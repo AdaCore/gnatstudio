@@ -72,6 +72,9 @@ package Ada_Semantic_Tree.Expression_Parser is
    --  parses the relevant completion expression.
    --  Start_Offset is the offset (in byte) of where we have to look. The
    --  caller is responsible for calling Free on Tokens.
+   --  The buffer given in parameter much as a liftime superior or equal to
+   --  the resulting parser expression, as it gets referenced by this
+   --  expression.
 
    function Parse_Current_List
      (Buffer : UTF8_String_Access) return Parsed_Expression;

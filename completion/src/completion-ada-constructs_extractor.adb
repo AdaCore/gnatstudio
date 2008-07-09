@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -564,12 +564,13 @@ package body Completion.Ada.Constructs_Extractor is
            (Visibility,
             Completion_Resolver_Access (Resolver),
             Find_Declarations
-              (File                      => Resolver.Current_File,
-               Offset                    => Offset,
+              ((From_File, Resolver.Current_File, Offset),
                From_Visibility           => Visibility,
                Expression                => Expression,
                Categories                => Null_Category_Array,
                Is_Partial                => True)));
+
+      Token_List.Free (Expression.Tokens);
    end Get_Completion_Root;
 
    ------------

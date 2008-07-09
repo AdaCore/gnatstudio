@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -185,7 +185,7 @@ private
    type Named_Entities_Access is access all Named_Entities.Map;
 
    type Visibility_Resolver is record
-      Hiding_Entities :  Named_Entities_Access;
+      Hiding_Entities : Named_Entities_Access;
    end record;
 
 end Ada_Semantic_Tree.Dependency_Tree;

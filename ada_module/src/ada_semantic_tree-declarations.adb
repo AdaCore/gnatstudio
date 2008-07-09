@@ -43,7 +43,6 @@ package body Ada_Semantic_Tree.Declarations is
    with record
       First_File      : Structured_File_Access;
       First_Buffer    : String_Access;
-      First_Tree      : Construct_Tree;
       First_Offset    : Natural;
       Construct_Db    : Construct_Database_Access;
       Name            : Distinct_Identifier;
@@ -110,8 +109,7 @@ package body Ada_Semantic_Tree.Declarations is
    procedure Get_Possibilities
      (Identifier      : Distinct_Identifier;
       Is_Partial      : Boolean;
-      Offset          : Integer;
-      File            : Structured_File_Access;
+      Context         : Search_Context;
       From_Visibility : Visibility_Context;
       Result          : in out Declaration_List);
    --  Look for the identifier given in parameter successively from:
@@ -457,29 +455,36 @@ package body Ada_Semantic_Tree.Declarations is
    is
       Result : Declaration_Id_Iterator;
    begin
-      Result.Stage := File_Hierarchy;
-      Result.First_File := List.First_File;
       Result.Name := List.Name;
-      Result.Construct_Db := List.Construct_Db;
       Result.Is_Partial := List.Is_Partial;
       Result.From_Visibility := List.From_Visibility;
-      Result.First_Unit := Get_Owning_Unit (List.First_File, List.Offset);
+      Result.Construct_Db := List.Construct_Db;
 
-      Result.Visible_Constructs :=
-        new Entity_Array'
-          (Get_Local_Visible_Constructs
-               (File       => List.First_File,
-                Offset     => List.First_Offset,
-                Name       => List.Name,
-                Visibility => Result.Hidden_Entities'Access,
-                Use_Wise   => True,
-                Is_Partial => List.Is_Partial));
+      if List.First_File /= null then
+         Result.Stage := File_Hierarchy;
+         Result.First_File := List.First_File;
+         Result.First_Unit := Get_Owning_Unit (List.First_File, List.Offset);
 
-      if Result.Visible_Constructs'Length = 0 then
-         Result.Visible_Index := 0;
-         Next (Result);
+         Result.Visible_Constructs :=
+           new Entity_Array'
+             (Get_Local_Visible_Constructs
+                  (File       => List.First_File,
+                   Offset     => List.First_Offset,
+                   Name       => List.Name,
+                   Visibility => Result.Hidden_Entities'Access,
+                   Use_Wise   => True,
+                   Is_Partial => List.Is_Partial));
+
+         if Result.Visible_Constructs'Length = 0 then
+            Result.Visible_Index := 0;
+            Next (Result);
+         else
+            Result.Visible_Index := Result.Visible_Constructs'First;
+         end if;
       else
-         Result.Visible_Index := Result.Visible_Constructs'First;
+         Result.Stage := Database;
+         Result.Db_Iterator := Start
+           (Result.Construct_Db, Result.Name.all, Result.Is_Partial);
       end if;
 
       if not Is_Valid (Result) then
@@ -653,8 +658,7 @@ package body Ada_Semantic_Tree.Declarations is
    -----------------------
 
    function Find_Declarations
-     (File                      : Structured_File_Access;
-      Offset                    : Natural;
+     (Context                   : Search_Context;
       From_Visibility           : Visibility_Context :=
         Null_Visibility_Context;
       Expression                : Parsed_Expression := Null_Parsed_Expression;
@@ -665,14 +669,11 @@ package body Ada_Semantic_Tree.Declarations is
    is
       pragma Unreferenced (Categories);
 
-      All_Name_Id : constant Distinct_Identifier :=
-        Get_Database (File).Get_Identifier ("all");
-
+      Db                     : Construct_Database_Access;
+      All_Name_Id            : Distinct_Identifier;
       Actual_From_Visibility : Visibility_Context;
-
-      Analyzed_Expression : Parsed_Expression;
-
-      First_Token : Token_List.List_Node;
+      Analyzed_Expression    : Parsed_Expression;
+      First_Token            : Token_List.List_Node;
 
       procedure Analyze_Token
         (Previous_Token       : Token_List.List_Node;
@@ -711,8 +712,7 @@ package body Ada_Semantic_Tree.Declarations is
                Get_Possibilities
                  (Id,
                   Next (Token) = Token_List.Null_Node and then Is_Partial,
-                  Offset,
-                  File,
+                  Context,
                   Actual_From_Visibility,
                   Tmp);
             else
@@ -800,10 +800,16 @@ package body Ada_Semantic_Tree.Declarations is
 
             when Tok_Identifier =>
                Handle_Identifier
-                 (Get_Database (File).Get_Identifier
+                 (Db.Get_Identifier
                   (Get_Name (Analyzed_Expression, Data (Token))));
 
             when Tok_Open_Parenthesis =>
+               if Context.Context_Type /= From_File then
+                  --  We do not handle parenthesis in a search in database.
+
+                  return;
+               end if;
+
                if Previous_Declaration.Profile = null then
                   --  There is no possible profile completion here, drop the
                   --  proposal
@@ -841,7 +847,8 @@ package body Ada_Semantic_Tree.Declarations is
                      Append_Actual
                        (Local_Declaration.Actuals.all,
                         Get_Actual_Parameter
-                          (UTF8_String_Access (Get_Buffer (File)), 0, 0),
+                          (UTF8_String_Access
+                             (Get_Buffer (Context.File)), 0, 0),
                         False,
                         Param_Added,
                         Success);
@@ -852,7 +859,7 @@ package body Ada_Semantic_Tree.Declarations is
                         --  ??? It's a shame to have to recompute the actual
                         --  each time we go there.
                         New_Param := Get_Actual_Parameter
-                          (UTF8_String_Access (Get_Buffer (File)),
+                          (UTF8_String_Access (Get_Buffer (Context.File)),
                            Data (Current_Token).Token_First,
                            Data (Current_Token).Token_Last);
 
@@ -946,22 +953,29 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_With | Tok_Use =>
                pragma Assert (Token = First_Token);
 
-               Actual_From_Visibility.Filter := All_Accessible_Units;
+               if Context.Context_Type = From_File then
+                  Actual_From_Visibility.Filter := All_Accessible_Units;
 
-               if Next (Token) /= Token_List.Null_Node then
-                  Analyze_Token
-                    (Token,
-                     Next (Token),
-                     Previous_Declaration,
-                     Result);
+                  if Next (Token) /= Token_List.Null_Node then
+                     Analyze_Token
+                       (Token,
+                        Next (Token),
+                        Previous_Declaration,
+                        Result);
+                  else
+                     Get_Possibilities
+                       (Null_Distinct_Identifier,
+                        Is_Partial,
+                        (From_File,
+                         Context.File,
+                         Data (Token).Token_First - 1),
+                        Actual_From_Visibility,
+                        Result);
+                  end if;
                else
-                  Get_Possibilities
-                    (Null_Distinct_Identifier,
-                     Is_Partial,
-                     Data (Token).Token_First - 1,
-                     File,
-                     Actual_From_Visibility,
-                     Result);
+                  --  There no database-wide search starting with a with token.
+
+                  return;
                end if;
 
             when others =>
@@ -971,12 +985,29 @@ package body Ada_Semantic_Tree.Declarations is
 
       Result : Declaration_List;
    begin
+      case Context.Context_Type is
+         when From_Database =>
+            Db := Context.Db;
+
+         when From_File =>
+            Db := Get_Database (Context.File);
+
+      end case;
+
+      All_Name_Id := Db.Get_Identifier ("all");
       Result.Excluded_List := Excluded_Entities;
       Ref (Result.Excluded_List);
 
       if Expression = Null_Parsed_Expression then
-         Analyzed_Expression := Parse_Current_List
-           (UTF8_String_Access (Get_Buffer (File)), Offset);
+         if Context.Context_Type = From_File then
+            Analyzed_Expression := Parse_Current_List
+              (UTF8_String_Access (Get_Buffer (Context.File)), Context.Offset);
+         else
+            --  We can't do a search without expression on a database wide
+            --  search.
+
+            return Result;
+         end if;
       else
          Analyzed_Expression := Expression;
       end if;
@@ -984,11 +1015,13 @@ package body Ada_Semantic_Tree.Declarations is
       if From_Visibility /= Null_Visibility_Context then
          Actual_From_Visibility := From_Visibility;
       else
-         Actual_From_Visibility.File := File;
-         Actual_From_Visibility.Offset := Offset;
-         Actual_From_Visibility.Min_Visibility_Confidence :=
-           Public_Library_Visible;
-         Actual_From_Visibility.Filter := Everything;
+         if Context.Context_Type = From_File then
+            Actual_From_Visibility.File := Context.File;
+            Actual_From_Visibility.Offset := Context.Offset;
+            Actual_From_Visibility.Min_Visibility_Confidence :=
+              Public_Library_Visible;
+            Actual_From_Visibility.Filter := Everything;
+         end if;
       end if;
 
       declare
@@ -1037,8 +1070,7 @@ package body Ada_Semantic_Tree.Declarations is
    procedure Get_Possibilities
      (Identifier      : Distinct_Identifier;
       Is_Partial      : Boolean;
-      Offset          : Integer;
-      File            : Structured_File_Access;
+      Context         : Search_Context;
       From_Visibility : Visibility_Context;
       Result          : in out Declaration_List)
    is
@@ -1049,7 +1081,7 @@ package body Ada_Semantic_Tree.Declarations is
          --  parent.
          declare
             C : Unit_Iterator := Get_Units
-              (Get_Database (File), Id_Name, Is_Partial);
+              (Get_Database (Context.File), Id_Name, Is_Partial);
             List : Declaration_List_Extensive_Pckg.Extensive_List_Pckg.List;
             Construct_It : Construct_Tree_Iterator;
             Construct    : access Simple_Construct_Information;
@@ -1092,22 +1124,28 @@ package body Ada_Semantic_Tree.Declarations is
 
       if (From_Visibility.Filter and All_Visible_Entities) /= 0 then
          declare
-            Tree : Construct_Tree;
+            List : Declaration_Id_List;
          begin
-            Tree := Get_Tree (File);
+            List := Declaration_Id_List'
+              (Name            => Identifier,
+               Is_Partial      => Is_Partial,
+               From_Visibility => From_Visibility,
+               others          => <>);
 
-            Append
-              (Result.Contents,
-               Declaration_Id_List'
-                 (First_File      => File,
-                  First_Buffer    => Get_Buffer (File),
-                  First_Tree      => Tree,
-                  First_Offset    => Offset,
-                  Construct_Db    => Get_Database (File),
-                  Name            => Identifier,
-                  Is_Partial      => Is_Partial,
-                  Offset          => Offset,
-                  From_Visibility => From_Visibility));
+            case Context.Context_Type is
+               when From_File =>
+                  List.First_File   := Context.File;
+                  List.First_Offset := Context.Offset;
+                  List.Construct_Db := Get_Database (Context.File);
+                  List.First_Buffer := Get_Buffer (Context.File);
+                  List.Offset       := Context.Offset;
+
+               when From_Database =>
+                  List.Construct_Db := Context.Db;
+
+            end case;
+
+            Append (Result.Contents, List);
          end;
       end if;
    end Get_Possibilities;
@@ -1126,8 +1164,7 @@ package body Ada_Semantic_Tree.Declarations is
       return Visibility_Confidence
    is
       Decls : Declaration_List := Find_Declarations
-        (File              => File,
-         Offset            => Offset,
+        (Context           => (From_File, File, Offset),
          From_Visibility   => From_Visibility,
          Expression        => Expression,
          Categories        => Null_Category_Array,

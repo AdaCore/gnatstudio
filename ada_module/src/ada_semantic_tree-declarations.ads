@@ -166,26 +166,39 @@ package Ada_Semantic_Tree.Declarations is
    procedure Unref (Stack : in out Excluded_Stack_Type);
    --  Decrement the reference counter of the stack.
 
-   function Find_Declarations
-     (File                      : Structured_File_Access;
-      --  The file handle where the occurence is set.  This handle doesn't
-      --  have to be up to date regarding the actuall buffer state, that's why
-      --  the tree and the buffer is passed later on.
+   type Search_Context_Type is (From_Database, From_File);
 
-      Offset                    : Natural;
-      --  The offset where the occurence is located, on the buffer
+   type Search_Context (Context_Type : Search_Context_Type) is record
+      case Context_Type is
+         when From_Database =>
+            Db : Construct_Database_Access;
+            --  The database where to perform the search
+
+         when From_File =>
+            File   : Structured_File_Access;
+            --  The file handle where the occurence is set.
+
+            Offset : Natural;
+            --  The offset where the occurence is located, on the buffer passed
+            --  in File.
+      end case;
+   end record;
+
+   function Find_Declarations
+     (Context                   : Search_Context;
+      --  The context of the search, either database wide or from a file.
 
       From_Visibility           : Visibility_Context :=
         Null_Visibility_Context;
       --  The location from wich public / private / body visiblity has to be
       --  calculated. With / Use visiblity will be calculated from the
-      --  File/Offset given in parameter. If no value is given, then
-      --  File / Offset will be taken, and Library_Visible will be the
-      --  required confidence.
+      --  File/Offset given in parameter from the context. If no value is
+      --  given, then File / Offset will be taken, and Library_Visible will be
+      --  the required confidence.
 
       Expression                : Parsed_Expression := Null_Parsed_Expression;
       --  The expression of the occurence. If null, an expression will be
-      --  analyzed from the offset given in parameter.
+      --  analyzed from the offset given in parameter by the context.
 
       Categories                : Category_Array := Null_Category_Array;
       --  A reduced set of categories lokked for. If there is any former
@@ -274,7 +287,12 @@ private
    end record;
 
    Null_Declaration_View : constant Declaration_View :=
-     (Null_Entity_Access, False, False, Public_Library_Visible, null, null);
+     (Null_Entity_Access,
+      False,
+      False,
+      Public_Library_Visible,
+      null,
+      null);
 
    package Excluded_Stack_Pckg is new Generic_Stack (Entity_Access);
 

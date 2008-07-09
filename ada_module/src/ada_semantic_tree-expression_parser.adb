@@ -172,7 +172,7 @@ package body Ada_Semantic_Tree.Expression_Parser is
       begin
          Local_Offset := UTF8_Find_Prev_Char (Buffer.all, Local_Offset);
 
-         while Local_Offset > 1 loop
+         while Local_Offset > Offset_Limit loop
             case Buffer (Local_Offset) is
                when '"' =>
                   Local_Offset := UTF8_Find_Prev_Char

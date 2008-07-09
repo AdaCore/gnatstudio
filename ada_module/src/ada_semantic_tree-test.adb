@@ -46,12 +46,12 @@ with GNATCOLL.VFS;                            use GNATCOLL.VFS;
 procedure Ada_Semantic_Tree.Test is
 
    procedure Next_Test_Command
-     (Buffer : String;
+     (Buffer : access String;
       File   : Structured_File_Access;
       Index  : in out Natural);
 
    procedure Read_Next_Word
-     (Buffer     : String;
+     (Buffer     : access String;
       Index      : in out Natural;
       Word_Begin : out Natural;
       Word_End   : out Natural);
@@ -66,7 +66,7 @@ procedure Ada_Semantic_Tree.Test is
    -----------------------
 
    procedure Next_Test_Command
-     (Buffer : String;
+     (Buffer : access String;
       File   : Structured_File_Access;
       Index  : in out Natural)
    is
@@ -76,7 +76,7 @@ procedure Ada_Semantic_Tree.Test is
 
       Looked_Offset : Natural;
    begin
-      Skip_To_String (Buffer, Index, Pattern);
+      Skip_To_String (Buffer.all, Index, Pattern);
 
       if Index + Pattern'Length - 1 > Buffer'Last
         or else Buffer (Index .. Index + Pattern'Length - 1) /= Pattern
@@ -118,8 +118,7 @@ procedure Ada_Semantic_Tree.Test is
             end if;
 
             List := Find_Declarations
-              (File              => File,
-               Offset            => Looked_Offset,
+              ((From_File, File, Looked_Offset),
                From_Visibility   => Null_Visibility_Context,
                Expression        => Null_Parsed_Expression,
                Categories        => Null_Category_Array,
@@ -352,8 +351,7 @@ procedure Ada_Semantic_Tree.Test is
                end if;
 
                List := Find_Declarations
-                 (File              => Full_File,
-                  Offset            => Sloc_End.Index,
+                 ((From_File, Full_File, Sloc_End.Index),
                   From_Visibility   => Null_Visibility_Context,
                   Expression        => Null_Parsed_Expression,
                   Categories        => Null_Category_Array,
@@ -459,6 +457,46 @@ procedure Ada_Semantic_Tree.Test is
                   Callback => Callback'Unrestricted_Access);
             end if;
          end;
+      elsif Buffer (Word_Begin .. Word_End) = "DATABASE_SEARCH" then
+         Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
+
+         Put_Line
+           ("DATABASE_SEARCH " & Buffer (Word_Begin .. Word_End));
+
+         declare
+            Expression : Parsed_Expression := Parse_Current_List
+              (Buffer       =>
+                 Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
+                   (Buffer),
+               Start_Offset => Word_End,
+               End_Offset   => Word_Begin);
+
+            List : constant Declaration_List := Find_Declarations
+              (Context           => (From_Database, Construct_Db),
+               From_Visibility   => Null_Visibility_Context,
+               Expression        => Expression,
+               Is_Partial        => False);
+
+            List_It : Declaration_Iterator;
+         begin
+            List_It := First (List);
+
+            while not At_End (List_It) loop
+               Put_Line
+                 ("----> "
+                  & Base_Name (Get_File_Path (Get_File (Get_Entity (List_It))))
+                  & ":"
+                  & Get_Construct (Get_Entity (List_It)).Sloc_Start.Line'Img
+                  & ":"
+                  & Get_Construct
+                    (Get_Entity (List_It)).Sloc_Start.Column'Img);
+
+               Next (List_It);
+            end loop;
+
+            Token_List.Free (Expression.Tokens);
+         end;
+
       else
          Put_Line ("UNKOWN COMMAND " & Buffer (Word_Begin .. Word_End));
       end if;
@@ -473,13 +511,13 @@ procedure Ada_Semantic_Tree.Test is
    --------------------
 
    procedure Read_Next_Word
-     (Buffer     : String;
+     (Buffer     : access String;
       Index      : in out Natural;
       Word_Begin : out Natural;
       Word_End   : out Natural) is
    begin
       Word_Begin := Index;
-      Skip_Blanks (Buffer, Word_Begin);
+      Skip_Blanks (Buffer.all, Word_Begin);
       Word_End := Word_Begin;
 
       while Is_Alphanumeric (Buffer (Word_End))
@@ -508,7 +546,7 @@ procedure Ada_Semantic_Tree.Test is
 
       while Index /= 0 loop
          Next_Test_Command
-           (Buffer => Get_Buffer (File_Node).all,
+           (Buffer => Get_Buffer (File_Node),
             File   => File_Node,
             Index  => Index);
       end loop;
@@ -552,12 +590,14 @@ begin
       pragma Unreferenced (File_Node);
    begin
       --  First, generate the whole database
-
-      for J in Files.all'Range loop
-         File_Node := Get_Or_Create
-           (Construct_Db,
-            Files.all (J),
-            Ada_Tree_Lang);
+      for J in 1 .. 3 loop
+         Clear (Construct_Db);
+         for J in Files.all'Range loop
+            File_Node := Get_Or_Create
+              (Construct_Db,
+               Files.all (J),
+               Ada_Tree_Lang);
+         end loop;
       end loop;
 
       --  Then, execute the tests
