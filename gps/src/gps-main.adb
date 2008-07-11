@@ -563,7 +563,8 @@ procedure GPS.Main is
       --  Initialize the traces
 
       GNATCOLL.Traces.Parse_Config_File
-        (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
+        (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg",
+         On_Exception => GNATCOLL.Traces.Deactivate);
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
       Trace (Me, "Gtk+ static version: "

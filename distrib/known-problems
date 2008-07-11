@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H612-018: GPS hang when it cannot write to the log file
+  Problem:    Due to special circumstances, GPS might not be able to write to
+              the log file (e.g NFS errors) and as a result just hangs.
+  Workaround: Remove the first line of the traces.cfg file that is located
+              under %USERPROFILE%/.gps on Windows or $HOME/.gps/ on other
+              platforms and which contains ">log.$$".
+
 - H704-007: Closing nodes in call graph still shows locations
   Problem:    If you select the contextual menu "... calls", you get a
               call tree, which shows location on its right-hand part. If
