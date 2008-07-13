@@ -199,13 +199,13 @@ package body String_Utils is
    ----------------
 
    function Line_Start (Buffer : String; P : Natural) return Natural is
-      Index : Natural := P;
+      Index : Natural := Natural'Min (Buffer'Last, P);
    begin
       if P <= Buffer'First then
          return P;
       end if;
 
-      if Buffer (P) = ASCII.LF then
+      if Buffer (Index) = ASCII.LF then
          Index := Index - 1;
 
          if Buffer (Index) = ASCII.LF then
@@ -221,7 +221,8 @@ package body String_Utils is
                return Buffer'First;
             end if;
          end if;
-      elsif Buffer (P) = ASCII.CR then
+
+      elsif Buffer (Index) = ASCII.CR then
          Index := Index - 1;
 
          if Buffer (Index) = ASCII.LF then
