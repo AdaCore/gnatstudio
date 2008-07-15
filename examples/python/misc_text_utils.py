@@ -1,8 +1,11 @@
+"""miscellaneous text utilities, on top of text_utils, used by other plug-ins
+"""
+
+
 import os
 import string
 import GPS
-import text_utils;  #from gps/share
-
+import text_utils
 
 #inserts text at current position in current file with a newline at the end
 def insert_line (text):

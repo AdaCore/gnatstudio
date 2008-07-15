@@ -1,109 +1,111 @@
-# This module provides minimally-intrusive Ada 95 reserved word and
-# construct expansion in GPS.
-#
-# Specifically, if an abbreviation of a reserved word is either on a line by
-# itself or follows only a label, that abbreviation is expanded into the
-# full spelling.  Note that not all reserved words are candidates for
-# expansion: they must be long enough for expansion to be of use in the
-# first place.
-#
-# Additionally, some (not all) constructs that require either a trailing
-# identifier or trailing reserved word are expanded to include that
-# identifier or reserved word. These include the following:
-#
-#    named block statements
-#    named basic loops
-#    named while-loops
-#    named for-loops
-#
-#    if-then statements
-#    case statements
-#    select statements
-#    record/end-record pairs
-#
-# Finally, begin-end pairs for program units are expanded to include the
-# corresponding unit name.
-#
-# Expansions follow the user's letter casing preferences for reserved words
-# and identifiers.
-#
-# A reserved word that is spelled fully does not require expansion of the
-# word itself, but, for the sake of minimal intrusion, also does not invoke
-# construct expansion.  Thus a person who types everything will not be
-# intruded upon except for the case in which a user-defined identifier
-# matches an abbreviation for a reserved word.  To mitigate this effect the
-# minimum abbreviation length may be set to a larger value by altering the
-# variable "min_abbreviation" declared below.
-#
-#
-# Examples:
-#
-#
-# A named loop is required to have the loop name follow the
-# "end loop".  If the user enters this text:
-#
-#    Foo : loo
-#
-# and enters the expansion key (the control-space key by default)
-# it will be expand into the following:
-#
-#    Foo : loop
-#       |
-#    end loop Foo;
-#
-# where the vertical bar '|' indicates the cursor location after expansion.
-# The cursor indentation is controlled by the user's syntax indentation
-# preference.
-#
-# This expansion is also done for begin-end pairs, For example, if the user
-# enters:
-#
-#    procedure Foo is
-#    beg
-#
-# it will be expanded into
-#
-#    procedure Foo is
-#    begin
-#       |
-#    end Foo;
-#
-# Nested declarations are ignored such that the correct name is used by the
-# expansion.
-#
-# For another example, this time without an identifier but with the required
-# completion:
-#
-#    if
-#
-# is expanded into
-#
-#    if | then
-#    end if;
+"""This module provides minimally-intrusive Ada 95 reserved word and
+construct expansion in GPS.
+
+Specifically, if an abbreviation of a reserved word is either on a line by
+itself or follows only a label, that abbreviation is expanded into the
+full spelling.  Note that not all reserved words are candidates for
+expansion: they must be long enough for expansion to be of use in the
+first place.
+
+Additionally, some (not all) constructs that require either a trailing
+identifier or trailing reserved word are expanded to include that
+identifier or reserved word. These include the following:
+
+   named block statements
+   named basic loops
+   named while-loops
+   named for-loops
+
+   if-then statements
+   case statements
+   select statements
+   record/end-record pairs
+
+Finally, begin-end pairs for program units are expanded to include the
+corresponding unit name.
+
+Expansions follow the user's letter casing preferences for reserved words
+and identifiers.
+
+A reserved word that is spelled fully does not require expansion of the
+word itself, but, for the sake of minimal intrusion, also does not invoke
+construct expansion.  Thus a person who types everything will not be
+intruded upon except for the case in which a user-defined identifier
+matches an abbreviation for a reserved word.  To mitigate this effect the
+minimum abbreviation length may be set to a larger value by altering the
+variable "min_abbreviation" declared below.
 
 
+Examples:
+
+
+A named loop is required to have the loop name follow the
+"end loop".  If the user enters this text:
+
+   Foo : loo
+
+and enters the expansion key (the control-space key by default)
+it will be expand into the following:
+
+   Foo : loop
+      |
+   end loop Foo;
+
+where the vertical bar '|' indicates the cursor location after expansion.
+The cursor indentation is controlled by the user's syntax indentation
+preference.
+
+This expansion is also done for begin-end pairs, For example, if the user
+enters:
+
+   procedure Foo is
+   beg
+
+it will be expanded into
+
+   procedure Foo is
+   begin
+      |
+   end Foo;
+
+Nested declarations are ignored such that the correct name is used by the
+expansion.
+
+For another example, this time without an identifier but with the required
+completion:
+
+   if
+
+is expanded into
+
+   if | then
+   end if;
+"""
+
+############################################################################
+# Customization variables
+# These variables can be changed in the initialization commands associated
+# with this script (see /Tools/Scripts)
+
+min_abbreviation = 3
 # We use the minimum abbreviation length to determine if the word
 # should be expanded into a reserved word.  Hence, any word of length less
 # than this value will not be expanded.
 # This doesn't make reserved word expansion less a "problem" if the user
 # perceives it as such, but it does mitigate it somewhat.
 
-min_abbreviation = 3
-
+action_name = "Conditionally expand Ada syntax"
 # Name of the GPS action this module creates. Changing this variable
 # has no effect, since the action is created as soon as this module
 # is loaded
 
-action_name = "Conditionally expand Ada syntax"
-
+default_action_key = "control-h"
 # To change the default expansion key, you should go to the menu
 # /Edit/Key shortcuts, and select the action action_name in the Ada
 # category. Changing the default action_key here has no effect, since
 # the default key is set as soon as GPS is loaded
 
-default_action_key = "control-space"
-
-
+
 ################### No user customization below this point ##########
 
 import sys;
@@ -296,7 +298,6 @@ def do_expansion ():
          return True
 
    return True # ie emit a blank
-
 
 
 # words to expand whenever the trigger key is hit immediately after the word

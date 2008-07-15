@@ -2,7 +2,7 @@
 
 This scripts adds a new contextual menu, shown when you click on
 an Ada entity that is declared as "separate". If you select that
-menu, an editor will be open to show the implementation directly.
+menu, an editor will be opened to show the implementation directly.
 
 GPS's standard "Go to body" contextual menu would take you to the
 editor that has the "is separate" statement instead, so this mode

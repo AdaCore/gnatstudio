@@ -1,6 +1,7 @@
 """This script shows how to reindent automatically all source files from
    all projects"""
 
+
 from GPS import *
 
 def indent_all (menu):
