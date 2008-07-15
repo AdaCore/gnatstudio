@@ -145,7 +145,7 @@ def show_unused_entities (where, globals_only):
      thaw_xref ()
      unset_busy()
 
-   Console().write ("Done searching for unused entities")
+   Console().write ("Done searching for unused entities\n")
    Logger ("UNUSED").log ("done")
 
 def show_unused_entities_in_file (menu):
