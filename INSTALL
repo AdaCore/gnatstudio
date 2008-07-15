@@ -16,7 +16,10 @@ Once Gtk+ has been installed, you need to install the latest GtkAda
 See GtkAda/INSTALL for instructions.
 
 Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
-to the GtkAda installation
+to the GtkAda installation. The gtkada.gpr project file needs to be visible
+either through the predefined search path (which is the case if you installed
+GtkAda in the same directory as GNAT), or you need to modify the
+GPR_PROJECT_PATH environment variable to point to it.
 
 Then you need to install the latest version of XML/Ada, and set the
 ADA_PROJECT_PATH environment variable to point to <xml-install>/lib/gnat
