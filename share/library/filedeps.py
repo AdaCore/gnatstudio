@@ -82,7 +82,7 @@ def print_dependency_path (from_file, to_file):
  GPS.Console().write \
     ("Dependencies from " + os.path.basename (from_file.name())\
      + " to " + os.path.basename (to_file.name()) + "\n" 
-     + dependency_path (from_file, to_file))
+     + dependency_path (from_file, to_file) + "\n")
 
 def interactive_dependency_path (menu):
    (file1, file2) = GPS.MDI.input_dialog ("Show dependency path for:", "From:", "To:")
