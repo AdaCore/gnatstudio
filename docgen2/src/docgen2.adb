@@ -1796,8 +1796,8 @@ package body Docgen2 is
    -- Execute --
    -------------
 
-   function Execute (Command : access Docgen_Command)
-                     return Command_Return_Type
+   function Execute
+     (Command : access Docgen_Command) return Command_Return_Type
    is
       function Get_All_Comments
         (Lang   : Language_Access;
@@ -2154,13 +2154,13 @@ package body Docgen2 is
                  Read_File (Command.Source_Files (Command.Src_File_Index));
 
                declare
-                  Lang_Handler  : constant Language_Handler :=
-                                    Get_Language_Handler (Command.Kernel);
-                  Language      : constant Language_Access :=
-                                    Get_Language_From_File
-                                      (Lang_Handler,
-                                       Command.Source_Files
-                                         (Command.Src_File_Index));
+                  Lang_Handler : constant Language_Handler :=
+                                   Get_Language_Handler (Command.Kernel);
+                  Language     : constant Language_Access :=
+                                   Get_Language_From_File
+                                     (Lang_Handler,
+                                      Command.Source_Files
+                                        (Command.Src_File_Index));
                begin
                   Generate_Annotated_Source
                     (Kernel  => Command.Kernel,
@@ -2280,16 +2280,16 @@ package body Docgen2 is
       File    : GNATCOLL.VFS.Virtual_File;
       Options : Docgen_Options)
    is
-      P             : constant Project_Type :=
-                        Get_Project_From_File
-                          (Registry          => Get_Registry (Kernel).all,
-                           Source_Filename   => File,
-                           Root_If_Not_Found => True);
-      Other_File    : constant Virtual_File :=
-                        Create
-                          (Other_File_Base_Name (P, File), P);
+      P          : constant Project_Type :=
+                     Get_Project_From_File
+                       (Registry          => Get_Registry (Kernel).all,
+                        Source_Filename   => File,
+                        Root_If_Not_Found => True);
+      Other_File : constant Virtual_File :=
+                     Create
+                       (Other_File_Base_Name (P, File), P);
 
-      C             : Docgen_Command_Access;
+      C          : Docgen_Command_Access;
    begin
       Parse_All_LI_Information (Kernel, P, False);
 
@@ -2329,9 +2329,9 @@ package body Docgen2 is
       Options   : Docgen_Options;
       Recursive : Boolean := False)
    is
-      C             : Docgen_Command_Access;
-      P             : Projects.Project_Type := Project;
-      Context       : Selection_Context;
+      C       : Docgen_Command_Access;
+      P       : Projects.Project_Type := Project;
+      Context : Selection_Context;
    begin
       if P = No_Project then
          Context := Get_Current_Context (Kernel);
@@ -3587,9 +3587,9 @@ package body Docgen2 is
       Ada.Text_IO.Close (File_Handle);
 
       Open_Html
-        (Kernel            => Kernel,
-         URL_Or_File       => Get_Doc_Directory (Kernel) &
-                                Backend.To_Destination_Name ("index"));
+        (Kernel      => Kernel,
+         URL_Or_File => Get_Doc_Directory (Kernel) &
+           Backend.To_Destination_Name ("index"));
    end Generate_TOC;
 
    --------------------------
