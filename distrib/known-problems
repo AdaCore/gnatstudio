@@ -7,7 +7,7 @@ Known Problems fixed in GPS 4.3.0
               under %USERPROFILE%/.gps on Windows or $HOME/.gps/ on other
               platforms and which contains ">log.$$".
 
-- H612-013: Not possible to set breakpoints at some locations
+- H612-013: Inability to set breakpoints at some locations
   Problem:    Recent GNAT Pro packages comes with a new version of GDB (6.8)
               which makes use of a new feature that is not properly handled
               by GPS (multiple locations breakpoints). As a result it might not
@@ -15,8 +15,8 @@ Known Problems fixed in GPS 4.3.0
               Furthermore, after GPS refused to set a breakpoint, it is not
               possible to open the breakpoint editor. Finally, this can also
               generate some instabilities.
-  Workaround: It can help to compile with no optimistion (-O0). Otherwise it
-              is still possible to use an older version of GDB (comming from a
+  Workaround: It can help to compile with no optimization (-O0). Otherwise it
+              is still possible to use an older version of GDB (coming from a
               previous release of GNAT Pro).
 
 - H704-007: Closing nodes in call graph still shows locations
