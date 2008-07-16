@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -81,7 +80,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Breakpoints : constant Breakpoints_Access :=
-        Breakpoints_Access (Object);
+                      Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, True);
       Set_Sensitive (Breakpoints.Line_Spin, True);
@@ -101,7 +100,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Breakpoints : constant Breakpoints_Access :=
-        Breakpoints_Access (Object);
+                      Breakpoints_Access (Object);
    begin
       Set_Sensitive (Breakpoints.File_Combo, False);
       Set_Sensitive (Breakpoints.Line_Spin, False);
@@ -242,7 +241,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Editor    : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Object);
+                    Breakpoint_Editor_Access (Object);
       Selection : constant Integer := Get_Selection_Index (Editor);
 
    begin
@@ -265,7 +264,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Editor    : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Object);
+                    Breakpoint_Editor_Access (Object);
       Selection : constant Integer := Get_Selection_Index (Editor);
 
    begin
@@ -291,7 +290,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Editor    : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Object);
+                    Breakpoint_Editor_Access (Object);
       Selection : constant Integer := Get_Selection_Index (Editor);
 
    begin
@@ -308,8 +307,7 @@ package body Breakpoints_Pkg.Callbacks is
    ----------------------
 
    procedure On_Ok_Bp_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+     (Object : access Gtk_Widget_Record'Class) is
    begin
       Hide (Object);
 

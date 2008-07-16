@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -358,10 +357,6 @@ package body GVD.Source_Editor.GPS is
          end if;
 
          Result.Line := D.Line;
-
-         if D.Info /= null then
-            Result.Info := new String'(D.Info.all);
-         end if;
 
          Result.Ignore := D.Ignore;
 

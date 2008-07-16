@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -176,9 +175,6 @@ package GVD.Types is
 
       Line        : Integer := 0;
       --  The line that contains the breakpoint
-
-      Info        : GNAT.Strings.String_Access;
-      --  Additionnal information
 
       Ignore      : Natural := 0;
       --  Number of hits that will be ignored before actually stopping

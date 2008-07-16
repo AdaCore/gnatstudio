@@ -3496,9 +3496,6 @@ package body Debugger.Gdb is
                   if not M then
                      Match_Extra_Breakpoint_Info (Tmp, Index, Num, Br);
                   end if;
-
-                  --  ??? Why is this code commented out
-                  --  Br (Num).Info := new String'(S (Tmp .. Index - 2));
                end loop;
             end if;
 
