@@ -48,6 +48,12 @@ package Codefix.Text_Manager is
    --  Return True if the character can be considerate as a separator
 
    ----------------------------------------------------------------------------
+   --  Early type declarations
+   ----------------------------------------------------------------------------
+
+   type Text_Navigator_Abstr is abstract tagged private;
+
+   ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
 
@@ -140,6 +146,11 @@ package Codefix.Text_Manager is
 
    function Get_Word (Word : Word_Cursor) return String;
    --  Return the word currently stored by the cursor, "" if none
+
+   function Get_Matching_Word
+     (Word : Word_Cursor; Text : Text_Navigator_Abstr'Class) return String;
+   --  Return the word matching the cursor given in parameter, if the mode
+   --  of the word is regular expression. Otherwise, just return the word.
 
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark
@@ -352,8 +363,6 @@ package Codefix.Text_Manager is
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
-
-   type Text_Navigator_Abstr is abstract tagged private;
 
    type Ptr_Text_Navigator is access all Text_Navigator_Abstr'Class;
 
@@ -1048,9 +1057,20 @@ package Codefix.Text_Manager is
    procedure Execute
      (This         : Text_Command;
       Current_Text : Text_Navigator_Abstr'Class;
+      Success      : in out Boolean) is null;
+   --  New version of Execute. Reset success to True if the command is in the
+   --  new kind, false if the old execute has still to be called.
+   --  ??? The success parameter will be removed once the transition out of the
+   --  extract model is done (see H716-013).
+
+   procedure Execute
+     (This         : Text_Command;
+      Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class) is abstract;
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
+   --  ??? This will be removed removed once the transition out of the
+   --  extract model is done (see H716-013).
 
    type Execute_Corrupted_Record is abstract tagged null record;
 
@@ -1065,11 +1085,22 @@ package Codefix.Text_Manager is
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : Text_Navigator_Abstr'Class;
+      Success      : in out Boolean;
+      Error_Cb     : Execute_Corrupted := null);
+   --  Same as execute, but catches exception (and calls the Error_Cb if any);
+   --  ??? The success parameter will be removed once the transition out of the
+   --  extract model is done (see H716-013).
+
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class;
       Error_Cb     : Execute_Corrupted := null);
    --  Same as the previous one, but when problems happend no exception is
    --  raised but Error_Cb is called. This function also
    --  updates the current text, in order to be conformant with user's changes,
+   --  ??? This will be removed removed once the transition out of the
+   --  extract model is done (see H716-013).
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command
@@ -1170,6 +1201,11 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Replace_Word_Cmd);
    --  Free the memory associated to a Replace_Word_Cmd
+
+   procedure Execute
+     (This         : Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
 
    procedure Execute
      (This         : Replace_Word_Cmd;

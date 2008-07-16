@@ -3668,6 +3668,21 @@ package body Codefix.Text_Manager is
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : Text_Navigator_Abstr'Class;
+      Success      : in out Boolean;
+      Error_Cb     : Execute_Corrupted := null)
+   is
+   begin
+      Execute (This, Current_Text, Success);
+   exception
+      when E : Codefix_Panic =>
+         if Error_Cb /= null then
+            Error (Error_Cb, Exception_Information (E));
+         end if;
+   end Secured_Execute;
+
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class;
       Error_Cb     : Execute_Corrupted := null) is
    begin
@@ -4010,29 +4025,43 @@ package body Codefix.Text_Manager is
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Success      : in out Boolean)
    is
       Current_Word : Word_Cursor;
-      Line_Cursor  : File_Cursor;
+      Text         : Ptr_Text;
+
    begin
+      Success := True;
+
       Make_Word_Cursor (This.Mark, Current_Text, Current_Word);
 
-      Line_Cursor := File_Cursor (Current_Word);
-      Line_Cursor.Col := 1;
-      Get_Line (Current_Text, Line_Cursor, New_Extract);
+      declare
+         Match        : constant String :=
+           Current_Word.Get_Matching_Word (Current_Text);
+      begin
+         Text := Current_Text.Get_File (Current_Word.File);
 
-      Replace_Word
-        (New_Extract,
-         Current_Word,
-         This.Str_Expected.all,
-         Current_Word.String_Match.all,
-         Current_Word.Mode);
+         Text.Replace
+           (Cursor    => Current_Word,
+            Len       => Match'Length,
+            New_Value => This.Str_Expected.all);
 
-      if This.Do_Indentation then
-         Set_Indentation (New_Extract, True);
-      end if;
+         if This.Do_Indentation then
+            Text.Indent_Line (Current_Word);
+         end if;
 
-      Free (Current_Word);
+         Free (Current_Word);
+      end;
+   end Execute;
+
+   procedure Execute
+     (This         : Replace_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      pragma Unreferenced (This, Current_Text, New_Extract);
+   begin
+      null;
    end Execute;
 
    ---------------------
@@ -4361,5 +4390,41 @@ package body Codefix.Text_Manager is
          return Word.String_Match.all;
       end if;
    end Get_Word;
+
+   -----------------------
+   -- Get_Matching_Word --
+   -----------------------
+
+   function Get_Matching_Word
+     (Word : Word_Cursor; Text : Text_Navigator_Abstr'Class) return String
+   is
+   begin
+      case Word.Mode is
+         when Text_Ascii =>
+            return Word.String_Match.all;
+         when Regular_Expression =>
+            declare
+               Matches    : Match_Array (0 .. 1);
+               Matcher    : constant Pattern_Matcher := Compile
+                 (Word.String_Match.all);
+               Str_Parsed : constant String := Text.Get_Line (Word, 1);
+               Index      : constant Char_Index :=
+                 To_Char_Index (Word.Col, Str_Parsed);
+            begin
+               Match
+                 (Matcher,
+                  Str_Parsed (Integer (Index) .. Str_Parsed'Last), Matches);
+
+               if Matches (0) = No_Match then
+                  raise Codefix_Panic with "pattern '"
+                    & Word.String_Match.all
+                    & " in '"
+                    & Word.String_Match.all & "' can't be found";
+               else
+                  return Str_Parsed (Matches (1).First .. Matches (1).Last);
+               end if;
+            end;
+      end case;
+   end Get_Matching_Word;
 
 end Codefix.Text_Manager;

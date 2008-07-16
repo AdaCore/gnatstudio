@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -253,14 +253,23 @@ package body Codefix.Errors_Manager is
       Choice       : Text_Command'Class)
    is
       New_Extract : Extract;
+      Success     : Boolean := False;
    begin
-      Secured_Execute
-        (Choice,
-         Current_Text,
-         New_Extract,
-         This.Error_Cb);
+      --  ??? While we are transitionning out of the extract model, we first
+      --  try to call the new version of Secure_Execute and then call the old
+      --  one if it fails (i.e. the migration has not been done for that
+      --  command). (see H716-013).
+      Choice.Secured_Execute (Current_Text, Success, This.Error_Cb);
 
-      Commit (New_Extract, Current_Text);
+      if Success = False then
+         Secured_Execute
+           (Choice,
+            Current_Text,
+            New_Extract,
+            This.Error_Cb);
+
+         Commit (New_Extract, Current_Text);
+      end if;
 
       Data (Error).Fixed.all := True;
       Extract (Data (Error).Solution_Chosen.all) := New_Extract;
