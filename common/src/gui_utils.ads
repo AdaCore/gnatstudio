@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -278,7 +277,7 @@ package GUI_Utils is
    --                    "activatable", 1);
    --     Cell_Renderer_List.Free (List);
    --
-   --  The resulting view should be added to a scrolled_window
+   --  The resulting view should be added to a scrolled_window.
    --
    --  If Sortable_Columns is True (and in this case Show_Column_Titles should
    --  be as well in most cases), then all columns in the view are sortable.
