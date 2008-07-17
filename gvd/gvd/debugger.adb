@@ -440,9 +440,11 @@ package body Debugger is
       end if;
 
    exception
-      when others =>
+      when E : others =>
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
+
+         Traces.Trace (Exception_Handle, E);
 
          if Process.Timeout_Id > 0 then
             Timeout_Remove (Process.Timeout_Id);

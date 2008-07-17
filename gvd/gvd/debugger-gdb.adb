@@ -39,6 +39,7 @@ with Debugger.Gdb.Cpp;        use Debugger.Gdb.Cpp;
 with Default_Preferences;     use Default_Preferences;
 with File_Utils;              use File_Utils;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Main_Window;         use GPS.Main_Window;
 with GVD.Dialogs;             use GVD.Dialogs;
@@ -57,7 +58,6 @@ with Language;                use Language;
 with Process_Proxies;         use Process_Proxies;
 with Remote.Path.Translator;  use Remote, Remote.Path.Translator;
 with String_Utils;            use String_Utils;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body Debugger.Gdb is
 
@@ -119,7 +119,7 @@ package body Debugger.Gdb is
 
    Breakpoint_Pattern        : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
-      & "\s+(<MULTIPLE> )*((0x0*)?(\S+))?\s+(.*)$",
+      & "\s+(<MULTIPLE>\s+)*((0x0*)?(\S+))?\s+(.*)$",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
@@ -3462,7 +3462,8 @@ package body Debugger.Gdb is
                      Tmp := Index;
                      Parse_Num (S, Tmp, Breakpoint_Number);
 
-                     exit when Integer (Breakpoint_Number) /= Num;
+                     exit when Integer (Breakpoint_Number) /=
+                       Integer (Br (Num).Num);
 
                      Skip_To_Char (S, Index, ASCII.LF);
                      Index := Index + 1;

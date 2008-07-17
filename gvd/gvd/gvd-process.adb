@@ -1574,6 +1574,10 @@ package body GVD.Process is
       Debugger  : constant Visual_Debugger := Visual_Debugger (Process);
       Bp_Editor : Breakpoint_Editor_Access;
    begin
+      if Debugger.Debugger = null then
+         return;
+      end if;
+
       --  We only need to update the list of breakpoints when we have a
       --  temporary breakpoint (since its status might be changed upon
       --  reaching the line).
