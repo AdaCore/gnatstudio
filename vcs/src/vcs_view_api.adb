@@ -25,6 +25,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Values;               use Glib.Values;
@@ -2982,7 +2983,8 @@ package body VCS_View_API is
 
          Create
            (Command, -"clear revision view", Kernel,
-            "Revision.clear_view """ & Full_Name (File).all & '"', Script);
+            "Revision.clear_view "
+            & Argument_To_Quoted_String (Full_Name (File).all), Script);
 
          Launch_Background_Command
            (Kernel, Command_Access (Command), True, False, "");

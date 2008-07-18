@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -1850,7 +1851,8 @@ package body VCS.Generic_VCS is
          Res : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel,
-                    "Editor.get_last_line """ & Full_Name (File).all & '"');
+                    "Editor.get_last_line "
+                    & Argument_To_Quoted_String (Full_Name (File).all));
       begin
          Max := Natural'Value (Res);
       exception
@@ -1922,8 +1924,9 @@ package body VCS.Generic_VCS is
 
                   Create
                     (Command, -"query log", Kernel,
-                     "VCS.log """
-                     & Full_Name (File).all & """ """ & Rev & """",
+                     "VCS.log "
+                     & Argument_To_Quoted_String (Full_Name (File).all)
+                     & " """ & Rev & """",
                      Script);
 
                   A (Line).Associated_Command := Command_Access (Command);
@@ -1975,8 +1978,9 @@ package body VCS.Generic_VCS is
       begin
          Create
            (Command, -"add link", Kernel,
-            "Revision.add_link """ & Full_Name (File).all &
-            """ """ & P_Rev & """ """ & Rev & """", Script);
+            "Revision.add_link " &
+            Argument_To_Quoted_String (Full_Name (File).all) &
+            " """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
            (Kernel, Command_Access (Command), True, False,
@@ -2046,8 +2050,9 @@ package body VCS.Generic_VCS is
          begin
             Create
               (Command, -"add log", Kernel,
-               "Revision.add_log """ & Full_Name (File).all &
-               """ """ & Rev & """ """ & Author & """ """ &
+               "Revision.add_log " &
+               Argument_To_Quoted_String (Full_Name (File).all) &
+               " """ & Rev & """ """ & Author & """ """ &
                Date & """ """ & String_Utils.Protect (Log) & """ """ &
                Boolean'Image (First) & """",
                Script);
@@ -2125,17 +2130,18 @@ package body VCS.Generic_VCS is
          exit when Matches (0) = No_Match;
 
          declare
-            Rev     : constant String :=
-                        S (Matches (Parser.Repository_Rev_Index).First
-                           .. Matches (Parser.Repository_Rev_Index).Last);
-            Sym     : constant String :=
-                        S (Matches (Parser.Sym_Index).First
-                           .. Matches (Parser.Sym_Index).Last);
+            Rev : constant String :=
+                    S (Matches (Parser.Repository_Rev_Index).First
+                       .. Matches (Parser.Repository_Rev_Index).Last);
+            Sym : constant String :=
+                    S (Matches (Parser.Sym_Index).First
+                       .. Matches (Parser.Sym_Index).Last);
          begin
             Create
               (Command, -"add revision", Kernel,
-               "Revision.add_revision """ & Full_Name (File).all &
-               """ """ & Rev & """ """ & Sym & """",
+               "Revision.add_revision " &
+               Argument_To_Quoted_String (Full_Name (File).all) &
+               " """ & Rev & """ """ & Sym & """",
                Script);
 
             Launch_Background_Command
