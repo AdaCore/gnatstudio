@@ -1856,7 +1856,7 @@ package body VCS.Generic_VCS is
       exception
          when others =>
             Trace
-              (Me, "Could not get last line ofxx "
+              (Me, "Could not get last line of "
                & Full_Name (File).all & ", result='" & Res & ''');
             return;
       end;

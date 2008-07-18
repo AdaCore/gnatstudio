@@ -20,10 +20,12 @@
 with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNAT.Strings;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Values;               use Glib.Values;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
@@ -70,7 +72,6 @@ with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body VCS_View_API is
 
@@ -2413,7 +2414,7 @@ package body VCS_View_API is
       Update     : Boolean;
       Get_Status : Boolean)
    is
-      Files        : String_List.List;
+      Files : String_List.List;
 
    begin
       --  Do not process hidden directories
@@ -2642,6 +2643,7 @@ package body VCS_View_API is
 
                      Free (Dirs);
                   end;
+
                else
                   Files := Get_Files_In_Project (The_Project, False);
                   Get_Status (Ref, Files);
@@ -2658,7 +2660,8 @@ package body VCS_View_API is
          end if;
       end Query_Status_For_Project;
 
-      Iterator : Imported_Project_Iterator := Start (Project, Recursive);
+      Iterator        : Imported_Project_Iterator :=
+                          Start (Project, Recursive);
       Current_Project : Project_Type := Current (Iterator);
    begin
       while Current_Project /= No_Project loop
@@ -2963,14 +2966,15 @@ package body VCS_View_API is
 
          Kernel        : constant Kernel_Handle := Get_Kernel (Context);
          File          : constant Virtual_File :=
-           Create (Full_Filename => Filename);
+                           Create (Full_Filename => Filename);
          Project       : constant Project_Type :=
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);
          Root_Branches : constant String := Get_Branches_Root (Project);
          Root_Tags     : constant String := Get_Tags_Root (Project);
          Script        : constant Scripting_Language :=
-           Lookup_Scripting_Language (Get_Scripts (Kernel), GPS_Shell_Name);
+                           Lookup_Scripting_Language
+                             (Get_Scripts (Kernel), GPS_Shell_Name);
          Command       : Custom_Command_Access;
 
       begin
@@ -3183,10 +3187,7 @@ package body VCS_View_API is
       if Has_File_Information (Context)
         and then Has_Tag_Information (Context)
       then
-         Diff_Tag
-           (Ref,
-            File_Information (Context),
-            Tag_Information (Context));
+         Diff_Tag (Ref, File_Information (Context), Tag_Information (Context));
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
