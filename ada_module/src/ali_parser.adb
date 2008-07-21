@@ -432,8 +432,7 @@ package body ALI_Parser is
                     Locale_To_UTF8
                       (Get_String (Units.Table (Id).Sfile));
       File      : Source_File;
-      Unit      : constant String :=
-                    Get_String (Units.Table (Id).Uname);
+
    begin
       Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
@@ -443,9 +442,6 @@ package body ALI_Parser is
          Handler       => Handler,
          LI            => LI);
       Set_Time_Stamp (File, GNATCOLL.Utils.No_Time);
-
-      --  Strip the %s or %b terminator
-      Set_Unit_Name (File, Unit (Unit'First .. Unit'Last - 2));
 
       return File;
    end Process_Unit;
