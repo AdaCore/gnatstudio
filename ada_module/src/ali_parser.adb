@@ -50,34 +50,6 @@ package body ALI_Parser is
    Me        : constant Trace_Handle := Create ("ALI", Off);
    Assert_Me : constant Trace_Handle := Create ("ALI.Assert", Off);
 
-   ALI_Ext  : constant String := ".ali";
-   --  Extension for ALI files
-
-   type ALI_Handler_Record is new LI_Handler_Record with record
-      Db       : Entities_Database;
-      Registry : Project_Registry;
-   end record;
-   type ALI_Handler is access all ALI_Handler_Record'Class;
-
-   function Get_Name (LI : access ALI_Handler_Record) return String;
-   function Get_Source_Info
-     (Handler               : access ALI_Handler_Record;
-      Source_Filename       : GNATCOLL.VFS.Virtual_File;
-      File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
-   function Case_Insensitive_Identifiers
-     (Handler : access ALI_Handler_Record) return Boolean;
-   function Parse_All_LI_Information
-     (Handler   : access ALI_Handler_Record;
-      Project   : Projects.Project_Type;
-      Recursive : Boolean := False) return Integer;
-   function Generate_LI_For_Project
-     (Handler      : access ALI_Handler_Record;
-      Lang_Handler : access Abstract_Language_Handler_Record'Class;
-      Project      : Projects.Project_Type;
-      Errors       : Projects.Error_Report;
-      Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
-   --  See doc for inherited subprograms
-
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
    procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
@@ -382,10 +354,6 @@ package body ALI_Parser is
       Reset_ALI             : Boolean) return Source_File;
    --  Same as Get_Source_Info, but it is possible not to reset the internal
    --  GNAT tables first. This must be used when calling this recursively
-
-   function Get_ALI_Filename
-     (Base_Name  : String) return String;
-   --  Return the most likely candidate for an ALI file, given a source name.
 
    --------------------
    -- Char_To_E_Kind --
@@ -1543,7 +1511,8 @@ package body ALI_Parser is
    ----------------------
 
    function Get_ALI_Filename
-     (Base_Name : String) return String
+     (Handler   : access ALI_Handler_Record;
+      Base_Name : String) return String
    is
       Last_Dot : Natural := Base_Name'Last;
    begin
@@ -1559,7 +1528,8 @@ package body ALI_Parser is
          Last_Dot := Base_Name'Last + 1;
       end if;
 
-      return Base_Name (Base_Name'First .. Last_Dot - 1) & ALI_Ext;
+      return Base_Name (Base_Name'First .. Last_Dot - 1)
+              & Get_ALI_Ext (Handler);
    end Get_ALI_Filename;
 
    -------------------------
@@ -1575,6 +1545,7 @@ package body ALI_Parser is
       --  cases, '~' on VMS).
       Char     : constant Character := Multi_Unit_Index_Char
         (Get_Filesystem (Get_Nickname (Build_Server)).all);
+      ALI_Ext  : constant String := Get_ALI_Ext (Handler);
 
       P        : Project_Type := Project;
       Dir      : Dir_Type;
@@ -1682,7 +1653,7 @@ package body ALI_Parser is
             --  Check the most likely ALI file (<file>.ali)
             LI := Locate_ALI
               (Handler,
-               Get_ALI_Filename (Base_Name (Source_Filename)),
+               Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
                Source_Filename, Project);
             if LI /= GNATCOLL.VFS.No_File then
                return LI;
@@ -1719,7 +1690,8 @@ package body ALI_Parser is
                   return Locate_ALI
                     (Handler,
                      Get_ALI_Filename
-                       (Get_Filename_From_Unit
+                       (Handler,
+                        Get_Filename_From_Unit
                           (Project, Unit (Unit'First .. Last - 1), Unit_Body,
                            Language => Ada_String)),
                      Source_Filename,
@@ -1743,7 +1715,7 @@ package body ALI_Parser is
             LI :=  Locate_ALI
               (Handler,
                Get_ALI_Filename
-                 (Other_File_Base_Name (Project, Source_Filename)),
+                 (Handler, Other_File_Base_Name (Project, Source_Filename)),
                Source_Filename,
                Project);
 
@@ -1766,7 +1738,7 @@ package body ALI_Parser is
 
             LI := Locate_ALI
               (Handler,
-               Get_ALI_Filename (Base_Name (Source_Filename)),
+               Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
                Source_Filename, Project);
 
             if LI /= GNATCOLL.VFS.No_File then
@@ -1938,7 +1910,9 @@ package body ALI_Parser is
             Read (Dir, File, Last);
             exit when Last = 0;
 
-            if File_Extension (File (File'First .. Last)) = ".ali" then
+            if File_Extension (File (File'First .. Last))
+              = Get_ALI_Ext (Handler)
+            then
                LI_File := Create
                  (Full_Filename => Directory & File (File'First .. Last));
 
@@ -2053,5 +2027,15 @@ package body ALI_Parser is
    begin
       return "Ada";
    end Get_Name;
+
+   -----------------
+   -- Get_ALI_Ext --
+   -----------------
+
+   function Get_ALI_Ext (LI : access ALI_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return ".ali";
+   end Get_ALI_Ext;
 
 end ALI_Parser;
