@@ -57,7 +57,7 @@ procedure Completion.Test is
    Max_Accepted_Time_For_Iteration : constant Duration := 0.1;
    --  Maximum time for the iteration, in seconds
 
-   Max_Accepted_Time_For_Initialization : constant Duration := 0.1;
+   Max_Accepted_Time_For_Initialization : constant Duration := 0.2;
    --  Maximum time for the initialization, in seconds
 
    procedure Next_Complete_Tag
