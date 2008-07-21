@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.0
 
+- H716-010: filedeps.py plug-in missing some dependencies
+  Problem:    If you search, through this plug-in, why file A depends on file
+              B, it is possible that the plug-in does not find any such
+              dependency whereas the compiler detects one
+  Workaround: Update the filedeps.py script. You do not need a new version of
+              GPS.
+
 - H612-018: GPS hang when it cannot write to the log file
   Problem:    Due to special circumstances, GPS might not be able to write to
               the log file (e.g NFS errors) and as a result just hangs.
