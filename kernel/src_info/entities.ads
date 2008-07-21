@@ -463,29 +463,11 @@ package Entities is
    --  If the timestamp is st to VFS.No_Time, then the timestamp is computed
    --  by reading it from the physical source file itself
 
-   procedure Set_Unit_Name (File : Source_File; Name : String);
-   function  Get_Unit_Name (File : Source_File) return String;
-   --  Changes the name of the toplevel unit stored in File.
-   --  Note that unit names found in ALI files are lower case and remain as
-   --  is if not overwritten.
-   --  ??? What if there are multiple of these ?
-   --  ??? What do we do for C files ?
-
    package Source_File_Arrays is new Dynamic_Arrays
      (Data                    => Source_File,
       Table_Multiplier        => 1,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 5);
-
-   type Source_File_Sort_Criteria is (Full_Name, Base_Name, Unit_Name);
-
-   procedure Sort
-     (Sources  : Source_File_Arrays.Instance;
-      Criteria : Source_File_Sort_Criteria);
-   --  Sort the array of source files alphabetically
-
-   function "<" (Source1, Source2 : Source_File) return Boolean;
-   --  Whether Source1 comes before Source2 is alphabetical order
 
    -------------------
    -- File_Location --
@@ -1188,10 +1170,6 @@ private
       --  the entities that used to be defined in this file, but no longer are,
       --  and that are kept because they are still referenced in some files.
       --  In this case, there Is_Active field is set to False.
-
-      Unit_Name   : GNAT.Strings.String_Access;
-      --  The name of the toplevel unit.
-      --  Only relevant for Ada files
 
       Depends_On  : Dependency_List;
       Depended_On : Dependency_List;

@@ -21,7 +21,6 @@ with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
-with GNAT.Heap_Sort_G;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -660,10 +659,6 @@ package body Entities is
 
       File.Scope_Tree_Computed := False;
 
-      if not Active (Debug_Me) then
-         Free (File.Unit_Name);
-      end if;
-
       --  Fields which have not been cleaned (see comments above):
       --     - Depended_On (cleaned "magically" when the other files are Reset)
    end Reset;
@@ -1205,10 +1200,6 @@ package body Entities is
          Reset (File.Entities);
          Free (File.Depends_On);
          Free (File.Depended_On);
-
-         if not Active (Debug_Me) then
-            Free (File.Unit_Name);
-         end if;
       end Fast_Reset;
 
       Iter : Files_HTable.Iterator;
@@ -1264,7 +1255,6 @@ package body Entities is
          F := new Source_File_Record;
          F.Db           := Db;
          F.Timestamp    := Timestamp;
-         F.Unit_Name    := null;
          F.Depends_On   := Null_Dependency_List;
          F.Depended_On  := Null_Dependency_List;
          F.Scope_Tree_Computed := False;
@@ -2546,113 +2536,6 @@ package body Entities is
    begin
       return (Entity, Entity_Reference_Arrays.Index_Type'Last);
    end Declaration_As_Reference;
-
-   -------------------
-   -- Set_Unit_Name --
-   -------------------
-
-   procedure Set_Unit_Name (File : Source_File; Name : String) is
-   begin
-      Free (File.Unit_Name);
-      File.Unit_Name := new String'(Name);
-   end Set_Unit_Name;
-
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
-
-   function Get_Unit_Name (File : Source_File) return String is
-   begin
-      if File.Unit_Name = null then
-         return "";
-      else
-         return File.Unit_Name.all;
-      end if;
-   end Get_Unit_Name;
-
-   ---------
-   -- "<" --
-   ---------
-
-   function "<" (Source1, Source2 : Source_File) return Boolean is
-   begin
-      return Source1.Name < Source2.Name;
-   end "<";
-
-   ----------
-   -- Sort --
-   ----------
-
-   procedure Sort
-     (Sources  : Source_File_Arrays.Instance;
-      Criteria : Source_File_Sort_Criteria)
-   is
-      First : constant Integer := Integer (Source_File_Arrays.First - 1);
-      Tmp   : Source_File;
-
-      procedure Move (From, To : Natural);
-      function Lt   (Op1, Op2 : Natural) return Boolean;
-
-      ----------
-      -- Move --
-      ----------
-
-      procedure Move (From, To : Natural) is
-      begin
-         if From = 0 then
-            Sources.Table (Source_File_Arrays.Index_Type (To + First)) := Tmp;
-         elsif To = 0 then
-            Tmp :=
-              Sources.Table (Source_File_Arrays.Index_Type (From + First));
-         else
-            Sources.Table (Source_File_Arrays.Index_Type (To + First)) :=
-              Sources.Table (Source_File_Arrays.Index_Type (From + First));
-         end if;
-      end Move;
-
-      --------
-      -- Lt --
-      --------
-
-      function Lt (Op1, Op2 : Natural) return Boolean is
-         S1, S2 : Source_File;
-      begin
-         if Op1 = 0 then
-            S1 := Tmp;
-         else
-            S1 := Sources.Table (Source_File_Arrays.Index_Type (Op1 + First));
-         end if;
-
-         if Op2 = 0 then
-            S2 := Tmp;
-         else
-            S2 := Sources.Table (Source_File_Arrays.Index_Type (Op2 + First));
-         end if;
-
-         case Criteria is
-            when Source_File_Sort_Criteria'(Full_Name) =>
-               return S1 < S2;
-            when Source_File_Sort_Criteria'(Base_Name) =>
-               return Base_Name (S1.Name) < Base_Name (S2.Name);
-            when Source_File_Sort_Criteria'(Unit_Name) =>
-               if S1.Unit_Name = null then
-                  if S2.Unit_Name = null then
-                     return Base_Name (S1.Name) < Base_Name (S2.Name);
-                  else
-                     return True;
-                  end if;
-               elsif S2.Unit_Name = null then
-                  return False;
-               else
-                  return S1.Unit_Name.all < S2.Unit_Name.all;
-               end if;
-         end case;
-      end Lt;
-
-      package Sort is new GNAT.Heap_Sort_G (Move, Lt);
-   begin
-      Sort.Sort (Integer (Last (Sources)) - First);
-   end Sort;
 
    ---------------------------------
    -- Get_Or_Create_Instantiation --
