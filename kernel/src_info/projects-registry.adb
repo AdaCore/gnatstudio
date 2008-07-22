@@ -532,7 +532,7 @@ package body Projects.Registry is
       New_Project_Loaded : out Boolean;
       Status             : out Boolean)
    is
-      procedure Fail (S1, S2, S3 : String);
+      procedure Fail (S : String);
       --  Replaces Osint.Fail
 
       procedure Internal_Load
@@ -547,10 +547,10 @@ package body Projects.Registry is
       -- Fail --
       ----------
 
-      procedure Fail (S1, S2, S3 : String) is
+      procedure Fail (S : String) is
       begin
          if Errors /= null then
-            Errors (S1 & S2 & S3);
+            Errors (S);
          end if;
       end Fail;
 
