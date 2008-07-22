@@ -3268,17 +3268,17 @@ package body Projects.Editor is
 
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
 
-      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
+      procedure Fail (S : String);
       --  Replaces Osint.Fail
 
       ----------
       -- Fail --
       ----------
 
-      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "") is
+      procedure Fail (S : String) is
       begin
          if Report_Errors /= null then
-            Report_Errors (S1 & S2 & S3);
+            Report_Errors (S);
          end if;
       end Fail;
 
@@ -3423,17 +3423,17 @@ package body Projects.Editor is
 
       Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
 
-      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
+      procedure Fail (S : String);
       --  Replaces Osint.Fail
 
       ----------
       -- Fail --
       ----------
 
-      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "") is
+      procedure Fail (S : String) is
       begin
          if Report_Errors /= null then
-            Report_Errors (S1 & S2 & S3);
+            Report_Errors (S);
          end if;
       end Fail;
 
