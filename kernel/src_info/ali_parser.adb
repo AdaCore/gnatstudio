@@ -676,17 +676,6 @@ package body ALI_Parser is
       Has_Completion   : Boolean := False;
 
    begin
-      --  Ignore labels for now. GNAT no longer outputs them anyway, and they
-      --  do not work in the callgraph browser
-      --  ??? Temporary activated (see H721-012)
-
-      --  if Kind.Kind = Label_On_Block
-      --    or else Kind.Kind = Label_On_Statement
-      --    or else Kind.Kind = Label_On_Loop
-      --  then
-      --     return;
-      --  end if;
-
       Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
 
       declare

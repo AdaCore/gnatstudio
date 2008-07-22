@@ -1982,36 +1982,41 @@ package body Entities.Queries is
          for E in Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
 
-            --  Add the spec too, since if it is on multiple lines, we
-            --  want the parameters to be associated with that subprogram,
-            --  and not to the caller.
+            --  Ignore labels on loops, which create a local scope that we do
+            --  not want to show in the callgraph
 
-            End_Of_Scope := Get_End_Of_Scope_In_File
-              (Entity, File, Force_Spec => True);
-            if End_Of_Scope /= No_File_Location then
-               Start_Of_Scope := Get_Start_Of_Scope_In_File
+            if Get_Kind (Entity).Kind /= Label_On_Loop then
+               --  Add the spec too, since if it is on multiple lines, we
+               --  want the parameters to be associated with that subprogram,
+               --  and not to the caller.
+
+               End_Of_Scope := Get_End_Of_Scope_In_File
                  (Entity, File, Force_Spec => True);
-               if Start_Of_Scope /= No_File_Location then
-                  Add_To_Tree
+               if End_Of_Scope /= No_File_Location then
+                  Start_Of_Scope := Get_Start_Of_Scope_In_File
+                    (Entity, File, Force_Spec => True);
+                  if Start_Of_Scope /= No_File_Location then
+                     Add_To_Tree
                        (Tree           => Tree,
                         Entity         => Entity,
                         Start_Of_Scope => Start_Of_Scope,
                         End_Of_Scope   => End_Of_Scope);
+                  end if;
                end if;
-            end if;
 
-            End_Of_Scope := Get_End_Of_Scope_In_File
-              (Entity, File, Force_Spec => False);
-
-            if End_Of_Scope /= No_File_Location then
-               Start_Of_Scope := Get_Start_Of_Scope_In_File
+               End_Of_Scope := Get_End_Of_Scope_In_File
                  (Entity, File, Force_Spec => False);
-               if Start_Of_Scope /= No_File_Location then
-                  Add_To_Tree
-                    (Tree           => Tree,
-                     Entity         => Entity,
-                     Start_Of_Scope => Start_Of_Scope,
-                     End_Of_Scope   => End_Of_Scope);
+
+               if End_Of_Scope /= No_File_Location then
+                  Start_Of_Scope := Get_Start_Of_Scope_In_File
+                    (Entity, File, Force_Spec => False);
+                  if Start_Of_Scope /= No_File_Location then
+                     Add_To_Tree
+                       (Tree           => Tree,
+                        Entity         => Entity,
+                        Start_Of_Scope => Start_Of_Scope,
+                        End_Of_Scope   => End_Of_Scope);
+                  end if;
                end if;
             end if;
          end loop;

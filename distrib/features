@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jun 30, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Jul 22, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H721-012 Cross-references available on labels (2008-07-22)
+
+  Cross references ("go to declaration") are now available when clicking
+  on labels inside Ada code.
 
 NF-43-H612-027 Edit menu reorganized (2008-06-13)
 
