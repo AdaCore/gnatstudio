@@ -6150,6 +6150,10 @@ package body Src_Editor_Buffer is
                   Visible_Column_Type (Buffer.Tab_Width);
       J       : Natural;
    begin
+      if Line not in Buffer.Editable_Lines'Range then
+         return Current;
+      end if;
+
       case Buffer.Editable_Lines (Line).Where is
          when In_Buffer =>
             Get_Iter_At_Line
