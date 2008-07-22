@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007                       --
---                             AdaCore                               --
+--                   Copyright (C) 2002-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,10 +21,12 @@ with Ada.Unchecked_Deallocation;
 
 with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
 
+with ALI_Parser;               use ALI_Parser;
 with CPP_Parser;               use CPP_Parser;
 with Case_Handling;            use Case_Handling;
 with Entities;                 use Entities;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
+with GNATCOLL.Traces;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
@@ -44,17 +45,31 @@ with Traces;                   use Traces;
 
 package body Cpp_Module is
 
+   Use_GLI_Trace : constant Debug_Handle :=
+                     Create ("CPP.GLI", GNATCOLL.Traces.Off);
+
    C_Automatic_Indentation   : Param_Spec_Enum;
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (LI_Handler_Record'Class, LI_Handler);
+   type GLI_Handler_Record is new ALI_Handler_Record with null record;
+   type GLI_Handler is access all GLI_Handler_Record'Class;
+   --  GCC LI Handler.
 
-   procedure Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the project view has changed in the kernel.
-   --  This resets the internal data for the C/C++ handler.
+   function Get_Name (LI : access GLI_Handler_Record) return String;
+   function Case_Insensitive_Identifiers
+     (Handler : access GLI_Handler_Record) return Boolean;
+   function Get_ALI_Ext (LI : access GLI_Handler_Record) return String;
+   function Get_ALI_Filename
+     (Handler   : access GLI_Handler_Record;
+      Base_Name : String) return String;
+   --  See doc for inherited subprograms
+
+   function Create_GLI_Handler
+     (Db       : Entities.Entities_Database;
+      Registry : Projects.Registry.Project_Registry)
+      return Entities.LI_Handler;
+   --  Create a new ALI handler
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -64,6 +79,77 @@ package body Cpp_Module is
      (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor;
    --  Create the naming scheme editor page
+
+   procedure Project_View_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project view has changed in the kernel.
+   --  This resets the internal data for the C/C++ handler.
+
+   ----------------------------
+   -- GLI_Handler primitives --
+   ----------------------------
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (LI : access GLI_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return "GNU C/C++";
+   end Get_Name;
+
+   ----------------------------------
+   -- Case_Insensitive_Identifiers --
+   ----------------------------------
+
+   function Case_Insensitive_Identifiers
+     (Handler : access GLI_Handler_Record) return Boolean
+   is
+      pragma Unreferenced (Handler);
+   begin
+      return False;
+   end Case_Insensitive_Identifiers;
+
+   -----------------
+   -- Get_ALI_Ext --
+   -----------------
+
+   function Get_ALI_Ext (LI : access GLI_Handler_Record) return String is
+      pragma Unreferenced (LI);
+   begin
+      return ".gli";
+   end Get_ALI_Ext;
+
+   ----------------------
+   -- Get_ALI_Filename --
+   ----------------------
+
+   function Get_ALI_Filename
+     (Handler   : access GLI_Handler_Record;
+      Base_Name : String) return String is
+   begin
+      return Base_Name & Get_ALI_Ext (Handler);
+   end Get_ALI_Filename;
+
+   -------------------------------
+   -- Non primitive subprograms --
+   -------------------------------
+
+   ------------------------
+   -- Create_GLI_Handler --
+   ------------------------
+
+   function Create_GLI_Handler
+     (Db       : Entities.Entities_Database;
+      Registry : Projects.Registry.Project_Registry) return Entities.LI_Handler
+   is
+      CPP : constant GLI_Handler := new GLI_Handler_Record;
+   begin
+      CPP.Db            := Db;
+      CPP.Registry      := Registry;
+      return LI_Handler (CPP);
+   end Create_GLI_Handler;
 
    ----------------------------
    -- C_Naming_Scheme_Editor --
@@ -146,26 +232,42 @@ package body Cpp_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (LI_Handler_Record'Class, LI_Handler);
+
       Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
-      LI      : LI_Handler := Create_CPP_Handler
+      LI      : LI_Handler := Create_GLI_Handler
         (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
-      Msg     : constant String :=
-        Set_Executables (Get_System_Dir (Kernel), LI);
 
    begin
-      if Msg /= "" then
-         --  No parser will be available. However, we still want the
-         --  highlighting for C and C++ files
-
-         Insert (Kernel, Msg, Mode => Error);
-         Unchecked_Free (LI);
+      if Active (Use_GLI_Trace) then
+         LI := Create_GLI_Handler
+                 (Get_Database (Kernel),
+                  Project_Registry (Get_Registry (Kernel).all));
       else
-         Add_Hook
-           (Kernel, Project_View_Changed_Hook,
-            Wrapper (Project_View_Changed'Access),
-            Name => "cpp_module.project_view_changed");
-         On_Project_View_Changed (LI);
+         LI := Create_CPP_Handler
+                 (Get_Database (Kernel),
+                  Project_Registry (Get_Registry (Kernel).all));
+
+         declare
+            Msg : constant String :=
+                    Set_Executables (Get_System_Dir (Kernel), LI);
+         begin
+            if Msg /= "" then
+               --  No parser will be available. However, we still want the
+               --  highlighting for C and C++ files
+
+               Insert (Kernel, Msg, Mode => Error);
+               Unchecked_Free (LI);
+            else
+               Add_Hook
+                 (Kernel, Project_View_Changed_Hook,
+                  Wrapper (Project_View_Changed'Access),
+                  Name => "cpp_module.project_view_changed");
+               On_Project_View_Changed (LI);
+            end if;
+         end;
       end if;
 
       Register_Language (Handler, C_Lang, null, LI => LI);
