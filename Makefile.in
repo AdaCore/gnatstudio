@@ -73,6 +73,7 @@ endif
 	(cd share; tar cf - library/pygps/*.py) | (cd $(sharedir)/gps; tar xf -)
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	$(RM) $(sharedir)/gps/library/align.py
+	$(RM) $(sharedir)/gps/library/editors.py
 	$(RM) $(sharedir)/gps/library/pipe.py
 	$(RM) $(sharedir)/gps/library/gnatcheck.py
 	$(RM) $(sharedir)/gps/library/gnatpsta.py

@@ -105,13 +105,8 @@ install_binaries() {
   cd $basedir
 
   rm -rf $basedir/lib/gps $basedir/bin/gps*
-  rm -f $basedir/share/gps/plug-ins/emacs.xml
-  rm -f $basedir/share/gps/plug-ins/gnatclean.xml
-  rm -f $basedir/share/gps/library/align.py
-  rm -f $basedir/share/gps/library/pipe.py
-  rm -f $basedir/share/gps/library/gnatpsta.py
-  rm -f $basedir/share/gps/library/gnatcheck.py
-  rm -f $basedir/share/gps/library/methods.py
+  rm -f $basedir/share/gps/plug-ins/*.xml
+  rm -f $basedir/share/gps/library/*.py
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
