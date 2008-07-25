@@ -12,7 +12,7 @@ Known Problems fixed in GPS 4.3.0
               and potentially crash. An identified scenario is when two new
               files are created using GPS, saved, closed, and opened again.
               A similar behavior can be observed when renaming a file.
-  Workaround: No known workaround.
+  Workaround: Create new files or rename files outside GPS before loading them.
 
 - H612-018: GPS hangs when it cannot write to the log file
   Problem:    Due to special circumstances, GPS might not be able to write to
@@ -39,7 +39,7 @@ Known Problems fixed in GPS 4.3.0
               you fold the toplevel node, the locations are still visible,
               although clicking on them has no effect
   Workaround: Expand the node again, and select the entity for which you
-              want to see the locations
+              want to see the locations.
 
 - H611-032: File Dependencies plug-in fails
   Problem:    If you active the filedeps.py plugin, you see a new menu
@@ -55,7 +55,7 @@ Known Problems fixed in GPS 4.3.0
               explicitely overrides its parent's Main attribute, then an
               incorrect executable (the one from the parent project) will be
               loaded in the debugger
-  Workaround: Define the Main attribute explicitely in the extending project
+  Workaround: Define the Main attribute explicitely in the extending project.
 
 - H604-001: Delay in scripts execution in batch mode
   Problem:    When launching GPS with the option "--load=<a script>", the
@@ -63,7 +63,7 @@ Known Problems fixed in GPS 4.3.0
               such as the loading of the entity database for the Smart
               Completion.
   Workaround: Disable the preferences/scripts that launch these background
-              tasks (such as the Smart Completion)
+              tasks (such as the Smart Completion).
 
 - H602-007: Cannot write data into read-only files
   Problem:    GPS does not properly detect that a file is read-only.
@@ -74,7 +74,7 @@ Known Problems fixed in GPS 4.3.0
 - H529-001: Separator for combo boxes not supported in XML files
   Problem:    If you defined a "separator" attribute for a <combo> switch
               in the XML files, that separator is ignored
-  Workaround: none
+  Workaround: None.
 
 - H526-009: Subversion status not properly reported
   Problem:    The "Needs merge" status is reported as "Needs update" in the
@@ -324,7 +324,6 @@ Known Problems fixed in GPS 4.3.0
               and is not referenced, the auto fix proposed by GPS doesn't
               manage to remove it properly.
   Workaround: Remove manually the variable.
-
 
 - FA23-004: Mischosen "from" as parameter name in the python API
   Problem:    "from" had been chosen as a parameter name of several methods of
