@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H724-004: Cannot search for package instantiation
+  Problem:    If you use the contextual menu "Find References to ..." on a
+              generic package, and then ask to only see its instantiations,
+              you will currently not get any output
+  Workaround: Look for "read references" to that package.
+
 - H716-010: filedeps.py plug-in missing some dependencies
   Problem:    If you search, through this plug-in, why file A depends on file
               B, it is possible that the plug-in does not find any such

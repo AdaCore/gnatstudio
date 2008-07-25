@@ -1669,6 +1669,11 @@ package body Entities is
       Unref (Entity.Instantiation_Of, "instantiation_of");
       Entity.Instantiation_Of := Of_Generic;
       Ref (Entity.Instantiation_Of, "set_is_instantiation");
+
+      Add_Reference
+        (Of_Generic,
+         Location => Get_Declaration_Of (Entity),
+         Kind     => Instantiation_Reference);
    end Set_Is_Instantiation;
 
    -----------------
