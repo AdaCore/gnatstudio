@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.3.0
 
+- H725-002: Miscomputation of highlighling when using visual comparison
+  Problem:    When using the visual comparison feature of GPS (via the
+              /Tools/Compare/* or the /VCS/Compare* menus), the portion of
+              lines that have been modified are highlighted. In some cases
+              this fine grained highlighting will not appear at places it
+              should.
+  Workaround: No known workaround. As the line is modified, it will be
+              be highlighted though, but the exact characters on the line that
+              are modified will not.
+
 - H724-004: Cannot search for package instantiation
   Problem:    If you use the contextual menu "Find References to ..." on a
               generic package, and then ask to only see its instantiations,
