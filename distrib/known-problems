@@ -7,7 +7,14 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Update the filedeps.py script. You do not need a new version of
               GPS.
 
-- H612-018: GPS hang when it cannot write to the log file
+- H711-009: GPS hangs when closing and opening files
+  Problem:    Under some circumstances, GPS might hang when opening a file
+              and potentially crash. An identified scenario is when two new
+              files are created using GPS, saved, closed, and opened again.
+              A similar behavior can be observed when renaming a file.
+  Workaround: No known workaround.
+
+- H612-018: GPS hangs when it cannot write to the log file
   Problem:    Due to special circumstances, GPS might not be able to write to
               the log file (e.g NFS errors) and as a result just hangs.
   Workaround: Remove the first line of the traces.cfg file that is located

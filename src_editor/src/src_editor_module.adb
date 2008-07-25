@@ -308,6 +308,11 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_changed_on_disk" hook
 
+   procedure File_Renamed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_renamed" hook
+
    procedure File_Saved_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -380,14 +385,31 @@ package body Src_Editor_Module is
       Params : Glib.Values.GValues;
       User   : Virtual_File)
    is
-      pragma Unreferenced (Widget, Params);
+      pragma Unreferenced (Params);
       Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+             Source_Editor_Module (Src_Editor_Module_Id);
+      Child : constant MDI_Child := MDI_Child (Widget);
+      I  : Editors_Hash.Iterator;
+      E  : Element;
    begin
       if Id /= null then
-         Editors_Hash.Remove (Id.Editors, User);
-      end if;
+         if Editors_Hash.Get (Id.Editors, User) /= No_Element then
+            Editors_Hash.Remove (Id.Editors, User);
+         else
+            Editors_Hash.Get_First (Id.Editors, I);
+            E := Editors_Hash.Get_Element (I);
 
+            while E /= No_Element loop
+               if E.Child = Child then
+                  Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+               else
+                  Editors_Hash.Get_Next (Id.Editors, I);
+               end if;
+
+               E := Editors_Hash.Get_Element (I);
+            end loop;
+         end if;
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Editor_Destroy;
@@ -568,6 +590,28 @@ package body Src_Editor_Module is
       end loop;
    end File_Changed_On_Disk_Cb;
 
+   ---------------------
+   -- File_Renamed_Cb --
+   ---------------------
+
+   procedure File_Renamed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      Id : constant Source_Editor_Module :=
+             Source_Editor_Module (Src_Editor_Module_Id);
+      D  : constant Files_2_Hooks_Args := Files_2_Hooks_Args (Data.all);
+      E  : Element;
+   begin
+      E := Editors_Hash.Get (Id.Editors, D.File);
+
+      if E /= No_Element then
+         Editors_Hash.Remove (Id.Editors, D.File);
+         Editors_Hash.Set (Id.Editors, D.Renamed, E);
+      end if;
+   end File_Renamed_Cb;
+
    -------------------
    -- File_Saved_Cb --
    -------------------
@@ -576,7 +620,15 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Id     : constant Source_Editor_Module :=
+                 Source_Editor_Module (Src_Editor_Module_Id);
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child;
+      Box    : Source_Editor_Box;
+
+      I      : Editors_Hash.Iterator;
+      E      : Element;
    begin
       --  Insert the saved file in the Recent menu
 
@@ -585,6 +637,37 @@ package body Src_Editor_Module is
       then
          Add_To_Recent_Menu (Kernel, D.File);
       end if;
+
+      loop
+         Child := Get (Iter);
+
+         exit when Child = null;
+
+         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
+            Box := Source_Editor_Box (Get_Widget (Child));
+
+            if D.File = GNATCOLL.VFS.No_File
+              or else D.File = Get_Filename (Box)
+            then
+               Editors_Hash.Get_First (Id.Editors, I);
+               E := Editors_Hash.Get_Element (I);
+
+               while E /= No_Element loop
+                  if E.Child = Child then
+                     Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+                  else
+                     Editors_Hash.Get_Next (Id.Editors, I);
+                  end if;
+
+                  E := Editors_Hash.Get_Element (I);
+               end loop;
+
+               Editors_Hash.Set (Id.Editors, D.File, (Child => Child));
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
    exception
       when E : others => Trace (Exception_Handle, E);
    end File_Saved_Cb;
@@ -1248,6 +1331,7 @@ package body Src_Editor_Module is
            (Child, Signal_Selected, Update_Cache_On_Focus'Access);
 
          --  Add child to the hash table of editors
+
          Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
 
          --  Make sure the entry in the hash table is removed when the editor
@@ -1365,7 +1449,6 @@ package body Src_Editor_Module is
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Source : Source_Editor_Box;
-
    begin
       if Child = null then
          Success := False;
@@ -3012,6 +3095,9 @@ package body Src_Editor_Module is
            (Button, Signal_Clicked, On_Save'Access, Kernel_Handle (Kernel));
       end;
 
+      Add_Hook (Kernel, File_Renamed_Hook,
+                Wrapper (File_Renamed_Cb'Access),
+                Name => "src_editor.file_renamed");
       Add_Hook (Kernel, File_Saved_Hook,
                 Wrapper (File_Saved_Cb'Access),
                 Name => "src_editor.file_saved");
