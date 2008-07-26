@@ -11,10 +11,10 @@ and only editors upon activation.
 
 import GPS
 
-
 def close_editors(menu):
+   GPS.execute_action ("/File/Save More/All")
    for ed in GPS.EditorBuffer.list():
-      ed.close()
+      ed.close (True)
 
 GPS.Menu.create ("/File/Close All Editors",
                  on_activate=close_editors,
