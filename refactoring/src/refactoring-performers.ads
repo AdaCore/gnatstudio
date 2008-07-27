@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -76,8 +76,8 @@ package Refactoring.Performers is
    --  Replaced_Length is the number of characters that should first be removed
    --  to be replaced by Text.
    --  If Only_If_Replacing is specified, then the replacement of text will be
-   --  done only if the text being replaced is exactly Only_If_Replacing. If it
-   --  isn't, False is returned.
+   --  done only if the text being replaced is Only_If_Replacing (case
+   --  insensitive). If it isn't, False is returned.
    --  This function returns True if the new text could be inserted.
 
    procedure Delete_Text

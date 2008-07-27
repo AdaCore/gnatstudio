@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
@@ -333,21 +334,27 @@ package body Refactoring.Performers is
       Args2 : Argument_List_Access := new Argument_List'
         (new String'(Integer'Image (Line)),
          new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
+
    begin
       if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
          declare
-            Args_Get : Argument_List_Access := new Argument_List'
+            Replacing_Str : constant String := To_Lower (Only_If_Replacing);
+            Args_Get      : Argument_List_Access := new Argument_List'
               (new String'(Full_Name (In_File).all),
                new String'(Integer'Image (Line)),
                new String'(Visible_Column_Type'Image (Column)),
                new String'("0"),
                new String'(Integer'Image (Replaced_Length)));
-            Str : constant String := Execute_GPS_Shell_Command
-              (Kernel, "Editor.get_chars", Args_Get.all);
+            Str           : constant String :=
+                              To_Lower (Execute_GPS_Shell_Command
+                                        (Kernel,
+                                         "Editor.get_chars",
+                                         Args_Get.all));
+
          begin
             Free (Args_Get);
 
-            if Str /= Only_If_Replacing then
+            if Str /= Replacing_Str then
                return False;
             end if;
          end;
