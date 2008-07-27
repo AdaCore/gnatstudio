@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H725-018: Refactoring->Rename does not ignore casing
+  Problem:    When using the 'Rename' refactoring, identifiers are not
+              considered with insensitive casing, thus failing to modify
+              some occurrences
+  Workaround: Use the Search & Replace capability instead.
+
 - H725-002: Miscomputation of highlighling when using visual comparison
   Problem:    When using the visual comparison feature of GPS (via the
               /Tools/Compare/* or the /VCS/Compare* menus), the portion of
