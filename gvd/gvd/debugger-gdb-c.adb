@@ -256,7 +256,7 @@ package body Debugger.Gdb.C is
             Last := Last - 1;
 
          else
-            Skip_Word (Type_Str, Index);
+            Skip_CPP_Token (Type_Str, Index);
          end if;
 
          Skip_Blanks (Type_Str, Index);
@@ -341,7 +341,7 @@ package body Debugger.Gdb.C is
 
             if Looking_At (Type_Str, Index, "enum ") then
                Index := Index + 5;
-               Skip_Word (Type_Str, Index);  --  skips enum name
+               Skip_CPP_Token (Type_Str, Index);  --  skips enum name
                Index := Index + 1;
 
                if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
@@ -387,12 +387,12 @@ package body Debugger.Gdb.C is
                Index := Index + 7;           --  skips "struct "
 
                if Type_Str (Index) /= Context.Record_Start then
-                  Skip_Word (Type_Str, Index);  --  skips struct name
+                  Skip_CPP_Token (Type_Str, Index);  --  skips struct name
                   while Index + 1 <= Type_Str'Last
                     and then Type_Str (Index .. Index + 1) = "::"
                   loop
                      Index := Index + 2;
-                     Skip_Word (Type_Str, Index);
+                     Skip_CPP_Token (Type_Str, Index);
                   end loop;
                end if;
 
@@ -421,7 +421,7 @@ package body Debugger.Gdb.C is
                Index := Index + 6;           --  skips "union "
 
                if Type_Str (Index) /= Context.Record_Start then
-                  Skip_Word (Type_Str, Index);  --  skips union name
+                  Skip_CPP_Token (Type_Str, Index);  --  skips union name
                end if;
 
                Skip_Blanks (Type_Str, Index);
@@ -688,12 +688,12 @@ package body Debugger.Gdb.C is
          --  However, in c++ mode the name can also be
          --     "My_Record::My_Field1_Type field"
 
-         Skip_Word (Type_Str, Tmp, Step => -1);
+         Skip_CPP_Token (Type_Str, Tmp, Step => -1);
          if Type_Str (Tmp - 1) = ':' then
             Field_End := Tmp - 2;
             Tmp := Tmp - 3;
             Name_End := Tmp;
-            Skip_Word (Type_Str, Tmp, Step => -1);
+            Skip_CPP_Token (Type_Str, Tmp, Step => -1);
          end if;
       end if;
       Name_Start := Tmp + 1;
