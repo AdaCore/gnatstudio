@@ -679,6 +679,35 @@ package body String_Utils is
       end if;
    end Skip_Word;
 
+   --------------------
+   -- Skip_CPP_Token --
+   --------------------
+
+   procedure Skip_CPP_Token
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1)
+   is
+      Initial : constant Natural := Index;
+   begin
+      while Index <= Type_Str'Last
+        and then Index >= Type_Str'First
+        and then (Is_Alphanumeric (Type_Str (Index))
+                  or else
+                  Type_Str (Index) = '_'
+                  or else
+                  Type_Str (Index) = '.')
+      loop
+         Index := Index + Step;
+      end loop;
+
+      --  Move at least one character
+
+      if Index = Initial then
+         Index := Index + Step;
+      end if;
+   end Skip_CPP_Token;
+
    ------------
    -- Reduce --
    ------------
