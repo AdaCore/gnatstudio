@@ -83,6 +83,15 @@ package String_Utils is
    --  Currently, a word is defined as any string made of alphanumeric
    --  character or underscore.
 
+   procedure Skip_CPP_Token
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1);
+   --  Skip the cpp token starting at Index (at least one character, even if
+   --  there is no cpp token).
+   --  Currently, a cpp token is defined as any string made of alphanumeric
+   --  character, underscore or period.
+
    function Lines_Count (Text : String) return Natural;
    --  Return the number of lines in Text
 
