@@ -1,13 +1,15 @@
 <?xml version="1.0" ?>
 <GPS>
    <action name="generate_ali" output="none" category="Build" >
-      <description>Generate Ada cross reference information</description>
-      <shell>MDI.save_all</shell>
-      <shell>Project.scenario_variables_cmd_line -X</shell>
-      <shell>Project.root</shell>
-      <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
-      <external output=""
-       server="build_server">%1 make -c -gnatQ -k %PPs %3</external>
+     <description>Generate Ada cross reference information</description>
+     <shell>MDI.save_all</shell>
+     <shell>Project.scenario_variables_cmd_line -X</shell>
+     <shell>Project.root</shell>
+     <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
+     <external output=""
+      server="build_server">%1 make -c -d -gnatQ -k %PPs %3</external>
+     <on-failure><shell>Locations.parse """%3 """ "Ada xref computation"</shell>
+     </on-failure>
    </action>
 
    <submenu>
