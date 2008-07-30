@@ -20,7 +20,9 @@
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
       <external output="" server="build_server">%1 pretty -rf %pps %3 "%F"</external>
-      <on-failure><shell>Locations.parse """%3 """ "Pretty printer"</shell></on-failure>
+      <on-failure>
+        <shell>Locations.parse """%1 """ "Pretty printer"</shell>
+      </on-failure>
       <shell>Editor.edit "%F" 0 0 0 true</shell>
    </action>
 
