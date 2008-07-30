@@ -9,7 +9,8 @@
      <external output=""
       server="build_server"
       progress-regexp="completed (\d+) out of (\d+).*">%1 make -c -d -gnatQ -k %PPs %3</external>
-     <on-failure><shell>Locations.parse """%3 """ "Ada xref computation"</shell>
+     <on-failure>
+       <shell>Locations.parse """%1 """ "Ada xref computation"</shell>
      </on-failure>
    </action>
 
