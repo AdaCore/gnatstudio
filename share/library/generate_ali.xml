@@ -14,7 +14,7 @@
       progress-regexp="completed (\d+) out of (\d+).*">%1 make -c -d -gnatQ -k %PPs %3</external>
      <on-failure>
        <shell>Locations.parse """%1 """ "Builder results"</shell>
-       <shell>Codefix.parse "Ada xref computation" """%2 """</shell>
+       <shell>Codefix.parse "Builder results" """%2 """</shell>
      </on-failure>
    </action>
 
