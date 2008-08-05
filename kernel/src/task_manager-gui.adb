@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2003-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -726,7 +725,10 @@ package body Task_Manager.GUI is
          return;
       end if;
 
-      if not (Index in Manager.Queues'Range)
+      --  If the manager is in Need_Global_Refresh mode, then do not refresh
+      --  the command, this will be handled by the next global refresh.
+      if Manager.Need_Global_Refresh
+        or else not (Index in Manager.Queues'Range)
         or else not Manager.Queues (Index).Need_Refresh
       then
          return;
