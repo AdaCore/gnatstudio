@@ -44,7 +44,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Label;                 use Gtk.Label;
 
-with Pango.Font;                use Pango.Font;
 with Pango.Layout;              use Pango.Layout;
 
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
@@ -281,6 +280,7 @@ package body Completion_Window is
          Gtk_New (Label);
          Set_Line_Wrap (Label, False);
          Set_Use_Markup (Label, True);
+         Modify_Font (Label, Window.Fixed_Width_Font);
 
          if Notes (N).Markup /= null
            and then Notes (N).Markup.all /= ""
@@ -309,10 +309,12 @@ package body Completion_Window is
             Set_Use_Markup (Title, True);
             Set_Markup (Title, "<b>Declaration:</b>");
             Pack_Start (HBox, Title, False, False, 1);
+            Modify_Font (Title, Window.Fixed_Width_Font);
 
             --  Create a button
             Gtk_New (Button, "");
             Gtk_New (Button_Label);
+            Modify_Font (Button_Label, Window.Fixed_Width_Font);
             Pack_Start (HBox, Button, False, False, 0);
             Add (Button, Button_Label);
             Set_Use_Markup (Button_Label, True);
@@ -1430,16 +1432,16 @@ package body Completion_Window is
 
       --  ??? Uposition should take into account the current desktop.
 
+      Window.Fixed_Width_Font := Get_Font_Description (Get_Style (View));
+
       declare
-         Font : constant Pango_Font_Description :=
-           Get_Font_Description (Get_Style (View));
          Char_Width, Char_Height : Gint;
          Layout : Pango_Layout;
       begin
-         Modify_Font (Window.View, Font);
+         Modify_Font (Window.View, Window.Fixed_Width_Font);
 
          Layout := Create_Pango_Layout (Window.View);
-         Set_Font_Description (Layout, Font);
+         Set_Font_Description (Layout, Window.Fixed_Width_Font);
          Set_Text (Layout, "0m");
          Get_Pixel_Size (Layout, Char_Width, Char_Height);
          Unref (Layout);
