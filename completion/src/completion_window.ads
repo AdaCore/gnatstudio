@@ -48,6 +48,8 @@ with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 
+with Pango.Font;             use Pango.Font;
+
 with Completion;    use Completion;
 with GPS.Kernel;    use GPS.Kernel;
 with Basic_Types;   use Basic_Types;
@@ -209,6 +211,9 @@ private
 
       Idle_Expansion : G_Source_Id;
       --  The id of the current idle callback.
+
+      Fixed_Width_Font : Pango_Font_Description;
+      --  A fixed-width font in use in the tree and the notes window.
    end record;
 
 end Completion_Window;
