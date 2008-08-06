@@ -88,6 +88,7 @@ package body Completion.Keywords is
    procedure Free
      (Resolver : in out Completion_Keywords)
    is
+      pragma Unreferenced (Resolver);
    begin
       null;
    end Free;

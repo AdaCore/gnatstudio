@@ -4203,6 +4203,7 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
+      pragma Unreferenced (This, Current_Text, New_Extract);
    begin
       null;
    end Execute;
