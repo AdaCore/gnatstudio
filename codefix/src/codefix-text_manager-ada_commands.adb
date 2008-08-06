@@ -1299,33 +1299,28 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class) is
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
    begin
       if This.Insert_With_Enabled and then not This.Prefix_Obj_Enabled then
-         Execute (This.Insert_With, Current_Text, New_Extract);
+         Execute (This.Insert_With, Current_Text, Success);
       elsif This.Prefix_Obj_Enabled and then not This.Insert_With_Enabled then
-         Execute (This.Prefix_Obj, Current_Text, New_Extract);
+         Execute (This.Prefix_Obj, Current_Text, Success);
       else
-         declare
-            Extract_1, Extract_2 : Extract;
-            Success              : Boolean;
-         begin
-            Execute (This.Insert_With, Current_Text, Extract_2);
-            Execute (This.Prefix_Obj, Current_Text, Extract_1);
-
-            Merge_Extracts
-              (New_Extract,
-               Extract_1,
-               Extract_2,
-               Success,
-               True);
-
-            if not Success then
-               raise Codefix_Panic;
-            end if;
-         end;
+         Execute (This.Insert_With, Current_Text, Success);
+         Execute (This.Prefix_Obj, Current_Text, Success);
       end if;
+   end Execute;
+
+   procedure Execute
+     (This         : Get_Visible_Declaration_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      pragma Unreferenced (This, Current_Text, New_Extract);
+   begin
+      null;
    end Execute;
 
    ----------

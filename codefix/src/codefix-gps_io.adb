@@ -267,6 +267,80 @@ package body Codefix.GPS_Io is
       end if;
    end Replace;
 
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (This         : in out Console_Interface;
+      Start_Cursor : Text_Cursor'Class;
+      End_Cursor   : Text_Cursor'Class;
+      New_Value    : String)
+   is
+      ArgsFile : GNAT.Strings.String_List :=
+        (1 => new String'(Full_Name (Get_File_Name (This)).all));
+
+      ArgsEditorBuffer : GNAT.Strings.String_List :=
+        (1 => new String'("%1"),
+         2 => new String'("False"),
+         3 => new String'("False"));
+
+      ArgsEditorLocation_Start : GNAT.Strings.String_List :=
+        (1 => new String'("%1"),
+         2 => new String'(Integer'Image (Start_Cursor.Get_Line)),
+         3 => new String'(Column_Index'Image (Start_Cursor.Get_Column)));
+
+      ArgsEditorLocation_End : GNAT.Strings.String_List :=
+        (1 => new String'("%2"),
+         2 => new String'(Integer'Image (End_Cursor.Get_Line)),
+         3 => new String'(Column_Index'Image (End_Cursor.Get_Column)));
+
+      ArgsDelete : GNAT.Strings.String_List :=
+        (1 => new String'("%3"),
+         2 => new String'("%2"),
+         3 => new String'("%1"));
+
+      ArgsInsert : GNAT.Strings.String_List :=
+        (1 => new String'("%4"),
+         2 => new String'("%3"),
+         3 => new String'(New_Value));
+
+      ResultFile : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "File", ArgsFile);
+      pragma Unreferenced (ResultFile);
+
+      ResultEditorBuffer : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorBuffer.get", ArgsEditorBuffer);
+      pragma Unreferenced (ResultEditorBuffer);
+
+      ResultEditorLocation_Start : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorLocation", ArgsEditorLocation_Start);
+      pragma Unreferenced (ResultEditorLocation_Start);
+
+      ResultEditorLocation_End : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorLocation", ArgsEditorLocation_End);
+      pragma Unreferenced (ResultEditorLocation_End);
+
+      ResultDelete : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorBuffer.delete", ArgsDelete);
+      pragma Unreferenced (ResultDelete);
+
+      ResultInsert : constant String := Execute_GPS_Shell_Command
+        (This.Kernel, "EditorBuffer.insert", ArgsInsert);
+      pragma Unreferenced (ResultInsert);
+
+   begin
+      This.File_Modified.all := True;
+      Text_Has_Changed (This);
+
+      Free (ArgsFile);
+      Free (ArgsEditorBuffer);
+      Free (ArgsEditorLocation_Start);
+      Free (ArgsEditorLocation_End);
+      Free (ArgsDelete);
+      Free (ArgsInsert);
+   end Replace;
+
    --------------
    -- Add_Line --
    --------------
@@ -342,7 +416,7 @@ package body Codefix.GPS_Io is
       ArgsEditorLocation : GNAT.Strings.String_List :=
         (1 => new String'("%1"),
          2 => new String'(Integer'Image (Cursor.Get_Line)),
-         3 => new String'(Column_Index'Image (Cursor.Get_Column)));
+         3 => new String'(Column_Index'Image (0)));
 
       ArgsIndent : GNAT.Strings.String_List :=
         (1 => new String'("%2"),

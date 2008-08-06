@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2007, AdaCore                  --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,12 +37,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Word_Case    : Case_Type := Mixed);
    --  Set all the marks that will be needed to re-case the word later.
 
+   overriding
    procedure Execute
      (This         : Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the word recased.
 
+   overriding
    procedure Free (This : in out Recase_Word_Cmd);
    --  Free the memory associated to a Recase_Word_Cmd.
 
@@ -58,12 +60,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Start_Instruction : File_Cursor'Class);
    --  Set all the marks that will be needed to remove the instruction later.
 
+   overriding
    procedure Execute
      (This         : Remove_Instruction_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the remove of the instruction.
 
+   overriding
    procedure Free (This : in out Remove_Instruction_Cmd);
    --  Free the memory associated to a Remove_Instruction_Cmd.
 
@@ -86,12 +90,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Word         : Word_Cursor);
    --  Add an element to be removed later.
 
+   overriding
    procedure Execute
      (This         : Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with all the elements removed.
 
+   overriding
    procedure Free (This : in out Remove_Elements_Cmd);
    --  Free the memory associated to a Remove_Elements_Cmd.
 
@@ -114,12 +120,14 @@ package Codefix.Text_Manager.Ada_Commands is
    --  Word.String_Match is null, then the first with after the position
    --  specified by the cursor will be taken.
 
+   overriding
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the remove of the package clauses.
 
+   overriding
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
    --  Free the memory associated to a Remove_Pkg_Cmd.
 
@@ -136,12 +144,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Mode         : Remove_Code_Mode := Erase);
    --  Set all the marks that will be needed to remove the entity later.
 
+   overriding
    procedure Execute
      (This         : Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the remove of the entity.
 
+   overriding
    procedure Free (This : in out Remove_Entity_Cmd);
    --  Free the memory associated to a Remove_Entity_Cmd.
 
@@ -158,12 +168,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Name, Argument : String);
    --  Set all the marks that will be neede to add the pragma later.
 
+   overriding
    procedure Execute
      (This         : Add_Pragma_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the addition of the pragma.
 
+   overriding
    procedure Free (This : in out Add_Pragma_Cmd);
    --  Free the memory associated to an Add_Pragma_Cmd.
 
@@ -180,12 +192,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Name         : String);
    --  Set all the marks that will be needed to make the constant later.
 
+   overriding
    procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the making of the constant.
 
+   overriding
    procedure Free (This : in out Make_Constant_Cmd);
    --  Free the memory associated to a Make_Constant_Cmd.
 
@@ -201,12 +215,14 @@ package Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor'Class);
    --  Set all the marks that will be needed to remove the conversion later.
 
+   overriding
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an Extract with the remove of the conversion.
 
+   overriding
    procedure Free (This : in out Remove_Parenthesis_Cmd);
    --  Free the memory associated to a Remove_Parenthesis_Cmd.
 
@@ -225,6 +241,7 @@ package Codefix.Text_Manager.Ada_Commands is
       Source_File      : GNATCOLL.VFS.Virtual_File);
    --  Set all the marks that will be needed to paste the profile later.
 
+   overriding
    procedure Execute
      (This         : Paste_Profile_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -232,6 +249,7 @@ package Codefix.Text_Manager.Ada_Commands is
    --  Set an extract with the profile source pasted in the profile
    --  Destination.
 
+   overriding
    procedure Free (This : in out Paste_Profile_Cmd);
    --  Free the memory associated to a Paste_Profile_Cmd.
 
@@ -263,12 +281,20 @@ package Codefix.Text_Manager.Ada_Commands is
       With_Could_Miss : Boolean);
    --  Set all the marks that will be needed to prefix the object later.
 
+   overriding
+   procedure Execute
+     (This         : Get_Visible_Declaration_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+
+   overriding
    procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
    --  Set an extract with the declaration made visible.
 
+   overriding
    procedure Free (This : in out Get_Visible_Declaration_Cmd);
    --  Free the memory associated to a Get_Visible_Declaration.
 
@@ -285,11 +311,13 @@ package Codefix.Text_Manager.Ada_Commands is
       Replaced_Exp : String;
       New_String   : String);
 
+   overriding
    procedure Execute
      (This         : Replace_Code_By_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class);
 
+   overriding
    procedure Free (This : in out Replace_Code_By_Cmd);
 
 private

@@ -222,6 +222,13 @@ package Codefix.Text_Manager is
    --  Replace the Len characters, from the position designed by the cursor, by
    --  New_Value
 
+   procedure Replace
+     (This         : in out Text_Interface;
+      Start_Cursor : Text_Cursor'Class;
+      End_Cursor   : Text_Cursor'Class;
+      New_Value    : String) is abstract;
+   --  Replace the characters between Start_Cursor and End_Cursor by New_Value.
+
    procedure Add_Line
      (This        : in out Text_Interface;
       Cursor      : Text_Cursor'Class;
@@ -1056,7 +1063,7 @@ package Codefix.Text_Manager is
 
    procedure Execute
      (This         : Text_Command;
-      Current_Text : Text_Navigator_Abstr'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Success      : in out Boolean) is null;
    --  New version of Execute. Reset success to True if the command is in the
    --  new kind, false if the old execute has still to be called.
@@ -1084,7 +1091,7 @@ package Codefix.Text_Manager is
 
    procedure Secured_Execute
      (This         : Text_Command'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Success      : in out Boolean;
       Error_Cb     : Execute_Corrupted := null);
    --  Same as execute, but catches exception (and calls the Error_Cb if any);
@@ -1128,9 +1135,16 @@ package Codefix.Text_Manager is
       Word         : Word_Cursor'Class);
    --  Set all the marks that will be necessary later to remove the word
 
+   overriding
    procedure Free (This : in out Remove_Word_Cmd);
    --  Free the memory associated to a Remove_Word_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Remove_Word_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+   overriding
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1153,9 +1167,17 @@ package Codefix.Text_Manager is
       Insert_New_Line : Boolean := False);
    --  Set all the marks that will be necessary later to insert the word
 
+   overriding
    procedure Free (This : in out Insert_Word_Cmd);
    --  Fre the memory associated to an Insert_Word_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Insert_Word_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+
+   overriding
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1176,9 +1198,16 @@ package Codefix.Text_Manager is
       Insert_New_Line : Boolean := False);
    --  Set all the marks that will be needed to move the word later
 
+   overriding
    procedure Free (This : in out Move_Word_Cmd);
    --  Free the memory associated to a Move_Word_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Move_Word_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+   overriding
    procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1199,14 +1228,17 @@ package Codefix.Text_Manager is
       Do_Indentation : Boolean := False);
    --  Set all the marks that will be needed to replace the word later
 
+   overriding
    procedure Free (This : in out Replace_Word_Cmd);
    --  Free the memory associated to a Replace_Word_Cmd
 
+   overriding
    procedure Execute
      (This         : Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Success      : in out Boolean);
 
+   overriding
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1225,9 +1257,17 @@ package Codefix.Text_Manager is
       Word1, Word2 : Word_Cursor'Class);
    --  Set all the marks that will be needed to invert the two words later
 
+   overriding
    procedure Free (This : in out Invert_Words_Cmd);
    --  Free the memory associated to an Invert_Word_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Invert_Words_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+
+   overriding
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1247,9 +1287,17 @@ package Codefix.Text_Manager is
       Line         : String);
    --  Set all the marks that will be needed to add the line later
 
+   overriding
    procedure Free (This : in out Add_Line_Cmd);
    --  Free the memory associated to an Add_Line_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Add_Line_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+
+   overriding
    procedure Execute
      (This         : Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -1269,9 +1317,17 @@ package Codefix.Text_Manager is
       New_Text                 : String);
    --  Set all the marks that will be necessary later to remove the slice
 
+   overriding
    procedure Free (This : in out Replace_Slice_Cmd);
    --  Free the memory associated to a Remove_Sloce_Cmd
 
+   overriding
+   procedure Execute
+     (This         : Replace_Slice_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean);
+
+   overriding
    procedure Execute
      (This         : Replace_Slice_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;

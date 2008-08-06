@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003-2007, AdaCore               --
+--                    Copyright (C) 2003-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,25 +37,31 @@ package Codefix.GPS_Io is
    function Get_Id (This : GPS_Mark) return String;
    --  Returns the identificator of a mark.
 
+   overriding
    function Get_New_Mark
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
    --  Create a new mark at the position specified by the cursor.
 
+   overriding
    function Get_Current_Cursor
      (Current_Text : Console_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
    --  Return the current position of the mark.
 
+   overriding
    procedure Free (This : in out GPS_Mark);
    --  Free the memory associated to a GPS_Mark
 
+   overriding
    procedure Free (This : in out Console_Interface);
    --  Free the memory associated with the Console_Interface
 
+   overriding
    procedure Undo (This : in out Console_Interface);
    --  Undo the last action made in This.
 
+   overriding
    function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class;
@@ -63,12 +69,14 @@ package Codefix.GPS_Io is
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
+   overriding
    function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class) return Character;
    --  Get the character from the file and the position specified by the
    --  cursor.
 
+   overriding
    function Get_Line
      (This      : Console_Interface;
       Cursor    : Text_Cursor'Class;
@@ -76,6 +84,7 @@ package Codefix.GPS_Io is
    --  Get all character from the column and the line specified by the cursor
    --  to the end of the line.
 
+   overriding
    procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
@@ -84,6 +93,15 @@ package Codefix.GPS_Io is
    --  Replace the Len characters, from the position designed by the cursor, by
    --  New_Value.
 
+   overriding
+   procedure Replace
+     (This         : in out Console_Interface;
+      Start_Cursor : Text_Cursor'Class;
+      End_Cursor   : Text_Cursor'Class;
+      New_Value    : String);
+   --  Replace the characters between Start_Cursor and End_Cursor by New_Value.
+
+   overriding
    procedure Add_Line
      (This        : in out Console_Interface;
       Cursor      : Text_Cursor'Class;
@@ -91,25 +109,30 @@ package Codefix.GPS_Io is
    --  Add a line at the cursor specified. To add a line at the
    --  begining of the text, set cursor line = 0.
 
+   overriding
    procedure Delete_Line
      (This : in out Console_Interface;
       Cursor : Text_Cursor'Class);
    --  Delete the line where the cursor is.
 
+   overriding
    procedure Indent_Line
      (This   : in out Console_Interface;
       Cursor : Text_Cursor'Class);
    --  Indent the line pointed by the cursor.
 
+   overriding
    procedure Initialize
      (This : in out Console_Interface;
       Path : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
+   overriding
    function Read_File (This : Console_Interface)
       return GNAT.Strings.String_Access;
    --  Get the entire file
 
+   overriding
    function Line_Max (This : Console_Interface) return Natural;
    --  Return the last position of line in File_Interface.
 
@@ -117,6 +140,7 @@ package Codefix.GPS_Io is
      (This : in out Console_Interface; Kernel : Kernel_Handle);
    --  Set the value of the kernel linked to the Console_Interface.
 
+   overriding
    procedure Constrain_Update (This : in out Console_Interface);
    --  Set the text to modified state.
 

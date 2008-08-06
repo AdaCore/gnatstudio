@@ -3667,7 +3667,7 @@ package body Codefix.Text_Manager is
 
    procedure Secured_Execute
      (This         : Text_Command'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Success      : in out Boolean;
       Error_Cb     : Execute_Corrupted := null)
    is
@@ -3782,35 +3782,33 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Remove_Word_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
+      Word : Word_Cursor;
+   begin
+      Success := True;
+
+      Make_Word_Cursor (This.Word, Current_Text, Word);
+
+      Current_Text.Replace
+        (Word, Word.Get_Matching_Word (Current_Text)'Length, "");
+
+      if Current_Text.Get_Line (Word, 1) = "" then
+         Current_Text.Delete_Line (Word);
+      end if;
+
+      Free (Word);
+   end Execute;
+
+   procedure Execute
+     (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Line_Cursor : File_Cursor;
-      Word        : Word_Cursor;
+      pragma Unreferenced (This, Current_Text, New_Extract);
    begin
-      Make_Word_Cursor (This.Word, Current_Text, Word);
-      Line_Cursor := File_Cursor (Word);
-
-      Line_Cursor.Col := 1;
-      Get_Line (Current_Text, Line_Cursor, New_Extract);
-
-      case Word.Mode is
-         when Text_Ascii =>
-            Delete
-              (Get_First_Line (New_Extract).Content,
-               Get_Column (Word),
-               Word.String_Match'Length);
-         when Regular_Expression =>
-            Delete
-              (Get_First_Line (New_Extract).Content,
-               Get_Column (Word),
-               Get_Word_Length (New_Extract, Word, Word.String_Match.all));
-      end case;
-
-      Get_First_Line (New_Extract).Context := Unit_Modified;
-      Delete_Empty_Lines (New_Extract);
-
-      Free (Word);
+      null;
    end Execute;
 
    ---------------------
@@ -3847,23 +3845,26 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
+   overriding
    procedure Execute
      (This         : Insert_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       New_Str         : GNAT.Strings.String_Access;
       Line_Cursor     : File_Cursor;
       Space_Cursor    : File_Cursor;
       Word            : Word_Cursor;
-      Length          : Integer;
       New_Pos         : Word_Cursor;
       Word_Char_Index : Char_Index;
-
-      Tmp_Extract     : Extract;
+      Modified_Text   : Ptr_Text;
    begin
+      Success := True;
+
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Make_Word_Cursor (This.New_Position, Current_Text, New_Pos);
+
+      Modified_Text := Current_Text.Get_File (New_Pos.File);
 
       Line_Cursor := Clone (File_Cursor (New_Pos));
       Line_Cursor.Col := 1;
@@ -3871,24 +3872,9 @@ package body Codefix.Text_Manager is
       Word_Char_Index :=
         To_Char_Index (Word.Col, Get_Line (Current_Text, Line_Cursor));
 
-      case Word.Mode is
-         when Regular_Expression =>
-            Get_Line (Current_Text, File_Cursor (Word), Tmp_Extract);
-            declare
-               Str : constant String := Get_String (Tmp_Extract);
-            begin
-               Length := Get_Word_Length
-                 (Tmp_Extract, Word, Word.String_Match.all);
-               Assign (New_Str, Str (Str'First .. Str'First + Length - 1));
-            end;
-
-         when Text_Ascii =>
-            Assign (New_Str, Word.String_Match);
-      end case;
+      Assign (New_Str, Word.Get_Matching_Word (Current_Text));
 
       if This.Position = Specified then
-         Get_Line (Current_Text, Line_Cursor, New_Extract);
-
          if This.Add_Spaces then
             Space_Cursor := Clone (File_Cursor (New_Pos));
             Space_Cursor.Col := Space_Cursor.Col - 1;
@@ -3911,40 +3897,49 @@ package body Codefix.Text_Manager is
 
          if This.Insert_New_Line then
             declare
-               Extract_Line   : Ptr_Extract_Line;
+               Line : constant String := Modified_Text.Get_Line (New_Pos, 1);
+               Pos_Char_Index : Char_Index;
             begin
-               Extract_Line := Get_Line (New_Extract, New_Pos);
+               Pos_Char_Index := To_Char_Index (Get_Column (New_Pos), Line);
 
-               declare
-                  Line : constant String := Get_String (Extract_Line.all);
-                  Pos_Char_Index : Char_Index;
-               begin
-                  Pos_Char_Index := To_Char_Index (Get_Column (New_Pos), Line);
-                  Replace
-                    (New_Extract,
-                     New_Pos,
-                     Line (Natural (Pos_Char_Index) .. Line'Last)'Length,
-                     "");
-                  Add_Line
-                    (New_Extract,
-                     New_Pos,
-                     Line (Natural (Pos_Char_Index) .. Line'Last),
-                     True);
-               end;
+               Modified_Text.Replace
+                 (New_Pos,
+                  Line (Natural (Pos_Char_Index) .. Line'Last)'Length, "");
+
+               Modified_Text.Add_Line
+                 (New_Pos, Line (Natural (Pos_Char_Index) .. Line'Last));
+               Modified_Text.Indent_Line (New_Pos);
             end;
          end if;
 
-         Add_Word (New_Extract, New_Pos, New_Str.all);
-
+         Modified_Text.Replace
+           (New_Pos,
+            0,
+            New_Str.all);
       elsif This.Position = After then
-         Add_Line (New_Extract, New_Pos, New_Str.all, True);
+         Modified_Text.Add_Line
+           (New_Pos, New_Str.all);
+         Modified_Text.Indent_Line (New_Pos);
       elsif This.Position = Before then
          New_Pos.Line := New_Pos.Line - 1;
-         Add_Line (New_Extract, New_Pos, New_Str.all, True);
+         Modified_Text.Add_Line
+           (New_Pos, New_Str.all);
+         New_Pos.Line := New_Pos.Line + 1;
+         Modified_Text.Indent_Line (New_Pos);
       end if;
 
       Free (New_Str);
       Free (Word);
+   end Execute;
+
+   procedure Execute
+     (This         : Insert_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      pragma Unreferenced (This, Current_Text, New_Extract);
+   begin
+      null;
    end Execute;
 
    -------------------
@@ -3976,27 +3971,22 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Move_Word_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
+   begin
+      This.Step_Insert.Execute (Current_Text, Success);
+      This.Step_Remove.Execute (Current_Text, Success);
+   end Execute;
+
+   procedure Execute
+     (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Extract_Remove, Extract_Insert : Extract;
-      Success                        : Boolean;
+      pragma Unreferenced (This, Current_Text, New_Extract);
    begin
-      Execute (This.Step_Insert, Current_Text, Extract_Insert);
-      Execute (This.Step_Remove, Current_Text, Extract_Remove);
-      Merge_Extracts
-        (New_Extract,
-         Extract_Remove,
-         Extract_Insert,
-         Success,
-         False);
-
-      if not Success then
-         raise Codefix_Panic;
-      end if;
-
-      Free (Extract_Remove);
-      Free (Extract_Insert);
+      null;
    end Execute;
 
    ----------------------
@@ -4024,7 +4014,7 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
+      Current_Text : in out Text_Navigator_Abstr'Class;
       Success      : in out Boolean)
    is
       Current_Word : Word_Cursor;
@@ -4088,6 +4078,16 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Invert_Words_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
+   begin
+      Execute (This.Step_Word1, Current_Text, Success);
+      Execute (This.Step_Word2, Current_Text, Success);
+   end Execute;
+
+   procedure Execute
+     (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
@@ -4134,15 +4134,25 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Add_Line_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Position.all);
+   begin
+      Success := True;
+      Current_Text.Get_File
+        (This.Position.File_Name).Add_Line (Cursor, This.Line.all);
+   end Execute;
+
+   procedure Execute
+     (This         : Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Cursor : File_Cursor;
+      pragma Unreferenced (This, Current_Text, New_Extract);
    begin
-      Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Position.all));
-      Add_Line (New_Extract, Cursor, This.Line.all);
-      Free (Cursor);
+      null;
    end Execute;
 
    ----------------------
@@ -4171,27 +4181,30 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Replace_Slice_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Start_Cursor, End_Cursor : File_Cursor;
+      Modified_Text            : Ptr_Text;
    begin
+      Success := True;
+
       Start_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Start_Mark.all));
       End_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.End_Mark.all));
+      Modified_Text := Current_Text.Get_File (Start_Cursor.File);
 
-      for J in Start_Cursor.Line .. End_Cursor.Line loop
-         declare
-            Cursor : File_Cursor := Start_Cursor;
-         begin
-            Set_Location (Cursor, J, 1);
-            Get_Line (Current_Text, Cursor, New_Extract);
-         end;
-      end loop;
+      Modified_Text.Replace (Start_Cursor, End_Cursor, This.New_Text.all);
+   end Execute;
 
-      Erase (New_Extract, Start_Cursor, End_Cursor);
-      Replace (New_Extract, Start_Cursor, 0, This.New_Text.all);
+   procedure Execute
+     (This         : Replace_Slice_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    --------------------
