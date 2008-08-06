@@ -521,10 +521,11 @@ to limit the scope of an action for instance</xsd:documentation>
 
    <xsd:complexType name="gps_language_category">
      <xsd:choice maxOccurs="unbounded">
-       <xsd:element name="Name"    type="gps_language_category_list" minOccurs="1" maxOccurs="1" />
-       <xsd:element name="Pattern" type="xsd:string"                 minOccurs="1" maxOccurs="1" />
-       <xsd:element name="Index"   type="xsd:byte"                   minOccurs="1" maxOccurs="1" />
-       <xsd:element name="Icon"    type="xsd:string"                 minOccurs="1" maxOccurs="1" />
+       <xsd:element name="Name"      type="gps_language_category_list" minOccurs="1" maxOccurs="1" />
+       <xsd:element name="Pattern"   type="xsd:string"                 minOccurs="1" maxOccurs="1" />
+       <xsd:element name="Index"     type="xsd:byte"                   minOccurs="1" maxOccurs="1" />
+       <xsd:element name="End_Index" type="xsd:byte"                   minOccurs="0" maxOccurs="1" />
+       <xsd:element name="Icon"      type="xsd:string"                 minOccurs="1" maxOccurs="1" />
      </xsd:choice>
    </xsd:complexType>
 

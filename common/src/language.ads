@@ -721,6 +721,7 @@ package Language is
       Category_Name  : Strings.String_Access;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
+      End_Index      : Natural;
       Make_Entry     : Make_Entry_Func;
    end record;
    --  Definition for a category (ie one of the subtrees of the explorer).
@@ -731,6 +732,8 @@ package Language is
    --  Position_Index is the index of the parenthesis-pair that the entity
    --  name starts at. When the user clicks on this item in the explorer,
    --  the cursor will be moved to that location in the editor.
+   --  End_Index is the index of the parenthesis-pair after that the
+   --  next search will begin.
    --
    --  If Make_Entry is null, then Position_Index is used to compute the
    --  string to display.

@@ -89,6 +89,7 @@ package body Language.C is
             Category_Name  => null,
             Regexp         => Subprogram_RE'Access,
             Position_Index => 5,
+            End_Index      => 0,
             Make_Entry     => null));
 
    C_Project_Fields : constant Project_Field_Array :=

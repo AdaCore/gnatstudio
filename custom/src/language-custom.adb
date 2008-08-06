@@ -634,6 +634,7 @@ package body Language.Custom is
             Pattern       : constant String := To_String (Str);
             Category      : Language_Category;
             Index         : Integer;
+            End_Index     : Integer;
             Category_Name : Strings.String_Access := null;
 
          begin
@@ -648,18 +649,24 @@ package body Language.Custom is
             end;
 
             Index := Integer'Value (Get_Field (Node, "Index").all);
+            if Get_Field (Node, "End_Index") /= null then
+               End_Index := Integer'Value (Get_Field (Node, "End_Index").all);
+            else
+               End_Index := 0;
+            end if;
             Lang.Categories (J) :=
               (Category       => Category,
                Category_Name  => Category_Name,
                Regexp         => new Pattern_Matcher'
                  (Compile (Pattern, Flags)),
                Position_Index => Index,
+               End_Index      => End_Index,
                Make_Entry     => null);
 
          exception
             when Constraint_Error =>
                --  ??? Should display an error instead.
-               Lang.Categories (J) := (Cat_Unknown, null, null, 0, null);
+               Lang.Categories (J) := (Cat_Unknown, null, null, 0, 0, null);
                Trace (Me, "Invalid Category found for language "
                       & Lang.Name.all);
          end;

@@ -442,21 +442,22 @@ package body Language is
    ----------------------
 
    procedure Parse_Constructs
-     (Lang          : access Language_Root;
-      Buffer        : Glib.UTF8_String;
-      Result        : out Construct_List)
+     (Lang        : access Language_Root;
+      Buffer      : Glib.UTF8_String;
+      Result      : out Construct_List)
    is
-      Matches        : Match_Array (0 .. 10);
-      Categories     : constant Explorer_Categories :=
-        Explorer_Regexps (Language_Access (Lang));
-      First          : Natural;
-      Line           : Natural;
-      Line_Pos       : Natural;
-      Sloc_Entity    : Source_Location;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Info           : Construct_Access;
-      Match_Index    : Natural;
+      Matches     : Match_Array (0 .. 10);
+      Categories  : constant Explorer_Categories :=
+                      Explorer_Regexps (Language_Access (Lang));
+      First       : Natural;
+      Line        : Natural;
+      Line_Pos    : Natural;
+      Sloc_Entity : Source_Location;
+      Sloc_Start  : Source_Location;
+      Sloc_End    : Source_Location;
+      Info        : Construct_Access;
+      Match_Index : Natural;
+      End_Index   : Natural;
 
       procedure Forward
         (Index : Natural;
@@ -500,11 +501,12 @@ package body Language is
             exit when Matches (0) = No_Match;
 
             Match_Index := Categories (C).Position_Index;
+            End_Index   := Categories (C).End_Index;
 
             if Matches (Match_Index) /= No_Match then
                Sloc_Start.Index  := Matches (0).First;
                Sloc_Entity.Index := Matches (Match_Index).First;
-               Sloc_End.Index    := Matches (0).Last;
+               Sloc_End.Index    := Matches (End_Index).Last;
 
                Forward (First, Sloc_Start);
                Forward (Sloc_Start.Index + 1, Sloc_Entity);
@@ -543,7 +545,7 @@ package body Language is
                Result.Current.Is_Declaration := False;
             end if;
 
-            First := Matches (0).Last + 1;
+            First := Matches (End_Index).Last + 1;
          end loop;
       end loop;
    end Parse_Constructs;

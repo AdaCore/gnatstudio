@@ -175,6 +175,7 @@ package body Language.Ada is
                                  Category_Name  => null,
                                  Regexp         => Subprogram_RE'Access,
                                  Position_Index => 2,
+                                 End_Index      => 0,
                                  Make_Entry     =>
                                    Make_Entry_Subprogram'Access),
 
@@ -182,24 +183,28 @@ package body Language.Ada is
                                  Category_Name  => null,
                                  Regexp         => Package_RE'Access,
                                  Position_Index => 3,
+                                 End_Index      => 0,
                                  Make_Entry     => null),
 
                                 (Category       => Cat_Type,
                                  Category_Name  => null,
                                  Regexp         => Type_Def_RE'Access,
                                  Position_Index => 2,
+                                 End_Index      => 0,
                                  Make_Entry     => null),
 
                                 (Category       => Cat_Task,
                                  Category_Name  => null,
                                  Regexp         => Task_RE'Access,
                                  Position_Index => 3,
+                                 End_Index      => 0,
                                  Make_Entry     => Make_Entry_Task'Access),
 
                                 (Category       => Cat_Protected,
                                  Category_Name  => null,
                                  Regexp         => Protected_RE'Access,
                                  Position_Index => 3,
+                                 End_Index      => 0,
                                  Make_Entry     =>
                                    Make_Entry_Protected'Access));
 

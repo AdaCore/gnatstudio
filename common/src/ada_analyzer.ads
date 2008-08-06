@@ -70,6 +70,6 @@ package Ada_Analyzer is
    Ada_Record_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 15;
    Ada_Tagged_Attribute    : constant Construct_Att_Key := Last_Gen_Att + 16;
    Ada_Class_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 17;
-   Ada_Renames_Attribute     : constant Construct_Att_Key := Last_Gen_Att + 18;
+   Ada_Renames_Attribute   : constant Construct_Att_Key := Last_Gen_Att + 18;
 
 end Ada_Analyzer;

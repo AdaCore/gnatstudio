@@ -60,11 +60,13 @@ package body Language.Cpp is
             Category_Name  => null,
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
+            End_Index      => 0,
             Make_Entry     => Make_Entry_Class'Access),
       2 => (Category       => Cat_Method,
             Category_Name  => null,
             Regexp         => Methods_RE'Access,
             Position_Index => 5,
+            End_Index      => 0,
             Make_Entry     => null));
 
    Cpp_Project_Fields : constant Project_Field_Array :=
