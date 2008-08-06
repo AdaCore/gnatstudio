@@ -2941,7 +2941,7 @@ package body Src_Editor_Module is
                        Sensitive  => False);
 
       declare
-         Space  : Gtk_Separator_Tool_Item;
+         Space : Gtk_Separator_Tool_Item;
       begin
          Gtk_New (Space);
          Set_Draw (Space, True);
