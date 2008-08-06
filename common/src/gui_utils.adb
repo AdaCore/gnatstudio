@@ -687,8 +687,9 @@ package body GUI_Utils is
    is
       use Widget_List;
       Children : Widget_List.Glist := Get_Children (Container);
-      N : Widget_List.Glist;
-      W : Gtk_Widget;
+      N        : Widget_List.Glist;
+      W        : Gtk_Widget;
+      Child    : Gtk_Widget;
    begin
       while Children /= Null_List loop
          N := Children;
@@ -702,7 +703,13 @@ package body GUI_Utils is
             --  the label (see gtk_accel_label_set_accel_widget).
 
             if W.all in Gtk_Bin_Record'Class then
-               Destroy (Get_Child (Gtk_Bin (W)));
+               Child := Get_Child (Gtk_Bin (W));
+
+               --  Child is null for separators
+
+               if Child /= null then
+                  Destroy (Child);
+               end if;
             end if;
 
             Remove (Container, W);

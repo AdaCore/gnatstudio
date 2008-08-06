@@ -1,5 +1,17 @@
 Known Problems fixed in GPS 4.3.0
 
+- H730-020: List of main files cleared after a scenario change
+  Problem:    When changing the value of a scenario variable for a project file
+              that declares a main file with an empty name such as in:
+                 for Main use ("");
+              the list of main files in the Build/Make and Build/Run menus is
+              cleared. Furthermore, those menus contain unexpected separators
+              (one per main file with an empty name).
+  Workaround: Although syntactically correct, this pattern has an undefined
+              semantics. The right syntax to achieve the desireable goal is
+              the following:
+                 for Main use (); --  Note that double quotes have been removed
+              
 - H725-018: Refactoring->Rename does not ignore casing
   Problem:    When using the 'Rename' refactoring, identifiers are not
               considered with insensitive casing, thus failing to modify

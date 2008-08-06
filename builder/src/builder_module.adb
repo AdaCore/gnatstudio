@@ -1832,29 +1832,32 @@ package body Builder_Module is
       --  before the update)
 
       for M in reverse Mains'Range loop
-         Mitem := new Dynamic_Menu_Item_Record;
-         Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
-         Prepend (Menu, Mitem);
+         if Mains (M).all /= "" then
+            Mitem := new Dynamic_Menu_Item_Record;
+            Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
+            Prepend (Menu, Mitem);
 
-         --  If the name of the main is not a source file, we might not be
-         --  able to resolve it.
+            --  If the name of the main is not a source file, we might not be
+            --  able to resolve it.
 
-         Main := Create (Mains (M).all, Project);
-         if Main = GNATCOLL.VFS.No_File then
-            Main := Create_From_Base
-              (Executables_Directory (Project) & Mains (M).all);
-         end if;
+            Main := Create (Mains (M).all, Project);
+            if Main = GNATCOLL.VFS.No_File then
+               Main := Create_From_Base
+                 (Executables_Directory (Project) & Mains (M).all);
+            end if;
 
-         File_Project_Cb.Object_Connect
-           (Mitem, Signal_Activate, On_Build'Access,
-            Slot_Object => Kernel,
-            User_Data   => File_Project_Record'
-              (Project => Project,
-               File    => Main));
+            File_Project_Cb.Object_Connect
+              (Mitem, Signal_Activate, On_Build'Access,
+               Slot_Object => Kernel,
+               User_Data   => File_Project_Record'
+                 (Project => Project,
+                  File    => Main));
 
-         if Set_Shortcut and then M = Mains'First then
-            Set_Accel_Path
-              (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M), Group);
+            if Set_Shortcut and then M = Mains'First then
+               Set_Accel_Path
+                 (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M),
+                  Group);
+            end if;
          end if;
       end loop;
    end Add_Build_Menu;
@@ -1958,26 +1961,29 @@ package body Builder_Module is
       end if;
 
       for M in reverse Mains'Range loop
-         declare
-            Exec : constant String :=
-                     Get_Executable_Name (Project, Mains (M).all);
-         begin
-            Mitem := new Dynamic_Menu_Item_Record;
-            Gtk.Menu_Item.Initialize (Mitem, Exec);
-            Prepend (Menu, Mitem);
-            File_Project_Cb.Object_Connect
-              (Mitem, Signal_Activate, On_Run'Access,
-               Slot_Object => Kernel,
-               User_Data => File_Project_Record'
-                 (Project => Project,
-                  File    => Create
-                    (Executables_Directory (Project) & Exec)));
+         if Mains (M).all /= "" then
+            declare
+               Exec : constant String :=
+                        Get_Executable_Name (Project, Mains (M).all);
+            begin
+               Mitem := new Dynamic_Menu_Item_Record;
+               Gtk.Menu_Item.Initialize (Mitem, Exec);
+               Prepend (Menu, Mitem);
+               File_Project_Cb.Object_Connect
+                 (Mitem, Signal_Activate, On_Run'Access,
+                  Slot_Object => Kernel,
+                  User_Data   => File_Project_Record'
+                    (Project => Project,
+                     File    => Create
+                       (Executables_Directory (Project) & Exec)));
 
-            if Set_Shortcut and then M = Mains'First then
-               Set_Accel_Path
-                 (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M), Group);
-            end if;
-         end;
+               if Set_Shortcut and then M = Mains'First then
+                  Set_Accel_Path
+                    (Mitem, Run_Menu_Prefix & Item_Accel_Path & Image (M),
+                     Group);
+               end if;
+            end;
+         end if;
       end loop;
    end Add_Run_Menu;
 
