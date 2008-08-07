@@ -23,7 +23,6 @@ with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux;           use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On);
-with GNAT.Regpat;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
@@ -820,6 +819,10 @@ package body Src_Editor_Buffer is
 
       Language     : constant Language_Access := Get_Language (Buffer);
 
+      Highlight_Within_Comment : Boolean := False;
+      --  Set to True if the cursor is in a comment. In this case, we want to
+      --  highlight matching parentheses only within the current comment block.
+
       function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
       --  Returns False if parsing must stop (end of file reached for example)
@@ -855,15 +858,24 @@ package body Src_Editor_Buffer is
                         Is_In_Comment (Source_Buffer (Buffer), Current);
 
       begin
+         --  If we are looking to highlight only within the current comment,
+         --  and the character we are looking at is not in a comment, exit.
+
+         if Highlight_Within_Comment
+           and then not (Is_Blank (C) or else In_Comment)
+         then
+            return False;
+         end if;
+
          if C = Delimiters (Delimiter, Closing)
            and then not String_Tag
-           and then not In_Comment
+           and then (not In_Comment or else Highlight_Within_Comment)
          then
             Stack := Stack + Val (Forward);
 
          elsif C = Delimiters (Delimiter, Opening)
            and then not String_Tag
-           and then not In_Comment
+           and then (not In_Comment or else Highlight_Within_Comment)
          then
             Stack := Stack - Val (Forward);
 
@@ -888,7 +900,7 @@ package body Src_Editor_Buffer is
 
             C2 := Get_Char (Tmp);
 
-            if C2 = ''' theN
+            if C2 = ''' then
                Copy (Tmp, Current);
             end if;
          end if;
@@ -907,8 +919,8 @@ package body Src_Editor_Buffer is
         and then Language /= Unknown_Lang
         and then Is_In_Comment (Source_Buffer (Buffer), Current)
       then
-         --  The current character is in a comment, nothing to do
-         return;
+         --  The current character is in a comment: set the corresponding flag.
+         Highlight_Within_Comment := True;
       end if;
 
       Backward_Char (Current, Success);
@@ -2459,58 +2471,9 @@ package body Src_Editor_Buffer is
    function Is_In_Comment
      (Buffer : Source_Buffer;
       Iter   : Gtk_Text_Iter)
-      return Boolean
-   is
-      Lang         : constant Language_Access := Buffer.Lang;
-      Lang_Context : constant Language_Context_Access :=
-                       Get_Language_Context (Lang);
-      Line         : Editable_Line_Type;
-      Column       : Character_Offset_Type;
-      Len          : Integer;
-
+      return Boolean is
    begin
-      --  ??? We do not support all languages here. It needs to be expanded to
-      --  have a proper support in every context.
-      Assert
-        (Traces.Exception_Handle,
-         Lang_Context.Comment_Start_Length = 0
-           or else Lang_Context.Comment_Start_Length = 0
-           or else Lang_Context.New_Line_Comment_Start /= null
-           or else Lang_Context.New_Line_Comment_Start_Regexp /= null,
-         "Is_In_Comment not supported for multi-line comments");
-
-      Get_Iter_Position (Buffer, Iter, Line, Column);
-
-      declare
-         S_Line : constant String :=
-                    Get_Text (Buffer, Line, 1, Line, Column);
-      begin
-         --  ??? The code below is inneficient
-
-         if Lang_Context.New_Line_Comment_Start /= null then
-            Len := Lang_Context.New_Line_Comment_Start'Length;
-
-            for J in S_Line'First .. S_Line'Last - Len + 1 loop
-               if S_Line (J .. J + Len - 1) =
-                 Lang_Context.New_Line_Comment_Start.all
-               then
-                  return True;
-               end if;
-            end loop;
-
-         elsif Lang_Context.New_Line_Comment_Start_Regexp /= null then
-            for J in S_Line'Range loop
-               if GNAT.Regpat.Match
-                 (Lang_Context.New_Line_Comment_Start_Regexp.all,
-                  S_Line (J .. S_Line'Last))
-               then
-                  return True;
-               end if;
-            end loop;
-         end if;
-      end;
-
-      return False;
+      return Has_Tag (Iter, Buffer.Syntax_Tags (Comment_Text));
    end Is_In_Comment;
 
    ------------------
