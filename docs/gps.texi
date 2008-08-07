@@ -11840,6 +11840,10 @@ nodes:
    Index in the pattern used to extract the name of the entity contained in
    this category.
 
+   @item End_Index
+   Optional attribute that indicates the index in the pattern used to start
+   the next search. Default value is the end of the pattern.
+
    @item Icon
    Name of a stock icon that should be used for that category (@pxref{Adding stock icons}). This attribute is currently ignored, and is reserved for future
    uses.
