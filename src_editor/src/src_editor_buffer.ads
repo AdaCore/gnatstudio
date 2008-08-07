@@ -95,11 +95,11 @@ package Src_Editor_Buffer is
    -- Column types --
    ------------------
 
-   function Convert (L : in Natural) return Editable_Line_Type;
-   function Convert (C : in Natural) return Visible_Column_Type;
-   function Convert (C : in Natural) return Character_Offset_Type;
-   function Convert (L : in Editable_Line_Type) return Natural;
-   function Convert (C : in Character_Offset_Type) return Natural;
+   function Convert (L : Natural) return Editable_Line_Type;
+   function Convert (C : Natural) return Visible_Column_Type;
+   function Convert (C : Natural) return Character_Offset_Type;
+   function Convert (L : Editable_Line_Type) return Natural;
+   function Convert (C : Character_Offset_Type) return Natural;
    --  ??? temporary ?
 
    function Expand_Tabs
@@ -918,8 +918,8 @@ private
    function Is_In_Comment
      (Buffer : Source_Buffer;
       Iter   : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
-   --  Retruns true if Iter is in a comment. This is only supported for non
-   --  case sensitive languages that have one-line comment construct only.
+   --  Retruns true if Iter is in a comment. This relies on syntax coloring and
+   --  will return False if the syntax coloring has not been computed for Iter.
 
    function Is_In_String
      (Buffer : Source_Buffer;
