@@ -53,6 +53,11 @@
           <choice default="true" >gcc</choice>
           <string />
       </specialized_index>
+      <specialized_index value="Gnatdist">
+          <choice default="true" >gnatdist</choice>
+          <choice>po_gnatdist</choice>
+          <string />
+      </specialized_index>
    </project_attribute>
 
    <project_attribute

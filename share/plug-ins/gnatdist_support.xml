@@ -1,0 +1,68 @@
+<?xml version="1.0" ?>
+<!--  This file provides support for the Gnatdist Configuration Language:
+      In particular, it provides syntax highlighting,
+      and support for showing the entities in the Outline View.
+      This also define new tool Gnatdist, and its switches.
+-->
+
+<GPS>
+  <Language>
+    <Name>gnatdist</Name>
+    <Parent>Ada</Parent>
+    <Spec_Suffix>.cfg</Spec_Suffix>
+    <Body_Suffix>.cfg</Body_Suffix>
+    <Keywords>^((c(onfiguration|hannel)|begin|use|i(s|n)|f(or|unction)|with|end|return|pr(ocedure|agma))\b|partition(;|\s+))</Keywords>
+    <Context>
+      <New_Line_Comment_Start>--</New_Line_Comment_Start>
+      <String_Delimiter>&quot;</String_Delimiter>
+      <Can_Indent>True</Can_Indent>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
+      <Case_Sensitive>False</Case_Sensitive>
+    </Context>
+    <Categories>
+      <Category>
+        <Name>partition</Name>
+        <Pattern>\s+([-\w\d+_]+)(,\s+([-\w\d+_]+))*\s+:\s+Partition</Pattern>
+        <Index>1</Index>
+        <End_Index>1</End_Index>
+      </Category>
+      <Category>
+        <Name>channel</Name>
+        <Pattern>\s+([-\w\d+_]+)(,\s+([-\w\d+_]+))*\s+:\s+Channel</Pattern>
+        <Index>1</Index>
+        <End_Index>1</End_Index>
+      </Category>
+      <Category>
+        <Name>subprogram</Name>
+        <Pattern>^\s*(procedure|function)\s+([-\w\d+_:]+)((.*)|)(\s+(is|return)|\s*;)</Pattern>
+        <Index>2</Index>
+        <Icon>subprogram_xpm</Icon>
+      </Category>
+      <Category>
+        <Name>configuration</Name>
+        <Pattern>^configuration\s+([-\w\d+_]+)\s+is</Pattern>
+        <Index>1</Index>
+        <Icon>package_xpm</Icon>
+      </Category>
+    </Categories>
+  </Language>
+
+  <tool name="Gnatdist" package="Compiler" index="gnatdist">
+    <language>Gnatdist</language>
+    <initial-cmd-line></initial-cmd-line>
+    <switches lines="2" columns="1">
+        <title line="1" column="1" >Distribution Runtime Library (PCS)</title>
+        <title line="1" column="1">Gnadist switches</title>
+        <combo switch="--PCS=" noswitch="0">
+           <combo-entry label="Default" value="0" />
+           <combo-entry label="PolyORB" value="polyorb" />
+           <combo-entry label="Garlic" value="garlic" />
+        </combo>
+        <check label="Consider all files, even readonly ali files" switch="-a" line="2"/>
+        <check label="Force recompilations" switch="-f" line="2"/>
+        <check label="Be quiet, do not display partitioning operations" switch="-q" line="2"/>
+        <check label="Motivate all executed commands" switch="-v" line="2"/>
+        <check label="Keep all temporary files" switch="-t" line="2"/>
+    </switches>
+  </tool>
+</GPS>

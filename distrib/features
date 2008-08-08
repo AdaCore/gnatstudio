@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 07, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 08, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -20,6 +20,12 @@ NF-43-H805-018 New attribute in Language / Category node (2008-08-07)
   In language category definition, the new attribute End_Index allows to
   select parenthesis-pair of the regular expression after which the next
   search will begin, instead of continuing after the end of the pattern.
+
+NF-43-H731-007 Gnatdist configuration language support (2008-08-08)
+
+  Add syntax highlighting and support for showing the entities in the 
+  project explorer for the Gnatdist configuration language. Add also 
+  Gnatdist compiler tool with switches.
 
 NF-43-H721-012 Cross-references available on labels (2008-07-22)
 
