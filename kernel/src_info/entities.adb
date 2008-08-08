@@ -2374,7 +2374,7 @@ package body Entities is
    function Kind_To_String (Kind : Reference_Kind) return String is
    begin
       case Kind is
-         when Reference               => return -"read reference";
+         when Reference               => return -"reference";
          when Dispatching_Call        => return -"dispatching call";
          when Modification            => return -"write reference";
          when Instantiation_Reference => return -"instantiation";
