@@ -52,7 +52,6 @@ class Gcov_Process (GPS.Console, GPS.Process):
           on_exit=Gcov_Process.on_exit, \
           on_match=Gcov_Process.on_output)
 
-
 # Actual menu implementation
 
 def run_gcov(menu):
@@ -109,7 +108,10 @@ on which you have permission to read and write.
    gcno_file_found = False
 
    for p in projects:
-      object_dir = p.object_dirs(False)[0]
+      if p.object_dirs (False) == []:
+         object_dir = None
+      else:
+         object_dir = p.object_dirs(False)[0]
 
       if object_dir != None and object_dir != "":
          sources = p.sources(False)
