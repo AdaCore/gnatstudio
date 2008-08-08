@@ -22,6 +22,8 @@ valgrind="valgrind --suppressions=$dir/valgrind-python.supp --suppressions=$dir/
 ##            "undefined-value checks". Twice as fast though
 ## cachegrind: cache simulator
 ## callgrind: call graph tracing for cachegrind
+##            This is a profiling tool. Use callgrind-control to get partial
+##            dumps or find out the backtrace
 
 mode=${1:-memcheck}
 shift
