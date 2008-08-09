@@ -19,11 +19,12 @@
 
 with Ada.Calendar;      use Ada.Calendar;
 
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+
 with GPS.Kernel;        use GPS.Kernel;
 with HTables;
 with String_List_Utils; use String_List_Utils;
 with VCS;               use VCS;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package VCS_Status is
 
