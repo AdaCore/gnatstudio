@@ -14,7 +14,7 @@ BASE_DIR=$(COMMON_BASE_DIR)/expect
 include $(BASE_DIR)/Makefile.expect
 endif
 
-COMMON_SRC_DIRS = $(COMMON_BASE_DIR)/src $(COMMON_BASE_DIR)/gnat
+COMMON_SRC_DIRS = $(COMMON_BASE_DIR)/src $(COMMON_BASE_DIR)/tty
 SRC_DIRS += $(COMMON_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(COMMON_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
