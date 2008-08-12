@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 08, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 12, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -31,6 +31,12 @@ NF-43-H721-012 Cross-references available on labels (2008-07-22)
 
   Cross references ("go to declaration") are now available when clicking
   on labels inside Ada code.
+
+NF-43-H616-008 Renaming parameters in overriding subporgrams (2008-08-12)
+
+  When using the refactoring capabilities of GPS to rename a subprogram
+  parameter, you can now optionally also rename parameters with the same
+  name in overriding or overridden subprograms.
 
 NF-43-H612-027 Edit menu reorganized (2008-06-13)
 

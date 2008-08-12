@@ -39,6 +39,7 @@ with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Tooltips;           use Gtk.Tooltips;
 with Gtk.Widget;             use Gtk.Widget;
 
 package body Refactoring.Rename is
@@ -51,6 +52,7 @@ package body Refactoring.Rename is
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
 
    Name_Cst               : aliased constant String := "name";
+   Include_Overriding_Cst : aliased constant String := "include_overriding";
 
    type Rename_Entity_Command is new Interactive_Command with null record;
    function Execute
@@ -143,14 +145,25 @@ package body Refactoring.Rename is
       Gtk_New
         (Dialog.Auto_Compile,
          -"Automatically recompile files (not implemented)");
+      Set_Sensitive (Dialog.Auto_Compile, False);
       Associate (Get_History (Kernel).all,
                  Auto_Compile_Hist,
                  Dialog.Auto_Compile);
       Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Compile, Expand => False);
 
       Gtk_New (Dialog.Rename_Primitives,
-               -"Rename overriding and overridden entities (not implemented)");
-      Set_Sensitive (Dialog.Rename_Primitives, False);
+               -"Rename overriding and overridden entities");
+      Set_Tip
+        (Get_Tooltips (Kernel),
+         Dialog.Rename_Primitives,
+         -("If the entity is a subprogram, also rename subprograms that"
+           & " override or are overridden by it." & ASCII.LF
+           & "If the entity is a subprogram parameter, also rename parameters"
+           & " with the same name in overriding or overridden subprograms."));
+      Create_New_Boolean_Key_If_Necessary
+        (Hist          => Get_History (Kernel).all,
+         Key           => Rename_Primitives_Hist,
+         Default_Value => True);
       Associate (Get_History (Kernel).all,
                  Rename_Primitives_Hist,
                  Dialog.Rename_Primitives);
@@ -289,7 +302,8 @@ package body Refactoring.Rename is
                  (Kernel        => Get_Kernel (Context.Context),
                   Entity        => Entity,
                   On_Completion => Refactor,
-                  Auto_Compile   => Get_Active (Dialog.Auto_Compile));
+                  Overridden    => Get_Active (Dialog.Rename_Primitives),
+                  Auto_Compile  => Get_Active (Dialog.Auto_Compile));
             end;
          end if;
 
@@ -313,10 +327,12 @@ package body Refactoring.Rename is
    is
    begin
       if Command = "rename" then
-         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Name_Parameters (Data, (1 => Name_Cst'Access,
+                                 2 => Include_Overriding_Cst'Access));
          declare
             Entity   : constant Entity_Information := Get_Data (Data, 1);
             New_Name : constant String := Nth_Arg (Data, 2);
+            Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
             Refactor : constant Renaming_Performer :=
               new Renaming_Performer_Record'
                 (Refactor_Performer_Record with
@@ -331,6 +347,7 @@ package body Refactoring.Rename is
                Entity,
                Refactor,
                Auto_Compile    => False,
+               Overridden      => Include_Overridding,
                Background_Mode => False);
          end;
       end if;
@@ -352,7 +369,7 @@ package body Refactoring.Rename is
          Filter => Lookup_Filter (Kernel, "Entity"),
          Action => C);
       Register_Command
-        (Kernel, "rename", 1, 1, Entity_Command_Handler'Access,
+        (Kernel, "rename", 1, 2, Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 

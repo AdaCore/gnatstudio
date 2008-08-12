@@ -2646,7 +2646,8 @@ the comment for the entity still applies.
 GPS will handle primitive operations by also renaming the operations it
 overrides or that overrides it. This means that any dispatching call to that
 operation will also be renamed, and the application should still work as
-before.
+before. If you are renaming a parameter to a subprogram, GPS can also rename
+parameters with similar names in overriding or overridden subprograms.
 
 @item Name parameters
 If you are editing Ada code and click on a call to a subprogram, GPS will

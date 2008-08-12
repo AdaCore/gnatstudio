@@ -156,6 +156,7 @@ package body Refactoring.Performers is
       Entity          : Entity_Information;
       On_Completion   : access Refactor_Performer_Record'Class;
       Auto_Compile    : Boolean := False;
+      Overridden      : Boolean := True;
       Background_Mode : Boolean := True)
    is
       pragma Unreferenced (Auto_Compile);
@@ -174,8 +175,8 @@ package body Refactoring.Performers is
         (Iter                  => Data.Iter.all,
          Entity                => Entity,
          File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
-         Include_Overriding    => True,
-         Include_Overridden    => True);
+         Include_Overriding    => Overridden,
+         Include_Overridden    => Overridden);
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
       Set_Progress

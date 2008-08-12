@@ -864,6 +864,8 @@ package body Entities.Queries is
       Overriding_Subprograms : Boolean := True;
       Overridden_Subprograms : Boolean := True)
    is
+      Param_Of : constant Entity_Information := Is_Parameter_Of (Iter.Entity);
+      Subprogram      : Entity_Information;
       Toplevel_Entity : Entity_Information;
 
       procedure Add_Prims_Of_Entity
@@ -894,7 +896,7 @@ package body Entities.Queries is
          Top : Entity_Information := Entity;
       begin
          if Use_Approximate_Overriding_Algorithm then
-            return Get_Name (Entity).all = Get_Name (Iter.Entity).all;
+            return Get_Name (Entity).all = Get_Name (Subprogram).all;
          else
             --  The test is smarter here: we make sure that it is correct even
             --  when there are two primitive operations with the same name.
@@ -916,6 +918,8 @@ package body Entities.Queries is
       is
          Prim      : Primitive_Operations_Iterator;
          Primitive : Entity_Information;
+         SIter     : Subprogram_Iterator;
+         Param     : Entity_Information;
       begin
          if Entity /= null then
             Find_All_Primitive_Operations
@@ -927,7 +931,29 @@ package body Entities.Queries is
                Primitive := Get (Prim);
 
                if Is_Same_Entity (Primitive) then
-                  Append (Iter.Extra_Entities, Primitive);
+                  --  Primitive is a subprogram that override Subprogram.
+                  --  The latter is either the entity we are searching itself,
+                  --  or the subprogram for which that entity is a parameter
+
+                  if Param_Of = null then
+                     Append (Iter.Extra_Entities, Primitive);
+                  else
+                     --  Search the parameter that correspond to our entity
+                     SIter := Get_Subprogram_Parameters (Primitive);
+                     loop
+                        Get (SIter, Param);
+                        exit when Param = null;
+
+                        if Get_Name (Param).all =
+                          Get_Name (Iter.Entity).all
+                        then
+                           Append (Iter.Extra_Entities, Param);
+                           exit;
+                        end if;
+
+                        Next (SIter);
+                     end loop;
+                  end if;
                end if;
 
                Next (Prim);
@@ -946,7 +972,7 @@ package body Entities.Queries is
          Deps : Dependency_Iterator;
       begin
          --  Trick here: we first look for all the files that depend, even
-         --  indirectly, from the file declaring Entity. That gives us all the
+         --  indirectly, on the file declaring Entity. That gives us all the
          --  files that might potentially contain child types of Entity. Once
          --  they have been loaded in memory, we can freeze the entities
          --  database to speed things up. This saves a lot of system calls, and
@@ -988,15 +1014,23 @@ package body Entities.Queries is
 
       Prim_Of : Entity_Information;
    begin
-      if not Use_Approximate_Overriding_Algorithm then
-         Toplevel_Entity := Iter.Entity;
+      --  If we have a parameter of subprogram A, we look for subprograms that
+      --  override A
 
+      if Param_Of /= null then
+         Subprogram := Param_Of;
+      else
+         Subprogram := Iter.Entity;
+      end if;
+
+      if not Use_Approximate_Overriding_Algorithm then
+         Toplevel_Entity := Subprogram;
          while Overriden_Entity (Toplevel_Entity) /= null loop
             Toplevel_Entity := Overriden_Entity (Toplevel_Entity);
          end loop;
       end if;
 
-      Prim_Of := Is_Primitive_Operation_Of (Iter.Entity);
+      Prim_Of := Is_Primitive_Operation_Of (Subprogram);
 
       if Prim_Of /= null then
          if Overriding_Subprograms then
@@ -3068,11 +3102,13 @@ package body Entities.Queries is
       Free (Iter.Results);
    end Destroy;
 
-   ------------------
-   -- Is_Parameter --
-   ------------------
+   ---------------------
+   -- Is_Parameter_Of --
+   ---------------------
 
-   function Is_Parameter (Entity : Entity_Information) return Boolean is
+   function Is_Parameter_Of
+     (Entity : Entity_Information) return Entity_Information
+   is
       Caller     : constant Entity_Information :=
                      Get_Caller (Declaration_As_Reference (Entity));
       Param_Iter : Subprogram_Iterator;
@@ -3083,18 +3119,17 @@ package body Entities.Queries is
 
          loop
             Get (Param_Iter, Param);
-
             exit when Param = null;
 
             if Param = Entity then
-               return True;
+               return Caller;
             end if;
 
             Next (Param_Iter);
          end loop;
       end if;
 
-      return False;
-   end Is_Parameter;
+      return null;
+   end Is_Parameter_Of;
 
 end Entities.Queries;

@@ -150,7 +150,8 @@ package Entities.Queries is
    --  memory leaks.
    --  If Include_Overriding or Include_Overridden are True, then all
    --  references to an overriding or Overriden subprogram will also be
-   --  returned.
+   --  returned. If Entity is a parameter of subprogram A, this will also
+   --  return the parameters of subprograms that override A.
 
    function At_End (Iter : Entity_Reference_Iterator) return Boolean;
    --  Whether there are no more reference to return
@@ -235,8 +236,9 @@ package Entities.Queries is
    function Image (Kind : Parameter_Type) return String;
    --  Return a string suitable for display
 
-   function Is_Parameter (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity is a parameter for a subprogram
+   function Is_Parameter_Of
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the subprogram for which Entity is a parameter (or null)
 
    -------------------------------
    -- Formal generic parameters --

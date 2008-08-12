@@ -383,7 +383,7 @@ package body Refactoring.Subprograms is
             Is_Read         := False;
             Has_Ref_Before  := False;
             Has_Ref_After   := False;
-            Is_Param        := Is_Parameter (Entity);
+            Is_Param        := Is_Parameter_Of (Entity) /= null;
 
             Find_All_References (Ref_Iter, Entity, In_File => Source);
             while not At_End (Ref_Iter) loop
