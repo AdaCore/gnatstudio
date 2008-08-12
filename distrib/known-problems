@@ -56,6 +56,19 @@ Known Problems fixed in GPS 4.3.0
               A similar behavior can be observed when renaming a file.
   Workaround: Create new files or rename files outside GPS before loading them.
 
+- H630-002: Incorrect file in xref after changing scenario
+  Problem:    GPS incorrectly resets its internal xref cache when the scenario
+              variables are changed. Do a query from file A, which ends into
+              file B (for instance B contains the body of an entity referenced
+              in A). Then change the scenario so that the object directories
+              are now different, and B no longer belongs to the project. If
+              you redo the same query as before, you will again end up in B,
+              whereas you should end up in another file C instead.
+  Workaround: Put the following python file in $HOME/.gps/plug-ins:
+              import GPS
+              def on_view_changed (h): GPS.reset_xref_db()
+              GPS.Hook ("project_view_changed").add (on_view_changed)
+
 - H612-018: GPS hangs when it cannot write to the log file
   Problem:    Due to special circumstances, GPS might not be able to write to
               the log file (e.g NFS errors) and as a result just hangs.

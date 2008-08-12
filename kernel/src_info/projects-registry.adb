@@ -59,7 +59,7 @@ with Remote;                    use Remote;
 with String_Hash;
 with Traces;                    use Traces;
 with Types;                     use Types;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Projects.Registry is
 

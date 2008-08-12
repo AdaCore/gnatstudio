@@ -1216,6 +1216,27 @@ package body Entities is
       Reset (Db.LIs);
    end Reset;
 
+   -------------------------
+   -- Foreach_Source_File --
+   -------------------------
+
+   procedure Foreach_Source_File
+     (Db     : Entities_Database;
+      Action : access procedure (F : in out Source_File))
+   is
+      Iter : Files_HTable.Iterator;
+      File : Source_File_Item;
+   begin
+      Get_First (Db.Files, Iter);
+      loop
+         File := Get_Element (Iter);
+         exit when File = null;
+
+         Get_Next (Db.Files, Iter);
+         Action (File.File);
+      end loop;
+   end Foreach_Source_File;
+
    -------------
    -- Destroy --
    -------------

@@ -392,6 +392,13 @@ package Entities is
    --  Change reference counting for the file. When it reaches 0, the memory
    --  is freed.
 
+   procedure Foreach_Source_File
+     (Db     : Entities_Database;
+      Action : access procedure (F : in out Source_File));
+   --  Executes Action for each Source_File already parsed into the database.
+   --  Not all sources part of the project will have an equivalent Source_File,
+   --  it all depends on what has already been parsed.
+
    function Get_Or_Create
      (Db           : Entities_Database;
       File         : GNATCOLL.VFS.Virtual_File;
