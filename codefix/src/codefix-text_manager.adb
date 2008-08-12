@@ -34,6 +34,14 @@ with Language.Tree.Ada;       use Language.Tree.Ada;
 
 package body Codefix.Text_Manager is
 
+   function Search_Tokens
+     (Line     : String;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
+   --  Return the first token matching one of the token list given in
+   --  parameter.
+
    ------------------
    -- Compare_Last --
    ------------------
@@ -480,43 +488,6 @@ package body Codefix.Text_Manager is
       Delete_Line
         (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
    end Delete_Line;
-
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   procedure Get_Entity
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-   is
-      Unit_Info, Body_Info : Construct_Tree_Iterator;
-      Line_Cursor          : File_Cursor := File_Cursor (Cursor);
-   begin
-      Line_Cursor.Col := 1;
-
-      Unit_Info := Get_Iterator_At (Current_Text, Cursor);
-
-      if Get_Construct (Unit_Info).Is_Declaration then
-         Body_Info := To_Construct_Tree_Iterator (Get_Second_Occurence
-           (To_Entity_Access
-              (Get_Structured_File (Current_Text, Cursor), Unit_Info)));
-
-         for J in Get_Construct (Body_Info).Sloc_Start.Line
-           .. Get_Construct (Body_Info).Sloc_End.Line
-         loop
-            Line_Cursor.Line := J;
-            Get_Line (Current_Text, Line_Cursor, This);
-         end loop;
-      end if;
-
-      for J in Get_Construct (Unit_Info).Sloc_Start.Line
-        .. Get_Construct (Unit_Info).Sloc_End.Line
-      loop
-         Line_Cursor.Line := J;
-         Get_Line (Current_Text, Line_Cursor, This);
-      end loop;
-   end Get_Entity;
 
    -----------------
    -- Line_Length --
@@ -988,37 +959,121 @@ package body Codefix.Text_Manager is
    --------------------
 
    function Search_Tokens
+     (Line     : String;
+      Cursor   : File_Cursor'Class;
+      Searched : Token_List;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class
+   is
+      --  ??? This is a bit Ada-specific (casing, use of Ada_Lang).
+
+      Result        : Word_Cursor :=
+        (File_Cursor (Cursor) with null, Text_Ascii);
+      Start_Index   : Char_Index;
+      Found         : Boolean := False;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+
+      function Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+      begin
+         for J in Searched'Range loop
+            if Entity = Searched (J).Kind
+              and then Equal
+                (Line (Sloc_Start.Index .. Sloc_End.Index),
+                 Searched (J).Name.all,
+                 False)
+            then
+               Found := True;
+
+               if Result.String_Match /= null then
+                  Free (Result.String_Match);
+               end if;
+
+               Result.Col := To_Column_Index
+                 (Char_Index (Sloc_Start.Index), Line);
+               Result.String_Match :=
+                 new String'
+                   (Line (Sloc_Start.Index .. Sloc_End.Index));
+
+               if Step = Normal_Step then
+                  --  If we are on the normal step, we stop as soon as we find
+                  --  something.
+
+                  return True;
+               else
+                  --  Otherwise we'll go until the last matching
+                  --  token.
+
+                  return False;
+               end if;
+            end if;
+         end loop;
+
+         return False;
+      end Callback;
+   begin
+      if Result.Col = 0 then
+         Start_Index := Char_Index (Line'Last);
+      else
+         Start_Index := To_Char_Index (Result.Col, Line);
+      end if;
+
+      case Step is
+         when Normal_Step =>
+            Parse_Entities
+              (Lang     => Ada_Lang,
+               Buffer   => Line
+                 (Integer (Start_Index) .. Line'Last),
+               Callback => Callback'Unrestricted_Access);
+
+         when Reverse_Step =>
+            Parse_Entities
+              (Lang     => Ada_Lang,
+               Buffer   => Line
+                 (Line'First .. Integer (Start_Index)),
+               Callback => Callback'Unrestricted_Access);
+
+      end case;
+
+      if Found then
+         return Result;
+      else
+         return Null_Word_Cursor;
+      end if;
+   end Search_Tokens;
+
+   function Search_Tokens
      (This     : Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
       Searched : Token_List;
       Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
       Last, Increment    : Integer;
-      Ext_Red            : Extract_Line;
       Result             : Word_Cursor;
       New_Cursor         : File_Cursor;
-      Line_Cursor        : File_Cursor;
       Old_Col            : Column_Index;
    begin
       New_Cursor := File_Cursor (Cursor);
-      Line_Cursor := New_Cursor;
-      Line_Cursor.Col := 1;
 
       case Step is
          when Normal_Step =>
             Last := Line_Max (This);
             Increment := 1;
-            Get_Line (This, Line_Cursor, Ext_Red);
          when Reverse_Step =>
             Last := 1;
             Increment := -1;
             Old_Col := New_Cursor.Col;
             New_Cursor.Col := 1;
-            --  ??? possible error there, since we used to get only the part of
-            --  the string where we wanted to do the analysis (as in normal
-            --  step), but this operation is not straighforward since we don't
-            --  know at this stage the size of the extract.
-            Get_Line (This, Line_Cursor, Ext_Red);
+
             New_Cursor.Col := Old_Col;
       end case;
 
@@ -1026,14 +1081,13 @@ package body Codefix.Text_Manager is
          Result :=
            Word_Cursor
              (Search_Tokens
-                  (Ext_Red,
+                  (This.Get_Line (New_Cursor, 1),
                    New_Cursor,
                    Searched,
                    Step));
 
          if Result /= Null_Word_Cursor then
             Result := Clone (Result);
-            Free (Ext_Red);
             return Result;
          end if;
 
@@ -1041,8 +1095,6 @@ package body Codefix.Text_Manager is
 
          New_Cursor.Col := 1;
          New_Cursor.Line := New_Cursor.Line + Increment;
-         Free (Ext_Red);
-         Get_Line (This, New_Cursor, Ext_Red);
 
          if Step = Reverse_Step then
             New_Cursor.Col := 0;
@@ -1050,7 +1102,6 @@ package body Codefix.Text_Manager is
 
       end loop;
 
-      Free (Ext_Red);
       return Null_Word_Cursor;
    end Search_Tokens;
 
@@ -1497,1035 +1548,6 @@ package body Codefix.Text_Manager is
       return New_Cursor;
    end Clone;
 
-   ----------------------------------------------------------------------------
-   --  type Extract_Line
-   ----------------------------------------------------------------------------
-
-   ---------
-   -- "=" --
-   ---------
-
-   function "=" (Left, Right : Extract_Line) return Boolean is
-   begin
-      return Left.Cursor = Right.Cursor
-        and then Left.Context = Right.Context
-        and then (Left.Context = Unit_Deleted
-                  or else To_String (Left.Content) =
-                    To_String (Right.Content));
-   end "=";
-
-   ---------
-   -- "<" --
-   ---------
-
-   function "<" (Left, Right : Ptr_Extract_Line) return Boolean is
-   begin
-      return Left.Cursor < Right.Cursor;
-   end "<";
-
-   ------------
-   -- Assign --
-   ------------
-
-   procedure Assign (This : in out Extract_Line; Value : Extract_Line) is
-   begin
-      This.Context := Value.Context;
-      Free (This.Cursor);
-      This.Cursor := Clone (Value.Cursor);
-      Assign (This.Content, Value.Content);
-   end Assign;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Extract_Line) is
-   begin
-      Free (This.Content);
-      Free (This.Cursor);
-      if This.Next /= null then
-         Free (This.Next.all);
-         Free (This.Next);
-      end if;
-   end Free;
-
-   ---------------
-   -- Free_Data --
-   ---------------
-
-   procedure Free_Data (This : in out Extract_Line) is
-   begin
-      Free (This.Content);
-      Free (This.Cursor);
-   end Free_Data;
-
-   -----------------
-   -- Get_Context --
-   -----------------
-
-   function Get_Context (This : Extract_Line) return Merge_Info is
-   begin
-      return This.Context;
-   end Get_Context;
-
-   -----------------
-   -- Set_Context --
-   -----------------
-
-   procedure Set_Context (This : in out Extract_Line; Value : Merge_Info) is
-   begin
-      This.Context := Value;
-   end Set_Context;
-
-   ----------
-   -- Next --
-   ----------
-
-   function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line is
-   begin
-      return This.Next;
-   end Next;
-
-   function Next (This : Extract_Line) return Ptr_Extract_Line is
-   begin
-      return This.Next;
-   end Next;
-
-   ----------------
-   -- Get_String --
-   ----------------
-
-   function Get_String (This : Extract_Line) return String is
-   begin
-      return To_String (This.Content);
-   end Get_String;
-
-   ----------------
-   -- Get_Cursor --
-   ----------------
-
-   function Get_Cursor (This : Extract_Line) return File_Cursor'Class is
-   begin
-      return This.Cursor;
-   end Get_Cursor;
-
-   ---------------------
-   -- Set_Indentation --
-   ---------------------
-
-   procedure Set_Indentation (This : in out Extract_Line; Value : Boolean) is
-   begin
-      This.Do_Indentation := Value;
-   end Set_Indentation;
-
-   ------------
-   -- Length --
-   ------------
-
-   function Length (This : Extract_Line) return Natural is
-   begin
-      if This.Next /= null then
-         return Length (This.Next.all) + 1;
-      else
-         return 1;
-      end if;
-   end Length;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (This         : in out Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer)
-   is
-      Cursor : File_Cursor := This.Cursor;
-
-      procedure Commit_Modified_Line;
-      --  Commit separately each part of a modified line, in order to keep
-      --  marks.
-
-      --------------------------
-      -- Commit_Modified_Line --
-      --------------------------
-
-      procedure Commit_Modified_Line is
-         It      : Mask_Iterator;
-         Len     : Natural;
-         Info    : Merge_Info;
-         Content : constant String (1 .. Get_String (This)'Length)
-           := Get_String (This);
-         Cursor_Char_Index : Char_Index := To_Char_Index (Cursor.Col, Content);
-      begin
-         Reset (It, This.Content);
-
-         loop
-            Get_Next_Area (This.Content, It, Cursor_Char_Index, Len, Info);
-
-            exit when Len = 0;
-
-            case Info is
-               when Unit_Modified =>
-                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
-
-                  Replace
-                    (Current_Text,
-                     Cursor,
-                     Len,
-                     Content
-                       (Natural (Cursor_Char_Index)
-                        .. Natural (Cursor_Char_Index) + Len - 1));
-               when Unit_Created =>
-                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
-
-                  Replace
-                    (Current_Text,
-                     Cursor,
-                     0,
-                     Content
-                       (Natural (Cursor_Char_Index)
-                        .. Natural (Cursor_Char_Index) + Len - 1));
-               when Unit_Deleted =>
-                  Cursor.Col := To_Column_Index (Cursor_Char_Index, Content);
-
-                  Replace
-                    (Current_Text,
-                     Cursor,
-                     Len,
-                     "");
-               when Original_Unit =>
-                  null;
-            end case;
-         end loop;
-      end Commit_Modified_Line;
-
-   begin
-      Cursor.Line := This.Cursor.Line + Offset_Line;
-
-      case This.Context is
-         when Unit_Created =>
-            Add_Line
-              (Current_Text,
-               Cursor,
-               To_String (This.Content),
-               This.Do_Indentation);
-            Offset_Line := Offset_Line + 1;
-         when Unit_Deleted =>
-            Delete_Line
-              (Current_Text,
-               Cursor);
-            Offset_Line := Offset_Line - 1;
-         when Unit_Modified =>
-            Commit_Modified_Line;
-
-            if This.Do_Indentation then
-               Indent_Line
-                 (Get_File (Current_Text, Get_File (Cursor)).all,
-                  Text_Cursor (Cursor));
-            end if;
-         when Original_Unit =>
-            null;
-      end case;
-   end Commit;
-
-   ------------------------
-   -- Get_Number_Actions --
-   ------------------------
-
-   function Get_Number_Actions (This : Extract_Line) return Natural is
-      Cursor : File_Cursor := This.Cursor;
-
-      function Count_Modified_Line_Actions return Natural;
-      --  Commit separately each part of a modified line, in order to keep
-      --  marks.
-
-      -------------------------
-      -- Count_Modified_Line --
-      -------------------------
-
-      function Count_Modified_Line_Actions return Natural is
-         It                : Mask_Iterator;
-         Len               : Natural;
-         Info              : Merge_Info;
-         Number_Actions    : Natural := 0;
-      begin
-         Reset (It, This.Content);
-
-         loop
-            declare
-               This_Content : constant String := To_String (This.Content);
-               Cursor_Char_Index : Char_Index;
-            begin
-               Cursor_Char_Index :=
-                 To_Char_Index (Cursor.Col, This_Content);
-               Get_Next_Area
-                 (This.Content,
-                  It,
-                  Cursor_Char_Index,
-                  Len,
-                  Info);
-               Cursor.Col := To_Column_Index (Cursor_Char_Index, This_Content);
-            end;
-
-            exit when Len = 0;
-
-            case Info is
-               when Unit_Modified | Unit_Created | Unit_Deleted =>
-                  Number_Actions := Number_Actions + 1;
-               when Original_Unit =>
-                  null;
-            end case;
-         end loop;
-
-         return Number_Actions;
-      end Count_Modified_Line_Actions;
-
-   begin
-      case This.Context is
-         when Unit_Created | Unit_Deleted =>
-            return 1;
-         when Unit_Modified =>
-            return Count_Modified_Line_Actions;
-         when Original_Unit =>
-            return 0;
-      end case;
-   end Get_Number_Actions;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone
-     (This      : Extract_Line;
-      Recursive : Boolean) return Extract_Line
-   is
-      New_Line : Extract_Line := This;
-   begin
-
-      New_Line.Cursor := Clone (New_Line.Cursor);
-      New_Line.Content := Clone (New_Line.Content);
-
-      if Recursive and then New_Line.Next /= null then
-         New_Line.Next := new Extract_Line'(Clone (New_Line.Next.all, True));
-      else
-         New_Line.Next := null;
-      end if;
-
-      return New_Line;
-   end Clone;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (This : Extract_Line) return Extract_Line is
-   begin
-      return Clone (This, False);
-   end Clone;
-
-   ---------------------
-   -- Get_Word_Length --
-   ---------------------
-
-   function Get_Word_Length
-     (This   : Extract_Line;
-      Col    : Column_Index;
-      Format : String) return Natural
-   is
-      Matches    : Match_Array (0 .. 1);
-      Matcher    : constant Pattern_Matcher := Compile (Format);
-      Str_Parsed : constant String := To_String (This.Content);
-      Index      : constant Char_Index :=
-        To_Char_Index (Col, Str_Parsed);
-
-   begin
-      Match
-        (Matcher,
-         Str_Parsed (Natural (Index) .. Str_Parsed'Last), Matches);
-
-      if Matches (0) = No_Match then
-         Raise_Exception (Codefix_Panic'Identity, "pattern '" & Format &
-                          "' from col" & Column_Index'Image (Col) & " in '" &
-                            Str_Parsed & "' can't be found");
-
-      else
-         return Matches (1).Last - Natural (Index) + 1;
-      end if;
-   end Get_Word_Length;
-
-   -------------------
-   -- Search_String --
-   -------------------
-
-   function Search_Token
-     (This     : Extract_Line;
-      Cursor   : File_Cursor'Class;
-      Searched : Token_Record;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class
-   is
-      Tokens : constant Token_List := (1 => Searched);
-      Result : File_Cursor'Class := Search_Tokens
-        (This, Cursor, Tokens, Step);
-      Real_Result : constant File_Cursor := Clone (File_Cursor (Result));
-   begin
-      Free (Result);
-
-      return Real_Result;
-   end Search_Token;
-
-   --------------------
-   -- Search_Strings --
-   --------------------
-
-   function Search_Tokens
-     (This     : Extract_Line;
-      Cursor   : File_Cursor'Class;
-      Searched : Token_List;
-      Step     : Step_Way := Normal_Step) return Word_Cursor'Class
-   is
-      --  ??? This is a bit Ada-specific (casing, use of Ada_Lang).
-
-      Result        : Word_Cursor :=
-        (File_Cursor (Cursor) with null, Text_Ascii);
-      Result_String : constant String := To_String (This.Content);
-      Start_Index   : Char_Index;
-      Found         : Boolean := False;
-
-      function Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
-
-      function Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean
-      is
-         pragma Unreferenced (Partial_Entity);
-      begin
-         for J in Searched'Range loop
-            if Entity = Searched (J).Kind
-              and then Equal
-                (Result_String (Sloc_Start.Index .. Sloc_End.Index),
-                 Searched (J).Name.all,
-                 False)
-            then
-               Found := True;
-
-               if Result.String_Match /= null then
-                  Free (Result.String_Match);
-               end if;
-
-               Result.Col := To_Column_Index
-                 (Char_Index (Sloc_Start.Index), Result_String);
-               Result.String_Match :=
-                 new String'
-                   (Result_String (Sloc_Start.Index .. Sloc_End.Index));
-
-               if Step = Normal_Step then
-                  --  If we are on the normal step, we stop as soon as we find
-                  --  something.
-
-                  return True;
-               else
-                  --  Otherwise we'll go until the last matching
-                  --  token.
-
-                  return False;
-               end if;
-            end if;
-         end loop;
-
-         return False;
-      end Callback;
-   begin
-      if Result.Col = 0 then
-         Start_Index := Char_Index (Result_String'Last);
-      else
-         Start_Index := To_Char_Index (Result.Col, Result_String);
-      end if;
-
-      case Step is
-         when Normal_Step =>
-            Parse_Entities
-              (Lang     => Ada_Lang,
-               Buffer   => Result_String
-                 (Integer (Start_Index) .. Result_String'Last),
-               Callback => Callback'Unrestricted_Access);
-
-         when Reverse_Step =>
-            Parse_Entities
-              (Lang     => Ada_Lang,
-               Buffer   => Result_String
-                 (Result_String'First .. Integer (Start_Index)),
-               Callback => Callback'Unrestricted_Access);
-
-      end case;
-
-      if Found then
-         return Result;
-      else
-         return Null_Word_Cursor;
-      end if;
-   end Search_Tokens;
-
-   ---------
-   -- Get --
-   ---------
-
-   procedure Get
-     (This        : Text_Interface'Class;
-      Cursor      : File_Cursor'Class;
-      Len         : Natural;
-      Destination : in out Extract_Line) is
-   begin
-      Destination :=
-        (Context         => Original_Unit,
-         Cursor          => Clone (File_Cursor (Cursor)),
-         Original_Length => Len,
-         Content         => To_Mergable_String (Get (This, Cursor, Len)),
-         Next            => null,
-         Coloration      => True,
-         others          => <>);
-   end Get;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   procedure Get_Line
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract_Line)
-   is
-      Str : GNAT.Strings.String_Access;
-   begin
-      Str := new String'(Get_Line (This, Cursor));
-      Destination :=
-        (Context         => Original_Unit,
-         Cursor          => File_Cursor (Cursor),
-         Original_Length => Str.all'Last,
-         Content         => To_Mergable_String (Str.all),
-         Next            => null,
-         Coloration      => True,
-         others          => <>);
-      Free (Str);
-   end Get_Line;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   procedure Get_Line
-     (This        : Text_Interface'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract_Line)
-   is
-      Str : GNAT.Strings.String_Access;
-   begin
-      Str := new String'(Get_Line (This, Cursor));
-      Free_Data (Destination);
-      Destination :=
-        (Context         => Original_Unit,
-         Cursor          => Clone (File_Cursor (Cursor)),
-         Original_Length => Str'Last,
-         Content         => To_Mergable_String (Str.all),
-         Next            => null,
-         Coloration      => True,
-         others          => <>);
-      Free (Str);
-   end Get_Line;
-
-   ------------------
-   -- Get_New_Text --
-   ------------------
-
-   function Get_New_Text
-     (This : Extract_Line; Detail : Boolean := True) return String
-   is
-      pragma Unreferenced (Detail);
-   begin
-      if This.Context /= Unit_Deleted then
-         return To_String (This.Content);
-      else
-         return "";
-      end if;
-   end Get_New_Text;
-
-   ------------------
-   -- Get_Old_Text --
-   ------------------
-
-   function Get_Old_Text
-     (This         : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class) return String
-   is
-      Old_Extract : Extract;
-   begin
-      case This.Context is
-         when Original_Unit | Unit_Modified =>
-            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
-
-            declare
-               Res : constant String := Get_New_Text
-                 (Get_Record (Old_Extract, 1).all,
-                  False);
-            begin
-               Free (Old_Extract);
-               return Res;
-            end;
-
-         when Unit_Created =>
-            null;
-         when Unit_Deleted =>
-            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
-
-            declare
-               Res : constant String := Get_New_Text
-                 (Get_Record (Old_Extract, 1).all,
-                  False);
-            begin
-               Free (Old_Extract);
-               return Res;
-            end;
-      end case;
-
-      return "";
-   end Get_Old_Text;
-
-   -------------------------
-   -- Get_New_Text_Length --
-   -------------------------
-
-   function Get_New_Text_Length
-     (This      : Extract_Line;
-      Recursive : Boolean := False) return Natural
-   is
-      Total  : Natural := 0;
-      Buffer : constant String := Get_New_Text (This);
-
-   begin
-      if Recursive and then This.Next /= null then
-         Total := Get_New_Text_Length (This.Next.all, True);
-      end if;
-
-      return Total + Buffer'Length;
-   end Get_New_Text_Length;
-
-   -------------------------
-   -- Get_Old_Text_Length --
-   -------------------------
-
-   function Get_Old_Text_Length
-     (This         : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Recursive    : Boolean := False) return Natural
-   is
-      Total  : Natural := 0;
-      Buffer : constant String := Get_Old_Text (This, Current_Text);
-
-   begin
-      if Recursive and then This.Next /= null then
-         Total := Get_Old_Text_Length (This.Next.all, Current_Text, True);
-      end if;
-
-      return Total + Buffer'Length;
-   end Get_Old_Text_Length;
-
-   -------------------
-   -- Extend_Before --
-   -------------------
-
-   procedure Extend_Before
-     (This          : in out Ptr_Extract_Line;
-      Prev          : in out Ptr_Extract_Line;
-      Current_Text  : Text_Navigator_Abstr'Class;
-      Size          : Natural)
-   is
-      pragma Warnings (Off, This);
-      pragma Warnings (Off, Prev);
-
-      Line_Cursor            : File_Cursor;
-      New_Line, Current_Line : Ptr_Extract_Line;
-
-   begin
-      if This = null then
-         return;
-      end if;
-
-      Line_Cursor := This.Cursor;
-      Line_Cursor.Col := 1;
-      New_Line := new Extract_Line;
-      Current_Line := This;
-
-      if Prev = null then
-         for J in 1 .. Size loop
-            if Current_Line.Context /= Unit_Created then
-               Line_Cursor.Line := Line_Cursor.Line - 1;
-            end if;
-
-            exit when Line_Cursor.Line = 0;
-
-            Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
-            New_Line.Next := Current_Line;
-            Current_Line := New_Line;
-            New_Line := new Extract_Line;
-         end loop;
-
-      else
-         for J in 1 .. Size loop
-            if Current_Line.Context /= Unit_Created then
-               Line_Cursor.Line := Line_Cursor.Line - 1;
-            end if;
-
-            exit when Get_File (Prev.Cursor) = Get_File (Current_Line.Cursor)
-              and then (Prev.Cursor.Line + 1 = Current_Line.Cursor.Line
-                        or else Prev.Cursor.Line = Current_Line.Cursor.Line);
-            exit when Line_Cursor.Line = 0;
-
-            Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
-            New_Line.Next := Current_Line;
-            Prev.Next := New_Line;
-            Current_Line := New_Line;
-            New_Line := new Extract_Line;
-         end loop;
-
-      end if;
-
-      Free (New_Line);
-      Extend_Before (This.Next, This, Current_Text, Size);
-      This := Current_Line;
-   end Extend_Before;
-
-   ------------------
-   -- Extend_After --
-   ------------------
-
-   procedure Extend_After
-     (This         : in out Ptr_Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Size         : Natural)
-   is
-      pragma Warnings (Off, This);
-
-      Line_Cursor            : File_Cursor;
-      New_Line, Current_Line : Ptr_Extract_Line;
-      End_Of_File            : Natural;
-
-   begin
-      if This = null then
-         return;
-      end if;
-
-      Line_Cursor := This.Cursor;
-      Line_Cursor.Col := 1;
-      New_Line := new Extract_Line;
-      Current_Line := This;
-      End_Of_File := Line_Max (Current_Text, Get_File (Line_Cursor));
-
-      if This.Next = null then
-         for J in 1 .. Size loop
-            Line_Cursor.Line := Line_Cursor.Line + 1;
-
-            exit when Line_Cursor.Line > End_Of_File;
-
-            Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
-            New_Line.Next := Current_Line.Next;
-            Current_Line.Next := New_Line;
-            Current_Line := New_Line;
-            New_Line := new Extract_Line;
-         end loop;
-
-      else
-         for J in 1 .. Size loop
-            exit when Get_File (Current_Line.Cursor) =
-              Get_File (Current_Line.Next.Cursor)
-              and then (Current_Line.Cursor.Line + 1 =
-                          Current_Line.Next.Cursor.Line
-                        or else Current_Line.Next.Cursor.Line =
-                          Current_Line.Cursor.Line);
-
-            Line_Cursor.Line := Line_Cursor.Line + 1;
-
-            exit when Line_Cursor.Line > End_Of_File;
-
-            Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
-            New_Line.Next := Current_Line.Next;
-            Current_Line.Next := New_Line;
-            Current_Line := New_Line;
-            New_Line := new Extract_Line;
-         end loop;
-      end if;
-
-      Free (New_Line);
-      Extend_After (Current_Line.Next, Current_Text, Size);
-   end Extend_After;
-
-   -------------
-   -- Replace --
-   -------------
-
-   procedure Replace
-     (This       : in out Extract_Line;
-      Start      : Column_Index;
-      Len        : Natural;
-      New_String : String)
-   is
-      This_String      : constant String := To_String (This.Content);
-      Start_Char_Index : constant Char_Index :=
-        To_Char_Index (Start, This_String);
-   begin
-      if Len /= New_String'Length
-        or else This_String
-          (Natural (Start_Char_Index) ..
-             Natural (Start_Char_Index) + Len - 1) /=
-          New_String
-      then
-         This.Context := Unit_Modified;
-
-         Replace (This.Content, Start_Char_Index, Len, New_String);
-      end if;
-   end Replace;
-
-   --------------------
-   -- Replace_To_End --
-   --------------------
-
-   procedure Replace_To_End
-     (This  : in out Extract_Line;
-      Start : Column_Index;
-      Value : String) is
-   begin
-      Replace (This, Start, To_String (This.Content)'Last, Value);
-   end Replace_To_End;
-
-   --------------------
-   -- Set_Coloration --
-   --------------------
-
-   procedure Set_Coloration (This : in out Extract_Line; Value : Boolean) is
-   begin
-      This.Coloration := Value;
-   end Set_Coloration;
-
-   --------------------
-   -- Get_Coloration --
-   --------------------
-
-   function Get_Coloration (This : Extract_Line) return Boolean is
-   begin
-      return This.Coloration;
-   end Get_Coloration;
-
-   ------------
-   -- Remove --
-   ------------
-
-   procedure Remove
-     (This, Prev : Ptr_Extract_Line; Container : in out Extract) is
-   begin
-      if Prev = null then
-         Container.First := This.Next;
-      else
-         Prev.Next := This.Next;
-      end if;
-
-      This.Next := null;
-   end Remove;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   function Get_Line
-     (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
-      return Ptr_Extract_Line is
-   begin
-      if This = null then
-         return null;
-      elsif Get_File (This.Cursor) = Get_File (Cursor)
-        and then This.Cursor.Line = Cursor.Line
-      then
-         return This;
-      elsif This.Next = null then
-         return null;
-      else
-         return Get_Line (This.Next, Cursor);
-      end if;
-   end Get_Line;
-
-   -----------------
-   -- Merge_Lines --
-   -----------------
-
-   procedure Merge_Lines
-     (Result              : out Extract_Line;
-      Object_1, Object_2  : Extract_Line;
-      Success             : out Boolean;
-      Chronologic_Changes : Boolean) is
-   begin
-      Merge_String
-        (Result.Content,
-         Object_1.Content,
-         Object_2.Content,
-         Success,
-         Chronologic_Changes);
-
-      Result.Cursor := Clone (Object_1.Cursor);
-      Result.Original_Length := Object_1.Original_Length;
-      Result.Coloration := Object_1.Coloration;
-   end Merge_Lines;
-
-   function Data (This : Ptr_Extract_Line) return Extract_Line is
-   begin
-      return This.all;
-   end Data;
-
-   function Is_Null (This : Ptr_Extract_Line) return Boolean is
-   begin
-      return This = null;
-   end Is_Null;
-
-   ----------------------------------------------------------------------------
-   --  type Extract
-   ----------------------------------------------------------------------------
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Ptr_Extract) is
-      procedure Free_Pool is new Ada.Unchecked_Deallocation
-        (Extract'Class, Ptr_Extract);
-   begin
-      Free (This.all);
-      Free_Pool (This);
-   end Free;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (This : Extract) return Extract is
-      New_Extract : Extract := This;
-   begin
-      if New_Extract.First /= null then
-         New_Extract.First :=
-           new Extract_Line'(Clone (New_Extract.First.all, True));
-      end if;
-
-      return New_Extract;
-   end Clone;
-
-   ------------
-   -- Assign --
-   ------------
-
-   procedure Assign (This : in out Extract'Class; Source : Extract'Class) is
-   begin
-      This.First := new Extract_Line'(Clone (Source.First.all, True));
-   end Assign;
-
-   ---------
-   -- Get --
-   ---------
-
-   procedure Get
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Len         : Natural;
-      Destination : in out Extract) is
-   begin
-      Add_Element
-        (Destination,
-         new Extract_Line'
-           (Context         => Original_Unit,
-            Cursor          => File_Cursor (Clone (Cursor)),
-            Original_Length => Len,
-            Content         => To_Mergable_String (Get (This, Cursor, Len)),
-            Next            => null,
-            Coloration      => True,
-            others          => <>));
-   end Get;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   procedure Get_Line
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract)
-   is
-      Str : constant String := Get_Line (This, Cursor);
-   begin
-      Add_Element
-        (Destination,
-         new Extract_Line'
-           (Context         => Original_Unit,
-            Cursor          => Clone (File_Cursor (Cursor)),
-            Original_Length => Str'Length,
-            Content         => To_Mergable_String (Str),
-            Next            => null,
-            Coloration      => True,
-            others          => <>));
-   end Get_Line;
-
-   ----------------
-   -- Get_String --
-   ----------------
-
-   function Get_String
-     (This     : Extract;
-      Position : Natural := 1) return String
-   is
-      Current_Extract : Ptr_Extract_Line := This.First;
-   begin
-      for J in 1 .. Position - 1 loop
-         Current_Extract := Current_Extract.Next;
-      end loop;
-
-      return To_String (Current_Extract.Content);
-   end Get_String;
-
-   -------------
-   -- Replace --
-   -------------
-
-   procedure Replace
-     (This          : in out Extract;
-      Start         : Column_Index;
-      Length        : Natural;
-      Value         : String;
-      Line_Number   : Natural := 1)
-   is
-      Current_Extract : Ptr_Extract_Line := This.First;
-   begin
-      for J in 1 .. Line_Number - 1 loop
-         Current_Extract := Current_Extract.Next;
-      end loop;
-
-      Replace (Current_Extract.all, Start, Length, Value);
-   end Replace;
-
-   -------------
-   -- Replace --
-   -------------
-
-   procedure Replace
-     (This   : in out Extract;
-      Start  : File_Cursor'Class;
-      Length : Natural;
-      Value  : String)
-   is
-      Current_Extract : constant Ptr_Extract_Line := Get_Line (This, Start);
-   begin
-      Replace (Current_Extract.all, Start.Col, Length, Value);
-   end Replace;
-
    -------------
    -- Replace --
    -------------
@@ -2635,666 +1657,6 @@ package body Codefix.Text_Manager is
       Free (Mark_Start);
       Free (Mark_Stop);
    end Replace;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (This         : Extract;
-      Current_Text : in out Text_Navigator_Abstr'Class)
-   is
-      Current_Extract : Ptr_Extract_Line := This.First;
-      Last_File_Name  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Offset_Line     : Integer := 0;
-   begin
-      while Current_Extract /= null loop
-         if Get_File (Current_Extract.Cursor) /= Last_File_Name then
-            Last_File_Name := Get_File (Current_Extract.Cursor);
-            Offset_Line := 0;
-         end if;
-
-         Commit (Current_Extract.all, Current_Text, Offset_Line);
-         Current_Extract := Current_Extract.Next;
-      end loop;
-   end Commit;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Extract) is
-   begin
-      if This.First /= null then
-         Free (This.First.all);
-         Free (This.First);
-      end if;
-   end Free;
-
-   ---------------
-   -- Free_Data --
-   ---------------
-
-   procedure Free_Data (This : in out Extract'Class) is
-   begin
-      Free (This);
-   end Free_Data;
-
-   ------------------
-   -- Get_New_Text --
-   ------------------
-
-   function Get_New_Text
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Lines_Before : Natural := 0;
-      Lines_After  : Natural := 0) return String
-   is
-      Extended_Extract : Extract;
-   begin
-      Extended_Extract := Clone (This);
-      Extend_Before (Extended_Extract, Current_Text, Lines_Before);
-      Extend_After (Extended_Extract, Current_Text, Lines_After);
-
-      declare
-         Buffer : constant String := Get_New_Text (Extended_Extract);
-      begin
-         Free (Extended_Extract);
-         return Buffer;
-      end;
-   end Get_New_Text;
-
-   ------------------
-   -- Get_New_Text --
-   ------------------
-
-   function Get_New_Text (This : Extract) return String is
-      Current_Extract  : Ptr_Extract_Line := This.First;
-      Current_Col      : Natural := 1;
-      Current_Length   : Natural;
-      Buffer : String
-        (1 .. Get_New_Text_Length (This) +
-           EOL_Str'Length * Get_Number_Lines (This));
-   begin
-      Current_Extract := This.First;
-
-      while Current_Extract /= null loop
-         Current_Length := Get_New_Text_Length (Current_Extract.all)
-           + EOL_Str'Length;
-         Buffer (Current_Col ..
-                   Current_Col + Current_Length - 1) :=
-             Get_New_Text (Current_Extract.all) & EOL_Str;
-         Current_Col := Current_Col + Current_Length;
-         Current_Extract := Current_Extract.Next;
-      end loop;
-
-      return Buffer;
-   end Get_New_Text;
-
-   ------------------
-   -- Get_Old_Text --
-   ------------------
-
-   function Get_Old_Text
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Lines_Before : Natural := 0;
-      Lines_After  : Natural := 0) return String
-   is
-      Current_Extract  : Ptr_Extract_Line;
-      Extended_Extract : Extract;
-      Current_Col      : Natural := 1;
-      Current_Length   : Natural;
-   begin
-
-      Extended_Extract := Clone (This);
-      Extend_Before (Extended_Extract, Current_Text, Lines_Before);
-      Extend_After (Extended_Extract, Current_Text, Lines_After);
-      Current_Extract := Extended_Extract.First;
-
-      declare
-         Buffer : String (1 .. Get_Old_Text_Length
-                            (Extended_Extract, Current_Text) +
-                            EOL_Str'Length * Get_Number_Lines
-                              (Extended_Extract));
-      begin
-         while Current_Extract /= null loop
-            Current_Length := Get_Old_Text_Length
-              (Current_Extract.all,
-               Current_Text) + EOL_Str'Length;
-            Buffer (Current_Col ..
-                      Current_Col + Current_Length - 1) :=
-                Get_Old_Text (Current_Extract.all, Current_Text) & EOL_Str;
-            Current_Col := Current_Col + Current_Length;
-            Current_Extract := Current_Extract.Next;
-         end loop;
-
-         Free (Extended_Extract);
-
-         return Buffer;
-      end;
-   end Get_Old_Text;
-
-   -------------------------
-   -- Get_New_Text_Length --
-   -------------------------
-
-   function Get_New_Text_Length (This : Extract) return Natural is
-   begin
-      if This.First /= null then
-         return Get_New_Text_Length (This.First.all, True);
-      else
-         return 0;
-      end if;
-   end Get_New_Text_Length;
-
-   -------------------------
-   -- Get_Old_Text_Length --
-   -------------------------
-
-   function Get_Old_Text_Length
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class) return Natural is
-   begin
-      if This.First /= null then
-         return Get_Old_Text_Length (This.First.all, Current_Text, True);
-      else
-         return 0;
-      end if;
-   end Get_Old_Text_Length;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   function Get_Line
-     (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line
-   is
-      Current_Extract : Ptr_Extract_Line := This.First;
-   begin
-      while Current_Extract /= null loop
-         if Current_Extract.Cursor.Line = Position.Line
-           and Get_File (Current_Extract.Cursor) = Get_File (Position)
-         then
-            return Current_Extract;
-         end if;
-
-         Current_Extract := Current_Extract.Next;
-      end loop;
-
-      Raise_Exception
-        (Codefix_Panic'Identity,
-         "line" & Natural'Image (Position.Line) & " of " &
-           Full_Name (Get_File (Position)).all & " not found in an extract");
-   end Get_Line;
-
-   ----------------
-   -- Get_Record --
-   ----------------
-
-   function Get_Record
-     (This : Extract; Number : Natural) return Ptr_Extract_Line
-   is
-      Current_Extract : Ptr_Extract_Line := This.First;
-      Iterator        : Integer;
-
-   begin
-      Iterator := 1;
-
-      loop
-         if Current_Extract = null then
-            Raise_Exception
-              (Codefix_Panic'Identity,
-               "record" & Natural'Image (Number) & " not found in an extract");
-         end if;
-
-         exit when Iterator = Number;
-
-         Iterator := Iterator + 1;
-         Current_Extract := Current_Extract.Next;
-      end loop;
-
-      return Current_Extract;
-   end Get_Record;
-
-   ------------------
-   -- Replace_Word --
-   ------------------
-
-   procedure Replace_Word
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      New_String   : String;
-      Old_String   : String;
-      Format_Old   : String_Mode := Text_Ascii)
-   is
-      Word_Length  : Natural;
-      Old_Line     : GNAT.Strings.String_Access;
-      Current_Line : Ptr_Extract_Line;
-
-   begin
-      Current_Line := Get_Line (This, Cursor);
-      Assign (Old_Line, To_String (Current_Line.Content));
-
-      case Format_Old is
-         when Regular_Expression =>
-            Word_Length := Get_Word_Length
-              (Current_Line.all, Cursor.Col, Old_String);
-
-         when Text_Ascii =>
-            Word_Length := Old_String'Length;
-      end case;
-
-      Replace (Current_Line.all, Cursor.Col, Word_Length, New_String);
-
-      Free (Old_Line);
-   end Replace_Word;
-
-   ------------------
-   -- Replace_Word --
-   ------------------
-
-   procedure Replace_Word
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      New_String   : String;
-      Old_Length   : Natural)
-   is
-      Current_Line : Ptr_Extract_Line;
-   begin
-      Current_Line := Get_Line (This, Cursor);
-      Replace (Current_Line.all, Cursor.Col, Old_Length, New_String);
-   end Replace_Word;
-
-   --------------
-   -- Add_Word --
-   --------------
-
-   procedure Add_Word
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class;
-      Word   : String)
-   is
-      Current_Line : constant Ptr_Extract_Line := Get_Line (This, Cursor);
-   begin
-      Insert (Current_Line.Content, Cursor.Col, Word);
-
-      Current_Line.Context := Unit_Modified;
-   end Add_Word;
-
-   ----------------------
-   -- Get_Number_Lines --
-   ----------------------
-
-   function Get_Number_Lines (This : Extract) return Natural is
-   begin
-      if This.First = null then
-         return 0;
-      else
-         return Length (This.First.all);
-      end if;
-   end Get_Number_Lines;
-
-   --------------
-   -- Add_Line --
-   --------------
-
-   procedure Add_Line
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class;
-      Text   : String;
-      Indent : Boolean := False)
-   is
-      Line_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
-   begin
-      Line_Cursor.Col := 1;
-      Add_Element
-        (This, new Extract_Line'
-         (Context         => Unit_Created,
-          Cursor          => Line_Cursor,
-          Original_Length => 0,
-          Content         => To_Mergable_String (Text),
-          Next            => null,
-          Coloration      => True,
-          Do_Indentation  => Indent));
-   end Add_Line;
-
-   -----------------
-   -- Delete_Line --
-   -----------------
-
-   procedure Delete_Line
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class)
-   is
-      Line : Ptr_Extract_Line;
-   begin
-      Line := Get_Line (This, Cursor);
-      Line.Context := Unit_Deleted;
-   end Delete_Line;
-
-   ----------------------
-   -- Delete_All_Lines --
-   ----------------------
-
-   procedure Delete_All_Lines (This : in out Extract) is
-      Line : Ptr_Extract_Line := This.First;
-   begin
-      while Line /= null loop
-         Line.Context := Unit_Deleted;
-         Line := Line.Next;
-      end loop;
-   end Delete_All_Lines;
-
-   -----------------
-   -- Add_Element --
-   -----------------
-
-   procedure Add_Element
-     (This, Previous, Element : Ptr_Extract_Line;
-      Container : in out Extract) is
-   begin
-      pragma Assert (This /= null or else Previous /= null);
-
-      if This = null then
-         Previous.Next := Element;
-      else
-         if This.Cursor > Element.Cursor then
-            Element.Next := This;
-
-            if Previous /= null then
-               Previous.Next := Element;
-            else
-               Container.First := Element;
-            end if;
-         elsif This.Cursor = Element.Cursor
-           and then (This.Context = Unit_Modified
-                     or else This.Context = Original_Unit)
-           and then (Element.Context = Unit_Modified
-                     or else Element.Context = Original_Unit)
-         then
-            return;
-         else
-            Add_Element (This.Next, This, Element, Container);
-         end if;
-      end if;
-   end Add_Element;
-
-   -----------------
-   -- Add_Element --
-   -----------------
-
-   procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line) is
-   begin
-      if This.First = null then
-         This.First := Element;
-      else
-         Add_Element (This.First, null, Element, This);
-      end if;
-   end Add_Element;
-
-   procedure Add_Element (This : in out Extract; Element : Extract_Line) is
-   begin
-      Add_Element (This, new Extract_Line'(Element));
-   end Add_Element;
-
-   ---------------------
-   -- Set_Indentation --
-   ---------------------
-
-   procedure Set_Indentation (This : in out Extract; Value : Boolean) is
-      Line : Ptr_Extract_Line := This.First;
-   begin
-      while Line /= null loop
-         Set_Indentation (Line.all, Value);
-         Line := Line.Next;
-      end loop;
-   end Set_Indentation;
-
-   ---------------------
-   -- Get_Word_Length --
-   ---------------------
-
-   function Get_Word_Length
-     (This   : Extract;
-      Cursor : File_Cursor'Class;
-      Format : String) return Natural is
-   begin
-      return Get_Word_Length
-        (Get_Line (This, Cursor).all,
-         Cursor.Col,
-         Format);
-   end Get_Word_Length;
-
-   -------------------
-   -- Search_String --
-   -------------------
-
-   function Search_Token
-     (This     : Extract;
-      Searched : Token_Record;
-      Cursor   : File_Cursor'Class := Null_File_Cursor;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class
-   is
-      Current, Last_Line : Ptr_Extract_Line;
-      Result             : File_Cursor := Null_File_Cursor;
-      Current_Cursor     : File_Cursor := Null_File_Cursor;
-      Real_Result        : File_Cursor;
-
-   begin
-      if File_Cursor (Cursor) /= Null_File_Cursor then
-         Current_Cursor := File_Cursor (Cursor);
-      else
-         if Step = Normal_Step then
-            Current_Cursor :=
-              File_Cursor (Get_Cursor (Get_First_Line (This).all));
-         else
-            Last_Line := Get_Last_Line (This);
-            Current_Cursor := File_Cursor (Get_Cursor (Last_Line.all));
-            Current_Cursor.Col :=
-              To_Column_Index
-                (Char_Index (Get_String (Last_Line.all)'Last),
-                 Get_String (Last_Line.all));
-         end if;
-      end if;
-
-      Current := Get_Line (This, Current_Cursor);
-
-      loop
-         if Current = null then
-            return Null_File_Cursor;
-         end if;
-
-         Result := File_Cursor (Search_Token
-           (Current.all,
-            Current_Cursor,
-            Searched,
-            Step));
-
-         if Result /= Null_File_Cursor then
-            --  ??? Do I really need this copy ???
-            Real_Result := Clone (Result);
-            Free (Result);
-            Real_Result.Line := Get_Cursor (Current.all).Line;
-
-            return Real_Result;
-         end if;
-
-         exit when Current = null;
-
-         case Step is
-            when Normal_Step =>
-               Current := Current.Next;
-               Current_Cursor.Col := 1;
-            when Reverse_Step =>
-               Current := Previous (This, Current);
-               Current_Cursor.Col := 0;
-         end case;
-
-      end loop;
-
-      return Null_File_Cursor;
-   end Search_Token;
-
-   --------------
-   -- Previous --
-   --------------
-
-   function Previous
-     (Container : Extract; Node : Ptr_Extract_Line) return Ptr_Extract_Line
-   is
-      Current : Ptr_Extract_Line := Container.First;
-   begin
-      if Current = Node then
-         return null;
-      end if;
-
-      while Current.Next /= Node loop
-         Current := Current.Next;
-
-         if Current = null then
-            Raise_Exception
-              (Codefix_Panic'Identity,
-               "Line unknowm in the specified extract");
-         end if;
-      end loop;
-
-      return Current;
-   end Previous;
-
-   --------------------
-   -- Get_First_Line --
-   --------------------
-
-   function Get_First_Line (This : Extract) return Ptr_Extract_Line is
-   begin
-      return This.First;
-   end Get_First_Line;
-
-   -------------------
-   -- Get_Last_Line --
-   -------------------
-
-   function Get_Last_Line (This : Extract) return Ptr_Extract_Line is
-      Result : Ptr_Extract_Line := This.First;
-   begin
-      while Result.Next /= null loop
-         Result := Result.Next;
-      end loop;
-
-      return Result;
-   end Get_Last_Line;
-
-   -------------------
-   -- Extend_Before --
-   -------------------
-
-   procedure Extend_Before
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Size         : Natural)
-   is
-      Null_Prev : Ptr_Extract_Line := null;
-   begin
-      Extend_Before (This.First, Null_Prev, Current_Text, Size);
-   end Extend_Before;
-
-   ------------------
-   -- Extend_After --
-   ------------------
-
-   procedure Extend_After
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Size         : Natural) is
-   begin
-      Extend_After (This.First, Current_Text, Size);
-   end Extend_After;
-
-   ------------
-   -- Reduce --
-   ------------
-
-   procedure Reduce
-     (This                    : in out Extract;
-      Size_Before, Size_After : Natural)
-   is
-      type Lines_Array is array (Natural range <>) of Ptr_Extract_Line;
-
-      procedure Delete_First;
-      --  ???
-
-      procedure Add_Last;
-      --  ???
-
-      Current_Line : Ptr_Extract_Line;
-      Lines        : Lines_Array (1 .. Size_Before);
-      Left_After   : Natural := 0;
-      Next_Line    : Ptr_Extract_Line;
-      Prev_Line    : Ptr_Extract_Line;
-
-      procedure Delete_First is
-      begin
-         Remove (Lines (1), Previous (This, Lines (1)), This);
-         Free (Lines (1).all);
-         Free (Lines (1));
-         Lines (1 .. Lines'Last - 1) := Lines (2 .. Lines'Last);
-         Lines (Lines'Last) := null;
-      end Delete_First;
-
-      procedure Add_Last is
-      begin
-         for J in Lines'Range loop
-            if Lines (J) = null then
-               Lines (J) := Current_Line;
-               return;
-            end if;
-         end loop;
-
-         Delete_First;
-         Lines (Lines'Last) := Current_Line;
-      end Add_Last;
-
-   begin
-      Current_Line := Get_First_Line (This);
-
-      while Current_Line /= null loop
-         Next_Line := Next (Current_Line.all);
-
-         if Current_Line.Coloration = False
-           or else Current_Line.Context = Original_Unit
-         then
-            if Left_After = 0 then
-               if Size_Before = 0 then
-                  Remove (Current_Line, Prev_Line, This);
-                  Free (Current_Line.all);
-                  Free (Current_Line);
-               else
-                  Prev_Line := Current_Line;
-                  Add_Last;
-               end if;
-            else
-               Prev_Line := Current_Line;
-               Left_After := Left_After - 1;
-            end if;
-         else
-            Prev_Line := Current_Line;
-            Left_After := Size_After;
-            Lines := (others => null);
-         end if;
-
-         Current_Line := Next_Line;
-      end loop;
-
-      if Left_After = 0 then
-         for J in Lines'Range loop
-            exit when Lines (J) = null;
-            Remove (Lines (J), Previous (This, Lines (J)), This);
-            Free (Lines (J).all);
-            Free (Lines (J));
-         end loop;
-      end if;
-   end Reduce;
 
    -----------
    -- Erase --
@@ -3426,126 +1788,6 @@ package body Codefix.Text_Manager is
       end if;
    end Comment;
 
-   ---------------------
-   -- Get_Files_Names --
-   ---------------------
-
-   function Get_Files_Names
-     (This : Extract; Size_Max : Natural := 0) return String
-   is
-      Previous     : GNATCOLL.VFS.Virtual_File;
-      Current_Line : Ptr_Extract_Line := Get_First_Line (This);
-      Result       : GNAT.Strings.String_Access;
-
-   begin
-      if Current_Line = null then
-         return "";
-      end if;
-
-      Previous := Get_File (Current_Line.Cursor);
-      Assign (Result, Full_Name (Previous).all);
-
-      while Current_Line /= null loop
-         if Previous /= Get_File (Current_Line.Cursor) then
-            Assign
-              (Result, Result.all & " / " &
-               Full_Name (Get_File (Current_Line.Cursor)).all);
-            Previous := Get_File (Current_Line.Cursor);
-         end if;
-         Current_Line := Current_Line.Next;
-      end loop;
-
-      declare
-         Result_Stack : constant String := Result.all;
-      begin
-         Free (Result);
-         if Size_Max > 0 and then Result_Stack'Length > Size_Max then
-            return Result_Stack
-              (Result_Stack'First .. Result_Stack'First + Size_Max)
-               & "...";
-         else
-            return Result_Stack;
-         end if;
-      end;
-   end Get_Files_Names;
-
-   ------------------
-   -- Get_Nb_Files --
-   ------------------
-
-   function Get_Nb_Files (This : Extract) return Natural is
-      Previous     : GNATCOLL.VFS.Virtual_File;
-      Current_Line : Ptr_Extract_Line := Get_First_Line (This);
-      Total        : Natural := 1;
-
-   begin
-      if Current_Line = null then
-         return 0;
-      end if;
-
-      Previous := Get_File (Current_Line.Cursor);
-
-      while Current_Line /= null loop
-         if Previous /= Get_File (Current_Line.Cursor) then
-            Total := Total + 1;
-            Previous := Get_File (Current_Line.Cursor);
-         end if;
-         Current_Line := Current_Line.Next;
-      end loop;
-
-      return Total;
-   end Get_Nb_Files;
-
-   ------------------------
-   -- Delete_Empty_Lines --
-   ------------------------
-
-   procedure Delete_Empty_Lines (This : in out Extract) is
-      Node : Ptr_Extract_Line := Get_First_Line (This);
-   begin
-      while Node /= null loop
-         if Is_Blank (Get_String (Node.all)) then
-            Node.Context := Unit_Deleted;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-   end Delete_Empty_Lines;
-
-   ------------------------
-   -- Get_Number_Actions --
-   ------------------------
-
-   function Get_Number_Actions (This : Extract) return Natural is
-      Line  : Ptr_Extract_Line := Get_First_Line (This);
-      Total : Natural := 0;
-   begin
-      while Line /= null loop
-         Total := Total + Get_Number_Actions (Line.all);
-         Line := Next (Line);
-      end loop;
-
-      return Total;
-   end Get_Number_Actions;
-
-   ----------
-   -- Undo --
-   ----------
-
-   procedure Undo
-     (This : Extract; Current_Text : Text_Navigator_Abstr'Class)
-   is
-      Line : Ptr_Extract_Line := Get_First_Line (This);
-   begin
-      while Line /= null loop
-         for J in 1 .. Get_Number_Actions (Line.all) loop
-            Undo (Current_Text, Get_File (Line.Cursor));
-         end loop;
-
-         Line := Line.Next;
-      end loop;
-   end Undo;
-
    ----------------------------------------------------------------------------
    --  type Text_Command
    ----------------------------------------------------------------------------
@@ -3586,27 +1828,10 @@ package body Codefix.Text_Manager is
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean;
       Error_Cb     : Execute_Corrupted := null)
    is
    begin
-      Execute (This, Current_Text, Success);
-   exception
-      when E : Codefix_Panic =>
-         if Error_Cb /= null then
-            Error (Error_Cb, Exception_Information (E));
-         end if;
-   end Secured_Execute;
-
-   procedure Secured_Execute
-     (This         : Text_Command'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class;
-      Error_Cb     : Execute_Corrupted := null) is
-   begin
-      Update_All (Current_Text);
-      Execute (This, Current_Text, New_Extract);
-
+      Execute (This, Current_Text);
    exception
       when E : Codefix_Panic =>
          if Error_Cb /= null then
@@ -3700,13 +1925,10 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Remove_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Word : Word_Cursor;
    begin
-      Success := True;
-
       Make_Word_Cursor (This.Word, Current_Text, Word);
 
       Current_Text.Replace
@@ -3717,16 +1939,6 @@ package body Codefix.Text_Manager is
       end if;
 
       Free (Word);
-   end Execute;
-
-   procedure Execute
-     (This         : Remove_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
    end Execute;
 
    ---------------------
@@ -3766,8 +1978,7 @@ package body Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Insert_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       New_Str         : GNAT.Strings.String_Access;
       Line_Cursor     : File_Cursor;
@@ -3777,8 +1988,6 @@ package body Codefix.Text_Manager is
       Word_Char_Index : Char_Index;
       Modified_Text   : Ptr_Text;
    begin
-      Success := True;
-
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Make_Word_Cursor (This.New_Position, Current_Text, New_Pos);
 
@@ -3846,16 +2055,6 @@ package body Codefix.Text_Manager is
       Free (Word);
    end Execute;
 
-   procedure Execute
-     (This         : Insert_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
-   end Execute;
-
    -------------------
    -- Move_Word_Cmd --
    -------------------
@@ -3885,22 +2084,11 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Move_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
    begin
-      This.Step_Insert.Execute (Current_Text, Success);
-      This.Step_Remove.Execute (Current_Text, Success);
-   end Execute;
-
-   procedure Execute
-     (This         : Move_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
+      This.Step_Insert.Execute (Current_Text);
+      This.Step_Remove.Execute (Current_Text);
    end Execute;
 
    ----------------------
@@ -3928,15 +2116,12 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Replace_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Word : Word_Cursor;
       Text         : Ptr_Text;
 
    begin
-      Success := True;
-
       Make_Word_Cursor (This.Mark, Current_Text, Current_Word);
 
       declare
@@ -3956,16 +2141,6 @@ package body Codefix.Text_Manager is
 
          Free (Current_Word);
       end;
-   end Execute;
-
-   procedure Execute
-     (This         : Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
    end Execute;
 
    ---------------------
@@ -3992,37 +2167,11 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Invert_Words_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
    begin
-      Execute (This.Step_Word1, Current_Text, Success);
-      Execute (This.Step_Word2, Current_Text, Success);
-   end Execute;
-
-   procedure Execute
-     (This         : Invert_Words_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      Extract1, Extract2 : Extract;
-      Success            : Boolean;
-   begin
-      Execute (This.Step_Word1, Current_Text, Extract1);
-      Execute (This.Step_Word2, Current_Text, Extract2);
-      Merge_Extracts
-        (New_Extract,
-         Extract1,
-         Extract2,
-         Success,
-         False);
-
-      if not Success then
-         raise Codefix_Panic;
-      end if;
-
-      Free (Extract1);
-      Free (Extract2);
+      Execute (This.Step_Word1, Current_Text);
+      Execute (This.Step_Word2, Current_Text);
    end Execute;
 
    -------------------
@@ -4048,25 +2197,13 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Add_Line_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Position.all);
    begin
-      Success := True;
       Current_Text.Get_File
         (This.Position.File_Name).Add_Line (Cursor, This.Line.all);
-   end Execute;
-
-   procedure Execute
-     (This         : Add_Line_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
    end Execute;
 
    ----------------------
@@ -4095,14 +2232,11 @@ package body Codefix.Text_Manager is
 
    procedure Execute
      (This         : Replace_Slice_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Start_Cursor, End_Cursor : File_Cursor;
       Modified_Text            : Ptr_Text;
    begin
-      Success := True;
-
       Start_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Start_Mark.all));
       End_Cursor := File_Cursor
@@ -4111,44 +2245,6 @@ package body Codefix.Text_Manager is
 
       Modified_Text.Replace (Start_Cursor, End_Cursor, This.New_Text.all);
    end Execute;
-
-   procedure Execute
-     (This         : Replace_Slice_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
-   is
-      pragma Unreferenced (This, Current_Text, New_Extract);
-   begin
-      null;
-   end Execute;
-
-   --------------------
-   -- Merge_Extracts --
-   --------------------
-
-   procedure Merge_Extracts
-     (Result              : out Extract'Class;
-      Object_1, Object_2  : Extract'Class;
-      Success             : out Boolean;
-      Chronologic_Changes : Boolean)
-   is
-      procedure Merge_Internal is new Generic_Merge
-        (Merge_Type     => Extract,
-         Merged_Unit    => Extract_Line,
-         Merge_Iterator => Ptr_Extract_Line,
-         First          => Get_First_Line,
-         Get_Merge_Info => Get_Context,
-         Set_Merge_Info => Set_Context,
-         Append         => Add_Element,
-         Merge_Units    => Merge_Lines);
-
-   begin
-      Merge_Internal
-        (Extract (Result),
-         Extract (Object_1), Extract (Object_2),
-         Success,
-         Chronologic_Changes);
-   end Merge_Extracts;
 
    ----------------
    -- Set_Kernel --
@@ -4257,17 +2353,6 @@ package body Codefix.Text_Manager is
    begin
       This.Col := Column;
    end Set_Column;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Line : in out Ptr_Extract_Line) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Extract_Line, Ptr_Extract_Line);
-   begin
-      Unchecked_Free (Line);
-   end Free;
 
    ------------------
    -- Set_Location --

@@ -28,8 +28,6 @@ with Projects.Registry;
 
 with Generic_List;
 
-with Codefix.Merge_Utils; use Codefix.Merge_Utils;
-
 package Codefix.Text_Manager is
 
    type Step_Way is (Normal_Step, Reverse_Step);
@@ -607,252 +605,6 @@ package Codefix.Text_Manager is
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
 
-   ----------------------------------------------------------------------------
-   --  type Extract_Line
-   ----------------------------------------------------------------------------
-
-   type Extract_Line is private;
-   type Ptr_Extract_Line is access all Extract_Line;
-
-   function "=" (Left, Right : Extract_Line) return Boolean;
-   --  Return True if both Extract_Lines are containing similar lines
-
-   function "<" (Left, Right : Ptr_Extract_Line) return Boolean;
-   --  Return True if Left is before Right
-
-   procedure Assign (This : in out Extract_Line; Value : Extract_Line);
-   --  Initialize information of This with clones of Value
-
-   function Get_Context (This : Extract_Line) return Merge_Info;
-   --  Return the context associated to an Extract_Line
-
-   procedure Set_Context (This : in out Extract_Line; Value : Merge_Info);
-   --  Set the context associated to an Extract_Line
-
-   function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line;
-   --  If the Extract_Line is a component of a list (typically, a list
-   --  contained in an extract), then Next returns the next entry of the list.
-
-   function Next (This : Extract_Line) return Ptr_Extract_Line;
-   --  If the Extract_Line is a component of a list (typically, a list
-   --  contained in an extract), then Next returns the next entry of the list.
-
-   function Get_String (This : Extract_Line) return String;
-   --  Returns the string memorized in an Extract_Line
-
-   function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
-   --  Return the cursor memorized in an Extract_Line
-
-   procedure Set_Indentation (This : in out Extract_Line; Value : Boolean);
-   --  Set wether we want to force identation on that line or not
-
-   procedure Commit
-     (This         : in out Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer);
-   --  Upate changes of the Extract_Line in the representation of the text. The
-   --  parameted Offset_Line counts the offset of inserted - delete lines of
-   --  the current commit.
-
-   procedure Free (This : in out Extract_Line);
-   --  Free the memory associated to an Extract_Line, and if this line is in
-   --  a list of line, free recursivly the whole list.
-
-   procedure Free_Data (This : in out Extract_Line);
-   --  Free the memory associated to an Extract line but do not free the lines
-   --  that can be connected to.
-
-   function Clone
-     (This      : Extract_Line;
-      Recursive : Boolean) return Extract_Line;
-   --  Clone an Extract_Line. Recursive True means that all the lines of the
-   --  extract that record this line are cloned.
-
-   function Clone (This : Extract_Line) return Extract_Line;
-   --  Same one as the previous but Recursive is consider as True
-
-   function Search_Token
-     (This     : Extract_Line;
-      Cursor   : File_Cursor'Class;
-      Searched : Token_Record;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
-   --  Search a token in the text and returns a cursor at the beginning. If
-   --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
-   --  the scan in initialized from the end of the content.
-
-   function Search_Tokens
-     (This     : Extract_Line;
-      Cursor   : File_Cursor'Class;
-      Searched : Token_List;
-      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
-   --  Search a token in the text and returns a cursor at the beginning. First
-   --  match is returned. If noting is found, then the cursor is Null_Cursor.
-   --  If Cursor.Col = 0, then the scan in initialized from the end of the
-   --  content.
-
-   procedure Get_Line
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract_Line);
-   --  Get a line from the position specified by the cursor
-
-   function Get_Old_Text
-     (This         : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class) return String;
-   --  Return the original content of the line
-
-   function Get_New_Text
-     (This : Extract_Line;
-      Detail : Boolean := True) return String;
-   --  Return the current content of the line
-
-   function Get_New_Text_Length
-     (This      : Extract_Line;
-      Recursive : Boolean := False) return Natural;
-   --  Return the length of the current text in the line
-
-   function Get_Old_Text_Length
-     (This      : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Recursive : Boolean := False) return Natural;
-   --  Return the length of the current text before modifications
-
-   procedure Extend_Before
-     (This          : in out Ptr_Extract_Line;
-      Prev          : in out Ptr_Extract_Line;
-      Current_Text  : Text_Navigator_Abstr'Class;
-      Size          : Natural);
-   --  Add to the extract size lines before each beginning of paragraph
-   --  recorded.
-
-   procedure Extend_After
-     (This          : in out Ptr_Extract_Line;
-      Current_Text  : Text_Navigator_Abstr'Class;
-      Size          : Natural);
-   --  Add to the extract size lines after each beginning of paragraph
-   --  recorded.
-
-   procedure Replace
-     (This       : in out Extract_Line;
-      Start      : Column_Index;
-      Len        : Natural;
-      New_String : String);
-   --  Replace 'len' characters from 'start' column with 'New_String'
-
-   procedure Replace_To_End
-     (This  : in out Extract_Line;
-      Start : Column_Index;
-      Value : String);
-   --  Replace by Value the characters from Start to the end of the line
-
-   procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
-   --  Set the boolean used to know if the line has to be colored in the window
-   --  or not.
-
-   function Get_Coloration (This : Extract_Line) return Boolean;
-   --  Return the boolean used to know if the line has to be colored in the
-   --  window or not.
-
-   function Get_Line
-     (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
-      return Ptr_Extract_Line;
-   --  If the line is referenced into an extract, this function search the
-   --  first line from this one which is at the position specified by the
-   --  cursor.
-
-   procedure Merge_Lines
-     (Result              : out Extract_Line;
-      Object_1, Object_2  : Extract_Line;
-      Success             : out Boolean;
-      Chronologic_Changes : Boolean);
-   --  Merge the two lines in result. See declartion of Generic_Merge in
-   --  Codefix.Merge_Utils for more details.
-
-   function Get_Number_Actions (This : Extract_Line) return Natural;
-   --  Return the number of actions that will be needed to commit the lines
-
-   ----------------------------------------------------------------------------
-   --  type Extract
-   ----------------------------------------------------------------------------
-
-   type Extract is tagged private;
-   --  An extract is a temporary object that contains a part of the source
-   --  code, modified or not. The modifications made in an extract do not have
-   --  any influence in the source code before the call of Update function.
-
-   type Ptr_Extract is access all Extract'Class;
-
-   procedure Free (This : in out Ptr_Extract);
-   --  Free the pointer and the memory associated to it
-
-   procedure Remove
-     (This, Prev : Ptr_Extract_Line; Container : in out Extract);
-   --  Remove the line This from the Container
-
-   procedure Add_Element
-     (This, Previous, Element : Ptr_Extract_Line;
-      Container               : in out Extract);
-   --  Add a new line in the line list. The line is always disposed in order
-   --  to preserve the internal order of the lines, not just at the end of the
-   --  list. If a line that already exisis is tried to be added, it is just
-   --  ignored.
-
-   procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line);
-   --  Add a new line in the line list. The line is always disposed in order
-   --  to preserve the internal order of the lines, not just at the end of the
-   --  list.
-
-   procedure Add_Element (This : in out Extract; Element : Extract_Line);
-   --  Add a new line in the line list. The line is always disposed in order
-   --  to preserve the internal order of the lines, not just at the end of the
-   --  list.
-
-   procedure Set_Indentation (This : in out Extract; Value : Boolean);
-   --  Set wether we want to force identation on the modified lines of the
-   --  extract
-
-   function Clone (This : Extract) return Extract;
-   --  Duplicate all informations associated to an extract, specially
-   --  information referenced in pools.
-
-   procedure Assign (This : in out Extract'Class; Source : Extract'Class);
-   --  Initiqlize all fields of This by clones from source
-
-   procedure Get
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Len         : Natural;
-      Destination : in out Extract);
-   --  Put un Destination Len characterts got from the position and the file
-   --  specified by the cursor.
-
-   procedure Get_Line
-     (This        : Text_Navigator_Abstr'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract);
-   --  Put in Destination a line from the position specified by the cursor to
-   --  the end of the line.
-
-   function Get_String (This : Extract; Position : Natural := 1) return String;
-   --  Get the string of the line of an extract. Strings are ordonned in the
-   --  order where they are recorded.
-
-   procedure Replace
-     (This          : in out Extract;
-      Start         : Column_Index;
-      Length        : Natural;
-      Value         : String;
-      Line_Number   : Natural := 1);
-   --  Replace 'len' characters from 'start' column and 'line_number' line
-   --  with 'Value'.
-
-   procedure Replace
-     (This   : in out Extract;
-      Start  : File_Cursor'Class;
-      Length : Natural;
-      Value  : String);
-   --  Replace 'len' characters from 'start' column with 'Value'.
-
    type Replace_Blanks_Policy is (Keep, One, None);
 
    procedure Replace
@@ -865,180 +617,6 @@ package Codefix.Text_Manager is
    --  to Source_End. If Blank_pos is None, blanks will be removed, if it's
    --  One, only one blank will be put. At the end of the process, Dest_Start
    --  and Dest_Stop are updated with the new positions.
-
-   procedure Commit
-     (This         : Extract;
-      Current_Text : in out Text_Navigator_Abstr'Class);
-   --  Upate changes of the Extract_Line in the representation of the text
-
-   procedure Replace_Word
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      New_String   : String;
-      Old_String   : String;
-      Format_Old   : String_Mode := Text_Ascii);
-   --  Replace a word by another in the extract
-
-   procedure Replace_Word
-     (This         : in out Extract;
-      Cursor       : File_Cursor'Class;
-      New_String   : String;
-      Old_Length   : Natural);
-   --  Replace a word by another in the extract
-
-   procedure Add_Word
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class;
-      Word   : String);
-   --  Add a word at the position specified by the cursor. Check if it needs
-   --  a space before or after, and add it.
-
-   function Get_Word_Length
-     (This   : Extract;
-      Cursor : File_Cursor'Class;
-      Format : String) return Natural;
-   --  Get the length of a word what begins at the position specified by the
-   --  cursor.
-
-   procedure Free (This : in out Extract);
-   --  Free the memory associated to an Extract
-
-   procedure Free_Data (This : in out Extract'Class);
-   --  Free the memory associated to an Extract
-
-   function Get_Line
-     (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
-   --  Return the line with the number specified in the original text
-
-   function Get_Record
-     (This : Extract; Number : Natural) return Ptr_Extract_Line;
-   --  Return the line recorded at the position Number in the extract
-
-   function Get_Number_Lines (This : Extract) return Natural;
-   --  Return the number of the lines in the extract
-
-   procedure Add_Line
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class;
-      Text   : String;
-      Indent : Boolean := False);
-   --  Add a line AFTER the line specified by the cursor.
-   --  Make a cursor with 0 for the line number to add a line at the beginning
-   --  of the file.
-
-   procedure Delete_Line
-     (This   : in out Extract;
-      Cursor : File_Cursor'Class);
-   --  Delete the line of the extract at the line number and in the file
-   --  specified by the cursor.
-
-   procedure Delete_All_Lines (This : in out Extract);
-   --  Delete all the lines from the extract
-
-   procedure Get_Entity
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class);
-   --  Add in the Extract lines of the Entity witch begins at the position
-   --  specified by the cursor (if it is a spec, the body is also got).
-
-   function Search_Token
-     (This     : Extract;
-      Searched : Token_Record;
-      Cursor   : File_Cursor'Class := Null_File_Cursor;
-      Step     : Step_Way := Normal_Step) return File_Cursor'Class;
-   --  Search a string in the text and returns a cursor at the beginning. If
-   --  noting is found, then the cursor is Null_Cursor. If Cursor is
-   --  Null_File_Cursor,then the research will begin at the begenning of the
-   --  extract if Step is Normal_Step or at the end of the extract if Step is
-   --  Reverse_Step.
-
-   function Get_Old_Text
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Lines_Before : Natural := 0;
-      Lines_After  : Natural := 0) return String;
-   --  Return the original text contained in the extract. EOL_Str is used to
-   --  make a new line.
-
-   function Get_New_Text
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Lines_Before : Natural := 0;
-      Lines_After  : Natural := 0) return String;
-   --  Return the current form of the text contained in the extract. EOL_Str
-   --  is used to make a new line.
-
-   function Get_New_Text (This : Extract) return String;
-   --  Return the current form of the text contained in the extract. EOL_Str
-   --  is used to make a new line.
-
-   function Get_New_Text_Length (This : Extract) return Natural;
-   --  Return the length of the current text in the extract
-
-   function Get_Old_Text_Length
-     (This : Extract;
-      Current_Text : Text_Navigator_Abstr'Class) return Natural;
-   --  Return the length of the current text before modifications
-
-   function Get_First_Line (This : Extract) return Ptr_Extract_Line;
-   --  Return the first line recored in an extract.
-
-   function Get_Last_Line (This : Extract) return Ptr_Extract_Line;
-   --  Return the last line recorded in an extract
-
-   procedure Extend_Before
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Size         : Natural);
-   --  Add to the extract size lines before each beginning of paragraph
-   --  recorded.
-
-   procedure Extend_After
-     (This         : in out Extract;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Size         : Natural);
-   --  Add to the extract size lines after each beginning of paragraph
-   --  recorded.
-
-   procedure Reduce
-     (This                    : in out Extract;
-      Size_Before, Size_After : Natural);
-   --  Reduce the number of non-modified lines before and after each paragraph.
-
-   function Get_Files_Names
-     (This     : Extract;
-      Size_Max : Natural := 0) return String;
-   --  Return a string containing all the files names of the extract separate
-   --  by '/'. If Size_Max /= 0, then the String returned cannot be bigger than
-   --  Size_Max + 3.
-
-   function Get_Nb_Files (This : Extract) return Natural;
-   --  Return the number of different files names contained in the extract
-
-   function Data (This : Ptr_Extract_Line) return Extract_Line;
-   --  Return the object pointed by This
-
-   function Is_Null (This : Ptr_Extract_Line) return Boolean;
-   --  Return True if This doesn't references any object
-
-   procedure Merge_Extracts
-     (Result              : out Extract'Class;
-      Object_1, Object_2  : Extract'Class;
-      Success             : out Boolean;
-      Chronologic_Changes : Boolean);
-   --  Merge the two extracts in result. See declartion of Generic_Merge in
-   --  Codefix.Merge_Utils for more details.
-
-   procedure Delete_Empty_Lines (This : in out Extract);
-   --  Delete all lines that are composed only by blanks characters
-
-   function Get_Number_Actions (This : Extract) return Natural;
-   --  Returns the number of actions that have been made in the extract
-   --  during his commit.
-
-   procedure Undo (This : Extract; Current_Text : Text_Navigator_Abstr'Class);
-   --  Undo each changes that have been made into the extract
 
    ----------------------------------------------------------------------------
    --  type Text_Command
@@ -1072,21 +650,9 @@ package Codefix.Text_Manager is
 
    procedure Execute
      (This         : Text_Command;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean) is null;
+      Current_Text : in out Text_Navigator_Abstr'Class) is null;
    --  New version of Execute. Reset success to True if the command is in the
    --  new kind, false if the old execute has still to be called.
-   --  ??? The success parameter will be removed once the transition out of the
-   --  extract model is done (see H716-013).
-
-   procedure Execute
-     (This         : Text_Command;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class) is abstract;
-   --  Execute a command, and create an extract to preview the changes. This
-   --  procedure raises a Codefix_Panic is the correction is no longer avaible.
-   --  ??? This will be removed removed once the transition out of the
-   --  extract model is done (see H716-013).
 
    type Execute_Corrupted_Record is abstract tagged null record;
 
@@ -1101,22 +667,8 @@ package Codefix.Text_Manager is
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean;
       Error_Cb     : Execute_Corrupted := null);
    --  Same as execute, but catches exception (and calls the Error_Cb if any);
-   --  ??? The success parameter will be removed once the transition out of the
-   --  extract model is done (see H716-013).
-
-   procedure Secured_Execute
-     (This         : Text_Command'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class;
-      Error_Cb     : Execute_Corrupted := null);
-   --  Same as the previous one, but when problems happend no exception is
-   --  raised but Error_Cb is called. This function also
-   --  updates the current text, in order to be conformant with user's changes,
-   --  ??? This will be removed removed once the transition out of the
-   --  extract model is done (see H716-013).
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command
@@ -1151,13 +703,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Remove_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-   overriding
-   procedure Execute
-     (This         : Remove_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word removed
 
    ---------------------
@@ -1183,14 +729,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Insert_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Insert_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word inserted
 
    --------------------
@@ -1214,13 +753,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Move_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-   overriding
-   procedure Execute
-     (This         : Move_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word moved
 
    ----------------------
@@ -1244,14 +777,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Replace_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Replace_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word replaced
 
    ----------------------
@@ -1273,14 +799,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Invert_Words_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Invert_Words_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion of the two word
 
    ------------------
@@ -1303,14 +822,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Add_Line_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Add_Line_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion add of the line
 
    -----------------------
@@ -1333,14 +845,7 @@ package Codefix.Text_Manager is
    overriding
    procedure Execute
      (This         : Replace_Slice_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Replace_Slice_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the slice removed
 
 private
@@ -1419,57 +924,6 @@ private
    procedure Update_Structure_If_Needed (This : access Text_Interface'Class);
    --  Update the constructs and the tree store if there have been changes
    --  since the last computation
-
-   ----------------------------------------------------------------------------
-   --  type Extract_Line
-   ----------------------------------------------------------------------------
-
-   type Extract_Line is record
-      Context         : Merge_Info := Original_Unit;
-
-      Cursor          : File_Cursor;
-      --  This cursor specify the position where the line begins
-
-      Original_Length : Natural := 0;
-      Content         : Mergable_String;
-      Next            : Ptr_Extract_Line;
-      Coloration      : Boolean := False;
-
-      Do_Indentation  : Boolean := False;
-   end record;
-
-   procedure Get
-     (This        : Text_Interface'Class;
-      Cursor      : File_Cursor'Class;
-      Len         : Natural;
-      Destination : in out Extract_Line);
-
-   procedure Get_Line
-     (This        : Text_Interface'Class;
-      Cursor      : File_Cursor'Class;
-      Destination : in out Extract_Line);
-
-   procedure Free (Line : in out Ptr_Extract_Line);
-   --  Free the memory associated with the line
-
-   ----------------------------------------------------------------------------
-   --  type Extract
-   ----------------------------------------------------------------------------
-
-   type Extract is tagged record
-      First : Ptr_Extract_Line;
-   end record;
-
-   function Get_Word_Length
-     (This   : Extract_Line;
-      Col    : Column_Index;
-      Format : String)
-     return Natural;
-
-   function Length (This : Extract_Line) return Natural;
-
-   function Previous (Container : Extract; Node : Ptr_Extract_Line)
-     return Ptr_Extract_Line;
 
    ----------------------------------------------------------------------------
    --  type Text_Command

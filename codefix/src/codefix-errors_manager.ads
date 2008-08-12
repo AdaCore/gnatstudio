@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -142,7 +142,6 @@ private
       Solutions       : Solution_List := Null_Solution_List;
       Category        : GNAT.Strings.String_Access;
       Fixed           : Ptr_Boolean := new Boolean'(False);
-      Solution_Chosen : Ptr_Extract := new Extract;
    end record;
 
    procedure Free (This : in out Error_Id_Record);

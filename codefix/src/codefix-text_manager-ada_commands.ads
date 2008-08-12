@@ -40,14 +40,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Recase_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Recase_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word recased.
 
    overriding
@@ -69,14 +62,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Remove_Instruction_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Remove_Instruction_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the remove of the instruction.
 
    overriding
@@ -105,14 +91,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Remove_Elements_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Remove_Elements_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with all the elements removed.
 
    overriding
@@ -141,14 +120,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Remove_Pkg_Clauses_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the remove of the package clauses.
 
    overriding
@@ -171,14 +143,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Remove_Entity_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Remove_Entity_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the remove of the entity.
 
    overriding
@@ -201,14 +166,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Add_Pragma_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Add_Pragma_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the addition of the pragma.
 
    overriding
@@ -231,14 +189,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Make_Constant_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Make_Constant_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the making of the constant.
 
    overriding
@@ -260,14 +211,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Remove_Parenthesis_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an Extract with the remove of the conversion.
 
    overriding
@@ -292,14 +236,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Paste_Profile_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Paste_Profile_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the profile source pasted in the profile
    --  Destination.
 
@@ -338,14 +275,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Get_Visible_Declaration_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the declaration made visible.
 
    overriding
@@ -368,14 +298,7 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Execute
      (This         : Replace_Code_By_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Success      : in out Boolean);
-
-   overriding
-   procedure Execute
-     (This         : Replace_Code_By_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class);
+      Current_Text : in out Text_Navigator_Abstr'Class);
 
    overriding
    procedure Free (This : in out Replace_Code_By_Cmd);

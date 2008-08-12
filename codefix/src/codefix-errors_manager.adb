@@ -85,7 +85,6 @@ package body Codefix.Errors_Manager is
       Codefix.Formal_Errors.Free_List (This.Solutions);
       Free (This.Category);
       Free (This.Fixed);
-      Free (This.Solution_Chosen);
    end Free;
 
    --------------
@@ -113,9 +112,7 @@ package body Codefix.Errors_Manager is
    procedure Undo
      (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class) is
    begin
-      Undo (Data (This).Solution_Chosen.all, Current_Text);
-      Data (This).Fixed.all := False;
-      Free (Data (This).Solution_Chosen.all);
+      null;
    end Undo;
 
    -------------
@@ -229,17 +226,13 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Natural)
    is
-      New_Extract : Extract;
    begin
       Secured_Execute
         (Get_Command (Get_Solutions (Error), Choice),
          Current_Text,
-         New_Extract,
          This.Error_Cb);
-      Commit (New_Extract, Current_Text);
 
       Data (Error).Fixed.all := True;
-      Extract (Data (Error).Solution_Chosen.all) := New_Extract;
    end Validate_And_Commit;
 
    -------------------------
@@ -252,27 +245,13 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Text_Command'Class)
    is
-      New_Extract : Extract;
-      Success     : Boolean := False;
    begin
-      --  ??? While we are transitionning out of the extract model, we first
-      --  try to call the new version of Secure_Execute and then call the old
-      --  one if it fails (i.e. the migration has not been done for that
-      --  command). (see H716-013).
-      Choice.Secured_Execute (Current_Text, Success, This.Error_Cb);
-
-      if Success = False then
-         Secured_Execute
-           (Choice,
-            Current_Text,
-            New_Extract,
-            This.Error_Cb);
-
-         Commit (New_Extract, Current_Text);
-      end if;
+      Secured_Execute
+        (Choice,
+         Current_Text,
+         This.Error_Cb);
 
       Data (Error).Fixed.all := True;
-      Extract (Data (Error).Solution_Chosen.all) := New_Extract;
    end Validate_And_Commit;
 
    ----------
