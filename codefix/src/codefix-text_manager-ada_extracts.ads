@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007, AdaCore              --
+--                     Copyright (C) 2002-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +38,7 @@ package Codefix.Text_Manager.Ada_Extracts is
       (Kind => Keyword_Text, Name => new String'("then")),
       (Kind => Keyword_Text, Name => new String'("loop")));
 
-   type Ada_Instruction is new Extract with private;
+   type Ada_Instruction is tagged private;
    --  This type represents an Ada instruction, or a part of an
    --  ada instructions.
 
@@ -62,16 +62,24 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Duplicate all informations associated to an extract, specially
    --  information referenced in pools.
 
-   procedure Remove_Instruction (This : in out Ada_Instruction);
+   procedure Remove_Instruction
+     (This : in out Ada_Instruction;
+      Text_Nav : in out Text_Navigator_Abstr'Class);
    --  Delete the instruction recored in This.
 
-   procedure Comment_Instruction (This : in out Ada_Instruction);
+   procedure Comment_Instruction
+     (This : in out Ada_Instruction;
+      Text_Nav : in out Text_Navigator_Abstr'Class);
    --  Comment the instruction recorded in This.
 
-   function Get_Start (This : Ada_Instruction) return File_Cursor;
+   function Get_Start
+     (This     : Ada_Instruction;
+      Text_Nav : Text_Navigator_Abstr'Class) return File_Cursor;
    --  Return the cursor stands at the beginning of the instruction/
 
-   function Get_Stop (This : Ada_Instruction) return File_Cursor;
+   function Get_Stop
+     (This     : Ada_Instruction;
+      Text_Nav : Text_Navigator_Abstr'Class) return File_Cursor;
    --  Return the cursors stands at the end of the instruction.
 
    ----------------------------------------------------------------------------
@@ -98,6 +106,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
+      Text_Nav     : in out Text_Navigator_Abstr'Class;
       New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : Natural;
@@ -108,6 +117,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
+      Text_Nav     : in out Text_Navigator_Abstr'Class;
       New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : String;
@@ -123,17 +133,19 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Return the number of entities actually declared in this list.
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode : Remove_Code_Mode;
-      First : Natural; Last : Natural := 0);
+     (This     : in out Ada_List;
+      Text_Nav : in out Text_Navigator_Abstr'Class;
+      Mode     : Remove_Code_Mode;
+      First    : Natural; Last : Natural := 0);
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode  : Remove_Code_Mode;
-      First : String;
-      Last : String := "");
+     (This     : in out Ada_List;
+      Text_Nav : in out Text_Navigator_Abstr'Class;
+      Mode     : Remove_Code_Mode;
+      First    : String;
+      Last     : String := "");
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
@@ -144,12 +156,12 @@ private
 
    function Is_Comment (Line : String) return Boolean;
 
-   type Ada_Instruction is new Extract with record
-      Start, Stop : File_Cursor;
+   type Ada_Instruction is tagged record
+      Start, Stop : Ptr_Mark;
    end record;
 
    type Token_Record is record
-      Line                  : Ptr_Extract_Line;
+      Line                  : File_Cursor;
       First_Char, Last_Char : Char_Index := 0;
       Content               : GNAT.Strings.String_Access;
    end record;
@@ -163,6 +175,7 @@ private
 
    procedure Get_Text_Slice
      (This                     : Ada_List;
+      Current_Text             : Text_Navigator_Abstr'Class;
       Start_Index, End_Index   : Integer;
       Start_Cursor, End_Cursor : out File_Cursor);
    --  Return a slice of text according to two token indexes.

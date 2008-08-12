@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
@@ -25,7 +24,7 @@ with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with String_Utils;                      use String_Utils;
 with Language.Ada;                      use Language.Ada;
-with GNATCOLL.VFS;                               use GNATCOLL.VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
@@ -54,9 +53,9 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Recase_Word_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class) is
-
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
+   is
       function To_Correct_Case (Str : String) return String;
       --  Return the string after having re-cased it (with Word_Case).
 
@@ -86,45 +85,48 @@ package body Codefix.Text_Manager.Ada_Commands is
          return New_String;
       end To_Correct_Case;
 
-      Cursor_Line  : File_Cursor;
-      Word_Matcher : constant Pattern_Matcher := Compile ("([\w]+)");
-      Cursor       : File_Cursor;
-      Matches      : Match_Array (0 .. 1);
-      Size         : Integer;
-      Line         : GNAT.Strings.String_Access;
-      Word_Chosen  : GNAT.Strings.String_Access;
-
+      Word   : Word_Cursor;
+      Cursor : File_Cursor;
    begin
+      Success := True;
+
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
-      Cursor_Line := Cursor;
+      Word :=
+        (Cursor with
+         String_Match => new String'("([\w]+)"), Mode => Regular_Expression);
 
-      Cursor_Line.Col := 1;
-      Get_Line (Current_Text, Cursor_Line, New_Extract);
-      Assign (Line, Get_String (New_Extract));
-      Match
-        (Word_Matcher,
-         Line (Natural (To_Char_Index (Cursor.Col, Line.all)) .. Line'Length),
-         Matches);
+      declare
+         Miscased_Word : constant String :=
+           Word.Get_Matching_Word (Current_Text);
+      begin
+         if This.Correct_Word.all /= "" then
+            Current_Text.Replace
+              (Cursor,
+               Miscased_Word'Length,
+               This.Correct_Word.all
+                 (This.Correct_Word.all'Last - Miscased_Word'Length + 1
+                  .. This.Correct_Word.all'Last));
+         else
+            Current_Text.Replace
+              (Cursor,
+               Miscased_Word'Length,
+               To_Correct_Case (Miscased_Word));
+         end if;
+      end;
 
-      Size := Matches (1).Last - Matches (1).First + 1;
-
-      if This.Correct_Word.all /= "" then
-         Word_Chosen := Clone (This.Correct_Word);
-      else
-         Word_Chosen := new String'
-           (To_Correct_Case (Line (Matches (1).First .. Matches (1).Last)));
-      end if;
-
-      Replace_Word
-        (New_Extract,
-         Cursor,
-         Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last),
-         Size);
-
-      Free (Word_Chosen);
-      Free (Line);
+      Free (Word);
       Free (Cursor);
+   end Execute;
+
+   procedure Execute
+     (This         : Recase_Word_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      pragma Unreferenced (This, Current_Text, New_Extract);
+   begin
+      null;
    end Execute;
 
    ----------
@@ -159,17 +161,27 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Remove_Instruction_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Start_Instruction : constant File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Begin_Mark.all));
       Instruction       : Ada_Instruction;
    begin
+      Success := True;
+
       Get_Unit (Current_Text, Start_Instruction, Instruction);
-      Remove_Instruction (Instruction);
-      Assign (New_Extract, Instruction);
+      Remove_Instruction (Instruction, Current_Text);
       Free (Instruction);
+   end Execute;
+
+   procedure Execute
+     (This         : Remove_Instruction_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -216,91 +228,38 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Remove_Elements_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
-      Remove_Extracts : Ada_Lists.List;
-      Current_Cursor  : Word_Cursor;
-      Current_Word    : Mark_List.List_Node;
-      Current_Extract : Ada_Lists.List_Node;
-      Already_Loaded  : Boolean;
-      Merge_Success   : Boolean;
-
+      Current_Cursor : Word_Cursor;
+      Current_Word   : Mark_List.List_Node;
    begin
+      Success := True;
+
       Current_Word := First (This.Remove_List);
 
       while Current_Word /= Mark_List.Null_Node loop
          Make_Word_Cursor (Data (Current_Word), Current_Text, Current_Cursor);
-         Current_Extract := First (Remove_Extracts);
-         Already_Loaded := False;
 
-         while Current_Extract /= Ada_Lists.Null_Node loop
-            declare
-               Extract_Temp : Ada_List;
-               Test_Cursor  : constant File_Cursor :=
-                 File_Cursor (Current_Cursor);
-            begin
-               if Test_Cursor >= Get_Start (Data (Current_Extract))
-                 and then Test_Cursor <= Get_Stop (Data (Current_Extract))
-               then
-                  Extract_Temp := Clone (Data (Current_Extract));
-                  Remove_Elements
-                    (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
-                  Set_Data (Current_Extract, Extract_Temp);
-                  Already_Loaded := True;
-                  exit;
-               end if;
-
-               Current_Extract := Next (Current_Extract);
-            end;
-         end loop;
-
-         if not Already_Loaded then
-            declare
-               Extract_Temp : Ada_List;
-            begin
-               Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-               Remove_Elements
-                 (Extract_Temp, This.Mode, Current_Cursor.String_Match.all);
-               Append (Remove_Extracts, Extract_Temp);
-            end;
-         end if;
-
-         Already_Loaded := False;
-
-         Free (Current_Cursor);
-         Current_Word := Next (Current_Word);
-      end loop;
-
-      Current_Extract := First (Remove_Extracts);
-
-      while Current_Extract /= Ada_Lists.Null_Node loop
          declare
-            pragma Warnings (Off, New_Extract);
-            Extract_Temp : Extract := Extract (New_Extract);
-            --  New_Extract has not been initializated on the first
-            --  iteration, so what is this supposed to do ???
-            --  Disable clever GNAT warning for now, to be revisited.
-
+            Extract_Temp : Ada_List;
          begin
-            Merge_Extracts
-              (New_Extract,
-               Extract_Temp,
-               Data (Current_Extract),
-               Merge_Success,
-               False);
-            Free (Extract_Temp);
-            --  Is it really safe to call Free here ???
+            Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
+            Remove_Elements
+              (Extract_Temp, Current_Text,
+               This.Mode, Current_Cursor.String_Match.all);
          end;
 
-         if not Merge_Success then
-            raise Codefix_Panic;
-         end if;
-
-         Current_Extract := Next (Current_Extract);
+         Current_Word := Next (Current_Word);
       end loop;
+   end Execute;
 
-      Free (Remove_Extracts);
+   procedure Execute
+     (This         : Remove_Elements_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class) is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -426,35 +385,20 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
-      Instr_Extract, Clauses_Extract : Extract;
-      Success                        : Boolean;
-      Node                           : String_List.List_Node;
-      Last_With                      : File_Cursor;
+      Node      : String_List.List_Node;
+      Last_With : File_Cursor;
    begin
+      Success := True;
+
       if This.Is_Instantiation then
-         Execute (This.Instantiation_Pkg, Current_Text, Instr_Extract);
-         Execute (This.Clauses_Pkg, Current_Text, Clauses_Extract);
-         Merge_Extracts
-           (New_Extract,
-            Instr_Extract,
-            Clauses_Extract,
-            Success,
-            False);
-
-         if not Success then
-            raise Codefix_Panic;
-         end if;
-
-         Free (Instr_Extract);
-         Free (Clauses_Extract);
+         Execute (This.Instantiation_Pkg, Current_Text, Success);
+         Execute (This.Clauses_Pkg, Current_Text, Success);
       else
-         Execute (This.Clauses_Pkg, Current_Text, New_Extract);
+         Execute (This.Clauses_Pkg, Current_Text, Success);
       end if;
-
-      Delete_Empty_Lines (New_Extract);
 
       if This.Last_With /= null then
 
@@ -464,12 +408,21 @@ package body Codefix.Text_Manager.Ada_Commands is
            (Get_Current_Cursor (Current_Text, This.Last_With.all));
 
          while Node /= String_List.Null_Node loop
-            Add_Line (New_Extract, Last_With, Data (Node).all);
+            Current_Text.Add_Line (Last_With, Data (Node).all);
             Node := Next (Node);
          end loop;
 
          Free (Last_With);
       end if;
+   end Execute;
+
+   procedure Execute
+     (This         : Remove_Pkg_Clauses_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -533,34 +486,35 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Remove_Entity_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
+      Text : Ptr_Text;
       Spec_Begin, Spec_End       : File_Cursor;
       Body_Begin, Body_End       : File_Cursor;
       Line_Cursor                : File_Cursor;
-      Spec_Extract, Body_Extract : Extract;
-      Success_Merge              : Boolean;
-
    begin
+      Success := True;
+
       Body_Begin := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Body_Begin.all));
       Body_End := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Body_End.all));
 
+      Text := Current_Text.Get_File (Body_Begin.File);
+
       Line_Cursor := Body_Begin;
       Line_Cursor.Col := 1;
 
       while Line_Cursor.Line <= Body_End.Line loop
-         Get_Line (Current_Text, Line_Cursor, Body_Extract);
          Line_Cursor.Line := Line_Cursor.Line + 1;
       end loop;
 
       case This.Mode is
          when Erase =>
-            Erase (Body_Extract, Body_Begin, Body_End);
+            Text.Erase (Body_Begin, Body_End);
          when Comment =>
-            Comment (Body_Extract, Body_Begin, Body_End);
+            Text.Comment (Body_Begin, Body_End);
       end case;
 
       if This.Spec_Begin /= null then
@@ -573,38 +527,29 @@ package body Codefix.Text_Manager.Ada_Commands is
          Line_Cursor.Col := 1;
 
          while Line_Cursor.Line <= Spec_End.Line loop
-            Get_Line (Current_Text, Line_Cursor, Spec_Extract);
             Line_Cursor.Line := Line_Cursor.Line + 1;
          end loop;
 
          case This.Mode is
             when Erase =>
-               Erase (Spec_Extract, Spec_Begin, Spec_End);
+               Text.Erase (Spec_Begin, Spec_End);
             when Comment =>
-               Comment (Spec_Extract, Spec_Begin, Spec_End);
+               Text.Comment (Spec_Begin, Spec_End);
          end case;
-
-         Merge_Extracts
-           (New_Extract,
-            Spec_Extract,
-            Body_Extract,
-            Success_Merge,
-            False);
-
-         if not Success_Merge then
-            raise Codefix_Panic;
-         end if;
-
-         Free (Spec_Extract);
-         Free (Body_Extract);
-      else
-         Extract (New_Extract) := Body_Extract;
       end if;
 
       Free (Spec_Begin);
       Free (Spec_End);
       Free (Body_Begin);
       Free (Body_End);
+   end Execute;
+
+   procedure Execute
+     (This         : Remove_Entity_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class) is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -644,14 +589,16 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Add_Pragma_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Position      : File_Cursor;
       Pragma_Cursor : File_Cursor;
       Line_Cursor   : File_Cursor;
       Next_Str      : GNAT.Strings.String_Access;
    begin
+      Success := True;
+
       Position := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
 
@@ -671,22 +618,29 @@ package body Codefix.Text_Manager.Ada_Commands is
                  (Current_Text, Pragma_Cursor, Close_Paren_Tok));
             Line_Cursor := Pragma_Cursor;
             Line_Cursor.Col := 1;
-            Get_Line (Current_Text, Line_Cursor, New_Extract);
-            Replace
-              (New_Extract, Pragma_Cursor, 1, ", " & This.Argument.all & ")");
+            Current_Text.Replace
+              (Pragma_Cursor, 1, ", " & This.Argument.all & ")");
             Free (Line_Cursor);
          end if;
 
       else
-         Add_Line
-           (New_Extract,
-            Position,
+         Current_Text.Add_Line
+           (Position,
             "pragma " & This.Name.all & " (" & This.Argument.all & ");",
             True);
       end if;
 
       Free (Next_Str);
       Free (Position);
+   end Execute;
+
+   procedure Execute
+     (This         : Add_Pragma_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -724,8 +678,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Make_Constant_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Cursor        : File_Cursor;
       Work_Extract  : Ada_List;
@@ -733,38 +687,46 @@ package body Codefix.Text_Manager.Ada_Commands is
       Col_Decl      : Natural;
 
    begin
+      Success := True;
+
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
       Get_Unit (Current_Text, Cursor, Work_Extract);
 
       if Get_Number_Of_Declarations (Work_Extract) = 1 then
-         Replace_Word
-           (Work_Extract,
-            Search_Token (Work_Extract, Semicolon_Tok),
-            ": constant",
-            ":");
+         Current_Text.Replace
+           (Current_Text.Search_Token (Cursor, Semicolon_Tok),
+            1,
+            ": constant");
       else
          Cut_Off_Elements
-           (Work_Extract, New_Instr, Current_Text, This.Name.all);
+           (Work_Extract, Current_Text,
+            New_Instr, Current_Text, This.Name.all);
 
          Col_Decl := New_Instr'First;
          Skip_To_Char (New_Instr.all, Col_Decl, ':');
 
          Assign
            (New_Instr,
-            New_Instr (New_Instr'First .. Col_Decl) & " constant" &
-              New_Instr (Col_Decl + 1 .. New_Instr'Last));
+            New_Instr (New_Instr'First .. Col_Decl) & " constant"
+            & New_Instr (Col_Decl + 1 .. New_Instr'Last));
 
-         Add_Line
-           (Work_Extract, Get_Stop (Work_Extract), New_Instr.all, True);
+         Current_Text.Add_Line
+           (Work_Extract.Get_Stop (Current_Text), New_Instr.all, True);
 
          Free (New_Instr);
       end if;
 
-      Assign (New_Extract, Work_Extract);
-
       Free (Work_Extract);
       Free (Cursor);
+   end Execute;
+
+   procedure Execute
+     (This         : Make_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class) is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -799,15 +761,15 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
-      procedure Right_Paren (Current_Index : in out Char_Index);
+      procedure Right_Paren
+        (Current_Index : in out Char_Index; Line_Cursor : File_Cursor);
       --  Put Current_Index extactly on the right paren correponding the last
       --  left paren.
 
       Work_Extract  : Ada_Instruction;
-      Current_Line  : Ptr_Extract_Line;
       Cursor        : File_Cursor;
       Line_Cursor   : File_Cursor;
       Current_Index : Char_Index := 1;
@@ -816,60 +778,76 @@ package body Codefix.Text_Manager.Ada_Commands is
       -- Right_Paren --
       -----------------
 
-      procedure Right_Paren (Current_Index : in out Char_Index) is
+      procedure Right_Paren
+        (Current_Index : in out Char_Index; Line_Cursor : File_Cursor)
+      is
+         Local_Cursor : File_Cursor := Line_Cursor;
       begin
          loop
-            if Natural (Current_Index)
-              > Get_String (Current_Line.all)'Last
-            then
-               Current_Index := 1;
-               Current_Line := Next (Current_Line.all);
-            end if;
+            declare
+               Local_Line : constant String :=
+                 Current_Text.Get_Line (Line_Cursor, 1);
+            begin
+               if Natural (Current_Index)
+                 > Local_Line'Last
+               then
+                  Current_Index := 1;
+                  Local_Cursor.Line := Local_Cursor.Line + 1;
+               end if;
 
-            case Get_String (Current_Line.all) (Natural (Current_Index)) is
-               when '(' =>
-                  Current_Index := Current_Index + 1;
-                  Right_Paren (Current_Index);
-               when ')' =>
-                  return;
-               when others =>
-                  Current_Index := Current_Index + 1;
-            end case;
+               case Local_Line (Natural (Current_Index)) is
+                  when '(' =>
+                     Current_Index := Current_Index + 1;
+                     Right_Paren (Current_Index, Local_Cursor);
+                  when ')' =>
+                     return;
+                  when others =>
+                     Current_Index := Current_Index + 1;
+               end case;
+            end;
          end loop;
       end Right_Paren;
 
+      Text : Ptr_Text;
+
    begin
+      Success := True;
+
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
+
+      Text := Current_Text.Get_File (Cursor.File);
 
       Line_Cursor := Cursor;
       Line_Cursor.Col := 1;
       Get_Unit (Current_Text, Cursor, Work_Extract);
-      Current_Line := Get_Line (Work_Extract, Line_Cursor);
 
-      Erase
-        (Work_Extract,
-         Cursor,
-         Search_Token (Work_Extract, Open_Paren_Tok, Cursor));
+      Text.Erase
+        (Cursor,
+         Current_Text.Search_Token (Cursor, Open_Paren_Tok));
 
       Current_Index := To_Char_Index
-        (Cursor.Col, Get_String (Current_Line.all));
+        (Cursor.Col, Current_Text.Get_Line (Line_Cursor, 1));
 
-      Right_Paren (Current_Index);
+      Right_Paren (Current_Index, Line_Cursor);
 
-      Cursor := Current_Line.Cursor;
+      Cursor := Line_Cursor;
       Cursor.Col := To_Column_Index
-        (Current_Index, Get_String (Current_Line.all));
+        (Current_Index, Current_Text.Get_Line (Line_Cursor, 1));
 
-      Erase
-        (Work_Extract,
-         Cursor,
-         Cursor);
-
-      Assign (New_Extract, Work_Extract);
+      Text.Erase (Cursor, Cursor);
 
       Free (Work_Extract);
       Free (Cursor);
+   end Execute;
+
+   procedure Execute
+     (This         : Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -1084,10 +1062,6 @@ package body Codefix.Text_Manager.Ada_Commands is
          This.Blank_After := One;
       end if;
 
-      if Destination_Begin = Destination_End then
-         This.Add_Spaces := True;
-      end if;
-
       This.Destination_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Destination_Begin));
       This.Destination_End := new Mark_Abstr'Class'
@@ -1109,14 +1083,14 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Paste_Profile_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Destination_Begin, Destination_End : File_Cursor;
       Source_Begin, Source_End           : File_Cursor;
-      Line_Cursor                        : File_Cursor;
-
    begin
+      Success := True;
+
       Destination_Begin := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Destination_Begin.all));
       Destination_End := File_Cursor
@@ -1126,34 +1100,27 @@ package body Codefix.Text_Manager.Ada_Commands is
       Source_End := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Source_End.all));
 
-      Line_Cursor := Destination_Begin;
-      Line_Cursor.Col := 1;
-
-      for J in Destination_Begin.Line .. Destination_End.Line loop
-         Line_Cursor.Line := J;
-         Get_Line (Current_Text, Line_Cursor, New_Extract);
-      end loop;
-
-      Replace
-        (New_Extract,
-         Destination_Begin,
+      Current_Text.Replace
+        (Destination_Begin,
          Destination_End,
          Source_Begin,
          Source_End,
-         Current_Text,
          This.Blank_Before,
          This.Blank_After);
-
-      if This.Add_Spaces then
-         Replace (New_Extract, Destination_Begin, 0, " ");
-      end if;
-
-      Set_Indentation (New_Extract, True);
 
       Free (Destination_Begin);
       Free (Destination_End);
       Free (Source_Begin);
       Free (Source_End);
+   end Execute;
+
+   procedure Execute
+     (This         : Paste_Profile_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+   begin
+      null;
    end Execute;
 
    ----------
@@ -1359,8 +1326,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Execute
      (This         : Replace_Code_By_Cmd;
-      Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : out Extract'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Success      : in out Boolean)
    is
       Start_Cursor : File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Start_Cursor.all));
@@ -1369,7 +1336,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Line    : constant String := Get_Line (Current_Text, Start_Cursor, 1);
       Matcher : constant Pattern_Matcher := Compile (This.Replaced_Exp.all);
       Matches : Match_Array (0 .. Paren_Count (Matcher));
+      Replace_Cursor : File_Cursor;
    begin
+      Success := True;
+
       Start_Index := To_Char_Index (Get_Column (Start_Cursor), Line);
 
       Match (Matcher, Line (Integer (Start_Index) .. Line'Last), Matches);
@@ -1377,22 +1347,28 @@ package body Codefix.Text_Manager.Ada_Commands is
       Set_Location (Start_Cursor, Get_Line (Start_Cursor), 1);
 
       if Matches (0) /= No_Match then
-         Get_Line
-           (Current_Text,
-            Start_Cursor,
-            New_Extract);
+         Replace_Cursor := Start_Cursor;
+         Replace_Cursor.Col :=
+           To_Column_Index (Char_Index (Matches (1).First), Line);
 
-         Replace
-           (New_Extract,
-            To_Column_Index (Char_Index (Matches (1).First), Line),
-            Matches (1).Last - Matches (1).First + 1,
-            This.New_String.all);
+         Current_Text.Replace
+           (Replace_Cursor,
+            Matches (1).Last - Matches (1).First + 1, This.New_String.all);
       else
-         Raise_Exception
-           (Codefix_Panic'Identity,
-            "Impossible to match """ &  This.Replaced_Exp.all & """ on " &
-            """" & Line & """.");
+         raise Codefix_Panic with
+           "Impossible to match """ &  This.Replaced_Exp.all & """ on "
+             & """" & Line & """.";
       end if;
+   end Execute;
+
+   procedure Execute
+     (This         : Replace_Code_By_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      pragma Unreferenced (This, Current_Text, New_Extract);
+   begin
+      null;
    end Execute;
 
    ----------

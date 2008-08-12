@@ -64,7 +64,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Free (This : in out Ada_Instruction) is
    begin
-      Free (Extract (This));
       Free (This.Start);
       Free (This.Stop);
    end Free;
@@ -77,9 +76,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
       New_Extract : Ada_Instruction;
    begin
       New_Extract :=
-        (Clone (Extract (This)) with
-         Start => Clone (This.Start),
-         Stop  => Clone (This.Stop));
+        (Start => new Mark_Abstr'Class'(This.Start.all),
+         Stop  => new Mark_Abstr'Class'(This.Stop.all));
 
       return New_Extract;
    end Clone;
@@ -94,8 +92,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Destination  : in out Ada_Instruction;
       Delimiters   : Delimiters_Array := Default_Delimiters)
    is
-      Line_Cursor  : File_Cursor;
       Matched_Word : Word_Cursor;
+      Start_Cur, Stop_Cur : File_Cursor;
    begin
       Matched_Word := Word_Cursor (Search_Tokens
         (Current_Text,
@@ -104,69 +102,87 @@ package body Codefix.Text_Manager.Ada_Extracts is
            Reverse_Step));
 
       if Matched_Word = Null_Word_Cursor then
-         Destination.Start := Clone (File_Cursor (Position));
-         Destination.Start.Col := 1;
-         Destination.Start.Line := 1;
+         Start_Cur := Clone (File_Cursor (Position));
+         Start_Cur.Col := 1;
+         Start_Cur.Line := 1;
       else
-         Destination.Start := Clone (File_Cursor (Matched_Word));
-         Destination.Start.Col := Destination.Start.Col +
+         Start_Cur := Clone (File_Cursor (Matched_Word));
+         Start_Cur.Col := Start_Cur.Col +
            Get_Word (Matched_Word)'Length;
          Free (Matched_Word);
       end if;
 
-      while Is_Blank (Get_Line (Current_Text, Destination.Start))
-        or else Is_Comment (Get_Line (Current_Text, Destination.Start))
+      while Is_Blank (Get_Line (Current_Text, Start_Cur))
+        or else Is_Comment (Get_Line (Current_Text, Start_Cur))
       loop
-         Destination.Start.Col := 1;
-         Destination.Start.Line := Destination.Start.Line + 1;
+         Start_Cur.Col := 1;
+         Start_Cur.Line := Start_Cur.Line + 1;
       end loop;
 
-      Destination.Stop := File_Cursor
+      Stop_Cur := File_Cursor
         (Search_Tokens
-           (Current_Text, Destination.Start, Delimiters));
+           (Current_Text, Start_Cur, Delimiters));
 
-      Set_File (Line_Cursor, Get_File (Destination.Start));
-
-      for J in Destination.Start.Line .. Destination.Stop.Line loop
-         Set_Location (Line_Cursor, Line => J, Column => 1);
-         Get_Line (Current_Text, Line_Cursor, Destination);
-      end loop;
+      Destination.Start := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Start_Cur));
+      Destination.Stop := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Stop_Cur));
    end Get_Unit;
 
    ------------------------
    -- Remove_Instruction --
    ------------------------
 
-   procedure Remove_Instruction (This : in out Ada_Instruction) is
+   procedure Remove_Instruction
+     (This : in out Ada_Instruction;
+      Text_Nav : in out Text_Navigator_Abstr'Class)
+   is
+      Text : constant Ptr_Text :=
+        Text_Nav.Get_File (This.Get_Start (Text_Nav).File);
    begin
-      Erase (This, This.Start, This.Stop);
+      Text.Erase (This.Get_Start (Text_Nav), This.Get_Stop (Text_Nav));
    end Remove_Instruction;
 
    ------------------------
    -- Comment_Instruction --
    ------------------------
 
-   procedure Comment_Instruction (This : in out Ada_Instruction) is
+   procedure Comment_Instruction
+     (This : in out Ada_Instruction;
+      Text_Nav : in out Text_Navigator_Abstr'Class)
+   is
+      Text : constant Ptr_Text :=
+        Text_Nav.Get_File (This.Get_Start (Text_Nav).File);
    begin
-      Comment (This, This.Start, This.Stop);
+      Text.Comment (This.Get_Start (Text_Nav), This.Get_Stop (Text_Nav));
    end Comment_Instruction;
 
    --------------
    -- Get_Stop --
    --------------
 
-   function Get_Start (This : Ada_Instruction) return File_Cursor is
+   function Get_Start
+     (This     : Ada_Instruction;
+      Text_Nav : Text_Navigator_Abstr'Class) return File_Cursor
+   is
+      Cursor : constant File_Cursor'Class :=
+        Text_Nav.Get_Current_Cursor (This.Start.all);
    begin
-      return This.Start;
+      return File_Cursor (Cursor);
    end Get_Start;
 
    --------------
    -- Get_Stop --
    --------------
 
-   function Get_Stop (This : Ada_Instruction) return File_Cursor is
+   function Get_Stop
+     (This : Ada_Instruction;
+      Text_Nav : Text_Navigator_Abstr'Class) return File_Cursor
+   is
+      Cursor : constant File_Cursor'Class :=
+        Text_Nav.Get_Current_Cursor (This.Stop.all);
    begin
-      return This.Stop;
+      return File_Cursor (Cursor);
    end Get_Stop;
 
    ----------------------------------------------------------------------------
@@ -199,10 +215,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       while Token_It /= Tokens_List.Null_Node loop
          declare
-            New_Token : Token_Record := Clone (Data (Token_It));
+            New_Token : constant Token_Record := Clone (Data (Token_It));
          begin
-            New_Token.Line := Get_Line
-              (New_Extract, Data (Token_It).Line.Cursor);
             Append (New_Extract.Elements_List, New_Token);
             Token_It := Next (Token_It);
          end;
@@ -217,6 +231,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Get_Text_Slice
      (This                     : Ada_List;
+      Current_Text             : Text_Navigator_Abstr'Class;
       Start_Index, End_Index   : Integer;
       Start_Cursor, End_Cursor : out File_Cursor)
    is
@@ -228,17 +243,17 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Begin_Char_Index, End_Char_Index : Char_Index;
 
    begin
-      Start_Cursor := File_Cursor (Get_Cursor (First_Token.Line.all));
-      End_Cursor := File_Cursor (Get_Cursor (Last_Token.Line.all));
+      Start_Cursor := First_Token.Line;
+      End_Cursor := Last_Token.Line;
 
       Begin_Char_Index := First_Token.First_Char;
       End_Char_Index := Last_Token.Last_Char;
 
       declare
-         First_Line : constant String :=
-           Get_String (Get_Line (This, Start_Cursor).all);
-         Last_Line : constant String :=
-           Get_String (Get_Line (This, Start_Cursor).all);
+         First_Line : constant String := Current_Text.Get_Line
+           (Start_Cursor, 1);
+         Last_Line : constant String := Current_Text.Get_Line
+           (End_Cursor, 1);
       begin
 
          if Start_Index > 0
@@ -322,16 +337,21 @@ package body Codefix.Text_Manager.Ada_Extracts is
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Destination  : in out Ada_List;
-      Delimiters   : Delimiters_Array := Default_Delimiters) is
+      Delimiters   : Delimiters_Array := Default_Delimiters)
+   is
+      Start_Cur, Stop_Cur : File_Cursor;
    begin
       Get_Unit
         (Current_Text, Position, Ada_Instruction (Destination), Delimiters);
 
+      Start_Cur := Destination.Get_Start (Current_Text);
+      Stop_Cur := Destination.Get_Stop (Current_Text);
+
       declare
-         Line_Offset   : constant Integer := Destination.Start.Line;
-         Column_Offset : constant Integer := Integer (Destination.Start.Col);
+         Line_Offset   : constant Integer := Start_Cur.Line;
+         Column_Offset : constant Integer := Integer (Start_Cur.Col);
          Instruction   : constant String :=
-           Get (Current_Text, Destination.Start, Destination.Stop);
+           Get (Current_Text, Start_Cur, Stop_Cur);
 
          function Entity_Callback
            (Entity         : Language_Entity;
@@ -364,22 +384,19 @@ package body Codefix.Text_Manager.Ada_Extracts is
                declare
                   New_Token   : Token_Record;
                   Back_Cursor : File_Cursor'Class := Position;
-                  Line_Extr   : Ptr_Extract_Line;
                begin
                   Back_Cursor.Line := Sloc_End.Line + Line_Offset - 1;
                   Back_Cursor.Col := To_Column_Index
                     (Char_Index (Real_Start_Col),
                      Get_Line (Current_Text, Back_Cursor, 1));
 
-                  Line_Extr := Get_Line (Destination, Back_Cursor);
-
                   New_Token.First_Char := Char_Index (Real_Start_Col);
                   New_Token.Last_Char := To_Char_Index
-                    (Destination.Stop.Col,
+                    (Stop_Cur.Col,
                      Get_Line (Current_Text, Back_Cursor, 1));
                   New_Token.Content := new String'
-                    (Get (Current_Text, Back_Cursor, Destination.Stop));
-                  New_Token.Line := Line_Extr;
+                    (Get (Current_Text, Back_Cursor, Stop_Cur));
+                  New_Token.Line := File_Cursor (Back_Cursor);
 
                   Append (Destination.Elements_List, New_Token);
 
@@ -393,16 +410,14 @@ package body Codefix.Text_Manager.Ada_Extracts is
                declare
                   New_Token   : Token_Record;
                   Line_Cursor : File_Cursor'Class := Position;
-                  Line_Extr   : Ptr_Extract_Line;
                begin
                   Line_Cursor.Line := Sloc_Start.Line + Line_Offset - 1;
                   Line_Cursor.Col := 1;
-                  Line_Extr := Get_Line (Destination, Line_Cursor);
 
                   New_Token.First_Char := Char_Index (Real_Start_Col);
                   New_Token.Last_Char := Char_Index (Real_End_Col);
                   New_Token.Content := new String'(Name);
-                  New_Token.Line := Line_Extr;
+                  New_Token.Line := File_Cursor (Line_Cursor);
 
                   Append (Destination.Elements_List, New_Token);
                end;
@@ -424,6 +439,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
+      Text_Nav     : in out Text_Navigator_Abstr'Class;
       New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : Natural;
@@ -443,7 +459,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       end if;
 
       Get_Text_Slice
-        (This, First, Last_Used, Cursor_Begin_Data, Cursor_End_Data);
+        (This, Text_Nav, First, Last_Used, Cursor_Begin_Data, Cursor_End_Data);
 
       declare
          Seek : Tokens_List.List_Node := Get_Element (This, Last_Used);
@@ -459,6 +475,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
          Get_Text_Slice
            (This,
+            Text_Nav,
             Semicolon_Index,
             Length (This.Elements_List),
             Cursor_Begin_Type, Cursor_End_Type);
@@ -467,8 +484,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
       New_Instr := new String'
         (Get (Current_Text, Cursor_Begin_Data, Cursor_End_Data)
          & Get (Current_Text, Cursor_Begin_Type, Cursor_End_Type));
-      Remove_Elements (This, Erase, First, Last_Used);
 
+      Remove_Elements (This, Text_Nav, Erase, First, Last_Used);
    end Cut_Off_Elements;
 
    ----------------------
@@ -477,6 +494,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This         : in out Ada_List;
+      Text_Nav     : in out Text_Navigator_Abstr'Class;
       New_Instr    : out GNAT.Strings.String_Access;
       Current_Text : Text_Navigator_Abstr'Class;
       First        : String;
@@ -484,10 +502,12 @@ package body Codefix.Text_Manager.Ada_Extracts is
    begin
       if Last = "" then
          Cut_Off_Elements
-           (This, New_Instr, Current_Text, Get_Nth_Element (This, First), 0);
+           (This, Text_Nav, New_Instr, Current_Text,
+            Get_Nth_Element (This, First), 0);
       else
          Cut_Off_Elements
            (This,
+            Text_Nav,
             New_Instr,
             Current_Text,
             Get_Nth_Element (This, First),
@@ -527,10 +547,11 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ---------------------
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode  : Remove_Code_Mode;
-      First : Natural;
-      Last  : Natural := 0)
+     (This     : in out Ada_List;
+      Text_Nav : in out Text_Navigator_Abstr'Class;
+      Mode     : Remove_Code_Mode;
+      First    : Natural;
+      Last     : Natural := 0)
    is
       Last_Used  : Natural;
       First_Used : Natural;
@@ -573,9 +594,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
       then
          case Mode is
             when Erase =>
-               Remove_Instruction (This);
+               Remove_Instruction (This, Text_Nav);
             when Comment =>
-               Comment_Instruction (This);
+               Comment_Instruction (This, Text_Nav);
          end case;
 
          return;
@@ -583,15 +604,18 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       declare
          Cursor_Begin, Cursor_End : File_Cursor;
+         Text                     : Ptr_Text;
       begin
          Get_Text_Slice
-           (This, First_Used, Last_Used, Cursor_Begin, Cursor_End);
+           (This, Text_Nav, First_Used, Last_Used, Cursor_Begin, Cursor_End);
+
+         Text := Text_Nav.Get_File (Cursor_Begin.File);
 
          case Mode is
             when Erase =>
-               Erase (This, Cursor_Begin, Cursor_End);
+               Text.Erase (Cursor_Begin, Cursor_End);
             when Comment =>
-               Comment (This, Cursor_Begin, Cursor_End);
+               Text.Comment (Cursor_Begin, Cursor_End);
          end case;
       end;
 
@@ -603,16 +627,19 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ---------------------
 
    procedure Remove_Elements
-     (This  : in out Ada_List;
-      Mode  : Remove_Code_Mode;
-      First : String;
-      Last  : String := "") is
+     (This     : in out Ada_List;
+      Text_Nav : in out Text_Navigator_Abstr'Class;
+      Mode     : Remove_Code_Mode;
+      First    : String;
+      Last     : String := "") is
    begin
       if Last = "" then
-         Remove_Elements (This, Mode, Get_Nth_Element (This, First), 0);
+         Remove_Elements
+           (This, Text_Nav, Mode, Get_Nth_Element (This, First), 0);
       else
          Remove_Elements
            (This,
+            Text_Nav,
             Mode,
             Get_Nth_Element (This, First),
             Get_Nth_Element (This, Last));

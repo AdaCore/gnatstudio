@@ -103,9 +103,10 @@ package Codefix.GPS_Io is
 
    overriding
    procedure Add_Line
-     (This        : in out Console_Interface;
-      Cursor      : Text_Cursor'Class;
-      New_Line    : String);
+     (This     : in out Console_Interface;
+      Cursor   : Text_Cursor'Class;
+      New_Line : String;
+      Indent   : Boolean := False);
    --  Add a line at the cursor specified. To add a line at the
    --  begining of the text, set cursor line = 0.
 

@@ -283,7 +283,7 @@ package body Codefix.GPS_Io is
       ArgsEditorBuffer : GNAT.Strings.String_List :=
         (1 => new String'("%1"),
          2 => new String'("False"),
-         3 => new String'("False"));
+         3 => new String'("True"));
 
       ArgsEditorLocation_Start : GNAT.Strings.String_List :=
         (1 => new String'("%1"),
@@ -346,9 +346,10 @@ package body Codefix.GPS_Io is
    --------------
 
    procedure Add_Line
-     (This        : in out Console_Interface;
-      Cursor      : Text_Cursor'Class;
-      New_Line    : String)
+     (This     : in out Console_Interface;
+      Cursor   : Text_Cursor'Class;
+      New_Line : String;
+      Indent   : Boolean := False)
    is
       Line_Str        : GNAT.Strings.String_Access;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
@@ -368,6 +369,17 @@ package body Codefix.GPS_Io is
             To_Column_Index (Char_Index (Line_Str'Last), Line_Str.all) + 1);
          Replace (This, Insert_Position, 0, EOL_Str & New_Line);
          Free (Line_Str);
+      end if;
+
+      if Indent then
+         declare
+            Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
+         begin
+            Line_Cursor.Set_Location
+              (Line_Cursor.Get_Line + 1, 1);
+
+            This.Indent_Line (Line_Cursor);
+         end;
       end if;
    end Add_Line;
 
@@ -411,7 +423,7 @@ package body Codefix.GPS_Io is
       ArgsEditorBuffer : GNAT.Strings.String_List :=
         (1 => new String'("%1"),
          2 => new String'("False"),
-         3 => new String'("False"));
+         3 => new String'("True"));
 
       ArgsEditorLocation : GNAT.Strings.String_List :=
         (1 => new String'("%1"),
@@ -457,9 +469,8 @@ package body Codefix.GPS_Io is
      (This : in out Console_Interface;
       Path : GNATCOLL.VFS.Virtual_File)
    is
-      pragma Unreferenced (This, Path);
    begin
-      null;
+      Initialize (Text_Interface (This), Path);
    end Initialize;
 
    ---------------

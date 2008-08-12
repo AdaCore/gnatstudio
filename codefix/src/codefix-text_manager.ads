@@ -183,7 +183,7 @@ package Codefix.Text_Manager is
 
    procedure Initialize
      (This      : in out Text_Interface;
-      File_Name : GNATCOLL.VFS.Virtual_File) is abstract;
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Text_Interface
 
    procedure Free (This : in out Text_Interface);
@@ -230,11 +230,13 @@ package Codefix.Text_Manager is
    --  Replace the characters between Start_Cursor and End_Cursor by New_Value.
 
    procedure Add_Line
-     (This        : in out Text_Interface;
-      Cursor      : Text_Cursor'Class;
-      New_Line    : String) is abstract;
+     (This     : in out Text_Interface;
+      Cursor   : Text_Cursor'Class;
+      New_Line : String;
+      Indent   : Boolean := False) is abstract;
    --  Add a line AFTER the line specified by the cursor. To add a line at the
-   --  begining of the text, set cursor line = 0.
+   --  begining of the text, set cursor line = 0. If Indent is true then the
+   --  new line will get automatically indented.
 
    procedure Delete_Line
      (This : in out Text_Interface;
@@ -245,6 +247,12 @@ package Codefix.Text_Manager is
      (This   : in out Text_Interface;
       Cursor : Text_Cursor'Class) is abstract;
    --  Indent the line pointed by the cursor
+
+   procedure Remove_Empty_Lines
+     (This : in out Text_Interface'Class;
+      Start_Cursor : Text_Cursor'Class;
+      End_Cursor   : Text_Cursor'Class);
+   --  Removes all the empty lines that are located between the two cursors
 
    function Line_Length
      (This   : Text_Interface'Class;
@@ -366,6 +374,19 @@ package Codefix.Text_Manager is
    --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
+
+   procedure Erase
+     (This            : in out Text_Interface'Class;
+      Start, Stop     : File_Cursor'Class;
+      Remove_If_Blank : Boolean := True);
+   --  Erase the text from Start to Stop. If a line, after the deletion, is
+   --  empty, then this line will be deleted. If Remove_If_Blank is true, the
+   --  remaining line will get removed if it contains only blank characters.
+
+   procedure Comment
+     (This        : in out Text_Interface'Class;
+      Start, Stop : File_Cursor'Class);
+   --  Comment from Start to Stop on the given extract
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -835,16 +856,15 @@ package Codefix.Text_Manager is
    type Replace_Blanks_Policy is (Keep, One, None);
 
    procedure Replace
-     (This                      : in out Extract;
-      Dest_Start, Dest_Stop     : File_Cursor'Class;
+     (This                      : in out Text_Navigator_Abstr'Class;
+      Dest_Start, Dest_Stop     : in out File_Cursor;
       Source_Start, Source_Stop : File_Cursor'Class;
-      Current_Text              : Text_Navigator_Abstr'Class;
       Blanks_Before             : Replace_Blanks_Policy := Keep;
       Blanks_After              : Replace_Blanks_Policy := Keep);
    --  Replace in this the text from Start to Stop by the one from Source_Start
-   --  to Source_End. Note that This must have been previously initialised with
-   --  lines from 'Dest_Start' to 'Dest_Stop'. If Blank_pos is None, blanks
-   --  will be removed, if it's One, only one blank will be put.
+   --  to Source_End. If Blank_pos is None, blanks will be removed, if it's
+   --  One, only one blank will be put. At the end of the process, Dest_Start
+   --  and Dest_Stop are updated with the new positions.
 
    procedure Commit
      (This         : Extract;
@@ -985,17 +1005,6 @@ package Codefix.Text_Manager is
      (This                    : in out Extract;
       Size_Before, Size_After : Natural);
    --  Reduce the number of non-modified lines before and after each paragraph.
-
-   procedure Erase
-     (This        : in out Extract;
-      Start, Stop : File_Cursor'Class);
-   --  Erase the text from Start to Stop. If a line, after the deletion, is
-   --  empty, then this line will be deleted.
-
-   procedure Comment
-     (This        : in out Extract;
-      Start, Stop : File_Cursor'Class);
-   --  Comment from Start to Stop on the given extract
 
    function Get_Files_Names
      (This     : Extract;

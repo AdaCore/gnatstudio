@@ -32,8 +32,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Tree.Ada;       use Language.Tree.Ada;
 
-with Glib.Unicode;            use Glib.Unicode;
-
 package body Codefix.Text_Manager is
 
    ------------------
@@ -467,19 +465,8 @@ package body Codefix.Text_Manager is
       Add_Line
         (Get_File (This, Get_File (Cursor)).all,
          Text_Cursor (Cursor),
-         New_Line);
-
-      if Indent then
-         declare
-            Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
-         begin
-            Line_Cursor.Set_Line (Line_Cursor.Get_Line + 1);
-
-            Indent_Line
-              (Get_File (This, Get_File (Cursor)).all,
-               Line_Cursor);
-         end;
-      end if;
+         New_Line,
+         Indent);
    end Add_Line;
 
    -----------------
@@ -836,6 +823,18 @@ package body Codefix.Text_Manager is
       Delete (This);
    end Free;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This      : in out Text_Interface;
+      File_Name : GNATCOLL.VFS.Virtual_File)
+   is
+   begin
+      This.File_Name := File_Name;
+   end Initialize;
+
    ---------------------
    -- Get_Iterator_At --
    ---------------------
@@ -916,6 +915,28 @@ package body Codefix.Text_Manager is
    begin
       return Recursive_Get (Text_Cursor (Start), "");
    end Get;
+
+   ------------------------
+   -- Remove_Emtpy_Lines --
+   ------------------------
+
+   procedure Remove_Empty_Lines
+     (This         : in out Text_Interface'Class;
+      Start_Cursor : Text_Cursor'Class;
+      End_Cursor   : Text_Cursor'Class)
+   is
+      Line_Cursor : Text_Cursor := Text_Cursor (Start_Cursor);
+   begin
+      Line_Cursor.Col := 1;
+
+      for J in reverse Start_Cursor.Line .. End_Cursor.Line loop
+         Line_Cursor.Line := J;
+
+         if Is_Blank (This.Get_Line (Line_Cursor)) then
+            This.Delete_Line (Line_Cursor);
+         end if;
+      end loop;
+   end Remove_Empty_Lines;
 
    -----------------
    -- Line_Length --
@@ -2510,160 +2531,109 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Replace
-     (This                      : in out Extract;
-      Dest_Start, Dest_Stop     : File_Cursor'Class;
+     (This                      : in out Text_Navigator_Abstr'Class;
+      Dest_Start, Dest_Stop     : in out File_Cursor;
       Source_Start, Source_Stop : File_Cursor'Class;
-      Current_Text              : Text_Navigator_Abstr'Class;
       Blanks_Before             : Replace_Blanks_Policy := Keep;
       Blanks_After              : Replace_Blanks_Policy := Keep)
    is
-      function Get_Next_Source_Line return GNAT.Strings.String_Access;
-      --  Retutn the next source line that have to be added to the extract,
-      --  addinf Head or Bottom if needed.
+      New_Text : constant String := This.Get (Source_Start, Source_Stop);
 
-      Destination_Line : Ptr_Extract_Line := Get_Line (This, Dest_Start);
+      Dest_Text : constant Ptr_Text := This.Get_File (Dest_Start.File);
 
-      Cursor_Dest      : File_Cursor := File_Cursor (Dest_Start);
-      Cursor_Source    : File_Cursor := File_Cursor (Source_Start);
-      Source_Line      : GNAT.Strings.String_Access;
-      Head, Bottom     : GNAT.Strings.String_Access;
-      Last_Line        : GNAT.Strings.String_Access;
+      Mark_Start, Mark_Stop : Ptr_Mark;
 
-      --------------------------
-      -- Get_Next_Source_Line --
-      --------------------------
+      type Bound_Type is (First, Last);
 
-      function Get_Next_Source_Line return GNAT.Strings.String_Access is
-         Line : GNAT.Strings.String_Access :=
-           new String'(Get_Line (Current_Text, Cursor_Source));
+      procedure Replace_Blank_Slice
+        (Around : Text_Cursor;
+         Policy : Replace_Blanks_Policy;
+         Pos    : Bound_Type);
+
+      procedure Replace_Blank_Slice
+        (Around : Text_Cursor;
+         Policy : Replace_Blanks_Policy;
+         Pos    : Bound_Type)
+      is
+         Line  : constant String := Dest_Text.Get_Line (Around, 1);
+         Begin_Blanks : Char_Index;
+         End_Blanks   : Char_Index;
+         Tmp_Cursor   : Text_Cursor := Around;
+         Blank_Length : Char_Index;
       begin
-         if Cursor_Source.Line = Source_Stop.Line then
-            Assign
-              (Line,
-               Line (1 .. Natural (To_Char_Index (Source_Stop.Col, Line.all)))
-               & Bottom.all);
+         case Pos is
+            when First =>
+               Begin_Blanks := To_Char_Index (Around.Col - 1, Line);
+            when Last =>
+               Begin_Blanks := To_Char_Index (Around.Col + 1, Line);
+         end case;
+
+         Skip_Blanks (Line, Integer (Begin_Blanks), -1);
+         End_Blanks := Begin_Blanks + 1;
+         Skip_Blanks (Line, Integer (End_Blanks), 1);
+         Blank_Length := End_Blanks - Begin_Blanks - 1;
+
+         if Blank_Length /= 0 then
+            if Begin_Blanks = 0 then
+               Tmp_Cursor.Col := 1;
+            else
+               Tmp_Cursor.Col := To_Column_Index (Begin_Blanks, Line) + 1;
+            end if;
          end if;
 
-         if Cursor_Source.Line = Source_Start.Line then
-            Assign
-              (Line,
-               Head.all
-               & Line
-                 (Natural (To_Char_Index (Source_Start.Col, Line.all))
-                  .. Line'Last));
-         end if;
+         case Policy is
+            when Keep =>
+               null;
+            when One =>
+               Dest_Text.Replace (Tmp_Cursor, Integer (Blank_Length), " ");
+            when None =>
+               Dest_Text.Replace (Tmp_Cursor, Integer (Blank_Length), "");
+         end case;
+      end Replace_Blank_Slice;
 
-         Cursor_Source.Line := Cursor_Source.Line + 1;
-
-         return Line;
-      end Get_Next_Source_Line;
-
-      Dest_String           : constant String :=
-        Get_String (Get_Line (This, Dest_Start).all);
-      Dest_Start_Char_Index : Char_Index :=
-        To_Char_Index (Dest_Start.Col, Dest_String);
-
-      Bottom_String        : constant String :=
-        Get_String (Get_Line (This, Dest_Stop).all);
-      Dest_Stop_Char_Index : Char_Index :=
-        To_Char_Index (Dest_Stop.Col, Bottom_String);
+      Last_Begin_Line : Integer;
 
    begin
-      if Integer (Dest_Start_Char_Index) > Bottom_String'First then
-         Dest_Start_Char_Index :=
-           Char_Index
-             (UTF8_Find_Prev_Char
-                  (Dest_String, Natural (Dest_Start_Char_Index)));
+      Dest_Text.Replace (Dest_Start, Dest_Stop, New_Text);
 
-         if Blanks_Before /= Keep then
-            String_Utils.Skip_Blanks
-              (Dest_String, Natural (Dest_Start_Char_Index), -1);
+      Dest_Stop.Line := Dest_Start.Line;
+
+      Last_Begin_Line := New_Text'First;
+
+      for J in New_Text'First .. New_Text'Last - EOL_Str'Length + 1 loop
+         if New_Text (J .. J + EOL_Str'Length - 1) = EOL_Str then
+            Dest_Stop.Line := Dest_Stop.Line + 1;
+
+            Last_Begin_Line := J + EOL_Str'Length;
          end if;
-
-         Assign (Head, Dest_String (1 .. Natural (Dest_Start_Char_Index)));
-
-         if Blanks_Before = One then
-            Assign (Head, Head.all & " ");
-         end if;
-      else
-         Assign (Head, "");
-      end if;
-
-      if Integer (Dest_Stop_Char_Index) < Bottom_String'Last then
-         Dest_Stop_Char_Index :=
-           Char_Index
-             (UTF8_Next_Char
-                  (Bottom_String, Natural (Dest_Stop_Char_Index)));
-
-         if Blanks_After /= Keep then
-            String_Utils.Skip_Blanks
-              (Bottom_String, Natural (Dest_Stop_Char_Index), 1);
-         end if;
-
-         Assign (Bottom, Bottom_String
-                 (Natural (Dest_Stop_Char_Index) .. Bottom_String'Last));
-
-         if Blanks_After = One then
-            Assign (Bottom, " " & Bottom.all);
-         end if;
-      else
-         Assign (Bottom, "");
-      end if;
-
-      Cursor_Source.Col := 1;
-
-      while Cursor_Source.Line <= Source_Stop.Line loop
-         Free (Source_Line);
-         Source_Line := Get_Next_Source_Line;
-
-         if Destination_Line /= null then
-            Replace_To_End
-              (Destination_Line.all,
-               1,
-               Source_Line.all);
-
-            Assign (Last_Line, Get_String (Destination_Line.all));
-
-            if Cursor_Dest.Line < Dest_Stop.Line then
-               Cursor_Dest.Line := Cursor_Dest.Line + 1;
-               Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
-               null;
-            else
-               Destination_Line := null;
-            end if;
-         else
-            if Last_Line /= null then
-               Add_Line
-                 (This,
-                  Cursor_Dest,
-                  Source_Line.all,
-                  True);
-            else
-               Add_Line
-                 (This,
-                  Cursor_Dest,
-                  Source_Line.all,
-                  True);
-            end if;
-         end if;
-
       end loop;
 
-      if Destination_Line /= null then
-         loop
-            Destination_Line.Context := Unit_Deleted;
-            Cursor_Dest.Line := Cursor_Dest.Line + 1;
+      Dest_Stop.Col :=
+        To_Column_Index
+          (Char_Index (New_Text'Last),
+           New_Text (Last_Begin_Line .. New_Text'Last));
 
-            exit when Cursor_Dest.Line > Dest_Stop.Line;
-
-            Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
-         end loop;
+      if Last_Begin_Line = New_Text'First then
+         Dest_Stop.Col := Dest_Start.Col + Dest_Stop.Col;
       end if;
 
-      Free (Source_Line);
-      Free (Head);
-      Free (Bottom);
-      Free (Last_Line);
+      Mark_Start := new Mark_Abstr'Class'(This.Get_New_Mark (Dest_Start));
+      Mark_Stop := new Mark_Abstr'Class'(This.Get_New_Mark (Dest_Stop));
+
+      Dest_Start := File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
+      Replace_Blank_Slice (Text_Cursor (Dest_Start), Blanks_Before, First);
+
+      Dest_Stop := File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
+      Replace_Blank_Slice (Text_Cursor (Dest_Stop), Blanks_After, Last);
+
+      Dest_Text.Indent_Line (Dest_Start);
+      Dest_Text.Indent_Line (Dest_Stop);
+
+      Dest_Start := File_Cursor (This.Get_Current_Cursor (Mark_Start.all));
+      Dest_Stop := File_Cursor (This.Get_Current_Cursor (Mark_Stop.all));
+
+      Free (Mark_Start);
+      Free (Mark_Stop);
    end Replace;
 
    ------------
@@ -3331,71 +3301,15 @@ package body Codefix.Text_Manager is
    -----------
 
    procedure Erase
-     (This        : in out Extract;
-      Start, Stop : File_Cursor'Class)
+     (This            : in out Text_Interface'Class;
+      Start, Stop     : File_Cursor'Class;
+      Remove_If_Blank : Boolean := True)
    is
-      Current_Line : Ptr_Extract_Line;
-      Line_Cursor  : File_Cursor := File_Cursor (Start);
-      Start_Char_Index : Char_Index;
-      Stop_Char_Index  : Char_Index;
    begin
-      Line_Cursor.Col := 1;
+      This.Replace (Start, Stop, "");
 
-      if Start.Line = Stop.Line then
-         Current_Line := Get_Line (This, Line_Cursor);
-
-         declare
-            Current_String : constant String :=
-              To_String (Current_Line.Content);
-         begin
-            Start_Char_Index := To_Char_Index (Start.Col, Current_String);
-            Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
-         end;
-
-         Delete
-           (Current_Line.Content,
-            Start_Char_Index,
-            Natural (Stop_Char_Index - Start_Char_Index + 1));
-
-         if Is_Blank (To_String (Current_Line.Content)) then
-            Current_Line.Context := Unit_Deleted;
-         else
-            Current_Line.Context := Unit_Modified;
-         end if;
-
-      else
-         Current_Line := Get_Line (This, Line_Cursor);
-
-         Delete (Current_Line.Content, Start.Col);
-
-         if Is_Blank (To_String (Current_Line.Content)) then
-            Current_Line.Context := Unit_Deleted;
-         else
-            Current_Line.Context := Unit_Modified;
-         end if;
-
-         for J in Start.Line + 1 .. Stop.Line - 1 loop
-            Current_Line := Next (Current_Line.all);
-            Current_Line.Context := Unit_Deleted;
-         end loop;
-
-         Current_Line := Next (Current_Line.all);
-
-         declare
-            Current_String : constant String :=
-              To_String (Current_Line.Content);
-         begin
-            Delete
-              (Current_Line.Content,
-               Char_Index (1),
-               Natural (To_Char_Index (Stop.Col, Current_String)));
-         end;
-
-         if Is_Blank (To_String (Current_Line.Content)) then
-            Current_Line.Context := Unit_Deleted;
-         else
-            Current_Line.Context := Unit_Modified;
-         end if;
+      if Remove_If_Blank and then Is_Blank (This.Get_Line (Start, 1)) then
+         This.Delete_Line (Start);
       end if;
    end Erase;
 
@@ -3404,107 +3318,111 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Comment
-     (This        : in out Extract;
+     (This        : in out Text_Interface'Class;
       Start, Stop : File_Cursor'Class)
    is
-      Current_Line     : Ptr_Extract_Line;
       Line_Cursor      : File_Cursor := File_Cursor (Start);
-      Stop_Char_Index  : Char_Index;
       Start_Char_Index : Char_Index;
-
-      function Back_Of_Line return String;
-      --  Returns the back of the line, assuming that Current_Line is set on
-      --  the last line of the extract. The back of lines begins after the
-      --  last column of the entity. Stop_Char_Index has also to be set
-      --  correctly.
-
-      function Back_Of_Line return String is
-      begin
-         return To_String (Current_Line.Content)
-           (Natural (Stop_Char_Index) + 1 ..
-              To_String (Current_Line.Content)'Last);
-      end Back_Of_Line;
-
+      Stop_Char_Index : Char_Index;
+      Tmp_Cursor       : File_Cursor;
    begin
       Line_Cursor.Col := 1;
-      Current_Line := Get_Line (This, Line_Cursor);
 
       if Start.Line = Stop.Line then
          --  Add a new line if there is some text after the entity that has
          --  not to be commented
 
          declare
-            Current_String : constant String :=
-              To_String (Current_Line.Content);
+            Current_String : constant String := This.Get_Line (Start, 1);
          begin
             Start_Char_Index := To_Char_Index (Start.Col, Current_String);
             Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
+
+            declare
+               Back : constant String := Current_String
+                 (Integer (Stop_Char_Index) + 1 .. Current_String'Last);
+            begin
+               if not Is_Blank (Back) then
+                  This.Add_Line (Stop, Back, False);
+                  Tmp_Cursor := File_Cursor (Stop);
+                  Tmp_Cursor.Col := Tmp_Cursor.Col + 1;
+                  This.Replace
+                    (Tmp_Cursor, Back'Length, "");
+
+                  --  The indentation must be done after the comment, otherwise
+                  --  the file may not be semantically correct while indenting.
+
+                  Tmp_Cursor.Line := Tmp_Cursor.Line + 1;
+                  Tmp_Cursor.Col := 1;
+                  This.Indent_Line (Tmp_Cursor);
+               end if;
+            end;
+
+            --  But proper comment at the begining of the entity
+
+            if Is_Blank (Current_String
+                         (1 .. Natural (Start_Char_Index) - 1))
+            then
+               Line_Cursor.Col := 1;
+               This.Replace (Line_Cursor, 0, "--  ");
+            else
+               Line_Cursor.Col := Start.Col;
+               This.Replace (Line_Cursor, 0, "--  ");
+            end if;
          end;
-
-         if not Is_Blank (Back_Of_Line) then
-            Add_Line (This, Stop, Back_Of_Line, True);
-            Replace
-              (Current_Line.all,
-               Stop.Col + 1,
-               Back_Of_Line'Length, "");
-         end if;
-
-         --  But proper comment at the begining of the entity
-
-         if Is_Blank (To_String (Current_Line.Content)
-                      (1 .. Natural (Start_Char_Index) - 1))
-         then
-            Insert (Current_Line.Content, Char_Index (1), "--  ");
-         else
-            Insert (Current_Line.Content, Start_Char_Index, "--  ");
-         end if;
-
-         Current_Line.Context := Unit_Modified;
       else
          --  But proper comment at the begining of the entity
 
          declare
-            Current_String : constant String :=
-              To_String (Current_Line.Content);
+            Current_String : constant String := This.Get_Line (Start, 1);
          begin
             Start_Char_Index := To_Char_Index (Start.Col, Current_String);
+
+            if Is_Blank
+              (Current_String (1 .. Natural (Start_Char_Index) - 1))
+            then
+               This.Replace (Line_Cursor, 0, "--  ");
+            else
+               This.Replace (Start, 0, "--  ");
+            end if;
+
+            for J in Start.Line + 1 .. Stop.Line - 1 loop
+               Line_Cursor.Line := J;
+               This.Replace (Line_Cursor, 0, "--  ");
+            end loop;
          end;
 
-         if Is_Blank (To_String (Current_Line.Content)
-                      (1 .. Natural (Start_Char_Index) - 1))
-         then
-            Insert (Current_Line.Content, Char_Index (1), "--  ");
-         else
-            Insert (Current_Line.Content, Start.Col, "--  ");
-         end if;
-
-         Current_Line.Context := Unit_Modified;
-
-         for J in Start.Line + 1 .. Stop.Line - 1 loop
-            Current_Line := Next (Current_Line.all);
-            Insert (Current_Line.Content, Char_Index (1), "--  ");
-            Current_Line.Context := Unit_Modified;
-         end loop;
-
-         Current_Line := Next (Current_Line.all);
+         Line_Cursor := File_Cursor (Stop);
+         Line_Cursor.Col := 1;
 
          --  Add a new line if there is some text after the entity that has
          --  not to be commented
 
          declare
-            Current_String : constant String :=
-              To_String (Current_Line.Content);
+            Current_String : constant String := This.Get_Line (Stop);
+            Back           : constant String := Current_String
+              (Current_String'First + 1 .. Current_String'Last);
          begin
-            Stop_Char_Index := To_Char_Index (Stop.Col, Current_String);
+            if not Is_Blank (Back) then
+               This.Add_Line (Stop, Back, False);
+
+               Tmp_Cursor := File_Cursor (Stop);
+               Tmp_Cursor.Col := Tmp_Cursor.Col + 1;
+               This.Replace
+                 (Tmp_Cursor, Back'Length, "");
+
+               This.Replace (Line_Cursor, 0, "--  ");
+
+               --  The indentation must be done after the comment, otherwise
+               --  the file may not be semantically correct while indenting.
+
+               Tmp_Cursor.Line := Tmp_Cursor.Line + 1;
+               Tmp_Cursor.Col := 1;
+               This.Indent_Line (Tmp_Cursor);
+            else
+               This.Replace (Line_Cursor, 0, "--  ");
+            end if;
          end;
-
-         if not Is_Blank (Back_Of_Line) then
-            Add_Line (This, Stop, Back_Of_Line, True);
-            Replace (Current_Line.all, Stop.Col + 1, Back_Of_Line'Length, "");
-         end if;
-
-         Insert (Current_Line.Content, Char_Index (1), "--  ");
-         Current_Line.Context := Unit_Modified;
       end if;
    end Comment;
 
@@ -3907,8 +3825,7 @@ package body Codefix.Text_Manager is
                   Line (Natural (Pos_Char_Index) .. Line'Last)'Length, "");
 
                Modified_Text.Add_Line
-                 (New_Pos, Line (Natural (Pos_Char_Index) .. Line'Last));
-               Modified_Text.Indent_Line (New_Pos);
+                 (New_Pos, Line (Natural (Pos_Char_Index) .. Line'Last), True);
             end;
          end if;
 
@@ -3918,14 +3835,11 @@ package body Codefix.Text_Manager is
             New_Str.all);
       elsif This.Position = After then
          Modified_Text.Add_Line
-           (New_Pos, New_Str.all);
-         Modified_Text.Indent_Line (New_Pos);
+           (New_Pos, New_Str.all, True);
       elsif This.Position = Before then
          New_Pos.Line := New_Pos.Line - 1;
          Modified_Text.Add_Line
-           (New_Pos, New_Str.all);
-         New_Pos.Line := New_Pos.Line + 1;
-         Modified_Text.Indent_Line (New_Pos);
+           (New_Pos, New_Str.all, True);
       end if;
 
       Free (New_Str);
