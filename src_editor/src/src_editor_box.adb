@@ -2163,7 +2163,8 @@ package body Src_Editor_Box is
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
       Filename : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Success  : out Boolean)
+      Success  : out Boolean;
+      Force    : Boolean := False)
    is
       File          : constant GNATCOLL.VFS.Virtual_File :=
                         Get_Filename (Editor.Source_Buffer);
@@ -2253,26 +2254,28 @@ package body Src_Editor_Box is
                   return;
                end if;
 
-               if Is_Regular_File (Name) then
-                  if Message_Dialog
-                    (Msg => Display_Base_Name (Name)
-                       & (-" already exists. Do you want to overwrite ?"),
-                     Dialog_Type => Confirmation,
-                     Buttons => Button_OK or Button_Cancel,
-                     Title => "Confirm overwriting",
+               if not Force
+                 and then Is_Regular_File (Name)
+                 and then Message_Dialog
+                   (Msg => Display_Base_Name (Name)
+                    & (-" already exists. Do you want to overwrite ?"),
+                    Dialog_Type => Confirmation,
+                    Buttons => Button_OK or Button_Cancel,
+                    Title => "Confirm overwriting",
                      Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
-                  then
-                     Success := False;
-                  end if;
+               then
+                  Success := False;
                end if;
 
                if Success then
-                  Save_To_File (Editor.Source_Buffer, Name, Success);
+                  Save_To_File
+                    (Editor.Source_Buffer, Name, Success, Force => Force);
                end if;
             end;
 
          else
-            if not Check_Timestamp (Editor.Source_Buffer)
+            if not Force
+              and then not Check_Timestamp (Editor.Source_Buffer)
               and then Message_Dialog
                 (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
@@ -2283,26 +2286,28 @@ package body Src_Editor_Box is
             then
                Success := False;
             else
-               Save_To_File (Editor.Source_Buffer, File, Success);
+               Save_To_File
+                 (Editor.Source_Buffer, File, Success, Force => Force);
             end if;
          end if;
 
       else
-         if Is_Regular_File (Filename) then
-            if Message_Dialog
-              (Msg => Display_Base_Name (Filename)
-               & (-" already exists. Do you want to overwrite ?"),
-               Dialog_Type => Confirmation,
-               Buttons => Button_OK or Button_Cancel,
-               Title => "Confirm overwriting",
-               Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
-            then
-               Success := False;
-            end if;
+         if not Force
+           and then Is_Regular_File (Filename)
+           and then Message_Dialog
+             (Msg => Display_Base_Name (Filename)
+              & (-" already exists. Do you want to overwrite ?"),
+              Dialog_Type => Confirmation,
+              Buttons => Button_OK or Button_Cancel,
+              Title => "Confirm overwriting",
+              Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
+         then
+            Success := False;
          end if;
 
          if Success then
-            Save_To_File (Editor.Source_Buffer, Filename, Success);
+            Save_To_File
+              (Editor.Source_Buffer, Filename, Success, Force => Force);
          end if;
       end if;
    end Save_To_File;

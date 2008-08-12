@@ -31,13 +31,15 @@ with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with String_Utils;            use String_Utils;
 with Traces;                  use Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Refactoring.Performers is
    Me : constant Debug_Handle := Create ("Refactoring");
 
    use Location_Arrays;
    use File_Arrays;
+
+   True_Cst : aliased String := "true";
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with
       record
@@ -61,6 +63,7 @@ package body Refactoring.Performers is
         Entity_Information_Arrays.Empty_Instance;
       Extra_Entities_Index : Entity_Information_Arrays.Index_Type :=
         Entity_Information_Arrays.First;
+      Make_Writable        : Boolean;
    end record;
    --  Extra_Entities is the list of entities that are also impacted by the
    --  refactoring
@@ -157,6 +160,7 @@ package body Refactoring.Performers is
       On_Completion   : access Refactor_Performer_Record'Class;
       Auto_Compile    : Boolean := False;
       Overridden      : Boolean := True;
+      Make_Writable   : Boolean := False;
       Background_Mode : Boolean := True)
    is
       pragma Unreferenced (Auto_Compile);
@@ -168,6 +172,7 @@ package body Refactoring.Performers is
       Data.Kernel        := Kernel_Handle (Kernel);
       Data.Iter          := new Entity_Reference_Iterator;
       Data.Errors        := new Renaming_Error_Record;
+      Data.Make_Writable := Make_Writable;
 
       Push_State (Data.Kernel, Busy);
       Data.Entity            := Entity;
@@ -207,16 +212,43 @@ package body Refactoring.Performers is
    ----------------------
 
    procedure On_End_Of_Search (Data : in Get_Locations_Data) is
+      Confirmed : Boolean;
+      Args3 : Argument_List (1 .. 2);
    begin
       Pop_State (Data.Kernel);
 
-      if Confirm_Files
-        (Data.Kernel,
-         Data.Read_Only_Files,
-         Data.Errors.No_LI_List,
-         Data.Stale_LI_List)
-      then
+      if Data.Make_Writable then
+         Confirmed := Confirm_Files
+           (Data.Kernel,
+            File_Arrays.Empty_Instance,
+            Data.Errors.No_LI_List,
+            Data.Stale_LI_List);
+      else
+         Confirmed := Confirm_Files
+           (Data.Kernel,
+            Data.Read_Only_Files,
+            Data.Errors.No_LI_List,
+            Data.Stale_LI_List);
+      end if;
+
+      if Confirmed then
          Push_State (Data.Kernel, Busy);
+
+         if Data.Make_Writable then
+            Args3 (2) := True_Cst'Access;
+
+            for F in File_Arrays.First .. Last (Data.Read_Only_Files) loop
+               Args3 (1) := new String'
+                 (Full_Name
+                    (Get_Filename (Data.Read_Only_Files.Table (F))).all);
+               Execute_GPS_Shell_Command
+                 (Data.Kernel, "Editor.edit", Args3 (1 .. 1));
+               Execute_GPS_Shell_Command
+                 (Data.Kernel, "Editor.set_writable", Args3);
+               Free (Args3 (1));
+            end loop;
+         end if;
+
          Execute
            (Data.On_Completion,
             Data.Kernel,

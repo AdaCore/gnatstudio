@@ -1850,7 +1850,11 @@ package body Src_Editor_Module.Shell is
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
-               Set_Writable (Source_Editor_Box (Get_Widget (Child)), Write);
+               Set_Writable
+                 (Source_Editor_Box (Get_Widget (Child)),
+                  Write, Explicit => True);
+            else
+               Trace (Me, "Editor not found: " & Full_Name (File).all);
             end if;
          end;
 

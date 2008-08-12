@@ -201,7 +201,8 @@ package GPS.Kernel.Modules is
      (Module       : access Module_ID_Record;
       Child        : Gtk.Widget.Gtk_Widget;
       Mode         : Save_Function_Mode;
-      Single_Child : Boolean) return Boolean;
+      Single_Child : Boolean;
+      Force        : Boolean) return Boolean;
    --  A function called when the kernel asks a MDI child to save itself.
    --  See the description of Mode for the description of the modes.
    --  Child is the widget that put directly in the MDI.

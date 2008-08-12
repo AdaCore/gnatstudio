@@ -1108,7 +1108,8 @@ package body Src_Editor_Module is
      (Module       : access Source_Editor_Module_Record;
       Child        : Gtk.Widget.Gtk_Widget;
       Mode         : Save_Function_Mode;
-      Single_Child : Boolean) return Boolean
+      Single_Child : Boolean;
+      Force        : Boolean) return Boolean
    is
       pragma Unreferenced (Module);
       Success : Boolean;
@@ -1120,7 +1121,7 @@ package body Src_Editor_Module is
 
          when Action =>
             if Needs_To_Be_Saved (Box, Single_Child) then
-               Save_To_File (Box, Success => Success);
+               Save_To_File (Box, Success => Success, Force => Force);
                return Success;
             else
                --  Nothing to do => success

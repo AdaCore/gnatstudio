@@ -261,7 +261,8 @@ package body Src_Editor_Buffer is
      (Buffer   : Source_Buffer;
       Filename : GNATCOLL.VFS.Virtual_File;
       Internal : Boolean;
-      Success  : out Boolean);
+      Success  : out Boolean;
+      Force    : Boolean := False);
    --  Low level save function. Only writes the buffer contents on disk,
    --  with no modification on the buffer's settings.
    --  If Internal is True, do not emit kernel signals. This is used notably
@@ -2879,7 +2880,8 @@ package body Src_Editor_Buffer is
      (Buffer   : Source_Buffer;
       Filename : GNATCOLL.VFS.Virtual_File;
       Internal : Boolean;
-      Success  : out Boolean)
+      Success  : out Boolean;
+      Force    : Boolean := False)
    is
       FD          : Writable_File;
       Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
@@ -3039,18 +3041,20 @@ package body Src_Editor_Buffer is
          declare
             Buttons : Message_Dialog_Buttons;
          begin
-            Buttons := Message_Dialog
-              (Msg            => -"The file "
-               & Display_Base_Name (Filename) & ASCII.LF
-               & (-"is read-only. Do you want to overwrite it ?"),
-               Dialog_Type    => Confirmation,
-               Buttons        => Button_Yes or Button_No,
-               Default_Button => Button_No,
-               Title          => -"File is read-only",
-               Justification  => Justify_Left,
-               Parent         => Get_Current_Window (Buffer.Kernel));
+            if not Force then
+               Buttons := Message_Dialog
+                 (Msg            => -"The file "
+                  & Display_Base_Name (Filename) & ASCII.LF
+                  & (-"is read-only. Do you want to overwrite it ?"),
+                  Dialog_Type    => Confirmation,
+                  Buttons        => Button_Yes or Button_No,
+                  Default_Button => Button_No,
+                  Title          => -"File is read-only",
+                  Justification  => Justify_Left,
+                  Parent         => Get_Current_Window (Buffer.Kernel));
+            end if;
 
-            if Buttons = Button_Yes then
+            if Force or else Buttons = Button_Yes then
                Force_Write := True;
                Set_Writable (Filename, True);
             end if;
@@ -3135,14 +3139,16 @@ package body Src_Editor_Buffer is
      (Buffer   : access Source_Buffer_Record;
       Filename : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
-      Internal : Boolean := False)
+      Internal : Boolean := False;
+      Force    : Boolean := False)
    is
       Name_Changed      : constant Boolean := Buffer.Filename /= Filename;
       Result            : Boolean;
       Original_Filename : constant Virtual_File := Buffer.Filename;
    begin
       Internal_Save_To_File
-        (Source_Buffer (Buffer), Filename, Internal, Success);
+        (Source_Buffer (Buffer), Filename, Internal, Success,
+         Force => Force);
 
       if Success and then not Internal then
          Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));

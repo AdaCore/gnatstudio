@@ -2649,6 +2649,12 @@ operation will also be renamed, and the application should still work as
 before. If you are renaming a parameter to a subprogram, GPS can also rename
 parameters with similar names in overriding or overridden subprograms.
 
+The behavior when handling read-only files can be specified: by default,
+GPS will not do any refactoring in these files, and will display a dialog
+listing all of them; but you can also choose to make them writable just
+as if you had clicked on the "Read-Only" button in the status bar of the
+editor and then have GPS perform the renaming in them as well.
+
 @item Name parameters
 If you are editing Ada code and click on a call to a subprogram, GPS will
 display a contextual menu @code{Refactoring/Name parameters}, which will

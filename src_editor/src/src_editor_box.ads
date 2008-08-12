@@ -154,7 +154,8 @@ package Src_Editor_Box is
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
       Filename : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Success  : out Boolean);
+      Success  : out Boolean;
+      Force    : Boolean := False);
    --  Save the buffer to the given file.
    --  Success is set to false if the buffer could not be saved.
    --  If filename is null, use the filename associated with Editor.

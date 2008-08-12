@@ -50,9 +50,11 @@ package body Refactoring.Rename is
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
    Auto_Compile_Hist      : constant History_Key := "refactor_auto_compile";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
+   Make_Writable_Hist     : constant History_Key := "refactor_make_writable";
 
    Name_Cst               : aliased constant String := "name";
    Include_Overriding_Cst : aliased constant String := "include_overriding";
+   Make_Writable_Cst      : aliased constant String := "make_writable";
 
    type Rename_Entity_Command is new Interactive_Command with null record;
    function Execute
@@ -81,6 +83,7 @@ package body Refactoring.Rename is
       Auto_Save         : Gtk_Check_Button;
       Auto_Compile      : Gtk_Check_Button;
       Rename_Primitives : Gtk_Check_Button;
+      Make_Writable     : Gtk_Check_Button;
    end record;
    type Entity_Renaming_Dialog is access all
      Entity_Renaming_Dialog_Record'Class;
@@ -168,6 +171,23 @@ package body Refactoring.Rename is
                  Rename_Primitives_Hist,
                  Dialog.Rename_Primitives);
       Pack_Start (Get_Vbox (Dialog), Dialog.Rename_Primitives);
+
+      Gtk_New (Dialog.Make_Writable, -"Make files writable");
+      Set_Tip
+        (Get_Tooltips (Kernel),
+         Dialog.Rename_Primitives,
+         -("If a read-only file contains references to the entity, this"
+           & " switch will make the file writable so that changes can be made."
+           & " If the switch is off, then the file will not be edited, but the"
+           & " renaming will only be partial."));
+      Create_New_Boolean_Key_If_Necessary
+        (Hist          => Get_History (Kernel).all,
+         Key           => Make_Writable_Hist,
+         Default_Value => True);
+      Associate (Get_History (Kernel).all,
+                 Make_Writable_Hist,
+                 Dialog.Make_Writable);
+      Pack_Start (Get_Vbox (Dialog), Dialog.Make_Writable);
 
       Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -303,6 +323,7 @@ package body Refactoring.Rename is
                   Entity        => Entity,
                   On_Completion => Refactor,
                   Overridden    => Get_Active (Dialog.Rename_Primitives),
+                  Make_Writable => Get_Active (Dialog.Make_Writable),
                   Auto_Compile  => Get_Active (Dialog.Auto_Compile));
             end;
          end if;
@@ -328,11 +349,13 @@ package body Refactoring.Rename is
    begin
       if Command = "rename" then
          Name_Parameters (Data, (1 => Name_Cst'Access,
-                                 2 => Include_Overriding_Cst'Access));
+                                 2 => Include_Overriding_Cst'Access,
+                                 3 => Make_Writable_Cst'Access));
          declare
             Entity   : constant Entity_Information := Get_Data (Data, 1);
             New_Name : constant String := Nth_Arg (Data, 2);
             Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
+            Make_Writable : constant Boolean := Nth_Arg (Data, 4, False);
             Refactor : constant Renaming_Performer :=
               new Renaming_Performer_Record'
                 (Refactor_Performer_Record with
@@ -348,6 +371,7 @@ package body Refactoring.Rename is
                Refactor,
                Auto_Compile    => False,
                Overridden      => Include_Overridding,
+               Make_Writable   => Make_Writable,
                Background_Mode => False);
          end;
       end if;
@@ -369,7 +393,7 @@ package body Refactoring.Rename is
          Filter => Lookup_Filter (Kernel, "Entity"),
          Action => C);
       Register_Command
-        (Kernel, "rename", 1, 2, Entity_Command_Handler'Access,
+        (Kernel, "rename", 1, 3, Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 

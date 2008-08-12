@@ -132,7 +132,8 @@ package Src_Editor_Buffer is
      (Buffer   : access Source_Buffer_Record;
       Filename : GNATCOLL.VFS.Virtual_File;
       Success  : out Boolean;
-      Internal : Boolean := False);
+      Internal : Boolean := False;
+      Force    : Boolean := False);
    --  Save the current buffer into a file. Success is set to False if this
    --  operation failed and the buffer could not be saved.
    --  If Internal is True, save the file to disk but do not modify the buffer

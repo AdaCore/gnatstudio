@@ -75,6 +75,11 @@ NF-43-H502-016 New action to compare version N and N-1 (2008-05-08)
   In the Revision View it is now possible to compare any revision with the
   previous one.
 
+NF-43-H423-022 Refactoring read-only files (2008-08-12)
+
+  When renaming an entity, GPS now has the capability to make files writable
+  before doing the change. The default is still to ignore read-only files
+
 NF-43-H415-014 Support delimiters highlighting within comments (2008-08-07)
 
   Highlighting of matching brackets/parenthesis now works within a same comment

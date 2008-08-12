@@ -260,7 +260,8 @@ private
      (Module       : access Source_Editor_Module_Record;
       Child        : Gtk.Widget.Gtk_Widget;
       Mode         : Save_Function_Mode;
-      Single_Child : Boolean) return Boolean;
+      Single_Child : Boolean;
+      Force        : Boolean) return Boolean;
    procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;

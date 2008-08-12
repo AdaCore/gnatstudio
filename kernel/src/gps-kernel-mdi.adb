@@ -261,7 +261,8 @@ package body GPS.Kernel.MDI is
            and then Save_Function
              (Module, Get_Widget (Child),
               Mode         => Query,
-              Single_Child => Children'Length = 1)
+              Single_Child => Children'Length = 1,
+              Force        => Force)
          then
             Append (Model, It, Null_Iter);
             Set (Model, It, 0, True);
@@ -281,7 +282,8 @@ package body GPS.Kernel.MDI is
             return Save_Function
               (Module, Get_Widget (Child),
                Mode         => Action,
-               Single_Child => Children'Length = 1);
+               Single_Child => Children'Length = 1,
+               Force        => Force);
          else
             return True;
          end if;
