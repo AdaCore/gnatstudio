@@ -42,6 +42,7 @@
 #endif
 
 /* Include every system header we need */
+#define _GNU_SOURCE
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,15 +105,15 @@
 #elif defined (_AIX)
 #define USE_CLONE_DEVICE "/dev/ptc"
 #elif defined (OSF1)
-/* On Tru64, the system offers two masters pseudo terminal drivers. One BSD 
+/* On Tru64, the system offers two masters pseudo terminal drivers. One BSD
    compatible which is non-streamed through /dev/ptmx_bsd cloning device. And
    a second one, System V compatible and stream based. We prefer here the non
-   streamed driver (see man pty for more info). Note that the system offers 
+   streamed driver (see man pty for more info). Note that the system offers
    also the openpty interface but it does not seems to work as expected */
 #define USE_CLONE_DEVICE "/dev/ptmx_bsd"
 #elif defined (__hpux__)
 /* On HP-UX we use the non streamed version available through cloning device
-   /dev/ptym/clone. There is also a streamed driver available through 
+   /dev/ptym/clone. There is also a streamed driver available through
    /dev/ptmx but this one does not work in our context */
 #define USE_CLONE_DEVICE "/dev/ptym/clone"
 #endif
@@ -128,7 +129,7 @@ typedef struct pty_desc_struct {
 } pty_desc;
 
 /* relocate_fd - ensure that a file descriptor is greater than a given value
- * 
+ *
  * PARAMETERS
  *   fd      file descriptor we want to relocate
  *   min_fd  min expected value after relocation
@@ -153,8 +154,6 @@ relocate_fd (int fd, int min_fd)
 
   return new_fd;
 }
-
-extern char* ptsname (int);
 
 /* allocate_pty_desc - allocate a pseudo terminal
  *
@@ -216,7 +215,7 @@ allocate_pty_desc (pty_desc **desc) {
       return -1;
     }
 
-  /* grant access to the slave sice */
+  /* grant access to the slave side */
   grantpt (master_fd);
   /* unlock the terminal */
   unlockpt (master_fd);
@@ -316,9 +315,9 @@ child_setup_tty (int fd)
 
 /* setup_communication - interface to the external world. Should be called
  * before forking. On Unixes this function only call allocate_pty_desc.
- * The Windows implementation (in different part of this file) is very 
+ * The Windows implementation (in different part of this file) is very
  * different.
- * 
+ *
  * PARAMETERS
  *  out desc   returned pointer to a pty_desc structure
  * RETURN VALUE
@@ -329,13 +328,13 @@ int gvd_setup_communication (pty_desc** desc) {
   return allocate_pty_desc (desc);
 }
 
-/* gvd_setup_parent_communication - interface to the external world. Should 
+/* gvd_setup_parent_communication - interface to the external world. Should
  * be called after forking in the parent process
  *
  * PARAMETERS
  *   out in_fd
      out out_fd
-     out err_fd fds corresponding to the parent side of the 
+     out err_fd fds corresponding to the parent side of the
                 terminal
      in pid_out child process pid
  * RETRUN VALUE
@@ -357,7 +356,7 @@ gvd_setup_parent_communication
   return 0;
 }
 
-/* gvd_setup_child_communication - interface to external world. Should be 
+/* gvd_setup_child_communication - interface to external world. Should be
  * called after forking in the child process. On Unixes, this function
  * first adjust the line setting, set standard output, input and error and
  * then spawn the program.
@@ -414,7 +413,7 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv) {
 }
 
 
-/* send_signal_via_characters - Send a characters that will trigger a signal 
+/* send_signal_via_characters - Send a characters that will trigger a signal
  * in the child process.
  *
  * PARAMETERS
@@ -548,7 +547,7 @@ gvd_new_tty () {
    return desc;
 }
 
-/* gvd_close_tty - close a terminal 
+/* gvd_close_tty - close a terminal
  *
  * PARAMETERS
  *   desc  a pty_desc strucure
