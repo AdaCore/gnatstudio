@@ -56,7 +56,7 @@ package body Codefix.Errors_Parser is
                   Success);
 
             exception
-               when E : Codefix_Panic | Obscolescent_Fix =>
+               when E : Codefix_Panic | Obsolescent_Fix =>
                   Traces.Trace
                     (Handle => Me,
                      E      => E,

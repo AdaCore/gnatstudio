@@ -147,10 +147,16 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   procedure Error
+   procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String);
-   --  Handles error messages when an error can no longer be corrected.
+   --  Handles error messages when an error can not be corrected.
+
+   procedure Obsolescent
+     (Corruption    : access GPS_Execute_Corrupted_Record;
+      Error_Message : String);
+   --  Handles error messages when an error can no longer be corrected because
+   --  of changes in the buffer.
 
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
    procedure Append_To_Menu
@@ -1063,7 +1069,7 @@ package body Codefix_Module is
    -- Execute_Corrupted_Cb --
    --------------------------
 
-   procedure Error
+   procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String) is
    begin
@@ -1073,7 +1079,18 @@ package body Codefix_Module is
       Insert
         (Corruption.Kernel,
          -"Fix of current error is no longer relevant");
-   end Error;
+   end Panic;
+
+   procedure Obsolescent
+     (Corruption    : access GPS_Execute_Corrupted_Record;
+      Error_Message : String)
+   is
+      pragma Unreferenced (Error_Message);
+   begin
+      Insert
+        (Corruption.Kernel,
+         -"Fix of current error is no longer relevant");
+   end Obsolescent;
 
    --------------------------
    -- Register_Preferences --

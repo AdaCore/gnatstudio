@@ -27,7 +27,7 @@ with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Tree.Ada;       use Language.Tree.Ada;
@@ -1837,12 +1837,14 @@ package body Codefix.Text_Manager is
    begin
       Execute (This, Current_Text);
    exception
-      when Obscolescent_Fix =>
-         null;
+      when E : Obsolescent_Fix =>
+         if Error_Cb /= null then
+            Error_Cb.Obsolescent (Exception_Information (E));
+         end if;
 
       when E : Codefix_Panic =>
          if Error_Cb /= null then
-            Error_Cb.Error (Exception_Information (E));
+            Error_Cb.Panic (Exception_Information (E));
          end if;
 
    end Secured_Execute;

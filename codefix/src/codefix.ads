@@ -32,9 +32,9 @@ package Codefix is
    --  most of times it is due to a bad usage of the functions by the
    --  programmer.
 
-   Obscolescent_Fix : exception;
+   Obsolescent_Fix : exception;
    --  This exception is raised when a fix is no longer valid - this may be
-   --  due to changes in the text between the time the fix is computed and the
+   --  due to changes in the text between the time the fix is computed and
    --  when the fix is applied. This exception is expected to be raised by
    --  the fix functions, and should not issue an unexpected exception trace.
 

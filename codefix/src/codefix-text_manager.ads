@@ -658,9 +658,17 @@ package Codefix.Text_Manager is
 
    type Execute_Corrupted is access all Execute_Corrupted_Record'Class;
 
-   procedure Error
+   procedure Panic
      (Corruption : access Execute_Corrupted_Record; Error_Message : String)
    is abstract;
+   --  This primitive is called when a Codefix_Panic is caught while applying a
+   --  fix.
+
+   procedure Obsolescent
+     (Corruption : access Execute_Corrupted_Record; Error_Message : String)
+   is abstract;
+   --  This primitive is called when a Obsolescent_Fix is caught while applying
+   --  a fix.
 
    procedure Free (Corruption : in out Execute_Corrupted);
 
@@ -668,8 +676,11 @@ package Codefix.Text_Manager is
      (This         : Text_Command'Class;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error_Cb     : Execute_Corrupted := null);
-   --  Same as execute, but catches exception (and calls the Error_Cb if any);
-   --  Obsolescent_Fix is only catched by does not calls the Error_Cb.
+   --  Same as execute, but catches exception. Error_Cb.Panic is called in case
+   --  of a Codefix_Panic, and Error_Cb.Obsolescent is called in case of an
+   --  Obsolescent fix caught.
+   --  ??? Cases where Obsolescent_Fix should be raised instead of
+   --  Codefix_Panic should be investigated further.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command
