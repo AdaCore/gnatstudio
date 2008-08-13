@@ -55,9 +55,6 @@ AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 
 ######## Support for ptys ###
 AC_CHECK_HEADERS(sys/stropts.h)
-AC_CHECK_FUNCS(getpt)
-AC_CHECK_FUNCS(grantpt)
-AC_CHECK_FUNCS(unlockpt)
 
 AC_CHECK_LIB(util,openpty,
  [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lutil"],
@@ -67,120 +64,38 @@ AC_CHECK_LIB(util,openpty,
  ])
 )
 
-AC_CHECK_FUNCS(_getpty)
-AC_CHECK_FUNCS(ptsname)
-AC_CHECK_FUNCS(setpgid)
-AC_CHECK_FUNCS(setsid)
-AC_CHECK_FUNCS(sigprocmask)
-
-opsys=''
-
 case "${host}" in
 
   ## Alpha (DEC) machines.
-  alpha*-dec-osf* )
-    machine=alpha opsys=osf1
-    EXECUTION_WINDOW=False
-  ;;
-
-  ## HP 9000 series 700 and 800, running HP/UX
-  hppa*-hp-hpux1[[0-9]]* )
-    machine=hp800 opsys=hpux10
-  ;;
-
-  mips-sgi-irix6.5* )
-    machine=iris4d opsys=irix6-5
-  ;;
-  mips-sgi-irix6* )
-    machine=iris4d opsys=irix6-0
-  ;;
+  alpha*-dec-osf* ) EXECUTION_WINDOW=False ;;
 
   ## IBM, AIX machines
-  powerpc-ibm-aix5.*  )
-    machine=ibmrs6000 opsys=aix4-2
-    TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc"
-  ;;
+  powerpc-ibm-aix5.*  ) TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc" ;;
 
   ## PowerPC
-  powerpc-*-linux-gnu )
-    machine=powerpc opsys=gnu-linux
-    PRINT_CMD="a2ps"
-  ;;
+  powerpc-*-linux-gnu ) PRINT_CMD="a2ps" ;;
 
-  powerpc-*-darwin* )
-    machine=powerpc opsys=darwin
-    STRIP_CR=True
-  ;;
+  powerpc-*-darwin* ) STRIP_CR=True ;;
 
   ## Suns
-  *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
-    | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \
-    | rs6000-*-solaris2* | sparc*-linux*-gnu )
+  *-sun-solaris* \
+    | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | sparc*-linux*-gnu )
     case "${host}" in
-      m68*-sunos1* )    machine=sun1 ;;
-      m68*-sunos2* )    machine=sun2 ;;
-      m68* )            machine=sun3 ;;
-      i[[3456]]86-sun-sunos[[34]]* )        machine=sun386 ;;
-      i[[3456]]86-*-* )     machine=intel386 ;;
-      powerpcle* )      machine=powerpcle ;;
-      powerpc* | rs6000* )  machine=ibmrs6000 ;;
-      sparc* )          machine=sparc ;;
-      * )               unported=yes ;;
-    esac
-    case "${host}" in
-      ## The Sun386 didn't get past 4.0.
-      i[[3456]]86-*-sunos4          ) opsys=sunos4-0 ;;
-      *-sunos4.0*         ) opsys=sunos4-0 ;;
-      *-sunos4.1.[[3-9]]*noshare )
-                opsys=sunos413
-                ;;
-      *-sunos4.1.[[3-9]]* | *-sunos4shr*)
-                opsys=sunos4shr
-                ;;
-      *-sunos4* | *-sunos )
-                opsys=sunos4-1
-                ;;
-      *-sunos5.3* | *-solaris2.3* )
-                opsys=sol2-3
-                ;;
-      *-sunos5.4* | *-solaris2.4* )
-                opsys=sol2-4
-                ;;
-      *-sunos5.5* | *-solaris2.5* )
-		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
-                opsys=sol2-5
-                ;;
-      *-sunos5* | *-solaris* )
-		TARGET_LFLAGS="$TARGET_LFLAGS -lXrender"
-                opsys=sol2-5
-                ;;
-      *-linux-gnu* )
-  	        opsys=gnu-linux
-		PRINT_CMD="a2ps"
-		;;
-      *) opsys=bsd4-2   ;;
+      *-sunos5* | *-solaris* ) TARGET_LFLAGS="$TARGET_LFLAGS -lXrender" ;;
+      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
     esac;;
 
   # IA64 processors
   ia64-*-* )
     case "${host}" in
-      *-linux-gnu* )
-	opsys=gnu-linux
-	PRINT_CMD="a2ps"
-        ;;
-      *-hp-hpux11* )
-        opsys=hpux10
-        ;;
+      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
     esac
   ;;
 
   # AMD64 processors
   x86_64-*-* )
     case "${host}" in
-      *-linux-gnu* )
-        opsys=gnu-linux
-	PRINT_CMD="a2ps"
-        ;;
+      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
     esac
   ;;
 
@@ -188,28 +103,8 @@ case "${host}" in
   i[[3456]]86-*-* )
     machine=intel386
     case "${host}" in
-      *-lynxos* )               opsys=lynxos ;;
-      *-isc1.* | *-isc2.[[01]]* ) opsys=386-ix ;;
-      *-isc2.2* )               opsys=isc2-2 ;;
-      *-isc4.0* )               opsys=isc4-0 ;;
-      *-isc4.* )                opsys=isc4-1 ;;
-      *-isc* )                  opsys=isc3-0 ;;
-      *-esix5* )                opsys=esix5r4 ;;
-      *-esix* )                 opsys=esix ;;
-      *-xenix* )                opsys=xenix ;;
-      *-linux-gnu* )
-	opsys=gnu-linux
-	PRINT_CMD="a2ps"
-	;;
-
-      *-sco3.2v4* )             opsys=sco4  ;;
-      *-sco3.2v5* )             opsys=sco5 ;;
-      *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
-      *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              opsys=freebsd ;;
-      *-nextstep* )             opsys=nextstep ;;
+      *-linux-gnu* ) PRINT_CMD="a2ps" ;;
       *win32* | *mingw32* | *cygwin* )
-	machine=intel386 opsys=windows
 	STRIP_CR=True
 	CAN_OUTPUT=False
 	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x5000000"
@@ -228,10 +123,7 @@ case "${host}" in
 	SSH_ESCAPE=\'~\'
 	;;
 
-      *-darwin* )
-        opsys=darwin
-        STRIP_CR=True
-        ;;
+      *-darwin* ) STRIP_CR=True ;;
 
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -241,13 +133,8 @@ case "${host}" in
      exit;;
 esac
 
-machfile="'\"machine/${machine}.h\"'"
-opsysfile="\\\"system/${opsys}.h\\\""
-
 # Set the version number of GPS
 AC_SUBST(GPS_VERSION)
-
-AC_SUBST(opsysfile)
 
 AC_SUBST(TARGET)
 AC_SUBST(EXEC_PREFIX)
