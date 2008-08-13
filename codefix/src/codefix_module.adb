@@ -410,7 +410,9 @@ package body Codefix_Module is
       Set_Construct_Database
         (Session.Current_Text.all, Get_Construct_Database (Kernel));
       Set_Error_Cb
-        (Session.Corrector.all, new GPS_Execute_Corrupted_Record);
+        (Session.Corrector.all,
+         new GPS_Execute_Corrupted_Record'
+           (Execute_Corrupted_Record with Kernel));
       Add_Errors_From (Errors_Found, Get_Registry (Kernel), Output);
 
       Options.Remove_Policy := Policy_To_Operations
