@@ -9,7 +9,7 @@
 ## --------------------- ##
 ## M4sh Initialization.  ##
 ## --------------------- ##
- 
+
 # Be Bourne compatible
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
   emulate sh
@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG HAVE_GTKADA GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION opsysfile TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -3283,7 +3283,42 @@ echo "${ECHO_T}not found" >&6
 echo "${ECHO_T}$GTK_PREFIX" >&6
         GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-2.0 --cflags`
         if test x"$GTK_GCC_FLAGS" != x ; then
-           WITH_GTK=yes
+           echo "$as_me:$LINENO: checking for gtkada" >&5
+echo $ECHO_N "checking for gtkada... $ECHO_C" >&6
+
+   project=gtkada
+   output=HAVE_GTKADA
+
+   # Create a temporary directory (from "info autoconf")
+   : ${TMPDIR=/tmp}
+   {
+     tmp=`(umask 077 && mktemp -d "$TMPDIR/fooXXXXXX") 2>/dev/null` \
+        && test -n "$tmp" && test -d "$tmp"
+   } || {
+     tmp=$TMPDIR/foo$$-$RANDOM
+     (umask 077 && mkdir -p "$tmp")
+   } || exit $?
+
+   mkdir $tmp/lib
+   echo "with \"$project\"; project default is for Source_Dirs use (); end default;" > $tmp/default.gpr
+
+   gnat make -P$tmp/default.gpr >/dev/null 2>/dev/null
+   if test $? = 0 ; then
+     HAVE_GTKADA=yes
+   else
+     HAVE_GTKADA=no
+   fi
+
+
+           if test "$HAVE_GTKADA" = "yes"; then
+              echo "$as_me:$LINENO: result: found" >&5
+echo "${ECHO_T}found" >&6;
+              WITH_GTK=yes
+           else
+              echo "$as_me:$LINENO: result: not found" >&5
+echo "${ECHO_T}not found" >&6
+              WITH_GTK=no
+           fi
         else
            WITH_GTK=no
         fi
@@ -4893,7 +4928,7 @@ echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { echo "$as_me:$LINENO: --------------------------------------------------" >&5
 echo "$as_me: --------------------------------------------------" >&6;}
 
-                                                                                                              ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets"
+                                                                                                    ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5449,7 +5484,6 @@ do
   "gnat/sdefault/sdefault.adb" ) CONFIG_FILES="$CONFIG_FILES gnat/sdefault/sdefault.adb" ;;
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
-  "common/Makefile.common" ) CONFIG_FILES="$CONFIG_FILES common/Makefile.common" ;;
   "common/src/config.ads" ) CONFIG_FILES="$CONFIG_FILES common/src/config.ads" ;;
   "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
@@ -5571,6 +5605,7 @@ s,@DVIPS@,$DVIPS,;t t
 s,@MAKEINFO@,$MAKEINFO,;t t
 s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
+s,@HAVE_GTKADA@,$HAVE_GTKADA,;t t
 s,@GTK_GCC_FLAGS@,$GTK_GCC_FLAGS,;t t
 s,@WITH_GTK@,$WITH_GTK,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
