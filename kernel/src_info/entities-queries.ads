@@ -19,6 +19,7 @@
 
 with GNATCOLL.VFS;
 with GNAT.Strings;
+with Interfaces.C;
 
 package Entities.Queries is
 
@@ -381,6 +382,48 @@ package Entities.Queries is
    function Is_Discriminant
      (Discr, Entity : Entity_Information) return Boolean;
    --  Return True if Discr is a discriminant of Entity
+
+   type Dispatching_Menu_Policy is (Never, From_Memory, Accurate);
+   for Dispatching_Menu_Policy'Size use Interfaces.C.int'Size;
+   pragma Convention (C, Dispatching_Menu_Policy);
+   --  The list of possible behaviours for the contextual menu on dispatching
+   --  calls. From_Memory relies on information already parsed in memory, and
+   --  might not be accurate. Accurate will possibly load other LI files, but
+   --  might be much slower as a result
+
+   Entity_Has_Declaration : constant Reference_Kind_Filter :=
+     (Declaration => True, others => False);
+   Entity_Has_Body        : constant Reference_Kind_Filter :=
+     (Body_Entity => True, others => False);
+
+   procedure For_Each_Dispatching_Call
+     (Entity    : Entity_Information;
+      Ref       : Entity_Reference;
+      On_Callee : access function
+        (Callee, Primitive_Of : Entity_Information) return Boolean;
+      Filter    : Reference_Kind_Filter := Entity_Has_Declaration;
+      Policy    : Dispatching_Menu_Policy);
+   --  If Ref is for a subprogram, this will call On_Callee with all the
+   --  subprograms that might possibly be called instead of Entity.
+   --  This is intended for use on dispatching calls (ie you have an
+   --  Entity_Reference for which Get_Kind returns Dispatching_Call).
+   --     For instance, if you have
+   --         procedure Dispatch (Self : Base'Class) is
+   --         begin
+   --            Proc (Self);
+   --         end Dispatch;
+   --  and call For_Each_Dispatching_Call on Proc, you will get the primitive
+   --  operation of Base and all the overriding primitive ops of its children.
+   --
+   --  Filter can be used to make sure the entity has some specific type of
+   --  reference. The most common use is to ensure that the entity does have
+   --  a body (ie is not abstract), in which case the filter is set to
+   --  Entity_Has_Body.
+   --
+   --  Search stops when On_Callee returns False
+   --
+   --  Nothing is done if Ref does not point to a dispatching call.
+   --  This procedure does not propagate any exception.
 
    ---------------
    -- Full_Name --

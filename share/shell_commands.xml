@@ -1380,15 +1380,20 @@ The parameter in_file can be used to limit the search to references in a particu
 
   <shell_doc name="GPS.Entity.calls">
       <param name="self">The instance of GPS.Entity</param>
+      <param name="dispatching_calls" default="false">A boolean</param>
       <return>A dictionary, see below</return>
-      <description>Display the list of entities called by the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced</description>
+      <description>Display the list of entities called by the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced.
+If dispatching_calls is true, then calls done through dispatching will result in multiple entities being listed (ie all the possible subprograms that are called at that location)</description>
+      <param name="dispatching_calls" default="false">A boolean</param>
       <see_also name="GPS.Entity.is_called_by()"/>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.called_by">
       <param name="self">The instance of GPS.Entity</param>
+      <param name="dispatching_calls" default="false">A boolean</param>
       <return>A dictionary, see below</return>
-      <description>Display the list of entities that call the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced. This command might take a while to execute, since GPS needs to get the cross-reference information for lots of source files.</description>
+      <description>Display the list of entities that call the entity. The returned value is a dictionary whose keys are instances of Entity calling this entity, and whose value is a list of FileLocation instances where the entity is referenced. This command might take a while to execute, since GPS needs to get the cross-reference information for lots of source files.
+If dispatching_calls is true, then calls to self that might occur through dispatching are also listed.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.called_by_browser">

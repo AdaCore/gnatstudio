@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2007, AdaCore                  --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,7 @@ with Commands.Generic_Asynchronous;  use Commands;
 with Entities.Queries;               use Entities.Queries;
 with Glib.Object;                    use Glib.Object;
 with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Intl;                       use GPS.Intl;
 with Gtk.Widget;                     use Gtk.Widget;
@@ -32,12 +33,13 @@ with Traces;                         use Traces;
 package body Entities.Commands is
 
    type Examine_Callback is record
-      Iter           : Entity_Reference_Iterator_Access;
-      Kernel         : Kernel_Handle;
-      Entity         : Entity_Information;
-      Data           : Commands_User_Data;
-      Watch          : Gtk_Widget;
-      Cancelled      : Boolean;
+      Iter              : Entity_Reference_Iterator_Access;
+      Kernel            : Kernel_Handle;
+      Entity            : Entity_Information;
+      Data              : Commands_User_Data;
+      Watch             : Gtk_Widget;
+      Dispatching_Calls : Boolean;
+      Cancelled         : Boolean;
    end record;
    type Examine_Callback_Access is access Examine_Callback;
 
@@ -138,10 +140,29 @@ package body Entities.Commands is
               and then Show_In_Call_Graph (Get_Kind (Ref))
               and then Is_Container (Get_Kind (Parent).Kind)
             then
-               if not On_Entity_Found
-                 (Data.Data, Data.Entity, Parent, Ref, False)
-               then
-                  Result := Failure;
+               --  If we are seeing a dispatching call to an overridden
+               --  subprogram, this could also result in a call to the entity
+               --  and we report it
+
+               if Get_Entity (Data.Iter.all) /= Data.Entity then
+                  if Get_Kind (Ref) = Dispatching_Call then
+                     if not On_Entity_Found
+                       (Data.Data, Get_Entity (Data.Iter.all), Parent, Ref,
+                        Through_Dispatching => True,
+                        Is_Renaming         => False)
+                     then
+                        Result := Failure;
+                     end if;
+                  end if;
+
+               else
+                  if not On_Entity_Found
+                    (Data.Data, Data.Entity, Parent, Ref,
+                     Through_Dispatching => False,
+                     Is_Renaming         => False)
+                  then
+                     Result := Failure;
+                  end if;
                end if;
             end if;
          end if;
@@ -168,11 +189,12 @@ package body Entities.Commands is
    ----------------------------------
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Entity          : Entity_Information;
-      User_Data       : access Commands_User_Data_Record'Class;
-      Background_Mode : Boolean := True;
-      Watch           : Gtk.Widget.Gtk_Widget := null)
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      User_Data         : access Commands_User_Data_Record'Class;
+      Background_Mode   : Boolean := True;
+      Dispatching_Calls : Boolean := False;
+      Watch             : Gtk.Widget.Gtk_Widget := null)
    is
       Cb     : Examine_Callback_Access;
       Rename : Entity_Information;
@@ -182,12 +204,13 @@ package body Entities.Commands is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       Cb := new Examine_Callback'
-        (Kernel    => Kernel_Handle (Kernel),
-         Data      => Commands_User_Data (User_Data),
-         Entity    => Entity,
-         Watch     => Watch,
-         Cancelled => False,
-         Iter      => new Entity_Reference_Iterator);
+        (Kernel            => Kernel_Handle (Kernel),
+         Data              => Commands_User_Data (User_Data),
+         Entity            => Entity,
+         Watch             => Watch,
+         Cancelled         => False,
+         Dispatching_Calls => Dispatching_Calls,
+         Iter              => new Entity_Reference_Iterator);
       Ref (Entity);
 
       --  If we have a renaming, report it
@@ -195,14 +218,19 @@ package body Entities.Commands is
       Rename := Renaming_Of (Entity);
       if Rename /= null then
          if not On_Entity_Found
-           (User_Data, Entity, Rename, No_Entity_Reference, True)
+           (User_Data, Entity, Rename, No_Entity_Reference,
+            Through_Dispatching => False,
+            Is_Renaming         => True)
          then
             Destroy_Idle (Cb);
             return;
          end if;
       end if;
 
-      Find_All_References (Iter => Cb.Iter.all, Entity => Entity);
+      Find_All_References
+        (Iter               => Cb.Iter.all,
+         Entity             => Entity,
+         Include_Overridden => Dispatching_Calls);
 
       if Watch /= null then
          Weak_Ref
@@ -235,16 +263,20 @@ package body Entities.Commands is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity          : Entity_Information;
-      User_Data       : access Commands_User_Data_Record'Class;
-      Get_All_Refs    : Boolean)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      User_Data         : access Commands_User_Data_Record'Class;
+      Get_All_Refs      : Boolean;
+      Dispatching_Calls : Boolean)
    is
+      Pref  : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
+        (Get_Pref (Submenu_For_Dispatching_Calls));
       Calls       : Calls_Iterator;
       Called_E    : Entity_Information;
       Refs        : Entity_Reference_Iterator;
       Ref         : Entity_Reference;
       Data        : Commands_User_Data;
+      Is_First    : Boolean;
    begin
       if Entity /= null then
          Push_State (Kernel_Handle (Kernel), Busy);
@@ -257,11 +289,16 @@ package body Entities.Commands is
             if Called_E /= null
               and then Is_Subprogram (Called_E)
             then
-               if Get_All_Refs then
+               if Get_All_Refs or Dispatching_Calls then
+                  --  No search for all references. This was either requested
+                  --  explicitly or is needed to resolve dispatching calls
+
                   Find_All_References
                     (Iter     => Refs,
                      Entity   => Called_E,
                      In_Scope => Entity);
+                  Is_First := True;
+
                   while not At_End (Refs) loop
                      Ref := Get (Refs);
                      if Ref /= No_Entity_Reference
@@ -269,16 +306,88 @@ package body Entities.Commands is
                        and then Get_Caller (Ref) = Entity
                        and then Is_Subprogram (Get_Entity (Refs))
                        and then Get_Declaration_Of (Called_E) /=
-                          Get_Location (Ref)
+                       Get_Location (Ref)
                      then
-                        if not On_Entity_Found
-                          (User_Data,
-                           Entity => Called_E,
-                           Parent => Entity,
-                           Ref    => Ref,
-                           Is_Renaming => False)
+                        --  If we want to see all references, report this one
+                        --  now, unless it is a dispatching call which is
+                        --  already reported later on
+
+                        if Get_All_Refs then
+                           if not Dispatching_Calls
+                             or else Get_Kind (Ref) /= Dispatching_Call
+                           then
+                              if not On_Entity_Found
+                                (User_Data,
+                                 Entity              => Get_Entity (Refs),
+                                 Parent              => Entity,
+                                 Ref                 => Ref,
+                                 Through_Dispatching =>
+                                   Get_Kind (Ref) = Dispatching_Call,
+                                 Is_Renaming         => False)
+                              then
+                                 exit For_Each_Entity;
+                              end if;
+                           end if;
+
+                        --  Else we only want to report the callee once, ie on
+                        --  its first reference. We still have to examine all
+                        --  references through to solve dispatching calls.
+
+                        elsif Is_First
+                          and then Get_Kind (Ref) /= Dispatching_Call
                         then
-                           exit For_Each_Entity;
+                           Is_First := False;
+
+                           if not On_Entity_Found
+                             (User_Data,
+                              Entity              => Get_Entity (Refs),
+                              Parent              => Entity,
+                              Ref                 => No_Entity_Reference,
+                              Through_Dispatching => False,
+                              Is_Renaming         => False)
+                           then
+                              exit For_Each_Entity;
+                           end if;
+                        end if;
+
+                        --  Now if the reference is in fact a dispatching call,
+                        --  report all called entities.
+
+                        if Dispatching_Calls then
+                           declare
+                              Stop : Boolean := False;
+                              function On_Callee
+                                (Callee, Primitive_Of : Entity_Information)
+                                 return Boolean;
+
+                              function On_Callee
+                                (Callee, Primitive_Of : Entity_Information)
+                                 return Boolean
+                              is
+                                 pragma Unreferenced (Primitive_Of);
+                              begin
+                                 if not On_Entity_Found
+                                   (User_Data,
+                                    Entity              => Callee,
+                                    Parent              => Entity,
+                                    Ref                 => Ref,
+                                    Through_Dispatching => True,
+                                    Is_Renaming         => False)
+                                 then
+                                    Stop := True;
+                                    return False;
+                                 end if;
+                                 return True;
+                              end On_Callee;
+
+                           begin
+                              For_Each_Dispatching_Call
+                                (Entity    => Get_Entity (Refs),
+                                 Ref       => Ref,
+                                 On_Callee => On_Callee'Access,
+                                 Policy    => Pref);
+                              exit For_Each_Entity when Stop;
+                           end;
                         end if;
                      end if;
 
@@ -288,10 +397,11 @@ package body Entities.Commands is
                else
                   if not On_Entity_Found
                     (User_Data,
-                     Entity => Called_E,
-                     Parent => Entity,
-                     Ref    => No_Entity_Reference,
-                     Is_Renaming => False)
+                     Entity              => Called_E,
+                     Parent              => Entity,
+                     Ref                 => No_Entity_Reference,
+                     Through_Dispatching => False,
+                     Is_Renaming         => False)
                   then
                      exit For_Each_Entity;
                   end if;

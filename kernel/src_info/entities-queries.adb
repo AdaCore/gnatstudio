@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 pragma Warnings (Off);
 with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
@@ -2458,6 +2459,68 @@ package body Entities.Queries is
          return Ref.Entity.References.Table (Ref.Index).Caller;
       end if;
    end Get_Caller;
+
+   -------------------------------
+   -- For_Each_Dispatching_Call --
+   -------------------------------
+
+   procedure For_Each_Dispatching_Call
+     (Entity    : Entity_Information;
+      Ref       : Entity_Reference;
+      On_Callee : access function
+        (Callee, Primitive_Of : Entity_Information) return Boolean;
+      Filter    : Reference_Kind_Filter := Entity_Has_Declaration;
+      Policy    : Dispatching_Menu_Policy)
+   is
+      Db     : Entities_Database;
+      Iter   : Entity_Reference_Iterator;
+      E, E2  : Entity_Information;
+   begin
+      if Entity /= null
+        and then Policy /= Never
+        and then Get_Kind (Ref) = Dispatching_Call
+      then
+         if Policy = From_Memory then
+            Db := Get_Database (Get_File (Get_Declaration_Of (Entity)));
+            Freeze (Db);
+         end if;
+
+         Find_All_References
+           (Iter                  => Iter,
+            Entity                => Entity,
+            File_Has_No_LI_Report => null,
+            In_File               => null,
+            Filter                => Filter,
+            Include_Overriding    => True,
+            Include_Overridden    => False);
+
+         while not At_End (Iter) loop
+            E := Get_Entity (Iter);
+            if E /= null then
+               E2 := Is_Primitive_Operation_Of (E);
+               if E2 /= null then
+                  exit when not On_Callee (Callee => E, Primitive_Of => E2);
+               end if;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         Destroy (Iter);
+
+         if Policy = From_Memory then
+            Thaw (Db);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Traces.Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
+         if Policy = From_Memory then
+            Thaw (Db);
+         end if;
+   end For_Each_Dispatching_Call;
 
    -----------------------------
    -- Get_All_Called_Entities --

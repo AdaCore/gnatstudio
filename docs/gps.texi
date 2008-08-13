@@ -915,6 +915,12 @@ This callgraph view is used to display the information about what subprograms
 are called by a given entity, and, opposite, what entities are calling a
 given entity.
 
+Some references might be reported with an additional " (dispatching)" text.
+In such a case, this indicates the the call to the entity is not explicit
+in the sources, but could occur through dynamic dispatching. This of course
+depends on what arguments are passed to the caller at run time, and it is
+possible that the subprogram is in fact never dispatched to.
+
 This view is automatically displayed when you select one of the contextual
 menus @code{... calls} and
 @code{... is called by}. Every time you select one of

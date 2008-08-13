@@ -224,14 +224,6 @@ package body Src_Editor_Box is
       Callback      : GPS.Kernel.Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
-   function Has_Overriding_Methods
-     (Context     : GPS.Kernel.Selection_Context;
-      From_Memory : Boolean) return Boolean;
-   --  Return true if a given context (e.g. function call) has possible
-   --  overriding Methods. if From_Memory is True, Only
-   --  compute from available information in memory, otherwise load
-   --  all xref information if needed.
-
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether the Entity referenced in context has a body other than at the
    --  location described in Context
@@ -1475,64 +1467,6 @@ package body Src_Editor_Box is
          Entity   => Entity);
    end On_Goto_Body_Of;
 
-   ---------------------------------
-   -- Number_Of_Dispatching_Calls --
-   ---------------------------------
-
-   function Has_Overriding_Methods
-     (Context     : GPS.Kernel.Selection_Context;
-      From_Memory : Boolean) return Boolean
-   is
-      Iter  : Entity_Reference_Iterator;
-      E, E2 : Entity_Information;
-      Count : Natural := 0;
-
-   begin
-      Push_State (Get_Kernel (Context), Busy);
-
-      if From_Memory then
-         Freeze (Get_Database (Get_Kernel (Context)));
-      end if;
-
-      Find_All_References
-        (Iter                  => Iter,
-         Entity                => Get_Entity (Context),
-         File_Has_No_LI_Report => null,
-         In_File               => null,
-         Filter                => (Declaration => True, others => False),
-         Include_Overriding    => True,
-         Include_Overridden    => False);
-
-      while not At_End (Iter) loop
-         E := Get_Entity (Iter);
-         if E /= null then
-            E2 := Is_Primitive_Operation_Of (E);
-            if E2 /= null then
-               Count := Count + 1;
-               exit when Count > 1;
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      Destroy (Iter);
-
-      if From_Memory then
-         Thaw (Get_Database (Get_Kernel (Context)));
-      end if;
-
-      Pop_State (Get_Kernel (Context));
-      return Count > 1;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Thaw (Get_Database (Get_Kernel (Context)));
-         Pop_State (Get_Kernel (Context));
-         return Count > 1;
-   end Has_Overriding_Methods;
-
    --------------------------------
    -- Append_To_Dispatching_Menu --
    --------------------------------
@@ -1546,24 +1480,37 @@ package body Src_Editor_Box is
       Show_Default  : Boolean;
       Callback      : GPS.Kernel.Entity_Callback.Simple_Handler)
    is
-      Iter  : Entity_Reference_Iterator;
       Item  : Gtk_Menu_Item;
-      E, E2 : Entity_Information;
       Label : Gtk_Label;
       Pref  : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
         (Get_Pref (Submenu_For_Dispatching_Calls));
       Count : Natural := 0;
 
+      function On_Callee
+        (Callee, Primitive_Of : Entity_Information) return Boolean;
+      function On_Callee
+        (Callee, Primitive_Of : Entity_Information) return Boolean
+      is
+      begin
+         Gtk_New (Label,
+                  "Primitive of: " & Emphasize (Get_Name (Primitive_Of).all));
+         Set_Use_Markup (Label, True);
+         Set_Alignment (Label, 0.0, 0.5);
+         Gtk_New (Item);
+         Add (Item, Label);
+         GPS.Kernel.Entity_Callback.Object_Connect
+           (Item, Gtk.Menu_Item.Signal_Activate,
+            Callback, Get_Kernel (Context), Callee);
+         Add (Menu, Item);
+         Count := Count + 1;
+         return True;
+      end On_Callee;
+
    begin
       Trace (Me, "Computing Dispatch_Submenu: " & Default_Title);
       Push_State (Get_Kernel (Context), Busy);
 
-      --  The declaration_dispatch menu already made sure we have
-      --  correctly loaded all relevant .ALI files. So in the loop below we
-      --  freeze the xref database to make sure we do not waste time in useless
-      --  system calls
-
-      if Pref = From_Memory or else Force_Freeze then
+      if Force_Freeze then
          Freeze (Get_Database (Get_Kernel (Context)));
       end if;
 
@@ -1577,39 +1524,12 @@ package body Src_Editor_Box is
          Add (Menu, Item);
       end if;
 
-      Find_All_References
-        (Iter                  => Iter,
-         Entity                => Get_Entity (Context),
-         File_Has_No_LI_Report => null,
-         In_File               => null,
-         Filter                => Filter,
-         Include_Overriding    => True,
-         Include_Overridden    => False);
-
-      while not At_End (Iter) loop
-         E := Get_Entity (Iter);
-         if E /= null then
-            E2 := Is_Primitive_Operation_Of (E);
-            if E2 /= null then
-               Gtk_New
-                 (Label, "Primitive of: " & Emphasize (Get_Name (E2).all));
-               Set_Use_Markup (Label, True);
-               Set_Alignment (Label, 0.0, 0.5);
-               Gtk_New (Item);
-               Add (Item, Label);
-
-               GPS.Kernel.Entity_Callback.Object_Connect
-                 (Item, Gtk.Menu_Item.Signal_Activate,
-                  Callback, Get_Kernel (Context), E);
-               Add (Menu, Item);
-               Count := Count + 1;
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      Destroy (Iter);
+      For_Each_Dispatching_Call
+        (Entity    => Get_Entity (Context),
+         Ref       => Get_Closest_Ref (Context),
+         On_Callee => On_Callee'Access,
+         Filter    => Filter,
+         Policy    => Pref);
 
       --  If we have not found any possible call, we must be missing some
       --  .ALI file (for instance the one containing the declaration of the
@@ -1630,7 +1550,7 @@ package body Src_Editor_Box is
          Add (Menu, Item);
       end if;
 
-      if Pref = From_Memory or else Force_Freeze then
+      if Force_Freeze then
          Thaw (Get_Database (Get_Kernel (Context)));
       end if;
 
@@ -1661,7 +1581,7 @@ package body Src_Editor_Box is
          Context       => Context,
          Force_Freeze  => False,
          Default_Title => -"Declaration of ",
-         Filter        => (Declaration => True, others => False),
+         Filter        => Entity_Has_Declaration,
          Show_Default  => True,
          Callback      => On_Goto_Declaration_Of'Access);
    end Append_To_Menu;
@@ -1683,7 +1603,7 @@ package body Src_Editor_Box is
          Context       => Context,
          Force_Freeze  => True,
          Default_Title => -"Body of ",
-         Filter        => (Body_Entity => True, others => False),
+         Filter        => Entity_Has_Body,
          Show_Default  => Has_Body (Context),
          Callback      => On_Goto_Body_Of'Access);
    end Append_To_Menu;
@@ -1782,20 +1702,29 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Ref  : constant Entity_Reference := Get_Closest_Ref (Context);
-      Pref : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
-        (Get_Pref (Submenu_For_Dispatching_Calls));
+      Result : Boolean := False;
+
+      function On_Callee
+        (Callee, Primitive_Of : Entity_Information) return Boolean;
+      function On_Callee
+        (Callee, Primitive_Of : Entity_Information) return Boolean
+      is
+         pragma Unreferenced (Callee, Primitive_Of);
+      begin
+         Result := True;
+         return False;
+      end On_Callee;
+
    begin
-      case Pref is
-         when Never =>
-            return False;
-         when From_Memory =>
-            return Get_Kind (Ref) = Dispatching_Call
-              and then Has_Overriding_Methods (Context, True);
-         when Accurate =>
-            return Get_Kind (Ref) = Dispatching_Call
-              and then Has_Overriding_Methods (Context, False);
-      end case;
+      Push_State (Get_Kernel (Context), Busy);
+      For_Each_Dispatching_Call
+        (Entity    => Get_Entity (Context),
+         Ref       => Get_Closest_Ref (Context),
+         On_Callee => On_Callee'Access,
+         Policy    => Dispatching_Menu_Policy'Val
+           (Get_Pref (Submenu_For_Dispatching_Calls)));
+      Pop_State (Get_Kernel (Context));
+      return Result;
    end Filter_Matches_Primitive;
 
    -------------

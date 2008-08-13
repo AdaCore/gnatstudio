@@ -43,26 +43,29 @@ package Entities.Commands is
    --  destroyed and is no longer valid
 
    function On_Entity_Found
-     (Data        : access Commands_User_Data_Record;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean is abstract;
+     (Data                : access Commands_User_Data_Record;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean is abstract;
    --  If Parent is a renaming of the original Entity, Is_Renaming is set to
    --  true, and Ref is set to No_Entity_Reference.
    --  Entity is the entity that was searched initially.
    --  If False is returned, the search is stopped.
+   --  If Through_Dispatching is true, then the call occurs through dispatching
 
    ----------------------------------------
    -- Searching for callers of an entity --
    ----------------------------------------
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity          : Entity_Information;
-      User_Data       : access Commands_User_Data_Record'Class;
-      Background_Mode : Boolean := True;
-      Watch           : Gtk.Widget.Gtk_Widget := null);
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      User_Data         : access Commands_User_Data_Record'Class;
+      Background_Mode   : Boolean := True;
+      Dispatching_Calls : Boolean := False;
+      Watch             : Gtk.Widget.Gtk_Widget := null);
    --  Search for all entities calling Entity.
    --  For each of this entity, Callback is called. In this case, its Parent
    --  parameter is the caller, and Ref is the occurrence of Entity within its
@@ -73,20 +76,27 @@ package Entities.Commands is
    --  User_Data will be deallocated automatically when the search is finished.
    --
    --  If Watch is destroyed during the search, then the latter is cancelled.
+   --
+   --  If Dispatching_Calls is true, then any caller that might call the
+   --  Entity indirectly through a dispatching call is also listed.
 
    ------------------------------------------------------
    -- Searching for all entities called by another one --
    ------------------------------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity          : Entity_Information;
-      User_Data       : access Commands_User_Data_Record'Class;
-      Get_All_Refs    : Boolean);
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      User_Data         : access Commands_User_Data_Record'Class;
+      Get_All_Refs      : Boolean;
+      Dispatching_Calls : Boolean);
    --  Search for all entities called by Entity.
    --  If Get_All_Refs is true, then all occurrences of the called entities
    --  within Entity will result in a call to On_Entity_Found. Otherwise, a
    --  single call it made for each entity, passing Ref as No_Entity_Reference.
    --  This call is synchronous.
+   --  If Dispatching_Calls is true, then a dispatching call within Entity will
+   --  be expanded to the full list of subprograms that might possibly be
+   --  called at that place.
 
 end Entities.Commands;

@@ -35,6 +35,7 @@ with Pango.Font;              use Pango.Font;
 
 with Case_Handling;           use Case_Handling;
 with Config;
+with Entities.Queries;        use Entities.Queries;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Charsets;     use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -60,7 +61,7 @@ package body GPS.Kernel.Preferences is
 
    package Dispatching_Menu_Policy_Properties is new
      Generic_Enumeration_Property
-       ("Dispatching_Menu_Policy", Dispatching_Menu_Policy);
+       ("Dispatching_Menu_Policy", Entities.Queries.Dispatching_Menu_Policy);
 
    package Multi_Language_Builder_Policy_Proterties is new
      Generic_Enumeration_Property

@@ -148,12 +148,6 @@ package GPS.Kernel.Preferences is
    pragma Convention (C, Editor_Desktop_Policy);
    --  The list of possible behaviours when saving editors in the desktop
 
-   type Dispatching_Menu_Policy is (Never, From_Memory, Accurate);
-   for Dispatching_Menu_Policy'Size use Glib.Gint'Size;
-   pragma Convention (C, Dispatching_Menu_Policy);
-   --  The list of possible behaviours for the contextual menu on dispatching
-   --  calls.
-
    type Multi_Language_Builder_Policy is (Gprbuild, Gprmake);
    for Multi_Language_Builder_Policy'Size use Glib.Gint'Size;
    pragma Convention (C, Multi_Language_Builder_Policy);

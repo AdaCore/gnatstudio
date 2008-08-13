@@ -119,6 +119,7 @@ package body Call_Graph_Views is
       Line   : Integer;
       Column : Visible_Column_Type;
       File   : GNATCOLL.VFS.Virtual_File;
+      Through_Dispatching : Boolean;
    end record;
 
    procedure Free (X : in out Reference_Record);
@@ -144,7 +145,9 @@ package body Call_Graph_Views is
       Create : Boolean := False) return List_Access;
    --  Get the locations list associated with Iter. Create it if necessary
 
-   function To_Record (Ref : Entity_Reference) return Reference_Record;
+   function To_Record
+     (Ref                 : Entity_Reference;
+      Through_Dispatching : Boolean) return Reference_Record;
    --  Extract the relevant information from Ref
 
    function To_XML (R : Reference_Record) return Node_Ptr;
@@ -167,13 +170,13 @@ package body Call_Graph_Views is
    subtype Callgraph_View_Access is Generic_View.View_Access;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Search for the entities called by the current entity in Context
 
    type Entity_Called_By_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Search for th entities calling the current entity in Context
@@ -184,23 +187,25 @@ package body Call_Graph_Views is
       Computing_Iter : Gtk_Tree_Iter := Null_Iter;  --  "computing..." node
    end record;
    type Ancestors_User_Data_Access is access all Ancestors_User_Data'Class;
-   procedure Destroy
+   overriding procedure Destroy
      (Data : in out Ancestors_User_Data; Cancelled : Boolean);
-   function On_Entity_Found
-     (Data        : access Ancestors_User_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean;
+   overriding function On_Entity_Found
+     (Data                : access Ancestors_User_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation
 
    function Insert_Entity
-     (View        : access Callgraph_View_Record'Class;
-      Parent      : Entity_Information;
-      Entity      : Entity_Information;
-      Ref         : Entity_Reference;
-      Suffix      : String := "";
-      Parent_Iter : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
+     (View                : access Callgraph_View_Record'Class;
+      Parent              : Entity_Information;
+      Entity              : Entity_Information;
+      Ref                 : Entity_Reference;
+      Suffix              : String := "";
+      Through_Dispatching : Boolean;
+      Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
    --  Insert an entry for Entity in the tree.
    --  Parent_Iter is the parent node for the node representing the entity.
    --  Parent is the caller of the entity.
@@ -248,11 +253,15 @@ package body Call_Graph_Views is
    -- To_Record --
    ---------------
 
-   function To_Record (Ref : Entity_Reference) return Reference_Record is
+   function To_Record
+     (Ref                 : Entity_Reference;
+      Through_Dispatching : Boolean) return Reference_Record
+   is
    begin
       return (Get_Line (Get_Location (Ref)),
               Get_Column (Get_Location (Ref)),
-              Get_Filename (Get_File (Get_Location (Ref))));
+              Get_Filename (Get_File (Get_Location (Ref))),
+              Through_Dispatching);
    end To_Record;
 
    ----------
@@ -628,8 +637,10 @@ package body Call_Graph_Views is
       L : List_Access;
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
+      Entity : Entity_Information;
+      Decl   : File_Location;
 
-      Value : GValue;
+      Value, Value2 : GValue;
       N     : List_Node;
       R     : Reference_Record;
       T     : Gtk_Tree_Iter;
@@ -645,6 +656,30 @@ package body Call_Graph_Views is
       Clear (V.Locations_Model);
 
       if Iter /= Null_Iter then
+
+         --  Insert an entry for the declaration to distinguish between
+         --  overloaded entities (even though the user can double-click on the
+         --  entity name, it might not be visible enough)
+
+         Get_Value (Model, Iter, Entity_Column, Value2);
+         Entity := From_GValue (Value2);
+         Decl := Get_Declaration_Of (Entity);
+
+         Append (V.Locations_Model, T);
+         Appended := True;
+         Set (V.Locations_Model, T, Location_Line_Column,
+              Gint (Get_Line (Decl)));
+         Set (V.Locations_Model, T, Location_Column_Column,
+              Gint (Get_Column (Decl)));
+         Set (V.Locations_Model, T, Location_Character_Column, ":");
+         Set (V.Locations_Model, T, Location_File_Column,
+              Display_Full_Name (Get_Filename (Get_File (Decl))));
+         Set (V.Locations_Model, T, Location_String_Column,
+              Display_Base_Name (Get_Filename (Get_File (Decl)))
+              & " (declaration)");
+
+         --  Then an entry for each call
+
          Get_Value (Model, Iter, List_Column, Value);
          Address := Get_Address (Value);
 
@@ -664,10 +699,18 @@ package body Call_Graph_Views is
                Set (V.Locations_Model, T, Location_Column_Column,
                     Gint (R.Column));
                Set (V.Locations_Model, T, Location_Character_Column, ":");
-               Set (V.Locations_Model, T, Location_String_Column,
-                    "    " & Display_Base_Name (R.File));
                Set (V.Locations_Model, T, Location_File_Column,
                     Display_Full_Name (R.File));
+
+               if R.Through_Dispatching then
+                  Set (V.Locations_Model, T, Location_String_Column,
+                       "    " & Display_Base_Name (R.File)
+                       & " (through dispatching)");
+               else
+                  Set (V.Locations_Model, T, Location_String_Column,
+                       "    " & Display_Base_Name (R.File));
+               end if;
+
 
                N := Next (N);
             end loop;
@@ -745,18 +788,20 @@ package body Call_Graph_Views is
       case V.Typ is
          when View_Calls     =>
             Examine_Entity_Call_Graph
-              (Kernel          => V.Kernel,
-               Entity          => Entity,
-               User_Data       => Data,
-               Get_All_Refs    => True);
+              (Kernel            => V.Kernel,
+               Entity            => Entity,
+               User_Data         => Data,
+               Dispatching_Calls => True,
+               Get_All_Refs      => True);
 
          when View_Called_By =>
             Examine_Ancestors_Call_Graph
-              (Kernel          => V.Kernel,
-               Entity          => Entity,
-               User_Data       => Data,
-               Watch           => Gtk_Widget (V),
-               Background_Mode => True);
+              (Kernel            => V.Kernel,
+               Entity            => Entity,
+               User_Data         => Data,
+               Watch             => Gtk_Widget (V),
+               Dispatching_Calls => True,
+               Background_Mode   => True);
       end case;
 
       --  Remove the dummy node
@@ -820,6 +865,9 @@ package body Call_Graph_Views is
       Set_Attribute (Result, "line", R.Line'Img);
       Set_Attribute (Result, "column", R.Column'Img);
       Set_Attribute (Result, "file", Full_Name (R.File).all);
+      if R.Through_Dispatching then
+         Set_Attribute (Result, "dispatch", "true");
+      end if;
       return Result;
    end To_XML;
 
@@ -833,6 +881,7 @@ package body Call_Graph_Views is
       Result.Line := Integer'Value (Get_Attribute (N, "line"));
       Result.Column := Visible_Column_Type'Value (Get_Attribute (N, "column"));
       Result.File := Create (Get_Attribute (N, "file"));
+      Result.Through_Dispatching := Get_Attribute (N, "dispatch") = "true";
       return Result;
    end From_XML;
 
@@ -1227,12 +1276,13 @@ package body Call_Graph_Views is
    -------------------
 
    function Insert_Entity
-     (View        : access Callgraph_View_Record'Class;
-      Parent      : Entity_Information;
-      Entity      : Entity_Information;
-      Ref         : Entity_Reference;
-      Suffix      : String := "";
-      Parent_Iter : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
+     (View                : access Callgraph_View_Record'Class;
+      Parent              : Entity_Information;
+      Entity              : Entity_Information;
+      Ref                 : Entity_Reference;
+      Suffix              : String := "";
+      Through_Dispatching : Boolean;
+      Parent_Iter         : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
    is
       pragma Unreferenced (Parent);
       Model     : constant Gtk_Tree_Store :=
@@ -1299,7 +1349,7 @@ package body Call_Graph_Views is
                L := To_Reference_List (Address);
             end if;
 
-            Append (L.all, To_Record (Ref));
+            Append (L.all, To_Record (Ref, Through_Dispatching));
 
             Set_Address (Value, To_Address (L));
 
@@ -1334,11 +1384,12 @@ package body Call_Graph_Views is
    ---------------------
 
    function On_Entity_Found
-     (Data        : access Ancestors_User_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean
+     (Data                : access Ancestors_User_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean
    is
       Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Is_Renaming, Iter);
@@ -1346,21 +1397,23 @@ package body Call_Graph_Views is
       case Data.View.Typ is
          when View_Called_By =>
             Iter := Insert_Entity
-              (View        => Data.View,
-               Parent      => Entity,
-               Entity      => Parent,
-               Ref         => Ref,
-               Suffix      => "",
-               Parent_Iter => Data.Entity_Iter);
+              (View                => Data.View,
+               Parent              => Entity,
+               Entity              => Parent,
+               Ref                 => Ref,
+               Suffix              => "",
+               Through_Dispatching => Through_Dispatching,
+               Parent_Iter         => Data.Entity_Iter);
 
          when View_Calls =>
             Iter := Insert_Entity
-              (View        => Data.View,
-               Parent      => Parent,
-               Entity      => Entity,
-               Ref         => Ref,
-               Suffix      => "",
-               Parent_Iter => Data.Entity_Iter);
+              (View                => Data.View,
+               Parent              => Parent,
+               Entity              => Entity,
+               Ref                 => Ref,
+               Suffix              => "",
+               Through_Dispatching => Through_Dispatching,
+               Parent_Iter         => Data.Entity_Iter);
       end case;
       return True;
    end On_Entity_Found;
@@ -1387,7 +1440,7 @@ package body Call_Graph_Views is
          View.Typ := View_Calls;
          Expand_Row (View.Tree,
            Insert_Entity (View, null, Entity, No_Entity_Reference,
-             -" calls "));
+             -" calls ", Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
          R := Get_Child_Requisition (View.Tree);
@@ -1419,7 +1472,8 @@ package body Call_Graph_Views is
          View.Typ := View_Called_By;
          Expand_Row
            (View.Tree, Insert_Entity (View, null, Entity,
-            No_Entity_Reference, -" is called by "));
+            No_Entity_Reference, -" is called by ",
+            Through_Dispatching => False));
 
          Size_Request (View.Tree, R);
          R := Get_Child_Requisition (View.Tree);

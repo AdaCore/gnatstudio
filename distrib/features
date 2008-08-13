@@ -139,6 +139,14 @@ NF-43-H216-003 gprbuild no longer packaged with GPS (2008-02-19)
   For users of older versions of GNAT, it is also possible/recommended
   to install gprbuild from a standalone package.
 
+NF-43-H131-009 Call graphs now uses dispatching information (2008-08-12)
+
+  When a subprogram A has a dispatching call to subprogram B (or one of
+  its overriding procedures B'), then both B and B' are now displayed in
+  the callgraph. This also applies when looking for the callers of a
+  subprogram, and helps locate all places where a subprogram might
+  potentially be called.
+
 NF-43-H123-034 Cross-references and extending projects (2008-01-31)
 
   If a source file is overridden in an extending project, but has not been

@@ -104,6 +104,7 @@ package body Browsers.Call_Graph is
    Synchronous_Cst      : aliased constant String := "synchronous";
    Show_Kind_Cst        : aliased constant String := "show_kind";
    In_File_Cst          : aliased constant String := "in_file";
+   Dispatching_Calls_Cst : aliased constant String := "dispatching_calls";
    References_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Include_Implicit_Cst'Access,
       2 => Synchronous_Cst'Access,
@@ -138,12 +139,13 @@ package body Browsers.Call_Graph is
          --  in the list. Otherwise, Entity will be used.
       end record;
    type Add_To_List_User_Data_Access is access all Add_To_List_User_Data'Class;
-   function On_Entity_Found
-     (D           : access Add_To_List_User_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean;
+   overriding function On_Entity_Found
+     (D                   : access Add_To_List_User_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation.
    --  Add a new entity to the returned value in D.Data.
 
@@ -329,14 +331,15 @@ package body Browsers.Call_Graph is
    end record;
    type Examine_Ancestors_Data_Access
      is access all Examine_Ancestors_Data'Class;
-   procedure Destroy
+   overriding procedure Destroy
      (Data : in out Examine_Ancestors_Data; Cancelled : Boolean);
-   function On_Entity_Found
-     (Data        : access Examine_Ancestors_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean;
+   overriding function On_Entity_Found
+     (Data                : access Examine_Ancestors_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation
 
    procedure Examine_Entity_Call_Graph
@@ -406,7 +409,8 @@ package body Browsers.Call_Graph is
       Link_From_Item : Boolean;
       Entity         : Entity_Information;
       Ref            : Entity_Reference;
-      Is_Renaming    : Boolean);
+      Is_Renaming    : Boolean;
+      Through_Dispatching : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data);
@@ -762,10 +766,11 @@ package body Browsers.Call_Graph is
             Set_Children_Shown (Data.Item, True);
             Redraw_Title_Bar (Data.Item);
             Examine_Entity_Call_Graph
-              (Kernel       => Kernel,
-               Entity       => Entity,
-               User_Data    => Data,
-               Get_All_Refs => True);
+              (Kernel            => Kernel,
+               Entity            => Entity,
+               User_Data         => Data,
+               Dispatching_Calls => True,
+               Get_All_Refs      => True);
 
             --  Data is no longer valid now, since it has been destroyed
          end;
@@ -817,7 +822,8 @@ package body Browsers.Call_Graph is
       Link_From_Item : Boolean;
       Entity         : Entity_Information;
       Ref            : Entity_Reference;
-      Is_Renaming    : Boolean)
+      Is_Renaming    : Boolean;
+      Through_Dispatching : Boolean)
    is
       Child            : Entity_Item;
       Link             : Browser_Link;
@@ -826,8 +832,16 @@ package body Browsers.Call_Graph is
       Text             : String_Access;
       New_Cb, Callback : Active_Area_Cb;
       Changing         : Entity_Item;
+
+      Descr_Dispatching : aliased String := "(dispatch)";
+      Descr_Others      : aliased String := "";
+      Descr            : String_Access := Descr_Others'Unchecked_Access;
    begin
       Child := Add_Entity_If_Not_Present (Browser, Entity);
+
+      if Through_Dispatching then
+         Descr := Descr_Dispatching'Unchecked_Access;
+      end if;
 
       if Link_From_Item then
          if not Has_Link (Get_Canvas (Browser), Item, Child) then
@@ -877,7 +891,7 @@ package body Browsers.Call_Graph is
             Expand_Line
               (Changing.Refs, Line,
                " @" & Image (Get_Line (Loc))
-               & ':' & Image (Integer (Get_Column (Loc))) & '@',
+               & ':' & Image (Integer (Get_Column (Loc))) & '@' & Descr.all,
                (1 => New_Cb),
                Check_Duplicates => True);
             return;
@@ -891,7 +905,7 @@ package body Browsers.Call_Graph is
          Get_Full_Name (Child.Entity)
          & ": @"
          & Image (Get_Line (Loc)) & ':'
-         & Image (Integer (Get_Column (Loc))) & '@',
+         & Image (Integer (Get_Column (Loc))) & '@' & Descr.all,
          Callback => (1 => New_Cb));
    end Add_Entity_And_Link;
 
@@ -900,20 +914,22 @@ package body Browsers.Call_Graph is
    ---------------------
 
    function On_Entity_Found
-     (Data        : access Examine_Ancestors_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean is
+     (Data                : access Examine_Ancestors_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean
+   is
    begin
       if Data.Link_From_Item then
          Add_Entity_And_Link
            (Data.Browser, Data.Item, Data.Link_From_Item,
-            Entity, Ref, Is_Renaming);
+            Entity, Ref, Is_Renaming, Through_Dispatching);
       else
          Add_Entity_And_Link
            (Data.Browser, Data.Item, Data.Link_From_Item,
-            Parent, Ref, Is_Renaming);
+            Parent, Ref, Is_Renaming, Through_Dispatching);
       end if;
       return True;
    end On_Entity_Found;
@@ -939,11 +955,12 @@ package body Browsers.Call_Graph is
       Redraw_Title_Bar (Data.Item);
 
       Examine_Ancestors_Call_Graph
-        (Kernel          => Kernel,
-         Entity          => Entity,
-         User_Data       => Data,
-         Background_Mode => True,
-         Watch           => Gtk_Widget (Data.Browser));
+        (Kernel            => Kernel,
+         Entity            => Entity,
+         User_Data         => Data,
+         Background_Mode   => True,
+         Dispatching_Calls => True,
+         Watch             => Gtk_Widget (Data.Browser));
 
    exception
       when E : others =>
@@ -1400,12 +1417,14 @@ package body Browsers.Call_Graph is
    ---------------------
 
    function On_Entity_Found
-     (D           : access Add_To_List_User_Data;
-      Entity      : Entities.Entity_Information;
-      Parent      : Entities.Entity_Information;
-      Ref         : Entities.Entity_Reference;
-      Is_Renaming : Boolean) return Boolean
+     (D                   : access Add_To_List_User_Data;
+      Entity              : Entities.Entity_Information;
+      Parent              : Entities.Entity_Information;
+      Ref                 : Entities.Entity_Reference;
+      Through_Dispatching : Boolean;
+      Is_Renaming         : Boolean) return Boolean
    is
+      pragma Unreferenced (Through_Dispatching);
       Loc : File_Location;
    begin
       if not Is_Renaming then
@@ -1531,18 +1550,23 @@ package body Browsers.Call_Graph is
          end;
 
       elsif Command = "calls" then
+         Name_Parameters (Data, (1 => Dispatching_Calls_Cst'Access));
+
          --  The following unchecked_access is safe since
          --  Examine_Entity_Call_Graph is called synchronously
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
          Examine_Entity_Call_Graph
-           (Kernel       => Kernel,
-            User_Data    => User_Data,
-            Entity       => Entity,
-            Get_All_Refs => True);
+           (Kernel            => Kernel,
+            User_Data         => User_Data,
+            Entity            => Entity,
+            Dispatching_Calls => Nth_Arg (Data, 2, False),
+            Get_All_Refs      => True);
 
       elsif Command = "called_by" then
+         Name_Parameters (Data, (1 => Dispatching_Calls_Cst'Access));
+
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
          User_Data := new Add_To_List_User_Data;
@@ -1551,6 +1575,7 @@ package body Browsers.Call_Graph is
            (Kernel          => Kernel,
             User_Data       => User_Data,
             Entity          => Entity,
+            Dispatching_Calls => Nth_Arg (Data, 2, False),
             Background_Mode => False);
 
       elsif Command = "called_by_browser" then
@@ -2234,10 +2259,12 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "calls",
          Class   => Get_Entity_Class (Kernel),
+         Maximum_Args => 1,
          Handler => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "called_by",
          Class   => Get_Entity_Class (Kernel),
+         Maximum_Args => 1,
          Handler => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "called_by_browser",
