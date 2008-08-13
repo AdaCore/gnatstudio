@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +56,7 @@ package body Codefix.Errors_Parser is
                   Success);
 
             exception
-               when E : Codefix_Panic =>
+               when E : Codefix_Panic | Obscolescent_Fix =>
                   Traces.Trace
                     (Handle => Me,
                      E      => E,

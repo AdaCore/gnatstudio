@@ -669,7 +669,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
          exit when Current_Node = Tokens_List.Null_Node;
       end loop;
 
-      raise Codefix_Panic;
+      raise Obscolescent_Fix;
    end Get_Nth_Element;
 
 end Codefix.Text_Manager.Ada_Extracts;

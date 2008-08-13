@@ -1021,6 +1021,10 @@ package body Codefix.Text_Manager is
          return False;
       end Callback;
    begin
+      if Line = "" then
+         return Null_Word_Cursor;
+      end if;
+
       if Result.Col = 0 then
          Start_Index := Char_Index (Line'Last);
       else
@@ -1833,10 +1837,14 @@ package body Codefix.Text_Manager is
    begin
       Execute (This, Current_Text);
    exception
+      when Obscolescent_Fix =>
+         null;
+
       when E : Codefix_Panic =>
          if Error_Cb /= null then
-            Error (Error_Cb, Exception_Information (E));
+            Error_Cb.Error (Exception_Information (E));
          end if;
+
    end Secured_Execute;
 
    -----------------
@@ -2245,6 +2253,43 @@ package body Codefix.Text_Manager is
       Modified_Text := Current_Text.Get_File (Start_Cursor.File);
 
       Modified_Text.Replace (Start_Cursor, End_Cursor, This.New_Text.all);
+   end Execute;
+
+   ----------------------------
+   -- Remove_Blank_Lines_Cmd --
+   ----------------------------
+
+   procedure Initialize
+     (This         : in out Remove_Blank_Lines_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Start_Cursor : File_Cursor'Class)
+   is
+   begin
+      This.Start_Mark := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Start_Cursor));
+   end Initialize;
+
+   procedure Free (This : in out Remove_Blank_Lines_Cmd) is
+   begin
+      Free (This.Start_Mark);
+   end Free;
+
+   procedure Execute
+     (This         : Remove_Blank_Lines_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor   : File_Cursor := File_Cursor
+        (Current_Text.Get_Current_Cursor (This.Start_Mark.all));
+      Text     : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
+      Max_Line : constant Integer := Text.Line_Max;
+   begin
+      Cursor.Col := 1;
+
+      while Cursor.Line <= Max_Line
+        and then Is_Blank (Text.Get_Line (Cursor, 1))
+      loop
+         Text.Delete_Line (Cursor);
+      end loop;
    end Execute;
 
    ----------------

@@ -669,6 +669,7 @@ package Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error_Cb     : Execute_Corrupted := null);
    --  Same as execute, but catches exception (and calls the Error_Cb if any);
+   --  Obsolescent_Fix is only catched by does not calls the Error_Cb.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command
@@ -848,6 +849,28 @@ package Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the slice removed
 
+   ----------------------------
+   -- Remove_Blank_Lines_Cmd --
+   ----------------------------
+
+   type Remove_Blank_Lines_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Remove_Blank_Lines_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Start_Cursor : File_Cursor'Class);
+   --  Set all the marks that will be necessary later to remove the blank lines
+
+   overriding
+   procedure Free (This : in out Remove_Blank_Lines_Cmd);
+   --  Free the memory associated to a Remove_Sloce_Cmd
+
+   overriding
+   procedure Execute
+     (This         : Remove_Blank_Lines_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+   --  Set an extract with the slice removed
+
 private
 
    function Compare_Last (Str_1, Str_2 : String) return Boolean;
@@ -970,6 +993,10 @@ private
       Start_Mark : Ptr_Mark;
       End_Mark   : Ptr_Mark;
       New_Text   : GNAT.Strings.String_Access;
+   end record;
+
+   type Remove_Blank_Lines_Cmd is new Text_Command with record
+      Start_Mark : Ptr_Mark;
    end record;
 
    ----------------------------------------------------------------------------

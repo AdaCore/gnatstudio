@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -246,6 +246,12 @@ package Codefix.Formal_Errors is
       return Solution_List;
    --  Proposes to change the code given at the cursor by the corresponding
    --  'Valid
+
+   function Remove_Blank_Lines
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List;
+   --  Propose a fix removing all the blank lines starting at the cursor
+   --  location.
 
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the

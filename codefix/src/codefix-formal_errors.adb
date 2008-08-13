@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1405,6 +1405,24 @@ package body Codefix.Formal_Errors is
 
       return Result;
    end Change_To_Tick_Valid;
+
+   ------------------------
+   -- Remove_Blank_Lines --
+   ------------------------
+
+   function Remove_Blank_Lines
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Solution_List
+   is
+      Result  : Solution_List;
+      Command : Remove_Blank_Lines_Cmd;
+   begin
+      Command.Initialize (Current_Text, Cursor);
+
+      Append (Result, Command);
+
+      return Result;
+   end Remove_Blank_Lines;
 
    -------------------------
    -- Is_Style_Or_Warning --

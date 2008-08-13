@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,12 @@ package Codefix is
    --  This exception is raised when a unpredicted error is made,
    --  most of times it is due to a bad usage of the functions by the
    --  programmer.
+
+   Obscolescent_Fix : exception;
+   --  This exception is raised when a fix is no longer valid - this may be
+   --  due to changes in the text between the time the fix is computed and the
+   --  when the fix is applied. This exception is expected to be raised by
+   --  the fix functions, and should not issue an unexpected exception trace.
 
    Tab_Width : constant Natural := 8;
    --  Width of a tab in GNAT

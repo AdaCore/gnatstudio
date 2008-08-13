@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -967,6 +967,23 @@ package body Codefix.GNAT_Parser is
    overriding
    procedure Fix
      (This         : Consecutive_Underlines;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'two consecutives underlines not permitted'.
+
+   type Multiple_Blank_Lines is new Error_Parser
+     (new String'("Multiple_Blank_Lines"), 1)
+   with null record;
+
+   overriding
+   procedure Initialize (This : in out Multiple_Blank_Lines);
+
+   overriding
+   procedure Fix
+     (This         : Multiple_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
       Options      : Fix_Options;
@@ -2965,6 +2982,37 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Extra_Underlines (Current_Text, Message);
    end Fix;
 
+   --------------------------
+   -- Multiple_Blank_Lines --
+   --------------------------
+
+   procedure Initialize (This : in out Multiple_Blank_Lines) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'(Compile ("multiple blank lines")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Multiple_Blank_Lines;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options, Matches);
+
+      First_Line_To_Remove : File_Cursor :=
+        File_Cursor (Get_Message (Message_It));
+   begin
+      First_Line_To_Remove.Set_Location
+        (First_Line_To_Remove.Get_Line + 1,
+         1);
+
+      Solutions := Remove_Blank_Lines
+        (Current_Text, First_Line_To_Remove);
+   end Fix;
+
    procedure Register_Parsers (Processor : in out Fix_Processor) is
    begin
       Add_Parser (Processor, new Agregate_Misspelling);
@@ -3020,6 +3068,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Non_Visible_Declaration);
       Add_Parser (Processor, new Redundant_With_In_Body);
       Add_Parser (Processor, new Consecutive_Underlines);
+      Add_Parser (Processor, new Multiple_Blank_Lines);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;
