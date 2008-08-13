@@ -75,7 +75,11 @@ package body Language.Tree.Database is
 
    function Get_Tree (File : Structured_File_Access) return Construct_Tree is
    begin
-      return File.Tree;
+      if File /= null then
+         return File.Tree;
+      else
+         return Null_Construct_Tree;
+      end if;
    end Get_Tree;
 
    ----------------
