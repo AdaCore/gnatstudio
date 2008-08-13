@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 12, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 13, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -23,8 +23,8 @@ NF-43-H805-018 New attribute in Language / Category node (2008-08-07)
 
 NF-43-H731-007 Gnatdist configuration language support (2008-08-08)
 
-  Add syntax highlighting and support for showing the entities in the 
-  project explorer for the Gnatdist configuration language. Add also 
+  Add syntax highlighting and support for showing the entities in the
+  project explorer for the Gnatdist configuration language. Add also
   Gnatdist compiler tool with switches.
 
 NF-43-H721-012 Cross-references available on labels (2008-07-22)
@@ -254,6 +254,11 @@ NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
   When the compiler detects an intendation problem, and doesn't propose the
   actual expected column, the auto fix proposed by GPS is now more accurate,
   using the same indentation engine & preferences as the editor.
+
+NF-43-F324-007 Fixing "multiple blank lines" error message (2008-08-13)
+
+   The style error "multiple blank lines" is now automatically fixable in GPS,
+   extra blank lines get removed when the fix is applied.
 
 NF-43-D811-007 Ability to define new language categories (2008-03-12)
 
