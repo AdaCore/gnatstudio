@@ -427,8 +427,6 @@ send_signal_via_characters
   (pty_desc *desc,
   int signal_number)
 {
-
-  /* is there the equivalent of "aliased" in C ??? */
   char ctrl_c         = 03;
   char ctrl_backslash = 28;
   char ctrl_Z         = 26;
