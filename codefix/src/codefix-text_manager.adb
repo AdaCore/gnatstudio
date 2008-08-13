@@ -2202,8 +2202,9 @@ package body Codefix.Text_Manager is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Position.all);
    begin
-      Current_Text.Get_File
-        (This.Position.File_Name).Add_Line (Cursor, This.Line.all);
+      Add_Line
+        (Get_File (Current_Text, This.Position.File_Name).all,
+         Cursor, This.Line.all);
    end Execute;
 
    ----------------------
