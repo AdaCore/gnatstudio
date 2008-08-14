@@ -5645,9 +5645,10 @@ program appears to be in an infinite (or at least very time-consuming) loop.
 
    @item Terminate Current
 @cindex terminate
-Terminate the current debug session, by closing the data window and the debugger
-console, as well as terminating the underlying debugger (e.g @code{gdb}) used
-to handle the low level debugging.
+Terminate the current debug session
+by terminating the underlying debugger (e.g @code{gdb}) used
+to handle the low level debugging. You can control what happens to the
+windows through the @code{Debugger/Debugger Windows} preference.
 
    @item Terminate
 @cindex terminate
@@ -9317,6 +9318,36 @@ When the preference is enabled, the debugger will also preserve the contents
 of the data window whenever it is closed. Reopening the window either during
 the same debugger session, or automatically when a new debugger is started
 on the same executable, will recreate the same boxes within the data window.
+
+@item Debugger Windows
+@cindex debugger windows
+This preference controls what happens to debugger-related windows, like the
+call stack, the data window, the tasks view,..., when the debugger is
+terminated. There are three possible behavior:
+@itemize @bullet
+ @item Close Windows
+
+In this case, all these windows are closed. This saves memory and space on
+the screen, but you will need to explicitly reopen them and put them in the
+right location on the desktop the next time you start a debugger session.
+
+ @item Keep Windows
+
+In this case, the windows are cleared, but kept on the desktop. When you
+start a new debugger session, the windows will be automatically reused. This
+ensures that you won't have to reopen and reposition them, but takes space
+on your screen
+
+ @item Hide Windows
+
+The windows are cleared, and hidden. When you start a new debugger session,
+they are automatically made visible again and reused. This also ensures you
+will not have to reopen and reposition them, but requires a bit of memory.
+If you move some windows around while these windows are hidden, they might
+reappear in unexpected location the next time, although you then just have
+to move them.
+
+@end itemize
 
 @item Break on exceptions
 @cindex breakpoint
