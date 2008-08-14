@@ -52,7 +52,7 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+--  with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
@@ -717,10 +717,6 @@ package body GVD.Process is
          end if;
       end if;
 
-      if Process.Debuggee_Console /= null then
-         Cleanup_TTY_If_Needed (Process.Debuggee_Console);
-      end if;
-
       Process.Post_Processing := False;
       Free (Process.Current_Output);
 
@@ -1097,7 +1093,8 @@ package body GVD.Process is
               Error, Button_OK, Button_OK);
          Process.Exiting := True;
 
-         Close (Window.MDI, Process.Debugger_Text);
+         Close_Debugger (Process);
+         --  Close (Window.MDI, Process.Debugger_Text);
 
          Process.Exiting := False;
          Success := False;
@@ -1181,7 +1178,6 @@ package body GVD.Process is
       Debugger_List : Debugger_List_Link := Get_Debugger_List (Kernel);
       Prev          : Debugger_List_Link;
       Property      : Breakpoint_Property;
-      Window        : MDI_Window;
    begin
       if Process.Exiting then
          return;
@@ -1202,7 +1198,6 @@ package body GVD.Process is
 
       Process.Exiting := True;
       Push_State (Kernel, Busy);
-      Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
 
       --  Save the breakpoints if needed
 
@@ -1225,16 +1220,15 @@ package body GVD.Process is
 
       --  Memorize whether we should automatically start the call stack the
       --  next time GVD is started or not.
+      --  ??? This might no longer be needed, since users have the option to
+      --  keep windows open now, which should be the preferred approach since
+      --  it also preserves the location of the window
 
       Set_Pref (Kernel, Show_Call_Stack, Process.Stack /= null);
 
-      --  This might have been closed by the user
+      --  Let all views know that they should close
 
-      Window := Get_MDI (Kernel);
-
-      if Window /= null and then Process.Debugger_Text /= null then
-         Close (Get_MDI (Kernel), Process.Debugger_Text, Force => True);
-      end if;
+      Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
 
       if Process.Breakpoints /= null then
          Free (Process.Breakpoints);

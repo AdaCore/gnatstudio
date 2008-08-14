@@ -167,9 +167,19 @@ package body GVD.Call_Stack is
 
    procedure Set_View
      (Process : access Visual_Debugger_Record'Class;
-      View    : Gtk_Scrolled_Window) is
+      View    : Gtk_Scrolled_Window)
+   is
+      Old : constant Call_Stack := Call_Stack (Process.Stack);
    begin
       Process.Stack := Gtk_Widget (View);
+
+      --  If we are detaching, clear the old view. This can only be done after
+      --  the above, since otherwise the action on the GUI will result into
+      --  actions on the debugger.
+
+      if View = null and then Old /= null then
+         Clear (Old.Model);
+      end if;
    end Set_View;
 
    -------------------
@@ -214,10 +224,13 @@ package body GVD.Call_Stack is
       end if;
 
       Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
-      Stack_Frame
-        (Get_Process (Stack).Debugger,
-         Natural'Value (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
-         GVD.Types.Visible);
+      if Iter /= Null_Iter then
+         Stack_Frame
+           (Get_Process (Stack).Debugger,
+            Natural'Value
+              (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
+            GVD.Types.Visible);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);

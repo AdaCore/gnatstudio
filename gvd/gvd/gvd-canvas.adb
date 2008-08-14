@@ -569,6 +569,13 @@ package body GVD.Canvas is
          Old.Selected_Component := null;
       end if;
 
+      --  If we are detaching, clear the old view
+      if Canvas = null
+        and then Process.Data /= null
+      then
+         Clear (GVD_Canvas (Process.Data).Canvas);
+      end if;
+
       Process.Data := Gtk_Widget (Canvas);
    end Set_Canvas;
 

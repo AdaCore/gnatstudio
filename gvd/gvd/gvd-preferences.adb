@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +18,14 @@
 -----------------------------------------------------------------------
 
 with Config;   use Config;
+with Glib.Generic_Properties; use Glib.Generic_Properties;
 with GPS.Intl; use GPS.Intl;
 
 package body GVD.Preferences is
+
+   package Debugger_Windows_Policy_Properties is new
+     Generic_Enumeration_Property
+       ("Debugger_Windows_Policy", Debugger_Windows_Policy);
 
    ----------------------------------
    -- Register_Default_Preferences --
@@ -87,6 +91,20 @@ package body GVD.Preferences is
          Default    => True));
       Register_Property
         (Prefs, Param_Spec (Preserve_State_On_Exit), General);
+
+      Debugger_Windows := Param_Spec_Enum
+        (Debugger_Windows_Policy_Properties.Gnew_Enum
+           (Name    => XML_Prefix & "Debugger-Windows",
+            Nick    => -"Debugger windows",
+            Blurb   =>
+            -("What should happen to debugger-related windows when the"
+              & " debugger session terminates. The windows can either be"
+              & " closed automatically, or be kept in the desktop, in which"
+              & " case they can either be hidden or kept visible. The next"
+              & " debugger session will reuse these windows, which is"
+              & " convenient if you want to put them in a specific place"),
+            Default => Close_Windows));
+      Register_Property (Prefs, Param_Spec (Debugger_Windows), General);
 
       Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Editor-Show-Line-With-Code",

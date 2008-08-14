@@ -63,7 +63,7 @@ package body GPS.Kernel.Preferences is
      Generic_Enumeration_Property
        ("Dispatching_Menu_Policy", Entities.Queries.Dispatching_Menu_Policy);
 
-   package Multi_Language_Builder_Policy_Proterties is new
+   package Multi_Language_Builder_Policy_Properties is new
      Generic_Enumeration_Property
        ("Multi_Language_Builder_Policy", Multi_Language_Builder_Policy);
 
@@ -432,7 +432,7 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Multi_Language_Build), -"General");
 
       Multi_Language_Builder := Param_Spec_Enum
-        (Multi_Language_Builder_Policy_Proterties.Gnew_Enum
+        (Multi_Language_Builder_Policy_Properties.Gnew_Enum
            (Name    => "General-Multi-Language-Builder",
             Nick    => -"Multi language builder",
             Blurb   =>

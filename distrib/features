@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 13, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 14, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,16 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H812-004 New debugger preference: Debugger Windows (2008-08-14)
+
+  A new preference was added, available in the Debugger tab. It lets
+  you choose what should be done with the debugger-related windows when
+  the debugger is terminated (call stack, data window, threads,...) You
+  can chose to destroy them (the behavior in previous versions of GPS),
+  keep them open, or hide them. In the last two cases, they will of
+  course be reused the next time you start a debugger, and this therefore
+  provides a way to preserve the location of these windows across sessions
 
 NF-43-H805-018 New attribute in Language / Category node (2008-08-07)
 

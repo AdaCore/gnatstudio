@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,25 +17,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Tags;           use Ada.Tags;
-
-with Glib;               use Glib;
-with Glib.Xml_Int;       use Glib.Xml_Int;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Intl;           use GPS.Intl;
-with Gtk.Object;         use Gtk.Object;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtk.Window;         use Gtk.Window;
-with Gtkada.Dialogs;     use Gtkada.Dialogs;
-with Gtkada.Handlers;    use Gtkada.Handlers;
-with Gtkada.MDI;         use Gtkada.MDI;
-with String_Utils;       use String_Utils;
-with Traces;             use Traces;
+with Ada.Tags;            use Ada.Tags;
+with Default_Preferences; use Default_Preferences;
+with Glib;                use Glib;
+with Glib.Object;         use Glib.Object;
+with Glib.Xml_Int;        use Glib.Xml_Int;
+with GNATCOLL.Traces;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Intl;            use GPS.Intl;
+with Gtk.Object;          use Gtk.Object;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Window;          use Gtk.Window;
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.MDI;          use Gtkada.MDI;
+with GVD.Preferences;     use GVD.Preferences;
+with String_Utils;        use String_Utils;
+with Traces;              use Traces;
 
 package body GVD.Generic_View is
+   Me : constant GNATCOLL.Traces.Trace_Handle := Create ("GVD");
 
    procedure Set_Process
      (View    : access Process_View_Record'Class;
@@ -131,6 +134,13 @@ package body GVD.Generic_View is
    package body Simple_Views is
       type Formal_View_Access is access all Formal_View_Record'Class;
 
+      procedure Gtk_New
+        (View   : out Formal_View_Access;
+         Child  : out GPS_MDI_Child;
+         MDI    : access MDI_Window_Record'Class;
+         Kernel : access Kernel_Handle_Record'Class);
+      --  Create a new view and put it in the MDI
+
       ----------------
       -- On_Destroy --
       ----------------
@@ -152,12 +162,17 @@ package body GVD.Generic_View is
       ---------------------------
 
       procedure On_Debugger_Terminate
-        (View : access Gtk_Widget_Record'Class)
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
       is
-         V : constant Formal_View_Access := Formal_View_Access (View);
-         P : constant Visual_Debugger := Get_Process (V);
+         pragma Unreferenced (Kernel);
+         P : constant Visual_Debugger := Get_Process (Data);
+         V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
+         Policy        : constant Debugger_Windows_Policy :=
+           Debugger_Windows_Policy'Val (Get_Pref (Debugger_Windows));
       begin
-         if P /= null then
+         Trace (Me, "On_Debugger_Terminate, closing view " & Module_Name);
+         if P /= null and then V /= null then
             --  Do not destroy the view when we are in the process of
             --  destroying the main window. What might happen otherwise is the
             --  following: we have the debugger console and debuggee console in
@@ -170,13 +185,22 @@ package body GVD.Generic_View is
             if Get_Main_Window (Get_Kernel (P)) /= null
               and then not Gtk.Object.In_Destruction_Is_Set
                 (Get_Main_Window (Get_Kernel (P)))
+              and then Get_Process (V) /= null
             then
-               Destroy (View);
+               Set_View (Get_Process (V), null);
+               Unset_Process (V);
+
+               case Policy is
+                  when Close_Windows => Destroy (V);
+                  when Hide_Windows  => Hide (V);
+                  when Keep_Windows  => null;
+               end case;
             else
                Set_View (Get_Process (V), null);
                Unset_Process (V);
             end if;
          end if;
+         Trace (Me, "On_Debugger_Terminate, done closing view " & Module_Name);
 
       exception
          when E : others => Trace (Exception_Handle, E);
@@ -221,31 +245,16 @@ package body GVD.Generic_View is
             --  If no existing view was found, create one
 
             if Child = null and then Create_If_Necessary then
-               View := new Formal_View_Record;
-               Initialize (View, Kernel);
-               Gtk_New (Child2, View,
-                        Flags  => MDI_Child_Flags,
-                        Group  => Group,
-                        Default_Width => 150,
-                        Default_Height => 150,
-                        Module => Get_Module);
+               Gtk_New (View, Child2, MDI, Kernel);
                Child := MDI_Child (Child2);
-               Set_Title (Child, View_Name);
-               Put (MDI, Child, Initial_Position => Position);
-               Raise_Child (Child);
             end if;
 
             if Child /= null then
-               --  First connect to the console. This way, if we are currently
-               --  creating it, we won't really attach to it and avoid event
-               --  loops
+               --  In case it was hidden because of the preference
+               Show (View);
 
-               if Get_Console (Process) /= null then
-                  Widget_Callback.Object_Connect
-                    (Get_Console (Process), Signal_Destroy,
-                     On_Debugger_Terminate'Unrestricted_Access,
-                     Slot_Object => View);
-               end if;
+               --  Make it visible again
+               Raise_Child (Child);
 
                Set_Process (View, Visual_Debugger (Process));
                Set_View (Process, Base_Type_Access (View));
@@ -293,6 +302,36 @@ package body GVD.Generic_View is
          end if;
       end Attach_To_View;
 
+      -------------
+      -- Gtk_New --
+      -------------
+
+      procedure Gtk_New
+        (View   : out Formal_View_Access;
+         Child  : out GPS_MDI_Child;
+         MDI    : access MDI_Window_Record'Class;
+         Kernel : access Kernel_Handle_Record'Class) is
+      begin
+         View := new Formal_View_Record;
+         Initialize (View, Kernel);
+         Add_Hook
+           (Kernel,
+            Hook  => Debugger_Terminated_Hook,
+            Func  => Wrapper (On_Debugger_Terminate'Unrestricted_Access),
+            Name  => "terminate_" & Module_Name,
+            Watch => GObject (View));
+
+         Gtk_New (Child, View,
+                  Flags          => MDI_Child_Flags,
+                  Group          => Group,
+                  Default_Width  => 150,
+                  Default_Height => 150,
+                  Module         => Get_Module);
+         Set_Title (Child, View_Name);
+         Put (MDI, Child, Initial_Position => Position);
+
+      end Gtk_New;
+
       ------------------
       -- Load_Desktop --
       ------------------
@@ -306,19 +345,10 @@ package body GVD.Generic_View is
          View  : Formal_View_Access;
       begin
          if Node.Tag.all = Module_Name then
-            View := new Formal_View_Record;
-            Initialize (View, Kernel);
-
+            Gtk_New (View, Child, MDI, Kernel);
             if Node.Child /= null then
                Load_From_XML (View, Node.Child);
             end if;
-
-            Gtk_New (Child, View,
-                     Flags  => MDI_Child_Flags,
-                     Group  => Group_Debugger_Stack,
-                     Module => Get_Module);
-            Set_Title (Child, View_Name);
-            Put (MDI, Child, Initial_Position => Position_Right);
             return MDI_Child (Child);
          end if;
 

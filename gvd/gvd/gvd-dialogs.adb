@@ -405,6 +405,14 @@ package body GVD.Dialogs is
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window) is
    begin
+      if View = null
+        and then Process.Threads /= null
+        and then Thread_View (Process.Threads).Tree /= null
+      then
+         Clear
+           (Gtk_Tree_Store (Get_Model (Thread_View (Process.Threads).Tree)));
+      end if;
+
       Process.Threads := Gtk_Widget (View);
    end Set_Thread_View;
 
@@ -427,6 +435,14 @@ package body GVD.Dialogs is
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window) is
    begin
+      if View = null
+        and then Process.Tasks /= null
+        and then Thread_View (Process.Tasks).Tree /= null
+      then
+         Clear
+           (Gtk_Tree_Store (Get_Model (Thread_View (Process.Tasks).Tree)));
+      end if;
+
       Process.Tasks := Gtk_Widget (View);
    end Set_Task_View;
 
@@ -449,6 +465,14 @@ package body GVD.Dialogs is
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window) is
    begin
+      if View = null
+        and then Process.PDs /= null
+        and then Thread_View (Process.PDs).Tree /= null
+      then
+         Clear
+           (Gtk_Tree_Store (Get_Model (Thread_View (Process.PDs).Tree)));
+      end if;
+
       Process.PDs := Gtk_Widget (View);
    end Set_PD_View;
 

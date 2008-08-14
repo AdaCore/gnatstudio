@@ -1041,6 +1041,13 @@ package body GVD.Assembly_View is
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window) is
    begin
+      --  If we are detaching, clear the old view
+      if View = null
+        and then Process.Assembly /= null
+      then
+         Set_Text (Assembly_View (Process.Assembly), "");
+      end if;
+
       Process.Assembly := Gtk_Widget (View);
    end Set_View;
 

@@ -81,6 +81,7 @@ package body GVD.Consoles is
          Debuggee_TTY        : GNAT.TTY.TTY_Handle;
          Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
          Debuggee_Id         : Gtk.Main.Timeout_Handler_Id := 0;
+         TTY_Initialized     : Boolean := False;
          Cleanup_TTY         : Boolean := False;
       end record;
    type Debuggee_Console is access all Debuggee_Console_Record'Class;
@@ -94,6 +95,10 @@ package body GVD.Consoles is
      (Console : access Debuggee_Console_Record'Class;
       Kernel  : access Kernel_Handle_Record'Class);
    --  Create each of the console types
+
+   procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class);
+   procedure Close_TTY (Console : access Debuggee_Console_Record'Class);
+   --  Allocate or close, if not done yet, a new tty on the console
 
    procedure On_Attach
      (Console : access Debuggee_Console_Record;
@@ -198,6 +203,13 @@ package body GVD.Consoles is
      (Process : access Visual_Debugger_Record'Class;
       Console : Interactive_Console) is
    begin
+      --  If we are detaching, clear the old view
+      if Console = null
+        and then Process.Debugger_Text /= null
+      then
+         Clear (Process.Debugger_Text);
+      end if;
+
       Process.Debugger_Text := Console;
    end Set_Debugger_Console;
 
@@ -209,28 +221,16 @@ package body GVD.Consoles is
      (Process : access Visual_Debugger_Record'Class;
       Console : Interactive_Console) is
    begin
+      --  If we are detaching, clear the old view
+      if Console = null
+        and then Process.Debuggee_Console /= null
+      then
+         Close_TTY (Debuggee_Console (Process.Debuggee_Console));
+         Clear (Process.Debuggee_Console);
+      end if;
+
       Process.Debuggee_Console := Console;
    end Set_Debuggee_Console;
-
-   ---------------------------
-   -- Cleanup_TTY_If_Needed --
-   ---------------------------
-
-   procedure Cleanup_TTY_If_Needed
-     (Console : access Interactive_Console_Record'Class)
-   is
-      C : constant Debuggee_Console := Debuggee_Console (Console);
-   begin
-      if C.Cleanup_TTY then
-         Close_TTY (C.Debuggee_TTY);
-         Allocate_TTY (C.Debuggee_TTY);
-         Close_Pseudo_Descriptor (C.Debuggee_Descriptor);
-         Pseudo_Descriptor (C.Debuggee_Descriptor, C.Debuggee_TTY, 0);
-         Set_TTY (Get_Process (C).Debugger, TTY_Name (C.Debuggee_TTY));
-         Flush (C.Debuggee_Descriptor);
-         C.Cleanup_TTY := False;
-      end if;
-   end Cleanup_TTY_If_Needed;
 
    ------------
    -- TTY_Cb --
@@ -261,13 +261,9 @@ package body GVD.Consoles is
          Highlight_Child
            (Find_MDI_Child (Get_Process (Console).Window.MDI, Console));
 
-         Console.Cleanup_TTY := True;
-
-         if not Command_In_Process
-           (Get_Process (Get_Process (Console).Debugger))
-         then
-            Cleanup_TTY_If_Needed (Console);
-         end if;
+         --  Reset the TTY linking with the debugger and the console
+         Close_TTY (Console);
+         Allocate_TTY (Console);
 
          return True;
    end TTY_Cb;
@@ -298,17 +294,9 @@ package body GVD.Consoles is
    -- On_Debuggee_Destroy --
    -------------------------
 
-   procedure On_Debuggee_Destroy
-     (Console : access Gtk_Widget_Record'Class)
-   is
-      C : constant Debuggee_Console := Debuggee_Console (Console);
+   procedure On_Debuggee_Destroy (Console : access Gtk_Widget_Record'Class) is
    begin
-      Close_Pseudo_Descriptor (C.Debuggee_Descriptor);
-      Close_TTY (C.Debuggee_TTY);
-
-      if C.Debuggee_Id /= 0 then
-         Gtk.Main.Timeout_Remove (C.Debuggee_Id);
-      end if;
+      Close_TTY (Debuggee_Console (Console));
    end On_Debuggee_Destroy;
 
    -------------------
@@ -458,6 +446,60 @@ package body GVD.Consoles is
          Context_Func    => Context_Factory'Access);
    end Initialize;
 
+   ------------------
+   -- Allocate_TTY --
+   ------------------
+
+   procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class) is
+   begin
+      if not Console.TTY_Initialized then
+         Allocate_TTY (Console.Debuggee_TTY);
+         Pseudo_Descriptor
+           (Console.Debuggee_Descriptor, Console.Debuggee_TTY, 0);
+         Flush (Console.Debuggee_Descriptor);
+
+         Console.TTY_Initialized := True;
+         Console.Debuggee_Id :=
+           TTY_Timeout.Add (Timeout, TTY_Cb'Access, Console.all'Access);
+
+         if Get_Process (Console) /= null
+           and then Get_Process (Console).Debugger /= null
+         then
+            Set_TTY
+              (Get_Process (Console).Debugger,
+               TTY_Name (Console.Debuggee_TTY));
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end Allocate_TTY;
+
+   ---------------
+   -- Close_TTY --
+   ---------------
+
+   procedure Close_TTY (Console : access Debuggee_Console_Record'Class) is
+   begin
+      if Console.TTY_Initialized then
+         if Console.Debuggee_Id /= 0 then
+            Gtk.Main.Timeout_Remove (Console.Debuggee_Id);
+            Console.Debuggee_Id := 0;
+         end if;
+
+         if Get_Process (Console) /= null
+           and then Get_Process (Console).Debugger /= null
+         then
+            Set_TTY (Get_Process (Console).Debugger,  "");
+         end if;
+
+         Close_TTY (Console.Debuggee_TTY);
+         Close_Pseudo_Descriptor (Console.Debuggee_Descriptor);
+         Console.TTY_Initialized := False;
+      end if;
+   end Close_TTY;
+
    ----------------
    -- Initialize --
    ----------------
@@ -479,7 +521,6 @@ package body GVD.Consoles is
          Wrap_Mode    => Wrap_Char);
       Widget_Callback.Connect
         (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
-      Allocate_TTY (Console.Debuggee_TTY);
    end Initialize;
 
    --------------------------------
@@ -502,14 +543,11 @@ package body GVD.Consoles is
 
    procedure On_Attach
      (Console : access Debuggee_Console_Record;
-      Process : access Visual_Debugger_Record'Class) is
+      Process : access Visual_Debugger_Record'Class)
+   is
+      pragma Unreferenced (Process);
    begin
-      Set_TTY (Process.Debugger, TTY_Name (Console.Debuggee_TTY));
-      Pseudo_Descriptor
-        (Console.Debuggee_Descriptor, Console.Debuggee_TTY, 0);
-      Flush (Console.Debuggee_Descriptor);
-      Console.Debuggee_Id :=
-        TTY_Timeout.Add (Timeout, TTY_Cb'Access, Console.all'Access);
+      Allocate_TTY (Console);
    end On_Attach;
 
    ---------------------

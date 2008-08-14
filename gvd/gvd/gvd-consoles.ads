@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2005                        --
---                             AdaCore                               --
+--                         Copyright (C) 2005-2008, AdaCore          --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +21,6 @@
 
 with GVD.Process;
 with GPS.Kernel;
-with Interactive_Consoles;
 
 package GVD.Consoles is
 
@@ -42,10 +40,5 @@ package GVD.Consoles is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the consoles
-
-   procedure Cleanup_TTY_If_Needed
-     (Console : access Interactive_Consoles.Interactive_Console_Record'Class);
-   --  Detatch the TTY from the debuggee console.
-   --  Nothing is done if Console.Cleanup_TTY is False
 
 end GVD.Consoles;

@@ -29,6 +29,13 @@ package GVD.Preferences is
    --  Register all the preferences relative to GVD, and their default
    --  values. This doesn't override existing values of the preferences.
 
+   type Debugger_Windows_Policy is
+     (Close_Windows, Hide_Windows, Keep_Windows);
+   for Debugger_Windows_Policy'Size use Glib.Gint'Size;
+   pragma Convention (C, Debugger_Windows_Policy);
+   --  What should happen to debugger-related windows when a debugger session
+   --  is terminated.
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -40,6 +47,7 @@ package GVD.Preferences is
    Open_Main_Unit                : Param_Spec_Boolean;
    Execution_Window              : Param_Spec_Boolean;
    Preserve_State_On_Exit        : Param_Spec_Boolean;
+   Debugger_Windows              : Param_Spec_Enum;
 
    -- Source Window --
    Editor_Show_Line_With_Code    : Param_Spec_Boolean;

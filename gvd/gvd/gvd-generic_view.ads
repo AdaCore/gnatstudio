@@ -44,8 +44,11 @@ generic
 
    Debugger_Process_Stopped_Hook : GPS.Kernel.Hook_Name;
    Debugger_Context_Changed_Hook : GPS.Kernel.Hook_Name;
-   --  The two hooks on which we want to refresh the view. These should be read
+   --  The hooks on which we want to refresh the view. These should be read
    --  from GVD.Scripts, but cannot for elaboration circularity issues.
+
+   Debugger_Terminated_Hook      : GPS.Kernel.Hook_Name;
+   --  Hook emitted when the debugger terminates
 
    with function Get_Module return GPS.Kernel.Modules.Module_ID is <>;
    --  The module to be associated with the MDI child, in particular when
@@ -55,11 +58,6 @@ generic
 
    with function Get_Num (Process : Visual_Debugger) return Glib.Gint is <>;
    --  Return the debugger identifier associated with Process
-
-   with function Get_Console
-     (Process : access Visual_Debugger_Record'Class)
-     return Gtk.Widget.Gtk_Widget is <>;
-   --  Return the debugger console associated with Process
 
    with function Get_Process
      (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
@@ -136,7 +134,10 @@ package GVD.Generic_View is
       --  the view in the properties if need be. It always occurs before the
       --  widget is actually destroyed, and while the debugger still exists
       --  (you should save the contents of the current view, before setting the
-      --  new one).
+      --  new one). When Set_View is called with a null View, it means the
+      --  process is being detached. At that point, it is a good idea to clear
+      --  graphically the contents of the old view. At that point the
+      --  view is still attached to a process with which you can interact.
 
       with procedure Initialize
         (View   : access Formal_View_Record'Class;
@@ -175,10 +176,11 @@ package GVD.Generic_View is
       --  body.
 
       procedure On_Debugger_Terminate
-        (View : access Gtk.Widget.Gtk_Widget_Record'Class);
-      --  Callback when the debugger console is destroyed (ie the debugger
-      --  terminates). This needs to be in the spec since it is used as a
-      --  callback in the body.
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      --  Callback when the debugger is terminated.
+      --  This needs to be in the spec since it is used as a callback in the
+      --  body.
 
       function Save_Desktop
         (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;

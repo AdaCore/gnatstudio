@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2005                        --
---                             AdaCore                               --
+--                         Copyright (C) 2005-2008, AdaCore          --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +34,8 @@ package GVD.Views is
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger,
       Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
-      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook,
+      Debugger_Terminated_Hook      => Debugger_Terminated_Hook);
 
    package Console_Views is new GVD.Generic_View
      (Base_Type                     => Interactive_Console_Record,
@@ -43,6 +43,7 @@ package GVD.Views is
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger,
       Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
-      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook);
+      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook,
+      Debugger_Terminated_Hook      => Debugger_Terminated_Hook);
 
 end GVD.Views;
