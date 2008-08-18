@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language.Tree;              use Language.Tree;
-with Language.Tree.Database;     use Language.Tree.Database;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Glib.Unicode;               use Glib.Unicode;
