@@ -105,13 +105,16 @@ package Projects.Editor is
       Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean := False;
       Limited_With              : Boolean := False)
       return Import_Project_Error;
    --  Add a new with_statement for Imported_Project.
    --  Errors while parsing the project file are sent to Report_Errors.
    --  True is returned if the project was modified with success
-   --  If Use_Relative_Path is True, then a relative path is used in the with
-   --  statement, otherwise an absolute path is used.
+   --  If Use_Base_Name is true then only the base name of the project is used
+   --  in the with statement. Otherwise, if Use_Relative_Path is True, then a
+   --  relative path is used in the with statement, otherwise an absolute path
+   --  is used.
 
    function Add_Imported_Project
      (Root_Project      : Project_Type;
@@ -119,6 +122,7 @@ package Projects.Editor is
       Imported_Project  : Project_Type;
       Report_Errors     : Output.Output_Proc := null;
       Use_Relative_Path : Boolean;
+      Use_Base_Name     : Boolean := False;
       Limited_With      : Boolean := False) return Import_Project_Error;
    --  Same as above, but the project is already in memory
 
@@ -172,17 +176,6 @@ package Projects.Editor is
       Use_Relative_Paths : Boolean) return Boolean;
    --  Renames the path to New_Path.
    --  Return value is True if the directory path could be renamed.
-
-   function Convert_Paths
-     (Project                : Project_Type;
-      Use_Relative_Paths     : Boolean := False;
-      Update_With_Statements : Boolean := False) return Boolean;
-   --  Convert all the paths (source path, object path) to absolute directories
-   --  (if Use_Relative_Paths if False) or relative directories.
-   --  This should always be used before moving a project file.
-   --  This doesn't modify the with statements however if
-   --  Update_With_Statements is False.
-   --  Return value is True if at least one of the paths has changed.
 
    ---------------
    -- Variables --

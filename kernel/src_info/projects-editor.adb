@@ -66,6 +66,7 @@ package body Projects.Editor is
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean;
       Limited_With              : Boolean := False);
    --  Set the attributes of the with_clause (imported project node, imported
    --  project path,....)
@@ -80,6 +81,7 @@ package body Projects.Editor is
       Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean;
       Limited_With              : Boolean := False)
       return Import_Project_Error;
    --  Internal version of Add_Imported_Project
@@ -2610,112 +2612,6 @@ package body Projects.Editor is
       return Changed;
    end Rename_Path;
 
-   -------------------
-   -- Convert_Paths --
-   -------------------
-
-   function Convert_Paths
-     (Project                : Project_Type;
-      Use_Relative_Paths     : Boolean := False;
-      Update_With_Statements : Boolean := False) return Boolean
-   is
-      Tree : constant Project_Node_Tree_Ref := Project.Tree;
-
-      procedure Convert_Path (Node : Project_Node_Id);
-      --  Convert the path to an absolute path
-
-      Base    : constant String := Full_Name (Project_Directory (Project)).all;
-      Changed : Boolean := False;
-
-      ------------------
-      -- Convert_Path --
-      ------------------
-
-      procedure Convert_Path (Node : Project_Node_Id) is
-         Old : constant String := Get_String (String_Value_Of (Node, Tree));
-      begin
-         if Use_Relative_Paths then
-            declare
-               Conv : constant String :=
-                 Relative_Path_Name (Old, Base, Build_Server);
-            begin
-               if Conv /= Old then
-                  Set_String_Value_Of (Node, Tree, Get_String (Conv));
-                  Changed := True;
-               end if;
-            end;
-         else
-            declare
-               Conv : constant String := Normalize_Pathname (Old, Base);
-            begin
-               if Conv /= Old then
-                  Set_String_Value_Of (Node, Tree, Get_String (Conv));
-                  Changed := True;
-               end if;
-            end;
-         end if;
-      end Convert_Path;
-
-      With_Clause : Project_Node_Id :=
-                      First_With_Clause_Of (Project.Node, Tree);
-
-   begin
-      --  First replace the with clauses
-
-      if Update_With_Statements then
-         while With_Clause /= Empty_Node loop
-            Convert_Path (With_Clause);
-            With_Clause := Next_With_Clause_Of (With_Clause, Tree);
-         end loop;
-      end if;
-
-      --  Converts the "extends ..." part
-
-      declare
-         Old : constant String := Get_String
-           (Extended_Project_Path_Of (Project.Node, Tree));
-      begin
-         if Old /= "" then
-            if Use_Relative_Paths then
-               declare
-                  Conv : constant String :=
-                    Relative_Path_Name (Old, Base, Build_Server);
-               begin
-                  if Old /= Conv then
-                     Set_Extended_Project_Path_Of
-                       (Project.Node,
-                        Tree,
-                        Get_String (Conv));
-                     Changed := True;
-                  end if;
-               end;
-            else
-               declare
-                  Conv : constant String := Normalize_Pathname (Old, Base);
-               begin
-                  if Conv /= Old then
-                     Set_Extended_Project_Path_Of
-                       (Project.Node,
-                        Tree,
-                        Get_String (Conv));
-                     Changed := True;
-                  end if;
-               end;
-            end if;
-         end if;
-      end;
-
-      --  Then replace all the paths
-
-      For_Each_Directory_Node (Project, Convert_Path'Unrestricted_Access);
-
-      if Changed then
-         Set_Project_Modified (Project, True);
-      end if;
-
-      return Changed;
-   end Convert_Paths;
-
    ------------------------------
    -- Post_Process_After_Clone --
    ------------------------------
@@ -3225,18 +3121,34 @@ package body Projects.Editor is
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean;
       Limited_With              : Boolean := False)
    is
       Clause : Name_Id;
    begin
-      if Use_Relative_Path then
-         Clause := Get_String
-           (Relative_Path_Name
+      if Use_Base_Name then
+         Clause := Get_String (Base_Name (Imported_Project_Location));
+
+      elsif Use_Relative_Path then
+         declare
+            Rel : constant String := Relative_Path_Name
               (Imported_Project_Location,
                Dir_Name
-                 (Get_String
-                    (Path_Name_Of (Importing_Project, Tree))),
-               Build_Server));
+                 (Get_String (Path_Name_Of (Importing_Project, Tree))),
+               Build_Server);
+         begin
+            --  Rel must have at least "./", to indicate this is a relative
+            --  path. Otherwise there is a confusion with the case where we use
+            --  base names, and these are never converted to absolute path when
+            --  the project is moved.
+
+            if Rel = Base_Name (Rel) then
+               Clause := Get_String ("." & Directory_Separator & Rel);
+            else
+               Clause := Get_String (Rel);
+            end if;
+         end;
+
       else
          Clause := Get_String (Imported_Project_Location);
       end if;
@@ -3260,6 +3172,7 @@ package body Projects.Editor is
       Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean;
       Limited_With              : Boolean := False)
       return Import_Project_Error
    is
@@ -3336,8 +3249,10 @@ package body Projects.Editor is
       Set_With_Clause_Path
         (Tree, With_Clause,
          Full_Name (Imported_Project_Location).all,
-         Imported_Project, Project.Node, Use_Relative_Path,
-         Limited_With => Limited_With);
+         Imported_Project, Project.Node,
+         Use_Relative_Path => Use_Relative_Path,
+         Use_Base_Name     => Use_Base_Name,
+         Limited_With      => Limited_With);
 
       if Has_Circular_Dependencies (Project.Tree, Project.Node) then
          Set_First_With_Clause_Of
@@ -3393,6 +3308,7 @@ package body Projects.Editor is
       Imported_Project  : Project_Type;
       Report_Errors     : Output.Output_Proc := null;
       Use_Relative_Path : Boolean;
+      Use_Base_Name     : Boolean := False;
       Limited_With      : Boolean := False) return Import_Project_Error is
    begin
       return Add_Imported_Project
@@ -3402,6 +3318,7 @@ package body Projects.Editor is
          Imported_Project_Location => Project_Path (Imported_Project),
          Report_Errors             => Report_Errors,
          Use_Relative_Path         => Use_Relative_Path,
+         Use_Base_Name             => Use_Base_Name,
          Limited_With              => Limited_With);
    end Add_Imported_Project;
 
@@ -3415,6 +3332,7 @@ package body Projects.Editor is
       Imported_Project_Location : GNATCOLL.VFS.Virtual_File;
       Report_Errors             : Output.Output_Proc := null;
       Use_Relative_Path         : Boolean;
+      Use_Base_Name             : Boolean := False;
       Limited_With              : Boolean := False)
       return Import_Project_Error
    is
@@ -3494,6 +3412,7 @@ package body Projects.Editor is
          Imported_Project_Location => Imported_Project_Location,
          Report_Errors             => Report_Errors,
          Use_Relative_Path         => Use_Relative_Path,
+         Use_Base_Name             => Use_Base_Name,
          Limited_With              => Limited_With);
    end Add_Imported_Project;
 
@@ -3871,7 +3790,9 @@ package body Projects.Editor is
                Set_With_Clause_Path
                  (Tree, With_Clause, Full_Name (Project_Path (Project)).all,
                   Project.Node,
-                  P.Node, Use_Relative_Path);
+                  P.Node,
+                  Use_Base_Name     => False,
+                  Use_Relative_Path => Use_Relative_Path);
                Set_Project_Modified (P, True);
                Reset_Cache (P, Imported_By => True);
             end if;

@@ -91,6 +91,7 @@ package body Creation_Wizard.Dependencies is
    Is_Limited_Column         : constant := 1;
    Can_Change_Limited_Column : constant := 2;
    Full_Path_Column          : constant := 3;
+   Use_Base_Name_Column      : constant := 4;
 
    --  Constants for the "Add from known dialog"
    Selected_Column2         : constant := 0;
@@ -144,7 +145,8 @@ package body Creation_Wizard.Dependencies is
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
       Imported_Project_Path : String;
-      Limited_With          : Boolean := False);
+      Limited_With          : Boolean;
+      Use_Base_Name         : Boolean);
    --  Internal function that creates a dependency between two projects. It
    --  properly handles the case where a project with the same name as
    --  Imported_Project_Path already exists in the project hierarchy.
@@ -157,7 +159,8 @@ package body Creation_Wizard.Dependencies is
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
       Imported_Project_Path : String;
-      Limited_With          : Boolean := False)
+      Limited_With          : Boolean;
+      Use_Base_Name         : Boolean)
    is
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
@@ -196,6 +199,7 @@ package body Creation_Wizard.Dependencies is
               (Normalize_Pathname
                  (Imported_Project_Path, Full_Name (Base).all)),
             Report_Errors     => Report_Error'Unrestricted_Access,
+            Use_Base_Name     => Use_Base_Name,
             Use_Relative_Path => Use_Relative_Path,
             Limited_With      => Limited_With);
 
@@ -454,7 +458,8 @@ package body Creation_Wizard.Dependencies is
            (Project_Name_Column       => GType_String,
             Is_Limited_Column         => GType_Boolean,
             Can_Change_Limited_Column => GType_Boolean,
-            Full_Path_Column          => GType_String),
+            Full_Path_Column          => GType_String,
+            Use_Base_Name_Column      => GType_Boolean),
          Column_Names      =>
            (1 + Project_Name_Column => Cst_Project_Name'Unchecked_Access,
             1 + Is_Limited_Column   => Cst_Limited'Unchecked_Access),
@@ -572,6 +577,7 @@ package body Creation_Wizard.Dependencies is
                     not Get_Boolean (Model, Iter, Is_Limited_Column2));
                Set (PModel, PIter, Full_Path_Column,
                     Get_String (Model, Iter, Full_Path_Column2));
+               Set (PModel, PIter, Use_Base_Name_Column, True);
             end if;
 
             Next (Model, Iter);
@@ -608,6 +614,7 @@ package body Creation_Wizard.Dependencies is
          Set (Model, Iter, Is_Limited_Column, False);
          Set (Model, Iter, Can_Change_Limited_Column, True);
          Set (Model, Iter, Full_Path_Column, Display_Full_Name (Name));
+         Set (Model, Iter, Use_Base_Name_Column, False);
       end if;
    end Add_New_Project_From_Wizard;
 
@@ -641,6 +648,7 @@ package body Creation_Wizard.Dependencies is
          Set (Model, Iter, Is_Limited_Column, False);
          Set (Model, Iter, Can_Change_Limited_Column, True);
          Set (Model, Iter, Full_Path_Column, Full_Name (Name).all);
+         Set (Model, Iter, Use_Base_Name_Column, False);
       end if;
    end Add_New_Project;
 
@@ -731,7 +739,9 @@ package body Creation_Wizard.Dependencies is
                   Imported_Project_Path =>
                     Get_String (Model, Iter, Full_Path_Column),
                   Limited_With          =>
-                    Get_Boolean (Model, Iter, Is_Limited_Column));
+                    Get_Boolean (Model, Iter, Is_Limited_Column),
+                  Use_Base_Name         =>
+                    Get_Boolean (Model, Iter, Use_Base_Name_Column));
                Changed := True;
             end if;
 

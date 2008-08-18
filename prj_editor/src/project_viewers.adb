@@ -1322,6 +1322,7 @@ package body Project_Viewers is
                   Project                   => Project,
                   Imported_Project_Location => Create (Project2),
                   Report_Errors           => Set_Error_Tmp'Unrestricted_Access,
+                  Use_Base_Name             => False,
                   Use_Relative_Path         => Relative);
             end if;
          end;

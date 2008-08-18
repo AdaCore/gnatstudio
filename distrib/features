@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 14, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 18, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -261,6 +261,15 @@ NF-43-GA19-017 Support for annotated comments highlighting (2008-02-29)
 
   The Ada source editor will now highlight with a different color annotated
   comments (e.g. --#).
+
+NF-43-G904-006 Importing predefined projects (2008-08-18)
+
+  When you add a dependency to your project (through the Project/Dependencies
+  contextual menu in the project view) on a predefined project (ie one
+  installed in the system's standard directories, like all the projects
+  installed with the GNAT addons), your project is modified so that the with
+  statement does not use absolute paths. This allows you to for instance
+  update the version of your compiler without modifying your projects.
 
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 
