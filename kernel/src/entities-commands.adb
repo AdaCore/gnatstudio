@@ -23,7 +23,6 @@ with Commands.Generic_Asynchronous;  use Commands;
 with Entities.Queries;               use Entities.Queries;
 with Glib.Object;                    use Glib.Object;
 with GPS.Kernel;                     use GPS.Kernel;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Intl;                       use GPS.Intl;
 with Gtk.Widget;                     use Gtk.Widget;
@@ -269,8 +268,6 @@ package body Entities.Commands is
       Get_All_Refs      : Boolean;
       Dispatching_Calls : Boolean)
    is
-      Pref  : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
-        (Get_Pref (Submenu_For_Dispatching_Calls));
       Calls       : Calls_Iterator;
       Called_E    : Entity_Information;
       Refs        : Entity_Reference_Iterator;
@@ -381,11 +378,15 @@ package body Entities.Commands is
                               end On_Callee;
 
                            begin
+                              --  Always compute accurate information for the
+                              --  call graph, since, as opposed to the
+                              --  contextual menu, we have more time to do the
+                              --  computation
                               For_Each_Dispatching_Call
                                 (Entity    => Get_Entity (Refs),
                                  Ref       => Ref,
                                  On_Callee => On_Callee'Access,
-                                 Policy    => Pref);
+                                 Policy    => Accurate);
                               exit For_Each_Entity when Stop;
                            end;
                         end if;

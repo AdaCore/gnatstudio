@@ -387,7 +387,8 @@ package body GPS.Kernel.Preferences is
               & "Accurate: GPS will reload the cross-references information"
               & " from the disk as needed. This might result in long delays"
               & " (up to several seconds) if lots of information needs to be"
-              & " loaded."),
+              & " loaded. This method is always used when computing"
+              & " dispatching information in call graphs."),
             Default => From_Memory));
       Register_Property
            (Kernel.Preferences,
