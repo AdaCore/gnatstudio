@@ -3130,24 +3130,12 @@ package body Projects.Editor is
          Clause := Get_String (Base_Name (Imported_Project_Location));
 
       elsif Use_Relative_Path then
-         declare
-            Rel : constant String := Relative_Path_Name
+         Clause := Get_String
+           (Relative_Path_Name
               (Imported_Project_Location,
                Dir_Name
                  (Get_String (Path_Name_Of (Importing_Project, Tree))),
-               Build_Server);
-         begin
-            --  Rel must have at least "./", to indicate this is a relative
-            --  path. Otherwise there is a confusion with the case where we use
-            --  base names, and these are never converted to absolute path when
-            --  the project is moved.
-
-            if Rel = Base_Name (Rel) then
-               Clause := Get_String ("." & Directory_Separator & Rel);
-            else
-               Clause := Get_String (Rel);
-            end if;
-         end;
+               Build_Server));
 
       else
          Clause := Get_String (Imported_Project_Location);
