@@ -1657,19 +1657,8 @@ package body Builder_Module is
          Directory    : String;
          Title        : String)
       is
-         Console    : Interactive_Console;
-         Child      : MDI_Child;
          Local_Args : Argument_List_Access;
-
       begin
-         Console := Create_Interactive_Console (K, Title);
-         Clear (Console);
-         Child := Find_MDI_Child (Get_MDI (K), Console);
-
-         if Child /= null then
-            Raise_Child (Child);
-         end if;
-
          if not Ext_Terminal
            and then Shell_Env /= ""
            and then Is_Local (Build_Server)
@@ -1677,34 +1666,20 @@ package body Builder_Module is
             --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
             --  is local.
 
-            Local_Args :=
-              new Argument_List'(new String'("-c"), new String'(Command));
-            Launch_Process
-              (K,
-               Command              => Shell_Env,
-               Arguments            => Local_Args.all,
-               Server               => Execution_Server,
-               Console              => Console,
-               Success              => Success,
-               Directory            => Directory,
-               Use_Ext_Terminal     => Ext_Terminal,
-               Show_Exit_Status     => True);
-
+            Local_Args := new Argument_List'
+              (new String'(Shell_Env),
+               new String'("-c"),
+               new String'(Command));
          else
             Local_Args := Argument_String_To_List (Command);
-            Launch_Process
-              (K,
-               Command          => Local_Args (Local_Args'First).all,
-               Arguments        =>
-                 Local_Args (Local_Args'First + 1 .. Local_Args'Last),
-               Server           => Execution_Server,
-               Console          => Console,
-               Success          => Success,
-               Directory        => Directory,
-               Use_Ext_Terminal => Ext_Terminal,
-               Show_Exit_Status => True);
          end if;
 
+         Launch
+           (Command    => Local_Args (Local_Args'First).all,
+            Arguments  => Local_Args (Local_Args'First + 1 .. Local_Args'Last),
+            Ext_Terminal => Ext_Terminal,
+            Directory    => Directory,
+            Title        => Title);
          Free (Local_Args);
       end Launch;
 
