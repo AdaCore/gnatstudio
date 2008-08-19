@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +30,6 @@ with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Styles;     use GPS.Kernel.Styles;
 with GPS.Location_View;     use GPS.Location_View;
-with String_List_Utils;
 with Builder_Module;        use Builder_Module;
 with GPS.Intl;              use GPS.Intl;
 with Traces;                use Traces;
@@ -99,8 +98,7 @@ package body Commands.Builder is
          Mode       => Single);
 
       for J in 1 .. Slice_Count (Lines) loop
-         String_List_Utils.String_List.Append
-           (Builder_Module_ID.Output, Slice (Lines, J));
+         Append_To_Build_Output (Kernel, Slice (Lines, J));
       end loop;
 
       Parse_File_Locations

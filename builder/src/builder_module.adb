@@ -78,6 +78,7 @@ with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with String_List_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
@@ -133,6 +134,28 @@ package body Builder_Module is
    --  ??? This should be configurable
 
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
+
+   type Builder_Module_ID_Record is
+     new GPS.Kernel.Modules.Module_ID_Record
+   with record
+      Make_Menu  : Gtk.Menu.Gtk_Menu;
+      Run_Menu   : Gtk.Menu.Gtk_Menu;
+      --  The build menu, updated automatically every time the list of main
+      --  units changes.
+
+      Last_Project_For_Menu : Projects.Project_Type := Projects.No_Project;
+      --  Project used to fill the Run_Menu and Make_Menu
+
+      Output     : String_List_Utils.String_List.List;
+      --  The last build output
+
+      Build_Count : Natural := 0;
+      --  Number of on-going builds
+   end record;
+   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
+   --  Data stored with the module id
+
+   Builder_Module_ID : Builder_Module_ID_Access;
 
    type Files_Callback_Data is new Callback_Data_Record with record
       Files  : File_Array_Access;
@@ -2263,6 +2286,19 @@ package body Builder_Module is
       Free (Mains);
    end Append_To_Menu;
 
+   ----------------------------
+   -- Append_To_Build_Output --
+   ----------------------------
+
+   procedure Append_To_Build_Output
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line   : String)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
+   end Append_To_Build_Output;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2281,7 +2317,7 @@ package body Builder_Module is
       Register_Module
         (Module      => Builder_Module_ID,
          Kernel      => Kernel,
-         Module_Name => Builder_Module_Name,
+         Module_Name => "Builder",
          Priority    => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
