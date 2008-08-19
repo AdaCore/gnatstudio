@@ -1231,7 +1231,6 @@ package body Src_Editor_Box is
       Mask                 : Gdk.Types.Gdk_Modifier_Type;
       Win                  : Gdk.Gdk_Window;
 
-
       function In_Selection
         (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean;
       --  Return True if (L,C) is between (First, Last)
