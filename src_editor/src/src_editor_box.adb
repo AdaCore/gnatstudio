@@ -27,6 +27,8 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
 with Gdk.Main;                  use Gdk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
@@ -1168,7 +1170,11 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Event_Widget);
    begin
-      Get_Contextual_Menu (Context, Kernel, Object, Event, Menu);
+      Get_Contextual_Menu
+        (Context, Kernel, Object,
+         Location => Location_Event,
+         Event    => Event,
+         Menu     => Menu);
    end Get_Contextual_Menu;
 
    ------------------------------
@@ -1197,16 +1203,18 @@ package body Src_Editor_Box is
    -------------------------
 
    procedure Get_Contextual_Menu
-     (Context : in out GPS.Kernel.Selection_Context;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Object  : access Glib.Object.GObject_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu)
+     (Context  : in out GPS.Kernel.Selection_Context;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object   : access Glib.Object.GObject_Record'Class;
+      Location : Location_Type := Location_Cursor;
+      Event    : Gdk.Event.Gdk_Event := null;
+      Menu     : Gtk.Menu.Gtk_Menu := null)
    is
       Editor        : constant Source_Editor_Box := Source_Editor_Box (Object);
       V             : constant Source_View := Editor.Source_View;
       Filename      : constant GNATCOLL.VFS.Virtual_File :=
-                        Get_Filename (Editor.Source_Buffer);
+        Get_Filename (Editor.Source_Buffer);
+      Loc           : Location_Type := Location;
       Line          : Gint := 0;
       Column        : Gint := 0;
       X, Y          : Gint;
@@ -1219,6 +1227,10 @@ package body Src_Editor_Box is
       Start_Line, End_Line : Integer;
       Selection_Is_Single_Entity : Boolean;
       Click_In_Selection         : Boolean;
+      Mouse_X, Mouse_Y     : Gint;
+      Mask                 : Gdk.Types.Gdk_Modifier_Type;
+      Win                  : Gdk.Gdk_Window;
+
 
       function In_Selection
         (L, C : Gint; First, Last : Gtk_Text_Iter) return Boolean;
@@ -1238,163 +1250,203 @@ package body Src_Editor_Box is
       begin
          --  ??? We should use Gtk.Text_Iter.In_Range, but that requires an
          --  iter in parameter, which we do not have currently.
-         return (L > L_Start
-                 or else (L = L_Start and then C >= C_Start))
+         return Has_Selection
            and then
-             (L < L_End
-              or else (L = L_End and then C <= C_End));
+             (L > L_Start or else (L = L_Start and then C >= C_Start))
+           and then
+             (L < L_End or else (L = L_End and then C <= C_End));
       end In_Selection;
 
    begin
+      if Location = Location_Event
+        and then
+        (Event = null
+         or else Get_Event_Type (Event) not in Button_Press .. Button_Release)
+      then
+         Loc := Location_Cursor;
+      end if;
+
       Stop_Selection_Drag (V);
 
-      --  Click in the line numbers area ?
+      Set_Context_Information
+        (Context => Context,
+         Kernel  => Kernel,
+         Creator => Abstract_Module_ID (Src_Editor_Module_Id));
 
-      if Event /= null
-        and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
-      then
-         Window_To_Buffer_Coords
-           (Editor.Source_View, Text_Window_Left,
-            Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
-         Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
-         Line := Get_Line (Start_Iter);
-         Place_Cursor (Editor.Source_Buffer, Start_Iter);
+      --  Compute the location for which we should compute the context.
+      --  Output of this block is (Line, Column) within the editor
 
-      --  Else click in the text area
+      case Loc is
+         when Location_Event =>
+            if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+               --  Click in the line numbers area
+               Window_To_Buffer_Coords
+                 (Editor.Source_View, Text_Window_Left,
+                  Gint (Get_X (Event)), Gint (Get_Y (Event)), X, Y);
+               Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
+               Line := Get_Line (Start_Iter);
+               Place_Cursor (Editor.Source_Buffer, Start_Iter);
+               --  ??? We are not computing the context
 
-      else
-         if Event = null
-           or else Get_Event_Type (Event) not in Button_Press .. Button_Release
-         then
+               Set_File_Information
+                 (Context,
+                  Files  => (1 => Filename),
+                  Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+                  Column => 0);
+               return;
+
+            else
+               Event_To_Buffer_Coords
+                 (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
+            end if;
+
+         when Location_Cursor =>
             Get_Iter_At_Mark
               (Editor.Source_Buffer, Start_Iter,
                Get_Insert (Editor.Source_Buffer));
             Line   := Get_Line (Start_Iter);
             Column := Get_Line_Offset (Start_Iter);
 
+         when Location_Mouse =>
+            Get_Pointer (Get_Window (V, Text_Window_Text),
+                         Mouse_X, Mouse_Y, Mask, Win);
+            Window_To_Buffer_Coords
+              (V, Mouse_X, Mouse_Y, Line, Column, Out_Of_Bounds);
+
+            if Out_Of_Bounds then
+               Set_File_Information (Context, Files  => (1 => Filename));
+               return;
+            end if;
+      end case;
+
+      --  Set basic context information about current file
+
+      Set_File_Information
+        (Context,
+         Files  => (1 => Filename),
+         Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+         Column => Expand_Tabs
+           (Get_Buffer (Editor),
+            Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+            To_Box_Column (Column)));
+
+      --  If we have a current selection, use it as the context if the user
+      --  clicked inside it (ie consider the selection as an opaque block and
+      --  don't look inside)
+
+      Get_Selection_Bounds
+        (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
+
+      if Out_Of_Bounds and then not Has_Selection then
+         --  The position we are looking at is outside the text, and there is
+         --  no current selection. We move the cursor to a valid location, but
+         --  there is no additional info to set in the context.
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer, Start_Iter, Line, Column);
+         Acquire_Focus (Editor.Source_View);
+         Place_Cursor (Editor.Source_Buffer, Start_Iter);
+
+      else
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer, Entity_Start, Line, Column);
+
+         Click_In_Selection :=
+           Has_Selection
+           and then In_Range (Entity_Start, Start_Iter, End_Iter);
+
+         Search_Entity_Bounds (Entity_Start, Entity_End);
+         Selection_Is_Single_Entity :=
+           Has_Selection
+           and then Equal (Entity_Start, Start_Iter)
+           and then Equal (Entity_End, End_Iter);
+
+         --  If the location is in the current selection, use this as the
+         --  context. However, if the selection is a single entity, we should
+         --  create a context such that cross-references menus also appear
+
+         if not Selection_Is_Single_Entity
+           and then In_Selection (Line, Column, Start_Iter, End_Iter)
+         then
+            Start_Line := To_Box_Line
+              (Editor.Source_Buffer, Get_Line (Start_Iter));
+            End_Line   := To_Box_Line
+              (Editor.Source_Buffer, Get_Line (End_Iter));
+
+            --  Do not consider the last line selected if only the first
+            --  character is selected.
+
+            if Get_Line_Offset (End_Iter) = 0 then
+               End_Line := End_Line - 1;
+            end if;
+
+            --  Do not consider the first line selected if only the last
+            --  character is selected.
+
+            if Ends_Line (Start_Iter) then
+               Start_Line := Start_Line + 1;
+            end if;
+
+            --  Set the column to the start of the selection
+
+            Column := Get_Line_Offset (Start_Iter);
+
+            Set_Area_Information
+              (Context,
+               Get_Text (Start_Iter, End_Iter),
+               Start_Line, End_Line);
+
          else
-            Event_To_Buffer_Coords
-              (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
-         end if;
+            --  Expand the tabs
 
-         Get_Selection_Bounds
-           (Editor.Source_Buffer, Start_Iter, End_Iter, Has_Selection);
+            declare
+               The_Line   : Editable_Line_Type;
+               The_Column : Character_Offset_Type;
+               Str : String_Access :=
+                 Get_String (Get_Buffer (Editor));
+               --  ??? Not very efficient though
+            begin
+               Get_Iter_Position
+                 (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
 
-         if Out_Of_Bounds and then not Has_Selection then
-            --  Invalid position: the cursor is outside the text
-            Get_Iter_At_Line_Offset
-              (Editor.Source_Buffer, Start_Iter, Line, Column);
-
-            Acquire_Focus (Editor.Source_View);
-            Place_Cursor (Editor.Source_Buffer, Start_Iter);
-
-         else
-            Get_Iter_At_Line_Offset
-              (Editor.Source_Buffer, Entity_Start, Line, Column);
-
-            Click_In_Selection :=
-              Has_Selection
-              and then In_Range (Entity_Start, Start_Iter, End_Iter);
-
-            --  Get the current entity bounds
-
-            Search_Entity_Bounds (Entity_Start, Entity_End);
-            Selection_Is_Single_Entity :=
-              Has_Selection
-              and then Equal (Entity_Start, Start_Iter)
-              and then Equal (Entity_End, End_Iter);
-
-            --  If we click in the current selection, use this as the context.
-            --  However, if the selection is a single entity, we should create
-            --  a context such that cross-references menus also appear
-
-            if Has_Selection
-              and then not Selection_Is_Single_Entity
-              and then In_Selection (Line, Column, Start_Iter, End_Iter)
-            then
-               Start_Line := To_Box_Line
-                 (Editor.Source_Buffer, Get_Line (Start_Iter));
-               End_Line   := To_Box_Line
-                 (Editor.Source_Buffer, Get_Line (End_Iter));
-
-               --  Do not consider the last line selected if only the first
-               --  character is selected.
-
-               if Get_Line_Offset (End_Iter) = 0 then
-                  End_Line := End_Line - 1;
-               end if;
-
-               --  Do not consider the first line selected if only the last
-               --  character is selected.
-
-               if Ends_Line (Start_Iter) then
-                  Start_Line := Start_Line + 1;
-               end if;
-
-               --  Set the column to the start of the selection
-
-               Column := Get_Line_Offset (Start_Iter);
-
-               Set_Area_Information
+               Set_Entity_Information
                  (Context,
-                  Get_Text (Start_Iter, End_Iter),
-                  Start_Line, End_Line);
+                  Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                  Entity_Column => Expand_Tabs
+                    (Editor.Source_Buffer, The_Line, The_Column),
+                  From_Expression =>
+                    Parse_Expression_Backward_To_String
+                      (Get_Language (Get_Buffer (Editor)),
+                       Buffer       => Str.all,
+                       Start_Offset => Integer (Get_Offset (Entity_End)) + 2));
+               --  "+1" because Get_Offset is zero-based, and another "+1"
+               --  because Entity_End points just before the end.
 
-            else
-               --  Expand the tabs
+               Free (Str);
+            end;
 
-               declare
-                  The_Line   : Editable_Line_Type;
-                  The_Column : Character_Offset_Type;
-               begin
-                  Get_Iter_Position
-                    (Editor.Source_Buffer, Entity_Start,
-                     The_Line, The_Column);
+            if Menu /= null
+              and then not Click_In_Selection
+            then
+               --  Move the cursor at the correct location. The cursor is
+               --  grabbed automatically by the kernel when displaying the
+               --  menu, and this would result in unwanted scrolling
+               --  otherwise..
+               --  Do not move the cursor if we have clicked in the
+               --  selection, since otherwise that cancels the selection
+               --
+               --  Force the focus on the MDI window right away, instead of
+               --  waiting for the editor to gain the focus later on.
+               --  Otherwise, if the editor doesn't have the focus at this
+               --  point, it will move back to its Saved_Cursor_Mark when
+               --  it does, instead of where we have used Place_Cursor. Note
+               --  that explicitly using Save_Cursor_Position doesn't work
+               --  either, since it needs to be called after Place_Cursor,
+               --  which does the scrolling to Saved_Cursor_Mark.
 
-                  Set_Entity_Information
-                    (Context,
-                     Get_Text (Entity_Start, Entity_End),
-                     Expand_Tabs
-                       (Editor.Source_Buffer, The_Line, The_Column));
-               end;
-
-               if Menu /= null
-                 and then not Click_In_Selection
-               then
-                  --  Move the cursor at the correct location. The cursor is
-                  --  grabbed automatically by the kernel when displaying the
-                  --  menu, and this would result in unwanted scrolling
-                  --  otherwise..
-                  --  Do not move the cursor if we have clicked in the
-                  --  selection, since otherwise that cancels the selection
-                  --
-                  --  Force the focus on the MDI window right away, instead of
-                  --  waiting for the editor to gain the focus later on.
-                  --  Otherwise, if the editor doesn't have the focus at this
-                  --  point, it will move back to its Saved_Cursor_Mark when
-                  --  it does, instead of where we have used Place_Cursor. Note
-                  --  that explicitly using Save_Cursor_Position doesn't work
-                  --  either, since it needs to be called after Place_Cursor,
-                  --  which does the scrolling to Saved_Cursor_Mark.
-
-                  Acquire_Focus (Editor.Source_View);
-                  Place_Cursor (Editor.Source_Buffer, Entity_Start);
-               end if;
+               Acquire_Focus (Editor.Source_View);
+               Place_Cursor (Editor.Source_Buffer, Entity_Start);
             end if;
          end if;
-
-         Set_File_Information
-           (Context,
-            Files  => (1 => Filename),
-            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-            Column => Expand_Tabs
-              (Get_Buffer (Editor),
-               Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
-               To_Box_Column (Column)));
-         Set_Context_Information
-           (Context => Context,
-            Kernel  => Kernel,
-            Creator => Abstract_Module_ID (Src_Editor_Module_Id));
       end if;
    end Get_Contextual_Menu;
 

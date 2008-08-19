@@ -38,9 +38,6 @@ package Codefix is
    --  when the fix is applied. This exception is expected to be raised by
    --  the fix functions, and should not issue an unexpected exception trace.
 
-   Tab_Width : constant Natural := 8;
-   --  Width of a tab in GNAT
-
    Indentation_Width : constant := 3;
    --  Width of an indentation in GNAT
 

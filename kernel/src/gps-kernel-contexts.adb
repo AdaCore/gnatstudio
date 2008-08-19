@@ -580,9 +580,10 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context       : in out Selection_Context;
-      Entity_Name   : String := "";
-      Entity_Column : Basic_Types.Visible_Column_Type := 0) is
+     (Context         : in out Selection_Context;
+      Entity_Name     : String := "";
+      Entity_Column   : Basic_Types.Visible_Column_Type := 0;
+      From_Expression : String := "") is
    begin
       Free (Context.Data.Data.Entity_Name);
       if Entity_Name /= "" then
@@ -591,6 +592,10 @@ package body GPS.Kernel.Contexts is
 
       Context.Data.Data.Entity_Column := Entity_Column;
       Context.Data.Data.Entity_Resolved := Entity_Not_Found;
+
+      if From_Expression /= "" then
+         Context.Data.Data.Expression := new String'(From_Expression);
+      end if;
    end Set_Entity_Information;
 
    ----------------------------
@@ -599,7 +604,8 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context : in out Selection_Context;
-      Entity  : access Entities.Entity_Information_Record'Class) is
+      Entity  : access Entities.Entity_Information_Record'Class;
+      From_Expression : String := "") is
    begin
       Ref (Entity_Information (Entity));
       Free (Context.Data.Data.Entity_Name);
@@ -609,7 +615,36 @@ package body GPS.Kernel.Contexts is
         Get_Column (Get_Declaration_Of (Entity_Information (Entity)));
       Context.Data.Data.Entity          := Entity_Information (Entity);
       Context.Data.Data.Entity_Resolved := Success;
+
+      if From_Expression /= "" then
+         Context.Data.Data.Expression := new String'(From_Expression);
+      end if;
    end Set_Entity_Information;
+
+   --------------------------------
+   -- Has_Expression_Information --
+   --------------------------------
+
+   function Has_Expression_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Expression /= null;
+   end Has_Expression_Information;
+
+   ----------------------------
+   -- Expression_Information --
+   ----------------------------
+
+   function Expression_Information
+     (Context : Selection_Context) return String is
+   begin
+      if Context.Data.Data.Expression = null then
+         return "";
+      else
+         return Context.Data.Data.Expression.all;
+      end if;
+   end Expression_Information;
 
    ---------------------------------
    -- Has_Entity_Name_Information --

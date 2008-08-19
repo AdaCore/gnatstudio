@@ -385,13 +385,20 @@ package Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the type declaration of the entity in the context
 
+   type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
    procedure Get_Contextual_Menu
-     (Context : in out GPS.Kernel.Selection_Context;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Object  : access Glib.Object.GObject_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu);
+     (Context  : in out GPS.Kernel.Selection_Context;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object   : access Glib.Object.GObject_Record'Class;
+      Location : Location_Type := Location_Cursor;
+      Event    : Gdk.Event.Gdk_Event := null;
+      Menu     : Gtk.Menu.Gtk_Menu := null);
    --  Return the contextual menu to use for the source box.
+   --  It returns the context at the given location (either depending on the
+   --  mouse position, the cursor location, or a specific button_press or
+   --  button_release event). If Location is Location_Event but not event is
+   --  specified, the context for the cursor is returned
+   --
    --  This function is also used to create the context for
    --  GPS.Kernel.Get_Current_Context, and might be called with Event and
    --  Menu set to null.

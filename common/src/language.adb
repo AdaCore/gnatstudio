@@ -20,10 +20,9 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
-
+with Glib.Unicode;                use Glib, Glib.Unicode;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with String_Utils;                use String_Utils;
-with Glib.Unicode;                use Glib, Glib.Unicode;
 
 package body Language is
 
@@ -1143,5 +1142,112 @@ package body Language is
    begin
       return not (S1 < S2);
    end ">=";
+
+   -------------------------------
+   -- Parse_Expression_Backward --
+   -------------------------------
+
+   function Parse_Expression_Backward
+     (Lang         : access Language_Root;
+      Buffer       : access Glib.UTF8_String;
+      Start_Offset : Natural;
+      End_Offset   : Natural := 0)
+      return Parsed_Expression
+   is
+      pragma Unreferenced (Lang);
+      Lowest : constant Natural := Integer'Max (End_Offset, Buffer'First);
+      Index  : Natural := Start_Offset;
+   begin
+      Skip_Word (Buffer (Lowest .. Index), Index, Step => -1);
+
+      --  Build in place to avoid a copy of the list
+
+      return Result : Parsed_Expression do
+         Result.Original_Buffer := Buffer;
+         Token_List.Append
+           (Result.Tokens, Token_Record'
+              (Tok_Type    => Tok_Identifier,
+               Token_First => Index + 1,
+               Token_Last  => Start_Offset));
+      end return;
+   end Parse_Expression_Backward;
+
+   -------------------------------
+   -- Parse_Expression_Backward --
+   -------------------------------
+
+   function Parse_Expression_Backward
+     (Lang   : access Language_Root'Class;
+      Buffer : access Glib.UTF8_String) return Parsed_Expression is
+   begin
+      return Parse_Expression_Backward (Lang, Buffer, Buffer'Last);
+   end Parse_Expression_Backward;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Expression : Parsed_Expression; Token : Token_Record) return String is
+   begin
+      if Token.Token_First /= 0 and then Token.Token_Last /= 0 then
+         return Expression.Original_Buffer
+           (Token.Token_First .. Token.Token_Last);
+      else
+         return "";
+      end if;
+   end Get_Name;
+
+   -----------------------------------------
+   -- Parse_Expression_Backward_To_String --
+   -----------------------------------------
+
+   function Parse_Expression_Backward_To_String
+     (Lang         : access Language_Root'Class;
+      Buffer       : Glib.UTF8_String;
+      Start_Offset : Natural;
+      End_Offset   : Natural := 0) return String
+   is
+      use Token_List;
+
+      --  Buffer is always passed by reference in GNAT, so it is safe to take
+      --  a Unchecked_Access on it
+      Expr : Parsed_Expression :=
+        Parse_Expression_Backward
+          (Lang, Buffer'Unrestricted_Access, Start_Offset, End_Offset);
+      Length : Natural := 0;
+      Iter   : Token_List.List_Node := First (Expr.Tokens);
+   begin
+      while Iter /= Null_Node loop
+         Length := Length + Get_Name (Expr, Data (Iter))'Length;
+         Iter := Next (Iter);
+      end loop;
+
+      return Result : String (1 .. Length) do
+         Iter := First (Expr.Tokens);
+         Length := Result'First;
+
+         while Iter /= Null_Node loop
+            declare
+               N : constant String := Get_Name (Expr, Data (Iter));
+            begin
+               Result (Length .. Length + N'Length - 1) := N;
+               Length := Length + N'Length;
+            end;
+            Iter := Next (Iter);
+         end loop;
+
+         Free (Expr);
+      end return;
+   end Parse_Expression_Backward_To_String;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Expression : in out Parsed_Expression) is
+   begin
+      Token_List.Free (Expression.Tokens);
+   end Free;
 
 end Language;

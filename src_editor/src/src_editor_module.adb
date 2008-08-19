@@ -2451,7 +2451,8 @@ package body Src_Editor_Module is
    begin
       Get_Contextual_Menu
         (Context, Get_Kernel (Module.all),
-         Source_Editor_Box (Child), null, null);
+         Source_Editor_Box (Child),
+         Location => Location_Cursor);
    end Default_Context_Factory;
 
    -----------------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,9 +18,6 @@
 -----------------------------------------------------------------------
 
 --  This package provides an Ada-specific completer
-
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 
 package Completion.Ada is
 

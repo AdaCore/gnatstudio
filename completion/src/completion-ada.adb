@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with Language.Ada;  use Language.Ada;
 
 package body Completion.Ada is
 
@@ -41,10 +43,8 @@ package body Completion.Ada is
 
       Completion_Context_Record (Ada_Context.all) :=
         Completion_Context_Record (Context.all);
-      Ada_Context_All.Expression := Parse_Current_List
-        (Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
-           (Context.Buffer),
-         Context.Offset);
+      Ada_Context_All.Expression := Parse_Expression_Backward
+        (Ada_Lang, Context.Buffer, Context.Offset);
 
       if Token_List.Length (Ada_Context_All.Expression.Tokens) > 0 then
          while It /= Completion_Resolver_List_Pckg.No_Element loop

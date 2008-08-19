@@ -20,8 +20,6 @@
 with Language;                        use Language;
 with Language.Ada;                    use Language.Ada;
 with Language.Tree.Ada;               use Language.Tree.Ada;
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Type_Tree;  use Ada_Semantic_Tree.Type_Tree;
 
@@ -225,8 +223,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                then
                   It.Step_Has_Started := False;
                elsif Ref_Id /= Null_Distinct_Identifier then
-                  Expression := Parse_Current_List
-                    (UTF8_String_Access (Ref_Id));
+                  Expression := Parse_Expression_Backward (Ada_Lang, Ref_Id);
 
                   It.Decl_List := Find_Declarations
                     ((From_File,
@@ -238,7 +235,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                      Excluded_Entities => It.Excluded_Entities,
                      From_Visibility   => It.From_Visibility);
 
-                  Token_List.Free (Expression.Tokens);
+                  Free (Expression);
 
                   It.Decl_It := First (It.Decl_List);
 

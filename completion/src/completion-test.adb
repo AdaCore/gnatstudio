@@ -39,8 +39,6 @@ with Language.Ada;           use Language.Ada;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Ada;      use Language.Tree.Ada;
 with Language.Tree.Database; use Language.Tree.Database;
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
@@ -259,9 +257,8 @@ procedure Completion.Test is
       end Display;
 
    begin
-      Result := Parse_Current_List
-        (Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
-           (Buffer), UTF8_Find_Prev_Char (Buffer.all, Buffer'Last));
+      Result := Parse_Expression_Backward
+        (Ada_Lang, Buffer, UTF8_Find_Prev_Char (Buffer.all, Buffer'Last));
       Display (Result.Tokens);
    end Parse_File;
 

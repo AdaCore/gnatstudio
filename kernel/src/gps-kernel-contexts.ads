@@ -196,23 +196,37 @@ package GPS.Kernel.Contexts is
    ---------------------
 
    procedure Set_Entity_Information
-     (Context       : in out Selection_Context;
-      Entity_Name   : String := "";
-      Entity_Column : Basic_Types.Visible_Column_Type := 0);
+     (Context         : in out Selection_Context;
+      Entity_Name     : String := "";
+      Entity_Column   : Basic_Types.Visible_Column_Type := 0;
+      From_Expression : String := "");
    --  Set the information in the context.
    --  Entity_Column should be the column on which the entity starts, not the
    --  current location of the cursor.
    --  The line at which the entity starts is the line set in
-   --  Set_File_Information
+   --  Set_File_Information.
+   --  From_Expression indicates the context of the entity. For instance, if
+   --  the source code contains   A.Func (5).X, then the entity is "X", but
+   --  From_Expression should be "A.Func (5).X". This expression is used when
+   --  computing the full name of the entity to sent it to the debugger for
+   --  instance.
 
    procedure Set_Entity_Information
-     (Context : in out Selection_Context;
-      Entity  : access Entities.Entity_Information_Record'Class);
+     (Context         : in out Selection_Context;
+      Entity          : access Entities.Entity_Information_Record'Class;
+      From_Expression : String := "");
    --  Same as above, but we provide directly the entity itself. This is more
    --  efficient when you already know the entity.
    --  This doesn't change the File_Information stored in the context, so that
    --  you can decide whether contextual menus should show file-related
    --  entries.
+
+   function Has_Expression_Information
+     (Context : Selection_Context) return Boolean;
+   function Expression_Information
+     (Context : Selection_Context) return String;
+   --  Return expression context for the entity. See the description of
+   --  From_Expression in the call to Set_Entity_Information.
 
    function Has_Entity_Name_Information
      (Context : Selection_Context) return Boolean;

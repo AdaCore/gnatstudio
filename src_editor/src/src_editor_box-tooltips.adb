@@ -40,13 +40,13 @@ with Entities.Tooltips;         use Entities.Tooltips;
 with GPS.Kernel.Contexts;       use GPS.Kernel, GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
-with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+--  with Src_Editor_Module;         use Src_Editor_Module;
 with Tooltips;                  use Tooltips;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Src_Editor_Box.Tooltips is
    Me : constant Debug_Handle := Create ("Editor.Tooltips");
@@ -151,13 +151,11 @@ package body Src_Editor_Box.Tooltips is
       Mask             : Gdk.Types.Gdk_Modifier_Type;
       Win              : Gdk.Gdk_Window;
       Location         : Gdk_Rectangle;
-      Filename         : constant Virtual_File := Get_Filename (Box);
       Out_Of_Bounds    : Boolean;
       Window           : Gdk.Gdk_Window;
       Window_Width     : Gint;
       Window_Height    : Gint;
       Window_Depth     : Gint;
-      Context          : Selection_Context;
 
    begin
       Pixmap := null;
@@ -244,17 +242,6 @@ package body Src_Editor_Box.Tooltips is
          return;
       end if;
 
-      if Mouse_X < Win_X
-        or else Mouse_Y < Win_Y
-        or else Win_X + Window_Width < Mouse_X
-        or else Win_Y + Window_Height < Mouse_Y
-      then
-         --  Invalid position: the cursor is outside the text, do not
-         --  display a tooltip.
-
-         return;
-      end if;
-
       Window_To_Buffer_Coords
         (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
 
@@ -291,38 +278,18 @@ package body Src_Editor_Box.Tooltips is
       end;
 
       declare
-         Entity_Name   : constant String := Get_Text (Start_Iter, End_Iter);
-         Editable_Line : constant Editable_Line_Type :=
-                           Get_Editable_Line
-                             (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
-         Column        : constant Visible_Column_Type :=
-                           Expand_Tabs (Box.Source_Buffer, Editable_Line,
-                                        Character_Offset_Type (Col + 1));
          Entity        : Entity_Information;
          Entity_Ref    : Entity_Reference;
          Status        : Find_Decl_Or_Body_Query_Status;
+         Context       : Selection_Context := New_Context;
       begin
-         if Entity_Name = "" then
-            return;
-         end if;
+         Get_Contextual_Menu
+           (Context  => Context,
+            Kernel   => Box.Kernel,
+            Object   => Box,
+            Location => Location_Mouse);
 
-         Trace (Me, "Tooltip on " & Entity_Name);
-
-         Context := New_Context;
-         Set_Context_Information
-           (Context, Box.Kernel,
-            Abstract_Module_ID (Src_Editor_Module_Id));
-         Set_File_Information
-           (Context => Context,
-            Files   => (1 => Filename),
-            Line    => Integer (Editable_Line),
-            Column  => Column);
-         --  ??? Should we use the cursor column here ?
-
-         Set_Entity_Information
-           (Context       => Context,
-            Entity_Name   => Entity_Name,
-            Entity_Column => Column);
+         Trace (Me, "Tooltip on " & Entity_Name_Information (Context));
          GPS.Kernel.Modules.Compute_Tooltip (Box.Kernel, Context, Pixmap);
 
          if Pixmap /= null then

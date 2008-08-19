@@ -20,11 +20,10 @@
 --  This package provides containers & process used to analyze formal / actual
 --  list of entities, in particular parameters.
 
+with Glib;
 with Language;                  use Language;
 with Language.Tree;             use Language.Tree;
 with Language.Tree.Database;    use Language.Tree.Database;
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 
 package Ada_Semantic_Tree.List_Resolver is
 
@@ -81,7 +80,7 @@ package Ada_Semantic_Tree.List_Resolver is
    Null_Actual_Parameter : constant Actual_Parameter;
 
    function Get_Actual_Parameter
-     (Buffer      : UTF8_String_Access;
+     (Buffer      : access Glib.UTF8_String;
       Param_Start : Natural;
       Param_End   : Natural) return Actual_Parameter;
    --  Created an actual parameter out of a piece of code - param start and

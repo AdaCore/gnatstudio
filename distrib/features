@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 18, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 19, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -284,8 +284,16 @@ NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
 
 NF-43-F324-007 Fixing "multiple blank lines" error message (2008-08-13)
 
-   The style error "multiple blank lines" is now automatically fixable in GPS,
-   extra blank lines get removed when the fix is applied.
+  The style error "multiple blank lines" is now automatically fixable in GPS,
+  extra blank lines get removed when the fix is applied.
+
+NF-43-EA12-009 Debugger contextual menu handles expressions (2008-08-19)
+
+  The Debug contextual menu will now take into account the full expression
+  to display a variable. For instance, if you leave your cursor on X in
+  "A.X", then the command sent to the debugger is "print a.x". This also
+  works with more complex expressions like "A(5)  .   X" (or if there are
+  comments in the middle of the expression). 
 
 NF-43-D811-007 Ability to define new language categories (2008-03-12)
 

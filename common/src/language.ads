@@ -18,10 +18,9 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
-
 with Glib;
 with Case_Handling;
-
+with Generic_List;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
 
@@ -756,6 +755,103 @@ package Language is
    --  files in C or run-time file in Ada). These files are displayed
    --  separately in the explorer.
 
+   -------------------------
+   -- Parsing expressions --
+   -------------------------
+   --  The following types and subprograms are used to manipulate expressions
+   --  in a specific language (as opposed to a whole file as in the subprograms
+   --  above). They are used in particular by the completion module to find out
+   --  the current context, and for similar reasons by the debugger module.
+
+   type Token_Type is
+     (No_Token,
+      Tok_Dot,
+      Tok_Open_Parenthesis,
+      Tok_Close_Parenthesis,
+      Tok_Identifier,
+      Tok_Expression,
+      Tok_With,
+      Tok_Use,
+      Tok_All,
+      Tok_Arrow);
+   --  Types of tokens that are found in an expression
+
+   type Token_Record is record
+      Tok_Type    : Token_Type := No_Token;
+      Token_First : Natural := 0;
+      Token_Last  : Natural := 0;
+   end record;
+   Null_Token : constant Token_Record;
+   --  This record holds the informations concerning one specific token.
+   --  (Token_First .. Token_Last) is the range of text in the source code for
+   --  that token. The buffer is available through the Parsed_Expression record
+   --  below.
+
+   procedure Free (This : in out Token_Record) is null;
+   --  Used to instantiate the generic list, does not actually do anything
+
+   package Token_List is new Generic_List (Token_Record, Free => Free);
+
+   type Parsed_Expression is record
+      Original_Buffer : access Glib.UTF8_String;
+      Tokens          : Token_List.List := Token_List.Null_List;
+   end record;
+   Null_Parsed_Expression : constant Parsed_Expression;
+   --  An expression extracted from source code.
+   --  Original_Buffer is a reference to the buffer passed to
+   --  Parse_Expression_Backward.
+   --
+   --  The src_editor module builds a string from that expression and stores it
+   --  in the current context. This is available through Expression_Information
+
+   procedure Free (Expression : in out Parsed_Expression);
+   --  Free memory associated with Expression
+
+   function Parse_Expression_Backward
+     (Lang         : access Language_Root;
+      Buffer       : access Glib.UTF8_String;
+      Start_Offset : Natural;
+      End_Offset   : Natural := 0)
+      return Parsed_Expression;
+   --  This function looks backwards from the offset given in parameter and
+   --  parses the relevant completion expression.
+   --  Start_Offset is the offset (in byte) of where we have to look.
+   --  The buffer given in parameter much as a liftime superior or equal to
+   --  the resulting parser expression, as it gets referenced by this
+   --  expression.
+   --  An example, if we have the following Ada code:
+   --       A.Func (C).field
+   --  and Start_Offset points to "field", the returned parsed expression will
+   --  contain 8 elements:
+   --      Tok_Identifier + Tok_Dot + Tok_Identifier + Tok_Open_Parenthesis
+   --      + Tok_Identifier + Tok_Close_Parenthesis + Tok_Dot + Tok_Identifdier
+   --  Note that Start_Offset must point on the d, or the last identifier
+   --  returned will only contain a part of the name
+   --
+   --  The default implementation for any language is to return the current
+   --  identifier, ie stop at the first non-alphanumeric character.
+   --
+   --  The return value must be freed by the user
+
+   function Parse_Expression_Backward
+     (Lang   : access Language_Root'Class;
+      Buffer : access Glib.UTF8_String) return Parsed_Expression;
+   --  Same as before, but analyzes the whole buffer as an expression (ie
+   --  Start_Offset = Buffer'Last.
+
+   function Parse_Expression_Backward_To_String
+     (Lang         : access Language_Root'Class;
+      Buffer       : Glib.UTF8_String;
+      Start_Offset : Natural;
+      End_Offset   : Natural := 0) return String;
+   --  Same as above, but doesn't return semantic information for each node.
+   --  Instead, the expression is returned as a sanitized string, ie with
+   --  which spaces, comments and newline characters removed.
+
+   function Get_Name
+     (Expression : Parsed_Expression; Token : Token_Record) return String;
+   --  Return the name of the element pointed by the token
+
 private
    type Language_Root is abstract tagged limited record
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
@@ -771,6 +867,14 @@ private
    --  Comment_Line (Comment_Line (A), Comment => False) should return A.
    --  If Clean is True, a clean up of of the line should be performed
    --  (e.g. leading spaces are removed).
+
+   Null_Token : constant Token_Record :=
+     (Tok_Type             => No_Token,
+      Token_First          => 0,
+      Token_Last           => 0);
+
+   Null_Parsed_Expression : constant Parsed_Expression :=
+     (null, Token_List.Null_List);
 
    Null_Construct_Info : constant Construct_Information :=
                            (Category       => Cat_Unknown,

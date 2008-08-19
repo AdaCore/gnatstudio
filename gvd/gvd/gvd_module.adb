@@ -156,10 +156,10 @@ package body GVD_Module is
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
-   procedure Destroy (Id : in out GVD_Module_Record);
+   overriding procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger module, and kill the underlying debugger
 
-   function Tooltip_Handler
+   overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
       Context : Selection_Context) return Gdk.Gdk_Pixmap;
    --  See inherited documentation
@@ -1534,7 +1534,7 @@ package body GVD_Module is
    function Custom_Label_Expansion
      (Context : Selection_Context) return String is
    begin
-      return Get_Variable_Name (Context, True);
+      return Emphasize (Get_Variable_Name (Context, True));
    end Custom_Label_Expansion;
 
    -------------
@@ -1763,18 +1763,12 @@ package body GVD_Module is
    is
       pragma Unreferenced (Module);
       Pixmap   : Gdk.Gdk_Pixmap;
-      Debugger : Visual_Debugger;
-      Kernel   : Kernel_Handle;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Debugger : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Kernel));
       Value    : GNAT.Strings.String_Access;
 
    begin
-      if not Has_Entity_Name_Information (Context) then
-         return null;
-      end if;
-
-      Kernel   := Get_Kernel (Context);
-      Debugger := Get_Current_Process (Get_Main_Window (Kernel));
-
       if Debugger = null
         or else Debugger.Debugger = null
         or else not Has_Entity_Name_Information (Context)
@@ -1786,7 +1780,8 @@ package body GVD_Module is
       Push_State (Kernel, Busy);
 
       declare
-         Variable_Name : constant String := Entity_Name_Information (Context);
+         Variable_Name : constant String := Get_Variable_Name
+           (Context, Dereference => False);
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
@@ -2021,43 +2016,41 @@ package body GVD_Module is
      (Context     : Selection_Context;
       Dereference : Boolean) return String
    is
-      Lang : Language_Access;
+      Lang  : Language_Access;
    begin
       if Context = No_Context then
          return "";
       end if;
 
-      if Has_Area_Information (Context) then
-         if Dereference then
-            if Has_File_Information (Context) then
-               Lang := Get_Language_From_File
-                 (Get_Language_Handler (Get_Kernel (Context)),
-                  File_Information (Context));
+      if Has_File_Information (Context) then
+         Lang := Get_Language_From_File
+           (Get_Language_Handler (Get_Kernel (Context)),
+            File_Information (Context));
+      end if;
 
-               if Lang /= null then
-                  return Dereference_Name (Lang, Text_Information (Context));
-               end if;
-            end if;
+      if Has_Area_Information (Context) then
+         if Dereference and then Lang /= null then
+            return Dereference_Name (Lang, Text_Information (Context));
          end if;
 
          return Text_Information (Context);
       end if;
 
-      if Has_Entity_Name_Information (Context) then
-         if Dereference then
-            if Has_File_Information (Context) then
-               Lang := Get_Language_From_File
-                 (Get_Language_Handler (Get_Kernel (Context)),
-                  File_Information (Context));
-
-               if Lang /= null then
-                  return Dereference_Name
-                    (Lang, Entity_Name_Information (Context));
-               end if;
-            end if;
-         else
-            return Entity_Name_Information (Context);
+      if Has_Expression_Information (Context) then
+         if Dereference and then Lang /= null then
+            return Dereference_Name (Lang, Expression_Information (Context));
          end if;
+
+         return Expression_Information (Context);
+      end if;
+
+      if Has_Entity_Name_Information (Context) then
+         if Dereference and then Lang /= null then
+            return Dereference_Name
+              (Lang, Entity_Name_Information (Context));
+         end if;
+
+         return Entity_Name_Information (Context);
       end if;
 
       return "";
@@ -2486,7 +2479,7 @@ package body GVD_Module is
       Command := new Print_Variable_Command;
       Register_Contextual_Menu
         (Kernel, "Debug print variable",
-         Label  => "Debug/Print %s",
+         Label  => "Debug/Print %S",
          Action => Command,
          Filter => Filter);
 
@@ -2494,7 +2487,7 @@ package body GVD_Module is
       Print_Variable_Command (Command.all).Display := True;
       Register_Contextual_Menu
         (Kernel, "Debug display variable",
-         Label  => "Debug/Display %s",
+         Label  => "Debug/Display %S",
          Action => Command,
          Filter => Filter);
 

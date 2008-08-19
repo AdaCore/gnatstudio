@@ -987,6 +987,7 @@ package body GPS.Kernel is
          Free (Data.Message);
          Free (Data.Text);
          Free (Data.Entity_Name);
+         Free (Data.Expression);
 
          --  Do not unref the entity stored in the context if the kernel is in
          --  destruction or as already been destroyed since the entity has

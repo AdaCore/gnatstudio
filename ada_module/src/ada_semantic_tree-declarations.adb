@@ -19,10 +19,9 @@
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-
 with GNAT.Strings;                 use GNAT.Strings;
-
 with Language.Tree.Ada;            use Language.Tree.Ada;
+with Language.Ada;                 use Language.Ada;
 with Ada_Semantic_Tree.Entity_Iteration;
 use Ada_Semantic_Tree.Entity_Iteration;
 with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
@@ -847,8 +846,8 @@ package body Ada_Semantic_Tree.Declarations is
                      Append_Actual
                        (Local_Declaration.Actuals.all,
                         Get_Actual_Parameter
-                          (UTF8_String_Access
-                             (Get_Buffer (Context.File)), 0, 0),
+                          (Get_Buffer (Context.File),
+                           0, 0),
                         False,
                         Param_Added,
                         Success);
@@ -859,7 +858,7 @@ package body Ada_Semantic_Tree.Declarations is
                         --  ??? It's a shame to have to recompute the actual
                         --  each time we go there.
                         New_Param := Get_Actual_Parameter
-                          (UTF8_String_Access (Get_Buffer (Context.File)),
+                          (Get_Buffer (Context.File),
                            Data (Current_Token).Token_First,
                            Data (Current_Token).Token_Last);
 
@@ -1000,8 +999,8 @@ package body Ada_Semantic_Tree.Declarations is
 
       if Expression = Null_Parsed_Expression then
          if Context.Context_Type = From_File then
-            Analyzed_Expression := Parse_Current_List
-              (UTF8_String_Access (Get_Buffer (Context.File)), Context.Offset);
+            Analyzed_Expression := Parse_Expression_Backward
+              (Ada_Lang, Get_Buffer (Context.File), Context.Offset);
          else
             --  We can't do a search without expression on a database wide
             --  search.
@@ -1060,7 +1059,7 @@ package body Ada_Semantic_Tree.Declarations is
          --  If we took the responsability of creating the expression, we have
          --  to free it.
 
-         Free (Analyzed_Expression.Tokens);
+         Free (Analyzed_Expression);
       end if;
 
       return Result;

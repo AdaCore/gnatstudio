@@ -806,6 +806,8 @@ private
       Entity_Name   : GNAT.Strings.String_Access := null;  --  ??? Use Text
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
+      Expression    : GNAT.Strings.String_Access := null;
+
       Entity       : Entities.Entity_Information := null;
       Closest_Ref  : Entities.Entity_Reference := Entities.No_Entity_Reference;
       --  The entity on which the user has clicked

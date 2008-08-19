@@ -25,8 +25,6 @@ with Language.Tree.Ada;       use Language.Tree.Ada;
 with Language.Ada;            use Language.Ada;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 
 package body Ada_Semantic_Tree.Type_Tree is
 
@@ -488,8 +486,8 @@ package body Ada_Semantic_Tree.Type_Tree is
          --  list. We'll see later if the primitive is overriden.
 
          declare
-            Expression : Parsed_Expression := Parse_Current_List
-              (UTF8_String_Access (Get_Identifier (Ref_Ids)));
+            Expression : Parsed_Expression := Parse_Expression_Backward
+              (Ada_Lang, Get_Identifier (Ref_Ids));
 
             Decl_List   : Declaration_List :=
               Find_Declarations
@@ -502,7 +500,7 @@ package body Ada_Semantic_Tree.Type_Tree is
             Parent_Type : Entity_Access;
             Parent_Info : Ada_Type_Access;
          begin
-            Token_List.Free (Expression.Tokens);
+            Free (Expression);
 
             --  ??? We should have more visiblity constraints here, and do
             --  some additional work in case of multiple matches.

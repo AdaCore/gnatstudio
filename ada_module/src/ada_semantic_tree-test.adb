@@ -31,8 +31,6 @@ with Language.Tree.Ada;              use Language.Tree.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Ada_Semantic_Tree.Declarations;
 use Ada_Semantic_Tree.Declarations;
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 with Ada_Semantic_Tree.Parts;      use Ada_Semantic_Tree.Parts;
 with Ada_Semantic_Tree.Assistants; use Ada_Semantic_Tree.Assistants;
 with Ada_Semantic_Tree.Type_Tree;  use Ada_Semantic_Tree.Type_Tree;
@@ -464,10 +462,9 @@ procedure Ada_Semantic_Tree.Test is
            ("DATABASE_SEARCH " & Buffer (Word_Begin .. Word_End));
 
          declare
-            Expression : Parsed_Expression := Parse_Current_List
-              (Buffer       =>
-                 Ada_Semantic_Tree.Expression_Parser.UTF8_String_Access
-                   (Buffer),
+            Expression : Parsed_Expression := Parse_Expression_Backward
+              (Lang         => Ada_Lang,
+               Buffer       => Buffer,
                Start_Offset => Word_End,
                End_Offset   => Word_Begin);
 

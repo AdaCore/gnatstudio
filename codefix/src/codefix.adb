@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2007, AdaCore               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with String_Utils;   use String_Utils;
+
 package body Codefix is
+
+   Tab_Width : constant Natural := 8;
+   --  Width of a tab in GNAT.
+   --  ??? This should be based on the preference Tab_Width
 
    -------------------
    -- To_Char_Index --
@@ -26,25 +32,12 @@ package body Codefix is
    function To_Char_Index
      (Index : Column_Index; Str : String) return Char_Index
    is
-      Current_Index : Char_Index := Char_Index (Str'First);
-      Current_Col   : Column_Index := 1;
+      Current_Index : Integer := Str'First;
    begin
-      loop
-         exit when Current_Col >= Index;
-
-         if Natural (Current_Index) < Str'Last
-           and then Str (Natural (Current_Index)) = ASCII.HT
-         then
-            Current_Col := Current_Col + Column_Index (Tab_Width) -
-              ((Current_Col - 1) mod Column_Index (Tab_Width));
-         else
-            Current_Col := Current_Col + 1;
-         end if;
-
-         Current_Index := Current_Index + 1;
-      end loop;
-
-      return Current_Index;
+      Skip_To_Column (Buffer  => Str,
+                      Columns => Integer (Index),
+                      Index   => Current_Index);
+      return Char_Index (Current_Index);
    end To_Char_Index;
 
    ---------------------

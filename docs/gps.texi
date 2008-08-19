@@ -10655,6 +10655,11 @@ parents. The one that is returned is read from the Project View itself.
 This is the text selected by the user, if a single line was selected. When
 multiple lines were selected, this returns the empty string
 
+@item %S
+This is either the text selected by the user, of the current entity if there
+is no selection. If the entity is part of an expression ("A.B.C"), then the
+whole expression is used instead of the entity name.
+
 @item %p
 The current project. This is the name of the project, not the project file, ie
 the @file{.gpr} extension is not included in this name, and the casing is the

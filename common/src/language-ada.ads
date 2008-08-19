@@ -33,45 +33,45 @@ package Language.Ada is
    -- Parsing --
    -------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return Strings.String_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return Pattern_Matcher_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return GNAT.Strings.String_List;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Ada_Language) return Explorer_Categories;
 
-   function Is_System_File
+   overriding function Is_System_File
      (Lang : access Ada_Language; File_Name : String) return Boolean;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Ada_Language;
       Name : String) return String;
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Ada_Language;
       Name  : String;
       Index : String) return String;
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Ada_Language;
       Name  : String;
       Field : String) return String;
@@ -80,7 +80,7 @@ package Language.Ada is
    -- Project support --
    ---------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Ada_Language) return Project_Field_Array;
 
    ----------------------
@@ -169,11 +169,22 @@ package Language.Ada is
    --  This attribute is not set by the parser itself - but external
    --  process will need to compute & store this value
 
-   function Get_Name (Lang : access Ada_Language) return String;
+   overriding function Get_Name (Lang : access Ada_Language) return String;
+
+   -------------------------
+   -- Parsing expressions --
+   -------------------------
+
+   overriding function Parse_Expression_Backward
+     (Lang         : access Ada_Language;
+      Buffer       : access Glib.UTF8_String;
+      Start_Offset : Natural;
+      End_Offset   : Natural := 0)
+      return Parsed_Expression;
 
 private
    type Ada_Language is new Language_Root with null record;
-   function Comment_Line
+   overriding function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;
       Comment : Boolean := True;

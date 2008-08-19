@@ -194,6 +194,35 @@ package body String_Utils is
       end if;
    end Skip_Lines;
 
+   --------------------
+   -- Skip_To_Column --
+   --------------------
+
+   procedure Skip_To_Column
+     (Buffer        : String;
+      Columns       : Natural := 0;
+      Index         : in out Natural;
+      Tab_Width     : Integer := 8)
+   is
+      Current_Col   : Natural := 1;
+   begin
+      while Current_Col < Columns
+        and then Index <= Buffer'Last
+        and then Buffer (Index) /= ASCII.LF
+      loop
+         if Index < Buffer'Last
+           and then Buffer (Index) = ASCII.HT
+         then
+            Current_Col := Current_Col
+              + Tab_Width - ((Current_Col - 1) mod Tab_Width);
+         else
+            Current_Col := Current_Col + 1;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+   end Skip_To_Column;
+
    ----------------
    -- Line_Start --
    ----------------

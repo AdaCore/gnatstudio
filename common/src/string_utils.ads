@@ -51,6 +51,16 @@ package String_Utils is
       Lines_Skipped : out Natural);
    --  Skip Lines forward or backward. Index is set to the beginning of a line.
    --  Lines_Skipped is the number of lines that have actually been skipped.
+   --  Use with Skip_To_Column to go to a specific position in a buffer.
+
+   procedure Skip_To_Column
+     (Buffer        : String;
+      Columns       : Natural := 0;
+      Index         : in out Natural;
+      Tab_Width     : Integer := 8);
+   --  Assuming Index points to the begining of a line (as is the case after
+   --  Skip_Lines for instance), jump to the specific column on that line.
+   --  This procedure handles tabulations.
 
    procedure Skip_Hexa_Digit
      (Type_Str : String;

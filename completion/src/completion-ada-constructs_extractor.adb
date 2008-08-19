@@ -17,17 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada_Semantic_Tree.Visibility;      use Ada_Semantic_Tree.Visibility;
+with Ada_Semantic_Tree.Dependency_Tree; use Ada_Semantic_Tree.Dependency_Tree;
+with Basic_Types;                       use Basic_Types;
+with Glib.Unicode;                      use Glib.Unicode;
 with GNAT.Strings;
-
-with Glib.Unicode; use Glib.Unicode;
-
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
-with Language.Tree.Ada;               use Language.Tree.Ada;
-with Ada_Semantic_Tree.Visibility; use Ada_Semantic_Tree.Visibility;
-with Ada_Semantic_Tree.Dependency_Tree;
-use Ada_Semantic_Tree.Dependency_Tree;
-with Basic_Types;                use Basic_Types;
+with Language.Tree.Ada;                 use Language.Tree.Ada;
 
 package body Completion.Ada.Constructs_Extractor is
 
@@ -570,7 +565,7 @@ package body Completion.Ada.Constructs_Extractor is
                Categories                => Null_Category_Array,
                Is_Partial                => True)));
 
-      Token_List.Free (Expression.Tokens);
+      Free (Expression);
    end Get_Completion_Root;
 
    ------------

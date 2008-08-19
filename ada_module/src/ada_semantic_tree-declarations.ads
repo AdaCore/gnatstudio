@@ -27,8 +27,6 @@ with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Language.Tree.Database;     use Language.Tree.Database;
 
-with Ada_Semantic_Tree.Expression_Parser;
-use Ada_Semantic_Tree.Expression_Parser;
 with Ada_Semantic_Tree.List_Resolver; use Ada_Semantic_Tree.List_Resolver;
 
 with Generic_Stack;

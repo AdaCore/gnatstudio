@@ -157,7 +157,7 @@ package body Ada_Semantic_Tree.List_Resolver is
 
    procedure Free (This : in out Actual_Parameter) is
    begin
-      Token_List.Free (This.Expression.Tokens);
+      Free (This.Expression);
    end Free;
 
    ----------
@@ -230,7 +230,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    --------------------------
 
    function Get_Actual_Parameter
-     (Buffer      : UTF8_String_Access;
+     (Buffer      : access Glib.UTF8_String;
       Param_Start : Natural;
       Param_End   : Natural) return Actual_Parameter
    is
@@ -239,7 +239,8 @@ package body Ada_Semantic_Tree.List_Resolver is
    begin
       Result.Is_Named := False;
 
-      Result.Expression := Parse_Current_List (Buffer, Param_End, Param_Start);
+      Result.Expression := Parse_Expression_Backward
+        (Ada_Lang, Buffer, Param_End, Param_Start);
 
       if Length (Result.Expression.Tokens) >= 2 then
          It := First (Result.Expression.Tokens);

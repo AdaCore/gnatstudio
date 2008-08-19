@@ -202,6 +202,15 @@ package body GPS.Kernel.Macros is
             return Text_Information (Context);
          end if;
 
+      elsif Param = "S" then
+         if Has_Area_Information (Context) then
+            return Text_Information (Context);
+         elsif Has_Expression_Information (Context) then
+            return Expression_Information (Context);
+         elsif Has_Entity_Name_Information (Context) then
+            return Entity_Name_Information (Context);
+         end if;
+
       elsif Param = "i" then
          if Importing_Project_Information (Context) /=
            Project_Information (Context)
