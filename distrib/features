@@ -248,6 +248,13 @@ NF-43-GB07-006 Major speed up in project view (2007-11-26)
   The computation time for the project view was greatly improved, and the
   view displays much faster now on big projects.
 
+NF-43-GB06-013 New menu /Build/Run/Last Launched (2008-08-19)
+
+  This menu allows you to spawn exactly the same command that you previously
+  spawned through the /Build/Run menu. No dialog is open to ask for arguments.
+  This menu can conveniently be bound to a key shortcut through the
+  /Edit/Key Shortcuts menu.
+
 NF-43-GA26-017 Improved handling of dispatching calls (2008-02-19)
 
   GPS now handles by default dispatching calls in contextual menus, and if

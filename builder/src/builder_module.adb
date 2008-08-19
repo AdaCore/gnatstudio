@@ -135,6 +135,30 @@ package body Builder_Module is
 
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
+   type Run_Description is record
+      Command      : GNAT.Strings.String_Access;
+      Arguments    : GNAT.OS_Lib.Argument_List_Access;
+      Ext_Terminal : Boolean;
+      Directory    : GNAT.Strings.String_Access;
+      Title        : GNAT.Strings.String_Access;
+   end record;
+   --  The arguments used to run an executable from the "Run" menu
+
+   procedure Free (Run : in out Run_Description);
+   --  Free the memory associated with Run
+
+   procedure Launch
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Run          : Run_Description);
+   --  Spawn the command described in Run on the Execution_Server.
+   --  Caller must not free Run.
+
+   procedure Set_Command
+     (Run          : in out Run_Description;
+      Ext_Terminal : Boolean;
+      Command      : String);
+   --  Set the command to be run. Gets both exec name and args from Command.
+
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -148,6 +172,9 @@ package body Builder_Module is
 
       Output     : String_List_Utils.String_List.List;
       --  The last build output
+
+      Last_Run_Cmd  : Run_Description;
+      --  The last command spawned from the run menu
 
       Build_Count : Natural := 0;
       --  Number of on-going builds
@@ -389,6 +416,12 @@ package body Builder_Module is
    procedure On_Run
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Run menu
+
+   procedure On_Run_Last_Launched
+     (Menu   : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Build->Run->Last Launched
+   --  Rererun the last run command
 
    procedure On_Tools_Interrupt
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1612,6 +1645,113 @@ package body Builder_Module is
          "load xrefs info");
    end Load_Xref_In_Memory;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Run : in out Run_Description) is
+   begin
+      Free (Run.Command);
+      Free (Run.Arguments);
+      Free (Run.Directory);
+      Free (Run.Title);
+   end Free;
+
+   ------------
+   -- Launch --
+   ------------
+
+   procedure Launch
+     (Kernel : access Kernel_Handle_Record'Class;
+      Run : Run_Description)
+   is
+      Console : Interactive_Console;
+      Child   : MDI_Child;
+      Success : Boolean;
+   begin
+      if Run.Command = null then
+         return;
+      end if;
+
+      Console := Create_Interactive_Console (Kernel, Run.Title.all);
+      Clear (Console);
+      Child := Find_MDI_Child (Get_MDI (Kernel), Console);
+
+      if Child /= null then
+         Raise_Child (Child);
+      end if;
+
+      --  Save command for the future
+
+      if Builder_Module_ID.Last_Run_Cmd /= Run then
+         Free (Builder_Module_ID.Last_Run_Cmd);
+         Builder_Module_ID.Last_Run_Cmd := Run;
+      end if;
+
+      --  Spawn
+
+      Launch_Process
+        (Kernel_Handle (Kernel),
+         Command          => Run.Command.all,
+         Arguments        => Run.Arguments.all,
+         Server           => Execution_Server,
+         Console          => Console,
+         Success          => Success,
+         Directory        => Run.Directory.all,
+         Use_Ext_Terminal => Run.Ext_Terminal,
+         Show_Exit_Status => True);
+
+      if not Success then
+         Trace (Me, "Problem spawning command");
+      end if;
+   end Launch;
+
+   -----------------
+   -- Set_Command --
+   -----------------
+
+   procedure Set_Command
+     (Run          : in out Run_Description;
+      Ext_Terminal : Boolean;
+      Command      : String)
+   is
+      Local_Args : Argument_List_Access;
+   begin
+      Run.Ext_Terminal := Ext_Terminal;
+
+      if not Ext_Terminal
+        and then Shell_Env /= ""
+        and then Is_Local (Build_Server)
+      then
+         --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
+         --  is local.
+
+         Run.Command := new String'(Shell_Env);
+         Run.Arguments := new Argument_List'
+           (new String'("-c"),
+            new String'(Command));
+      else
+         Local_Args := Argument_String_To_List (Command);
+         Run.Command := Local_Args (Local_Args'First);
+         Run.Arguments := new Argument_List'
+           (Local_Args (Local_Args'First + 1 .. Local_Args'Last));
+         Basic_Types.Unchecked_Free (Local_Args);  --  Not the actual strings
+      end if;
+   end Set_Command;
+
+   --------------------------
+   -- On_Run_Last_Launched --
+   --------------------------
+
+   procedure On_Run_Last_Launched
+     (Menu   : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Menu);
+   begin
+      Launch (Kernel, Builder_Module_ID.Last_Run_Cmd);
+   end On_Run_Last_Launched;
+
    ------------
    -- On_Run --
    ------------
@@ -1622,90 +1762,7 @@ package body Builder_Module is
       K            : constant Kernel_Handle := Kernel_Handle (Kernel);
       Active       : aliased Boolean := False;
       Use_Exec_Dir : aliased Boolean := False;
-      Args         : Argument_List_Access;
-      Success      : Boolean;
-
-      procedure Launch
-        (Command      : String;
-         Arguments    : GNAT.OS_Lib.Argument_List;
-         Ext_Terminal : Boolean;
-         Directory    : String;
-         Title        : String);
-      --  Launch Command (with Args) locally, or remotely if necessary
-
-      procedure Launch
-        (Command      : String;
-         Ext_Terminal : Boolean;
-         Directory    : String;
-         Title        : String);
-      --  Ditto, with command being a simple string (may contain parameters)
-
-      ------------
-      -- Launch --
-      ------------
-
-      procedure Launch
-        (Command      : String;
-         Arguments    : GNAT.OS_Lib.Argument_List;
-         Ext_Terminal : Boolean;
-         Directory    : String;
-         Title        : String)
-      is
-         Console : Interactive_Console;
-         Child   : MDI_Child;
-      begin
-         Console := Create_Interactive_Console (K, Title);
-         Clear (Console);
-         Child := Find_MDI_Child (Get_MDI (K), Console);
-
-         if Child /= null then
-            Raise_Child (Child);
-         end if;
-
-         Launch_Process
-           (K,
-            Command          => Command,
-            Arguments        => Arguments,
-            Server           => Execution_Server,
-            Console          => Console,
-            Success          => Success,
-            Directory        => Directory,
-            Use_Ext_Terminal => Ext_Terminal,
-            Show_Exit_Status => True);
-      end Launch;
-
-      procedure Launch
-        (Command      : String;
-         Ext_Terminal : Boolean;
-         Directory    : String;
-         Title        : String)
-      is
-         Local_Args : Argument_List_Access;
-      begin
-         if not Ext_Terminal
-           and then Shell_Env /= ""
-           and then Is_Local (Build_Server)
-         then
-            --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
-            --  is local.
-
-            Local_Args := new Argument_List'
-              (new String'(Shell_Env),
-               new String'("-c"),
-               new String'(Command));
-         else
-            Local_Args := Argument_String_To_List (Command);
-         end if;
-
-         Launch
-           (Command    => Local_Args (Local_Args'First).all,
-            Arguments  => Local_Args (Local_Args'First + 1 .. Local_Args'Last),
-            Ext_Terminal => Ext_Terminal,
-            Directory    => Directory,
-            Title        => Title);
-         Free (Local_Args);
-      end Launch;
-
+      Run          : Run_Description;
    begin
       if Data.File = GNATCOLL.VFS.No_File then
          declare
@@ -1720,17 +1777,17 @@ package body Builder_Module is
                Key_Check      => Run_External_Key);
 
          begin
-            if Command = ""
-              or else Command (Command'First) = ASCII.NUL
+            if Command /= ""
+              and then Command (Command'First) /= ASCII.NUL
             then
-               return;
-            else
+               Set_Command (Run, Active, Command);
+               Run.Directory    := new String'("");
+
                if Is_Local (Execution_Server) then
-                  Launch (Command, Active, "", -"Run: " & Command);
+                  Run.Title := new String'(-"Run: " & Command);
                else
-                  Launch
-                    (Command, Active, "",
-                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                  Run.Title := new String'
+                    (-"Run on " & Get_Nickname (Execution_Server) & ": " &
                      Command);
                end if;
             end if;
@@ -1750,40 +1807,39 @@ package body Builder_Module is
                Check_Msg2     => -"Use exec dir instead of current dir",
                Key_Check2     => Run_Exec_Dir_Key,
                Button2_Active => Use_Exec_Dir'Unchecked_Access);
-            Directory : GNAT.Strings.String_Access;
 
          begin
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
-               Args := Argument_String_To_List (Arguments);
+               Run.Command := new String'
+                 (To_Remote (Full_Name (Data.File).all, Execution_Server));
+               Run.Arguments := Argument_String_To_List (Arguments);
+               Run.Ext_Terminal := Active;
 
                if Use_Exec_Dir then
-                  Directory := new String'
+                  Run.Directory := new String'
                     (Executables_Directory (Data.Project));
                else
-                  Directory := new String'("");
+                  Run.Directory := new String'("");
                end if;
 
                if Is_Local (Execution_Server) then
-                  Launch
-                    (To_Remote (Full_Name (Data.File).all, Execution_Server),
-                     Args.all, Active, Directory.all,
-                     -"Run: " &
+                  Run.Title := new String'
+                    (-"Run: " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
                else
-                  Launch
-                    (To_Remote (Full_Name (Data.File).all, Execution_Server),
-                     Args.all, Active, Directory.all,
-                     -"Run on " & Get_Nickname (Execution_Server) & ": " &
+                  Run.Title := new String'
+                    (-"Run on " & Get_Nickname (Execution_Server) & ": " &
                      Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
                end if;
 
-               Free (Args);
-               Free (Directory);
             end if;
          end;
       end if;
+
+      Launch (K, Run);
+      --  Run must not be freed
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -2195,13 +2251,24 @@ package body Builder_Module is
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu2, Mitem);
-               Set_Accel_Path
-                 (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
+      Set_Accel_Path
+        (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
       File_Project_Cb.Object_Connect
         (Mitem, Signal_Activate, On_Run'Access,
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Project => Get_Project (Kernel), File => GNATCOLL.VFS.No_File));
+
+      --  Rerunning the previous command
+
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -"Last Launched");
+      Append (Menu2, Mitem);
+      Set_Accel_Path (Mitem, -(Run_Menu_Prefix) & (-"Last Launched"), Group);
+      Kernel_Callback.Connect
+        (Mitem, Signal_Activate, On_Run_Last_Launched'Access,
+         User_Data => Kernel_Handle (Kernel));
+
       Show_All (Menu1);
       Show_All (Menu2);
 

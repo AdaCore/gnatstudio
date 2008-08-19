@@ -5091,6 +5091,12 @@ not needed, @xref{Support for Cross-References}.
    will be spawned directly by GPS without any shell interpretation.
    @end table
 
+   @item Last Launched
+   This menu spawns the same command you previously spawned through the Run
+   menu. However, it does not open an intermediate dialog. If you bind this
+   dialog to a key shortcut through the @code{/Edit/Key Shortcuts} menu, this
+   provides a convenient way to spawn the same command multiple times
+
 @end table
 
 The @code{Tools->Interrupt} menu can be used to interrupt the last compilation
