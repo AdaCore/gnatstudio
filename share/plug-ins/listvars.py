@@ -67,7 +67,8 @@ def list_vars (subprogram):
       GPS.MDI.get ("Locations").raise_window()
 
 def on_filter (context):
-   return isinstance (context, GPS.EntityContext)
+   return (isinstance (context, GPS.EntityContext) and
+     (context.entity().category() == "subprogram"))
 
 def on_label (context):
    entity = context.entity()

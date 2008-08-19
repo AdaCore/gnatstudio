@@ -2140,30 +2140,30 @@ package body Entities is
    function Get_Category
      (Entity : Entity_Information) return Entity_Category is
    begin
-      if Entity.Kind.Is_Type then
-         return Type_Or_Subtype;
-      else
-         case Entity.Kind.Kind is
-            when Overloaded_Entity | Unresolved_Entity | Macro =>
-               return Unknown;
+      case Entity.Kind.Kind is
+         when Overloaded_Entity | Unresolved_Entity | Macro =>
+            return Unknown;
 
-            when Procedure_Kind | Function_Or_Operator |
-                 Entry_Or_Entry_Family =>
-               return Subprogram;
+         when Procedure_Kind | Function_Or_Operator |
+              Entry_Or_Entry_Family =>
+            return Subprogram;
 
-            when Package_Kind =>
-               return Package_Or_Namespace;
+         when Package_Kind =>
+            return Package_Or_Namespace;
 
-            when Label_On_Block | Label_On_Loop | Label_On_Statement =>
-               return Label;
+         when Label_On_Block | Label_On_Loop | Label_On_Statement =>
+            return Label;
 
-            when Enumeration_Literal | Named_Number =>
-               return Literal;
+         when Enumeration_Literal | Named_Number =>
+            return Literal;
 
-            when others =>
+         when others =>
+            if Entity.Kind.Is_Type then
+               return Type_Or_Subtype;
+            else
                return Object;
-         end case;
-      end if;
+            end if;
+      end case;
    end Get_Category;
 
    --------------
