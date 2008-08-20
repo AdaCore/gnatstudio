@@ -1158,18 +1158,22 @@ package body Language is
       Lowest : constant Natural := Integer'Max (End_Offset, Buffer'First);
       Index  : Natural := Start_Offset;
    begin
-      Skip_Word (Buffer (Lowest .. Index), Index, Step => -1);
+      if Index not in Lowest .. Buffer'Last then
+         return Null_Parsed_Expression;
+      else
+         Skip_Word (Buffer (Lowest .. Index), Index, Step => -1);
 
-      --  Build in place to avoid a copy of the list
+         --  Build in place to avoid a copy of the list
 
-      return Result : Parsed_Expression do
-         Result.Original_Buffer := Buffer;
-         Token_List.Append
-           (Result.Tokens, Token_Record'
-              (Tok_Type    => Tok_Identifier,
-               Token_First => Index + 1,
-               Token_Last  => Start_Offset));
-      end return;
+         return Result : Parsed_Expression do
+            Result.Original_Buffer := Buffer;
+            Token_List.Append
+              (Result.Tokens, Token_Record'
+                 (Tok_Type    => Tok_Identifier,
+                  Token_First => Index + 1,
+                  Token_Last  => Start_Offset));
+         end return;
+      end if;
    end Parse_Expression_Backward;
 
    -------------------------------

@@ -68,6 +68,7 @@ def list_vars (subprogram):
 
 def on_filter (context):
    return (isinstance (context, GPS.EntityContext) and
+     context.entity() and
      (context.entity().category() == "subprogram"))
 
 def on_label (context):

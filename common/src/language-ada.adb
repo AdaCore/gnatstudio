@@ -1029,6 +1029,12 @@ package body Language.Ada is
       Possible_Arrow           : Boolean := False;
 
    begin
+      Result.Original_Buffer := Buffer;
+
+      if Buffer'Length = 0 or Offset > Buffer'Last then
+         return Result;
+      end if;
+
       if End_Offset < Buffer'First then
          Offset_Limit := Buffer'First - 1;
       else
@@ -1036,7 +1042,6 @@ package body Language.Ada is
       end if;
 
       Skip_Comment_Line (Offset);
-      Result.Original_Buffer := Buffer;
 
       if Offset /= Start_Offset then
          --  In this case, we are on a comment line. So the expression is
