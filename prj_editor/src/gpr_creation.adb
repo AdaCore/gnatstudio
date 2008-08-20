@@ -660,10 +660,12 @@ package body GPR_Creation is
       Linker_Switches   : String;
       Cross_Prefix      : String := "")
    is
+      Dot             : aliased String := ".";
       Project         : Project_Type;
       Obj_Dirs        : Object_Directory_Info_Array (Object_Dirs'Range);
       Src_Files       : File_Htables.HTable;
       Obj_Files_Count : Natural;
+      Dir             : String_Access;
       Single_Obj_Dir  : Boolean;
       Tmp             : Boolean;
       Related_To      : Is_Related_To (Source_Dirs'Range, Object_Dirs'Range) :=
@@ -693,18 +695,16 @@ package body GPR_Creation is
          Process_List (Project, Source_Dirs_Attribute, Source_Dirs);
 
          if Object_Dirs'Length = 0 then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Obj_Dir_Attribute,
-               Value              => ".");
+            Dir := Dot'Unchecked_Access;
          else
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Obj_Dir_Attribute,
-               Value              => Object_Dirs (Object_Dirs'First).all);
+            Dir := Object_Dirs (Object_Dirs'First);
          end if;
+
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Obj_Dir_Attribute,
+            Value              => Dir.all);
 
          Generate_Project_Attributes
            (Project           => Project,
