@@ -5646,7 +5646,7 @@ Asynchronously interrupt the program being debugged. Note that depending on
 the state of the program, you may stop it in low-level system code that does
 not have debug information, or in some cases, not even a coherent state. Use
 of breakpoints is preferable to interrupting programs. Interrupting programs
-is nevertheless indispensable in some situations, for example when the
+is nevertheless required in some situations, for example when the
 program appears to be in an infinite (or at least very time-consuming) loop.
 
    @item Terminate Current
@@ -9379,13 +9379,13 @@ Windows, this is a separate window created by the underlying gdb, since
 Windows does not have the notion of separate terminals (aka ttys).
 
 Note that in this mode under Windows, the @code{Debug->Interrupt} menu
-will not interrupt the debugged program. Instead, you need to hit
+will only interrupt the debugged program with recent versions of gdb.
+If you are using older versions of gdb, you need to hit
 @key{Ctrl-C} in the separate execution window to interrupt it while it is
-running. On Windows this separate execution window uses the default
+running. Note also that this separate execution window uses the default
 system-wide console properties (the size of the window, the
-colors...). It is possible to change those properties using the
-default console menu (top-left of the console) on Windows XP or using
-the control panel on Windows NT.
+colors...). It is possible to change those properties using e.g. the
+default console menu (top-left of the console) on Windows XP.
 
 If false, no execution window will be created. The debugger assumes that the
 program being debugged does not require input, or that if it does, input
