@@ -27,7 +27,12 @@ project Prj_Editor is
       end case;
    end Builder;
 
-   package Compiler renames Shared.Compiler;
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Default_Switches ("C") use Shared.Compiler'Default_Switches ("C");
+      for Switches ("gpr_creation.adb") use ("-O2", "-gnatws", "-gnat05");
+   end Compiler;
+
 
    package Binder is
       for Default_Switches ("Ada") use ("-E");
