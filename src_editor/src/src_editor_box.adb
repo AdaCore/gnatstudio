@@ -1318,17 +1318,6 @@ package body Src_Editor_Box is
             end if;
       end case;
 
-      --  Set basic context information about current file
-
-      Set_File_Information
-        (Context,
-         Files  => (1 => Filename),
-         Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-         Column => Expand_Tabs
-           (Get_Buffer (Editor),
-            Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
-            To_Box_Column (Column)));
-
       --  If we have a current selection, use it as the context if the user
       --  clicked inside it (ie consider the selection as an opaque block and
       --  don't look inside)
@@ -1447,6 +1436,17 @@ package body Src_Editor_Box is
             end if;
          end if;
       end if;
+
+      --  Set basic context information about current file
+
+      Set_File_Information
+        (Context,
+         Files  => (1 => Filename),
+         Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+         Column => Expand_Tabs
+           (Get_Buffer (Editor),
+            Editable_Line_Type (To_Box_Line (Editor.Source_Buffer, Line)),
+            To_Box_Column (Column)));
    end Get_Contextual_Menu;
 
    ---------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007, AdaCore             --
+--                      Copyright (C) 2004-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,7 @@ with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Casing_Exceptions is
 
