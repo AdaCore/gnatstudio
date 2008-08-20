@@ -52,6 +52,7 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+--  ???
 --  with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -1094,6 +1095,7 @@ package body GVD.Process is
          Process.Exiting := True;
 
          Close_Debugger (Process);
+         --  Why is this code commented out ???
          --  Close (Window.MDI, Process.Debugger_Text);
 
          Process.Exiting := False;
