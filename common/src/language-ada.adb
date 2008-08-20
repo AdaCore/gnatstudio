@@ -920,10 +920,13 @@ package body Language.Ada is
                   Prev_Offset := UTF8_Find_Prev_Char
                     (Buffer.all, Local_Offset);
 
-                  if Buffer (Prev_Offset) = '-' then
+                  if Prev_Offset > Offset_Limit
+                    and then Buffer (Prev_Offset) = '-'
+                  then
                      Local_Offset := UTF8_Find_Prev_Char
                        (Buffer.all, Prev_Offset);
 
+                     --  ??? Not very efficient to use a recursive call here
                      Skip_Comment_Line (Local_Offset);
                      Offset := Local_Offset + 1;
 
