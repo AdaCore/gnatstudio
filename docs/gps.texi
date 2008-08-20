@@ -916,7 +916,7 @@ are called by a given entity, and, opposite, what entities are calling a
 given entity.
 
 Some references might be reported with an additional " (dispatching)" text.
-In such a case, this indicates the the call to the entity is not explicit
+In such a case, this indicates that the call to the entity is not explicit
 in the sources, but could occur through dynamic dispatching. This of course
 depends on what arguments are passed to the caller at run time, and it is
 possible that the subprogram is in fact never dispatched to.
@@ -16765,6 +16765,19 @@ copy of the code on your local machine).
 GPS 4.0.0 and above need the X RENDER extension when running under unix
 systems to perform at a reasonable speed, so you need to make sure you X
 server properly supports this extension.
+
+@item GPS crashes on some Linux distributions
+
+On some recent Linux distributions not officially supported by GPS,
+GPS will not start, generating a message such as:
+
+@smallexample
+gps_exe: ../../src/xcb_lock.c:77: _XGetXCBBuffer: Assertion `
+((int) ((xcb_req) - (dpy->request)) >= 0)' failed.
+@end smallexample
+
+The work around in this case is to rename the directory
+@file{prefix/lib/gps} to e.g. @file{prefix/lib/gps.old}.
 
 @end table
 
