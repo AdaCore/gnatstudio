@@ -338,6 +338,7 @@ package body Src_Editor_Buffer.Text_Handling is
 
       else
          Get_Cursor_Position (Buffer, W_End);
+         Backward_Char (W_End, Result);
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy /= On_The_Fly
@@ -349,6 +350,8 @@ package body Src_Editor_Buffer.Text_Handling is
             --  or we are in a comment or a string.
             return;
          end if;
+
+         Forward_Char (W_End, Result);
       end if;
 
       Get_Iter_Position (Source_Buffer (Buffer), W_End, Line, Column);
