@@ -1057,8 +1057,7 @@ package body GVD.Process is
       end if;
 
       --  If some unattached dialogs exist, claim them
-      Attach_To_Call_Stack
-        (Process, Create_If_Necessary => Get_Pref (Show_Call_Stack));
+      Attach_To_Call_Stack    (Process, Create_If_Necessary => False);
       Attach_To_Data_Window   (Process, Create_If_Necessary => False);
       Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
       Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
@@ -1215,14 +1214,6 @@ package body GVD.Process is
                Name => "breakpoints");
          end if;
       end if;
-
-      --  Memorize whether we should automatically start the call stack the
-      --  next time GVD is started or not.
-      --  ??? This might no longer be needed, since users have the option to
-      --  keep windows open now, which should be the preferred approach since
-      --  it also preserves the location of the window
-
-      Set_Pref (Kernel, Show_Call_Stack, Process.Stack /= null);
 
       --  Let all views know that they should close
 

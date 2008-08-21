@@ -67,7 +67,6 @@ package GVD.Preferences is
    Hide_Big_Items                : Param_Spec_Boolean;
    Big_Item_Height               : Param_Spec_Int;
    Default_Detect_Aliases        : Param_Spec_Boolean;
-   Show_Call_Stack               : Param_Spec_Boolean;
    Max_Item_Width                : Param_Spec_Int;
    Max_Item_Height               : Param_Spec_Int;
 

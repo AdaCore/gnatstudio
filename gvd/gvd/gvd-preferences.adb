@@ -103,7 +103,7 @@ package body GVD.Preferences is
               & " case they can either be hidden or kept visible. The next"
               & " debugger session will reuse these windows, which is"
               & " convenient if you want to put them in a specific place"),
-            Default => Close_Windows));
+            Default => Hide_Windows));
       Register_Property (Prefs, Param_Spec (Debugger_Windows), General);
 
       Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
@@ -211,14 +211,6 @@ package body GVD.Preferences is
          Maximum  => 100000,
          Default  => 150));
       Register_Property (Prefs, Param_Spec (Big_Item_Height), General);
-
-      Show_Call_Stack := Param_Spec_Boolean (Gnew_Boolean
-        (Name     => XML_Prefix & "Show-Call-Stack",
-         Nick     => -"Show call stack",
-         Blurb    => -"True if call stack should be displayed by default",
-         Flags    => Source_Flags,
-         Default  => False));
-      Register_Property (Prefs, Param_Spec (Show_Call_Stack), General);
 
       Memory_View_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-View-Color",
