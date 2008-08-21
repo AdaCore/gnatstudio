@@ -54,7 +54,7 @@
 
 {
    ADDRESS_IN_RANGE/Use of uninitialized value of size
-   Memcheck:Cond
+   Memcheck:Value8
    fun:PyObject_Free
 }
 
