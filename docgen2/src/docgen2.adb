@@ -2448,10 +2448,10 @@ package body Docgen2 is
 
             Child_EInfo.Printout_Loc :=
               Child_EInfo.Full_Declaration.Xref.Printout_Loc;
-            Child_EInfo.Full_Declaration.Xref.Displayed := True;
+            Child_EInfo.Full_Declaration.Xref.Hidden := True;
          end if;
 
-         if Child_EInfo.Displayed then
+         if Child_EInfo.Hidden then
             null;
 
             --  CLASSES HANDLING --
@@ -2654,8 +2654,6 @@ package body Docgen2 is
                Append (Subp_Generic_Params_Loc, Param_Loc_Tag);
             end;
          end if;
-
-         Child_EInfo.Displayed := True;
 
          Entity_Info_List.Next (Cursor);
       end loop;
@@ -2951,9 +2949,7 @@ package body Docgen2 is
          while Cross_Ref_List.Has_Element (Cursor) loop
             Xref := Cross_Ref_List.Element (Cursor);
 
-            if Xref.Xref /= null
-              and then not Xref.Xref.Displayed
-            then
+            if Xref.Xref /= null and then not Xref.Xref.Hidden then
                if Prev_Xref = null
                  or else Xref.Location /= Prev_Xref.Location
                then
@@ -2999,7 +2995,7 @@ package body Docgen2 is
             --  Let's see if it has a parent
             if (EInfo.Parents.Is_Empty
                 or else EInfo.Parents.First_Element.Xref = null)
-              and then not EInfo.Displayed
+              and then not EInfo.Hidden
             then
                Append (Tree_Tag, Print_Tree (Xref.Name.all, EInfo, 0));
             end if;

@@ -149,8 +149,10 @@ package Docgen2.Entities is
          Full_Declaration     : Cross_Ref := null;
          --  For partial entities, xref to their full declarations
 
-         Displayed            : Boolean := False;
-         --  Mark the entity information as displayed in the final document
+         Hidden               : Boolean := False;
+         --  Mark the entity information as not shown in the final document
+         --  This is used in particular for partial views of a type, to
+         --  determine if the full view or partial view should be used.
 
          Children             : Entity_Info_List.Vector;
          --  For tagged types, the list of immediate children
