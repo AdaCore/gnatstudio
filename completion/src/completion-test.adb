@@ -49,14 +49,17 @@ procedure Completion.Test is
    use Standard.Ada;
    use Token_List;
 
-   Max_Accepted_Time_For_Creation : constant Duration := 0.1;
+   Max_Accepted_Time_For_Creation : Duration := 0.1;
    --  Maximum time for the resolution, in seconds
 
-   Max_Accepted_Time_For_Iteration : constant Duration := 0.1;
+   Max_Accepted_Time_For_Iteration : Duration := 0.1;
    --  Maximum time for the iteration, in seconds
 
-   Max_Accepted_Time_For_Initialization : constant Duration := 0.2;
+   Max_Accepted_Time_For_Initialization : Duration := 0.2;
    --  Maximum time for the initialization, in seconds
+
+   procedure Set_Max_Time;
+   --  Set the maximum time allowed for each type of operation
 
    procedure Next_Complete_Tag
      (Buffer      : String;
@@ -82,6 +85,21 @@ procedure Completion.Test is
    procedure Extract_Entities (File : Virtual_File; Project : String);
    procedure Full_Test
      (File : Virtual_File; Project : String; History : Boolean);
+
+   ------------------
+   -- Set_Max_Time --
+   ------------------
+
+   procedure Set_Max_Time is
+      Env : String_Access := GNAT.OS_Lib.Getenv ("GPS_COMPLETION_MAX_TIME");
+   begin
+      if Env /= null and then Env.all /= "" then
+         Max_Accepted_Time_For_Creation := Duration'Value (Env.all);
+         Max_Accepted_Time_For_Iteration := Duration'Value (Env.all);
+         Max_Accepted_Time_For_Initialization := Duration'Value (Env.all);
+      end if;
+      Free (Env);
+   end Set_Max_Time;
 
    -----------------------
    -- Next_Complete_Tag --
@@ -584,6 +602,8 @@ begin
       Put_Line ("Usage : <command> <file_name> <mode>");
       return;
    end if;
+
+   Set_Max_Time;
 
    Projects.Registry.Initialize;
 
