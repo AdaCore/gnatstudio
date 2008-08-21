@@ -84,7 +84,7 @@ package body Filesystems is
    -- Execute_Remotely --
    ----------------------
 
-   procedure Execute_Remotely
+   overriding procedure Execute_Remotely
      (Transport           : access GPS_Transport_Record;
       Host                : String;
       Args                : GNAT.Strings.String_List;
@@ -100,7 +100,7 @@ package body Filesystems is
    -- Execute_Remotely --
    ----------------------
 
-   procedure Execute_Remotely
+   overriding procedure Execute_Remotely
      (Transport           : access GPS_Transport_Record;
       Host                : String;
       Args                : GNAT.Strings.String_List;
@@ -117,7 +117,7 @@ package body Filesystems is
    -- Spawn_Remotely --
    --------------------
 
-   procedure Spawn_Remotely
+   overriding procedure Spawn_Remotely
      (Transport           : access GPS_Transport_Record;
       Descriptor          : out GNAT.Expect.Process_Descriptor_Access;
       Host                : String;

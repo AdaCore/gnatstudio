@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -172,7 +172,7 @@ package body GPS.Kernel.Properties is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access String_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
@@ -185,7 +185,7 @@ package body GPS.Kernel.Properties is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access Integer_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
@@ -196,7 +196,7 @@ package body GPS.Kernel.Properties is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access Boolean_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr) is
    begin
@@ -207,7 +207,7 @@ package body GPS.Kernel.Properties is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out String_Property; From : Glib.Xml_Int.Node_Ptr) is
    begin
       if From.Value /= null then
@@ -221,7 +221,7 @@ package body GPS.Kernel.Properties is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Integer_Property; From : Glib.Xml_Int.Node_Ptr) is
    begin
       Property.Value := Integer'Value (From.Value.all);
@@ -234,7 +234,7 @@ package body GPS.Kernel.Properties is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Boolean_Property; From : Glib.Xml_Int.Node_Ptr) is
    begin
       Property.Value := Boolean'Value (From.Value.all);
@@ -247,7 +247,7 @@ package body GPS.Kernel.Properties is
    -- Destroy --
    -------------
 
-   procedure Destroy (Property : in out String_Property) is
+   overriding procedure Destroy (Property : in out String_Property) is
    begin
       Free (Property.Value);
    end Destroy;

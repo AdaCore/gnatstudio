@@ -92,10 +92,10 @@ package body GVD.Call_Stack is
       end record;
    type Call_Stack is access all Call_Stack_Record'Class;
 
-   procedure Update (View   : access Call_Stack_Record);
-   procedure Load_From_XML
+   overriding procedure Update (View   : access Call_Stack_Record);
+   overriding procedure Load_From_XML
      (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr);
-   function Save_To_XML
+   overriding function Save_To_XML
      (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
 
@@ -427,7 +427,7 @@ package body GVD.Call_Stack is
    -- Load_From_XML --
    -------------------
 
-   procedure Load_From_XML
+   overriding procedure Load_From_XML
      (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr) is
    begin
       View.Backtrace_Mask := Stack_List_Mask'Value (XML.Value.all);
@@ -440,7 +440,7 @@ package body GVD.Call_Stack is
    -- Save_To_XML --
    -----------------
 
-   function Save_To_XML
+   overriding function Save_To_XML
      (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
@@ -454,7 +454,7 @@ package body GVD.Call_Stack is
    -- Update --
    ------------
 
-   procedure Update (View : access Call_Stack_Record) is
+   overriding procedure Update (View : access Call_Stack_Record) is
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
       Process  : Process_Proxy_Access;

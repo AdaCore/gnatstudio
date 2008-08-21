@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -848,23 +847,23 @@ package Debugger is
 
    function Get_Memory
      (Debugger : access Debugger_Root;
-      Size     : in Integer;
-      Address  : in String) return String is abstract;
+      Size     : Integer;
+      Address  : String) return String is abstract;
    --  Return the contents of the byte at a given address. The output should
    --  be a hexadecimal string representing Size bytes, with no separator.
    --  Address is "0x" followed by an hexadecimal number.
 
    procedure Put_Memory_Byte
      (Debugger : access Debugger_Root;
-      Address  : in String;
-      Byte     : in String) is abstract;
+      Address  : String;
+      Byte     : String) is abstract;
    --  Write the contents of one byte into the memory.
    --  Address is "0x" followed by an hexadecimal number.
    --  Byte is two hexadicimal digits.
 
    function Get_Variable_Address
      (Debugger  : access Debugger_Root;
-      Variable  : in String) return String is abstract;
+      Variable  : String) return String is abstract;
    --  Returns the starting address for a given variable.
    --  The returned adress should be "0x" followed by an hexadecimal number.
    --  Alternatively, it returns "" if no such variable is found.

@@ -305,9 +305,10 @@ package body Docgen2 is
 
    type Docgen_Command_Access is access all Docgen_Command'Class;
 
-   function Name (Command : access Docgen_Command) return String;
-   function Progress (Command : access Docgen_Command) return Progress_Record;
-   function Execute (Command : access Docgen_Command)
+   overriding function Name (Command : access Docgen_Command) return String;
+   overriding function Progress
+     (Command : access Docgen_Command) return Progress_Record;
+   overriding function Execute (Command : access Docgen_Command)
                      return Command_Return_Type;
    --  See inherited for documentation
 
@@ -1761,7 +1762,7 @@ package body Docgen2 is
    -- Name --
    ----------
 
-   function Name (Command : access Docgen_Command) return String is
+   overriding function Name (Command : access Docgen_Command) return String is
       pragma Unreferenced (Command);
    begin
       return "Documentation generator";
@@ -1771,7 +1772,8 @@ package body Docgen2 is
    -- Progress --
    --------------
 
-   function Progress (Command : access Docgen_Command) return Progress_Record
+   overriding function Progress
+     (Command : access Docgen_Command) return Progress_Record
    is
    begin
       if Command.File_Index < Command.Source_Files'Last then
@@ -1796,7 +1798,7 @@ package body Docgen2 is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Docgen_Command) return Command_Return_Type
    is
       function Get_All_Comments

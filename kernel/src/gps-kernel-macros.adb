@@ -388,7 +388,7 @@ package body GPS.Kernel.Macros is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
       Context : Selection_Context) return Boolean
    is

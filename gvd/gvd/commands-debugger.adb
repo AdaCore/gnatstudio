@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,7 +49,7 @@ package body Commands.Debugger is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Set_Breakpoint_Command) return Command_Return_Type
    is
       C : Command_Access;

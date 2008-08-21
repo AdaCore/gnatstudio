@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007, AdaCore                     --
+--                   Copyright (C) 2007-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,29 +23,31 @@ package Docgen2_Backend.HTML is
 
    type HTML_Backend_Record is new Backend_Record with null record;
 
-   function Get_Template (Backend    : access HTML_Backend_Record;
-                          System_Dir : String;
-                          Kind       : Template_Kind) return String;
+   overriding function Get_Template
+     (Backend    : access HTML_Backend_Record;
+      System_Dir : String;
+      Kind       : Template_Kind) return String;
    --  See inherited doc.
 
-   function Get_Support_Dir (Backend    : access HTML_Backend_Record;
-                             System_Dir : String) return String;
+   overriding function Get_Support_Dir
+     (Backend    : access HTML_Backend_Record;
+      System_Dir : String) return String;
    --  See inherited doc.
 
-   function To_Destination_Name
+   overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
       Basename : String)
       return String;
    --  See inherited doc.
 
-   function To_Destination_Name
+   overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
       Src_File : String;
       Pkg_Nb   : Natural)
       return String;
    --  See inherited doc.
 
-   function To_Href
+   overriding function To_Href
      (Backend  : access HTML_Backend_Record;
       Location : String;
       Src_File : String;
@@ -53,18 +55,18 @@ package Docgen2_Backend.HTML is
       return String;
    --  See inherited doc.
 
-   function Gen_Ref
+   overriding function Gen_Ref
      (Backend : access HTML_Backend_Record;
       Name    : String) return String;
    --  See inherited doc.
 
-   function Gen_Href
+   overriding function Gen_Href
      (Backend                : access HTML_Backend_Record;
       Name, Href, Title : String)
       return String;
    --  See inherited doc.
 
-   function Gen_Tag
+   overriding function Gen_Tag
      (Backend : access HTML_Backend_Record;
       Tag     : Language_Entity;
       Value   : String;

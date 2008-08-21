@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -231,22 +231,22 @@ package GPS.Kernel.Properties is
    --  Register the script commands associated with this module
 
 private
-   procedure Destroy (Property : in out String_Property);
-   procedure Save
+   overriding procedure Destroy (Property : in out String_Property);
+   overriding procedure Save
      (Property : access String_Property; Node : in out Glib.Xml_Int.Node_Ptr);
-   procedure Load
+   overriding procedure Load
      (Property : in out String_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation
 
-   procedure Save
+   overriding procedure Save
      (Property : access Integer_Property; Node : in out Glib.Xml_Int.Node_Ptr);
-   procedure Load
+   overriding procedure Load
      (Property : in out Integer_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation
 
-   procedure Save
+   overriding procedure Save
      (Property : access Boolean_Property; Node : in out Glib.Xml_Int.Node_Ptr);
-   procedure Load
+   overriding procedure Load
      (Property : in out Boolean_Property; From : Glib.Xml_Int.Node_Ptr);
    --  See inherited documentation
 

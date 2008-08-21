@@ -138,16 +138,16 @@ package body GVD.Canvas is
       Canvas : GVD_Canvas;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed, to refresh the GVD canvas
    --  appropriately.
 
-   procedure On_Attach
+   overriding procedure On_Attach
      (Canvas  : access GVD_Canvas_Record;
       Process : access Visual_Debugger_Record'Class);
-   procedure Update (Canvas : access GVD_Canvas_Record);
+   overriding procedure Update (Canvas : access GVD_Canvas_Record);
    --  Called when the canvas needs refreshing
 
    procedure Initialize
@@ -209,13 +209,13 @@ package body GVD.Canvas is
    end record;
    type GVD_Items_Property is access all GVD_Items_Property_Record'Class;
 
-   procedure Save
+   overriding procedure Save
      (Property : access GVD_Items_Property_Record;
       Node     : in out Glib.Xml_Int.Node_Ptr);
-   procedure Load
+   overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
       From     : Glib.Xml_Int.Node_Ptr);
-   procedure Destroy (Property : in out GVD_Items_Property_Record);
+   overriding procedure Destroy (Property : in out GVD_Items_Property_Record);
    --  See inherited documentation
 
    procedure Load_Items_From_Property
@@ -369,7 +369,7 @@ package body GVD.Canvas is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -382,7 +382,7 @@ package body GVD.Canvas is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access GVD_Items_Property_Record;
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
@@ -402,7 +402,7 @@ package body GVD.Canvas is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
       From     : Glib.Xml_Int.Node_Ptr)
    is
@@ -447,7 +447,8 @@ package body GVD.Canvas is
    -- Destroy --
    -------------
 
-   procedure Destroy (Property : in out GVD_Items_Property_Record) is
+   overriding procedure Destroy
+     (Property : in out GVD_Items_Property_Record) is
    begin
       Free (Property.Items);
    end Destroy;
@@ -456,7 +457,7 @@ package body GVD.Canvas is
    -- On_Attach --
    ---------------
 
-   procedure On_Attach
+   overriding procedure On_Attach
      (Canvas  : access GVD_Canvas_Record;
       Process : access Visual_Debugger_Record'Class)
    is
@@ -482,7 +483,7 @@ package body GVD.Canvas is
    -- Update --
    ------------
 
-   procedure Update (Canvas : access GVD_Canvas_Record) is
+   overriding procedure Update (Canvas : access GVD_Canvas_Record) is
    begin
       if Get_Process (Canvas) /= null then
          Recompute_All_Aliases (Get_Process (Canvas));

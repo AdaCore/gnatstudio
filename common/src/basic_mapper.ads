@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2007, AdaCore                 --
+--                  Copyright (C) 2003-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +41,7 @@ package Basic_Mapper is
    --  Add a couple of corresponding strings in Mapper
 
    procedure Remove_Entry
-     (Mapper : in File_Mapper_Access;
+     (Mapper : File_Mapper_Access;
       Text   : String);
    --  Remove all the entries containing Text on either table
    --  from Mapping.

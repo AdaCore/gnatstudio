@@ -94,13 +94,13 @@ package body XML_Viewer is
    type Metrix_XML_Viewer_Record is new XML_Viewer_Record with record
       File : GNAT.Strings.String_Access;
    end record;
-   function Node_Parser
+   overriding function Node_Parser
      (View        : access Metrix_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
       Child_Index : Positive) return Gtk_Tree_Iter;
-   procedure Free (View : access Metrix_XML_Viewer_Record);
-   function On_Click
+   overriding procedure Free (View : access Metrix_XML_Viewer_Record);
+   overriding function On_Click
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -113,13 +113,13 @@ package body XML_Viewer is
       On_Select : Subprogram_Type;
       Columns   : Integer;
    end record;
-   function Node_Parser
+   overriding function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
       Child_Index : Positive) return Gtk_Tree_Iter;
-   procedure Free (View : access Custom_XML_Viewer_Record);
-   function On_Click
+   overriding procedure Free (View : access Custom_XML_Viewer_Record);
+   overriding function On_Click
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -181,7 +181,7 @@ package body XML_Viewer is
    -- Free --
    ----------
 
-   procedure Free (View : access Custom_XML_Viewer_Record) is
+   overriding procedure Free (View : access Custom_XML_Viewer_Record) is
    begin
       Free (View.Parser);
       Free (View.On_Click);
@@ -219,7 +219,7 @@ package body XML_Viewer is
    -- Node_Parser --
    -----------------
 
-   function Node_Parser
+   overriding function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
@@ -273,7 +273,7 @@ package body XML_Viewer is
    -- On_Click --
    --------------
 
-   function On_Click
+   overriding function On_Click
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -313,7 +313,7 @@ package body XML_Viewer is
    -- On_Click --
    --------------
 
-   function On_Click
+   overriding function On_Click
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -409,7 +409,7 @@ package body XML_Viewer is
    -- Free --
    ----------
 
-   procedure Free (View : access Metrix_XML_Viewer_Record) is
+   overriding procedure Free (View : access Metrix_XML_Viewer_Record) is
    begin
       GNAT.Strings.Free (View.File);
    end Free;
@@ -418,7 +418,7 @@ package body XML_Viewer is
    -- Node_Parser --
    -----------------
 
-   function Node_Parser
+   overriding function Node_Parser
      (View        : access Metrix_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;

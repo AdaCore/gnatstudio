@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2006                       --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,7 +81,7 @@ private
       Requires : Requirements;
    end record;
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
       Context : Selection_Context) return Boolean;
    --  See doc for inherited subprogram.

@@ -23,9 +23,10 @@ package body Docgen2_Backend.HTML is
    -- Get_Template --
    ------------------
 
-   function Get_Template (Backend    : access HTML_Backend_Record;
-                          System_Dir : String;
-                          Kind       : Template_Kind) return String
+   overriding function Get_Template
+     (Backend    : access HTML_Backend_Record;
+      System_Dir : String;
+      Kind       : Template_Kind) return String
    is
       pragma Unreferenced (Backend);
    begin
@@ -51,8 +52,9 @@ package body Docgen2_Backend.HTML is
    -- Get_Support_Dir --
    ---------------------
 
-   function Get_Support_Dir (Backend    : access HTML_Backend_Record;
-                             System_Dir : String) return String
+   overriding function Get_Support_Dir
+     (Backend    : access HTML_Backend_Record;
+      System_Dir : String) return String
    is
       pragma Unreferenced (Backend);
    begin
@@ -63,7 +65,7 @@ package body Docgen2_Backend.HTML is
    -- To_Destination_Name --
    -------------------------
 
-   function To_Destination_Name
+   overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
       Basename : String)
       return String
@@ -77,7 +79,7 @@ package body Docgen2_Backend.HTML is
    -- To_Destination_Name --
    -------------------------
 
-   function To_Destination_Name
+   overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
       Src_File : String;
       Pkg_Nb   : Natural)
@@ -100,7 +102,7 @@ package body Docgen2_Backend.HTML is
    -- To_Href --
    -------------
 
-   function To_Href
+   overriding function To_Href
      (Backend  : access HTML_Backend_Record;
       Location : String;
       Src_File : String;
@@ -115,7 +117,7 @@ package body Docgen2_Backend.HTML is
    -- Gen_Ref --
    -------------
 
-   function Gen_Ref
+   overriding function Gen_Ref
      (Backend : access HTML_Backend_Record;
       Name    : String) return String
    is
@@ -128,7 +130,7 @@ package body Docgen2_Backend.HTML is
    -- Gen_Href --
    --------------
 
-   function Gen_Href
+   overriding function Gen_Href
      (Backend                : access HTML_Backend_Record;
       Name, Href, Title : String)
       return String
@@ -143,7 +145,7 @@ package body Docgen2_Backend.HTML is
    -- Gen_Tag --
    -------------
 
-   function Gen_Tag
+   overriding function Gen_Tag
      (Backend  : access HTML_Backend_Record;
       Tag      : Language_Entity;
       Value    : String;

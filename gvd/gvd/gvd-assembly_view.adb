@@ -123,7 +123,7 @@ package body GVD.Assembly_View is
    --  Store in the assembly view the range of address that corresponds to the
    --  current source line.
 
-   procedure Update (View : access Assembly_View_Record);
+   overriding procedure Update (View : access Assembly_View_Record);
    --  Update the assembly view
 
    procedure Set_Font
@@ -249,7 +249,7 @@ package body GVD.Assembly_View is
       View : Assembly_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed, to refresh the editor
@@ -969,7 +969,7 @@ package body GVD.Assembly_View is
    -- Update --
    ------------
 
-   procedure Update (View : access Assembly_View_Record) is
+   overriding procedure Update (View : access Assembly_View_Record) is
       Process      : constant Visual_Debugger := Get_Process (View);
       Buffer       : constant Gtk_Text_Buffer := Get_Buffer (View.View);
 
@@ -1165,7 +1165,7 @@ package body GVD.Assembly_View is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is

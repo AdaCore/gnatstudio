@@ -258,7 +258,7 @@ package body Default_Preferences is
    --  Handling of Param_Spec_Style
 
    procedure Get_Font
-     (Info : in Pref_Description_Access;
+     (Info : Pref_Description_Access;
       Desc : in out Pango_Font_Description);
    --  Check that Desc is a valid font, and associate it with the node N.
 
@@ -752,7 +752,7 @@ package body Default_Preferences is
    --------------
 
    procedure Get_Font
-     (Info : in Pref_Description_Access;
+     (Info : Pref_Description_Access;
       Desc : in out Pango_Font_Description)
    is
       use type Gdk.Gdk_Font;
