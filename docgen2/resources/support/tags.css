@@ -1,4 +1,3 @@
-; <summary> tag handling
 div.summary:before
 {
    content: "Summary: ";
@@ -9,7 +8,6 @@ div.summary
    border-bottom: 1px dotted #e0e0e0;
 }
 
-; <description> tag handling
 div.description:before
 {
    content: "Description: ";
@@ -21,17 +19,16 @@ div.description
    border-bottom: 1px dotted #e0e0e0;
 }
 
-; <parameter name="param"> tag handling
 div.parameter:before
 {
-   content: attr(name);
+   content: attr(name)': ';
    font-style: italic;
-   color: #f00;
+   color: #f44;
    display: inline;
 }
 div.parameter *
 {
    font-style: italic;
+   color: #444;
    display: inline;
-   margin-left: 10px;
 }
