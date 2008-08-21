@@ -53,6 +53,12 @@
 }
 
 {
+   ADDRESS_IN_RANGE/Use of uninitialized value of size
+   Memcheck:Cond
+   fun:PyObject_Free
+}
+
+{
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Addr4
    fun:PyObject_Realloc
