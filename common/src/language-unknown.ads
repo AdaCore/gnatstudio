@@ -26,53 +26,53 @@ package Language.Unknown is
    Unknown_Lang : constant Language_Access;
    --  Class constant for the Unknown language.
 
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
       Buffer : String;
       Result : out Construct_List);
 
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Unknown_Language;
       Buffer   : String;
       Callback : Entity_Callback);
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Unknown_Language;
       Str : String) return Boolean;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return Strings.String_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return Pattern_Matcher_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return GNAT.Strings.String_List;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Unknown_Language) return Language_Context_Access;
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Unknown_Language;
       Name : String) return String;
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Unknown_Language;
       Name  : String;
       Index : String) return String;
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Unknown_Language;
       Name  : String;
       Field : String) return String;
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Unknown_Language) return Project_Field_Array;
 
 private
    type Unknown_Language is new Language_Root with null record;
 
-   function Get_Name (Lang : access Unknown_Language) return String;
+   overriding function Get_Name (Lang : access Unknown_Language) return String;
    --  See inherited documentation
 
    Unknown_Lang : constant Language_Access := new Unknown_Language;

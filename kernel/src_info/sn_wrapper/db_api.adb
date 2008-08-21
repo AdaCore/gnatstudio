@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2002-2007, AdaCore                   --
+--                Copyright (C) 2002-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -212,7 +212,7 @@ package body DB_API is
    -- "=" --
    ---------
 
-   function "=" (P1, P2 : Pair) return Boolean is
+   overriding function "=" (P1, P2 : Pair) return Boolean is
    begin
       return P1.Key = P2.Key
         and then P1.Data = P2.Data

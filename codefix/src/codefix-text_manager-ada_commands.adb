@@ -51,7 +51,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Recase_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -120,7 +120,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Recase_Word_Cmd) is
+   overriding procedure Free (This : in out Recase_Word_Cmd) is
    begin
       Free (This.Cursor);
       Free (This.Correct_Word);
@@ -146,7 +146,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Instruction_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -163,7 +163,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Remove_Instruction_Cmd) is
+   overriding procedure Free (This : in out Remove_Instruction_Cmd) is
    begin
       Free (This.Begin_Mark);
       Free (Text_Command (This));
@@ -201,7 +201,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Elements_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -230,7 +230,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Remove_Elements_Cmd) is
+   overriding procedure Free (This : in out Remove_Elements_Cmd) is
    begin
       Free (This.Remove_List);
       Free (Text_Command (This));
@@ -347,7 +347,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -381,7 +381,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
+   overriding procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
       Free (This.Instantiation_Pkg);
       Free (This.Clauses_Pkg);
@@ -436,7 +436,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Entity_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -497,7 +497,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Remove_Entity_Cmd) is
+   overriding procedure Free (This : in out Remove_Entity_Cmd) is
    begin
       Free (This.Spec_Begin);
       Free (This.Spec_End);
@@ -528,7 +528,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Add_Pragma_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -576,7 +576,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Add_Pragma_Cmd) is
+   overriding procedure Free (This : in out Add_Pragma_Cmd) is
    begin
       Free (This.Position);
       Free (This.Name);
@@ -605,7 +605,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -651,7 +651,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Make_Constant_Cmd) is
+   overriding procedure Free (This : in out Make_Constant_Cmd) is
    begin
       Free (This.Position);
       Free (This.Name);
@@ -677,7 +677,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Parenthesis_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -760,7 +760,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Remove_Parenthesis_Cmd) is
+   overriding procedure Free (This : in out Remove_Parenthesis_Cmd) is
    begin
       Free (This.Cursor);
       Free (Text_Command (This));
@@ -987,7 +987,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Paste_Profile_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -1021,7 +1021,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Paste_Profile_Cmd) is
+   overriding procedure Free (This : in out Paste_Profile_Cmd) is
    begin
       Free (This.Destination_Begin);
       Free (This.Destination_End);
@@ -1158,7 +1158,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Get_Visible_Declaration_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -1177,7 +1177,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Get_Visible_Declaration_Cmd) is
+   overriding procedure Free (This : in out Get_Visible_Declaration_Cmd) is
    begin
       Free (This.Insert_With);
       Free (This.Prefix_Obj);
@@ -1207,7 +1207,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Replace_Code_By_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -1245,7 +1245,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   procedure Free (This : in out Replace_Code_By_Cmd) is
+   overriding procedure Free (This : in out Replace_Code_By_Cmd) is
    begin
       Free (This.Replaced_Exp);
       Free (This.New_String);

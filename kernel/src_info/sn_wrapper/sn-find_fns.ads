@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2004                      --
---                            ACT-Europe                             --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -110,7 +109,6 @@ package SN.Find_Fns is
       Key            : out Entity_Function_Key;
       Success        : out Boolean);
    --  Only applicable to LV
-
 
    procedure Find
      (DB             : DB_File;

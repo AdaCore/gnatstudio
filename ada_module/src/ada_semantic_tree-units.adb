@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                    Copyright (C) 2007-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -79,7 +79,7 @@ package body Ada_Semantic_Tree.Units is
    -- Free --
    ----------
 
-   procedure Free (Assistant : in out Ada_Unit_Assistant) is
+   overriding procedure Free (Assistant : in out Ada_Unit_Assistant) is
    begin
       Clear (Assistant.Units_Db'Access);
       Clear (Assistant.Waiting_For_Parent'Access);
@@ -334,7 +334,7 @@ package body Ada_Semantic_Tree.Units is
    -- File_Updated --
    ------------------
 
-   procedure File_Updated
+   overriding procedure File_Updated
      (Assistant : access Ada_Unit_Assistant;
       File      : Structured_File_Access;
       Kind      : Update_Kind)
@@ -926,7 +926,7 @@ package body Ada_Semantic_Tree.Units is
    -- Free --
    ----------
 
-   procedure Free (Unit : in out Unit_Access_Record) is
+   overriding procedure Free (Unit : in out Unit_Access_Record) is
    begin
       Reset_Unit_Links (Unit);
 

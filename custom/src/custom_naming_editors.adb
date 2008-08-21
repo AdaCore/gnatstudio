@@ -139,7 +139,8 @@ package body Custom_Naming_Editors is
    -- Destroy --
    -------------
 
-   procedure Destroy (Editor : access Custom_Naming_Editor_Record) is
+   overriding procedure Destroy
+     (Editor : access Custom_Naming_Editor_Record) is
    begin
       Destroy (Editor.GUI);
       Free (Editor.Language);
@@ -149,7 +150,7 @@ package body Custom_Naming_Editors is
    -- Get_Window --
    ----------------
 
-   function Get_Window
+   overriding function Get_Window
      (Editor : access Custom_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget is
    begin
@@ -160,7 +161,7 @@ package body Custom_Naming_Editors is
    -- Create_Project_Entry --
    --------------------------
 
-   function Create_Project_Entry
+   overriding function Create_Project_Entry
      (Editor             : access Custom_Naming_Editor_Record;
       Project            : Projects.Project_Type;
       Languages          : String_List;
@@ -209,7 +210,7 @@ package body Custom_Naming_Editors is
    -- Show_Project_Settings --
    ---------------------------
 
-   procedure Show_Project_Settings
+   overriding procedure Show_Project_Settings
      (Editor             : access Custom_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;

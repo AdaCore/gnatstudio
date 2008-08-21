@@ -89,10 +89,10 @@ package Codefix.Text_Manager.Ada_Extracts is
    type Ada_List is new Ada_Instruction with private;
    --  This type is a representation of an Ada_Instruction as a list of Tokens.
 
-   procedure Free (This : in out Ada_List);
+   overriding procedure Free (This : in out Ada_List);
    --  Free the memory associated to an Ada_List.
 
-   procedure Get_Unit
+   overriding procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Destination  : in out Ada_List;
@@ -100,7 +100,7 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Initialise Destination considerate that position is on a random position
    --  in an list (typically a with / use list or a multiple vars declaration).
 
-   function Clone (This : Ada_List) return Ada_List;
+   overriding function Clone (This : Ada_List) return Ada_List;
    --  Duplicate all informations associated to an extract, specially
    --  information referenced in pools.
 

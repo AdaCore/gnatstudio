@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +26,7 @@ package Language.Debugger is
    type Language_Debugger is abstract new Language_Root with private;
    type Language_Debugger_Access is access all Language_Debugger'Class;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Language_Debugger) return Strings.String_Access;
    --  Function used for all debugger languages as this is not used. This
    --  version always returns null.
@@ -62,12 +61,12 @@ package Language.Debugger is
    --  Repeat_Num is the number of times the item is repeated in the output.
 
    procedure Parse_Array_Type
-     (Lang      : access Language_Debugger;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Start_Of_Dim : in Natural;
-      Result    : out Items.Generic_Type_Access) is abstract;
+     (Lang         : access Language_Debugger;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
+      Start_Of_Dim : Natural;
+      Result       : out Items.Generic_Type_Access) is abstract;
    --  Parse the description of an array type.
    --  Index should point at the opening character of the array in Type_Str
    --  (ie "array " in gdb Ada, or "int [4]" in gdb C).

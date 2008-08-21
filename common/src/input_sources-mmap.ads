@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2007, AdaCore            --
+--                       Copyright (C) 2001-2008, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -42,7 +42,7 @@ package Input_Sources.Mmap is
      (From : in out Mmap_Input; C : out Unicode.Unicode_Char);
    overriding function Eof (From : Mmap_Input) return Boolean;
 
-   procedure Set_System_Id
+   overriding procedure Set_System_Id
      (Input : in out Mmap_Input; Id : Unicode.CES.Byte_Sequence);
    --  Override Input_Sources.Set_System_Id, and ensure we use an absolute
    --  file name. This is needed in lots of cases, for instance to resolve

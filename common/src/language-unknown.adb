@@ -29,7 +29,7 @@ package body Language.Unknown is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Unknown_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang, Str);
@@ -41,7 +41,7 @@ package body Language.Unknown is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Unknown_Language;
       Name : String) return String
    is
@@ -55,7 +55,7 @@ package body Language.Unknown is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Unknown_Language;
       Name  : String;
       Index : String) return String
@@ -71,7 +71,7 @@ package body Language.Unknown is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Unknown_Language;
       Name  : String;
       Field : String) return String
@@ -87,7 +87,7 @@ package body Language.Unknown is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return Strings.String_Access
    is
       pragma Unreferenced (Lang);
@@ -95,7 +95,7 @@ package body Language.Unknown is
       return Keywords_Regexp'Access;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -103,7 +103,7 @@ package body Language.Unknown is
       return Keywords_List'Access;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Unknown_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -131,7 +131,7 @@ package body Language.Unknown is
       Syntax_Highlighting           => False,
       Case_Sensitive                => True);
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Unknown_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -143,7 +143,7 @@ package body Language.Unknown is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Unknown_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -155,7 +155,7 @@ package body Language.Unknown is
    -- Parse_Constructs --
    ----------------------
 
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
       Buffer : String;
       Result : out Construct_List)
@@ -169,7 +169,7 @@ package body Language.Unknown is
    -- Parse_Entities --
    --------------------
 
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Unknown_Language;
       Buffer   : String;
       Callback : Entity_Callback)
@@ -183,7 +183,9 @@ package body Language.Unknown is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Unknown_Language) return String is
+   overriding function Get_Name
+     (Lang : access Unknown_Language) return String
+   is
       pragma Unreferenced (Lang);
    begin
       return "Unknown";

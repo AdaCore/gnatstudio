@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007, AdaCore             --
+--                     Copyright (C) 2002-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -69,7 +69,7 @@ package SN.Browse is
    --  to be deleted when the latter has finished executing.
    --  Started is set to False if there was no need to start dbimp.
 
-   procedure Delete_Database (DB_Directory : in String);
+   procedure Delete_Database (DB_Directory : String);
    --  Removes all files from SN DB directory except xref pool
 
    procedure Is_Alive

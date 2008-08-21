@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2007, AdaCore                   --
+--                Copyright (C) 2004-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -61,7 +61,7 @@ package body XML_Readers is
    -- Start_Document --
    --------------------
 
-   procedure Start_Document (Handler : in out Gtk_Reader) is
+   overriding procedure Start_Document (Handler : in out Gtk_Reader) is
    begin
       Handler.Tree := null;
       Handler.Current_Node := null;
@@ -89,7 +89,7 @@ package body XML_Readers is
    -- Set_Document_Locator --
    --------------------------
 
-   procedure Set_Document_Locator
+   overriding procedure Set_Document_Locator
      (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator) is
    begin
       Set_Line_Number (Loc,
@@ -100,7 +100,7 @@ package body XML_Readers is
    -- Start_Element --
    -------------------
 
-   procedure Start_Element
+   overriding procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
@@ -132,7 +132,7 @@ package body XML_Readers is
    -- End_Element --
    -----------------
 
-   procedure End_Element
+   overriding procedure End_Element
      (Handler : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
@@ -149,7 +149,7 @@ package body XML_Readers is
    -- Characters --
    ----------------
 
-   procedure Characters
+   overriding procedure Characters
      (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
       S : Glib.String_Ptr;
@@ -175,7 +175,7 @@ package body XML_Readers is
    -- Ignorable_Whitespace --
    --------------------------
 
-   procedure Ignorable_Whitespace
+   overriding procedure Ignorable_Whitespace
      (Handler : in out Gtk_Reader;
       Ch      : Unicode.CES.Byte_Sequence)
    is
@@ -203,7 +203,7 @@ package body XML_Readers is
    -- Error --
    -----------
 
-   procedure Error
+   overriding procedure Error
      (Handler : in out Gtk_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
@@ -214,7 +214,7 @@ package body XML_Readers is
    -- Warning --
    -------------
 
-   procedure Warning
+   overriding procedure Warning
      (Handler : in out Gtk_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin

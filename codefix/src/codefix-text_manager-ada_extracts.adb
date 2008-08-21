@@ -193,7 +193,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Free --
    ----------
 
-   procedure Free (This : in out Ada_List) is
+   overriding procedure Free (This : in out Ada_List) is
    begin
       Free (Ada_Instruction (This));
       Free (This.Elements_List);
@@ -203,7 +203,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Clone --
    -----------
 
-   function Clone (This : Ada_List) return Ada_List is
+   overriding function Clone (This : Ada_List) return Ada_List is
       New_Extract : Ada_List;
       Token_It    : Tokens_List.List_Node;
    begin
@@ -333,7 +333,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Get_Unit --
    --------------
 
-   procedure Get_Unit
+   overriding procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Destination  : in out Ada_List;

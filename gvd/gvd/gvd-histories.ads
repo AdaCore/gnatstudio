@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,7 +50,7 @@ package GVD.Histories is
    --  Return the item currently pointed to.
    --  No_Such_Item is raised if the list is empty.
 
-   procedure Set_Current (History : History_List; Data : in Data_Type);
+   procedure Set_Current (History : History_List; Data : Data_Type);
    --  Change the current item data.
 
    procedure Move_To_Previous (History : in out History_List);
@@ -74,7 +73,7 @@ package GVD.Histories is
    procedure Wind  (History : in out History_List; D : Direction);
    --  Move forward or backward until end of history.
 
-   function Length (History : in History_List) return Integer;
+   function Length (History : History_List) return Integer;
    --  Return the length of the history.
 
    procedure Free (History : in out History_List);

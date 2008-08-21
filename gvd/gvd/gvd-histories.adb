@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -81,7 +80,7 @@ package body GVD.Histories is
    -- Set_Current --
    -----------------
 
-   procedure Set_Current (History : History_List; Data : in Data_Type) is
+   procedure Set_Current (History : History_List; Data : Data_Type) is
       procedure Free_Data_Pointer is new
         Ada.Unchecked_Deallocation (Data_Type, Data_Pointer);
    begin
@@ -176,7 +175,7 @@ package body GVD.Histories is
    -- Length --
    ------------
 
-   function Length (History : in History_List) return Integer is
+   function Length (History : History_List) return Integer is
    begin
       return History.Length;
    end Length;

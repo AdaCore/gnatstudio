@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +32,7 @@ package Debugger.Gdb is
 
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
-   procedure Spawn
+   overriding procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -45,35 +44,35 @@ package Debugger.Gdb is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "");
 
-   procedure Initialize (Debugger : access Gdb_Debugger);
+   overriding procedure Initialize (Debugger : access Gdb_Debugger);
 
-   procedure Close (Debugger : access Gdb_Debugger);
+   overriding procedure Close (Debugger : access Gdb_Debugger);
 
-   procedure Connect_To_Target
+   overriding procedure Connect_To_Target
      (Debugger : access Gdb_Debugger;
       Target   : String;
       Protocol : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Wait_Prompt (Debugger : access Gdb_Debugger);
+   overriding procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
-   function Wait_Prompt
+   overriding function Wait_Prompt
      (Debugger : access Gdb_Debugger;
       Timeout  : Integer) return Boolean;
 
-   function Highlighting_Pattern
+   overriding function Highlighting_Pattern
      (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
-   procedure Display_Prompt (Debugger : access Gdb_Debugger);
+   overriding procedure Display_Prompt (Debugger : access Gdb_Debugger);
 
-   procedure Change_Directory
+   overriding procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
       Dir         : String;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Detect_Language (Debugger : access Gdb_Debugger);
+   overriding procedure Detect_Language (Debugger : access Gdb_Debugger);
 
-   procedure Found_File_Name
+   overriding procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
       Name_First  : out Natural;
@@ -83,273 +82,276 @@ package Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural);
 
-   procedure Found_Frame_Info
+   overriding procedure Found_Frame_Info
      (Debugger    : access Gdb_Debugger;
       Str         : String;
       First, Last : out Natural;
       Message     : out Frame_Info_Type);
 
-   function Source_Files_List
+   overriding function Source_Files_List
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List;
 
-   function Find_File
+   overriding function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String;
 
-   function Type_Of
+   overriding function Type_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
 
-   function Get_Type_Info
+   overriding function Get_Type_Info
      (Debugger  : access Gdb_Debugger;
       Entity    : String;
       Default   : String) return String;
 
-   function Value_Of
+   overriding function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Default_Format) return String;
 
-   function Print_Value_Cmd
+   overriding function Print_Value_Cmd
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
 
-   function Info_Locals (Debugger : access Gdb_Debugger) return String;
+   overriding function Info_Locals
+     (Debugger : access Gdb_Debugger) return String;
 
-   function Info_Args (Debugger : access Gdb_Debugger) return String;
+   overriding function Info_Args
+     (Debugger : access Gdb_Debugger) return String;
 
-   function Info_Registers (Debugger : access Gdb_Debugger) return String;
+   overriding function Info_Registers
+     (Debugger : access Gdb_Debugger) return String;
 
-   function Get_Uniq_Id
+   overriding function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
 
-   procedure Set_Executable
+   overriding procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Get_Executable
+   overriding function Get_Executable
      (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File;
 
-   procedure Load_Core_File
+   overriding procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Add_Symbols
+   overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Run
+   overriding procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Start
+   overriding procedure Start
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Attach_Process
+   overriding procedure Attach_Process
      (Debugger : access Gdb_Debugger;
       Process  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Detach_Process
+   overriding procedure Detach_Process
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Kill_Process
+   overriding procedure Kill_Process
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Step_Into
+   overriding procedure Step_Into
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Step_Over
+   overriding procedure Step_Over
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Step_Into_Instruction
+   overriding procedure Step_Into_Instruction
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Step_Over_Instruction
+   overriding procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Continue
+   overriding procedure Continue
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Interrupt (Debugger : access Gdb_Debugger);
+   overriding procedure Interrupt (Debugger : access Gdb_Debugger);
 
-   function Is_Execution_Command
+   overriding function Is_Execution_Command
      (Debugger : access Gdb_Debugger;
       Command : String) return Boolean;
 
-   function Is_Context_Command
+   overriding function Is_Context_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean;
 
-   function Is_Load_Command
+   overriding function Is_Load_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean;
 
-   function Is_Break_Command
+   overriding function Is_Break_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean;
 
-   procedure Stack_Down
+   overriding procedure Stack_Down
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Stack_Up
+   overriding procedure Stack_Up
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Stack_Frame
+   overriding procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Subprogram
+   overriding procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Source
+   overriding procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Exception
+   overriding procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Address
+   overriding procedure Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : GVD.Types.Address_Type;
       Temporary  : Boolean := False;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Regexp
+   overriding procedure Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Enable_Breakpoint
+   overriding procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Enable   : Boolean := True;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Remove_Breakpoint
+   overriding procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   function Get_Last_Breakpoint_Id
+   overriding function Get_Last_Breakpoint_Id
      (Debugger  : access Gdb_Debugger)
       return GVD.Types.Breakpoint_Identifier;
 
-   procedure Set_Breakpoint_Condition
+   overriding procedure Set_Breakpoint_Condition
      (Debugger  : access Gdb_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Set_Breakpoint_Command
+   overriding procedure Set_Breakpoint_Command
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Set_Breakpoint_Ignore_Count
+   overriding procedure Set_Breakpoint_Ignore_Count
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Set_Scope_Action
+   overriding procedure Set_Scope_Action
      (Debugger : access Gdb_Debugger;
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Num      : GVD.Types.Breakpoint_Identifier := 0;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Watch
+   overriding procedure Watch
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
       Condition : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Finish
+   overriding procedure Finish
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Backtrace
+   overriding procedure Backtrace
      (Debugger : access Gdb_Debugger;
       Value    : out Backtrace_Array;
       Len      : out Natural);
 
-   procedure Task_Switch
+   overriding procedure Task_Switch
      (Debugger : access Gdb_Debugger;
       Task_Num : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Thread_Switch
+   overriding procedure Thread_Switch
      (Debugger : access Gdb_Debugger;
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure PD_Switch
+   overriding procedure PD_Switch
      (Debugger : access Gdb_Debugger;
       PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Info_Tasks
+   overriding procedure Info_Tasks
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural);
 
-   procedure Info_Threads
+   overriding procedure Info_Threads
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural);
 
-   procedure Info_PD
+   overriding procedure Info_PD
      (Debugger : access Gdb_Debugger;
       Info     : out PD_Information_Array;
       Len      : out Natural);
 
-   procedure Info_WTX
+   overriding procedure Info_WTX
      (Debugger : access Gdb_Debugger;
       Version  : out Natural);
 
-   procedure Lines_With_Code
+   overriding procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
       Lines    : out Line_Array);
 
-   function List_Breakpoints
+   overriding function List_Breakpoints
      (Debugger : access Gdb_Debugger) return GVD.Types.Breakpoint_Array;
 
-   function List_Exceptions
+   overriding function List_Exceptions
      (Debugger : access Gdb_Debugger) return GVD.Types.Exception_Array;
 
-   procedure Get_Machine_Code
+   overriding procedure Get_Machine_Code
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out GVD.Types.Address_Type;
@@ -357,55 +359,56 @@ package Debugger.Gdb is
       Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
       End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address);
 
-   procedure Get_Line_Address
+   overriding procedure Get_Line_Address
      (Debugger        : access Gdb_Debugger;
       Line            : Natural;
       Range_Start     : out GVD.Types.Address_Type;
       Range_End       : out GVD.Types.Address_Type);
 
-   function Get_Memory
+   overriding function Get_Memory
      (Debugger : access Gdb_Debugger;
-      Size     : in Integer;
-      Address  : in String) return String;
+      Size     : Integer;
+      Address  : String) return String;
 
-   procedure Put_Memory_Byte
+   overriding procedure Put_Memory_Byte
      (Debugger : access Gdb_Debugger;
-      Address  : in String;
-      Byte     : in String);
+      Address  : String;
+      Byte     : String);
 
-   function Get_Variable_Address
+   overriding function Get_Variable_Address
      (Debugger  : access Gdb_Debugger;
-      Variable  : in String) return String;
+      Variable  : String) return String;
 
-   function Get_Endian_Type
+   overriding function Get_Endian_Type
      (Debugger : access Gdb_Debugger) return Endian_Type;
 
-   function Complete
+   overriding function Complete
      (Debugger  : access Gdb_Debugger;
       Beginning : String) return GNAT.Strings.String_List;
 
-   procedure Open_Processes (Debugger : access Gdb_Debugger);
+   overriding procedure Open_Processes (Debugger : access Gdb_Debugger);
 
-   procedure Next_Process
+   overriding procedure Next_Process
      (Debugger : access Gdb_Debugger;
       Info     : out GVD.Proc_Utils.Process_Info;
       Success  : out Boolean);
 
-   procedure Close_Processes (Debugger : access Gdb_Debugger);
+   overriding procedure Close_Processes (Debugger : access Gdb_Debugger);
 
-   function Support_TTY (Debugger : access Gdb_Debugger) return Boolean;
+   overriding function Support_TTY
+     (Debugger : access Gdb_Debugger) return Boolean;
 
-   procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String);
+   overriding procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String);
 
 private
 
-   function Send
+   overriding function Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
 
-   procedure Send
+   overriding procedure Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;

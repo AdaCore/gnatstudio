@@ -235,7 +235,7 @@ package body Debugger.Gdb is
 
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
-      Language : in String);
+      Language : String);
    --  Switch gdb to another language. The possible values for Language are:
    --  "ada", "c", "c++", "asm", "chill", "fortran", "java", "modula-2",
    --  "scheme".
@@ -525,7 +525,7 @@ package body Debugger.Gdb is
    -- Send --
    ----------
 
-   function Send
+   overriding function Send
      (Debugger : access Gdb_Debugger;
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
@@ -544,7 +544,7 @@ package body Debugger.Gdb is
       return S (S'First .. Pos);
    end Send;
 
-   procedure Send
+   overriding procedure Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
@@ -586,7 +586,7 @@ package body Debugger.Gdb is
    -- Type_Of --
    -------------
 
-   function Type_Of
+   overriding function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
       --  If Entity contains a LF, this is an invalid entity, so give up
@@ -616,7 +616,9 @@ package body Debugger.Gdb is
    -- Info_Locals --
    -----------------
 
-   function Info_Locals (Debugger : access Gdb_Debugger) return String is
+   overriding function Info_Locals
+     (Debugger : access Gdb_Debugger) return String
+   is
       pragma Unreferenced (Debugger);
    begin
       return "info locals";
@@ -626,7 +628,9 @@ package body Debugger.Gdb is
    -- Info_Args --
    ---------------
 
-   function Info_Args (Debugger : access Gdb_Debugger) return String is
+   overriding function Info_Args
+     (Debugger : access Gdb_Debugger) return String
+   is
       pragma Unreferenced (Debugger);
    begin
       return "info args";
@@ -636,7 +640,9 @@ package body Debugger.Gdb is
    -- Info_Registers --
    --------------------
 
-   function Info_Registers (Debugger : access Gdb_Debugger) return String is
+   overriding function Info_Registers
+     (Debugger : access Gdb_Debugger) return String
+   is
       pragma Unreferenced (Debugger);
    begin
       return "info registers";
@@ -655,7 +661,7 @@ package body Debugger.Gdb is
       Octal          => "/o");
    --  Array used by Value_Of to print values in various formats.
 
-   function Value_Of
+   overriding function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Default_Format) return String
@@ -685,7 +691,7 @@ package body Debugger.Gdb is
    -- Print_Value_Cmd --
    ---------------------
 
-   function Print_Value_Cmd
+   overriding function Print_Value_Cmd
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String
    is
@@ -698,7 +704,7 @@ package body Debugger.Gdb is
    -- Get_Uniq_Id --
    -----------------
 
-   function Get_Uniq_Id
+   overriding function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String
    is
@@ -724,7 +730,7 @@ package body Debugger.Gdb is
    -- Spawn --
    -----------
 
-   procedure Spawn
+   overriding procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -852,7 +858,7 @@ package body Debugger.Gdb is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Debugger : access Gdb_Debugger) is
+   overriding procedure Initialize (Debugger : access Gdb_Debugger) is
       Num  : Expect_Match;
       Lang : Language_Access;
 
@@ -963,7 +969,7 @@ package body Debugger.Gdb is
    -- Close --
    -----------
 
-   procedure Close (Debugger : access Gdb_Debugger) is
+   overriding procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
       --  If the debugger process is dead, do not attempt to communicate
@@ -1019,7 +1025,7 @@ package body Debugger.Gdb is
    -- Connect_To_Target --
    -----------------------
 
-   procedure Connect_To_Target
+   overriding procedure Connect_To_Target
      (Debugger : access Gdb_Debugger;
       Target   : String;
       Protocol : String;
@@ -1044,7 +1050,7 @@ package body Debugger.Gdb is
    -- Get_Executable --
    --------------------
 
-   function Get_Executable
+   overriding function Get_Executable
      (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File is
    begin
       return Debugger.Executable;
@@ -1086,7 +1092,7 @@ package body Debugger.Gdb is
    -- Set_Executable --
    --------------------
 
-   procedure Set_Executable
+   overriding procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File;
       Mode       : Command_Type := Hidden)
@@ -1264,7 +1270,7 @@ package body Debugger.Gdb is
    -- Load_Core_File --
    --------------------
 
-   procedure Load_Core_File
+   overriding procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;
       Mode     : Command_Type := Hidden)
@@ -1289,7 +1295,7 @@ package body Debugger.Gdb is
    -- Add_Symbols --
    -----------------
 
-   procedure Add_Symbols
+   overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -1307,7 +1313,7 @@ package body Debugger.Gdb is
    -- Attach_Process --
    --------------------
 
-   procedure Attach_Process
+   overriding procedure Attach_Process
      (Debugger : access Gdb_Debugger;
       Process  : String;
       Mode     : Command_Type := Hidden)
@@ -1368,7 +1374,7 @@ package body Debugger.Gdb is
    -- Detach_Process --
    --------------------
 
-   procedure Detach_Process
+   overriding procedure Detach_Process
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1380,7 +1386,7 @@ package body Debugger.Gdb is
    -- Kill_Process --
    ------------------
 
-   procedure Kill_Process
+   overriding procedure Kill_Process
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1392,14 +1398,14 @@ package body Debugger.Gdb is
    -- Wait_Prompt --
    -----------------
 
-   procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
+   overriding procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
       Num : Expect_Match;
       pragma Unreferenced (Num);
    begin
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
    end Wait_Prompt;
 
-   function Wait_Prompt
+   overriding function Wait_Prompt
      (Debugger : access Gdb_Debugger;
       Timeout  : Integer) return Boolean
    is
@@ -1432,7 +1438,7 @@ package body Debugger.Gdb is
    -- Run --
    ---------
 
-   procedure Run
+   overriding procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
@@ -1457,7 +1463,7 @@ package body Debugger.Gdb is
    -- Start --
    -----------
 
-   procedure Start
+   overriding procedure Start
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
@@ -1513,7 +1519,7 @@ package body Debugger.Gdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into
+   overriding procedure Step_Into
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1524,7 +1530,7 @@ package body Debugger.Gdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over
+   overriding procedure Step_Over
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1535,7 +1541,7 @@ package body Debugger.Gdb is
    -- Step_Into_Instruction --
    ---------------------------
 
-   procedure Step_Into_Instruction
+   overriding procedure Step_Into_Instruction
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1546,7 +1552,7 @@ package body Debugger.Gdb is
    -- Step_Over_Instruction --
    ---------------------------
 
-   procedure Step_Over_Instruction
+   overriding procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1557,7 +1563,7 @@ package body Debugger.Gdb is
    -- Continue --
    --------------
 
-   procedure Continue
+   overriding procedure Continue
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1568,7 +1574,7 @@ package body Debugger.Gdb is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Debugger : access Gdb_Debugger) is
+   overriding procedure Interrupt (Debugger : access Gdb_Debugger) is
       Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
       Descriptor : constant Process_Descriptor_Access :=
                      Get_Descriptor (Proxy);
@@ -1597,7 +1603,7 @@ package body Debugger.Gdb is
    -- Is_Context_Command --
    ------------------------
 
-   function Is_Context_Command
+   overriding function Is_Context_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
@@ -1618,7 +1624,7 @@ package body Debugger.Gdb is
    -- Is_Execution_Command --
    --------------------------
 
-   function Is_Execution_Command
+   overriding function Is_Execution_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
@@ -1664,7 +1670,7 @@ package body Debugger.Gdb is
    -- Is_Load_Command --
    ---------------------
 
-   function Is_Load_Command
+   overriding function Is_Load_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
@@ -1684,7 +1690,7 @@ package body Debugger.Gdb is
    -- Is_Break_Command --
    ----------------------
 
-   function Is_Break_Command
+   overriding function Is_Break_Command
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
@@ -1713,7 +1719,7 @@ package body Debugger.Gdb is
    -- Stack_Down --
    ----------------
 
-   procedure Stack_Down
+   overriding procedure Stack_Down
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1724,7 +1730,7 @@ package body Debugger.Gdb is
    -- Stack_Up --
    --------------
 
-   procedure Stack_Up
+   overriding procedure Stack_Up
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -1735,7 +1741,7 @@ package body Debugger.Gdb is
    -- Stack_Frame --
    -----------------
 
-   procedure Stack_Frame
+   overriding procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
       Mode     : Command_Type := Hidden)
@@ -1793,7 +1799,7 @@ package body Debugger.Gdb is
    -- Backtrace --
    ---------------
 
-   procedure Backtrace
+   overriding procedure Backtrace
      (Debugger : access Gdb_Debugger;
       Value    : out Backtrace_Array;
       Len      : out Natural) is
@@ -1806,7 +1812,7 @@ package body Debugger.Gdb is
    -- Break_Subprogram --
    ----------------------
 
-   procedure Break_Subprogram
+   overriding procedure Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
@@ -1823,7 +1829,7 @@ package body Debugger.Gdb is
    -- Break_Source --
    ------------------
 
-   procedure Break_Source
+   overriding procedure Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
@@ -1846,7 +1852,7 @@ package body Debugger.Gdb is
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception
+   overriding procedure Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
@@ -1864,7 +1870,7 @@ package body Debugger.Gdb is
    -- Break_Address --
    -------------------
 
-   procedure Break_Address
+   overriding procedure Break_Address
      (Debugger  : access Gdb_Debugger;
       Address   : GVD.Types.Address_Type;
       Temporary : Boolean := False;
@@ -1883,7 +1889,7 @@ package body Debugger.Gdb is
    -- Break_Regexp --
    ------------------
 
-   procedure Break_Regexp
+   overriding procedure Break_Regexp
      (Debugger  : access Gdb_Debugger;
       Regexp    : String;
       Temporary : Boolean := False;
@@ -1901,7 +1907,7 @@ package body Debugger.Gdb is
    -- Get_Last_Breakpoint_Id --
    ----------------------------
 
-   function Get_Last_Breakpoint_Id
+   overriding function Get_Last_Breakpoint_Id
      (Debugger : access Gdb_Debugger) return Breakpoint_Identifier
    is
       S            : constant String :=
@@ -1929,7 +1935,7 @@ package body Debugger.Gdb is
    -- Set_Breakpoint_Condition --
    ------------------------------
 
-   procedure Set_Breakpoint_Condition
+   overriding procedure Set_Breakpoint_Condition
      (Debugger  : access Gdb_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
@@ -1943,7 +1949,7 @@ package body Debugger.Gdb is
    -- Set_Breakpoint_Command --
    ----------------------------
 
-   procedure Set_Breakpoint_Command
+   overriding procedure Set_Breakpoint_Command
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
@@ -1962,7 +1968,7 @@ package body Debugger.Gdb is
    -- Set_Breakpoint_Ignore_Count --
    ---------------------------------
 
-   procedure Set_Breakpoint_Ignore_Count
+   overriding procedure Set_Breakpoint_Ignore_Count
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
@@ -1981,7 +1987,7 @@ package body Debugger.Gdb is
    Any_String  : aliased String := "any";
    All_String  : aliased String := "all";
 
-   procedure Set_Scope_Action
+   overriding procedure Set_Scope_Action
      (Debugger : access Gdb_Debugger;
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
@@ -2044,7 +2050,7 @@ package body Debugger.Gdb is
    -- Watch --
    -----------
 
-   procedure Watch
+   overriding procedure Watch
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
@@ -2086,7 +2092,7 @@ package body Debugger.Gdb is
    -- Finish --
    ------------
 
-   procedure Finish
+   overriding procedure Finish
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden) is
    begin
@@ -2097,7 +2103,7 @@ package body Debugger.Gdb is
    -- Task_Switch --
    -----------------
 
-   procedure Task_Switch
+   overriding procedure Task_Switch
      (Debugger : access Gdb_Debugger;
       Task_Num : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2109,7 +2115,7 @@ package body Debugger.Gdb is
    -- Thread_Switch --
    -------------------
 
-   procedure Thread_Switch
+   overriding procedure Thread_Switch
      (Debugger : access Gdb_Debugger;
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2121,7 +2127,7 @@ package body Debugger.Gdb is
    -- PD_Switch --
    ---------------
 
-   procedure PD_Switch
+   overriding procedure PD_Switch
      (Debugger : access Gdb_Debugger;
       PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2133,7 +2139,7 @@ package body Debugger.Gdb is
    -- Info_Tasks --
    ----------------
 
-   procedure Info_Tasks
+   overriding procedure Info_Tasks
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
@@ -2186,7 +2192,7 @@ package body Debugger.Gdb is
    -- Info_Threads --
    ------------------
 
-   procedure Info_Threads
+   overriding procedure Info_Threads
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
@@ -2225,7 +2231,7 @@ package body Debugger.Gdb is
    -- Info_PD --
    --------------
 
-   procedure Info_PD
+   overriding procedure Info_PD
      (Debugger : access Gdb_Debugger;
       Info     : out PD_Information_Array;
       Len      : out Natural)
@@ -2300,7 +2306,7 @@ package body Debugger.Gdb is
    -- Info_WTX --
    --------------
 
-   procedure Info_WTX
+   overriding procedure Info_WTX
      (Debugger : access Gdb_Debugger;
       Version  : out Natural) is
    begin
@@ -2329,7 +2335,7 @@ package body Debugger.Gdb is
    Cached_File  : GNATCOLL.VFS.Virtual_File;
    Cached_Lines : Line_Array_Access;
 
-   procedure Lines_With_Code
+   overriding procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Result   : out Boolean;
@@ -2452,7 +2458,7 @@ package body Debugger.Gdb is
    -- Highlighting_Pattern --
    --------------------------
 
-   function Highlighting_Pattern
+   overriding function Highlighting_Pattern
      (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher
    is
       pragma Unreferenced (Debugger);
@@ -2464,7 +2470,7 @@ package body Debugger.Gdb is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt (Debugger : access Gdb_Debugger) is
+   overriding procedure Display_Prompt (Debugger : access Gdb_Debugger) is
    begin
       Output_Text
         (Convert (Debugger.Window, Debugger),
@@ -2477,7 +2483,7 @@ package body Debugger.Gdb is
    -- Change_Directory --
    ----------------------
 
-   procedure Change_Directory
+   overriding procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
       Dir         : String;
       Mode        : Command_Type := Hidden)
@@ -2491,7 +2497,7 @@ package body Debugger.Gdb is
    -- Found_File_Name --
    ---------------------
 
-   procedure Found_File_Name
+   overriding procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
       Name_First  : out Natural;
@@ -2561,7 +2567,7 @@ package body Debugger.Gdb is
    -- Found_Frame_Info --
    ----------------------
 
-   procedure Found_Frame_Info
+   overriding procedure Found_Frame_Info
      (Debugger    : access Gdb_Debugger;
       Str         : String;
       First, Last : out Natural;
@@ -2594,7 +2600,7 @@ package body Debugger.Gdb is
    -- Source_Files_List --
    -----------------------
 
-   function Source_Files_List
+   overriding function Source_Files_List
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List
    is
       S         : constant String :=
@@ -3113,7 +3119,7 @@ package body Debugger.Gdb is
    -- List_Breakpoints --
    ----------------------
 
-   function List_Breakpoints
+   overriding function List_Breakpoints
      (Debugger  : access Gdb_Debugger) return Breakpoint_Array
    is
       S               : constant String :=
@@ -3524,7 +3530,7 @@ package body Debugger.Gdb is
    -- Enable_Breakpoint --
    -----------------------
 
-   procedure Enable_Breakpoint
+   overriding procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Breakpoint_Identifier;
       Enable   : Boolean := True;
@@ -3543,7 +3549,7 @@ package body Debugger.Gdb is
    -- Remove_Breakpoint --
    -----------------------
 
-   procedure Remove_Breakpoint
+   overriding procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Breakpoint_Identifier;
       Mode     : Command_Type := Hidden) is
@@ -3556,7 +3562,7 @@ package body Debugger.Gdb is
    -- List_Exceptions --
    ---------------------
 
-   function List_Exceptions
+   overriding function List_Exceptions
      (Debugger : access Gdb_Debugger)
      return GVD.Types.Exception_Array
    is
@@ -3611,7 +3617,7 @@ package body Debugger.Gdb is
    -- Get_Type_Info --
    -------------------
 
-   function Get_Type_Info
+   overriding function Get_Type_Info
      (Debugger  : access Gdb_Debugger;
       Entity    : String;
       Default   : String) return String
@@ -3633,7 +3639,7 @@ package body Debugger.Gdb is
    -- Find_File --
    ---------------
 
-   function Find_File
+   overriding function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String
    is
       File_First  : Natural := 0;
@@ -3678,7 +3684,7 @@ package body Debugger.Gdb is
    -- Get_Machine_Code --
    ----------------------
 
-   procedure Get_Machine_Code
+   overriding procedure Get_Machine_Code
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out Address_Type;
@@ -3762,7 +3768,7 @@ package body Debugger.Gdb is
    -- Get_Line_Address --
    ----------------------
 
-   procedure Get_Line_Address
+   overriding procedure Get_Line_Address
      (Debugger    : access Gdb_Debugger;
       Line        : Natural;
       Range_Start : out Address_Type;
@@ -3800,10 +3806,10 @@ package body Debugger.Gdb is
    -- Get_Memory --
    ----------------
 
-   function Get_Memory
+   overriding function Get_Memory
      (Debugger : access Gdb_Debugger;
-      Size     : in Integer;
-      Address  : in String) return String
+      Size     : Integer;
+      Address  : String) return String
    is
       Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
       Error_String : constant String := "Cannot access memory at";
@@ -3925,10 +3931,10 @@ package body Debugger.Gdb is
    -- Put_Memory_Byte --
    ---------------------
 
-   procedure Put_Memory_Byte
+   overriding procedure Put_Memory_Byte
      (Debugger : access Gdb_Debugger;
-      Address  : in String;
-      Byte     : in String) is
+      Address  : String;
+      Byte     : String) is
    begin
       Switch_Language (Debugger, "c");
       Send (Debugger, "set {char}" & Address & " = 0x" & Byte,
@@ -3940,9 +3946,9 @@ package body Debugger.Gdb is
    -- Get_Variable_Address --
    --------------------------
 
-   function Get_Variable_Address
+   overriding function Get_Variable_Address
      (Debugger : access Gdb_Debugger;
-      Variable : in String) return String
+      Variable : String) return String
    is
       S         : constant String := Send
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
@@ -3975,7 +3981,7 @@ package body Debugger.Gdb is
    -- Get_Endian_Type --
    ---------------------
 
-   function Get_Endian_Type
+   overriding function Get_Endian_Type
      (Debugger : access Gdb_Debugger) return Endian_Type is
    begin
       if Debugger.Endian /= Unknown_Endian then
@@ -4004,7 +4010,7 @@ package body Debugger.Gdb is
    -- Complete --
    --------------
 
-   function Complete
+   overriding function Complete
      (Debugger  : access Gdb_Debugger;
       Beginning : String) return GNAT.Strings.String_List
    is
@@ -4055,7 +4061,7 @@ package body Debugger.Gdb is
    -- Open_Processes --
    --------------------
 
-   procedure Open_Processes (Debugger : access Gdb_Debugger) is
+   overriding procedure Open_Processes (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.Remote_Protocol /= null
         and then Debugger.Remote_Protocol.all = "wtx"
@@ -4084,7 +4090,7 @@ package body Debugger.Gdb is
    -- Next_Process --
    ------------------
 
-   procedure Next_Process
+   overriding procedure Next_Process
      (Debugger : access Gdb_Debugger;
       Info     : out GVD.Proc_Utils.Process_Info;
       Success  : out Boolean)
@@ -4128,7 +4134,7 @@ package body Debugger.Gdb is
    -- Close_Processes --
    ---------------------
 
-   procedure Close_Processes (Debugger : access Gdb_Debugger) is
+   overriding procedure Close_Processes (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.WTX_List /= null then
          Free (Debugger.WTX_List);
@@ -4141,7 +4147,7 @@ package body Debugger.Gdb is
    -- Detect_Language --
    ---------------------
 
-   procedure Detect_Language (Debugger : access Gdb_Debugger) is
+   overriding procedure Detect_Language (Debugger : access Gdb_Debugger) is
       S : constant String := Send (Debugger, "show lang", Mode => Internal);
       pragma Unreferenced (S);
    begin
@@ -4154,7 +4160,7 @@ package body Debugger.Gdb is
 
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
-      Language : in String)
+      Language : String)
    is
       S           : constant String :=
                       Send (Debugger, "show lang", Mode => Internal);
@@ -4191,7 +4197,9 @@ package body Debugger.Gdb is
    -- Support_TTY --
    -----------------
 
-   function Support_TTY (Debugger : access Gdb_Debugger) return Boolean is
+   overriding function Support_TTY
+     (Debugger : access Gdb_Debugger) return Boolean
+   is
       pragma Unreferenced (Debugger);
    begin
       return True;
@@ -4201,7 +4209,8 @@ package body Debugger.Gdb is
    -- Set_TTY --
    -------------
 
-   procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String) is
+   overriding procedure Set_TTY
+     (Debugger : access Gdb_Debugger; TTY : String) is
    begin
       Send (Debugger, "tty " & TTY, Mode => Hidden);
    end Set_TTY;

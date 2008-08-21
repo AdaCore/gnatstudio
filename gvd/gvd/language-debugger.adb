@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +23,7 @@ package body Language.Debugger is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Language_Debugger) return Strings.String_Access is
       pragma Unreferenced (Lang);
    begin

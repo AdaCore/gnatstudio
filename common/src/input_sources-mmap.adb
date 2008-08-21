@@ -75,7 +75,7 @@ package body Input_Sources.Mmap is
    -- Close --
    -----------
 
-   procedure Close (Input : in out Mmap_Input) is
+   overriding procedure Close (Input : in out Mmap_Input) is
    begin
       Close (Input.File);
       Input.Index := Natural'Last;
@@ -85,7 +85,7 @@ package body Input_Sources.Mmap is
    -- Next_Char --
    ---------------
 
-   procedure Next_Char
+   overriding procedure Next_Char
      (From : in out Mmap_Input;
       C    : out Unicode.Unicode_Char) is
    begin
@@ -98,7 +98,7 @@ package body Input_Sources.Mmap is
    -- Eof --
    ---------
 
-   function Eof (From : Mmap_Input) return Boolean is
+   overriding function Eof (From : Mmap_Input) return Boolean is
    begin
       return File_Size (From.Index) > Length (From.File);
    end Eof;
@@ -107,7 +107,8 @@ package body Input_Sources.Mmap is
    -- Set_System_Id --
    -------------------
 
-   procedure Set_System_Id (Input : in out Mmap_Input; Id : Byte_Sequence) is
+   overriding procedure Set_System_Id
+     (Input : in out Mmap_Input; Id : Byte_Sequence) is
    begin
       if Is_Absolute_Path (Id) then
          Set_System_Id (Input_Source (Input), Id);

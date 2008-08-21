@@ -97,7 +97,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    -- Free --
    ----------
 
-   procedure Free (Annotation : in out Ada_Primitive_Annotation) is
+   overriding procedure Free (Annotation : in out Ada_Primitive_Annotation) is
    begin
       if Annotation.Ada_Primitive /= null then
          Unref (Annotation.Ada_Primitive);
@@ -108,7 +108,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    -- Free --
    ----------
 
-   procedure Free (Annotation : in out Ada_Type_Annotation) is
+   overriding procedure Free (Annotation : in out Ada_Type_Annotation) is
    begin
       if Annotation.Ada_Type /= null then
          for J in Annotation.Ada_Type.Parents'Range loop
@@ -165,7 +165,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    -- File_Updated --
    ------------------
 
-   procedure File_Updated
+   overriding procedure File_Updated
      (Assistant : access Ada_Type_Assistant;
       File      : Structured_File_Access;
       Kind      : Update_Kind)

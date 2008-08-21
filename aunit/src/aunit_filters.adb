@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2007, AdaCore           --
+--                        Copyright (C) 2001-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -146,7 +146,7 @@ package body Aunit_Filters is
    -- Use_File_Filter --
    ---------------------
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Suites;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -184,7 +184,7 @@ package body Aunit_Filters is
    -- Use_File_Filter --
    ---------------------
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Tests;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -222,7 +222,7 @@ package body Aunit_Filters is
    -- Use_File_Filter --
    ---------------------
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Ada;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;

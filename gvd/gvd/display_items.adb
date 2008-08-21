@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007, AdaCore              --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -952,7 +952,7 @@ package body Display_Items is
    -- On_Button_Click --
    ---------------------
 
-   procedure On_Button_Click
+   overriding procedure On_Button_Click
      (Item   : access Display_Item_Record;
       Event  : Gdk.Event.Gdk_Event_Button)
    is

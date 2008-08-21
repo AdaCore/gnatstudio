@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,7 +70,7 @@ package Aunit_Filters is
    type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
    --  This filter shows only files containing tests or test suites.
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Ada;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -81,7 +80,7 @@ package Aunit_Filters is
    --  Use_File_Filter procedure for Filter_Show_Ada.
    --  Text is set to the name of the main unit in the file.
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Suites;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -91,7 +90,7 @@ package Aunit_Filters is
    --  Use_File_Filter procedure for Filter_Show_Suites.
    --  Text is set to the name of the suite found in the file.
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_Tests;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;

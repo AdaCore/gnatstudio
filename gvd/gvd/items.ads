@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -85,10 +84,10 @@ package Items is
    type Display_Mode is (Value, Type_Only, Type_Value);
    --  What information should be displayed in the item.
 
-   function Show_Value (Mode : in Display_Mode) return Boolean;
+   function Show_Value (Mode : Display_Mode) return Boolean;
    --  Whether we should display the value of the item
 
-   function Show_Type (Mode : in Display_Mode) return Boolean;
+   function Show_Type (Mode : Display_Mode) return Boolean;
    --  Whether we should display the type of the item
 
    type Drawing_Context is record

@@ -42,7 +42,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
       null;
    end record;
 
-   procedure File_Updated
+   overriding procedure File_Updated
      (Assistant : access Dependency_Assistant;
       File      : Structured_File_Access;
       Kind      : Update_Kind);
@@ -716,7 +716,7 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    -- File_Updated --
    ------------------
 
-   procedure File_Updated
+   overriding procedure File_Updated
      (Assistant : access Dependency_Assistant;
       File      : Structured_File_Access;
       Kind      : Update_Kind)

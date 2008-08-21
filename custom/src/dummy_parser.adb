@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2004                         --
---                            ACT-Europe                             --
+--                    Copyright (C) 2004-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,19 +25,20 @@ package body Dummy_Parser is
 
    type Dummy_LI_Handler_Record is new LI_Handler_Record with null record;
 
-   function Get_Name (LI : access Dummy_LI_Handler_Record) return String;
-   function Case_Insensitive_Identifiers
+   overriding function Get_Name
+     (LI : access Dummy_LI_Handler_Record) return String;
+   overriding function Case_Insensitive_Identifiers
      (Handler : access Dummy_LI_Handler_Record) return Boolean;
-   function Get_Source_Info
+   overriding function Get_Source_Info
      (Handler               : access Dummy_LI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null)
       return Source_File;
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer;
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
@@ -48,8 +48,8 @@ package body Dummy_Parser is
    --  See doc for inherited subprograms
 
    type Dummy_LI_Handler_Iterator is new LI_Handler_Iterator with null record;
-   procedure Destroy (Iterator : in out Dummy_LI_Handler_Iterator);
-   procedure Continue
+   overriding procedure Destroy (Iterator : in out Dummy_LI_Handler_Iterator);
+   overriding procedure Continue
      (Iterator : in out Dummy_LI_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean);
@@ -59,7 +59,9 @@ package body Dummy_Parser is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iterator : in out Dummy_LI_Handler_Iterator) is
+   overriding procedure Destroy
+     (Iterator : in out Dummy_LI_Handler_Iterator)
+   is
       pragma Unreferenced (Iterator);
    begin
       null;
@@ -69,7 +71,7 @@ package body Dummy_Parser is
    -- Continue --
    --------------
 
-   procedure Continue
+   overriding procedure Continue
      (Iterator : in out Dummy_LI_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean)
@@ -83,7 +85,7 @@ package body Dummy_Parser is
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler : access Dummy_LI_Handler_Record) return Boolean
    is
       pragma Unreferenced (Handler);
@@ -95,7 +97,7 @@ package body Dummy_Parser is
    -- Get_Source_Info --
    ---------------------
 
-   function Get_Source_Info
+   overriding function Get_Source_Info
      (Handler               : access Dummy_LI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null)
@@ -110,7 +112,7 @@ package body Dummy_Parser is
    -- Parse_All_LI_Information --
    ------------------------------
 
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access Dummy_LI_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer
@@ -124,7 +126,7 @@ package body Dummy_Parser is
    -- Generate_LI_For_Project --
    -----------------------------
 
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler   : access Dummy_LI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project   : Projects.Project_Type;
@@ -151,7 +153,9 @@ package body Dummy_Parser is
    -- Get_Name --
    --------------
 
-   function Get_Name (LI : access Dummy_LI_Handler_Record) return String is
+   overriding function Get_Name
+     (LI : access Dummy_LI_Handler_Record) return String
+   is
       pragma Unreferenced (LI);
    begin
       return "";
