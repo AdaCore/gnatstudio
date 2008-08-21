@@ -1305,7 +1305,7 @@ package body CPP_Parser is
 
       if Success then
          Index := V.Original.First;
-         Skip_To_Char (String (V.Data), Index, ':');
+         Skip_To_Char (V.Data (V.Data'First .. V.Data_Size), Index, ':');
 
          --  Name is of the form A::type
          if Index < V.Original.Last then

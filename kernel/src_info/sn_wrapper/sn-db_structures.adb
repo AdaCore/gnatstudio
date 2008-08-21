@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -802,6 +801,7 @@ package body SN.DB_Structures is
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
+      Tab.Data_Size := Key_Data_Pair.Data_Size;
 
       Parse_Key   (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_No_Brackets (Data, 3, Tab.Original);

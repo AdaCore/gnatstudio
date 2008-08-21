@@ -423,6 +423,7 @@ package SN.DB_Structures is
 --      Comments                 : Segment;
 --      Class_Name               : Segment; -- name of enclosing class for Name
       Data                     : Buffer_String;
+      Data_Size                : Integer;  --  Last significant char in Data
 
       DBI                      : Integer;
    end record;
