@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                            AdaCore                                --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,6 +90,7 @@ package body Src_Editor_View.Commands is
 
          when Page =>
             null;
+--  ??? why is this code commented out
 --              if Step > 0 then
 --                 for S in 1 .. Step loop
 --                    Forward_Display_Line (View, Iter, Ignored);
@@ -107,7 +107,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Move_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type
@@ -155,7 +155,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Scroll_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -179,7 +179,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Delete_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type
@@ -202,7 +202,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Indentation_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type
@@ -240,7 +240,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Control_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -260,7 +260,7 @@ package body Src_Editor_View.Commands is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Tab_As_Space_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type

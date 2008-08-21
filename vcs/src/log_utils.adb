@@ -693,7 +693,7 @@ package body Log_Utils is
    is
       use String_List;
 
-      function Add_LF_To_Log (Log : in String) return String;
+      function Add_LF_To_Log (Log : String) return String;
       --  Returns Log with LF added if there is no ending line separator. We
       --  call this routine to ensure that the catenated logs won't be put on
       --  the same line.
@@ -702,7 +702,7 @@ package body Log_Utils is
       -- Add_LF_To_Log --
       -------------------
 
-      function Add_LF_To_Log (Log : in String) return String is
+      function Add_LF_To_Log (Log : String) return String is
       begin
          if Log'Length > 0
            and then Log (Log'Last) /= ASCII.LF

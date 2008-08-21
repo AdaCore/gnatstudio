@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +28,7 @@ package Commands.External is
    type External_Command is new Root_Command with private;
    type External_Command_Access is access all External_Command;
 
-   procedure Free (D : in out External_Command);
+   overriding procedure Free (D : in out External_Command);
    --  Free memory associated to D.
 
    type String_List_Handler is access
@@ -62,12 +61,12 @@ package Commands.External is
    --  Check_Password tells if a password prompt is expected from the external
    --  command.
 
-   function Execute
+   overriding function Execute
      (Command : access External_Command) return Command_Return_Type;
    --  Execute Command, and launch the associated Handler.
    --  See comments for Create.
 
-   function Name (Command : access External_Command) return String;
+   overriding function Name (Command : access External_Command) return String;
    --  Return a description of the command.
 
 private

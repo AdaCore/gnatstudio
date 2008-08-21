@@ -75,8 +75,8 @@ package body VCS.Generic_VCS is
       VCS_List : VCS_Info_List.List;
    end record;
 
-   procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
-   procedure Customize
+   overriding procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
+   overriding procedure Customize
      (Module : access VCS_Generic_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -201,7 +201,7 @@ package body VCS.Generic_VCS is
    -- Free --
    ----------
 
-   procedure Free (Command : in out Parser_Command_Type) is
+   overriding procedure Free (Command : in out Parser_Command_Type) is
    begin
       GNAT.Strings.Free (Command.Text);
       GNAT.Strings.Free (Command.Dir);
@@ -304,7 +304,7 @@ package body VCS.Generic_VCS is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out VCS_Generic_Module_ID_Record) is
+   overriding procedure Destroy (Id : in out VCS_Generic_Module_ID_Record) is
       pragma Unreferenced (Id);
    begin
       VCS_Info_List.Free (VCS_Generic_Module_ID.VCS_List);
@@ -323,7 +323,7 @@ package body VCS.Generic_VCS is
    -- Name --
    ----------
 
-   function Name (Ref : access Generic_VCS_Record) return String is
+   overriding function Name (Ref : access Generic_VCS_Record) return String is
    begin
       if Ref.Id /= null then
          return Ref.Id.all;
@@ -621,7 +621,7 @@ package body VCS.Generic_VCS is
    -- Get_Status --
    ----------------
 
-   procedure Get_Status
+   overriding procedure Get_Status
      (Rep        : access Generic_VCS_Record;
       Filenames  : String_List.List;
       Clear_Logs : Boolean := False;
@@ -662,7 +662,7 @@ package body VCS.Generic_VCS is
    -- Get_Status_Dirs --
    ---------------------
 
-   procedure Get_Status_Dirs
+   overriding procedure Get_Status_Dirs
      (Rep        : access Generic_VCS_Record;
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
@@ -688,7 +688,7 @@ package body VCS.Generic_VCS is
    -- Get_Status_Dirs_Recursive --
    -------------------------------
 
-   procedure Get_Status_Dirs_Recursive
+   overriding procedure Get_Status_Dirs_Recursive
      (Rep        : access Generic_VCS_Record;
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
@@ -790,7 +790,7 @@ package body VCS.Generic_VCS is
    -- Local_Get_Status --
    ----------------------
 
-   function Local_Get_Status
+   overriding function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List)
       return File_Status_List.List
@@ -818,7 +818,7 @@ package body VCS.Generic_VCS is
    -- Create_Tag --
    ----------------
 
-   procedure Create_Tag
+   overriding procedure Create_Tag
      (Rep       : access Generic_VCS_Record;
       Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
@@ -847,7 +847,7 @@ package body VCS.Generic_VCS is
    -- Open --
    ----------
 
-   procedure Open
+   overriding procedure Open
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
       User_Name : String := "")
@@ -861,7 +861,7 @@ package body VCS.Generic_VCS is
    -- Commit --
    ------------
 
-   procedure Commit
+   overriding procedure Commit
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
       Log       : String)
@@ -893,7 +893,7 @@ package body VCS.Generic_VCS is
    -- Update --
    ------------
 
-   procedure Update
+   overriding procedure Update
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) is
    begin
@@ -904,7 +904,7 @@ package body VCS.Generic_VCS is
    -- Switch --
    ------------
 
-   procedure Switch
+   overriding procedure Switch
      (Rep : access Generic_VCS_Record;
       Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
@@ -928,7 +928,7 @@ package body VCS.Generic_VCS is
    -- Resolved --
    --------------
 
-   procedure Resolved
+   overriding procedure Resolved
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) is
    begin
@@ -939,7 +939,7 @@ package body VCS.Generic_VCS is
    -- Merge --
    -----------
 
-   procedure Merge
+   overriding procedure Merge
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
       Tag       : String)
@@ -969,7 +969,7 @@ package body VCS.Generic_VCS is
    -- File_Revision --
    -------------------
 
-   procedure File_Revision
+   overriding procedure File_Revision
      (Rep      : access Generic_VCS_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
@@ -986,7 +986,7 @@ package body VCS.Generic_VCS is
    -- Add --
    ---------
 
-   procedure Add
+   overriding procedure Add
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -1011,7 +1011,7 @@ package body VCS.Generic_VCS is
    -- Remove --
    ------------
 
-   procedure Remove
+   overriding procedure Remove
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -1036,7 +1036,7 @@ package body VCS.Generic_VCS is
    -- Revert --
    ------------
 
-   procedure Revert
+   overriding procedure Revert
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List) is
    begin
@@ -1047,7 +1047,7 @@ package body VCS.Generic_VCS is
    -- Diff --
    ----------
 
-   procedure Diff
+   overriding procedure Diff
      (Rep       : access Generic_VCS_Record;
       File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
@@ -1084,7 +1084,7 @@ package body VCS.Generic_VCS is
    -- Diff_Patch --
    ----------------
 
-   procedure Diff_Patch
+   overriding procedure Diff_Patch
      (Rep    : access Generic_VCS_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Output : GNATCOLL.VFS.Virtual_File)
@@ -1102,7 +1102,7 @@ package body VCS.Generic_VCS is
    -- Diff_Base_Head --
    --------------------
 
-   procedure Diff_Base_Head
+   overriding procedure Diff_Base_Head
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File) is
    begin
@@ -1113,7 +1113,7 @@ package body VCS.Generic_VCS is
    -- Diff_Working --
    ------------------
 
-   procedure Diff_Working
+   overriding procedure Diff_Working
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File) is
    begin
@@ -1124,7 +1124,7 @@ package body VCS.Generic_VCS is
    -- Diff_Tag --
    --------------
 
-   procedure Diff_Tag
+   overriding procedure Diff_Tag
      (Rep      : access Generic_VCS_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
@@ -1144,7 +1144,7 @@ package body VCS.Generic_VCS is
    -- Log --
    ---------
 
-   procedure Log
+   overriding procedure Log
      (Rep     : access Generic_VCS_Record;
       File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
@@ -1173,7 +1173,7 @@ package body VCS.Generic_VCS is
    -- Annotate --
    --------------
 
-   procedure Annotate
+   overriding procedure Annotate
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File) is
    begin
@@ -1184,7 +1184,7 @@ package body VCS.Generic_VCS is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access VCS_Generic_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -1701,7 +1701,9 @@ package body VCS.Generic_VCS is
    -- Name --
    ----------
 
-   function Name (Command : access Parser_Command_Type) return String is
+   overriding function Name
+     (Command : access Parser_Command_Type) return String
+   is
       pragma Unreferenced (Command);
    begin
       return -"Parsing status";
@@ -1745,7 +1747,7 @@ package body VCS.Generic_VCS is
    -- Parse_Status --
    ------------------
 
-   procedure Parse_Status
+   overriding procedure Parse_Status
      (Rep        : access Generic_VCS_Record;
       Text       : String;
       Local      : Boolean;
@@ -1765,7 +1767,7 @@ package body VCS.Generic_VCS is
    -- Parse_Annotations --
    -----------------------
 
-   procedure Parse_Annotations
+   overriding procedure Parse_Annotations
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
       Text : String)
@@ -1951,7 +1953,7 @@ package body VCS.Generic_VCS is
    -- Parse_Log --
    ---------------
 
-   procedure Parse_Log
+   overriding procedure Parse_Log
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
       Text : String)
@@ -2103,7 +2105,7 @@ package body VCS.Generic_VCS is
    -- Parse_Revision --
    --------------------
 
-   procedure Parse_Revision
+   overriding procedure Parse_Revision
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
       Text : String)
@@ -2168,7 +2170,7 @@ package body VCS.Generic_VCS is
    -- Get_Identified_Actions --
    ----------------------------
 
-   function Get_Identified_Actions
+   overriding function Get_Identified_Actions
      (Rep : access Generic_VCS_Record) return Action_Array is
    begin
       return Rep.Labels;
@@ -2178,7 +2180,7 @@ package body VCS.Generic_VCS is
    -- Get_Registered_Status --
    ---------------------------
 
-   function Get_Registered_Status
+   overriding function Get_Registered_Status
      (Rep : access Generic_VCS_Record) return Status_Array
    is
       Result : Status_Array (1 .. Rep.Status'Length + 1);

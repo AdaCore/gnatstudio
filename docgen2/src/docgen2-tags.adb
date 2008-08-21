@@ -47,7 +47,7 @@ package body Docgen2.Tags is
       Value : String (1 .. Value_Length);
    end record;
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access User_Tags_Args)
@@ -89,7 +89,7 @@ package body Docgen2.Tags is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access User_Tags_Args)

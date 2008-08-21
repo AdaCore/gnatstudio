@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,7 +107,8 @@ package Items.Simples is
    function Refresh_Command (Item : Debugger_Output_Type) return String;
    --  Return the command to send to the debugger to refresh the value.
 
-   procedure Set_Value (Item : in out Debugger_Output_Type; Value : String);
+   overriding procedure Set_Value
+     (Item : in out Debugger_Output_Type; Value : String);
    --  Set a new value for Item.
    --  Since there is no pre-processing done on Value, we filter out ^Ms for
    --  Value as well.
@@ -122,48 +122,48 @@ private
       --  Whether the value of the item has changed.
    end record;
 
-   procedure Print (Value : Simple_Type; Indent : Natural := 0);
-   procedure Free
+   overriding procedure Print (Value : Simple_Type; Indent : Natural := 0);
+   overriding procedure Free
      (Item : access Simple_Type;
       Only_Value : Boolean := False);
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Simple_Type;
       Clone : in out Generic_Type_Access);
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Simple_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
-   function Get_Component
+   overriding function Get_Component
      (Item : access Simple_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;
-   function Replace
+   overriding function Replace
      (Parent       : access Simple_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   procedure Reset_Recursive (Item : access Simple_Type);
-   function Structurally_Equivalent
+   overriding procedure Reset_Recursive (Item : access Simple_Type);
+   overriding function Structurally_Equivalent
      (Item1 : access Simple_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
    type Range_Type is new Simple_Type with record
       Min, Max : Long_Integer;
    end record;
-   procedure Print (Value : Range_Type; Indent : Natural := 0);
-   function Structurally_Equivalent
+   overriding procedure Print (Value : Range_Type; Indent : Natural := 0);
+   overriding function Structurally_Equivalent
      (Item1 : access Range_Type; Item2 : access Generic_Type'Class)
      return Boolean;
    --  Free is inherited from Simple_Type.
@@ -171,29 +171,29 @@ private
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
-   procedure Print (Value : Mod_Type; Indent : Natural := 0);
-   function Structurally_Equivalent
+   overriding procedure Print (Value : Mod_Type; Indent : Natural := 0);
+   overriding function Structurally_Equivalent
      (Item1 : access Mod_Type; Item2 : access Generic_Type'Class)
      return Boolean;
    --  Free is inherited from Simple_Type.
 
    type Access_Type is new Simple_Type with null record;
-   procedure Print (Value : Access_Type; Indent : Natural := 0);
+   overriding procedure Print (Value : Access_Type; Indent : Natural := 0);
    --  Free is inherited from Simple_Type.
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Access_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
    type Enum_Type is new Simple_Type with null record;
-   procedure Print (Value : Enum_Type; Indent : Natural := 0);
-   function Structurally_Equivalent
+   overriding procedure Print (Value : Enum_Type; Indent : Natural := 0);
+   overriding function Structurally_Equivalent
      (Item1 : access Enum_Type; Item2 : access Generic_Type'Class)
      return Boolean;
    --  Free is inherited from Simple_Type.
@@ -206,26 +206,27 @@ private
    --  a special character at the beginning of each line to indicate whether
    --  the line should be highlighted or not.
 
-   procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0);
-   procedure Clone_Dispatching
+   overriding procedure Print
+     (Value : Debugger_Output_Type; Indent : Natural := 0);
+   overriding procedure Clone_Dispatching
      (Item  : Debugger_Output_Type;
       Clone : in out Generic_Type_Access);
-   procedure Free (Item : access Debugger_Output_Type;
+   overriding procedure Free (Item : access Debugger_Output_Type;
                    Only_Value : Boolean := False);
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Debugger_Output_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   procedure Paint (Item    : in out Debugger_Output_Type;
+   overriding procedure Paint (Item    : in out Debugger_Output_Type;
                     Context : Drawing_Context;
                     Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
                     Lang    : Language.Language_Access;
                     Mode    : Display_Mode;
                     X, Y    : Glib.Gint := 0);
-   procedure Reset_Recursive (Item : access Debugger_Output_Type);
-   function Structurally_Equivalent
+   overriding procedure Reset_Recursive (Item : access Debugger_Output_Type);
+   overriding function Structurally_Equivalent
      (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 

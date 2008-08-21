@@ -236,7 +236,7 @@ package body VCS_View is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access VCS_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2006                    --
---                                AdaCore                            --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,26 +56,26 @@ package Vdiff2_Module.Callback is
    --  Called when the preferences have changed
 
    type Change_Ref_File_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Change_Ref_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Change the Ref File for the current diff and reload hightlighting
 
    type Hide_Difference_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Hide_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Hide the highlighting and free the difference list
 
    type Recompute_Diff_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Recompute_Diff_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Hide difference ,recalculate the difference
    --  and show the new difference list
 
    type Close_Difference_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Close_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close all file for current diff

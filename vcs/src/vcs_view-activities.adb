@@ -66,7 +66,7 @@ package body VCS_View.Activities is
    -- Columns_Types --
    -------------------
 
-   function Columns_Types
+   overriding function Columns_Types
      (Explorer : access VCS_Activities_View_Record) return GType_Array
    is
       pragma Unreferenced (Explorer);
@@ -112,7 +112,7 @@ package body VCS_View.Activities is
       Explorer : VCS_Activities_View_Access;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook      : File_Hook_Record;
       Kernel    : access Kernel_Handle_Record'Class;
       File_Data : access Hooks_Data'Class);
@@ -168,7 +168,7 @@ package body VCS_View.Activities is
    -- Do_Delete --
    ---------------
 
-   procedure Do_Delete (Explorer : VCS_Activities_View_Record) is
+   overriding procedure Do_Delete (Explorer : VCS_Activities_View_Record) is
       pragma Unreferenced (Explorer);
    begin
       Hide_VCS_Activities_Explorer;
@@ -178,7 +178,8 @@ package body VCS_View.Activities is
    -- Do_Refresh --
    ----------------
 
-   procedure Do_Refresh (Explorer : access VCS_Activities_View_Record) is
+   overriding procedure Do_Refresh
+     (Explorer : access VCS_Activities_View_Record) is
    begin
       Query_Activities_Files
         (VCS_Activities_View_Access (Explorer), Explorer.Kernel, False);
@@ -590,7 +591,7 @@ package body VCS_View.Activities is
    -- Fill_Info_Specific --
    ------------------------
 
-   procedure Do_Fill_Info
+   overriding procedure Do_Fill_Info
      (Explorer  : VCS_Activities_View_Record;
       Iter      : Gtk_Tree_Iter;
       Line_Info : Line_Record;
@@ -779,7 +780,7 @@ package body VCS_View.Activities is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook      : File_Hook_Record;
       Kernel    : access Kernel_Handle_Record'Class;
       File_Data : access Hooks_Data'Class)
@@ -834,7 +835,7 @@ package body VCS_View.Activities is
    -- Initialize --
    ----------------
 
-   procedure Do_Initialize
+   overriding procedure Do_Initialize
      (Explorer : access VCS_Activities_View_Record;
       Kernel   : Kernel_Handle)
    is

@@ -84,29 +84,31 @@ package Commands.VCS is
       Activity : Activity_Id);
    --  Create a new Check_Activity_Command
 
-   function Execute
+   overriding function Execute
      (Command : access Log_Action_Command_Type) return Command_Return_Type;
-   function Execute
+   overriding function Execute
      (Command : access Get_Status_Command_Type) return Command_Return_Type;
-   function Execute
+   overriding function Execute
      (Command : access Update_Files_Command_Type) return Command_Return_Type;
-   function Execute
+   overriding function Execute
      (Command : access Generic_Kernel_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   function Execute
+   overriding function Execute
      (Command : access Check_Activity_Command_Type)
       return Command_Return_Type;
 
-   function Name (X : access Log_Action_Command_Type) return String;
-   function Name (X : access Get_Status_Command_Type) return String;
-   function Name (X : access Update_Files_Command_Type) return String;
-   function Name (X : access Generic_Kernel_Command) return String;
-   function Name (X : access Check_Activity_Command_Type) return String;
+   overriding function Name (X : access Log_Action_Command_Type) return String;
+   overriding function Name (X : access Get_Status_Command_Type) return String;
+   overriding function Name
+     (X : access Update_Files_Command_Type) return String;
+   overriding function Name (X : access Generic_Kernel_Command) return String;
+   overriding function Name
+     (X : access Check_Activity_Command_Type) return String;
 
-   procedure Free (X : in out Log_Action_Command_Type);
-   procedure Free (X : in out Get_Status_Command_Type);
-   procedure Free (X : in out Update_Files_Command_Type);
-   procedure Free (X : in out Generic_Kernel_Command);
+   overriding procedure Free (X : in out Log_Action_Command_Type);
+   overriding procedure Free (X : in out Get_Status_Command_Type);
+   overriding procedure Free (X : in out Update_Files_Command_Type);
+   overriding procedure Free (X : in out Generic_Kernel_Command);
    --  Free memory associated to X
 
 private

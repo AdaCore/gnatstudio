@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                            AdaCore                                --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +89,7 @@ package body Commands.Locations is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Source_Location_Command_Type) return Command_Return_Type
    is
       Other_Command    : Command_Access;

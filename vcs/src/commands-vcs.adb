@@ -25,7 +25,7 @@ with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
 with VCS_View.Activities; use VCS_View.Activities;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 package body Commands.VCS is
 
@@ -37,23 +37,23 @@ package body Commands.VCS is
    -- Free --
    ----------
 
-   procedure Free (X : in out Log_Action_Command_Type) is
+   overriding procedure Free (X : in out Log_Action_Command_Type) is
    begin
       String_List.Free (X.Filenames);
       String_List.Free (X.Logs);
    end Free;
 
-   procedure Free (X : in out Get_Status_Command_Type) is
+   overriding procedure Free (X : in out Get_Status_Command_Type) is
    begin
       String_List.Free (X.Filenames);
    end Free;
 
-   procedure Free (X : in out Update_Files_Command_Type) is
+   overriding procedure Free (X : in out Update_Files_Command_Type) is
    begin
       String_List.Free (X.Filenames);
    end Free;
 
-   procedure Free (X : in out Generic_Kernel_Command) is
+   overriding procedure Free (X : in out Generic_Kernel_Command) is
       pragma Unreferenced (X);
    begin
       null;
@@ -123,7 +123,7 @@ package body Commands.VCS is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Log_Action_Command_Type) return Command_Return_Type
    is
       use String_List;
@@ -204,7 +204,7 @@ package body Commands.VCS is
          return Failure;
    end Execute;
 
-   function Execute
+   overriding function Execute
      (Command : access Get_Status_Command_Type) return Command_Return_Type is
    begin
       Get_Status (Command.Rep, Command.Filenames, Clear_Logs => True);
@@ -212,7 +212,7 @@ package body Commands.VCS is
       return Success;
    end Execute;
 
-   function Execute
+   overriding function Execute
      (Command : access Update_Files_Command_Type) return Command_Return_Type
    is
       use String_List;
@@ -228,7 +228,7 @@ package body Commands.VCS is
       return Success;
    end Execute;
 
-   function Execute
+   overriding function Execute
      (Command : access Generic_Kernel_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -243,7 +243,7 @@ package body Commands.VCS is
       return Success;
    end Execute;
 
-   function Execute
+   overriding function Execute
      (Command : access Check_Activity_Command_Type)
       return Command_Return_Type
    is
@@ -288,7 +288,9 @@ package body Commands.VCS is
    -- Name --
    ----------
 
-   function Name (X : access Log_Action_Command_Type) return String is
+   overriding function Name
+     (X : access Log_Action_Command_Type) return String
+   is
       Action_String : constant GNAT.Strings.String_Access :=
                         Get_Identified_Actions (X.Rep) (X.Action);
    begin
@@ -299,25 +301,33 @@ package body Commands.VCS is
       end if;
    end Name;
 
-   function Name (X : access Get_Status_Command_Type) return String is
+   overriding function Name
+     (X : access Get_Status_Command_Type) return String
+   is
       pragma Unreferenced (X);
    begin
       return -"Getting status";
    end Name;
 
-   function Name (X : access Update_Files_Command_Type) return String is
+   overriding function Name
+     (X : access Update_Files_Command_Type) return String
+   is
       pragma Unreferenced (X);
    begin
       return -"Updating files";
    end Name;
 
-   function Name (X : access Generic_Kernel_Command) return String is
+   overriding function Name
+     (X : access Generic_Kernel_Command) return String
+   is
       pragma Unreferenced (X);
    begin
       return -"VCS";
    end Name;
 
-   function Name (X : access Check_Activity_Command_Type) return String is
+   overriding function Name
+     (X : access Check_Activity_Command_Type) return String
+   is
       pragma Unreferenced (X);
    begin
       return -"Check Activity";

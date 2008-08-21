@@ -68,7 +68,7 @@ package body VCS_View.Explorer is
    -- Columns_Types --
    -------------------
 
-   function Columns_Types
+   overriding function Columns_Types
      (Explorer : access VCS_Explorer_View_Record) return GType_Array
    is
       pragma Unreferenced (Explorer);
@@ -114,7 +114,7 @@ package body VCS_View.Explorer is
       Explorer : VCS_Explorer_View_Access;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook      : File_Hook_Record;
       Kernel    : access Kernel_Handle_Record'Class;
       File_Data : access Hooks_Data'Class);
@@ -129,7 +129,7 @@ package body VCS_View.Explorer is
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
-   function To_History_Key (S : in String) return History_Key;
+   function To_History_Key (S : String) return History_Key;
    --  Return history key corresponding to S
 
    function Match_Filter
@@ -154,7 +154,7 @@ package body VCS_View.Explorer is
    -- To_History_Key --
    --------------------
 
-   function To_History_Key (S : in String) return History_Key is
+   function To_History_Key (S : String) return History_Key is
       Result : History_Key (S'First .. S'Last);
    begin
       for J in S'Range loop
@@ -172,7 +172,7 @@ package body VCS_View.Explorer is
    -- Do_Delete --
    ---------------
 
-   procedure Do_Delete
+   overriding procedure Do_Delete
      (Explorer : VCS_Explorer_View_Record)
    is
       pragma Unreferenced (Explorer);
@@ -184,8 +184,9 @@ package body VCS_View.Explorer is
    -- Do_Refresh --
    ----------------
 
-   procedure Do_Refresh (Explorer : access VCS_Explorer_View_Record) is
-
+   overriding procedure Do_Refresh
+     (Explorer : access VCS_Explorer_View_Record)
+   is
       procedure Check_Iter
         (Iter : in out Gtk_Tree_Iter;
          Root : Boolean;
@@ -606,7 +607,7 @@ package body VCS_View.Explorer is
    -- Fill_Info --
    ---------------
 
-   procedure Do_Fill_Info
+   overriding procedure Do_Fill_Info
      (Explorer  : VCS_Explorer_View_Record;
       Iter      : Gtk_Tree_Iter;
       Line_Info : Line_Record;
@@ -931,7 +932,7 @@ package body VCS_View.Explorer is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook      : File_Hook_Record;
       Kernel    : access Kernel_Handle_Record'Class;
       File_Data : access Hooks_Data'Class)
@@ -965,7 +966,7 @@ package body VCS_View.Explorer is
    -- Do_Initialize --
    -------------------
 
-   procedure Do_Initialize
+   overriding procedure Do_Initialize
      (Explorer : access VCS_Explorer_View_Record;
       Kernel   : Kernel_Handle)
    is

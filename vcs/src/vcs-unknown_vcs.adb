@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,7 +65,7 @@ package body VCS.Unknown_VCS is
    -- Name --
    ----------
 
-   function Name (Ref : access Unknown_VCS_Record) return String is
+   overriding function Name (Ref : access Unknown_VCS_Record) return String is
       pragma Unreferenced (Ref);
    begin
       return Unknown_VCS_Name;
@@ -86,7 +85,7 @@ package body VCS.Unknown_VCS is
    -- Get_Status --
    ----------------
 
-   procedure Get_Status
+   overriding procedure Get_Status
      (Rep        : access Unknown_VCS_Record;
       Filenames  : String_List.List;
       Clear_Logs : Boolean := False;
@@ -105,7 +104,7 @@ package body VCS.Unknown_VCS is
    -- Local_Get_Status --
    ----------------------
 
-   function Local_Get_Status
+   overriding function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
       return File_Status_List.List
@@ -132,7 +131,7 @@ package body VCS.Unknown_VCS is
    -- Create_Tag --
    ----------------
 
-   procedure Create_Tag
+   overriding procedure Create_Tag
      (Rep       : access Unknown_VCS_Record;
       Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
@@ -149,7 +148,7 @@ package body VCS.Unknown_VCS is
    -- Open --
    ----------
 
-   procedure Open
+   overriding procedure Open
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
       User_Name : String := "")
@@ -165,7 +164,7 @@ package body VCS.Unknown_VCS is
    -- Commit --
    ------------
 
-   procedure Commit
+   overriding procedure Commit
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
       Log       : String)
@@ -181,7 +180,7 @@ package body VCS.Unknown_VCS is
    -- Update --
    ------------
 
-   procedure Update
+   overriding procedure Update
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
@@ -196,7 +195,7 @@ package body VCS.Unknown_VCS is
    -- Switch --
    ------------
 
-   procedure Switch
+   overriding procedure Switch
      (Rep : access Unknown_VCS_Record;
       Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
@@ -212,7 +211,7 @@ package body VCS.Unknown_VCS is
    -- Resolved --
    --------------
 
-   procedure Resolved
+   overriding procedure Resolved
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
@@ -227,7 +226,7 @@ package body VCS.Unknown_VCS is
    -- Merge --
    -----------
 
-   procedure Merge
+   overriding procedure Merge
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
       Tag       : String)
@@ -243,7 +242,7 @@ package body VCS.Unknown_VCS is
    -- Add --
    ---------
 
-   procedure Add
+   overriding procedure Add
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -260,7 +259,7 @@ package body VCS.Unknown_VCS is
    -- Remove --
    ------------
 
-   procedure Remove
+   overriding procedure Remove
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -278,7 +277,7 @@ package body VCS.Unknown_VCS is
    -- Revert --
    ------------
 
-   procedure Revert
+   overriding procedure Revert
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List)
    is
@@ -294,7 +293,7 @@ package body VCS.Unknown_VCS is
    -- File_Revision --
    -------------------
 
-   procedure File_Revision
+   overriding procedure File_Revision
      (Rep      : access Unknown_VCS_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
@@ -308,7 +307,7 @@ package body VCS.Unknown_VCS is
    -- Diff --
    ----------
 
-   procedure Diff
+   overriding procedure Diff
      (Rep       : access Unknown_VCS_Record;
       File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
@@ -323,7 +322,7 @@ package body VCS.Unknown_VCS is
    -- Diff_Patch --
    ----------------
 
-   procedure Diff_Patch
+   overriding procedure Diff_Patch
      (Rep    : access Unknown_VCS_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Output : GNATCOLL.VFS.Virtual_File)
@@ -337,7 +336,7 @@ package body VCS.Unknown_VCS is
    -- Diff_Base_Head --
    --------------------
 
-   procedure Diff_Base_Head
+   overriding procedure Diff_Base_Head
      (Rep  : access Unknown_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File)
    is
@@ -350,7 +349,7 @@ package body VCS.Unknown_VCS is
    -- Diff_Working --
    ------------------
 
-   procedure Diff_Working
+   overriding procedure Diff_Working
      (Rep  : access Unknown_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File)
    is
@@ -363,7 +362,7 @@ package body VCS.Unknown_VCS is
    -- Diff_Tag --
    --------------
 
-   procedure Diff_Tag
+   overriding procedure Diff_Tag
      (Rep      : access Unknown_VCS_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
@@ -377,7 +376,7 @@ package body VCS.Unknown_VCS is
    -- Log --
    ---------
 
-   procedure Log
+   overriding procedure Log
      (Rep     : access Unknown_VCS_Record;
       File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
@@ -392,7 +391,7 @@ package body VCS.Unknown_VCS is
    -- Annotate --
    --------------
 
-   procedure Annotate
+   overriding procedure Annotate
      (Rep  : access Unknown_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File)
    is

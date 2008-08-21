@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +32,7 @@ package body Commands.Controls is
    end record;
    type Queue_Change_Access is access all Queue_Change_Command;
 
-   function Execute
+   overriding function Execute
      (Command : access Queue_Change_Command) return Command_Return_Type;
 
    package Command_Callback is new User_Callback
@@ -43,7 +42,7 @@ package body Commands.Controls is
    -- Local subprograms --
    -----------------------
 
-   procedure Free (X : in out Queue_Change_Command);
+   overriding procedure Free (X : in out Queue_Change_Command);
    --  Free memory associated to X.
 
    procedure On_Undo
@@ -62,7 +61,7 @@ package body Commands.Controls is
    -- Free --
    ----------
 
-   procedure Free (X : in out Queue_Change_Command) is
+   overriding procedure Free (X : in out Queue_Change_Command) is
       pragma Unreferenced (X);
    begin
       null;
@@ -108,7 +107,7 @@ package body Commands.Controls is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Queue_Change_Command) return Command_Return_Type is
    begin
       if Command.UR.Undo_Button /= null then

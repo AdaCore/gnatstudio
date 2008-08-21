@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +30,7 @@ package Src_Editor_View.Commands is
       Kind   : Movement_Type;
       Step   : Integer;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Move_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -40,7 +39,7 @@ package Src_Editor_View.Commands is
    type Scroll_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Scroll_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -52,7 +51,7 @@ package Src_Editor_View.Commands is
       Kind   : Movement_Type := Word;
       Count  : Integer := 1;  --  Delete backward if negative
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Delete_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -61,7 +60,7 @@ package Src_Editor_View.Commands is
    type Indentation_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Indentation_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -74,7 +73,7 @@ package Src_Editor_View.Commands is
       Kernel : GPS.Kernel.Kernel_Handle;
       Mode   : Control_Type;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Control_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -84,7 +83,7 @@ package Src_Editor_View.Commands is
    type Tab_As_Space_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Tab_As_Space_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;

@@ -73,7 +73,7 @@ package body Vdiff2_Command_Block is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Block;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -89,7 +89,7 @@ package body Vdiff2_Command_Block is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type
    is
       Context       : constant Selection_Context :=

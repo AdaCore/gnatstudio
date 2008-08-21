@@ -126,7 +126,7 @@ package body VCS_Activities_View_API is
    end record;
    type Edit_Action_Command_Access is access Edit_Action_Command_Type;
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type;
 
    --  Action adjust patch root
@@ -141,7 +141,7 @@ package body VCS_Activities_View_API is
    type Adjust_Patch_Action_Command_Access is
      access Adjust_Patch_Action_Command_Type;
 
-   function Execute
+   overriding function Execute
      (Command : access Adjust_Patch_Action_Command_Type)
       return Command_Return_Type;
 
@@ -173,7 +173,7 @@ package body VCS_Activities_View_API is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type
    is
       Filename : aliased String := Full_Name (Command.File).all;
@@ -183,7 +183,7 @@ package body VCS_Activities_View_API is
       return Success;
    end Execute;
 
-   function Execute
+   overriding function Execute
      (Command : access Adjust_Patch_Action_Command_Type)
       return Command_Return_Type
    is

@@ -63,7 +63,7 @@ package body Src_Printing is
    --  selections, taking into account the fact that the printer cannot usually
    --  print to the very edge of the page.
 
-   procedure Get_Margins (Printer : in HDC; Offsets : out Margin_Offsets);
+   procedure Get_Margins (Printer : HDC; Offsets : out Margin_Offsets);
    --  Determine the offsets in pixels from the edges of the page.
    --  The user's values are from the edge of the page so we have to
    --  subtract the margin offsets that the printer inserts due to the
@@ -562,7 +562,7 @@ package body Src_Printing is
    -- Get_Margins --
    -----------------
 
-   procedure Get_Margins (Printer : in HDC; Offsets : out Margin_Offsets) is
+   procedure Get_Margins (Printer : HDC; Offsets : out Margin_Offsets) is
       --  Requested margins are decimal values specifying (fractions of) inches
       --  eventually these will come from the user via Prefs
       Left   : constant Float := 0.75; -- inches

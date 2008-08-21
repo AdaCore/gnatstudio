@@ -244,7 +244,7 @@ package body Src_Editor_Module.Shell is
       Location : Location_Info_Access;
    end record;
    type Location_Property_Access is access all Location_Property;
-   procedure Destroy (Property : in out Location_Property);
+   overriding procedure Destroy (Property : in out Location_Property);
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Location_Info_Access);
@@ -575,7 +575,7 @@ package body Src_Editor_Module.Shell is
    -- Destroy --
    -------------
 
-   procedure Destroy (Property : in out Location_Property) is
+   overriding procedure Destroy (Property : in out Location_Property) is
    begin
       --  Make sure we will not get a signal when the buffer is destroyed later
       --  since we are no longer interested in it

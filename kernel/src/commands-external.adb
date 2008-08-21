@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,7 @@ package body Commands.External is
    -- Free --
    ----------
 
-   procedure Free (D : in out External_Command) is
+   overriding procedure Free (D : in out External_Command) is
       use String_List;
 
       Fd      : TTY_Process_Descriptor renames D.Fd;
@@ -183,7 +183,7 @@ package body Commands.External is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access External_Command) return Command_Return_Type
    is
       use String_List;
@@ -282,7 +282,8 @@ package body Commands.External is
    -- Name --
    ----------
 
-   function Name (Command : access External_Command) return String is
+   overriding function Name
+     (Command : access External_Command) return String is
    begin
       return Command.Description.all;
    end Name;

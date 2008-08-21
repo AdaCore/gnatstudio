@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,7 +55,7 @@ package Completion.Ada.Constructs_Extractor is
    function Get_Id (Resolver : Construct_Completion_Resolver) return String;
    --  See inherited documentation
 
-   procedure Free (This : in out Construct_Completion_Resolver);
+   overriding procedure Free (This : in out Construct_Completion_Resolver);
    --  Free the data associated to a construct completion resolver
 
 private
@@ -213,26 +213,26 @@ private
       Params_It : Integer;
    end record;
 
-   function First
+   overriding function First
      (Db_Construct : Construct_Db_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
    --  See inherited documentation
 
-   function At_End (It : Construct_Iterator_Wrapper) return Boolean;
+   overriding function At_End (It : Construct_Iterator_Wrapper) return Boolean;
    --  See inherited documentation
 
    function Is_Valid (It : Construct_Iterator_Wrapper) return Boolean;
    --  Return true if the iterator is OK to be returned to the user, which
    --  means that either it points on an expected value or it's at end.
 
-   procedure Next (It : in out Construct_Iterator_Wrapper);
+   overriding procedure Next (It : in out Construct_Iterator_Wrapper);
    --  See inherited documentation
 
-   function Get
+   overriding function Get
      (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class;
    --  See inherited documentation
 
-   procedure Free (This : in out Construct_Iterator_Wrapper);
+   overriding procedure Free (This : in out Construct_Iterator_Wrapper);
    --  Free the data associated to the wrapper
 
 end Completion.Ada.Constructs_Extractor;

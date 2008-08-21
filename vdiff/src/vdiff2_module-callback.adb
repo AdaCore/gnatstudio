@@ -482,7 +482,7 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Change_Ref_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -527,7 +527,7 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Hide_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -559,7 +559,7 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Recompute_Diff_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -619,7 +619,7 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Close_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,7 +63,7 @@ package body Commands.Console is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Console_Command) return Command_Return_Type is
    begin
       if Command.Text /= null then
@@ -83,7 +82,7 @@ package body Commands.Console is
    -- Free --
    ----------
 
-   procedure Free (Command : in out Console_Command) is
+   overriding procedure Free (Command : in out Console_Command) is
    begin
       GNAT.Strings.Free (Command.Text);
    end Free;
@@ -92,7 +91,9 @@ package body Commands.Console is
    -- Undo --
    ----------
 
-   function Undo (Command : access Console_Command) return Boolean is
+   overriding function Undo
+     (Command : access Console_Command) return Boolean
+   is
       pragma Unreferenced (Command);
    begin
       return True;

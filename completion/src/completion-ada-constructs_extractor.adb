@@ -60,7 +60,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Equal --
    -----------
 
-   function Equal
+   overriding function Equal
      (Left  : Stored_Construct_Completion_Proposal;
       Right : Stored_Proposal'Class)
       return Boolean
@@ -76,7 +76,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- From_Stored_Proposal --
    --------------------------
 
-   function From_Stored_Proposal
+   overriding function From_Stored_Proposal
      (Stored  : Stored_Construct_Completion_Proposal;
       Manager : Completion_Manager_Access;
       Context : Completion_Context)
@@ -116,7 +116,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Free --
    ----------
 
-   procedure Free
+   overriding procedure Free
      (Stored : in out Stored_Construct_Completion_Proposal)
    is
    begin
@@ -127,7 +127,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- To_Completion_Id --
    ----------------------
 
-   function To_Completion_Id
+   overriding function To_Completion_Id
      (Proposal : Construct_Completion_Proposal) return Completion_Id
    is
       Id_Length : Integer := 0;
@@ -189,7 +189,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Completion --
    --------------------
 
-   function Get_Completion
+   overriding function Get_Completion
      (Proposal : Construct_Completion_Proposal) return UTF8_String
    is
       Comma         : Boolean := False;
@@ -259,7 +259,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Label --
    ---------------
 
-   function Get_Label
+   overriding function Get_Label
      (Proposal : Construct_Completion_Proposal) return UTF8_String
    is
       Construct : constant access Simple_Construct_Information :=
@@ -290,7 +290,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Caret_Offset --
    ----------------------
 
-   function Get_Caret_Offset
+   overriding function Get_Caret_Offset
      (Proposal : Construct_Completion_Proposal)
       return Basic_Types.Character_Offset_Type
    is
@@ -334,7 +334,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Type --
    --------------
 
-   function Get_Category
+   overriding function Get_Category
      (Proposal : Construct_Completion_Proposal) return Language_Category
    is
       Construct : constant access Simple_Construct_Information :=
@@ -355,7 +355,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Visibility --
    --------------------
 
-   function Get_Visibility
+   overriding function Get_Visibility
      (Proposal : Construct_Completion_Proposal) return Construct_Visibility is
    begin
       if Proposal.Is_All then
@@ -369,7 +369,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation
+   overriding function Get_Documentation
      (Proposal : Construct_Completion_Proposal) return UTF8_String is
    begin
       return Get_Documentation
@@ -383,7 +383,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Location --
    ------------------
 
-   function Get_Location
+   overriding function Get_Location
      (Proposal : Construct_Completion_Proposal) return File_Location
    is
       Construct : constant access Simple_Construct_Information :=
@@ -398,7 +398,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Match --
    -----------
 
-   function Match
+   overriding function Match
      (Proposal   : Construct_Completion_Proposal;
       Context    : Completion_Context;
       Offset     : Integer) return Boolean
@@ -464,7 +464,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- To_Stored_Proposal --
    ------------------------
 
-   function To_Stored_Proposal
+   overriding function To_Stored_Proposal
      (Proposal : Construct_Completion_Proposal)
       return Stored_Proposal_Access
    is
@@ -491,7 +491,8 @@ package body Completion.Ada.Constructs_Extractor is
    -- Free --
    ----------
 
-   procedure Free (Proposal : in out Construct_Completion_Proposal) is
+   overriding procedure Free
+     (Proposal : in out Construct_Completion_Proposal) is
    begin
       Free (Proposal.Actual_Params);
    end Free;
@@ -500,7 +501,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Free --
    ----------
 
-   procedure Free (This : in out Construct_Db_Wrapper) is
+   overriding procedure Free (This : in out Construct_Db_Wrapper) is
    begin
       Free (This.List);
    end Free;
@@ -522,7 +523,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Possibilities --
    -----------------------
 
-   procedure Get_Completion_Root
+   overriding procedure Get_Completion_Root
      (Resolver : access Construct_Completion_Resolver;
       Offset   : Integer;
       Context  : Completion_Context;
@@ -572,7 +573,9 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get_Id --
    ------------
 
-   function Get_Id (Resolver : Construct_Completion_Resolver) return String is
+   overriding function Get_Id
+     (Resolver : Construct_Completion_Resolver) return String
+   is
       pragma Unreferenced (Resolver);
    begin
       return Resolver_ID;
@@ -582,7 +585,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Free --
    ----------
 
-   procedure Free (This : in out Construct_Completion_Resolver) is
+   overriding procedure Free (This : in out Construct_Completion_Resolver) is
       pragma Unreferenced (This);
    begin
       null;
@@ -592,7 +595,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- First --
    -----------
 
-   function First
+   overriding function First
      (Db_Construct : Construct_Db_Wrapper)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
@@ -613,7 +616,8 @@ package body Completion.Ada.Constructs_Extractor is
    -- At_End --
    ------------
 
-   function At_End (It : Construct_Iterator_Wrapper) return Boolean is
+   overriding function At_End
+     (It : Construct_Iterator_Wrapper) return Boolean is
    begin
       return At_End (It.Iter);
    end At_End;
@@ -622,7 +626,9 @@ package body Completion.Ada.Constructs_Extractor is
    -- Is_Valid --
    --------------
 
-   function Is_Valid (It : Construct_Iterator_Wrapper) return Boolean is
+   function Is_Valid
+     (It : Construct_Iterator_Wrapper) return Boolean
+   is
       pragma Unreferenced (It);
    begin
       return True;
@@ -632,7 +638,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Next --
    ----------
 
-   procedure Next (It : in out Construct_Iterator_Wrapper) is
+   overriding procedure Next (It : in out Construct_Iterator_Wrapper) is
    begin
       if Get_Actual_Parameters (It.Current_Decl) /= null
         or else It.Params_Array /= null
@@ -674,7 +680,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class
    is
       Entity : constant Entity_Access := Get_Entity (This.Current_Decl);
@@ -699,7 +705,7 @@ package body Completion.Ada.Constructs_Extractor is
    -- Free --
    ----------
 
-   procedure Free (This : in out Construct_Iterator_Wrapper) is
+   overriding procedure Free (This : in out Construct_Iterator_Wrapper) is
    begin
       Free (This.Params_Array);
       Free (This.Iter);
