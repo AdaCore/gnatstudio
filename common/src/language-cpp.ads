@@ -33,24 +33,24 @@ package Language.Cpp is
    -- Highlighting --
    ------------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Cpp_Language) return Pattern_Matcher_Access;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories;
 
    ---------------------
    -- Project support --
    ---------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Cpp_Language) return Project_Field_Array;
 
    ----------------------
@@ -66,7 +66,7 @@ package Language.Cpp is
 private
    type Cpp_Language is new Language.C.C_Language with null record;
 
-   function Get_Name (Lang : access Cpp_Language) return String;
+   overriding function Get_Name (Lang : access Cpp_Language) return String;
 
    Cpp_Lang : constant Language_Access := new Cpp_Language;
 end Language.Cpp;

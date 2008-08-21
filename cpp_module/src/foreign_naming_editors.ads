@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                   Copyright (C) 2002-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,16 +37,16 @@ package Foreign_Naming_Editors is
       Language : String);
    --  Create a new naming scheme editor for languages other than Ada.
 
-   procedure Destroy (Editor : access Foreign_Naming_Editor_Record);
-   function Get_Window
+   overriding procedure Destroy (Editor : access Foreign_Naming_Editor_Record);
+   overriding function Get_Window
      (Editor : access Foreign_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget;
-   function Create_Project_Entry
+   overriding function Create_Project_Entry
      (Editor             : access Foreign_Naming_Editor_Record;
       Project            : Projects.Project_Type;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
-   procedure Show_Project_Settings
+   overriding procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;

@@ -43,7 +43,7 @@ package body Codefix.Errors_Manager is
    -- Next --
    ----------
 
-   function Next (This : Error_Id) return Error_Id is
+   overriding function Next (This : Error_Id) return Error_Id is
    begin
       return Error_Id (Next (Memorized_Corrections.List_Node (This)));
    end Next;

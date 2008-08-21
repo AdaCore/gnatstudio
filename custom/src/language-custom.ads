@@ -48,45 +48,45 @@ package Language.Custom is
    -- Parsing --
    -------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Custom_Language; Str : String) return Boolean;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return Strings.String_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List;
 
-   function Is_Word_Char
+   overriding function Is_Word_Char
      (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Custom_Language) return Explorer_Categories;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Custom_Language;
       Name : String) return String;
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Custom_Language;
       Name  : String;
       Index : String) return String;
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Custom_Language;
       Name  : String;
       Field : String) return String;
@@ -95,14 +95,14 @@ package Language.Custom is
    -- Project support --
    ---------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Custom_Language) return Project_Field_Array;
 
    ------------------
    -- Field access --
    ------------------
 
-   function Get_Name (Lang : access Custom_Language) return String;
+   overriding function Get_Name (Lang : access Custom_Language) return String;
    --  Return the name associated with Lang.
 
    ----------------------
@@ -113,14 +113,12 @@ package Language.Custom is
    --  implementation, or redefined using a shared library specified in the
    --  xml file.
 
-   overriding
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang   : access Custom_Language;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List);
 
-   overriding
-   procedure Format_Buffer
+   overriding procedure Format_Buffer
      (Lang                : access Custom_Language;
       Buffer              : String;
       Replace             : Replace_Text_Callback;
@@ -132,8 +130,7 @@ package Language.Custom is
       Is_Optional_Keyword : access function (S : String)
                                              return Boolean := null);
 
-   overriding
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Custom_Language;
       Buffer   : String;
       Callback : Entity_Callback);

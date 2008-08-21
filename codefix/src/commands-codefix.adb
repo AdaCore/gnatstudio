@@ -34,7 +34,7 @@ package body Commands.Codefix is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Codefix_Command) return Command_Return_Type
    is
       Menu : Gtk_Menu;
@@ -74,7 +74,8 @@ package body Commands.Codefix is
    -- Undo --
    ----------
 
-   function Undo (Command : access Codefix_Command) return Boolean is
+   overriding function Undo
+     (Command : access Codefix_Command) return Boolean is
    begin
       Undo (Command.Error, Command.Session.Current_Text.all);
       Create_Pixmap_And_Category
@@ -89,7 +90,7 @@ package body Commands.Codefix is
    -- Free --
    ----------
 
-   procedure Free (Command : in out Codefix_Command) is
+   overriding procedure Free (Command : in out Codefix_Command) is
       pragma Unreferenced (Command);
    begin
       null;
@@ -99,7 +100,7 @@ package body Commands.Codefix is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type is
    begin
       if Command.Session_Timestamp /= Command.Session.Timestamp then
@@ -130,7 +131,7 @@ package body Commands.Codefix is
    -- Free --
    ----------
 
-   procedure Free (Command : in out Codefix_Add_Command) is
+   overriding procedure Free (Command : in out Codefix_Add_Command) is
       pragma Unreferenced (Command);
    begin
       null;
@@ -140,7 +141,7 @@ package body Commands.Codefix is
    -- Progress --
    --------------
 
-   function Progress
+   overriding function Progress
      (Command : access Codefix_Add_Command) return Progress_Record is
    begin
       return (Running, Command.Errors_Fixed, Command.Errors_Num);
@@ -150,7 +151,9 @@ package body Commands.Codefix is
    -- Name --
    ----------
 
-   function Name (Command : access Codefix_Add_Command) return String is
+   overriding function Name
+     (Command : access Codefix_Add_Command) return String
+   is
       pragma Unreferenced (Command);
    begin
       return -"Code fixing";

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -106,7 +105,8 @@ package body Foreign_Naming_Editors is
    -- Destroy --
    -------------
 
-   procedure Destroy (Editor : access Foreign_Naming_Editor_Record) is
+   overriding procedure Destroy
+     (Editor : access Foreign_Naming_Editor_Record) is
    begin
       Free (Editor.Language);
       Destroy (Editor.GUI);
@@ -116,7 +116,7 @@ package body Foreign_Naming_Editors is
    -- Get_Window --
    ----------------
 
-   function Get_Window
+   overriding function Get_Window
      (Editor : access Foreign_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget is
    begin
@@ -127,7 +127,7 @@ package body Foreign_Naming_Editors is
    -- Create_Project_Entry --
    --------------------------
 
-   function Create_Project_Entry
+   overriding function Create_Project_Entry
      (Editor             : access Foreign_Naming_Editor_Record;
       Project            : Projects.Project_Type;
       Languages          : Argument_List;
@@ -179,13 +179,13 @@ package body Foreign_Naming_Editors is
    -- Show_Project_Settings --
    ---------------------------
 
-   procedure Show_Project_Settings
+   overriding procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      P      : Project_Type := Project;
+      P : Project_Type := Project;
    begin
       --  If the project is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions

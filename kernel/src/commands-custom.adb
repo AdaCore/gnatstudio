@@ -96,12 +96,12 @@ package body Commands.Custom is
       Current    : Integer;
       On_Failure : Integer;
    end record;
-   function Get
+   overriding function Get
      (Iter : access Custom_Component_Iterator)
       return Command_Component;
-   procedure Next (Iter : access Custom_Component_Iterator);
-   procedure Free (Iter : in out Custom_Component_Iterator);
-   function On_Failure
+   overriding procedure Next (Iter : access Custom_Component_Iterator);
+   overriding procedure Free (Iter : in out Custom_Component_Iterator);
+   overriding function On_Failure
      (Iter : access Custom_Component_Iterator) return Component_Iterator;
    --  See doc from inherited subprograms
 
@@ -135,7 +135,7 @@ package body Commands.Custom is
       end record;
    type Custom_Component is access all Custom_Component_Record'Class;
 
-   function Get_Name
+   overriding function Get_Name
      (Component : access Custom_Component_Record) return String;
    --  See doc from inherited subprogram
 
@@ -223,7 +223,7 @@ package body Commands.Custom is
    --  If Component is null, an empty editor is displayed, associated with
    --  The_Type. Otherwise, the parameter The_Type is unused
 
-   function To_XML
+   overriding function To_XML
      (Editor : access Custom_Command_Editor_Record)
       return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
@@ -757,7 +757,7 @@ package body Commands.Custom is
    -- Free --
    ----------
 
-   procedure Free (X : in out Custom_Command) is
+   overriding procedure Free (X : in out Custom_Command) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Components_Array, Components_Array_Access);
    begin
@@ -1068,7 +1068,7 @@ package body Commands.Custom is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Custom_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1309,7 +1309,7 @@ package body Commands.Custom is
          Console         : Interactive_Console;
          Output_Location : GNAT.Strings.String_Access;
 
-         function To_String (P : in GNAT.Strings.String_Access) return String;
+         function To_String (P : GNAT.Strings.String_Access) return String;
          --  Return the contents of P, or the empty string if P is null
 
          function Execute_Shell
@@ -1324,7 +1324,7 @@ package body Commands.Custom is
          ---------------
 
          function To_String
-           (P : in GNAT.Strings.String_Access) return String is
+           (P : GNAT.Strings.String_Access) return String is
          begin
             if P = null then
                return "";
@@ -1659,7 +1659,7 @@ package body Commands.Custom is
    -- Name --
    ----------
 
-   function Name (Command : access Custom_Command) return String is
+   overriding function Name (Command : access Custom_Command) return String is
    begin
       return Command.Name.all;
    end Name;
@@ -1668,7 +1668,7 @@ package body Commands.Custom is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (Iter : access Custom_Component_Iterator) return Command_Component is
    begin
       if Iter.Current <= Iter.Command.Components'Last then
@@ -1683,7 +1683,7 @@ package body Commands.Custom is
    -- On_Failure --
    ----------------
 
-   function On_Failure
+   overriding function On_Failure
      (Iter : access Custom_Component_Iterator) return Component_Iterator
    is
       Component : constant Command_Component := Get (Iter);
@@ -1709,7 +1709,7 @@ package body Commands.Custom is
    -- Next --
    ----------
 
-   procedure Next (Iter : access Custom_Component_Iterator) is
+   overriding procedure Next (Iter : access Custom_Component_Iterator) is
    begin
       loop
          Iter.Current := Iter.Current + 1;
@@ -1723,7 +1723,7 @@ package body Commands.Custom is
    -- Free --
    ----------
 
-   procedure Free (Iter : in out Custom_Component_Iterator) is
+   overriding procedure Free (Iter : in out Custom_Component_Iterator) is
       pragma Unreferenced (Iter);
    begin
       null;
@@ -1733,7 +1733,7 @@ package body Commands.Custom is
    -- Create_Command_Editor --
    ---------------------------
 
-   function Create_Command_Editor
+   overriding function Create_Command_Editor
      (Command : access Custom_Command;
       Kernel  : access Kernel_Handle_Record'Class) return Command_Editor
    is
@@ -2093,7 +2093,7 @@ package body Commands.Custom is
    -- Start --
    -----------
 
-   function Start
+   overriding function Start
      (Command : access Custom_Command) return Component_Iterator is
    begin
       --  ??? Case where we don't have an XML, but a simple command
@@ -2297,7 +2297,7 @@ package body Commands.Custom is
    -- Get_Name --
    --------------
 
-   function Get_Name
+   overriding function Get_Name
      (Component : access Custom_Component_Record) return String is
    begin
       return Component.Command.all;
@@ -2307,7 +2307,7 @@ package body Commands.Custom is
    -- To_XML --
    ------------
 
-   function To_XML
+   overriding function To_XML
      (Editor : access Custom_Command_Editor_Record)
       return Glib.Xml_Int.Node_Ptr
    is
@@ -2411,7 +2411,7 @@ package body Commands.Custom is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Custom_Command) is
+   overriding procedure Interrupt (Command : in out Custom_Command) is
    begin
       if Command.Execution /= null then
          Command.Execution.Cmd_Index := Command.Components'First;

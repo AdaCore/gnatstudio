@@ -41,7 +41,7 @@ package body Codefix.GPS_Io is
    -- Get_New_Mark --
    ------------------
 
-   function Get_New_Mark
+   overriding function Get_New_Mark
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
@@ -64,7 +64,7 @@ package body Codefix.GPS_Io is
    -- Get_Current_Cursor --
    ------------------------
 
-   function Get_Current_Cursor
+   overriding function Get_Current_Cursor
      (Current_Text : Console_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
@@ -99,7 +99,7 @@ package body Codefix.GPS_Io is
    -- Free --
    ----------
 
-   procedure Free (This : in out GPS_Mark) is
+   overriding procedure Free (This : in out GPS_Mark) is
    begin
       Free (This.Id);
       Free (Mark_Abstr (This));
@@ -109,7 +109,7 @@ package body Codefix.GPS_Io is
    -- Free --
    ----------
 
-   procedure Free (This : in out Console_Interface) is
+   overriding procedure Free (This : in out Console_Interface) is
    begin
       Free (Text_Interface (This));
 
@@ -126,7 +126,7 @@ package body Codefix.GPS_Io is
    -- Undo --
    ----------
 
-   procedure Undo (This : in out Console_Interface) is
+   overriding procedure Undo (This : in out Console_Interface) is
       Args : GNAT.Strings.String_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all));
       Ignore : constant String := Execute_GPS_Shell_Command
@@ -140,7 +140,7 @@ package body Codefix.GPS_Io is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String
@@ -157,7 +157,7 @@ package body Codefix.GPS_Io is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class) return Character
    is
@@ -172,7 +172,7 @@ package body Codefix.GPS_Io is
    -- Get_Line --
    --------------
 
-   function Get_Line
+   overriding function Get_Line
      (This      : Console_Interface;
       Cursor    : Text_Cursor'Class;
       Start_Col : Column_Index := 0) return String
@@ -218,7 +218,7 @@ package body Codefix.GPS_Io is
    -- Replace --
    -------------
 
-   procedure Replace
+   overriding procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
@@ -271,7 +271,7 @@ package body Codefix.GPS_Io is
    -- Replace --
    -------------
 
-   procedure Replace
+   overriding procedure Replace
      (This         : in out Console_Interface;
       Start_Cursor : Text_Cursor'Class;
       End_Cursor   : Text_Cursor'Class;
@@ -345,7 +345,7 @@ package body Codefix.GPS_Io is
    -- Add_Line --
    --------------
 
-   procedure Add_Line
+   overriding procedure Add_Line
      (This     : in out Console_Interface;
       Cursor   : Text_Cursor'Class;
       New_Line : String;
@@ -387,7 +387,7 @@ package body Codefix.GPS_Io is
    -- Delete_Line --
    -----------------
 
-   procedure Delete_Line
+   overriding procedure Delete_Line
      (This   : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
@@ -413,7 +413,7 @@ package body Codefix.GPS_Io is
    -- Indent_Line --
    -----------------
 
-   procedure Indent_Line
+   overriding procedure Indent_Line
      (This : in out Console_Interface;
       Cursor : Text_Cursor'Class)
    is
@@ -465,7 +465,7 @@ package body Codefix.GPS_Io is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   overriding procedure Initialize
      (This : in out Console_Interface;
       Path : GNATCOLL.VFS.Virtual_File)
    is
@@ -477,7 +477,7 @@ package body Codefix.GPS_Io is
    -- Read_File --
    ---------------
 
-   function Read_File (This : Console_Interface)
+   overriding function Read_File (This : Console_Interface)
       return GNAT.Strings.String_Access
    is
       Args : GNAT.Strings.String_List :=
@@ -493,7 +493,7 @@ package body Codefix.GPS_Io is
    -- Line_Max --
    --------------
 
-   function Line_Max (This : Console_Interface) return Natural is
+   overriding function Line_Max (This : Console_Interface) return Natural is
    begin
       Update (This);
 
@@ -575,7 +575,7 @@ package body Codefix.GPS_Io is
    -- Constrain_Update --
    ----------------------
 
-   procedure Constrain_Update (This : in out Console_Interface) is
+   overriding procedure Constrain_Update (This : in out Console_Interface) is
    begin
       This.File_Modified.all := True;
    end Constrain_Update;

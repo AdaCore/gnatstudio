@@ -995,13 +995,13 @@ package body Codefix.GNAT_Parser is
    -- Aggregate_Misspelling --
    ---------------------------
 
-   procedure Initialize (This : in out Agregate_Misspelling) is
+   overriding procedure Initialize (This : in out Agregate_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("misspelling of ""=>""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Agregate_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1020,7 +1020,7 @@ package body Codefix.GNAT_Parser is
    -- Light_Misspelling --
    -----------------------
 
-   procedure Initialize (This : in out Light_Misspelling) is
+   overriding procedure Initialize (This : in out Light_Misspelling) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1029,7 +1029,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("incorrect spelling of keyword ""([^""]+)""$")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Light_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1051,13 +1051,13 @@ package body Codefix.GNAT_Parser is
    -- Double_Misspelling --
    ------------------------
 
-   procedure Initialize (This : in out Double_Misspelling) is
+   overriding procedure Initialize (This : in out Double_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("misspelling of ""([^""]+)"" or ""([^""]+)""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Double_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1086,13 +1086,13 @@ package body Codefix.GNAT_Parser is
    -- Goto_Mispelling --
    ---------------------
 
-   procedure Initialize (This : in out Goto_Misspelling) is
+   overriding procedure Initialize (This : in out Goto_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("goto is one word")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Goto_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1112,19 +1112,19 @@ package body Codefix.GNAT_Parser is
    -- Library_Misspelling --
    -------------------------
 
-   procedure Initialize (This : in out Library_Misspelling) is
+   overriding procedure Initialize (This : in out Library_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("""([^""]+)"" is not a predefined library unit")));
    end Initialize;
 
-   procedure Free (This : in out Library_Misspelling) is
+   overriding procedure Free (This : in out Library_Misspelling) is
    begin
       Free (Error_Parser (This));
       Free (This.Misspelling_Matcher);
    end Free;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Library_Misspelling;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1160,7 +1160,7 @@ package body Codefix.GNAT_Parser is
    -- Sth_Should_Be_Sth --
    -----------------------
 
-   procedure Initialize (This : in out Sth_Should_Be_Sth) is
+   overriding procedure Initialize (This : in out Sth_Should_Be_Sth) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1171,7 +1171,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("""([^""])+"" illegal here, replaced by ""([^""])+""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Sth_Should_Be_Sth;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1195,13 +1195,13 @@ package body Codefix.GNAT_Parser is
    -- Should_Be_Semicolon --
    -------------------------
 
-   procedure Initialize (This : in out Should_Be_Semicolon) is
+   overriding procedure Initialize (This : in out Should_Be_Semicolon) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("period should probably be semicolon")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Should_Be_Semicolon;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1220,13 +1220,13 @@ package body Codefix.GNAT_Parser is
    -- And_Meant --
    ---------------
 
-   procedure Initialize (This : in out And_Meant) is
+   overriding procedure Initialize (This : in out And_Meant) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("maybe ""and"" was meant")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : And_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1245,13 +1245,13 @@ package body Codefix.GNAT_Parser is
    -- Or_Meant --
    --------------
 
-   procedure Initialize (This : in out Or_Meant) is
+   overriding procedure Initialize (This : in out Or_Meant) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("did you mean ""or""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Or_Meant;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1270,7 +1270,7 @@ package body Codefix.GNAT_Parser is
    -- Bad_End_Block --
    -------------------
 
-   procedure Initialize (This : in out Bad_End_Block) is
+   overriding procedure Initialize (This : in out Bad_End_Block) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1279,7 +1279,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("""(end loop [\w]+;)"" expected")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Bad_End_Block;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1303,13 +1303,13 @@ package body Codefix.GNAT_Parser is
    -- Unqualified_Expression --
    ----------------------------
 
-   procedure Initialize (This : in out Unqualified_Expression) is
+   overriding procedure Initialize (This : in out Unqualified_Expression) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("if qualified expression was meant")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Unqualified_Expression;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1334,7 +1334,7 @@ package body Codefix.GNAT_Parser is
    -- Goes_Before --
    -----------------
 
-   procedure Initialize (This : in out Goes_Before) is
+   overriding procedure Initialize (This : in out Goes_Before) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1347,7 +1347,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("""([\w]+)"" must preceed ""([\w]+)""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Goes_Before;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1370,13 +1370,13 @@ package body Codefix.GNAT_Parser is
    -- Sth_Expected_3 --
    --------------------
 
-   procedure Initialize (This : in out Sth_Expected_3) is
+   overriding procedure Initialize (This : in out Sth_Expected_3) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("""function"", ""procedure"" or ""package"" expected")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Sth_Expected_3;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1397,13 +1397,13 @@ package body Codefix.GNAT_Parser is
    -- Sth_Expected_2 --
    --------------------
 
-   procedure Initialize (This : in out Sth_Expected_2) is
+   overriding procedure Initialize (This : in out Sth_Expected_2) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("""function"" or ""procedure"" expected")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Sth_Expected_2;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1423,13 +1423,13 @@ package body Codefix.GNAT_Parser is
    -- Sth_Expected --
    ------------------
 
-   procedure Initialize (This : in out Sth_Expected) is
+   overriding procedure Initialize (This : in out Sth_Expected) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("""([\w]+)"" expected")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Sth_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1451,13 +1451,13 @@ package body Codefix.GNAT_Parser is
    -- Missing_Kw --
    ----------------
 
-   procedure Initialize (This : in out Missing_Kw) is
+   overriding procedure Initialize (This : in out Missing_Kw) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("missing ""(\w+)""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Missing_Kw;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1488,19 +1488,19 @@ package body Codefix.GNAT_Parser is
    -- Missing_Sep --
    -----------------
 
-   procedure Free (This : in out Missing_Sep) is
+   overriding procedure Free (This : in out Missing_Sep) is
    begin
       Free (This.Wrong_Form);
       Free (Error_Parser (This));
    end Free;
 
-   procedure Initialize (This : in out Missing_Sep) is
+   overriding procedure Initialize (This : in out Missing_Sep) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("missing ""([^""\w]+)""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Missing_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1535,13 +1535,13 @@ package body Codefix.GNAT_Parser is
    -- Missing_All --
    -----------------
 
-   procedure Free (This : in out Missing_All) is
+   overriding procedure Free (This : in out Missing_All) is
    begin
       Free (This.Col_Matcher);
       Free (Error_Parser (This));
    end Free;
 
-   procedure Initialize (This : in out Missing_All) is
+   overriding procedure Initialize (This : in out Missing_All) is
    begin
       This.Matcher := (new Pattern_Matcher'
         (Compile ("add ""all"" to type ""[\w]+"" defined at (line) ([0-9]+)")),
@@ -1549,7 +1549,7 @@ package body Codefix.GNAT_Parser is
         ("add ""all"" to type ""[\w]+"" defined at ([^:]+):([0-9]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Missing_All;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1606,13 +1606,13 @@ package body Codefix.GNAT_Parser is
    -- Statement_Missing --
    -----------------------
 
-   procedure Initialize (This : in out Statement_Missing) is
+   overriding procedure Initialize (This : in out Statement_Missing) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("statement expected")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Statement_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1632,12 +1632,12 @@ package body Codefix.GNAT_Parser is
    -- Space_Missing --
    -------------------
 
-   procedure Initialize (This : in out Space_Missing) is
+   overriding procedure Initialize (This : in out Space_Missing) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'(Compile ("space required")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Space_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1656,13 +1656,13 @@ package body Codefix.GNAT_Parser is
    -- Two_Spaces_Missing --
    ------------------------
 
-   procedure Initialize (This : in out Two_Spaces_Missing) is
+   overriding procedure Initialize (This : in out Two_Spaces_Missing) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'(Compile ("two spaces required")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Two_Spaces_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1681,7 +1681,7 @@ package body Codefix.GNAT_Parser is
    -- Name_Missing --
    ------------------
 
-   procedure Free (This : in out Name_Missing) is
+   overriding procedure Free (This : in out Name_Missing) is
    begin
       for J in This.Matcher_Aux'Range loop
          Free (This.Matcher_Aux (J));
@@ -1690,7 +1690,7 @@ package body Codefix.GNAT_Parser is
       Free (Error_Parser (This));
    end Free;
 
-   procedure Initialize (This : in out Name_Missing) is
+   overriding procedure Initialize (This : in out Name_Missing) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1701,7 +1701,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("\(style\) ""(end record) ([\w]+)"" required")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Name_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1750,13 +1750,13 @@ package body Codefix.GNAT_Parser is
    -- Double_Keyword --
    --------------------
 
-   procedure Initialize (This : in out Double_Keyword) is
+   overriding procedure Initialize (This : in out Double_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("extra ""([^""])"" ignored")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Double_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1778,13 +1778,13 @@ package body Codefix.GNAT_Parser is
    -- Extra_Paren --
    -----------------
 
-   procedure Initialize (This : in out Extra_Paren) is
+   overriding procedure Initialize (This : in out Extra_Paren) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("extra right paren")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Extra_Paren;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1803,13 +1803,13 @@ package body Codefix.GNAT_Parser is
    -- Redundant_Keyword --
    -----------------------
 
-   procedure Initialize (This : in out Redundant_Keyword) is
+   overriding procedure Initialize (This : in out Redundant_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("redundant (["" \w]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Redundant_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1836,13 +1836,13 @@ package body Codefix.GNAT_Parser is
    -- Unexpected_Sep --
    --------------------
 
-   procedure Initialize (This : in out Unexpected_Sep) is
+   overriding procedure Initialize (This : in out Unexpected_Sep) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("unexpected ""([^""]+)"" ignored")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Unexpected_Sep;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1864,13 +1864,13 @@ package body Codefix.GNAT_Parser is
    -- Unexpected_Word --
    ---------------------
 
-   procedure Initialize (This : in out Unexpected_Word) is
+   overriding procedure Initialize (This : in out Unexpected_Word) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("unexpected ([\w]+) ([\w]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Unexpected_Word;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1899,7 +1899,7 @@ package body Codefix.GNAT_Parser is
    -- Kw_Not_Allowed --
    --------------------
 
-   procedure Initialize (This : in out Kw_Not_Allowed) is
+   overriding procedure Initialize (This : in out Kw_Not_Allowed) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'(Compile ("""([\w]+)"" not allowed")),
@@ -1908,7 +1908,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("""([\w]+)"" ignored \(only allowed in")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Kw_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1930,7 +1930,7 @@ package body Codefix.GNAT_Parser is
    -- Sep_Not_Allowed --
    ---------------------
 
-   procedure Initialize (This : in out Sep_Not_Allowed) is
+   overriding procedure Initialize (This : in out Sep_Not_Allowed) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -1943,7 +1943,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("(space) not allowed")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Sep_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -1991,14 +1991,14 @@ package body Codefix.GNAT_Parser is
    -- Already_Use_Visible --
    -------------------------
 
-   procedure Initialize (This : in out Already_Use_Visible) is
+   overriding procedure Initialize (This : in out Already_Use_Visible) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("""([\w])+"" is already use.visible")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Already_Use_Visible;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2018,14 +2018,14 @@ package body Codefix.GNAT_Parser is
    -- Redundant_With_In_Body --
    ----------------------------
 
-   procedure Initialize (This : in out Redundant_With_In_Body) is
+   overriding procedure Initialize (This : in out Redundant_With_In_Body) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("redundant with clause in body")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Redundant_With_In_Body;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2045,14 +2045,14 @@ package body Codefix.GNAT_Parser is
    -- Use_Valid_Instead --
    -----------------------
 
-   procedure Initialize (This : in out Use_Valid_Instead) is
+   overriding procedure Initialize (This : in out Use_Valid_Instead) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("use 'Valid attribute instead")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Use_Valid_Instead;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2071,13 +2071,13 @@ package body Codefix.GNAT_Parser is
    -- Should_Be_In --
    ------------------
 
-   procedure Initialize (This : in out Should_Be_In) is
+   overriding procedure Initialize (This : in out Should_Be_In) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
          (Compile ("should be in column ([0-9]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Should_Be_In;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2100,7 +2100,7 @@ package body Codefix.GNAT_Parser is
    -- Bad_Column --
    ----------------
 
-   procedure Initialize (This : in out Bad_Column) is
+   overriding procedure Initialize (This : in out Bad_Column) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'(Compile ("bad column")),
@@ -2108,7 +2108,7 @@ package body Codefix.GNAT_Parser is
          new Pattern_Matcher'(Compile ("bad indentation")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Bad_Column;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2127,7 +2127,7 @@ package body Codefix.GNAT_Parser is
    -- Main_With_Missing --
    -----------------------
 
-   procedure Initialize (This : in out Main_With_Missing) is
+   overriding procedure Initialize (This : in out Main_With_Missing) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2144,7 +2144,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("possible missing ""(with) ([^;]+)(;) (use) [^;]+""")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Main_With_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2180,14 +2180,14 @@ package body Codefix.GNAT_Parser is
    -- Bad_Casing_Standard --
    -------------------------
 
-   procedure Initialize (This : in out Bad_Casing_Standard) is
+   overriding procedure Initialize (This : in out Bad_Casing_Standard) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("bad capitalization, mixed case required")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Bad_Casing_Standard;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2206,13 +2206,13 @@ package body Codefix.GNAT_Parser is
    -- Bad_Casing_Declared --
    -------------------------
 
-   procedure Initialize (This : in out Bad_Casing_Declared) is
+   overriding procedure Initialize (This : in out Bad_Casing_Declared) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("bad casing of ""([^""]+)"" declared")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Bad_Casing_Declared;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2234,13 +2234,13 @@ package body Codefix.GNAT_Parser is
    -- Bad_Casing_Keyword --
    ------------------------
 
-   procedure Initialize (This : in out Bad_Casing_Keyword) is
+   overriding procedure Initialize (This : in out Bad_Casing_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("reserved words must be all lower case")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Bad_Casing_Keyword;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2259,7 +2259,7 @@ package body Codefix.GNAT_Parser is
    -- Object_Not_Referenced --
    ---------------------------
 
-   procedure Initialize (This : in out Object_Not_Referenced) is
+   overriding procedure Initialize (This : in out Object_Not_Referenced) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2269,7 +2269,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Object_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2335,7 +2335,7 @@ package body Codefix.GNAT_Parser is
    -- Pkg_Not_Referenced --
    ------------------------
 
-   procedure Initialize (This : in out Pkg_Not_Referenced) is
+   overriding procedure Initialize (This : in out Pkg_Not_Referenced) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2346,7 +2346,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("unit ""([^""]+)"" is never instantiated")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Pkg_Not_Referenced;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2370,14 +2370,14 @@ package body Codefix.GNAT_Parser is
    -- Never_Read --
    ----------------
 
-   procedure Initialize (This : in out Never_Read) is
+   overriding procedure Initialize (This : in out Never_Read) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("variable ""([^""]+)"" is assigned but never read")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Never_Read;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2401,14 +2401,14 @@ package body Codefix.GNAT_Parser is
    -- Never_Assigned --
    --------------------
 
-   procedure Initialize (This : in out Never_Assigned) is
+   overriding procedure Initialize (This : in out Never_Assigned) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
            (Compile ("""([^""]+)"" is never read and never assigned")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Never_Assigned;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2435,13 +2435,13 @@ package body Codefix.GNAT_Parser is
    -- Pragma_Missplaced --
    -----------------------
 
-   procedure Initialize (This : in out Pragma_Missplaced) is
+   overriding procedure Initialize (This : in out Pragma_Missplaced) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
          (Compile ("pragma must be first line of file")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Pragma_Missplaced;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2460,13 +2460,13 @@ package body Codefix.GNAT_Parser is
    -- Constant_Expected --
    -----------------------
 
-   procedure Initialize (This : in out Constant_Expected) is
+   overriding procedure Initialize (This : in out Constant_Expected) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
          (Compile ("""([\w]+)"" is not modified, could be declared const")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Constant_Expected;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2489,7 +2489,7 @@ package body Codefix.GNAT_Parser is
    -- Possible_Interpretation --
    -----------------------------
 
-   procedure Initialize (This : in out Possible_Interpretation) is
+   overriding procedure Initialize (This : in out Possible_Interpretation) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
@@ -2497,14 +2497,14 @@ package body Codefix.GNAT_Parser is
               ("ambiguous expression \(cannot resolve """"?([^""]+)""""?")));
    end Initialize;
 
-   procedure Free (This : in out Possible_Interpretation) is
+   overriding procedure Free (This : in out Possible_Interpretation) is
    begin
       Free (Error_Parser (This));
       Free (This.Source_Matcher);
       Free (This.Local_Matcher);
    end Free;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Possible_Interpretation;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2584,13 +2584,13 @@ package body Codefix.GNAT_Parser is
    -- Hidden_Declaration --
    ------------------------
 
-   procedure Initialize (This : in out Hidden_Declaration) is
+   overriding procedure Initialize (This : in out Hidden_Declaration) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
          (Compile ("""""?([^""]+)""""? is not visible")));
    end Initialize;
 
-   procedure Free (This : in out Hidden_Declaration) is
+   overriding procedure Free (This : in out Hidden_Declaration) is
    begin
       Free (Error_Parser (This));
       Free (This.Check_Possible);
@@ -2598,7 +2598,7 @@ package body Codefix.GNAT_Parser is
       Free (This.Get_From_Other_File);
    end Free;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Hidden_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2699,7 +2699,7 @@ package body Codefix.GNAT_Parser is
    -- Use_Missing --
    -----------------
 
-   procedure Initialize (This : in out Use_Missing) is
+   overriding procedure Initialize (This : in out Use_Missing) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
@@ -2707,8 +2707,7 @@ package body Codefix.GNAT_Parser is
             & "([^\:]+):([0-9]+) is not directly visible")));
    end Initialize;
 
-   overriding
-   procedure Fix
+   overriding procedure Fix
      (This         : Use_Missing;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2764,7 +2763,7 @@ package body Codefix.GNAT_Parser is
    -- Redundant_Conversion --
    --------------------------
 
-   procedure Initialize (This : in out Redundant_Conversion) is
+   overriding procedure Initialize (This : in out Redundant_Conversion) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
@@ -2773,7 +2772,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("redundant conversion, ""([^""])"" is of type")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Redundant_Conversion;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2796,7 +2795,7 @@ package body Codefix.GNAT_Parser is
    -- Missplaced_With --
    ---------------------
 
-   procedure Initialize (This : in out Missplaced_With) is
+   overriding procedure Initialize (This : in out Missplaced_With) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2805,7 +2804,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("with clause might be moved to body")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Missplaced_With;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2824,7 +2823,7 @@ package body Codefix.GNAT_Parser is
    -- Not_Fully_Conformant --
    --------------------------
 
-   procedure Initialize (This : in out Not_Fully_Conformant) is
+   overriding procedure Initialize (This : in out Not_Fully_Conformant) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2841,7 +2840,7 @@ package body Codefix.GNAT_Parser is
                      "(line) ([\d]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Not_Fully_Conformant;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2882,13 +2881,13 @@ package body Codefix.GNAT_Parser is
    -- Generic_Use_Unallowed --
    ---------------------------
 
-   procedure Initialize (This : in out Generic_Use_Unallowed) is
+   overriding procedure Initialize (This : in out Generic_Use_Unallowed) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("a generic package is not allowed in a use clause")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Generic_Use_Unallowed;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2908,7 +2907,7 @@ package body Codefix.GNAT_Parser is
    -- Non_Visible_Declaration --
    -----------------------------
 
-   procedure Initialize (This : in out Non_Visible_Declaration) is
+   overriding procedure Initialize (This : in out Non_Visible_Declaration) is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
@@ -2917,7 +2916,7 @@ package body Codefix.GNAT_Parser is
            (Compile ("non-visible declaration at (line) ([\d]+)")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Non_Visible_Declaration;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2962,13 +2961,13 @@ package body Codefix.GNAT_Parser is
    -- Consecutive_Underlines --
    ----------------------------
 
-   procedure Initialize (This : in out Consecutive_Underlines) is
+   overriding procedure Initialize (This : in out Consecutive_Underlines) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("two consecutive underlines not permitted")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Consecutive_Underlines;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;
@@ -2986,13 +2985,13 @@ package body Codefix.GNAT_Parser is
    -- Multiple_Blank_Lines --
    --------------------------
 
-   procedure Initialize (This : in out Multiple_Blank_Lines) is
+   overriding procedure Initialize (This : in out Multiple_Blank_Lines) is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'(Compile ("multiple blank lines")));
    end Initialize;
 
-   procedure Fix
+   overriding procedure Fix
      (This         : Multiple_Blank_Lines;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : in out Error_Message_Iterator;

@@ -143,7 +143,7 @@ package body Codefix.Formal_Errors is
    -- Free --
    ----------
 
-   procedure Free (This : in out Error_Message) is
+   overriding procedure Free (This : in out Error_Message) is
    begin
       Free (File_Cursor (This));
       Free (This.Message);
@@ -153,7 +153,7 @@ package body Codefix.Formal_Errors is
    -- Clone --
    -----------
 
-   function Clone (This : Error_Message) return Error_Message is
+   overriding function Clone (This : Error_Message) return Error_Message is
       New_Message : Error_Message;
    begin
       New_Message := (Clone (File_Cursor (This)) with
@@ -167,7 +167,8 @@ package body Codefix.Formal_Errors is
    -- Concat --
    ------------
 
-   procedure Concat (Dest : in out Solution_List; Source : Solution_List) is
+   overriding procedure Concat
+     (Dest : in out Solution_List; Source : Solution_List) is
    begin
       Concat (Command_List.List (Dest), Command_List.List (Source));
    end Concat;
@@ -176,7 +177,7 @@ package body Codefix.Formal_Errors is
    -- Length --
    ------------
 
-   function Length (List : Solution_List) return Integer is
+   overriding function Length (List : Solution_List) return Integer is
    begin
       return Length (Command_List.List (List));
    end Length;
@@ -195,7 +196,8 @@ package body Codefix.Formal_Errors is
    -- Next --
    ----------
 
-   function Next (It : Solution_List_Iterator) return Solution_List_Iterator is
+   overriding function Next
+     (It : Solution_List_Iterator) return Solution_List_Iterator is
    begin
       return Solution_List_Iterator (Next (Command_List.List_Node (It)));
    end Next;

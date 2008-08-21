@@ -108,15 +108,15 @@ package body Expect_Interface is
       Unmatched_Output : String_Access;
    end record;
 
-   function Name (X : access Custom_Action_Record) return String;
+   overriding function Name (X : access Custom_Action_Record) return String;
    --  Returns the name of the command
 
-   procedure Free (X : in out Custom_Action_Record);
+   overriding procedure Free (X : in out Custom_Action_Record);
    --  Free memory associated to X
 
-   function Execute
+   overriding function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type;
-   procedure Interrupt (Command : in out Custom_Action_Record);
+   overriding procedure Interrupt (Command : in out Custom_Action_Record);
    --  Do not do anything. This command is not aimed at being used in the
    --  task manager.
 
@@ -158,7 +158,7 @@ package body Expect_Interface is
    procedure Exit_Cb (D : in out Custom_Action_Record);
    --  Called when an external process has finished running
 
-   procedure Before_Kill_Cb (D : in Custom_Action_Record);
+   procedure Before_Kill_Cb (D : Custom_Action_Record);
    --  Called before killing the external process
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
@@ -192,7 +192,7 @@ package body Expect_Interface is
    -- Name --
    ----------
 
-   function Name (X : access Custom_Action_Record) return String is
+   overriding function Name (X : access Custom_Action_Record) return String is
    begin
       if X.Command /= null then
          return X.Command (X.Command'First).all;
@@ -205,7 +205,7 @@ package body Expect_Interface is
    -- Free --
    ----------
 
-   procedure Free (X : in out Custom_Action_Record) is
+   overriding procedure Free (X : in out Custom_Action_Record) is
    begin
       Free (X.Command);
       Unchecked_Free (X.Pattern);
@@ -232,7 +232,7 @@ package body Expect_Interface is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Custom_Action_Record) is
+   overriding procedure Interrupt (Command : in out Custom_Action_Record) is
    begin
       Before_Kill_Cb (Command);
       Interrupt      (Command.Pd.all);
@@ -245,7 +245,7 @@ package body Expect_Interface is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type
    is
       Res       : Boolean;
@@ -414,7 +414,7 @@ package body Expect_Interface is
    -- Before_Kill_Cb --
    --------------------
 
-   procedure Before_Kill_Cb (D : in Custom_Action_Record) is
+   procedure Before_Kill_Cb (D : Custom_Action_Record) is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin

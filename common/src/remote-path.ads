@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007                       --
---                              AdaCore                              --
+--                   Copyright (C) 2006-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,17 +60,17 @@ package Remote.Path is
    --  Same as above for sync
 
    procedure Set_Deleted_State (Mirror : in out Mirror_Path);
-   function Get_Deleted_State (Mirror : in Mirror_Path) return Boolean;
+   function Get_Deleted_State (Mirror : Mirror_Path) return Boolean;
    --  Set/Get the deleted state
 
-   function Is_Modified (Mirror : in Mirror_Path) return Boolean;
+   function Is_Modified (Mirror : Mirror_Path) return Boolean;
    --  Tell if Mirror as a tentative value set.
 
    procedure Apply (Mirror : in out Mirror_Path);
 
    procedure Cancel (Mirror : in out Mirror_Path);
 
-   function "=" (M1, M2 : Mirror_Path) return Boolean;
+   overriding function "=" (M1, M2 : Mirror_Path) return Boolean;
 
 private
 

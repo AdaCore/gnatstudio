@@ -175,7 +175,7 @@ package body Codefix.Text_Manager is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : File_Cursor) return Boolean is
+   overriding function "=" (Left, Right : File_Cursor) return Boolean is
    begin
       return Left.Line = Right.Line
         and then Left.Col = Right.Col
@@ -186,7 +186,7 @@ package body Codefix.Text_Manager is
    -- "<" --
    ---------
 
-   function "<" (Left, Right : File_Cursor) return Boolean is
+   overriding function "<" (Left, Right : File_Cursor) return Boolean is
    begin
       return Left.File < Right.File
         or else (Left.File = Right.File
@@ -1853,7 +1853,7 @@ package body Codefix.Text_Manager is
    -- Word_Cursor --
    -----------------
 
-   procedure Free (This : in out Word_Cursor) is
+   overriding procedure Free (This : in out Word_Cursor) is
    begin
       Free (This.String_Match);
       Free (File_Cursor (This));
@@ -1863,7 +1863,7 @@ package body Codefix.Text_Manager is
    -- Clone --
    -----------
 
-   function Clone (This : Word_Cursor) return Word_Cursor is
+   overriding function Clone (This : Word_Cursor) return Word_Cursor is
    begin
       return (Clone (File_Cursor (This)) with
               Clone (This.String_Match), This.Mode);
@@ -1927,13 +1927,13 @@ package body Codefix.Text_Manager is
       Make_Word_Mark (Word, Current_Text, This.Word);
    end Initialize;
 
-   procedure Free (This : in out Remove_Word_Cmd) is
+   overriding procedure Free (This : in out Remove_Word_Cmd) is
    begin
       Free (This.Word);
       Free (Text_Command (This));
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -1978,7 +1978,7 @@ package body Codefix.Text_Manager is
       This.Insert_New_Line := Insert_New_Line;
    end Initialize;
 
-   procedure Free (This : in out Insert_Word_Cmd) is
+   overriding procedure Free (This : in out Insert_Word_Cmd) is
    begin
       Free (This.Word);
       Free (This.New_Position);
@@ -2085,14 +2085,14 @@ package body Codefix.Text_Manager is
       Initialize (This.Step_Remove, Current_Text, Word);
    end Initialize;
 
-   procedure Free (This : in out Move_Word_Cmd) is
+   overriding procedure Free (This : in out Move_Word_Cmd) is
    begin
       Free (This.Step_Remove);
       Free (This.Step_Insert);
       Free (Text_Command (This));
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -2117,14 +2117,14 @@ package body Codefix.Text_Manager is
       This.Do_Indentation := Do_Indentation;
    end Initialize;
 
-   procedure Free (This : in out Replace_Word_Cmd) is
+   overriding procedure Free (This : in out Replace_Word_Cmd) is
    begin
       Free (This.Mark);
       Free (This.Str_Expected);
       Free (Text_Command (This));
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -2168,14 +2168,14 @@ package body Codefix.Text_Manager is
         (This.Step_Word2, Current_Text, Word2, Word1.String_Match.all);
    end Initialize;
 
-   procedure Free (This : in out Invert_Words_Cmd) is
+   overriding procedure Free (This : in out Invert_Words_Cmd) is
    begin
       Free (This.Step_Word1);
       Free (This.Step_Word2);
       Free (Text_Command (This));
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -2199,13 +2199,13 @@ package body Codefix.Text_Manager is
         (Get_New_Mark (Current_Text, Position));
    end Initialize;
 
-   procedure Free (This : in out Add_Line_Cmd) is
+   overriding procedure Free (This : in out Add_Line_Cmd) is
    begin
       Free (This.Line);
       Free (This.Position);
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Add_Line_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -2234,14 +2234,14 @@ package body Codefix.Text_Manager is
       This.New_Text := new String'(New_Text);
    end Initialize;
 
-   procedure Free (This : in out Replace_Slice_Cmd) is
+   overriding procedure Free (This : in out Replace_Slice_Cmd) is
    begin
       Free (This.Start_Mark);
       Free (This.End_Mark);
       Free (This.New_Text);
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Replace_Slice_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -2271,12 +2271,12 @@ package body Codefix.Text_Manager is
         (Current_Text.Get_New_Mark (Start_Cursor));
    end Initialize;
 
-   procedure Free (This : in out Remove_Blank_Lines_Cmd) is
+   overriding procedure Free (This : in out Remove_Blank_Lines_Cmd) is
    begin
       Free (This.Start_Mark);
    end Free;
 
-   procedure Execute
+   overriding procedure Execute
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is

@@ -85,7 +85,7 @@ package body Language.Custom is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Custom_Language;
       Name  : String;
       Index : String) return String is
@@ -101,7 +101,7 @@ package body Language.Custom is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Custom_Language;
       Name : String) return String is
    begin
@@ -116,7 +116,7 @@ package body Language.Custom is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Custom_Language) return Explorer_Categories is
    begin
       if Lang.Categories'Length > 0
@@ -132,7 +132,7 @@ package body Language.Custom is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access is
    begin
       if Lang.Parent = null
@@ -679,7 +679,7 @@ package body Language.Custom is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Custom_Language;
       Str  : String) return Boolean is
    begin
@@ -694,13 +694,13 @@ package body Language.Custom is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return Strings.String_Access is
    begin
       return Lang.Keywords_Regexp;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return Pattern_Matcher_Access is
    begin
       if Lang.Keywords = null then
@@ -714,7 +714,7 @@ package body Language.Custom is
       end if;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List
    is
    begin
@@ -728,7 +728,7 @@ package body Language.Custom is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Custom_Language;
       Name  : String;
       Field : String) return String is
@@ -744,7 +744,8 @@ package body Language.Custom is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Custom_Language) return String is
+   overriding function Get_Name
+     (Lang : access Custom_Language) return String is
    begin
       if Lang.Name = null then
          return "";
@@ -757,7 +758,7 @@ package body Language.Custom is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Custom_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -835,7 +836,7 @@ package body Language.Custom is
    -- Comment_Line --
    ------------------
 
-   function Comment_Line
+   overriding function Comment_Line
      (Lang    : access Custom_Language;
       Line    : String;
       Comment : Boolean := True;
@@ -881,7 +882,7 @@ package body Language.Custom is
    -- Parse_Constructs --
    ----------------------
 
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang   : access Custom_Language;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List) is
@@ -905,7 +906,7 @@ package body Language.Custom is
    -- Format_Buffer --
    -------------------
 
-   procedure Format_Buffer
+   overriding procedure Format_Buffer
     (Lang                : access Custom_Language;
      Buffer              : String;
      Replace             : Replace_Text_Callback;
@@ -976,7 +977,7 @@ package body Language.Custom is
    -- Parse_Entities --
    --------------------
 
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Custom_Language;
       Buffer   : String;
       Callback : Entity_Callback)
@@ -1023,7 +1024,7 @@ package body Language.Custom is
    -- Is_Word_Char --
    ------------------
 
-   function Is_Word_Char
+   overriding function Is_Word_Char
      (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean
    is
    begin

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                    Copyright (C) 2006-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -185,7 +184,7 @@ package body Remote.Path is
    -- Get_Deleted_State --
    -----------------------
 
-   function Get_Deleted_State (Mirror : in Mirror_Path) return Boolean is
+   function Get_Deleted_State (Mirror : Mirror_Path) return Boolean is
    begin
       Trace (Me, "Deleted state is " &
              Boolean'Image (Mirror.Tentative_Delete));
@@ -196,7 +195,7 @@ package body Remote.Path is
    -- Is_Modified --
    -----------------
 
-   function Is_Modified (Mirror : in Mirror_Path) return Boolean is
+   function Is_Modified (Mirror : Mirror_Path) return Boolean is
    begin
       return Mirror.Tentative.Local_Path /= null
         or else Mirror.Tentative.Remote_Path /= null
@@ -259,7 +258,7 @@ package body Remote.Path is
    -- "=" --
    ---------
 
-   function "=" (M1, M2 : Mirror_Path) return Boolean is
+   overriding function "=" (M1, M2 : Mirror_Path) return Boolean is
       function Same (P1, P2 : String_Access) return Boolean;
 
       function Same (P1, P2 : String_Access) return Boolean is

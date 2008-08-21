@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +29,7 @@ package body String_List_Utils is
    ----------------------
 
    function Copy_String_List
-     (S : in String_List.List) return String_List.List
+     (S : String_List.List) return String_List.List
    is
       Result : String_List.List;
       Temp   : List_Node := First (S);

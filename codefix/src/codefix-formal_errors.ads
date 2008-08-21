@@ -60,14 +60,15 @@ package Codefix.Formal_Errors is
    function Get_Message (This : Error_Message) return String;
    --  Returns the message text (no line or column number)
 
-   procedure Free (This : in out Error_Message);
+   overriding procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
    type Solution_List is private;
 
    Null_Solution_List : constant Solution_List;
 
-   procedure Concat (Dest : in out Solution_List; Source : Solution_List);
+   procedure Concat
+     (Dest : in out Solution_List; Source : Solution_List);
    --  Adds the contents of Sources at the end of Dest. No deep copy is done by
    --  this function.
 
@@ -253,7 +254,7 @@ package Codefix.Formal_Errors is
    --  Propose a fix removing all the blank lines starting at the cursor
    --  location.
 
-   function Clone (This : Error_Message) return Error_Message;
+   overriding function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
 

@@ -31,46 +31,46 @@ package Language.C is
    -- Parsing --
    -------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access C_Language; Str : String) return Boolean;
 
    ------------------
    -- Highlighting --
    ------------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access C_Language) return Strings.String_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access C_Language) return Pattern_Matcher_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access C_Language) return GNAT.Strings.String_List;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access C_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access C_Language) return Explorer_Categories;
 
    ------------------------
    -- Naming Conventions --
    ------------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access C_Language;
       Name : String) return String;
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access C_Language;
       Name  : String;
       Index : String) return String;
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access C_Language;
       Name  : String;
       Field : String) return String;
@@ -79,7 +79,7 @@ package Language.C is
    -- Project support --
    ---------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access C_Language) return Project_Field_Array;
 
    ----------------------
@@ -114,8 +114,8 @@ package Language.C is
 private
    type C_Language is new Language_Root with null record;
 
-   function Get_Name (Lang : access C_Language) return String;
-   function Comment_Line
+   overriding function Get_Name (Lang : access C_Language) return String;
+   overriding function Comment_Line
      (Lang    : access C_Language;
       Line    : String;
       Comment : Boolean := True;

@@ -92,7 +92,7 @@ package body Language.Cpp is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories is
    begin
       return Explorer_Regexps (C_Language (Lang.all)'Access)
@@ -103,7 +103,7 @@ package body Language.Cpp is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Cpp_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -129,7 +129,7 @@ package body Language.Cpp is
       Syntax_Highlighting           => True,
       Case_Sensitive                => True);
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -141,7 +141,7 @@ package body Language.Cpp is
    -- Parse_Entities --
    --------------------
 
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Cpp_Language;
       Buffer   : String;
       Callback : Entity_Callback)
@@ -163,7 +163,7 @@ package body Language.Cpp is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Cpp_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -175,7 +175,7 @@ package body Language.Cpp is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Cpp_Language) return String is
+   overriding function Get_Name (Lang : access Cpp_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "c++";

@@ -40,22 +40,23 @@ package Commands.Codefix is
       Session_Timestamp : Integer := 0;
    end record;
 
-   function Execute
+   overriding function Execute
      (Command : access Codefix_Command) return Command_Return_Type;
    --  Fix the error recorded in the Codefix_Command.
 
-   function Execute
+   overriding function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type;
-   procedure Free (Command : in out Codefix_Add_Command);
-   function Progress
+   overriding procedure Free (Command : in out Codefix_Add_Command);
+   overriding function Progress
      (Command : access Codefix_Add_Command) return Progress_Record;
-   function Name (Command : access Codefix_Add_Command) return String;
+   overriding function Name
+     (Command : access Codefix_Add_Command) return String;
    --  See Commands for a description of overloaded subprograms.
 
-   function Undo (Command : access Codefix_Command) return Boolean;
+   overriding function Undo (Command : access Codefix_Command) return Boolean;
    --  Unfix the error recored.
 
-   procedure Free (Command : in out Codefix_Command);
+   overriding procedure Free (Command : in out Codefix_Command);
    --  Do not do anyting, as far as nothing has to be freed in Codefix_Command.
 
 end Commands.Codefix;

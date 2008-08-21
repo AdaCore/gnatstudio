@@ -149,24 +149,24 @@ package body CPP_Parser is
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
 
-   function Get_Name (LI : access CPP_Handler_Record) return String;
-   function Get_Source_Info
+   overriding function Get_Name (LI : access CPP_Handler_Record) return String;
+   overriding function Get_Source_Info
      (Handler               : access CPP_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler         : access CPP_Handler_Record) return Boolean;
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer;
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler      : access CPP_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
       Errors       : Projects.Error_Report;
       Recursive    : Boolean := False) return LI_Handler_Iterator'Class;
-   procedure Parse_File_Constructs
+   overriding procedure Parse_File_Constructs
      (Handler   : access CPP_Handler_Record;
       Languages : access Abstract_Language_Handler_Record'Class;
       File_Name : GNATCOLL.VFS.Virtual_File;
@@ -198,11 +198,11 @@ package body CPP_Parser is
       --  The name of a temporary file created by dbimp, which needs to be
       --  freed on completion
    end record;
-   procedure Continue
+   overriding procedure Continue
      (Iterator : in out CPP_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean);
-   procedure Destroy (Iterator : in out CPP_Handler_Iterator);
+   overriding procedure Destroy (Iterator : in out CPP_Handler_Iterator);
    --  See doc for inherited subprograms
 
    procedure Browse_Project
@@ -2741,7 +2741,7 @@ package body CPP_Parser is
    -- Get_Source_Info --
    ---------------------
 
-   function Get_Source_Info
+   overriding function Get_Source_Info
      (Handler               : access CPP_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
@@ -2834,7 +2834,7 @@ package body CPP_Parser is
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler : access CPP_Handler_Record) return Boolean
    is
       pragma Unreferenced (Handler);
@@ -2858,7 +2858,7 @@ package body CPP_Parser is
    -- Parse_All_LI_Information --
    ------------------------------
 
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access CPP_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer
@@ -3099,7 +3099,7 @@ package body CPP_Parser is
    -- Generate_LI_For_Project --
    -----------------------------
 
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler      : access CPP_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
@@ -3127,7 +3127,7 @@ package body CPP_Parser is
    -- Continue --
    --------------
 
-   procedure Continue
+   overriding procedure Continue
      (Iterator : in out CPP_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean)
@@ -3218,7 +3218,7 @@ package body CPP_Parser is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iterator : in out CPP_Handler_Iterator) is
+   overriding procedure Destroy (Iterator : in out CPP_Handler_Iterator) is
       Success : Boolean;
    begin
       if Iterator.List_Filename /= null then
@@ -3346,7 +3346,7 @@ package body CPP_Parser is
    -- Parse_File_Constructs --
    ---------------------------
 
-   procedure Parse_File_Constructs
+   overriding procedure Parse_File_Constructs
      (Handler   : access CPP_Handler_Record;
       Languages : access Abstract_Language_Handler_Record'Class;
       File_Name : GNATCOLL.VFS.Virtual_File;
@@ -3542,7 +3542,9 @@ package body CPP_Parser is
    -- Get_Name --
    --------------
 
-   function Get_Name (LI : access CPP_Handler_Record) return String is
+   overriding function Get_Name
+     (LI : access CPP_Handler_Record) return String
+   is
       pragma Unreferenced (LI);
    begin
       return CPP_LI_Handler_Name;

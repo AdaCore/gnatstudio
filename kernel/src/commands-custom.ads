@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2007, AdaCore                  --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -124,10 +124,10 @@ package Commands.Custom is
    --  This filter should be checked if the command is used as an action in
    --  GPS.
 
-   procedure Free (X : in out Custom_Command);
+   overriding procedure Free (X : in out Custom_Command);
    --  Free memory associated with X.
 
-   function Execute
+   overriding function Execute
      (Command : access Custom_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
@@ -141,9 +141,10 @@ package Commands.Custom is
    --  since they launch external processes in background mode and must wait
    --  for their output.
 
-   procedure Interrupt (Command : in out Custom_Command);
-   function Start (Command : access Custom_Command) return Component_Iterator;
-   function Create_Command_Editor
+   overriding procedure Interrupt (Command : in out Custom_Command);
+   overriding function Start
+     (Command : access Custom_Command) return Component_Iterator;
+   overriding function Create_Command_Editor
      (Command : access Custom_Command;
       Kernel  : access Kernel_Handle_Record'Class) return Command_Editor;
    --  See doc from inherited subprograms
@@ -152,7 +153,7 @@ private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
-   function Name (Command : access Custom_Command) return String;
+   overriding function Name (Command : access Custom_Command) return String;
    --  See doc for inherited subprogram
 
    type Custom_Command_Execution_Record is record

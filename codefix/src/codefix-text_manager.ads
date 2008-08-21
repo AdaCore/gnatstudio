@@ -91,10 +91,10 @@ package Codefix.Text_Manager is
    function Get_File (This : File_Cursor) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with the cursor
 
-   function "=" (Left, Right : File_Cursor) return Boolean;
+   overriding function "=" (Left, Right : File_Cursor) return Boolean;
    --  Return true when Left is in the same position than rigth
 
-   function "<" (Left, Right : File_Cursor) return Boolean;
+   overriding function "<" (Left, Right : File_Cursor) return Boolean;
    --  Return True when Left is before Right
 
    procedure Free (This : in out File_Cursor);
@@ -153,7 +153,7 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark
 
-   procedure Free (This : in out Word_Cursor);
+   overriding procedure Free (This : in out Word_Cursor);
    --  Free the memory associated to a Word_Cursor
 
    ----------------------------------------------------------------------------
@@ -634,7 +634,7 @@ package Codefix.Text_Manager is
       Cursor       : out Word_Cursor);
    --  Create a Word_Cursor from information given by the mark
 
-   function Clone (This : Word_Cursor) return Word_Cursor;
+   overriding function Clone (This : Word_Cursor) return Word_Cursor;
    --  Duplicate all informations of a Word_Cursor, specially informations
    --  memorized in dynamic memory.
 

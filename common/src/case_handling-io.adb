@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2007, AdaCore                 --
+--                  Copyright (C) 2004-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +97,7 @@ package body Case_Handling.IO is
    ---------------------
 
    procedure Save_Exceptions
-     (C        : in Casing_Exceptions;
+     (C        : Casing_Exceptions;
       Filename : String;
       Success  : out Boolean)
    is
