@@ -228,7 +228,7 @@ package body Src_Editor_View is
       View : Source_View;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed, to refresh the editor
@@ -238,7 +238,7 @@ package body Src_Editor_View is
       View : Source_View;
    end record;
    type File_Hook is access all File_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -1533,7 +1533,7 @@ package body Src_Editor_View is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -1619,7 +1619,7 @@ package body Src_Editor_View is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)

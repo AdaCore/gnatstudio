@@ -192,7 +192,7 @@ package body Completion_Module is
 
    Completion_Module : Completion_Module_Access;
 
-   procedure Destroy (Module : in out Completion_Module_Record);
+   overriding procedure Destroy (Module : in out Completion_Module_Record);
    --  See inherited documentation
 
    procedure Extend_Completions_List;
@@ -395,7 +395,7 @@ package body Completion_Module is
    with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Complete the word under the cursor based on the
@@ -405,7 +405,7 @@ package body Completion_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Completion_Module_Record) is
+   overriding procedure Destroy (Module : in out Completion_Module_Record) is
       pragma Unreferenced (Module);
    begin
       if Completion_Module /= null then
@@ -920,7 +920,7 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002 - 2006                      --
---                              AdaCore                              --
+--                   Copyright (C) 2002-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +19,7 @@
 
 --  This package implements commands related to the editor.
 
+with Glib;              use Glib;
 with Basic_Types;       use Basic_Types;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
@@ -59,17 +59,17 @@ package Commands.Editor is
    end record;
    type Unhide_Editable_Lines_Command is access all Unhide_Editable_Lines_Type;
 
-   function Execute
+   overriding function Execute
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type;
    --  Unhides lines from the buffer.
 
-   function Execute
+   overriding function Execute
      (Command : access Hide_Editable_Lines_Type)
       return Command_Return_Type;
    --  Hides lines from the buffer.
 
-   function Execute
+   overriding function Execute
      (Command : access Remove_Blank_Lines_Command_Type)
       return Command_Return_Type;
    --  This commands removes the Number blank lines associated with Mark.
@@ -86,7 +86,7 @@ package Commands.Editor is
       Queue  : Command_Queue);
    --  Create a new Check_Modified_State command.
 
-   function Execute
+   overriding function Execute
      (Command : access Check_Modified_State_Type) return Command_Return_Type;
    --  Compare the states of the associated box and queues,
    --  and change the label in the source editor if needed.
@@ -98,7 +98,7 @@ package Commands.Editor is
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type;
-      Text         : String;
+      Text         : UTF8_String;
       Force_End    : Boolean := False);
    --  Create a new Editor_Replace_Slice command.
    --  If Force_End then the cursor will always be placed at the end of the
@@ -106,9 +106,10 @@ package Commands.Editor is
    --  the command, and at the beginning when undoing it.
    --  Text is must be a UTF-8 encoded string.
 
-   function Execute
+   overriding function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type;
-   function Undo (Command : access Editor_Replace_Slice_Type) return Boolean;
+   overriding function Undo
+     (Command : access Editor_Replace_Slice_Type) return Boolean;
 
    type Editor_Command_Mode is (Insertion, Deletion);
 
@@ -139,30 +140,31 @@ package Commands.Editor is
 
    procedure Add_Text
      (Item         : Editor_Command;
-      UTF8         : String;
+      UTF8         : UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
       Start_Column : Character_Offset_Type := 0);
    --  Add some text (in UTF-8 format) to the current action.
    --  If values other than -1 are specified, they override the
    --  current values in Item.
 
-   function Get_Text (Item : Editor_Command) return String;
+   function Get_Text (Item : Editor_Command) return UTF8_String;
    --  Return the text (in UTF-8 format) associated with Item.
 
-   procedure Set_Text (Item : Editor_Command; Text : String);
+   procedure Set_Text (Item : Editor_Command; Text : UTF8_String);
    --  Set the text (in UTF-8 format) associated with Item.
 
-   function Execute
+   overriding function Execute
      (Command : access Editor_Command_Type) return Command_Return_Type;
 
-   function Undo (Command : access Editor_Command_Type) return Boolean;
+   overriding function Undo
+     (Command : access Editor_Command_Type) return Boolean;
 
-   procedure Free (X : in out Editor_Command_Type);
-   procedure Free (X : in out Editor_Replace_Slice_Type);
-   procedure Free (X : in out Check_Modified_State_Type);
-   procedure Free (X : in out Remove_Blank_Lines_Command_Type);
-   procedure Free (X : in out Unhide_Editable_Lines_Type);
-   procedure Free (X : in out Hide_Editable_Lines_Type);
+   overriding procedure Free (X : in out Editor_Command_Type);
+   overriding procedure Free (X : in out Editor_Replace_Slice_Type);
+   overriding procedure Free (X : in out Check_Modified_State_Type);
+   overriding procedure Free (X : in out Remove_Blank_Lines_Command_Type);
+   overriding procedure Free (X : in out Unhide_Editable_Lines_Type);
+   overriding procedure Free (X : in out Hide_Editable_Lines_Type);
    --  Free memory associated to X.
 
 private

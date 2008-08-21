@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,13 +40,13 @@ package body Refactoring.Parameters is
    Location_Cst               : aliased constant String := "location";
 
    type Is_Subprogram_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Subprogram_Filter;
       Context : Selection_Context) return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity
 
    type Name_Parameters_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Name_Parameters_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Name Parameters" menu
@@ -67,7 +67,7 @@ package body Refactoring.Parameters is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Subprogram_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -192,7 +192,7 @@ package body Refactoring.Parameters is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Name_Parameters_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

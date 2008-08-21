@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2005                    --
---                            AdaCore                                --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,8 +53,8 @@ package body Projects.Graphs is
       Limited_With : Boolean;
    end record;
 
-   procedure Destroy (V : in out Name_Vertex);
-   procedure Destroy (E : in out Name_Edge);
+   overriding procedure Destroy (V : in out Name_Vertex);
+   overriding procedure Destroy (E : in out Name_Edge);
    --  Dummy function, so that Name_Vertex is no longer abstract
 
    function Dependency_Graph
@@ -94,7 +93,7 @@ package body Projects.Graphs is
    -- Destroy --
    -------------
 
-   procedure Destroy (V : in out Name_Vertex) is
+   overriding procedure Destroy (V : in out Name_Vertex) is
       pragma Unreferenced (V);
    begin
       null;
@@ -104,7 +103,7 @@ package body Projects.Graphs is
    -- Destroy --
    -------------
 
-   procedure Destroy (E : in out Name_Edge) is
+   overriding procedure Destroy (E : in out Name_Edge) is
       pragma Unreferenced (E);
    begin
       null;

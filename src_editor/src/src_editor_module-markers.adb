@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005 - 2006                     --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -214,7 +213,7 @@ package body Src_Editor_Module.Markers is
    -- Destroy --
    -------------
 
-   procedure Destroy (Marker : in out File_Marker_Record) is
+   overriding procedure Destroy (Marker : in out File_Marker_Record) is
       use Marker_List;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
@@ -410,7 +409,7 @@ package body Src_Editor_Module.Markers is
    -- Go_To --
    -----------
 
-   function Go_To
+   overriding function Go_To
      (Marker : access File_Marker_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean
    is
@@ -464,7 +463,7 @@ package body Src_Editor_Module.Markers is
    -- To_String --
    ---------------
 
-   function To_String
+   overriding function To_String
      (Marker : access File_Marker_Record) return String
    is
       function Get_Subprogram_Name return String;
@@ -507,7 +506,7 @@ package body Src_Editor_Module.Markers is
    -- Save --
    ----------
 
-   function Save
+   overriding function Save
      (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr
    is
       Node : constant Node_Ptr := new Glib.Xml_Int.Node;

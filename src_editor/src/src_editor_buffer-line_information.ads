@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,8 +61,8 @@ package Src_Editor_Buffer.Line_Information is
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
       GC          : Gdk.GC.Gdk_GC;
-      Layout      : in Pango_Layout;
-      Drawable    : in Gdk.Pixmap.Gdk_Pixmap);
+      Layout      : Pango_Layout;
+      Drawable    : Gdk.Pixmap.Gdk_Pixmap);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.
    --  Layout should be used to draw text.
 

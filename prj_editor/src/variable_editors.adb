@@ -615,7 +615,7 @@ package body Variable_Editors is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Add_Variable_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type

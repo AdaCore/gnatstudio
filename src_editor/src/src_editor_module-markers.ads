@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,13 +99,13 @@ private
          Kernel : Kernel_Handle;
       end record;
 
-   procedure Destroy (Marker : in out File_Marker_Record);
-   function Go_To
+   overriding procedure Destroy (Marker : in out File_Marker_Record);
+   overriding function Go_To
      (Marker : access File_Marker_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
-   function To_String
+   overriding function To_String
      (Marker : access File_Marker_Record) return String;
-   function Save
+   overriding function Save
      (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
 

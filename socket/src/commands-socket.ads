@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
---                            ACT-Europe                             --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,10 +39,10 @@ package Commands.Socket is
       Stream  : Stream_Access);
    --  Create a new custom command
 
-   procedure Free (X : in out Socket_Command);
+   overriding procedure Free (X : in out Socket_Command);
    --  Free memory associated to X
 
-   function Execute
+   overriding function Execute
      (Command : access Socket_Command) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.

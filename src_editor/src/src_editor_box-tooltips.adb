@@ -54,7 +54,7 @@ package body Src_Editor_Box.Tooltips is
    type Editor_Tooltips is new Standard.Tooltips.Pixmap_Tooltips with record
       Box : Source_Editor_Box;
    end record;
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
@@ -134,7 +134,7 @@ package body Src_Editor_Box.Tooltips is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Editor_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)

@@ -667,7 +667,7 @@ package body Switches_Editors is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Switches_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -783,11 +783,10 @@ package body Switches_Editors is
    -- Get_Tool_By_Name --
    ----------------------
 
-   function Get_Tool_By_Name
+   overriding function Get_Tool_By_Name
      (Editor    : Switches_Editor_Page_Record;
       Tool_Name : String)
-      return Gtk_Switches_Editors.Root_Switches_Editor_Access
-   is
+      return Gtk_Switches_Editors.Root_Switches_Editor_Access is
    begin
       if Editor.Switches /= null then
          for P in Editor.Switches.Pages'Range loop

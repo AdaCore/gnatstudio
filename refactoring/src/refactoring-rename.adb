@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -57,7 +57,7 @@ package body Refactoring.Rename is
    Make_Writable_Cst      : aliased constant String := "make_writable";
 
    type Rename_Entity_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Rename_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Rename Entity" menu
@@ -69,7 +69,7 @@ package body Refactoring.Rename is
        New_Name    : String (1 .. New_Name_Length);
      end record;
    type Renaming_Performer is access all Renaming_Performer_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
@@ -197,7 +197,7 @@ package body Refactoring.Rename is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
@@ -287,7 +287,7 @@ package body Refactoring.Rename is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Rename_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

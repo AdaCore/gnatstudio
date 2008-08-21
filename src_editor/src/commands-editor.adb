@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,7 +52,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Check_Modified_State_Type) return Command_Return_Type
    is
       New_Status : constant Status_Type := Get_Status (Command.Buffer);
@@ -70,38 +70,38 @@ package body Commands.Editor is
    -- Free --
    ----------
 
-   procedure Free (X : in out Editor_Command_Type) is
+   overriding procedure Free (X : in out Editor_Command_Type) is
    begin
       Free (X.Current_Text);
    end Free;
 
-   procedure Free (X : in out Editor_Replace_Slice_Type) is
+   overriding procedure Free (X : in out Editor_Replace_Slice_Type) is
    begin
       Free (X.Text_Before);
       Free (X.Text_After);
    end Free;
 
-   procedure Free (X : in out Check_Modified_State_Type) is
+   overriding procedure Free (X : in out Check_Modified_State_Type) is
       pragma Unreferenced (X);
    begin
       null;
    end Free;
 
-   procedure Free (X : in out Remove_Blank_Lines_Command_Type) is
+   overriding procedure Free (X : in out Remove_Blank_Lines_Command_Type) is
    begin
       if not Get_Deleted (X.Mark) then
          Delete_Mark (X.Buffer, X.Mark);
       end if;
    end Free;
 
-   procedure Free (X : in out Unhide_Editable_Lines_Type) is
+   overriding procedure Free (X : in out Unhide_Editable_Lines_Type) is
    begin
       if not Get_Deleted (X.Mark) then
          Delete_Mark (X.Buffer, X.Mark);
       end if;
    end Free;
 
-   procedure Free (X : in out Hide_Editable_Lines_Type) is
+   overriding procedure Free (X : in out Hide_Editable_Lines_Type) is
    begin
       --  We do not want to free marks when the buffer is being destroyed,
       --  because, in this case, the reference count for Buffer is set to 0,
@@ -173,7 +173,7 @@ package body Commands.Editor is
    -- Get_Text --
    --------------
 
-   function Get_Text (Item : Editor_Command) return String is
+   function Get_Text (Item : Editor_Command) return UTF8_String is
    begin
       return Item.Current_Text (1 .. Item.Current_Text_Size);
    end Get_Text;
@@ -182,7 +182,7 @@ package body Commands.Editor is
    -- Set_Text --
    --------------
 
-   procedure Set_Text (Item : Editor_Command; Text : String) is
+   procedure Set_Text (Item : Editor_Command; Text : UTF8_String) is
    begin
       while Text'Length > Item.Current_Text_Total_Length loop
          Item.Current_Text_Total_Length := Item.Current_Text_Total_Length * 2;
@@ -205,7 +205,7 @@ package body Commands.Editor is
 
    procedure Add_Text
      (Item         : Editor_Command;
-      UTF8         : String;
+      UTF8         : UTF8_String;
       Start_Line   : Editable_Line_Type := 0;
       Start_Column : Character_Offset_Type := 0)
    is
@@ -270,7 +270,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Editor_Command_Type) return Command_Return_Type
    is
       First  : constant Natural := Command.Current_Text'First;
@@ -351,7 +351,7 @@ package body Commands.Editor is
    -- Undo --
    ----------
 
-   function Undo
+   overriding function Undo
      (Command : access Editor_Command_Type) return Boolean is
    begin
       if Command.Edition_Mode = Insertion then
@@ -375,7 +375,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
@@ -427,7 +427,9 @@ package body Commands.Editor is
    -- Undo --
    ----------
 
-   function Undo (Command : access Editor_Replace_Slice_Type) return Boolean is
+   overriding function Undo
+     (Command : access Editor_Replace_Slice_Type) return Boolean
+   is
       Editor : Source_Editor_Box;
    begin
       if not Is_Valid_Position
@@ -483,7 +485,7 @@ package body Commands.Editor is
       Start_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
       End_Column   : Character_Offset_Type;
-      Text         : String;
+      Text         : UTF8_String;
       Force_End    : Boolean := False)
    is
    begin
@@ -505,7 +507,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Remove_Blank_Lines_Command_Type)
       return Command_Return_Type is
    begin
@@ -518,7 +520,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Hide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
@@ -533,7 +535,7 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type is
    begin

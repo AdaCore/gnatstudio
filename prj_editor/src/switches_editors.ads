@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -104,7 +104,7 @@ package Switches_Editors is
 
    type Edit_Switches_Command
      is new Commands.Interactive.Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_Switches_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;

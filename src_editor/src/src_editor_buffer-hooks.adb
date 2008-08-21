@@ -28,18 +28,18 @@ package body Src_Editor_Buffer.Hooks is
       record
          Parent_Entity : Entities.Entity_Information;
       end record;
-   function Compute_Parent_Entity
+   overriding function Compute_Parent_Entity
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Src_File_Location_Hooks_Args)
       return Entity_Information;
-   procedure Destroy (Data : in out Src_File_Location_Hooks_Args);
+   overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args);
    --  See inherited documentation
 
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Data : in out Src_File_Location_Hooks_Args) is
+   overriding procedure Destroy (Data : in out Src_File_Location_Hooks_Args) is
    begin
       Unref (Data.Parent_Entity);
    end Destroy;
@@ -48,7 +48,7 @@ package body Src_Editor_Buffer.Hooks is
    -- Compute_Parent_Entity --
    ---------------------------
 
-   function Compute_Parent_Entity
+   overriding function Compute_Parent_Entity
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Src_File_Location_Hooks_Args)
       return Entity_Information

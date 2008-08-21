@@ -561,8 +561,8 @@ package body Src_Editor_Buffer.Line_Information is
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
       GC          : Gdk.GC.Gdk_GC;
-      Layout      : in Pango_Layout;
-      Drawable    : in Gdk.Pixmap.Gdk_Pixmap)
+      Layout      : Pango_Layout;
+      Drawable    : Gdk.Pixmap.Gdk_Pixmap)
    is
       Current_Line    : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;

@@ -52,20 +52,20 @@ package body Creation_Wizard.Extending is
       Projects_Count : Natural;
    end record;
    type Extending_Sources_Page_Access is access all Extending_Sources_Page;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Extending_Sources_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
-   function Create_Content
+   overriding function Create_Content
      (Page : access Extending_Sources_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
 
    type Edit_In_Extended_Project is
      new Commands.Interactive.Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_In_Extended_Project;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -73,7 +73,7 @@ package body Creation_Wizard.Extending is
    --  of the file if necessary first)
 
    type Can_Add_To_Extended is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Can_Add_To_Extended;
       Context : Selection_Context) return Boolean;
    --  True if the selected file can be added to an extending project
@@ -107,7 +107,7 @@ package body Creation_Wizard.Extending is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Extending_Sources_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -193,7 +193,7 @@ package body Creation_Wizard.Extending is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Extending_Sources_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -397,7 +397,7 @@ package body Creation_Wizard.Extending is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_In_Extended_Project;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -433,7 +433,7 @@ package body Creation_Wizard.Extending is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Can_Add_To_Extended;
       Context : Selection_Context) return Boolean
    is

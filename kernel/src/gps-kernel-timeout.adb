@@ -333,7 +333,7 @@ package body GPS.Kernel.Timeout is
                           & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
                else
                   Insert (Console, Time_Stamp
-                          & (-"process exited with status")
+                          & (-"process exited with status ")
                           & Image (Status) & " (elapsed time: "
                           & Elapsed (Elapsed_Start .. Elapsed'Last) & "s)");
                end if;

@@ -945,7 +945,7 @@ package body Src_Contexts is
       end if;
    end Free;
 
-   procedure Free (Context : in out Files_Context) is
+   overriding procedure Free (Context : in out Files_Context) is
    begin
       Directory_List.Free (Context.Dirs);
       Free (Context.Directory);
@@ -953,13 +953,13 @@ package body Src_Contexts is
       Free (Search_Context (Context));
    end Free;
 
-   procedure Free (Context : in out Files_Project_Context) is
+   overriding procedure Free (Context : in out Files_Project_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Search_Context (Context));
    end Free;
 
-   procedure Free (Context : in out Open_Files_Context) is
+   overriding procedure Free (Context : in out Open_Files_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Search_Context (Context));
@@ -982,7 +982,7 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Files_Project_Context) return Integer is
    begin
       return Context.Current_File;
@@ -992,7 +992,7 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Files_Project_Context) return Integer is
    begin
       if Context.Files = null then
@@ -1019,7 +1019,7 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Open_Files_Context) return Integer is
    begin
       return Context.Current_File;
@@ -1029,7 +1029,7 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Open_Files_Context) return Integer is
    begin
       if Context.Files = null then
@@ -1043,7 +1043,7 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Files_Context) return Integer is
    begin
       return Context.Current_Dir;
@@ -1053,7 +1053,7 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Files_Context) return Integer is
    begin
       return Context.Total_Dirs;
@@ -1160,7 +1160,7 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   function Get_Terminate_Message
+   overriding function Get_Terminate_Message
      (Context : access Files_Project_Context;
       Kind    : Operation_Kind) return String
    is
@@ -1205,7 +1205,7 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   function Get_Terminate_Message
+   overriding function Get_Terminate_Message
      (Context : access Open_Files_Context;
       Kind    : Operation_Kind) return String
    is
@@ -1281,7 +1281,7 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   function Get_Terminate_Message
+   overriding function Get_Terminate_Message
      (Context : access Files_Context;
       Kind    : Operation_Kind) return String
    is
@@ -1389,7 +1389,7 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   function Get_Terminate_Message
+   overriding function Get_Terminate_Message
      (Context : access Current_File_Context;
       Kind    : Operation_Kind) return String
    is
@@ -1464,7 +1464,7 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -1747,7 +1747,7 @@ package body Src_Contexts is
    -- Replace --
    -------------
 
-   function Replace
+   overriding function Replace
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -1938,7 +1938,7 @@ package body Src_Contexts is
    -- Reset --
    -----------
 
-   procedure Reset
+   overriding procedure Reset
      (Context : access Abstract_Files_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
@@ -1950,7 +1950,7 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -1998,7 +1998,7 @@ package body Src_Contexts is
    -- Replace --
    -------------
 
-   function Replace
+   overriding function Replace
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -2063,7 +2063,7 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   function Current_File
+   overriding function Current_File
      (Context : access Files_Project_Context) return GNATCOLL.VFS.Virtual_File
    is
    begin
@@ -2080,7 +2080,8 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   procedure Move_To_First_File (Context : access Files_Project_Context) is
+   overriding procedure Move_To_First_File
+     (Context : access Files_Project_Context) is
    begin
       Context.Current_File    := 1;
       Context.Current_Lexical := Statements;
@@ -2090,7 +2091,8 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   procedure Move_To_Next_File (Context : access Files_Project_Context) is
+   overriding procedure Move_To_Next_File
+     (Context : access Files_Project_Context) is
    begin
       Context.Current_File    := Context.Current_File + 1;
       Context.Current_Lexical := Statements;
@@ -2100,7 +2102,7 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   function Current_File
+   overriding function Current_File
      (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File
    is
    begin
@@ -2117,7 +2119,8 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   procedure Move_To_First_File (Context : access Open_Files_Context) is
+   overriding procedure Move_To_First_File
+     (Context : access Open_Files_Context) is
    begin
       Context.Current_File    := 1;
       Context.Current_Lexical := Statements;
@@ -2127,7 +2130,8 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   procedure Move_To_Next_File (Context : access Open_Files_Context) is
+   overriding procedure Move_To_Next_File
+     (Context : access Open_Files_Context) is
    begin
       Context.Current_File    := Context.Current_File + 1;
       Context.Current_Lexical := Statements;
@@ -2137,7 +2141,7 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   function Current_File
+   overriding function Current_File
      (Context : access Files_Context) return Virtual_File is
    begin
       return Context.Current_File;
@@ -2147,7 +2151,7 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   procedure Move_To_First_File (Context : access Files_Context) is
+   overriding procedure Move_To_First_File (Context : access Files_Context) is
    begin
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
@@ -2161,7 +2165,7 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   procedure Move_To_Next_File (Context : access Files_Context) is
+   overriding procedure Move_To_Next_File (Context : access Files_Context) is
       use Directory_List;
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;

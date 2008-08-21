@@ -71,10 +71,10 @@ package body Creation_Wizard.Dependencies is
    end record;
    type Dependency_Project_Page_Access
      is access all Dependency_Project_Page'Class;
-   function Create_Content
+   overriding function Create_Content
      (Page : access Dependency_Project_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Dependency_Project_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -425,7 +425,7 @@ package body Creation_Wizard.Dependencies is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Dependency_Project_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -678,7 +678,7 @@ package body Creation_Wizard.Dependencies is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Dependency_Project_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -779,7 +779,7 @@ package body Creation_Wizard.Dependencies is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Project_Dependency_Wizard_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type

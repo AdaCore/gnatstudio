@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2003-2007                       --
---                             AdaCore                               --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +29,7 @@ package Src_Editor_Buffer.Buffer_Commands is
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
 
-   function Execute
+   overriding function Execute
      (Command : access Jump_To_Delimiter_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Jump to the next delimiter for the one currently under the cursor.

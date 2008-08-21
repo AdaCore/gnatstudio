@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2007, AdaCore              --
+--                     Copyright (C) 2002-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,7 @@ package body Commands.Socket is
    -- Free --
    ----------
 
-   procedure Free (X : in out Socket_Command) is
+   overriding procedure Free (X : in out Socket_Command) is
    begin
       Free (X.Command);
       Free (X.Shell);
@@ -53,7 +53,7 @@ package body Commands.Socket is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Socket_Command) return Command_Return_Type
    is
       Errors : aliased Boolean;

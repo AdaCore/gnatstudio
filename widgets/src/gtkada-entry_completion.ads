@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2005                       --
---                             AdaCore                               --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,9 +118,9 @@ private
    type String_Factory is new Completions_Factory with record
       Completions  : GNAT.Strings.String_List_Access;
    end record;
-   function Completion
+   overriding function Completion
      (Factory : String_Factory; Index : Positive) return String;
-   procedure Destroy (Factory : in out String_Factory);
+   overriding procedure Destroy (Factory : in out String_Factory);
    --  See inherited documentation
 
    type Completions_Factory_Access is access Completions_Factory'Class;

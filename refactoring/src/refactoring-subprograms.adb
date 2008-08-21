@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,7 +50,7 @@ package body Refactoring.Subprograms is
 --   Me : constant Debug_Handle := Create ("Refactor.Subprograms");
 
    type Extract_Method_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Extract Method" menu
@@ -515,7 +515,7 @@ package body Refactoring.Subprograms is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
