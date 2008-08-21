@@ -2438,7 +2438,7 @@ package body Docgen2 is
 
          if Child_EInfo.Is_Partial
            and then Child_EInfo.Full_Declaration.Xref /= null
-           and then not Child_EInfo.Full_Declaration.Xref.Displayed
+           and then not Child_EInfo.Full_Declaration.Xref.Hidden
          then
             --  Replace current printout by full declaration's printout
             Free (Child_EInfo.Printout);
