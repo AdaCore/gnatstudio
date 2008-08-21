@@ -670,7 +670,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Context_Hooks_Args) return Callback_Data_Access
@@ -688,7 +688,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access String_Hooks_Args) return Callback_Data_Access
@@ -705,7 +705,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access String_Boolean_Hooks_Args) return Callback_Data_Access
@@ -723,7 +723,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Project_Hooks_Args) return Callback_Data_Access
@@ -741,7 +741,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Hooks_Args) return Callback_Data_Access
@@ -759,7 +759,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Files_2_Hooks_Args) return Callback_Data_Access
@@ -779,7 +779,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Source_File_Hooks_Args) return Callback_Data_Access
@@ -832,7 +832,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Line_Hooks_Args) return Callback_Data_Access
@@ -853,7 +853,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Location_Hooks_Args) return Callback_Data_Access
@@ -876,7 +876,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Html_Hooks_Args) return Callback_Data_Access
@@ -895,7 +895,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Location_Hooks_Args) return Callback_Data_Access
@@ -915,7 +915,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Diff_Hooks_Args) return Callback_Data_Access
@@ -937,7 +937,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Exit_Before_Action_Hooks_Args)
@@ -955,7 +955,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Marker_Hooks_Args) return Callback_Data_Access
@@ -972,7 +972,7 @@ package body GPS.Kernel.Standard_Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Status_Changed_Hooks_Args)

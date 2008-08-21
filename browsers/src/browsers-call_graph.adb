@@ -86,7 +86,7 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Callgraph_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -163,17 +163,17 @@ package body Browsers.Call_Graph is
    --------------
 
    type Container_Entity_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
       Context : Selection_Context) return Boolean;
 
    type Entity_Calls_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Entity_Called_By_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -183,23 +183,23 @@ package body Browsers.Call_Graph is
       Writes_Only     : Boolean := False;
       Reads_Only      : Boolean := False;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Find_All_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Find_Specific_Refs_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Edit_Body_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_Body_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Edit_Spec_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_Spec_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -248,11 +248,11 @@ package body Browsers.Call_Graph is
       May_Have_To_Dependencies : Boolean);
    --  Internal initialization function
 
-   procedure Destroy (Item : in out Entity_Item_Record);
+   overriding procedure Destroy (Item : in out Entity_Item_Record);
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Entity_Item_Record;
       Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
@@ -260,7 +260,7 @@ package body Browsers.Call_Graph is
       Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for this item
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
@@ -268,7 +268,7 @@ package body Browsers.Call_Graph is
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
    --  See doc for inherited subprogram
 
-   function Output_SVG_Item_Content
+   overriding function Output_SVG_Item_Content
      (Item : access Entity_Item_Record) return String;
    --  See doc for inherited subprogram
 
@@ -285,9 +285,9 @@ package body Browsers.Call_Graph is
    end record;
    type Show_Location_Callback_Access
      is access all Show_Location_Callback'Class;
-   function Call (Callback : Show_Location_Callback;
-                  Event    : Gdk.Event.Gdk_Event) return Boolean;
-   --  See inherated doc
+   overriding function Call (Callback : Show_Location_Callback;
+                             Event    : Gdk.Event.Gdk_Event) return Boolean;
+   --  See inherited doc
 
    --------------------
    -- Renaming links --
@@ -565,7 +565,7 @@ package body Browsers.Call_Graph is
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out Entity_Item_Record) is
+   overriding procedure Destroy (Item : in out Entity_Item_Record) is
       Item2    : constant Entity_Item := Item'Unrestricted_Access;
       Iter     : Item_Iterator := Start (Get_Canvas (Get_Browser (Item2)));
       It       : Canvas_Item;
@@ -794,7 +794,7 @@ package body Browsers.Call_Graph is
    -- Destroy --
    -------------
 
-   procedure Destroy
+   overriding procedure Destroy
      (Data : in out Examine_Ancestors_Data; Cancelled : Boolean)
    is
       pragma Unmodified (Data);
@@ -913,7 +913,7 @@ package body Browsers.Call_Graph is
    -- On_Entity_Found --
    ---------------------
 
-   function On_Entity_Found
+   overriding function On_Entity_Found
      (Data                : access Examine_Ancestors_Data;
       Entity              : Entities.Entity_Information;
       Parent              : Entities.Entity_Information;
@@ -972,7 +972,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Body_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1007,7 +1007,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Spec_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1036,7 +1036,7 @@ package body Browsers.Call_Graph is
    -- Free --
    ----------
 
-   procedure Free (Command : in out References_Command) is
+   overriding procedure Free (Command : in out References_Command) is
    begin
       Destroy (Command.Iter);
       Free (Command.Locations);
@@ -1046,7 +1046,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access References_Command) return Command_Return_Type
    is
       Ref : Entity_Reference;
@@ -1295,7 +1295,7 @@ package body Browsers.Call_Graph is
    -- Contextual_Factory --
    ------------------------
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Entity_Item_Record;
       Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
@@ -1389,7 +1389,7 @@ package body Browsers.Call_Graph is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Callgraph_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -1416,7 +1416,7 @@ package body Browsers.Call_Graph is
    -- On_Entity_Found --
    ---------------------
 
-   function On_Entity_Found
+   overriding function On_Entity_Found
      (D                   : access Add_To_List_User_Data;
       Entity              : Entities.Entity_Information;
       Parent              : Entities.Entity_Information;
@@ -1706,7 +1706,7 @@ package body Browsers.Call_Graph is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Container_Entity_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1726,7 +1726,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1763,7 +1763,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1925,7 +1925,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Find_All_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1988,7 +1988,7 @@ package body Browsers.Call_Graph is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2327,7 +2327,7 @@ package body Browsers.Call_Graph is
    -- Draw_Link --
    ---------------
 
-   procedure Draw_Link
+   overriding procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Renaming_Link_Record;
       Invert_Mode : Boolean;
@@ -2375,8 +2375,8 @@ package body Browsers.Call_Graph is
    -- Call --
    ----------
 
-   function Call (Callback : Show_Location_Callback;
-                  Event    : Gdk.Event.Gdk_Event) return Boolean
+   overriding function Call (Callback : Show_Location_Callback;
+                             Event    : Gdk.Event.Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
    begin
@@ -2394,7 +2394,7 @@ package body Browsers.Call_Graph is
    -- Resize_And_Draw --
    ---------------------
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item                        : access Entity_Item_Record;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
@@ -2420,7 +2420,7 @@ package body Browsers.Call_Graph is
    -- Output_SVG_Item_Content --
    -----------------------------
 
-   function Output_SVG_Item_Content
+   overriding function Output_SVG_Item_Content
      (Item : access Entity_Item_Record) return String
    is
       use Ada.Strings.Unbounded;

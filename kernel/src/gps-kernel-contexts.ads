@@ -157,7 +157,7 @@ package GPS.Kernel.Contexts is
    --  Return the text belonging to the selection
 
    type Is_Area_Context is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Area_Context;
       Context : Selection_Context) return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity.

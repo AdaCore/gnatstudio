@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,7 +52,7 @@ package body Browsers.Projects is
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Project_Browser_Module;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -74,7 +74,7 @@ package body Browsers.Projects is
       Recursive      : Boolean := False;
       Show_Ancestors : Boolean := False;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -88,13 +88,13 @@ package body Browsers.Projects is
       end record;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Browser_Project_Vertex;
       Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu);
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
@@ -150,7 +150,7 @@ package body Browsers.Projects is
       return Search_Context_Access;
    --  Create a new search context for the explorer
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Browser_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -432,7 +432,7 @@ package body Browsers.Projects is
    -- Resize_And_Draw --
    ---------------------
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Browser_Project_Vertex;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
@@ -497,7 +497,7 @@ package body Browsers.Projects is
    -- Contextual_Factory --
    ------------------------
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Browser_Project_Vertex;
       Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
@@ -615,7 +615,7 @@ package body Browsers.Projects is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Project_Browser_Module;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -659,7 +659,7 @@ package body Browsers.Projects is
    -- Search --
    ------------
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Browser_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -736,7 +736,7 @@ package body Browsers.Projects is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

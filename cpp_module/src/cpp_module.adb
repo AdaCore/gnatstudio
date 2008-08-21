@@ -56,11 +56,12 @@ package body Cpp_Module is
    type GLI_Handler is access all GLI_Handler_Record'Class;
    --  GCC LI Handler.
 
-   function Get_Name (LI : access GLI_Handler_Record) return String;
-   function Case_Insensitive_Identifiers
+   overriding function Get_Name (LI : access GLI_Handler_Record) return String;
+   overriding function Case_Insensitive_Identifiers
      (Handler : access GLI_Handler_Record) return Boolean;
-   function Get_ALI_Ext (LI : access GLI_Handler_Record) return String;
-   function Get_ALI_Filename
+   overriding function Get_ALI_Ext
+     (LI : access GLI_Handler_Record) return String;
+   overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
       Base_Name : String) return String;
    --  See doc for inherited subprograms
@@ -93,7 +94,9 @@ package body Cpp_Module is
    -- Get_Name --
    --------------
 
-   function Get_Name (LI : access GLI_Handler_Record) return String is
+   overriding function Get_Name
+     (LI : access GLI_Handler_Record) return String
+   is
       pragma Unreferenced (LI);
    begin
       return "GNU C/C++";
@@ -103,7 +106,7 @@ package body Cpp_Module is
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler : access GLI_Handler_Record) return Boolean
    is
       pragma Unreferenced (Handler);
@@ -115,7 +118,9 @@ package body Cpp_Module is
    -- Get_ALI_Ext --
    -----------------
 
-   function Get_ALI_Ext (LI : access GLI_Handler_Record) return String is
+   overriding function Get_ALI_Ext
+     (LI : access GLI_Handler_Record) return String
+   is
       pragma Unreferenced (LI);
    begin
       return ".gli";
@@ -125,7 +130,7 @@ package body Cpp_Module is
    -- Get_ALI_Filename --
    ----------------------
 
-   function Get_ALI_Filename
+   overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
       Base_Name : String) return String is
    begin

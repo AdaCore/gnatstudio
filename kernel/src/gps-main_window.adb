@@ -161,7 +161,7 @@ package body GPS.Main_Window is
    end record;
    type MDI_Child_Selection_Command_Access is access all
      MDI_Child_Selection_Command'Class;
-   function Execute
+   overriding function Execute
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type;
@@ -177,7 +177,7 @@ package body GPS.Main_Window is
    end record;
    type MDI_Window_Actions_Command_Access is access all
      MDI_Window_Actions_Command'Class;
-   function Execute
+   overriding function Execute
      (Command : access MDI_Window_Actions_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type;
@@ -202,7 +202,7 @@ package body GPS.Main_Window is
    end record;
    --  Generic User Interface object
 
-   function Query_User
+   overriding function Query_User
      (UI            : User_Interface;
       Prompt        : String;
       Password_Mode : Boolean) return String;
@@ -212,7 +212,7 @@ package body GPS.Main_Window is
    -- Query_User --
    ----------------
 
-   function Query_User
+   overriding function Query_User
      (UI            : User_Interface;
       Prompt        : String;
       Password_Mode : Boolean) return String is
@@ -224,7 +224,7 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access MDI_Window_Actions_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type
@@ -1323,7 +1323,7 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin

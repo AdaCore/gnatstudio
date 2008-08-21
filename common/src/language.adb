@@ -1091,7 +1091,7 @@ package body Language is
    -- "=" --
    ---------
 
-   function "=" (S1, S2 : Source_Location) return Boolean is
+   overriding function "=" (S1, S2 : Source_Location) return Boolean is
    begin
       if S1.Index > 0 and then S2.Index > 0 then
          return S1.Index = S2.Index;

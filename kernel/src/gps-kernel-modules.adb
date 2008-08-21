@@ -162,7 +162,7 @@ package body GPS.Kernel.Modules is
    end record;
 
    type Contextual_Label_Param is access Contextual_Label_Parameters'Class;
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Label_Parameters;
       Context : Selection_Context) return String;
    --  Substitute %p, %f,... in the title to create a suitable contextual menu
@@ -493,7 +493,7 @@ package body GPS.Kernel.Modules is
    -- Get_Label --
    ---------------
 
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Label_Parameters;
       Context : Selection_Context) return String
    is

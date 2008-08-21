@@ -106,7 +106,7 @@ package body Aliases_Module is
    end record;
    type Interactive_Alias_Expansion_Command_Access is access all
      Interactive_Alias_Expansion_Command'Class;
-   function Execute
+   overriding function Execute
      (Command : access Interactive_Alias_Expansion_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type;
@@ -166,8 +166,8 @@ package body Aliases_Module is
    end record;
    type Aliases_Module_Id_Access is access all Aliases_Module_Id_Record'Class;
 
-   procedure Destroy (Module : in out Aliases_Module_Id_Record);
-   procedure Customize
+   overriding procedure Destroy (Module : in out Aliases_Module_Id_Record);
+   overriding procedure Customize
      (Module : access Aliases_Module_Id_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -445,7 +445,7 @@ package body Aliases_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Aliases_Module_Id_Record) is
+   overriding procedure Destroy (Module : in out Aliases_Module_Id_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Expansion_Function_Record, Expansion_Function_List);
 
@@ -943,7 +943,7 @@ package body Aliases_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Interactive_Alias_Expansion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2121,7 +2121,7 @@ package body Aliases_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Aliases_Module_Id_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;

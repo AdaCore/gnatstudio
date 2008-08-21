@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2003-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,18 +45,19 @@ package Commands.Generic_Asynchronous is
    procedure Create
      (Command     : out Generic_Asynchronous_Command_Access;
       Description : String;
-      Data        : in Data_Type;
+      Data        : Data_Type;
       Iterate     : Iteration_Procedure);
 
-   procedure Free (D : in out Generic_Asynchronous_Command);
+   overriding procedure Free (D : in out Generic_Asynchronous_Command);
    --  Free memory associated to D
 
-   function Execute
+   overriding function Execute
      (Command : access Generic_Asynchronous_Command)
       return Command_Return_Type;
    --  Execute Command. Will fail if Command has not been created using Create
 
-   function Name (Command : access Generic_Asynchronous_Command) return String;
+   overriding function Name
+     (Command : access Generic_Asynchronous_Command) return String;
    --  Return the name of the command
 
    procedure Set_Data

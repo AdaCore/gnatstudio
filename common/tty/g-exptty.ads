@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2000-2006 Ada Core Technologies, Inc.            --
+--                    Copyright (C) 2000-2008, AdaCore                      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -59,7 +59,7 @@ package GNAT.Expect.TTY is
    procedure Interrupt (Pid : Integer);
    --  Interrupt a process given its pid
 
-   procedure Send
+   overriding procedure Send
      (Descriptor   : in out TTY_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
@@ -74,14 +74,14 @@ package GNAT.Expect.TTY is
 
 private
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out TTY_Process_Descriptor;
       Status     : out Integer);
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out TTY_Process_Descriptor);
 
-   procedure Interrupt (Descriptor : in out TTY_Process_Descriptor);
+   overriding procedure Interrupt (Descriptor : in out TTY_Process_Descriptor);
    --  When we use pseudo-terminals, we do not need to use signals to
    --  interrupt the debugger, we can simply send the appropriate character.
    --  This provides a better support for remote debugging for instance.

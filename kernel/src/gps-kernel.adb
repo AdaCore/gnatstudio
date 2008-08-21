@@ -965,7 +965,9 @@ package body GPS.Kernel is
    -- Finalize --
    --------------
 
-   procedure Finalize (Context : in out Selection_Context_Controlled) is
+   overriding procedure Finalize
+     (Context : in out Selection_Context_Controlled)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Selection_Context_Data_Record, Selection_Context_Data);
 
@@ -1062,7 +1064,8 @@ package body GPS.Kernel is
    -- Adjust --
    ------------
 
-   procedure Adjust (Context : in out Selection_Context_Controlled) is
+   overriding procedure Adjust
+     (Context : in out Selection_Context_Controlled) is
    begin
       if Context.Data /= null then
          Context.Data.Ref_Count := Context.Data.Ref_Count + 1;
@@ -2093,7 +2096,7 @@ package body GPS.Kernel is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
       Context : Selection_Context) return Boolean
    is

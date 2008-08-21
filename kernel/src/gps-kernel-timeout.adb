@@ -111,7 +111,7 @@ package body GPS.Kernel.Timeout is
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
-      Input     : in String;
+      Input     : String;
       User_Data : System.Address) return String;
    --  Handler for user input on the console
 
@@ -125,13 +125,13 @@ package body GPS.Kernel.Timeout is
    --  the output is done, since this is assumed to be done through the call
    --  to Launch_Process already. Closing the console terminates the process.
 
-   procedure Interrupt (Command : in out Monitor_Command);
+   overriding procedure Interrupt (Command : in out Monitor_Command);
    --  Interrupts the command
 
-   procedure Free (D : in out Monitor_Command);
-   function Execute
+   overriding procedure Free (D : in out Monitor_Command);
+   overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
-   function Name (Command : access Monitor_Command) return String;
+   overriding function Name (Command : access Monitor_Command) return String;
    --  See inherited documentation
 
    function Execute_Monitor
@@ -164,7 +164,7 @@ package body GPS.Kernel.Timeout is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Monitor_Command) is
+   overriding procedure Interrupt (Command : in out Monitor_Command) is
    begin
       if Command.Data.D.Descriptor /= null then
          Interrupt (Command.Data.D.Descriptor.all);
@@ -177,7 +177,7 @@ package body GPS.Kernel.Timeout is
    -- Free --
    ----------
 
-   procedure Free (D : in out Monitor_Command) is
+   overriding procedure Free (D : in out Monitor_Command) is
       PID    : GNAT.Expect.Process_Id;
    begin
       if not D.Data.Died and then D.Data.D.Descriptor /= null then
@@ -201,7 +201,7 @@ package body GPS.Kernel.Timeout is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type
    is
       Timeout : constant Guint := 50;
@@ -270,7 +270,7 @@ package body GPS.Kernel.Timeout is
    -- Name --
    ----------
 
-   function Name (Command : access Monitor_Command) return String is
+   overriding function Name (Command : access Monitor_Command) return String is
    begin
       if Command.Name /= null then
          return Command.Name.all;
@@ -484,7 +484,7 @@ package body GPS.Kernel.Timeout is
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
-      Input     : in String;
+      Input     : String;
       User_Data : System.Address) return String
    is
       pragma Unreferenced (Console);

@@ -100,7 +100,7 @@ package body GPS.Kernel.Hooks is
    end record;
    --  Describes a hook or a hook type
 
-   procedure Free (Hook : in out Hook_Description);
+   overriding procedure Free (Hook : in out Hook_Description);
    --  See inherited doc
 
    function Get_Or_Create_Hook
@@ -144,14 +144,14 @@ package body GPS.Kernel.Hooks is
    type Wrapper_No_Args is new Function_No_Args with record
       Func : Function_No_Args_Callback;
    end record;
-   procedure Execute
+   overriding procedure Execute
      (Func : Wrapper_No_Args; Kernel : access Kernel_Handle_Record'Class);
    --  Wrapper for a simple Ada function
 
    type Wrapper_Args is new Function_With_Args with record
       Func : Function_With_Args_Callback;
    end record;
-   procedure Execute
+   overriding procedure Execute
      (Func   : Wrapper_Args;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -161,7 +161,7 @@ package body GPS.Kernel.Hooks is
    record
       Func : Function_With_Args_Return_Boolean_Callback;
    end record;
-   function Execute
+   overriding function Execute
      (Func   : Wrapper_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
@@ -171,7 +171,7 @@ package body GPS.Kernel.Hooks is
    record
       Func : Function_With_Args_Return_String_Callback;
    end record;
-   function Execute
+   overriding function Execute
      (Func   : Wrapper_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String;
@@ -181,8 +181,8 @@ package body GPS.Kernel.Hooks is
       Hook       : Hook_Description_Access;
       Subprogram : Subprogram_Type;
    end record;
-   procedure Destroy (Func : in out Subprogram_Wrapper_No_Args);
-   procedure Execute
+   overriding procedure Destroy (Func : in out Subprogram_Wrapper_No_Args);
+   overriding procedure Execute
      (Func   : Subprogram_Wrapper_No_Args;
       Kernel : access Kernel_Handle_Record'Class);
    function Create_Subprogram_Wrapper_No_Args
@@ -194,8 +194,8 @@ package body GPS.Kernel.Hooks is
       Hook       : Hook_Description_Access;
       Subprogram : Subprogram_Type;
    end record;
-   procedure Destroy (Func : in out Subprogram_Wrapper_No_Return);
-   procedure Execute
+   overriding procedure Destroy (Func : in out Subprogram_Wrapper_No_Return);
+   overriding procedure Execute
      (Func   : Subprogram_Wrapper_No_Return;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -210,8 +210,9 @@ package body GPS.Kernel.Hooks is
       Hook       : Hook_Description_Access;
       Subprogram : Subprogram_Type;
    end record;
-   procedure Destroy (Func : in out Subprogram_Wrapper_Return_Boolean);
-   function Execute
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_Boolean);
+   overriding function Execute
      (Func   : Subprogram_Wrapper_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
@@ -226,8 +227,9 @@ package body GPS.Kernel.Hooks is
       Hook       : Hook_Description_Access;
       Subprogram : Subprogram_Type;
    end record;
-   procedure Destroy (Func : in out Subprogram_Wrapper_Return_String);
-   function Execute
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_String);
+   overriding function Execute
      (Func   : Subprogram_Wrapper_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String;
@@ -237,7 +239,7 @@ package body GPS.Kernel.Hooks is
    --  Wrapper for a shell subprogram
 
    type Shell_Hooks_Data is new Hooks_Data with null record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Shell_Hooks_Data) return Callback_Data_Access;
@@ -326,7 +328,7 @@ package body GPS.Kernel.Hooks is
    -- Free --
    ----------
 
-   procedure Free (Hook : in out Hook_Description) is
+   overriding procedure Free (Hook : in out Hook_Description) is
    begin
       if not Hook.Is_Hook_Type then
          Free (Hook.Name);
@@ -708,7 +710,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func : Wrapper_No_Args; Kernel : access Kernel_Handle_Record'Class) is
    begin
       Func.Func (Kernel);
@@ -728,7 +730,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : Wrapper_Args;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) is
@@ -751,7 +753,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Func   : Wrapper_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean is
@@ -775,7 +777,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Func   : Wrapper_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String is
@@ -811,7 +813,7 @@ package body GPS.Kernel.Hooks is
    -- Destroy --
    -------------
 
-   procedure Destroy (Func : in out Subprogram_Wrapper_No_Args) is
+   overriding procedure Destroy (Func : in out Subprogram_Wrapper_No_Args) is
    begin
       Free (Func.Subprogram);
    end Destroy;
@@ -820,7 +822,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : Subprogram_Wrapper_No_Args;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -850,7 +852,7 @@ package body GPS.Kernel.Hooks is
    -- Destroy --
    -------------
 
-   procedure Destroy (Func : in out Subprogram_Wrapper_No_Return) is
+   overriding procedure Destroy (Func : in out Subprogram_Wrapper_No_Return) is
    begin
       Free (Func.Subprogram);
    end Destroy;
@@ -859,7 +861,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : Subprogram_Wrapper_No_Return;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -896,7 +898,8 @@ package body GPS.Kernel.Hooks is
    -- Destroy --
    -------------
 
-   procedure Destroy (Func : in out Subprogram_Wrapper_Return_Boolean) is
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_Boolean) is
    begin
       Free (Func.Subprogram);
    end Destroy;
@@ -905,7 +908,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Func   : Subprogram_Wrapper_Return_Boolean;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
@@ -940,7 +943,8 @@ package body GPS.Kernel.Hooks is
    -- Destroy --
    -------------
 
-   procedure Destroy (Func : in out Subprogram_Wrapper_Return_String) is
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_String) is
    begin
       Free (Func.Subprogram);
    end Destroy;
@@ -949,7 +953,7 @@ package body GPS.Kernel.Hooks is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Func   : Subprogram_Wrapper_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String
@@ -1269,7 +1273,7 @@ package body GPS.Kernel.Hooks is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Shell_Hooks_Data) return Callback_Data_Access

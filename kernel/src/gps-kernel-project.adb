@@ -73,7 +73,7 @@ package body GPS.Kernel.Project is
       Mode   : Message_Type := Error;
    end record;
 
-   procedure Report
+   overriding procedure Report
      (Handler : access Registry_Error_Handler_Record; Msg : String);
    --  Used to report an error to the user.
 
@@ -81,7 +81,7 @@ package body GPS.Kernel.Project is
    -- Report --
    ------------
 
-   procedure Report
+   overriding procedure Report
      (Handler : access Registry_Error_Handler_Record; Msg : String) is
    begin
       Insert (Handler.Handle, Msg, Mode => Handler.Mode);
@@ -115,12 +115,12 @@ package body GPS.Kernel.Project is
       Project_Path : Glib.String_Ptr;
    end record;
 
-   procedure Save
+   overriding procedure Save
      (Property : access Predefined_Paths_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr);
    --  See inherited procedure
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Predefined_Paths_Property;
       From     : Glib.Xml_Int.Node_Ptr);
    --  See inherited procedure
@@ -129,7 +129,7 @@ package body GPS.Kernel.Project is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access Predefined_Paths_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
@@ -156,7 +156,7 @@ package body GPS.Kernel.Project is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Predefined_Paths_Property;
       From     : Glib.Xml_Int.Node_Ptr)
    is
@@ -176,7 +176,7 @@ package body GPS.Kernel.Project is
 
    procedure Invalidate_Predefined_Paths_Cache
      (Handle : access Kernel_Handle_Record'Class;
-      Host   : in String)
+      Host   : String)
    is
       Property_Index   : Property_Index_Type := No_Index;
    begin

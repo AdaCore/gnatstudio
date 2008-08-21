@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                      Copyright (C) 2006-2007 AdaCore                     --
+--                      Copyright (C) 2006-2008, AdaCore                    --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -64,7 +64,7 @@ package GNAT.Expect.TTY.Remote is
    type Remote_Process_Descriptor_Access is
      access all Remote_Process_Descriptor'Class;
 
-   procedure Add_Filter
+   overriding procedure Add_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function;
       Filter_On  : Filter_Type := Output;
@@ -75,22 +75,24 @@ package GNAT.Expect.TTY.Remote is
    --  in which case it will be run after existing filters. User_Data
    --  is passed as is to the filter procedure.
 
-   procedure Remove_Filter
+   overriding procedure Remove_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function);
    --  Remove a filter from the list of filters (whatever the type of the
    --  filter).
 
-   procedure Lock_Filters (Descriptor : in out Remote_Process_Descriptor);
+   overriding procedure Lock_Filters
+     (Descriptor : in out Remote_Process_Descriptor);
    --  Temporarily disables all output and input filters. They will be
    --  reactivated only when Unlock_Filters has been called as many times as
    --  Lock_Filters;
 
-   procedure Unlock_Filters (Descriptor : in out Remote_Process_Descriptor);
+   overriding procedure Unlock_Filters
+     (Descriptor : in out Remote_Process_Descriptor);
    --  Unlocks the filters. They are reactivated only if Unlock_Filters
    --  has been called as many times as Lock_Filters.
 
-   procedure Send
+   overriding procedure Send
      (Descriptor   : in out Remote_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
@@ -150,7 +152,7 @@ package GNAT.Expect.TTY.Remote is
    --  timeout), that can really lead to infinite wait. So this value is
    --  automatically replaced with a timeout of 1s.
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -158,7 +160,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -166,7 +168,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -175,7 +177,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -184,7 +186,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -192,7 +194,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -200,7 +202,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -209,7 +211,7 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -222,14 +224,15 @@ private
 
    --  The following methods are inherited. See parent for explanations.
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out Remote_Process_Descriptor;
       Status     : out Integer);
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out Remote_Process_Descriptor);
 
-   procedure Interrupt (Descriptor : in out Remote_Process_Descriptor);
+   overriding procedure Interrupt
+     (Descriptor : in out Remote_Process_Descriptor);
 
    type Shell_State_Type is (OFF, BUSY, READY);
    --  The state of a session.
@@ -257,7 +260,7 @@ private
    type Remote_Machine_Descriptor_Access is
      access all Remote_Machine_Descriptor_Item;
 
-   procedure Close (Desc : access Remote_Machine_Descriptor_Item);
+   overriding procedure Close (Desc : access Remote_Machine_Descriptor_Item);
    --  Close all machine sessions
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record

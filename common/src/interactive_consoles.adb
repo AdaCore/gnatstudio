@@ -207,7 +207,7 @@ package body Interactive_Consoles is
    -- Ref --
    ---------
 
-   procedure Ref
+   overriding procedure Ref
      (Console : access Interactive_Virtual_Console_Record) is
    begin
       Ref (Console.Console);
@@ -217,7 +217,7 @@ package body Interactive_Consoles is
    -- Unref --
    -----------
 
-   procedure Unref
+   overriding procedure Unref
      (Console : access Interactive_Virtual_Console_Record) is
    begin
       Unref (Console.Console);
@@ -227,8 +227,8 @@ package body Interactive_Consoles is
    -- Clear --
    -----------
 
-   procedure Clear
-     (Console    : access Interactive_Virtual_Console_Record) is
+   overriding procedure Clear
+     (Console : access Interactive_Virtual_Console_Record) is
    begin
       Clear (Console.Console);
    end Clear;
@@ -237,7 +237,7 @@ package body Interactive_Consoles is
    -- Insert_Text --
    -----------------
 
-   procedure Insert_Text
+   overriding procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
@@ -247,7 +247,7 @@ package body Interactive_Consoles is
    -- Insert_Log --
    ----------------
 
-   procedure Insert_Log
+   overriding procedure Insert_Log
      (Console : access Interactive_Virtual_Console_Record; Txt : String)
    is
       pragma Unreferenced (Console);
@@ -259,7 +259,7 @@ package body Interactive_Consoles is
    -- Insert_Prompt --
    -------------------
 
-   procedure Insert_Prompt
+   overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       --  If the console has its own prompt, so ignore the one passed in
@@ -277,7 +277,7 @@ package body Interactive_Consoles is
    -- Insert_Error --
    ------------------
 
-   procedure Insert_Error
+   overriding procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       Insert (Console.Console, Txt,
@@ -295,7 +295,7 @@ package body Interactive_Consoles is
    -- Grab_Events --
    -----------------
 
-   procedure Grab_Events
+   overriding procedure Grab_Events
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean) is
    begin
       if Grab then
@@ -334,7 +334,7 @@ package body Interactive_Consoles is
    -- Set_As_Default_Console --
    ----------------------------
 
-   procedure Set_As_Default_Console
+   overriding procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
       Script  : GNATCOLL.Scripts.Scripting_Language) is
    begin
@@ -345,7 +345,7 @@ package body Interactive_Consoles is
    -- Set_Data_Primitive --
    ------------------------
 
-   procedure Set_Data_Primitive
+   overriding procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record) is
    begin
@@ -356,7 +356,7 @@ package body Interactive_Consoles is
    -- Get_Instance --
    ------------------
 
-   function Get_Instance
+   overriding function Get_Instance
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance is
@@ -369,7 +369,7 @@ package body Interactive_Consoles is
    -- Process_Pending_Events_Primitive --
    --------------------------------------
 
-   procedure Process_Pending_Events_Primitive
+   overriding procedure Process_Pending_Events_Primitive
      (Console : access Interactive_Virtual_Console_Record)
    is
       Dead : Boolean;
@@ -391,7 +391,7 @@ package body Interactive_Consoles is
    -- Read --
    ----------
 
-   function Read
+   overriding function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
       Whole_Line : Boolean) return String

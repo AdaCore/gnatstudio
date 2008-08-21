@@ -192,7 +192,7 @@ package body Builder_Module is
       --  processing of the compilation output.
    end record;
    type Files_Callback_Data_Access is access all Files_Callback_Data'Class;
-   procedure Destroy (Data : in out Files_Callback_Data);
+   overriding procedure Destroy (Data : in out Files_Callback_Data);
    --  Callback data used for the list of files that need to be freed at the
    --  end of a compilation.
 
@@ -317,14 +317,14 @@ package body Builder_Module is
    --  Same as Add_Build_Menu, but for the Run menu
 
    type Builder_Contextual is new Submenu_Factory_Record with null record;
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Run_Contextual is new Submenu_Factory_Record with null record;
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Run_Contextual;
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
@@ -470,7 +470,7 @@ package body Builder_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Data : in out Files_Callback_Data) is
+   overriding procedure Destroy (Data : in out Files_Callback_Data) is
    begin
       Unchecked_Free (Data.Files);
    end Destroy;
@@ -2283,7 +2283,7 @@ package body Builder_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
@@ -2328,7 +2328,7 @@ package body Builder_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Run_Contextual;
       Object  : access GObject_Record'Class;
       Context : Selection_Context;

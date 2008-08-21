@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -49,7 +49,7 @@ package body GPS.Kernel.Custom is
    end record;
    type Scripts_Htable_Access is access all Scripts_Htable_Record'Class;
 
-   procedure Reset (Table : access Scripts_Htable_Record);
+   overriding procedure Reset (Table : access Scripts_Htable_Record);
    --  Reset the table
 
    procedure Parse_Custom_Dir
@@ -733,7 +733,7 @@ package body GPS.Kernel.Custom is
    -- Reset --
    -----------
 
-   procedure Reset (Table : access Scripts_Htable_Record) is
+   overriding procedure Reset (Table : access Scripts_Htable_Record) is
    begin
       Reset (Table.Table);
    end Reset;

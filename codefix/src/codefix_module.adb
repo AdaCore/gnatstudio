@@ -115,7 +115,7 @@ package body Codefix_Module is
    Codefix_Module_ID   : Codefix_Module_ID_Access;
    Codefix_Module_Name : constant String := "Code_Fixing";
 
-   procedure Destroy (Id : in out Codefix_Module_ID_Record);
+   overriding procedure Destroy (Id : in out Codefix_Module_ID_Record);
 
    type Codefix_Properties is new Instance_Property_Record with record
       Session : Codefix_Session;
@@ -147,19 +147,19 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   procedure Panic
+   overriding procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String);
    --  Handles error messages when an error can not be corrected.
 
-   procedure Obsolescent
+   overriding procedure Obsolescent
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String);
    --  Handles error messages when an error can no longer be corrected because
    --  of changes in the buffer.
 
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -183,10 +183,11 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
-   function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
+   overriding function New_Text_Interface
+     (This : GPS_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
-   procedure Initialize
+   overriding procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
    --  Set the value of the Text_Interface's kernel
@@ -548,7 +549,7 @@ package body Codefix_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -980,7 +981,9 @@ package body Codefix_Module is
    -- New_Text_Interface --
    ------------------------
 
-   function New_Text_Interface (This : GPS_Navigator) return Ptr_Text is
+   overriding function New_Text_Interface
+     (This : GPS_Navigator) return Ptr_Text
+   is
       pragma Unreferenced (This);
    begin
       return new Console_Interface;
@@ -990,7 +993,7 @@ package body Codefix_Module is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   overriding procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class) is
    begin
@@ -1054,7 +1057,7 @@ package body Codefix_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out Codefix_Module_ID_Record) is
+   overriding procedure Destroy (Id : in out Codefix_Module_ID_Record) is
    begin
       if Id.Sessions /= null then
          for S in Id.Sessions'Range loop
@@ -1071,7 +1074,7 @@ package body Codefix_Module is
    -- Execute_Corrupted_Cb --
    --------------------------
 
-   procedure Panic
+   overriding procedure Panic
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String) is
    begin
@@ -1083,7 +1086,7 @@ package body Codefix_Module is
          -"Fix of current error is no longer relevant");
    end Panic;
 
-   procedure Obsolescent
+   overriding procedure Obsolescent
      (Corruption    : access GPS_Execute_Corrupted_Record;
       Error_Message : String)
    is

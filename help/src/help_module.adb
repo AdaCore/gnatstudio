@@ -94,7 +94,7 @@ package body Help_Module is
       XML : Node_Ptr;
    end record;
    type XML_Property_Access is access all XML_Property'Class;
-   procedure Destroy (Property : in out XML_Property);
+   overriding procedure Destroy (Property : in out XML_Property);
    --  See inherited documentation
 
    procedure Free (Data : in out Help_File_Record);
@@ -122,13 +122,13 @@ package body Help_Module is
    end record;
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
-   procedure Destroy (Module : in out Help_Module_ID_Record);
-   procedure Customize
+   overriding procedure Destroy (Module : in out Help_Module_ID_Record);
+   overriding procedure Customize
      (Module : access Help_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Help_Module_ID_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -334,7 +334,7 @@ package body Help_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Help_Module_ID_Record) is
+   overriding procedure Destroy (Module : in out Help_Module_ID_Record) is
    begin
       Free (Module.Categories);
       Free (Module.Doc_Path);
@@ -529,7 +529,7 @@ package body Help_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Property : in out XML_Property) is
+   overriding procedure Destroy (Property : in out XML_Property) is
    begin
       if Property.XML /= null then
          Trace (Me, "Freeing XML file");
@@ -679,7 +679,7 @@ package body Help_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Help_Module_ID_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -959,7 +959,7 @@ package body Help_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Help_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007, AdaCore                       --
+--                 Copyright (C) 2007-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,13 +31,13 @@ package Docgen2_Module is
       Recursive : Boolean := False;
    end record;
 
-   function Execute
+   overriding function Execute
      (Command : access Generate_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Generate_File_Command is new Interactive_Command with null record;
 
-   function Execute
+   overriding function Execute
      (Command : access Generate_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 

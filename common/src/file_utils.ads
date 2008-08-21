@@ -80,7 +80,7 @@ package File_Utils is
    --  /cydrive/x/ -> x:\
    --  where x is an single character.
 
-   function To_File_Name (Name : in String) return String;
+   function To_File_Name (Name : String) return String;
    --  Returns a file name from an ada subprogram/package name (ie converts '.'
    --  and '-' to the appropriate characters).
    --  ??? Note: this should be modified to use the naming schemes, if needed.

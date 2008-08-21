@@ -112,7 +112,7 @@ package body GVD_Module is
       Top : GPS_Window;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -120,7 +120,7 @@ package body GVD_Module is
 
    type Lines_Revealed_Hook_Record is new Function_With_Args with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -394,23 +394,23 @@ package body GVD_Module is
    ----------------
 
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
       Context : Selection_Context) return Boolean;
 
    type Printable_Variable_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
    type Access_Variable_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
    type Subprogram_Variable_Filter
      is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
@@ -418,22 +418,22 @@ package body GVD_Module is
       Display     : Boolean := False;
       Dereference : Boolean := False;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Print_Variable_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Set_Value_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type View_Memory_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_Location_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Show_Location_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -441,7 +441,7 @@ package body GVD_Module is
       On_Line       : Boolean := False;  --  If False, on entity
       Continue_Till : Boolean := False;  --  Continue until given line ?
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -1541,7 +1541,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Show_Location_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1564,7 +1564,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Print_Variable_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1591,7 +1591,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1618,7 +1618,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access View_Memory_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1638,7 +1638,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1672,7 +1672,7 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Debugger_Active_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1691,7 +1691,7 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1709,7 +1709,7 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1734,7 +1734,7 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Access_Variable_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1757,7 +1757,7 @@ package body GVD_Module is
    -- Tooltip_Handler --
    ---------------------
 
-   function Tooltip_Handler
+   overriding function Tooltip_Handler
      (Module  : access GVD_Module_Record;
       Context : Selection_Context) return Gdk.Gdk_Pixmap
    is
@@ -2166,7 +2166,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -2184,7 +2184,7 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -2661,7 +2661,7 @@ package body GVD_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out GVD_Module_Record) is
+   overriding procedure Destroy (Id : in out GVD_Module_Record) is
    begin
       Debug_Terminate (Get_Kernel (Id));
    end Destroy;

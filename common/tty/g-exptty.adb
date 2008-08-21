@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2000-2006 Ada Core Technologies, Inc.            --
+--                    Copyright (C) 2000-2008, AdaCore                      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,7 +32,7 @@ package body GNAT.Expect.TTY is
    -- Close --
    -----------
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out TTY_Process_Descriptor;
       Status     : out Integer)
    is
@@ -74,7 +74,7 @@ package body GNAT.Expect.TTY is
       end if;
    end Close;
 
-   procedure Close (Descriptor : in out TTY_Process_Descriptor) is
+   overriding procedure Close (Descriptor : in out TTY_Process_Descriptor) is
       Status : Integer;
    begin
       Close (Descriptor, Status);
@@ -95,7 +95,9 @@ package body GNAT.Expect.TTY is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Descriptor : in out TTY_Process_Descriptor) is
+   overriding procedure Interrupt
+     (Descriptor : in out TTY_Process_Descriptor)
+   is
       procedure Internal (Process : System.Address);
       pragma Import (C, Internal, "gvd_interrupt_process");
 
@@ -117,7 +119,7 @@ package body GNAT.Expect.TTY is
    -- Send --
    ----------
 
-   procedure Send
+   overriding procedure Send
      (Descriptor   : in out TTY_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
@@ -183,7 +185,7 @@ package body GNAT.Expect.TTY is
    -- Set_Up_Communications --
    ---------------------------
 
-   procedure Set_Up_Communications
+   overriding procedure Set_Up_Communications
      (Pid        : in out TTY_Process_Descriptor;
       Err_To_Out : Boolean;
       Pipe1      : access Pipe_Type;
@@ -203,7 +205,7 @@ package body GNAT.Expect.TTY is
    -- Set_Up_Parent_Communications --
    ----------------------------------
 
-   procedure Set_Up_Parent_Communications
+   overriding procedure Set_Up_Parent_Communications
      (Pid   : in out TTY_Process_Descriptor;
       Pipe1 : in out Pipe_Type;
       Pipe2 : in out Pipe_Type;
@@ -228,7 +230,7 @@ package body GNAT.Expect.TTY is
    -- Set_Up_Child_Communications --
    ---------------------------------
 
-   procedure Set_Up_Child_Communications
+   overriding procedure Set_Up_Child_Communications
      (Pid   : in out TTY_Process_Descriptor;
       Pipe1 : in out Pipe_Type;
       Pipe2 : in out Pipe_Type;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,7 +64,8 @@ package body GPS.Kernel.Task_Manager is
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
-   procedure Destroy (Module : in out Task_Manager_Module_Id_Record);
+   overriding procedure Destroy
+     (Module : in out Task_Manager_Module_Id_Record);
    --  Called when the module is destroyed.
 
    function Get_Or_Create_Task_Manager_Interface_MDI
@@ -274,7 +275,7 @@ package body GPS.Kernel.Task_Manager is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Scheduled_Command) return Command_Return_Type is
    begin
       return Execute (Command.Command);
@@ -284,7 +285,8 @@ package body GPS.Kernel.Task_Manager is
    -- Name --
    ----------
 
-   function Name (Command : access Scheduled_Command) return String is
+   overriding function Name
+     (Command : access Scheduled_Command) return String is
    begin
       return Name (Command.Command);
    end Name;
@@ -293,7 +295,7 @@ package body GPS.Kernel.Task_Manager is
    -- Progress --
    --------------
 
-   function Progress
+   overriding function Progress
      (Command : access Scheduled_Command) return Progress_Record is
    begin
       return Progress (Command.Command);
@@ -303,8 +305,8 @@ package body GPS.Kernel.Task_Manager is
    -- Set_Progress --
    ------------------
 
-   procedure Set_Progress (Command : access Scheduled_Command;
-                           Progress : Progress_Record) is
+   overriding procedure Set_Progress (Command : access Scheduled_Command;
+                                      Progress : Progress_Record) is
    begin
       Set_Progress (Command.Command, Progress);
    end Set_Progress;
@@ -313,7 +315,7 @@ package body GPS.Kernel.Task_Manager is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Scheduled_Command) is
+   overriding procedure Interrupt (Command : in out Scheduled_Command) is
    begin
       Interrupt (Command.Command.all);
    end Interrupt;
@@ -322,7 +324,7 @@ package body GPS.Kernel.Task_Manager is
    -- Free --
    ----------
 
-   procedure Free (Command : in out Scheduled_Command) is
+   overriding procedure Free (Command : in out Scheduled_Command) is
       Instances : constant Instance_Array := Get_Instances (Command.Instances);
    begin
       if Command.Is_Dead then
@@ -372,7 +374,7 @@ package body GPS.Kernel.Task_Manager is
    -- Undo --
    ----------
 
-   function Undo (This : access Scheduled_Command) return Boolean is
+   overriding function Undo (This : access Scheduled_Command) return Boolean is
    begin
       return Undo (This.Command);
    end Undo;
@@ -592,7 +594,8 @@ package body GPS.Kernel.Task_Manager is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Task_Manager_Module_Id_Record) is
+   overriding procedure Destroy
+     (Module : in out Task_Manager_Module_Id_Record) is
    begin
       Destroy (Get_Task_Manager (Get_Kernel (Module)));
    end Destroy;

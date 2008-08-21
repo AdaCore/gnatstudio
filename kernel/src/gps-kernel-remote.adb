@@ -113,12 +113,12 @@ package body GPS.Kernel.Remote is
    end record;
    type Remote_Module_ID is access all Remote_Module_Record'Class;
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Remote_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   procedure Destroy (Module : in out Remote_Module_Record);
+   overriding procedure Destroy (Module : in out Remote_Module_Record);
    --  See doc for inherited subprogram
 
    procedure Load_Remote_Config (Kernel : Kernel_Handle);
@@ -151,7 +151,7 @@ package body GPS.Kernel.Remote is
                     Title  : String) return Connection_Debugger;
    --  Create a Connection_Debug object
 
-   procedure Print
+   overriding procedure Print
      (Dbg  : access Connection_Debug;
       Str  : String;
       Mode : Mode_Type);
@@ -175,7 +175,7 @@ package body GPS.Kernel.Remote is
    -- Print --
    -----------
 
-   procedure Print
+   overriding procedure Print
      (Dbg  : access Connection_Debug;
       Str  : String;
       Mode : Mode_Type)
@@ -418,11 +418,11 @@ package body GPS.Kernel.Remote is
       Servers : Servers_Config;
    end record;
 
-   procedure Save
+   overriding procedure Save
      (Property : access Servers_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr);
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr);
 
    ----------------------------
@@ -2622,7 +2622,7 @@ package body GPS.Kernel.Remote is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Rsync_Hooks_Args)
@@ -2670,7 +2670,7 @@ package body GPS.Kernel.Remote is
    -- Create_Callbackc_Data --
    ---------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Server_Config_Changed_Hooks_Args)
@@ -2732,7 +2732,7 @@ package body GPS.Kernel.Remote is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access Servers_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
@@ -2752,7 +2752,7 @@ package body GPS.Kernel.Remote is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr)
    is
       Srv : Node_Ptr;
@@ -2921,7 +2921,7 @@ package body GPS.Kernel.Remote is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Remote_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -3258,7 +3258,7 @@ package body GPS.Kernel.Remote is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Remote_Module_Record) is
+   overriding procedure Destroy (Module : in out Remote_Module_Record) is
       pragma Unreferenced (Module);
    begin
       Remote_Module := null;

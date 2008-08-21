@@ -191,7 +191,7 @@ package body Tooltips is
    -- Create_Contents --
    ---------------------
 
-   procedure Create_Contents
+   overriding procedure Create_Contents
      (Tooltip  : access Pixmap_Tooltips;
       Contents : out Gtk.Widget.Gtk_Widget;
       Area     : out Gdk.Rectangle.Gdk_Rectangle)

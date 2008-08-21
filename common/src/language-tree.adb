@@ -904,7 +904,8 @@ package body Language.Tree is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Construct_Tree_Iterator) return Boolean is
+   overriding function "="
+     (Left, Right : Construct_Tree_Iterator) return Boolean is
    begin
       --  This function is supposed to be called a lot, so it has to be as
       --  efficient as possible. That's why we overload it, in order to test
@@ -1308,7 +1309,9 @@ package body Language.Tree is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Referenced_Identifiers_List) return Boolean is
+   overriding function "="
+     (Left, Right : Referenced_Identifiers_List) return Boolean
+   is
       Left_Node  : Referenced_Identifiers_List := Left;
       Right_Node : Referenced_Identifiers_List := Right;
    begin
@@ -1682,7 +1685,7 @@ package body Language.Tree is
    -- Get_Language --
    ------------------
 
-   function Get_Language
+   overriding function Get_Language
      (Tree : access Unknown_Tree_Language) return Language_Access
    is
       pragma Unreferenced (Tree);

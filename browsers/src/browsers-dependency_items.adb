@@ -72,7 +72,7 @@ package body Browsers.Dependency_Items is
    Include_Implicit_Cst  : aliased constant String := "include_implicit";
    Include_System_Cst    : aliased constant String := "include_system";
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -83,17 +83,17 @@ package body Browsers.Dependency_Items is
    --------------
 
    type Show_Dep_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Show_Dep_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_Depending_On_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Show_Depending_On_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Examine_Other_File_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Examine_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -112,8 +112,8 @@ package body Browsers.Dependency_Items is
       Browser : Dependency_Browser;
    end record;
    type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
-   procedure Execute (Hook   : Project_Changed_Hook_Record;
-                      Kernel : access Kernel_Handle_Record'Class);
+   overriding procedure Execute (Hook   : Project_Changed_Hook_Record;
+                                 Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project as changed
 
    ----------------
@@ -151,10 +151,10 @@ package body Browsers.Dependency_Items is
    pragma Inline (Get_Source);
    --  Return the source file associated with Item
 
-   procedure Destroy (Item : in out File_Item_Record);
+   overriding procedure Destroy (Item : in out File_Item_Record);
    --  Free the memory associated with the item
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access File_Item_Record;
       Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
@@ -162,7 +162,7 @@ package body Browsers.Dependency_Items is
       Menu    : Gtk.Menu.Gtk_Menu);
    --  Return the context to use for this item
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access File_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
@@ -474,7 +474,7 @@ package body Browsers.Dependency_Items is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Project_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -880,7 +880,7 @@ package body Browsers.Dependency_Items is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Show_Dep_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -895,7 +895,7 @@ package body Browsers.Dependency_Items is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Show_Depending_On_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -936,7 +936,7 @@ package body Browsers.Dependency_Items is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Dependency_Browser_Module;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -1215,7 +1215,7 @@ package body Browsers.Dependency_Items is
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out File_Item_Record) is
+   overriding procedure Destroy (Item : in out File_Item_Record) is
    begin
       Destroy (Arrow_Item_Record (Item));
    end Destroy;
@@ -1245,7 +1245,7 @@ package body Browsers.Dependency_Items is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Examine_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1281,7 +1281,7 @@ package body Browsers.Dependency_Items is
    -- Contextual_Factory --
    ------------------------
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access File_Item_Record;
       Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
@@ -1349,7 +1349,7 @@ package body Browsers.Dependency_Items is
    -- Resize_And_Draw --
    ---------------------
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access File_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;

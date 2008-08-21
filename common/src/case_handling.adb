@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2007, AdaCore                 --
+--                  Copyright (C) 2004-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,12 +25,12 @@ with Glib.Unicode;               use Glib.Unicode;
 package body Case_Handling is
 
    procedure Add_Exception
-     (HTable    : in Exceptions_Table;
+     (HTable    : Exceptions_Table;
       Str       : String;
       Read_Only : Boolean);
    --  Add Str exception in HTable
 
-   procedure Remove_Exception (HTable : in Exceptions_Table; Str : String);
+   procedure Remove_Exception (HTable : Exceptions_Table; Str : String);
    --  Remove str exception from the HTable
 
    ----------
@@ -203,7 +203,7 @@ package body Case_Handling is
    -------------------
 
    procedure Add_Exception
-     (HTable    : in Exceptions_Table;
+     (HTable    : Exceptions_Table;
       Str       : String;
       Read_Only : Boolean) is
    begin
@@ -236,7 +236,7 @@ package body Case_Handling is
    ----------------------
 
    procedure Remove_Exception
-     (HTable : in Exceptions_Table;
+     (HTable : Exceptions_Table;
       Str    : String)
    is
       L_Str : constant String := To_Lower (Str);

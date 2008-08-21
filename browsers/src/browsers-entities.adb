@@ -93,7 +93,7 @@ package body Browsers.Entities is
    Methods_Cmd_Parameters : constant Cst_Argument_List :=
      (2 => Include_Inherited'Access);
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Entity_Browser_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -101,7 +101,7 @@ package body Browsers.Entities is
 
    type Entity_Browser_Action_Context is new GPS.Kernel.Action_Filter_Record
      with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Entity_Browser_Action_Context;
       Ctxt : GPS.Kernel.Selection_Context) return Boolean;
    --  A context that matches if the current widget is an entity browser
@@ -117,7 +117,7 @@ package body Browsers.Entities is
    end record;
    type Type_Browser is access all Type_Browser_Record'Class;
 
-   procedure Refresh_Layout_Orientation
+   overriding procedure Refresh_Layout_Orientation
      (Browser : access Type_Browser_Record);
    --  See inherited documentation
 
@@ -147,30 +147,30 @@ package body Browsers.Entities is
       Entity  : Entity_Information);
    --  Internal initialization function
 
-   procedure Destroy (Item : in out Type_Item_Record);
+   overriding procedure Destroy (Item : in out Type_Item_Record);
    --  Free the memory occupied by the item. This is called automatically when
    --  the item is removed from the canvas.
 
-   function Get_Background_GC
+   overriding function Get_Background_GC
      (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Type_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
       Height_Offset    : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Type_Item_Record;
       Context : in out Selection_Context;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu);
-   function Get_Last_Button_Number
+   overriding function Get_Last_Button_Number
      (Item : access Type_Item_Record) return Glib.Gint;
-   procedure Redraw_Title_Bar (Item : access Type_Item_Record);
-   procedure Highlight (Item : access Type_Item_Record);
-   function Output_SVG_Item_Content
+   overriding procedure Redraw_Title_Bar (Item : access Type_Item_Record);
+   overriding procedure Highlight (Item : access Type_Item_Record);
+   overriding function Output_SVG_Item_Content
      (Item : access Type_Item_Record) return String;
    --  See doc for inherited subprograms
 
@@ -216,7 +216,7 @@ package body Browsers.Entities is
    type Parent_Link_Record is new Browsers.Canvas.Browser_Link_Record
      with null record;
 
-   procedure Draw_Straight_Line
+   overriding procedure Draw_Straight_Line
      (Link        : access Parent_Link_Record;
       Window      : Gdk.Window.Gdk_Window;
       GC          : Gdk.GC.Gdk_GC;
@@ -271,10 +271,10 @@ package body Browsers.Entities is
       Link_Name : GNAT.Strings.String_Access;
    end record;
 
-   function Call
+   overriding function Call
      (Callback : Show_Entity_Callback;
       Event    : Gdk.Event.Gdk_Event) return Boolean;
-   procedure Destroy (Callback : in out Show_Entity_Callback);
+   overriding procedure Destroy (Callback : in out Show_Entity_Callback);
    --  See inherated doc
 
    function Build
@@ -390,7 +390,7 @@ package body Browsers.Entities is
    --------------
 
    type Examine_Entity_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -398,7 +398,7 @@ package body Browsers.Entities is
    -- Refresh_Layout_Orientation --
    --------------------------------
 
-   procedure Refresh_Layout_Orientation
+   overriding procedure Refresh_Layout_Orientation
      (Browser : access Type_Browser_Record)
    is
    begin
@@ -410,7 +410,7 @@ package body Browsers.Entities is
    -- Call --
    ----------
 
-   function Call
+   overriding function Call
      (Callback : Show_Entity_Callback;
       Event    : Gdk.Event.Gdk_Event) return Boolean is
    begin
@@ -430,7 +430,7 @@ package body Browsers.Entities is
    -- Destroy --
    -------------
 
-   procedure Destroy (Callback : in out Show_Entity_Callback) is
+   overriding procedure Destroy (Callback : in out Show_Entity_Callback) is
    begin
       Unref (Callback.Entity);
       Free (Callback.Link_Name);
@@ -457,7 +457,7 @@ package body Browsers.Entities is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -870,7 +870,7 @@ package body Browsers.Entities is
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out Type_Item_Record) is
+   overriding procedure Destroy (Item : in out Type_Item_Record) is
    begin
       Free (Item.General_Lines);
       Free (Item.Attr_Lines);
@@ -1494,7 +1494,7 @@ package body Browsers.Entities is
    -- Resize_And_Draw --
    ---------------------
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Type_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
@@ -1654,7 +1654,7 @@ package body Browsers.Entities is
    -- Redraw_Title_Bar --
    ----------------------
 
-   procedure Redraw_Title_Bar (Item : access Type_Item_Record) is
+   overriding procedure Redraw_Title_Bar (Item : access Type_Item_Record) is
    begin
       Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access);
 
@@ -1788,7 +1788,7 @@ package body Browsers.Entities is
    -- Contextual_Factory --
    ------------------------
 
-   procedure Contextual_Factory
+   overriding procedure Contextual_Factory
      (Item    : access Type_Item_Record;
       Context : in out Selection_Context;
       Browser : access General_Browser_Record'Class;
@@ -1826,7 +1826,7 @@ package body Browsers.Entities is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Entity_Browser_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -1849,7 +1849,7 @@ package body Browsers.Entities is
    -- Get_Last_Button_Number --
    ----------------------------
 
-   function Get_Last_Button_Number (Item : access Type_Item_Record)
+   overriding function Get_Last_Button_Number (Item : access Type_Item_Record)
       return Gint is
    begin
       return Get_Last_Button_Number (Arrow_Item_Record (Item.all)'Access) + 1;
@@ -1859,7 +1859,7 @@ package body Browsers.Entities is
    -- Draw_Straight_Line --
    ------------------------
 
-   procedure Draw_Straight_Line
+   overriding procedure Draw_Straight_Line
      (Link        : access Parent_Link_Record;
       Window      : Gdk.Window.Gdk_Window;
       GC          : Gdk.GC.Gdk_GC;
@@ -1919,7 +1919,7 @@ package body Browsers.Entities is
    -- Highlight --
    ---------------
 
-   procedure Highlight (Item : access Type_Item_Record) is
+   overriding procedure Highlight (Item : access Type_Item_Record) is
    begin
       Redraw_Title_Bar (Browser_Item (Item));
    end Highlight;
@@ -1928,7 +1928,7 @@ package body Browsers.Entities is
    -- Get_Background_GC --
    -----------------------
 
-   function Get_Background_GC
+   overriding function Get_Background_GC
      (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC is
    begin
       return Get_Default_Item_Background_GC (Get_Browser (Item));
@@ -1938,7 +1938,7 @@ package body Browsers.Entities is
    -- Resize_And_Draw --
    ---------------------
 
-   procedure Resize_And_Draw
+   overriding procedure Resize_And_Draw
      (Item             : access Generic_Item_Record;
       Width, Height    : Glib.Gint;
       Width_Offset     : Glib.Gint;
@@ -1976,7 +1976,7 @@ package body Browsers.Entities is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Item   : access Generic_Item_Record;
       Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       GC     : Gdk.GC.Gdk_GC;
@@ -2012,7 +2012,7 @@ package body Browsers.Entities is
    -- Point_In_Item --
    -------------------
 
-   function Point_In_Item
+   overriding function Point_In_Item
      (Item : access Generic_Item_Record;
       X, Y : Glib.Gint) return Boolean is
    begin
@@ -2033,7 +2033,7 @@ package body Browsers.Entities is
    -- Clip_Line --
    ---------------
 
-   procedure Clip_Line
+   overriding procedure Clip_Line
      (Src   : access Generic_Item_Record;
       Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       To_X  : Gint;
@@ -2069,7 +2069,7 @@ package body Browsers.Entities is
    -- Output_SVG_Item_Content --
    -----------------------------
 
-   function Output_SVG_Item_Content
+   overriding function Output_SVG_Item_Content
      (Item : access Type_Item_Record) return String
    is
       Output   : Unbounded_String;
@@ -2124,7 +2124,7 @@ package body Browsers.Entities is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Entity_Browser_Action_Context;
       Ctxt    : Selection_Context) return Boolean
    is

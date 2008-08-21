@@ -255,7 +255,7 @@ package body Language.Ada is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -271,7 +271,7 @@ package body Language.Ada is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Ada_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
@@ -283,7 +283,7 @@ package body Language.Ada is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Ada_Language;
       Name  : String;
       Index : String) return String
@@ -305,7 +305,7 @@ package body Language.Ada is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Ada_Language;
       Name  : String;
       Field : String) return String
@@ -327,7 +327,7 @@ package body Language.Ada is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Ada_Language) return Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -437,7 +437,7 @@ package body Language.Ada is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File
+   overriding function Is_System_File
      (Lang      : access Ada_Language;
       File_Name : String) return Boolean
    is
@@ -461,7 +461,7 @@ package body Language.Ada is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return Strings.String_Access
    is
       pragma Unreferenced (Lang);
@@ -469,7 +469,7 @@ package body Language.Ada is
       return Keywords_Regexp'Access;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -477,7 +477,7 @@ package body Language.Ada is
       return The_Keywords;
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Ada_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -503,7 +503,7 @@ package body Language.Ada is
                     Syntax_Highlighting           => True,
                     Case_Sensitive                => False);
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -515,7 +515,7 @@ package body Language.Ada is
    -- Comment_Line --
    ------------------
 
-   function Comment_Line
+   overriding function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;
       Comment : Boolean := True;
@@ -582,7 +582,7 @@ package body Language.Ada is
    -- Parse_Constructs --
    ----------------------
 
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang   : access Ada_Language;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List)
@@ -602,7 +602,7 @@ package body Language.Ada is
    -- Parse_Entities --
    --------------------
 
-   procedure Parse_Entities
+   overriding procedure Parse_Entities
      (Lang     : access Ada_Language;
       Buffer   : String;
       Callback : Entity_Callback)
@@ -625,7 +625,7 @@ package body Language.Ada is
    -- Format_Buffer --
    -------------------
 
-   procedure Format_Buffer
+   overriding procedure Format_Buffer
      (Lang                : access Ada_Language;
       Buffer              : String;
       Replace             : Replace_Text_Callback;
@@ -651,7 +651,7 @@ package body Language.Ada is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Ada_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -663,7 +663,7 @@ package body Language.Ada is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Ada_Language) return String is
+   overriding function Get_Name (Lang : access Ada_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "Ada";
@@ -673,7 +673,7 @@ package body Language.Ada is
    -- Get_Referenced_Entity --
    ---------------------------
 
-   procedure Get_Referenced_Entity
+   overriding procedure Get_Referenced_Entity
      (Lang       : access Ada_Language;
       Buffer     : String;
       Construct  : Simple_Construct_Information;
@@ -782,7 +782,7 @@ package body Language.Ada is
    -- Parse_Expression_Backward --
    -------------------------------
 
-   function Parse_Expression_Backward
+   overriding function Parse_Expression_Backward
      (Lang         : access Ada_Language;
       Buffer       : access Glib.UTF8_String;
       Start_Offset : Natural;

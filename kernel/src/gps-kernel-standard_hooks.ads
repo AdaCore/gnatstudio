@@ -42,7 +42,7 @@ package GPS.Kernel.Standard_Hooks is
    type File_Hooks_Args is new Hooks_Data with record
       File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    end record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Hooks_Args)
@@ -54,7 +54,7 @@ package GPS.Kernel.Standard_Hooks is
    type String_Hooks_Args (Length : Natural) is new Hooks_Data with record
       Value : String (1 .. Length);
    end record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access String_Hooks_Args)
@@ -75,7 +75,7 @@ package GPS.Kernel.Standard_Hooks is
       record
          Bool : Boolean;
       end record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access String_Boolean_Hooks_Args)
@@ -89,7 +89,7 @@ package GPS.Kernel.Standard_Hooks is
    type Project_Hooks_Args is new Hooks_Data with record
       Project : Projects.Project_Type;
    end record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Project_Hooks_Args)
@@ -152,7 +152,7 @@ package GPS.Kernel.Standard_Hooks is
    type Files_2_Hooks_Args is new File_Hooks_Args with record
       Renamed : GNATCOLL.VFS.Virtual_File;
    end record;
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Files_2_Hooks_Args)
@@ -471,70 +471,70 @@ private
    Empty_Line_Information : constant Line_Information_Record :=
                               (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Context_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Line_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Source_File_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Location_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Diff_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Html_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Exit_Before_Action_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Location_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited doc
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Marker_Hooks_Args)
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited subprograms
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access File_Status_Changed_Hooks_Args)

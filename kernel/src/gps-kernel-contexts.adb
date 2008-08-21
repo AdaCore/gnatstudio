@@ -83,7 +83,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Area_Context;
       Context : Selection_Context) return Boolean
    is
@@ -96,7 +96,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_Project_Only;
       Context : Selection_Context) return Boolean
    is
@@ -111,7 +111,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter : access Filter_Editable_Project; Context : Selection_Context)
       return Boolean
    is
@@ -125,7 +125,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_Project_File;
       Context : Selection_Context) return Boolean
    is
@@ -139,7 +139,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_In_Project;
       Context : Selection_Context) return Boolean
    is
@@ -156,7 +156,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
       Context : Selection_Context) return Boolean
    is
@@ -169,7 +169,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_File;
       Context : Selection_Context) return Boolean
    is
@@ -182,7 +182,7 @@ package body GPS.Kernel.Contexts is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_Directory;
       Context : Selection_Context) return Boolean
    is

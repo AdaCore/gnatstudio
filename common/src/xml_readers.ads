@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
---                XML/Ada - An XML suite for Ada95                   --
+--                     XML/Ada - An XML suite for Ada                --
 --                                                                   --
---                       Copyright (C) 2004                          --
---                             AdaCore                               --
+--                   Copyright (C) 2004-2008, AdaCore                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -93,30 +92,30 @@ private
       Warnings_As_Error          : Boolean := False;
    end record;
 
-   procedure Start_Document (Handler : in out Gtk_Reader);
-   procedure Set_Document_Locator
+   overriding procedure Start_Document (Handler : in out Gtk_Reader);
+   overriding procedure Set_Document_Locator
      (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator);
-   procedure Start_Element
+   overriding procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class);
-   procedure End_Element
+   overriding procedure End_Element
      (Handler : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "");
-   procedure Characters
+   overriding procedure Characters
      (Handler : in out Gtk_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Ignorable_Whitespace
+   overriding procedure Ignorable_Whitespace
      (Handler : in out Gtk_Reader;
       Ch      : Unicode.CES.Byte_Sequence);
-   procedure Error
+   overriding procedure Error
      (Handler : in out Gtk_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
-   procedure Warning
+   overriding procedure Warning
      (Handler : in out Gtk_Reader;
       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
 end XML_Readers;

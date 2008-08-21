@@ -129,7 +129,7 @@ package GPS.Kernel.Remote is
       --  Destination path
    end record;
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Rsync_Hooks_Args)
@@ -154,7 +154,7 @@ package GPS.Kernel.Remote is
       --  The new server nickname attached to it
    end record;
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Server_Config_Changed_Hooks_Args)

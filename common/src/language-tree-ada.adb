@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2006-2007, AdaCore               --
+--                    Copyright (C) 2006-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +56,7 @@ package body Language.Tree.Ada is
    -- Get_Language --
    ------------------
 
-   function Get_Language
+   overriding function Get_Language
      (Tree : access Ada_Tree_Language) return Language_Access
    is
       pragma Unreferenced (Tree);
@@ -68,7 +68,7 @@ package body Language.Tree.Ada is
    -- Get_Name_Index --
    --------------------
 
-   function Get_Name_Index
+   overriding function Get_Name_Index
      (Lang      : access Ada_Tree_Language;
       Construct : Simple_Construct_Information) return String
    is
@@ -100,7 +100,7 @@ package body Language.Tree.Ada is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation
+   overriding function Get_Documentation
      (Lang   : access Ada_Tree_Language;
       Buffer : String;
       Tree   : Construct_Tree;
@@ -539,7 +539,7 @@ package body Language.Tree.Ada is
    -- Diff --
    ----------
 
-   procedure Diff
+   overriding procedure Diff
      (Lang               : access Ada_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
       Callback           : Diff_Callback)

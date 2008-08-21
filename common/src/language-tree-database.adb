@@ -32,7 +32,7 @@ package body Language.Tree.Database is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer
+   overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;
       File     : GNATCOLL.VFS.Virtual_File) return String_Access
    is
@@ -922,7 +922,7 @@ package body Language.Tree.Database is
    -- Free --
    ----------
 
-   procedure Free
+   overriding procedure Free
      (Obj : in out Entity_Persistent_Annotation)
    is
       procedure Internal is new Standard.Ada.Unchecked_Deallocation
@@ -939,7 +939,7 @@ package body Language.Tree.Database is
    -- Get_Identifier --
    --------------------
 
-   function Get_Identifier
+   overriding function Get_Identifier
      (Manager : access Construct_Database; Name : String)
       return Distinct_Identifier
    is

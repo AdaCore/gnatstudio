@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -194,7 +194,7 @@ package body GPS.Kernel.Styles is
    -- Reset --
    -----------
 
-   procedure Reset (X : access Style_Htable_Record) is
+   overriding procedure Reset (X : access Style_Htable_Record) is
    begin
       Reset (X.Table);
    end Reset;

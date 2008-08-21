@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -103,7 +102,7 @@ package Tooltips is
    --  which is relative to Get_Window for the widget on which the tooltip
    --  applies (On_Widget parameter to Set_Tooltip)
 
-   procedure Create_Contents
+   overriding procedure Create_Contents
      (Tooltip  : access Pixmap_Tooltips;
       Contents : out Gtk.Widget.Gtk_Widget;
       Area     : out Gdk.Rectangle.Gdk_Rectangle);

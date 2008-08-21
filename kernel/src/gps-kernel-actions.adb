@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +40,7 @@ package body GPS.Kernel.Actions is
       Menu_Name : GNAT.Strings.String_Access;
    end record;
    type Menu_Command is access all Menu_Command_Record'Class;
-   function Execute
+   overriding function Execute
      (Command : access Menu_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for interactive commands
@@ -50,7 +49,7 @@ package body GPS.Kernel.Actions is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Menu_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -273,7 +272,7 @@ package body GPS.Kernel.Actions is
    -- Reset --
    -----------
 
-   procedure Reset (X : access Actions_Htable_Record) is
+   overriding procedure Reset (X : access Actions_Htable_Record) is
       Iter   : Iterator;
       Action : Action_Record_Access;
    begin

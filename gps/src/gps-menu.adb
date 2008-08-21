@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +56,7 @@ package body GPS.Menu is
    type On_Reopen is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
    end record;
-   procedure Activate (Callback : access On_Reopen; Item : String);
+   overriding procedure Activate (Callback : access On_Reopen; Item : String);
 
    procedure On_Project_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -67,7 +67,7 @@ package body GPS.Menu is
       Kernel : Kernel_Handle;
       Kind   : Clipboard_Kind;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Clipboard_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type;
@@ -188,7 +188,7 @@ package body GPS.Menu is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Clipboard_Command;
       Context : Interactive_Command_Context)
       return Command_Return_Type
@@ -214,7 +214,8 @@ package body GPS.Menu is
    -- Activate --
    --------------
 
-   procedure Activate (Callback : access On_Reopen; Item : String) is
+   overriding procedure Activate
+     (Callback : access On_Reopen; Item : String) is
    begin
       Load_Project (Callback.Kernel, Create (Item));
 

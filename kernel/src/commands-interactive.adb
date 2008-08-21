@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,15 +30,15 @@ package body Commands.Interactive is
          At_End : Boolean := False;
       end record;
 
-   function Get
+   overriding function Get
      (Iter : access Internal_Component_Iterator) return Command_Component;
-   procedure Next (Iter : access Internal_Component_Iterator);
+   overriding procedure Next (Iter : access Internal_Component_Iterator);
    --  See docs from inherited subprograms
 
    type Internal_Component_Record is new Command_Component_Record
       with null record;
 
-   function Get_Name
+   overriding function Get_Name
      (Component : access Internal_Component_Record) return String;
    --  See docs for inherited subprograms
 
@@ -96,7 +96,7 @@ package body Commands.Interactive is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (Iter : access Internal_Component_Iterator) return Command_Component is
    begin
       if Iter.At_End then
@@ -110,7 +110,7 @@ package body Commands.Interactive is
    -- Next --
    ----------
 
-   procedure Next (Iter : access Internal_Component_Iterator) is
+   overriding procedure Next (Iter : access Internal_Component_Iterator) is
    begin
       Iter.At_End := True;
    end Next;
@@ -119,7 +119,7 @@ package body Commands.Interactive is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Interactive_Command) return Command_Return_Type is
    begin
       return Execute (Interactive_Command_Access (Command), Null_Context);
@@ -178,7 +178,7 @@ package body Commands.Interactive is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Interactive_Command_Proxy) return Command_Return_Type
    is
    begin
@@ -189,7 +189,8 @@ package body Commands.Interactive is
    -- Name --
    ----------
 
-   function Name (Command : access Interactive_Command_Proxy) return String is
+   overriding function Name
+     (Command : access Interactive_Command_Proxy) return String is
    begin
       if Command.Context.Label = null then
          return -"Interactive command";
@@ -202,7 +203,7 @@ package body Commands.Interactive is
    -- Free --
    ----------
 
-   procedure Free (X : in out Interactive_Command_Proxy) is
+   overriding procedure Free (X : in out Interactive_Command_Proxy) is
    begin
       Free (X.Context);
    end Free;
@@ -243,7 +244,7 @@ package body Commands.Interactive is
    -- Get_Name --
    --------------
 
-   function Get_Name
+   overriding function Get_Name
      (Component : access Internal_Component_Record) return String
    is
       pragma Unreferenced (Component);
@@ -255,7 +256,7 @@ package body Commands.Interactive is
    -- Progress --
    --------------
 
-   function Progress
+   overriding function Progress
      (Command : access Interactive_Command_Proxy) return Progress_Record is
    begin
       return Progress (Command.Command);
@@ -265,7 +266,7 @@ package body Commands.Interactive is
    -- Set_Progress --
    ------------------
 
-   procedure Set_Progress
+   overriding procedure Set_Progress
      (Command  : access Interactive_Command_Proxy;
       Progress : Progress_Record) is
    begin
@@ -276,7 +277,8 @@ package body Commands.Interactive is
    -- Undo --
    ----------
 
-   function Undo (Command : access Interactive_Command_Proxy) return Boolean is
+   overriding function Undo
+     (Command : access Interactive_Command_Proxy) return Boolean is
    begin
       return Undo (Command.Command);
    end Undo;
@@ -285,7 +287,8 @@ package body Commands.Interactive is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Command : in out Interactive_Command_Proxy) is
+   overriding procedure Interrupt
+     (Command : in out Interactive_Command_Proxy) is
    begin
       Interrupt (Command.Command.all);
    end Interrupt;

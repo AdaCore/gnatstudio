@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -72,7 +72,8 @@ package Language.Tree is
 
    Null_Construct_Tree_Iterator : constant Construct_Tree_Iterator;
 
-   function "=" (Left, Right : Construct_Tree_Iterator) return Boolean;
+   overriding function "="
+     (Left, Right : Construct_Tree_Iterator) return Boolean;
    function "<" (Left, Right : Construct_Tree_Iterator) return Boolean;
    function ">" (Left, Right : Construct_Tree_Iterator) return Boolean;
    function "<=" (Left, Right : Construct_Tree_Iterator) return Boolean;
@@ -342,7 +343,8 @@ package Language.Tree is
 
    Null_Referenced_Identifiers_List : constant Referenced_Identifiers_List;
 
-   function "=" (Left, Right : Referenced_Identifiers_List) return Boolean;
+   overriding function "="
+     (Left, Right : Referenced_Identifiers_List) return Boolean;
    --  Return true if all the elements of the two lists are the same, and if
    --  the two lists contains the same number of elements, false otherwise.
 
@@ -444,7 +446,7 @@ package Language.Tree is
 
    type Unknown_Tree_Language is new Tree_Language with private;
 
-   function Get_Language
+   overriding function Get_Language
      (Tree : access Unknown_Tree_Language) return Language_Access;
    --  See inherited documentation
 

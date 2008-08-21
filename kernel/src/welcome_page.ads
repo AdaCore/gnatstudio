@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005                        --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,4 +36,3 @@ package Welcome_Page is
    --  Internal function to create the welcome page.
 
 end Welcome_Page;
-

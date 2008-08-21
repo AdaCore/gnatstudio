@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,7 +62,7 @@ package body GPS.Kernel.Console is
 
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
 
-   procedure Destroy (Module : in out Console_Module_Id_Record);
+   overriding procedure Destroy (Module : in out Console_Module_Id_Record);
    --  Called when the module is destroyed
 
    Console_Module_Id   : Console_Module_Id_Access;
@@ -310,7 +310,7 @@ package body GPS.Kernel.Console is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Console_Module_Id_Record) is
+   overriding procedure Destroy (Module : in out Console_Module_Id_Record) is
    begin
       if Module.Console /= null then
          Destroy (Module.Console);

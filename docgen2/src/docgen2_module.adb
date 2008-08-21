@@ -186,7 +186,7 @@ package body Docgen2_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Generate_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -208,7 +208,7 @@ package body Docgen2_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Generate_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -2530,7 +2530,7 @@ package body GPS.Kernel.Scripts is
    -- Destroy --
    -------------
 
-   procedure Destroy (Prop : in out GPS_Properties_Record) is
+   overriding procedure Destroy (Prop : in out GPS_Properties_Record) is
    begin
       case Prop.Typ is
          when Contexts =>
@@ -2555,7 +2555,7 @@ package body GPS.Kernel.Scripts is
    -- Get_Instances --
    -------------------
 
-   function Get_Instances
+   overriding function Get_Instances
      (Prop : GPS_Properties_Record) return Instance_List_Access is
    begin
       case Prop.Typ is
@@ -2575,7 +2575,7 @@ package body GPS.Kernel.Scripts is
    -- On_Click --
    --------------
 
-   procedure On_Click
+   overriding procedure On_Click
      (Link : access Hyper_Link_Subprogram; Text : String)
    is
       Data   : Callback_Data'Class :=

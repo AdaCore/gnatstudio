@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,15 +34,15 @@ package Ada_Naming_Editors is
    procedure Gtk_New (Editor : out Ada_Naming_Editor);
    --  Create a new naming scheme editor.
 
-   procedure Destroy (Editor : access Ada_Naming_Editor_Record);
-   function Get_Window
+   overriding procedure Destroy (Editor : access Ada_Naming_Editor_Record);
+   overriding function Get_Window
      (Editor : access Ada_Naming_Editor_Record) return Gtk.Widget.Gtk_Widget;
-   function Create_Project_Entry
+   overriding function Create_Project_Entry
      (Editor             : access Ada_Naming_Editor_Record;
       Project            : Projects.Project_Type;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
-   procedure Show_Project_Settings
+   overriding procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Projects.Project_Type;

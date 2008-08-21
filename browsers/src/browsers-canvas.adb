@@ -135,7 +135,7 @@ package body Browsers.Canvas is
    --  Select all the items in the canvas.
 
    type Select_All_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -165,7 +165,7 @@ package body Browsers.Canvas is
       Browser : General_Browser;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute (Hook : Preferences_Hook_Record;
+   overriding procedure Execute (Hook : Preferences_Hook_Record;
                       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
@@ -186,12 +186,12 @@ package body Browsers.Canvas is
    end record;
    type Image_Canvas is access all Image_Canvas_Record'Class;
 
-   function Get_Window
+   overriding function Get_Window
      (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window;
    --  Override Gtk.Widget.Get_Window, so that a different Window can be
    --  returned if needed (e.g. when exporting the canvas).
 
-   procedure Draw_Background
+   overriding procedure Draw_Background
      (Canvas        : access Image_Canvas_Record;
       Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle);
 
@@ -206,7 +206,7 @@ package body Browsers.Canvas is
    function Arrow_Head_To_SVG
      (Canvas : access Interactive_Canvas_Record'Class;
       X, Y   : Gint;
-      Angle  : in Float)
+      Angle  : Float)
       return String;
    --  Return a SVG representation of an arrow head defined by it coordinates
    --  (X, Y, Angle).
@@ -225,12 +225,13 @@ package body Browsers.Canvas is
    end record;
    type Browser_Marker is access all Browser_Marker_Record'Class;
 
-   function Go_To
+   overriding function Go_To
      (Marker : access Browser_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   procedure Destroy (Marker : in out Browser_Marker_Record);
-   function To_String (Marker : access Browser_Marker_Record) return String;
-   function Save
+   overriding procedure Destroy (Marker : in out Browser_Marker_Record);
+   overriding function To_String
+     (Marker : access Browser_Marker_Record) return String;
+   overriding function Save
      (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr;
    --  See inherited documentation
 
@@ -242,7 +243,7 @@ package body Browsers.Canvas is
    -- Get_Window --
    ----------------
 
-   function Get_Window
+   overriding function Get_Window
      (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window
    is
       use type Gdk.Gdk_Drawable;
@@ -283,7 +284,7 @@ package body Browsers.Canvas is
    -- Draw_Background --
    ---------------------
 
-   procedure Draw_Background
+   overriding procedure Draw_Background
      (Canvas      : access Image_Canvas_Record;
       Screen_Rect : Gdk.Rectangle.Gdk_Rectangle)
    is
@@ -467,7 +468,7 @@ package body Browsers.Canvas is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -1089,7 +1090,7 @@ package body Browsers.Canvas is
    -- Draw_Link --
    ---------------
 
-   procedure Draw_Link
+   overriding procedure Draw_Link
      (Canvas      : access Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
       Invert_Mode : Boolean;
@@ -1461,7 +1462,7 @@ package body Browsers.Canvas is
    -- On_Button_Click --
    ---------------------
 
-   procedure On_Button_Click
+   overriding procedure On_Button_Click
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
@@ -1497,7 +1498,7 @@ package body Browsers.Canvas is
    -- Selected --
    --------------
 
-   procedure Selected
+   overriding procedure Selected
      (Item        : access Browser_Item_Record;
       Canvas      : access Interactive_Canvas_Record'Class;
       Is_Selected : Boolean)
@@ -1531,7 +1532,7 @@ package body Browsers.Canvas is
    -- Call --
    ----------
 
-   function Call
+   overriding function Call
      (Callback : Item_Active_Area_Callback;
       Event    : Gdk.Event.Gdk_Event) return Boolean is
    begin
@@ -1833,7 +1834,7 @@ package body Browsers.Canvas is
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out Browser_Item_Record) is
+   overriding procedure Destroy (Item : in out Browser_Item_Record) is
    begin
       Reset_Active_Areas (Browser_Item_Record'Class (Item));
       Destroy (Buffered_Item_Record (Item));
@@ -2385,7 +2386,7 @@ package body Browsers.Canvas is
    -- Reset --
    -----------
 
-   procedure Reset
+   overriding procedure Reset
      (Item : access Arrow_Item_Record;
       Parent_Removed, Child_Removed : Boolean) is
    begin
@@ -2402,7 +2403,7 @@ package body Browsers.Canvas is
    -- Get_Last_Button_Number --
    ----------------------------
 
-   function Get_Last_Button_Number (Item : access Arrow_Item_Record)
+   overriding function Get_Last_Button_Number (Item : access Arrow_Item_Record)
       return Glib.Gint is
    begin
       return Get_Last_Button_Number
@@ -2441,7 +2442,7 @@ package body Browsers.Canvas is
    -- Redraw_Title_Bar --
    ----------------------
 
-   procedure Redraw_Title_Bar (Item : access Arrow_Item_Record) is
+   overriding procedure Redraw_Title_Bar (Item : access Arrow_Item_Record) is
    begin
       Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access);
 
@@ -2541,7 +2542,7 @@ package body Browsers.Canvas is
    -- Go_To --
    -----------
 
-   function Go_To
+   overriding function Go_To
      (Marker : access Browser_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean
    is
@@ -2560,7 +2561,7 @@ package body Browsers.Canvas is
    -- Destroy --
    -------------
 
-   procedure Destroy (Marker : in out Browser_Marker_Record) is
+   overriding procedure Destroy (Marker : in out Browser_Marker_Record) is
    begin
       Free (Marker.Title);
    end Destroy;
@@ -2569,7 +2570,8 @@ package body Browsers.Canvas is
    -- To_String --
    ---------------
 
-   function To_String (Marker : access Browser_Marker_Record) return String is
+   overriding function To_String
+     (Marker : access Browser_Marker_Record) return String is
    begin
       return "Browser: " & Marker.Title.all;
    end To_String;
@@ -2578,7 +2580,7 @@ package body Browsers.Canvas is
    -- Save --
    ----------
 
-   function Save
+   overriding function Save
      (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
@@ -2627,7 +2629,7 @@ package body Browsers.Canvas is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2875,7 +2877,7 @@ package body Browsers.Canvas is
    function Arrow_Head_To_SVG
      (Canvas : access Interactive_Canvas_Record'Class;
       X, Y   : Gint;
-      Angle  : in Float)
+      Angle  : Float)
       return String
    is
       use String_Utils;

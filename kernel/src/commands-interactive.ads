@@ -113,7 +113,7 @@ package Commands.Interactive is
    --  field is the event that started the execution (a Gdk_Key_Event
    --  if started from a key, a Gtk_Button_Event if started from a menu,...)
 
-   function Execute (Command : access Interactive_Command)
+   overriding function Execute (Command : access Interactive_Command)
       return Command_Return_Type;
    --  Execute the command non-interactively, with a Null_Context
 
@@ -196,17 +196,19 @@ package Commands.Interactive is
    --  proxy. Context.Event is also automatically copied (see comment for
    --  Interactive_Command_Context)
 
-   procedure Interrupt (Command : in out Interactive_Command_Proxy);
-   function Execute (Command : access Interactive_Command_Proxy)
+   overriding procedure Interrupt (Command : in out Interactive_Command_Proxy);
+   overriding function Execute (Command : access Interactive_Command_Proxy)
       return Command_Return_Type;
-   function Name (Command : access Interactive_Command_Proxy) return String;
-   procedure Free (X : in out Interactive_Command_Proxy);
-   function Progress
+   overriding function Name
+     (Command : access Interactive_Command_Proxy) return String;
+   overriding procedure Free (X : in out Interactive_Command_Proxy);
+   overriding function Progress
      (Command : access Interactive_Command_Proxy) return Progress_Record;
-   procedure Set_Progress
+   overriding procedure Set_Progress
      (Command  : access Interactive_Command_Proxy;
       Progress : Progress_Record);
-   function Undo (Command : access Interactive_Command_Proxy) return Boolean;
+   overriding function Undo
+     (Command : access Interactive_Command_Proxy) return Boolean;
    --  See doc from inherited subprogram
 
 private

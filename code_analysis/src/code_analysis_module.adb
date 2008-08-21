@@ -169,7 +169,7 @@ package body Code_Analysis_Module is
    type Code_Analysis_Contextual_Menu_Access is access all
      Code_Analysis_Contextual_Menu;
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -2039,7 +2039,7 @@ package body Code_Analysis_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;

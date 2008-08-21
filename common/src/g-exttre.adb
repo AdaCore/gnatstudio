@@ -95,10 +95,10 @@ package body GNAT.Expect.TTY.Remote is
 
    procedure Log (Where : String; What : String) is
 
-      function Clean_Up (Str : in String) return String;
+      function Clean_Up (Str : String) return String;
       --  On VMS, traces might begin with NUL character. Remove it for display
 
-      function Clean_Up (Str : in String) return String is
+      function Clean_Up (Str : String) return String is
          Out_S : String := Str;
       begin
          for J in Str'Range loop
@@ -120,7 +120,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Add_Filter --
    ----------------
 
-   procedure Add_Filter
+   overriding procedure Add_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function;
       Filter_On  : Filter_Type := Output;
@@ -161,7 +161,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Remove_Filter --
    -------------------
 
-   procedure Remove_Filter
+   overriding procedure Remove_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function)
    is
@@ -188,7 +188,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Lock_Filters --
    ------------------
 
-   procedure Lock_Filters (Descriptor : in out Remote_Process_Descriptor) is
+   overriding procedure Lock_Filters
+     (Descriptor : in out Remote_Process_Descriptor) is
    begin
       Descriptor.R_Filters_Lock := Descriptor.R_Filters_Lock + 1;
    end Lock_Filters;
@@ -197,7 +198,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Unlock_Filters --
    --------------------
 
-   procedure Unlock_Filters (Descriptor : in out Remote_Process_Descriptor) is
+   overriding procedure Unlock_Filters
+     (Descriptor : in out Remote_Process_Descriptor) is
    begin
       if Descriptor.R_Filters_Lock > 0 then
          Descriptor.R_Filters_Lock := Descriptor.R_Filters_Lock - 1;
@@ -238,7 +240,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Send --
    ----------
 
-   procedure Send
+   overriding procedure Send
      (Descriptor   : in out Remote_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
@@ -1221,7 +1223,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   procedure Close
+   overriding procedure Close
      (Descriptor : in out Remote_Process_Descriptor;
       Status     : out Integer)
    is
@@ -1384,7 +1386,9 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   procedure Close (Descriptor : in out Remote_Process_Descriptor) is
+   overriding procedure Close
+     (Descriptor : in out Remote_Process_Descriptor)
+   is
       Status : Integer;
    begin
       Close (Descriptor, Status);
@@ -1394,7 +1398,9 @@ package body GNAT.Expect.TTY.Remote is
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Descriptor : in out Remote_Process_Descriptor) is
+   overriding procedure Interrupt
+     (Descriptor : in out Remote_Process_Descriptor)
+   is
       Remote_Desc : Remote_Descriptor_Access;
    begin
       if not Descriptor.Terminated then
@@ -1422,7 +1428,7 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   procedure Close (Desc : access Remote_Machine_Descriptor_Item) is
+   overriding procedure Close (Desc : access Remote_Machine_Descriptor_Item) is
       Shell_Desc : Shell_Descriptor_Access;
    begin
       for J in Desc.Sessions'Range loop
@@ -1630,7 +1636,7 @@ package body GNAT.Expect.TTY.Remote is
       end if;
    end Handle_Post_Disconnect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -1653,7 +1659,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -1676,7 +1682,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -1701,7 +1707,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -1726,7 +1732,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -1749,7 +1755,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -1772,7 +1778,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -1797,7 +1803,7 @@ package body GNAT.Expect.TTY.Remote is
          raise;
    end Expect;
 
-   procedure Expect
+   overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;

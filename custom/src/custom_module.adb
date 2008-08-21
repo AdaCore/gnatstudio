@@ -122,7 +122,7 @@ package body Custom_Module is
    type Action_Filter_Wrapper is new Action_Filter_Record with record
       Filter : Subprogram_Type;
    end record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Action_Filter_Wrapper;
       Context : Selection_Context) return Boolean;
    --  A filter that executes a shell subprogram
@@ -130,7 +130,7 @@ package body Custom_Module is
    procedure On_Activate (Menu : access Gtk_Widget_Record'Class);
    --  Called when a Subprogram_Type_Menu is activated
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -150,7 +150,7 @@ package body Custom_Module is
       On_Activate : Subprogram_Type;
    end record;
    type Contextual_Shell_Command is access all Contextual_Shell_Cmd'Class;
-   function Execute
+   overriding function Execute
      (Command : access Contextual_Shell_Cmd;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Type used to define contextual menus from a scripting language
@@ -160,7 +160,7 @@ package body Custom_Module is
       Filter     : Subprogram_Type;
    end record;
    type Contextual_Shell_Filter is access all Contextual_Shell_Filters'Class;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Contextual_Shell_Filters;
       Context : Selection_Context) return Boolean;
    --  Type used to define contextual menus from a scripting language
@@ -171,7 +171,7 @@ package body Custom_Module is
       Label      : Subprogram_Type;
    end record;
    type Contextual_Shell_Label is access all Contextual_Shell_Labels'Class;
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Shell_Labels;
       Context : Selection_Context) return String;
    --  Type used to define contextual menus from a scripting language
@@ -183,7 +183,7 @@ package body Custom_Module is
    end record;
    type Create_Dynamic_Contextual_Access is access all
      Create_Dynamic_Contextual'Class;
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -914,7 +914,7 @@ package body Custom_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -969,7 +969,7 @@ package body Custom_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Contextual_Shell_Cmd;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -991,7 +991,7 @@ package body Custom_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Contextual_Shell_Filters;
       Context : Selection_Context) return Boolean
    is
@@ -1010,7 +1010,7 @@ package body Custom_Module is
    -- Get_Label --
    ---------------
 
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Shell_Labels;
       Context : Selection_Context) return String
    is
@@ -1031,7 +1031,7 @@ package body Custom_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -1955,7 +1955,7 @@ package body Custom_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Action_Filter_Wrapper;
       Context : Selection_Context) return Boolean
    is

@@ -88,7 +88,7 @@ package body GPS.Kernel.Preferences is
    --  Return enum value for Index
 
    type Preferences_Module is new Module_ID_Record with null record;
-   procedure Customize
+   overriding procedure Customize
      (Module : access Preferences_Module;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -1281,7 +1281,7 @@ package body GPS.Kernel.Preferences is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Preferences_Module;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;

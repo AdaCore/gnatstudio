@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -590,11 +590,11 @@ private
       Children  : Active_Area_Tree_Array_Access;
    end record;
 
-   procedure Destroy (Item : in out Browser_Item_Record);
-   procedure On_Button_Click
+   overriding procedure Destroy (Item : in out Browser_Item_Record);
+   overriding procedure On_Button_Click
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button);
-   procedure Selected
+   overriding procedure Selected
      (Item        : access Browser_Item_Record;
       Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Is_Selected : Boolean);
@@ -619,10 +619,10 @@ private
       Parents_Cb, Children_Cb : Arrow_Item_Callback;
    end record;
 
-   procedure Redraw_Title_Bar (Item : access Arrow_Item_Record);
-   function Get_Last_Button_Number
+   overriding procedure Redraw_Title_Bar (Item : access Arrow_Item_Record);
+   overriding function Get_Last_Button_Number
      (Item : access Arrow_Item_Record) return Glib.Gint;
-   procedure Reset
+   overriding procedure Reset
      (Item : access Arrow_Item_Record;
       Parent_Removed, Child_Removed : Boolean);
 
@@ -630,7 +630,7 @@ private
       User_Data : Browser_Item;
       Cb        : Item_Active_Callback;
    end record;
-   function Call
+   overriding function Call
      (Callback : Item_Active_Area_Callback;
       Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  See doc for inherited Call
