@@ -992,11 +992,14 @@ package body GPS.Kernel.Hooks is
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Data (N);
+
+            --  Move to next element first (see comment in next Run_Hook)
+            N := Next (N);
+
             Assert (Me, F.Func.all in Function_No_Args'Class,
                     "Hook expects no argument: " & String (Hook)
                     & " for function: " & String (F.Name.all));
             Execute (Function_No_Args_Access (F.Func).all, Kernel);
-            N := Next (N);
          end loop;
 
          if Set_Busy then
@@ -1033,11 +1036,22 @@ package body GPS.Kernel.Hooks is
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
+
+            --  Move to next element first, in case the callback removes the
+            --  current hook from the list (for instance because we are
+            --  destroying a widget which automatically results in
+            --  disconnecting from the hook).
+            --  ??? This would still fail if we remove the next callback
+            --  ??? instead of the current, but I don't think that's done
+            --  ??? currently. Otherwise we don't have a real solution apart
+            --  ??? from reference counting
+
+            N := Next (N);
+
             Assert (Me, F.Func.all in Function_With_Args'Class,
                     "Hook expects arguments: " & String (Hook)
                     & " for function: " & String (F.Name.all));
             Execute (Function_With_Args_Access (F.Func).all, Kernel, Data);
-            N := Next (N);
          end loop;
 
          Free (Data.Data);
@@ -1077,6 +1091,8 @@ package body GPS.Kernel.Hooks is
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
+            N := Next (N);
+
             Assert (Me, F.Func.all in Function_With_Args_Return_Boolean'Class,
                     "Hook expects arguments and return boolean: "
                     & String (Hook) & " for function: " & String (F.Name.all));
@@ -1084,7 +1100,6 @@ package body GPS.Kernel.Hooks is
               (Function_With_Args_Return_Boolean_Access (F.Func).all,
                Kernel, Data);
             exit when Tmp;
-            N := Next (N);
          end loop;
 
          Free (Data.Data);
@@ -1128,6 +1143,8 @@ package body GPS.Kernel.Hooks is
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
+            N := Next (N);
+
             Assert (Me, F.Func.all in Function_With_Args_Return_Boolean'Class,
                     "Hook expects arguments and return boolean: "
                     & String (Hook) & " for function: " & String (F.Name.all));
@@ -1135,7 +1152,6 @@ package body GPS.Kernel.Hooks is
               (Function_With_Args_Return_Boolean_Access (F.Func).all,
                Kernel, Data);
             exit when not Tmp;
-            N := Next (N);
          end loop;
 
          Free (Data.Data);
@@ -1179,6 +1195,8 @@ package body GPS.Kernel.Hooks is
          N := First (Info.Funcs);
          while N /= Null_Node loop
             F := Hooks_List.Data (N);
+            N := Next (N);
+
             Assert (Me, F.Func.all in Function_With_Args_Return_String'Class,
                     "Hook expects arguments and return string: "
                     & String (Hook) & " for function: " & String (F.Name.all));
@@ -1195,7 +1213,6 @@ package body GPS.Kernel.Hooks is
                end if;
             end;
 
-            N := Next (N);
          end loop;
 
          Free (Data.Data);
