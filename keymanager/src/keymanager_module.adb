@@ -185,12 +185,12 @@ package body KeyManager_Module is
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Keymanager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   procedure Destroy (Module : in out Keymanager_Module_Record);
+   overriding procedure Destroy (Module : in out Keymanager_Module_Record);
    --  See doc for inherited subprogram
 
    --  ??? Global variable, could be queries from the kernel
@@ -236,7 +236,7 @@ package body KeyManager_Module is
    type Repeat_Next_Command is new Interactive_Command with record
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Repeat_Next_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
@@ -335,7 +335,7 @@ package body KeyManager_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Keymanager_Module_Record) is
+   overriding procedure Destroy (Module : in out Keymanager_Module_Record) is
       Key : constant String :=
               Get_Home_Dir (Get_Kernel (Module)) & "custom_key";
    begin
@@ -459,11 +459,32 @@ package body KeyManager_Module is
    -- Debug_Event_Handler --
    -------------------------
 
+   procedure Break_Me_Configure;
+   procedure Break_Me_Configure is
+   begin
+      null;
+   end Break_Me_Configure;
+
+   procedure Break_Me_State;
+   procedure Break_Me_State is
+   begin
+      null;
+   end Break_Me_State;
+
    procedure Debug_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
+      case Event_Type is
+         when Configure =>
+            Break_Me_Configure;
+         when Window_State =>
+            Break_Me_State;
+         when others =>
+            null;
+      end case;
+
       Trace (Event_Debug_Trace, Event_Type'Img);
       General_Event_Handler (Event, Kernel);
 
@@ -1420,7 +1441,7 @@ package body KeyManager_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Keymanager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -1651,7 +1672,7 @@ package body KeyManager_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Repeat_Next_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type

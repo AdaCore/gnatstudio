@@ -41,13 +41,13 @@ package body Vdiff2_Module is
    use Diff_Head_List;
 
    type In_Diff_List_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_Diff_List_Filter;
       Context : Selection_Context) return Boolean;
    --  ??? See In_Diff_List subprogram
 
    type In_3Diff_List_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_3Diff_List_Filter;
       Context : Selection_Context) return Boolean;
    --  Filter for 3-way diff contextual menus
@@ -420,7 +420,7 @@ package body Vdiff2_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out VDiff2_Module_Record) is
+   overriding procedure Destroy (Id : in out VDiff2_Module_Record) is
    begin
       Free (Id.List_Diff);
       Vdiff_Module_ID := null;
@@ -430,7 +430,7 @@ package body Vdiff2_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_Diff_List_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -451,7 +451,7 @@ package body Vdiff2_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_3Diff_List_Filter;
       Context : Selection_Context) return Boolean
    is

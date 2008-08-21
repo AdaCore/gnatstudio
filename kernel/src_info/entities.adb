@@ -94,7 +94,7 @@ package body Entities is
    pragma Inline (Ref, Unref);
 
    procedure Isolate
-     (Entity           : in Entity_Information;
+     (Entity           : Entity_Information;
       Clear_References : Boolean);
    --  Isolate the entity from the rest of the LI structure. This should be
    --  used when we are removing the entity from the internal tables, but the
@@ -474,7 +474,7 @@ package body Entities is
    procedure Mark_And_Isolate_Entities (File : Source_File) is
 
       procedure Clean_References
-        (EL         : in Entity_Information_List_Access;
+        (EL         : Entity_Information_List_Access;
          Mark_Valid : Boolean);
       --  Remove all references in File for the entities in EL
       --  If Mark_Valid is true, then all entities are marked as valid.
@@ -482,7 +482,7 @@ package body Entities is
       --  None of the entity is unref'ed or destroyed
 
       procedure Clean_References
-        (EL         : in Entity_Information_List_Access;
+        (EL         : Entity_Information_List_Access;
          Mark_Valid : Boolean)
       is
          Entity : Entity_Information;
@@ -686,7 +686,7 @@ package body Entities is
    -------------
 
    procedure Isolate
-     (Entity : in Entity_Information; Clear_References : Boolean)
+     (Entity : Entity_Information; Clear_References : Boolean)
    is
       Entity2 : Entity_Information;
    begin

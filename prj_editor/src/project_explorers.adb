@@ -125,7 +125,7 @@ package body Project_Explorers is
    --  otherwise since the build server might change and we don't know until
    --  late whether files names are case sensitive or not there.
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -172,7 +172,7 @@ package body Project_Explorers is
    end record;
    type Explorer_Search_Context_Access is access all Explorer_Search_Context;
 
-   procedure Free (Context : in out Explorer_Search_Context);
+   overriding procedure Free (Context : in out Explorer_Search_Context);
    --  Free the memory allocated for Context
 
    type Explorer_Search_Extra_Record is new Gtk_Box_Record with record
@@ -198,7 +198,7 @@ package body Project_Explorers is
    --  Create a new search context for the explorer. Only one occurence is
    --  searched, and only in Projects or Files, depending on the parameters.
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -225,7 +225,7 @@ package body Project_Explorers is
       Explorer : Project_Explorer_Access;
    end record;
    type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Explorer_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
@@ -375,7 +375,7 @@ package body Project_Explorers is
       Explorer : Project_Explorer;
    end record;
    type Refresh_Hook is access all Refresh_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Refresh_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
@@ -384,7 +384,7 @@ package body Project_Explorers is
       Explorer : Project_Explorer;
    end record;
    type Project_Hook is access all Project_Changed_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Project_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project as changed, as opposed to the project view.
@@ -453,13 +453,13 @@ package body Project_Explorers is
 
    type Locate_File_In_Explorer_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Locate_File_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Locate_Project_In_Explorer_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Locate_Project_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -477,19 +477,19 @@ package body Project_Explorers is
       with null record;
    type Entity_Node_Filter_Record is new Action_Filter_Record
       with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Project_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
@@ -497,7 +497,7 @@ package body Project_Explorers is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Project_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -510,7 +510,7 @@ package body Project_Explorers is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Project_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -525,7 +525,7 @@ package body Project_Explorers is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Directory_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -540,7 +540,7 @@ package body Project_Explorers is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -555,7 +555,7 @@ package body Project_Explorers is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -1112,7 +1112,7 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Project_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -1315,7 +1315,7 @@ package body Project_Explorers is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Explorer_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
@@ -2217,7 +2217,7 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Refresh_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -2344,7 +2344,7 @@ package body Project_Explorers is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget) is
@@ -2357,7 +2357,7 @@ package body Project_Explorers is
    -- Free --
    ----------
 
-   procedure Free (Context : in out Explorer_Search_Context) is
+   overriding procedure Free (Context : in out Explorer_Search_Context) is
    begin
       Reset (Context.Matches);
    end Free;
@@ -2433,7 +2433,7 @@ package body Project_Explorers is
    -- Search --
    ------------
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -2921,7 +2921,7 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Locate_File_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2968,7 +2968,7 @@ package body Project_Explorers is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Locate_Project_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

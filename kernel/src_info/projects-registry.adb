@@ -2012,7 +2012,7 @@ package body Projects.Registry is
    -- Report --
    ------------
 
-   procedure Report
+   overriding procedure Report
      (Handler : access Null_Error_Handler_Record;
       Msg     : String)
    is

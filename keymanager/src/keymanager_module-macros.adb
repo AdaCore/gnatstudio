@@ -118,7 +118,8 @@ package body KeyManager_Module.Macros is
    type Keymanager_Macro_Module_Id
      is access all Keymanager_Macro_Module_Record'Class;
 
-   procedure Destroy (Module : in out Keymanager_Macro_Module_Record);
+   overriding procedure Destroy
+     (Module : in out Keymanager_Macro_Module_Record);
    --  See inherited doc
 
    Keymanager_Macro_Module : Keymanager_Macro_Module_Id;
@@ -188,7 +189,7 @@ package body KeyManager_Module.Macros is
       Kernel : Kernel_Handle;
       Action : Macro_Command_Action;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Macro_Command;
       Context : Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -198,7 +199,8 @@ package body KeyManager_Module.Macros is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Keymanager_Macro_Module_Record) is
+   overriding procedure Destroy
+     (Module : in out Keymanager_Macro_Module_Record) is
    begin
       Free (Module.Current_Macro);
    end Destroy;
@@ -274,7 +276,7 @@ package body KeyManager_Module.Macros is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Macro_Command;
       Context : Interactive_Command_Context)
       return Commands.Command_Return_Type

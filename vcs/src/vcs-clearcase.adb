@@ -64,7 +64,7 @@ package body VCS.ClearCase is
    -- Local Subprograms --
    -----------------------
 
-   procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record);
+   overriding procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record);
    --  Free the memory occupied by this module
 
    function Identify_VCS (S : String) return VCS_Access;
@@ -367,7 +367,7 @@ package body VCS.ClearCase is
    -- Name --
    ----------
 
-   function Name (Ref : access ClearCase_Record) return String is
+   overriding function Name (Ref : access ClearCase_Record) return String is
       pragma Unreferenced (Ref);
    begin
       return ClearCase_Identifier;
@@ -395,7 +395,7 @@ package body VCS.ClearCase is
    -- Get_Status --
    ----------------
 
-   procedure Get_Status
+   overriding procedure Get_Status
      (Rep        : access ClearCase_Record;
       Filenames  : String_List.List;
       Clear_Logs : Boolean := False;
@@ -408,7 +408,7 @@ package body VCS.ClearCase is
       Args         : List;
       List_Temp    : List_Node := First (Filenames);
 
-      procedure Status (File : in String);
+      procedure Status (File : String);
       --  Append necessary data to local variables to query the status for
       --  File.
 
@@ -416,7 +416,7 @@ package body VCS.ClearCase is
       -- Status --
       ------------
 
-      procedure Status (File : in String) is
+      procedure Status (File : String) is
       begin
          Append (Args, File);
          Append (Command_Head, File);
@@ -616,7 +616,7 @@ package body VCS.ClearCase is
    -- Local_Get_Status --
    ----------------------
 
-   function Local_Get_Status
+   overriding function Local_Get_Status
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
       return File_Status_List.List
@@ -626,14 +626,14 @@ package body VCS.ClearCase is
       Result    : File_Status_List.List;
       List_Temp : List_Node := First (Filenames);
 
-      function Status (File : in String) return File_Status_Record;
+      function Status (File : String) return File_Status_Record;
       --  Return the local file status for File
 
       ------------
       -- Status --
       ------------
 
-      function Status (File : in String) return File_Status_Record is
+      function Status (File : String) return File_Status_Record is
          Result : File_Status_Record;
       begin
          Result.File := Create (File);
@@ -674,7 +674,7 @@ package body VCS.ClearCase is
    -- Create_Tag --
    ----------------
 
-   procedure Create_Tag
+   overriding procedure Create_Tag
      (Rep       : access ClearCase_Record;
       Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
@@ -692,7 +692,7 @@ package body VCS.ClearCase is
    -- Open --
    ----------
 
-   procedure Open
+   overriding procedure Open
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       User_Name : String := "")
@@ -800,7 +800,7 @@ package body VCS.ClearCase is
    -- Commit --
    ------------
 
-   procedure Commit
+   overriding procedure Commit
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String)
@@ -911,7 +911,7 @@ package body VCS.ClearCase is
    -- Update --
    ------------
 
-   procedure Update
+   overriding procedure Update
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
@@ -981,7 +981,7 @@ package body VCS.ClearCase is
    -- Switch --
    ------------
 
-   procedure Switch
+   overriding procedure Switch
      (Rep : access ClearCase_Record;
       Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String)
@@ -998,7 +998,7 @@ package body VCS.ClearCase is
    -- Resolved --
    --------------
 
-   procedure Resolved
+   overriding procedure Resolved
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
@@ -1014,7 +1014,7 @@ package body VCS.ClearCase is
    -- Merge --
    -----------
 
-   procedure Merge
+   overriding procedure Merge
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Tag       : String)
@@ -1151,7 +1151,7 @@ package body VCS.ClearCase is
    -- Add --
    ---------
 
-   procedure Add
+   overriding procedure Add
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -1335,7 +1335,7 @@ package body VCS.ClearCase is
    -- Remove --
    ------------
 
-   procedure Remove
+   overriding procedure Remove
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String;
@@ -1491,7 +1491,7 @@ package body VCS.ClearCase is
    -- Revert --
    ------------
 
-   procedure Revert
+   overriding procedure Revert
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
@@ -1541,7 +1541,7 @@ package body VCS.ClearCase is
    -- File_Revision --
    -------------------
 
-   procedure File_Revision
+   overriding procedure File_Revision
      (Rep      : access ClearCase_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Revision : String)
@@ -1555,7 +1555,7 @@ package body VCS.ClearCase is
    -- Diff --
    ----------
 
-   procedure Diff
+   overriding procedure Diff
      (Rep       : access ClearCase_Record;
       File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
@@ -1646,7 +1646,7 @@ package body VCS.ClearCase is
    -- Diff_Patch --
    ----------------
 
-   procedure Diff_Patch
+   overriding procedure Diff_Patch
      (Rep    : access ClearCase_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Output : GNATCOLL.VFS.Virtual_File)
@@ -1663,7 +1663,7 @@ package body VCS.ClearCase is
    -- Diff_Base_Head --
    --------------------
 
-   procedure Diff_Base_Head
+   overriding procedure Diff_Base_Head
      (Rep  : access ClearCase_Record;
       File : GNATCOLL.VFS.Virtual_File)
    is
@@ -1679,7 +1679,7 @@ package body VCS.ClearCase is
    -- Diff_Working --
    ------------------
 
-   procedure Diff_Working
+   overriding procedure Diff_Working
      (Rep  : access ClearCase_Record;
       File : GNATCOLL.VFS.Virtual_File)
    is
@@ -1695,7 +1695,7 @@ package body VCS.ClearCase is
    -- Diff_Tag --
    --------------
 
-   procedure Diff_Tag
+   overriding procedure Diff_Tag
      (Rep      : access ClearCase_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String)
@@ -1712,7 +1712,7 @@ package body VCS.ClearCase is
    -- Log --
    ---------
 
-   procedure Log
+   overriding procedure Log
      (Rep     : access ClearCase_Record;
       File    : Virtual_File;
       Rev     : String;
@@ -1756,7 +1756,7 @@ package body VCS.ClearCase is
    -- Annotate --
    --------------
 
-   procedure Annotate
+   overriding procedure Annotate
      (Rep  : access ClearCase_Record;
       File : Virtual_File)
    is
@@ -1800,7 +1800,7 @@ package body VCS.ClearCase is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record) is
+   overriding procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record) is
    begin
       Free (Id.ClearCase_Reference);
       Unregister_VCS_Identifier (Identify_VCS'Access);
@@ -1868,7 +1868,7 @@ package body VCS.ClearCase is
    -- Get_Identified_Actions --
    ----------------------------
 
-   function Get_Identified_Actions
+   overriding function Get_Identified_Actions
      (Rep : access ClearCase_Record) return Action_Array
    is
       pragma Unreferenced (Rep);

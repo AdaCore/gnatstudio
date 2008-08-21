@@ -36,19 +36,19 @@ package ALI_Parser is
    type ALI_Handler is access all ALI_Handler_Record'Class;
    --  Generic ALI handler. Can be overriden for e.g. GCC .gli files.
 
-   function Get_Name (LI : access ALI_Handler_Record) return String;
-   function Get_Source_Info
+   overriding function Get_Name (LI : access ALI_Handler_Record) return String;
+   overriding function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : Entities.File_Error_Reporter := null)
       return Entities.Source_File;
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler : access ALI_Handler_Record) return Boolean;
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer;
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Entities.Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;

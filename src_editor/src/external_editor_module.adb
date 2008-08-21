@@ -84,7 +84,7 @@ package body External_Editor_Module is
    --------------
 
    type Edit_With_External_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_With_External_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -725,7 +725,7 @@ package body External_Editor_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_With_External_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

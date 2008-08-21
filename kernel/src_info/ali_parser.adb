@@ -51,11 +51,11 @@ package body ALI_Parser is
    Assert_Me : constant Trace_Handle := Create ("ALI.Assert", Off);
 
    type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
-   procedure Continue
+   overriding procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean);
-   procedure Destroy (Iterator : in out ALI_Handler_Iterator);
+   overriding procedure Destroy (Iterator : in out ALI_Handler_Iterator);
    --  See doc for inherited subprograms
 
    type E_Kind_To_Char_Map is array (Character range '*' .. 'z') of E_Kind;
@@ -1747,7 +1747,7 @@ package body ALI_Parser is
    -- Get_Source_Info --
    ---------------------
 
-   function Get_Source_Info
+   overriding function Get_Source_Info
      (Handler               : access ALI_Handler_Record;
       Source_Filename       : GNATCOLL.VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
@@ -1861,7 +1861,7 @@ package body ALI_Parser is
    -- Case_Insensitive_Identifiers --
    ----------------------------------
 
-   function Case_Insensitive_Identifiers
+   overriding function Case_Insensitive_Identifiers
      (Handler : access ALI_Handler_Record) return Boolean
    is
       pragma Unreferenced (Handler);
@@ -1873,7 +1873,7 @@ package body ALI_Parser is
    -- Parse_All_LI_Information --
    ------------------------------
 
-   function Parse_All_LI_Information
+   overriding function Parse_All_LI_Information
      (Handler   : access ALI_Handler_Record;
       Project   : Projects.Project_Type;
       Recursive : Boolean := False) return Integer
@@ -1956,7 +1956,7 @@ package body ALI_Parser is
    -- Generate_LI_For_Project --
    -----------------------------
 
-   function Generate_LI_For_Project
+   overriding function Generate_LI_For_Project
      (Handler      : access ALI_Handler_Record;
       Lang_Handler : access Abstract_Language_Handler_Record'Class;
       Project      : Projects.Project_Type;
@@ -1988,7 +1988,7 @@ package body ALI_Parser is
    -- Continue --
    --------------
 
-   procedure Continue
+   overriding procedure Continue
      (Iterator : in out ALI_Handler_Iterator;
       Errors   : Projects.Error_Report;
       Finished : out Boolean)
@@ -2002,7 +2002,7 @@ package body ALI_Parser is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iterator : in out ALI_Handler_Iterator) is
+   overriding procedure Destroy (Iterator : in out ALI_Handler_Iterator) is
       pragma Unreferenced (Iterator);
    begin
       null;
@@ -2012,7 +2012,9 @@ package body ALI_Parser is
    -- Get_Name --
    --------------
 
-   function Get_Name (LI : access ALI_Handler_Record) return String is
+   overriding function Get_Name
+     (LI : access ALI_Handler_Record) return String
+   is
       pragma Unreferenced (LI);
    begin
       return "Ada";

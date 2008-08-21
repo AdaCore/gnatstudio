@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,117 +29,117 @@ package VCS.ClearCase is
 
    type ClearCase_Access is access all ClearCase_Record'Class;
 
-   function Name (Ref : access ClearCase_Record) return String;
+   overriding function Name (Ref : access ClearCase_Record) return String;
 
-   procedure Get_Status
+   overriding procedure Get_Status
      (Rep        : access ClearCase_Record;
       Filenames  : String_List.List;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False);
 
-   procedure Get_Status_Dirs
+   overriding procedure Get_Status_Dirs
      (Rep        : access ClearCase_Record;
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) renames Get_Status;
 
-   procedure Get_Status_Dirs_Recursive
+   overriding procedure Get_Status_Dirs_Recursive
      (Rep        : access ClearCase_Record;
       Dirs       : String_List.List;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) renames Get_Status;
 
-   function Local_Get_Status
+   overriding function Local_Get_Status
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
      return File_Status_List.List;
 
-   procedure Create_Tag
+   overriding procedure Create_Tag
      (Rep       : access ClearCase_Record;
       Dir       : GNATCOLL.VFS.Virtual_File;
       Tag       : String;
       As_Branch : Boolean);
 
-   procedure Open
+   overriding procedure Open
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       User_Name : String := "");
 
-   procedure Commit
+   overriding procedure Commit
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String);
 
-   procedure Update
+   overriding procedure Update
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List);
 
-   procedure Switch
+   overriding procedure Switch
      (Rep : access ClearCase_Record;
       Dir : GNATCOLL.VFS.Virtual_File;
       Tag : String);
 
-   procedure Resolved
+   overriding procedure Resolved
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List);
 
-   procedure Merge
+   overriding procedure Merge
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Tag       : String);
 
-   procedure Add
+   overriding procedure Add
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String;
       Commit    : Boolean := True);
 
-   procedure Remove
+   overriding procedure Remove
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
       Log       : String;
       Commit    : Boolean := True);
 
-   procedure Revert
+   overriding procedure Revert
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List);
 
-   procedure File_Revision
+   overriding procedure File_Revision
      (Rep      : access ClearCase_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Revision : String);
 
-   procedure Diff
+   overriding procedure Diff
      (Rep       : access ClearCase_Record;
       File      : GNATCOLL.VFS.Virtual_File;
       Version_1 : String := "";
       Version_2 : String := "");
 
-   procedure Diff_Patch
+   overriding procedure Diff_Patch
      (Rep    : access ClearCase_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Output : GNATCOLL.VFS.Virtual_File);
 
-   procedure Diff_Base_Head
+   overriding procedure Diff_Base_Head
      (Rep  : access ClearCase_Record;
       File : GNATCOLL.VFS.Virtual_File);
 
-   procedure Diff_Working
+   overriding procedure Diff_Working
      (Rep  : access ClearCase_Record;
       File : GNATCOLL.VFS.Virtual_File);
 
-   procedure Diff_Tag
+   overriding procedure Diff_Tag
      (Rep      : access ClearCase_Record;
       File     : GNATCOLL.VFS.Virtual_File;
       Tag_Name : String);
 
-   procedure Log
+   overriding procedure Log
      (Rep     : access ClearCase_Record;
       File    : GNATCOLL.VFS.Virtual_File;
       Rev     : String;
       As_Text : Boolean := True);
 
-   procedure Annotate
+   overriding procedure Annotate
      (Rep  : access ClearCase_Record;
       File : GNATCOLL.VFS.Virtual_File);
 
@@ -148,7 +147,7 @@ package VCS.ClearCase is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.ClearCase module
 
-   function Get_Identified_Actions
+   overriding function Get_Identified_Actions
      (Rep : access ClearCase_Record) return Action_Array;
 
 private

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                            AdaCore                                --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +19,7 @@
 
 with Gtk.Main;                use Gtk.Main;
 with GNAT.Sockets;            use GNAT.Sockets;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Kernel;              use GPS.Kernel;
@@ -95,7 +94,7 @@ package body Socket_Module is
    -- Local declarations --
    ------------------------
 
-   procedure Destroy (Id : in out Socket_Module_Record);
+   overriding procedure Destroy (Id : in out Socket_Module_Record);
    --  Free memory associated to Id and close the corresponding server socket.
 
    function Timeout_Process_Commands return Boolean;
@@ -150,7 +149,7 @@ package body Socket_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out Socket_Module_Record) is
+   overriding procedure Destroy (Id : in out Socket_Module_Record) is
    begin
       Empty (Id.R_Set.all);
       Empty (Id.W_Set.all);

@@ -196,7 +196,7 @@ package VCS is
    end record;
 
    function Copy_File_Status
-     (F : in File_Status_Record) return File_Status_Record;
+     (F : File_Status_Record) return File_Status_Record;
    --  Return a deep copy of F
 
    procedure Free (F : in out File_Status_Record);

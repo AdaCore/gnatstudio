@@ -60,13 +60,13 @@ package body VCS_Module is
    Auto_Detect : constant String := "None";
 
    type Has_VCS_Filter is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_VCS_Filter;
       Context : Selection_Context) return Boolean;
    --  True when the current context is associated with a known VCS
 
    type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -172,7 +172,7 @@ package body VCS_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_VCS_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -191,7 +191,7 @@ package body VCS_Module is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
@@ -265,7 +265,7 @@ package body VCS_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out VCS_Module_ID_Record) is
+   overriding procedure Destroy (Module : in out VCS_Module_ID_Record) is
    begin
       Free (Module.VCS_List);
       Clear_Cache (Module.Cached_Status);
@@ -332,7 +332,7 @@ package body VCS_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)

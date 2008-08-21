@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -129,12 +129,12 @@ package body Vsearch is
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Vsearch_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   procedure Destroy (Module : in out Vsearch_Module_Record);
+   overriding procedure Destroy (Module : in out Vsearch_Module_Record);
    --  See inherited documentation
 
    Vsearch_Module_Id : Vsearch_Module;
@@ -533,7 +533,7 @@ package body Vsearch is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Vsearch_Module_Record) is
+   overriding procedure Destroy (Module : in out Vsearch_Module_Record) is
    begin
       if Module.Search_Regexps /= null then
          for S in Module.Search_Regexps'Range loop
@@ -2300,7 +2300,7 @@ package body Vsearch is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Vsearch_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;

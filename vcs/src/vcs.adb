@@ -48,7 +48,7 @@ package body VCS is
    ----------------------
 
    function Copy_File_Status
-     (F : in File_Status_Record) return File_Status_Record
+     (F : File_Status_Record) return File_Status_Record
    is
       Result : File_Status_Record;
    begin

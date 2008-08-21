@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                      Copyright (C) 2001-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -117,7 +116,7 @@ package body Scenario_Views is
       View : Scenario_View;
    end record;
    type Refresh_Hook is access all Refresh_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class);
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
@@ -340,7 +339,7 @@ package body Scenario_Views is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class)
    is
       V      : constant Scenario_View := Hook.View;

@@ -72,13 +72,13 @@ package body VFS_Module is
    --  Interactive command handler for the vfs module
 
    type Delete_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
 
    type Rename_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Rename_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
@@ -86,7 +86,7 @@ package body VFS_Module is
    type Create_Command is new Interactive_Command with record
       Create_Dir : Boolean;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc from inherited subprogram
@@ -374,7 +374,7 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Delete_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -474,7 +474,7 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Rename_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -674,7 +674,7 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -753,10 +753,10 @@ package body VFS_Module is
    type File_Filter_Record is new Action_Filter_Record with null record;
    type Dir_Filter_Record is new Action_Filter_Record with null record;
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Dir_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
@@ -764,7 +764,7 @@ package body VFS_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -778,7 +778,7 @@ package body VFS_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Dir_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is

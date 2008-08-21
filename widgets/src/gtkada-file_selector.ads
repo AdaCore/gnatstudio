@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2007 AdaCore                  --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -287,7 +287,7 @@ private
    package Dir_Stack is new Generic_Stack (GNATCOLL.VFS.Virtual_File);
    use Dir_Stack;
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_All;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;

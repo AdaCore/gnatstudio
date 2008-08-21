@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                             AdaCore                               --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -42,7 +41,7 @@ package Project_Properties is
 
    type Project_Properties_Editor_Command
      is new Commands.Interactive.Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Project_Properties_Editor_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;

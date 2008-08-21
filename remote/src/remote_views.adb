@@ -150,7 +150,7 @@ package body Remote_Views is
    type On_Server_Config_Hook is new Function_With_Args with record
       View : Remote_View;
    end record;
-   procedure Execute
+   overriding procedure Execute
      (Func   : On_Server_Config_Hook;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -159,7 +159,7 @@ package body Remote_Views is
    type On_Server_List_Hook is new Function_No_Args with record
       View : Remote_View;
    end record;
-   procedure Execute
+   overriding procedure Execute
      (Func   : On_Server_List_Hook;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when server list changed
@@ -637,7 +637,7 @@ package body Remote_Views is
    -- On_Server_Config_Changed_Hook --
    -----------------------------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : On_Server_Config_Hook;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -653,7 +653,7 @@ package body Remote_Views is
    -- On_Server_List_Hook --
    -------------------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : On_Server_List_Hook;
       Kernel : access Kernel_Handle_Record'Class) is
    begin

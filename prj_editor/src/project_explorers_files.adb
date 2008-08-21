@@ -81,7 +81,7 @@ package body Project_Explorers_Files is
      "explorers-file-show-project-only";
 
    type Explorer_Module_Record is new Module_ID_Record with null record;
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -212,7 +212,7 @@ package body Project_Explorers_Files is
 
    type File_View_Filter_Record is new Action_Filter_Record
       with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
@@ -233,19 +233,19 @@ package body Project_Explorers_Files is
    type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
    type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Deleted_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_deleted" hook
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Saved_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_saved" hook
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Renamed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -265,7 +265,7 @@ package body Project_Explorers_Files is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access File_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -278,7 +278,7 @@ package body Project_Explorers_Files is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget) is
@@ -1452,7 +1452,7 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Deleted_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -1466,7 +1466,7 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Saved_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -1480,7 +1480,7 @@ package body Project_Explorers_Files is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Renamed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)

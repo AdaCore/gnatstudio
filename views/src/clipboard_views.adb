@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                   Copyright (C) 2005-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -105,14 +104,14 @@ package body Clipboard_Views is
 
    type Merge_With_Previous_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Merge_With_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Merge the selected entry with the previous one
 
    type Remove_Entry_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Remove_Entry_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove the currently selected entry
@@ -126,7 +125,7 @@ package body Clipboard_Views is
    end record;
    type Clipboard_View_Tooltips_Access is
      access all Clipboard_View_Tooltips'Class;
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Clipboard_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
@@ -135,7 +134,7 @@ package body Clipboard_Views is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Clipboard_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
@@ -173,7 +172,7 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Merge_With_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -197,7 +196,7 @@ package body Clipboard_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Remove_Entry_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

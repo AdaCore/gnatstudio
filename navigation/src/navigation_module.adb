@@ -91,12 +91,14 @@ package body Navigation_Module is
       Command : String) return Shell_Marker;
    --  Create a new marker associated with a shell command
 
-   function Go_To
+   overriding function Go_To
      (Marker : access Shell_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   procedure Destroy (Marker : in out Shell_Marker_Record);
-   function To_String (Marker : access Shell_Marker_Record) return String;
-   function Save (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr;
+   overriding procedure Destroy (Marker : in out Shell_Marker_Record);
+   overriding function To_String
+     (Marker : access Shell_Marker_Record) return String;
+   overriding function Save
+     (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr;
    --  See inherited documentation
 
    -----------------------
@@ -108,7 +110,7 @@ package body Navigation_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Location_Marker_Array, Location_Marker_Array_Access);
 
-   procedure Destroy (Id : in out Navigation_Module_Record);
+   overriding procedure Destroy (Id : in out Navigation_Module_Record);
    --  Free memory associated to Id
 
    procedure Refresh_Location_Buttons
@@ -551,7 +553,7 @@ package body Navigation_Module is
    -- Go_To --
    -----------
 
-   function Go_To
+   overriding function Go_To
      (Marker : access Shell_Marker_Record;
       Kernel : access Kernel_Handle_Record'Class) return Boolean
    is
@@ -571,7 +573,7 @@ package body Navigation_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Marker : in out Shell_Marker_Record) is
+   overriding procedure Destroy (Marker : in out Shell_Marker_Record) is
    begin
       Free (Marker.Command);
       Destroy (Location_Marker_Record (Marker));
@@ -581,7 +583,8 @@ package body Navigation_Module is
    -- To_String --
    ---------------
 
-   function To_String (Marker : access Shell_Marker_Record) return String is
+   overriding function To_String
+     (Marker : access Shell_Marker_Record) return String is
    begin
       return Marker.Command.all;
    end To_String;
@@ -590,7 +593,7 @@ package body Navigation_Module is
    -- Save --
    ----------
 
-   function Save
+   overriding function Save
      (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
@@ -1060,7 +1063,7 @@ package body Navigation_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out Navigation_Module_Record) is
+   overriding procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
       Save_History_Markers (Get_Kernel (Id));
 

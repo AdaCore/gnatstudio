@@ -124,9 +124,9 @@ package body Src_Editor_Module is
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
-   function Get_Command_Queue
+   overriding function Get_Command_Queue
      (Child : access Editor_Child_Record) return Commands.Command_Queue;
-   function Dnd_Data
+   overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
 
@@ -263,21 +263,21 @@ package body Src_Editor_Module is
    type File_Completion_Factory is new Completions_Factory with record
       File1, File2 : File_Array_Access;
    end record;
-   function Completion
+   overriding function Completion
      (Factory : File_Completion_Factory; Index : Positive) return String;
-   function Description
+   overriding function Description
      (Factory : File_Completion_Factory; Index : Positive) return String;
    --  See doc from inherited subprogram
 
    type Edit_File_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
    --  Edit a file (from a contextual menu)
 
    type Editor_Properties_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Editor_Properties_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See doc for inherited subprogram
@@ -287,7 +287,7 @@ package body Src_Editor_Module is
       Kernel    : Kernel_Handle;
       Close_All : Boolean;
    end record;
-   function Execute
+   overriding function Execute
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True)
@@ -347,7 +347,7 @@ package body Src_Editor_Module is
    type On_Recent is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
    end record;
-   procedure Activate (Callback : access On_Recent; Item : String);
+   overriding procedure Activate (Callback : access On_Recent; Item : String);
 
    procedure Toolbar_Destroy_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -418,7 +418,7 @@ package body Src_Editor_Module is
    -- Dnd_Data --
    --------------
 
-   function Dnd_Data
+   overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child
    is
       Editor : Source_Editor_Box;
@@ -841,7 +841,7 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
@@ -1104,7 +1104,7 @@ package body Src_Editor_Module is
    -- Save_Function --
    -------------------
 
-   function Save_Function
+   overriding function Save_Function
      (Module       : access Source_Editor_Module_Record;
       Child        : Gtk.Widget.Gtk_Widget;
       Mode         : Save_Function_Mode;
@@ -1533,7 +1533,7 @@ package body Src_Editor_Module is
    -- Completion --
    ----------------
 
-   function Completion
+   overriding function Completion
      (Factory : File_Completion_Factory; Index : Positive) return String
    is
       File : GNATCOLL.VFS.Virtual_File;
@@ -1560,7 +1560,7 @@ package body Src_Editor_Module is
    -- Description --
    -----------------
 
-   function Description
+   overriding function Description
      (Factory : File_Completion_Factory; Index : Positive) return String
    is
       File : GNATCOLL.VFS.Virtual_File;
@@ -1712,7 +1712,8 @@ package body Src_Editor_Module is
    -- Activate --
    --------------
 
-   procedure Activate (Callback : access On_Recent; Item : String) is
+   overriding procedure Activate
+     (Callback : access On_Recent; Item : String) is
    begin
       Open_File_Editor (Callback.Kernel, Create (Full_Filename => Item));
 
@@ -1799,7 +1800,7 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2297,7 +2298,7 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2325,7 +2326,7 @@ package body Src_Editor_Module is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Editor_Properties_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2444,7 +2445,7 @@ package body Src_Editor_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Source_Editor_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget) is
@@ -2518,7 +2519,7 @@ package body Src_Editor_Module is
    -- Bookmark_Handler --
    ----------------------
 
-   function Bookmark_Handler
+   overriding function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
       Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker is
    begin
@@ -2529,7 +2530,7 @@ package body Src_Editor_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -3357,7 +3358,7 @@ package body Src_Editor_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out Source_Editor_Module_Record) is
+   overriding procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
       Marker_List.Free (Id.Stored_Marks);
 
@@ -3626,7 +3627,7 @@ package body Src_Editor_Module is
    -- Get_Command_Queue --
    -----------------------
 
-   function Get_Command_Queue
+   overriding function Get_Command_Queue
      (Child : access Editor_Child_Record) return Commands.Command_Queue
    is
       Box : constant Source_Editor_Box :=

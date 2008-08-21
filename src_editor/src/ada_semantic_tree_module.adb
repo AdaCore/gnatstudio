@@ -50,7 +50,7 @@ package body Ada_Semantic_Tree_Module is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer
+   overriding function Get_Buffer
      (Provider : access GPS_Buffer_Provider;
       File     : Virtual_File) return String_Access
    is

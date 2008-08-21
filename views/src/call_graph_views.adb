@@ -154,9 +154,9 @@ package body Call_Graph_Views is
    function From_XML (N : Node_Ptr) return Reference_Record;
    --  Conversion functions
 
-   function Save_To_XML
+   overriding function Save_To_XML
      (View : access Callgraph_View_Record) return Glib.Xml_Int.Node_Ptr;
-   procedure Load_From_XML
+   overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : Glib.Xml_Int.Node_Ptr);
    procedure Initialize
      (View   : access Callgraph_View_Record'Class;
@@ -711,7 +711,6 @@ package body Call_Graph_Views is
                        "    " & Display_Base_Name (R.File));
                end if;
 
-
                N := Next (N);
             end loop;
          end if;
@@ -925,7 +924,7 @@ package body Call_Graph_Views is
    -- Save_To_XML --
    -----------------
 
-   function Save_To_XML
+   overriding function Save_To_XML
      (View : access Callgraph_View_Record) return Glib.Xml_Int.Node_Ptr
    is
       Model : constant Gtk_Tree_Store :=
@@ -1030,7 +1029,7 @@ package body Call_Graph_Views is
    -- Load_From_XML --
    -------------------
 
-   procedure Load_From_XML
+   overriding procedure Load_From_XML
      (View : access Callgraph_View_Record; XML : Glib.Xml_Int.Node_Ptr)
    is
       Model : constant Gtk_Tree_Store :=
@@ -1366,7 +1365,7 @@ package body Call_Graph_Views is
    -- Destroy --
    -------------
 
-   procedure Destroy
+   overriding procedure Destroy
      (Data : in out Ancestors_User_Data; Cancelled : Boolean)
    is
       Model : Gtk_Tree_Store;
@@ -1383,7 +1382,7 @@ package body Call_Graph_Views is
    -- On_Entity_Found --
    ---------------------
 
-   function On_Entity_Found
+   overriding function On_Entity_Found
      (Data                : access Ancestors_User_Data;
       Entity              : Entities.Entity_Information;
       Parent              : Entities.Entity_Information;
@@ -1422,7 +1421,7 @@ package body Call_Graph_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1454,7 +1453,7 @@ package body Call_Graph_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Entity_Called_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

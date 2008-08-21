@@ -272,7 +272,7 @@ package body Src_Editor_Buffer is
       Buffer : Source_Buffer;
    end record;
    type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
@@ -488,13 +488,13 @@ package body Src_Editor_Buffer is
    type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
    type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Deleted_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_deleted" hook
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Renamed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -504,7 +504,7 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Deleted_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -543,7 +543,7 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Renamed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -2545,7 +2545,7 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -5708,7 +5708,7 @@ package body Src_Editor_Buffer is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
       Ctxt    : Selection_Context) return Boolean
    is

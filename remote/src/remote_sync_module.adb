@@ -69,7 +69,7 @@ package body Remote_Sync_Module is
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Rsync_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -136,7 +136,7 @@ package body Remote_Sync_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Rsync_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;

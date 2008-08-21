@@ -184,7 +184,7 @@ package body Project_Viewers is
    --
    --  Project_Filter mustn't be No_Project.
 
-   procedure Destroy (Module : in out Prj_Editor_Module_Id_Record);
+   overriding procedure Destroy (Module : in out Prj_Editor_Module_Id_Record);
    --  Free the memory associated with the module
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -209,7 +209,7 @@ package body Project_Viewers is
       Viewer : Project_Viewer;
    end record;
    type Context_Hook is access all Context_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Context_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -275,7 +275,7 @@ package body Project_Viewers is
       Viewer : Project_Viewer;
    end record;
    type Preferences_Hook is access all Preferences_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Hook called when the preferences change
@@ -284,7 +284,7 @@ package body Project_Viewers is
       Viewer : Project_Viewer;
    end record;
    type Project_View_Hook is access all Project_View_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook : Project_View_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Hook called when the project view changes
@@ -298,13 +298,13 @@ package body Project_Viewers is
 --     function Create_Content
 --       (Page : access Switches_Editor_Record;
 --        Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   function Widget_Factory
+   overriding function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
-   function Project_Editor
+   overriding function Project_Editor
      (Page               : access Switches_Editor_Record;
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
@@ -312,7 +312,7 @@ package body Project_Viewers is
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project        : Project_Type) return Boolean;
-   procedure Refresh
+   overriding procedure Refresh
      (Page      : access Switches_Editor_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Project_Type := No_Project;
@@ -321,13 +321,13 @@ package body Project_Viewers is
    type Naming_Editor_Record is new Project_Editor_Page_Record with record
       Kernel : Kernel_Handle;
    end record;
-   function Widget_Factory
+   overriding function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project      : Project_Type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
-   function Project_Editor
+   overriding function Project_Editor
      (Page               : access Naming_Editor_Record;
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
@@ -335,7 +335,7 @@ package body Project_Viewers is
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project        : Project_Type) return Boolean;
-   procedure Refresh
+   overriding procedure Refresh
      (Page      : access Naming_Editor_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Project_Type := No_Project;
@@ -347,13 +347,13 @@ package body Project_Viewers is
 
    type Save_Project_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Save_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Edit_Project_Source_Command
      is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -361,7 +361,9 @@ package body Project_Viewers is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Prj_Editor_Module_Id_Record) is
+   overriding procedure Destroy
+     (Module : in out Prj_Editor_Module_Id_Record)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Editor_Page_Record'Class, Project_Editor_Page);
    begin
@@ -486,7 +488,7 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook : Project_View_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class) is
    begin
@@ -589,7 +591,7 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Context_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -717,7 +719,7 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Preferences_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
@@ -841,7 +843,7 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Save_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -862,7 +864,7 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -992,7 +994,7 @@ package body Project_Viewers is
    -- Widget_Factory --
    --------------------
 
-   function Widget_Factory
+   overriding function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
       Full_Project : String;
@@ -1017,7 +1019,7 @@ package body Project_Viewers is
    -- Project_Editor --
    --------------------
 
-   function Project_Editor
+   overriding function Project_Editor
      (Page               : access Switches_Editor_Record;
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
@@ -1045,7 +1047,7 @@ package body Project_Viewers is
    -- Refresh --
    -------------
 
-   procedure Refresh
+   overriding procedure Refresh
      (Page      : access Switches_Editor_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Project_Type := No_Project;
@@ -1060,7 +1062,7 @@ package body Project_Viewers is
    -- Widget_Factory --
    --------------------
 
-   function Widget_Factory
+   overriding function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project      : Project_Type;
       Full_Project : String;
@@ -1091,7 +1093,7 @@ package body Project_Viewers is
    -- Project_Editor --
    --------------------
 
-   function Project_Editor
+   overriding function Project_Editor
      (Page               : access Naming_Editor_Record;
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
@@ -1118,7 +1120,7 @@ package body Project_Viewers is
    -- Refresh --
    -------------
 
-   procedure Refresh
+   overriding procedure Refresh
      (Page      : access Naming_Editor_Record;
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project   : Project_Type := No_Project;

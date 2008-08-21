@@ -74,8 +74,8 @@ package VCS_Module is
 
    VCS_Module_ID : VCS_Module_ID_Access;
 
-   procedure Destroy (Module : in out VCS_Module_ID_Record);
-   procedure Default_Context_Factory
+   overriding procedure Destroy (Module : in out VCS_Module_ID_Record);
+   overriding procedure Default_Context_Factory
      (Module  : access VCS_Module_ID_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);

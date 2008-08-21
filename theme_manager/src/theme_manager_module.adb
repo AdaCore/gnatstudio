@@ -93,10 +93,10 @@ package body Theme_Manager_Module is
      end record;
    type Theme_Editor is access all Theme_Editor_Record'Class;
 
-   function Name (Pref : access Theme_Editor_Record) return String;
-   function Create
+   overriding function Name (Pref : access Theme_Editor_Record) return String;
+   overriding function Create
      (Pref : access Theme_Editor_Record) return Gtk.Widget.Gtk_Widget;
-   procedure Validate
+   overriding procedure Validate
      (Pref   : access Theme_Editor_Record;
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  See doc for inherited subprograms.
@@ -115,8 +115,8 @@ package body Theme_Manager_Module is
    Active_Column    : constant := 1;
    Visible_Column   : constant := 2;
 
-   procedure Destroy (Module : in out Theme_Manager_Module_Record);
-   procedure Customize
+   overriding procedure Destroy (Module : in out Theme_Manager_Module_Record);
+   overriding procedure Customize
      (Module : access Theme_Manager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -215,7 +215,9 @@ package body Theme_Manager_Module is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Theme_Manager_Module_Record) is
+   overriding procedure Destroy
+     (Module : in out Theme_Manager_Module_Record)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Theme_Description, Theme_Description_Access);
       Themes : Theme_Description_Access := Module.Themes;
@@ -237,7 +239,7 @@ package body Theme_Manager_Module is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Theme_Manager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -418,7 +420,9 @@ package body Theme_Manager_Module is
    -- Name --
    ----------
 
-   function Name (Pref : access Theme_Editor_Record) return String is
+   overriding function Name
+     (Pref : access Theme_Editor_Record) return String
+   is
       pragma Unreferenced (Pref);
    begin
       return -"Themes";
@@ -428,7 +432,7 @@ package body Theme_Manager_Module is
    -- Validate --
    --------------
 
-   procedure Validate
+   overriding procedure Validate
      (Pref   : access Theme_Editor_Record;
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
@@ -471,7 +475,7 @@ package body Theme_Manager_Module is
    -- Create --
    ------------
 
-   function Create
+   overriding function Create
      (Pref : access Theme_Editor_Record) return Gtk.Widget.Gtk_Widget
    is
       Active          : constant String := Get_Pref (Active_Themes);

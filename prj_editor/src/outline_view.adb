@@ -95,7 +95,7 @@ package body Outline_View is
    Line_Column         : constant := 4;
    Declaration_Column  : constant := 5;
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -131,7 +131,7 @@ package body Outline_View is
    --  Create a new outline view
 
    type Refresh_Outline_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Refresh_Outline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See inherited documentation
@@ -225,7 +225,7 @@ package body Outline_View is
       Outline : Outline_View_Access;
    end record;
    type Outline_View_Tooltips_Access is access all Outline_View_Tooltips;
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Outline_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
@@ -257,7 +257,7 @@ package body Outline_View is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Outline_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
@@ -440,7 +440,7 @@ package body Outline_View is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)
@@ -817,7 +817,7 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Refresh_Outline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -498,7 +498,8 @@ package body Src_Editor_Box is
    -- Grab_Focus --
    ----------------
 
-   procedure Grab_Focus (Editor : access Source_Editor_Box_Record) is
+   overriding procedure Grab_Focus
+     (Editor : access Source_Editor_Box_Record) is
    begin
       Grab_Focus (Editor.Source_View);
    end Grab_Focus;
@@ -1181,7 +1182,7 @@ package body Src_Editor_Box is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1453,7 +1454,7 @@ package body Src_Editor_Box is
    -- Get_Label --
    ---------------
 
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Goto_Body_Menu_Label;
       Context : Selection_Context) return String
    is
@@ -1619,7 +1620,7 @@ package body Src_Editor_Box is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Declaration_Submenu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
@@ -1641,7 +1642,7 @@ package body Src_Editor_Box is
    -- Append_To_Menu --
    --------------------
 
-   procedure Append_To_Menu
+   overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Body_Submenu;
       Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
@@ -1663,7 +1664,7 @@ package body Src_Editor_Box is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Type_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -1678,7 +1679,7 @@ package body Src_Editor_Box is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -1735,7 +1736,7 @@ package body Src_Editor_Box is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Body_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -1748,7 +1749,7 @@ package body Src_Editor_Box is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Dispatching_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -1782,7 +1783,7 @@ package body Src_Editor_Box is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Goto_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1810,7 +1811,7 @@ package body Src_Editor_Box is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Goto_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1871,7 +1872,7 @@ package body Src_Editor_Box is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Goto_Declaration_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1892,7 +1893,7 @@ package body Src_Editor_Box is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Goto_Next_Body_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1913,7 +1914,7 @@ package body Src_Editor_Box is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Goto_Type_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -1,7 +1,7 @@
-------------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -291,7 +291,7 @@ package body Shell_Script is
    -- Create --
    ------------
 
-   function Create
+   overriding function Create
      (Script          : access Shell_GPS_Scripting_Record;
       Arguments_Count : Natural) return Callback_Data'Class
    is
@@ -305,7 +305,7 @@ package body Shell_Script is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
       Args       : Callback_Data'Class) return String
    is
@@ -344,7 +344,7 @@ package body Shell_Script is
    -- Get_Name --
    --------------
 
-   function Get_Name
+   overriding function Get_Name
      (Subprogram : access Shell_GPS_Subprogram_Record) return String is
    begin
       return "action: " & Get_Command (Subprogram);
@@ -354,7 +354,7 @@ package body Shell_Script is
    -- Nth_Arg --
    -------------
 
-   function Nth_Arg
+   overriding function Nth_Arg
      (Data : Shell_GPS_Callback_Data; N : Positive) return Subprogram_Type
    is
       A    : Action_Record_Access;

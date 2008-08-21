@@ -47,7 +47,7 @@ package body Vdiff_Module is
 
    type Vdiff_Module_Record is new Module_ID_Record with null record;
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Vdiff_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
@@ -303,7 +303,7 @@ package body Vdiff_Module is
    -- Default_Context_Factory --
    -----------------------------
 
-   procedure Default_Context_Factory
+   overriding procedure Default_Context_Factory
      (Module  : access Vdiff_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget)

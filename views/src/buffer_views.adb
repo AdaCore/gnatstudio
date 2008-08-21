@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2005-2007                   --
---                                 AdaCore                           --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -111,7 +110,7 @@ package body Buffer_Views is
    --  User must free memory associated to the returned path.
 
    type Close_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the selected editors
@@ -129,7 +128,7 @@ package body Buffer_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

@@ -55,29 +55,29 @@ package body Casing_Exceptions is
       Casing : Casing_Type;
    end record;
    type Contextual_Label is access all Contextual_Label_Record'Class;
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Label_Record;
       Context : Selection_Context) return String;
 
    type Change_Case_Command (Casing : Casing_Type) is
      new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Add_Exception_Command (Substring, Remove : Boolean) is
      new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Substring_Filter_Record is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
       Context : Selection_Context) return Boolean;
 
    type Empty_Filter_Record is new Action_Filter_Record with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Empty_Filter_Record;
       Context : Selection_Context) return Boolean;
 
@@ -85,7 +85,7 @@ package body Casing_Exceptions is
    -- Subprograms --
    -----------------
 
-   procedure Destroy (Id : in out Casing_Module_Record);
+   overriding procedure Destroy (Id : in out Casing_Module_Record);
    --  Terminate the module and save the casing exceptions on file
 
    procedure Set_Casing
@@ -231,7 +231,7 @@ package body Casing_Exceptions is
    -- Get_Label --
    ---------------
 
-   function Get_Label
+   overriding function Get_Label
      (Creator : access Contextual_Label_Record;
       Context : Selection_Context) return String
    is
@@ -272,7 +272,7 @@ package body Casing_Exceptions is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Change_Case_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -320,7 +320,7 @@ package body Casing_Exceptions is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Add_Exception_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -378,7 +378,7 @@ package body Casing_Exceptions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Substring_Filter_Record;
       Context : Selection_Context) return Boolean
    is
@@ -424,7 +424,7 @@ package body Casing_Exceptions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Empty_Filter_Record;
       Context : Selection_Context) return Boolean
    is
@@ -554,7 +554,7 @@ package body Casing_Exceptions is
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out Casing_Module_Record) is
+   overriding procedure Destroy (Id : in out Casing_Module_Record) is
    begin
       Destroy (Id.Casing_Exceptions_Table);
    end Destroy;

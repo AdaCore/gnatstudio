@@ -253,16 +253,17 @@ package body Project_Properties is
    type XML_Project_Wizard_Page_Access is
      access all XML_Project_Wizard_Page'Class;
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access XML_Project_Wizard_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
-   function Create_Content
+   overriding function Create_Content
      (Page : access XML_Project_Wizard_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   function Is_Complete (Page : access XML_Project_Wizard_Page) return String;
+   overriding function Is_Complete
+     (Page : access XML_Project_Wizard_Page) return String;
    --  See inherited doc
 
    -----------------------
@@ -276,8 +277,8 @@ package body Project_Properties is
      is access all Properties_Module_ID_Record'Class;
    Properties_Module_ID : Properties_Module_ID_Access;
 
-   procedure Destroy (Module : in out Properties_Module_ID_Record);
-   procedure Customize
+   overriding procedure Destroy (Module : in out Properties_Module_ID_Record);
+   overriding procedure Customize
      (Module : access Properties_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -383,18 +384,18 @@ package body Project_Properties is
    --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
    --  parameter.
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor          : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List;
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access File_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean);
-   function Is_Valid
+   overriding function Is_Valid
      (Editor : access File_Attribute_Editor_Record) return String;
    --  See doc from inherited subprogram
 
@@ -430,13 +431,13 @@ package body Project_Properties is
    end record;
    type List_Attribute_Editor is access all List_Attribute_Editor_Record'Class;
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor          : access List_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List;
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor : access List_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access List_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
@@ -503,13 +504,13 @@ package body Project_Properties is
    type Indexed_Attribute_Editor is
      access all Indexed_Attribute_Editor_Record'Class;
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor          : access Indexed_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List;
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor : access Indexed_Attribute_Editor_Record;
       Attribute_Index : String := "") return String;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access Indexed_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
@@ -764,7 +765,8 @@ package body Project_Properties is
    -- Destroy --
    -------------
 
-   procedure Destroy (Module : in out Properties_Module_ID_Record) is
+   overriding procedure Destroy
+     (Module : in out Properties_Module_ID_Record) is
    begin
       if Module.Pages /= null then
          for P in Module.Pages'Range loop
@@ -1138,7 +1140,7 @@ package body Project_Properties is
    -- Is_Valid --
    --------------
 
-   function Is_Valid
+   overriding function Is_Valid
      (Editor : access File_Attribute_Editor_Record) return String
    is
    begin
@@ -1156,7 +1158,7 @@ package body Project_Properties is
    -- Is_Complete --
    -----------------
 
-   function Is_Complete
+   overriding function Is_Complete
      (Page : access XML_Project_Wizard_Page) return String is
    begin
       return Is_Valid (Page.Page);
@@ -1166,7 +1168,7 @@ package body Project_Properties is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access File_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
@@ -1282,7 +1284,7 @@ package body Project_Properties is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access List_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
@@ -1318,7 +1320,7 @@ package body Project_Properties is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Editor             : access Indexed_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
@@ -2334,7 +2336,7 @@ package body Project_Properties is
    -- Customize --
    ---------------
 
-   procedure Customize
+   overriding procedure Customize
      (Module : access Properties_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
@@ -3597,7 +3599,7 @@ package body Project_Properties is
    -- Get_Value_As_String --
    -------------------------
 
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor          : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return String
    is
@@ -3626,7 +3628,7 @@ package body Project_Properties is
    -- Get_Value_As_String --
    -------------------------
 
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor          : access List_Attribute_Editor_Record;
       Attribute_Index : String := "") return String
    is
@@ -3639,7 +3641,7 @@ package body Project_Properties is
    -- Get_Value_As_String --
    -------------------------
 
-   function Get_Value_As_String
+   overriding function Get_Value_As_String
      (Editor          : access Indexed_Attribute_Editor_Record;
       Attribute_Index : String := "") return String
    is
@@ -3662,7 +3664,7 @@ package body Project_Properties is
    -- Get_Value_As_List --
    -----------------------
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List
    is
@@ -3685,7 +3687,7 @@ package body Project_Properties is
    -- Get_Value_As_List --
    -----------------------
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor          : access List_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List
    is
@@ -3710,7 +3712,7 @@ package body Project_Properties is
    -- Get_Value_As_List --
    -----------------------
 
-   function Get_Value_As_List
+   overriding function Get_Value_As_List
      (Editor          : access Indexed_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List
    is
@@ -4687,7 +4689,7 @@ package body Project_Properties is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access XML_Project_Wizard_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -4725,7 +4727,7 @@ package body Project_Properties is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access XML_Project_Wizard_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -5287,7 +5289,7 @@ package body Project_Properties is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Project_Properties_Editor_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type

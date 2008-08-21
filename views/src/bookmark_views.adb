@@ -188,7 +188,7 @@ package body Bookmark_Views is
       View : Bookmark_View;
    end record;
    type Refresh_Hook_Access is access all Refresh_Hook'Class;
-   procedure Execute
+   overriding procedure Execute
      (Func   : Refresh_Hook;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -196,19 +196,19 @@ package body Bookmark_Views is
    --  properly refresh the view.
 
    type Delete_Bookmark_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Delete_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Delete the selected bookmark
 
    type Create_Bookmark_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create a new bookmark
 
    type Rename_Bookmark_Command is new Interactive_Command with null record;
-   function Execute
+   overriding function Execute
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
@@ -228,7 +228,7 @@ package body Bookmark_Views is
    end record;
    type Bookmark_View_Tooltips_Access is
      access all Bookmark_View_Tooltips'Class;
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Bookmark_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
@@ -237,7 +237,7 @@ package body Bookmark_Views is
    -- Draw --
    ----------
 
-   procedure Draw
+   overriding procedure Draw
      (Tooltip : access Bookmark_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
@@ -337,7 +337,7 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Delete_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -422,7 +422,7 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -546,7 +546,7 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -772,7 +772,7 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Func   : Refresh_Hook;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)

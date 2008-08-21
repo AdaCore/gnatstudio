@@ -174,7 +174,7 @@ package body Gtkada.File_Selector is
    --  If Name is not null, use it instead of Pattern for the name of the
    --  filter.
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Regexp_Filter_Record;
       Win    : access File_Selector_Window_Record'Class;
       File   : Virtual_File;
@@ -377,7 +377,7 @@ package body Gtkada.File_Selector is
    -- Use_File_Filter --
    ---------------------
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Regexp_Filter_Record;
       Win    : access File_Selector_Window_Record'Class;
       File   : Virtual_File;
@@ -948,7 +948,7 @@ package body Gtkada.File_Selector is
    -- Use_File_Filter --
    ---------------------
 
-   procedure Use_File_Filter
+   overriding procedure Use_File_Filter
      (Filter : access Filter_Show_All;
       Win    : access File_Selector_Window_Record'Class;
       File   : Virtual_File;
