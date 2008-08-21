@@ -858,13 +858,13 @@ package body Projects.Registry is
 
       Errout.Initialize;
       Prj.Proc.Process
-        (Registry.Data.View_Tree,
-         View, Success,
-         Registry.Data.Root.Node,
-         Registry.Data.Tree,
-         Report_Error'Unrestricted_Access,
-         Current_Dir     => Current_Dir,
-         When_No_Sources => Warning);
+        (In_Tree                => Registry.Data.View_Tree,
+         Project                => View, Success => Success,
+         From_Project_Node      => Registry.Data.Root.Node,
+         From_Project_Node_Tree => Registry.Data.Tree,
+         Report_Error           => Report_Error'Unrestricted_Access,
+         Current_Dir            => Current_Dir,
+         When_No_Sources        => Warning);
 
       --  Lower case the languages attribute
 
@@ -2127,6 +2127,11 @@ package body Projects.Registry is
       Info                   : Source_File_Data := No_Source_File_Data;
 
    begin
+      --  Note: in this procedure, we test project with
+      --  Get_View (..) /= Prj.No_Project
+      --  rathen than by comparing directly with Projects.No_Project.
+      --  This is slightly more efficient
+
       if Is_Absolute_Path (Filename) then
          declare
             S : constant String := Locale_To_UTF8
@@ -2160,7 +2165,7 @@ package body Projects.Registry is
 
          if GNAT.Directory_Operations.File_Extension (Locale) =
            Project_File_Extension
-           and then Get_Root_Project (Registry) /= No_Project
+           and then Get_View (Get_Root_Project (Registry)) /= Prj.No_Project
          then
             Iterator := Start (Get_Root_Project (Registry));
 
@@ -2200,7 +2205,7 @@ package body Projects.Registry is
          end if;
 
          if Locale /= "" then
-            if Project2 /= No_Project then
+            if Get_View (Project2) /= Prj.No_Project then
                if Use_Source_Path then
                   Path := Locate_Regular_File
                     (Locale, Include_Path (Project2, False));
@@ -2212,7 +2217,7 @@ package body Projects.Registry is
                end if;
             end if;
 
-            if Get_Root_Project (Registry) /= No_Project then
+            if Get_View (Get_Root_Project (Registry)) /= Prj.No_Project then
                if Path = null and then Use_Source_Path then
                   --  ??? Should not search again in the directories from
                   --  Project2

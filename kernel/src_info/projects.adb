@@ -542,6 +542,10 @@ package body Projects is
    function Include_Path
      (Project : Project_Type; Recursive : Boolean) return String is
    begin
+      if Get_View (Project) = Prj.No_Project then
+         return "";
+      end if;
+
       --  ??? The project parser doesn't cache the non-recursive version
       if not Recursive then
          if Project.Data.Non_Recursive_Include_Path = null then
