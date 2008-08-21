@@ -3989,3 +3989,9 @@
   fun:memcpy
   fun:entities__remove__2 
 }
+{
+  H821-014/Source and destination overlap in memcpy
+  Memcheck:Overlap
+  fun:memcpy
+  fun:entities__remove__3 
+}
