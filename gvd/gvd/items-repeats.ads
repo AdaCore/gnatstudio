@@ -1,10 +1,9 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                G P S                              --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -59,15 +58,15 @@ private
       Value            : Generic_Type_Access := null;
    end record;
 
-   procedure Print (Value : Repeat_Type; Indent : Natural := 0);
-   procedure Free
+   overriding procedure Print (Value : Repeat_Type; Indent : Natural := 0);
+   overriding procedure Free
      (Item : access Repeat_Type;
       Only_Value : Boolean := False);
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Repeat_Type;
       Clone : in out Generic_Type_Access);
 
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Repeat_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
@@ -75,25 +74,25 @@ private
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
 
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Repeat_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Repeat_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
-   function Get_Component
+   overriding function Get_Component
      (Item : access Repeat_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;
-   function Replace
+   overriding function Replace
      (Parent       : access Repeat_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Repeat_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
@@ -101,9 +100,11 @@ private
       Item   : Repeat_Type_Access;
       At_End : Boolean;
    end record;
-   function Start (Item : access Repeat_Type) return Generic_Iterator'Class;
-   procedure Next (Iter : in out Repeat_Iterator);
-   function At_End (Iter : Repeat_Iterator) return Boolean;
-   function Data (Iter : Repeat_Iterator) return Generic_Type_Access;
+   overriding function Start
+     (Item : access Repeat_Type) return Generic_Iterator'Class;
+   overriding procedure Next (Iter : in out Repeat_Iterator);
+   overriding function At_End (Iter : Repeat_Iterator) return Boolean;
+   overriding function Data
+     (Iter : Repeat_Iterator) return Generic_Type_Access;
 
 end Items.Repeats;

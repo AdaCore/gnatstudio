@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004 - 2007                     --
---                              AdaCore                              --
+--                    Copyright (C) 2004-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +27,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Creation_Wizard.Simple is
 
@@ -36,13 +35,13 @@ package body Creation_Wizard.Simple is
       Dirs : Directory_Tree.Directory_Selector;
    end record;
    type Dirs_Selection_Page_Access is access all Dirs_Selection_Page'Class;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
-   function Create_Content
+   overriding function Create_Content
      (Page : access Dirs_Selection_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
@@ -51,10 +50,10 @@ package body Creation_Wizard.Simple is
       Src_Dirs : Dirs_Selection_Page_Access;
    end record;
    type Obj_Dirs_Page_Access is access all Obj_Dirs_Page'Class;
-   function Create_Content
+   overriding function Create_Content
      (Page : access Obj_Dirs_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -88,7 +87,7 @@ package body Creation_Wizard.Simple is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Dirs_Selection_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -107,7 +106,7 @@ package body Creation_Wizard.Simple is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Obj_Dirs_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -140,7 +139,7 @@ package body Creation_Wizard.Simple is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Dirs_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -156,7 +155,7 @@ package body Creation_Wizard.Simple is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Obj_Dirs_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;

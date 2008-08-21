@@ -179,7 +179,7 @@ package body Gtkada.Check_Button is
    -- Set_Active --
    ----------------
 
-   procedure Set_Active
+   overriding procedure Set_Active
      (Check      : access Gtkada_Check_Button_Record;
       State      : Boolean)
    is

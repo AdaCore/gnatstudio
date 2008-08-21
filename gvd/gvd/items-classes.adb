@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                G P S                              --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -112,7 +111,7 @@ package body Items.Classes is
    -- Print --
    -----------
 
-   procedure Print (Value : Class_Type; Indent : Natural := 0) is
+   overriding procedure Print (Value : Class_Type; Indent : Natural := 0) is
    begin
       Put ("{Class ");
       for A in Value.Ancestors'Range loop
@@ -139,7 +138,7 @@ package body Items.Classes is
    -- Free --
    ----------
 
-   procedure Free
+   overriding procedure Free
      (Item : access Class_Type;
       Only_Value : Boolean := False) is
    begin
@@ -155,7 +154,7 @@ package body Items.Classes is
    -- Clone_Dispatching --
    -----------------------
 
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Class_Type;
       Clone : in out Generic_Type_Access)
    is
@@ -176,7 +175,7 @@ package body Items.Classes is
    -- Paint --
    -----------
 
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Class_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
@@ -272,7 +271,7 @@ package body Items.Classes is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Class_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
@@ -341,7 +340,7 @@ package body Items.Classes is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Class_Type;
       Lang : access Language_Root'Class;
       Name : String;
@@ -378,7 +377,7 @@ package body Items.Classes is
    -- Get_Component --
    -------------------
 
-   function Get_Component
+   overriding function Get_Component
      (Item : access Class_Type;
       X, Y : Glib.Gint) return Generic_Type_Access
    is
@@ -408,7 +407,7 @@ package body Items.Classes is
    -- Replace --
    -------------
 
-   function Replace
+   overriding function Replace
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access is
@@ -434,7 +433,7 @@ package body Items.Classes is
    -- Propagate_Width --
    ---------------------
 
-   procedure Propagate_Width
+   overriding procedure Propagate_Width
      (Item  : in out Class_Type;
       Width : Glib.Gint) is
    begin
@@ -454,7 +453,9 @@ package body Items.Classes is
    -- Start --
    -----------
 
-   function Start (Item : access Class_Type) return Generic_Iterator'Class is
+   overriding function Start
+     (Item : access Class_Type) return Generic_Iterator'Class
+   is
       Iter : Class_Iterator;
    begin
       Iter.Item := Class_Type_Access (Item);
@@ -470,7 +471,7 @@ package body Items.Classes is
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Class_Iterator) is
+   overriding procedure Next (Iter : in out Class_Iterator) is
    begin
       Iter.Ancestor := Iter.Ancestor + 1;
    end Next;
@@ -479,7 +480,7 @@ package body Items.Classes is
    -- At_End --
    ------------
 
-   function At_End (Iter : Class_Iterator) return Boolean is
+   overriding function At_End (Iter : Class_Iterator) return Boolean is
    begin
       return Iter.Ancestor > Iter.Item.Ancestors'Last + 1;
    end At_End;
@@ -488,7 +489,8 @@ package body Items.Classes is
    -- Data --
    ----------
 
-   function Data (Iter : Class_Iterator) return Generic_Type_Access is
+   overriding function Data
+     (Iter : Class_Iterator) return Generic_Type_Access is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          return Generic_Type_Access (Iter.Item.Ancestors (Iter.Ancestor));
@@ -516,7 +518,7 @@ package body Items.Classes is
    -- Set_Type_Name --
    -------------------
 
-   procedure Set_Type_Name
+   overriding procedure Set_Type_Name
      (Item : access Class_Type;
       Name : String)
    is
@@ -530,7 +532,7 @@ package body Items.Classes is
    -- Structurally_Equivalent --
    -----------------------------
 
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
       return Boolean
    is

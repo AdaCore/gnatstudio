@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                    Copyright (C) 2007-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ package body Completion.History is
    -- Get_Completion_Root --
    -------------------------
 
-   procedure Get_Completion_Root
+   overriding procedure Get_Completion_Root
      (Resolver   : access Completion_History;
       Offset     : Integer;
       Context    : Completion_Context;
@@ -66,7 +66,7 @@ package body Completion.History is
    -- Get_Id --
    ------------
 
-   function Get_Id (Resolver : Completion_History) return String is
+   overriding function Get_Id (Resolver : Completion_History) return String is
       pragma Unreferenced (Resolver);
    begin
       return Resolver_ID;
@@ -76,7 +76,7 @@ package body Completion.History is
    -- Free --
    ----------
 
-   procedure Free (Resolver : in out Completion_History) is
+   overriding procedure Free (Resolver : in out Completion_History) is
    begin
       Clear (Resolver.Stack);
    end Free;

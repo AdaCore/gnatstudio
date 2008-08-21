@@ -61,7 +61,7 @@ package Gtkada.Check_Button is
      (Check : access Gtkada_Check_Button_Record) return Boolean;
    --  Get the default state of the check button
 
-   procedure Set_Active
+   overriding procedure Set_Active
      (Check : access Gtkada_Check_Button_Record;
       State : Boolean);
    --  Force the state of the check button

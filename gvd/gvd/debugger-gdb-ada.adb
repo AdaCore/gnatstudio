@@ -40,7 +40,9 @@ package body Debugger.Gdb.Ada is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Gdb_Ada_Language) return String is
+   overriding function Get_Name
+     (Lang : access Gdb_Ada_Language) return String
+   is
       pragma Unreferenced (Lang);
    begin
       return "ada";
@@ -50,7 +52,7 @@ package body Debugger.Gdb.Ada is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Gdb_Ada_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -62,7 +64,7 @@ package body Debugger.Gdb.Ada is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -70,7 +72,7 @@ package body Debugger.Gdb.Ada is
       return Keywords (Ada_Lang);
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Ada_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -82,7 +84,7 @@ package body Debugger.Gdb.Ada is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Gdb_Ada_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -94,7 +96,7 @@ package body Debugger.Gdb.Ada is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -106,7 +108,7 @@ package body Debugger.Gdb.Ada is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File
+   overriding function Is_System_File
      (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -118,7 +120,7 @@ package body Debugger.Gdb.Ada is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Gdb_Ada_Language;
       Name : String) return String
    is
@@ -131,7 +133,7 @@ package body Debugger.Gdb.Ada is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Gdb_Ada_Language;
       Name  : String;
       Index : String) return String
@@ -145,7 +147,7 @@ package body Debugger.Gdb.Ada is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Gdb_Ada_Language;
       Name  : String;
       Field : String) return String
@@ -159,7 +161,7 @@ package body Debugger.Gdb.Ada is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Gdb_Ada_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -171,7 +173,7 @@ package body Debugger.Gdb.Ada is
    -- Break Exception --
    ---------------------
 
-   function Break_Exception
+   overriding function Break_Exception
      (Debugger  : access Gdb_Ada_Language;
       Name      : String  := "";
       Temporary : Boolean := False;
@@ -204,7 +206,7 @@ package body Debugger.Gdb.Ada is
    -- Parse_Type --
    ----------------
 
-   procedure Parse_Type
+   overriding procedure Parse_Type
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Entity   : String;
@@ -444,7 +446,7 @@ package body Debugger.Gdb.Ada is
    -- Parse_Value --
    -----------------
 
-   procedure Parse_Value
+   overriding procedure Parse_Value
      (Lang       : access Gdb_Ada_Language;
       Type_Str   : String;
       Index      : in out Natural;
@@ -459,12 +461,12 @@ package body Debugger.Gdb.Ada is
    -- Parse_Array_Type --
    ----------------------
 
-   procedure Parse_Array_Type
+   overriding procedure Parse_Array_Type
      (Lang         : access Gdb_Ada_Language;
       Type_Str     : String;
       Entity       : String;
       Index        : in out Natural;
-      Start_Of_Dim : in Natural;
+      Start_Of_Dim : Natural;
       Result       : out Generic_Type_Access)
    is
       pragma Unreferenced (Start_Of_Dim);
@@ -638,7 +640,7 @@ package body Debugger.Gdb.Ada is
    -- Parse_Record_Type --
    -----------------------
 
-   procedure Parse_Record_Type
+   overriding procedure Parse_Record_Type
      (Lang      : access Gdb_Ada_Language;
       Type_Str  : String;
       Entity    : String;
@@ -882,7 +884,7 @@ package body Debugger.Gdb.Ada is
    -- Parse_Array_Value --
    -----------------------
 
-   procedure Parse_Array_Value
+   overriding procedure Parse_Array_Value
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Index    : in out Natural;
@@ -1094,7 +1096,7 @@ package body Debugger.Gdb.Ada is
    -- Get_Language_Debugger_Context --
    -----------------------------------
 
-   function Get_Language_Debugger_Context
+   overriding function Get_Language_Debugger_Context
      (Lang : access Gdb_Ada_Language) return Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
@@ -1111,7 +1113,7 @@ package body Debugger.Gdb.Ada is
    -- Set_Variable --
    ------------------
 
-   function Set_Variable
+   overriding function Set_Variable
      (Lang     : access Gdb_Ada_Language;
       Var_Name : String;
       Value    : String) return String
@@ -1125,7 +1127,9 @@ package body Debugger.Gdb.Ada is
    -- Start --
    -----------
 
-   function Start (Debugger : access Gdb_Ada_Language) return String is
+   overriding function Start
+     (Debugger : access Gdb_Ada_Language) return String
+   is
       pragma Unreferenced (Debugger);
    begin
       return "begin";
@@ -1135,7 +1139,7 @@ package body Debugger.Gdb.Ada is
    -- Can_Tooltip_On_Entity --
    ---------------------------
 
-   function Can_Tooltip_On_Entity
+   overriding function Can_Tooltip_On_Entity
      (Lang   : access Gdb_Ada_Language;
       Entity : String) return Boolean
    is

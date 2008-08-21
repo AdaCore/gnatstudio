@@ -28,7 +28,7 @@ package body Completion.Keywords is
    -- Get_Completion_Root --
    -------------------------
 
-   procedure Get_Completion_Root
+   overriding procedure Get_Completion_Root
      (Resolver   : access Completion_Keywords;
       Offset     : Integer;
       Context    : Completion_Context;
@@ -72,7 +72,7 @@ package body Completion.Keywords is
    -- Get_Id --
    ------------
 
-   function Get_Id
+   overriding function Get_Id
      (Resolver : Completion_Keywords)
       return String
    is
@@ -85,7 +85,7 @@ package body Completion.Keywords is
    -- Free --
    ----------
 
-   procedure Free
+   overriding procedure Free
      (Resolver : in out Completion_Keywords)
    is
       pragma Unreferenced (Resolver);

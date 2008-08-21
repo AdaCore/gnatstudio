@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +32,7 @@ package body Vdiff2_Command_Line is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Line;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -46,7 +45,7 @@ package body Vdiff2_Command_Line is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type
    is
       Diff : Diff_Head_Access;

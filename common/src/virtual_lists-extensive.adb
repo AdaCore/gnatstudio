@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                    Copyright (C) 2006-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,7 +36,7 @@ package body Virtual_Lists.Extensive is
    -- First --
    -----------
 
-   function First (List : Extensive_List_Component)
+   overriding function First (List : Extensive_List_Component)
       return Virtual_List_Component_Iterator'Class
    is
    begin
@@ -48,7 +47,7 @@ package body Virtual_Lists.Extensive is
    -- At_End --
    ------------
 
-   function At_End (It : Extensive_List_Iterator) return Boolean is
+   overriding function At_End (It : Extensive_List_Iterator) return Boolean is
    begin
       return It.It = Null_Node;
    end At_End;
@@ -57,7 +56,7 @@ package body Virtual_Lists.Extensive is
    -- Next --
    ----------
 
-   procedure Next (It : in out Extensive_List_Iterator) is
+   overriding procedure Next (It : in out Extensive_List_Iterator) is
    begin
       It.It := Next (It.It);
    end Next;
@@ -66,7 +65,7 @@ package body Virtual_Lists.Extensive is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (It : Extensive_List_Iterator) return Data_Type
    is
    begin
@@ -77,7 +76,7 @@ package body Virtual_Lists.Extensive is
    -- Free --
    ----------
 
-   procedure Free (List : in out Extensive_List_Component) is
+   overriding procedure Free (List : in out Extensive_List_Component) is
    begin
       Free (List.Content);
    end Free;

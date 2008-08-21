@@ -448,7 +448,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- First --
    -----------
 
-   function First
+   overriding function First
      (List : Declaration_Id_List)
       return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class
    is
@@ -497,7 +497,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Next --
    ----------
 
-   procedure Next (It : in out Declaration_Id_Iterator) is
+   overriding procedure Next (It : in out Declaration_Id_Iterator) is
    begin
       loop
          if It.Stage = File_Hierarchy then
@@ -585,7 +585,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- At_End --
    ------------
 
-   function At_End (It : Declaration_Id_Iterator) return Boolean is
+   overriding function At_End (It : Declaration_Id_Iterator) return Boolean is
    begin
       return It.Stage = Database and then At_End (It.Db_Iterator);
    end At_End;
@@ -594,7 +594,9 @@ package body Ada_Semantic_Tree.Declarations is
    -- Get --
    ---------
 
-   function Get (It : Declaration_Id_Iterator) return Declaration_View is
+   overriding function Get
+     (It : Declaration_Id_Iterator) return Declaration_View
+   is
       Declaration : Declaration_View;
       Full_Cell   : Entity_Access;
    begin
@@ -635,7 +637,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (List : in out Declaration_Id_List) is
+   overriding procedure Free (List : in out Declaration_Id_List) is
       pragma Unreferenced (List);
    begin
       null;
@@ -645,7 +647,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (It : in out Declaration_Id_Iterator) is
+   overriding procedure Free (It : in out Declaration_Id_Iterator) is
    begin
       Free (It.Visible_Constructs);
       Free (It.Db_Iterator);
@@ -1219,7 +1221,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- First --
    -----------
 
-   function First
+   overriding function First
      (List : Declaration_Composition_List)
       return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class
    is
@@ -1249,7 +1251,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- At_End --
    ------------
 
-   function At_End
+   overriding function At_End
      (It : Declaration_Composition_Iterator) return Boolean is
    begin
       return At_End (It.It);
@@ -1259,7 +1261,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Next --
    ----------
 
-   procedure Next (It : in out Declaration_Composition_Iterator) is
+   overriding procedure Next (It : in out Declaration_Composition_Iterator) is
    begin
       Next (It.It);
 
@@ -1272,7 +1274,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (It : Declaration_Composition_Iterator) return Declaration_View
    is
       Info : constant Semantic_Information := Get (It.It);
@@ -1350,7 +1352,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (List : in out Declaration_Composition_List) is
+   overriding procedure Free (List : in out Declaration_Composition_List) is
    begin
       Free (List.Name);
    end Free;
@@ -1359,7 +1361,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (It : in out Declaration_Composition_Iterator) is
+   overriding procedure Free (It : in out Declaration_Composition_Iterator) is
    begin
       --  Name will be freed with List, doing free here is erroneous.
       Free (It.It);
@@ -1421,7 +1423,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- First --
    -----------
 
-   function First
+   overriding function First
      (List : Unique_Declaration_List)
       return Declaration_List_Pckg.Virtual_List_Component_Iterator'Class is
    begin
@@ -1432,7 +1434,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- At_End --
    ------------
 
-   function At_End
+   overriding function At_End
      (It : Unique_Declaration_Iterator) return Boolean is
    begin
       return It.Object = Null_Declaration_View;
@@ -1442,7 +1444,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Next --
    ----------
 
-   procedure Next (It : in out Unique_Declaration_Iterator) is
+   overriding procedure Next (It : in out Unique_Declaration_Iterator) is
    begin
       It.Object := Null_Declaration_View;
    end Next;
@@ -1451,7 +1453,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Get --
    ---------
 
-   function Get
+   overriding function Get
      (It : Unique_Declaration_Iterator) return Declaration_View is
    begin
       return Deep_Copy (It.Object);
@@ -1461,7 +1463,7 @@ package body Ada_Semantic_Tree.Declarations is
    -- Free --
    ----------
 
-   procedure Free (List : in out Unique_Declaration_List) is
+   overriding procedure Free (List : in out Unique_Declaration_List) is
    begin
       Free (List.Object);
    end Free;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,7 +83,7 @@ package body Items.Repeats is
    -- Print --
    -----------
 
-   procedure Print (Value : Repeat_Type; Indent : Natural := 0) is
+   overriding procedure Print (Value : Repeat_Type; Indent : Natural := 0) is
    begin
       Put ("{<" & Value.Repeat_Num'Img & " times> : ");
 
@@ -100,7 +99,8 @@ package body Items.Repeats is
    -- Free --
    ----------
 
-   procedure Free (Item : access Repeat_Type; Only_Value : Boolean := False) is
+   overriding procedure Free
+     (Item : access Repeat_Type; Only_Value : Boolean := False) is
    begin
       if Item.Value /= null then
          --  Keep the structure of the item that is repeated, if required.
@@ -114,7 +114,7 @@ package body Items.Repeats is
    -- Clone_Dispatching --
    -----------------------
 
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Repeat_Type;
       Clone : in out Generic_Type_Access) is
    begin
@@ -131,7 +131,7 @@ package body Items.Repeats is
    -- Paint --
    -----------
 
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Repeat_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
@@ -192,7 +192,7 @@ package body Items.Repeats is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Repeat_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
@@ -220,7 +220,7 @@ package body Items.Repeats is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Repeat_Type;
       Lang : access Language_Root'Class;
       Name : String;
@@ -238,7 +238,7 @@ package body Items.Repeats is
    -- Get_Component --
    -------------------
 
-   function Get_Component
+   overriding function Get_Component
      (Item : access Repeat_Type;
       X, Y : Glib.Gint) return Generic_Type_Access is
    begin
@@ -254,7 +254,7 @@ package body Items.Repeats is
    -- Replace --
    -------------
 
-   function Replace
+   overriding function Replace
      (Parent       : access Repeat_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access is
@@ -272,7 +272,8 @@ package body Items.Repeats is
    -- Start --
    -----------
 
-   function Start (Item : access Repeat_Type) return Generic_Iterator'Class is
+   overriding function Start
+     (Item : access Repeat_Type) return Generic_Iterator'Class is
       Iter : Repeat_Iterator;
    begin
       Iter.Item := Repeat_Type_Access (Item);
@@ -284,7 +285,7 @@ package body Items.Repeats is
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Repeat_Iterator) is
+   overriding procedure Next (Iter : in out Repeat_Iterator) is
    begin
       Iter.At_End := True;
    end Next;
@@ -293,7 +294,7 @@ package body Items.Repeats is
    -- At_End --
    ------------
 
-   function At_End (Iter : Repeat_Iterator) return Boolean is
+   overriding function At_End (Iter : Repeat_Iterator) return Boolean is
    begin
       return Iter.At_End;
    end At_End;
@@ -302,7 +303,8 @@ package body Items.Repeats is
    -- Data --
    ----------
 
-   function Data (Iter : Repeat_Iterator) return Generic_Type_Access is
+   overriding function Data
+     (Iter : Repeat_Iterator) return Generic_Type_Access is
    begin
       return Iter.Item.Value;
    end Data;
@@ -311,7 +313,7 @@ package body Items.Repeats is
    -- Structurally_Equivalent --
    -----------------------------
 
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Repeat_Type; Item2 : access Generic_Type'Class)
       return Boolean is
    begin

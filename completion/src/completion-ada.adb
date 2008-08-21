@@ -25,7 +25,7 @@ package body Completion.Ada is
    -- Get_Initial_Completion_List --
    ---------------------------------
 
-   function Get_Initial_Completion_List
+   overriding function Get_Initial_Completion_List
      (Manager : access Ada_Completion_Manager; Context : Completion_Context)
       return Completion_List
    is

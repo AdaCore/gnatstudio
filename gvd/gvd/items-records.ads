@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +55,7 @@ package Items.Records is
    --  Get the number of variant parts for a specific field in the record.
 
    function Get_Field_Name
-     (Item  : in Record_Type;
+     (Item  : Record_Type;
       Index : Positive) return GNAT.Strings.String_Access;
    --  Return the name of the Index-th field in Item.
 
@@ -165,39 +164,39 @@ private
    procedure Free is new Ada.Unchecked_Deallocation
      (Record_Type_Array, Record_Type_Array_Access);
 
-   procedure Print (Value : Record_Type; Indent : Natural := 0);
-   procedure Free
+   overriding procedure Print (Value : Record_Type; Indent : Natural := 0);
+   overriding procedure Free
      (Item : access Record_Type;
       Only_Value : Boolean := False);
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Record_Type;
       Clone : in out Generic_Type_Access);
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Record_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Record_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Record_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
-   function Get_Component
+   overriding function Get_Component
      (Item : access Record_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;
-   function Replace
+   overriding function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
@@ -206,14 +205,16 @@ private
       Field : Natural;
       Variant : Natural;
    end record;
-   function Start (Item : access Record_Type) return Generic_Iterator'Class;
-   procedure Next (Iter : in out Record_Iterator);
-   function At_End (Iter : Record_Iterator) return Boolean;
-   function Data (Iter : Record_Iterator) return Generic_Type_Access;
+   overriding function Start
+     (Item : access Record_Type) return Generic_Iterator'Class;
+   overriding procedure Next (Iter : in out Record_Iterator);
+   overriding function At_End (Iter : Record_Iterator) return Boolean;
+   overriding function Data
+     (Iter : Record_Iterator) return Generic_Type_Access;
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
-   procedure Print (Value : Union_Type; Indent : Natural := 0);
+   overriding procedure Print (Value : Union_Type; Indent : Natural := 0);
    --  Free is inherited from Record_Type.
 
 end Items.Records;

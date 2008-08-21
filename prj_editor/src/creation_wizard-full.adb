@@ -35,11 +35,12 @@ package body Creation_Wizard.Full is
          Name_And_Loc : Name_And_Location_Page_Access;
          Wiz          : Wizard;
       end record;
-   function Create_Content
+   overriding function Create_Content
      (Page : access Project_Editor_Page_Wrapper;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   procedure Update_Page (Page : access Project_Editor_Page_Wrapper);
-   procedure Generate_Project
+   overriding procedure Update_Page
+     (Page : access Project_Editor_Page_Wrapper);
+   overriding procedure Generate_Project
      (Page               : access Project_Editor_Page_Wrapper;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -51,7 +52,7 @@ package body Creation_Wizard.Full is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Project_Editor_Page_Wrapper;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget is
    begin
@@ -70,7 +71,9 @@ package body Creation_Wizard.Full is
    -- Update_Page --
    -----------------
 
-   procedure Update_Page (Page : access Project_Editor_Page_Wrapper) is
+   overriding procedure Update_Page
+     (Page : access Project_Editor_Page_Wrapper)
+   is
       Languages : String_List := Get_Current_Value
         (Kernel => Get_Kernel (Page.Wiz),
          Pkg    => "",
@@ -87,7 +90,7 @@ package body Creation_Wizard.Full is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Project_Editor_Page_Wrapper;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;

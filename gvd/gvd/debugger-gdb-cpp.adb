@@ -72,7 +72,7 @@ package body Debugger.Gdb.Cpp is
    -- Is_Simple_Type --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Gdb_Cpp_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -84,7 +84,7 @@ package body Debugger.Gdb.Cpp is
    -- Keywords --
    --------------
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -92,7 +92,7 @@ package body Debugger.Gdb.Cpp is
       return Keywords (Cpp_Lang);
    end Keywords;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Cpp_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -104,7 +104,7 @@ package body Debugger.Gdb.Cpp is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Gdb_Cpp_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -116,7 +116,7 @@ package body Debugger.Gdb.Cpp is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -128,7 +128,7 @@ package body Debugger.Gdb.Cpp is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File
+   overriding function Is_System_File
      (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -140,7 +140,7 @@ package body Debugger.Gdb.Cpp is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Gdb_Cpp_Language;
       Name : String) return String
    is
@@ -153,7 +153,7 @@ package body Debugger.Gdb.Cpp is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
       Index : String) return String
@@ -167,7 +167,7 @@ package body Debugger.Gdb.Cpp is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
       Field : String) return String
@@ -181,7 +181,7 @@ package body Debugger.Gdb.Cpp is
    -- Get_Project_Fields --
    ------------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Gdb_Cpp_Language) return Project_Field_Array
    is
       pragma Unreferenced (Lang);
@@ -193,17 +193,31 @@ package body Debugger.Gdb.Cpp is
    -- Break Exception --
    ---------------------
 
-   function Break_Exception
+   overriding function Break_Exception
      (Debugger  : access Gdb_Cpp_Language;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String
    is
       pragma Unreferenced (Debugger, Unhandled);
+
+      function Temp (S : String) return String;
+      --  Take into account Temporary and return appropriate gdb command
+
+      function Temp (S : String) return String is
+      begin
+         if Temporary then
+            return "t" & S;
+         else
+            return S;
+         end if;
+      end Temp;
+
    begin
       if Name = "" then
-         return "break __raise_exception";
+         return Temp ("break __raise_exception");
       else
-         return "catch " & Name;
+         return Temp ("catch " & Name);
       end if;
    end Break_Exception;
 
@@ -211,7 +225,7 @@ package body Debugger.Gdb.Cpp is
    -- Parse_Type --
    ----------------
 
-   procedure Parse_Type
+   overriding procedure Parse_Type
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Entity   : String;
@@ -262,7 +276,7 @@ package body Debugger.Gdb.Cpp is
    -- Parse_Value --
    -----------------
 
-   procedure Parse_Value
+   overriding procedure Parse_Value
      (Lang       : access Gdb_Cpp_Language;
       Type_Str   : String;
       Index      : in out Natural;
@@ -360,13 +374,13 @@ package body Debugger.Gdb.Cpp is
    -- Parse_Array_Type --
    ----------------------
 
-   procedure Parse_Array_Type
-     (Lang      : access Gdb_Cpp_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access) is
+   overriding procedure Parse_Array_Type
+     (Lang         : access Gdb_Cpp_Language;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
+      Start_Of_Dim : Natural;
+      Result       : out Generic_Type_Access) is
    begin
       C_Parse_Array_Type
         (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
@@ -376,7 +390,7 @@ package body Debugger.Gdb.Cpp is
    -- Parse_Record_Type --
    -----------------------
 
-   procedure Parse_Record_Type
+   overriding procedure Parse_Record_Type
      (Lang      : access Gdb_Cpp_Language;
       Type_Str  : String;
       Entity    : String;
@@ -587,7 +601,7 @@ package body Debugger.Gdb.Cpp is
    -- Parse_Array_Value --
    -----------------------
 
-   procedure Parse_Array_Value
+   overriding procedure Parse_Array_Value
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
@@ -604,7 +618,7 @@ package body Debugger.Gdb.Cpp is
    -- Get_Language_Debugger_Context --
    -----------------------------------
 
-   function Get_Language_Debugger_Context
+   overriding function Get_Language_Debugger_Context
      (Lang : access Gdb_Cpp_Language) return Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
@@ -618,7 +632,7 @@ package body Debugger.Gdb.Cpp is
    -- Set_Variable --
    ------------------
 
-   function Set_Variable
+   overriding function Set_Variable
      (Lang     : access Gdb_Cpp_Language;
       Var_Name : String;
       Value    : String) return String
@@ -634,7 +648,9 @@ package body Debugger.Gdb.Cpp is
    -- Start --
    -----------
 
-   function Start (Debugger : access Gdb_Cpp_Language) return String is
+   overriding function Start
+     (Debugger : access Gdb_Cpp_Language) return String
+   is
       pragma Unreferenced (Debugger);
 
       Lang_C : aliased Gdb_C_Language;
@@ -646,7 +662,9 @@ package body Debugger.Gdb.Cpp is
    -- Get_Name --
    --------------
 
-   function Get_Name (Lang : access Gdb_Cpp_Language) return String is
+   overriding function Get_Name
+     (Lang : access Gdb_Cpp_Language) return String
+   is
       pragma Unreferenced (Lang);
    begin
       return "c++";

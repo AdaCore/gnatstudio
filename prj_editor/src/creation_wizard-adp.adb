@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007                      --
---                              AdaCore                              --
+--                    Copyright (C) 2004-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,16 +42,17 @@ package body Creation_Wizard.Adp is
       Adp_File_Name : Gtk.GEntry.Gtk_Entry;
    end record;
    type Adp_Selection_Page_Access is access all Adp_Selection_Page'Class;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Adp_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean);
-   function Create_Content
+   overriding function Create_Content
      (Page : access Adp_Selection_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   function Is_Complete (Page : access Adp_Selection_Page) return String;
+   overriding function Is_Complete
+     (Page : access Adp_Selection_Page) return String;
    --  See inherited documentation
 
    procedure On_Browse
@@ -79,7 +79,7 @@ package body Creation_Wizard.Adp is
    -- Is_Complete --
    -----------------
 
-   function Is_Complete
+   overriding function Is_Complete
      (Page : access Adp_Selection_Page) return String is
    begin
       if Page.Adp_File_Name /= null
@@ -95,7 +95,7 @@ package body Creation_Wizard.Adp is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Adp_Selection_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -120,7 +120,7 @@ package body Creation_Wizard.Adp is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Adp_Selection_Page;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is

@@ -109,7 +109,7 @@ package Completion is
    function "<" (Left, Right : Completion_Id) return Boolean;
    --  Arbitrary comparison between two completion ids.
 
-   function "=" (Left, Right : Completion_Id) return Boolean;
+   overriding function "=" (Left, Right : Completion_Id) return Boolean;
    --  Return true if the two ids are equals.
 
    -------------------------
@@ -398,33 +398,33 @@ private
       Documentation : String_Access;
    end record;
 
-   function Get_Completion
+   overriding function Get_Completion
      (Proposal : Simple_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Documentation
+   overriding function Get_Documentation
      (Proposal : Simple_Completion_Proposal) return UTF8_String;
    --  See inherited documentation
 
-   function Get_Category
+   overriding function Get_Category
      (Proposal : Simple_Completion_Proposal) return Language_Category;
    --  See inherited documentation
 
-   function Get_Visibility
+   overriding function Get_Visibility
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility;
    --  See inherited documentation
 
-   function Match
+   overriding function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
       Offset   : Integer) return Boolean;
    --  See inherited documentation
 
-   function To_Completion_Id
+   overriding function To_Completion_Id
      (Proposal : Simple_Completion_Proposal) return Completion_Id;
    --  See inherited documentation
 
-   procedure Free (Proposal : in out Simple_Completion_Proposal);
+   overriding procedure Free (Proposal : in out Simple_Completion_Proposal);
    --  See inherited documentation
 
    function Match

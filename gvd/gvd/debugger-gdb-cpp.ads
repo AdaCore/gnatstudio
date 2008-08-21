@@ -35,42 +35,42 @@ package Debugger.Gdb.Cpp is
    -- Simple Parsing --
    --------------------
 
-   function Is_Simple_Type
+   overriding function Is_Simple_Type
      (Lang : access Gdb_Cpp_Language; Str : String) return Boolean;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access;
 
-   function Keywords
+   overriding function Keywords
      (Lang : access Gdb_Cpp_Language) return GNAT.Strings.String_List;
 
-   function Get_Language_Context
+   overriding function Get_Language_Context
      (Lang : access Gdb_Cpp_Language) return Language.Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps
+   overriding function Explorer_Regexps
      (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories;
 
-   function Is_System_File
+   overriding function Is_System_File
      (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   function Dereference_Name
+   overriding function Dereference_Name
      (Lang : access Gdb_Cpp_Language;
       Name : String) return String;
 
-   function Array_Item_Name
+   overriding function Array_Item_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
       Index : String) return String;
 
-   function Record_Field_Name
+   overriding function Record_Field_Name
      (Lang  : access Gdb_Cpp_Language;
       Name  : String;
       Field : String) return String;
@@ -79,41 +79,42 @@ package Debugger.Gdb.Cpp is
    -- Project support --
    ---------------------
 
-   function Get_Project_Fields
+   overriding function Get_Project_Fields
      (Lang : access Gdb_Cpp_Language) return Project_Field_Array;
 
    -------------
    -- Parsing --
    -------------
 
-   procedure Parse_Type
+   overriding procedure Parse_Type
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
       Result   : out Items.Generic_Type_Access);
 
-   procedure Parse_Value
+   overriding procedure Parse_Value
      (Lang       : access Gdb_Cpp_Language;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive);
 
-   function Break_Exception
+   overriding function Break_Exception
      (Debugger  : access Gdb_Cpp_Language;
       Name      : String  := "";
+      Temporary : Boolean := False;
       Unhandled : Boolean := False) return String;
 
-   procedure Parse_Array_Type
+   overriding procedure Parse_Array_Type
      (Lang         : access Gdb_Cpp_Language;
       Type_Str     : String;
       Entity       : String;
       Index        : in out Natural;
-      Start_Of_Dim : in Natural;
+      Start_Of_Dim : Natural;
       Result       : out Items.Generic_Type_Access);
 
-   procedure Parse_Record_Type
+   overriding procedure Parse_Record_Type
      (Lang      : access Gdb_Cpp_Language;
       Type_Str  : String;
       Entity    : String;
@@ -123,20 +124,21 @@ package Debugger.Gdb.Cpp is
       End_On    : String);
    --  End_On is ignored in the C implementation.
 
-   procedure Parse_Array_Value
+   overriding procedure Parse_Array_Value
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out Items.Arrays.Array_Type_Access);
 
-   function Set_Variable
+   overriding function Set_Variable
      (Lang     : access Gdb_Cpp_Language;
       Var_Name : String;
       Value    : String) return String;
 
-   function Start (Debugger : access Gdb_Cpp_Language) return String;
+   overriding function Start
+     (Debugger : access Gdb_Cpp_Language) return String;
 
-   function Get_Language_Debugger_Context
+   overriding function Get_Language_Debugger_Context
      (Lang : access Gdb_Cpp_Language)
       return Language.Debugger.Language_Debugger_Context;
 
@@ -145,7 +147,7 @@ private
    type Gdb_Cpp_Language is new
      Language.Debugger.Language_Debugger with null record;
 
-   function Get_Name (Lang : access Gdb_Cpp_Language) return String;
+   overriding function Get_Name (Lang : access Gdb_Cpp_Language) return String;
    --  See inherited documentation
 
 end Debugger.Gdb.Cpp;

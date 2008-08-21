@@ -133,7 +133,7 @@ package body Completion is
    -- "=" --
    ---------
 
-   function "=" (Left, Right : Completion_Id) return Boolean is
+   overriding function "=" (Left, Right : Completion_Id) return Boolean is
    begin
       return Left.Resolver_Id = Right.Resolver_Id
         and then Left.Id = Right.Id
@@ -420,7 +420,7 @@ package body Completion is
    -- Get_Completion --
    --------------------
 
-   function Get_Completion
+   overriding function Get_Completion
      (Proposal : Simple_Completion_Proposal) return UTF8_String is
    begin
       return Proposal.Name.all;
@@ -430,7 +430,7 @@ package body Completion is
    -- Get_Documentation --
    -----------------------
 
-   function Get_Documentation
+   overriding function Get_Documentation
      (Proposal : Simple_Completion_Proposal) return UTF8_String is
    begin
       if Proposal.Documentation = null then
@@ -444,7 +444,7 @@ package body Completion is
    -- Get_Category --
    ------------------
 
-   function Get_Category
+   overriding function Get_Category
      (Proposal : Simple_Completion_Proposal) return Language_Category
    is
       pragma Unreferenced (Proposal);
@@ -456,7 +456,7 @@ package body Completion is
    -- Get_Visibility --
    --------------------
 
-   function Get_Visibility
+   overriding function Get_Visibility
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility
    is
       pragma Unreferenced (Proposal);
@@ -468,7 +468,7 @@ package body Completion is
    -- Match --
    -----------
 
-   function Match
+   overriding function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
       Offset   : Integer) return Boolean
@@ -483,7 +483,7 @@ package body Completion is
    -- Free --
    ----------
 
-   procedure Free (Proposal : in out Simple_Completion_Proposal) is
+   overriding procedure Free (Proposal : in out Simple_Completion_Proposal) is
    begin
       Free (Proposal.Name);
       Free (Proposal.Documentation);
@@ -518,7 +518,7 @@ package body Completion is
    -- To_Completion_Id --
    ----------------------
 
-   function To_Completion_Id
+   overriding function To_Completion_Id
      (Proposal : Simple_Completion_Proposal) return Completion_Id is
    begin
       return (Proposal.Name'Length,

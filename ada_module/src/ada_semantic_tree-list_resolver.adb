@@ -40,7 +40,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    -- Get_Construct --
    -------------------
 
-   function Get_Construct
+   overriding function Get_Construct
      (Param : Formal_Parameter)
       return access Simple_Construct_Information
    is

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,7 +73,7 @@ package Items.Classes is
    --  If Draw is True (the default for new items), a border is drawn around
    --  the item when it is displayed on the screen.
 
-   procedure Propagate_Width
+   overriding procedure Propagate_Width
      (Item  : in out Class_Type;
       Width : Glib.Gint);
 
@@ -87,42 +86,42 @@ private
      Border_Spacing : Glib.Gint := Items.Border_Spacing;
      Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
    end record;
-   procedure Print (Value : Class_Type; Indent : Natural := 0);
-   procedure Free
+   overriding procedure Print (Value : Class_Type; Indent : Natural := 0);
+   overriding procedure Free
      (Item : access Class_Type;
       Only_Value : Boolean := False);
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Class_Type;
       Clone : in out Generic_Type_Access);
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Class_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Class_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Class_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
-   function Get_Component
+   overriding function Get_Component
      (Item : access Class_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;
-   function Replace
+   overriding function Replace
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   procedure Set_Type_Name
+   overriding procedure Set_Type_Name
      (Item : access Class_Type;
       Name : String);
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
@@ -130,9 +129,10 @@ private
       Item     : Class_Type_Access;
       Ancestor : Natural;
    end record;
-   function Start (Item : access Class_Type) return Generic_Iterator'Class;
-   procedure Next (Iter : in out Class_Iterator);
-   function At_End (Iter : Class_Iterator) return Boolean;
-   function Data (Iter : Class_Iterator) return Generic_Type_Access;
+   overriding function Start
+     (Item : access Class_Type) return Generic_Iterator'Class;
+   overriding procedure Next (Iter : in out Class_Iterator);
+   overriding function At_End (Iter : Class_Iterator) return Boolean;
+   overriding function Data (Iter : Class_Iterator) return Generic_Type_Access;
 
 end Items.Classes;

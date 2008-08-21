@@ -46,7 +46,7 @@ package body Refactoring.Performers is
          No_LI_List : File_Arrays.Instance := File_Arrays.Empty_Instance;
       end record;
    type Renaming_Error is access all Renaming_Error_Record'Class;
-   procedure Error
+   overriding procedure Error
      (Report : in out Renaming_Error_Record; File : Source_File);
 
    type Get_Locations_Data is record
@@ -81,7 +81,7 @@ package body Refactoring.Performers is
       Result  : out Command_Return_Type);
    --  Find the next location, and stores it in Data
 
-   procedure On_End_Of_Search (Data : in Get_Locations_Data);
+   procedure On_End_Of_Search (Data : Get_Locations_Data);
    --  Called when all the related files have been searched and the refactoring
    --  should be performed.
 
@@ -144,7 +144,7 @@ package body Refactoring.Performers is
    -- Error --
    -----------
 
-   procedure Error
+   overriding procedure Error
      (Report : in out Renaming_Error_Record; File : Entities.Source_File) is
    begin
       Append (Report.No_LI_List, File);
@@ -211,7 +211,7 @@ package body Refactoring.Performers is
    -- On_End_Of_Search --
    ----------------------
 
-   procedure On_End_Of_Search (Data : in Get_Locations_Data) is
+   procedure On_End_Of_Search (Data : Get_Locations_Data) is
       Confirmed : Boolean;
       Args3 : Argument_List (1 .. 2);
    begin

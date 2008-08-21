@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                               AdaCore                             --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,5 +28,3 @@ private
    pragma Import (C, red_button_xpm, "red_button_xpm");
    pragma Import (C, green_button_xpm, "green_button_xpm");
 end Pixmaps_Vdiff2;
-
-

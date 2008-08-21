@@ -131,7 +131,7 @@ package body Switches_Chooser.Gtkada is
    -- Set_Graphical_Command_Line --
    --------------------------------
 
-   procedure Set_Graphical_Command_Line
+   overriding procedure Set_Graphical_Command_Line
      (Editor    : in out Switches_Editor_Record;
       Cmd_Line  : String) is
    begin
@@ -310,7 +310,7 @@ package body Switches_Chooser.Gtkada is
    -- Set_Graphical_Widget --
    --------------------------
 
-   procedure Set_Graphical_Widget
+   overriding procedure Set_Graphical_Widget
      (Editor     : in out Switches_Editor_Record;
       Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Switch     : Switch_Type;

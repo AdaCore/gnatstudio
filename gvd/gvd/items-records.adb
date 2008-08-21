@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,7 +95,7 @@ package body Items.Records is
    --------------------
 
    function Get_Field_Name
-     (Item  : in Record_Type;
+     (Item  : Record_Type;
       Index : Positive) return GNAT.Strings.String_Access is
    begin
       return Item.Fields (Index).Name;
@@ -256,7 +255,7 @@ package body Items.Records is
    -- Print --
    -----------
 
-   procedure Print (Value : Record_Type; Indent : Natural := 0) is
+   overriding procedure Print (Value : Record_Type; Indent : Natural := 0) is
    begin
       Put ("{Record: ");
       if Value.Fields'Length = 0 then
@@ -300,7 +299,7 @@ package body Items.Records is
    -- Print --
    -----------
 
-   procedure Print (Value : Union_Type; Indent : Natural := 0) is
+   overriding procedure Print (Value : Union_Type; Indent : Natural := 0) is
    begin
       Put ("{Union: ");
 
@@ -325,7 +324,7 @@ package body Items.Records is
    -- Free --
    ----------
 
-   procedure Free
+   overriding procedure Free
      (Item : access Record_Type;
       Only_Value : Boolean := False) is
    begin
@@ -353,7 +352,7 @@ package body Items.Records is
    -- Clone_Dispatching --
    -----------------------
 
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Record_Type;
       Clone : in out Generic_Type_Access)
    is
@@ -387,7 +386,7 @@ package body Items.Records is
    -- Paint --
    -----------
 
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Record_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
@@ -521,7 +520,7 @@ package body Items.Records is
    -- Size_Request --
    ------------------
 
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Record_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
@@ -664,7 +663,7 @@ package body Items.Records is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Record_Type;
       Lang : access Language_Root'Class;
       Name : String;
@@ -743,7 +742,7 @@ package body Items.Records is
    -- Get_Component --
    -------------------
 
-   function Get_Component
+   overriding function Get_Component
      (Item : access Record_Type; X, Y : Glib.Gint) return Generic_Type_Access
    is
       Total_Height : Gint := Item.Border_Spacing + Item.Type_Height;
@@ -798,7 +797,7 @@ package body Items.Records is
    -- Replace --
    -------------
 
-   function Replace
+   overriding function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access is
@@ -832,7 +831,9 @@ package body Items.Records is
    -- Start --
    -----------
 
-   function Start (Item : access Record_Type) return Generic_Iterator'Class is
+   overriding function Start
+     (Item : access Record_Type) return Generic_Iterator'Class
+   is
       Iter : Record_Iterator;
    begin
       Iter.Item := Record_Type_Access (Item);
@@ -845,7 +846,7 @@ package body Items.Records is
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Record_Iterator) is
+   overriding procedure Next (Iter : in out Record_Iterator) is
    begin
       if Iter.Item.Fields (Iter.Field).Variant_Part /= null then
          if Iter.Variant = Natural'Last then
@@ -870,7 +871,7 @@ package body Items.Records is
    -- At_End --
    ------------
 
-   function At_End (Iter : Record_Iterator) return Boolean is
+   overriding function At_End (Iter : Record_Iterator) return Boolean is
    begin
       return Iter.Field > Iter.Item.Fields'Last;
    end At_End;
@@ -879,7 +880,8 @@ package body Items.Records is
    -- Data --
    ----------
 
-   function Data (Iter : Record_Iterator) return Generic_Type_Access is
+   overriding function Data
+     (Iter : Record_Iterator) return Generic_Type_Access is
    begin
       if Iter.Variant = Natural'Last then
          return Generic_Type_Access (Iter.Item.Fields (Iter.Field).Value);
@@ -908,7 +910,7 @@ package body Items.Records is
    -- Structurally_Equivalent --
    -----------------------------
 
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
       return Boolean is
    begin

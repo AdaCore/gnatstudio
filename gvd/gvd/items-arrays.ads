@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -111,7 +110,7 @@ package Items.Arrays is
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
 
-   procedure Propagate_Width
+   overriding procedure Propagate_Width
      (Item  : in out Array_Type;
       Width : Glib.Gint);
 
@@ -158,39 +157,39 @@ private
    --    - Values'Last = Last_Value, so that one can use 'Range for easier
    --      access
 
-   procedure Print (Value : Array_Type; Indent : Natural := 0);
-   procedure Free
+   overriding procedure Print (Value : Array_Type; Indent : Natural := 0);
+   overriding procedure Free
      (Item : access Array_Type;
       Only_Value : Boolean := False);
-   procedure Clone_Dispatching
+   overriding procedure Clone_Dispatching
      (Item  : Array_Type;
       Clone : in out Generic_Type_Access);
-   procedure Paint
+   overriding procedure Paint
      (Item    : in out Array_Type;
       Context : Drawing_Context;
       Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Lang    : Language.Language_Access;
       Mode    : Display_Mode;
       X, Y    : Glib.Gint := 0);
-   procedure Size_Request
+   overriding procedure Size_Request
      (Item           : in out Array_Type;
       Context        : Drawing_Context;
       Lang           : Language.Language_Access;
       Mode           : Display_Mode;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name
+   overriding function Get_Component_Name
      (Item : access Array_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
-   function Get_Component
+   overriding function Get_Component
      (Item : access Array_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;
-   function Replace
+   overriding function Replace
      (Parent       : access Array_Type;
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
-   function Structurally_Equivalent
+   overriding function Structurally_Equivalent
      (Item1 : access Array_Type; Item2 : access Generic_Type'Class)
      return Boolean;
 
@@ -198,9 +197,10 @@ private
       Item  : Array_Type_Access;
       Child : Natural;
    end record;
-   function Start (Item : access Array_Type) return Generic_Iterator'Class;
-   procedure Next (Iter : in out Array_Iterator);
-   function At_End (Iter : Array_Iterator) return Boolean;
-   function Data (Iter : Array_Iterator) return Generic_Type_Access;
+   overriding function Start
+     (Item : access Array_Type) return Generic_Iterator'Class;
+   overriding procedure Next (Iter : in out Array_Iterator);
+   overriding function At_End (Iter : Array_Iterator) return Boolean;
+   overriding function Data (Iter : Array_Iterator) return Generic_Type_Access;
 
 end Items.Arrays;

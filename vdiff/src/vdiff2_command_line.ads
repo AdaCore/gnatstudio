@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,14 +52,14 @@ package Vdiff2_Command_Line is
       Line      : Natural;
       Action    : Vdiff2_Command_Line.Handler_Action_Line);
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Line;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
 
-   function Execute
+   overriding function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
