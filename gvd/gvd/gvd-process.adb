@@ -92,7 +92,7 @@ package body GVD.Process is
    end record;
    --  GPS specific proxy, used to redefine Set_Command_In_Process
 
-   procedure Set_Command_In_Process
+   overriding procedure Set_Command_In_Process
      (Proxy : access GPS_Proxy; In_Process : Boolean := True);
    --  Set the appropriate debugger menu items to the corresponding state
 
@@ -188,13 +188,13 @@ package body GVD.Process is
    end record;
    type Breakpoint_Property is access all Breakpoint_Property_Record'Class;
 
-   procedure Save
+   overriding procedure Save
      (Property : access Breakpoint_Property_Record;
       Node     : in out Glib.Xml_Int.Node_Ptr);
-   procedure Load
+   overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
       From     : Glib.Xml_Int.Node_Ptr);
-   procedure Destroy (Property : in out Breakpoint_Property_Record);
+   overriding procedure Destroy (Property : in out Breakpoint_Property_Record);
    --  See inherited documentation
 
    procedure Load_Breakpoints_From_Property
@@ -212,7 +212,8 @@ package body GVD.Process is
    -- Destroy --
    -------------
 
-   procedure Destroy (Property : in out Breakpoint_Property_Record) is
+   overriding procedure Destroy
+     (Property : in out Breakpoint_Property_Record) is
    begin
       Free (Property.Breakpoints);
    end Destroy;
@@ -221,7 +222,7 @@ package body GVD.Process is
    -- Save --
    ----------
 
-   procedure Save
+   overriding procedure Save
      (Property : access Breakpoint_Property_Record;
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
@@ -295,7 +296,7 @@ package body GVD.Process is
    -- Load --
    ----------
 
-   procedure Load
+   overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
       From     : Glib.Xml_Int.Node_Ptr)
    is
@@ -477,7 +478,7 @@ package body GVD.Process is
    -- Set_Command_In_Process --
    ----------------------------
 
-   procedure Set_Command_In_Process
+   overriding procedure Set_Command_In_Process
      (Proxy      : access GPS_Proxy;
       In_Process : Boolean := True) is
    begin

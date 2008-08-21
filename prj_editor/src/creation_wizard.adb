@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2007                       --
---                            AdaCore                                --
+--                    Copyright (C) 2004-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -120,7 +119,7 @@ package body Creation_Wizard is
    -- Is_Complete --
    -----------------
 
-   function Is_Complete
+   overriding function Is_Complete
      (Page : access Name_And_Location_Page) return String
    is
       Ignored : Message_Dialog_Buttons;
@@ -166,7 +165,7 @@ package body Creation_Wizard is
    -- Create_Content --
    --------------------
 
-   function Create_Content
+   overriding function Create_Content
      (Page : access Name_And_Location_Page;
       Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
@@ -268,7 +267,7 @@ package body Creation_Wizard is
    -- Generate_Project --
    ----------------------
 
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Name_And_Location_Page;
       Kernel             : access Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -377,7 +376,7 @@ package body Creation_Wizard is
    -- Perform_Finish --
    --------------------
 
-   procedure Perform_Finish (Wiz : access Project_Wizard_Record) is
+   overriding procedure Perform_Finish (Wiz : access Project_Wizard_Record) is
       Pages   : constant Wizard_Pages_Array_Access := Get_Pages (Wiz);
       Changed : Boolean := False;
       Tmp     : Boolean;

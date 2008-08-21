@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                              AdaCore                              --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -138,7 +137,7 @@ package Process_Proxies is
 
    type Gui_Process_Proxy is new Process_Proxy with private;
 
-   procedure Wait
+   overriding procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -150,7 +149,7 @@ package Process_Proxies is
    --  The recommended way is to use a (non GUI) Process_Proxy and call Wait
    --  with small timeouts inside Gtk+ timeout handlers.
 
-   procedure Wait
+   overriding procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;

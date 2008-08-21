@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2006                       --
---                            AdaCore                                --
+--                    Copyright (C) 2004-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,14 +120,14 @@ package Creation_Wizard is
 
 private
 
-   procedure Perform_Finish (Wiz : access Project_Wizard_Record);
+   overriding procedure Perform_Finish (Wiz : access Project_Wizard_Record);
 
-   function Is_Complete
+   overriding function Is_Complete
      (Page : access Name_And_Location_Page) return String;
-   function Create_Content
+   overriding function Create_Content
      (Page : access Name_And_Location_Page;
       Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   procedure Generate_Project
+   overriding procedure Generate_Project
      (Page               : access Name_And_Location_Page;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Scenario_Variables : Projects.Scenario_Variable_Array;

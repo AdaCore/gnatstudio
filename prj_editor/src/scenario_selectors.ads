@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2005                      --
---                              AdaCore                              --
+--                    Copyright (C) 2002-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,7 +120,6 @@ package Scenario_Selectors is
    --  Set the value of each variable described in Variables to the value at
    --  the matching index in Values. This directly modifies the environment
    --  variables. Values can be the result of Current above.
-
 
 private
 

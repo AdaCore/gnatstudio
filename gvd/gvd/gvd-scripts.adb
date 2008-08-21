@@ -59,7 +59,7 @@ package body GVD.Scripts is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Debugger_Hooks_Data)
@@ -94,7 +94,7 @@ package body GVD.Scripts is
    -- Create_Callback_Data --
    --------------------------
 
-   function Create_Callback_Data
+   overriding function Create_Callback_Data
      (Script : access Scripting_Language_Record'Class;
       Hook   : Hook_Name;
       Data   : access Debugger_String_Hooks_Data)

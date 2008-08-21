@@ -447,7 +447,7 @@ package body KeyManager_Module.GUI is
       Bold      : Gtk_Text_Tag;
 
       procedure Insert_Details
-        (Comp_Iter : in Component_Iterator; Prefix : String);
+        (Comp_Iter : Component_Iterator; Prefix : String);
       --  Insert the detail for the components of the action
 
       --------------------
@@ -455,7 +455,7 @@ package body KeyManager_Module.GUI is
       --------------------
 
       procedure Insert_Details
-        (Comp_Iter : in Component_Iterator; Prefix : String)
+        (Comp_Iter : Component_Iterator; Prefix : String)
       is
          Comp    : Command_Component;
          Failure : Component_Iterator;

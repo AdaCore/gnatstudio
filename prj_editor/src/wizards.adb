@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -438,7 +437,7 @@ package body Wizards is
    -- Display_Message --
    ---------------------
 
-   procedure Display_Message
+   overriding procedure Display_Message
      (Wiz      : access Wizard_Record;
       Msg      : String;
       As_Error : Boolean := False) is

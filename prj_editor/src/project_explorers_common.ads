@@ -40,10 +40,11 @@ package Project_Explorers_Common is
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with private;
    type MDI_Explorer_Child is access all MDI_Explorer_Child_Record'Class;
 
-   function Dnd_Data
+   overriding function Dnd_Data
      (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
       return Gtkada.MDI.MDI_Child;
-   procedure Child_Drag_Finished (Child  : access MDI_Explorer_Child_Record);
+   overriding procedure Child_Drag_Finished
+     (Child  : access MDI_Explorer_Child_Record);
    --  See inherited documentation
 
    ------------------------

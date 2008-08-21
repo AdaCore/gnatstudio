@@ -117,7 +117,7 @@ package body GVD.Dialogs is
    procedure Set_Thread_View
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window);
-   procedure Update (Thread : access Thread_View_Record);
+   overriding procedure Update (Thread : access Thread_View_Record);
    --  See description in GVD.Generic_View
 
    package Thread_Views is new Scrolled_Views.Simple_Views
@@ -500,7 +500,7 @@ package body GVD.Dialogs is
    -- Update --
    ------------
 
-   procedure Update (Thread : access Thread_View_Record) is
+   overriding procedure Update (Thread : access Thread_View_Record) is
       Info        : Thread_Information_Array (1 .. Max_Tasks);
       Len         : Natural;
       Num_Columns : Thread_Fields;

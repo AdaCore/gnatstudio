@@ -100,7 +100,7 @@ package body GVD.Consoles is
    procedure Close_TTY (Console : access Debuggee_Console_Record'Class);
    --  Allocate or close, if not done yet, a new tty on the console
 
-   procedure On_Attach
+   overriding procedure On_Attach
      (Console : access Debuggee_Console_Record;
       Process : access Visual_Debugger_Record'Class);
    --  Requires initialized when attaching the console to a process
@@ -541,7 +541,7 @@ package body GVD.Consoles is
    -- On_Attach --
    ---------------
 
-   procedure On_Attach
+   overriding procedure On_Attach
      (Console : access Debuggee_Console_Record;
       Process : access Visual_Debugger_Record'Class)
    is

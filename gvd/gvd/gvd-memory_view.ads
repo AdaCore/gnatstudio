@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2005                       --
---                             AdaCore                               --
+--                   Copyright (C) 2000-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -92,7 +91,7 @@ package GVD.Memory_View is
 
    procedure Gtk_New
      (View   : out GVD_Memory_View;
-      Window : in Gtk_Widget);
+      Window : Gtk_Widget);
    --  Create a new memory view.
 
    procedure Display_Memory
@@ -125,7 +124,7 @@ package GVD.Memory_View is
    type Dir is (Up, Down, Left, Right);
    procedure Move_Cursor
      (View  : access GVD_Memory_View_Record'Class;
-      Where : in Dir);
+      Where : Dir);
    --  Moves the cursor.
 
    procedure Insert

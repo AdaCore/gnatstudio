@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                Copyright (C) 2000-2006 AdaCore                    --
+--                Copyright (C) 2000-2008, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -464,7 +464,7 @@ package body Gtkada.Macro is
       Put_Line (File, "Time:=" & Guint32'Image (Item.Time));
    end Save_To_Disk;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Mouse) is
    begin
@@ -479,7 +479,7 @@ package body Gtkada.Macro is
         (File, "Window:=" & Address_Integer'Image (To_Integer (Item.Window)));
    end Save_To_Disk;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Key) is
    begin
@@ -490,7 +490,7 @@ package body Gtkada.Macro is
       Put_Line (File, "Group:=" & Guint8'Image (Item.Group));
    end Save_To_Disk;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Motion) is
    begin
@@ -500,7 +500,7 @@ package body Gtkada.Macro is
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
    end Save_To_Disk;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Crossing) is
    begin
@@ -512,7 +512,7 @@ package body Gtkada.Macro is
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
    end Save_To_Disk;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Scroll) is
    begin
@@ -537,7 +537,7 @@ package body Gtkada.Macro is
       Item.Time := Guint32'Value (Load_Line (File, "Time"));
    end Load_Macro;
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Mouse) is
    begin
@@ -552,7 +552,7 @@ package body Gtkada.Macro is
         To_Window (Address_Integer'Value (Load_Line (File, "Window")));
    end Load_Macro;
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Key) is
    begin
@@ -565,7 +565,7 @@ package body Gtkada.Macro is
       Item.Group := Guint8'Value (Load_Line (File, "Group"));
    end Load_Macro;
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Motion) is
    begin
@@ -575,7 +575,7 @@ package body Gtkada.Macro is
       Item.State := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
    end Load_Macro;
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Crossing) is
    begin
@@ -587,7 +587,7 @@ package body Gtkada.Macro is
       Item.State  := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
    end Load_Macro;
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Scroll) is
    begin
@@ -603,7 +603,7 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Mouse;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
@@ -739,7 +739,7 @@ package body Gtkada.Macro is
       return True;
    end Play_Event;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Key;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
@@ -775,7 +775,7 @@ package body Gtkada.Macro is
       return True;
    end Play_Event;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Motion;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
@@ -800,7 +800,7 @@ package body Gtkada.Macro is
       return True;
    end Play_Event;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Crossing;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
@@ -833,7 +833,7 @@ package body Gtkada.Macro is
       return True;
    end Play_Event;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Scroll;
       Default_Widget : Gtk_Widget := null) return Boolean
    is

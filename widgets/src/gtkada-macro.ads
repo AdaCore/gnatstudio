@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                 Copyright (C) 2000-2006 AdaCore                   --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -141,14 +141,14 @@ package Gtkada.Macro is
    --  Prev_Time must be the time of the previous event recorded, if any so
    --  that Item.Time can be computed properly.
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Mouse;
       Default_Widget : Gtk_Widget := null) return Boolean;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Mouse);
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Mouse);
 
    --------------------
@@ -167,15 +167,15 @@ package Gtkada.Macro is
      (Event     : Gdk.Event.Gdk_Event_Key;
       Prev_Time : Guint32 := 0) return Macro_Item_Key_Access;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Key;
       Default_Widget : Gtk_Widget := null) return Boolean;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Key);
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Key);
 
@@ -192,15 +192,15 @@ package Gtkada.Macro is
      (Event     : Gdk.Event.Gdk_Event_Motion;
       Prev_Time : Guint32 := 0) return Macro_Item_Motion_Access;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Motion;
       Default_Widget : Gtk_Widget := null) return Boolean;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Motion);
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Motion);
 
@@ -219,15 +219,15 @@ package Gtkada.Macro is
      (Event     : Gdk.Event.Gdk_Event_Crossing;
       Prev_Time : Guint32 := 0) return Macro_Item_Crossing_Access;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Crossing;
       Default_Widget : Gtk_Widget := null) return Boolean;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Crossing);
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Crossing);
 
@@ -245,14 +245,14 @@ package Gtkada.Macro is
      (Event     : Gdk.Event.Gdk_Event_Scroll;
       Prev_Time : Guint32 := 0) return Macro_Item_Scroll_Access;
 
-   function Play_Event
+   overriding function Play_Event
      (Item           : Macro_Item_Scroll;
       Default_Widget : Gtk_Widget := null) return Boolean;
 
-   procedure Save_To_Disk
+   overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Scroll);
 
-   procedure Load_Macro
+   overriding procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Scroll);
 
 end Gtkada.Macro;

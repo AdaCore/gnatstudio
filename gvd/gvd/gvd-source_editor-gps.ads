@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2001-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,41 +41,41 @@ package GVD.Source_Editor.GPS is
       Window : access GPS_Window_Record'Class);
    --  Internal initialization procedure.
 
-   procedure Update_Breakpoints
+   overriding procedure Update_Breakpoints
      (Editor  : access GEdit_Record;
       Br      : GVD.Types.Breakpoint_Array;
       Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Show_Message
+   overriding procedure Show_Message
      (Editor  : access GEdit_Record;
       Message : String);
    --  Display a message in the editor.
    --  This deletes the currently displayed file.
 
-   procedure Load_File
+   overriding procedure Load_File
      (Editor    : access GEdit_Record;
       File_Name : GNATCOLL.VFS.Virtual_File);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Highlight_Current_Line (Editor : access GEdit_Record);
+   overriding procedure Highlight_Current_Line (Editor : access GEdit_Record);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Unhighlight_Current_Line
+   overriding procedure Unhighlight_Current_Line
      (Editor  : access GEdit_Record;
       Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Preferences_Changed (Editor : access GEdit_Record);
+   overriding procedure Preferences_Changed (Editor : access GEdit_Record);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   procedure Set_Line
+   overriding procedure Set_Line
      (Editor  : access GEdit_Record;
       Line    : Natural;
       Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
-   function Get_Line (Editor : access GEdit_Record) return Natural;
+   overriding function Get_Line (Editor : access GEdit_Record) return Natural;
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Free_Debug_Info (Editor : access GEdit_Record);

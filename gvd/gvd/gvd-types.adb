@@ -138,7 +138,7 @@ package body GVD.Types is
    -- "=" --
    ---------
 
-   function "="
+   overriding function "="
      (Address_1 : Address_Type;
       Address_2 : Address_Type)
       return Boolean is

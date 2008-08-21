@@ -48,7 +48,8 @@ package body GVD.Source_Editor.GPS is
    -- Get_Line --
    --------------
 
-   function Get_Line (Editor : access GEdit_Record) return Natural is
+   overriding function Get_Line
+     (Editor : access GEdit_Record) return Natural is
    begin
       return Editor.Line;
    end Get_Line;
@@ -69,7 +70,9 @@ package body GVD.Source_Editor.GPS is
    -- Highlight_Current_Line --
    ----------------------------
 
-   procedure Highlight_Current_Line (Editor : access GEdit_Record) is
+   overriding procedure Highlight_Current_Line
+     (Editor : access GEdit_Record)
+   is
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
       if Editor.Current_File = GNATCOLL.VFS.No_File then
@@ -121,7 +124,7 @@ package body GVD.Source_Editor.GPS is
    -- Unhighlight_Current_Line --
    ------------------------------
 
-   procedure Unhighlight_Current_Line
+   overriding procedure Unhighlight_Current_Line
      (Editor  : access GEdit_Record;
       Process : Glib.Object.GObject)
    is
@@ -186,7 +189,7 @@ package body GVD.Source_Editor.GPS is
    -- Load_File --
    ---------------
 
-   procedure Load_File
+   overriding procedure Load_File
      (Editor    : access GEdit_Record;
       File_Name : GNATCOLL.VFS.Virtual_File)
    is
@@ -219,7 +222,7 @@ package body GVD.Source_Editor.GPS is
    -- Preferences_Changed --
    -------------------------
 
-   procedure Preferences_Changed (Editor : access GEdit_Record) is
+   overriding procedure Preferences_Changed (Editor : access GEdit_Record) is
       pragma Unreferenced (Editor);
    begin
       null;
@@ -229,7 +232,7 @@ package body GVD.Source_Editor.GPS is
    -- Set_Line --
    --------------
 
-   procedure Set_Line
+   overriding procedure Set_Line
      (Editor  : access GEdit_Record;
       Line    : Natural;
       Process : Glib.Object.GObject)
@@ -285,7 +288,7 @@ package body GVD.Source_Editor.GPS is
    -- Show_Message --
    ------------------
 
-   procedure Show_Message
+   overriding procedure Show_Message
      (Editor  : access GEdit_Record;
       Message : String)
    is
@@ -302,7 +305,7 @@ package body GVD.Source_Editor.GPS is
    -- Update_Breakpoints --
    ------------------------
 
-   procedure Update_Breakpoints
+   overriding procedure Update_Breakpoints
      (Editor  : access GEdit_Record;
       Br      : GVD.Types.Breakpoint_Array;
       Process : Glib.Object.GObject)

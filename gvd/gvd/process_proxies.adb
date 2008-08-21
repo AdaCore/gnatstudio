@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -183,7 +182,7 @@ package body Process_Proxies is
       Wait (Proxy, Result, Compile (Pattern), Timeout);
    end Wait;
 
-   procedure Wait
+   overriding procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -274,7 +273,7 @@ package body Process_Proxies is
       end loop;
    end Wait;
 
-   procedure Wait
+   overriding procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;

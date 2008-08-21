@@ -70,7 +70,7 @@ package GVD.Types is
      (Address : Address_Type;
       Offset  : Natural) return Address_Type;
 
-   function "="
+   overriding function "="
      (Address_1 : Address_Type;
       Address_2 : Address_Type)
       return Boolean;

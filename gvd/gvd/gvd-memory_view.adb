@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                    Copyright (C) 2000-2008, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,7 +83,7 @@ package body GVD.Memory_View is
    -----------------------
 
    function Conversion
-     (S        : in String;
+     (S        : String;
       Size     : Integer;
       Format   : Display_Type;
       Trunc_At : Integer) return String;
@@ -92,7 +91,7 @@ package body GVD.Memory_View is
    --  the same number in Format, with a constant size.
 
    function To_Standard_Base
-     (Address  : in Long_Long_Integer;
+     (Address  : Long_Long_Integer;
       Base     : Integer;
       Trunc_At : Integer := -1) return String;
    --  Conversion from a Long_Long_Integer to a based representation.
@@ -103,14 +102,14 @@ package body GVD.Memory_View is
 
    procedure Get_Coordinates
     (View     : access GVD_Memory_View_Record'Class;
-     Position : in Gint;
+     Position : Gint;
      Row      : out Integer;
      Column   : out Integer);
    --  Gives the bloc coordinates from a given position.
 
    function Position_To_Bloc
      (View     : access GVD_Memory_View_Record'Class;
-      Position : in Gint) return Integer;
+      Position : Gint) return Integer;
    --  Gives the bloc number at the given position.
 
    procedure Swap_Blocks
@@ -185,7 +184,7 @@ package body GVD.Memory_View is
 
    procedure Get_Coordinates
      (View     : access GVD_Memory_View_Record'Class;
-      Position : in Gint;
+      Position : Gint;
       Row      : out Integer;
       Column   : out Integer)
    is
@@ -226,7 +225,7 @@ package body GVD.Memory_View is
 
    function Position_To_Bloc
      (View     : access GVD_Memory_View_Record'Class;
-      Position : in Gint) return Integer
+      Position : Gint) return Integer
    is
       Row    : Integer;
       Column : Integer;
@@ -273,7 +272,7 @@ package body GVD.Memory_View is
    ----------------
 
    function Conversion
-     (S        : in String;
+     (S        : String;
       Size     : Integer;
       Format   : Display_Type;
       Trunc_At : Integer) return String
@@ -392,7 +391,7 @@ package body GVD.Memory_View is
    ----------------------
 
    function To_Standard_Base
-     (Address  : in Long_Long_Integer;
+     (Address  : Long_Long_Integer;
       Base     : Integer;
       Trunc_At : Integer := -1) return String
    is
@@ -738,7 +737,7 @@ package body GVD.Memory_View is
 
    procedure Gtk_New
      (View   : out GVD_Memory_View;
-      Window : in Gtk_Widget) is
+      Window : Gtk_Widget) is
    begin
       View := new GVD_Memory_View_Record;
       Initialize (View);
@@ -777,7 +776,7 @@ package body GVD.Memory_View is
 
    procedure Move_Cursor
      (View  : access GVD_Memory_View_Record'Class;
-      Where : in Dir)
+      Where : Dir)
    is
       Buffer     : constant Gtk_Text_Buffer := Get_Buffer (View.View);
       Start_Iter : Gtk_Text_Iter;

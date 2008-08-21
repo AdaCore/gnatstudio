@@ -512,7 +512,7 @@ package body Project_Explorers_Common is
    -- Dnd_Data --
    --------------
 
-   function Dnd_Data
+   overriding function Dnd_Data
      (Child : access MDI_Explorer_Child_Record; Copy : Boolean)
       return Gtkada.MDI.MDI_Child
    is
@@ -543,7 +543,8 @@ package body Project_Explorers_Common is
    -- Child_Drag_Finished --
    -------------------------
 
-   procedure Child_Drag_Finished (Child : access MDI_Explorer_Child_Record) is
+   overriding procedure Child_Drag_Finished
+     (Child : access MDI_Explorer_Child_Record) is
    begin
       --  So that we can also move the explorer itself
       Child.Dnd_From_File := GNATCOLL.VFS.No_File;
