@@ -48,6 +48,10 @@ gnatlib/gnatcoll_shared.gpr
 gnatlib/src/gnatcoll_python.gpr
 gnatlib/src/lib
 gnatlib/src/obj
+gnatlib/distrib/gnatcoll.gpr
+gnatlib/docs/gnatcoll_include.texi
+gnatlib/testsuite/obj
+gnatlib/testsuite/test_email.gpr
 gps/gmon.out*
 kernel/src_info/sn/include/config.h
 kernel/src_info/sn/snsrc/db/config.h
@@ -59,5 +63,6 @@ kernel/src_info/sn/snsrc/snavigator/stamp-h
 kernel/src_info/sn/snsrc/tcl8.1/unix/tclConfig.sh
 po/Makefile
 share/plug-ins/protocols.xml
+share/plug-ins/runtime.xml
 templates_parser
 widgets/Makefile.widgets
