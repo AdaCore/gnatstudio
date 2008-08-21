@@ -17,6 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with String_Utils;          use String_Utils;
+
 package body Docgen2_Backend.HTML is
 
    ------------------
@@ -113,6 +116,19 @@ package body Docgen2_Backend.HTML is
       return Backend.To_Destination_Name (Src_File, Pkg_Nb) & "#" & Location;
    end To_Href;
 
+   -------------------
+   -- Gen_Paragraph --
+   -------------------
+
+   overriding function Gen_Paragraph
+     (Backend : access HTML_Backend_Record;
+      Msg     : String) return String
+   is
+      pragma Unreferenced (Backend);
+   begin
+      return "<p>" & Msg & "</p>";
+   end Gen_Paragraph;
+
    -------------
    -- Gen_Ref --
    -------------
@@ -140,6 +156,64 @@ package body Docgen2_Backend.HTML is
       return "<a href=""" & Href & """ title=""" & Title &
         """>" & Name & "</a>";
    end Gen_Href;
+
+   ------------
+   -- Filter --
+   ------------
+
+   overriding function Filter
+     (Backend  : access HTML_Backend_Record;
+      S        : String) return String
+   is
+      pragma Unreferenced (Backend);
+
+      function Replace
+        (S      : String;
+         C      : Character;
+         Entity : String) return String;
+      --  Replace all occurences of C by Entity
+
+      -------------
+      -- Replace --
+      -------------
+
+      function Replace
+        (S      : String;
+         C      : Character;
+         Entity : String) return String
+      is
+         Idx  : Natural;
+         Nxt  : Natural;
+         Res  : Unbounded_String;
+
+      begin
+         Idx := S'First;
+
+         loop
+            Nxt := Idx;
+            Skip_To_Char (S, Nxt, C);
+
+            if Nxt > S'Last then
+               Ada.Strings.Unbounded.Append (Res, S (Idx .. S'Last));
+               exit;
+            end if;
+
+            Ada.Strings.Unbounded.Append (Res, S (Idx .. Nxt - 1));
+            Ada.Strings.Unbounded.Append (Res, Entity);
+            Idx := Nxt + 1;
+         end loop;
+
+         return To_String (Res);
+      end Replace;
+
+   begin
+      return Replace
+        (Replace
+           (Replace
+              (S, '&', "&amp;"),
+            '<', "&lt;"),
+         '>', "&gt;");
+   end Filter;
 
    -------------
    -- Gen_Tag --
@@ -172,5 +246,21 @@ package body Docgen2_Backend.HTML is
          return Value;
       end if;
    end Gen_Tag;
+
+   ------------------
+   -- Gen_User_Tag --
+   ------------------
+
+   overriding function Gen_User_Tag
+     (Backend    : access HTML_Backend_Record;
+      User_Tag   : String;
+      Attributes : String;
+      Value      : String) return String
+   is
+      pragma Unreferenced (Backend);
+   begin
+      return "<div class=""" & User_Tag & """ " & Attributes & ">" &
+        Value & "</div>";
+   end Gen_User_Tag;
 
 end Docgen2_Backend.HTML;

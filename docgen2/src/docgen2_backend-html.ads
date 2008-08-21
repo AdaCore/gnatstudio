@@ -55,6 +55,11 @@ package Docgen2_Backend.HTML is
       return String;
    --  See inherited doc.
 
+   overriding function Gen_Paragraph
+     (Backend : access HTML_Backend_Record;
+      Msg     : String) return String;
+   --  See inherited doc.
+
    overriding function Gen_Ref
      (Backend : access HTML_Backend_Record;
       Name    : String) return String;
@@ -73,5 +78,17 @@ package Docgen2_Backend.HTML is
       Emphasis : Boolean := False)
       return String;
    --  See inherited doc.
+
+   overriding function Gen_User_Tag
+     (Backend    : access HTML_Backend_Record;
+      User_Tag   : String;
+      Attributes : String;
+      Value      : String) return String;
+   --  See inherited doc.
+
+   overriding function Filter
+     (Backend  : access HTML_Backend_Record;
+      S        : String) return String;
+   --  See inherited doc
 
 end Docgen2_Backend.HTML;

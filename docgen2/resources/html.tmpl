@@ -12,6 +12,7 @@
     @@END_IF@@
   </title>
   <link rel='stylesheet' href='support/docgen.css' type='text/css'/>
+  <link rel='stylesheet' href='support/tags.css' type='text/css'/>
   <script src='support/docgen.js' type='text/javascript' charset='utf-8'></script>
 </head>
 <body onload="onloadDoc();">
@@ -132,7 +133,7 @@
     <div class='details'>@_PRINTOUT_@</div>
     @@END_IF@@
     @@IF@@ @_NO_SPACE:DESCRIPTION_@ /= ""
-    <div class='comment'><xmp>@_DESCRIPTION_@</xmp></div>
+    <div class='comment'>@_DESCRIPTION_@</div>
     @@END_IF@@
     @@IF@@ @_EXIST:GENERIC_PARAMETERS_@
     <div class='parameters'>
@@ -161,7 +162,7 @@
       </h3>
       @@IF@@ (@_NO_SPACE:PKG_INSTANTIATION_@ = "") AND (@_NO_SPACE:PKG_RENAMES_@ = "")
         @@IF@@ @_NO_SPACE:PKG_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_PKG_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_PKG_DESCRIPTION_@</div>
         @@END_IF@@
         <div class='details'>@_PKG_FULL_LINK_@</div>
       @@ELSE@@
@@ -169,7 +170,7 @@
         <div class='details'>@_PKG_PRINTOUT_@</div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:PKG_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_PKG_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_PKG_DESCRIPTION_@</div>
         @@END_IF@@
       @@END_IF@@
     </div>
@@ -235,7 +236,7 @@
       </div>
       @@END_IF@@
       @@IF@@ @_NO_SPACE:CLASS_DESCRIPTION_@ /= ""
-      <div class='comment'><xmp>@_CLASS_DESCRIPTION_@</xmp></div>
+      <div class='comment'>@_CLASS_DESCRIPTION_@</div>
       @@END_IF@@
     </div>
     @@END_TABLE@@
@@ -296,7 +297,7 @@
         </div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:TASK_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_TASK_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_TASK_DESCRIPTION_@</div>
         @@END_IF@@
       </div>
       @@END_TABLE@@
@@ -327,7 +328,7 @@
         </div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:TYPE_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_TYPE_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_TYPE_DESCRIPTION_@</div>
         @@END_IF@@
       </div>
       @@END_TABLE@@
@@ -360,7 +361,7 @@
         </div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:CST_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_CST_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_CST_DESCRIPTION_@</div>
         @@END_IF@@
       </div>
       @@END_TABLE@@
@@ -408,7 +409,7 @@
               </div>
               @@END_IF@@
               @@IF@@ @_NO_SPACE:TASK_ENTRY_DESCRIPTION_@ /= ""
-              <div class='comment'><xmp>@_TASK_ENTRY_DESCRIPTION_@</xmp></div>
+              <div class='comment'>@_TASK_ENTRY_DESCRIPTION_@</div>
               @@END_IF@@
             </div>
           </div>
@@ -464,7 +465,7 @@
         </div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:SUBP_DESCRIPTION_@ /= ""
-        <div class='comment'><xmp>@_SUBP_DESCRIPTION_@</xmp></div>
+        <div class='comment'>@_SUBP_DESCRIPTION_@</div>
         @@END_IF@@
       </div>
       @@END_TABLE@@

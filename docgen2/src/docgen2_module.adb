@@ -17,9 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
-with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
@@ -27,6 +28,7 @@ with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 
 with Docgen2;                     use Docgen2;
+with Docgen2.Tags;
 with Docgen2_Backend;             use Docgen2_Backend;
 with Docgen2_Backend.HTML;        use Docgen2_Backend.HTML;
 with GPS.Intl;                    use GPS.Intl;
@@ -37,8 +39,9 @@ with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with Projects;                    use Projects;
+with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
-with GNATCOLL.VFS;                         use GNATCOLL.VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body Docgen2_Module is
 
@@ -49,26 +52,29 @@ package body Docgen2_Module is
    type Docgen_Module_Record is new Module_ID_Record with record
       --  Docgen preferences
 
-      Generate_Body_Files   : Param_Spec_Boolean;
+      Generate_Body_Files     : Param_Spec_Boolean;
       --  Create also the body documentation
 
-      Comments_Filter       : Param_Spec_String;
+      Comments_Filter         : Param_Spec_String;
       --  Regexp used to filter comments
 
-      Show_Private_Entities : Param_Spec_Boolean;
+      Show_Private_Entities   : Param_Spec_Boolean;
       --  Show also private entities
 
-      Show_References       : Param_Spec_Boolean;
+      Show_References         : Param_Spec_Boolean;
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
 
       Process_Up_To_Date_Only : Param_Spec_Boolean;
       --  True if docgen should document up to date entities only.
 
-      Options               : Docgen_Options;
+      User_Tags_List          : Param_Spec_String;
+      --  List of space-separated user tags.
+
+      Options                 : Docgen_Options;
       --  Group all the preferences
 
-      Backend               : Docgen2_Backend.Backend_Handle;
+      Backend                 : Docgen2_Backend.Backend_Handle;
       --  The backend used to generate documentation
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
@@ -145,7 +151,10 @@ package body Docgen2_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       function Get_Filter (Regx : String) return Pattern_Matcher_Access;
-      --   Return an access to a pattern, or null if the string is empty
+      --  Return an access to a pattern, or null if the string is empty
+
+      function Get_Tags (Tags_List : String) return User_Tags_List.Vector;
+      --  Return a list of tags from the space-separated list in string.
 
       ----------------
       -- Get_Filter --
@@ -161,6 +170,22 @@ package body Docgen2_Module is
          end if;
       end Get_Filter;
 
+      function Get_Tags (Tags_List : String) return User_Tags_List.Vector is
+         List : User_Tags_List.Vector;
+         Idx  : Natural;
+         Nxt  : Natural;
+      begin
+         Idx := Tags_List'First;
+         while Idx <= Tags_List'Last loop
+            Nxt := Idx;
+            Skip_To_Char (Tags_List, Nxt, ' ');
+            List.Append (To_Unbounded_String (Tags_List (Idx .. Nxt - 1)));
+            Idx := Nxt + 1;
+         end loop;
+
+         return List;
+      end Get_Tags;
+
       pragma Unreferenced (Kernel);
    begin
       Docgen_Module (Docgen_Module_Id).Options :=
@@ -175,7 +200,11 @@ package body Docgen2_Module is
            Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References),
          Process_Up_To_Date_Only =>
            Get_Pref
-             (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only));
+             (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only),
+         User_Tags               =>
+           Get_Tags
+             (Get_Pref (Docgen_Module (Docgen_Module_Id).User_Tags_List)),
+         Keep_Formatting         => True);
 
    exception
       when E : others =>
@@ -427,29 +456,6 @@ package body Docgen2_Module is
       --  a backend selection mechanism will be needed.
       Docgen_Module (Docgen_Module_Id).Backend := new HTML_Backend_Record;
 
-      Command := new Generate_Project_Command;
-      Register_Contextual_Menu
-        (Kernel, "Generate project documentation",
-         Label  => "Documentation/Generate for %p",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"));
-
-      Command := new Generate_Project_Command;
-      Generate_Project_Command (Command.all).Recursive := True;
-      Register_Contextual_Menu
-        (Kernel, "Generate project documentation recursive",
-         Label  => "Documentation/Generate for %p and subprojects",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"));
-
-      Command := new Generate_File_Command;
-      Register_Contextual_Menu
-        (Kernel, "Generate file documentation",
-         Label  => "Documentation/Generate for %f",
-         Action => Command,
-         Filter => Action_Filter (Lookup_Filter (Kernel, "File") and
-                                  Create (Language => "ada")));
-
       Docgen_Module (Docgen_Module_Id).Generate_Body_Files
         := Param_Spec_Boolean
         (Gnew_Boolean
@@ -514,11 +520,50 @@ package body Docgen2_Module is
          Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only),
          -"Documentation");
 
+      Docgen_Module (Docgen_Module_Id).User_Tags_List :=
+        Param_Spec_String
+          (Gnew_String
+               (Name    => "Doc-User-Tags",
+                Default => "summary description parameter exception seealso",
+                Blurb   =>
+                -("List of space separated xml tags used to better format the"
+                  & " documentation extracted from the source comments."),
+                Nick    => -"User defined tags"));
+      Register_Property
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_Id).User_Tags_List),
+         -"Documentation");
+
       Add_Hook
         (Kernel, Preferences_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel);
+
+      Docgen2.Tags.Register_Hook (Kernel);
+
+      Command := new Generate_Project_Command;
+      Register_Contextual_Menu
+        (Kernel, "Generate project documentation",
+         Label  => "Documentation/Generate for %p",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Command := new Generate_Project_Command;
+      Generate_Project_Command (Command.all).Recursive := True;
+      Register_Contextual_Menu
+        (Kernel, "Generate project documentation recursive",
+         Label  => "Documentation/Generate for %p and subprojects",
+         Action => Command,
+         Filter => Lookup_Filter (Kernel, "Project only"));
+
+      Command := new Generate_File_Command;
+      Register_Contextual_Menu
+        (Kernel, "Generate file documentation",
+         Label  => "Documentation/Generate for %f",
+         Action => Command,
+         Filter => Action_Filter (Lookup_Filter (Kernel, "File") and
+                                  Create (Language => "ada")));
 
       Register_Menu
         (Kernel, Tools, "_Documentation", Callback => null,
@@ -547,6 +592,7 @@ package body Docgen2_Module is
          Tools & Generate,
          -"Generate _for ...",
          Callback => Choose_Menu_File'Access);
+
       Register_Commands (Kernel);
    end Register_Module;
 

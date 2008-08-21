@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007, AdaCore                     --
+--                  Copyright (C) 2007-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -85,6 +85,12 @@ package Docgen2_Backend is
    --  Pkg_Nb is the indes of the pkg in the source file, or "0" if not
    --   applicable
 
+   function Gen_Paragraph
+     (Backend : access Backend_Record;
+      Msg     : String) return String is abstract;
+   --  Return Msg as new paragraph.
+   --  For example, html will return <p>Msg</p>
+
    function Gen_Ref
      (Backend : access Backend_Record;
       Name    : String) return String is abstract;
@@ -111,5 +117,19 @@ package Docgen2_Backend is
    --  Gen_Tag
    --  for example: html backend will generate "<span class='name'>Name</span>"
    --  for 'name' tags.
+
+   function Gen_User_Tag
+     (Backend    : access Backend_Record;
+      User_Tag   : String;
+      Attributes : String;
+      Value      : String) return String is abstract;
+   --  Generate a text block corresponding to the user tag.
+
+   function Filter
+     (Backend : access Backend_Record;
+      S       : String) return String is abstract;
+   --  Filter the text so that it is compatible with the backend.
+   --  For example: for html backend, it will replace '<' '>' and '&' by
+   --  respectively &lt; &gt; and &amp;
 
 end Docgen2_Backend;
