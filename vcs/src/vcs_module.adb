@@ -1127,7 +1127,7 @@ package body VCS_Module is
          end if;
       end loop;
 
-      Parse_Log (Ref, File, Escaped (Escaped'First .. Last));
+      Parse_Log (Ref, File, Escaped (Escaped'First .. Last - 1));
    exception
       when E : others => Trace (Exception_Handle, E);
    end Log_Parse_Handler;
