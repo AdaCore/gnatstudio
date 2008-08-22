@@ -3197,12 +3197,15 @@ package body CPP_Parser is
                if Process_Alive then
                   return;
                end if;
+
+               --  If process is not running, we haven't created the temporary
+               --  file.
+               GNAT.OS_Lib.Delete_File (Iterator.Tmp_Filename, Success);
             end if;
 
             Iterator.Process_Running := False;
             Trace (Me, "dbimp finished, switching to next project");
 
-            GNAT.OS_Lib.Delete_File (Iterator.Tmp_Filename, Success);
             Next_Project;
       end case;
 
