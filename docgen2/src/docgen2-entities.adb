@@ -262,14 +262,23 @@ package body Docgen2.Entities is
       return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
    end Less_Than;
 
-   ---------------
-   -- Less_Than --
-   ---------------
+   -------------------------
+   -- Less_Than_Full_Name --
+   -------------------------
 
-   function Less_Than (Left, Right : Entity_Info) return Boolean is
+   function Less_Than_Full_Name (Left, Right : Entity_Info) return Boolean is
+   begin
+      return To_Lower (Left.Name.all) < To_Lower (Right.Name.all);
+   end Less_Than_Full_Name;
+
+   --------------------------
+   -- Less_Than_Short_Name --
+   --------------------------
+
+   function Less_Than_Short_Name (Left, Right : Entity_Info) return Boolean is
    begin
       return To_Lower (Left.Short_Name.all) < To_Lower (Right.Short_Name.all);
-   end Less_Than;
+   end Less_Than_Short_Name;
 
    ---------------
    -- Less_Than --

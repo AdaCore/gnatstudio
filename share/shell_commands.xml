@@ -499,11 +499,25 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
     <description>Hook called when the last file revision has been parsed after the corresponding VCS action.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ docgen_start_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="path">A string, the documentation path</param>
+     <description>Hook called when the documentation generation process is starting.</description>
+  </shell_doc>
+
+  <shell_doc name="@hook@ docgen_finished_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="path">A string, the documentation path</param>
+     <description>Hook called when the documentation generation process is finishing.</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ docgen_user_tag_action_hook">
      <param name="hook">A string, the name of the hook</param>
      <param name="tag">A string, the user tag</param>
      <param name="attributes">A string, the attributes of the xml tag, in the form "attrib1='a1' attrib2='a2'"</param>
      <param name="value">A string, the value of the tag</param>
+     <param name="entityname">A string, the entity name corresponding to this user tag</param>
+     <param name="href">A string, a href to the entity corresponding to this user tag</param>
      <return>A string</return>
      <description>Action hook called when a user tag is found while generating the documentation. If a hook handler returns a non-empty string, then this string will be used in the final document. Else, &lt;span class="_tag_" _attributess_&gt;_value_&lt;/span&gt; will be used.</description>
      <example lang="python">

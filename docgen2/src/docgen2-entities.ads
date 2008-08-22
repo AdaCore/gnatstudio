@@ -24,7 +24,7 @@ with GNAT.Strings;
 with Entities;     use Entities;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Language;     use Language;
-with Docgen2.Tags; use Docgen2.Tags;
+with Docgen2.Tags;
 
 package Docgen2.Entities is
 
@@ -84,15 +84,19 @@ package Docgen2.Entities is
      (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
 
    function Less_Than (Left, Right : Cross_Ref) return Boolean;
-   function Less_Than (Left, Right : Entity_Info) return Boolean;
+   function Less_Than_Short_Name (Left, Right : Entity_Info) return Boolean;
+   function Less_Than_Full_Name (Left, Right : Entity_Info) return Boolean;
    function Less_Than (Left, Right : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Used to sort the children lists
 
    package Vector_Sort is new Cross_Ref_List.Generic_Sorting
      ("<" => Less_Than);
 
-   package EInfo_Vector_Sort is new Entity_Info_List.Generic_Sorting
-     ("<" => Less_Than);
+   package EInfo_Vector_Sort_Short is new Entity_Info_List.Generic_Sorting
+     ("<" => Less_Than_Short_Name);
+
+   package EInfo_Vector_Sort_Full is new Entity_Info_List.Generic_Sorting
+     ("<" => Less_Than_Full_Name);
 
    package Files_Vector_Sort is new Files_List.Generic_Sorting
      ("<" => Less_Than);
@@ -108,10 +112,11 @@ package Docgen2.Entities is
 
          Name                 : GNAT.Strings.String_Access;
          --  Full name (with namespace)
+
          Short_Name           : GNAT.Strings.String_Access;
          --  Short name
 
-         Description          : Comment_Type;
+         Description          : aliased Docgen2.Tags.Comment_Type;
          --  Associated comment
 
          Printout             : GNAT.Strings.String_Access;
@@ -119,6 +124,7 @@ package Docgen2.Entities is
 
          Entity_Loc           : Source_Location;
          --  Location of the entity in line/column/index format
+
          Location             : Location_Type;
          --  Location of the entity in line/column/file/package number format
 

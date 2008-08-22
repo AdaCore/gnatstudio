@@ -22,10 +22,9 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;                use GNAT.Regpat;
 
 with Docgen2_Backend;            use Docgen2_Backend;
+with Docgen2.Hooks;              use Docgen2.Hooks;
 with Docgen2.Utils;              use Docgen2.Utils;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with String_Utils;               use String_Utils;
 
 package body Docgen2.Tags is
@@ -35,33 +34,6 @@ package body Docgen2.Tags is
    XML_Regpat : constant Pattern_Matcher :=
                   Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
-   User_Tag_Action_Args_Type : constant Hook_Type := "docgen_user_tag_args";
-   User_Tag_Action_Type : constant Hook_Name :=  "docgen_user_tag_action_hook";
-   type User_Tags_Args
-     (Tag_Length   : Natural;
-      Attrs_Length : Natural;
-      Value_Length : Natural)
-     is new Hooks_Data with record
-      Tag   : String (1 .. Tag_Length);
-      Attrs : String (1 .. Attrs_Length);
-      Value : String (1 .. Value_Length);
-   end record;
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access User_Tags_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access;
-
-   function From_Callback_Data
-     (Data : GNATCOLL.Scripts.Callback_Data'Class)
-      return Hooks_Data'Class;
-
-   function User_Tag_Action
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tag, Attrs, Value : String) return String;
-   --  Execute the Docgen_User_Tag_Action hook and return the result
-
    function Is_Tag
      (S       : Unbounded_String;
       Options : Docgen_Options) return Boolean;
@@ -70,11 +42,13 @@ package body Docgen2.Tags is
    function Deep_Copy (Comment : Comment_Type) return Comment_Type;
    --  Performs a deep copy of comment
 
-   function To_String
+   function To_Unbounded_String
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend         : access Backend_Record'Class;
+      Entity_Name     : String;
+      Href            : String;
       N               : Node_Ptr;
-      Keep_Formatting : Boolean) return String;
+      Keep_Formatting : Boolean) return Unbounded_String;
 
    function Strip_Blanks
      (S : Unbounded_String;
@@ -84,89 +58,6 @@ package body Docgen2.Tags is
      (S    : String;
       N    : in out Node_Ptr;
       Opts : Docgen_Options);
-
-   --------------------------
-   -- Create_Callback_Data --
-   --------------------------
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access User_Tags_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access
-   is
-      D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 4));
-   begin
-      Set_Nth_Arg (D.all, 1, String (Hook));
-      Set_Nth_Arg (D.all, 2, Data.Tag);
-      Set_Nth_Arg (D.all, 3, Data.Attrs);
-      Set_Nth_Arg (D.all, 4, Data.Value);
-      return D;
-   end Create_Callback_Data;
-
-   ---------------------------------
-   -- From_Callback_Data_Function --
-   ---------------------------------
-
-   function From_Callback_Data
-     (Data : GNATCOLL.Scripts.Callback_Data'Class)
-      return Hooks_Data'Class
-   is
-      Tag   : constant String := Nth_Arg (Data, 2);
-      Attrs : constant String := Nth_Arg (Data, 3);
-      Value : constant String := Nth_Arg (Data, 4);
-
-      Args  : constant User_Tags_Args :=
-                (Hooks_Data with
-                 Tag_Length   => Tag'Length,
-                 Tag          => Tag,
-                 Attrs_Length => Attrs'Length,
-                 Attrs        => Attrs,
-                 Value_Length => Value'Length,
-                 Value        => Value);
-   begin
-      return Args;
-   end From_Callback_Data;
-
-   -------------------
-   -- Register_Hook --
-   -------------------
-
-   procedure Register_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-   begin
-      Register_Hook_Data_Type
-        (Kernel,
-         Data_Type_Name => User_Tag_Action_Args_Type,
-         Args_Creator   => From_Callback_Data'Access);
-      Register_Hook_Return_String
-        (Kernel,
-         User_Tag_Action_Type,
-         User_Tag_Action_Args_Type);
-   end Register_Hook;
-
-   ---------------------
-   -- User_Tag_Action --
-   ---------------------
-
-   function User_Tag_Action
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tag, Attrs, Value : String) return String
-   is
-      Data : aliased User_Tags_Args :=
-               (Hooks_Data with
-                Tag_Length   => Tag'Length,
-                Tag          => Tag,
-                Attrs_Length => Attrs'Length,
-                Attrs        => Attrs,
-                Value_Length => Value'Length,
-                Value        => Value);
-   begin
-      return Run_Hook_Until_Not_Empty
-        (Kernel, User_Tag_Action_Type, Data'Unchecked_Access, True);
-   end User_Tag_Action;
 
    ------------
    -- Is_Tag --
@@ -215,6 +106,10 @@ package body Docgen2.Tags is
          if Is_Blank_Line (Str (Idx .. Nxt), Idx) then
             Res := Res & ASCII.LF;
          else
+            if not Keep_Formatting then
+               Skip_Blanks (Str, Idx);
+            end if;
+
             Res := Res & Str (Idx .. Nxt);
 
             if not Is_Blank (Str (Nxt)) then
@@ -233,28 +128,31 @@ package body Docgen2.Tags is
       return To_String (Res);
    end Strip_Blanks;
 
-   ---------------
-   -- To_String --
-   ---------------
+   -------------------------
+   -- To_Unbounded_String --
+   -------------------------
 
-   function To_String
+   function To_Unbounded_String
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend         : access Backend_Record'Class;
+      Entity_Name     : String;
+      Href            : String;
       N               : Node_Ptr;
-      Keep_Formatting : Boolean) return String
+      Keep_Formatting : Boolean) return Unbounded_String
    is
       Str   : Ada.Strings.Unbounded.Unbounded_String;
       Node  : Node_Ptr := N;
 
    begin
       if Node = null then
-         return "";
+         return Null_Unbounded_String;
       end if;
 
       if Node.Tag = Null_Unbounded_String
         and then Node.Children = null
       then
-         return Backend.Filter (Strip_Blanks (Node.Value, True));
+         return To_Unbounded_String
+           (Backend.Filter (Strip_Blanks (Node.Value, True)));
       end if;
 
       while Node /= null loop
@@ -266,32 +164,36 @@ package body Docgen2.Tags is
                                    Keep_Formatting
                                    and then Node.Tag = Null_Unbounded_String));
             Val_U_Str    : Unbounded_String;
-            Children_Str : constant String :=
-                             To_String (Kernel, Backend, Node.Children,
-                                        Keep_Formatting);
+            Children_Str : constant Unbounded_String :=
+                             To_Unbounded_String
+                               (Kernel, Backend, Entity_Name, Href,
+                                Node.Children, Keep_Formatting);
             Idx          : Natural;
             Nxt          : Natural;
          begin
 
             if Node.Tag /= Null_Unbounded_String then
-               Idx := Val_Str'First;
-               Val_U_Str := Null_Unbounded_String;
-               while Idx < Val_Str'Last loop
-                  Nxt := Line_End (Val_Str, Idx);
-                  Append
-                    (Val_U_Str,
-                     Backend.Gen_Paragraph (Val_Str (Idx .. Nxt)));
-                  Idx := Next_Line (Val_Str, Idx);
-               end loop;
-
                declare
-                  Res : constant String := User_Tag_Action
-                    (Kernel,
-                     To_String (Node.Tag),
-                     To_String (Node.Attributes),
-                     To_String (Val_U_Str));
+                  Res : constant String :=
+                          User_Tag_Action
+                            (Kernel,
+                             To_String (Node.Tag),
+                             To_String (Node.Attributes),
+                             Val_Str,
+                             Entity_Name,
+                             Href);
                begin
                   if Res'Length = 0 then
+                     Idx := Val_Str'First;
+                     Val_U_Str := Null_Unbounded_String;
+                     while Idx < Val_Str'Last loop
+                        Nxt := Line_End (Val_Str, Idx);
+                        Append
+                          (Val_U_Str,
+                           Backend.Gen_Paragraph (Val_Str (Idx .. Nxt)));
+                        Idx := Next_Line (Val_Str, Idx);
+                     end loop;
+
                      Append
                        (Str,
                         Backend.Gen_User_Tag
@@ -304,7 +206,7 @@ package body Docgen2.Tags is
                end;
             end if;
 
-            if Children_Str'Length > 0 then
+            if Length (Children_Str) > 0 then
                Str := Str & Children_Str;
             end if;
 
@@ -323,8 +225,8 @@ package body Docgen2.Tags is
          Node := Node.Next;
       end loop;
 
-      return To_String (Str);
-   end To_String;
+      return Str;
+   end To_Unbounded_String;
 
    ---------------
    -- To_String --
@@ -333,10 +235,19 @@ package body Docgen2.Tags is
    function To_String
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend         : access Backend_Record'Class;
-      Comment         : Comment_Type;
-      Keep_Formatting : Boolean) return String is
+      Comment         : access Comment_Type;
+      Entity_Name     : String;
+      Href            : String;
+      Keep_Formatting : Boolean) return String
+   is
    begin
-      return To_String (Kernel, Backend, Comment.N, Keep_Formatting);
+      if not Comment.Analysed then
+         Comment.Block := To_Unbounded_String
+           (Kernel, Backend, Entity_Name, Href, Comment.N, Keep_Formatting);
+         Comment.Analysed := True;
+      end if;
+
+      return To_String (Comment.Block);
    end To_String;
 
    ------------------
@@ -464,7 +375,8 @@ package body Docgen2.Tags is
            (Block      => To_Unbounded_String (Comment),
             Sloc_Start => Sloc_Start,
             Sloc_Stop  => Sloc_Stop,
-            N          => null);
+            N          => null,
+            Analysed   => False);
          List.Append (Elem);
       end if;
    end Add_Comment_Line;

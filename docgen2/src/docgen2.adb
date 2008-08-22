@@ -51,6 +51,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Docgen2_Backend;           use Docgen2_Backend;
 with Docgen2.Entities;          use Docgen2.Entities;
+with Docgen2.Hooks;             use Docgen2.Hooks;
 with Docgen2.Tags;              use Docgen2.Tags;
 with Docgen2.Utils;             use Docgen2.Utils;
 
@@ -152,18 +153,6 @@ package body Docgen2 is
       EInfo_Map : Entity_Info_Map.Map);
    --  Generate all missing links in Xref_List
 
-   procedure Generate_TOC
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Files      : in out Cross_Ref_List.Vector);
-   --  Generate the Table Of Contents
-
-   procedure Generate_Files_Index
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Src_Files  : Files_List.Vector);
-   --  Generate the global src files index
-
    procedure Generate_Trees
      (Kernel     : access Kernel_Handle_Record'Class;
       Backend    : Backend_Handle;
@@ -172,9 +161,11 @@ package body Docgen2 is
    --  Generate the global inheritance trees
 
    procedure Generate_Global_Index
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      EInfo_Map  : Entity_Info_Map.Map);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Backend   : Backend_Handle;
+      Files     : Cross_Ref_List.Vector;
+      EInfo_Map : Entity_Info_Map.Map;
+      Src_Files : Files_List.Vector);
    --  Generate the global index
 
    procedure Generate_Annotated_Source
@@ -215,6 +206,7 @@ package body Docgen2 is
    --  Same as above for Cross-Refs. If the cross-ref could not be found
    --  then only the name is displayed with no hyper-link
 
+   function Location_Image (E_Info : Entity_Info) return String;
    function Location_Image (Loc : File_Location) return String;
    --  Return the location formated the gnat way: "file:line:col"
 
@@ -240,22 +232,42 @@ package body Docgen2 is
       EInfo   : Entity_Info;
       Name    : String := "") return String
    is
-      Ref : constant String :=
-              Backend.To_Href
-                (Location_Image (EInfo.Location.File_Loc),
-                 GNATCOLL.VFS.Base_Name
-                   (Get_Filename (EInfo.Location.File_Loc.File)),
-                 EInfo.Location.Pkg_Nb);
+      File : GNATCOLL.VFS.Virtual_File;
+      Pkg  : Natural;
    begin
-      if Name = "" then
-         return Backend.Gen_Href
-           (EInfo.Name.all, Ref,
-            "defined at " & Location_Image (EInfo.Location.File_Loc));
+      if EInfo.Location.File_Loc.File /= null then
+         File := Get_Filename (EInfo.Location.File_Loc.File);
+         Pkg  := EInfo.Location.Pkg_Nb;
+
+      elsif EInfo.Category = Cat_Package
+        or else EInfo.Category = Cat_File
+      then
+         File := Get_Filename (EInfo.File);
+         Pkg  := 1;
+
       else
-         return Backend.Gen_Href
-           (Name, Ref,
-            "defined at " & Location_Image (EInfo.Location.File_Loc));
+         File := GNATCOLL.VFS.No_File;
       end if;
+
+      pragma Assert (File /= GNATCOLL.VFS.No_File);
+
+      declare
+         Ref : constant String :=
+                 Backend.To_Href
+                   (Location_Image (EInfo),
+                    File.Base_Name,
+                    Pkg);
+      begin
+         if Name = "" then
+            return Backend.Gen_Href
+              (EInfo.Name.all, Ref,
+               "defined at " & Location_Image (EInfo));
+         else
+            return Backend.Gen_Href
+              (Name, Ref,
+               "defined at " & Location_Image (EInfo));
+         end if;
+      end;
    end Gen_Href;
 
    --------------
@@ -291,6 +303,23 @@ package body Docgen2 is
    -- Location_Image --
    --------------------
 
+   function Location_Image (E_Info : Entity_Info) return String is
+   begin
+      if Get_File (E_Info.Location.File_Loc) /= null then
+         return Location_Image (E_Info.Location.File_Loc);
+      else
+         declare
+            F_Name : constant String := Base_Name (Get_Filename (E_Info.File));
+         begin
+            return F_Name;
+         end;
+      end if;
+   end Location_Image;
+
+   --------------------
+   -- Location_Image --
+   --------------------
+
    function Location_Image (Loc : File_Location) return String is
       function Int_Img (I : Integer) return String;
 
@@ -309,7 +338,9 @@ package body Docgen2 is
       end Int_Img;
 
    begin
-      if Loc = No_File_Location then
+      if Loc = No_File_Location
+        or else Get_File (Loc) = null
+      then
          return "";
       end if;
 
@@ -1137,6 +1168,8 @@ package body Docgen2 is
             Generate_Support_Files (Command.Kernel, Command.Backend);
             Command.State := Analyse_Files;
             Command.File_Index := Command.Source_Files'First - 1;
+            Documentation_Generation_Start_Hook
+              (Command.Kernel, Get_Doc_Directory (Command.Kernel));
 
          when Analyse_Files =>
             if Command.File_Index = Command.Source_Files'Last then
@@ -1474,18 +1507,17 @@ package body Docgen2 is
             --  No more file processing. Let's print indexes.
 
             Files_Vector_Sort.Sort (Command.Src_Files);
-            Generate_Files_Index
-              (Command.Kernel, Command.Backend, Command.Src_Files);
+
+            Documentation_Generation_Finish_Hook
+              (Command.Kernel, Get_Doc_Directory (Command.Kernel));
 
             Generate_Trees
               (Command.Kernel, Command.Backend,
                Command.Class_List, Command.EInfo_Map);
 
             Generate_Global_Index
-              (Command.Kernel, Command.Backend, Command.EInfo_Map);
-
-            Generate_TOC
-              (Command.Kernel, Command.Backend, Command.Files);
+              (Command.Kernel, Command.Backend,
+               Command.Files, Command.EInfo_Map, Command.Src_Files);
 
             Templates_Parser.Release_Cache;
             Free (Command.Buffer);
@@ -1944,7 +1976,13 @@ package body Docgen2 is
            (Tags.Description_Tag,
             Filter_Documentation
               (To_String
-                 (Kernel, Backend, E_Info.Description,
+                 (Kernel, Backend,
+                  E_Info.all.Description'Unchecked_Access,
+                  E_Info.Name.all,
+                  Backend.To_Href
+                    (Location_Image (E_Info),
+                     Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
+                     E_Info.Location.Pkg_Nb),
                   Options.Keep_Formatting),
                Options));
 
@@ -2086,7 +2124,7 @@ package body Docgen2 is
          Append (Tags.Calls_Tag, Calls_Tag);
 
          Append (Tags.Loc_Tag,
-                 Location_Image (E_Info.Location.File_Loc));
+                 Location_Image (E_Info));
          Append (Tags.Instantiation_Tag,
                  Gen_Href (Backend, E_Info.Instantiated_Entity));
          Append (Tags.Renames_Tag,
@@ -2255,7 +2293,7 @@ package body Docgen2 is
                         Backend.Gen_Tag
                           (Identifier_Text,
                            Backend.Gen_Ref
-                             (Location_Image (EInfo.Location.File_Loc)) &
+                             (Location_Image (EInfo)) &
                            Extract (Sloc_Start.Index, Sloc_End.Index)));
 
                   elsif EInfo = null then
@@ -2386,7 +2424,12 @@ package body Docgen2 is
                             (To_String
                                (Kernel,
                                 Backend,
-                                E_Info.Description,
+                                E_Info.Description'Access,
+                                E_Info.Name.all,
+                                Backend.To_Href
+                                  (Location_Image (E_Info),
+                                   Base_Name (Get_Filename (File)),
+                                   E_Info.Location.Pkg_Nb),
                                 Options.Keep_Formatting),
                              Options);
       begin
@@ -2424,7 +2467,7 @@ package body Docgen2 is
 
                Append (Pkg_Gen_Params, Name_Str);
                Append (Pkg_Gen_Params_Loc,
-                       Location_Image (Param.Location.File_Loc));
+                       Location_Image (Param));
 
                Entity_Info_List.Next (Cursor);
             end loop;
@@ -2571,9 +2614,9 @@ package body Docgen2 is
                   Append (Entry_Cat_Tag, Image (E_Entry.Lang_Category));
                   Append (Entry_Parent_Tag, Child_EInfo.Name.all);
                   Append (Entry_P_Loc_Tag,
-                          Location_Image (Child_EInfo.Location.File_Loc));
+                          Location_Image (Child_EInfo));
                   Append (Entry_Loc_Tag,
-                          Location_Image (E_Entry.Location.File_Loc));
+                          Location_Image (E_Entry));
                   Format_Printout (E_Entry);
                   Append (Entry_Print_Tag, E_Entry.Printout.all);
 
@@ -2583,7 +2626,14 @@ package body Docgen2 is
                        (To_String
                           (Kernel,
                            Backend,
-                           E_Entry.Description,
+                           E_Entry.Description'Access,
+                           E_Entry.Name.all,
+                           Backend.To_Href
+                             (Location_Image (E_Entry),
+                              Base_Name
+                                (Get_Filename
+                                   (E_Entry.Location.File_Loc.File)),
+                              E_Entry.Location.Pkg_Nb),
                            Options.Keep_Formatting),
                         Options));
 
@@ -2796,95 +2846,6 @@ package body Docgen2 is
       end loop;
    end Generate_Xrefs;
 
-   ------------------
-   -- Generate_TOC --
-   ------------------
-
-   procedure Generate_TOC
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Backend : Backend_Handle;
-      Files   : in out Cross_Ref_List.Vector)
-   is
-      Tmpl               : constant String :=
-                             Backend.Get_Template
-                               (Get_System_Dir (Kernel), Tmpl_TOC);
-      Translation        : Translate_Set;
-      File_Handle        : File_Type;
-      Xref               : Cross_Ref;
-      First_Letter       : Character;
-      Prev_Letter        : Character := ASCII.NUL;
-      Letter_Tag         : Vector_Tag;
-      Letter_Changed_Tag : Vector_Tag;
-      Files_Tag          : Vector_Tag;
-   begin
-      Vector_Sort.Sort (Files);
-
-      for J in Files.First_Index .. Files.Last_Index loop
-         Xref := Files.Element (J);
-         First_Letter := To_Upper (Xref.Xref.Name (Xref.Xref.Name'First));
-
-         if not Is_Letter (First_Letter) then
-            First_Letter := '*';
-         end if;
-
-         Append (Letter_Tag, First_Letter);
-         Append (Letter_Changed_Tag, First_Letter /= Prev_Letter);
-         Append (Files_Tag,
-                 Backend.Gen_Href
-                   (Name  => Xref.Xref.Name.all,
-                    Href  => Xref.Name.all,
-                    Title => Location_Image (Xref.Location)));
-         Prev_Letter := First_Letter;
-      end loop;
-
-      Insert (Translation, Assoc ("LETTER", Letter_Tag));
-      Insert (Translation, Assoc ("LETTER_CHANGED", Letter_Changed_Tag));
-      Insert (Translation, Assoc ("FILES", Files_Tag));
-
-      Ada.Text_IO.Create
-        (File_Handle,
-         Name =>  Get_Doc_Directory (Kernel) &
-           Backend.To_Destination_Name ("index"));
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
-      Ada.Text_IO.Close (File_Handle);
-
-      Open_Html
-        (Kernel      => Kernel,
-         URL_Or_File => Get_Doc_Directory (Kernel) &
-           Backend.To_Destination_Name ("index"));
-   end Generate_TOC;
-
-   --------------------------
-   -- Generate_Files_Index --
-   --------------------------
-
-   procedure Generate_Files_Index
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Src_Files  : Files_List.Vector)
-   is
-      Tmpl        : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_Src_Index);
-      File_Handle : File_Type;
-      Translation : Translate_Set;
-      Src_File    : Vector_Tag;
-   begin
-      for J in Src_Files.First_Index .. Src_Files.Last_Index loop
-         Append
-           (Src_File, Base_Name (Src_Files.Element (J)));
-      end loop;
-
-      Insert (Translation, Assoc ("SRC_FILE", Src_File));
-
-      Ada.Text_IO.Create
-        (File_Handle,
-         Name =>  Get_Doc_Directory (Kernel) &
-           Backend.To_Destination_Name ("src_index"));
-      Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
-      Ada.Text_IO.Close (File_Handle);
-   end Generate_Files_Index;
-
    --------------------
    -- Generate_Trees --
    --------------------
@@ -2939,7 +2900,7 @@ package body Docgen2 is
          end if;
 
          Append (Tree_Tag, Gen_Href (Backend, Class, Name));
-         Append (Tree_Loc_Tag, Location_Image (Class.Location.File_Loc));
+         Append (Tree_Loc_Tag, Location_Image (Class));
          Append (Root_Tree_Tag, Depth = 0);
 
          Vector_Sort.Sort (Class.Class_Children);
@@ -3020,25 +2981,104 @@ package body Docgen2 is
    procedure Generate_Global_Index
      (Kernel    : access Kernel_Handle_Record'Class;
       Backend   : Backend_Handle;
-      EInfo_Map : Entity_Info_Map.Map)
+      Files     : Cross_Ref_List.Vector;
+      EInfo_Map : Entity_Info_Map.Map;
+      Src_Files : Files_List.Vector)
    is
       Tmpl         : constant String :=
                        Backend.Get_Template
                          (Get_System_Dir (Kernel), Tmpl_Index);
       Letter       : Character;
+      Last_Letter  : Character := ' ';
+      Letter_Kind  : Character;
       Map_Cursor   : Entity_Info_Map.Cursor;
       EInfo        : Entity_Info;
-      List_Index   : Natural;
+      Xref         : Cross_Ref;
       Translation  : Translate_Set;
       Href_Tag     : Tag;
       Loc_Tag      : Tag;
       Kind_Tag     : Tag;
 
       File_Handle  : File_Type;
-      Local_List   : array (1 .. 27) of Entity_Info_List.Vector;
+      type Index_Type is new Natural range 1 .. 2*27;
+      Local_List   : array (Index_Type) of Entity_Info_List.Vector;
+      List_Index   : Index_Type;
       First_List   : Boolean;
 
+      type Index_Kind is (API_Index, Entity_Index);
+
+      function Index
+        (Kind : Index_Kind; Letter : Character) return Index_Type;
+      --  Return index from kind and letter
+
+      function Get_Index_Kind (I : Index_Type) return Index_Kind;
+      --  Get the index kind from the current list index
+
+      function Get_Letter (I : Index_Type) return Character;
+      --  Get the first letter corresponding to Index.
+
+      -----------
+      -- Index --
+      -----------
+
+      function Index
+        (Kind : Index_Kind; Letter : Character) return Index_Type
+      is
+         I : Index_Type;
+      begin
+         if Kind = API_Index then
+            I := 1;
+         else
+            I := 28;
+         end if;
+
+         if not Is_Letter (Letter) then
+            return I;
+         else
+            return I + 1 + Character'Pos (Letter) - Character'Pos ('A');
+         end if;
+      end Index;
+
+      --------------------
+      -- Get_Index_Kind --
+      --------------------
+
+      function Get_Index_Kind (I : Index_Type) return Index_Kind is
+      begin
+         if I <= 27 then
+            return API_Index;
+         else
+            return Entity_Index;
+         end if;
+      end Get_Index_Kind;
+
+      ----------------
+      -- Get_Letter --
+      ----------------
+
+      function Get_Letter (I : Index_Type) return Character is
+         Idx : Natural;
+      begin
+         Idx := Natural (I);
+
+         if Idx = 1 or else I = 28 then
+            return '*';
+         elsif Idx <= 27 then
+            return Character'Val (Idx - 2 + Character'Pos ('A'));
+         else
+            return Character'Val (Idx - 29 + Character'Pos ('A'));
+         end if;
+      end Get_Letter;
+
    begin
+      for J in Files.First_Index .. Files.Last_Index loop
+         Xref := Files.Element (J);
+         Letter := To_Upper (Xref.Xref.Name (Xref.Xref.Name'First));
+
+         List_Index := Index (API_Index, Letter);
+         Local_List (List_Index).Append (Xref.Xref);
+      end loop;
+
       Map_Cursor := EInfo_Map.First;
 
       while Entity_Info_Map.Has_Element (Map_Cursor) loop
@@ -3046,14 +3086,7 @@ package body Docgen2 is
 
          if EInfo.Category /= Cat_Parameter then
             Letter := To_Upper (EInfo.Short_Name (EInfo.Short_Name'First));
-
-            if not Is_Letter (Letter) then
-               List_Index := 1;
-            else
-               List_Index := 2 +
-                 Character'Pos (Letter) - Character'Pos ('A');
-            end if;
-
+            List_Index := Index (Entity_Index, Letter);
             Local_List (List_Index).Append (EInfo);
          end if;
 
@@ -3061,54 +3094,95 @@ package body Docgen2 is
       end loop;
 
       for J in Local_List'Range loop
-         if J = 1 then
-            Letter := '*';
-         else
-            Letter := Character'Val (J - 2 + Character'Pos ('A'));
-         end if;
+         Letter := Get_Letter (J);
 
-         Insert
-           (Translation,
-            Assoc
-              ("ENTITY_EXISTS_" & Letter,
-               +(not Local_List (J).Is_Empty)));
+         case Get_Index_Kind (J) is
+            when API_Index =>
+               Insert
+                 (Translation,
+                  Assoc
+                    ("FILE_EXISTS_" & Letter,
+                     +(not Local_List (J).Is_Empty)));
+            when Entity_Index =>
+               Insert
+                 (Translation,
+                  Assoc
+                    ("ENTITY_EXISTS_" & Letter,
+                     +(not Local_List (J).Is_Empty)));
+         end case;
+      end loop;
+
+      for J in Src_Files.First_Index .. Src_Files.Last_Index loop
+         declare
+            Name : constant String := Src_Files.Element (J).Base_Name;
+         begin
+            Letter := To_Upper (Name (Name'First));
+         end;
+
+         if Letter /= Last_Letter then
+            Insert (Translation, Assoc ("SRC_EXISTS_" & Letter, True));
+            Last_Letter := Letter;
+         end if;
       end loop;
 
       for J in Local_List'Range loop
-         EInfo_Vector_Sort.Sort (Local_List (J));
+
+         case Get_Index_Kind (J) is
+            when API_Index =>
+               --  Sort using the full name
+               EInfo_Vector_Sort_Full.Sort (Local_List (J));
+            when Entity_Index =>
+               --  Sort using the short name
+               EInfo_Vector_Sort_Short.Sort (Local_List (J));
+         end case;
+
          Clear (Href_Tag);
          Clear (Loc_Tag);
          Clear (Kind_Tag);
 
          for K in Local_List (J).First_Index .. Local_List (J).Last_Index loop
             EInfo := Local_List (J).Element (K);
-            Append (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Short_Name.all));
-            Append (Loc_Tag, Location_Image (EInfo.Location.File_Loc));
+            --  For packages index, we want the full name. Else, we want the
+            --  short name.
+            if J < 28 then
+               Append
+                 (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Name.all));
+            else
+               Append
+                 (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Short_Name.all));
+            end if;
+
+            Append (Loc_Tag, Location_Image (EInfo));
             Append (Kind_Tag, Image (EInfo.Category));
          end loop;
 
-         Insert (Translation, Assoc ("ENTITY_HREF", Href_Tag));
-         Insert (Translation, Assoc ("ENTITY_LOC", Loc_Tag));
-         Insert (Translation, Assoc ("ENTITY_KIND", Kind_Tag));
+         Insert (Translation, Assoc ("HREF", Href_Tag));
+         Insert (Translation, Assoc ("LOC", Loc_Tag));
+         Insert (Translation, Assoc ("KIND", Kind_Tag));
 
-         if J = 1 then
-            Letter := '*';
-         else
-            Letter := Character'Val (J - 2 + Character'Pos ('A'));
-         end if;
+         Letter := Get_Letter (J);
 
-         Insert (Translation, Assoc ("LETTER", +Letter));
+         case Get_Index_Kind (J) is
+            when API_Index =>
+               Insert (Translation, Assoc ("E_LETTER", ""));
+               Insert (Translation, Assoc ("F_LETTER", +Letter));
+               Letter_Kind := 'f';
+            when Entity_Index =>
+               Insert (Translation, Assoc ("E_LETTER", +Letter));
+               Insert (Translation, Assoc ("F_LETTER", ""));
+               Letter_Kind := 'e';
+         end case;
 
          if Letter = '*' then
             Ada.Text_IO.Create
               (File_Handle,
                Name => Get_Doc_Directory (Kernel) &
-                 Backend.To_Destination_Name ("entitiesother"));
+               Backend.To_Destination_Name ("index" & Letter_Kind & "other"));
          else
             Ada.Text_IO.Create
               (File_Handle,
                Name => Get_Doc_Directory (Kernel) &
-                 Backend.To_Destination_Name ("entities" & Letter));
+               Backend.To_Destination_Name ("index" & Letter_Kind & Letter));
          end if;
 
          Ada.Text_IO.Put
@@ -3127,16 +3201,73 @@ package body Docgen2 is
          end loop;
 
          if First_List then
-            --  First non empty list... create entities.html
+            --  First non empty list... create index.html
             Ada.Text_IO.Create
               (File_Handle,
                Name => Get_Doc_Directory (Kernel) &
-                 Backend.To_Destination_Name ("entities"));
+                 Backend.To_Destination_Name ("index"));
             Ada.Text_IO.Put
               (File_Handle, Parse (Tmpl, Translation, Cached => True));
             Ada.Text_IO.Close (File_Handle);
          end if;
       end loop;
+
+      Clear (Href_Tag);
+      Clear (Loc_Tag);
+      Clear (Kind_Tag);
+
+      Last_Letter := ' ';
+      for J in Src_Files.First_Index .. Src_Files.Last_Index + 1 loop
+         if J <= Src_Files.Last_Index then
+            declare
+               Name : constant String := Src_Files.Element (J).Base_Name;
+            begin
+               Letter := To_Upper (Name (Name'First));
+            end;
+         else
+            Letter := ASCII.NUL;
+         end if;
+
+         if Letter /= Last_Letter
+           and then Last_Letter /= ' '
+         then
+            Insert (Translation, Assoc ("E_LETTER", ""));
+            Insert (Translation, Assoc ("F_LETTER", ""));
+            Insert (Translation, Assoc ("S_LETTER", +Last_Letter));
+            Insert (Translation, Assoc ("HREF", Href_Tag));
+            Insert (Translation, Assoc ("LOC", Loc_Tag));
+            Insert (Translation, Assoc ("KIND", Kind_Tag));
+
+            Ada.Text_IO.Create
+              (File_Handle,
+               Name => Get_Doc_Directory (Kernel) &
+               Backend.To_Destination_Name ("indexs" & Last_Letter));
+            Ada.Text_IO.Put
+              (File_Handle, Parse (Tmpl, Translation, Cached => True));
+            Ada.Text_IO.Close (File_Handle);
+
+            Clear (Href_Tag);
+            Clear (Loc_Tag);
+            Clear (Kind_Tag);
+         end if;
+
+         exit when J > Src_Files.Last_Index;
+
+         Last_Letter := Letter;
+
+         Append
+           (Href_Tag,
+            Backend.Gen_Href
+              (Src_Files.Element (J).Base_Name,
+               Backend.To_Destination_Name
+                 ("src_" & Src_Files.Element (J).Base_Name),
+               Src_Files.Element (J).Base_Name));
+      end loop;
+
+      Open_Html
+        (Kernel      => Kernel,
+         URL_Or_File => Get_Doc_Directory (Kernel) &
+         Backend.To_Destination_Name ("index"));
    end Generate_Global_Index;
 
    ----------------------------

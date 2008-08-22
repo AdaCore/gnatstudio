@@ -28,7 +28,7 @@ with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 
 with Docgen2;                     use Docgen2;
-with Docgen2.Tags;
+with Docgen2.Hooks;
 with Docgen2_Backend;             use Docgen2_Backend;
 with Docgen2_Backend.HTML;        use Docgen2_Backend.HTML;
 with GPS.Intl;                    use GPS.Intl;
@@ -540,7 +540,7 @@ package body Docgen2_Module is
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel);
 
-      Docgen2.Tags.Register_Hook (Kernel);
+      Docgen2.Hooks.Register_Hook (Kernel);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu

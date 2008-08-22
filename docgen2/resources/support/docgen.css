@@ -3,7 +3,7 @@ body
    background: #F4F4F4;
    font-family: arial, verdana;
    font-size: 90%;
-   margin: 0px 0px 0px 205px;
+   margin: 0px 0px 10px 205px;
    height: 100%;
 }
 
@@ -43,27 +43,35 @@ a.hide:visited
    margin-right: 5px;
 }
 
-div#topBar
+div.topBar
 {
    position: fixed;
    top: 0px;
    left: 0px;
-   height: 40px;
-   width: 100%;
    margin: 0px;
-   padding: 0px;
-   text-align: center;
-   z-index: 21;
-   background: transparent url(../support/images/menubarleft.png) no-repeat 193px 0px;
+   margin-left: 193px;
+   width: 100%;
+   padding-bottom: 10px;
+   z-index: 1;
+   background: transparent url(../support/images/menubarbottom.png) repeat-x bottom;
 }
-
-div#topBarLinks
+div.topBarInside
 {
    padding-top: 10px;
-   padding-right: 20px;
-   margin-left: 205px;
-   height: 40px;
+   padding-bottom: 5px;
+   width: 100%;
    background: transparent url(../support/images/menubar.png) repeat-x top;
+}
+
+
+div.topBarLinks
+{
+   z-index: 1;
+   padding: 0px;
+   margin-top: 0px;
+   margin-right: 20px;
+   margin-left: 10px;
+   text-align: left;
 }
 
 /* Generate page layout */
@@ -232,7 +240,7 @@ div.title
 }
 div.titleTopBar
 {
-   margin-top: 45px;
+   margin-top: 100px;
 }
 
 div.subprograms

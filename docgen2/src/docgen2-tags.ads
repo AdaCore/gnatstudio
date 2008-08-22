@@ -76,7 +76,9 @@ package Docgen2.Tags is
    function To_String
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend         : access Docgen2_Backend.Backend_Record'Class;
-      Comment         : Comment_Type;
+      Comment         : access Comment_Type;
+      Entity_Name     : String;
+      Href            : String;
       Keep_Formatting : Boolean) return String;
    --  Return a formatted string representing Comment.
 
@@ -85,10 +87,6 @@ package Docgen2.Tags is
       Comments : Comments_List.Vector) return Boolean;
    --  Tell if the current file location should be ignored in the
    --  documentation (because of user tags <doc_ignore>)
-
-   procedure Register_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Need to be called at GPS startup: this registers the user_tag_hook
 
 private
 
@@ -108,12 +106,14 @@ private
       Block      : Ada.Strings.Unbounded.Unbounded_String;
       Sloc_Start : Source_Location;
       Sloc_Stop  : Source_Location;
+      Analysed   : Boolean;
    end record;
 
    No_Comment : constant Comment_Type :=
                   (N          => null,
                    Block      => Ada.Strings.Unbounded.Null_Unbounded_String,
                    Sloc_Start => (Line => 0, Column => 0, Index => 0),
-                   Sloc_Stop  => (Line => 0, Column => 0, Index => 0));
+                   Sloc_Stop  => (Line => 0, Column => 0, Index => 0),
+                   Analysed   => False);
 
 end Docgen2.Tags;
