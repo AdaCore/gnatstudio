@@ -382,7 +382,8 @@ package body GVD.Call_Stack is
 
          Found_Frame_Info
            (Process.Debugger,
-            Process.Current_Output.all,
+            Process.Current_Output
+              (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
             First, Last, Frame_Info);
 
          if Frame_Info = Location_Found then

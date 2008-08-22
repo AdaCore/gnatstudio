@@ -108,7 +108,8 @@ package GVD.Process is
       Current_Output          : String_Access;
       --  Complete output received in the underlying debugger for the current
       --  command. This is needed to buffer the output before calling the
-      --  various filters.
+      --  various filters. It is only initialized in the range
+      --  Current_Output'First .. Current_Output_Pos - 1
 
       Exiting                 : Boolean := False;
       --  True if the debugger is exiting.
