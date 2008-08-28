@@ -785,6 +785,7 @@ package body Src_Contexts is
            and then not Continue_Dialog
              (-"No more matches, restart from the end ?")
          then
+            Stop_Macro (Kernel);
             Set_End_Notif_Done (Context.all, True);
             Unchecked_Free (Result);
             return;
@@ -814,6 +815,7 @@ package body Src_Contexts is
                elsif not Continue_Dialog
                  (-"No more matches, restart from the beginning ?")
                then
+                  Stop_Macro (Kernel);
                   Set_End_Notif_Done (Context.all, True);
                   return;
                end if;
@@ -1900,6 +1902,7 @@ package body Src_Contexts is
                      if Button = Button_Yes then
                         Move_To_First_File (C);
                      else
+                        Stop_Macro (Kernel);
                         Set_End_Notif_Done (Context.all, True);
 
                         return False;

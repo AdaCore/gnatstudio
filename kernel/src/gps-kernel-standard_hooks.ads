@@ -194,6 +194,17 @@ package GPS.Kernel.Standard_Hooks is
    --  terminates.
    --  Status is the exit status
 
+   ------------
+   -- Macros --
+   ------------
+
+   Stop_Macro_Action_Hook : constant Hook_Name := "stop_macro_action_hook";
+   --  Requests that the macro currently being replayed be stopped.
+
+   procedure Stop_Macro
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Requests that the macro currently being replayed be stopped.
+
    -----------------------------
    -- Source_File_Action_Hook --
    -----------------------------

@@ -30,10 +30,12 @@ with GNATCOLL.Traces;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                use GPS.Intl;
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.Macro;            use Gtkada.Macro;
@@ -162,6 +164,9 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Events : Event_Set_Access);
    --  Stop the current macro
+
+   procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class);
+   --  Stop running current macro as a result of the "stop_macro_action_hook'
 
    function Load_Macro
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -490,6 +495,18 @@ package body KeyManager_Module.Macros is
          End_Group (Get_Command_Queue (Events.Child));
       end if;
    end Stop_Macro;
+
+   ------------------------
+   -- Stop_Macro_Hook_Cb --
+   ------------------------
+
+   procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      if Keymanager_Macro_Module.Current_Macro /= null then
+         Stop_Macro (Kernel_Handle (Kernel),
+                     Keymanager_Macro_Module.Current_Macro);
+      end if;
+   end Stop_Macro_Hook_Cb;
 
    ----------------
    -- Play_Macro --
@@ -840,6 +857,10 @@ package body KeyManager_Module.Macros is
             Maximum_Args => 1,
             Handler      => Macro_Command_Handler'Access);
       end if;
+
+      Add_Hook (Kernel, Stop_Macro_Action_Hook,
+                Wrapper (Stop_Macro_Hook_Cb'Access),
+                "do stop macro");
    end Register_Module;
 
 end KeyManager_Module.Macros;

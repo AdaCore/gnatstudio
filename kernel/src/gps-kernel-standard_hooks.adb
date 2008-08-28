@@ -1005,6 +1005,16 @@ package body GPS.Kernel.Standard_Hooks is
       Run_Hook (Kernel, Hook, Args'Unchecked_Access);
    end Run_String_Hook;
 
+   ----------------
+   -- Stop_Macro --
+   ----------------
+
+   procedure Stop_Macro
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Run_Hook (Kernel, Stop_Macro_Action_Hook);
+   end Stop_Macro;
+
    ---------------------------
    -- Register_Action_Hooks --
    ---------------------------
@@ -1074,6 +1084,8 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, File_Location_Hook_Type,
          Args_Creator => From_Callback_Data_File_Location'Access);
+
+      Register_Hook_No_Args (Kernel, Stop_Macro_Action_Hook);
    end Register_Action_Hooks;
 
 end GPS.Kernel.Standard_Hooks;

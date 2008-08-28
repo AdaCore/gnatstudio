@@ -56,6 +56,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
@@ -819,6 +820,7 @@ package body Vsearch is
               and then not Has_Next
               and then not Get_End_Notif_Done (Vsearch.Last_Search_Context.all)
             then
+               Stop_Macro (Vsearch.Kernel);
                Button := Message_Dialog
                  (Msg     => (-"No occurrences of '") & Pattern &
                   (-"' found."),
@@ -905,6 +907,7 @@ package body Vsearch is
             Pop_State (Vsearch.Kernel);
 
             if not Found then
+               Stop_Macro (Vsearch.Kernel);
                Set_Sensitive
                  (Vsearch.Replace_Search_Button, False);
                Set_Sensitive (Vsearch.Replace_Button, False);

@@ -376,6 +376,7 @@ class Isearch (CommandWindow):
           self.loc = self.loc.buffer().beginning_of_buffer()
         self.end_loc = self.loc
         self.set_background (error_color)
+        Hook ("stop_macro_action_hook").run()
 
    def on_activate (self, input):
      """The user has pressed enter"""

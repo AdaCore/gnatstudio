@@ -280,6 +280,11 @@ Funtions connected to this hook should return False if the compilation should no
 Among the various tasks that GPS connects to this hook are the automatic reparsing of all xref information, and the activation of the automatic-error fixes</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ stop_macro_action_hook">
+     <param name="hook">A string, the name of the hook</param>
+     <description>You should run this hook to request that the macro currently being replayed be stopped. No more events should be processed as part of this macro</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ open_file_action_hook">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
