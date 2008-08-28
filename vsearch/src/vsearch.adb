@@ -81,11 +81,11 @@ package body Vsearch is
    Window_X_Hist_Key  : constant History_Key := "search_window_x";
    Window_Y_Hist_Key  : constant History_Key := "search_window_y";
    Options_Collapsed_Hist_Key  : constant History_Key := "options_collapsed";
+   Select_On_Match_Hist_Key    : constant History_Key := "select_on_match";
+   Close_On_Match_Hist_Key     : constant History_Key := "close_on_match";
    --  The key for the histories.
 
    Ask_Confirmation_For_Replace_All : Param_Spec_Boolean;
-   Close_On_Match                   : Param_Spec_Boolean;
-   Select_On_Match                  : Param_Spec_Boolean;
    Keep_Previous_Search_Context     : Param_Spec_Boolean;
    --  The preferences
 
@@ -290,18 +290,6 @@ package body Vsearch is
 
    procedure On_Replace_All (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Replace_All" is clicked.
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences are changed
-
-   procedure On_Select_On_Match_Toggled
-     (Object : access Gtk_Widget_Record'Class);
-   --  Called when the checkbox "select on match" is toggled.
-
-   procedure On_Close_On_Match_Toggled
-     (Object : access Gtk_Widget_Record'Class);
-   --  Called when the checkbox "close on match" is toggled.
 
    procedure On_Context_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
@@ -843,7 +831,7 @@ package body Vsearch is
       if not Replace
         and then Realized_Is_Set (Vsearch)
         and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
-        and then Get_Pref (Close_On_Match)
+        and then Get_Active (Vsearch.Auto_Hide_Check)
       then
          Close_Vsearch (Vsearch);
       end if;
@@ -1073,64 +1061,6 @@ package body Vsearch is
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Replace_All;
-
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Vsearch_Module_Id.Search /= null then
-         if Get_Pref (Select_On_Match)
-           /= Get_Active (Vsearch_Module_Id.Search.Select_Editor_Check)
-         then
-            Set_Active
-              (Vsearch_Module_Id.Search.Select_Editor_Check,
-               Get_Pref (Select_On_Match));
-         end if;
-
-         if Get_Pref (Close_On_Match)
-           /= Get_Active (Vsearch_Module_Id.Search.Auto_Hide_Check)
-         then
-            Set_Active
-              (Vsearch_Module_Id.Search.Auto_Hide_Check,
-               Get_Pref (Close_On_Match));
-         end if;
-      end if;
-   end On_Preferences_Changed;
-
-   --------------------------------
-   -- On_Select_On_Match_Toggled --
-   --------------------------------
-
-   procedure On_Select_On_Match_Toggled
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
-   begin
-      Set_Pref
-        (Vsearch.Kernel,
-         Select_On_Match,
-         Get_Active (Vsearch.Select_Editor_Check));
-   end On_Select_On_Match_Toggled;
-
-   -------------------------------
-   -- On_Close_On_Match_Toggled --
-   -------------------------------
-
-   procedure On_Close_On_Match_Toggled
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
-   begin
-      Set_Pref
-        (Vsearch.Kernel,
-         Close_On_Match,
-         Get_Active (Vsearch.Auto_Hide_Check));
-   end On_Close_On_Match_Toggled;
 
    ----------------------
    -- Resize_If_Needed --
@@ -1669,20 +1599,20 @@ package body Vsearch is
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Select_Editor_Check,
          Select_On_Match_Description);
-      Set_Active (Vsearch.Select_Editor_Check, Get_Pref (Select_On_Match));
-      Widget_Callback.Object_Connect
-        (Vsearch.Select_Editor_Check, Gtk.Toggle_Button.Signal_Toggled,
-         On_Select_On_Match_Toggled'Access, Vsearch);
+      Associate
+        (Hist   => Get_History (Handle).all,
+         Key    => Select_On_Match_Hist_Key,
+         Button => Vsearch.Select_Editor_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Select_Editor_Check, 1, 2, 1, 2);
 
       Gtk_New (Vsearch.Auto_Hide_Check, -"Close on Match");
       Set_Tip
         (Get_Tooltips (Handle), Vsearch.Auto_Hide_Check,
          -Close_On_Match_Description);
-      Set_Active (Vsearch.Auto_Hide_Check, Get_Pref (Close_On_Match));
-      Widget_Callback.Object_Connect
-        (Vsearch.Auto_Hide_Check, Gtk.Toggle_Button.Signal_Toggled,
-         On_Close_On_Match_Toggled'Access, Vsearch);
+      Associate
+        (Hist   => Get_History (Handle).all,
+         Key    => Close_On_Match_Hist_Key,
+         Button => Vsearch.Auto_Hide_Check);
       Attach (Vsearch.Options_Vbox, Vsearch.Auto_Hide_Check, 0, 2, 2, 3);
 
       --  Create the widget
@@ -2429,32 +2359,6 @@ package body Vsearch is
               Default => False));
       Register_Property
         (Kernel, Param_Spec (Keep_Previous_Search_Context), -"Search");
-
-      Close_On_Match :=
-        Glib.Properties.Creation.Param_Spec_Boolean
-          (Gnew_Boolean
-             (Name  => "Close-On-Match",
-              Nick  => -"Close on Match",
-              Blurb => Close_On_Match_Description,
-              Default => False));
-      Register_Property
-        (Kernel, Param_Spec (Close_On_Match), -"Search");
-
-      Select_On_Match :=
-        Glib.Properties.Creation.Param_Spec_Boolean
-          (Gnew_Boolean
-             (Name  => "Select-On-Match",
-              Nick  => -"Select on Match",
-              Blurb => Select_On_Match_Description,
-              Default => False));
-      Register_Property
-        (Kernel, Param_Spec (Select_On_Match), -"Search");
-
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Preferences_Changed_Hook,
-         Func   => Wrapper (On_Preferences_Changed'Access),
-         Name   => "Vsearch.preferences");
    end Register_Preferences;
 
    ----------
