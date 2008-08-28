@@ -75,7 +75,6 @@ with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 
 package body VCS_View_API is
-
    use type GNAT.Strings.String_Access;
 
    VCS_Menu_Prefix : constant String := "<gps>/VCS/";
@@ -2920,10 +2919,16 @@ package body VCS_View_API is
             Dir          : constant Virtual_File := Create (Root);
             F_Dir        : constant String := Full_Name (Dir, True).all;
             F_File       : constant String := Full_Name (File, True).all;
-            Subdirs      : constant File_Array_Access := Read_Dir (Dir);
-            --  ??? what if Root is not a full pathname ?
+            Subdirs      : File_Array_Access;
             F_Sep, D_Sep : Natural := 0;
          begin
+            if not Is_Directory (Dir) then
+               return;
+            end if;
+
+            Subdirs := Read_Dir (Dir);
+            --  ??? what if Root is not a full pathname ?
+
             --  Works only if the branches/tags are sharing the same root as
             --  trunk.
 
