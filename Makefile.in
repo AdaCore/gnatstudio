@@ -1,7 +1,6 @@
 CP              = cp -p
 MV              = mv
 MKDIR           = mkdir -p
-RMDIR           = rmdir
 STRIP           = strip
 AWK             = gawk
 PERL            = perl
@@ -78,7 +77,6 @@ endif
 	$(RM) $(sharedir)/gps/library/gnatcheck.py
 	$(RM) $(sharedir)/gps/library/gnatpsta.py
 	$(RM) $(sharedir)/gps/library/methods.py
-	-$(RMDIR) $(sharedir)/gps/python/
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen2/resources; tar cf - *.tmpl support/*.css support/*.js support/images/*.png) \
