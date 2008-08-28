@@ -112,8 +112,6 @@ GNAT_SOURCES= \
   stand.adb \
   stringt.ads \
   stringt.adb \
-  style.ads \
-  style.adb \
   styleg.ads \
   styleg.adb \
   stylesw.ads \
