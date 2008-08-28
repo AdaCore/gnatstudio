@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Aug 19, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Aug 28, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H821-010 VCS_Patch_Root can be specified as relative path (2008-08-28)
+
+  It is now possible to set the package's IDE VCS_Patch_Root
+  attribute to a relative path. This way it is easier to share
+  a project between developers who may have different setup.
 
 NF-43-H812-004 New debugger preference: Debugger Windows (2008-08-14)
 

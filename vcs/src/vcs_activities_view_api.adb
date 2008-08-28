@@ -750,16 +750,27 @@ package body VCS_Activities_View_API is
                                 VCS_Patch_Root,
                                 Default => Full_Name
                                   (Project_Directory (Root_Project)).all));
+         Path         : constant Virtual_File := Create (Root_Dir);
       begin
          Adjust_Patch := new Adjust_Patch_Action_Command_Type;
          Adjust_Patch.Kernel := Kernel;
          Adjust_Patch.Patch_File := File;
          Adjust_Patch.Files := Files;
-         if Is_Directory_Separator (Root_Dir (Root_Dir'Last)) then
-            Adjust_Patch.Root_Dir := new String'(Root_Dir);
+
+         --  If Root_Dir is set use it and handle the case where it is a
+         --  relative path, otherwise set it to the root project directory.
+
+         Ensure_Directory (Path);
+
+         if Is_Absolute_Path (Path) then
+            Adjust_Patch.Root_Dir := new String'(Full_Name (Path).all);
+
          else
-            Adjust_Patch.Root_Dir :=
-              new String'(Root_Dir & OS_Lib.Directory_Separator);
+            Adjust_Patch.Root_Dir := new String'
+              (OS_Lib.Normalize_Pathname
+                 (Name      => Full_Name (Path).all,
+                  Directory => Full_Name (Get_Current_Dir).all)
+               & OS_Lib.Directory_Separator);
          end if;
 
          Adjust_Patch.Header_Length := Length (Content);
