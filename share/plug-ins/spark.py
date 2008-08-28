@@ -284,38 +284,38 @@ a = """<?xml version="1.0"?>
   <action name="Examine file" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell>MDI.save_all false</shell>
-	 <shell>Locations.remove_category Examiner</shell>  <!-- clears the Location window to remove previous errors -->
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
+     <shell output="none">MDI.save_all false</shell>
+     <shell output="none">Locations.remove_category Examiner</shell>  <!-- clears the Location window to remove previous errors -->
+     <shell output="none">Project %p</shell>
+     <shell output="none">Project.get_tool_switches_as_string %1 "Examiner" </shell>
      <external output="SPARK Output">spark %1 ~brief "%F"</external> <!-- force /brief option as can't parse output otherwise -->
      <on-failure>
-          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+          <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
-     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+     <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
   <action name="SPARKFormat file" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell>MDI.save_all false</shell>
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
+     <shell output="none">MDI.save_all false</shell>
+     <shell output="none">Project %p</shell>
+     <shell output="none">Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
      <external output="SPARK Output">sparkformat %1 %f</external>
-     <shell>Editor.edit %f 0 0 0 true</shell>
+     <shell output="none">Editor.edit %f 0 0 0 true</shell>
   </action>
 
   <action name="Examine metafile" category="Spark">
      <filter language="Metafile" />
-     <shell>MDI.save_all false</shell>
-	 <shell>Locations.remove_category Examiner</shell>
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
+     <shell output="none">MDI.save_all false</shell>
+     <shell output="none">Locations.remove_category Examiner</shell>
+     <shell output="none">Project %p</shell>
+     <shell output="none">Project.get_tool_switches_as_string %1 "Examiner" </shell>
      <external output="SPARK Output">spark %1 ~brief @%f</external>
      <on-failure>
-          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+          <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
-     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+     <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
@@ -324,24 +324,24 @@ a = """<?xml version="1.0"?>
 
   <action name="Simplify file" category="Spark">
     <filter language="VCG" />
-    <shell>Project %p</shell>
-    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
+    <shell output="none">Project %p</shell>
+    <shell output="none">Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <external output="Simplifier Output">spadesimp %f %1</external>
   </action>
 
   <action name="Simplify all" category="Spark">
-    <shell>Project %P</shell>
-    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <shell>Project %P</shell>
-    <shell>Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
+    <shell output="none">Project %P</shell>
+    <shell output="none">Project.get_tool_switches_as_string %1 "Simplifier" </shell>
+    <shell output="none">Project %P</shell>
+    <shell output="none">Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
     <external output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
   </action>
 
   <action name="POGS" category="Spark">
-    <shell>MDI.save_all false</shell>
-    <shell>cd %d</shell>
-    <shell>Project %p</shell>
-    <shell>Project.get_tool_switches_as_string %1 "POGS" </shell>
+    <shell output="none">MDI.save_all false</shell>
+    <shell output="none">cd %d</shell>
+    <shell output="none">Project %p</shell>
+    <shell output="none">Project.get_tool_switches_as_string %1 "POGS" </shell>
     <external output="POGS Output">pogs %1</external>
     <!-- Python is C-like - use non-zero (-1) for true -->
     <shell lang="python">GPS.Editor.edit(spark.pogs_file(), 0, 0, 0, -1)</shell>
@@ -350,9 +350,9 @@ a = """<?xml version="1.0"?>
   <action name="SPARKmake" category="Spark">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell>MDI.save_all false</shell>
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "SPARKmake" </shell>
+     <shell output="none">MDI.save_all false</shell>
+     <shell output="none">Project %p</shell>
+     <shell output="none">Project.get_tool_switches_as_string %1 "SPARKmake" </shell>
      <external output="SPARKmake Output">sparkmake %1 %f</external>
   </action>
 
@@ -388,23 +388,23 @@ a = """<?xml version="1.0"?>
  </submenu>
 
   <contextual action="Examine metafile" >
-    <Title>Examine Metafile</Title>
+    <Title>Spark/Examine Metafile</Title>
   </contextual>
 
   <contextual action="Examine file" >
-    <Title>Examine File</Title>
+    <Title>Spark/Examine File</Title>
   </contextual>
 
   <contextual action="SPARKFormat file" >
-    <Title>SPARKFormat File</Title>
+    <Title>Spark/SPARKFormat File</Title>
   </contextual>
 
   <contextual action="Simplify file" >
-    <Title>Simplify File</Title>
+    <Title>Spark/Simplify File</Title>
   </contextual>
 
   <contextual action="SPARKmake" >
-    <Title>SPARKmake</Title>
+    <Title>Spark/SPARKmake</Title>
   </contextual>
 
   <!-- Shortcut keys -->
