@@ -325,20 +325,25 @@ package body Python_Module is
       Dir              : String;
       Default_Autoload : Boolean)
    is
-      D       : Dir_Type;
-      File    : String (1 .. 1024);
-      Last    : Natural;
-      VF      : GNATCOLL.VFS.Virtual_File;
-      Command : Custom_Command_Access;
-      Errors  : Boolean;
-      Script  : constant Scripting_Language :=
-        Lookup_Scripting_Language (Get_Scripts (Kernel), Python_Name);
+      Native_Dir : constant String :=
+                     GNAT.OS_Lib.Normalize_Pathname
+                       (Name => Dir, Resolve_Links => False);
+      D          : Dir_Type;
+      File       : String (1 .. 1024);
+      Last       : Natural;
+      VF         : GNATCOLL.VFS.Virtual_File;
+      Command    : Custom_Command_Access;
+      Errors     : Boolean;
+      Script     : constant Scripting_Language :=
+                     Lookup_Scripting_Language
+                       (Get_Scripts (Kernel), Python_Name);
+
    begin
-      if not GNAT.OS_Lib.Is_Directory (Dir) or else Script = null then
+      if not GNAT.OS_Lib.Is_Directory (Native_Dir) or else Script = null then
          return;
       end if;
 
-      Trace (Me, "Load python files from " & Dir);
+      Trace (Me, "Load python files from " & Native_Dir);
 
       --  Make sure the error messages will not be lost
 
@@ -348,12 +353,12 @@ package body Python_Module is
 
       Execute_Command
         (Script,
-         "sys.path=[r'" & Dir & "']+sys.path",
+         "sys.path=[r'" & Native_Dir & "']+sys.path",
          Show_Command => False,
          Hide_Output => True,
          Errors      => Errors);
 
-      Open (D, Dir);
+      Open (D, Native_Dir);
 
       loop
          Read (D, File, Last);
@@ -361,27 +366,18 @@ package body Python_Module is
 
          if Last > 3 and then File (Last - 2 .. Last) = ".py" then
             VF := Create
-              (Full_Filename => Name_As_Directory (Dir)
+              (Full_Filename => Name_As_Directory (Native_Dir)
                & File (1 .. Last));
             if Load_File_At_Startup
               (Kernel, VF, Default => Default_Autoload)
             then
                Trace (Me, "Loading " & Full_Name (VF).all);
---                 Script.Current_File := VF;
                Execute_Command
                  (Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
                   Show_Command => False,
                   Hide_Output  => True,
                   Errors       => Errors);
---                 Script.Current_File := VFS.No_File;
---                 Execute_File
---                   (Script,
---                    Filename     => Full_Name (VF).all,
---                    Show_Command => False,
---                    Hide_Output  => True,
---                    Force_Reload => False,
---                    Errors       => Errors);
 
                Command := Initialization_Command (Kernel, VF);
                if Command /= null then
