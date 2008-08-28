@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,7 +74,9 @@ package GPS.Kernel.Task_Manager is
    --  Id will be created.
    --  If Active is True, the command will be launched in active mode, ie
    --  executed as fast as possible in an idle loop. Otherwise, it is launched
-   --  in background mode, ie executed more slowly in a timeout.
+   --  in background mode, ie executed more slowly in a timeout. If a queue is
+   --  specified, the command is put in front of the queue if Active is false,
+   --  and at the back otherwise.
    --  If Show_Bar is True, a progress bar will be displayed for this command,
    --  otherwise it will only be visible in the Task Manager window.
    --  Memory associated to Command will be freed by the Task Manager

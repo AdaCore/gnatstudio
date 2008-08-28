@@ -1985,7 +1985,7 @@ package body VCS.Generic_VCS is
             " """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
-           (Kernel, Command_Access (Command), True, False,
+           (Kernel, Command_Access (Command), False, False,
             Revision_Handling_Queue);
       end Create_Link;
 
@@ -2021,6 +2021,7 @@ package body VCS.Generic_VCS is
       P_Branch : Unbounded_String;
       P_Rev    : Unbounded_String;
       First    : Boolean := True;
+      Commands : Command_Access;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -2059,11 +2060,13 @@ package body VCS.Generic_VCS is
                Boolean'Image (First) & """",
                Script);
 
-            First := False;
+            if Commands /= null then
+               Add_Consequence_Action (Commands, Command);
+            else
+               Commands := Command_Access (Command);
+            end if;
 
-            Launch_Background_Command
-              (Kernel, Command_Access (Command), True, False,
-               Revision_Handling_Queue);
+            First := False;
 
             Branch := Parse (Rev, Rep.Branch_Root_Revision_Regexp);
 
@@ -2096,8 +2099,18 @@ package body VCS.Generic_VCS is
                   Log_Parsed_Hook'Length,
                   Rep.Kernel, Log_Parsed_Hook);
       begin
-         Launch_Background_Command
-           (Rep.Kernel, C, True, False, Revision_Handling_Queue);
+         if Commands /= null then
+            Add_Consequence_Action (Commands, C);
+         end if;
+
+         if Commands /= null then
+            Launch_Background_Command
+              (Kernel   => Rep.Kernel,
+               Command  => Commands,
+               Active   => False,
+               Show_Bar => False,
+               Queue_Id => Revision_Handling_Queue);
+         end if;
       end;
    end Parse_Log;
 
@@ -2116,7 +2129,7 @@ package body VCS.Generic_VCS is
       Matches : Match_Array (0 .. Parser.Matches_Num);
       Script  : Scripting_Language;
       Start   : Integer := S'First;
-      Command : Custom_Command_Access;
+      Commands : Command_Access;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
@@ -2138,6 +2151,7 @@ package body VCS.Generic_VCS is
             Sym : constant String :=
                     S (Matches (Parser.Sym_Index).First
                        .. Matches (Parser.Sym_Index).Last);
+            Command : Custom_Command_Access;
          begin
             Create
               (Command, -"add revision", Kernel,
@@ -2146,9 +2160,11 @@ package body VCS.Generic_VCS is
                " """ & Rev & """ """ & Sym & """",
                Script);
 
-            Launch_Background_Command
-              (Rep.Kernel, Command_Access (Command), True, False,
-               Revision_Handling_Queue);
+            if Commands /= null then
+               Add_Consequence_Action (Commands, Command);
+            else
+               Commands := Command_Access (Command);
+            end if;
          end;
 
          Start := Matches (0).Last + 1;
@@ -2161,8 +2177,18 @@ package body VCS.Generic_VCS is
                   Revision_Parsed_Hook'Length,
                   Rep.Kernel, Revision_Parsed_Hook);
       begin
-         Launch_Background_Command
-           (Rep.Kernel, C, True, False, Revision_Handling_Queue);
+         if Commands /= null then
+            Add_Consequence_Action (Commands, C);
+         end if;
+
+         if Commands /= null then
+            Launch_Background_Command
+              (Kernel   => Rep.Kernel,
+               Command  => Commands,
+               Active   => False,
+               Show_Bar => False,
+               Queue_Id => Revision_Handling_Queue);
+         end if;
       end;
    end Parse_Revision;
 

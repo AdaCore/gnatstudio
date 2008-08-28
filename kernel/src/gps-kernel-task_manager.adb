@@ -449,13 +449,13 @@ package body GPS.Kernel.Task_Manager is
       Block_Exit      : Boolean := True)
    is
       Wrapper : constant Scheduled_Command_Access := Launch_Background_Command
-        (Kernel,
-         Command,
-         Active,
-         Show_Bar,
-         Queue_Id,
-         Destroy_On_Exit,
-         Block_Exit);
+        (Kernel          => Kernel,
+         Command         => Command,
+         Active          => Active,
+         Show_Bar        => Show_Bar,
+         Queue_Id        => Queue_Id,
+         Destroy_On_Exit => Destroy_On_Exit,
+         Block_Exit      => Block_Exit);
       pragma Unreferenced (Wrapper);
    begin
       null;
