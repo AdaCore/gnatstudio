@@ -863,16 +863,22 @@ package body Codefix.Text_Manager is
       function Recursive_Get (C : Text_Cursor; Before : String) return String
       is
          Line        : constant String :=
-           Get_Line (Text_Interface'Class (This), C);
+           Get_Line (Text_Interface'Class (This), C, 1);
          Next_Cursor : Text_Cursor;
       begin
          if C.Line = Stop.Line then
-            return Before & Line
-              (Line'First
-               .. Integer
-                 (To_Char_Index
-                    (Stop.Col,
-                     Get_Line (Text_Interface'Class (This), C, 1))));
+            declare
+               Char_Start, Char_End : Char_Index := 1;
+            begin
+               Char_End := To_Char_Index (Stop.Col, Line);
+
+               if C.Line = Start.Line then
+                  Char_Start := To_Char_Index (Start.Col, Line);
+               end if;
+
+               return Before & Line
+                 (Integer (Char_Start) .. Integer (Char_End));
+            end;
          else
             Next_Cursor := C;
             Next_Cursor.Line := Next_Cursor.Line + 1;
