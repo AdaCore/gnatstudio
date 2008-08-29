@@ -316,12 +316,12 @@ endef
 $(OBJ_DIR)/%.d: %$(C_EXT)
 	@$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
 	| sed -e 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@):/g' \
-		-e 's,c:/,/c/,g' > $@
+		-e 's,c:/,/,g' > $@
 
 $(OBJ_DIR)/%.d: %$(CXX_EXT)
 	@$(CC) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
 	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) :/g' \
-		-e 's,c:/,/c/,g' > $@
+		-e 's,c:/,/,g' > $@
 endif
 
 ifneq ($(DEP_FILES),)
