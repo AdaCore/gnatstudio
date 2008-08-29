@@ -388,23 +388,23 @@ a = """<?xml version="1.0"?>
  </submenu>
 
   <contextual action="Examine metafile" >
-    <Title>Spark/Examine Metafile</Title>
+    <Title>SPARK/Examine Metafile</Title>
   </contextual>
 
   <contextual action="Examine file" >
-    <Title>Spark/Examine File</Title>
+    <Title>SPARK/Examine File</Title>
   </contextual>
 
   <contextual action="SPARKFormat file" >
-    <Title>Spark/SPARKFormat File</Title>
+    <Title>SPARK/SPARKFormat File</Title>
   </contextual>
 
   <contextual action="Simplify file" >
-    <Title>Spark/Simplify File</Title>
+    <Title>SPARK/Simplify File</Title>
   </contextual>
 
   <contextual action="SPARKmake" >
-    <Title>Spark/SPARKmake</Title>
+    <Title>SPARK/SPARKmake</Title>
   </contextual>
 
   <!-- Shortcut keys -->
