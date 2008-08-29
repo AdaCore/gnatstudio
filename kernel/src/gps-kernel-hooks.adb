@@ -400,6 +400,9 @@ package body GPS.Kernel.Hooks is
             Args : aliased Hooks_Data'Class :=
                      Info.Parameters_Type.From_Data (Data);
          begin
+            Trace (Testsuite_Handle, "MANU Command_Handler_No_Return: name="
+                   & String (Name) & " num_args="
+                   & Number_Of_Arguments (Data)'Img);
             Run_Hook (Kernel, Name, Args'Unchecked_Access, Set_Busy => True);
             Destroy (Args);
          end;
