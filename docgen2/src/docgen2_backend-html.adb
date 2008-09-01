@@ -228,23 +228,22 @@ package body Docgen2_Backend.HTML is
    is
       pragma Unreferenced (Backend);
    begin
-      if Tag = Identifier_Text then
-         if Emphasis then
-            return "<span class=""name""><b>" & Value & "</b></span>";
-         else
-            return "<span class=""name"">" & Value & "</span>";
-         end if;
-      elsif Tag = Keyword_Text then
-         return "<span class=""keyword"">" & Value & "</span>";
-      elsif Tag = Comment_Text then
-         return "<span class=""comment"">" & Value & "</span>";
-      elsif Tag = Character_Text
-        or else Tag = String_Text
-      then
-         return "<span class=""string"">" & Value & "</span>";
-      else
-         return Value;
-      end if;
+      case Tag is
+         when Identifier_Text =>
+            if Emphasis then
+               return "<span class=""name""><b>" & Value & "</b></span>";
+            else
+               return "<span class=""name"">" & Value & "</span>";
+            end if;
+         when Keyword_Text =>
+            return "<span class=""keyword"">" & Value & "</span>";
+         when Comment_Text | Annotated_Comment_Text =>
+            return "<span class=""comment"">" & Value & "</span>";
+         when Character_Text | String_Text =>
+            return "<span class=""string"">" & Value & "</span>";
+         when Normal_Text | Partial_Identifier_Text | Operator_Text =>
+            return Value;
+      end case;
    end Gen_Tag;
 
    ------------------

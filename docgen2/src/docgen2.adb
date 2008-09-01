@@ -1114,7 +1114,9 @@ package body Docgen2 is
          pragma Unreferenced (Partial_Entity);
 
       begin
-         if Entity = Comment_Text then
+         if Entity = Comment_Text or else Entity = Annotated_Comment_Text then
+            --  ??? would be nice to handle annotated comments specially
+            --  in particular SPARK annotations
             Add_Comment_Line
               (Sloc_Start, Sloc_End,
                Comment_Block
@@ -1123,9 +1125,10 @@ package body Docgen2 is
                   Clean   => False),
                Force_New => Last_Entity /= Comment_Text,
                List      => Comments);
+            Last_Entity := Comment_Text;
+         else
+            Last_Entity := Entity;
          end if;
-
-         Last_Entity := Entity;
 
          return False;
 
