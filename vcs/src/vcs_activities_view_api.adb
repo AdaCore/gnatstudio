@@ -107,6 +107,11 @@ package body VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
 
+   procedure On_Menu_Remove_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context);
+   --  Delete activity log file
+
    procedure On_Menu_Build_Patch_File
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
@@ -673,6 +678,33 @@ package body VCS_Activities_View_API is
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_Log;
 
+   ------------------------
+   -- On_Menu_Remove_Log --
+   ------------------------
+
+   procedure On_Menu_Remove_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Success : Boolean;
+   begin
+      if Context /= No_Context and then Has_Activity_Information (Context) then
+         declare
+            Log_File : constant Virtual_File :=
+                         Get_Log_File
+                           (Kernel, Value (Activity_Information (Context)));
+         begin
+            Close_File_Editors (Kernel, Log_File);
+            Delete (Log_File, Success);
+            Query_Status (Widget, Kernel);
+         end;
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Menu_Remove_Log;
+
    ---------------------------------
    -- On_Menu_Close_Open_Activity --
    ---------------------------------
@@ -1008,6 +1040,14 @@ package body VCS_Activities_View_API is
          Context_Callback.Connect
            (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
          Set_Sensitive (Item, True);
+
+         if Has_Log (Kernel, Activity) then
+            Gtk_New (Item, Label => -"Remove revision log");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);
+            Set_Sensitive (Item, True);
+         end if;
       end if;
    end VCS_Activities_Contextual_Menu;
 
