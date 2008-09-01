@@ -7227,6 +7227,10 @@ file. See @ref{Files}.
 @item Edit revision log
 Edit the current revision log for activity. This log is shared with
 all the activity files.
+
+@item Remove revision log
+Remove the current revision log for activity. This menu is present
+only if the activity revision log exists.
 @end table
 
 On a file line the contextual menu contains:
