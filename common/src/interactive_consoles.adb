@@ -757,10 +757,6 @@ package body Interactive_Consoles is
       Event  : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Virtual_Console_Record'Class, Virtual_Console);
-
       Console : constant Interactive_Console := Interactive_Console (Object);
    begin
       if Console.Idle_Registered
@@ -777,14 +773,6 @@ package body Interactive_Consoles is
       --  idle callbacks when we are deleting the console.
       Console.Internal_Insert := True;
       Console.Idle_Registered := True;
-
-      if Console.Virtual /= null then
-         if Interactive_Virtual_Console (Console.Virtual).Script /= null then
-            Set_Default_Console
-              (Interactive_Virtual_Console (Console.Virtual).Script, null);
-         end if;
-         Unchecked_Free (Console.Virtual);
-      end if;
 
       return False;
 
@@ -1193,6 +1181,8 @@ package body Interactive_Consoles is
         (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Hyper_Link_Record, Hyper_Links);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Virtual_Console_Record'Class, Virtual_Console);
       C     : constant Interactive_Console := Interactive_Console (Console);
       L, L2 : Hyper_Links;
    begin
@@ -1219,6 +1209,18 @@ package body Interactive_Consoles is
       Unref (C.External_Messages_Tag);
       Free (C.Prompt);
       Free (C.User_Input);
+
+      --  Disconnect virtual console (used in scripts) and real console.
+
+      if C.Virtual /= null then
+         if Interactive_Virtual_Console (C.Virtual).Script /= null then
+            Set_Default_Console
+              (Interactive_Virtual_Console (C.Virtual).Script, null);
+         end if;
+         Interactive_Virtual_Console (C.Virtual).Console := null;
+         Unchecked_Free (C.Virtual);
+         --  C.Virtual := null;
+      end if;
    end On_Destroy;
 
    -------------
