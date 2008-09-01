@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;    use GNATCOLL.Scripts;
 
 with Glib.Object;         use Glib.Object;
 with Gtk.Menu;            use Gtk.Menu;

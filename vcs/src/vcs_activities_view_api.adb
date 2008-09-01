@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT;
 with GNAT.Strings;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
@@ -51,7 +52,6 @@ with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_View;                  use VCS_View;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body VCS_Activities_View_API is
 
