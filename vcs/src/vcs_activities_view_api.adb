@@ -1003,8 +1003,6 @@ package body VCS_Activities_View_API is
       end if;
 
       if Activity_Section then
-         --  Fill the section relative to files
-
          Gtk_New (Item, Label => -"Edit revision log");
          Append (Menu, Item);
          Context_Callback.Connect
