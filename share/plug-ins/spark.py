@@ -39,7 +39,7 @@ will produce a warning if the incorrect context is selected.
 """
 
 
-import os, re, string
+import os, os.path, re, string
 import os_utils
 import GPS
 
@@ -52,6 +52,7 @@ import GPS
 
 spark_console="SPARK Output"
 spark_category="Examiner"
+pogs_console="POGS Output"
 
 spark_separator='/'
 if os.name != 'nt':
@@ -73,7 +74,22 @@ def examine_file (file):
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
   GPS.Console (spark_console).write (cmd + "\n")
-  proc = GPS.Process (cmd, regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.Process (cmd, regexp=".+", on_match=on_match, on_exit=on_exit)
+
+def show_pogs_file():
+  """Show the pogs file of the current project"""
+  # Pogs looks for .vcg files in current dir and all subdirs. For now,
+  # we'll start it in the root project's directory, but we should be
+  # smarter
+  GPS.MDI.save_all (False)
+  dir = os.path.dirname (GPS.Project.root().file().name())
+  GPS.cd (dir)
+  sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
+  cmd = "pogs " + sw
+  GPS.Console (pogs_console).write (cmd + "\n")
+  GPS.Console (pogs_console).write (GPS.Process (cmd).get_result())
+  dir_name = os.path.basename (dir)
+  GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'))
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -358,13 +374,7 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="POGS" category="Spark">
-    <shell output="none">MDI.save_all false</shell>
-    <shell output="none">cd %d</shell>
-    <shell output="none">Project %p</shell>
-    <shell output="none">Project.get_tool_switches_as_string %1 "POGS" </shell>
-    <external output="POGS Output">pogs %1</external>
-    <!-- Python is C-like - use non-zero (-1) for true -->
-    <shell lang="python">GPS.Editor.edit(spark.pogs_file(), 0, 0, 0, -1)</shell>
+    <shell lang="python">spark.show_pogs_file()</shell>
   </action>
 
   <action name="SPARKmake" category="Spark">
@@ -437,14 +447,6 @@ a = """<?xml version="1.0"?>
 </SPARK>
 
 """
-
-def pogs_file ():
-  """Return the filename of the POGS file based on the current directory"""
-  ## If no context is currently selected, then this will fail with an exception.
-  full_path = GPS.current_context().directory()
-  match_obj = re.search(r'.*[\\/]([^\\/]*)[\\/]', full_path)
-  dir_name = match_obj.group(1)
-  return (full_path + dir_name + '.sum')
 
 if os_utils.locate_exec_on_path ("spark") != "":
   a = a.replace('~', spark_separator)
