@@ -117,20 +117,19 @@ def pogs_xref (context):
 def pogs_simplified_xref (context):
   do_pogs_xref (context, simplified=True)
 
-def has_failed_vc (context):
-  """Return TRUE if the current line of the POGS output referenced a
-     failed VC"""
+def has_vc (context):
+  """Return TRUE if the current line of the POGS output references a VC"""
   try:
      # Avoid doing the word several times for all entries in the menu
-     return context.has_failed_vc
+     return context.has_vc
   except:
      if os.path.splitext (context.file().name())[1] != ".sum":
         return False
      editor = GPS.EditorBuffer.get()
      curs = editor.current_view().cursor()
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
-     context.has_failed_vc = re.search ("(\|\s+){5}\|\s+YES\s+\|", line) != None
-     return context.has_failed_vc
+     context.has_vc = re.search ("\|\s+YES\s+\|", line) != None
+     return context.has_vc
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -494,7 +493,7 @@ if os_utils.locate_exec_on_path ("spark") != "":
   GPS.parse_xml(a)
   GPS.Contextual ("SPARK/Show VC").create (
      on_activate=pogs_xref,
-     filter=has_failed_vc)
+     filter=has_vc)
   GPS.Contextual ("SPARK/Show Simplified VC").create (
      on_activate=pogs_simplified_xref,
-     filter=has_failed_vc)
+     filter=has_vc)
