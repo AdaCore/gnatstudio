@@ -154,8 +154,11 @@ def has_vc (context):
      # Avoid doing the work several times for all entries in the menu
      return context.has_vc
   except:
-     if os.path.splitext (context.file().name())[1] != ".sum":
-        return False
+     try:
+        if os.path.splitext (context.file().name())[1] != ".sum":
+           return False
+     except:
+        return False  # context.file() does not exist
      editor = GPS.EditorBuffer.get()
      curs = editor.current_view().cursor()
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
