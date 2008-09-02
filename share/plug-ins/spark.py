@@ -78,13 +78,34 @@ def examine_file (file):
   GPS.Process (cmd, regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
 
+def pogs_directory():
+  """Return the directory in which pogs should be run"""
+  # If the -output_directory switch is specified, use that directory
+
+  dir = None
+  sw = GPS.Project.root().get_tool_switches_as_list ("Examiner")
+  for s in sw:
+    if s.find ("-output_directory=") == 0:
+       dir=s[18:]
+  
+  # Else take the common parent for all sources dirs
+  if not dir:
+     src = GPS.Project.root().source_dirs (recursive=True)
+     dir = os.path.commonprefix (src)
+
+  # Else take the project's root directory
+  if not dir:
+     dir = os.path.dirname (GPS.Project.root().file().name())
+
+  return dir
+
 def show_pogs_file():
   """Show the pogs file of the current project"""
   # Pogs looks for .vcg files in current dir and all subdirs. For now,
   # we'll start it in the root project's directory, but we should be
   # smarter
   GPS.MDI.save_all (False)
-  dir = os.path.dirname (GPS.Project.root().file().name())
+  dir = pogs_directory()
   GPS.cd (dir)
   sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
   cmd = "pogs " + sw
@@ -226,9 +247,10 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches columns ="2" lines="5" switch_char="~">
       <title line="1" column-span="2">Examiner Files</title>
-      <field line="1" label=" Index File " as-file="true" switch="~index_file=" />
-      <field line="1" label=" Warning File " as-file="true" switch="~warning_file=" />
-      <field line="1" label=" Configuration File " as-file="true" switch="~config=" />
+      <field line="1" label="Index File " as-file="true" switch="~index_file=" />
+      <field line="1" label="Warning File " as-file="true" switch="~warning_file=" />
+      <field line="1" label="Configuration File " as-file="true" switch="~config=" />
+      <field line="1" label="Output directory" as-dir="true" switch="~output_directory" separator="="/>
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
       <radio column="1" line="2" >
