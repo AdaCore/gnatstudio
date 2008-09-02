@@ -112,6 +112,8 @@ def do_pogs_xref (context, simplified):
   # a number of lines
   f.current_view().goto (frm.forward_line (6))
 
+  GPS.MDI.get_by_child (f.current_view()).raise_window()
+
 def pogs_xref (context):
   do_pogs_xref (context, simplified=False)
 def pogs_simplified_xref (context):
@@ -120,7 +122,7 @@ def pogs_simplified_xref (context):
 def has_vc (context):
   """Return TRUE if the current line of the POGS output references a VC"""
   try:
-     # Avoid doing the word several times for all entries in the menu
+     # Avoid doing the work several times for all entries in the menu
      return context.has_vc
   except:
      if os.path.splitext (context.file().name())[1] != ".sum":
