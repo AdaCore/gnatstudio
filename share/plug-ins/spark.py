@@ -91,6 +91,47 @@ def show_pogs_file():
   dir_name = os.path.basename (dir)
   GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'))
 
+def do_pogs_xref (context, simplified):
+  """Jump to the VC referenced in the current line of the POGS output"""
+  editor = GPS.EditorBuffer.get()
+  curs = editor.current_view().cursor()
+  line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
+  vc = re.search ("^\s*(\d+)", line).group (1)  # VC rule number
+
+  (frm,to) = curs.search ("^File (.*)$", backward=True, regexp=True)
+  vc_file=editor.get_chars (frm+5, to)
+
+  if simplified:
+     vc_file = vc_file.replace (".vcg", ".siv")
+
+  f = GPS.EditorBuffer.get (GPS.File (vc_file))
+  loc = GPS.EditorLocation (f, 1, 1)
+  (frm, to) = loc.search ("^(procedure|function)_\S+_" + vc + "\.$", regexp=True)
+
+  # Workaround to make sure we see at least part of the rule: move forward
+  # a number of lines
+  f.current_view().goto (frm.forward_line (6))
+
+def pogs_xref (context):
+  do_pogs_xref (context, simplified=False)
+def pogs_simplified_xref (context):
+  do_pogs_xref (context, simplified=True)
+
+def has_failed_vc (context):
+  """Return TRUE if the current line of the POGS output referenced a
+     failed VC"""
+  try:
+     # Avoid doing the word several times for all entries in the menu
+     return context.has_failed_vc
+  except:
+     if os.path.splitext (context.file().name())[1] != ".sum":
+        return False
+     editor = GPS.EditorBuffer.get()
+     curs = editor.current_view().cursor()
+     line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
+     context.has_failed_vc = re.search ("(\|\s+){5}\|\s+YES\s+\|", line) != None
+     return context.has_failed_vc
+
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
 
@@ -451,3 +492,9 @@ a = """<?xml version="1.0"?>
 if os_utils.locate_exec_on_path ("spark") != "":
   a = a.replace('~', spark_separator)
   GPS.parse_xml(a)
+  GPS.Contextual ("SPARK/Show VC").create (
+     on_activate=pogs_xref,
+     filter=has_failed_vc)
+  GPS.Contextual ("SPARK/Show Simplified VC").create (
+     on_activate=pogs_simplified_xref,
+     filter=has_failed_vc)
