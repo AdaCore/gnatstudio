@@ -39,12 +39,41 @@ will produce a warning if the incorrect context is selected.
 """
 
 
+import os, re, string
+import os_utils
+import GPS
+
 # Future work
 # -----------
 
 # Nice-to-haves include:
 #   - Context sensitive navigation in annotations
 #   - Hot keys displayed on the SPARK Menu
+
+spark_console="SPARK Output"
+spark_category="Examiner"
+
+spark_separator='/'
+if os.name != 'nt':
+  spark_separator='-'
+
+def on_match (process, match, since_last):
+  GPS.Console (spark_console).write (since_last + match)
+
+def on_exit (process, status, full_output):
+  # Protect "Flow Error:123:" from being detected as a file reference
+  GPS.Locations.parse (
+     full_output.replace (" Error:"," Error "), category=spark_category)
+
+def examine_file (file):
+  """Examine current file through the SPARK examiner. file is an instance
+     of GPS.File"""
+  GPS.MDI.save_all (False)
+  GPS.Locations.remove_category (spark_category)
+  sw = file.project().get_tool_switches_as_string ("Examiner")
+  cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
+  GPS.Console (spark_console).write (cmd + "\n")
+  proc = GPS.Process (cmd, regexp=".+", on_match=on_match, on_exit=on_exit)
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -275,24 +304,15 @@ a = """<?xml version="1.0"?>
     </switches>
   </tool>
 
-
   <!-- Filtering actions by file extensions is done by setting up -->
   <!-- different languages for each extension. This means if you  -->
   <!-- want to use metafiles or the simplifier, you'll also have  -->
   <!-- to select metafile and VCG as project languages.           -->
 
-  <action name="Examine file" category="Spark">
-     <filter language="SPARK" />
-     <filter language="Ada" />
-     <shell output="none">MDI.save_all false</shell>
-     <shell output="none">Locations.remove_category Examiner</shell>  <!-- clears the Location window to remove previous errors -->
-     <shell output="none">Project %p</shell>
-     <shell output="none">Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output">spark %1 ~brief "%F"</external> <!-- force /brief option as can't parse output otherwise -->
-     <on-failure>
-          <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
-     </on-failure>
-     <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+  <action name="Examine file" category="Spark" output="none">
+     <filter language="SPARK"/>
+     <filter language="Ada"/>
+     <shell lang="python">spark.examine_file (GPS.File ("%F"))</shell>
   </action>
 
   <action name="SPARKFormat file" category="Spark">
@@ -414,14 +434,9 @@ a = """<?xml version="1.0"?>
   <key action="Simplify all">F10</key>
   <key action="POGS">F11</key>
 
-
 </SPARK>
 
 """
-
-import os, re, string
-import os_utils
-import GPS
 
 def pogs_file ():
   """Return the filename of the POGS file based on the current directory"""
@@ -432,9 +447,5 @@ def pogs_file ():
   return (full_path + dir_name + '.sum')
 
 if os_utils.locate_exec_on_path ("spark") != "":
-  if os.name == 'nt':
-    a = a.replace('~', '/')
-  else:
-    a = a.replace('~', '-')
-
+  a = a.replace('~', spark_separator)
   GPS.parse_xml(a)

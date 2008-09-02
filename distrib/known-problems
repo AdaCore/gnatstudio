@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H902-002: Duplicate locations for SPARK Examiner error messages
+  Problem:    If you use the spark module and examine a file, it happens
+              that the location window has duplicate entries for error
+              messages with lines greater than 100.
+  Workaround: Ignore those extra lines, they have no impact on the result
+
 - H805-023: Some references refered to as "read references"
   Problem:    When you search for references to an entity, GPS will report
               some of these as "read reference" when they really are just an
