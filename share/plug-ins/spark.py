@@ -79,13 +79,14 @@ def examine_file (file):
   GPS.MDI.get (spark_console).raise_window ()
 
 def pogs_directory():
-  """Return the directory in which pogs should be run"""
+  """Return the directory in which pogs should be run. This directory
+     never contains a trailing directory separator"""
   # If the -output_directory switch is specified, use that directory
 
   dir = None
   sw = GPS.Project.root().get_tool_switches_as_list ("Examiner")
   for s in sw:
-    if s.find ("-output_directory=") == 0:
+    if s.find (spark_separator + "output_directory=") == 0:
        dir=s[18:]
   
   # Else take the common parent for all sources dirs
@@ -96,6 +97,8 @@ def pogs_directory():
   # Else take the project's root directory
   if not dir:
      dir = os.path.dirname (GPS.Project.root().file().name())
+
+  dir = dir.rstrip ("/\\")
 
   return dir
 
