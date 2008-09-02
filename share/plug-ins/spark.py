@@ -89,7 +89,7 @@ def show_pogs_file():
   GPS.Console (pogs_console).write (cmd + "\n")
   GPS.Console (pogs_console).write (GPS.Process (cmd).get_result())
   dir_name = os.path.basename (dir)
-  GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'))
+  GPS.Editor.edit (os.path.join (dir,dir_name)+'.sum', 0, 0, 1, -1)
 
 def do_pogs_xref (context, simplified):
   """Jump to the VC referenced in the current line of the POGS output"""
@@ -415,7 +415,7 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="POGS" category="Spark">
-    <shell lang="python">spark.show_pogs_file()</shell>
+    <shell output="none" lang="python">spark.show_pogs_file()</shell>
   </action>
 
   <action name="SPARKmake" category="Spark">
