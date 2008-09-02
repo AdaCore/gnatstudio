@@ -262,9 +262,15 @@ package body Interactive_Consoles is
    overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      --  If the console has its own prompt, so ignore the one passed in
-      --  parameter
+      if not Console.Console.Input_Blocked then
+         --  If the console does not support input, no need to display a
+         --  prompt
+         return;
+      end if;
+
       if Console.Console.Prompt.all /= "" then
+            --  If the console has its own prompt, so ignore the one passed in
+            --  parameter.
          Display_Prompt (Console.Console);
       else
          Set_Prompt (Console.Console, Txt);
