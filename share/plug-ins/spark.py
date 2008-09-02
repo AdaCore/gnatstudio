@@ -89,7 +89,8 @@ def show_pogs_file():
   GPS.Console (pogs_console).write (cmd + "\n")
   GPS.Console (pogs_console).write (GPS.Process (cmd).get_result())
   dir_name = os.path.basename (dir)
-  GPS.Editor.edit (os.path.join (dir,dir_name)+'.sum', 0, 0, 1, -1)
+  buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
+  GPS.MDI.get_by_child (buf.current_view()).raise_window()
 
 def do_pogs_xref (context, simplified):
   """Jump to the VC referenced in the current line of the POGS output"""
