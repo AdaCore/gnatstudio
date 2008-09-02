@@ -73,8 +73,10 @@ def examine_file (file):
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
+  GPS.Console (spark_console).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.MDI.get (spark_console).raise_window ()
 
 def show_pogs_file():
   """Show the pogs file of the current project"""
@@ -86,8 +88,10 @@ def show_pogs_file():
   GPS.cd (dir)
   sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
   cmd = "pogs " + sw
+  GPS.Console (pogs_console).clear ()
   GPS.Console (pogs_console).write (cmd + "\n")
   GPS.Console (pogs_console).write (GPS.Process (cmd).get_result())
+  GPS.MDI.get (pogs_console).raise_window ()
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
   GPS.MDI.get_by_child (buf.current_view()).raise_window()
