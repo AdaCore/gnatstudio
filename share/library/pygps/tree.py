@@ -85,7 +85,5 @@ try:
       if process_events:
          pygps.process_all_events ()
 
-
 except ImportError:
   pass
-
