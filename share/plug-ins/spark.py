@@ -139,7 +139,7 @@ def do_pogs_xref (context, simplified):
 
   # Workaround to make sure we see at least part of the rule: move forward
   # a number of lines
-  f.current_view().goto (frm.forward_line (6))
+  f.current_view().goto (frm.forward_line (3))
 
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
@@ -164,6 +164,15 @@ def has_vc (context):
      line = editor.get_chars (curs.beginning_of_line(), curs.end_of_line())
      context.has_vc = re.search ("\|\s+YES\s+\|", line) != None
      return context.has_vc
+
+def sparkmake ():
+  GPS.MDI.save_all (False)
+  sw = GPS.current_context().project().get_tool_switches_as_string ("SPARKmake")
+  cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
+  GPS.Console (spark_console).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  GPS.Console (spark_console).write (GPS.Process (cmd).get_result())
+  GPS.MDI.get (spark_console).raise_window ()
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -406,59 +415,56 @@ a = """<?xml version="1.0"?>
      <shell lang="python">spark.examine_file (GPS.File ("%F"))</shell>
   </action>
 
-  <action name="SPARKFormat file" category="Spark">
+  <action name="SPARKFormat file" category="Spark" output="none">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell output="none">MDI.save_all false</shell>
-     <shell output="none">Project %p</shell>
-     <shell output="none">Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
+     <shell>MDI.save_all false</shell>
+     <shell>Project %p</shell>
+     <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
      <external output="SPARK Output">sparkformat %1 %f</external>
-     <shell output="none">Editor.edit %f 0 0 0 true</shell>
+     <shell>Editor.edit %f 0 0 0 true</shell>
   </action>
 
-  <action name="Examine metafile" category="Spark">
+  <action name="Examine metafile" category="Spark" output="none">
      <filter language="Metafile" />
-     <shell output="none">MDI.save_all false</shell>
-     <shell output="none">Locations.remove_category Examiner</shell>
-     <shell output="none">Project %p</shell>
-     <shell output="none">Project.get_tool_switches_as_string %1 "Examiner" </shell>
+     <shell>MDI.save_all false</shell>
+     <shell>Locations.remove_category Examiner</shell>
+     <shell>Project %p</shell>
+     <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
      <external output="SPARK Output">spark %1 ~brief @%f</external>
      <on-failure>
-          <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+          <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
-     <shell output="none">Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
+     <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
      <external>spark /help</external>
   </action>
 
-  <action name="Simplify file" category="Spark">
+  <action name="Simplify file" category="Spark" output="none">
     <filter language="VCG" />
-    <shell output="none">Project %p</shell>
-    <shell output="none">Project.get_tool_switches_as_string %1 "Simplifier" </shell>
+    <shell>Project %p</shell>
+    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <external output="Simplifier Output">spadesimp %f %1</external>
   </action>
 
-  <action name="Simplify all" category="Spark">
-    <shell output="none">Project %P</shell>
-    <shell output="none">Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <shell output="none">Project %P</shell>
-    <shell output="none">Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
+  <action name="Simplify all" category="Spark" output="none">
+    <shell>Project %P</shell>
+    <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
+    <shell>Project %P</shell>
+    <shell>Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
     <external output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
   </action>
 
-  <action name="POGS" category="Spark">
-    <shell output="none" lang="python">spark.show_pogs_file()</shell>
+  <action name="POGS" category="Spark" output="none">
+    <shell lang="python">spark.show_pogs_file()</shell>
   </action>
 
-  <action name="SPARKmake" category="Spark">
-     <filter language="SPARK" />
-     <filter language="Ada" />
-     <shell output="none">MDI.save_all false</shell>
-     <shell output="none">Project %p</shell>
-     <shell output="none">Project.get_tool_switches_as_string %1 "SPARKmake" </shell>
-     <external output="SPARKmake Output">sparkmake %1 %f</external>
+  <action name="SPARKmake" category="Spark" output="none">
+    <filter language="SPARK" />
+    <filter language="Ada" />
+    <shell lang="python">spark.sparkmake ()</shell>
   </action>
 
 
@@ -487,7 +493,7 @@ a = """<?xml version="1.0"?>
       <menu action="POGS">
         <Title>P_OGS</Title>
       </menu>
-	  <menu action="SPARKmake">
+      <menu action="SPARKmake">
         <Title>SPARKma_ke</Title>
       </menu>
  </submenu>
