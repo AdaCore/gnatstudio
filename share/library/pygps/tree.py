@@ -3,7 +3,7 @@
 
 
 try:
-   import gtk, gobject
+   import gtk, gobject, os
    import pygps
 
    def find_in_tree (tree, column, key, iter=None):
@@ -55,6 +55,14 @@ try:
 
          To send a double-click, emit an event with type=gtk.gdk._2BUTTON_PRESS
       """
+
+      if os.name=='nt' and button==3 and events==pygps.single_click_events:
+         # ??? work around
+         # On Windows sending a BUTTON_PRESS followed by a
+         # BUTTON_RELEASE event when opening a contextual menu does
+         # not work. The BUTTON_RELEASE close the contextual menu.
+         # For now we remove this event.
+         events = events[:1]
 
       if not path:
          path = view.get_selection().get_selected_rows()[1][0]
