@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,6 +37,7 @@ with Gtk.Handlers;         use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Object;           use Gtk.Object;
 with Gtk.Pixmap;           use Gtk.Pixmap;
+with Gtk.Toggle_Button;    use Gtk.Toggle_Button;
 with Gtk.Widget;           use Gtk.Widget;
 
 with Gtkada.Handlers;      use Gtkada.Handlers;
@@ -111,8 +111,7 @@ package body Gtkada.Color_Combo is
 
    procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class) is
    begin
-      Widget_Callback.Emit_By_Name
-        (Get_Arrow (Gtk_Color_Combo (Combo)), Signal_Clicked);
+      Set_Active (Get_Toggle_Button (Gtk_Color_Combo (Combo)), True);
    end Button_Clicked;
 
    -------------------
