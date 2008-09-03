@@ -233,7 +233,7 @@ a = """<?xml version="1.0"?>
 
   <Language>
     <Name>SIV</Name>
-	<Spec_Suffix>.siv</Spec_Suffix>
+    <Spec_Suffix>.siv</Spec_Suffix>
   </Language>
 
   <Language>
@@ -379,7 +379,6 @@ a = """<?xml version="1.0"?>
     </switches>
   </tool>
 
-
   <tool name="POGS">
     <language>SPARK</language>
     <language>Ada</language>
@@ -439,7 +438,7 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
-     <external>spark /help</external>
+     <external>spark ~help</external>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
