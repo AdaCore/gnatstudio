@@ -66,7 +66,6 @@ try:
 
       if not path:
          path = view.get_selection().get_selected_rows()[1][0]
-      model = view.get_model()
       rect = view.get_cell_area (path, view.get_column (column))
 
       for t in events:
