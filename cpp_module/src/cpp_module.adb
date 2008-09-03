@@ -296,7 +296,7 @@ package body Cpp_Module is
             Blurb   => -"How the editor should indent C/C++ sources",
             Nick    => -"Auto indentation"));
       Register_Property
-        (Kernel, Param_Spec (C_Automatic_Indentation), -"Editor:C/C++");
+        (Kernel, Param_Spec (C_Automatic_Indentation), -"Editor/C & C++");
 
       C_Use_Tabs := Param_Spec_Boolean
         (Gnew_Boolean
@@ -306,7 +306,7 @@ package body Cpp_Module is
              -("Whether the editor should use tabulations when indenting"),
            Nick    => -"Use tabulations"));
       Register_Property
-        (Kernel, Param_Spec (C_Use_Tabs), -"Editor:C/C++");
+        (Kernel, Param_Spec (C_Use_Tabs), -"Editor/C & C++");
 
       C_Indentation_Level := Param_Spec_Int
         (Gnew_Int
@@ -317,7 +317,7 @@ package body Cpp_Module is
            Blurb   => -"The number of spaces for the default indentation",
            Nick    => -"Default indentation"));
       Register_Property
-        (Kernel, Param_Spec (C_Indentation_Level), -"Editor:C/C++");
+        (Kernel, Param_Spec (C_Indentation_Level), -"Editor/C & C++");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

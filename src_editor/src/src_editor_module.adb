@@ -3240,7 +3240,7 @@ package body Src_Editor_Module is
            Blurb   => -"Color to use for the cursor in editors",
            Nick    => -"Cursor color"));
       Register_Property
-        (Kernel, Param_Spec (Cursor_Color), -"Editor:Fonts & Colors");
+        (Kernel, Param_Spec (Cursor_Color), -"Editor/Fonts & Colors");
 
       Cursor_Aspect_Ratio := Param_Spec_Int (Gnew_Int
         (Name    => "Editor-Cursor-Aspect-Ratio",
@@ -3251,7 +3251,7 @@ package body Src_Editor_Module is
          Blurb   => -("Size of the cursor, proportionaly to one character. 100"
                       & "means the same size as a character")));
       Register_Property
-        (Kernel, Param_Spec (Cursor_Aspect_Ratio), -"Editor:Fonts & Colors");
+        (Kernel, Param_Spec (Cursor_Aspect_Ratio), -"Editor/Fonts & Colors");
 
       Completion_Module.Register_Module (Kernel);
    end Register_Module;

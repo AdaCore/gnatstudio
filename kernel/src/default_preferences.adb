@@ -97,6 +97,11 @@ package body Default_Preferences is
    --  Name of the property set in a param_spec to point to the description of
    --  the preference.
 
+--     function Get_Page
+--       (Param : Param_Spec) return String;
+   --  Return the name of the page for the Name preference.
+   --  Constraint_Error is raised if the preference doesn't exist.
+
    ----------------------
    -- Pref_Description --
    ----------------------
@@ -556,7 +561,7 @@ package body Default_Preferences is
    -----------------------
 
    procedure Register_Property
-     (Manager : access Preferences_Manager_Record;
+     (Manager : access Preferences_Manager_Record'Class;
       Param   : Glib.Param_Spec;
       Page    : String)
    is
@@ -927,17 +932,17 @@ package body Default_Preferences is
    -- Get_Page --
    --------------
 
-   function Get_Page
-     (Param   : Param_Spec) return String
-   is
-      Info : constant Pref_Description_Access := Get_Description (Param);
-   begin
-      if Info = null then
-         return "";
-      else
-         return Info.Page.all;
-      end if;
-   end Get_Page;
+--     function Get_Page
+--       (Param   : Param_Spec) return String
+--     is
+--        Info : constant Pref_Description_Access := Get_Description (Param);
+--     begin
+--        if Info = null then
+--           return "";
+--        else
+--           return Info.Page.all;
+--        end if;
+--     end Get_Page;
 
    ----------------------
    -- Load_Preferences --
@@ -1852,7 +1857,9 @@ package body Default_Preferences is
          while First <= Name'Last loop
             Last := First;
 
-            while Last <= Name'Last and then Name (Last) /= ':' loop
+            while Last <= Name'Last
+              and then Name (Last) /= '/'
+            loop
                Last := Last + 1;
             end loop;
 

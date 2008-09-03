@@ -4096,8 +4096,30 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
   <shell_doc name="GPS.Preference.__init__">
      <param name="self">The instance of GPS.Preference</param>
      <param name="name">A string</param>
-     <description>Initializes an instance of the GPS.Preference class, associating it with the preference given in parameter</description>
+     <description>Initializes an instance of the GPS.Preference class, associating it with the preference given in parameter. The name is the one that can be found in the $HOME/.gps/preferences file. When you are creating a new preference, this name can include '/' characters, which will result in subpages created in the Preferences dialog. The name after the last '/' should only include letters and '-' characters.</description>
   </shell_doc>
+
+  <shell_doc name="GPS.Preference.create">
+     <param name="self">The instance of GPS.Preference</param>
+     <param name="label">A string</param>
+     <param name="type">A string, one of "integer", "boolean", "string", "color", "font"</param>
+     <param name="doc" default="">A string</param>
+     <param name="default" default="">Depends on the type</param>
+     <param name="*">Additional parameters depending on the type</param>
+     <description>This function creates a new preference, and makes it visible in the preferences dialog. In the dialog, the preference appears in the page given by the name used when creating the instance of GPS.Preference. The label is used to qualify the preference, and doc will appear as a tooltip to explain the preference to users. The type describes the type of preference, and therefore how it should be edited by users.
+The additional parameters depend on the type of preference you are creating:
+
+For an "integer", the default value is 0, and the two additional parameters are the minimum and maximum possible values. These are integers.
+
+For a "boolean", the default is True.
+
+For a "string", the default is the empty string.
+
+For a "color", the default is "black".
+
+For a "font", the default is "sans 9"
+     </description>
+   </shell_doc>
 
   <shell_doc name="GPS.Preference.get">
      <param name="self">The instance of GPS.Preference</param>

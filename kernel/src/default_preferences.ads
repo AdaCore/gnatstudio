@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -143,7 +143,7 @@ package Default_Preferences is
       return Param_Spec_Style;
 
    procedure Register_Property
-     (Manager : access Preferences_Manager_Record;
+     (Manager : access Preferences_Manager_Record'Class;
       Param   : Glib.Param_Spec;
       Page    : String);
    --  Register a new property.
@@ -156,7 +156,7 @@ package Default_Preferences is
    --  preference.
    --  Page is the name of the preferences dialog page that should contain this
    --  property. Pages are organized into a hierarchy, parsed from
-   --  Page:subpage1:subpage2:...
+   --  Page/subpage1/subpage2/...
    --  Due to some limitations in glib, the name in Param must only use
    --  alphanumeric characters or '-'.
 
@@ -228,11 +228,6 @@ package Default_Preferences is
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
    --  Checks are made to make sure the type of Name is valid.
-
-   function Get_Page
-     (Param : Param_Spec) return String;
-   --  Return the name of the page for the Name preference.
-   --  Constraint_Error is raised if the preference doesn't exist.
 
    ---------------------------------------------
    -- Loading and saving preferences to files --

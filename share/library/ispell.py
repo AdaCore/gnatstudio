@@ -40,35 +40,38 @@ It also shows how to get the word under the cursor in GPS.
 # These variables can be changed in the initialization commands associated
 # with this script (see /Tools/Plug-ins)
 
-# ispell_cmd = "ispell"
-# ispell_command = ispell_cmd + " -S -a"
-#   -S => Sort the list of guesses by probable correctness
+import GPS
 
-ispell_cmd = "aspell"
-ispell_command = ispell_cmd + " -a --lang=en"
-# Command to use to start a process to which words can be sent on standard
-# input. The process is expected to return a list of words that could
-# replace the current one.
-#   -a => read from stdin, until pipe is closed
+GPS.Preference ("Plugins/ispell/cmd").create (
+    "Command", "string", """External command to use to spell check words.
+This command should return a list of words that could replace the current
+one. Recommended values are "aspell" or "ispell". Input to this command
+is sent to its stdin.""", "aspell -a --lang=en")
+
+GPS.Preference ("Plugins/ispell/bgcolor").create (
+    "Background color", "color", """Background color for the command window that contains the suggested replacements""", "yellow")
+
 
 contextual_menu_type = "static"
 # What type of contextual menu we should use. Value can be:
 #   "dynamic", "static", or "none"
 # See above for a description of the various types
 
-background_color = "yellow"
-# Background color for the command window when checking a whole buffer
-
 
 ###########################################################################
 ## No user customization below this line
 ############################################################################
 
-import GPS, re, os_utils
+import re, os_utils
 from text_utils import *
 import traceback
 
 ispell = None
+
+def on_pref_changed (h):
+   global ispell_command, background_color
+   ispell_command = GPS.Preference ("Plugins/ispell/cmd").get()
+   background_color = GPS.Preference ("Plugins/ispell/bgcolor").get()
 
 class Ispell:
    """Interface to ispell. This takes care of properly starting a process,
@@ -486,7 +489,10 @@ def on_gps_started (hook_name):
       </menu>
      </submenu>""")
 
-if os_utils.locate_exec_on_path (ispell_cmd) != "":
+on_pref_changed (None) # Initialize default values
+
+if os_utils.locate_exec_on_path (ispell_command.split()[0]) != "":
    GPS.Hook ("before_exit_action_hook").add (before_exit)
    GPS.Hook ("gps_started").add (on_gps_started)
+   GPS.Hook ("preferences_changed").add (on_pref_changed)
 

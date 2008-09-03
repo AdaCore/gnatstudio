@@ -17,11 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions;          use Ada.Exceptions;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with Interfaces.C.Strings;    use Interfaces.C, Interfaces.C.Strings;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;               use Gdk.Color;
 with Gdk.Types;               use Gdk.Types;
@@ -163,7 +166,8 @@ package body GPS.Kernel.Preferences is
 
       elsif Command = "get" then
          declare
-            Pref  : constant String     := Get_Data (Inst, Class);
+            Pref  : constant String     :=
+              Translate (Get_Data (Inst, Class), To_Mapping ("/", "-"));
             Param : constant Param_Spec :=
               Get_Pref_From_Name (Kernel.Preferences, Pref, False);
             Typ   : GType;
@@ -217,7 +221,8 @@ package body GPS.Kernel.Preferences is
       elsif Command = "set" then
          Name_Parameters (Data, Set_Cmd_Parameters);
          declare
-            Pref  : constant String     := Get_Data (Inst, Class);
+            Pref  : constant String     :=
+              Translate (Get_Data (Inst, Class), To_Mapping ("/", "-"));
             Param : constant Param_Spec :=
               Get_Pref_From_Name (Kernel.Preferences, Pref, False);
             Typ   : GType;
@@ -277,6 +282,59 @@ package body GPS.Kernel.Preferences is
             when E : Invalid_Parameter =>
                Set_Error_Msg (Data, Exception_Message (E));
             when E : others => Trace (Traces.Exception_Handle, E);
+         end;
+
+      elsif Command = "create" then
+         declare
+            Pref  : constant String := Get_Data (Inst, Class);
+            Name  : constant String := Translate (Pref, To_Mapping ("/", "-"));
+            Nick  : constant String := Nth_Arg (Data, 2);
+            Typ   : constant String := Nth_Arg (Data, 3);
+            Doc   : constant String := Nth_Arg (Data, 4, "");
+            Param : Param_Spec;
+         begin
+            if Typ = "integer" then
+               Param := Gnew_Int
+                 (Name    => Name,
+                  Nick    => Nick,
+                  Blurb   => Doc,
+                  Default => Gint (Nth_Arg (Data, 5, 0)),
+                  Minimum => Gint (Nth_Arg (Data, 6, Integer'First)),
+                  Maximum => Gint (Nth_Arg (Data, 7, Integer'Last)));
+
+            elsif Typ = "boolean" then
+               Param := Gnew_Boolean
+                 (Name    => Name,
+                  Nick    => Nick,
+                  Blurb   => Doc,
+                  Default => Nth_Arg (Data, 5, True));
+
+            elsif Typ = "string" then
+               Param := Gnew_String
+                 (Name    => Name,
+                  Nick    => Nick,
+                  Blurb   => Doc,
+                  Default => Nth_Arg (Data, 5, ""));
+
+            elsif Typ = "color" then
+               Param := Param_Spec (Gnew_Color
+                 (Name    => Name,
+                  Nick    => Nick,
+                  Blurb   => Doc,
+                  Default => Nth_Arg (Data, 5, "black")));
+
+            elsif Typ = "font" then
+               Param := Param_Spec (Gnew_Font
+                 (Name    => Name,
+                  Nick    => Nick,
+                  Blurb   => Doc,
+                  Default => Nth_Arg (Data, 5, Config.Default_Font)));
+            else
+               Set_Error_Msg (Data, -"Invalid preference type");
+               return;
+            end if;
+
+            Register_Property (Kernel.Preferences, Param, Dir_Name (Pref));
          end;
       end if;
    end Get_Command_Handler;
@@ -677,7 +735,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white");
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Style),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Keywords_Style := Gnew_Style
         (Name    => "Src-Editor-Keywords-Style",
@@ -688,7 +746,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white");
       Register_Property
         (Kernel.Preferences, Param_Spec (Keywords_Style),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Comments_Style := Gnew_Style
         (Name    => "Src-Editor-Comments-Style",
@@ -699,7 +757,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white");
       Register_Property
         (Kernel.Preferences, Param_Spec (Comments_Style),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Annotated_Comments_Style := Gnew_Style
         (Name    => "Src-Editor-Annotated-Comments-Style",
@@ -710,7 +768,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white");
       Register_Property
         (Kernel.Preferences, Param_Spec (Annotated_Comments_Style),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Strings_Style := Gnew_Style
         (Name    => "Src-Editor-Strings-Style",
@@ -721,7 +779,7 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white");
       Register_Property
         (Kernel.Preferences, Param_Spec (Strings_Style),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Current_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Current-Line-Color",
@@ -730,7 +788,7 @@ package body GPS.Kernel.Preferences is
          Nick    => -"Current line color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Current_Line_Color),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Current_Block_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Current-Block-Color",
@@ -739,7 +797,7 @@ package body GPS.Kernel.Preferences is
          Nick    => -"Current block color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Current_Block_Color),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Delimiter_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Highlight-Delimiters-Color",
@@ -748,7 +806,7 @@ package body GPS.Kernel.Preferences is
          Nick    => -"Delimiter highlighting color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Delimiter_Color),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       Search_Results_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Search_Results-Color",
@@ -757,7 +815,7 @@ package body GPS.Kernel.Preferences is
          Nick    => -"Search results highlighting"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Search_Results_Color),
-         -"Editor:Fonts & Colors");
+         -"Editor/Fonts & Colors");
 
       -- Browsers --
 
@@ -1503,6 +1561,12 @@ package body GPS.Kernel.Preferences is
         (Kernel, "set",
          Minimum_Args  => 1,
          Maximum_Args  => 2,
+         Class         => Pref_Class,
+         Handler       => Get_Command_Handler'Access);
+      Register_Command
+        (Kernel, "create",
+         Minimum_Args  => 2,
+         Maximum_Args  => Integer'Last,
          Class         => Pref_Class,
          Handler       => Get_Command_Handler'Access);
    end Register_Module;
