@@ -262,7 +262,7 @@ package body Interactive_Consoles is
    overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      if not Console.Console.Input_Blocked then
+      if not Get_Editable (Console.Console.View) then
          --  If the console does not support input, no need to display a
          --  prompt.
          return;
