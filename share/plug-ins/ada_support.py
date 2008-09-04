@@ -34,6 +34,7 @@ class gnatMakeProc:
       self.validity_checks_list = []
       self.style_checks_list = []
       self.gnatCmd = ""
+      self.style_alias = "-gnaty3abcefhiklmnprst"
 
    def initSwitches(self):
       global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity, xmlCompilerPopupStyles, xmlCompilerTrailer
@@ -191,7 +192,7 @@ class gnatMakeProc:
           if len (res) > 2:
             if res[1] == "a":
               # retrieve the list of warnings not activated by -gnatwa
-              exception = re.split ("\(except ([a-zA-Z.]*)\) *$", res[3])
+              exception = re.split ("\(except ([a-zA-Z. ]*)\) *$", res[3])
               self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1]+".e")
               self.warnings_list.append ([res[1], res[3], False, False])
             elif res[1] == "e" or res[1] == ".e" or res[1] == "s":
