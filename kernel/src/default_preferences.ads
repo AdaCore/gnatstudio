@@ -508,9 +508,9 @@ private
       Style_Font    : GNAT.Strings.String_Access;
       Font_Descr    : Pango.Font.Pango_Font_Description;
       Style_Fg      : GNAT.Strings.String_Access;
-      Fg_Color      : Gdk.Color.Gdk_Color;
+      Fg_Color      : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Style_Bg      : GNAT.Strings.String_Access;
-      Bg_Color      : Gdk.Color.Gdk_Color;
+      Bg_Color      : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
    end record;
    overriding procedure Set_Pref
      (Pref    : access Style_Preference_Record;

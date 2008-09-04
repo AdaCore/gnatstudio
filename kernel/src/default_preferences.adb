@@ -484,7 +484,6 @@ package body Default_Preferences is
          Free (Old_Pref);
 
          Replace_Element (Manager.Preferences, Old, Preference (Pref));
-
       else
          Append
            (Container => Manager.Preferences,
