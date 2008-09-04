@@ -1314,6 +1314,58 @@ package body String_Utils is
       return Res (1 .. K);
    end URL_Decode;
 
+   -----------------
+   -- XML_Protect --
+   -----------------
+
+   function XML_Protect (S : String) return String is
+      function Count (S : String; C : Character) return Natural;
+      --  Return the number of occurences of C in S
+
+      -----------
+      -- Count --
+      -----------
+
+      function Count (S : String; C : Character) return Natural is
+         Res : Natural := 0;
+      begin
+         for J in S'Range loop
+            if S (J) = C then
+               Res := Res + 1;
+            end if;
+         end loop;
+
+         return Res;
+      end Count;
+
+      Cnt : constant Natural :=
+              3 * Count (S, '<') + 3 * Count (S, '>') + 4 * Count (S, '&');
+
+      Res : String (1 .. S'Length + Cnt);
+      Idx : Natural := 0;
+
+   begin
+
+      for J in S'Range loop
+         case S (J) is
+            when '<' =>
+               Res (Idx + 1 .. Idx + 4) := "&lt;";
+               Idx := Idx + 4;
+            when '>' =>
+               Res (Idx + 1 .. Idx + 4) := "&gt;";
+               Idx := Idx + 4;
+            when '&' =>
+               Res (Idx + 1 .. Idx + 5) := "&amp;";
+               Idx := Idx + 5;
+            when others =>
+               Res (Idx + 1) := S (J);
+               Idx := Idx + 1;
+         end case;
+      end loop;
+
+      return Res (Res'First .. Idx);
+   end XML_Protect;
+
    ------------
    -- Revert --
    ------------
