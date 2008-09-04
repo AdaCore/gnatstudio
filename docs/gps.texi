@@ -9287,7 +9287,7 @@ end P;
 
 @end table
 
-@item C/C++
+@item C & C++
 @cindex C
 @cindex C++
 
