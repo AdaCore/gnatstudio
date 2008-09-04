@@ -446,13 +446,13 @@ package body GPS.Kernel.Console is
               (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
             Raise_Child (NChild);
 
+            if Console /= null then
+               Enable_Prompt_Display (Console, Accept_Input);
+            end if;
+
          elsif Child /= null then
             Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
-         end if;
-
-         if Console /= null then
-            Enable_Prompt_Display (Console, Accept_Input);
          end if;
 
          return Console;

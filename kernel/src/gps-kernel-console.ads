@@ -67,7 +67,8 @@ package GPS.Kernel.Console is
    --  If Force_Create, a new console is created even if one with the same
    --  name already exists.
    --  Module is used to associate the console with a specific module.
-   --  If Accept_Input is True, the console will be editable.
+   --  If Accept_Input is True, the console will be editable. This is ignored
+   --  if the console already exists.
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
