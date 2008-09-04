@@ -251,10 +251,13 @@ package body Default_Preferences.Enums is
       --------------
 
       overriding function Get_Pref
-        (Pref : access Preference_Record) return String is
-      begin
-         return Enumeration'Image
+        (Pref : access Preference_Record) return String
+      is
+         S : String := Enumeration'Image
            (Enumeration'Val (Enum_Preference (Pref).Enum_Value));
+      begin
+         Mixed_Case (S);
+         return S;
       end Get_Pref;
 
       --------------
