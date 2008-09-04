@@ -385,7 +385,7 @@ package body Command_Window is
       Pack_Start
         (Window.Box, Window.Prompt, Expand => False, Fill => False);
       Set_Alignment (Window.Prompt, 0.0, 0.5);
-      Modify_Font (Window.Prompt, Get_Pref (Default_Font));
+      Modify_Font (Window.Prompt, Default_Font.Get_Pref);
 
       if Prompt = "" then
          Set_Child_Visible (Window.Prompt, False);
@@ -394,7 +394,7 @@ package body Command_Window is
       Gtk_New (Window.Line);
       Set_Wrap_Mode (Window.Line, Wrap_Word);
       Pack_Start (Window.Box, Window.Line, Expand => True, Fill => True);
-      Modify_Font (Window.Line, Get_Pref (View_Fixed_Font));
+      Modify_Font (Window.Line, View_Fixed_Font.Get_Pref);
 
       Return_Callback.Object_Connect
         (Window.Line, Signal_Key_Press_Event,

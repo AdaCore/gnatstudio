@@ -134,14 +134,10 @@ package body GPS.Kernel.Styles is
    is
       pragma Unreferenced (Kernel);
    begin
-      Set_Background
-        (Search_Results_Style, Get_Pref (Search_Results_Color));
-      Set_Background
-        (Builder_Errors_Style, Get_Pref (Error_Src_Highlight));
-      Set_Background
-        (Builder_Warnings_Style, Get_Pref (Warning_Src_Highlight));
-      Set_Background
-        (Builder_Style_Style, Get_Pref (Style_Src_Highlight));
+      Set_Background (Search_Results_Style, Search_Results_Color.Get_Pref);
+      Set_Background (Builder_Errors_Style, Error_Src_Highlight.Get_Pref);
+      Set_Background (Builder_Warnings_Style, Warning_Src_Highlight.Get_Pref);
+      Set_Background (Builder_Style_Style, Style_Src_Highlight.Get_Pref);
    end Preferences_Changed;
 
    --------------------

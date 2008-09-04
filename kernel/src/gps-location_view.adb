@@ -30,7 +30,6 @@ with Gdk.Rectangle;            use Gdk.Rectangle;
 
 with Glib.Convert;
 with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
@@ -55,6 +54,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 
 with Commands.Interactive;     use Commands.Interactive;
 with Commands;                 use Commands;
+with Default_Preferences;      use Default_Preferences;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
@@ -1473,7 +1473,7 @@ package body GPS.Location_View is
             Path_Free (Path);
 
             if not Quiet
-              and then Get_Pref (Auto_Jump_To_First)
+              and then Auto_Jump_To_First.Get_Pref
             then
                Goto_Location (View);
             end if;
@@ -1882,7 +1882,7 @@ package body GPS.Location_View is
                 Wrapper (Preferences_Changed'Access),
                 Name => "location_view.preferences_changed",
                 Watch => GObject (View));
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
       Add_Hook (Kernel, Location_Changed_Hook,
                 Wrapper (Location_Changed'Access),
@@ -2446,8 +2446,8 @@ package body GPS.Location_View is
                   Abstract_Module_ID (Location_View_Module_Id));
          Gtk_New (Child, Locations,
                   Module              => Location_View_Module_Id,
-                  Default_Width       => Get_Pref (Default_Widget_Width),
-                  Default_Height      => Get_Pref (Default_Widget_Height),
+                  Default_Width       => Gint (Default_Widget_Width.Get_Pref),
+                  Default_Height      => Gint (Default_Widget_Height.Get_Pref),
                   Group               => Group_Consoles,
                   Desktop_Independent => True);
          Set_Title (Child, -"Locations");
@@ -2491,10 +2491,10 @@ package body GPS.Location_View is
       end if;
 
       View.Secondary_File_Pattern := new Pattern_Matcher'
-        (Compile (Get_Pref (Secondary_File_Pattern)));
-      View.SFF := Natural (Get_Pref (Secondary_File_Pattern_Index));
-      View.SFL := Natural (Get_Pref (Secondary_Line_Pattern_Index));
-      View.SFC := Natural (Get_Pref (Secondary_Column_Pattern_Index));
+        (Compile (Secondary_File_Pattern.Get_Pref));
+      View.SFF := Secondary_File_Pattern_Index.Get_Pref;
+      View.SFL := Secondary_Line_Pattern_Index.Get_Pref;
+      View.SFC := Secondary_Column_Pattern_Index.Get_Pref;
    end Read_Secondary_Pattern_Preferences;
 
    -------------------------
@@ -2522,7 +2522,7 @@ package body GPS.Location_View is
       View := Location_View (Get_Widget (Child));
       Read_Secondary_Pattern_Preferences (View);
 
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
       Node := First (View.Stored_Locations);
 
       while Node /= Location_List.Null_Node loop
@@ -3134,7 +3134,8 @@ package body GPS.Location_View is
       --  Return the pattern matcher for the file location
 
       function Get_Index
-        (Pref : Param_Spec_Int; Value : Integer) return Integer;
+        (Pref  : access Integer_Preference_Record'Class;
+         Value : Integer) return Integer;
       --  If Value is -1, return Pref, otherwise return Value
 
       function Get_Message (Last : Natural) return UTF8_String;
@@ -3149,7 +3150,7 @@ package body GPS.Location_View is
       function Get_File_Location return Pattern_Matcher is
       begin
          if File_Location_Regexp = "" then
-            return Compile (Get_Pref (File_Pattern));
+            return Compile (File_Pattern.Get_Pref);
          else
             return Compile (File_Location_Regexp);
          end if;
@@ -3163,12 +3164,13 @@ package body GPS.Location_View is
       ---------------
 
       function Get_Index
-        (Pref : Param_Spec_Int; Value : Integer) return Integer
+        (Pref  : access Integer_Preference_Record'Class;
+         Value : Integer) return Integer
       is
          Location : Integer;
       begin
          if Value = -1 then
-            Location := Integer (Get_Pref (Pref));
+            Location := Pref.Get_Pref;
          else
             Location := Value;
          end if;

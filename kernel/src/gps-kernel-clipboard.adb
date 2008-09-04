@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,7 +25,6 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 
 with Glib.Object;                use Glib.Object;
-with Glib.Properties.Creation;   use Glib.Properties.Creation;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
@@ -35,10 +34,10 @@ with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
 
+with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Traces;                     use Traces;
 with GUI_Utils;                  use GUI_Utils;
@@ -48,7 +47,7 @@ package body GPS.Kernel.Clipboard is
 
    Me : constant Debug_Handle := Create ("Clipboard");
 
-   Clipboard_Size_Pref : Param_Spec_Int;
+   Clipboard_Size_Pref : Integer_Preference;
 
    Text_Cst            : aliased constant String := "text";
    Append_Cst          : aliased constant String := "append";
@@ -81,8 +80,7 @@ package body GPS.Kernel.Clipboard is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Size      : constant Integer :=
-                    Integer (Get_Pref (Clipboard_Size_Pref));
+      Size      : constant Integer := Clipboard_Size_Pref.Get_Pref;
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
    begin
@@ -111,24 +109,23 @@ package body GPS.Kernel.Clipboard is
       Err         : String_Access;
    begin
       if Clipboard_Size_Pref = null then
-         Clipboard_Size_Pref := Param_Spec_Int
-           (Gnew_Int
-              (Name    => "Clipboard-Size",
-               Nick    => "Clipboard Size",
-               Default => 10,
-               Blurb   => -("Number of entries stored in the clipboard, that"
-                            & " can be accessed through Paste Previous. The"
-                            & " higher the size, the more memory GPS needs"),
-               Minimum => 1,
-               Maximum => 1_000));
-         Register_Property
-           (Kernel, Param_Spec (Clipboard_Size_Pref), -"General");
+         Clipboard_Size_Pref := Create
+           (Get_Preferences (Kernel),
+            Name    => "Clipboard-Size",
+            Label   => "Clipboard Size",
+            Default => 10,
+            Doc     => -("Number of entries stored in the clipboard, that"
+              & " can be accessed through Paste Previous. The"
+              & " higher the size, the more memory GPS needs"),
+            Page    => -"General",
+            Minimum => 1,
+            Maximum => 1_000);
 
          Register_Hook_No_Args (Kernel, Clipboard_Changed_Hook);
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
-      Size := Integer (Get_Pref (Clipboard_Size_Pref));
+      Size := Clipboard_Size_Pref.Get_Pref;
       Clipboard.List := new Selection_List (1 .. Size);
       Clipboard.Last_Paste := Clipboard.List'First;
 

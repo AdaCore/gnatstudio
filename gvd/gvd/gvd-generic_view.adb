@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Tags;            use Ada.Tags;
-with Default_Preferences; use Default_Preferences;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
 with Glib.Xml_Int;        use Glib.Xml_Int;
@@ -169,7 +168,7 @@ package body GVD.Generic_View is
          P : constant Visual_Debugger := Get_Process (Data);
          V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
          Policy        : constant Debugger_Windows_Policy :=
-           Debugger_Windows_Policy'Val (Get_Pref (Debugger_Windows));
+           Debugger_Windows.Get_Pref;
       begin
          Trace (Me, "On_Debugger_Terminate, closing view " & Module_Name);
          if P /= null and then V /= null then

@@ -126,7 +126,7 @@ package body Diff_Utils is
       Result       : Expect_Match;
       Ret          : Diff_Occurrence_Link;
       Occurrence   : Diff_Occurrence_Link;
-      Diff_Command : constant String := Get_Pref (Diff_Cmd);
+      Diff_Command : constant String := Diff_Cmd.Get_Pref;
       Cmd          : String_Access;
       Cmd_Args     : Argument_List_Access;
 
@@ -187,7 +187,7 @@ package body Diff_Utils is
       Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Occurrence_Link
    is
-      Patch_Command : constant String := Get_Pref (Patch_Cmd);
+      Patch_Command : constant String := Patch_Cmd.Get_Pref;
       Descriptor    : TTY_Process_Descriptor;
       Args          : Argument_List (1 .. 6);
       Ret           : Diff_Occurrence_Link;

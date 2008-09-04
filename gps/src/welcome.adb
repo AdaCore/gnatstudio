@@ -104,7 +104,7 @@ package body Welcome is
          Title      => -"Welcome to GPS " & Config.Version &
                        " (" & Config.Source_Date & ")",
          Parent     => null,
-         Title_Font => Get_Pref (Wizard_Title_Font));
+         Title_Font => Wizard_Title_Font.Get_Pref);
 
       Set_Default_Size (Screen, 600, 350);
 
@@ -219,8 +219,7 @@ package body Welcome is
       Gtk_New (Screen.Always_Show,
                -"Always show this dialog when GPS starts");
       Pack_End (Box, Screen.Always_Show, Expand => False);
-      Set_Active (Screen.Always_Show,
-                  Get_Pref (Display_Welcome));
+      Set_Active (Screen.Always_Show, Display_Welcome.Get_Pref);
 
       Gtk_New_Hseparator (Sep);
       Pack_End (Box, Sep, Expand => False, Padding => 5);
@@ -239,7 +238,7 @@ package body Welcome is
    is
       Response : Gtk_Response_Type;
    begin
-      if not Get_Pref (Display_Welcome) then
+      if not Display_Welcome.Get_Pref then
          On_Default_Project (Screen);
          return Project_Loaded;
       end if;
@@ -262,7 +261,7 @@ package body Welcome is
          end loop;
 
          if not Get_Active (Screen.Always_Show) then
-            Set_Pref (Screen.Kernel, Display_Welcome, False);
+            Set_Pref (Display_Welcome, Screen.Kernel, False);
          end if;
 
          if Response = Gtk_Response_OK then
@@ -369,7 +368,7 @@ package body Welcome is
         (Title             => -"Select a directory",
          Base_Directory    => Create (Get_Text (S.Default_Dir)),
          Parent            => Gtk_Window (S),
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          History           => Get_History (S.Kernel));
    begin
       if Dir /= No_File then
@@ -403,7 +402,7 @@ package body Welcome is
             File_Pattern      => "*.gpr",
             Pattern_Name      => -"Project Files",
             Parent            => Gtk_Window (Get_Toplevel (Screen)),
-            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
             Kind              => Open_File,
             History           => Get_History (S.Kernel));
 

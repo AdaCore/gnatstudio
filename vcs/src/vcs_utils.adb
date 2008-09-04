@@ -159,16 +159,16 @@ package body VCS_Utils is
               (Kernel, Get_Log_File (Kernel, Activity));
             return Save_MDI_Children
               (Kernel, Children & Logs & Activity_Log,
-               Force => Get_Pref (Auto_Save));
+               Force => Auto_Save.Get_Pref);
 
          else
             return Save_MDI_Children
-              (Kernel, Children & Logs, Force => Get_Pref (Auto_Save));
+              (Kernel, Children & Logs, Force => Auto_Save.Get_Pref);
          end if;
 
       else
          return Save_MDI_Children
-           (Kernel, Children, Force => Get_Pref (Auto_Save));
+           (Kernel, Children, Force => Auto_Save.Get_Pref);
       end if;
    end Save_Files;
 

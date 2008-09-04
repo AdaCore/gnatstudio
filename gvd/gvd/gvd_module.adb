@@ -673,7 +673,7 @@ package body GVD_Module is
                Select_File
                  (Title             => -"Select Module",
                   Parent            => Gtk_Window (Top),
-                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File,
                   File_Pattern      => "*",
                   Pattern_Name      => -"All files",
@@ -1438,7 +1438,7 @@ package body GVD_Module is
                   File_Pattern      => "*" & Exec_Suffix & ";*",
                   Pattern_Name      => -"Executable files;All files",
                   Parent            => Get_Current_Window (Kernel),
-                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File,
                   History           => Get_History (Kernel));
       begin
@@ -1503,7 +1503,7 @@ package body GVD_Module is
                   File_Pattern      => "core*;*",
                   Pattern_Name      => -"Core files;All files",
                   Parent            => Get_Current_Window (Kernel),
-                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File,
                   History           => Get_History (Kernel));
       begin
@@ -1797,7 +1797,7 @@ package body GVD_Module is
          if Value.all /= "" then
             Create_Pixmap_From_Text
               (Text       => Value.all,
-               Font       => Get_Pref (GPS.Kernel.Preferences.Default_Font),
+               Font       => GPS.Kernel.Preferences.Default_Font.Get_Pref,
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
@@ -2421,7 +2421,7 @@ package body GVD_Module is
 
       Prev   := GVD_Module_ID.Show_Lines_With_Code;
       GVD_Module_ID.Show_Lines_With_Code :=
-        Get_Pref (Editor_Show_Line_With_Code);
+        Editor_Show_Line_With_Code.Get_Pref;
 
       if GVD_Module_ID.Initialized
         and then Prev /= GVD_Module_ID.Show_Lines_With_Code
@@ -2458,7 +2458,7 @@ package body GVD_Module is
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
       GVD.Scripts.Create_Hooks (Kernel);
       GVD_Module_ID.Show_Lines_With_Code :=
-        Get_Pref (Editor_Show_Line_With_Code);
+        Editor_Show_Line_With_Code.Get_Pref;
 
       Register_Module
         (Module          => Module_ID (GVD_Module_ID),

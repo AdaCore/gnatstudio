@@ -295,8 +295,8 @@ package body Bookmark_Views is
 
       Create_Pixmap_From_Text
         (Text.all,
-         Get_Pref (Default_Font),
-         Get_Pref (Tooltip_Color),
+         Default_Font.Get_Pref,
+         Tooltip_Color.Get_Pref,
          Tooltip.Bookmark_View.Tree,
          Pixmap);
       Free (Text);
@@ -662,7 +662,7 @@ package body Bookmark_Views is
       View : constant Bookmark_View_Access :=
                Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
    end On_Preferences_Changed;
 
    ----------------

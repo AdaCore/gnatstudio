@@ -783,8 +783,8 @@ package body Browsers.Entities is
          Browser := Open_Type_Browser (Kernel);
          Gtk_New (Child, Browser,
                   Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Get_Pref (Default_Widget_Width),
-                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Graphs,
                   Module         => Entity_Browser_Module);
          Set_Title (Child, Title);
@@ -904,8 +904,6 @@ package body Browsers.Entities is
    ----------
 
    procedure Sort (Arr : in out Entity_Information_Arrays.Instance) is
-      pragma Unmodified (Arr);
-
       use type Entity_Information_Arrays.Index_Type;
       First : constant Integer :=
                 Integer (Entity_Information_Arrays.First) - 1;
@@ -1725,8 +1723,8 @@ package body Browsers.Entities is
    begin
       if Node.Tag.all = "Entities_Browser" then
          Gtk_New (Child, Open_Type_Browser (User),
-                  Default_Width  => Get_Pref (Default_Widget_Width),
-                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Graphs,
                   Module         => Entity_Browser_Module);
          Set_Title (Child, -"Entity Browser");

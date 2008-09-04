@@ -350,37 +350,37 @@ package body Codefix_Module is
       Session.Timestamp := Session.Timestamp + 1;
 
       if File_Index = -1 then
-         Fi := Integer (Get_Pref (File_Pattern_Index));
+         Fi := File_Pattern_Index.Get_Pref;
       else
          Fi := File_Index;
       end if;
 
       if Line_Index = -1 then
-         Li := Integer (Get_Pref (Line_Pattern_Index));
+         Li := Line_Pattern_Index.Get_Pref;
       else
          Li := Line_Index;
       end if;
 
       if Col_Index = -1 then
-         Ci := Integer (Get_Pref (Column_Pattern_Index));
+         Ci := Column_Pattern_Index.Get_Pref;
       else
          Ci := Col_Index;
       end if;
 
       if Msg_Index = -1 then
-         Mi := Integer (Get_Pref (Message_Pattern_Index));
+         Mi := Message_Pattern_Index.Get_Pref;
       else
          Mi := Msg_Index;
       end if;
 
       if Style_Index = -1 then
-         Si := Integer (Get_Pref (Style_Pattern_Index));
+         Si := Style_Pattern_Index.Get_Pref;
       else
          Si := Style_Index;
       end if;
 
       if Warning_Index = -1 then
-         Wi := Integer (Get_Pref (Warning_Pattern_Index));
+         Wi := Warning_Pattern_Index.Get_Pref;
       else
          Wi := Warning_Index;
       end if;
@@ -388,7 +388,7 @@ package body Codefix_Module is
       if File_Location_Regexp = "" then
          Set_Regexp
            (Errors_Found,
-            File_Location_Regexp => Compile (Get_Pref (File_Pattern)),
+            File_Location_Regexp => Compile (File_Pattern.Get_Pref),
             File_Index_In_Regexp    => Fi,
             Line_Index_In_Regexp    => Li,
             Col_Index_In_Regexp     => Ci,
@@ -417,7 +417,7 @@ package body Codefix_Module is
       Add_Errors_From (Errors_Found, Get_Registry (Kernel), Output);
 
       Options.Remove_Policy := Policy_To_Operations
-        (Codefix_Remove_Policy'Val (Get_Pref (Remove_Policy)));
+        (Remove_Policy.Get_Pref);
 
       Analyze
         (Session.Corrector.all, Codefix_Module_ID.Codefix_Processor,
@@ -1104,15 +1104,14 @@ package body Codefix_Module is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Remove_Policy := Glib.Properties.Creation.Param_Spec_Enum
-        (Codefix_Remove_Policy_Properties.Gnew_Enum
-           (Name  => "Remove-Policy-When-Fixing",
-            Nick  => -"Remove policy when fixing code",
-            Blurb => -("Prefered way to fix code when part have to be " &
-              "removed."),
-            Default => Always_Remove));
-      Register_Property
-        (Kernel, Param_Spec (Remove_Policy), -"General");
+      Remove_Policy := Codefix_Remove_Policy_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name  => "Remove-Policy-When-Fixing",
+         Label => -"Remove policy when fixing code",
+         Doc   => -("Prefered way to fix code when part have to be " &
+           "removed."),
+         Page    => -"General",
+         Default => Always_Remove);
    end Register_Preferences;
 
    --------------------------

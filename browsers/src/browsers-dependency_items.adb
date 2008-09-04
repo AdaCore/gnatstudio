@@ -518,8 +518,8 @@ package body Browsers.Dependency_Items is
          Browser := Create_Dependency_Browser (Kernel);
          Gtk_New (Child, Browser,
                   Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-                  Default_Width  => Get_Pref (Default_Widget_Width),
-                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Graphs,
                   Module         => Dependency_Browser_Module_ID);
          Set_Title (Child, Title);
@@ -919,7 +919,7 @@ package body Browsers.Dependency_Items is
           (Title             => -"Select File",
            Parent            =>
              Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
            Kind              => Open_File,
            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
            Pattern_Name      => -"All files;Ada files;C/C++ files",
@@ -1312,8 +1312,8 @@ package body Browsers.Dependency_Items is
    begin
       if Node.Tag.all = "Dependency_Browser" then
          Gtk_New (Child, Create_Dependency_Browser (User),
-                  Default_Width  => Get_Pref (Default_Widget_Width),
-                  Default_Height => Get_Pref (Default_Widget_Height),
+                  Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+                  Default_Height => Gint (Default_Widget_Height.Get_Pref),
                   Group          => Group_Graphs,
                   Module         => Dependency_Browser_Module_ID);
          Set_Title (Child, -"Dependency Browser");

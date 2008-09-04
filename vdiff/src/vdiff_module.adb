@@ -110,8 +110,8 @@ package body Vdiff_Module is
         (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
       Show_All (Vdiff);
       Gtk_New (Child, Vdiff,
-               Default_Width  => Get_Pref (Default_Widget_Width),
-               Default_Height => Get_Pref (Default_Widget_Height),
+               Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+               Default_Height => Gint (Default_Widget_Height.Get_Pref),
                Module         => Vdiff_Module_ID);
       Set_Title (Child, -"Visual Comparison");
       Put (Get_MDI (Kernel), Child);
@@ -201,7 +201,7 @@ package body Vdiff_Module is
         Select_File
           (Title             => -"Select First File",
            Parent            => Get_Current_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
            Kind              => Open_File,
            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
            Pattern_Name      => -"All files;Ada files;C/C++ files",
@@ -218,7 +218,7 @@ package body Vdiff_Module is
       File2 := Select_File
         (Title             => -"Select Second File",
          Parent            => Get_Current_Window (Kernel),
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          Kind              => Open_File,
          File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
          Pattern_Name      => -"All files;Ada files;C/C++ files",
@@ -359,16 +359,16 @@ package body Vdiff_Module is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Diff_Context_Length := Param_Spec_Int (Gnew_Int
-        (Name    => "Diff_Utils-Context-Length",
+      Diff_Context_Length := Default_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "Diff_Utils-Context-Length",
          Minimum => -1,
-         Maximum => Gint'Last,
+         Maximum => Integer'Last,
          Default => 5,
-         Blurb   => -("The number of lines displayed before and after each"
+         Page    => -"Visual diff",
+         Doc     => -("The number of lines displayed before and after each"
                       & " chunk of differences. -1 to display the whole file"),
-         Nick    => -"Context length"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Context_Length), -"Visual diff");
+         Label   => -"Context length");
    end Register_Module;
 
 end Vdiff_Module;

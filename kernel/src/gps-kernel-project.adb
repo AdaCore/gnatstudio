@@ -400,16 +400,16 @@ package body GPS.Kernel.Project is
       --  Output error messages from the project parser to the console.
 
       procedure Report_Error (S : String) is
-         Old_Pref : constant Boolean := Get_Pref (Auto_Jump_To_First);
+         Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
       begin
          --  Temporarily unset this, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
-         Set_Pref (Kernel, Auto_Jump_To_First, False);
+         Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
          Parse_File_Locations (Kernel, S, Location_Category);
-         Set_Pref (Kernel, Auto_Jump_To_First, Old_Pref);
+         Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
       Reloaded : Boolean;
@@ -445,17 +445,17 @@ package body GPS.Kernel.Project is
       ------------------
 
       procedure Report_Error (S : String) is
-         Old_Pref : constant Boolean := Get_Pref (Auto_Jump_To_First);
+         Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
       begin
          --  Temporarily unset this, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
          --  would be open several times otherwise
 
-         Set_Pref (Kernel, Auto_Jump_To_First, False);
+         Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
          Parse_File_Locations (Kernel, S, Location_Category);
-         Set_Pref (Kernel, Auto_Jump_To_First, Old_Pref);
+         Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
       Had_Project_Desktop : Boolean;
@@ -498,7 +498,7 @@ package body GPS.Kernel.Project is
          --  Never save automatically the desktop for the default project
 
          if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
-           and then Get_Pref (Save_Desktop_On_Exit)
+           and then Save_Desktop_On_Exit.Get_Pref
          then
             Save_Desktop (Kernel);
          end if;

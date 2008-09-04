@@ -495,7 +495,7 @@ package body Task_Manager.GUI is
       Iface.Progress_Layout := Create_Pango_Layout (Iface);
       Set_Font_Description
         (Iface.Progress_Layout,
-         Get_Pref (View_Fixed_Font));
+         View_Fixed_Font.Get_Pref);
 
       Gdk_New
         (Iface.Progress_Template,
@@ -942,7 +942,7 @@ package body Task_Manager.GUI is
 
       Add (View, Scrolled);
 
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
       View.Manager.GUI := Gtk_Widget (View);
 

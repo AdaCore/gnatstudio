@@ -35,12 +35,12 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Commands.Editor;           use Commands.Editor;
+with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Intl;                  use GPS.Intl;
@@ -65,8 +65,6 @@ with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
-
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -74,8 +72,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
 with Language.Tree.Ada;         use Language.Tree.Ada;
-
-with Glib.Generic_Properties;   use Glib.Generic_Properties;
 
 package body Completion_Module is
 
@@ -85,12 +81,12 @@ package body Completion_Module is
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
-   Smart_Completion_Trigger_Timeout : Param_Spec_Int;
+   Smart_Completion_Trigger_Timeout : Integer_Preference;
 
-   package Smart_Completion_Properties is new Generic_Enumeration_Property
-     ("Smart_Completion", Smart_Completion_Type);
+   package Smart_Completion_Preferences is new
+     Default_Preferences.Enums.Generics (Smart_Completion_Type);
 
-   Smart_Completion : Param_Spec_Enum;
+   Smart_Completion : Smart_Completion_Preferences.Preference;
 
    use String_List_Utils.String_List;
 
@@ -268,8 +264,8 @@ package body Completion_Module is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Smart_Completion_Pref : constant Smart_Completion_Type
-        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+      Smart_Completion_Pref : constant Smart_Completion_Type :=
+        Smart_Completion.Get_Pref;
    begin
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;
@@ -299,7 +295,7 @@ package body Completion_Module is
       end if;
 
       Completion_Module.Trigger_Timeout_Value :=
-        Get_Pref (Smart_Completion_Trigger_Timeout);
+        Gint (Smart_Completion_Trigger_Timeout.Get_Pref);
 
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion_Pref;
@@ -317,8 +313,8 @@ package body Completion_Module is
    is
       File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       File      : Structured_File_Access;
-      Smart_Completion_Pref : constant Smart_Completion_Type
-        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+      Smart_Completion_Pref : constant Smart_Completion_Type :=
+        Smart_Completion.Get_Pref;
 
    begin
       if Smart_Completion_Pref /= Disabled then
@@ -787,8 +783,8 @@ package body Completion_Module is
             It   : Gtk_Text_Iter;
             Constructs : aliased Construct_List;
 
-            Smart_Completion_Pref : constant Smart_Completion_Type
-              := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+            Smart_Completion_Pref : constant Smart_Completion_Type :=
+              Smart_Completion.Get_Pref;
          begin
             Kernel.Push_State (Busy);
 
@@ -1053,12 +1049,10 @@ package body Completion_Module is
    ---------------------
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Smart_Completion_Pref : constant Smart_Completion_Type
-        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
    begin
       Clear (Get_Construct_Database (Kernel));
 
-      if Smart_Completion_Pref /= Disabled then
+      if Smart_Completion.Get_Pref /= Disabled then
          Load_Construct_Database (Kernel);
       end if;
    end On_View_Changed;
@@ -1217,8 +1211,8 @@ package body Completion_Module is
       Dummy        : Boolean;
       pragma Unreferenced (Dummy);
 
-      Smart_Completion_Pref : constant Smart_Completion_Type
-        := Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+      Smart_Completion_Pref : constant Smart_Completion_Type :=
+        Smart_Completion.Get_Pref;
 
       Timeout : Gint;
    begin
@@ -1265,52 +1259,33 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
    begin
-      Smart_Completion := Glib.Properties.Creation.Param_Spec_Enum
-        (Smart_Completion_Properties.Gnew_Enum
-           (Name  => "Smart-Completion-Mode",
-            Nick  => -"Smart completion",
-            Blurb => -("Disabled: smart completion is disabled." & ASCII.LF &
-              "Normal: smart completion occurs on key press," &
-              " or after a timeout on special characters." & ASCII.LF &
-              "Dynamic: the smart completion occurs on every key press."),
-            Default => Normal));
-      Register_Property
-        (Kernel, Param_Spec (Smart_Completion), -"Editor");
+      Smart_Completion := Smart_Completion_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name  => "Smart-Completion-Mode",
+         Label => -"Smart completion",
+         Page  => -"Editor",
+         Doc   => -("Disabled: smart completion is disabled." & ASCII.LF &
+           "Normal: smart completion occurs on key press," &
+           " or after a timeout on special characters." & ASCII.LF &
+           "Dynamic: the smart completion occurs on every key press."),
+         Default => Normal);
 
-      Smart_Completion_Trigger_Timeout :=
-        Glib.Properties.Creation.Param_Spec_Int
-          (Gnew_Int
-               (Name    => "Smart-Completion-Trigger-Timeout",
-                Minimum => 0,
-                Maximum => 9999,
-                Blurb   => -("The timeout (in milliseconds) for "
-                  & "character-triggered smart completion in 'Normal' mode"),
-                Nick    => -"Smart completion timeout",
-                Default => 200));
-      Register_Property
-        (Kernel, Param_Spec (Smart_Completion_Trigger_Timeout), -"Editor");
-
-      --  ??? Deactivated code. This registers a preference to control the
-      --  "character triggers". We have decided for now to reuse the
-      --  Smart_Completion_Enabled_Set property.
-
-      --        Smart_Completion_Triggers := Param_Spec_Boolean
-      --          (Gnew_Boolean
-      --             (Name    => "Smart-Completion-Triggers",
-      --              Default => False,
-      --              Blurb   =>
-      --              -("Whether completion should activate automatically"
-      --                & " on appropriate characters"),
-      --              Nick    => "Smart completion triggers"));
-      --        Register_Property
-      --          (Kernel,
-      --           Param_Spec (Smart_Completion_Triggers), -"General");
+      Smart_Completion_Trigger_Timeout := Create
+        (Get_Preferences (Kernel),
+         Name    => "Smart-Completion-Trigger-Timeout",
+         Minimum => 0,
+         Maximum => 9999,
+         Page    => -"Editor",
+         Doc     => -("The timeout (in milliseconds) for "
+           & "character-triggered smart completion in 'Normal' mode"),
+         Label   => -"Smart completion timeout",
+         Default => 200);
 
       Completion_Module.Completion_Triggers_Callback :=
         Wrapper (Character_Added_Hook_Callback'Access);
 
       Completion_Module.Previous_Smart_Completion_State :=
-        Smart_Completion_Type'Val (Get_Pref (Smart_Completion));
+        Smart_Completion.Get_Pref;
    end Register_Preferences;
 
    -------------------------

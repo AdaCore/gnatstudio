@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -214,8 +214,8 @@ package body Entities.Tooltips is
       Doc    : constant String := Get_Instance (Ref)
         & Get_Documentation (Kernel, Entity);
 
-      Font   : constant Pango_Font_Description := Get_Pref (Default_Font);
-      Fixed  : constant Pango_Font_Description := Get_Pref (View_Fixed_Font);
+      Font   : constant Pango_Font_Description := Default_Font.Get_Pref;
+      Fixed  : constant Pango_Font_Description := View_Fixed_Font.Get_Pref;
 
       Header_Layout, Doc_Layout : Pango_Layout;
 
@@ -258,7 +258,7 @@ package body Entities.Tooltips is
       Width  := Gint'Max (W1 + Get_Width (Pixbuf) + H_Pad * 2, W2 + H_Pad * 2);
 
       Gdk_New (GC, Get_Window (Widget));
-      Set_Foreground (GC, Get_Pref (Tooltip_Color));
+      Set_Foreground (GC, Tooltip_Color.Get_Pref);
 
       Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
       Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);

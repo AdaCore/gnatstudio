@@ -29,18 +29,16 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Glib;                      use Glib;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Gtk.Main;                  use Gtk.Main;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
@@ -66,16 +64,13 @@ package body External_Editor_Module is
 
    type Supported_Clients is
      (Auto, Gnuclient, Emacsclient, Emacs, Vim, Vi, Custom);
-   for Supported_Clients'Size use Gint'Size;
-   pragma Convention (C, Supported_Clients);
+   package Supported_Client_Preferences is new
+     Default_Preferences.Enums.Generics (Supported_Clients);
    --  The list of supported external editors.
 
-   package Supported_Client_Properties is new Generic_Enumeration_Property
-     ("Supported_Clients", Supported_Clients);
-
-   Default_External_Editor    : Param_Spec_Enum;
-   Custom_Editor              : Param_Spec_String;
-   Always_Use_External_Editor : Param_Spec_Boolean;
+   Default_External_Editor    : Supported_Client_Preferences.Preference;
+   Custom_Editor              : String_Preference;
+   Always_Use_External_Editor : Boolean_Preference;
 
    type Constant_String_Access is access constant String;
 
@@ -305,7 +300,7 @@ package body External_Editor_Module is
       Args           : Argument_List_Access;
       Match          : Boolean;
       Default_Client : constant Supported_Clients := Supported_Clients'Val
-        (Get_Pref (Default_External_Editor));
+        (Default_External_Editor.Get_Pref);
    begin
       --  If the user has specified a default client, use that one.
       if Default_Client /= Auto then
@@ -812,34 +807,32 @@ package body External_Editor_Module is
 
       --  Create the preferences
 
-      Default_External_Editor :=
-        Param_Spec_Enum (Supported_Client_Properties.Gnew_Enum
-        (Name    => "External-Editor-Default-Editor",
-         Nick    => -"External editor",
-         Blurb   => -"The default external editor to use",
-         Default => Gnuclient));
-      Register_Property
-        (Kernel, Param_Spec (Default_External_Editor),
-         Page => -"Editor");
+      Default_External_Editor := Supported_Client_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "External-Editor-Default-Editor",
+         Label   => -"External editor",
+         Page    => -"Editor",
+         Doc     => -"The default external editor to use",
+         Default => Gnuclient);
 
-      Custom_Editor := Param_Spec_String (Gnew_String
-        (Name    => "External-Editor-Custom-Command",
-         Nick    => -"Custom editor command",
-         Blurb   => -"Command to use for launching a custom editor",
-         Default => "emacs +%l %f"));
-      Register_Property
-        (Kernel, Param_Spec (Custom_Editor), -"Editor");
+      Custom_Editor := Create
+        (Get_Preferences (Kernel),
+         Name    => "External-Editor-Custom-Command",
+         Label   => -"Custom editor command",
+         Page    => -"Editor",
+         Doc     => -"Command to use for launching a custom editor",
+         Default => "emacs +%l %f");
 
-      Always_Use_External_Editor := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "External-Editor-Always-Use-External-Editor",
+      Always_Use_External_Editor := Create
+        (Get_Preferences (Kernel),
+         Name    => "External-Editor-Always-Use-External-Editor",
          Default => False,
-         Blurb   => -("True if all editions should be done with the external"
+         Page    => -"Editor",
+         Doc     => -("True if all editions should be done with the external"
                       & " editor. This will deactivate completely the"
                       & " internal editor. False if the external editor"
                       & " needs to be explicitely called by the user."),
-         Nick    => -"Always use external editor"));
-      Register_Property
-        (Kernel, Param_Spec (Always_Use_External_Editor), -"Editor");
+         Label   => -"Always use external editor");
 
       Command := new Edit_With_External_Command;
       Register_Contextual_Menu

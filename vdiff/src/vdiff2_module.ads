@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,9 +19,6 @@
 
 --  New Visual Diff module
 
-with Glib;                     use Glib;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-
 with Default_Preferences;
 with Diff_Utils2;              use Diff_Utils2;
 with GPS.Kernel.Modules;       use GPS.Kernel;
@@ -34,13 +30,13 @@ package Vdiff2_Module is
    Vdiff_Module_ID        : GPS.Kernel.Modules.Module_ID;
    Vdiff_Module_Name      : constant String := "Visual_Diff2";
 
-   Diff3_Cmd              : Param_Spec_String;
-   Diff_Default_Color     : Default_Preferences.Param_Spec_Color;
-   Diff_Old_Color         : Default_Preferences.Param_Spec_Color;
-   Diff_Append_Color      : Default_Preferences.Param_Spec_Color;
-   Diff_Remove_Color      : Default_Preferences.Param_Spec_Color;
-   Diff_Change_Color      : Default_Preferences.Param_Spec_Color;
-   Diff_Fine_Change_Color : Default_Preferences.Param_Spec_Color;
+   Diff3_Cmd              : Default_Preferences.String_Preference;
+   Diff_Default_Color     : Default_Preferences.Color_Preference;
+   Diff_Old_Color         : Default_Preferences.Color_Preference;
+   Diff_Append_Color      : Default_Preferences.Color_Preference;
+   Diff_Remove_Color      : Default_Preferences.Color_Preference;
+   Diff_Change_Color      : Default_Preferences.Color_Preference;
+   Diff_Fine_Change_Color : Default_Preferences.Color_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

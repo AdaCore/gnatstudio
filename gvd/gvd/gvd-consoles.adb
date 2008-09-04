@@ -423,7 +423,7 @@ package body GVD.Consoles is
          Handler             => Interpret_Command_Handler'Access,
          User_Data           => Console.all'Address,
          Prompt              => "",
-         Font                => Get_Pref_Font (Default_Style),
+         Font                => Default_Style.Get_Pref_Font,
          History_List        => Get_History (Kernel),
          Key                 => "gvd_console",
          Wrap_Mode           => Wrap_Char,
@@ -433,7 +433,7 @@ package body GVD.Consoles is
       Allow_Duplicates
         (Get_History (Kernel).all, "gvd_console", True, True);
 
-      Set_Highlight_Color    (Console, Get_Pref (Debugger_Highlight_Color));
+      Set_Highlight_Color    (Console, Debugger_Highlight_Color.Get_Pref);
       Set_Completion_Handler (Console, Complete_Command'Access);
       Widget_Callback.Object_Connect
         (Get_View (Console), Signal_Grab_Focus, On_Grab_Focus'Access, Console);
@@ -515,7 +515,7 @@ package body GVD.Consoles is
          Prompt      => "",
          Handler     => Debuggee_Console_Handler'Access,
          User_Data   => Console.all'Address,
-         Font         => Get_Pref_Font (Default_Style),
+         Font         => Default_Style.Get_Pref_Font,
          History_List => null,
          Key          => "gvd_tty_console",
          Wrap_Mode    => Wrap_Char);

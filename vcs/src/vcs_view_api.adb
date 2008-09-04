@@ -548,7 +548,7 @@ package body VCS_View_API is
       Name : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (Title             => -"Select root directory",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          Base_Directory    => GNATCOLL.VFS.Create (Get_Text (Dialog.Dir)));
 
    begin

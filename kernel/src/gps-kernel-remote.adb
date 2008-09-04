@@ -3749,7 +3749,7 @@ package body GPS.Kernel.Remote is
                Tmp_Args_2 : Argument_List_Access;
             begin
                Tmp_Args_2 := Argument_String_To_List
-                 (Get_Pref (GPS.Kernel.Preferences.Execute_Command));
+                 (GPS.Kernel.Preferences.Execute_Command.Get_Pref);
                Args := new Argument_List'(Tmp_Args_2.all & Tmp_Args_1.all);
                Simple_Free (Tmp_Args_1);
                Simple_Free (Tmp_Args_2);

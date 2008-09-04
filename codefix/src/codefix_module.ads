@@ -25,8 +25,7 @@ with GNAT.Strings;            use GNAT.Strings;
 with Codefix;                 use Codefix;
 with Codefix.Errors_Manager;  use Codefix.Errors_Manager;
 with Codefix.Text_Manager;
-with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Default_Preferences.Enums;
 with Codefix.Formal_Errors;    use Codefix.Formal_Errors;
 
 package Codefix_Module is
@@ -68,13 +67,10 @@ package Codefix_Module is
 
    type Codefix_Remove_Policy is
      (Always_Remove, Always_Comment, Propose_Both_Choices);
-   for Codefix_Remove_Policy'Size use Glib.Gint'Size;
-   pragma Convention (C, Codefix_Remove_Policy);
+   package Codefix_Remove_Policy_Preferences is new
+     Default_Preferences.Enums.Generics (Codefix_Remove_Policy);
 
-   package Codefix_Remove_Policy_Properties is new Generic_Enumeration_Property
-     ("Codefix_Remove_Policy", Codefix_Remove_Policy);
-
-   Remove_Policy : Param_Spec_Enum;
+   Remove_Policy : Codefix_Remove_Policy_Preferences.Preference;
 
    function Policy_To_Operations
      (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations;

@@ -230,7 +230,7 @@ package body Creation_Wizard is
 
          Gtk_New (Page.Relative_Paths, -"Use relative paths in the projects");
          Set_Active (Page.Relative_Paths,
-                     Get_Pref (Generate_Relative_Paths));
+                     Generate_Relative_Paths.Get_Pref);
          Pack_Start (Box, Page.Relative_Paths, Expand => False);
       else
          Page.Relative_Paths := null;
@@ -253,7 +253,7 @@ package body Creation_Wizard is
         (Title             => -"Select project file location",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
          Base_Directory    => Create (Get_Text (P.Project_Location)),
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          History           => Get_History (P.Kernel));
 
    begin

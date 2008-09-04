@@ -60,8 +60,6 @@ with Completion.History; use Completion.History;
 package Completion_Window is
 
    type Smart_Completion_Type is (Disabled, Normal, Dynamic);
-   for Smart_Completion_Type'Size use Glib.Gint'Size;
-   pragma Convention (C, Smart_Completion_Type);
 
    type Completion_Window_Record is new Gtk_Window_Record with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;

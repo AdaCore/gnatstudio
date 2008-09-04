@@ -32,30 +32,7 @@ function calls instead.
 This plug-in also demonstrates how to start and monitor an external
 executable.
 It also shows how to get the word under the cursor in GPS.
-
 """
-
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-import GPS
-
-GPS.Preference ("Plugins/ispell/cmd").create (
-    "Command", "string", """External command to use to spell check words.
-This command should return a list of words that could replace the current
-one. Recommended values are "aspell" or "ispell". Input to this command
-is sent to its stdin.""", "aspell -a --lang=en")
-
-GPS.Preference ("Plugins/ispell/bgcolor").create (
-    "Background color", "color", """Background color for the command window that contains the suggested replacements""", "yellow")
-
-
-contextual_menu_type = "static"
-# What type of contextual menu we should use. Value can be:
-#   "dynamic", "static", or "none"
-# See above for a description of the various types
 
 
 ###########################################################################
@@ -65,13 +42,30 @@ contextual_menu_type = "static"
 import re, os_utils
 from text_utils import *
 import traceback
+import GPS
+
+GPS.Preference ("Plugins/ispell/cmd").create (
+    "Command", "string", """External command to use to spell check words.
+This command should return a list of words that could replace the current
+one. Recommended values are "aspell" or "ispell". Input to this command
+is sent to its stdin.
+You need to restart GPS to take any change into account""", "aspell -a --lang=en")
+
+GPS.Preference ("Plugins/ispell/bgcolor").create (
+    "Background color", "color", """Background color for the command window that contains the suggested replacements""", "yellow")
+
+GPS.Preference ("Plugins/ispell/menutype").create (
+    "Menu type", "enum", """The type of contextual menu we should use. "dynamic" only shows the possible replacements for the current word. "static" displays a single entry that spawns the spell checked for the current word.
+You need to restart GPS to take any change into account""",
+    1, "static", "dynamic", "none");
 
 ispell = None
 
 def on_pref_changed (h):
-   global ispell_command, background_color
+   global ispell_command, background_color, contextual_menu_type
    ispell_command = GPS.Preference ("Plugins/ispell/cmd").get()
    background_color = GPS.Preference ("Plugins/ispell/bgcolor").get()
+   contextual_menu_type = GPS.Preference ("Plugins/ispell/menutype").get()
 
 class Ispell:
    """Interface to ispell. This takes care of properly starting a process,

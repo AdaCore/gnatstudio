@@ -544,7 +544,7 @@ package body Builder_Module is
 
       case Syntax is
          when GPRbuild_Syntax | GNAT_Syntax =>
-            if not Get_Pref (Trusted_Mode) then
+            if not Trusted_Mode.Get_Pref then
                declare
                   Old_Vars : Argument_List_Access := Vars;
                begin
@@ -818,15 +818,13 @@ package body Builder_Module is
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
          Syntax := GNAT_Syntax;
 
-      elsif Get_Pref (Multi_Language_Build)
-        and then Get_Pref (Multi_Language_Builder) =
-          Multi_Language_Builder_Policy'Pos (Gprmake)
+      elsif Multi_Language_Build.Get_Pref
+        and then Multi_Language_Builder.Get_Pref = Gprmake
       then
          Syntax := GPRmake_Syntax;
 
-      elsif Get_Pref (Multi_Language_Build)
-        and then Get_Pref (Multi_Language_Builder) =
-          Multi_Language_Builder_Policy'Pos (Gprbuild)
+      elsif Multi_Language_Build.Get_Pref
+        and then Multi_Language_Builder.Get_Pref = Gprbuild
       then
          Syntax := GPRbuild_Syntax;
 
@@ -1109,9 +1107,7 @@ package body Builder_Module is
          end case;
 
       else
-         if Get_Pref (Multi_Language_Builder) =
-           Multi_Language_Builder_Policy'Pos (Gprmake)
-         then
+         if Multi_Language_Builder.Get_Pref = Gprmake then
             Cmd := new String'("gprmake");
             Syntax := GPRmake_Syntax;
          else
@@ -1578,7 +1574,7 @@ package body Builder_Module is
       --  project whose name is changed when saving
 
       if not D.Bool
-        and then not Save_MDI_Children (Kernel, Force => Get_Pref (Auto_Save))
+        and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
       then
          return False;
       end if;
@@ -1613,7 +1609,7 @@ package body Builder_Module is
       end if;
 
       if Builder_Module_ID.Build_Count = 0 then
-         if Get_Pref (Automatic_Xrefs_Load) then
+         if Automatic_Xrefs_Load.Get_Pref then
             Load_Xref_In_Memory (Kernel);
          end if;
       end if;
@@ -2272,7 +2268,7 @@ package body Builder_Module is
       Show_All (Menu1);
       Show_All (Menu2);
 
-      if Get_Pref (Automatic_Xrefs_Load) then
+      if Automatic_Xrefs_Load.Get_Pref then
          Load_Xref_In_Memory (Kernel_Handle (Kernel));
       end if;
    exception

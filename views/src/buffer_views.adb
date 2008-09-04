@@ -539,7 +539,7 @@ package body Buffer_Views is
          Hide_Expander      => False);
       Add (View, View.Tree);
 
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), Signal_Child_Added,
@@ -594,7 +594,7 @@ package body Buffer_Views is
    begin
       if Child /= null then
          View := Buffer_View_Access (Get_Widget (Child));
-         Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+         Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
       end if;
    end Preferences_Changed;
 

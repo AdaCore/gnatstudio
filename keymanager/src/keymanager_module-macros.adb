@@ -571,7 +571,7 @@ package body KeyManager_Module.Macros is
            Select_File
              (Title             => -"Load Macro",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
               Kind              => Open_File,
               History           => Get_History (Kernel));
 
@@ -615,7 +615,7 @@ package body KeyManager_Module.Macros is
            Select_File
              (Title             => -"Save Macro As",
               Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
               Kind              => Save_File,
               History           => Get_History (Kernel));
 

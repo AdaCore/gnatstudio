@@ -221,7 +221,7 @@ package body GPS.Kernel.Console is
          File : constant Virtual_File :=
            Select_File
              (Title             => -"Save messages window as",
-              Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
               Kind              => Save_File,
               Parent            => Get_Current_Window (Kernel),
               History           => Get_History (Kernel));
@@ -261,7 +261,7 @@ package body GPS.Kernel.Console is
    begin
       File := Select_File
         (Title             => -"Select file to load in the messages window",
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          Kind              => Open_File,
          Parent            => Get_Current_Window (Kernel),
          History           => Get_History (Kernel));
@@ -328,7 +328,7 @@ package body GPS.Kernel.Console is
       Console : constant Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
-         Modify_Font (Get_View (Console), Get_Pref (View_Fixed_Font));
+         Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
       end if;
    end On_Preferences_Changed;
 
@@ -351,8 +351,8 @@ package body GPS.Kernel.Console is
          "",
          null,
          Kernel.all'Address,
-         Get_Pref (View_Fixed_Font),
-         Highlight    => Get_Pref (Message_Highlight),
+         View_Fixed_Font.Get_Pref,
+         Highlight    => Message_Highlight.Get_Pref,
          History_List => null,
          Key          => "",
          Wrap_Mode    => Wrap_Char);
@@ -417,11 +417,11 @@ package body GPS.Kernel.Console is
          if Create then
             Gtk_New
               (Console, "", null,
-               System.Null_Address, Get_Pref_Font (Default_Style),
+               System.Null_Address, Default_Style.Get_Pref_Font,
                History_List => Get_History (Kernel),
                Key          => History,
                Wrap_Mode    => Wrap_Char,
-               Highlight    => Get_Pref (Message_Highlight));
+               Highlight    => Message_Highlight.Get_Pref);
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 

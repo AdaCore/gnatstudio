@@ -18,12 +18,10 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
-with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
-
 with ALI_Parser;               use ALI_Parser;
 with CPP_Parser;               use CPP_Parser;
 with Case_Handling;            use Case_Handling;
+with Default_Preferences;      use Default_Preferences;
 with Entities;                 use Entities;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
 with GNATCOLL.Traces;
@@ -36,7 +34,7 @@ with GPS.Kernel;               use GPS.Kernel;
 with Language.C;               use Language.C;
 with Language.Cpp;             use Language.Cpp;
 with Language;                 use Language;
-with Language_Handlers;    use Language_Handlers;
+with Language_Handlers;        use Language_Handlers;
 with Naming_Editors;           use Naming_Editors;
 with Project_Viewers;          use Project_Viewers;
 with Projects.Registry;        use Projects.Registry;
@@ -48,9 +46,9 @@ package body Cpp_Module is
    Use_GLI_Trace : constant Debug_Handle :=
                      Create ("CPP.GLI", GNATCOLL.Traces.Off);
 
-   C_Automatic_Indentation   : Param_Spec_Enum;
-   C_Use_Tabs                : Param_Spec_Boolean;
-   C_Indentation_Level       : Param_Spec_Int;
+   C_Automatic_Indentation   : Indentation_Kind_Preferences.Preference;
+   C_Use_Tabs                : Boolean_Preference;
+   C_Indentation_Level       : Integer_Preference;
 
    type GLI_Handler_Record is new ALI_Handler_Record with null record;
    type GLI_Handler is access all GLI_Handler_Record'Class;
@@ -179,23 +177,20 @@ package body Cpp_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
-      Style  : constant Indentation_Kind := Indentation_Kind'Val
-        (Get_Pref (C_Automatic_Indentation));
-      Tabs   : constant Boolean := Get_Pref (C_Use_Tabs);
+      Style  : constant Indentation_Kind := C_Automatic_Indentation.Get_Pref;
       Params : constant Indent_Parameters :=
-                 (Indent_Level        =>
-                    Integer (Get_Pref (C_Indentation_Level)),
+                 (Indent_Level        => C_Indentation_Level.Get_Pref,
                   Indent_Continue     => 0,
                   Indent_Decl         => 0,
                   Indent_Conditional  => 0,
                   Indent_Record       => 0,
-                  Tab_Width           => Integer (Get_Pref (Tab_Width)),
+                  Tab_Width           => Tab_Width.Get_Pref,
                   Indent_Case_Extra   => Automatic,
                   Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,
                   Ident_Casing        => Case_Handling.Unchanged,
                   Format_Operators    => False,
-                  Use_Tabs            => Tabs,
+                  Use_Tabs            => C_Use_Tabs.Get_Pref,
                   Align_On_Colons     => False,
                   Align_On_Arrows     => False,
                   Align_Decl_On_Colon => False,
@@ -289,35 +284,32 @@ package body Cpp_Module is
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
 
-      C_Automatic_Indentation := Param_Spec_Enum
-        (Indentation_Properties.Gnew_Enum
-           (Name    => "C-Auto-Indentation",
-            Default => Extended,
-            Blurb   => -"How the editor should indent C/C++ sources",
-            Nick    => -"Auto indentation"));
-      Register_Property
-        (Kernel, Param_Spec (C_Automatic_Indentation), -"Editor/C & C++");
+      C_Automatic_Indentation := Indentation_Kind_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "C-Auto-Indentation",
+         Default => Extended,
+         Page    => -"Editor/C & C++",
+         Doc     => -"How the editor should indent C/C++ sources",
+         Label   => -"Auto indentation");
 
-      C_Use_Tabs := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "C-Use-Tabs",
-           Default => True,
-           Blurb   =>
+      C_Use_Tabs := Create
+        (Get_Preferences (Kernel),
+         Name    => "C-Use-Tabs",
+         Default => True,
+         Page    => -"Editor/C & C++",
+         Doc     =>
              -("Whether the editor should use tabulations when indenting"),
-           Nick    => -"Use tabulations"));
-      Register_Property
-        (Kernel, Param_Spec (C_Use_Tabs), -"Editor/C & C++");
+         Label   => -"Use tabulations");
 
-      C_Indentation_Level := Param_Spec_Int
-        (Gnew_Int
-          (Name    => "C-Indent-Level",
-           Minimum => 1,
-           Maximum => 9,
-           Default => 2,
-           Blurb   => -"The number of spaces for the default indentation",
-           Nick    => -"Default indentation"));
-      Register_Property
-        (Kernel, Param_Spec (C_Indentation_Level), -"Editor/C & C++");
+      C_Indentation_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "C-Indent-Level",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 2,
+         Page    => -"Editor/C & C++",
+         Doc     => -"The number of spaces for the default indentation",
+         Label   => -"Default indentation");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

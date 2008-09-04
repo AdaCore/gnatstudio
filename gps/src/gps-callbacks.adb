@@ -130,7 +130,7 @@ package body GPS.Callbacks is
          if Child = null then
             Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
          else
-            if Get_Pref (Pref_Draw_Title_Bars) then
+            if Pref_Draw_Title_Bars.Get_Pref then
                Reset_Title
                  (GPS_Window (Get_Main_Window (Kernel)),
                   Get_Short_Title (Child));

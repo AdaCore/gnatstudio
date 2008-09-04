@@ -17,58 +17,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
+with GNAT.Strings;              use GNAT.Strings;
 
-with Gdk.Color;               use Gdk.Color;
-with Gdk.Types;               use Gdk.Types;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 
-with Glib.Generic_Properties; use Glib.Generic_Properties;
-with Glib.Properties;         use Glib.Properties;
-with Glib.Xml_Int;            use Glib.Xml_Int;
-with Gtk.Style;
-
-with Pango.Font;              use Pango.Font;
-
-with Case_Handling;           use Case_Handling;
 with Config;
-with Entities.Queries;        use Entities.Queries;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Charsets;     use GPS.Kernel.Charsets;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Language;                use Language;
+with Default_Preferences.Enums; use Default_Preferences.Enums;
+with Entities.Queries;          use Entities.Queries;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Language;                  use Language;
 with Traces;
 
 package body GPS.Kernel.Preferences is
    Me : constant Trace_Handle := Create ("GPS_KERNEL");
 
    use type Config.Host_Type;
-
-   package Line_Terminators_Properties is new Generic_Enumeration_Property
-     ("Line_Terminators", Line_Terminators);
-
-   package Speed_Column_Policy_Properties is new Generic_Enumeration_Property
-     ("Speed_Column_Policies", Speed_Column_Policies);
-
-   package Editor_Desktop_Policy_Properties is new Generic_Enumeration_Property
-     ("Editor_Desktop_Policy", Editor_Desktop_Policy);
-
-   package Dispatching_Menu_Policy_Properties is new
-     Generic_Enumeration_Property
-       ("Dispatching_Menu_Policy", Entities.Queries.Dispatching_Menu_Policy);
-
-   package Multi_Language_Builder_Policy_Properties is new
-     Generic_Enumeration_Property
-       ("Multi_Language_Builder_Policy", Multi_Language_Builder_Policy);
 
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
@@ -80,16 +52,6 @@ package body GPS.Kernel.Preferences is
      (Data : in out Callback_Data'Class; Command : String);
    --  Get preference command handler
 
-   function Get_Index
-     (Enum  : Param_Spec_Enum;
-      Value : String) return Gint;
-   --  Return string representation of value's index in Enum
-
-   function Get_Value
-     (Enum  : Param_Spec_Enum;
-      Index : Guint) return String;
-   --  Return enum value for Index
-
    type Preferences_Module is new Module_ID_Record with null record;
    overriding procedure Customize
      (Module : access Preferences_Module;
@@ -97,58 +59,6 @@ package body GPS.Kernel.Preferences is
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
-
-   ---------------
-   -- Get_Value --
-   ---------------
-
-   function Get_Value
-     (Enum  : Param_Spec_Enum;
-      Index : Guint) return String
-   is
-      E_Klass : constant Enum_Class := Enumeration (Enum);
-      Val     : Enum_Value;
-   begin
-      Val := Nth_Value (E_Klass, Index);
-
-      if Val = null then
-         raise Constraint_Error;
-      end if;
-
-      declare
-         S : String := Nick (Val);
-      begin
-         Mixed_Case (S);
-         return S;
-      end;
-   end Get_Value;
-
-   ---------------
-   -- Get_Index --
-   ---------------
-
-   function Get_Index
-     (Enum  : Param_Spec_Enum;
-      Value : String) return Gint
-   is
-      L_Value : constant String     := To_Upper (Value);
-      --  Enumeration value are returned all upper case
-      E_Klass : constant Enum_Class := Enumeration (Enum);
-      Val     : Enum_Value;
-      K       : Gint := 0;
-   begin
-      loop
-         Val := Nth_Value (E_Klass, Guint (K));
-         exit when Val = null;
-
-         if Nick (Val) = L_Value then
-            return K;
-         end if;
-
-         K := K + 1;
-      end loop;
-      raise Constraint_Error;
-   end Get_Index;
 
    -------------------------
    -- Get_Command_Handler --
@@ -166,49 +76,28 @@ package body GPS.Kernel.Preferences is
 
       elsif Command = "get" then
          declare
-            Pref  : constant String     :=
-              Translate (Get_Data (Inst, Class), To_Mapping ("/", "-"));
-            Param : constant Param_Spec :=
-              Get_Pref_From_Name (Kernel.Preferences, Pref, False);
-            Typ   : GType;
+            Name  : constant String     := Get_Data (Inst, Class);
+            Pref : constant Preference :=
+              Get_Pref_From_Name (Kernel.Preferences, Name, False);
          begin
-            if Param = null then
-               Set_Error_Msg (Data, -"Unknown preference " & Pref);
-               return;
-            else
-               Typ := Value_Type (Param);
-            end if;
+            if Pref = null then
+               Set_Error_Msg (Data, -"Unknown preference " & Name);
 
-            if Typ = GType_Int then
+            elsif Pref.all in Integer_Preference_Record'Class then
                Set_Return_Value
-                 (Data, Integer (Get_Pref (Param_Spec_Int (Param))));
+                 (Data, Integer'(Get_Pref (Integer_Preference (Pref))));
 
-            elsif Typ = GType_Boolean then
+            elsif Pref.all in Boolean_Preference_Record'Class then
                Set_Return_Value
-                 (Data, (Get_Pref (Param_Spec_Boolean (Param))));
+                 (Data, Boolean'(Get_Pref (Boolean_Preference (Pref))));
 
-            elsif Typ = GType_String then
-               Set_Return_Value
-                 (Data, Get_Pref (Param_Spec_String (Param)));
-
-            elsif Typ = Gdk.Color.Gdk_Color_Type then
-               Set_Return_Value
-                 (Data, To_String (Get_Pref (Param_Spec_Color (Param))));
-
-            elsif Typ = Pango.Font.Get_Type then
-               Set_Return_Value
-                 (Data, To_String (Get_Pref (Param_Spec_Font (Param))));
-
-            elsif Typ = Gtk.Style.Get_Type then
-               Set_Return_Value
-                 (Data, Get_Pref (Param_Spec_String (Param)));
-
-            elsif Fundamental (Typ) = GType_Enum then
-               Set_Return_Value
-                 (Data,
-                  Get_Value
-                    (Param_Spec_Enum (Param),
-                     Guint (Get_Pref (Param_Spec_Enum (Param)))));
+            elsif Pref.all in String_Preference_Record'Class
+              or else Pref.all in Color_Preference_Record'Class
+              or else Pref.all in Font_Preference_Record'Class
+              or else Pref.all in Style_Preference_Record'Class
+              or else Pref.all in Enum_Preference_Record'Class
+            then
+               Set_Return_Value (Data, Get_Pref (Pref));
 
             else
                Set_Error_Msg (Data, -"Preference type not supported");
@@ -221,51 +110,33 @@ package body GPS.Kernel.Preferences is
       elsif Command = "set" then
          Name_Parameters (Data, Set_Cmd_Parameters);
          declare
-            Pref  : constant String     :=
-              Translate (Get_Data (Inst, Class), To_Mapping ("/", "-"));
-            Param : constant Param_Spec :=
-              Get_Pref_From_Name (Kernel.Preferences, Pref, False);
-            Typ   : GType;
+            Name  : constant String     := Get_Data (Inst, Class);
+            Pref  : constant Preference :=
+              Get_Pref_From_Name (Kernel.Preferences, Name, False);
             Done  : Boolean := True;
          begin
-            if Param = null then
-               Set_Error_Msg (Data, -"Unknown preference " & Pref);
-               return;
-            else
-               Typ := Value_Type (Param);
-            end if;
+            if Pref = null then
+               Set_Error_Msg (Data, -"Unknown preference " & Name);
 
-            if Typ = GType_Int then
+            elsif Pref.all in Integer_Preference_Record'Class then
                Set_Pref
-                 (Kernel.Preferences,
-                  Param_Spec_Int (Param),
-                  Gint (Integer'(Nth_Arg (Data, 2))));
+                 (Integer_Preference (Pref),
+                  Kernel.Preferences,
+                  Integer'(Nth_Arg (Data, 2)));
 
-            elsif Typ = GType_String
-              or else Typ = Pango.Font.Get_Type
-              or else Typ = Gdk_Color_Type
+            elsif Pref.all in Boolean_Preference_Record'Class then
+               Set_Pref
+                 (Boolean_Preference (Pref),
+                  Kernel.Preferences,
+                  Boolean'(Nth_Arg (Data, 2)));
+
+            elsif Pref.all in String_Preference_Record'Class
+              or else Pref.all in Font_Preference_Record'Class
+              or else Pref.all in Color_Preference_Record'Class
+              or else Pref.all in Style_Preference_Record'Class
+              or else Pref.all in Enum_Preference_Record'Class
             then
-               Set_Pref
-                 (Kernel.Preferences,
-                  Param_Spec_String (Param), String'(Nth_Arg (Data, 2)));
-
-            elsif Typ = GType_Boolean then
-               Set_Pref
-                 (Kernel.Preferences, Param_Spec_Boolean (Param),
-                  Nth_Arg (Data, 2));
-
-            elsif Typ = Gtk.Style.Get_Type then
-               Set_Pref
-                 (Kernel.Preferences,
-                  Param_Spec_String (Param),
-                  String'(Nth_Arg (Data, 2)));
-
-            elsif Fundamental (Typ) = GType_Enum then
-               Set_Pref
-                 (Kernel.Preferences,
-                  Param_Spec_Int (Param),
-                  Get_Index
-                    (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 2))));
+               Set_Pref (Pref, Kernel.Preferences, String'(Nth_Arg (Data, 2)));
 
             else
                Done := False;
@@ -286,55 +157,84 @@ package body GPS.Kernel.Preferences is
 
       elsif Command = "create" then
          declare
-            Pref  : constant String := Get_Data (Inst, Class);
-            Name  : constant String := Translate (Pref, To_Mapping ("/", "-"));
-            Nick  : constant String := Nth_Arg (Data, 2);
+            Path  : constant String := Get_Data (Inst, Class);
+            Label : constant String := Nth_Arg (Data, 2);
             Typ   : constant String := Nth_Arg (Data, 3);
             Doc   : constant String := Nth_Arg (Data, 4, "");
-            Param : Param_Spec;
+            Pref  : Preference;
+            pragma Unreferenced (Pref);
          begin
             if Typ = "integer" then
-               Param := Gnew_Int
-                 (Name    => Name,
-                  Nick    => Nick,
-                  Blurb   => Doc,
-                  Default => Gint (Nth_Arg (Data, 5, 0)),
-                  Minimum => Gint (Nth_Arg (Data, 6, Integer'First)),
-                  Maximum => Gint (Nth_Arg (Data, 7, Integer'Last)));
+               Pref := Preference (Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Doc     => Doc,
+                  Page    => Dir_Name (Path),
+                  Default => Nth_Arg (Data, 5, 0),
+                  Minimum => Nth_Arg (Data, 6, Integer'First),
+                  Maximum => Nth_Arg (Data, 7, Integer'Last)));
 
             elsif Typ = "boolean" then
-               Param := Gnew_Boolean
-                 (Name    => Name,
-                  Nick    => Nick,
-                  Blurb   => Doc,
-                  Default => Nth_Arg (Data, 5, True));
+               Pref := Preference (Boolean_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Doc     => Doc,
+                  Page    => Dir_Name (Path),
+                  Default => Nth_Arg (Data, 5, True))));
 
             elsif Typ = "string" then
-               Param := Gnew_String
-                 (Name    => Name,
-                  Nick    => Nick,
-                  Blurb   => Doc,
-                  Default => Nth_Arg (Data, 5, ""));
+               Pref := Preference (String_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Page    => Dir_Name (Path),
+                  Doc     => Doc,
+                  Default => Nth_Arg (Data, 5, ""))));
 
             elsif Typ = "color" then
-               Param := Param_Spec (Gnew_Color
-                 (Name    => Name,
-                  Nick    => Nick,
-                  Blurb   => Doc,
-                  Default => Nth_Arg (Data, 5, "black")));
+               Pref := Preference (Color_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Doc     => Doc,
+                  Page    => Dir_Name (Path),
+                  Default => Nth_Arg (Data, 5, "black"))));
 
             elsif Typ = "font" then
-               Param := Param_Spec (Gnew_Font
-                 (Name    => Name,
-                  Nick    => Nick,
-                  Blurb   => Doc,
-                  Default => Nth_Arg (Data, 5, Config.Default_Font)));
+               Pref := Preference (Font_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Page    => Dir_Name (Path),
+                  Doc     => Doc,
+                  Default => Nth_Arg (Data, 5, Config.Default_Font))));
+
+            elsif Typ = "enum" then
+               declare
+                  Val : constant String_List_Access :=
+                    new String_List (1 .. Number_Of_Arguments (Data) - 5);
+                  --  Freed when the preference is destroyed
+               begin
+                  for V in Val'Range loop
+                     Val (V) := new String'(Nth_Arg (Data, 5 + V));
+                  end loop;
+
+                  Pref := Preference (Choice_Preference'(Create
+                    (Manager => Kernel.Preferences,
+                     Name      => Path,
+                     Label     => Label,
+                     Page      => Dir_Name (Path),
+                     Doc       => Doc,
+                     Choices   => Val,
+                     Default   => Nth_Arg (Data, 5))));
+               end;
+
             else
                Set_Error_Msg (Data, -"Invalid preference type");
                return;
             end if;
-
-            Register_Property (Kernel.Preferences, Param, Dir_Name (Pref));
          end;
       end if;
    end Get_Command_Handler;
@@ -348,953 +248,892 @@ package body GPS.Kernel.Preferences is
    begin
       -- General --
 
-      Default_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "General-Default-Font",
+      Default_Font := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Default-Font",
          Default => Config.Default_Font,
-         Blurb   => -"The default font used in GPS",
-         Nick    => -"Default font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Font), -"General");
+         Doc     => -"The default font used in GPS",
+         Page    => -"General",
+         Label   => -"Default font");
 
-      View_Fixed_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "General-Fixed-View-Font",
+      View_Fixed_Font := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Fixed-View-Font",
          Default => "Courier 10",
-         Blurb   => -("Fixed pitch (monospace) font used in the various views "
+         Doc     => -("Fixed pitch (monospace) font used in the various views "
                       & "(Outline View, Clipboard View, Messages, ...)"),
-         Nick    => -"Fixed view font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (View_Fixed_Font), -"General");
+         Label    => -"Fixed view font",
+         Page     => -"General");
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
-      Default_Widget_Width := Param_Spec_Int (Gnew_Int
-        (Name    => "General-Default-Widget-Width",
-         Nick    => -"Default width",
-         Blurb   => -"Default width for all the newly created windows",
+      Default_Widget_Width := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Default-Widget-Width",
+         Label   => -"Default width",
+         Doc     => -"Default width for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
          Default => 200,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Widget_Width), -"General");
+         Page    => "");
 
-      Default_Widget_Height := Param_Spec_Int (Gnew_Int
-        (Name    => "General-Default-Widget-Height",
-         Nick    => -"Default height",
-         Blurb   => -"Default height for all the newly created windows",
+      Default_Widget_Height := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Default-Widget-Height",
+         Label   => -"Default height",
+         Doc     => -"Default height for all the newly created windows",
          Minimum => 50,
          Maximum => 2000,
          Default => 200,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Widget_Height), -"General");
+         Page    => "");
 
-      Use_Native_Dialogs := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Use-Native-Dialogs",
-         Nick    => -"Native dialogs",
-         Blurb   =>
-           -"Use OS native dialogs if enabled, portable dialogs otherwise",
+      Use_Native_Dialogs := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Use-Native-Dialogs",
+         Label   => -"Native dialogs",
+         Doc     =>
+         -"Use OS native dialogs if enabled, portable dialogs otherwise",
          Default => True,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Use_Native_Dialogs), -"General");
+         Page    => "");
 
-      Splash_Screen := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "General-Splash-Screen",
-            Nick    => -"Display splash screen",
-            Blurb   =>
-              -"Whether a splash screen should be displayed when starting GPS",
-         Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
+      Splash_Screen := Create
+        (Manager  => Kernel.Preferences,
+         Name     => "General-Splash-Screen",
+         Label    => -"Display splash screen",
+         Doc      =>
+         -"Whether a splash screen should be displayed when starting GPS",
+         Default => True,
+         Page    => -"General");
 
-      Display_Welcome := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Display-Welcome",
-         Nick    => -"Display welcome window",
-         Blurb   => -("Enabled when GPS should display the welcome window"
+      Display_Welcome := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Display-Welcome",
+         Label   => -"Display welcome window",
+         Doc     => -("Enabled when GPS should display the welcome window"
                       & " for the selection of the project"),
-         Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Welcome), -"General");
+         Default => True,
+         Page    => -"General");
 
-      Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Toolbar-Text",
-         Nick    => -"Show text in tool bar",
-         Blurb   => -("Enabled if tool bar should show both text and icons,"
+      Toolbar_Show_Text := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Toolbar-Text",
+         Label   => -"Show text in tool bar",
+         Doc     => -("Enabled if tool bar should show both text and icons,"
                       & " Disabled if it should only show icons"),
-         Default => False));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
+         Default => False,
+         Page    => -"General");
 
-      Submenu_For_Dispatching_Calls := Param_Spec_Enum
-        (Dispatching_Menu_Policy_Properties.Gnew_Enum
-           (Name => "Submenu-For-Dispatching",
-            Nick => -"Submenu for dispatching calls",
-            Blurb => -("If you are using a GNAT version more recent than"
-              & " 2007-09-21, cross-references on dispatching calls can"
-              & " list all the subprograms that might be called at run time."
-              & " However, computing this info might take some time, and the"
-              & " preference lets you chose how GPS should behave:"
-              & ASCII.LF
-              & "Never: no special submenu is displayed for dispatching calls"
-              & ASCII.LF
-              & "From Memory: only the information already available in memory"
+      Submenu_For_Dispatching_Calls := Dispatching_Menu_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name  => "Submenu-For-Dispatching",
+         Label => -"Submenu for dispatching calls",
+         Doc   => -("If you are using a GNAT version more recent than"
+           & " 2007-09-21, cross-references on dispatching calls can"
+           & " list all the subprograms that might be called at run time."
+           & " However, computing this info might take some time, and the"
+           & " preference lets you chose how GPS should behave:"
+           & ASCII.LF
+           & "Never: no special submenu is displayed for dispatching calls"
+           & ASCII.LF
+           & "From Memory: only the information already available in memory"
               & " is used. Some possible subprograms will not be listed"
-              & ASCII.LF
-              & "Accurate: GPS will reload the cross-references information"
-              & " from the disk as needed. This might result in long delays"
-              & " (up to several seconds) if lots of information needs to be"
-              & " loaded. This method is always used when computing"
-              & " dispatching information in call graphs."),
-            Default => From_Memory));
-      Register_Property
-           (Kernel.Preferences,
-            Param_Spec (Submenu_For_Dispatching_Calls), -"Editor");
+           & ASCII.LF
+           & "Accurate: GPS will reload the cross-references information"
+           & " from the disk as needed. This might result in long delays"
+           & " (up to several seconds) if lots of information needs to be"
+           & " loaded. This method is always used when computing"
+           & " dispatching information in call graphs."),
+         Page    => -"Editor",
+         Default => From_Memory);
 
-      Auto_Save := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Auto-Save",
-         Nick    => -"Auto save",
-         Blurb   => -("Whether unsaved files/projects should be saved"
+      Auto_Save := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Auto-Save",
+         Label   => -"Auto save",
+         Doc     => -("Whether unsaved files/projects should be saved"
                       & " automatically before calling external tools"),
-         Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Auto_Save), -"General");
+         Default => True,
+         Page    => -"General");
 
-      Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Save-Desktop-On-Exit",
-         Nick    => -"Save project-specific desktop on exit",
-         Blurb   => -("Whether the desktop should be saved when exiting GPS."
+      Save_Desktop_On_Exit := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Save-Desktop-On-Exit",
+         Label   => -"Save project-specific desktop on exit",
+         Doc     => -("Whether the desktop should be saved when exiting GPS."
              & " This only applies to project-specific desktops, never to"
              & " the default desktop"),
-         Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
+         Default => True,
+         Page    => -"General");
 
-      Save_Editor_Desktop := Param_Spec_Enum
-        (Editor_Desktop_Policy_Properties.Gnew_Enum
-           (Name    => "General-Editor-Desktop-Policy",
-            Nick    => "Save editor in desktop",
-            Blurb   => -"When to save source editors in the desktop",
-            Default => From_Project));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Save_Editor_Desktop), -"General");
+      Save_Editor_Desktop := Editor_Desktop_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Editor-Desktop-Policy",
+         Label   => "Save editor in desktop",
+         Doc     => -"When to save source editors in the desktop",
+         Page    => -"General",
+         Default => From_Project);
 
-      Multi_Language_Build := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Multi-Language-Build",
-         Nick    => -"Multi language build",
-         Blurb   =>
+      Multi_Language_Build := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Multi-Language-Build",
+         Label   => -"Multi language build",
+         Doc     =>
          -("Whether GPS should build more than just Ada " &
            "sources for projects containing Ada and other (e.g. C) languages"),
-         Default => False));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Multi_Language_Build), -"General");
+         Default => False,
+         Page    => -"General");
 
-      Multi_Language_Builder := Param_Spec_Enum
-        (Multi_Language_Builder_Policy_Properties.Gnew_Enum
-           (Name    => "General-Multi-Language-Builder",
-            Nick    => -"Multi language builder",
-            Blurb   =>
-            -("Whether GPS should build multi-language projects using " &
-              "gprbuild (the new option) or gprmake (the old option)"),
-            Default => Gprbuild));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Multi_Language_Builder), -"General");
+      Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Multi-Language-Builder",
+         Label   => -"Multi language builder",
+         Doc     =>
+         -("Whether GPS should build multi-language projects using " &
+           "gprbuild (the new option) or gprmake (the old option)"),
+         Page    => -"General",
+         Default => Gprbuild);
 
-      Auto_Jump_To_First := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Auto-Jump-To-First",
-           Default => True,
-           Blurb   =>
-             -("Whether GPS should automatically jump to the first location"
-               & " when entries are added to the Location window (error"
-               & " messages, find results, ...)"),
-           Nick    => -"Jump to first location"));
-      Register_Property
-        (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
+      Auto_Jump_To_First := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Auto-Jump-To-First",
+         Default => True,
+         Doc     =>
+         -("Whether GPS should automatically jump to the first location"
+           & " when entries are added to the Location window (error"
+           & " messages, find results, ...)"),
+         Label   => -"Jump to first location",
+         Page    => -"General");
 
-      Tooltip_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "General-Tooltip-Color",
+      Tooltip_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Tooltip-Color",
          Default => "#FFFFEE",
-         Blurb   => -"Color to use for the tooltips background",
-         Nick    => -"Tooltip color",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel, Param_Spec (Tooltip_Color), -"General");
+         Doc     => -"Color to use for the tooltips background",
+         Label   => -"Tooltip color",
+         Page    => "");
 
       -- MDI --
 
-      MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Opaque",
+      MDI_Opaque := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Opaque",
          Default => Config.Default_Opaque_MDI,
-         Blurb   => -("Whether items will be resized or moved opaquely when"
+         Doc     => -("Whether items will be resized or moved opaquely when"
                       & " not maximized"),
-         Nick    => -"Opaque"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"Windows");
+         Label   => -"Opaque",
+         Page    => -"Windows");
 
-      MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Destroy-Floats",
+      MDI_Destroy_Floats := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Destroy-Floats",
          Default => False,
-         Blurb   =>
+         Doc     =>
            -("If disabled, closing the window associated with a floating"
              & " item will put the item back in the main GPS window,"
              & " but will not destroy it. If enabled, the item is"
              & " destroyed"),
-         Nick    => -"Destroy floats"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats), -"Windows");
+         Label   => -"Destroy floats",
+         Page    => -"Windows");
 
-      MDI_All_Floating := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-All-Floating",
+      MDI_All_Floating := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-All-Floating",
          Default => False,
-         Blurb   =>
+         Doc     =>
            -("If enabled, all windows will be set as floating, and put"
              & " under control of your window manager. Otherwise, a"
              & " multiple document interface is used."),
-         Nick    => -"All floating"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_All_Floating), -"Windows");
+         Label   => -"All floating",
+         Page    => -"Windows");
 
-      MDI_Float_Short_Title := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "MDI-Float-Short-Title",
+      MDI_Float_Short_Title := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Float-Short-Title",
          Default => False,
-         Blurb   =>
+         Doc     =>
            -("If enabled, all floating windows will have a short title. In"
            & " particular, base file names will be used for editors."),
-         Nick    => -"Short titles for floats"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Float_Short_Title), -"Windows");
+         Label   => -"Short titles for floats",
+         Page    => -"Windows");
 
-      MDI_Background_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Background-Color",
+      MDI_Background_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Background-Color",
          Default => "#666666",
-         Blurb   => -"Color to use for the background of the MDI",
-         Nick    => -"Background color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Background_Color), -"Windows");
+         Doc     => -"Color to use for the background of the MDI",
+         Label   => -"Background color",
+         Page    => -"Windows");
 
-      MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Title-Bar-Color",
+      MDI_Title_Bar_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Title-Bar-Color",
          Default => "#AAAAAA",
-         Blurb   => -"Color to use for the title bar of unselected items",
-         Nick    => -"Title bar color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color), -"Windows");
+         Doc     => -"Color to use for the title bar of unselected items",
+         Label   => -"Title bar color",
+         Page    => -"Windows");
 
-      MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "MDI-Focus-Title-Color",
+      MDI_Focus_Title_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "MDI-Focus-Title-Color",
          Default => "#6297C5",
-         Blurb   => -"Color to use for the title bar of selected items",
-         Nick    => -"Selected title bar color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color), -"Windows");
+         Doc     => -"Color to use for the title bar of selected items",
+         Label   => -"Selected title bar color",
+         Page    => -"Windows");
 
       -- Source Editor --
 
-      Strip_Blanks := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Strip-Blanks",
+      Strip_Blanks := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Strip-Blanks",
          Default => True,
-         Blurb   =>
+         Doc     =>
            -"Should the editor remove trailing blanks when saving files",
-         Nick    => -"Strip blanks"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor");
+         Label   => -"Strip blanks",
+         Page    => -"Editor");
 
-      Line_Terminator := Param_Spec_Enum (Line_Terminators_Properties.Gnew_Enum
-        (Name  => "Src-Editor-Line-Terminator",
-         Nick  => -"Line terminator",
-         Blurb => -"Line terminator style to use when saving files",
-         Default => Unchanged));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Line_Terminator), -"Editor");
+      Line_Terminator := Line_Terminators_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name  => "Src-Editor-Line-Terminator",
+         Label => -"Line terminator",
+         Doc   => -"Line terminator style to use when saving files",
+         Default => Unchanged,
+         Page    => -"Editor");
 
-      Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Display-Line_Numbers",
+      Display_Line_Numbers := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Display-Line_Numbers",
          Default => True,
-         Blurb   =>
+         Doc     =>
            -"Whether the line numbers should be displayed in file editors",
-         Nick    => -"Display line numbers"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Line_Numbers),
-         -"Editor");
+         Label   => -"Display line numbers",
+         Page    => -"Editor");
 
-      Display_Subprogram_Names := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Display-Subprogram_Names",
+      Display_Subprogram_Names := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Display-Subprogram_Names",
          Default => True,
-         Blurb   =>
+         Doc     =>
            -"Whether the subprogram names should be displayed in status lines",
-         Nick    => -"Display subprogram names"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Subprogram_Names),
-         -"Editor");
+         Label   => -"Display subprogram names",
+         Page    => -"Editor");
 
-      Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Display-Tooltip",
+      Display_Tooltip := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Display-Tooltip",
          Default => True,
-         Blurb   => -"Whether tooltips should be displayed automatically",
-         Nick    => -"Tooltips"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor");
+         Doc     => -"Whether tooltips should be displayed automatically",
+         Label   => -"Tooltips",
+         Page    => -"Editor");
 
-      Tooltip_Timeout := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Tooltip-Timeout",
+      Tooltip_Timeout := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Tooltip-Timeout",
          Minimum => 0,
          Maximum => 10000,
          Default => 600,
-         Blurb   => -"Time (in milliseconds) before displaying tooltips",
-         Nick    => -"Tooltips timeout"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Tooltip_Timeout), -"Editor");
+         Doc     => -"Time (in milliseconds) before displaying tooltips",
+         Label   => -"Tooltips timeout",
+         Page    => -"Editor");
 
-      Highlight_Delimiters := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Highlight-Delimiters",
+      Highlight_Delimiters := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Highlight-Delimiters",
          Default => True,
-         Blurb   => -"Whether delimiters should be highlighted: (){}[]",
-         Nick    => -"Highlight delimiters"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Highlight_Delimiters),
-         -"Editor");
+         Doc     => -"Whether delimiters should be highlighted: (){}[]",
+         Label   => -"Highlight delimiters",
+         Page    => -"Editor");
 
-      Periodic_Save := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Periodic-Save",
+      Periodic_Save := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Periodic-Save",
          Minimum => 0,
          Maximum => 3600,
          Default => 60,
-         Blurb   => -("The period (in seconds) after which a source editor"
+         Doc     => -("The period (in seconds) after which a source editor"
                       & " is automatically saved. 0 if none."),
-         Nick    => -"Autosave delay"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor");
+         Label   => -"Autosave delay",
+         Page    => -"Editor");
 
-      Highlight_Column := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Highlight-Column",
+      Highlight_Column := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Highlight-Column",
          Minimum => 0,
          Maximum => 255,
          Default => 80,
-         Blurb   => -("The right margin to highlight. 0 if none. This value "
+         Doc     => -("The right margin to highlight. 0 if none. This value "
                       & "is also used to implement the Edit->Refill command"),
-         Nick    => -"Right margin"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Highlight_Column), -"Editor");
+         Label   => -"Right margin",
+         Page    => -"Editor");
 
-      Tab_Width := Param_Spec_Int (Gnew_Int
-        (Name    => "Src-Editor-Tab-Width",
+      Tab_Width := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Tab-Width",
          Minimum => 1,
          Maximum => 16,
          Default => 8,
-         Blurb   => -"The width of a tabulation character, in characters",
-         Nick    => -"Tabulation width",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
+         Doc     => -"The width of a tabulation character, in characters",
+         Label   => -"Tabulation width",
+         Page    => "");
 
-      Block_Highlighting := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Block-Highlighting",
+      Block_Highlighting := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Block-Highlighting",
          Default => True,
-         Blurb   =>
+         Doc     =>
            -"Should the editor enable block highlighting",
-         Nick    => -"Block highlighting"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Block_Highlighting), -"Editor");
+         Label   => -"Block highlighting",
+         Page    => -"Editor");
 
-      Block_Folding := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Block-Folding",
+      Block_Folding := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Block-Folding",
          Default => True,
-         Blurb   =>
-           -"Should the editor enable block folding",
-         Nick    => -"Block folding"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Block_Folding), -"Editor");
+         Doc     => -"Should the editor enable block folding",
+         Label   => -"Block folding",
+         Page    => -"Editor");
 
-      Automatic_Syntax_Check := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Automatic-Syntax-Check",
+      Automatic_Syntax_Check := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Automatic-Syntax-Check",
          Default => False,
-         Blurb   =>
-           -"Enable/Disable automatic syntax check",
-         Nick    => -"Automatic syntax check",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Automatic_Syntax_Check), -"Editor");
+         Doc     => -"Enable/Disable automatic syntax check",
+         Label   => -"Automatic syntax check",
+         Page    => "");
 
-      Speed_Column_Policy := Param_Spec_Enum
-        (Speed_Column_Policy_Properties.Gnew_Enum
-           (Name    => "Src-Editor-Speed-Column-Policy",
-            Nick    => -"Speed column policy",
-            Blurb   => -"When the speed column should be displayed",
-            Default => Automatic));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Speed_Column_Policy), -"Editor");
+      Speed_Column_Policy := Speed_Column_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Speed-Column-Policy",
+         Label   => -"Speed column policy",
+         Doc     => -"When the speed column should be displayed",
+         Default => Automatic,
+         Page    => -"Editor");
 
-      Default_Style := Gnew_Style
-        (Name    => "Src-Editor-Default-Style",
-         Nick    => -"Default",
-         Blurb   => -"Default style used in the source editors",
+      Default_Style := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Default-Style",
+         Label   => -"Default",
+         Doc     => -"Default style used in the source editors",
          Default_Font => "Courier 10",
          Default_Fg   => "black",
-         Default_Bg   => "white");
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Style),
-         -"Editor/Fonts & Colors");
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
 
-      Keywords_Style := Gnew_Style
-        (Name    => "Src-Editor-Keywords-Style",
-         Nick    => -"Keywords",
-         Blurb   => -"Style to use when displaying keywords",
+      Keywords_Style := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Keywords-Style",
+         Label   => -"Keywords",
+         Doc     => -"Style to use when displaying keywords",
          Default_Font => "Courier Bold 10",
          Default_Fg   => "black",
-         Default_Bg   => "white");
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Keywords_Style),
-         -"Editor/Fonts & Colors");
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
 
-      Comments_Style := Gnew_Style
-        (Name    => "Src-Editor-Comments-Style",
-         Nick    => -"Comments",
-         Blurb   => -"Style to use when displaying comments",
+      Comments_Style := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Comments-Style",
+         Label   => -"Comments",
+         Doc     => -"Style to use when displaying comments",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "blue",
-         Default_Bg   => "white");
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Comments_Style),
-         -"Editor/Fonts & Colors");
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
 
-      Annotated_Comments_Style := Gnew_Style
-        (Name    => "Src-Editor-Annotated-Comments-Style",
-         Nick    => -"Annotated Comments",
-         Blurb   => -"Style to use when displaying annotated comments",
+      Annotated_Comments_Style := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Annotated-Comments-Style",
+         Label   => -"Annotated Comments",
+         Doc     => -"Style to use when displaying annotated comments",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "#21A9DE",
-         Default_Bg   => "white");
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Annotated_Comments_Style),
-         -"Editor/Fonts & Colors");
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
 
-      Strings_Style := Gnew_Style
-        (Name    => "Src-Editor-Strings-Style",
-         Nick    => -"Strings",
-         Blurb   => -"Style to use when displaying strings",
+      Strings_Style := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Strings-Style",
+         Label   => -"Strings",
+         Doc     => -"Style to use when displaying strings",
          Default_Font => "Courier 10",
          Default_Fg   => "brown",
-         Default_Bg   => "white");
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Strings_Style),
-         -"Editor/Fonts & Colors");
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors");
 
-      Current_Line_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Current-Line-Color",
+      Current_Line_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Current-Line-Color",
          Default => "#FFC38D",
-         Blurb   => -"Color for highlighting the current line",
-         Nick    => -"Current line color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Current_Line_Color),
-         -"Editor/Fonts & Colors");
+         Doc     => -"Color for highlighting the current line",
+         Label   => -"Current line color",
+         Page    => -"Editor/Fonts & Colors");
 
-      Current_Block_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Current-Block-Color",
+      Current_Block_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Current-Block-Color",
          Default => "#BBBBFF",
-         Blurb   => -"Color for highlighting the current block",
-         Nick    => -"Current block color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Current_Block_Color),
-         -"Editor/Fonts & Colors");
+         Doc     => -"Color for highlighting the current block",
+         Label   => -"Current block color",
+         Page    => -"Editor/Fonts & Colors");
 
-      Delimiter_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Highlight-Delimiters-Color",
+      Delimiter_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Highlight-Delimiters-Color",
          Default => "cyan",
-         Blurb   => -"Color for highlighting delimiters",
-         Nick    => -"Delimiter highlighting color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Delimiter_Color),
-         -"Editor/Fonts & Colors");
+         Doc     => -"Color for highlighting delimiters",
+         Label   => -"Delimiter highlighting color",
+         Page    => -"Editor/Fonts & Colors");
 
-      Search_Results_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Search_Results-Color",
+      Search_Results_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Search_Results-Color",
          Default => "light blue",
-         Blurb   => -"Color for highlighting search results",
-         Nick    => -"Search results highlighting"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Search_Results_Color),
-         -"Editor/Fonts & Colors");
+         Doc     => -"Color for highlighting search results",
+         Label   => -"Search results highlighting",
+         Page    => -"Editor/Fonts & Colors");
 
       -- Browsers --
 
-      Browsers_Bg_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Bg-Color",
+      Browsers_Bg_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Bg-Color",
          Default => "#BBBBBB",
-         Blurb   => -"Color used to draw the background of the browsers",
-         Nick    => -"Background color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Bg_Color),
-         -"Browsers");
+         Doc     => -"Color used to draw the background of the browsers",
+         Label   => -"Background color",
+         Page    => -"Browsers");
 
-      Browsers_Bg_Image := Param_Spec_String (Gnew_String
-        (Name    => "Browsers-Bg-Image",
-         Nick    => -"Background image",
-         Flags   => Param_Readable,
-         Blurb   =>
+      Browsers_Bg_Image := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Bg-Image",
+         Label   => -"Background image",
+         Page    => "",
+         Doc     =>
            -("Image to draw in the background of browsers. If left empty,"
              & " no image is drawn. Using a large image will slow down"
              & " performances"),
-         Default => ""));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Bg_Image),
-         -"Browsers");
+         Default => "");
 
-      Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Draw-Grid",
+      Browsers_Draw_Grid := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Draw-Grid",
          Default => True,
-         Blurb   => -"Whether a grid should be displayed in the browsers",
-         Flags   => Param_Readable,
-         Nick    => -"Draw grid"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
-         -"Browsers");
+         Doc     => -"Whether a grid should be displayed in the browsers",
+         Page    => "",
+         Label   => -"Draw grid");
 
-      Browsers_Hyper_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Hyper-Link-Color",
+      Browsers_Hyper_Link_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Hyper-Link-Color",
          Default => "#0000FF",
-         Blurb   => -"Color used to draw the hyper links in the items",
-         Nick    => -"Hyper link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Hyper_Link_Color),
-         -"Browsers");
+         Doc     => -"Color used to draw the hyper links in the items",
+         Label   => -"Hyper link color",
+         Page    => -"Browsers");
 
-      Selected_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Selected-Link-Color",
+      Selected_Link_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Selected-Link-Color",
          Default => "#FF0000",
-         Blurb   => -"Color to use for links between selected items",
-         Nick    => -"Selected link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Link_Color),
-         -"Browsers");
+         Doc     => -"Color to use for links between selected items",
+         Label   => -"Selected link color",
+         Page    => -"Browsers");
 
-      Unselected_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Unselected-Link-Color",
+      Unselected_Link_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Unselected-Link-Color",
          Default => "#000000",
-         Blurb   => -"Color to use for links between unselected items",
-         Nick    => -"Default link color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Unselected_Link_Color),
-         -"Browsers");
+         Doc     => -"Color to use for links between unselected items",
+         Label   => -"Default link color",
+         Page    => -"Browsers");
 
-      Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Linked-Item-Color",
+      Parent_Linked_Item_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Linked-Item-Color",
          Default => "#AAAAAA",
-         Blurb   => -("Color to use for the background of the items linked"
+         Doc     => -("Color to use for the background of the items linked"
                       & " to the selected item"),
-         Nick    => -"Ancestor items color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Parent_Linked_Item_Color),
-         -"Browsers");
+         Label   => -"Ancestor items color",
+         Page    => -"Browsers");
 
-      Child_Linked_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Child-Linked-Item-Color",
+      Child_Linked_Item_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Child-Linked-Item-Color",
          Default => "#DDDDDD",
-         Blurb   => -("Color to use for the background of the items linked"
+         Doc     => -("Color to use for the background of the items linked"
                       & " from the selected item"),
-         Nick    => -"Offspring items color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
-         -"Browsers");
+         Label   => -"Offspring items color",
+         Page    => -"Browsers");
 
-      Selected_Item_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Selected-Item-Color",
+      Selected_Item_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Selected-Item-Color",
          Default => "#888888",
-         Blurb   => -"Color to use to draw the selected item",
-         Nick    => -"Selected item color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Item_Color), -"Browsers");
+         Doc     => -"Color to use to draw the selected item",
+         Label   => -"Selected item color",
+         Page    => -"Browsers");
 
-      Title_Color := Param_Spec_Color (Gnew_Color
-        (Name     => "Browsers-Title-Color",
-         Nick     => -"Title background",
-         Blurb    => -"Color used for the background of the title",
-         Flags    => Param_Readable,
-         Default  => "#BEBEBE"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Title_Color), -"Browsers");
+      Title_Color := Create
+        (Manager => Kernel.Preferences,
+         Name     => "Browsers-Title-Color",
+         Label    => -"Title background",
+         Doc      => -"Color used for the background of the title",
+         Page     => "",
+         Default  => "#BEBEBE");
 
-      Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Vertical-Layout",
+      Browsers_Vertical_Layout := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Browsers-Vertical-Layout",
          Default => False,
-         Blurb   => -("If enabled, the boxes in the browsers will be"
+         Doc     => -("If enabled, the boxes in the browsers will be"
            & " organized into layers displayed one below the other. The"
            & " graph will tend to grow vertically when you open new boxes."
            & " This setting does not affect the entities browser, though,"
            & " where the layout is always vertical."),
-         Nick    => -"Vertical layout"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
-         -"Browsers");
+         Label   => -"Vertical layout",
+         Page    => -"Browsers");
 
       -- Diff_Utils --
 
-      Diff_Cmd := Param_Spec_String (Gnew_String
-        (Name  => "Diff-Utils-Diff",
-         Nick  => -"Diff command",
-         Blurb => -("Command used to compute differences between two files."
+      Diff_Cmd := Create
+        (Manager => Kernel.Preferences,
+         Name  => "Diff-Utils-Diff",
+         Label => -"Diff command",
+         Doc   => -("Command used to compute differences between two files."
                     & " Arguments can also be specified"),
-         Default => Config.Default_Diff_Cmd));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
+         Default => Config.Default_Diff_Cmd,
+         Page    => -"Visual diff");
 
-      Patch_Cmd := Param_Spec_String (Gnew_String
-        (Name    => "Diff-Utils-Patch",
-         Nick    => -"Patch command",
-         Blurb   =>
+      Patch_Cmd := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Diff-Utils-Patch",
+         Label   => -"Patch command",
+         Doc     =>
            -"Command used to apply a patch. Arguments can also be specified",
-         Default => Config.Default_Patch_Cmd));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
+         Default => Config.Default_Patch_Cmd,
+         Page    => -"Visual diff");
 
-      Old_Vdiff := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Diff-Utils-Old-Vdiff",
-         Nick    => -"Use old diff (requires restart)",
-         Blurb   => -("Use the old version of visual differences."
+      Old_Vdiff := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Diff-Utils-Old-Vdiff",
+         Label   => -"Use old diff (requires restart)",
+         Doc     => -("Use the old version of visual differences."
                       & " Changing this parameter requires restarting GPS."),
-         Default => False));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Old_Vdiff), -"Visual diff");
+         Default => False,
+         Page    => -"Visual diff");
       -- Messages --
 
-      Message_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Messages-Highlight-Color",
-         Nick    => -"Color highlighting",
-         Blurb   => -"Color used to highlight text in the messages window",
-         Default => "#FF0000"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
+      Message_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Highlight-Color",
+         Label   => -"Color highlighting",
+         Doc     => -"Color used to highlight text in the messages window",
+         Default => "#FF0000",
+         Page    => -"Messages");
 
-      Error_Src_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Errors-Src-Highlight-Color",
-         Nick    => -"Errors highlighting",
-         Blurb   => -"Color used to highlight errors in the source editors",
-         Default => "#FF6D6D"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Error_Src_Highlight), -"Messages");
+      Error_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Errors-Src-Highlight-Color",
+         Label   => -"Errors highlighting",
+         Doc     => -"Color used to highlight errors in the source editors",
+         Default => "#FF6D6D",
+         Page    => -"Messages");
 
-      Warning_Src_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Warnings-Src-Highlight-Color",
-         Nick    => -"Warnings highlighting",
-         Blurb   => -"Color used to highlight warnings in the source editors",
-         Default => "#FFB46D"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Warning_Src_Highlight), -"Messages");
+      Warning_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Warnings-Src-Highlight-Color",
+         Label   => -"Warnings highlighting",
+         Doc     => -"Color used to highlight warnings in the source editors",
+         Default => "#FFB46D",
+         Page    => -"Messages");
 
-      Style_Src_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Style-Src-Highlight-Color",
-         Nick    => -"Style errors highlighting",
-         Blurb   =>
+      Style_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Style-Src-Highlight-Color",
+         Label   => -"Style errors highlighting",
+         Doc     =>
            -"Color used to highlight style errors in the source editors",
-         Default => "#EEFF6D"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Style_Src_Highlight), -"Messages");
+         Default => "#EEFF6D",
+         Page    => -"Messages");
 
-      Search_Src_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Search-Src-Highlight-Color",
-         Nick    => -"Search highlighting",
-         Blurb   =>
+      Search_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Search-Src-Highlight-Color",
+         Label   => -"Search highlighting",
+         Doc     =>
              -"Color used to highlight search results in the source editors",
-         Default => "#A2B6FF"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Search_Src_Highlight), -"Messages");
+         Default => "#A2B6FF",
+         Page    => -"Messages");
 
-      File_Pattern := Param_Spec_String
-        (Gnew_String
-           (Name  => "Messages-File-Regpat",
-            Nick  => -"File pattern",
-            Blurb =>
-              -"Pattern used to detect file locations (e.g error messages)",
-            Default =>
-              "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
+      File_Pattern := Create
+        (Manager => Kernel.Preferences,
+         Name  => "Messages-File-Regpat",
+         Label => -"File pattern",
+         Doc   =>
+         -"Pattern used to detect file locations (e.g error messages)",
+         Default =>
+           "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)",
+         Page    => -"Messages");
 
-      File_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-File-Regexp-Index",
+      File_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-File-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 1,
-         Blurb   => -"Index of filename in the pattern",
-         Nick    => -"File index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (File_Pattern_Index), -"Messages");
+         Doc     => -"Index of filename in the pattern",
+         Label   => -"File index",
+         Page    => -"Messages");
 
-      Line_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Line-Regexp-Index",
+      Line_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Line-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 2,
-         Blurb   => -"Index of line number in the pattern",
-         Nick    => -"Line index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Line_Pattern_Index), -"Messages");
+         Doc     => -"Index of line number in the pattern",
+         Label   => -"Line index",
+         Page    => -"Messages");
 
-      Column_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Column-Regexp-Index",
+      Column_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Column-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 4,
-         Blurb   => -"Index of column number in the pattern, 0 if none",
-         Nick    => -"Column index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
+         Doc     => -"Index of column number in the pattern, 0 if none",
+         Label   => -"Column index",
+         Page    => -"Messages");
 
-      Message_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Message-Regexp-Index",
+      Message_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Message-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 5,
-         Blurb   => -"Index of message in the pattern, 0 if none",
-         Nick    => -"Message index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Message_Pattern_Index), -"Messages");
+         Doc     => -"Index of message in the pattern, 0 if none",
+         Label   => -"Message index",
+         Page    => -"Messages");
 
-      Warning_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Warning-Regexp-Index",
+      Warning_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Warning-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 6,
-         Blurb   => -"Index of warning indication in the pattern, 0 if none",
-         Nick    => -"Warning index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Warning_Pattern_Index), -"Messages");
+         Doc     => -"Index of warning indication in the pattern, 0 if none",
+         Label   => -"Warning index",
+         Page    => -"Messages");
 
-      Style_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Style-Regexp-Index",
+      Style_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Style-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 7,
-         Blurb   => -"Index of style indication in the pattern, 0 if none",
-         Nick    => -"Style index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Style_Pattern_Index), -"Messages");
+         Doc     => -"Index of style indication in the pattern, 0 if none",
+         Label   => -"Style index",
+         Page    => -"Messages");
 
-      Secondary_File_Pattern := Param_Spec_String
-        (Gnew_String
-           (Name  => "Messages-Secondary-File-Regpat",
-            Nick  => -"Secondary File pattern",
-            Blurb =>
-            -"Pattern used to detect secondary file locations in messages",
-            Default =>
-              "([^: ]+):(\d+)(:(\d+):)?"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Secondary_File_Pattern), -"Messages");
+      Secondary_File_Pattern := Create
+        (Manager => Kernel.Preferences,
+         Name  => "Messages-Secondary-File-Regpat",
+         Label => -"Secondary File pattern",
+         Doc   =>
+         -"Pattern used to detect secondary file locations in messages",
+         Default => "([^: ]+):(\d+)(:(\d+):)?",
+         Page    => -"Messages");
 
-      Secondary_File_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Secondary-File-Regexp-Index",
+      Secondary_File_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Secondary-File-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 1,
-         Blurb   => -"Index of secondary filename in the pattern",
-         Nick    => -"Secondary File index"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Secondary_File_Pattern_Index),
-         -"Messages");
+         Doc     => -"Index of secondary filename in the pattern",
+         Label   => -"Secondary File index",
+         Page    => -"Messages");
 
-      Secondary_Line_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Secondary-Line-Regexp-Index",
+      Secondary_Line_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Secondary-Line-Regexp-Index",
          Minimum => 1,
          Maximum => 99,
          Default => 2,
-         Blurb   => -"Index of secondary location line number in the pattern",
-         Nick    => -"Secondary Line index"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Secondary_Line_Pattern_Index), -"Messages");
+         Doc     => -"Index of secondary location line number in the pattern",
+         Label   => -"Secondary Line index",
+         Page    => -"Messages");
 
-      Secondary_Column_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Secondary-Column-Regexp-Index",
+      Secondary_Column_Pattern_Index := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Messages-Secondary-Column-Regexp-Index",
          Minimum => 0,
          Maximum => 99,
          Default => 3,
-         Blurb   =>
+         Doc     =>
          -"Index of secondary column number in the pattern, 0 if none",
-         Nick    => -"Secondary Column index"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Secondary_Column_Pattern_Index), -"Messages");
+         Label   => -"Secondary Column index",
+         Page    => -"Messages");
 
       -- Project Editor --
 
-      Default_Switches_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Prj-Editor-Default-Switches-Color",
+      Default_Switches_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Default-Switches-Color",
          Default => "#777777",
-         Blurb   => -("Color to use when displaying switches that are set"
+         Doc     => -("Color to use when displaying switches that are set"
                       & " as default for all the files in the project"),
-         Nick    => -"Default switches color",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Switches_Color), -"Project");
+         Label   => -"Default switches color",
+         Page    => "");
 
-      Switches_Editor_Title_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Prj-Editor-Title-Font",
+      Switches_Editor_Title_Font := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Title-Font",
          Default => "sans bold oblique 14",
-         Blurb   => -"Font to use for the switches editor dialog",
-         Nick    => -"Title font",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Switches_Editor_Title_Font),
-         -"Project");
+         Doc     => -"Font to use for the switches editor dialog",
+         Label   => -"Title font",
+         Page    => "");
 
-      Variable_Ref_Background := Param_Spec_Color (Gnew_Color
-        (Name    => "Prj-Editor-Var-Ref-Bg",
+      Variable_Ref_Background := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Var-Ref-Bg",
          Default => "#AAAAAA",
-         Blurb   => -("Color to use for the background of variable"
+         Doc     => -("Color to use for the background of variable"
                       & " references in the value editor"),
-         Nick    => -"Variable reference color",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Variable_Ref_Background), -"Project");
+         Label   => -"Variable reference color",
+         Page    => "");
 
-      Invalid_Variable_Ref_Background := Param_Spec_Color (Gnew_Color
-        (Name    => "Prj-Editor-Invalid-Var-Ref-Bg",
+      Invalid_Variable_Ref_Background := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Invalid-Var-Ref-Bg",
          Default => "#AA0000",
-         Blurb   => -("Color to use for the foreground of invalid variable"
+         Doc     => -("Color to use for the foreground of invalid variable"
                       & " references"),
-         Nick    => -"Invalid references color",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Invalid_Variable_Ref_Background),
-         -"Project");
+         Label   => -"Invalid references color",
+         Page    => "");
 
-      Generate_Relative_Paths := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Prj-Editor-Generate-Relative-Paths",
+      Generate_Relative_Paths := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Generate-Relative-Paths",
          Default => True,
-         Blurb   => -("If enabled, use relative paths when the projects are " &
+         Doc     => -("If enabled, use relative paths when the projects are " &
                       "modified, use absolute paths otherwise"),
-         Nick    => -"Relative project paths"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
+         Label   => -"Relative project paths",
+         Page    => -"Project");
 
-      Trusted_Mode := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Prj-Editor-Trusted-Mode",
+      Trusted_Mode := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Prj-Editor-Trusted-Mode",
          Default => True,
-         Blurb   => -("Whether a fast algorithm should be used to load Ada"
+         Doc     => -("Whether a fast algorithm should be used to load Ada"
                       & " projects. This algorithm assumes the following "
                       & "about your project:" & ASCII.LF
                       & "   - no symbolic links are used to point to other"
                       & " files in the project" & ASCII.LF
                       & "   - no directory has a name which is a valid source"
                       & " file name according to the naming scheme"),
-         Nick    => -"Fast Project Loading"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Trusted_Mode), -"Project");
+         Label   => -"Fast Project Loading",
+         Page    => -"Project");
 
-      Automatic_Xrefs_Load := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name    => "Load-Xref-Info-At-Startup",
-            Default => False,
-            Blurb   => -("Whether to load the Xref info in memory whenever a"
-              & " new project is loaded into memory, or a new file is"
-              & " compiled."),
-            Nick    => -"Load Xref info automatically"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Automatic_Xrefs_Load), -"Project");
+      Automatic_Xrefs_Load := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Load-Xref-Info-At-Startup",
+         Default => False,
+         Doc     => -("Whether to load the Xref info in memory whenever a"
+           & " new project is loaded into memory, or a new file is"
+           & " compiled."),
+         Label   => -"Load Xref info automatically",
+         Page    => -"Project");
 
-      Hidden_Directories_Pattern := Param_Spec_String
-        (Gnew_String
-           (Name  => "Project-Hidden-Directories-Regexp",
-            Nick  => -"Hidden directories pattern",
-            Blurb =>
-              -"Directories matching this pattern are removed from the project"
-              & " view. This preference is really OS dependent, for"
-              & " example on UNIX based systems, files and directories"
-              & " starting with a dot are considered as hidden. This regular"
-              & " expression is also used to remove VCS specific directories"
-              & " like CVS.",
-            Default =>
-              "^((\..+)|CVS)$"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Hidden_Directories_Pattern), -"Project");
+      Hidden_Directories_Pattern := Create
+        (Manager => Kernel.Preferences,
+         Name  => "Project-Hidden-Directories-Regexp",
+         Label => -"Hidden directories pattern",
+         Doc   =>
+         -"Directories matching this pattern are removed from the project"
+         & " view. This preference is really OS dependent, for"
+         & " example on UNIX based systems, files and directories"
+         & " starting with a dot are considered as hidden. This regular"
+         & " expression is also used to remove VCS specific directories"
+         & " like CVS.",
+         Default => "^((\..+)|CVS)$",
+         Page    => -"Project");
 
       -- Wizards --
 
-      Wizard_Title_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Wizard-Title-Font",
+      Wizard_Title_Font := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Wizard-Title-Font",
          Default => "sans bold oblique 10",
-         Blurb   => -"Font to use for the title of the pages in the wizard",
-         Nick    => -"Title font",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Wizard_Title_Font),
-         -"Project wizard");
+         Doc     => -"Font to use for the title of the pages in the wizard",
+         Label   => -"Title font",
+         Page    => "");
 
       -- VCS --
 
-      Hide_Up_To_Date := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "VCS-Hide-Up-To-Date",
+      Hide_Up_To_Date := Create
+        (Manager => Kernel.Preferences,
+         Name    => "VCS-Hide-Up-To-Date",
          Default => False,
-         Flags   => Param_Readable,
-         Blurb   => -"Whether up to date files should be hidden by default",
-         Nick    => -"Hide up-to-date files"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Hide_Up_To_Date), -"VCS");
+         Page    => "",
+         Doc     => -"Whether up to date files should be hidden by default",
+         Label   => -"Hide up-to-date files");
 
-      Hide_Not_Registered := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "VCS-Hide-Not-Registered",
+      Hide_Not_Registered := Create
+        (Manager => Kernel.Preferences,
+         Name    => "VCS-Hide-Not-Registered",
          Default => False,
-         Flags   => Param_Readable,
-         Blurb   => -"Whether unregistered files should be hidden by default",
-         Nick    => -"Hide non registered files"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Hide_Not_Registered), -"VCS");
+         Page    => "",
+         Doc     => -"Whether unregistered files should be hidden by default",
+         Label   => -"Hide non registered files");
 
       -- CVS --
 
-      CVS_Command := Param_Spec_String (Gnew_String
-        (Name    => "CVS-Command",
+      CVS_Command := Create
+        (Manager => Kernel.Preferences,
+         Name    => "CVS-Command",
          Default => "cvs",
-         Blurb   => -"General CVS command",
-         Flags   => Param_Readable,
-         Nick    => -"CVS command"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
+         Doc     => -"General CVS command",
+         Page    => "",
+         Label   => -"CVS command");
 
       -- ClearCase --
 
-      ClearCase_Command := Param_Spec_String (Gnew_String
-        (Name    => "ClearCase-Command",
+      ClearCase_Command := Create
+        (Manager => Kernel.Preferences,
+         Name    => "ClearCase-Command",
          Default => "cleartool",
-         Blurb   => -"General ClearCase command",
-         Flags   => Param_Readable,
-         Nick    => -"ClearCase command"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (ClearCase_Command), -"VCS:ClearCase");
+         Doc     => -"General ClearCase command",
+         Page    => "",
+         Label   => -"ClearCase command");
 
       -- External Commands --
 
-      List_Processes := Param_Spec_String (Gnew_String
-        (Name     => "Helpers-List-Processes",
-         Nick     => -"List processes",
-         Blurb    =>
+      List_Processes := Create
+        (Manager => Kernel.Preferences,
+         Name     => "Helpers-List-Processes",
+         Label    => -"List processes",
+         Doc      =>
          -("Command used to list processes running on the machine." & ASCII.LF
            & "On Unix machines, you should surround the command with"
            & " triple-quotes similar to what python uses, and execute the"
            & " command through sh -c so that environment variables and"
            & " output redirection are properly executed"),
-         Default  => Config.Default_Ps));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
+         Default  => Config.Default_Ps,
+         Page     => -"External Command");
 
-      Execute_Command := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Execute-Command",
-          Nick    => -"Execute command",
-          Blurb   => -"Program used to execute commands externally",
-          Default => Config.Exec_Command));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Execute_Command), -"External Command");
+      Execute_Command := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Helpers-Execute-Command",
+         Label   => -"Execute command",
+         Doc     => -"Program used to execute commands externally",
+         Default => Config.Exec_Command,
+         Page    => -"External Command");
 
       if Config.Host /= Config.Windows then
          --  Preference not used under Windows
 
-         Html_Browser := Param_Spec_String (Gnew_String
-           (Name  => "Helpers-HTML-Browser",
-            Nick  => -"HTML browser",
-            Blurb =>
+         Html_Browser := Create
+           (Manager => Kernel.Preferences,
+            Name  => "Helpers-HTML-Browser",
+            Label => -"HTML browser",
+            Doc   =>
             -("Program used to browse HTML pages. " &
               "No value means automatically try to find a suitable browser."
               & ASCII.LF
@@ -1306,33 +1145,30 @@ package body GPS.Kernel.Preferences is
               & " browser, instead of replacing the current one, you could set"
               & " this command to" & ASCII.LF
               & "    firefox -remote ""openURL(%u,new-tab)"""),
-            Default => ""));
-         Register_Property
-           (Kernel.Preferences,
-            Param_Spec (Html_Browser), -"External Command");
+            Default => "",
+            Page    => -"External Command");
       end if;
 
-      Print_Command := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Print-Command",
-          Nick    => -"Print command",
-          Blurb   => -("Program used to print files. No value means use " &
+      Print_Command := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Helpers-Print-Command",
+          Label   => -"Print command",
+          Doc     => -("Program used to print files. No value means use " &
                        "the built-in printing capability (available under " &
                        "Windows only)"),
-          Default => Config.Default_Print_Cmd));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Print_Command), -"External Command");
+         Default => Config.Default_Print_Cmd,
+         Page    => -"External Command");
 
-      Max_Output_Length := Param_Spec_Int (Gnew_Int
-         (Name    => "Max-Output-Length",
-          Nick    => -"Maximum output length",
-          Blurb   => -("Maximum output length of output taken into account by"
-            & "GPS, in bytes."),
-          Minimum => 1_000,
-          Maximum => Gint'Last,
-          Default => 1_000_000,
-          Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Max_Output_Length), "");
+      Max_Output_Length := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Max-Output-Length",
+         Label   => -"Maximum output length",
+         Doc     => -("Maximum output length of output taken into account by"
+           & "GPS, in bytes."),
+         Minimum => 1_000,
+         Maximum => Integer'Last,
+         Default => 1_000_000,
+         Page    => "");
    end Register_Global_Preferences;
 
    ---------------
@@ -1349,7 +1185,6 @@ package body GPS.Kernel.Preferences is
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
       Child : Glib.Xml_Int.Node_Ptr;
       Child_Count : Natural;
-      Flags : Param_Flags;
    begin
       if Node.Tag.all = "preference" then
          declare
@@ -1360,10 +1195,11 @@ package body GPS.Kernel.Preferences is
             Tooltip : constant String := Get_Attribute (Node, "tip", "");
             Label   : constant String := Get_Attribute (Node, "label", "");
             Typ     : constant String := Get_Attribute (Node, "type", "");
-            Min   : constant String := Get_Attribute (Node, "minimum", "0");
-            Max   : constant String := Get_Attribute (Node, "maximum", "10");
-            Pspec   : Param_Spec;
-            Minimum, Maximum, Def : Gint;
+            Min     : constant String := Get_Attribute (Node, "minimum", "0");
+            Max     : constant String := Get_Attribute (Node, "maximum", "10");
+            Pref    : Preference;
+            pragma Unreferenced (Pref);
+            Minimum, Maximum, Def : Integer;
             Bool_Def : Boolean;
          begin
             if Name = "" or else Typ = "" or else Label = "" then
@@ -1373,11 +1209,6 @@ package body GPS.Kernel.Preferences is
                     & " ""label"" attributes"),
                   Mode => Error);
                return;
-            end if;
-
-            Flags := Param_Readable or Param_Writable;
-            if Page = "" then
-               Flags := Param_Readable;
             end if;
 
             for N in Name'Range loop
@@ -1397,19 +1228,21 @@ package body GPS.Kernel.Preferences is
                else
                   Bool_Def := Boolean'Value (Default);
                end if;
-               Pspec := Gnew_Boolean
-                 (Name    => Name,
-                  Nick    => Label,
-                  Blurb   => Tooltip,
-                  Default => Bool_Def);
+               Pref := Preference (Boolean_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Name,
+                  Label   => Label,
+                  Page    => Page,
+                  Doc     => Tooltip,
+                  Default => Bool_Def)));
 
             elsif Typ = "integer" then
-               Minimum := Gint'Value (Min);
-               Maximum := Gint'Value (Max);
+               Minimum := Integer'Value (Min);
+               Maximum := Integer'Value (Max);
                if Default = "" then
                   Def := 0;
                else
-                  Def     := Gint'Value (Default);
+                  Def     := Integer'Value (Default);
                end if;
 
                if Minimum > Maximum then
@@ -1439,35 +1272,42 @@ package body GPS.Kernel.Preferences is
                   Maximum := Def;
                end if;
 
-               Pspec := Gnew_Int
-                 (Name    => Name,
-                  Nick    => Label,
-                  Blurb   => Tooltip,
+               Pref := Preference (Integer_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Name,
+                  Label   => Label,
+                  Doc     => Tooltip,
                   Minimum => Minimum,
                   Maximum => Maximum,
                   Default => Def,
-                  Flags   => Flags);
+                  Page    => Page)));
+
             elsif Typ = "string" then
-               Pspec := Gnew_String
-                 (Name    => Name,
-                  Nick    => Label,
-                  Blurb   => Tooltip,
+               Pref := Preference (String_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Name,
+                  Label   => Label,
+                  Doc     => Tooltip,
                   Default => Default,
-                  Flags   => Flags);
+                  Page    => Page)));
+
             elsif Typ = "color" then
-               Pspec := Param_Spec (Gnew_Color
-                                      (Name    => Name,
-                                       Nick    => Label,
-                                       Blurb   => Tooltip,
-                                       Default => Default,
-                                       Flags   => Flags));
+               Pref := Preference (Color_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Name,
+                  Label   => Label,
+                  Page    => Page,
+                  Doc     => Tooltip,
+                  Default => Default)));
+
             elsif Typ = "font" then
-               Pspec := Param_Spec (Gnew_Font
-                                      (Name    => Name,
-                                       Nick    => Label,
-                                       Blurb   => Tooltip,
-                                       Default => Default,
-                                       Flags   => Flags));
+               Pref := Preference (Font_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Name,
+                  Label   => Label,
+                  Doc     => Tooltip,
+                  Default => Default,
+                  Page    => Page)));
 
             elsif Typ = "choices" then
                Child := Node.Child;
@@ -1478,37 +1318,32 @@ package body GPS.Kernel.Preferences is
                end loop;
 
                declare
-                  Typ : GType;
-                  Val : chars_ptr_array (1 .. size_t (Child_Count));
+                  Val : constant String_List_Access :=
+                    new String_List (1 .. Child_Count);
+                  --  Freed when the preference is destroyed
                begin
                   Child := Node.Child;
                   Child_Count := 1;
                   while Child /= null loop
-                     Val (size_t (Child_Count)) := New_String
-                       (Child.Value.all);
+                     Val (Child_Count) := new String'(Child.Value.all);
                      Child_Count := Child_Count + 1;
                      Child := Child.Next;
-                  end loop;
-
-                  Typ := Register_Static_Enum (Name, Val);
-
-                  for V in Val'Range loop
-                     Free (Val (V));
                   end loop;
 
                   if Default = "" then
                      Def := 1;
                   else
-                     Def := Gint'Value (Default);
+                     Def := Integer'Value (Default);
                   end if;
 
-                  Pspec := Gnew_Enum
-                    (Name      => Name,
-                     Nick      => Label,
-                     Blurb     => Tooltip,
-                     Enum_Type => Typ,
-                     Default   => Def,
-                     Flags     => Flags);
+                  Pref := Preference (Choice_Preference'(Create
+                    (Manager => Kernel.Preferences,
+                     Name      => Name,
+                     Label     => Label,
+                     Page      => Page,
+                     Doc       => Tooltip,
+                     Choices   => Val,
+                     Default   => Def)));
                end;
 
             else
@@ -1518,8 +1353,6 @@ package body GPS.Kernel.Preferences is
                   Mode => Error);
                return;
             end if;
-
-            Register_Property (Kernel.Preferences, Pspec, Page);
 
          exception
             when Constraint_Error =>
@@ -1628,11 +1461,11 @@ package body GPS.Kernel.Preferences is
    --------------
 
    procedure Set_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Boolean;
+     (Pref   : Boolean_Preference;
+      Kernel : access Kernel_Handle_Record'Class;
       Value  : Boolean) is
    begin
-      Set_Pref (Kernel.Preferences, Pref, Value);
+      Set_Pref (Pref, Kernel.Preferences, Value);
    end Set_Pref;
 
    --------------
@@ -1640,11 +1473,11 @@ package body GPS.Kernel.Preferences is
    --------------
 
    procedure Set_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_Int;
-      Value  : Glib.Gint) is
+     (Pref   : Integer_Preference;
+      Kernel : access Kernel_Handle_Record'Class;
+      Value  : Integer) is
    begin
-      Set_Pref (Kernel.Preferences, Pref, Value);
+      Set_Pref (Pref, Kernel.Preferences, Value);
    end Set_Pref;
 
    --------------
@@ -1652,24 +1485,12 @@ package body GPS.Kernel.Preferences is
    --------------
 
    procedure Set_Pref
-     (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Param_Spec_String;
+     (Pref   : Preference;
+      Kernel : access Kernel_Handle_Record'Class;
       Value  : String) is
    begin
-      Set_Pref (Kernel.Preferences, Pref, Value);
+      Set_Pref (Pref, Kernel.Preferences, Value);
    end Set_Pref;
-
-   -----------------------
-   -- Register_Property --
-   -----------------------
-
-   procedure Register_Property
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Param  : Glib.Param_Spec;
-      Page   : String) is
-   begin
-      Register_Property (Kernel.Preferences, Param, Page);
-   end Register_Property;
 
    ----------------------
    -- Save_Preferences --

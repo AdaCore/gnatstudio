@@ -202,8 +202,7 @@ package body Vdiff_Utils is
       File2  : GNATCOLL.VFS.Virtual_File;
       Diff   : Diff_Occurrence_Link)
    is
-      Context_Len     : Integer :=
-        Integer (Get_Pref (Diff_Context_Length));
+      Context_Len     : Integer := Diff_Context_Length.Get_Pref;
       --  Number of lines displayed before and after each chunk of differences
 
       S               : String (1 .. 8192);
@@ -226,7 +225,7 @@ package body Vdiff_Utils is
       Color           : Gdk_Color;
       Context_Changed : Boolean;
       Desc            : constant Pango_Font_Description :=
-        Get_Pref_Font (GPS.Kernel.Preferences.Default_Style);
+        GPS.Kernel.Preferences.Default_Style.Get_Pref_Font;
 
       Info_1          : Vdiff_Info_Access;
       Info_2          : Vdiff_Info_Access;
@@ -532,7 +531,7 @@ package body Vdiff_Utils is
       Offset_Line      : Integer := 0;
       Last_Line_Number : Natural;
       Desc             : constant Pango_Font_Description :=
-        Get_Pref_Font (GPS.Kernel.Preferences.Default_Style);
+        GPS.Kernel.Preferences.Default_Style.Get_Pref_Font;
 
       procedure Add_Line
         (List   : access Gtk_Clist_Record'Class;

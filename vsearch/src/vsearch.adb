@@ -26,7 +26,6 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gtk.Alignment;            use Gtk.Alignment;
 with Gtk.Clipboard;            use Gtk.Clipboard;
@@ -60,6 +59,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
+with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Generic_List;
 with Histories;                use Histories;
@@ -85,8 +85,8 @@ package body Vsearch is
    Close_On_Match_Hist_Key     : constant History_Key := "close_on_match";
    --  The key for the histories.
 
-   Ask_Confirmation_For_Replace_All : Param_Spec_Boolean;
-   Keep_Previous_Search_Context     : Param_Spec_Boolean;
+   Ask_Confirmation_For_Replace_All : Boolean_Preference;
+   Keep_Previous_Search_Context     : Boolean_Preference;
    --  The preferences
 
    Close_On_Match_Description : constant String :=
@@ -1010,7 +1010,7 @@ package body Vsearch is
       Response : Gtk_Response_Type;
 
    begin
-      if Get_Pref (Ask_Confirmation_For_Replace_All) then
+      if Ask_Confirmation_For_Replace_All.Get_Pref then
          Gtk_New (Do_Not_Ask, -"Do not ask this question again");
          Gtk_New_Hbox (Box);
          Pack_Start (Get_Vbox (Dialog), Box, True, True, 3);
@@ -1031,7 +1031,7 @@ package body Vsearch is
 
          if Get_Active (Do_Not_Ask) then
             Set_Pref
-              (Vsearch.Kernel, Ask_Confirmation_For_Replace_All, False);
+              (Ask_Confirmation_For_Replace_All, Vsearch.Kernel, False);
          end if;
 
          Destroy (Dialog);
@@ -2286,7 +2286,7 @@ package body Vsearch is
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Vsearch_Module_Id.Tab_Width := Natural (Get_Pref (Tab_Width));
+      Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
 
       Close_Options_Pixbuf := Gdk.Pixbuf.Gdk_New_From_Xpm_Data
         (close_options_xpm);
@@ -2338,27 +2338,23 @@ package body Vsearch is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Ask_Confirmation_For_Replace_All :=
-        Glib.Properties.Creation.Param_Spec_Boolean
-          (Gnew_Boolean
-             (Name  => "Ask-Confirmation-For-Replace-All",
-              Nick  => -"Confirmation for 'Replace all'",
-              Blurb => -("Enable the confirmation popup before doing a" &
-                " replace all from the search window."),
-              Default => True));
-      Register_Property
-        (Kernel, Param_Spec (Ask_Confirmation_For_Replace_All), -"Search");
+      Ask_Confirmation_For_Replace_All := Create
+        (Get_Preferences (Kernel),
+         Name  => "Ask-Confirmation-For-Replace-All",
+         Label => -"Confirmation for 'Replace all'",
+         Page  => -"Search",
+         Doc   => -("Enable the confirmation popup before doing a" &
+           " replace all from the search window."),
+         Default => True);
 
-      Keep_Previous_Search_Context :=
-        Glib.Properties.Creation.Param_Spec_Boolean
-          (Gnew_Boolean
-             (Name  => "keep-previous-search-context",
-              Nick  => -"Preserve Search Context",
-              Blurb => -("Preserve the contents of the ""Look in"" entry"
-                & " between consecutive searches."),
-              Default => False));
-      Register_Property
-        (Kernel, Param_Spec (Keep_Previous_Search_Context), -"Search");
+      Keep_Previous_Search_Context := Create
+        (Get_Preferences (Kernel),
+         Name  => "keep-previous-search-context",
+         Label => -"Preserve Search Context",
+         Page  => -"Search",
+         Doc   => -("Preserve the contents of the ""Look in"" entry"
+           & " between consecutive searches."),
+         Default => False);
    end Register_Preferences;
 
    ----------
@@ -2394,7 +2390,7 @@ package body Vsearch is
    is
       pragma Unreferenced (Kernel);
    begin
-      Vsearch_Module_Id.Tab_Width := Natural (Get_Pref (Tab_Width));
+      Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;
    end Preferences_Changed;
 
 end Vsearch;

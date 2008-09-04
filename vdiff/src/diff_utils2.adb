@@ -224,7 +224,7 @@ package body Diff_Utils2 is
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List
    is
-      Diff_Command : constant String := Get_Pref (Diff_Cmd);
+      Diff_Command : constant String := Diff_Cmd.Get_Pref;
    begin
       return Diff (Kernel, Diff_Command, Ref_File, New_File);
    end Diff;
@@ -308,7 +308,7 @@ package body Diff_Utils2 is
       Diff_File : GNATCOLL.VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List
    is
-      Patch_Command : constant String := Get_Pref (Patch_Cmd);
+      Patch_Command : constant String := Patch_Cmd.Get_Pref;
       Pattern_Any   : constant Pattern_Matcher := Compile (".+");
       Pattern       : constant Pattern_Matcher := Compile
         ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
@@ -427,7 +427,7 @@ package body Diff_Utils2 is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
-      Diff3_Command : constant String := Get_Pref (Diff3_Cmd);
+      Diff3_Command : constant String := Diff3_Cmd.Get_Pref;
    begin
       return Diff3 (Kernel, Diff3_Command, My_Change, Old_File, Your_Change);
    end Diff3;

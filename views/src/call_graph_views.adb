@@ -1221,7 +1221,7 @@ package body Call_Graph_Views is
       View.Show_Locations :=
         Get_History (Get_History (Kernel).all, History_Show_Locations);
 
-      Modify_Font (View.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
 
       Return_Callback.Object_Connect
         (View.Tree,

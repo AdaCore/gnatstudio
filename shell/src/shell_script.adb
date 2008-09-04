@@ -153,7 +153,7 @@ package body Shell_Script is
            (Console      => Console,
             Prompt       => "GPS> ",
             User_Data    => Kernel.all'Address,
-            Font         => Get_Pref_Font (Default_Style),
+            Font         => Default_Style.Get_Pref_Font,
             History_List => Get_History (Kernel),
             Key          => "shell",
             Wrap_Mode    => Wrap_Char);

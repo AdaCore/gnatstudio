@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                             AdaCore                               --
+--                      Copyright (C) 2002-2008, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,7 +117,7 @@ package body GVD.Proc_Utils is
 
       --  ??? Get_Pref is not fine here, as this can be a remote call
       Args := Argument_String_To_List_With_Triple_Quotes
-        (Get_Pref (List_Processes));
+        (List_Processes.Get_Pref);
       Spawn (Kernel,
              Args.all,
              Debug_Server,

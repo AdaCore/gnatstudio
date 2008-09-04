@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2005-2007, AdaCore           --
+--                        Copyright (C) 2005-2008, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 
 --  This package handles the charsets supported by GPS
 
-with Glib;
+with Default_Preferences;  use Default_Preferences;
 with Gtk.Combo;
 
 package GPS.Kernel.Charsets is
@@ -28,17 +28,22 @@ package GPS.Kernel.Charsets is
    -- Preferences --
    -----------------
 
-   type Param_Spec_Charset is new Glib.Param_Spec;
+   type Charset_Preference_Record is new
+     String_Preference_Record with null record;
+   type Charset_Preference is access all Charset_Preference_Record'Class;
 
-   function Gnew_Charset
-     (Name, Nick, Blurb   : String;
-      Default             : String;
-      Flags : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Charset;
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : String)
+      return Charset_Preference;
    --  Create a new preference representing a charset
 
-   function Get_Pref (Pref : Param_Spec_Charset) return String;
-   --  Return the currently selected charset
+   overriding function Edit
+     (Pref               : access Charset_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget;
 
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class);

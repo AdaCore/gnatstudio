@@ -17,9 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
+with Default_Preferences.Enums;
 
 package GVD.Preferences is
 
@@ -30,8 +29,8 @@ package GVD.Preferences is
 
    type Debugger_Windows_Policy is
      (Close_Windows, Hide_Windows, Keep_Windows);
-   for Debugger_Windows_Policy'Size use Glib.Gint'Size;
-   pragma Convention (C, Debugger_Windows_Policy);
+   package Debugger_Windows_Preferences is new
+     Default_Preferences.Enums.Generics (Debugger_Windows_Policy);
    --  What should happen to debugger-related windows when a debugger session
    --  is terminated.
 
@@ -42,42 +41,39 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General --
-   Break_On_Exception            : Param_Spec_Boolean;
-   Open_Main_Unit                : Param_Spec_Boolean;
-   Execution_Window              : Param_Spec_Boolean;
-   Preserve_State_On_Exit        : Param_Spec_Boolean;
-   Debugger_Windows              : Param_Spec_Enum;
+   Break_On_Exception            : Boolean_Preference;
+   Open_Main_Unit                : Boolean_Preference;
+   Execution_Window              : Boolean_Preference;
+   Preserve_State_On_Exit        : Boolean_Preference;
+   Debugger_Windows              : Debugger_Windows_Preferences.Preference;
 
    -- Source Window --
-   Editor_Show_Line_With_Code    : Param_Spec_Boolean;
+   Editor_Show_Line_With_Code    : Boolean_Preference;
 
    -- Assembly Window --
-   Asm_Highlight_Color           : Param_Spec_Color;
-   Asm_Breakpoint_Color          : Param_Spec_Color;
-   Assembly_Range_Size           : Param_Spec_Int;
+   Asm_Highlight_Color           : Color_Preference;
+   Asm_Breakpoint_Color          : Color_Preference;
+   Assembly_Range_Size           : Integer_Preference;
 
    -- Data Window --
-   Xref_Color                    : Param_Spec_Color;
-   Change_Color                  : Param_Spec_Color;
-   Thaw_Bg_Color                 : Param_Spec_Color;
-   Freeze_Bg_Color               : Param_Spec_Color;
-   Title_Font                    : Param_Spec_Font;
-   Type_Font                     : Param_Spec_Font;
-   Hide_Big_Items                : Param_Spec_Boolean;
-   Big_Item_Height               : Param_Spec_Int;
-   Default_Detect_Aliases        : Param_Spec_Boolean;
-   Max_Item_Width                : Param_Spec_Int;
-   Max_Item_Height               : Param_Spec_Int;
+   Xref_Color                    : Color_Preference;
+   Change_Color                  : Color_Preference;
+   Thaw_Bg_Color                 : Color_Preference;
+   Freeze_Bg_Color               : Color_Preference;
+   Title_Font                    : Font_Preference;
+   Type_Font                     : Font_Preference;
+   Hide_Big_Items                : Boolean_Preference;
+   Big_Item_Height               : Integer_Preference;
+   Default_Detect_Aliases        : Boolean_Preference;
+   Max_Item_Width                : Integer_Preference;
+   Max_Item_Height               : Integer_Preference;
 
    -- Command Window --
-   Debugger_Highlight_Color      : Param_Spec_Color;
+   Debugger_Highlight_Color      : Color_Preference;
 
    -- Memory Window --
-   Memory_View_Color             : Param_Spec_Color;
-   Memory_Highlighted_Color      : Param_Spec_Color;
-   Memory_Selected_Color         : Param_Spec_Color;
+   Memory_View_Color             : Color_Preference;
+   Memory_Highlighted_Color      : Color_Preference;
+   Memory_Selected_Color         : Color_Preference;
 
-private
-   type GVD_Preferences_Manager is new Preferences_Manager_Record with
-   null record;
 end GVD.Preferences;

@@ -17,9 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;              use Gdk.Color;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with String_Utils;           use String_Utils;
 
@@ -241,18 +239,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
    procedure Register_Highlighting
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Default_Color      : constant String  :=
-                             To_String (Get_Pref (Diff_Default_Color));
-      Old_Color          : constant String  :=
-                             To_String (Get_Pref (Diff_Old_Color));
-      Append_Color       : constant String  :=
-                             To_String (Get_Pref (Diff_Append_Color));
-      Remove_Color       : constant String  :=
-                             To_String (Get_Pref (Diff_Remove_Color));
-      Change_Color       : constant String  :=
-                             To_String (Get_Pref (Diff_Change_Color));
-      Change_Fine_Color  : constant String  :=
-                             To_String (Get_Pref (Diff_Fine_Change_Color));
+      Default_Color      : constant String  := Diff_Default_Color.Get_Pref;
+      Old_Color          : constant String  := Diff_Old_Color.Get_Pref;
+      Append_Color       : constant String  := Diff_Append_Color.Get_Pref;
+      Remove_Color       : constant String  := Diff_Remove_Color.Get_Pref;
+      Change_Color       : constant String  := Diff_Change_Color.Get_Pref;
+      Change_Fine_Color  : constant String  := Diff_Fine_Change_Color.Get_Pref;
       Args               : Argument_List :=
                              (1 => new String'(Default_Style),
                               2 => new String'(Default_Color));

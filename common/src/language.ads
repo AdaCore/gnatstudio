@@ -307,8 +307,6 @@ package Language is
    overriding function "=" (S1, S2 : Source_Location) return Boolean;
 
    type Indent_Style is (Automatic, RM_Style, Non_RM_Style);
-   for Indent_Style'Size use Integer'Size;
-   pragma Convention (C, Indent_Style);
    --  Indentation style used by some constructs (e.g. case statements in
    --  Ada).
    --  Automatic means that the engine will guess the best value.
@@ -386,8 +384,6 @@ package Language is
       Stick_Comments      => False);
 
    type Indentation_Kind is (None, Simple, Extended);
-   for Indentation_Kind'Size use Integer'Size;
-   pragma Convention (C, Indentation_Kind);
    --  Indentation kinds:
    --  None: no indentation should be performed
    --  Simple: use the amount of white spaces from previous line

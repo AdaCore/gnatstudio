@@ -432,7 +432,7 @@ package body Outline_View is
    begin
       if Child /= null then
          Outline := Outline_View_Access (Get_Widget (Child));
-         Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
+         Modify_Font (Outline.Tree, View_Fixed_Font.Get_Pref);
       end if;
    end Preferences_Changed;
 
@@ -775,7 +775,7 @@ package body Outline_View is
       Outline.File_Icon := Render_Icon
         (Get_Main_Window (Kernel), "gps-file", Icon_Size_Menu);
 
-      Modify_Font (Outline.Tree, Get_Pref (View_Fixed_Font));
+      Modify_Font (Outline.Tree, View_Fixed_Font.Get_Pref);
 
       Return_Callback.Object_Connect
         (Outline.Tree,

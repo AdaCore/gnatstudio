@@ -27,7 +27,7 @@ procedure Display_Help
 is
 
    HTML_Browser : constant String :=
-     Get_Pref (GPS.Kernel.Preferences.Html_Browser);
+     GPS.Kernel.Preferences.Html_Browser.Get_Pref;
 
    type Cst_String_Access is access constant String;
    type Browser_List is array (Natural range <>) of Cst_String_Access;

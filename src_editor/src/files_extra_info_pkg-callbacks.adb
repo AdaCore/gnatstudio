@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                               AdaCore                             --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,7 +37,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
       S     : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (-"Select a directory",
          Parent  => Gtk_Window (Get_Toplevel (Object)),
-         Use_Native_Dialog => Get_Pref (Use_Native_Dialogs),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          History           => null);  --  ??? No history
 
    begin

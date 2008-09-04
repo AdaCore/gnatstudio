@@ -166,7 +166,7 @@ package body Creation_Wizard.Adp is
       P    : constant Adp_Selection_Page_Access :=
         Adp_Selection_Page_Access (Page);
       Name : constant GNATCOLL.VFS.Virtual_File := Select_File
-        (Use_Native_Dialog  => Get_Pref (Use_Native_Dialogs),
+        (Use_Native_Dialog  => Use_Native_Dialogs.Get_Pref,
          File_Pattern       => "*.adp",
          Pattern_Name       => -"Glide project files",
          Parent             => Gtk_Window (Get_Toplevel (Widget)),

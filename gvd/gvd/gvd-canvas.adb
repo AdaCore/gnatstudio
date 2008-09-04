@@ -467,7 +467,7 @@ package body GVD.Canvas is
       Clear (Canvas.Canvas);
       Canvas.Item_Num := 0;
 
-      if Get_Pref (Preserve_State_On_Exit) then
+      if Preserve_State_On_Exit.Get_Pref then
          Get_Property
            (Property,
             Get_Executable (Process.Debugger),
@@ -518,7 +518,7 @@ package body GVD.Canvas is
       --  Save the currently displayed items, if any
 
       if Old /= null and then Process.Debugger /= null then
-         if Get_Pref (Preserve_State_On_Exit) then
+         if Preserve_State_On_Exit.Get_Pref then
             Iter := Start (Old.Canvas);
 
             while Get (Iter) /= null loop
@@ -1080,7 +1080,7 @@ package body GVD.Canvas is
       Set_Policy (Canvas, Policy_Automatic, Policy_Automatic);
 
       Canvas.Kernel         := Kernel_Handle (Kernel);
-      Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
+      Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
       Gtk_New (Canvas.Canvas);
       Align_On_Grid (Canvas.Canvas, True);
@@ -1107,7 +1107,7 @@ package body GVD.Canvas is
 
       --  Initialize the canvas
 
-      Annotation_Font := Copy (Get_Pref (GPS.Kernel.Preferences.Default_Font));
+      Annotation_Font := Copy (GPS.Kernel.Preferences.Default_Font.Get_Pref);
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale,
@@ -1181,7 +1181,7 @@ package body GVD.Canvas is
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
       Iter : Item_Iterator := Start (Canvas.Canvas);
       Item : Canvas_Item;
-      Hide : constant Boolean := Get_Pref (Hide_Big_Items);
+      Hide : constant Boolean := Hide_Big_Items.Get_Pref;
    begin
       loop
          Item := Get (Iter);
@@ -1203,13 +1203,12 @@ package body GVD.Canvas is
       Win : Gdk.Window.Gdk_Window;
       Item : Canvas_Item;
       Iter : Item_Iterator;
-      Hide : constant Boolean := Get_Pref (Hide_Big_Items);
+      Hide : constant Boolean := Hide_Big_Items.Get_Pref;
 
    begin
       Realize (Canvas);
       Win := Get_Window (Canvas);
-      Set_Detect_Aliases
-        (Canvas, Get_Pref (Default_Detect_Aliases));
+      Set_Detect_Aliases (Canvas, Default_Detect_Aliases.Get_Pref);
 
       --  If we are not attached to a process, this means the canvas is empty
       --  and nothing needs to be done anyway
@@ -1219,10 +1218,8 @@ package body GVD.Canvas is
 
       --  The drawing context for the items
 
-      Items.Set_Max_Height
-        (Positive (Get_Pref (Max_Item_Height)));
-      Items.Set_Max_Width
-        (Positive (Get_Pref (Max_Item_Width)));
+      Items.Set_Max_Height (Max_Item_Height.Get_Pref);
+      Items.Set_Max_Width  (Max_Item_Width.Get_Pref);
 
       if Canvas.Item_Context.GC /= null then
          Destroy (Canvas.Item_Context.GC);
@@ -1237,8 +1234,7 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (Canvas.Item_Context.Xref_GC, Win);
-      Set_Foreground
-        (Canvas.Item_Context.Xref_GC, Get_Pref (Xref_Color));
+      Set_Foreground (Canvas.Item_Context.Xref_GC, Xref_Color.Get_Pref);
       Canvas.Tooltip_Context.Xref_GC := Canvas.Item_Context.Xref_GC;
 
       if Canvas.Item_Context.Modified_GC /= null then
@@ -1246,8 +1242,7 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (Canvas.Item_Context.Modified_GC, Win);
-      Set_Foreground
-        (Canvas.Item_Context.Modified_GC, Get_Pref (Change_Color));
+      Set_Foreground (Canvas.Item_Context.Modified_GC, Change_Color.Get_Pref);
       Canvas.Tooltip_Context.Modified_GC := Canvas.Item_Context.Modified_GC;
 
       if Canvas.Item_Context.Selection_GC /= null then
@@ -1256,7 +1251,7 @@ package body GVD.Canvas is
 
       Gdk_New (Canvas.Item_Context.Selection_GC, Win);
       Set_Foreground (Canvas.Item_Context.Selection_GC,
-                      Get_Pref (Selected_Item_Color));
+                      Selected_Item_Color.Get_Pref);
       Canvas.Tooltip_Context.Selection_GC := Canvas.Item_Context.Selection_GC;
 
       if Canvas.Item_Context.Text_Layout /= null then
@@ -1265,17 +1260,17 @@ package body GVD.Canvas is
       end if;
 
       Canvas.Item_Context.Line_Height := To_Pixels
-        (Get_Size (Get_Pref (View_Fixed_Font)));
+        (Get_Size (View_Fixed_Font.Get_Pref));
 
-      Canvas.Item_Context.Big_Item_Height := Get_Pref (Big_Item_Height);
+      Canvas.Item_Context.Big_Item_Height := Gint (Big_Item_Height.Get_Pref);
 
       Canvas.Item_Context.Text_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (Canvas.Item_Context.Text_Layout, Get_Pref (View_Fixed_Font));
+        (Canvas.Item_Context.Text_Layout, View_Fixed_Font.Get_Pref);
 
       Canvas.Item_Context.Type_Layout := Create_Pango_Layout (Canvas.Canvas);
       Set_Font_Description
-        (Canvas.Item_Context.Type_Layout, Get_Pref (Type_Font));
+        (Canvas.Item_Context.Type_Layout, Type_Font.Get_Pref);
 
       --  The drawing context for the boxes
 
@@ -1284,8 +1279,7 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (Canvas.Box_Context.Grey_GC, Win);
-      Set_Foreground
-        (Canvas.Box_Context.Grey_GC, Get_Pref (Title_Color));
+      Set_Foreground (Canvas.Box_Context.Grey_GC, Title_Color.Get_Pref);
 
       if Canvas.Box_Context.Black_GC /= null then
          Destroy (Canvas.Box_Context.Black_GC);
@@ -1306,8 +1300,7 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (Canvas.Box_Context.Thaw_Bg_GC, Win);
-      Set_Foreground
-        (Canvas.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
+      Set_Foreground (Canvas.Box_Context.Thaw_Bg_GC, Thaw_Bg_Color.Get_Pref);
 
       if Canvas.Box_Context.Freeze_Bg_GC /= null then
          Destroy (Canvas.Box_Context.Freeze_Bg_GC);
@@ -1315,7 +1308,7 @@ package body GVD.Canvas is
 
       Gdk_New (Canvas.Box_Context.Freeze_Bg_GC, Win);
       Set_Foreground
-        (Canvas.Box_Context.Freeze_Bg_GC, Get_Pref (Freeze_Bg_Color));
+        (Canvas.Box_Context.Freeze_Bg_GC, Freeze_Bg_Color.Get_Pref);
 
       Allocate_Fonts (Canvas);
 

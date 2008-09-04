@@ -296,8 +296,8 @@ package body VCS_View is
       if Text /= null then
          Create_Pixmap_From_Text
            (Text.all,
-            Get_Pref (Default_Font),
-            Get_Pref (Tooltip_Color),
+            Default_Font.Get_Pref,
+            Tooltip_Color.Get_Pref,
             Tooltip.Explorer.Tree,
             Pixmap);
          GNAT.Strings.Free (Text);

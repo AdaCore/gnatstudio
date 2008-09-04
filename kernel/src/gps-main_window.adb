@@ -27,9 +27,7 @@ with Gdk.Dnd;                   use Gdk.Dnd;
 
 with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
-with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Object;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Glib.Values;               use Glib.Values;
 
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -56,6 +54,7 @@ with Gtkada.Types;
 with Pango.Font;                use Pango.Font;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -120,27 +119,21 @@ package body GPS.Main_Window is
      (1 => Name_Cst'Access, 2 => Short_Cst'Access);
 
    type Tabs_Position_Preference is (Bottom, Top, Left, Right);
-   for Tabs_Position_Preference'Size use Glib.Gint'Size;
-   pragma Convention (C, Tabs_Position_Preference);
-   package Tabs_Position_Properties is new Generic_Enumeration_Property
-     ("Tabs_Position", Tabs_Position_Preference);
+   package Tabs_Position_Preferences is new
+     Default_Preferences.Enums.Generics (Tabs_Position_Preference);
 
    type Tabs_Policy_Enum is (Never, Automatic, Always);
-   for Tabs_Policy_Enum'Size use Glib.Gint'Size;
-   pragma Convention (C, Tabs_Policy_Enum);
-   package Show_Tabs_Policy_Properties is new Generic_Enumeration_Property
-     ("Tabs_Policy", Tabs_Policy_Enum);
+   package Show_Tabs_Policy_Preferences is new
+     Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
 
    type Toolbar_Icons_Size is (Hide_Toolbar, Small_Icons, Large_Icons);
-   for Toolbar_Icons_Size'Size use Glib.Gint'Size;
-   pragma Convention (C, Toolbar_Icons_Size);
-   package Toolbar_Icons_Size_Properties is new Generic_Enumeration_Property
-     ("Toobar_Icons", Toolbar_Icons_Size);
+   package Toolbar_Icons_Size_Preferences is new
+     Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
-   Pref_Tabs_Policy     : Param_Spec_Enum;
-   Pref_Tabs_Position   : Param_Spec_Enum;
-   Pref_Toolbar_Style   : Param_Spec_Enum;
-   Pref_Show_Statusbar  : Param_Spec_Boolean;
+   Pref_Tabs_Policy     : Show_Tabs_Policy_Preferences.Preference;
+   Pref_Tabs_Position   : Tabs_Position_Preferences.Preference;
+   Pref_Toolbar_Style   : Toolbar_Icons_Size_Preferences.Preference;
+   Pref_Show_Statusbar  : Boolean_Preference;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -437,17 +430,15 @@ package body GPS.Main_Window is
       Policy : Show_Tabs_Policy_Enum;
    begin
       Gtk.Rc.Parse_String
-        ("gtk-font-name=""" &
-         To_String (Get_Pref (Default_Font)) &
-         '"' & ASCII.LF);
+        ("gtk-font-name=""" & Default_Font.Get_Pref & '"' & ASCII.LF);
 
       Gtk.Rc.Parse_String
         ("style ""gtk-default-tooltips-style""  {" & ASCII.LF
          & "  bg[NORMAL] = """
-         & Get_Pref (Tooltip_Color) & """" & ASCII.LF
+         & Tooltip_Color.Get_Pref & """" & ASCII.LF
          & "}");
 
-      case Toolbar_Icons_Size'Val (Get_Pref (Pref_Toolbar_Style)) is
+      case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Hide_Toolbar =>
             Set_Child_Visible (Win.Toolbar_Box, False);
             Hide_All (Win.Toolbar_Box);
@@ -465,26 +456,26 @@ package body GPS.Main_Window is
             Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
       end case;
 
-      if Get_Pref (Toolbar_Show_Text) then
+      if Toolbar_Show_Text.Get_Pref then
          Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
       else
          Set_Style (Get_Toolbar (Kernel), Toolbar_Icons);
       end if;
 
-      case Tabs_Position_Preference'Val (Get_Pref (Pref_Tabs_Position)) is
+      case Tabs_Position_Preference'(Pref_Tabs_Position.Get_Pref) is
          when Bottom => Pos := Pos_Bottom;
          when Right  => Pos := Pos_Right;
          when Top    => Pos := Pos_Top;
          when Left   => Pos := Pos_Left;
       end case;
 
-      case Tabs_Policy_Enum'Val (Get_Pref (Pref_Tabs_Policy)) is
+      case Tabs_Policy_Enum'(Pref_Tabs_Policy.Get_Pref) is
          when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
          when Never     => Policy := Show_Tabs_Policy_Enum'(Never);
          when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
-      if Get_Pref (Pref_Show_Statusbar) then
+      if Pref_Show_Statusbar.Get_Pref then
          Show_All (Win.Statusbar);
          Set_Child_Visible (Win.Statusbar, True);
          Set_Size_Request (Win.Statusbar, 0, -1);
@@ -496,22 +487,20 @@ package body GPS.Main_Window is
 
       Configure
         (Get_MDI (Kernel),
-         Opaque_Resize     => Get_Pref (MDI_Opaque),
-         Close_Floating_Is_Unfloat =>
-           not Get_Pref (MDI_Destroy_Floats),
-         Title_Font        => Get_Pref (Default_Font),
-         Background_Color  => Get_Pref (MDI_Background_Color),
-         Title_Bar_Color   => Get_Pref (MDI_Title_Bar_Color),
-         Focus_Title_Color => Get_Pref (MDI_Focus_Title_Color),
-         Draw_Title_Bars   => Get_Pref (Pref_Draw_Title_Bars),
+         Opaque_Resize     => MDI_Opaque.Get_Pref,
+         Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref,
+         Title_Font        => Default_Font.Get_Pref,
+         Background_Color  => MDI_Background_Color.Get_Pref,
+         Title_Bar_Color   => MDI_Title_Bar_Color.Get_Pref,
+         Focus_Title_Color => MDI_Focus_Title_Color.Get_Pref,
+         Draw_Title_Bars   => Pref_Draw_Title_Bars.Get_Pref,
          Show_Tabs_Policy  => Policy,
          Tabs_Position     => Pos);
 
-      Set_All_Floating_Mode
-        (Get_MDI (Kernel), Get_Pref (MDI_All_Floating));
+      Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
 
       Use_Short_Titles_For_Floats
-        (Get_MDI (Kernel), Get_Pref (MDI_Float_Short_Title));
+        (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
    end Preferences_Changed;
 
    ----------------
@@ -541,57 +530,52 @@ package body GPS.Main_Window is
          Gtk_Window (Main_Window),
          Home_Dir, Prefix_Directory);
 
-      Pref_Draw_Title_Bars := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name  => "Window-Draw-Title-Bars",
-            Nick  => -"Show title bars",
-            Blurb => -("Whether the windows should have their own title bars."
-                       & " If this is disabled, then the notebooks tabs will"
-                       & " be used to show the current window"),
-            Default => True));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Pref_Draw_Title_Bars), -"Windows");
+      Pref_Draw_Title_Bars := Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name  => "Window-Draw-Title-Bars",
+         Label => -"Show title bars",
+         Page  => -"Windows",
+         Doc   => -("Whether the windows should have their own title bars."
+           & " If this is disabled, then the notebooks tabs will"
+           & " be used to show the current window"),
+         Default => True);
 
-      Pref_Tabs_Policy := Param_Spec_Enum
-        (Show_Tabs_Policy_Properties.Gnew_Enum
-           (Name  => "Window-Tabs-Policy",
-            Nick  => -"Notebook tabs policy",
-            Blurb => -"When the notebook tabs should be displayed",
-            Default => Automatic));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Pref_Tabs_Policy), -"Windows");
+      Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name  => "Window-Tabs-Policy",
+         Label => -"Notebook tabs policy",
+         Page  => -"Windows",
+         Doc   => -"When the notebook tabs should be displayed",
+         Default => Automatic);
 
-      Pref_Tabs_Position := Param_Spec_Enum
-        (Tabs_Position_Properties.Gnew_Enum
-           (Name  => "Window-Tabs-Position",
-            Nick  => -"Notebook tabs position",
-            Blurb => -("Where the tabs should be displayed relative to the"
-                       & " notebooks"),
-            Default => Bottom));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Pref_Tabs_Position), -"Windows");
+      Pref_Tabs_Position := Tabs_Position_Preferences.Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name  => "Window-Tabs-Position",
+         Label => -"Notebook tabs position",
+         Page  => -"Windows",
+         Doc   => -("Where the tabs should be displayed relative to the"
+           & " notebooks"),
+         Default => Bottom);
 
-      Pref_Toolbar_Style := Param_Spec_Enum
-        (Toolbar_Icons_Size_Properties.Gnew_Enum
-           (Name    => "General-Toolbar-Style",
-            Nick    => -"Tool bar style",
-            Blurb   => -("Indicates how the tool bar should be displayed"),
-            Default => Large_Icons));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Pref_Toolbar_Style), -"General");
+      Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name    => "General-Toolbar-Style",
+         Label   => -"Tool bar style",
+         Page    => -"General",
+         Doc     => -("Indicates how the tool bar should be displayed"),
+         Default => Large_Icons);
 
-      Pref_Show_Statusbar := Param_Spec_Boolean
-        (Gnew_Boolean
-           (Name  => "Window-Show-Status-Bar",
-            Nick  => -"Show status bar",
-            Blurb => -("Whether the area at the bottom of the GPS window"
+      Pref_Show_Statusbar := Create
+        (Get_Preferences (Main_Window.Kernel),
+         Name  => "Window-Show-Status-Bar",
+         Label => -"Show status bar",
+         Page  => -"General",
+         Doc   => -("Whether the area at the bottom of the GPS window"
                        & " should be displayed. This area contains the"
                        & " progress bars while actions are taking place. The"
                        & " same information is available from the Task"
                        & " Manager"),
-            Default => True));
-      Register_Property
-        (Main_Window.Kernel, Param_Spec (Pref_Show_Statusbar), -"General");
+         Default => True);
 
       Set_Policy (Main_Window, False, True, False);
       Set_Position (Main_Window, Win_Pos_None);

@@ -642,8 +642,8 @@ package body Browsers.Call_Graph is
 
       Gtk_New (Child, Browser,
                Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
-               Default_Width  => Get_Pref (Default_Widget_Width),
-               Default_Height => Get_Pref (Default_Widget_Height),
+               Default_Width  => Gint (Default_Widget_Width.Get_Pref),
+               Default_Height => Gint (Default_Widget_Height.Get_Pref),
                Group          => Group_Graphs,
                Module         => Call_Graph_Module_Id);
       Set_Title (Child, -"Call graph Browser");

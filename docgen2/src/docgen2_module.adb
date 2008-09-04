@@ -24,9 +24,9 @@ with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
-with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Gtkada.File_Selector;        use Gtkada.File_Selector;
 
+with Default_Preferences;         use Default_Preferences;
 with Docgen2;                     use Docgen2;
 with Docgen2.Hooks;
 with Docgen2_Backend;             use Docgen2_Backend;
@@ -52,23 +52,23 @@ package body Docgen2_Module is
    type Docgen_Module_Record is new Module_ID_Record with record
       --  Docgen preferences
 
-      Generate_Body_Files     : Param_Spec_Boolean;
+      Generate_Body_Files     : Boolean_Preference;
       --  Create also the body documentation
 
-      Comments_Filter         : Param_Spec_String;
+      Comments_Filter         : String_Preference;
       --  Regexp used to filter comments
 
-      Show_Private_Entities   : Param_Spec_Boolean;
+      Show_Private_Entities   : Boolean_Preference;
       --  Show also private entities
 
-      Show_References         : Param_Spec_Boolean;
+      Show_References         : Boolean_Preference;
       --  True if the program should search for the references
       --  Adding information like "subprogram called by..."
 
-      Process_Up_To_Date_Only : Param_Spec_Boolean;
+      Process_Up_To_Date_Only : Boolean_Preference;
       --  True if docgen should document up to date entities only.
 
-      User_Tags_List          : Param_Spec_String;
+      User_Tags_List          : String_Preference;
       --  List of space-separated user tags.
 
       Options                 : Docgen_Options;
@@ -190,20 +190,18 @@ package body Docgen2_Module is
    begin
       Docgen_Module (Docgen_Module_Id).Options :=
         (Process_Body_Files =>
-           Get_Pref (Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
+           Docgen_Module (Docgen_Module_Id).Generate_Body_Files.Get_Pref,
          Comments_Filter =>
            Get_Filter
-             (Get_Pref (Docgen_Module (Docgen_Module_Id).Comments_Filter)),
+             (Docgen_Module (Docgen_Module_Id).Comments_Filter.Get_Pref),
          Show_Private       =>
-           Get_Pref (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
+           Docgen_Module (Docgen_Module_Id).Show_Private_Entities.Get_Pref,
          References         =>
-           Get_Pref (Docgen_Module (Docgen_Module_Id).Show_References),
+           Docgen_Module (Docgen_Module_Id).Show_References.Get_Pref,
          Process_Up_To_Date_Only =>
-           Get_Pref
-             (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only),
+           Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref,
          User_Tags               =>
-           Get_Tags
-             (Get_Pref (Docgen_Module (Docgen_Module_Id).User_Tags_List)),
+           Get_Tags (Docgen_Module (Docgen_Module_Id).User_Tags_List.Get_Pref),
          Keep_Formatting         => True);
 
    exception
@@ -456,83 +454,60 @@ package body Docgen2_Module is
       --  a backend selection mechanism will be needed.
       Docgen_Module (Docgen_Module_Id).Backend := new HTML_Backend_Record;
 
-      Docgen_Module (Docgen_Module_Id).Generate_Body_Files
-        := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-Process-Body",
-           Default => False,
-           Blurb   => -"Whether body files should be processed",
-           Nick    => -"Process body files"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
-         -"Documentation");
+      Docgen_Module (Docgen_Module_Id).Generate_Body_Files := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-Process-Body",
+         Default => False,
+         Page    => -"Documentation",
+         Doc     => -"Whether body files should be processed",
+         Label   => -"Process body files");
 
-      Docgen_Module (Docgen_Module_Id).Comments_Filter
-        := Param_Spec_String
-        (Gnew_String
-          (Name    => "Doc-Filter-Comments",
-           Default => "",
-           Blurb   =>
+      Docgen_Module (Docgen_Module_Id).Comments_Filter := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-Filter-Comments",
+         Default => "",
+         Page    => -"Documentation",
+         Doc     =>
              -("Regular expression used to filter comments. Matching parts" &
                " of the comments will be ignored."),
-           Nick    => -"Comments filter regexp"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Comments_Filter),
-         -"Documentation");
+         Label   => -"Comments filter regexp");
 
-      Docgen_Module (Docgen_Module_Id).Show_Private_Entities :=
-        Param_Spec_Boolean
-          (Gnew_Boolean
-               (Name    => "Doc-Show-Private",
-                Default => False,
-                Blurb   => -"Whether Docgen should show private entities",
-                Nick    => -"Show private entities"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
-         -"Documentation");
+      Docgen_Module (Docgen_Module_Id).Show_Private_Entities := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-Show-Private",
+         Default => False,
+         Page    => -"Documentation",
+         Doc     => -"Whether Docgen should show private entities",
+         Label   => -"Show private entities");
 
-      Docgen_Module (Docgen_Module_Id).Show_References := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-References",
-           Default => False,
-           Blurb   =>
-             -("Whether Docgen should compute references (e.g. call graph)"),
-            Nick    => -"Call graph"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
-         -"Documentation");
+      Docgen_Module (Docgen_Module_Id).Show_References := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-References",
+         Default => False,
+         Page    => -"Documentation",
+         Doc     =>
+            -("Whether Docgen should compute references (e.g. call graph)"),
+         Label   => -"Call graph");
 
-      Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only :=
-        Param_Spec_Boolean
-          (Gnew_Boolean
-               (Name    => "Doc-Up-To-Date-Only",
-                Default => True,
-                Blurb   =>
-                -("Whether Docgen should only document files with up-to-date"
-                  & " cross ref informations."),
-                Nick    => -"Up-to-date files only"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only),
-         -"Documentation");
+      Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-Up-To-Date-Only",
+         Default => True,
+         Page    => -"Documentation",
+         Doc     =>
+            -("Whether Docgen should only document files with up-to-date"
+            & " cross ref informations."),
+         Label   => -"Up-to-date files only");
 
-      Docgen_Module (Docgen_Module_Id).User_Tags_List :=
-        Param_Spec_String
-          (Gnew_String
-               (Name    => "Doc-User-Tags",
-                Default => "summary description parameter exception seealso",
-                Blurb   =>
-                -("List of space separated xml tags used to better format the"
-                  & " documentation extracted from the source comments."),
-                Nick    => -"User defined tags"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).User_Tags_List),
-         -"Documentation");
+      Docgen_Module (Docgen_Module_Id).User_Tags_List := Create
+        (Get_Preferences (Kernel),
+         Name    => "Doc-User-Tags",
+         Default => "summary description parameter exception seealso",
+         Page    => -"Documentation",
+         Doc     =>
+            -("List of space separated xml tags used to better format the"
+             & " documentation extracted from the source comments."),
+         Label   => -"User defined tags");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

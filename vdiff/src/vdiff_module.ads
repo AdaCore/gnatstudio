@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +19,8 @@
 
 --  Visual Diff module.
 
+with Default_Preferences;
 with GPS.Kernel.Modules;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 
 package Vdiff_Module is
 
@@ -29,7 +28,7 @@ package Vdiff_Module is
    Vdiff_Module_Name : constant String := "Visual_Diff";
 
    --  Preferences used by vdiff1 and not by vdiff2
-   Diff_Context_Length : Param_Spec_Int;
+   Diff_Context_Length : Default_Preferences.Integer_Preference;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

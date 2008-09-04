@@ -277,7 +277,7 @@ package body GVD.Assembly_View is
       Gtk_New (View.Highlight_Tag);
       Set_Property
         (View.Highlight_Tag, Foreground_Gdk_Property,
-         Get_Pref (Asm_Highlight_Color));
+         Asm_Highlight_Color.Get_Pref);
       Add (Tag_Table, View.Highlight_Tag);
 
       --  Breakpoints highlighting
@@ -285,7 +285,7 @@ package body GVD.Assembly_View is
       Gtk_New (View.Breakpoint_Tag);
       Set_Property
         (View.Breakpoint_Tag, Background_Gdk_Property,
-         Get_Pref (Asm_Breakpoint_Color));
+         Asm_Breakpoint_Color.Get_Pref);
       Add (Tag_Table, View.Breakpoint_Tag);
 
       --  Pc Hightlighting
@@ -685,7 +685,7 @@ package body GVD.Assembly_View is
       end if;
 
       if View.Current_Range /= null
-        and then Get_Pref (Assembly_Range_Size) /= 0
+        and then Assembly_Range_Size.Get_Pref /= 0
       then
          Set_Busy
            (Get_Process (View), True,
@@ -711,7 +711,7 @@ package body GVD.Assembly_View is
                String_To_Address
                  (Add_Address
                     (Address_To_String (View.Current_Range.High),
-                     Integer (Get_Pref (Assembly_Range_Size)))));
+                     Assembly_Range_Size.Get_Pref)));
          end if;
 
          Highlight (View);
@@ -883,7 +883,7 @@ package body GVD.Assembly_View is
       else
          View.Current_Range := Find_In_Cache (View, Start_Address);
          if View.Current_Range = null then
-            if Get_Pref (Assembly_Range_Size) = 0
+            if Assembly_Range_Size.Get_Pref = 0
               or else End_Address = Invalid_Address
             then
                Get_Machine_Code
@@ -899,7 +899,7 @@ package body GVD.Assembly_View is
                   Code            => S,
                   Start_Address   => Start_Address,
                   End_Address     => Set_Offset
-                    (Start_Address, Integer (Get_Pref (Assembly_Range_Size))));
+                    (Start_Address, Assembly_Range_Size.Get_Pref));
             end if;
 
             if Start /= Invalid_Address then
@@ -1151,7 +1151,7 @@ package body GVD.Assembly_View is
          Assembly_View_Event_Cb.To_Marshaller (Key_Press_Cb'Access),
          Widget);
 
-      Configure (Assembly_View (Widget), Get_Pref_Font (Default_Style));
+      Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
       Hook := new Preferences_Hook_Record'
         (Function_No_Args with View => Assembly_View (Widget));
@@ -1174,12 +1174,12 @@ package body GVD.Assembly_View is
       Set_Property
         (Hook.View.Highlight_Tag,
          Foreground_Gdk_Property,
-         Get_Pref (Asm_Highlight_Color));
+         Asm_Highlight_Color.Get_Pref);
       Set_Property
         (Hook.View.Breakpoint_Tag,
          Background_Gdk_Property,
-         Get_Pref (Asm_Breakpoint_Color));
-      Set_Font (Hook.View, Get_Pref_Font (Default_Style));
+         Asm_Breakpoint_Color.Get_Pref);
+      Set_Font (Hook.View, Default_Style.Get_Pref_Font);
 
       Update (Hook.View);
 

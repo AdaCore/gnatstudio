@@ -22,13 +22,12 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Default_Preferences;
+with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with GPS.Intl;                 use GPS.Intl;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Values;              use Glib.Values;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -62,7 +61,7 @@ package body Theme_Manager_Module is
 
    Me : constant Debug_Handle := Create ("Themes");
 
-   Active_Themes : Param_Spec_String;
+   Active_Themes : String_Preference;
 
    type Theme_Description;
    type Theme_Description_Access is access Theme_Description;
@@ -247,7 +246,7 @@ package body Theme_Manager_Module is
    is
       pragma Unreferenced (Level);
       Kernel       : constant Kernel_Handle := Get_Kernel (Module.all);
-      Active       : constant String := Get_Pref (Active_Themes);
+      Active       : constant String := Active_Themes.Get_Pref;
       Themes       : Theme_Description_Access;
       Str          : GNAT.Strings.String_Access;
       Theme_Active : Boolean;
@@ -302,12 +301,12 @@ package body Theme_Manager_Module is
       elsif Node.Tag.all = "pref" then
          declare
             Name : constant String := Get_Attribute (Node, "name");
-            Param : constant Param_Spec :=
+            Pref : constant Default_Preferences.Preference :=
                Default_Preferences.Get_Pref_From_Name
                  (Get_Preferences (Kernel), Name, True);
          begin
             if Name /= "" then
-               Set_Pref (Kernel, Param_Spec_String (Param), Node.Value.all);
+               Set_Pref (Pref, Kernel, Node.Value.all);
             end if;
          end;
       end if;
@@ -468,7 +467,7 @@ package body Theme_Manager_Module is
          Next (W.Model, Category);
       end loop;
 
-      Set_Pref (W.Kernel, Active_Themes, To_String (List));
+      Set_Pref (Active_Themes, Get_Preferences (W.Kernel), To_String (List));
    end Validate;
 
    ------------
@@ -598,13 +597,13 @@ package body Theme_Manager_Module is
       Register_Module
         (Module_ID (Theme_Manager_Module), Kernel, "theme_manager");
 
-      Active_Themes := Param_Spec_String (Gnew_String
-        (Name    => "Active-Themes",
-         Nick    => -"Active themes",
-         Blurb   => -"List of currently active themes",
+      Active_Themes := Create
+        (Get_Preferences (Kernel),
+         Name    => "Active-Themes",
+         Label   => -"Active themes",
+         Doc     => -"List of currently active themes",
          Default => "@Default@",
-         Flags   => Param_Readable));
-      Register_Property (Kernel, Param_Spec (Active_Themes), -"General");
+         Page    => "");
 
       Theme.Kernel := Kernel_Handle (Kernel);
       GPS.Kernel.Preferences.Register_Page (Kernel, Theme);

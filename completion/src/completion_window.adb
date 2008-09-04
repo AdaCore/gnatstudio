@@ -1346,7 +1346,7 @@ package body Completion_Window is
       --  Create the Notes window
 
       Gtk_New (Window.Notes_Window, Window_Popup);
-      Modify_Bg (Window.Notes_Window, State_Normal, Get_Pref (Tooltip_Color));
+      Modify_Bg (Window.Notes_Window, State_Normal, Tooltip_Color.Get_Pref);
 
       Gtk_New (Frame);
 --        Modify_Bg (Frame, State_Normal, Get_Pref (Tooltip_Color));
@@ -1356,7 +1356,7 @@ package body Completion_Window is
       Add (Frame, Scroll);
       Add (Window.Notes_Window, Frame);
       Gtk_New (Viewport);
-      Modify_Bg (Viewport, State_Normal, Get_Pref (Tooltip_Color));
+      Modify_Bg (Viewport, State_Normal, Tooltip_Color.Get_Pref);
 
       Set_Shadow_Type (Viewport, Shadow_None);
       Add (Scroll, Viewport);

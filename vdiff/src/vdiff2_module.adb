@@ -25,7 +25,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
@@ -317,69 +316,62 @@ package body Vdiff2_Module is
          Action => Command,
          Filter => Filter_3_Files);
 
-      Diff3_Cmd := Param_Spec_String
-        (Gnew_String
-           (Name  => "Diff-Utils-Diff3",
-            Nick  => -"Diff3 command",
-            Blurb => -("Command used to compute differences between three" &
-              "files. Arguments can also be specified"),
-            Default => Config.Default_Diff3_Cmd));
-      Register_Property
-        (Kernel, Param_Spec (Diff3_Cmd), -"Visual diff");
+      Diff3_Cmd := Create
+        (Get_Preferences (Kernel),
+         Name  => "Diff-Utils-Diff3",
+         Label => -"Diff3 command",
+         Doc   => -("Command used to compute differences between three" &
+           "files. Arguments can also be specified"),
+         Page  => -"Visual diff",
+         Default => Config.Default_Diff3_Cmd);
 
-      Diff_Default_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Diff-Default-Color",
-            Nick     => -"Default Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#C1C1C1"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Default_Color), -"Visual diff");
+      Diff_Default_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Diff-Default-Color",
+         Label    => -"Default Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#C1C1C1");
 
-      Diff_Old_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Diff-Old-Color",
-            Nick     => -"Old Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#C1C1C1"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Old_Color), -"Visual diff");
+      Diff_Old_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Diff-Old-Color",
+         Label    => -"Old Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#C1C1C1");
 
-      Diff_Append_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Diff-Append-Color",
-            Nick     => -"Append Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#88EEAA"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Append_Color), -"Visual diff");
+      Diff_Append_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Diff-Append-Color",
+         Label    => -"Append Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#88EEAA");
 
-      Diff_Remove_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Diff-Remove-Color",
-            Nick     => -"Remove Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#FFA0A0"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Remove_Color), -"Visual diff");
+      Diff_Remove_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Diff-Remove-Color",
+         Label    => -"Remove Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#FFA0A0");
 
-      Diff_Change_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Diff-Change-Color",
-            Nick     => -"Change Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#ECECAA"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Change_Color), -"Visual diff");
+      Diff_Change_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Diff-Change-Color",
+         Label    => -"Change Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#ECECAA");
 
-      Diff_Fine_Change_Color := Param_Spec_Color
-        (Gnew_Color
-           (Name     =>  "Horizontal-Diff-Change-Color",
-            Nick     => -"Fine Change Color",
-            Blurb    => -"Color used for highlighting in Visual Diff2",
-            Default  => "#FDE66A"));
-      Register_Property
-        (Kernel, Param_Spec (Diff_Fine_Change_Color), -"Visual diff");
+      Diff_Fine_Change_Color := Create
+        (Get_Preferences (Kernel),
+         Name     =>  "Horizontal-Diff-Change-Color",
+         Label    => -"Fine Change Color",
+         Doc      => -"Color used for highlighting in Visual Diff2",
+         Page     => -"Visual diff",
+         Default  => "#FDE66A");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

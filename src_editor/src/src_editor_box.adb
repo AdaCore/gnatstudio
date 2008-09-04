@@ -865,7 +865,7 @@ package body Src_Editor_Box is
       Set_Tooltip
         (Tooltip   => Create_Tooltips (Box),
          On_Widget => Box.Source_View,
-         Timeout   => Guint32 (Get_Pref (Tooltip_Timeout)));
+         Timeout   => Guint32 (Tooltip_Timeout.Get_Pref));
 
       --  The status bar, at the bottom of the window...
 
@@ -1534,8 +1534,8 @@ package body Src_Editor_Box is
    is
       Item  : Gtk_Menu_Item;
       Label : Gtk_Label;
-      Pref  : constant Dispatching_Menu_Policy := Dispatching_Menu_Policy'Val
-        (Get_Pref (Submenu_For_Dispatching_Calls));
+      Pref  : constant Dispatching_Menu_Policy :=
+        Submenu_For_Dispatching_Calls.Get_Pref;
       Count : Natural := 0;
 
       function On_Callee
@@ -1773,8 +1773,7 @@ package body Src_Editor_Box is
         (Entity    => Get_Entity (Context),
          Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
-         Policy    => Dispatching_Menu_Policy'Val
-           (Get_Pref (Submenu_For_Dispatching_Calls)));
+         Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
       Pop_State (Get_Kernel (Context));
       return Result;
    end Filter_Matches_Primitive;
@@ -2220,8 +2219,7 @@ package body Src_Editor_Box is
                    (Title             => -"Save File As",
                     Parent            => Get_Current_Window (Editor.Kernel),
                     Default_Name      => New_Base_Name.all,
-                    Use_Native_Dialog =>
-                      Get_Pref (Use_Native_Dialogs),
+                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                     Kind              => Save_File,
                     File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
                     Pattern_Name      => -"All files;Ada files;C/C++ files",

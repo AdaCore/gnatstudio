@@ -18,14 +18,9 @@
 -----------------------------------------------------------------------
 
 with Config;   use Config;
-with Glib.Generic_Properties; use Glib.Generic_Properties;
 with GPS.Intl; use GPS.Intl;
 
 package body GVD.Preferences is
-
-   package Debugger_Windows_Policy_Properties is new
-     Generic_Enumeration_Property
-       ("Debugger_Windows_Policy", Debugger_Windows_Policy);
 
    ----------------------------------
    -- Register_Default_Preferences --
@@ -36,239 +31,248 @@ package body GVD.Preferences is
    is
       XML_Prefix   : constant String := "Debugger-";
       General      : constant String := -"Debugger";
-      Source_Flags : constant Param_Flags := Param_Readable;
 
    begin
-      Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
-        (Name      => XML_Prefix & "Break-On-Exception",
-         Nick      => -"Break on exceptions",
-         Blurb     =>
+      Break_On_Exception := Create
+        (Manager   => Prefs,
+         Name      => XML_Prefix & "Break-On-Exception",
+         Page      => General,
+         Label     => -"Break on exceptions",
+         Doc       =>
            -("True if process should be stopped when an exception is raised."
              & " This setup is only taken into account when a new debugger"
              & " is initialized, it doesn't modify the behavior for existing"
              & " debuggers."),
-         Default   => False));
-      Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
+         Default   => False);
 
-      Open_Main_Unit := Param_Spec_Boolean (Gnew_Boolean
-        (Name       => XML_Prefix & "Open-Main-Unit",
-         Nick       => -"Always open main unit",
-         Blurb      =>
+      Open_Main_Unit := Create
+        (Manager    => Prefs,
+         Name       => XML_Prefix & "Open-Main-Unit",
+         Label      => -"Always open main unit",
+         Page       => General,
+         Doc        =>
          -("Enabled when initializing the debugger should always open the"
            & " main unit. If disabled, no new editor is opened"),
-         Default    => True));
-      Register_Property (Prefs, Param_Spec (Open_Main_Unit), General);
+         Default    => True);
 
       if Support_Execution_Window then
-         Execution_Window := Param_Spec_Boolean (Gnew_Boolean
-           (Name      => XML_Prefix & "Execution-Window",
-            Nick      => -"Execution window",
-            Blurb     =>
+         Execution_Window := Create
+           (Manager   => Prefs,
+            Name      => XML_Prefix & "Execution-Window",
+            Label     => -"Execution window",
+            Page      => General,
+            Doc       =>
              -("If False, the debugged program is assumed to require no " &
                "input. If True, a separate execution window will be created"),
-            Default   => True));
-
+            Default   => True);
       else
-         Execution_Window := Param_Spec_Boolean (Gnew_Boolean
-           (Name      => XML_Prefix & "Execution-Window",
-            Nick      => -"Execution window",
-            Blurb     => "",
-            Flags     => Source_Flags,
-            Default   => False));
+         Execution_Window := Create
+           (Manager   => Prefs,
+            Name      => XML_Prefix & "Execution-Window",
+            Label     => -"Execution window",
+            Page      => "",
+            Doc       => "",
+            Default   => False);
       end if;
 
-      Register_Property  (Prefs, Param_Spec (Execution_Window), General);
-
-      Preserve_State_On_Exit := Param_Spec_Boolean (Gnew_Boolean
-        (Name       => XML_Prefix & "Preserve_State-On-Exit",
-         Nick       => -"Preserve state on exit",
-         Blurb      =>
+      Preserve_State_On_Exit := Create
+        (Manager    => Prefs,
+         Name       => XML_Prefix & "Preserve_State-On-Exit",
+         Label      => -"Preserve state on exit",
+         Page       => General,
+         Doc        =>
             -("True if the breakpoints should be saved when the debugger"
              & " session is terminated, and restored the next time the same"
              & " executable is debugged. This preference also controls"
              & " whether the contents of the data window should be preserved"
              & " when the window is closed."),
-         Default    => True));
-      Register_Property
-        (Prefs, Param_Spec (Preserve_State_On_Exit), General);
+         Default    => True);
 
-      Debugger_Windows := Param_Spec_Enum
-        (Debugger_Windows_Policy_Properties.Gnew_Enum
-           (Name    => XML_Prefix & "Debugger-Windows",
-            Nick    => -"Debugger windows",
-            Blurb   =>
-            -("What should happen to debugger-related windows when the"
-              & " debugger session terminates. The windows can either be"
-              & " closed automatically, or be kept in the desktop, in which"
-              & " case they can either be hidden or kept visible. The next"
-              & " debugger session will reuse these windows, which is"
-              & " convenient if you want to put them in a specific place"),
-            Default => Hide_Windows));
-      Register_Property (Prefs, Param_Spec (Debugger_Windows), General);
+      Debugger_Windows := Debugger_Windows_Preferences.Create
+        (Manager => Prefs,
+         Name    => XML_Prefix & "Debugger-Windows",
+         Label   => -"Debugger windows",
+         Page    => General,
+         Doc     =>
+         -("What should happen to debugger-related windows when the"
+           & " debugger session terminates. The windows can either be"
+           & " closed automatically, or be kept in the desktop, in which"
+           & " case they can either be hidden or kept visible. The next"
+           & " debugger session will reuse these windows, which is"
+           & " convenient if you want to put them in a specific place"),
+         Default => Hide_Windows);
 
-      Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
-        (Name      => XML_Prefix & "Editor-Show-Line-With-Code",
-         Nick      => -"Show lines with code",
-         Blurb     => -("True if dots should be shown in the editor for lines"
-                        & " that contain code"),
-         Default   => False));
-      Register_Property
-        (Prefs, Param_Spec (Editor_Show_Line_With_Code), General);
+      Editor_Show_Line_With_Code := Create
+        (Manager   => Prefs,
+         Name      => XML_Prefix & "Editor-Show-Line-With-Code",
+         Label     => -"Show lines with code",
+         Doc       => -("True if dots should be shown in the editor for lines"
+           & " that contain code"),
+         Page      => General,
+         Default   => False);
 
-      Default_Detect_Aliases := Param_Spec_Boolean (Gnew_Boolean
-        (Name     => XML_Prefix & "Default-Detect-Aliases",
-         Nick     => -"Detect aliases",
-         Blurb    => -("True if we shouldn't create new items in the data "
+      Default_Detect_Aliases := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Default-Detect-Aliases",
+         Label    => -"Detect aliases",
+         Page     => General,
+         Doc      => -("True if we shouldn't create new items in the data "
                        & "window when an item at the same address already "
                        & "exists"),
-         Default  => True));
-      Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), General);
+         Default  => True);
 
-      Assembly_Range_Size := Param_Spec_Int (Gnew_Int
-        (Name     => XML_Prefix & "Assembly-Range-Size",
-         Nick     => -"Assembly range size",
-         Blurb    => -("Number of assembly lines to display in the initial"
+      Assembly_Range_Size := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Assembly-Range-Size",
+         Page     => General,
+         Label    => -"Assembly range size",
+         Doc      => -("Number of assembly lines to display in the initial"
                        & " display of the assembly window." & ASCII.LF
                        & "If this size is 0, then the whole subprogram"
                        & " is displayed, but this can take a very long time"
                        & " on slow machines"),
          Minimum  => 0,
          Maximum  => 100000,
-         Default  => 200));
-      Register_Property (Prefs, Param_Spec (Assembly_Range_Size), General);
+         Default  => 200);
 
-      Asm_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Asm-Highlight-Color",
-         Nick     => -"Current assembly line",
-         Blurb    => -("Color used to highlight the assembly code for the"
+      Asm_Highlight_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Asm-Highlight-Color",
+         Page     => General,
+         Label    => -"Current assembly line",
+         Doc      => -("Color used to highlight the assembly code for the"
                        & " current source line"),
-         Default  => "#0000FF"));
-      Register_Property (Prefs, Param_Spec (Asm_Highlight_Color), General);
+         Default  => "#0000FF");
 
-      Asm_Breakpoint_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Asm-Breakpoint-Color",
-         Nick     => -"Breakpoint line",
-         Blurb    => -("Assembly line on which a breakpoint is set"),
-         Default  => "#FF0000"));
-      Register_Property (Prefs, Param_Spec (Asm_Breakpoint_Color), General);
+      Asm_Breakpoint_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Asm-Breakpoint-Color",
+         Page     => General,
+         Label    => -"Breakpoint line",
+         Doc      => -("Assembly line on which a breakpoint is set"),
+         Default  => "#FF0000");
 
-      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Highlight-Color",
-         Nick     => -"Color highlighting",
-         Blurb    => -"Color used for highlighting in the debugger console",
-         Default  => "#0000FF"));
-      Register_Property
-        (Prefs, Param_Spec (Debugger_Highlight_Color), General);
+      Debugger_Highlight_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Highlight-Color",
+         Page     => General,
+         Label    => -"Color highlighting",
+         Doc      => -"Color used for highlighting in the debugger console",
+         Default  => "#0000FF");
 
-      Xref_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Xref-Color",
-         Nick     => -"Clickable item",
-         Blurb    => -"Color used for the data items that are clickable",
-         Default  => "#0000FF"));
-      Register_Property (Prefs, Param_Spec (Xref_Color), General);
+      Xref_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Xref-Color",
+         Page     => General,
+         Label    => -"Clickable item",
+         Doc      => -"Color used for the data items that are clickable",
+         Default  => "#0000FF");
 
-      Change_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Change-Color",
-         Nick     => -"Changed data",
-         Blurb    => -("Color used to highlight data fields that have changed"
+      Change_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Change-Color",
+         Page     => General,
+         Label    => -"Changed data",
+         Doc      => -("Color used to highlight data fields that have changed"
                        & " since the last update"),
-         Default  => "#FF0000"));
-      Register_Property (Prefs, Param_Spec (Change_Color), General);
+         Default  => "#FF0000");
 
-      Thaw_Bg_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Thaw-Bg-Color",
-         Nick     => -"Auto-Refreshed",
-         Blurb    => -("Background color for the items that are recomputed"
+      Thaw_Bg_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Thaw-Bg-Color",
+         Page     => "",
+         Label    => -"Auto-Refreshed",
+         Doc      => -("Background color for the items that are recomputed"
                        & " every time the debugger stops"),
-         Flags    => Source_Flags,
-         Default  => "#FFFFFF"));
-      Register_Property (Prefs, Param_Spec (Thaw_Bg_Color), General);
+         Default  => "#FFFFFF");
 
-      Freeze_Bg_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Freeze-Bg-Color",
-         Nick     => -"Frozen",
-         Blurb    =>
+      Freeze_Bg_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Freeze-Bg-Color",
+         Label    => -"Frozen",
+         Doc      =>
            -("Background color for the items that are never recomputed"),
-         Flags    => Source_Flags,
-         Default  => "#AAAAAA"));
-      Register_Property (Prefs, Param_Spec (Freeze_Bg_Color), General);
+         Page     => "",
+         Default  => "#AAAAAA");
 
-      Hide_Big_Items := Param_Spec_Boolean (Gnew_Boolean
-        (Name     => XML_Prefix & "Hide-Big-Items",
-         Nick     => -"Fold big items",
-         Blurb    => -("True if items higher than a Big Item Height should"
+      Hide_Big_Items := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Hide-Big-Items",
+         Label    => -"Fold big items",
+         Doc      => -("True if items higher than a Big Item Height should"
                        & " be folded initially"),
-         Flags    => Source_Flags,
-         Default  => True));
-      Register_Property (Prefs, Param_Spec (Hide_Big_Items), General);
+         Page     => "",
+         Default  => True);
 
-      Big_Item_Height := Param_Spec_Int (Gnew_Int
-        (Name     => XML_Prefix & "Big-Item-Height",
-         Nick     => -"Big item height",
-         Blurb    => -"See Fold big items",
-         Flags    => Source_Flags,
+      Big_Item_Height := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Big-Item-Height",
+         Label    => -"Big item height",
+         Doc      => -"See Fold big items",
+         Page     => "",
          Minimum  => 0,
          Maximum  => 100000,
-         Default  => 150));
-      Register_Property (Prefs, Param_Spec (Big_Item_Height), General);
+         Default  => 150);
 
-      Memory_View_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Memory-View-Color",
-         Nick     => -"Memory color",
-         Blurb    => -"Color used by default in the memory view window",
-         Default  => "#333399"));
-      Register_Property (Prefs, Param_Spec (Memory_View_Color), General);
+      Memory_View_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Memory-View-Color",
+         Page     => General,
+         Label    => -"Memory color",
+         Doc      => -"Color used by default in the memory view window",
+         Default  => "#333399");
 
-      Memory_Highlighted_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Memory-Highlighted-Color",
-         Nick     => -"Memory highlighting",
-         Blurb    => -"Color used for highlighted items in the memory view",
-         Default  => "#DDDDDD"));
-      Register_Property
-        (Prefs, Param_Spec (Memory_Highlighted_Color), General);
+      Memory_Highlighted_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Memory-Highlighted-Color",
+         Page     => General,
+         Label    => -"Memory highlighting",
+         Doc      => -"Color used for highlighted items in the memory view",
+         Default  => "#DDDDDD");
 
-      Memory_Selected_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Memory-Selected-Color",
-         Nick     => -"Memory selection",
-         Blurb    => -"Color used for selected items in the memory view",
-         Default  => "#FF0000"));
-      Register_Property
-        (Prefs, Param_Spec (Memory_Selected_Color), General);
+      Memory_Selected_Color := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Memory-Selected-Color",
+         Page     => General,
+         Label    => -"Memory selection",
+         Doc      => -"Color used for selected items in the memory view",
+         Default  => "#FF0000");
 
-      Title_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Title-Font",
-         Nick     => -"Item name",
-         Blurb    => -"Font used for the name of the variables",
-         Default  => "Sans Bold 9"));
-      Register_Property (Prefs, Param_Spec (Title_Font), General);
+      Title_Font := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Title-Font",
+         Page     => General,
+         Label    => -"Item name",
+         Doc      => -"Font used for the name of the variables",
+         Default  => "Sans Bold 9");
 
-      Type_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Type-Font",
-         Nick     => -"Item type",
-         Blurb    => -"Font used for the type of the variables",
-         Default  => "Sans Oblique 9"));
-      Register_Property (Prefs, Param_Spec (Type_Font), General);
+      Type_Font := Create
+        (Manager  => Prefs,
+         Name     => XML_Prefix & "Type-Font",
+         Page     => General,
+         Label    => -"Item type",
+         Doc      => -"Font used for the type of the variables",
+         Default  => "Sans Oblique 9");
 
-      Max_Item_Width := Param_Spec_Int (Gnew_Int
-        (Name    => "Browsers-Item-Max-Width",
+      Max_Item_Width := Create
+        (Manager => Prefs,
+         Name    => "Browsers-Item-Max-Width",
+         Page    => General,
          Minimum => 1,
-         Maximum => Gint'Last,
+         Maximum => Integer'Last,
          Default => 1200,
-         Blurb   => -"The maximum width of an item",
-         Nick    => -"Max item width"));
-      Register_Property
-        (Prefs, Param_Spec (Max_Item_Width), General);
+         Doc     => -"The maximum width of an item",
+         Label   => -"Max item width");
 
-      Max_Item_Height := Param_Spec_Int (Gnew_Int
-        (Name    => "Browsers-Item-Max-Height",
+      Max_Item_Height := Create
+        (Manager => Prefs,
+         Name    => "Browsers-Item-Max-Height",
+         Page    => General,
          Minimum => 1,
-         Maximum => Gint'Last,
+         Maximum => Integer'Last,
          Default => 12000,
-         Blurb   => -"The maximum height of an item",
-         Nick    => -"Max item height"));
-      Register_Property
-        (Prefs, Param_Spec (Max_Item_Height), General);
-
+         Doc     => -"The maximum height of an item",
+         Label   => -"Max item height");
    end Register_Default_Preferences;
 
 end GVD.Preferences;

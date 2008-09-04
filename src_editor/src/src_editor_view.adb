@@ -912,7 +912,7 @@ package body Src_Editor_View is
       --  current block, if needed.
 
       procedure Highlight_Text is
-         Column           : constant Gint := Get_Pref (Highlight_Column);
+         Column           : constant Gint := Gint (Highlight_Column.Get_Pref);
          Rect             : Gdk_Rectangle;
          Line_Y           : Gint;
          Line_Height      : Gint;
@@ -1193,7 +1193,7 @@ package body Src_Editor_View is
       Gdk_New
         (View.Current_Line_GC,
          Get_Window (View, Text_Window_Text));
-      Color := Get_Pref (Current_Line_Color);
+      Color := Current_Line_Color.Get_Pref;
       Set_Foreground (View.Current_Line_GC, Color);
       View.Highlight_Current :=
         not Equal (Color, White (Get_Default_Colormap));
@@ -1201,9 +1201,9 @@ package body Src_Editor_View is
       Gdk_New
         (View.Current_Block_GC,
          Get_Window (View, Text_Window_Text));
-      Color := Get_Pref (Current_Block_Color);
+      Color := Current_Block_Color.Get_Pref;
       Set_Foreground (View.Current_Block_GC, Color);
-      View.Highlight_Blocks := Get_Pref (Block_Highlighting);
+      View.Highlight_Blocks := Block_Highlighting.Get_Pref;
 
       Gdk_New
         (View.Default_GC,
@@ -1547,7 +1547,7 @@ package body Src_Editor_View is
    begin
       --  Set the font.
 
-      Descr := Get_Pref_Font (Default_Style);
+      Descr := Default_Style.Get_Pref_Font;
       Set_Font (Source, Descr);
 
       --  Recompute the width of one character.
@@ -1564,18 +1564,17 @@ package body Src_Editor_View is
       --  point.
 
       if Source.Current_Line_GC /= null then
-         Color := Get_Pref (Current_Line_Color);
+         Color := Current_Line_Color.Get_Pref;
          Set_Foreground (Source.Current_Line_GC, Color);
          Source.Highlight_Current :=
            not Equal (Color, White (Get_Default_Colormap));
 
-         Color := Get_Pref (Current_Block_Color);
+         Color := Current_Block_Color.Get_Pref;
          Set_Foreground (Source.Current_Block_GC, Color);
-         Source.Highlight_Blocks := Get_Pref (Block_Highlighting);
+         Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
       end if;
 
-      Source.Speed_Column_Mode :=
-        Speed_Column_Policies'Val (Get_Pref (Speed_Column_Policy));
+      Source.Speed_Column_Mode := Speed_Column_Policy.Get_Pref;
 
       if Source.Speed_Column_Mode /= Mode then
          if Source.Speed_Column_Mode = Never then
@@ -1597,14 +1596,14 @@ package body Src_Editor_View is
 
       --  Modify the text background and color.
 
-      Color := Get_Pref_Bg (Default_Style);
+      Color := Default_Style.Get_Pref_Bg;
 
       if Color /= Source.Background_Color then
          Source.Background_Color := Color;
          Modify_Base (Source, State_Normal, Color);
       end if;
 
-      Color := Get_Pref_Fg (Default_Style);
+      Color := Default_Style.Get_Pref_Fg;
 
       if Color /= Source.Text_Color then
          Source.Text_Color := Color;

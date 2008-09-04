@@ -1177,7 +1177,7 @@ package body Project_Properties is
       Relative : constant Boolean :=
          Get_Paths_Type (Project) = Projects.Relative
          or else (Get_Paths_Type (Project) = From_Pref
-                  and then Get_Pref (Generate_Relative_Paths));
+                  and then Generate_Relative_Paths.Get_Pref);
       Iter     : Gtk_Tree_Iter;
    begin
       if Editor.Ent /= null then
@@ -2384,7 +2384,7 @@ package body Project_Properties is
       case Get_Paths_Type (Project) is
          when Relative  => return True;
          when Absolute  => return False;
-         when From_Pref => return Get_Pref (Generate_Relative_Paths);
+         when From_Pref => return Generate_Relative_Paths.Get_Pref;
       end case;
    end Paths_Are_Relative;
 
@@ -2837,7 +2837,7 @@ package body Project_Properties is
       if As_Directory then
          File := Select_Directory
            (Parent            => Gtk_Window (Toplevel),
-            Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
          if File = GNATCOLL.VFS.No_File then
             return (1 .. 0 => GNATCOLL.VFS.No_File);
          else
@@ -2950,13 +2950,13 @@ package body Project_Properties is
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Project_Path),
                   Default_Name      => "",
-                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
             else
                File := Select_File
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Dir_Name (Default)),
                   Default_Name      => Base_Name (Default),
-                  Use_Native_Dialog => Get_Pref (Use_Native_Dialogs));
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
             end if;
 
             if File = GNATCOLL.VFS.No_File then

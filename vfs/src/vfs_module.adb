@@ -521,7 +521,7 @@ package body VFS_Module is
             Relative :=
               Get_Paths_Type (Prj) = Projects.Relative
               or else (Get_Paths_Type (Prj) = From_Pref
-                       and then Get_Pref (Generate_Relative_Paths));
+                       and then Generate_Relative_Paths.Get_Pref);
 
             Success := Success or else Projects.Editor.Rename_Path
               (Prj, File_In, File_Out, Relative);

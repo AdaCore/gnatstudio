@@ -20,7 +20,6 @@
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Object;                use Glib.Object;
-with Glib.Properties.Creation;   use Glib.Properties.Creation;
 
 with Gtk.Combo;                  use Gtk.Combo;
 with Gtk.Editable;               use Gtk.Editable;
@@ -31,7 +30,6 @@ with Gtk.List_Item;              use Gtk.List_Item;
 with Gtk.Tooltips;               use Gtk.Tooltips;
 with Gtk.Widget;                 use Gtk.Widget;
 
-with Default_Preferences;        use Default_Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
@@ -40,17 +38,8 @@ package body GPS.Kernel.Charsets is
 
    CHARSET : constant String_Access := Getenv ("CHARSET");
 
-   Default_Charset : GPS.Kernel.Charsets.Param_Spec_Charset;
+   Default_Charset : Charset_Preference;
    --  Preference that defines the default charset to use when opening files
-
-   function Edit_Charset
-     (Manager            : access Preferences_Manager_Record;
-      Preferences_Editor : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Param              : Glib.Param_Spec;
-      Tips               : Gtk.Tooltips.Gtk_Tooltips)
-      return Gtk.Widget.Gtk_Widget;
-   pragma Convention (C, Edit_Charset);
-   --  Create a widget suitable for editing a charset
 
    type Charset_Description is record
       Name        : String_Access;
@@ -90,11 +79,11 @@ package body GPS.Kernel.Charsets is
    --  See also the list in "gedit  File->Open  Available Encodings"
 
    procedure Charset_Changed
-     (Combo : access GObject_Record'Class; Data : Manager_Param_Spec);
+     (Combo : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when the contents of the Combo has changed, to set the pref
 
    procedure Update_Charset
-     (Combo : access GObject_Record'Class; Data : Manager_Param_Spec);
+     (Combo : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when the pref has changed, to set the combo
 
    ---------------------
@@ -103,19 +92,18 @@ package body GPS.Kernel.Charsets is
 
    procedure Charset_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
+      Data  : Manager_Preference)
    is
       Value : constant String := Get_Text (Get_Entry (Gtk_Combo (Combo)));
    begin
       for C in Charsets'Range loop
          if Charsets (C).Description.all = Value then
-            Set_Pref (Data.Manager, Param_Spec_String (Data.Param),
-                      Charsets (C).Name.all);
+            Set_Pref (Data.Pref, Data.Manager, Charsets (C).Name.all);
             return;
          end if;
       end loop;
 
-      Set_Pref (Data.Manager, Param_Spec_String (Data.Param), Value);
+      Set_Pref (Data.Pref, Data.Manager, Value);
    end Charset_Changed;
 
    --------------------
@@ -124,10 +112,9 @@ package body GPS.Kernel.Charsets is
 
    procedure Update_Charset
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec) is
+      Data  : Manager_Preference) is
    begin
-      Set_Text (Get_Entry (Gtk_Combo (Combo)),
-                Get_Pref (Param_Spec_Charset (Data.Param)));
+      Set_Text (Get_Entry (Gtk_Combo (Combo)), Data.Pref.Get_Pref);
    end Update_Charset;
 
    --------------------------
@@ -169,19 +156,18 @@ package body GPS.Kernel.Charsets is
       return Combo;
    end Create_Charset_Combo;
 
-   ------------------
-   -- Edit_Charset --
-   ------------------
+   ----------
+   -- Edit --
+   ----------
 
-   function Edit_Charset
-     (Manager            : access Preferences_Manager_Record;
-      Preferences_Editor : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Param              : Glib.Param_Spec;
+   function Edit
+     (Pref               : access Charset_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Tips);
-      Value    : constant String := Get_Pref (Param_Spec_Charset (Param));
+      Value    : constant String := Pref.Get_Pref;
       Combo   : Gtk_Combo;
       Item    : Gtk_List_Item;
       Selected : Integer := -1;
@@ -205,54 +191,37 @@ package body GPS.Kernel.Charsets is
          Set_Text (Get_Entry (Combo), Value);
       end if;
 
-      Param_Spec_Handlers.Object_Connect
+      Preference_Handlers.Object_Connect
         (Get_Entry (Combo), Signal_Changed,
          Charset_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Param),
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
          Slot_Object => Combo,
          After       => True);
-      Param_Spec_Handlers.Object_Connect
-        (Preferences_Editor, Signal_Preferences_Changed,
+      Preference_Handlers.Object_Connect
+        (Get_Editor (Manager), Signal_Preferences_Changed,
          Update_Charset'Access,
          Slot_Object => Combo,
-         User_Data => (Preferences_Manager (Manager), Param));
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
       return Gtk_Widget (Combo);
-   end Edit_Charset;
+   end Edit;
 
-   ------------------
-   -- Gnew_Charset --
-   ------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Gnew_Charset
-     (Name, Nick, Blurb   : String;
-      Default             : String;
-      Flags : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Charset
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : String)
+      return Charset_Preference
    is
-      function Internal
-        (Name, Nick, Blurb : String;
-         Default           : String;
-         Flags             : Param_Flags) return Param_Spec_Charset;
-      pragma Import (C, Internal, "g_param_spec_string");
-      Param : Param_Spec_Charset;
+      Result : constant Charset_Preference := new Charset_Preference_Record;
    begin
-      Param := Internal
-        (Name & ASCII.NUL, Nick & ASCII.NUL, Blurb & ASCII.NUL,
-         Default => Default & ASCII.NUL,
-         Flags   => Flags);
-      Set_Param_Spec_Editor (Param_Spec (Param), Edit_Charset'Access);
-      return Param;
-   end Gnew_Charset;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref : Param_Spec_Charset) return String is
-   begin
-      return Get_Pref (Param_Spec_String (Pref));
-   end Get_Pref;
+      Set_Pref (Result, null, Default);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
 
    --------------------------
    -- Register_Preferences --
@@ -261,17 +230,17 @@ package body GPS.Kernel.Charsets is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Default_Charset := Gnew_Charset
-        (Name    => "General-Charset",
-         Nick    => -"Character set",
-         Blurb   => -("Name of character set to use when reading or saving"
+      Default_Charset := Create
+        (Get_Preferences (Kernel),
+         Name    => "General-Charset",
+         Label   => -"Character set",
+         Page    => -"General",
+         Doc     => -("Name of character set to use when reading or saving"
                       & " files. GPS uses unicode internally, but need to"
                       & " convert the files from and to your system's"
                       & " own encoding. Use ""UTF-8"" if your system supports"
                       & " unicode"),
          Default => "ISO-8859-1");
-      Register_Property
-         (Kernel.Preferences, Param_Spec (Default_Charset), -"General");
    end Register_Preferences;
 
    ----------------------

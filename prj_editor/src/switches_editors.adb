@@ -148,7 +148,7 @@ package body Switches_Editors is
         (Editor             => Page,
          Config             => Tool.Config,
          Tooltips           => Get_Tooltips (Kernel),
-         Use_Native_Dialogs => Get_Pref (Use_Native_Dialogs));
+         Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref);
       Widget_Callback.Connect (Page, Signal_Destroy, Page_Destroyed'Access);
 
       Page.Switches  := In_Editor;

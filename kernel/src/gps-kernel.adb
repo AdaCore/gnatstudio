@@ -329,9 +329,7 @@ package body GPS.Kernel is
       end if;
 
       declare
-         Pattern : constant String :=
-                     GPS.Kernel.Preferences.Get_Pref
-                       (Hidden_Directories_Pattern);
+         Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
       begin
          if Pattern /= "" then
             Kernel.Hidden_File_Matcher :=
@@ -339,9 +337,7 @@ package body GPS.Kernel is
          end if;
       end;
 
-      Set_Trusted_Mode
-        (Get_Registry (Kernel).all,
-         GPS.Kernel.Preferences.Get_Pref (Trusted_Mode));
+      Set_Trusted_Mode (Get_Registry (Kernel).all, Trusted_Mode.Get_Pref);
    end On_Preferences_Changed;
 
    ------------------

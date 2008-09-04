@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007, AdaCore              --
+--                     Copyright (C) 2006-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -434,7 +434,7 @@ package body Startup_Module is
       Add (Scrolled, Text);
       Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
-      Modify_Font (Text, Get_Pref_Font (Default_Style));
+      Modify_Font (Text, Default_Style.Get_Pref_Font);
 
       Gtk_New (Scrolled);
       Gtk_New (Label, -"Initialization");
@@ -457,7 +457,7 @@ package body Startup_Module is
       Add (Scrolled, Text);
       Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
-      Modify_Font (Text, Get_Pref_Font (Default_Style));
+      Modify_Font (Text, Default_Style.Get_Pref_Font);
 
       List := Get_Cell_Renderers (Get_Column (Editor.Tree, Column_Load));
       Add_Attribute

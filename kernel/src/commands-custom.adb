@@ -410,8 +410,8 @@ package body Commands.Custom is
             if S = null then
                S := new String'(Value);
             else
-               if S'Length > GPS.Kernel.Preferences.Get_Pref
-                 (GPS.Kernel.Preferences.Max_Output_Length)
+               if S'Length >
+                 GPS.Kernel.Preferences.Max_Output_Length.Get_Pref
                then
                   --  If we are collecting more output than we should, emit a
                   --  warning and stop collecting.

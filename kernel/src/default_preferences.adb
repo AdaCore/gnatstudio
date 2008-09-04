@@ -17,19 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Unchecked_Conversion;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNAT.Strings;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Font;                 use Gdk.Font;
-with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 
@@ -39,7 +36,6 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Color_Selection;      use Gtk.Color_Selection;
-with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
@@ -49,14 +45,11 @@ with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.List;                 use Gtk.List;
-with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Style;                use Gtk.Style;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tooltips;             use Gtk.Tooltips;
@@ -73,7 +66,7 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Pango.Font;               use Pango.Font;
 
-with Case_Handling;            use Case_Handling;
+with Config;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
@@ -83,65 +76,20 @@ package body Default_Preferences is
 
    Me : constant Debug_Handle := Create ("Default_Prefs");
 
-   use Param_Spec_List;
-
-   Fallback_Font : constant String := "Sans 10";
-   --  The name of a font that should always work on all systems. This is used
-   --  in case the user-specified fonts can not be found.
-
-   Param_Spec_Editor_Data : constant String := "gps_editor";
-   --  Name of the property set in a param_spec to point to the function that
-   --  edits it
-
-   Pref_Description_Data : constant String := "pref_description";
-   --  Name of the property set in a param_spec to point to the description of
-   --  the preference.
-
---     function Get_Page
---       (Param : Param_Spec) return String;
-   --  Return the name of the page for the Name preference.
-   --  Constraint_Error is raised if the preference doesn't exist.
-
-   ----------------------
-   -- Pref_Description --
-   ----------------------
-
-   type Pref_Description is record
-      Value : GNAT.Strings.String_Access;
-      Page  : GNAT.Strings.String_Access;
-      Param : Glib.Param_Spec;
-      --  The definition of the preference. This can be null if the preference
-      --  has not been registered yet, but its value has been read in the
-      --  preferences file.
-
-      Descr : Pango.Font.Pango_Font_Description;
-   end record;
-   type Pref_Description_Access is access all Pref_Description;
-   pragma Convention (C, Pref_Description_Access);
-
-   function Get_Description  (P : Param_Spec) return Pref_Description_Access;
-   procedure Set_Description (P : Param_Spec; Descr : Pref_Description_Access);
-   --  Set or Get the description associated with Param.
-
-   procedure Free_Pref_Description (Data : Glib.C_Proxy);
-   pragma Convention (C, Free_Pref_Description);
-   --  Free the memory associated with the Pref_Description parameter. This is
-   --  called automatically when the associated Param_Spec is destroyed.
+   use Preferences_Maps;
+   use type Gdk.Gdk_Font;
 
    ------------------
    -- Saved_Params --
    ------------------
 
-   type Saved_Param_Spec is record
-      Param : Param_Spec;               --  Points to the original one (no ref)
-      Descr : Pref_Description_Access;  --  A clone of the original one
-   end record;
-   procedure Free (P : in out Saved_Param_Spec);
-   package Saved_Param_List is new Generic_List (Saved_Param_Spec, Free);
-   use Saved_Param_List;
+   package Str_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, String, Ada.Strings.Hash, "=");
+   use Str_Maps;
 
    type Saved_Prefs_Data_Record is record
-      Preferences : Saved_Param_List.List;
+      Preferences : Str_Maps.Map;
+      Manager     : Preferences_Manager;
    end record;
 
    -------------------------
@@ -155,64 +103,46 @@ package body Default_Preferences is
    Preferences_Editor_Signals : constant chars_ptr_array :=
                        (1 => New_String (String (Signal_Preferences_Changed)));
 
-   generic
-      type Param is private;
-      P : Param_Spec;
-      type Result (<>) is private;
-      Val_Type : GType;
-      with function Convert (S : String) return Result;
-      with function Default (P : Param) return Result is <>;
-   function Generic_Get_Pref (Pref : Param) return Result;
-   --  Generic implementation for Get_Pref. This is used by most other
-   --  Get_Pref calls.
-
-   function Clone
-     (Info : Pref_Description_Access) return Pref_Description_Access;
-   --  Return a deep copy  of Info.
-   --  Return value must be freed by caller.
+   procedure Free (Pref : in out Preference);
+   --  Free the memory associated with Pref
 
    procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class);
    --  Called when a toggle button has changed, to display the appropriate text
    --  in it.
 
-   procedure Enum_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec);
-   --  Called when an enumeration preference has been changed.
-
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    --  Called when a Gint preference has been changed.
 
    procedure Update_Gint
      (Adj  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    --  Called when the preference Data has changed, to update Adj
 
    procedure Boolean_Changed
      (Toggle : access GObject_Record'Class;
-      Data   : Manager_Param_Spec);
+      Data   : Manager_Preference);
    --  Called when a boolean preference has been changed.
 
    procedure Update_Boolean
      (Toggle : access GObject_Record'Class;
-      Data   : Manager_Param_Spec);
+      Data   : Manager_Preference);
    --  Called when the preference Data has changed, to update Toggle
 
    procedure Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    --  Called when the text in an entry field has changed.
 
    procedure Update_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    --  Called when the preference Data has changed, to update Ent
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec) return Boolean;
+      Data : Manager_Preference) return Boolean;
    --  Called when the entry for a font selection has changed.
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class);
@@ -220,39 +150,36 @@ package body Default_Preferences is
 
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec);
+      Data  : Manager_Preference);
    --  Called when a color has changed.
 
    procedure Update_Font_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    procedure Update_Fg
      (Combo  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    procedure Update_Bg
      (Combo  : access GObject_Record'Class;
-      Data : Manager_Param_Spec);
+      Data : Manager_Preference);
    --  Called when the preference Data has changed, to update Combo for the
    --  Font, foreground or background of the preference
 
    procedure Update_Color
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec);
+      Data  : Manager_Preference);
    --  Update the contents of the combo based on the color found in Data
 
    procedure Bg_Color_Changed
-     (Combo : access GObject_Record'Class; Data  : Manager_Param_Spec);
+     (Combo : access GObject_Record'Class; Data  : Manager_Preference);
    --  Called when the background color of a style has changed.
 
    procedure Fg_Color_Changed
-     (Combo : access GObject_Record'Class; Data  : Manager_Param_Spec);
+     (Combo : access GObject_Record'Class; Data  : Manager_Preference);
    --  Called when the foreground color of a style has changed.
 
-   function Value (S : String) return String;
-   --  Return the string as is (used for instantiation of Generic_Get_Pref)
-
    procedure Select_Font
-     (Ent : access GObject_Record'Class; Data : Manager_Param_Spec);
+     (Ent : access GObject_Record'Class; Data : Manager_Preference);
    --  Open a dialog to select a new font
 
    procedure Key_Grab (Ent : access Gtk_Widget_Record'Class);
@@ -262,179 +189,74 @@ package body Default_Preferences is
    function Style_Token (Value : String; Num : Positive) return String;
    --  Handling of Param_Spec_Style
 
-   procedure Get_Font
-     (Info : Pref_Description_Access;
-      Desc : in out Pango_Font_Description);
-   --  Check that Desc is a valid font, and associate it with the node N.
-
    function Create_Box_For_Font
-     (Manager      : access Preferences_Manager_Record;
-      Pref         : Param_Spec;
+     (Manager      : access Preferences_Manager_Record'Class;
+      Pref         : Preference;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box;
    --  Create a box suitable for editing fonts
 
-   function Editor_Widget
-     (Manager : access Preferences_Manager_Record;
-      Param   : Param_Spec;
-      Tips    : Gtk.Tooltips.Gtk_Tooltips) return Gtk.Widget.Gtk_Widget;
-   --  Return a widget for graphical editing of Param. The exact type of widget
-   --  depends on the type of data in Param.
-   --  When the widget is modified, the corresponding preference is
-   --  automatically changed as well. However, nobody gets informed that the
-   --  preference has changed.
+   function Get_Pref_From_Name
+     (Manager             : access Preferences_Manager_Record'Class;
+      Name                : String) return Preferences_Maps.Cursor;
+   --  Return a pointer to the preference Name
 
-   ----------------------
-   -- Param_Spec_Unref --
-   ----------------------
+   --------------
+   -- Get_Name --
+   --------------
 
-   procedure Param_Spec_Unref (P : in out Glib.Param_Spec) is
-      pragma Warnings (Off, P);
+   function Get_Name  (Pref : access Preference_Record'Class) return String is
    begin
-      Unref (P);
-   end Param_Spec_Unref;
+      return Pref.Name.all;
+   end Get_Name;
 
-   ----------
-   -- Free --
-   ----------
+   ---------------
+   -- Get_Label --
+   ---------------
 
-   procedure Free (P : in out Saved_Param_Spec) is
-      function Convert is new Ada.Unchecked_Conversion
-        (Pref_Description_Access, Glib.C_Proxy);
+   function Get_Label (Pref : access Preference_Record'Class) return String is
    begin
-      Free_Pref_Description (Convert (P.Descr));
-   end Free;
+      return Pref.Label.all;
+   end Get_Label;
 
-   ---------------------------
-   -- Get_Param_Spec_Editor --
-   ---------------------------
+   -------------
+   -- Get_Doc --
+   -------------
 
-   function Get_Param_Spec_Editor
-     (Param : Glib.Param_Spec) return Param_Spec_Editor
-   is
-      function Convert is new Ada.Unchecked_Conversion
-        (Glib.C_Proxy, Param_Spec_Editor);
-      Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
-
+   function Get_Doc (Pref : access Preference_Record'Class) return String is
    begin
-      return Convert (Get_Qdata (Param, Quark));
-   end Get_Param_Spec_Editor;
-
-   ---------------------------
-   -- Set_Param_Spec_Editor --
-   ---------------------------
-
-   procedure Set_Param_Spec_Editor
-     (Param : Glib.Param_Spec; Editor : Param_Spec_Editor)
-   is
-      function Convert is new Ada.Unchecked_Conversion
-        (Param_Spec_Editor, Glib.C_Proxy);
-      Quark : constant GQuark := Quark_From_String (Param_Spec_Editor_Data);
-
-   begin
-      Set_Qdata
-        (Param => Param,
-         Quark => Quark,
-         Data  => Convert (Editor));
-   end Set_Param_Spec_Editor;
-
-   ---------------------
-   -- Get_Description --
-   ---------------------
-
-   function Get_Description  (P : Param_Spec) return Pref_Description_Access is
-      --  Kill warning about incompatible alignments between C_Dummy and
-      --  Pref_Description on some platforms
-      pragma Warnings (Off);
-      function Convert is new Ada.Unchecked_Conversion
-        (Glib.C_Proxy, Pref_Description_Access);
-      Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
-
-   begin
-      return Convert (Get_Qdata (P, Quark));
-      pragma Warnings (On);
-   end Get_Description;
-
-   ---------------------
-   -- Set_Description --
-   ---------------------
-
-   procedure Set_Description
-     (P : Param_Spec; Descr : Pref_Description_Access)
-   is
-      function Convert is new Ada.Unchecked_Conversion
-        (Pref_Description_Access, Glib.C_Proxy);
-      Quark : constant GQuark := Quark_From_String (Pref_Description_Data);
-
-   begin
-      Set_Qdata
-        (Param   => P,
-         Quark   => Quark,
-         Data    => Convert (Descr),
-         Destroy => Free_Pref_Description'Access);
-   end Set_Description;
-
-   ---------------------------
-   -- Free_Pref_Description --
-   ---------------------------
-
-   procedure Free_Pref_Description (Data : Glib.C_Proxy) is
-      --  Kill warning about incompatible alignments between C_Dummy and
-      --  Pref_Description on some platforms
-      pragma Warnings (Off);
-      function Convert is new Ada.Unchecked_Conversion
-        (Glib.C_Proxy, Pref_Description_Access);
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pref_Description, Pref_Description_Access);
-
-      Descr : Pref_Description_Access := Convert (Data);
-      pragma Warnings (Off);
-
-   begin
-      GNAT.Strings.Free (Descr.Value);
-      Free (Descr.Page);
-      Unchecked_Free (Descr);
-   end Free_Pref_Description;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone
-     (Info : Pref_Description_Access) return Pref_Description_Access
-   is
-      Clone : constant Pref_Description_Access := new Pref_Description'
-        (Page  => new String'(Info.Page.all),
-         Value => null,
-         Param => Info.Param,
-         Descr => null);
-
-   begin
-      if Info.Value /= null then
-         Clone.Value := new String'(Info.Value.all);
-      end if;
-
-      return Clone;
-   end Clone;
-
-   -----------
-   -- Value --
-   -----------
-
-   function Value (S : String) return String is
-   begin
-      return S;
-   end Value;
+      return Pref.Doc.all;
+   end Get_Doc;
 
    -------------
    -- Destroy --
    -------------
 
    procedure Destroy (Manager : in out Preferences_Manager_Record) is
+      C : Preferences_Maps.Cursor := First (Manager.Preferences);
+      Pref : Preference;
    begin
-      Free (Manager.Preferences);
+      while Has_Element (C) loop
+         Pref := Element (C);
+         Free (Pref);
+         Next (C);
+      end loop;
+      Clear (Manager.Preferences);
    end Destroy;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Pref : in out Preference) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Preference_Record'Class, Preference);
+   begin
+      if Pref /= null then
+         Free (Pref.all);
+         Unchecked_Free (Pref);
+      end if;
+   end Free;
 
    -------------
    -- Destroy --
@@ -448,501 +270,534 @@ package body Default_Preferences is
       Unchecked_Free (Manager);
    end Destroy;
 
-   ----------------
-   -- Gnew_Color --
-   ----------------
+   ------------
+   -- Create --
+   ------------
 
-   function Gnew_Color
-     (Name, Nick, Blurb : String;
-      Default           : String;
-      Flags             : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Color
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Minimum, Maximum, Default : Integer)
+      return Integer_Preference
    is
-      P : constant Param_Spec_Color := Param_Spec_Color
-        (Gnew_String (Name, Nick, Blurb, Default, Flags));
+      Result : constant Integer_Preference := new Integer_Preference_Record;
    begin
-      Set_Value_Type (Param_Spec (P), Gdk.Color.Gdk_Color_Type);
-      return P;
-   end Gnew_Color;
+      Result.Int_Min_Value := Minimum;
+      Result.Int_Max_Value := Maximum;
+      Result.Int_Value     := Default;
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
 
-   ---------------
-   -- Gnew_Font --
-   ---------------
+   ------------
+   -- Create --
+   ------------
 
-   function Gnew_Font
-     (Name, Nick, Blurb : String;
-      Default           : String;
-      Flags             : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Font
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : Boolean)
+      return Boolean_Preference
    is
-      P : constant Param_Spec_Font := Param_Spec_Font
-        (Gnew_String (Name, Nick, Blurb, Default, Flags));
+      Result : constant Boolean_Preference := new Boolean_Preference_Record;
    begin
-      Set_Value_Type (Param_Spec (P), Pango.Font.Get_Type);
-      return P;
-   end Gnew_Font;
+      Result.Bool_Value := Default;
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
 
-   --------------
-   -- Gnew_Key --
-   --------------
+   ------------
+   -- Create --
+   ------------
 
-   function Gnew_Key
-     (Name, Nick, Blurb : String;
-      Default_Modifier  : Gdk.Types.Gdk_Modifier_Type;
-      Default_Key       : Gdk.Types.Gdk_Key_Type;
-      Flags             : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Key
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : String)
+      return String_Preference
    is
-      P : constant Param_Spec_Key := Param_Spec_Key
-        (Gnew_String (Name, Nick, Blurb,
-                      Image (Default_Key, Default_Modifier),
-                      Flags));
+      Result : constant String_Preference := new String_Preference_Record;
    begin
-      Set_Value_Type (Param_Spec (P), Gdk.Keyval.Get_Type);
-      return P;
-   end Gnew_Key;
+      Result.Str_Value := new String'(Default);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
 
-   ----------------
-   -- Gnew_Style --
-   ----------------
+   ------------
+   -- Create --
+   ------------
 
-   function Gnew_Style
-     (Name, Nick, Blurb : String;
-      Default_Font      : String;
-      Default_Fg        : String;
-      Default_Bg        : String;
-      Flags             : Param_Flags := Param_Readable or Param_Writable)
-      return Param_Spec_Style
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : String)
+      return Color_Preference
    is
-      P : constant Param_Spec_Style := Param_Spec_Style
-        (Gnew_String (Name, Nick, Blurb,
-                      To_String (Default_Font, Default_Fg, Default_Bg),
-                      Flags));
+      Result : constant Color_Preference := new Color_Preference_Record;
    begin
-      Set_Value_Type (Param_Spec (P), Gtk.Style.Get_Type);
-      return P;
-   end Gnew_Style;
+      Result.Color_Value := new String'(Default);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default                   : String)
+      return Font_Preference
+   is
+      Result : constant Font_Preference := new Font_Preference_Record;
+   begin
+      Result.Font_Value := new String'(Default);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default_Modifier          : Gdk.Types.Gdk_Modifier_Type;
+      Default_Key               : Gdk.Types.Gdk_Key_Type)
+      return Key_Preference
+   is
+      Result : constant Key_Preference := new Key_Preference_Record;
+   begin
+      Result.Key_Modifier := Default_Modifier;
+      Result.Key_Value    := Default_Key;
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Default_Font              : String;
+      Default_Fg                : String;
+      Default_Bg                : String)
+      return Style_Preference
+   is
+      Result : constant Style_Preference := new Style_Preference_Record;
+   begin
+      Result.Style_Font := new String'(Default_Font);
+      Result.Style_Fg   := new String'(Default_Fg);
+      Result.Style_Bg   := new String'(Default_Bg);
+      Register (Manager, Name, Label, Page, Doc, Result);
+      return Result;
+   end Create;
 
    ------------------------
    -- Get_Pref_From_Name --
    ------------------------
 
    function Get_Pref_From_Name
-     (Manager : access Preferences_Manager_Record;
-      Name    : String;
-      Create_If_Necessary : Boolean) return Param_Spec
+     (Manager             : access Preferences_Manager_Record'Class;
+      Name                : String) return Preferences_Maps.Cursor
    is
-      L     : Param_Spec_List.List_Node := First (Manager.Preferences);
-      Param : Param_Spec;
+      C : Preferences_Maps.Cursor := First (Manager.Preferences);
    begin
-      while L /= Param_Spec_List.Null_Node loop
-         if Pspec_Name (Data (L)) = Name then
-            return Data (L);
+      while Has_Element (C) loop
+         if Element (C).Name.all = Name then
+            return C;
          end if;
-         L := Next (L);
+         Next (C);
       end loop;
 
+      return Preferences_Maps.No_Element;
+   end Get_Pref_From_Name;
+
+   function Get_Pref_From_Name
+     (Manager             : access Preferences_Manager_Record;
+      Name                : String;
+      Create_If_Necessary : Boolean) return Preference
+   is
+      C : constant Preferences_Maps.Cursor :=
+        Get_Pref_From_Name (Manager, Name);
+   begin
+      if Has_Element (C) then
+         return Element (C);
+      end if;
+
       if Create_If_Necessary then
-         Param := Gnew_String
-           (Name    => Name,
-            Nick    => Name,
-            Blurb   => "",
-            Default => "",
-            Flags   => Param_Readable);
-         Register_Property (Manager, Param, "General");
-         return Param;
+         return Preference
+           (String_Preference'
+              (Create
+                 (Manager => Manager,
+                  Name    => Name,
+                  Label   => Name,
+                  Page    => "",
+                  Doc     => "",
+                  Default => "")));
       else
          return null;
       end if;
    end Get_Pref_From_Name;
 
-   -----------------------
-   -- Register_Property --
-   -----------------------
+   --------------
+   -- Register --
+   --------------
 
-   procedure Register_Property
-     (Manager : access Preferences_Manager_Record'Class;
-      Param   : Glib.Param_Spec;
-      Page    : String)
+   procedure Register
+     (Manager                   : access Preferences_Manager_Record'Class;
+      Name, Label, Page, Doc    : String;
+      Pref                      : access Preference_Record'Class)
    is
-      Info, Old_Info : Pref_Description_Access;
-      Value          : String_Access;
-      L              : Param_Spec_List.List_Node :=
-                         First (Manager.Preferences);
-
+      Old : constant Preferences_Maps.Cursor :=
+        Get_Pref_From_Name (Manager, Name);
+      Old_Pref : Preference;
    begin
-      while L /= Param_Spec_List.Null_Node loop
-         if Pspec_Name (Data (L)) = Pspec_Name (Param) then
-            Old_Info := Get_Description (Data (L));
+      Free (Pref.Name);
+      Pref.Name := new String'(Name);
 
-            if Old_Info.Value /= null then
-               Value := new String'(Old_Info.Value.all);
-            end if;
+      Free (Pref.Label);
+      Pref.Label := new String'(Label);
 
-            exit;
-         end if;
+      Free (Pref.Page);
+      if Page /= "" then
+         Pref.Page := new String'(Page);
+      end if;
 
-         L := Next (L);
-      end loop;
+      Free (Pref.Doc);
+      Pref.Doc := new String'(Doc);
 
-      Info := new Pref_Description'
-        (Page  => new String'(Page),
-         Param => Param,
-         Descr => null,
-         Value => Value);
-      Set_Description (Param, Info);
+      if Has_Element (Old) then
+         Old_Pref := Element (Old);
 
-      if L /= Param_Spec_List.Null_Node then
-         Set_Data (L, Param);
+         --  Override the current value with the one that was already stored,
+         --  since the latter was most probably read from the XML file
+
+         Set_Pref
+           (Pref    => Pref,
+            Manager => Manager,
+            Value   => String'(Get_Pref (Pref)));
+         Free (Old_Pref);
+
+         Replace_Element (Manager.Preferences, Old, Preference (Pref));
+
       else
-         Append (Manager.Preferences, Param);
+         Append
+           (Container => Manager.Preferences,
+            New_Item  => Preference (Pref));
       end if;
-   end Register_Property;
-
-   ----------------------
-   -- Generic_Get_Pref --
-   ----------------------
-
-   function Generic_Get_Pref (Pref : Param) return Result is
-      N : constant Pref_Description_Access := Get_Description (P);
-   begin
-      if N /= null
-        and then N.Value /= null
-      then
-         if Value_Type (P) = Val_Type
-           or else Fundamental (Value_Type (P)) = Val_Type
-         then
-            return Convert (N.Value.all);
-
-         elsif Val_Type = GType_String then
-            return Convert (N.Value.all);
-         end if;
-      end if;
-
-      return Default (Pref);
-
-   exception
-      when Constraint_Error =>
-         return Default (Pref);
-   end Generic_Get_Pref;
+   end Register;
 
    --------------
    -- Get_Pref --
    --------------
 
-   function Get_Pref (Pref : Param_Spec_Int) return Gint is
-      function Internal is new Generic_Get_Pref
-        (Param_Spec_Int, Param_Spec (Pref), Gint, GType_Int, Gint'Value);
+   overriding function Get_Pref
+     (Pref : access Integer_Preference_Record) return String is
    begin
-      return Internal (Pref);
+      return Integer'Image (Pref.Int_Value);
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref : Param_Spec_Boolean) return Boolean is
-      function Internal is new Generic_Get_Pref
-        (Param_Spec_Boolean, Param_Spec (Pref), Boolean, GType_Boolean,
-         Boolean'Value);
-
-   begin
-      return Internal (Pref);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref : Param_Spec_Enum) return Gint is
-      function Internal is new Generic_Get_Pref
-        (Param_Spec_Enum, Param_Spec (Pref), Gint, GType_Enum, Gint'Value);
-   begin
-      return Internal (Pref);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref : Param_Spec_String) return String is
-      function Internal is new Generic_Get_Pref
-        (Param_Spec_String, Param_Spec (Pref), String, GType_String, Value);
-   begin
-      return Internal (Pref);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color is
-      function Color_Get_Pref is new Generic_Get_Pref
-        (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
-
-      S     : constant String := Color_Get_Pref (Pref);
-      Color : Gdk_Color;
-
-   begin
-      Color := Parse (S);
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      return Color;
-
-   exception
-      when Wrong_Color =>
-         Color := Black (Get_Default_Colormap);
-         return Color;
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Pref    : Param_Spec_Color) return String is
-      function Color_Get_Pref is new Generic_Get_Pref
-        (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
-   begin
-      return Color_Get_Pref (Pref);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   procedure Get_Pref
-     (Pref     : Param_Spec_Key;
-      Modifier : out Gdk_Modifier_Type;
-      Key      : out Gdk_Key_Type)
-   is
-      Info : constant Pref_Description_Access :=
-               Get_Description (Param_Spec (Pref));
-   begin
-      if Info /= null
-        and then Info.Value /= null
-      then
-         Value (Info.Value.all, Key, Modifier);
-      else
-         Value (Default (Param_Spec_String (Pref)), Key, Modifier);
-      end if;
-   end Get_Pref;
-
-   -------------------
-   -- Get_Pref_Font --
-   -------------------
-
-   function Get_Pref_Font
-     (Pref : Param_Spec_Style) return Pango_Font_Description
-   is
-      Info : constant Pref_Description_Access :=
-               Get_Description (Param_Spec (Pref));
-      Desc : Pango_Font_Description;
-   begin
-      if Info /= null and then Info.Value /= null then
-         if Info.Descr /= null then
-            return Info.Descr;
-         end if;
-
-         Desc := From_String (Style_Token (Info.Value.all, 1));
-      else
-         Desc := From_String
-           (Style_Token (Default (Param_Spec_String (Pref)), 1));
-      end if;
-
-      Get_Font (Info, Desc);
-      return Desc;
-   end Get_Pref_Font;
-
-   --------------
-   -- Get_Font --
-   --------------
-
-   procedure Get_Font
-     (Info : Pref_Description_Access;
-      Desc : in out Pango_Font_Description)
-   is
-      use type Gdk.Gdk_Font;
-   begin
-      --  ??? We have a memory leak if Info is null, but seems impossible
-      if Info = null then
-         return;
-      end if;
-
-      --  Check that the font exists, or use a default, to avoid crashes
-      if From_Description (Desc) = null then
-         Free (Desc);
-         Desc := From_String (Fallback_Font);
-      end if;
-
-      --  ??? Valgrind reports a memory leak on Info.Descr, although trying
-      --  to free it will result in random fonts being used under Windows
-      --  when restoring the desktop, so do nothing instead of the following:
-      --
-      --  if Info.Descr /= null then
-      --     Free (Info.Descr);
-      --  end if;
-
-      Info.Descr := Desc;
-   end Get_Font;
-
-   -----------------
-   -- Get_Pref_Fg --
-   -----------------
-
-   function Get_Pref_Fg
-     (Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
-   is
-      Info  : constant Pref_Description_Access  :=
-                Get_Description (Param_Spec (Pref));
-      Color : Gdk_Color;
-   begin
-      if Info = null or else Info.Value = null then
-         Color := Parse (Style_Token (Default (Param_Spec_String (Pref)), 2));
-      else
-         Color := Parse (Style_Token (Info.Value.all, 2));
-      end if;
-
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      return Color;
-   end Get_Pref_Fg;
-
-   -----------------
-   -- Get_Pref_Bg --
-   -----------------
-
-   function Get_Pref_Bg
-     (Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
-   is
-      Info  : constant Pref_Description_Access :=
-                Get_Description (Param_Spec (Pref));
-      Color : Gdk_Color;
-   begin
-      if Info = null or else Info.Value = null then
-         Color := Parse (Style_Token (Default (Param_Spec_String (Pref)), 3));
-      else
-         Color := Parse (Style_Token (Info.Value.all, 3));
-      end if;
-
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      return Color;
-   end Get_Pref_Bg;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
-     (Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
-   is
-      Info : constant Pref_Description_Access :=
-               Get_Description (Param_Spec (Pref));
-      Desc : Pango_Font_Description;
+     (Pref : access Integer_Preference_Record) return Integer is
    begin
-      if Info /= null
-        and then Info.Value /= null
-      then
-         if Info.Descr /= null then
-            return Info.Descr;
-         end if;
-
-         Desc := From_String (Info.Value.all);
-      else
-         Desc := From_String (Default (Pref));
-      end if;
-
-      Get_Font (Info, Desc);
-      return Desc;
+      return Pref.Int_Value;
    end Get_Pref;
 
-   --------------
-   -- Set_Pref --
-   --------------
-
-   procedure Set_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_String;
-      Value   : String)
-   is
-      Info : Pref_Description_Access := Get_Description (Param_Spec (Pref));
+   overriding function Get_Pref
+     (Pref : access Boolean_Preference_Record) return String is
    begin
-      if Info = null then
-         Register_Property (Manager, Param_Spec (Pref), "General");
-         Info := Get_Description (Param_Spec (Pref));
+      return Boolean'Image (Pref.Bool_Value);
+   end Get_Pref;
+
+   function Get_Pref
+     (Pref : access Boolean_Preference_Record) return Boolean is
+   begin
+      return Pref.Bool_Value;
+   end Get_Pref;
+
+   overriding function Get_Pref
+     (Pref : access String_Preference_Record) return String is
+   begin
+      return Pref.Str_Value.all;
+   end Get_Pref;
+
+   overriding function Get_Pref
+     (Pref : access Color_Preference_Record) return String is
+   begin
+      return Pref.Color_Value.all;
+   end Get_Pref;
+
+   function Get_Pref
+     (Pref : access Color_Preference_Record) return Gdk.Color.Gdk_Color is
+   begin
+      if Pref.Color = Gdk.Color.Null_Color then
+         Pref.Color := Parse (Pref.Color_Value.all);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Color);
       end if;
+      return Pref.Color;
+   exception
+      when Wrong_Color =>
+         Pref.Color := Black (Get_Default_Colormap);
+         return Pref.Color;
+   end Get_Pref;
 
-      Free (Info.Value);
-      Info.Value := new String'(Value);
-      Info.Descr := null;
+   overriding function Get_Pref
+     (Pref : access Key_Preference_Record) return String is
+   begin
+      return Image (Pref.Key_Value, Pref.Key_Modifier);
+   end Get_Pref;
 
-      if Manager.Pref_Editor /= null then
+   procedure Get_Pref
+     (Pref     : access Key_Preference_Record;
+      Modifier : out Gdk_Modifier_Type;
+      Key      : out Gdk_Key_Type) is
+   begin
+      Modifier := Pref.Key_Modifier;
+      Key      := Pref.Key_Value;
+   end Get_Pref;
+
+   overriding function Get_Pref
+     (Pref : access Enum_Preference_Record) return String is
+   begin
+      return Integer'Image (Pref.Enum_Value);
+   end Get_Pref;
+
+   function Get_Pref
+     (Pref : access Enum_Preference_Record) return Integer is
+   begin
+      return Pref.Enum_Value;
+   end Get_Pref;
+
+   overriding function Get_Pref
+     (Pref : access Font_Preference_Record) return String is
+   begin
+      return Pref.Font_Value.all;
+   end Get_Pref;
+
+   function Get_Pref
+     (Pref    : access Font_Preference_Record)
+      return Pango.Font.Pango_Font_Description is
+   begin
+      if Pref.Descr = null then
+         Pref.Descr := From_String (Pref.Font_Value.all);
+
+         --  Check that the font exists, or use a default, to avoid crashes
+         if From_Description (Pref.Descr) = null then
+            Free (Pref.Descr);
+            Pref.Descr := From_String (Config.Default_Font);
+         end if;
+      end if;
+      return Pref.Descr;
+   end Get_Pref;
+
+   overriding function Get_Pref
+     (Pref : access Style_Preference_Record) return String is
+   begin
+      return To_String
+        (Pref.Style_Font.all, Pref.Style_Fg.all, Pref.Style_Bg.all);
+   end Get_Pref;
+
+   function Get_Pref_Font
+     (Pref : access Style_Preference_Record) return Pango_Font_Description is
+   begin
+      if Pref.Font_Descr = null then
+         Pref.Font_Descr := From_String (Pref.Style_Font.all);
+
+         --  Check that the font exists, or use a default, to avoid crashes
+         if From_Description (Pref.Font_Descr) = null then
+            Free (Pref.Font_Descr);
+            Pref.Font_Descr := From_String (Config.Default_Font);
+         end if;
+      end if;
+      return Pref.Font_Descr;
+   end Get_Pref_Font;
+
+   function Get_Pref_Fg
+     (Pref    : access Style_Preference_Record) return Gdk.Color.Gdk_Color is
+   begin
+      if Pref.Fg_Color = Gdk.Color.Null_Color then
+         Pref.Fg_Color := Parse (Pref.Style_Fg.all);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Fg_Color);
+      end if;
+      return Pref.Fg_Color;
+   exception
+      when Wrong_Color =>
+         Pref.Fg_Color := Black (Get_Default_Colormap);
+         return Pref.Fg_Color;
+   end Get_Pref_Fg;
+
+   function Get_Pref_Bg
+     (Pref    : access Style_Preference_Record) return Gdk.Color.Gdk_Color is
+   begin
+      if Pref.Bg_Color = Gdk.Color.Null_Color then
+         Pref.Bg_Color := Parse (Pref.Style_Bg.all);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Pref.Bg_Color);
+      end if;
+      return Pref.Bg_Color;
+   exception
+      when Wrong_Color =>
+         Pref.Bg_Color := Black (Get_Default_Colormap);
+         return Pref.Bg_Color;
+   end Get_Pref_Bg;
+
+   -----------------------
+   -- Emit_Pref_Changed --
+   -----------------------
+
+   procedure Emit_Pref_Changed
+     (Manager : access Preferences_Manager_Record'Class) is
+   begin
+      if Manager /= null and then Manager.Pref_Editor /= null then
          Widget_Callback.Emit_By_Name
            (Manager.Pref_Editor, Signal_Preferences_Changed);
       end if;
-   end Set_Pref;
+   end Emit_Pref_Changed;
 
    --------------
    -- Set_Pref --
    --------------
 
-   procedure Set_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Glib.Properties.Creation.Param_Spec_Int;
-      Value   : Gint) is
+   overriding procedure Set_Pref
+     (Pref    : access Key_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
    begin
-      Set_Pref (Manager, Param_Spec_String (Pref), Gint'Image (Value));
+      GUI_Utils.Value (Value, Pref.Key_Value, Pref.Key_Modifier);
+      Emit_Pref_Changed (Manager);
    end Set_Pref;
 
-   --------------
-   -- Set_Pref --
-   --------------
-
    procedure Set_Pref
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Key;
-      Modifier : Gdk_Modifier_Type;
-      Key      : Gdk_Key_Type) is
+     (Pref     : Key_Preference;
+      Manager  : access Preferences_Manager_Record'Class;
+      Modifier : Gdk.Types.Gdk_Modifier_Type;
+      Key      : Gdk.Types.Gdk_Key_Type) is
    begin
-      Set_Pref (Manager, Param_Spec_String (Pref), Image (Key, Modifier));
+      Pref.Key_Value := Key;
+      Pref.Key_Modifier := Modifier;
+      Emit_Pref_Changed (Manager);
    end Set_Pref;
 
-   --------------
-   -- Set_Pref --
-   --------------
-
-   procedure Set_Pref
-     (Manager      : access Preferences_Manager_Record;
-      Pref         : Param_Spec_Font;
-      Font, Fg, Bg : String) is
+   overriding procedure Set_Pref
+     (Pref    : access Integer_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
    begin
-      Set_Pref (Manager, Param_Spec_String (Pref), To_String (Font, Fg, Bg));
+      Pref.Int_Value := Integer'Value (Value);
+      Emit_Pref_Changed (Manager);
    end Set_Pref;
 
-   --------------
-   -- Set_Pref --
-   --------------
+   procedure Set_Pref
+     (Pref    : Integer_Preference;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : Integer) is
+   begin
+      Pref.Int_Value := Value;
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   overriding procedure Set_Pref
+     (Pref    : access Boolean_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Pref.Bool_Value := Boolean'Value (Value);
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
 
    procedure Set_Pref
-     (Manager : access Preferences_Manager_Record;
-      Pref    : Param_Spec_Boolean;
+     (Pref    : Boolean_Preference;
+      Manager : access Preferences_Manager_Record'Class;
       Value   : Boolean) is
    begin
-      Set_Pref (Manager, Param_Spec_String (Pref), Boolean'Image (Value));
+      Pref.Bool_Value := Value;
+      Emit_Pref_Changed (Manager);
    end Set_Pref;
 
-   --------------
-   -- Get_Page --
-   --------------
+   overriding procedure Set_Pref
+     (Pref    : access String_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Free (Pref.Str_Value);
+      Pref.Str_Value := new String'(Value);
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
 
---     function Get_Page
---       (Param   : Param_Spec) return String
---     is
---        Info : constant Pref_Description_Access := Get_Description (Param);
---     begin
---        if Info = null then
---           return "";
---        else
---           return Info.Page.all;
---        end if;
---     end Get_Page;
+   overriding procedure Set_Pref
+     (Pref    : access Color_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Free (Pref.Color_Value);
+      Pref.Color_Value := new String'(Value);
+
+      if Pref.Color /= Null_Color then
+         Free_Colors (Gtk.Widget.Get_Default_Colormap, (1 => Pref.Color));
+         Pref.Color := Null_Color;
+      end if;
+
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   overriding procedure Set_Pref
+     (Pref    : access Font_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Free (Pref.Font_Value);
+      Free (Pref.Descr);
+      Pref.Font_Value := new String'(Value);
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   overriding procedure Set_Pref
+     (Pref    : access Style_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Set_Pref (Style_Preference (Pref), Manager,
+                Font => Style_Token (Value, 1),
+                Fg   => Style_Token (Value, 2),
+                Bg   => Style_Token (Value, 3));
+   end Set_Pref;
+
+   procedure Set_Pref
+     (Pref         : Style_Preference;
+      Manager      : access Preferences_Manager_Record'Class;
+      Font, Fg, Bg : String) is
+   begin
+      Free (Pref.Style_Font);
+      Free (Pref.Font_Descr);
+      Free (Pref.Style_Fg);
+      Free (Pref.Style_Bg);
+
+      if Pref.Fg_Color /= Null_Color then
+         Free_Colors (Gtk.Widget.Get_Default_Colormap,
+                      (1 => Pref.Fg_Color, 2 => Pref.Bg_Color));
+         Pref.Fg_Color := Null_Color;
+         Pref.Bg_Color := Null_Color;
+      end if;
+
+      Pref.Style_Font := new String'(Font);
+      Pref.Style_Fg   := new String'(Fg);
+      Pref.Style_Bg   := new String'(Bg);
+
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
+
+   overriding procedure Set_Pref
+     (Pref    : access Enum_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class;
+      Value   : String) is
+   begin
+      Pref.Enum_Value := Integer'Value (Value);
+      Emit_Pref_Changed (Manager);
+   end Set_Pref;
 
    ----------------------
    -- Load_Preferences --
@@ -966,9 +821,8 @@ package body Default_Preferences is
                while Node /= null loop
                   Set_Pref
                     (Manager => Manager,
-                     Pref    => Param_Spec_String
-                       (Get_Pref_From_Name (Manager, Node.Tag.all, True)),
-                     Value   => Node.Value.all);
+                     Pref  => Get_Pref_From_Name (Manager, Node.Tag.all, True),
+                     Value => Node.Value.all);
                   Node := Node.Next;
                end loop;
             else
@@ -980,8 +834,7 @@ package body Default_Preferences is
                      begin
                         Set_Pref
                           (Manager => Manager,
-                           Pref    => Param_Spec_String
-                             (Get_Pref_From_Name (Manager, Name, True)),
+                           Pref    => Get_Pref_From_Name (Manager, Name, True),
                            Value   => Node.Value.all);
                      end;
                   end if;
@@ -1011,24 +864,20 @@ package body Default_Preferences is
       Success   : out Boolean)
    is
       File, Node : Node_Ptr;
-      Info       : Pref_Description_Access;
-      L          : Param_Spec_List.List_Node := First (Manager.Preferences);
+      C          : Preferences_Maps.Cursor := First (Manager.Preferences);
+      P          : Preference;
    begin
       File := new Glib.Xml_Int.Node;
       File.Tag := new String'("Prefs");
 
-      while L /= Param_Spec_List.Null_Node loop
-         Info := Get_Description (Data (L));
-
-         if Info.Value /= null then
-            Node := new Glib.Xml_Int.Node;
-            Node.Tag := new String'("pref");
-            Set_Attribute (Node, "name", Pspec_Name (Data (L)));
-            Node.Value := new String'(Info.Value.all);
-            Add_Child (File, Node);
-         end if;
-
-         L := Next (L);
+      while Has_Element (C) loop
+         P := Element (C);
+         Node     := new Glib.Xml_Int.Node;
+         Node.Tag := new String'("pref");
+         Set_Attribute (Node, "name", Get_Name (P));
+         Node.Value := new String'(Get_Pref (P));
+         Add_Child (File, Node);
+         Next (C);
       end loop;
 
       Print (File, File_Name, Success);
@@ -1052,33 +901,16 @@ package body Default_Preferences is
    end Toggled_Boolean;
 
    ------------------
-   -- Enum_Changed --
-   ------------------
-
-   procedure Enum_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
-   is
-      C     : constant Gtk_Combo := Gtk_Combo (Combo);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
-   begin
-      Free (Descr.Value);
-      Descr.Value := new String'(Integer'Image (Get_Index_In_List (C)));
-   end Enum_Changed;
-
-   ------------------
    -- Gint_Changed --
    ------------------
 
    procedure Gint_Changed
      (Adj  : access GObject_Record'Class;
-      Data : Manager_Param_Spec)
+      Data : Manager_Preference)
    is
       A : constant Gtk_Adjustment := Gtk_Adjustment (Adj);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Descr.Value);
-      Descr.Value := new String'(Gint'Image (Gint (Get_Value (A))));
+      Set_Pref (Integer_Preference (Data.Pref), null, Integer (Get_Value (A)));
    end Gint_Changed;
 
    -----------------
@@ -1087,11 +919,11 @@ package body Default_Preferences is
 
    procedure Update_Gint
      (Adj  : access GObject_Record'Class;
-      Data : Manager_Param_Spec) is
+      Data : Manager_Preference) is
    begin
       Set_Value
         (Gtk_Adjustment (Adj),
-         Gdouble (Get_Pref (Param_Spec_Int (Data.Param))));
+         Gdouble (Integer_Preference (Data.Pref).Int_Value));
    end Update_Gint;
 
    ---------------------
@@ -1100,13 +932,11 @@ package body Default_Preferences is
 
    procedure Boolean_Changed
      (Toggle : access GObject_Record'Class;
-      Data   : Manager_Param_Spec)
+      Data   : Manager_Preference)
    is
       T     : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Descr.Value);
-      Descr.Value := new String'(Boolean'Image (Get_Active (T)));
+      Set_Pref (Boolean_Preference (Data.Pref), null, Get_Active (T));
    end Boolean_Changed;
 
    --------------------
@@ -1115,10 +945,10 @@ package body Default_Preferences is
 
    procedure Update_Boolean
      (Toggle : access GObject_Record'Class;
-      Data   : Manager_Param_Spec) is
+      Data   : Manager_Preference) is
    begin
       Set_Active (Gtk_Toggle_Button (Toggle),
-                  Get_Pref (Param_Spec_Boolean (Data.Param)));
+                  Boolean_Preference (Data.Pref).Bool_Value);
    end Update_Boolean;
 
    -------------------
@@ -1127,13 +957,11 @@ package body Default_Preferences is
 
    procedure Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec)
+      Data : Manager_Preference)
    is
       E     : constant Gtk_Entry := Gtk_Entry (Ent);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Descr.Value);
-      Descr.Value := new String'(Get_Text (E));
+      Set_Pref (String_Preference (Data.Pref), null, Get_Text (E));
    end Entry_Changed;
 
    ------------------
@@ -1142,40 +970,9 @@ package body Default_Preferences is
 
    procedure Update_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec)
-   is
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
+      Data : Manager_Preference) is
    begin
-      if Descr.Value /= null then
-         if Fundamental (Value_Type (Param_Spec (Data.Param))) =
-           GType_Enum
-         then
-            Set_Text
-              (Gtk_Entry (Ent),
-               Name (Get_Value (Enumeration (Param_Spec_Enum (Data.Param)),
-                                Gint'Value (Descr.Value.all))));
-         else
-            Set_Text (Gtk_Entry (Ent), Descr.Value.all);
-         end if;
-      end if;
-   exception
-      when E : others =>
-         Set_Text
-           (Gtk_Entry (Ent),
-            Name
-              (Get_Value
-                 (Enumeration (Param_Spec_Enum (Data.Param)),
-                  Default (Param_Spec_Enum (Data.Param)))));
-         Trace
-           (Exception_Handle,
-            "An inconsistency has been found in your preference file." &
-            ASCII.LF &
-            """" & Pspec_Name (Data.Param) & """ has been set to its " &
-            "default value." & ASCII.LF &
-            Exception_Information (E));
-         --  ??? It would be nice to have this message displayed on the
-         --  GPS console but not doable with the current organization which
-         --  would lead to circular dependencies.
+      Set_Text (Gtk_Entry (Ent), String'(Get_Pref (Data.Pref)));
    end Update_Entry;
 
    ----------------
@@ -1185,8 +982,6 @@ package body Default_Preferences is
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class) is
       E    : constant Gtk_Entry := Gtk_Entry (Ent);
       Desc : Pango_Font_Description := From_String (Get_Text (E));
-
-      use type Gdk_Font;
    begin
       --  Also set the context, so that every time the pango layout is
       --  recreated by the entry (key press,...), we still use the correct
@@ -1198,7 +993,7 @@ package body Default_Preferences is
 
       if From_Description (Desc) = null then
          Free (Desc);
-         Desc := From_String (Fallback_Font);
+         Desc := From_String (Config.Default_Font);
       end if;
 
       Modify_Font (E, Desc);
@@ -1210,33 +1005,17 @@ package body Default_Preferences is
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec) return Boolean
+      Data : Manager_Preference) return Boolean
    is
       E     : constant Gtk_Entry := Gtk_Entry (Ent);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
-      Value : String_Access;
    begin
-      Descr.Descr := null;
-
-      if Value_Type (Data.Param) = Pango.Font.Get_Type then
-         Free (Descr.Value);
-         Descr.Value := new String'(Get_Text (E));
-
-      elsif Descr.Value /= null then
-         Value := Descr.Value;
-         Descr.Value := new String'
-              (To_String (Font => Get_Text (E),
-                          Fg   => Style_Token (Descr.Value.all, 2),
-                          Bg   => Style_Token (Descr.Value.all, 3)));
-         Free (Value);
+      if Data.Pref.all in Font_Preference_Record'Class then
+         Set_Pref (Font_Preference (Data.Pref), null, Get_Text (E));
 
       else
-         Descr.Value := new String'
-           (To_String (Font => Get_Text (E),
-                       Fg   => Style_Token
-                         (Default (Param_Spec_String (Data.Param)), 2),
-                       Bg   => Style_Token
-                         (Default (Param_Spec_String (Data.Param)), 3)));
+         Free (Style_Preference (Data.Pref).Style_Font);
+         Free (Style_Preference (Data.Pref).Font_Descr);
+         Style_Preference (Data.Pref).Style_Font := new String'(Get_Text (E));
       end if;
 
       Reset_Font (E);
@@ -1262,13 +1041,11 @@ package body Default_Preferences is
 
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
+      Data  : Manager_Preference)
    is
       C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      Free (Descr.Value);
-      Descr.Value := new String'(Get_Color (C));
+      Set_Pref (Color_Preference (Data.Pref), null, Get_Color (C));
    end Color_Changed;
 
    ---------------
@@ -1277,16 +1054,10 @@ package body Default_Preferences is
 
    procedure Update_Fg
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
-   is
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
-      Color : Gdk_Color;
+      Data  : Manager_Preference) is
    begin
-      if Descr.Value /= null then
-         Color := Parse (Style_Token (Descr.Value.all, 2));
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gtk_Color_Combo (Combo), Color);
-      end if;
+      Set_Color (Gtk_Color_Combo (Combo),
+                 Get_Pref_Fg (Style_Preference (Data.Pref)));
    end Update_Fg;
 
    ---------------
@@ -1295,16 +1066,10 @@ package body Default_Preferences is
 
    procedure Update_Bg
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
-   is
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
-      Color : Gdk_Color;
+      Data  : Manager_Preference) is
    begin
-      if Descr.Value /= null then
-         Color := Parse (Style_Token (Descr.Value.all, 3));
-         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Set_Color (Gtk_Color_Combo (Combo), Color);
-      end if;
+      Set_Color (Gtk_Color_Combo (Combo),
+                 Get_Pref_Bg (Style_Preference (Data.Pref)));
    end Update_Bg;
 
    -----------------------
@@ -1313,14 +1078,14 @@ package body Default_Preferences is
 
    procedure Update_Font_Entry
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec) is
+      Data : Manager_Preference) is
    begin
-      if Value_Type (Data.Param) = Pango.Font.Get_Type then
+      if Data.Pref.all in Font_Preference_Record'Class then
          Set_Text (Gtk_Entry (Ent),
-                   To_String (Get_Pref (Param_Spec_Font (Data.Param))));
+                   Font_Preference (Data.Pref).Font_Value.all);
       else
          Set_Text (Gtk_Entry (Ent),
-                   To_String (Get_Pref_Font (Param_Spec_Style (Data.Param))));
+                   Style_Preference (Data.Pref).Style_Font.all);
       end if;
    end Update_Font_Entry;
 
@@ -1330,13 +1095,10 @@ package body Default_Preferences is
 
    procedure Update_Color
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
-   is
-      Color : Gdk_Color;
+      Data  : Manager_Preference) is
    begin
-      Color := Parse (Get_Pref (Param_Spec_Color (Data.Param)));
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      Set_Color (Gtk_Color_Combo (Combo), Color);
+      Set_Color
+        (Gtk_Color_Combo (Combo), Get_Pref (Color_Preference (Data.Pref)));
    end Update_Color;
 
    ----------------------
@@ -1345,32 +1107,13 @@ package body Default_Preferences is
 
    procedure Fg_Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
+      Data  : Manager_Preference)
    is
       C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Descr.Value = null then
-         declare
-            V : constant String := Default (Param_Spec_String (Data.Param));
-         begin
-            Descr.Value := new String'
-              (To_String (Font => Style_Token (V, 1),
-                          Fg   => Get_Color (C),
-                          Bg   => Style_Token (V, 3)));
-         end;
-
-      else
-         declare
-            V : constant String := To_String
-              (Font => Style_Token (Descr.Value.all, 1),
-               Fg   => Get_Color (C),
-               Bg   => Style_Token (Descr.Value.all, 3));
-         begin
-            Free (Descr.Value);
-            Descr.Value := new String'(V);
-         end;
-      end if;
+      Free (Style_Preference (Data.Pref).Style_Fg);
+      Style_Preference (Data.Pref).Style_Fg := new String'(Get_Color (C));
+      Style_Preference (Data.Pref).Fg_Color := Get_Color (C);
    end Fg_Color_Changed;
 
    ----------------------
@@ -1379,32 +1122,13 @@ package body Default_Preferences is
 
    procedure Bg_Color_Changed
      (Combo : access GObject_Record'Class;
-      Data  : Manager_Param_Spec)
+      Data  : Manager_Preference)
    is
       C     : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
-      Descr : constant Pref_Description_Access := Get_Description (Data.Param);
    begin
-      if Descr.Value = null then
-         declare
-            V : constant String := Default (Param_Spec_String (Data.Param));
-         begin
-            Descr.Value := new String'
-              (To_String (Font => Style_Token (V, 1),
-                          Fg   => Style_Token (V, 2),
-                          Bg   => Get_Color (C)));
-         end;
-
-      else
-         declare
-            V : constant String := To_String
-              (Font => Style_Token (Descr.Value.all, 1),
-               Fg   => Style_Token (Descr.Value.all, 2),
-               Bg   => Get_Color (C));
-         begin
-            Free (Descr.Value);
-            Descr.Value := new String'(V);
-         end;
-      end if;
+      Free (Style_Preference (Data.Pref).Style_Bg);
+      Style_Preference (Data.Pref).Style_Bg := new String'(Get_Color (C));
+      Style_Preference (Data.Pref).Bg_Color := Get_Color (C);
    end Bg_Color_Changed;
 
    ---------------
@@ -1439,8 +1163,6 @@ package body Default_Preferences is
 
          Last := Last + 1;
       end loop;
-
-      return "";
    end Style_Token;
 
    -----------------
@@ -1449,11 +1171,9 @@ package body Default_Preferences is
 
    procedure Select_Font
      (Ent  : access GObject_Record'Class;
-      Data : Manager_Param_Spec)
+      Data : Manager_Preference)
    is
       E      : constant Gtk_Entry := Gtk_Entry (Ent);
-      Descr  : constant Pref_Description_Access :=
-                 Get_Description (Data.Param);
       F      : Gtk_Font_Selection;
       Dialog : Gtk_Dialog;
       Result : Boolean;
@@ -1478,32 +1198,19 @@ package body Default_Preferences is
       Result := Set_Font_Name (F, Get_Text (E));
 
       if Run (Dialog) = Gtk_Response_OK then
-         Descr.Descr := null;
          Set_Text (E, Get_Font_Name (F));
 
-         if Value_Type (Data.Param) = Pango.Font.Get_Type then
-            Free (Descr.Value);
-            Descr.Value := new String'(Get_Text (E));
-         else
-            if Descr.Value /= null then
-               declare
-                  V : constant String := To_String
-                    (Font => Get_Text (E),
-                     Fg   => Style_Token (Descr.Value.all, 2),
-                     Bg   => Style_Token (Descr.Value.all, 3));
-               begin
-                  Free (Descr.Value);
-                  Descr.Value := new String'(V);
-               end;
+         if Data.Pref.all in Font_Preference_Record'Class then
+            Free (Font_Preference (Data.Pref).Font_Value);
+            Free (Font_Preference (Data.Pref).Descr);
+            Font_Preference (Data.Pref).Font_Value :=
+              new String'(Get_Text (E));
 
-            else
-               Descr.Value := new String'
-                 (To_String (Font => Get_Text (E),
-                             Fg   => Style_Token
-                               (Default (Param_Spec_String (Data.Param)), 2),
-                             Bg   => Style_Token
-                               (Default (Param_Spec_String (Data.Param)), 3)));
-            end if;
+         else
+            Free (Style_Preference (Data.Pref).Style_Font);
+            Free (Style_Preference (Data.Pref).Font_Descr);
+            Style_Preference (Data.Pref).Style_Font :=
+              new String'(Get_Text (E));
          end if;
          Reset_Font (E);
       end if;
@@ -1516,17 +1223,14 @@ package body Default_Preferences is
    -------------------------
 
    function Create_Box_For_Font
-     (Manager      : access Preferences_Manager_Record;
-      Pref         : Param_Spec;
+     (Manager      : access Preferences_Manager_Record'Class;
+      Pref         : Preference;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box
    is
       Box    : Gtk_Box;
       Ent    : Gtk_Entry;
       Button : Gtk_Button;
-
-      use type Gdk_Font;
-
    begin
       Gtk_New_Hbox (Box, Homogeneous => False);
       Gtk_New (Ent);
@@ -1534,16 +1238,16 @@ package body Default_Preferences is
 
       Gtk_New (Button, Button_Label);
       Pack_Start (Box, Button, Expand => False, Fill => False);
-      Param_Spec_Handlers.Object_Connect
+      Preference_Handlers.Object_Connect
         (Button, Gtk.Button.Signal_Clicked,
-         Param_Spec_Handlers.To_Marshaller (Select_Font'Access),
+         Preference_Handlers.To_Marshaller (Select_Font'Access),
          Slot_Object => Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
 
-      Return_Param_Spec_Handlers.Connect
+      Return_Preference_Handlers.Connect
         (Ent, Signal_Focus_Out_Event, Font_Entry_Changed'Access,
          User_Data => (Preferences_Manager (Manager), Pref));
-      Param_Spec_Handlers.Object_Connect
+      Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
          Update_Font_Entry'Access, Ent,
          User_Data => (Preferences_Manager (Manager), Pref));
@@ -1557,264 +1261,305 @@ package body Default_Preferences is
       return Box;
    end Create_Box_For_Font;
 
-   -------------------
-   -- Editor_Widget --
-   -------------------
+   ----------
+   -- Free --
+   ----------
 
-   function Editor_Widget
-     (Manager : access Preferences_Manager_Record;
-      Param   : Param_Spec;
-      Tips    : Gtk_Tooltips) return Gtk.Widget.Gtk_Widget
+   procedure Free (Pref : in out Preference_Record) is
+   begin
+      Free (Pref.Name);
+      Free (Pref.Label);
+      Free (Pref.Page);
+      Free (Pref.Doc);
+   end Free;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Integer_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
    is
-      Typ      : constant GType := Value_Type (Param);
-      Callback : constant Param_Spec_Editor :=
-                   Get_Param_Spec_Editor (Param);
+      pragma Unreferenced (Tips);
+      Spin : Gtk_Spin_Button;
+      Adj  : Gtk_Adjustment;
+   begin
+      Gtk_New (Adj,
+               Value => Gdouble (Pref.Int_Value),
+               Lower => Gdouble (Pref.Int_Min_Value),
+               Upper => Gdouble (Pref.Int_Max_Value),
+               Step_Increment => 1.0,
+               Page_Increment => 10.0,
+               Page_Size      => 10.0);
+      Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
+      Set_Editable (Spin, True);
+
+      Preference_Handlers.Connect
+        (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Gint'Access, Adj,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      return Gtk_Widget (Spin);
+   end Edit;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Boolean_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Tips);
+      Toggle : Gtk_Check_Button;
+   begin
+      Gtk_New (Toggle, -"Enabled");
+      Widget_Callback.Connect
+        (Toggle, Signal_Toggled, Toggled_Boolean'Access);
+      Set_Active (Toggle, True); --  Forces a toggle
+      Set_Active (Toggle, Pref.Bool_Value);
+
+      Preference_Handlers.Connect
+        (Toggle, Signal_Toggled, Boolean_Changed'Access,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Boolean'Access, Toggle,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      return Gtk_Widget (Toggle);
+   end Edit;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access String_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Tips);
+      Ent  : Gtk_Entry;
+   begin
+      Gtk_New (Ent);
+      Set_Text (Ent, Pref.Str_Value.all);
+
+      Preference_Handlers.Connect
+        (Ent, Signal_Insert_Text,
+         Entry_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
+         After       => True);
+      Preference_Handlers.Connect
+        (Ent, Signal_Delete_Text,
+         Entry_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
+         After       => True);
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Entry'Access,
+         Ent, User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      return Gtk_Widget (Ent);
+   end Edit;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Pref : in out String_Preference_Record) is
+   begin
+      Free (Pref.Str_Value);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Color_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Tips);
+      Combo : Gtk_Color_Combo;
+   begin
+      Gtk_New (Combo);
+      Set_Color (Combo, Get_Pref (Color_Preference (Pref)));
+
+      Preference_Handlers.Connect
+        (Combo, Signal_Color_Changed,
+         Color_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Color'Access, Combo,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      return Gtk_Widget (Combo);
+   end Edit;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Pref : in out Color_Preference_Record) is
+   begin
+      Free (Pref.Color_Value);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Font_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Tips);
+   begin
+      return Gtk_Widget
+        (Create_Box_For_Font
+           (Manager, Preference (Pref),
+            Get_Pref (Font_Preference (Pref)), -"Browse"));
+   end Edit;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Pref : in out Font_Preference_Record) is
+   begin
+      Free (Pref.Font_Value);
+      Free (Pref.Descr);
+      Free (Preference_Record (Pref));
+   end Free;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Key_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Tips);
+      Ent    : Gtk_Entry;
+      Modif  : Gdk_Modifier_Type;
+      Key    : Gdk_Key_Type;
+      Button : Gtk_Button;
+      Box    : Gtk_Box;
+   begin
+      Gtk_New_Hbox (Box);
+      Gtk_New (Ent);
+      Set_Editable (Ent, False);
+      Pack_Start (Box, Ent, Expand => True, Fill => True);
+
+      Gtk_New (Button, -"Grab...");
+      Pack_Start (Box, Button, Expand => False);
+
+      Get_Pref (Key_Preference (Pref), Modif, Key);
+
+      Append_Text (Ent, Image (Key, Modif));
+
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
+         Slot_Object => Ent);
+      Preference_Handlers.Connect
+        (Ent, Signal_Insert_Text, Entry_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
+         After       => True);
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Entry'Access,
+         Ent, User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      return Gtk_Widget (Box);
+   end Edit;
+
+   ----------
+   -- Edit --
+   ----------
+
+   overriding function Edit
+     (Pref               : access Style_Preference_Record;
+      Manager            : access Preferences_Manager_Record'Class;
+      Tips               : Gtk.Tooltips.Gtk_Tooltips)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Event : Gtk_Event_Box;
+      Box   : Gtk_Box;
+      F     : constant Gtk_Box := Create_Box_For_Font
+        (Manager, Preference (Pref),
+         Get_Pref_Font (Style_Preference (Pref)), "...");
+      Combo : Gtk_Color_Combo;
 
    begin
-      if Callback /= null then
-         return Callback (Manager, Manager.Pref_Editor, Param, Tips);
+      Gtk_New (Event);
+      Add (Event, F);
+      Set_Tip
+        (Tips, Event, -"Click on ... to display the font selector");
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Box, Event, Expand => True, Fill => True);
 
-      elsif Typ = GType_Int then
-         declare
-            Prop : constant Param_Spec_Int := Param_Spec_Int (Param);
-            Spin : Gtk_Spin_Button;
-            Adj  : Gtk_Adjustment;
-         begin
-            Gtk_New (Adj,
-                     Value => Gdouble (Get_Pref (Prop)),
-                     Lower => Gdouble (Minimum (Prop)),
-                     Upper => Gdouble (Maximum (Prop)),
-                     Step_Increment => 1.0,
-                     Page_Increment => 10.0,
-                     Page_Size      => 10.0);
-            Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
-            Set_Editable (Spin, True);
+      Gtk_New (Event);
+      Gtk_New (Combo);
+      Add (Event, Combo);
+      Set_Tip (Tips, Event, -"Foreground color");
+      Pack_Start (Box, Event, Expand => False);
+      Set_Color (Combo, Get_Pref_Fg (Style_Preference (Pref)));
+      Preference_Handlers.Connect
+        (Combo, Signal_Color_Changed,
+         Fg_Color_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Fg'Access, Combo,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-            Param_Spec_Handlers.Connect
-              (Adj, Gtk.Adjustment.Signal_Value_Changed, Gint_Changed'Access,
-               User_Data => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Gint'Access, Adj,
-               User_Data => (Preferences_Manager (Manager), Param));
+      Gtk_New (Event);
+      Gtk_New (Combo);
+      Add (Event, Combo);
+      Set_Tip (Tips, Event, -"Background color");
+      Pack_Start (Box, Event, Expand => False);
+      Set_Color (Combo, Get_Pref_Bg (Style_Preference (Pref)));
+      Preference_Handlers.Connect
+        (Combo, Signal_Color_Changed,
+         Bg_Color_Changed'Access,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+      Preference_Handlers.Object_Connect
+        (Manager.Pref_Editor, Signal_Preferences_Changed,
+         Update_Bg'Access, Combo,
+         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-            return Gtk_Widget (Spin);
-         end;
+      return Gtk_Widget (Box);
+   end Edit;
 
-      elsif Typ = GType_Boolean then
-         declare
-            Prop   : constant Param_Spec_Boolean := Param_Spec_Boolean (Param);
-            Toggle : Gtk_Check_Button;
-         begin
-            Gtk_New (Toggle, -"Enabled");
-            Widget_Callback.Connect
-              (Toggle, Signal_Toggled, Toggled_Boolean'Access);
-            Set_Active (Toggle, True); --  Forces a toggle
-            Set_Active (Toggle, Get_Pref (Prop));
+   ----------
+   -- Free --
+   ----------
 
-            Param_Spec_Handlers.Connect
-              (Toggle, Signal_Toggled, Boolean_Changed'Access,
-               User_Data => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Boolean'Access,
-               Toggle, User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Toggle);
-         end;
-
-      elsif Typ = Gdk.Keyval.Get_Type then
-         declare
-            Prop   : constant Param_Spec_Key := Param_Spec_Key (Param);
-            Ent    : Gtk_Entry;
-            Modif  : Gdk_Modifier_Type;
-            Key    : Gdk_Key_Type;
-            Button : Gtk_Button;
-            Box    : Gtk_Box;
-         begin
-            Gtk_New_Hbox (Box);
-            Gtk_New (Ent);
-            Set_Editable (Ent, False);
-            Pack_Start (Box, Ent, Expand => True, Fill => True);
-
-            Gtk_New (Button, -"Grab...");
-            Pack_Start (Box, Button, Expand => False);
-
-            Get_Pref (Prop, Modif, Key);
-
-            Append_Text (Ent, Image (Key, Modif));
-
-            Widget_Callback.Object_Connect
-              (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
-               Slot_Object => Ent);
-            Param_Spec_Handlers.Connect
-              (Ent, Signal_Insert_Text, Entry_Changed'Access,
-               User_Data   => (Preferences_Manager (Manager), Param),
-               After       => True);
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Entry'Access,
-               Ent, User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Box);
-         end;
-
-      elsif Typ = GType_String then
-         declare
-            Prop : constant Param_Spec_String := Param_Spec_String (Param);
-            Ent  : Gtk_Entry;
-         begin
-            Gtk_New (Ent);
-            Set_Text (Ent, Get_Pref (Prop));
-
-            Param_Spec_Handlers.Connect
-              (Ent, Signal_Insert_Text,
-               Entry_Changed'Access,
-               User_Data   => (Preferences_Manager (Manager), Param),
-               After       => True);
-            Param_Spec_Handlers.Connect
-              (Ent, Signal_Delete_Text,
-               Entry_Changed'Access,
-               User_Data   => (Preferences_Manager (Manager), Param),
-               After       => True);
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Entry'Access,
-               Ent, User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Ent);
-         end;
-
-      elsif Typ = Gtk.Style.Get_Type then
-         declare
-            Prop  : constant Param_Spec_Style := Param_Spec_Style (Param);
-            Event : Gtk_Event_Box;
-            Box   : Gtk_Box;
-            F     : constant Gtk_Box := Create_Box_For_Font
-              (Manager, Param, Get_Pref_Font (Prop), "...");
-            Combo : Gtk_Color_Combo;
-
-         begin
-            Gtk_New (Event);
-            Add (Event, F);
-            Set_Tip
-              (Tips, Event, -"Click on ... to display the font selector");
-            Gtk_New_Hbox (Box, Homogeneous => False);
-            Pack_Start (Box, Event, Expand => True, Fill => True);
-
-            Gtk_New (Event);
-            Gtk_New (Combo);
-            Add (Event, Combo);
-            Set_Tip (Tips, Event, -"Foreground color");
-            Pack_Start (Box, Event, Expand => False);
-            Set_Color (Combo, Get_Pref_Fg (Prop));
-            Param_Spec_Handlers.Connect
-              (Combo, Signal_Color_Changed,
-               Fg_Color_Changed'Access,
-               User_Data   => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Fg'Access,
-               Combo, User_Data => (Preferences_Manager (Manager), Param));
-
-            Gtk_New (Event);
-            Gtk_New (Combo);
-            Add (Event, Combo);
-            Set_Tip (Tips, Event, -"Background color");
-            Pack_Start (Box, Event, Expand => False);
-            Set_Color (Combo, Get_Pref_Bg (Prop));
-            Param_Spec_Handlers.Connect
-              (Combo, Signal_Color_Changed,
-               Bg_Color_Changed'Access,
-               User_Data => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Bg'Access,
-               Combo, User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Box);
-         end;
-
-      elsif Typ = Gdk.Color.Gdk_Color_Type then
-         declare
-            Prop  : constant Param_Spec_Color := Param_Spec_Color (Param);
-            Combo : Gtk_Color_Combo;
-         begin
-            Gtk_New (Combo);
-            Set_Color (Combo, Get_Pref (Prop));
-
-            Param_Spec_Handlers.Connect
-              (Combo, Signal_Color_Changed,
-               Color_Changed'Access,
-               User_Data   => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Color'Access,
-               Combo, User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Combo);
-         end;
-
-      elsif Typ = Pango.Font.Get_Type then
-         return Gtk_Widget
-           (Create_Box_For_Font
-              (Manager, Param,
-               Get_Pref (Param_Spec_Font (Param)), -"Browse"));
-
-      elsif Fundamental (Typ) = GType_Enum then
-         declare
-            Prop    : constant Param_Spec_Enum := Param_Spec_Enum (Param);
-            V       : constant Gint := Get_Pref (Prop);
-            Combo   : Gtk_Combo;
-            E_Klass : constant Enum_Class := Enumeration (Prop);
-            Val     : Enum_Value;
-            K       : Guint := 0;
-            Item    : Gtk_List_Item;
-         begin
-            Gtk_New (Combo);
-            Set_Value_In_List (Combo, True, Ok_If_Empty => False);
-            Set_Editable (Get_Entry (Combo), False);
-
-            loop
-               Val := Nth_Value (E_Klass, K);
-               exit when Val = null;
-               declare
-                  S : String := Nick (Val);
-               begin
-                  Mixed_Case (S);
-                  Gtk_New (Item, S);
-               end;
-               Add (Get_List (Combo), Item);
-               if Value (Val) = V then
-                  Set_Text (Get_Entry (Combo), Nick (Val));
-               end if;
-               Show_All (Item);
-               K := K + 1;
-            end loop;
-
-            Param_Spec_Handlers.Object_Connect
-              (Get_List (Combo), "select_child",
-               Enum_Changed'Access,
-               Slot_Object => Combo,
-               User_Data   => (Preferences_Manager (Manager), Param));
-            Param_Spec_Handlers.Object_Connect
-              (Manager.Pref_Editor, Signal_Preferences_Changed,
-               Update_Entry'Access,
-               Get_Entry (Combo),
-               User_Data => (Preferences_Manager (Manager), Param));
-
-            return Gtk_Widget (Combo);
-         end;
-
-      else
-         declare
-            Label : Gtk_Label;
-         begin
-            Gtk_New (Label, -"Preference cannot be edited");
-            return Gtk_Widget (Label);
-         end;
-      end if;
-   end Editor_Widget;
+   overriding procedure Free (Pref : in out Style_Preference_Record) is
+   begin
+      Free (Pref.Style_Font);
+      Free (Pref.Font_Descr);
+      Free (Pref.Style_Fg);
+      Free (Pref.Style_Bg);
+   end Free;
 
    ----------------------
    -- Edit_Preferences --
@@ -1944,7 +1689,7 @@ package body Default_Preferences is
       pragma Unreferenced (Tmp, Num);
 
       Saved      : Saved_Prefs_Data;
-      Info       : Pref_Description_Access;
+      Pref       : Preference;
 
       Had_Apply  : Boolean := False;
       Row        : Guint;
@@ -1953,7 +1698,7 @@ package body Default_Preferences is
       Event      : Gtk_Event_Box;
       Label      : Gtk_Label;
       Separator  : Gtk_Separator;
-      L          : Param_Spec_List.List_Node := First (Manager.Preferences);
+      C          : Preferences_Maps.Cursor := First (Manager.Preferences);
    begin
       Save_Preferences (Manager, Saved);
 
@@ -2023,33 +1768,33 @@ package body Default_Preferences is
 
       --  Then add all implicitely defined pages
 
-      while L /= Param_Spec_List.Null_Node loop
-         Info := Get_Description (Data (L));
+      while Has_Element (C) loop
+         Pref := Element (C);
 
-         if Info /= null
-           and then Info.Param /= null
-           and then (Flags (Info.Param) and Param_Writable) /= 0
-         then
-            Table := Gtk_Table (Find_Or_Create_Page (Info.Page.all, null));
+         if Pref.Page /= null then
+            Table := Gtk_Table (Find_Or_Create_Page (Pref.Page.all, null));
             Row := Get_Property (Table, N_Rows_Property);
             Resize (Table, Rows => Row + 1, Columns => 2);
 
             Gtk_New (Event);
-            Gtk_New (Label, Nick_Name (Info.Param));
+            Gtk_New (Label, Pref.Label.all);
             Add (Event, Label);
-            Set_Tip (Tips, Event, Description (Info.Param));
+            Set_Tip (Tips, Event, Pref.Doc.all);
             Set_Alignment (Label, 0.0, 0.5);
             Attach (Table, Event, 0, 1, Row, Row + 1,
                     Xoptions => Fill, Yoptions => 0);
 
-            Widget := Editor_Widget (Manager, Info.Param, Tips);
+            Widget := Edit
+              (Pref               => Pref,
+               Manager            => Manager,
+               Tips               => Tips);
 
             if Widget /= null then
                Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
             end if;
          end if;
 
-         L := Next (L);
+         Next (C);
       end loop;
 
       Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -2125,20 +1870,21 @@ package body Default_Preferences is
 
    procedure Save_Preferences
      (Manager : access Preferences_Manager_Record;
-      Saved   : out Default_Preferences.Saved_Prefs_Data)
+      Saved   : out Saved_Prefs_Data)
    is
-      L    : Param_Spec_List.List_Node := First (Manager.Preferences);
-      Info : Pref_Description_Access;
+      C    : Preferences_Maps.Cursor := First (Manager.Preferences);
+      Pref : Preference;
    begin
       Saved := new Saved_Prefs_Data_Record;
+      Saved.Manager := Preferences_Manager (Manager);
 
-      while L /= Param_Spec_List.Null_Node loop
-         Info := Get_Description (Data (L));
-         Append
+      while Has_Element (C) loop
+         Pref := Element (C);
+         Include
            (Saved.Preferences,
-            Saved_Param_Spec'(Param => Data (L),
-                              Descr => Clone (Info)));
-         L := Next (L);
+            Pref.Name.all,
+            String'(Get_Pref (Pref)));
+         Next (C);
       end loop;
    end Save_Preferences;
 
@@ -2147,11 +1893,21 @@ package body Default_Preferences is
    -------------------------
 
    procedure Restore_Preferences (Saved : Saved_Prefs_Data) is
-      L : Saved_Param_List.List_Node := First (Saved.Preferences);
+      C    : Preferences_Maps.Cursor := First (Saved.Manager.Preferences);
+      Pref : Preference;
    begin
-      while L /= Saved_Param_List.Null_Node loop
-         Set_Description (Data (L).Param, Clone (Data (L).Descr));
-         L := Next (L);
+      while Has_Element (C) loop
+         Pref := Element (C);
+         begin
+            Set_Pref (Pref,
+                      Manager => null,
+                      Value   => Element (Saved.Preferences, Pref.Name.all));
+         exception
+            when Constraint_Error =>
+               null;
+         end;
+
+         Next (C);
       end loop;
    end Restore_Preferences;
 
@@ -2163,7 +1919,6 @@ package body Default_Preferences is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Saved_Prefs_Data_Record, Saved_Prefs_Data);
    begin
-      Free (Data.Preferences);
       Unchecked_Free (Data);
    end Destroy;
 
@@ -2179,5 +1934,16 @@ package body Default_Preferences is
    begin
       null;
    end Undo;
+
+   ----------------
+   -- Get_Editor --
+   ----------------
+
+   function Get_Editor
+     (Manager : access Preferences_Manager_Record)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      return Manager.Pref_Editor;
+   end Get_Editor;
 
 end Default_Preferences;

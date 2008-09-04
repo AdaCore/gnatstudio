@@ -1844,7 +1844,7 @@ package body Aliases_Module is
       Set_Wrap_Mode (Editor.Expansion, Wrap_None);
 
       Realize (Editor.Expansion);
-      Modify_Font (Editor.Expansion, Get_Pref_Font (Default_Style));
+      Modify_Font (Editor.Expansion, Default_Style.Get_Pref_Font);
 
       Register_Contextual_Menu
         (Widget       => Editor.Expansion,

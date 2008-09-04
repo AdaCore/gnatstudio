@@ -918,9 +918,7 @@ package body GVD.Process is
 
       Configure
         (Process.Editor_Text,
-         Source,
-         Get_Pref_Font (Default_Style),
-         arrow_xpm, stop_xpm);
+         Source, Default_Style.Get_Pref_Font, arrow_xpm, stop_xpm);
 
       Set_Current_Debugger (Window.Kernel, GObject (Process));
 
@@ -1071,7 +1069,7 @@ package body GVD.Process is
       Attach_To_Debuggee_Console
         (Process,
          Create_If_Necessary =>
-           Get_Pref (Execution_Window)
+           Execution_Window.Get_Pref
            and then Is_Local (Debug_Server)
            and then Support_TTY (Process.Debugger)
            and then GNAT.TTY.TTY_Supported);
@@ -1120,7 +1118,7 @@ package body GVD.Process is
       --  Filter breakpoints that are created automatically by GPS as a
       --  result of preferences.
 
-      if Get_Pref (Break_On_Exception) then
+      if Break_On_Exception.Get_Pref then
          for B in reverse Process.Breakpoints'Range loop
             declare
                Br : Breakpoint_Data renames Process.Breakpoints (B);
@@ -1199,7 +1197,7 @@ package body GVD.Process is
 
       --  Save the breakpoints if needed
 
-      if Get_Pref (Preserve_State_On_Exit) then
+      if Preserve_State_On_Exit.Get_Pref then
          if Process.Breakpoints /= null then
             Traces.Trace (Me, "Saving breakpoints in properties");
             --  Take into account breakpoints that have been set manually
@@ -1874,7 +1872,7 @@ package body GVD.Process is
       Load_Project_From_Executable (Kernel, Get_Current_Process (Top));
 
       --  Restore the breakpoints
-      if Get_Pref (Preserve_State_On_Exit) then
+      if Preserve_State_On_Exit.Get_Pref then
          Get_Property
            (Property, Get_Executable (Process.Debugger),
             Name => "breakpoints", Found => Success);
