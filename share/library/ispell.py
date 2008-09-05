@@ -48,24 +48,100 @@ GPS.Preference ("Plugins/ispell/cmd").create (
     "Command", "string", """External command to use to spell check words.
 This command should return a list of words that could replace the current
 one. Recommended values are "aspell" or "ispell". Input to this command
-is sent to its stdin.
-You need to restart GPS to take any change into account""", "aspell -a --lang=en")
+is sent to its stdin.""", "aspell -a --lang=en")
 
 GPS.Preference ("Plugins/ispell/bgcolor").create (
     "Background color", "color", """Background color for the command window that contains the suggested replacements""", "yellow")
 
 GPS.Preference ("Plugins/ispell/menutype").create (
-    "Menu type", "enum", """The type of contextual menu we should use. "dynamic" only shows the possible replacements for the current word. "static" displays a single entry that spawns the spell checked for the current word.
-You need to restart GPS to take any change into account""",
+    "Menu type", "enum", """The type of contextual menu we should use. "dynamic" only shows the possible replacements for the current word. "static" displays a single entry that spawns the spell checked for the current word.""",
     1, "static", "dynamic", "none");
 
 ispell = None
+static = None
+dynamic = None
 
 def on_pref_changed (h):
    global ispell_command, background_color, contextual_menu_type
-   ispell_command = GPS.Preference ("Plugins/ispell/cmd").get()
-   background_color = GPS.Preference ("Plugins/ispell/bgcolor").get()
+   global ispell, static, dynamic
+
+   ispell_command       = GPS.Preference ("Plugins/ispell/cmd").get()
+   background_color     = GPS.Preference ("Plugins/ispell/bgcolor").get()
    contextual_menu_type = GPS.Preference ("Plugins/ispell/menutype").get()
+
+   # Activate the module if the ispell command is available. If the user
+   # changes it to something invalid, we cannot hide everything, so we keep
+   # the menus
+
+   if not ispell \
+     and os_utils.locate_exec_on_path (ispell_command.split()[0]) != "":
+      GPS.Logger ("ISPELL").log ("initialize ispell module " + ispell_command)
+      GPS.Hook ("before_exit_action_hook").add (before_exit)
+
+      ispell = Ispell()
+      GPS.parse_xml ("""
+     <action name="spell check comments" category="Editor" output="none">
+      <description>Check the spelling for all comments in the current editor</description>
+      <filter id="Source editor"/>
+      <shell lang="python">ispell.SpellCheckBuffer ("comment")</shell>
+    </action>
+    <action name="spell check editor" category="Editor" output="none">
+      <description>Check the spelling for the whole contents of the editor</description>
+      <filter id="Source editor" />
+      <shell lang="python">ispell.SpellCheckBuffer ("")</shell>
+    </action>
+    <action name="spell check selection" category="Editor" output="none">
+      <description>Check the spelling in the current selection</description>
+      <filter id="Source editor" />
+      <shell lang="python">ispell.SpellCheckBuffer ("selection")</shell>
+    </action>
+    <action name="spell check word" category="Editor" output="none">
+      <description>Check the spelling of the current word</description>
+      <filter id="Source editor" />
+      <shell lang="python">ispell.SpellCheckBuffer ("word")</shell>
+    </action>
+
+    <submenu after="Selection">
+      <title>/Edit/Spe_ll Check</title>
+      <menu action="spell check comments">
+         <title>Comments</title>
+      </menu>
+      <menu action="spell check editor">
+         <title>Editor</title>
+      </menu>
+      <menu action="spell check selection">
+         <title>Selection</title>
+      </menu>
+      <menu action="spell check word">
+         <title>Word</title>
+      </menu>
+     </submenu>""")
+
+   # Update the command
+
+   if ispell and ispell_command != ispell.cmd:
+      GPS.Logger ("ISPELL").log ("command changed, restart process")
+      ispell.kill()
+      ispell = Ispell()
+
+   # Activate the right kind of contextual menu
+
+   if ispell:
+      if contextual_menu_type == "static":
+         GPS.Logger ("ISPELL").log ("Activate static contextual menu")
+         if dynamic: dynamic.hide()
+         if not static: static = Static_Contextual()
+         else: static.show()
+
+      elif contextual_menu_type == "dynamic":
+         GPS.Logger ("ISPELL").log ("Activate dynamic contextual menu")
+         if static: static.hide()
+         if not dynamic: dynamic = Dynamic_Contextual() 
+         else: dynamic.show()
+
+      else:
+         if static: static.hide()
+         if dynamic: dynamic.hide()
 
 class Ispell:
    """Interface to ispell. This takes care of properly starting a process,
@@ -73,7 +149,9 @@ class Ispell:
       it"""
 
    def __init__ (self):
+      global ispell_command
       self.proc = None
+      self.cmd = ispell_command
       self.personal_dict_modified=False
 
    def before_kill (self, proc, output):
@@ -98,10 +176,10 @@ class Ispell:
            ## Do not display the process in the task manager, since it will run
            ## forever in any case.
            self.proc = GPS.Process \
-              (ispell_command, before_kill=self.before_kill, task_manager=False)
+              (self.cmd, before_kill=self.before_kill, task_manager=False)
            result = self.proc.expect ("^.*\\n", timeout=2000)
         except:
-           GPS.Console ("Messages").write ("Could not start external command: " + ispell_command)
+           GPS.Console ("Messages").write ("Could not start external command: " + self.cmd)
 
    def read (self, words):
       """Run ispell to find out the possible correction for the words.
@@ -114,6 +192,9 @@ class Ispell:
       attempt = 0
       while attempt < 2:
          self.restart_if_needed()
+         if not self.proc:
+            GPS.Logger ("ISPELL").log ("process not started " + self.cmd)
+            return ""
 
          # Always prepend a space, to protect special characters at the
          # beginning of words that might be interpreted by aspell. This
@@ -434,59 +515,5 @@ class SpellCheckBuffer (GPS.CommandWindow):
          self.next_with_error_or_destroy()
          return True
 
-####################################
-
-def on_gps_started (hook_name):
-   global ispell
-   ispell = Ispell()
-
-   if contextual_menu_type == "static":
-      static = Static_Contextual()
-   elif contextual_menu_type == "dynamic":
-      dynamic = Dynamic_Contextual() 
-
-   GPS.parse_xml ("""
-     <action name="spell check comments" category="Editor" output="none">
-      <description>Check the spelling for all comments in the current editor</description>
-      <filter id="Source editor"/>
-      <shell lang="python">ispell.SpellCheckBuffer ("comment")</shell>
-    </action>
-    <action name="spell check editor" category="Editor" output="none">
-      <description>Check the spelling for the whole contents of the editor</description>
-      <filter id="Source editor" />
-      <shell lang="python">ispell.SpellCheckBuffer ("")</shell>
-    </action>
-    <action name="spell check selection" category="Editor" output="none">
-      <description>Check the spelling in the current selection</description>
-      <filter id="Source editor" />
-      <shell lang="python">ispell.SpellCheckBuffer ("selection")</shell>
-    </action>
-    <action name="spell check word" category="Editor" output="none">
-      <description>Check the spelling of the current word</description>
-      <filter id="Source editor" />
-      <shell lang="python">ispell.SpellCheckBuffer ("word")</shell>
-    </action>
-
-    <submenu after="Selection">
-      <title>/Edit/Spe_ll Check</title>
-      <menu action="spell check comments">
-         <title>Comments</title>
-      </menu>
-      <menu action="spell check editor">
-         <title>Editor</title>
-      </menu>
-      <menu action="spell check selection">
-         <title>Selection</title>
-      </menu>
-      <menu action="spell check word">
-         <title>Word</title>
-      </menu>
-     </submenu>""")
-
-on_pref_changed (None) # Initialize default values
-
-if os_utils.locate_exec_on_path (ispell_command.split()[0]) != "":
-   GPS.Hook ("before_exit_action_hook").add (before_exit)
-   GPS.Hook ("gps_started").add (on_gps_started)
-   GPS.Hook ("preferences_changed").add (on_pref_changed)
+GPS.Hook ("preferences_changed").add (on_pref_changed)
 
