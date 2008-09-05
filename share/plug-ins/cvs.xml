@@ -180,16 +180,19 @@
    </action>
 
    <action name="generic_cvs_history_text" show-command="false" output="none" category="">
-      <shell output="">echo "Querying history for $1"</shell>
-      <external check-password="true">cvs log -N "$1"</external>
-      <on-failure>
-         <shell output="">echo_error "CVS error:"</shell>
-         <shell output="">echo_error "%2"</shell>
-      </on-failure>
-     <shell>dump "%1" TRUE</shell>
+     <shell output="">echo "Querying history for $1"</shell>
+     <external check-password="true">cvs log -N "$1"</external>
+     <on-failure>
+       <shell output="">echo_error "CVS error:"</shell>
+       <shell output="">echo_error "%2"</shell>
+     </on-failure>
+     <shell>base_name "$1"</shell>
+     <shell>dump "%2" TRUE</shell>
      <shell>Editor.edit "%1"</shell>
+     <shell>Editor.set_title "%2" "Log for %3"</shell>
+     <shell>Editor.set_writable "%3" FALSE</shell>
      <shell>MDI.split_vertically TRUE</shell>
-     <shell>delete "%3"</shell>
+     <shell>delete "%5"</shell>
    </action>
 
    <action name="generic_cvs_history_rev" show-command="false" output="none" category="">
