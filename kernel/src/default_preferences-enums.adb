@@ -53,9 +53,6 @@ package body Default_Preferences.Enums is
    begin
       Enum_Preference (Data.Pref).Enum_Value :=
         Integer (Get_Index_In_List (C));
-      Trace (Me, "MANU New value="
-             & Enum_Preference (Data.Pref).Enum_Value'Img);
-      Trace (Me, "MANU New value=" & Get_Pref (Data.Pref));
    end Enum_Changed;
 
    ------------------
@@ -125,7 +122,7 @@ package body Default_Preferences.Enums is
          end;
 
          Add (Get_List (Combo), Item);
-         if K = Pref.Enum_Value then
+         if K = Pref.Enum_Value + Pref.Choices'First then
             Set_Text (Get_Entry (Combo), Pref.Choices (K).all);
          end if;
          Show_All (Item);
