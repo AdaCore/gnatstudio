@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2004-2008, AdaCore                --
+--                 Copyright (C) 2004-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,8 +23,9 @@ with Glib;               use Glib;
 
 with Gtk.Main;           use Gtk.Main;
 
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+
 with Custom_Module;      use Custom_Module;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -35,7 +36,7 @@ package body Custom_Timeout is
    Timeout_Cst         : aliased constant String := "timeout";
    Action_Cst          : aliased constant String := "action";
    Constructor_Args    : constant Cst_Argument_List :=
-     (Timeout_Cst'Access, Action_Cst'Access);
+                           (Timeout_Cst'Access, Action_Cst'Access);
 
    Timeout_Class_Name : constant String := "Timeout";
 
@@ -62,17 +63,17 @@ package body Custom_Timeout is
 
    procedure Custom_Timeout_Handler
      (Data    : in out Callback_Data'Class; Command : String);
-   --  Handle the custom timeout commands.
+   --  Handle the custom timeout commands
 
    function Callback (D : Custom_Timeout_Access) return Boolean;
-   --  Generic timeout callback.
+   --  Generic timeout callback
 
    function Get_Data
      (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access;
    --  Get or store some data in an instance of GPS.Process
 
    procedure Free (X : in out Custom_Timeout_Access);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    ----------
    -- Free --
@@ -92,8 +93,9 @@ package body Custom_Timeout is
      (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access
    is
       Timeout_Class : constant Class_Type :=
-        New_Class (Get_Kernel (Data), Timeout_Class_Name);
-      Inst : constant Class_Instance := Nth_Arg (Data, N, Timeout_Class);
+                        New_Class (Get_Kernel (Data), Timeout_Class_Name);
+      Inst          : constant Class_Instance :=
+                        Nth_Arg (Data, N, Timeout_Class);
    begin
       return Timeout_Property_Access
         (Instance_Property'(Get_Data (Inst, Timeout_Class_Name))).Timeout;
@@ -104,8 +106,8 @@ package body Custom_Timeout is
    --------------
 
    function Callback (D : Custom_Timeout_Access) return Boolean is
-      C : Callback_Data'Class := Create
-        (Get_Script (D.Action.all), Arguments_Count => 1);
+      C   : Callback_Data'Class :=
+              Create (Get_Script (D.Action.all), Arguments_Count => 1);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -126,9 +128,10 @@ package body Custom_Timeout is
    procedure Custom_Timeout_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Custom_Module_ID.all);
+      Kernel        : constant Kernel_Handle :=
+                        Get_Kernel (Custom_Module_ID.all);
       Timeout_Class : constant Class_Type :=
-        New_Class (Kernel, Timeout_Class_Name);
+                        New_Class (Kernel, Timeout_Class_Name);
       D             : Custom_Timeout_Access;
    begin
       if Command = Constructor_Method then
@@ -136,7 +139,7 @@ package body Custom_Timeout is
 
          declare
             Inst    : constant Class_Instance :=
-              Nth_Arg (Data, 1, Timeout_Class);
+                        Nth_Arg (Data, 1, Timeout_Class);
             Timeout : constant Integer := Nth_Arg (Data, 2);
             Act     : constant Subprogram_Type := Nth_Arg (Data, 3);
          begin

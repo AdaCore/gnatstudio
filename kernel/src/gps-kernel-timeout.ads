@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,11 +22,11 @@ with GNAT.Expect;
 with GNAT.OS_Lib;
 
 with Gtk.Main;
+
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with Interactive_Consoles;
 with Commands;                use Commands;
-
 with Remote;                  use Remote;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 
 package GPS.Kernel.Timeout is
 
@@ -194,7 +193,5 @@ package GPS.Kernel.Timeout is
       Created_Command      : out Scheduled_Command_Access);
    --  Same as above, and returns the created File_Descriptor.
    --  This process is necessarily launched locally.
-
-private
 
 end GPS.Kernel.Timeout;

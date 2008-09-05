@@ -107,7 +107,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Cleanup (Data : Console_Process);
    --  Close the process descriptor and free its associated memory.
-   --  Free memory used by Data itself
+   --  Free memory used by Data itself.
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -178,7 +178,7 @@ package body GPS.Kernel.Timeout is
    ----------
 
    overriding procedure Free (D : in out Monitor_Command) is
-      PID    : GNAT.Expect.Process_Id;
+      PID : GNAT.Expect.Process_Id;
    begin
       if not D.Data.Died and then D.Data.D.Descriptor /= null then
          PID := Get_Pid (D.Data.D.Descriptor.all);
@@ -389,7 +389,7 @@ package body GPS.Kernel.Timeout is
             Expect (Fd.all, Result, Data.Expect_Regexp.all, Timeout => 1);
 
             if Result /= Expect_Timeout then
-               --  Received something. Cancel timeout.
+               --  Received something. Cancel timeout
                Data.Timeout := -1;
 
                declare
@@ -402,7 +402,7 @@ package body GPS.Kernel.Timeout is
                      Insert (Data.Console, Output, Add_LF => False);
 
                      --  ??? This might be costly, we could cache this MDI
-                     --  Child
+                     --  Child.
                      Highlight_Child
                        (Find_MDI_Child
                           (Get_MDI (Data.D.Kernel), Data.Console));
@@ -419,7 +419,7 @@ package body GPS.Kernel.Timeout is
                    Duration (Data.Timeout) /  1000.0
                then
                   --  Make sure the process is killed. Just interrupting it is
-                  --  sometimes not enough
+                  --  sometimes not enough.
                   Close (Fd.all);
                end if;
 
