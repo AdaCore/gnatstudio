@@ -14,17 +14,6 @@ following are provided:
   - Add links to python documentation on the internet
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
-pydoc_port = 9432
-## Port that should be used for the pydoc daemon.
-## This is a small program provided in the python distribution, which
-## external web browsers can connect to to get the documentation for the
-## standard python library
-
 
 ############################################################################
 ## No user customization below this line
@@ -35,6 +24,10 @@ pydoc_port = 9432
 #   - "class browser" -> project view in GPS
 
 import GPS, sys, os.path
+
+GPS.Preference ("Plugins/python_support/port").create (
+   "Pydoc port", "integer", """Port that should be used when spawning the pydoc daemon.
+This is a small local server to which your web browser connects to display the documentation for the standard python library. It is accessed through the /Python menu when editing a python file""", 9432)
 
 try:
   import gtk
@@ -147,7 +140,10 @@ def project_recomputed (hook_name):
 
 def show_python_library ():
   """Open a navigator to show the help on the python library"""
-  global pydoc_proc, pydoc_port
+  global pydoc_proc
+
+  pydoc_port = GPS.Preference ("Plugins/python_support/port").get()
+
   if not pydoc_proc:
      while 1:
         pydoc_proc = GPS.Process ("pydoc -p " + `pydoc_port`)

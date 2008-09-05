@@ -5,6 +5,10 @@ and project properties to configure the builder.
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 from GPS import *
 
 def on_exit(process, status, output):

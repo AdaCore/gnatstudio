@@ -18,14 +18,6 @@ A convenience menu is added to open the console:
 It asks you for the location of the executable
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-addr2line_args="--functions --demangle=gnat"
-# Additional arguments to pass to addr2line
-
 
 #############################################################################
 ## No user customization below this line
@@ -34,6 +26,11 @@ addr2line_args="--functions --demangle=gnat"
 from GPS import *
 import re
 import os.path
+
+Preference ("Plugins/addr2line/args").create (
+  "Arguments", "string",
+  """Additional arguments to pass to addr2line""",
+  "--functions --demangle=gnat")
 
 file_line_re = "(([-_\w./\\\\]+):(\d+)(:(\d+))?)"
 
@@ -51,7 +48,7 @@ class Addr2line (Console):
 
   def backtrace (self, bt):
      self.clear ()
-     cmd = "addr2line -e " + self.executable + " " + addr2line_args
+     cmd = "addr2line -e " + self.executable + " " + Preference ("Plugins/addr2line/args").get()
      self.write (cmd + "\n")
      Process (cmd + " " + bt, ".+",
               on_exit = self.on_exit,

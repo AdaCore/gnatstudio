@@ -29,26 +29,6 @@ Note that you can save the contents of the Locations window, after execution,
 through the GPS.Locations.dump() method in the python console.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-xmlada_projects=["xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
-                 "xmlada_input", "xmlada_shared", "xmlada"]
-aws_projects=["aws_config", "aws_libz", "aws_shared", "aws_ssl_support",
-              "aws_components", "aws_xmlada", "aws"]
-
-
-ignore_projects = [] + xmlada_projects + aws_projects
-# Names of the projects for which we never want to look for unused entities.
-# This should in general include those projects from third-party libraries.
-# You can still search for unusued entities if you select that project
-# specifically. The two constants xmlada_projects and aws_projects can be
-# used to initialize those lists, since it is expected that any project
-# depending on those does not use all their entities.
-# Names should be lower-cased
-
 
 #############################################################################
 ## No user customization below this line
@@ -56,9 +36,22 @@ ignore_projects = [] + xmlada_projects + aws_projects
 
 from GPS import *
 
+xmlada_projects=["xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
+                 "xmlada_input", "xmlada_shared", "xmlada"]
+aws_projects=["aws_config", "aws_libz", "aws_shared", "aws_ssl_support",
+              "aws_components", "aws_xmlada", "aws"]
+
+Preference ("Plugins/unused entities/ignoreprj").create (
+  "Ignored projects", "string",
+  """Comma-separated list of projects for which we never want to look for unused entities. # This should in general include those projects from third-party libraries. You can still search for unusued entities if you select that project
+specifically.""",
+  ",".join (xmlada_projects + aws_projects))
+
 def EntityIterator (where):
   """Return all entities from WHERE"""
   if not where:
+     ignore_projects = [s.strip().lower() for s in Preference ("Plugins/unused entities/ignoreprj").get().split(",")]
+
      for p in Project.root().dependencies (recursive=True):
        if p.name().lower() not in ignore_projects:
          Console ().write ("Searching unused entities in project " + p.name() + "\n")

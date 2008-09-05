@@ -27,33 +27,29 @@ Note that line numbers will be aligned to the biggest one, e.g.
 
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-standard_contextual=True
-# If True, contextual menus will be created for copying, cutting and pasting
-# text. They will correspond to the /Edit/Copy, /Edit/Cut and /Edit/Paste
-# menus.
-
-copy_with_line_numbers_contextual=False
-# If True and standard_contextual is also True, a contextual menu to copy some
-# text with the line numbers will be created.
-#  Otherwise, the capability will only be accessible from the
-# /Edit/Copy with line numbers menu and possibly the associated key
-# shortcut.
-
-grey_out_contextual=True
-# If left to False, each time the contextual menu filter is not matched, the 
-# contextual menu is hidden. Otherwise, it will be created by greyed out.
-
 
 ###########################################################################
 ## No user customization below this line
 ############################################################################
 
 import GPS
+
+GPS.Preference ("Plugins/copy paste/stdmenu").create (
+  "Contextual menu", "boolean",
+  """If enabled, contextual menus will be created for copying, cutting and pasting text. They will correspond to the /Edit/Copy, /Edit/Cut and /Edit/Paste menus. You must restart GPS to take changes into account.""",
+  True)
+
+GPS.Preference ("Plugins/copy paste/greyedout").create (
+  "Grey out contextual menu", "boolean",
+  """If disabled, contextual menu entries are hidden when not applicable. If enabled, the entries are still visible by greyed out.
+You must restart GPS to take changes into account.""",
+  True)
+
+GPS.Preference ("Plugins/copy paste/copy_with_line_nums").create (
+  "Copy with line numbers", "boolean",
+  """If enabled and Contextual Menu is also enabled, a contextual menu to copy some text with the line numbers will be created.
+Otherwise, the capability will only be accessible from the /Edit/Copy with line numbers menu and possibly the associated key shortcut.""",
+  False)
 
 def copy_with_line_numbers (menu):
    buffer = GPS.EditorBuffer.get()
@@ -103,7 +99,10 @@ def on_paste (context):
    GPS.Editor.paste()
 
 def on_gps_started (hook):
-   if standard_contextual:
+   if GPS.Preference ("Plugins/copy paste/stdmenu").get():
+      grey_out_contextual = GPS.Preference ("Plugins/copy paste/greyedout").get()
+      copy_with_line_numbers_contextual = GPS.Preference ("Plugins/copy paste/copy_with_line_nums").get()
+
       GPS.Contextual ("sep_group_1").create \
         (on_activate=None, group=-1, visibility_filter=not grey_out_contextual)
       GPS.Contextual ("Paste").create \

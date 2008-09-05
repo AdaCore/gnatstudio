@@ -12,17 +12,18 @@ on-line support services:
 All these facilities are available from the /Help/On-Line Support menu.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-gap_member=False
-# If you are a GAP member, set this to True
-
 
+###########################################################################
+## No user customization below this line
+###########################################################################
 
 import GPS
+
+GPS.Preference ("Plugins/online_support/gap").create (
+  "GAP member", "boolean",
+  """If you are an academic user member of the GAP program, enable this preference. This slightly changes the menus to give you better access to GnatTracker.
+You need to restart GPS after changing this preference""",
+  False)
 
 def open_gnattracker(uri):
    GPS.HTML.browse ("http://www.adacore.com/gnattracker" + uri)
@@ -33,6 +34,7 @@ def view_ticket (menu):
       open_gnattracker ("/ticket?tn=" + ticket[0])
 
 def on_gps_started (hook):
+   gap_member = GPS.Preference ("Plugins/online_support/gap").get()
    GPS.Menu.create ("/Help/On-Line Support/Dashboard", \
                     lambda x: open_gnattracker (""))
    GPS.Menu.create ("/Help/On-Line Support/View ticket", view_ticket)

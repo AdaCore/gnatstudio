@@ -19,25 +19,6 @@ GPS Messages window (which you can then save to a text file, or through a
 graphical tree widget, which you can dynamically manipulate.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-show_source_dependencies=False
-# Show the file dependencies that explain project dependencies
-
-show_diff = True
-# If True, show only the difference in dependencies with the current
-# setup
-
-no_source_projects = ["shared"]
-# Name of the project that contain no sources, but are used to share
-# common settings. Since this script looks at source files to find
-# out dependencies, the dependencies on such projects would not be
-# shown otherwise.
-# Use lower-cases in this list
-
 
 ############################################################################
 ## No user customization below this line
@@ -46,6 +27,21 @@ no_source_projects = ["shared"]
 from GPS import *
 from os.path import *
 import traceback, re
+
+Preference ("Plugins/dependencies/show_source").create (
+  "Show source", "boolean",
+  """If enabled, show the file dependencies that explain project dependencies. If disabled, you only see the dependencies between the projects""",
+  False)
+
+Preference ("Plugins/dependencies/show_diff").create (
+  "Show diff", "boolean",
+  """If enabled, show only the differences with the current project setup. This mode helps you clean up the with statements in your projects""",
+  True)
+
+Preference ("Plugins/dependencies/no_src_prj").create (
+  "Projects with no sources", "string",
+  """comma-separated list of project names that contain no sources, but are used to share common settings. Since this script looks at source files to find out dependencies, the dependencies on such projects would not be shown otherwise.""",
+  "shared")
 
 class Output:
   def __init__ (self):
@@ -58,6 +54,7 @@ class Output:
 
   def add_dependency (self, dependency, newdep=True, removed=False):
      """Indicate a new GPS.Project dependency for the current project"""
+     show_diff = Preference ("Plugins/dependencies/show_diff").get()
      if removed and show_diff:
         Console().write (" - " + dependency.name() + "\n")
      elif newdep or not show_diff:
@@ -65,7 +62,7 @@ class Output:
   
   def explain_dependency (self, file, depends_on):
      """Explains the last add_dependency: file depends on depends_on"""
-     if show_source_dependencies:
+     if Preference ("Plugins/dependencies/show_source").get():
         Console().write \
           ("   => " + basename (file.name())  + 
            " depends on " + basename (depends_on.name()) + "\n")
@@ -159,6 +156,9 @@ def compute_project_dependencies (menu):
             if ip != p:
                try:             depends_on[p][ip].append ((s, imp))
                except KeyError: depends_on[p][ip] = [(s, imp)]
+
+   no_source_projects = [
+      s.strip().lower() for s in Preference ("Plugins/dependencies/no_src_prj").get().split (",")]
 
    for p in depends_on:
      menu.out.set_current_project (p)

@@ -37,7 +37,7 @@ It also shows how to get the word under the cursor in GPS.
 
 ###########################################################################
 ## No user customization below this line
-############################################################################
+###########################################################################
 
 import re, os_utils
 from text_utils import *

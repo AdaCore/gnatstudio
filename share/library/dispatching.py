@@ -10,19 +10,6 @@ For the Ada language, this plug-in requires a version of GNAT more recent
 than 2007-09-20, since the xref information was not created before then.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-highlight_on_open = True
-# Whether highlighting should be done as soon as a file is opened. This can
-# slow down the opening of a file, though, so should be deactivated if opening
-# a file appears slow.
-
-highlight_color="#FFDC4F"
-# The background color to use for the dispatching calls in the editors
-
 
 #############################################################################
 ## No user customization below this line
@@ -30,6 +17,15 @@ highlight_color="#FFDC4F"
 
 import GPS
 from GPS import *
+
+Preference ("Plugins/dispatching/onopen").create (
+  "Highlight dispatching calls", "boolean",
+   """If enabled, highlighting of dispatching calls is done as soon as a file is opened. This can slow down GPS, though, so should be deactivated if opening a file seems slow""", True)
+
+Preference ("Plugins/dispatching/color").create (
+  "Highlight color", "color",
+   """Background color to use for dispatching calls""",
+   "#FFDC4F")
 
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
@@ -86,6 +82,8 @@ def highlight_file_idle ():
      current_entities=[]
      return True
 
+
+
 def highlight_dispatching_calls (buffer):
   global insert_overlays_id
   global to_highlight
@@ -97,7 +95,8 @@ def highlight_dispatching_calls (buffer):
      buffer.remove_overlay (buffer.dispatch_overlay)
   except:
      buffer.dispatch_overlay = buffer.create_overlay ("dispatchcalls")
-     buffer.dispatch_overlay.set_property ("background", highlight_color)
+
+  buffer.dispatch_overlay.set_property ("background", Preference ("Plugins/dispatching/color").get())
 
   if has_pygtk:
      if not buffer in to_highlight:
@@ -122,15 +121,33 @@ def on_compilation_finished (hook, category):
   for l in EditorBuffer.list():
      highlight_dispatching_calls (l)
 
-def on_gps_start (hook):
-  if highlight_on_open:
-     Hook ("file_edited").add (on_file_edited)
-     Hook ("file_changed_on_disk").add (on_file_edited)
-     Hook ("compilation_finished").add (on_compilation_finished)
+hooks_set = 0
+
+def preferences_changed (hook):
+  global hooks_set
+  if Preference ("Plugins/dispatching/onopen").get():
+     if not hooks_set:
+        Hook ("file_edited").add (on_file_edited)
+        Hook ("file_changed_on_disk").add (on_file_edited)
+        Hook ("compilation_finished").add (on_compilation_finished)
+        hooks_set = 1
+
+     # Always redo the highlighting to take into account changes in colors
      on_compilation_finished (hook, "")
 
+  else:
+     if hooks_set: 
+        Hook ("file_edited").remove (on_file_edited)
+        Hook ("file_changed_on_disk").remove (on_file_edited)
+        Hook ("compilation_finished").remove (on_compilation_finished)
+        hooks_set = 0
+     for l in EditorBuffer.list():
+       try:
+          l.remove_overlay (l.dispatch_overlay)
+       except:
+          pass
 
-Hook ("gps_started").add (on_gps_start)
+Hook ("preferences_changed").add (preferences_changed)
 Menu.create ("/Navigate/Highlight Dispatching Calls",
              on_highlight_dispatching_calls,
              ref = "Find All References",

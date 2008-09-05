@@ -7,6 +7,10 @@ And finally a number of predefined text aliases are defined.
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 import GPS, os, os.path, re, string, traceback
 import os_utils, gnat_switches
 

@@ -71,33 +71,14 @@
    error messages to display them in the locations window as usual.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-locations_category = "Builder results"
-## Name of the category in the Locations window in which error messages
-## will be displayed
-
-extra_ant_switches  = ""
-extra_make_switches = ""
-## List of switches that should always be added to ant or make.
-## We use this variable instead of overriding the default value for the
-## project attribute because the new attribute is declared as soon as this
-## script is loaded, and therefore changing the python variable afterward
-## has no impact
-
-ant_support=False
-## Whether support for ant should be added. This is False by default,
-## because adding this support will implicitely load libexpat from the system,
-## which conflicts in some cases with the one linked with the gtk+ distributed
-## with GPS, and that results in a fatal storage error, crashing GPS
-
 
 ############################################################################
 ## No user customization below this line
 ############################################################################
+
+locations_category = "Builder results"
+## Name of the category in the Locations window in which error messages
+## will be displayed
 
 from GPS import *
 from os.path import *
@@ -105,7 +86,23 @@ import re
 import os
 import traceback
 
-if ant_support:
+Preference ("Plugins/Makefile/ant_support").create (
+  "Ant support", "boolean",
+  """If enabled, the Makefile plugin will have support for ant, ie it will support an ant file found in the toplevel directory.
+This is disabled by default because adding this support will implicitly load the libexpat library from the system, which conflicts in some cases with the one linked with the gtk+ distribution. This can result in fatal errors crashing GPS. However, it appears to work fine on some systems.
+You need to restart GPS to take changes into account.""",
+  False)
+
+Preference ("Plugins/Makefile/ant switches").create (
+  "Ant switches", "string",
+  """Extra switches that need to be passed to ant""",
+  "")
+Preference ("Plugins/Makefile/make switches").create (
+  "Make switches", "string",
+  """Extra switches that need to be passed to make""",
+  "")
+
+if Preference ("Plugins/Makefile/ant_support").get():
    from xml.sax import handler, make_parser
 
 class Console_Process (Console, Process):
@@ -270,7 +267,7 @@ class Makefile (Builder):
        self.build_cmd_attr = "make"
        self.switches_attr = "switches"
        self.default_build_files = ["Makefile", "makefile"]
-       self.extra_switches = extra_make_switches
+       self.extra_switches = Preference ("Plugins/Makefile/make switches").get()
        self.menu_name = "/Build/Makefile/"
        self.edit_menu = "Edit Makefile"
        Builder.__init__ (self)
@@ -303,7 +300,7 @@ class Antfile (Builder):
        self.build_cmd_attr = "ant"
        self.switches_attr = "switches"
        self.default_build_files = ["build.xml"]
-       self.extra_switches = extra_ant_switches
+       self.extra_switches = Preference ("Plugins/Makefile/ant switches").get()
        self.menu_name = "/Build/Ant/"
        self.edit_menu = "Edit ant file"
        Builder.__init__ (self)
@@ -383,7 +380,7 @@ def register_project_attributes ():
 
 def on_gps_started (hook_name):
    Makefile()
-   if ant_support:
+   if Preference ("Plugins/Makefile/ant_support").get():
       Antfile()
    
 

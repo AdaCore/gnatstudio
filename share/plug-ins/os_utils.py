@@ -1,5 +1,8 @@
 """Utility library used by other plug-ins"""
 
+###########################################################################
+## No user customization below this line
+###########################################################################
 
 import os, os.path, string
 

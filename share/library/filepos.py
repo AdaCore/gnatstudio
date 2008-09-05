@@ -1,11 +1,6 @@
 """This script saves the cursor location when an editor is closed, and
    restore it when the editor is reopened later on"""
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
 
 ############################################################################
 ## No user customization below this line

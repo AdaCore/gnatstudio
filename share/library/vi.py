@@ -64,17 +64,6 @@ displaying the command window. This is by analogy with vi's <.> command,
 although the scope is less ambitious here.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-background_color = "red"
-## Background color to use for the command line window
-
-ignorecase = False
-## Whether search ignores case differences by default.
-
 
 #############################################################################
 ## No user customization below this line
@@ -82,6 +71,16 @@ ignorecase = False
 
 from GPS import *
 import re
+
+Preference ("Plugins/vi/bgcolor").create (
+  "Background color", "color",
+  """Color to use for the command line window""",
+  "red")
+
+Preference ("Plugins/vi/ignorecase").create (
+  "Ignore case", "boolean",
+  """If enabled, searching will ignore casing by default""",
+  False)
 
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
@@ -121,7 +120,7 @@ class CmdLine (CommandWindow):
                                on_cancel   = self.on_cancel,
                                on_key      = self.on_key,
                                on_activate = self.on_activate)
-       self.set_background (background_color)
+       self.set_background (Preference ("Plugins/vi/bgcolor").get())
 
        self.current_in_history = -1
        self.current_cmd_line = ""  # Before moving in the history
@@ -209,7 +208,7 @@ class CmdLine (CommandWindow):
         options = ""
 
      count = 1
-     icase = ignorecase or (options.find ("i") < 0)
+     icase = Preference ("Plugins/vi/ignorecase").get() or (options.find ("i") < 0)
      if loc == maxloc:
         maxloc = loc.end_of_line ()  ## On whole line by default
      else:

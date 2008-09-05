@@ -16,19 +16,14 @@ Example of use:
   This automatically adds "end if;" on the line following the statement
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
-action_name = "Block Completion"
-menu_name   = "/Edit/More Completion/Complete _Block"
-## Name of the action and the menu defined by this package.
-
 
 ############################################################################
 ## No user customization below this line
 ############################################################################
+
+action_name = "Block Completion"
+menu_name   = "/Edit/More Completion/Complete _Block"
+## Name of the action and the menu defined by this package.
 
 import re, string, GPS
 

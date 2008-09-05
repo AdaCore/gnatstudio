@@ -8,18 +8,13 @@ one of the two menus:
   - /Edit/Selection/Sort Reverse
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
-menu_name1 = "/Edit/Selection/Sort Reverse"
-menu_name2 = "/Edit/Selection/Sort"
-
 
 ############################################################################
 ## No user customization below this line
 ############################################################################
+
+menu_name1 = "/Edit/Selection/Sort Reverse"
+menu_name2 = "/Edit/Selection/Sort"
 
 import GPS
 import string

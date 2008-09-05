@@ -39,6 +39,10 @@ will produce a warning if the incorrect context is selected.
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 import os, os.path, re, string
 import os_utils
 import GPS

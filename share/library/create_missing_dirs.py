@@ -9,11 +9,6 @@
  of directories, and the default is to create missing directories.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
 
 #############################################################################
 ## No user customization below this line

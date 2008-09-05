@@ -4,6 +4,10 @@ This plug-in adds support gnatcheck, a coding standard checker
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 import GPS, os, os.path, re, string, pygtk, traceback
 import os_utils
 pygtk.require('2.0')

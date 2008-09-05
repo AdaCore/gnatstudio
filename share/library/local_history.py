@@ -19,31 +19,6 @@ the revert, the current version is in the local revision history, and can
 therefore be reverted.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-local_rcs_dir = ".gpsrcs"
-## Name of the local directory created to store history. Several such
-## directories might be created, one per project
-
-max_days = 2
-## Keep revisions for that many days at most. See also max_revisions
-
-max_revisions = 200
-## Maximal number of completions to keep. See also max_days
-
-diff_switches="-u"
-## Additional switches to pass to rcsdiff. In particular, this can be used
-## to specify your preferred format for diff
-
-local_hist_when_no_project=False
-## Whether files outside of a project should also have a local history. In
-## such a case, the local history will be put in a local_rcs_dir subdirectory
-## of the directory that contains the file. When the file belongs to a
-## project, the local history goes to the object directory of the project.
-
 
 ###########################################################################
 ## No user customization below this line
@@ -52,6 +27,32 @@ local_hist_when_no_project=False
 from GPS import *
 from os.path import *
 import os, shutil, datetime, traceback, time, stat, re
+
+Preference ("Plugins/local history/rcsdir").create (
+  "Local RCS dir", "string",
+  """Name of the local directory created to store history locally.
+One such directory will be created in each object directory of the project and its subprojects""",
+  ".gpsrcs")
+
+Preference ("Plugins/local history/maxdays").create (
+  "Max age", "integer",
+  """Keep revisions for that many days at most""",
+  2, 0, 1000)
+
+Preference ("Plugins/local history/maxrevisions").create (
+  "Max revisions", "integer",
+  """Maximal number of revisions to keep""",
+  200, 0, 10000)
+
+Preference ("Plugins/local history/diff_switches").create (
+  "Diff switches", "string",
+  """Additional switches to pass to rcsdiff. In particular, this can be used to specify your preferred format for diff""",
+  "-u")
+
+Preference ("Plugins/local history/when_no_prj").create (
+  "When no project", "boolean",
+  """Whether files outside of a project should also have a local history. In such a case, the local history will be put in a local_rcs_dir subdirectory of the directory that contains the file. When the file belongs to a project, the local history goes to the object directory of the project.""",
+  False)
 
 class LocalHistory:
   """This class provides access to the local history of a file"""
@@ -64,12 +65,12 @@ class LocalHistory:
      project   = file.project (default_to_root = False)
      if project:
         dir = project.object_dirs (recursive = False)[0]
-     elif local_hist_when_no_project:
+     elif Preference ("Plugins/local history/when_no_prj").get():
         dir = dirname (self.file)
      else:
         return
 
-     self.rcs_dir = join (dir, local_rcs_dir)
+     self.rcs_dir = join (dir, Preference ("Plugins/local history/rcsdir").get())
      self.rcs_file = join (self.rcs_dir, basename (self.file)) + ",v"
 
      # convert all \ to / for Cygwin toolset, note that forward
@@ -135,10 +136,13 @@ class LocalHistory:
      """Remove the older revision histories for self"""
      if not self.rcs_dir:
         return
+
+     max_days = Preference ("Plugins/local history/maxdays").get ()
      older = datetime.datetime.now() - datetime.timedelta (days = max_days)
      older = older.strftime ("%Y.%m.%d.%H.%M.%S")
 
      revisions = self.get_revisions ()
+     max_revisions = Preference ("Plugins/local history/maxrevisions").get ()
      if revisions:
        version = max (0, revisions[0][0] - max_revisions)
        for r in revisions:
@@ -198,6 +202,7 @@ class LocalHistory:
      if self.rcs_dir and isdir (self.rcs_dir):
         pwd = os.getcwd()
         os.chdir (dirname (self.file))
+        diff_switches = Preference ("Plugins/local history/diff_switches").get()
         proc = Process ("rcsdiff " + diff_switches \
                         + " -r" + revision + " " + self.rcs_file)
         diff = proc.get_result()

@@ -17,23 +17,22 @@ Occurrences" action, or simply by deleting the corresponding category in the
 Locations window.
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-menu_name = "/Navigate/Mark Occurrences in File"
-mark_action_name = "Mark occurrences"
-remove_action_name = "Remove marked occurrences"
-
-highlight_color = "lightblue"
-
 
 ############################################################################
 ## No user customization below this line
 ############################################################################
 
+menu_name = "/Navigate/Mark Occurrences in File"
+mark_action_name = "Mark occurrences"
+remove_action_name = "Remove marked occurrences"
+
 import GPS
+
+GPS.Preference ("Plugins/occurrences/color").create (
+  "Highlight color", "color",
+  """Color used to highlight matching occurrences.
+You must restart GPS to take changes into account""",
+  "lightblue")
 
 def on_gps_started (hook_name):
   GPS.parse_xml ("""
@@ -54,7 +53,7 @@ def on_gps_started (hook_name):
   </menu>""")
 
   GPS.Editor.register_highlighting \
-    ("dynamic occurrences", highlight_color, True)
+    ("dynamic occurrences", GPS.Preference ("Plugins/occurrences/color").get(), True)
 
 def mark_selected ():
    buffer = GPS.EditorBuffer.get()

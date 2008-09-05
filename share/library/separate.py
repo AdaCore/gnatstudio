@@ -10,11 +10,6 @@ makes it slightly faster to navigate if you use Ada separates a
 lot
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
 
 ############################################################################
 ## No user customization below this line

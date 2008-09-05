@@ -12,16 +12,6 @@ package.
 See also emacs.xml
 """
 
-###########################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Scripts)
-
-transient_mark_mode = False
-## If set to False, then the region is never unselected when the clipboard is
-## modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs
-## mode with the same name, although will behave differently in some cases
-
 
 ############################################################################
 ## No user customization below this line
@@ -31,9 +21,12 @@ import GPS
 import string, traceback
 import navigation_utils
 
+GPS.Preference ("Plugins/emacs/transient_mark").create (
+   "Transient Mark", "boolean",
+   """If unset, the selected region is never unselected when the clipboard is modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs mode with the same name""", False)
+
 def on_gps_started (hook_name):
-  if transient_mark_mode:
-    GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
+  GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
 
   GPS.parse_xml ("""
    <action name="subprogram box" output="none" category="Editor">
@@ -640,6 +633,7 @@ def cancel_mark_command (buffer = None):
 
 def on_clipboard_changed (hook):
     """Called when the contents of the clipboard has changed"""
-    cancel_mark_command ()
+    if GPS.Preference ("Plugins/emacs/transient_mark").get():
+       cancel_mark_command ()
 
 GPS.Hook ("gps_started").add (on_gps_started)

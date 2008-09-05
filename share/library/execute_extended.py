@@ -7,24 +7,24 @@
    case insensitive
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-action_name = "execute extended command"
-
-show_completions = True
-# Whether we should display possible completions in the command window
-
-background_color = "yellow"
-
 
 ############################################################################
 ## No user customization below this line
 ############################################################################
 
+action_name = "execute extended command"
+
 from GPS import *
+
+Preference ("Plugins/execute_extended/bgcolor").create (
+  "Background color","color",
+  """Background color of the command window""",
+  "yellow")
+
+Preference ("Plugins/execute_extended/completions").create (
+  "Show completions", "boolean",
+  """If enabled, GPS will display the list of possible completions in the command window when you press <tab>. If disabled, it will only complete the current command as much as possible, but give no hint of valid completions.""",
+  True)
 
 def on_gps_started (hook_name):
    parse_xml ("""
@@ -57,7 +57,7 @@ class Extended_Command (CommandWindow):
                                prompt  = "Action:",
                                on_key  = self.on_key,
                                on_activate = self.on_activate)
-       self.set_background (background_color)
+       self.set_background (Preference ("Plugins/execute_extended/bgcolor").get())
        self.actions = lookup_actions()
        self.locked  = False
        self.repeat_count = repeat_count
@@ -78,7 +78,7 @@ class Extended_Command (CommandWindow):
           match.sort ()
           completions = ""
           prefix = findcommonstart (match)
-          if show_completions:
+          if Preference ("Plugins/execute_extended/completions").get():
              for m in match:
                 if completions != "": completions = completions + ","
                 completions = completions + m[len(prefix):]

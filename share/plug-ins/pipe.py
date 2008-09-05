@@ -19,13 +19,6 @@
       - "date" => Insert the current date in the file
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-background_color = "yellow"
-
 
 ############################################################################
 ## No user customization below this line
@@ -33,6 +26,9 @@ background_color = "yellow"
 
 from GPS import *
 import os_utils
+
+Preference ("Plugins/pipe/bgcolor").create (
+  "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
 
 def pipe (command, buffer=None):
    """Process the current selection in BUFFER through COMMAND,
@@ -87,7 +83,7 @@ class ShellProcess (CommandWindow):
       CommandWindow.__init__ (self, global_window = True,
                               prompt = "Shell command:",
                               on_activate = self.on_activate)
-      self.set_background (background_color)
+      self.set_background (Preference ("Plugins/pipe/bgcolor").get())
 
    def on_activate (self, shell_command):
       pipe (shell_command)

@@ -55,37 +55,39 @@ if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
 
-############################################################################
-# Customization variables
-# These variables can be changed in the initialization commands associated
-# with this script (see /Tools/Plug-ins)
-
-highlight_next_matches = True
-## Whether GPS should highlight the next matches. This highlighting will be
-## visible until the next isearch command. To cancel, start an isearch and
-## press Esc immediately
-
-next_matches_color = "cyan"
-## Color to use to highlight the next matches
-
-background_color = "yellow"
-## Background color to use for the search field
-
-error_color = "red"
-## Background color to use for the search field when no match is found
-
-isearch_action_name = 'isearch'
-isearch_menu = '/Navigate/Find Incremental'
-isearch_backward_action_name = 'isearch backward'
-isearch_backward_menu = '/Navigate/Find Previous Incremental'
-## Changing the name of menus should be reflected in emacs.xml
-
 
 #############################################################################
 ## No user customization below this line
 #############################################################################
 
 from GPS import *
+
+Preference ("Plugins/isearch/highlightnext").create (
+  "Highlight next matches", "boolean",
+  """Whether GPS should highlight the next matches. This highlighting will be visible until the next isearch command. To cancel, start an isearch and press Esc immediately""",
+  True)
+
+Preference ("Plugins/isearch/nextmatchcolor").create (
+  "Matches color", "color",
+  """Color to use when highlighting the next matches""",
+  "cyan")
+
+Preference ("Plugins/isearch/bgcolor").create (
+  "Background color", "color",
+  "Background color to use for the search field",
+  "yellow")
+
+Preference ("Plugins/isearch/errcolor").create (
+  "Error color", "color",
+  "Background color to use for the search field when no match is found",
+  "red")
+
+
+isearch_action_name = 'isearch'
+isearch_menu = '/Navigate/Find Incremental'
+isearch_backward_action_name = 'isearch backward'
+isearch_backward_menu = '/Navigate/Find Previous Incremental'
+## Changing the name of menus should be reflected in emacs.xml
 
 try:
    ## If we have PyGTK installed, we'll do the highlighting of the next
@@ -136,7 +138,7 @@ class Isearch (CommandWindow):
        self.stack = [(self.loc, self.end_loc, "", 0)]
        self.locked = False
        self.overlay = self.editor.create_overlay ("isearch")
-       self.overlay.set_property ("background", next_matches_color)
+       self.overlay.set_property ("background", Preference ("Plugins/isearch/nextmatchcolor").get())
        self.insert_overlays_id = 0
        self.remove_overlays ()
        CommandWindow.__init__ (self,
@@ -145,7 +147,7 @@ class Isearch (CommandWindow):
                                on_cancel   = self.on_cancel,
                                on_key      = self.on_key,
                                on_activate = self.on_activate)
-       self.set_background (background_color)
+       self.set_background (Preference ("Plugins/isearch/bgcolor").get())
 
      except:
        pass
@@ -165,7 +167,8 @@ class Isearch (CommandWindow):
 
    def remove_overlays (self):
      """Remove all isearch overlays in the current editor"""
-     global highlight_next_matches
+
+     highlight_next_matches = Preference ("Plugins/isearch/highlightnext").get()
 
      self.cancel_idle_overlays ()
 
@@ -196,7 +199,7 @@ class Isearch (CommandWindow):
            return False
 
    def insert_overlays (self):
-     global highlight_next_matches
+     highlight_next_matches = Preference ("Plugins/isearch/highlightnext").get()
      if highlight_next_matches:
         input = self.read ()
         self.overlay_loc = self.loc
@@ -253,7 +256,7 @@ class Isearch (CommandWindow):
            if changed: self.remove_overlays ()
            self.write (pattern)
            self.highlight_match (save_in_stack = 0)
-           self.set_background (background_color)
+           self.set_background (Preference ("Plugins/isearch/bgcolor").get())
            if changed: self.insert_overlays ()
            self.locked = False
            return True
@@ -347,7 +350,7 @@ class Isearch (CommandWindow):
             dialog_on_failure = False,
             backward = False)
         if result and result[0] == self.loc:
-           self.set_background (background_color)
+           self.set_background (Preference ("Plugins/isearch/bgcolor").get())
            (match_from, match_to) = result
            self.end_loc = match_to
            self.highlight_match ()
@@ -360,7 +363,7 @@ class Isearch (CommandWindow):
                  dialog_on_failure = False,
                  backward = self.backward)
      if result:
-        self.set_background (background_color)
+        self.set_background (Preference ("Plugins/isearch/bgcolor").get())
         (self.loc, self.end_loc) = result
         self.highlight_match ()
         if redo_overlays: self.insert_overlays ()
@@ -375,7 +378,7 @@ class Isearch (CommandWindow):
         else:
           self.loc = self.loc.buffer().beginning_of_buffer()
         self.end_loc = self.loc
-        self.set_background (error_color)
+        self.set_background (Preference ("Plugins/isearch/errcolor").get())
         Hook ("stop_macro_action_hook").run()
 
    def on_activate (self, input):

@@ -9,6 +9,10 @@ information.
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 import GPS, os
 from GPS import *
 from os import *
