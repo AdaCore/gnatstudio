@@ -51,6 +51,9 @@ with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -144,6 +147,16 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Manager_Preference) return Boolean;
    --  Called when the entry for a font selection has changed.
+
+   procedure Text_Buffer_Changed
+     (Buffer : access GObject_Record'Class;
+      Data   : Manager_Preference);
+   --  Called when the buffer has changed, to update the preference
+
+   procedure Update_Text_Buffer
+     (Buffer : access GObject_Record'Class;
+      Data  : Manager_Preference);
+   --  Called when the preference has changed, to update the buffer
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class);
    --  Update the font used for the entry Ent, based on its contents.
@@ -313,12 +326,14 @@ package body Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Multi_Line                : Boolean := False)
       return String_Preference
    is
       Result : constant String_Preference := new String_Preference_Record;
    begin
       Result.Str_Value := new String'(Default);
+      Result.Multi_Line := Multi_Line;
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -950,6 +965,33 @@ package body Default_Preferences is
                   Boolean_Preference (Data.Pref).Bool_Value);
    end Update_Boolean;
 
+   -------------------------
+   -- Text_Buffer_Changed --
+   -------------------------
+
+   procedure Text_Buffer_Changed
+     (Buffer : access GObject_Record'Class;
+      Data   : Manager_Preference)
+   is
+      E     : constant Gtk_Text_Buffer := Gtk_Text_Buffer (Buffer);
+      From, To : Gtk_Text_Iter;
+   begin
+      Get_Start_Iter (E, From);
+      Get_End_Iter   (E, To);
+      Set_Pref (String_Preference (Data.Pref), null, Get_Text (E, From, To));
+   end Text_Buffer_Changed;
+
+   ------------------------
+   -- Update_Text_Buffer --
+   ------------------------
+
+   procedure Update_Text_Buffer
+     (Buffer : access GObject_Record'Class;
+      Data   : Manager_Preference) is
+   begin
+      Set_Text (Gtk_Text_Buffer (Buffer), Get_Pref (Data.Pref));
+   end Update_Text_Buffer;
+
    -------------------
    -- Entry_Changed --
    -------------------
@@ -1348,25 +1390,46 @@ package body Default_Preferences is
    is
       pragma Unreferenced (Tips);
       Ent  : Gtk_Entry;
+      Text : Gtk_Text_View;
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk_New (Ent);
-      Set_Text (Ent, Pref.Str_Value.all);
+      if Pref.Multi_Line then
+         Gtk_New (Scrolled);
+         Set_Size_Request (Scrolled, -1, 200);
+         Gtk_New (Text);
+         Add (Scrolled, Text);
+         Set_Text (Get_Buffer (Text), Pref.Str_Value.all);
+         Preference_Handlers.Connect
+           (Get_Buffer (Text), "changed", Text_Buffer_Changed'Access,
+            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         Preference_Handlers.Object_Connect
+           (Manager.Pref_Editor, Signal_Preferences_Changed,
+            Update_Text_Buffer'Access, Get_Buffer (Text),
+            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
 
-      Preference_Handlers.Connect
-        (Ent, Signal_Insert_Text,
-         Entry_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
-         After       => True);
-      Preference_Handlers.Connect
-        (Ent, Signal_Delete_Text,
-         Entry_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
-         After       => True);
-      Preference_Handlers.Object_Connect
-        (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Entry'Access,
-         Ent, User_Data => (Preferences_Manager (Manager), Preference (Pref)));
-      return Gtk_Widget (Ent);
+         return Gtk.Widget.Gtk_Widget (Scrolled);
+
+      else
+         Gtk_New (Ent);
+         Set_Text (Ent, Pref.Str_Value.all);
+
+         Preference_Handlers.Connect
+           (Ent, Gtk.Editable.Signal_Insert_Text,
+            Entry_Changed'Access,
+            User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
+            After       => True);
+         Preference_Handlers.Connect
+           (Ent, Signal_Delete_Text,
+            Entry_Changed'Access,
+            User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
+            After       => True);
+         Preference_Handlers.Object_Connect
+           (Manager.Pref_Editor, Signal_Preferences_Changed,
+            Update_Entry'Access,
+            Ent,
+            User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+         return Gtk_Widget (Ent);
+      end if;
    end Edit;
 
    ----------
@@ -1479,7 +1542,7 @@ package body Default_Preferences is
         (Button, Gtk.Button.Signal_Clicked, Key_Grab'Access,
          Slot_Object => Ent);
       Preference_Handlers.Connect
-        (Ent, Signal_Insert_Text, Entry_Changed'Access,
+        (Ent, Gtk.Editable.Signal_Insert_Text, Entry_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
          After       => True);
       Preference_Handlers.Object_Connect

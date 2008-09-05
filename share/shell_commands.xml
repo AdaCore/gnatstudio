@@ -4171,7 +4171,7 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
   <shell_doc name="GPS.Preference.create">
      <param name="self">The instance of GPS.Preference</param>
      <param name="label">A string</param>
-     <param name="type">A string, one of "integer", "boolean", "string", "color", "font", "enum"</param>
+     <param name="type">A string, one of "integer", "boolean", "string", "color", "font", "enum", "multiline"</param>
      <param name="doc" default="">A string</param>
      <param name="default" default="">Depends on the type</param>
      <param name="*">Additional parameters depending on the type</param>
@@ -4183,6 +4183,7 @@ For an "integer", the default value is 0, and the two additional parameters are 
 For a "boolean", the default is True.
 
 For a "string", the default is the empty string.
+A "multiline" behaves the same as a string except it is edited on multiple lines in the Preferences dialog.
 
 For a "color", the default is "black".
 

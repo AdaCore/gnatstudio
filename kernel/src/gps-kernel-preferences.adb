@@ -193,6 +193,16 @@ package body GPS.Kernel.Preferences is
                   Doc     => Doc,
                   Default => Nth_Arg (Data, 5, ""))));
 
+            elsif Typ = "multiline" then
+               Pref := Preference (String_Preference'(Create
+                 (Manager => Kernel.Preferences,
+                  Name    => Path,
+                  Label   => Label,
+                  Page    => Dir_Name (Path),
+                  Doc     => Doc,
+                  Multi_Line => True,
+                  Default => Nth_Arg (Data, 5, ""))));
+
             elsif Typ = "color" then
                Pref := Preference (Color_Preference'(Create
                  (Manager => Kernel.Preferences,

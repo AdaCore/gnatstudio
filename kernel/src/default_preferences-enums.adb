@@ -26,10 +26,8 @@ with Glib.Object;              use Glib.Object;
 with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Default_Preferences.Enums is
-   Me : constant Trace_Handle := Create ("ENUMS");
 
    procedure Enum_Changed
      (Combo : access GObject_Record'Class;

@@ -154,7 +154,8 @@ package Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Multi_Line                : Boolean := False)
       return String_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
@@ -446,6 +447,7 @@ private
 
    type String_Preference_Record is new Preference_Record with record
       Str_Value     : GNAT.Strings.String_Access;
+      Multi_Line    : Boolean := False;
    end record;
    overriding procedure Set_Pref
      (Pref    : access String_Preference_Record;
