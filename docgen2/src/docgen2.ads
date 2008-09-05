@@ -65,12 +65,6 @@ package Docgen2 is
       --  Adding information like "subprogram called by..."
       Process_Up_To_Date_Only : Boolean := True;
       --  True if docgen should process only files having up-to-date cross refs
-      Keep_Formatting         : Boolean := True;
-      --  If true, then comments that are not inside user tags will be kept
-      --  as is in the final document (line returns are kept, as well as
-      --  leading spaces).
-      User_Tags               : User_Tags_List.Vector;
-      --  The list of user-defined tags
    end record;
 
    procedure Generate
@@ -119,5 +113,37 @@ package Docgen2 is
    --    If false, then only the project's source files are documented.
    --    Else, imported project's source files are also documented.
    --  </parameter>
+
+   type Docgen_Object is private;
+
+   procedure Generate_Custom_Docgen_File
+     (Command  : Docgen_Object;
+      Name     : String;
+      Filename : String;
+      Content  : String);
+   --  Used by docgen2.hooks for customized user-generated files.
+
+   function Get_Kernel (D : Docgen_Object) return GPS.Kernel.Kernel_Handle;
+   --  Get kernel from docgen object
+
+   function Get_Backend
+     (D : Docgen_Object) return Docgen2_Backend.Backend_Handle;
+   --  Get selected backend from docgen object
+
+   function Get_Options
+     (D : Docgen_Object) return Docgen_Options;
+   --  Get current docgen options from docgen object
+
+   function Get_Doc_Directory (Object : Docgen_Object) return String;
+   --  Return the directory in which the documentation will be generated
+
+   function Get_Current_File
+     (Object : Docgen_Object) return GNATCOLL.VFS.Virtual_File;
+   --  Return the file currently analysed
+
+private
+
+   type Docgen_Command;
+   type Docgen_Object is access all Docgen_Command'Class;
 
 end Docgen2;

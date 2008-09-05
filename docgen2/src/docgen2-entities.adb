@@ -30,10 +30,15 @@ with String_Utils;              use String_Utils;
 
 package body Docgen2.Entities is
 
+   procedure Free (List : in out Cross_Ref_List.Vector);
+   --  Free memory used by the List
+
    procedure Xref_Free (Xref : in out Cross_Ref);
    --  Free memory used by Xref
 
-   procedure EInfo_Free (EInfo : in out Entity_Info);
+   procedure EInfo_Free
+     (Loc   : File_Location;
+      EInfo : in out Entity_Info);
    --  Free memory used by Entity Info
 
    procedure Ensure_Loc_Index
@@ -59,7 +64,11 @@ package body Docgen2.Entities is
    -- Free --
    ----------
 
-   procedure EInfo_Free (EInfo : in out Entity_Info) is
+   procedure EInfo_Free
+     (Loc   : File_Location;
+      EInfo : in out Entity_Info)
+   is
+      pragma Unreferenced (Loc);
       procedure Internal is new Ada.Unchecked_Deallocation
         (Entity_Info_Record, Entity_Info);
    begin
@@ -73,14 +82,14 @@ package body Docgen2.Entities is
 
       Free (EInfo.Name);
       Free (EInfo.Printout);
-      Free (EInfo.Generic_Params);
+      EInfo.Generic_Params.Clear;
       Xref_Free (EInfo.Renamed_Entity);
       Xref_Free (EInfo.Instantiated_Entity);
       Xref_Free (EInfo.Full_Declaration);
-      Free (EInfo.Children);
-      Entity_Ref_List.Clear (EInfo.References);
-      Cross_Ref_List.Clear (EInfo.Calls);
-      Cross_Ref_List.Clear (EInfo.Called);
+      EInfo.Children.Clear;
+      EInfo.References.Clear;
+      EInfo.Calls.Clear;
+      EInfo.Called.Clear;
 
       case EInfo.Category is
          when Cat_Class =>
@@ -237,20 +246,22 @@ package body Docgen2.Entities is
          List.Update_Element (J, Xref_Free'Access);
       end loop;
 
-      Cross_Ref_List.Clear (List);
+      List.Clear;
    end Free;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (List : in out Entity_Info_List.Vector) is
+   procedure Free (List : in out Entity_Info_Map.Map) is
+      Cursor : Entity_Info_Map.Cursor := List.First;
    begin
-      for J in List.First_Index .. List.Last_Index loop
-         List.Update_Element (J, EInfo_Free'Access);
+      while Entity_Info_Map.Has_Element (Cursor) loop
+         List.Update_Element (Cursor, EInfo_Free'Access);
+         Entity_Info_Map.Next (Cursor);
       end loop;
 
-      Entity_Info_List.Clear (List);
+      List.Clear;
    end Free;
 
    ---------------

@@ -22,9 +22,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;                use GNAT.Regpat;
 
 with Docgen2_Backend;            use Docgen2_Backend;
-with Docgen2.Hooks;              use Docgen2.Hooks;
+with Docgen2.Scripts;            use Docgen2.Scripts;
 with Docgen2.Utils;              use Docgen2.Utils;
-with GPS.Kernel;                 use GPS.Kernel;
 with String_Utils;               use String_Utils;
 
 package body Docgen2.Tags is
@@ -34,21 +33,11 @@ package body Docgen2.Tags is
    XML_Regpat : constant Pattern_Matcher :=
                   Compile (" *<([/]?) *([^ </>]+) *([^<>]*)>", Single_Line);
 
-   function Is_Tag
-     (S       : Unbounded_String;
-      Options : Docgen_Options) return Boolean;
-   --  Return true if S is a user-defined tag
-
-   function Deep_Copy (Comment : Comment_Type) return Comment_Type;
-   --  Performs a deep copy of comment
-
    function To_Unbounded_String
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Backend         : access Backend_Record'Class;
-      Entity_Name     : String;
-      Href            : String;
-      N               : Node_Ptr;
-      Keep_Formatting : Boolean) return Unbounded_String;
+     (Docgen      : Docgen_Object;
+      N           : Node_Ptr;
+      Entity_Name : String;
+      Href        : String) return Unbounded_String;
 
    function Strip_Blanks
      (S : Unbounded_String;
@@ -59,25 +48,8 @@ package body Docgen2.Tags is
       N    : in out Node_Ptr;
       Opts : Docgen_Options);
 
-   ------------
-   -- Is_Tag --
-   ------------
-
-   function Is_Tag
-     (S       : Unbounded_String;
-      Options : Docgen_Options) return Boolean
-   is
-   begin
-      for J in
-        Options.User_Tags.First_Index .. Options.User_Tags.Last_Index
-      loop
-         if S = Options.User_Tags.Element (J) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
-   end Is_Tag;
+   procedure Free_Node (N : in out Node_Ptr);
+   --  Free a xml node tree
 
    ------------------
    -- Strip_Blanks --
@@ -103,22 +75,26 @@ package body Docgen2.Tags is
       loop
          Nxt := Line_End (Str, Idx);
 
-         if Is_Blank_Line (Str (Idx .. Nxt), Idx) then
+         if not Keep_Formatting
+           and then Is_Blank_Line (Str (Idx .. Nxt), Idx)
+         then
             Res := Res & ASCII.LF;
+
          else
             if not Keep_Formatting then
                Skip_Blanks (Str, Idx);
             end if;
 
             Res := Res & Str (Idx .. Nxt);
-
-            if not Is_Blank (Str (Nxt)) then
-               Res := Res & ' ';
-            end if;
          end if;
 
          if Keep_Formatting then
             Res := Res & ASCII.LF;
+
+         elsif not Is_Blank (Str (Nxt))
+           and then Next_Line (Str, Idx) /= Str'Last
+         then
+            Res := Res & ' ';
          end if;
 
          Idx := Next_Line (Str, Idx);
@@ -133,15 +109,14 @@ package body Docgen2.Tags is
    -------------------------
 
    function To_Unbounded_String
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Backend         : access Backend_Record'Class;
-      Entity_Name     : String;
-      Href            : String;
-      N               : Node_Ptr;
-      Keep_Formatting : Boolean) return Unbounded_String
+     (Docgen      : Docgen_Object;
+      N           : Node_Ptr;
+      Entity_Name : String;
+      Href        : String) return Unbounded_String
    is
-      Str   : Ada.Strings.Unbounded.Unbounded_String;
-      Node  : Node_Ptr := N;
+      Str     : Ada.Strings.Unbounded.Unbounded_String;
+      Node    : Node_Ptr := N;
+      Backend : Docgen2_Backend.Backend_Handle renames Get_Backend (Docgen);
 
    begin
       if Node = null then
@@ -161,47 +136,56 @@ package body Docgen2.Tags is
                              Backend.Filter
                                (Strip_Blanks
                                   (Node.Value,
-                                   Keep_Formatting
-                                   and then Node.Tag = Null_Unbounded_String));
+                                   Node.Tag = Null_Unbounded_String));
             Val_U_Str    : Unbounded_String;
             Children_Str : constant Unbounded_String :=
                              To_Unbounded_String
-                               (Kernel, Backend, Entity_Name, Href,
-                                Node.Children, Keep_Formatting);
+                               (Docgen, Node.Children, Entity_Name, Href);
             Idx          : Natural;
             Nxt          : Natural;
          begin
 
             if Node.Tag /= Null_Unbounded_String then
+               if Next_Line (Val_Str, Val_Str'First) < Val_Str'Last then
+                  Idx := Val_Str'First;
+                  Val_U_Str := Null_Unbounded_String;
+
+                  while Idx < Val_Str'Last loop
+                     Nxt := Line_End (Val_Str, Idx);
+                     Append
+                       (Val_U_Str,
+                        Backend.Gen_Paragraph (Val_Str (Idx .. Nxt)));
+                     Idx := Next_Line (Val_Str, Idx);
+                  end loop;
+
+               else
+                  Val_U_Str := To_Unbounded_String (Val_Str);
+               end if;
+
                declare
                   Res : constant String :=
-                          User_Tag_Action
-                            (Kernel,
+                          On_Custom_Tag
+                            (Docgen,
                              To_String (Node.Tag),
                              To_String (Node.Attributes),
-                             Val_Str,
+                             To_String (Val_U_Str),
                              Entity_Name,
                              Href);
                begin
-                  if Res'Length = 0 then
-                     Idx := Val_Str'First;
-                     Val_U_Str := Null_Unbounded_String;
-                     while Idx < Val_Str'Last loop
-                        Nxt := Line_End (Val_Str, Idx);
-                        Append
-                          (Val_U_Str,
-                           Backend.Gen_Paragraph (Val_Str (Idx .. Nxt)));
-                        Idx := Next_Line (Val_Str, Idx);
-                     end loop;
-
+                  if Res'Length > 0 then
+                     --  The way for a script not to print anything is to
+                     --  return a single space character. In this case, do
+                     --  not append it to the result.
+                     if Res'Length > 1 or else Res /= " " then
+                        Append (Str, Res);
+                     end if;
+                  else
                      Append
                        (Str,
                         Backend.Gen_User_Tag
                           (To_String (Node.Tag),
                            To_String (Node.Attributes),
                            To_String (Val_U_Str)));
-                  else
-                     Append (Str, Res);
                   end if;
                end;
             end if;
@@ -232,21 +216,9 @@ package body Docgen2.Tags is
    -- To_String --
    ---------------
 
-   function To_String
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Backend         : access Backend_Record'Class;
-      Comment         : access Comment_Type;
-      Entity_Name     : String;
-      Href            : String;
-      Keep_Formatting : Boolean) return String
+   function To_String (Comment : Comment_Type) return String
    is
    begin
-      if not Comment.Analysed then
-         Comment.Block := To_Unbounded_String
-           (Kernel, Backend, Entity_Name, Href, Comment.N, Keep_Formatting);
-         Comment.Analysed := True;
-      end if;
-
       return To_String (Comment.Block);
    end To_String;
 
@@ -290,7 +262,7 @@ package body Docgen2.Tags is
       end if;
 
       --  If we found an unexpected xml tag, then treat it like raw text
-      if not Is_Tag (Tag, Opts)
+      if not Is_Custom_Tag (To_String (Tag))
         or else (Closing_Tag and then Tag /= N.Tag)
       then
          N.Value := N.Value & S (Matches (0).First .. Matches (0).Last);
@@ -375,7 +347,6 @@ package body Docgen2.Tags is
            (Block      => To_Unbounded_String (Comment),
             Sloc_Start => Sloc_Start,
             Sloc_Stop  => Sloc_Stop,
-            N          => null,
             Analysed   => False);
          List.Append (Elem);
       end if;
@@ -385,108 +356,75 @@ package body Docgen2.Tags is
    -- Analyse_Comments --
    ----------------------
 
-   procedure Analyse_Comments
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Options : Docgen_Options;
-      File    : Source_File;
-      List    : in out Comments_List.Vector)
+   procedure Analyse_Comment
+     (Comment     : in out Comment_Type;
+      Docgen      : Docgen_Object;
+      File        : Source_File;
+      Entity_Name : String;
+      Href        : String)
    is
-      Elem   : Comment_Access;
-
+      N : Node_Ptr;
    begin
-      if List.Is_Empty then
+      if Comment.Analysed then
          return;
       end if;
 
-      for Index in List.First_Index .. List.Last_Index loop
-         Elem := List.Element (Index);
-         Elem.N := new Node'
-           (Tag        => Null_Unbounded_String,
-            Value      => Null_Unbounded_String,
-            Attributes => Null_Unbounded_String,
-            Next       => null,
-            Children   => null,
-            Parent     => null);
-         Parse_Buffer
-           (To_String (Elem.Block),
-            Elem.N,
-            Options);
+      N := new Node'
+        (Tag        => Null_Unbounded_String,
+         Value      => Null_Unbounded_String,
+         Attributes => Null_Unbounded_String,
+         Next       => null,
+         Children   => null,
+         Parent     => null);
 
-         while Elem.N.Parent /= null loop
-            Warning
-              (Kernel, File, Elem.Sloc_Stop,
-               "Tag " & To_String (Elem.N.Tag) &
-               " is not closed");
-            Elem.N := Elem.N.Parent;
-         end loop;
+      --  Translate the block into an xml tree
+      Parse_Buffer (To_String (Comment.Block), N, Get_Options (Docgen));
+
+      while N.Parent /= null loop
+         Warning
+           (Get_Kernel (Docgen), File, Comment.Sloc_Stop,
+            "Tag " & To_String (N.Tag) &
+            " is not closed");
+         N := N.Parent;
       end loop;
-   end Analyse_Comments;
+
+      --  And translate the xml tree back to a block, using appropriate
+      --  user tag transformations
+      Comment.Block := To_Unbounded_String
+        (Docgen, N, Entity_Name, Href);
+      Free_Node (N);
+      --  Set comment.analyzed so that this transformation is not done twice.
+      Comment.Analysed := True;
+   end Analyse_Comment;
 
    ---------------
-   -- Deep_Copy --
+   -- Free_Node --
    ---------------
 
-   function Deep_Copy (Comment : Comment_Type) return Comment_Type
-   is
-      Ret : Comment_Type := Comment;
-      function Deep_Copy (N : Node_Ptr) return Node_Ptr;
-
-      function Deep_Copy (N : Node_Ptr) return Node_Ptr is
-         Ret    : Node_Ptr;
-         Dest   : Node_Ptr;
-         Source : Node_Ptr;
-      begin
-         if N = null then
-            return null;
-         end if;
-
-         Ret := new Node'(N.all);
-         Dest := Ret;
-         Dest.Children := Deep_Copy (N.Children);
-
-         Source := N.Next;
-
-         while Source /= null loop
-            Dest.Next := new Node'(Source.all);
-            Dest := Dest.Next;
-            Dest.Children := Deep_Copy (Source.Children);
-
-            Source := Source.Next;
-         end loop;
-
-         return Ret;
-      end Deep_Copy;
+   procedure Free_Node (N : in out Node_Ptr) is
+      procedure Internal is new Ada.Unchecked_Deallocation (Node, Node_Ptr);
+      Child : Node_Ptr;
+      Next  : Node_Ptr;
    begin
-      Ret.N := Deep_Copy (Comment.N);
-      return Ret;
-   end Deep_Copy;
+      Child := N.Children;
+
+      while Child /= null loop
+         Next := Child.Next;
+         Free_Node (Child);
+         Child := Next;
+      end loop;
+
+      Internal (N);
+      N := null;
+   end Free_Node;
 
    ----------
    -- Free --
    ----------
 
    procedure Free (Comment : in out Comment_Type) is
-      procedure Free_Node (N : in out Node_Ptr);
-      --  Free a xml node tree
-
-      procedure Free_Node (N : in out Node_Ptr) is
-         procedure Internal is new Ada.Unchecked_Deallocation (Node, Node_Ptr);
-         Child : Node_Ptr;
-         Next  : Node_Ptr;
-      begin
-         Child := N.Children;
-
-         while Child /= null loop
-            Next := Child.Next;
-            Free_Node (Child);
-            Child := Next;
-         end loop;
-
-         Internal (N);
-      end Free_Node;
-
    begin
-      Free_Node (Comment.N);
+      Comment.Block := Null_Unbounded_String;
    end Free;
 
    ----------
@@ -517,31 +455,25 @@ package body Docgen2.Tags is
       Comments   : Comments_List.Vector;
       File_Doc   : Boolean := False) return Comment_Type
    is
-      Index : Natural;
    begin
-
-      Index := Comments.First_Index;
-
-      while Index <= Comments.Last_Index loop
+      for J in Comments.First_Index .. Comments.Last_Index loop
          if File_Doc
-           and then Comments.Element (Index).Sloc_Start.Line > Sloc_Start.Line
+           and then Comments.Element (J).Sloc_Start.Line < Sloc_Start.Line
+           and then
+             (J = Comments.Last_Index
+              or else Comments.Element (J + 1).Sloc_Start.Line >
+                Sloc_Start.Line)
          then
-            if Index > Comments.First_Index then
-               return Deep_Copy (Comments.Element (Index - 1).all);
-            else
-               return No_Comment;
-            end if;
+            return Comments.Element (J).all;
 
-         elsif Sloc_Start.Line - 1 = Comments.Element (Index).Sloc_Stop.Line
-           or else Sloc_End.Line + 1 = Comments.Element (Index).Sloc_Start.Line
+         elsif Sloc_Start.Line - 1 = Comments.Element (J).Sloc_Stop.Line
+           or else Sloc_End.Line + 1 = Comments.Element (J).Sloc_Start.Line
          then
             --  ??? Should not return twice a comment. Mark it as used ?
-            return Deep_Copy (Comments.Element (Index).all);
+            return Comments.Element (J).all;
          end if;
 
-         exit when Comments.Element (Index).Sloc_Start > Sloc_End;
-
-         Index := Index + 1;
+         exit when Comments.Element (J).Sloc_Start > Sloc_End;
       end loop;
 
       return No_Comment;

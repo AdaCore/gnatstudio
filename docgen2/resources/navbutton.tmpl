@@ -1,0 +1,10 @@
+@@SET@@ BUTTONWHEREAMI = $1
+@@SET@@ BUTTONWHOAMI = $2
+@@SET@@ BUTTONHREF = $3
+@@SET@@ BUTTONNAME = $4
+    @@IF@@ @_BUTTONWHEREAMI_@ /= @_BUTTONWHOAMI_@
+    <a href='@_BUTTONHREF_@'><div class="button2">@_BUTTONNAME_@</div></a>
+    @@ELSE@@
+    <i><div class="button2">@_BUTTONNAME_@</div></i>
+    @@END_IF@@
+

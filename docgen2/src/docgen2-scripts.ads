@@ -19,26 +19,30 @@
 
 with GPS.Kernel;
 
-package Docgen2.Hooks is
+package Docgen2.Scripts is
 
-   procedure Register_Hook
+   procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Need to be called at GPS startup: this registers the user_tag_hook
+   --  Register script commands and hooks
 
-   procedure Documentation_Generation_Start_Hook
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Doc_Path : String);
-   --  Notification for documentation generation start.
+   function Is_Custom_Tag (Tag : String) return Boolean;
+   --  Tell if Tag is a user-defined custom tag
 
-   procedure Documentation_Generation_Finish_Hook
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Doc_Path : String);
-   --  Notification for documentation generation start.
+   procedure On_Documentation_Start
+     (Object : Docgen_Object);
+   --  Notifies the custom tag handlers that documentation generation starts
 
-   function User_Tag_Action
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tag, Attrs, Value : String;
-      Entity_Name, Href : String) return String;
-   --  Execute the Docgen_User_Tag_Action hook and return the result
+   procedure On_Documentation_Finished
+     (Object : Docgen_Object);
+   --  Notifies the custom tag handlers that documentation generation finishes
 
-end Docgen2.Hooks;
+   function On_Custom_Tag
+     (Object      : Docgen_Object;
+      Tag         : String;
+      Attrs       : String;
+      Value       : String;
+      Entity_Name : String;
+      Entity_Href : String) return String;
+   --  Filters a custom tag using the user-defined handler.
+
+end Docgen2.Scripts;

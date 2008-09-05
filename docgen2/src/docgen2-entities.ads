@@ -101,10 +101,6 @@ package Docgen2.Entities is
    package Files_Vector_Sort is new Files_List.Generic_Sorting
      ("<" => Less_Than);
 
-   procedure Free (List : in out Cross_Ref_List.Vector);
-   procedure Free (List : in out Entity_Info_List.Vector);
-   --  Free memory used by List
-
    type Entity_Info_Record (Category : Entity_Info_Category := Cat_Unknown)
       is record
          Lang_Category        : Language_Category;
@@ -215,6 +211,9 @@ package Docgen2.Entities is
    package Entity_Info_Map is new Ada.Containers.Indefinite_Hashed_Maps
      (File_Location, Entity_Info, Hash, Equivalent_Keys);
    --  A hashed set of nodes, identified by their 'loc' attribute
+
+   procedure Free (List : in out Entity_Info_Map.Map);
+   --  Free memory used by List
 
    function To_Category (Category : Language_Category)
                          return Entity_Info_Category;

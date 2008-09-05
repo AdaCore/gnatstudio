@@ -21,10 +21,7 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with Entities;               use Entities;
-with GPS.Kernel;
 with Language;               use Language;
-
-with Docgen2_Backend;
 
 package Docgen2.Tags is
 
@@ -45,11 +42,12 @@ package Docgen2.Tags is
       List       : in out Comments_List.Vector);
    --  Add a new comment line in the comments_list
 
-   procedure Analyse_Comments
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Options : Docgen_Options;
-      File    : Source_File;
-      List    : in out Comments_List.Vector);
+   procedure Analyse_Comment
+     (Comment     : in out Comment_Type;
+      Docgen      : Docgen_Object;
+      File        : Source_File;
+      Entity_Name : String;
+      Href        : String);
    --  Parse the comments list for user tags.
 
    procedure Free (List : in out Comments_List.Vector);
@@ -73,13 +71,7 @@ package Docgen2.Tags is
    --  the list can be freed while the returned values remain OK. This should
    --  then be freed manually.
 
-   function To_String
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Backend         : access Docgen2_Backend.Backend_Record'Class;
-      Comment         : access Comment_Type;
-      Entity_Name     : String;
-      Href            : String;
-      Keep_Formatting : Boolean) return String;
+   function To_String (Comment : Comment_Type) return String;
    --  Return a formatted string representing Comment.
 
    function Ignore
@@ -102,7 +94,6 @@ private
    end record;
 
    type Comment_Type is record
-      N          : Node_Ptr;
       Block      : Ada.Strings.Unbounded.Unbounded_String;
       Sloc_Start : Source_Location;
       Sloc_Stop  : Source_Location;
@@ -110,8 +101,7 @@ private
    end record;
 
    No_Comment : constant Comment_Type :=
-                  (N          => null,
-                   Block      => Ada.Strings.Unbounded.Null_Unbounded_String,
+                  (Block      => Ada.Strings.Unbounded.Null_Unbounded_String,
                    Sloc_Start => (Line => 0, Column => 0, Index => 0),
                    Sloc_Stop  => (Line => 0, Column => 0, Index => 0),
                    Analysed   => False);

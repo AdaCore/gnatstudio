@@ -1,14 +1,11 @@
 @@SET@@ WHEREAMI = $1
   <div id='header'>
     <h2 class="button">Documentation</h2>
-    @@IF@@ @_WHEREAMI_@ /= "INDEX"
-    <a href='index.html'><div class="button2">Table of Contents</div></a>
-    @@ELSE@@
-    <i><div class="button2">Table of Contents</div></i>
-    @@END_IF@@
-    @@IF@@ @_WHEREAMI_@ /= "CLASS_TREE"
-    <a href='tree.html'><div class="button2">Class Inheritance Trees</div></a>
-    @@ELSE@@
-    <i><div class="button2">Class Inheritance Trees</div></i>
+    @@INCLUDE@@ navbutton.tmpl @_WHEREAMI_@ "INDEX" "index.html" "Table of Contents"
+    @@INCLUDE@@ navbutton.tmpl @_WHEREAMI_@ "CLASS_TREE" "tree.html" "Class Inheritance Tree"
+    @@IF@@ @_EXIST:USER_DEFINED_FILES_@
+    @@TABLE@@
+      @@INCLUDE@@ navbutton.tmpl "@_WHEREAMI_@" "@_USER_DEFINED_FILES_@" "@_USER_DEFINED_FILES_@" "@_USER_DEFINED_NAMES_@"
+    @@END_TABLE@@
     @@END_IF@@
   </div>

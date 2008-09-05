@@ -504,36 +504,6 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
     <description>Hook called when the last file revision has been parsed after the corresponding VCS action.</description>
   </shell_doc>
 
-  <shell_doc name="@hook@ docgen_start_hook">
-     <param name="hook">A string, the name of the hook</param>
-     <param name="path">A string, the documentation path</param>
-     <description>Hook called when the documentation generation process is starting.</description>
-  </shell_doc>
-
-  <shell_doc name="@hook@ docgen_finished_hook">
-     <param name="hook">A string, the name of the hook</param>
-     <param name="path">A string, the documentation path</param>
-     <description>Hook called when the documentation generation process is finishing.</description>
-  </shell_doc>
-
-  <shell_doc name="@hook@ docgen_user_tag_action_hook">
-     <param name="hook">A string, the name of the hook</param>
-     <param name="tag">A string, the user tag</param>
-     <param name="attributes">A string, the attributes of the xml tag, in the form "attrib1='a1' attrib2='a2'"</param>
-     <param name="value">A string, the value of the tag</param>
-     <param name="entityname">A string, the entity name corresponding to this user tag</param>
-     <param name="href">A string, a href to the entity corresponding to this user tag</param>
-     <return>A string</return>
-     <description>Action hook called when a user tag is found while generating the documentation. If a hook handler returns a non-empty string, then this string will be used in the final document. Else, &lt;span class="_tag_" _attributess_&gt;_value_&lt;/span&gt; will be used.</description>
-     <example lang="python">
-         def c_version_tag_handler (hook, tag, attributes, value):
-            if tag == "c_version":
-               return "<p>C version of the file is "+value+"</p>"
-            return ""
-         GPS.Hook ("docgen_user_tag_action_hook").add (c_version_tag_handler)
-     </example>
-  </shell_doc>
-
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->
@@ -3427,6 +3397,105 @@ The action takes a single argument, which is the instance of GPS.Timeout that ca
   <shell_doc name="GPS.Timeout.remove">
       <param name="self">The Timeout to remove</param>
       <description>Unregister a timeout</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Docgen classes
+    ###################################################################-->
+
+  <shell_doc name="GPS.Docgen">
+     <description>Interface for handling customized documentation generation. This class is used in conjunction with GPS.DocgenTagHandler. You cannot create directly this class, but use the ones furnished in GPS.DocgenTagHandler callbacks.</description>
+     <see_also name="GPS.DocgenTagHandler" />
+  </shell_doc>
+  <shell_doc name="GPS.Docgen.register_tag_handler">
+     <param name="handler">The handler to register</param>
+     <description>Registers a new tag handler. This handler will be used each time a new documentation is generated and the corresponding tag is found</description>
+     <example lang="python"># register a default handler for tag &lt;description&gt;
+# that is, -- &lt;description&gt;sth&lt;/description&gt;
+# will be translated as &lt;div class="description"&gt;sth&lt;/div&gt;
+GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("description"))</example>
+  </shell_doc>
+  <shell_doc name="GPS.Docgen.generate_index_file">
+     <param name="self">The Docgen instance as passed in the GPS.DocgenTagHandler callbacks</param>
+     <param name="name">The name of the new index file.</param>
+     <param name="filename">The created file name.</param>
+     <param name="content">The content of the created file.</param>
+     <description>Create a new Index file. The file 'filename' will be titled 'name', and will contain the general decoration along with 'content'.
+     All other generated documentation file will have a link to it for convenience.</description>
+  </shell_doc>
+  <shell_doc name="GPS.Docgen.get_current_file">
+     <param name="self">The Docgen instance as passed in the GPS.DocgenTagHandler callbacks</param>
+     <return>A GPS.File instance</return>
+     <description>Retrieves the current analysed source file. You should call this method only from a GPS.DocgenTagHandler.on_match() callback.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.DocgenTagHandler">
+     <description>This class is used to handle user-defined documentation tags. This allows custom handling of comments such as : -- &lt;summary&gt;This fn does something&lt;/summary&gt;</description>
+     <example lang="python">import GPS
+
+class ScreenshotTagHandler (GPS.DocgenTagHandler):
+   """Handling for &lt;screenshot&gt;screen.jpg&lt;/screenshot&gt;"""
+   def __init__ (self):
+      GPS.DocgenTagHandler.__init__ (
+        self, "screenshot",
+        on_match = self.on_match, on_start=self.on_start, on_exit=self.on_exit)
+
+   def on_start (self, docgen):
+      self.list = {}
+
+   def on_match (self, docgen, attrs, value, entity_name, entity_href):
+      # In this examples, images are in the directory _project_root_/doc/imgs/
+      dir = docgen.get_current_file().project().file().directory()+"doc/imgs/"
+      img = """&lt;img src="%s%s" alt="%s"/&gt;""" % (dir, value, value)
+      self.list[entity_name] = [entity_href, img]
+      return """&lt;h3&gt;Screenshot&lt;/h3&gt;&lt;p&gt;%s&lt;/p&gt;""" % (img)
+
+   def on_exit (self, docgen):
+      content=""
+
+      for pict in sorted(self.list.keys()):
+         content += """&lt;div class='subprograms'&gt;"""
+         content += """  &lt;div class='class'&gt;"""
+         content += """    &lt;h3&gt;%s&lt;/h3&gt;""" % (pict)
+         content += """    &lt;div class='comment'&gt;"""
+         content += """      &lt;a href="%s"&gt;%s&lt;/a&gt;""" % (self.list[pict][0], self.list[pict][1])
+         content += """    &lt;/div&gt;"""
+         content += """  &lt;/div&gt;"""
+         content += """&lt;/div&gt;"""
+
+      if content != "":
+         docgen.generate_index_file ("Screenshots", "screenshots.html", content);
+
+def on_gps_start (hook):
+   GPS.Docgen.register_tag_handler (ScreenshotTagHandler ())
+
+GPS.Hook ("gps_started").add (on_gps_start)
+     </example>
+     <see_also name="GPS.Docgen" />
+  </shell_doc>
+
+  <shell_doc name="GPS.DocgenTagHandler.__init__">
+     <param name="self">The instance of GPS.DocgenTagHandler</param>
+     <param name="tag">The tag that is handled</param>
+     <param name="on_start" default="None">A subprogram</param>
+     <param name="on_match" default="None">A subprogram</param>
+     <param name="on_exit" default="None">A subprogram</param>
+     <description>Create a new GPS.DocgenTagHandler instance handling the tag &quot;tag&quot;. You need to register it afterwards using GPS.Docgen.register_tag_handler.
+
+&quot;on_match&quot; is a callback that is called each time a tag corresponding to the GPS.DocgenTagHandler is analysed. It takes the following parameters:
+  $1 = the instance of GPS.Docgen.
+  $2 = the eventual attributes of the tag.
+  $3 = the value of the tag.
+  $4 = the entity name linked to the analysed tag.
+  $5 = the href to the entity documentation location.
+
+&quot;on_start&quot; is a callback that is called each time a documentation generation starts. It takes the following parameters:
+  $1 = the instance of GPS.Docgen.
+
+&quot;on_exit&quot; is a callback that is called each time a documentation generation finishes. It takes the following parameters:
+  $1 = the instance of GPS.Docgen.
+
+Using the default values of the callbacks (e.g. None), the GPS.DocgenTagHandler handler will translate comments of the form "-- &lt;tag&gt;value&lt;/tag&gt;" by "&lt;div class="tag"&gt;value&lt;/div&gt;".</description>
   </shell_doc>
 
   <!--#################################################################

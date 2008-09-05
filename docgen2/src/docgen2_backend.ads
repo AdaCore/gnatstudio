@@ -32,9 +32,9 @@ package Docgen2_Backend is
       Tmpl_Class_Tree_Elem,
       --  Class Tree Element
       Tmpl_Index,
-      --  Entities Index
-      Tmpl_TOC,
-      --  Table of Content: files and packages list
+      --  packages, source files and entities Index
+      Tmpl_User_Defined_File,
+      --  user defined doc file
       Tmpl_Src,
       --  Source code
       Tmpl_Src_Index

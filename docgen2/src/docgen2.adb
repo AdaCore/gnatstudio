@@ -31,6 +31,7 @@ with Commands;                  use Commands;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with File_Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -47,13 +48,12 @@ with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Templates_Parser;          use Templates_Parser;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Docgen2_Backend;           use Docgen2_Backend;
-with Docgen2.Entities;          use Docgen2.Entities;
-with Docgen2.Hooks;             use Docgen2.Hooks;
-with Docgen2.Tags;              use Docgen2.Tags;
-with Docgen2.Utils;             use Docgen2.Utils;
+with Docgen2_Backend;        use Docgen2_Backend;
+with Docgen2.Entities;       use Docgen2.Entities, Docgen2.Entities.Files_List;
+with Docgen2.Scripts;        use Docgen2.Scripts;
+with Docgen2.Tags;           use Docgen2.Tags;
+with Docgen2.Utils;          use Docgen2.Utils;
 
 package body Docgen2 is
 
@@ -92,6 +92,26 @@ package body Docgen2 is
    function Current (Context : Analysis_Context) return Context_Stack_Element;
    --  Context stack manipulation
 
+   procedure Remove_Element
+     (List   : in out Files_List.Vector;
+      Cursor : in out Files_List.Cursor);
+   --  Removes an element, and place the cursor just after the current
+   --  postition
+
+   type Custom_File_Record is record
+      Name     : Unbounded_String;
+      Filename : Unbounded_String;
+      Content  : Unbounded_String;
+   end record;
+
+   package Custom_Files_List is new Ada.Containers.Vectors
+     (Natural, Custom_File_Record);
+
+   procedure Add_Custom_Index
+     (Cmd   : Docgen_Object;
+      Trans : in out Translate_Set);
+   --  Add in the translate set links to the user defined files
+
    type Command_State is
      (Analysis_Setup,
       Analyse_Files,
@@ -104,90 +124,96 @@ package body Docgen2 is
    --  The state of the docgen command processing.
 
    type Docgen_Command is new Commands.Root_Command with record
-      State           : Command_State := Analysis_Setup;
-      Kernel          : Kernel_Handle;
-      Backend         : Docgen2_Backend.Backend_Handle;
-      Project         : Projects.Project_Type;
-      Source_Files    : File_Array_Access;
-      Annotated_Files : File_Array_Access := null;
-      Xref_List       : Cross_Ref_List.Vector;
-      EInfo_Map       : Entity_Info_Map.Map;
-      Class_List      : Cross_Ref_List.Vector;
-      Documentation   : Entity_Info_List.Vector;
-      File_Index      : Natural;
-      Src_A_Files_Idx : Natural;
-      Buffer          : GNAT.Strings.String_Access;
-      Src_Files       : Files_List.Vector;
-      Files           : Cross_Ref_List.Vector;
-      Analysis_Ctxt   : Analysis_Context;
-      Options         : Docgen_Options;
-      Cursor          : Entity_Info_List.Cursor;
-      Doc_Gen         : Boolean := False;
+      State            : Command_State := Analysis_Setup;
+      --  The current state of the analysis
+
+      Kernel           : Kernel_Handle;
+
+      Backend          : Docgen2_Backend.Backend_Handle;
+      --  The backend used to generate the documentation
+
+      Analysis_Ctxt    : Analysis_Context;
+      --  The current analysis context
+
+      Project          : Projects.Project_Type;
+      --  The project
+
+      Src_Files        : Files_List.Vector;
+      --  List of all files in the project
+
+      File_Index       : Files_List.Cursor;
+      --  Index on Src_Files
+
+      Package_List     : Entity_Info_List.Vector;
+      --  List of all files actually used
+
+      Cursor           : Entity_Info_List.Cursor;
+      --  Index on Package_List
+
+      EInfos           : Entity_Info_Map.Map;
+      --  List of all entities described in this documentation
+
+      Xref_List        : Cross_Ref_List.Vector;
+      --  All cross-ref used in this documentation.
+
+      Class_List       : Cross_Ref_List.Vector;
+      --  All tagged types found
+
+      Custom_Files     : Custom_Files_List.Vector;
+      --  Files created by the user
+
+      Options          : Docgen_Options;
+      --  Docgen options from the preferences menu
+
+      Current_File     : GNATCOLL.VFS.Virtual_File;
+      --  The file currently analysed. Used for user-defined callbacks.
    end record;
    --  Command used for generating the documentation
-
-   type Docgen_Command_Access is access all Docgen_Command'Class;
 
    overriding function Name (Command : access Docgen_Command) return String;
    overriding function Progress
      (Command : access Docgen_Command) return Progress_Record;
-   overriding function Execute (Command : access Docgen_Command)
-                     return Command_Return_Type;
+   overriding function Execute
+     (Command : access Docgen_Command) return Command_Return_Type;
    --  See inherited for documentation
 
-   procedure Analyse_Construct
-     (Context     : in out Analysis_Context;
-      Options     : Docgen_Options;
-      Db          : Entities_Database;
-      EInfo_Map   : in out Entity_Info_Map.Map;
-      Xref_List   : in out Cross_Ref_List.Vector;
-      Class_List  : in out Cross_Ref_List.Vector);
+   procedure Analyse_Construct (Cmd : Docgen_Object);
+   --  Analyse the construct pointed to by the current Context
 
-   procedure Generate_Support_Files
-     (Kernel : access Kernel_Handle_Record'Class;
-      Backend : Backend_Handle);
+   procedure Generate_Support_Files (Cmd : Docgen_Object);
    --  Generate support files in destination directory
 
-   procedure Generate_Xrefs
-     (XRef_List : in out Cross_Ref_List.Vector;
-      EInfo_Map : Entity_Info_Map.Map);
+   procedure Generate_Comments (Cmd : Docgen_Object);
+   --  Generate structured comments from the raw data
+
+   procedure Generate_Xrefs (Cmd : Docgen_Object);
    --  Generate all missing links in Xref_List
 
-   procedure Generate_Trees
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Class_List : in out Cross_Ref_List.Vector;
-      EInfo_Map  : Entity_Info_Map.Map);
+   procedure Generate_Trees (Cmd : Docgen_Object);
    --  Generate the global inheritance trees
 
-   procedure Generate_Global_Index
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backend   : Backend_Handle;
-      Files     : Cross_Ref_List.Vector;
-      EInfo_Map : Entity_Info_Map.Map;
-      Src_Files : Files_List.Vector);
+   procedure Generate_Global_Index (Cmd : Docgen_Object);
    --  Generate the global index
 
+   procedure Generate_User_Indexes (Command : Docgen_Object);
+   --  Generate the user-defined indexes
+
    procedure Generate_Annotated_Source
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Backend : Backend_Handle;
-      File    : Source_File;
-      Buffer  : GNAT.Strings.String_Access;
-      Lang    : Language_Access;
-      Db      : Entities_Database;
-      Xrefs   : Entity_Info_Map.Map);
+     (Command     : Docgen_Object;
+      File        : Source_File;
+      Buffer      : GNAT.Strings.String_Access;
+      Buffer_Last : Natural;
+      Lang        : Language_Access;
+      Db          : Entities_Database;
+      Xrefs       : Entity_Info_Map.Map);
    --  Generate hrefs and pretty print on a source file.
 
    procedure Generate_Doc
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backend   : Backend_Handle;
-      Options   : Docgen_Options;
+     (Command   : Docgen_Object;
       Xrefs     : Entity_Info_Map.Map;
       Lang      : Language_Access;
       Db        : Entities_Database;
       File      : Source_File;
-      Files     : in out Cross_Ref_List.Vector;
-      Prj_Files : File_Array;
       E_Info    : Entity_Info);
    --  Generate the final documentation for the specified Entity_Info.
    --  E_Info's category must be Cat_File
@@ -210,15 +236,8 @@ package body Docgen2 is
    function Location_Image (Loc : File_Location) return String;
    --  Return the location formated the gnat way: "file:line:col"
 
-   function Get_Doc_Directory
-     (Kernel : not null access Kernel_Handle_Record'Class) return String;
-   --  Return the directory in which the documentation will be generated
-
    procedure Get_All_Comments
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Options  : Docgen_Options;
-      File     : Source_File;
-      Lang     : Language_Access;
+     (Lang     : Language_Access;
       Buffer   : String;
       Comments : out Comments_List.Vector);
    --  Retrieve all comment blocks from a file
@@ -427,21 +446,17 @@ package body Docgen2 is
    -- Analyse_Construct --
    -----------------------
 
-   procedure Analyse_Construct
-     (Context     : in out Analysis_Context;
-      Options     : Docgen_Options;
-      Db          : Entities_Database;
-      EInfo_Map   : in out Entity_Info_Map.Map;
-      Xref_List   : in out Cross_Ref_List.Vector;
-      Class_List  : in out Cross_Ref_List.Vector)
+   procedure Analyse_Construct (Cmd : Docgen_Object)
    is
-      Construct   : access Simple_Construct_Information;
-      Entity      : Entity_Information := null;
-      E_Info      : Entity_Info;
-      Entity_Kind : E_Kind;
-      Lang        : constant Language_Access :=
-                      Get_Language_From_File
-                        (Context.Language, Get_Filename (Context.File));
+      Db            : constant Entities_Database := Get_Database (Cmd.Kernel);
+      Context       : Analysis_Context renames Cmd.Analysis_Ctxt;
+      Construct     : access Simple_Construct_Information;
+      Entity        : Entity_Information := null;
+      E_Info        : Entity_Info;
+      Entity_Kind   : E_Kind;
+      Lang          : constant Language_Access :=
+                        Get_Language_From_File
+                          (Context.Language, Get_Filename (Context.File));
       Body_Location : File_Location;
       Context_Elem  : constant Context_Stack_Element := Current (Context);
 
@@ -472,13 +487,13 @@ package body Docgen2 is
          end if;
 
          Xref := new Cross_Ref_Record'
-           (Name         => new String'(Name),
-            Location     => Loc,
-            Xref         => null,
-            Inherited    => False,
+           (Name          => new String'(Name),
+            Location      => Loc,
+            Xref          => null,
+            Inherited     => False,
             Overriding_Op => null);
 
-         Xref_List.Append (Xref);
+         Cmd.Xref_List.Append (Xref);
 
          return Xref;
       end Create_Xref;
@@ -529,14 +544,14 @@ package body Docgen2 is
                E_Info.Location := (File_Loc => Loc, Pkg_Nb => 1);
             end if;
 
-            EInfo_Map.Include (Loc, E_Info);
+            Cmd.EInfos.Include (Loc, E_Info);
          else
             E_Info.Location := Null_Location;
          end if;
 
          if E_Info.Category = Cat_Class then
             --  Class list is global for all tagged types. Use the full name.
-            Class_List.Append
+            Cmd.Class_List.Append
               (Create_Xref
                  (Get_Full_Name (Entity), Get_Declaration_Of (Entity)));
          end if;
@@ -563,7 +578,7 @@ package body Docgen2 is
 
       --  Ignore the private part
       if Construct.Visibility = Visibility_Private
-        and then not Options.Show_Private
+        and then not Cmd.Options.Show_Private
       then
          Pop (Context);
          return;
@@ -596,7 +611,7 @@ package body Docgen2 is
                (File   => Context.File,
                 Line   => Construct.Sloc_Entity.Line,
                 Column => Basic_Types.Visible_Column_Type
-                            (Construct.Sloc_Entity.Column)));
+                  (Construct.Sloc_Entity.Column)));
          end if;
 
          Context_Elem.Parent_Entity.Children.Append (E_Info);
@@ -609,7 +624,7 @@ package body Docgen2 is
          if Entity /= null then
             if Construct.Category = Cat_Package then
                --  Packages receive fully qualified names
-               E_Info.Name := new String'(Get_Full_Name (Entity));
+               E_Info.Name := new String'(Construct.Name.all);
             else
                E_Info.Name := new String'(Get_Name (Entity).all);
             end if;
@@ -633,20 +648,20 @@ package body Docgen2 is
                      Construct.Sloc_End,
                      Context.Comments);
          --  ??? Remove commented code
---           declare
---              Doc : constant String :=
---                      Filter_Documentation
---                        (Find_Doc
---                           (Command.Backend,
---                            Construct.Sloc_Start,
---                            Construct.Sloc_End,
---                            Context.Comments),
---                         Options);
---           begin
---              if Doc /= "" then
---                 E_Info.Description := new String'(Doc);
---              end if;
---           end;
+         --           declare
+         --              Doc : constant String :=
+         --                      Filter_Documentation
+         --                        (Find_Doc
+         --                           (Command.Backend,
+         --                            Construct.Sloc_Start,
+         --                            Construct.Sloc_End,
+         --                            Context.Comments),
+         --                         Options);
+         --           begin
+         --              if Doc /= "" then
+         --                 E_Info.Description := new String'(Doc);
+         --              end if;
+         --           end;
 
          --  Retrieve printout
 
@@ -672,7 +687,7 @@ package body Docgen2 is
             Called_E   : Entity_Information;
             Caller_E   : Entity_Information;
          begin
-            if Options.References
+            if Cmd.Options.References
               and then Construct.Category /= Cat_Package
             then
                Find_All_References (Iter, Entity);
@@ -744,11 +759,11 @@ package body Docgen2 is
 
                   --  ??? need a better handling of formal parameters types
                   Param_EInfo.Parameter_Type := new Cross_Ref_Record'
-                    (Name         => new String'
-                                    (Kind_To_String (Get_Kind (Param_Entity))),
-                     Location     => No_File_Location,
-                     Xref         => null,
-                     Inherited    => False,
+                    (Name          => new String'
+                       (Kind_To_String (Get_Kind (Param_Entity))),
+                     Location      => No_File_Location,
+                     Xref          => null,
+                     Inherited     => False,
                      Overriding_Op => null);
 
                   E_Info.Generic_Params.Append (Param_EInfo);
@@ -1058,26 +1073,28 @@ package body Docgen2 is
      (Command : access Docgen_Command) return Progress_Record
    is
       Current : Natural;
+      Total1  : constant Natural := (Natural (Command.Src_Files.Length));
+      Total2  : constant Natural := (Natural (Command.Package_List.Length));
    begin
       case Command.State is
          when Analysis_Setup =>
             Current := 0;
          when Analyse_Files | Analyse_File_Constructs =>
-            Current := Command.File_Index;
+            Current := Files_List.To_Index (Command.File_Index);
          when Analysis_Tear_Down | Gen_Doc_Setup =>
-            Current := Command.Source_Files'Last;
+            Current := Total1;
          when Gen_Doc_Annotated_Src =>
-            Current := Command.Source_Files'Last + Command.File_Index;
+            Current := Total1 + Files_List.To_Index (Command.File_Index);
          when Gen_Doc_Spec =>
-            Current := 2 * Command.Source_Files'Last +
+            Current := 2 * Total1 +
               Entity_Info_List.To_Index (Command.Cursor);
          when Gen_Doc_Tear_Down =>
-            Current := 3 * Command.Source_Files'Last;
+            Current := 2 * Total1 + Total2;
       end case;
 
       return (Activity => Running,
               Current  => Current,
-              Total    => Command.Source_Files'Length * 3);
+              Total    => 2 * Total1 + Total2);
    end Progress;
 
    ----------------------
@@ -1085,10 +1102,7 @@ package body Docgen2 is
    ----------------------
 
    procedure Get_All_Comments
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Options  : Docgen_Options;
-      File     : Source_File;
-      Lang     : Language_Access;
+     (Lang     : Language_Access;
       Buffer   : String;
       Comments : out Comments_List.Vector)
    is
@@ -1140,8 +1154,21 @@ package body Docgen2 is
 
    begin
       Parse_Entities (Lang, Buffer, CB'Unrestricted_Access);
-      Analyse_Comments (Kernel, Options, File, Comments);
    end Get_All_Comments;
+
+   --------------------
+   -- Remove_Element --
+   --------------------
+
+   procedure Remove_Element
+     (List   : in out Files_List.Vector;
+      Cursor : in out Files_List.Cursor)
+   is
+      Prev : constant Files_List.Extended_Index := To_Index (Cursor);
+   begin
+      List.Delete (Cursor);
+      Cursor := List.To_Cursor (Prev);
+   end Remove_Element;
 
    -------------
    -- Execute --
@@ -1158,6 +1185,8 @@ package body Docgen2 is
                         Get_Language_Handler (Command.Kernel);
       Lang          : Language_Access;
       File          : Source_File;
+      Striped       : Boolean;
+      pragma Unreferenced (Striped);
       use type Ada.Containers.Count_Type;
    begin
       --  Freeze the database to speed-up the processing of the cross
@@ -1168,51 +1197,49 @@ package body Docgen2 is
       case Command.State is
          when Analysis_Setup =>
             --  Let's first create the destination directory with support files
-            Generate_Support_Files (Command.Kernel, Command.Backend);
+            Generate_Support_Files (Docgen_Object (Command));
             Command.State := Analyse_Files;
-            Command.File_Index := Command.Source_Files'First - 1;
-            Documentation_Generation_Start_Hook
-              (Command.Kernel, Get_Doc_Directory (Command.Kernel));
+            Command.File_Index := Command.Src_Files.First;
+            On_Documentation_Start (Docgen_Object (Command));
 
          when Analyse_Files =>
-            if Command.File_Index = Command.Source_Files'Last then
+            --  Test if there are still files to analyse
+            if not Has_Element (Command.File_Index) then
                Command.State := Gen_Doc_Setup;
                Thaw (Database);
                return Execute_Again;
-
-            else
-               Command.File_Index := Command.File_Index + 1;
             end if;
 
-            --  Only analyze specs
-            if not Is_Spec_File (Command.Kernel,
-                                 Command.Source_Files (Command.File_Index))
-            then
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            if not Command.Source_Files
-              (Command.File_Index).Is_Regular_File
-            then
+            if not Element (Command.File_Index).Is_Regular_File then
                Insert
                  (Command.Kernel,
                   (-"warning: the file ") &
-                  Command.Source_Files (Command.File_Index).Full_Name.all &
+                  Element (Command.File_Index).Full_Name.all &
                   (-" cannot be found. It will be skipped."),
                   Mode => Info);
 
+               Remove_Element (Command.Src_Files, Command.File_Index);
                Thaw (Database);
                return Execute_Again;
             end if;
 
-            File := Get_Or_Create
-              (Database,
-               Command.Source_Files (Command.File_Index));
+            File := Get_Or_Create (Database, Element (Command.File_Index));
+
+            --  File might be null here if no LI_Handler corresponds to it.
+            if File = null then
+               Insert
+                 (Command.Kernel,
+                  (-"warning: the file ") &
+                  Element (Command.File_Index).Full_Name.all &
+                  (-" has no cross reference. It will be skipped."),
+                  Mode => Info);
+               Remove_Element (Command.Src_Files, Command.File_Index);
+               Thaw (Database);
+               return Execute_Again;
+            end if;
 
             Lang := Get_Language_From_File
-              (Lang_Handler,
-               Command.Source_Files (Command.File_Index));
+              (Lang_Handler, Element (Command.File_Index));
 
             --  ??? We won't support other parsers than Ada here, as cross
             --  references are for now only reliable with Ada. Change this
@@ -1222,29 +1249,52 @@ package body Docgen2 is
                Insert
                  (Command.Kernel,
                   -("info: Documentation not generated for ") &
-                  Base_Name (Command.Source_Files (Command.File_Index))
-                  & (-" as this is a non Ada file."),
+                  Base_Name (Element (Command.File_Index)) &
+                  (-" as this is a non Ada file."),
                   Mode => Info);
 
+               Remove_Element (Command.Src_Files, Command.File_Index);
+               Thaw (Database);
                return Execute_Again;
             end if;
 
+            --  Verify that we have the .ali file for this source file.
             if Command.Options.Process_Up_To_Date_Only
               and then not Is_Up_To_Date (File)
             then
                Insert
                  (Command.Kernel,
                   -("warning: cross references for file ") &
-                  Base_Name (Command.Source_Files (Command.File_Index))
-                  & (-" are not up-to-date. Documentation not generated."),
+                  Base_Name (Element (Command.File_Index)) &
+                  (-" are not up-to-date. Documentation not generated."),
                   Mode => Error);
+
+               Remove_Element (Command.Src_Files, Command.File_Index);
+               Thaw (Database);
+               return Execute_Again;
+            end if;
+
+            --  Only analyze specs
+            if not Is_Spec_File
+              (Command.Kernel, Element (Command.File_Index))
+            then
+               if Command.Options.Process_Body_Files then
+                  --  We'll need this file later for generating annotated
+                  --  sources
+                  Next (Command.File_Index);
+               else
+                  --  We won't need this file.
+                  Remove_Element (Command.Src_Files, Command.File_Index);
+               end if;
+
+               Thaw (Database);
                return Execute_Again;
             end if;
 
             --  Create the new entity info structure
             File_EInfo := new Entity_Info_Record (Category => Cat_File);
             File_EInfo.Name := new String'
-              (Base_Name (Command.Source_Files (Command.File_Index)));
+              (Base_Name (Element (Command.File_Index)));
             File_EInfo.Short_Name := File_EInfo.Name;
 
             Trace (Me, "Analysis of file " & File_EInfo.Name.all);
@@ -1261,8 +1311,7 @@ package body Docgen2 is
                File_EInfo.Language := Lang;
                File_EInfo.File := File;
                Ref (File_EInfo.File);
-               File_Buffer := Read_File
-                 (Command.Source_Files (Command.File_Index));
+               File_Buffer := Read_File (Element (Command.File_Index));
 
                --  Strip CRs from file.
                Strip_CR (File_Buffer.all, Last, CR_Found);
@@ -1282,41 +1331,39 @@ package body Docgen2 is
 
                   --  In case of C/C++, the LI_Handler's Parse_File_Construct
                   --  work much better than Language's Parse_Construct.
---                    if Lang.all in Cpp.Cpp_Language'Class
---                      or else Lang.all in C.C_Language'Class
---                    then
---                       declare
---                          Handler : LI_Handler;
---                       begin
---                          Handler := Get_LI_Handler_From_File
---                            (Lang_Handler,
---                             Command.Source_Files (Command.File_Index));
---
---                          if Handler /= null then
---                             Parse_File_Constructs
---                               (Handler,
---                                Lang_Handler,
---                                Command.Source_Files (Command.File_Index),
---                                Constructs);
---                          else
---                             Parse_Constructs
---                               (Language, File_Buffer.all, Constructs);
---                          end if;
---                       end;
---                    else
+                  --  if Lang.all in Cpp.Cpp_Language'Class
+                  --    or else Lang.all in C.C_Language'Class
+                  --  then
+                  --     declare
+                  --        Handler : LI_Handler;
+                  --     begin
+                  --        Handler := Get_LI_Handler_From_File
+                  --          (Lang_Handler,
+                  --           Command.Source_Files (Command.File_Index));
+                  --
+                  --        if Handler /= null then
+                  --           Parse_File_Constructs
+                  --             (Handler,
+                  --              Lang_Handler,
+                  --              Command.Source_Files (Command.File_Index),
+                  --              Constructs);
+                  --        else
+                  --           Parse_Constructs
+                  --             (Language, File_Buffer.all, Constructs);
+                  --        end if;
+                  --     end;
+                  --  else
 
                Parse_Constructs
                  (Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
---                    end if;
+               --  end if;
 
                --  And add it to the global documentation list
-               Command.Documentation.Append (File_EInfo);
+               Command.Package_List.Append (File_EInfo);
 
                Construct_T := To_Construct_Tree (Constructs'Access, True);
 
-               Get_All_Comments
-                 (Command.Kernel, Command.Options,
-                  File, Lang, File_Buffer.all, Comments);
+               Get_All_Comments (Lang, File_Buffer.all, Comments);
 
                --  Retrieve the file's main unit comments, if any
                if First (Construct_T) /= Null_Construct_Tree_Iterator then
@@ -1350,15 +1397,37 @@ package body Docgen2 is
 
          when Analyse_File_Constructs =>
             if Command.Analysis_Ctxt.Iter = Null_Construct_Tree_Iterator then
+               --  Current file is analysed. Let's see if it has a single child
+               --  e_info to move comment when appropriate
+
+               --  For this, we pop all values until getting the root context
+               while Current (Command.Analysis_Ctxt).Parent_Iter /=
+                 Null_Construct_Tree_Iterator
+               loop
+                  Pop (Command.Analysis_Ctxt);
+               end loop;
+
+               declare
+                  Ctxt_Elem  : constant Context_Stack_Element :=
+                                 Current (Command.Analysis_Ctxt);
+                  EInfo      : Entity_Info renames
+                                 Ctxt_Elem.Parent_Entity;
+               begin
+                  if EInfo.Children.Length = 1
+                    and then EInfo.Description /= No_Comment
+                    and then EInfo.Children.First_Element.Description =
+                      No_Comment
+                  then
+                     EInfo.Children.First_Element.all.Description :=
+                       EInfo.Description;
+                     EInfo.Description := No_Comment;
+                  end if;
+               end;
+
                Command.State := Analysis_Tear_Down;
             else
                --  Analysis of a new construct of the current file.
-               Analyse_Construct
-                 (Command.Analysis_Ctxt, Command.Options,
-                  Db          => Get_Database (Command.Kernel),
-                  EInfo_Map   => Command.EInfo_Map,
-                  Xref_List   => Command.Xref_List,
-                  Class_List  => Command.Class_List);
+               Analyse_Construct (Docgen_Object (Command));
             end if;
 
          when Analysis_Tear_Down =>
@@ -1366,22 +1435,82 @@ package body Docgen2 is
             Free (Command.Analysis_Ctxt.Tree);
             Free (Command.Analysis_Ctxt.File_Buffer);
             Free (Command.Analysis_Ctxt.Comments);
-            Command.State := Analyse_Files;
+
+            --  And setup for next file analysis
+            Next (Command.File_Index);
+
+            if Has_Element (Command.File_Index) then
+               Command.State := Analyse_Files;
+            else
+               Command.State := Gen_Doc_Setup;
+            end if;
 
          when Gen_Doc_Setup =>
+            --  Generate all annotated comments
+            Generate_Comments (Docgen_Object (Command));
             --  Generate all cross-refs
             Trace (Me, "Generate all Cross-Refs");
-            Generate_Xrefs (Command.Xref_List, Command.EInfo_Map);
+            Generate_Xrefs (Docgen_Object (Command));
+
+            --  We tell the user that the analysis is done
+            On_Documentation_Finished (Docgen_Object (Command));
+
             Command.State := Gen_Doc_Setup;
-            Command.File_Index := Command.Source_Files'First - 1;
+
+            if not Command.Package_List.Is_Empty then
+               Command.Cursor := Command.Package_List.First;
+            end if;
+            if not Command.Src_Files.Is_Empty then
+               Command.File_Index := Command.Src_Files.First;
+            end if;
+
             --  We need to first generate doc for annotated sources. Once we
             --  have them all, then we can generate the spec docs that
             --  reference those.
             Command.State := Gen_Doc_Annotated_Src;
 
-            if not Command.Documentation.Is_Empty then
-               Command.Cursor := Command.Documentation.First;
+         when Gen_Doc_Annotated_Src =>
+            --  Generate annotated source files
+            if not Has_Element (Command.File_Index) then
+               Command.State := Gen_Doc_Spec;
+               Thaw (Database);
+               return Execute_Again;
             end if;
+
+            File := Get_Or_Create (Database, Element (Command.File_Index));
+
+            if Active (Me) then
+               Trace
+                 (Me, "Generate annotated source for " &
+                  Base_Name (Element (Command.File_Index)));
+            end if;
+
+            declare
+               Buffer       : GNAT.Strings.String_Access;
+               Last         : Natural;
+               Lang_Handler : constant Language_Handler :=
+                                Get_Language_Handler (Command.Kernel);
+               Language     : constant Language_Access :=
+                                Get_Language_From_File
+                                  (Lang_Handler,
+                                   Element (Command.File_Index));
+            begin
+               Buffer := Read_File (Element (Command.File_Index));
+               Strip_CR (Buffer.all, Last, Striped);
+
+               Generate_Annotated_Source
+                 (Command     => Docgen_Object (Command),
+                  File        => File,
+                  Buffer      => Buffer,
+                  Buffer_Last => Last,
+                  Lang        => Language,
+                  Db          => Database,
+                  Xrefs       => Command.EInfos);
+
+               Free (Buffer);
+            end;
+
+            Next (Command.File_Index);
 
          when Gen_Doc_Spec =>
             if Entity_Info_List.Has_Element (Command.Cursor) then
@@ -1393,16 +1522,11 @@ package body Docgen2 is
                   Trace (Me, "Generate doc for " & EInfo.Name.all);
 
                   Generate_Doc
-                    (Kernel    => Command.Kernel,
-                     Backend   => Command.Backend,
-                     Options   => Command.Options,
-                     Xrefs     => Command.EInfo_Map,
+                    (Command   => Docgen_Object (Command),
+                     Xrefs     => Command.EInfos,
                      Lang      => EInfo.Language,
                      Db        => Database,
                      File      => EInfo.File,
-                     Files     => Command.Files,
-                     Prj_Files => Command.Annotated_Files
-                       (1 .. Command.Src_A_Files_Idx),
                      E_Info    => EInfo);
                   Entity_Info_List.Next (Command.Cursor);
                end;
@@ -1412,128 +1536,24 @@ package body Docgen2 is
                Command.State := Gen_Doc_Tear_Down;
             end if;
 
-         when Gen_Doc_Annotated_Src =>
-            --  Generate annotated source files
-
-            if Command.File_Index = Command.Source_Files'Last then
-               Command.State := Gen_Doc_Spec;
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            Command.File_Index := Command.File_Index + 1;
-
-            if not Command.Options.Process_Body_Files
-              and then not Is_Spec_File
-                (Command.Kernel, Command.Source_Files (Command.File_Index))
-            then
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            if not Command.Source_Files
-              (Command.File_Index).Is_Regular_File
-            then
-               Insert
-                 (Command.Kernel,
-                  (-"warning: cannot find ") &
-                  Command.Source_Files (Command.File_Index).Full_Name.all &
-                  (-(" referenced in this project. " &
-                     "Its documentation will be skipped.")),
-                  Mode => Error);
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            File := Get_Or_Create
-              (Database,
-               Command.Source_Files (Command.File_Index));
-
-            --  File might be null here if no LI_Handler corresponds to it.
-            if File = null then
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            if Command.Options.Process_Up_To_Date_Only
-              and then not Is_Up_To_Date (File)
-            then
-               Thaw (Database);
-               return Execute_Again;
-            end if;
-
-            if Command.Annotated_Files = null then
-               Command.Annotated_Files :=
-                 new File_Array (1 .. Command.Source_Files'Length);
-               Command.Src_A_Files_Idx := 0;
-            end if;
-
-            --  Add file in the list of annotated source files
-            Command.Src_A_Files_Idx := Command.Src_A_Files_Idx + 1;
-            Command.Annotated_Files (Command.Src_A_Files_Idx) :=
-              Command.Source_Files (Command.File_Index);
-
-            Command.Src_Files.Append
-              (Command.Source_Files (Command.File_Index));
-
-            if Active (Me) then
-               Trace
-                 (Me, "Generate annotated source for " &
-                  Base_Name
-                    (Command.Source_Files (Command.File_Index)));
-            end if;
-
-            Command.Buffer :=
-              Read_File (Command.Source_Files (Command.File_Index));
-
-            declare
-               Lang_Handler : constant Language_Handler :=
-                                Get_Language_Handler (Command.Kernel);
-               Language     : constant Language_Access :=
-                                Get_Language_From_File
-                                  (Lang_Handler,
-                                   Command.Source_Files (Command.File_Index));
-            begin
-               Generate_Annotated_Source
-                 (Kernel  => Command.Kernel,
-                  Backend => Command.Backend,
-                  File    => File,
-                  Buffer  => Command.Buffer,
-                  Lang    => Language,
-                  Db      => Database,
-                  Xrefs   => Command.EInfo_Map);
-            end;
-
-            Free (Command.Buffer);
-
          when Gen_Doc_Tear_Down =>
             --  No more file processing. Let's print indexes.
 
             Files_Vector_Sort.Sort (Command.Src_Files);
 
-            Documentation_Generation_Finish_Hook
-              (Command.Kernel, Get_Doc_Directory (Command.Kernel));
-
-            Generate_Trees
-              (Command.Kernel, Command.Backend,
-               Command.Class_List, Command.EInfo_Map);
-
-            Generate_Global_Index
-              (Command.Kernel, Command.Backend,
-               Command.Files, Command.EInfo_Map, Command.Src_Files);
+            Generate_User_Indexes (Docgen_Object (Command));
+            Generate_Trees (Docgen_Object (Command));
+            Generate_Global_Index (Docgen_Object (Command));
 
             Templates_Parser.Release_Cache;
-            Free (Command.Buffer);
-            Free (Command.Documentation);
-            Unchecked_Free (Command.Source_Files);
+            Free (Command.EInfos);
             --  Don't free the internal data of those lists, as they are just
             --  pointers to the Documentation structure, which has already been
-            --  freed
+            --  freed in Command.EInfos
             Command.Xref_List.Clear;
-            Command.EInfo_Map.Clear;
+            Command.Package_List.Clear;
             Command.Class_List.Clear;
             Command.Src_Files.Clear;
-            Command.Files.Clear;
 
             Thaw (Database);
             return Success;
@@ -1569,16 +1589,15 @@ package body Docgen2 is
                      Create
                        (Other_File_Base_Name (P, File), P);
 
-      C          : Docgen_Command_Access;
+      C          : Docgen_Object;
    begin
       Parse_All_LI_Information (Kernel, P, False);
 
       C := new Docgen_Command;
 
+      C.Src_Files.Append (File);
       if Is_Regular_File (Other_File) then
-         C.Source_Files := new File_Array'(1 => File, 2 => Other_File);
-      else
-         C.Source_Files := new File_Array'(1 => File);
+         C.Src_Files.Append (Other_File);
       end if;
 
       C.State              := Analysis_Setup;
@@ -1608,7 +1627,7 @@ package body Docgen2 is
       Options   : Docgen_Options;
       Recursive : Boolean := False)
    is
-      C       : Docgen_Command_Access;
+      C       : Docgen_Object;
       P       : Projects.Project_Type := Project;
       Context : Selection_Context;
    begin
@@ -1629,12 +1648,14 @@ package body Docgen2 is
                            Get_Source_Files (P, Recursive);
       begin
          C := new Docgen_Command;
+
          C.State          := Analysis_Setup;
          C.Kernel         := Kernel_Handle (Kernel);
          C.Backend        := Backend;
          C.Project        := P;
-         C.Source_Files   := Source_Files;
-         C.File_Index     := Source_Files'First - 1;
+         for J in Source_Files'Range loop
+            C.Src_Files.Append (Source_Files (J));
+         end loop;
          C.Options        := Options;
          C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
       end;
@@ -1653,13 +1674,13 @@ package body Docgen2 is
    -------------------------------
 
    procedure Generate_Annotated_Source
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Backend : Backend_Handle;
-      File    : Source_File;
-      Buffer  : GNAT.Strings.String_Access;
-      Lang    : Language_Access;
-      Db      : Entities_Database;
-      Xrefs   : Entity_Info_Map.Map)
+     (Command     : Docgen_Object;
+      File        : Source_File;
+      Buffer      : GNAT.Strings.String_Access;
+      Buffer_Last : Natural;
+      Lang        : Language_Access;
+      Db          : Entities_Database;
+      Xrefs       : Entity_Info_Map.Map)
    is
       Last_Idx     : Natural := 0;
       Printout     : Unbounded_String;
@@ -1667,8 +1688,8 @@ package body Docgen2 is
       Translation  : Translate_Set;
       Line_Nb      : Natural := 0;
       Tmpl         : constant String :=
-                       Backend.Get_Template
-                         (Get_System_Dir (Kernel), Tmpl_Src);
+                       Command.Backend.Get_Template
+                         (Get_System_Dir (Command.Kernel), Tmpl_Src);
 
       function CB
         (Entity         : Language_Entity;
@@ -1698,7 +1719,7 @@ package body Docgen2 is
          if Last_Idx /= 0 then
             Ada.Strings.Unbounded.Append
               (Printout,
-               Backend.Filter
+               Command.Backend.Filter
                  (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1)));
          end if;
 
@@ -1712,9 +1733,9 @@ package body Docgen2 is
 
             Ada.Strings.Unbounded.Append
               (Printout,
-               Backend.Gen_Tag
+               Command.Backend.Gen_Tag
                  (Entity,
-                  Backend.Filter
+                  Command.Backend.Filter
                     (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
 
          else
@@ -1727,7 +1748,8 @@ package body Docgen2 is
                begin
                   Ada.Strings.Unbounded.Append
                     (Printout,
-                     Backend.Gen_Ref (Line (Line'First + 1 .. Line'Last)));
+                     Command.Backend.Gen_Ref
+                       (Line (Line'First + 1 .. Line'Last)));
                end;
             end if;
 
@@ -1761,8 +1783,8 @@ package body Docgen2 is
                Ada.Strings.Unbounded.Append
                  (Printout,
                   Gen_Href
-                    (Backend, EInfo,
-                     Backend.Filter
+                    (Command.Backend, EInfo,
+                     Command.Backend.Filter
                        (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
 
             elsif Decl_Entity /= null
@@ -1774,9 +1796,9 @@ package body Docgen2 is
                --  the examined entity is a declaration entity
                Ada.Strings.Unbounded.Append
                  (Printout,
-                  Backend.Gen_Tag
+                  Command.Backend.Gen_Tag
                     (Identifier_Text,
-                     Backend.Filter
+                     Command.Backend.Filter
                        (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
 
             else
@@ -1784,9 +1806,9 @@ package body Docgen2 is
                --  just generate simple text
                Ada.Strings.Unbounded.Append
                  (Printout,
-                  Backend.Gen_Tag
+                  Command.Backend.Gen_Tag
                     (Normal_Text,
-                     Backend.Filter
+                     Command.Backend.Filter
                        (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
 
             end if;
@@ -1801,12 +1823,13 @@ package body Docgen2 is
 
    begin
       Trace (Me, "Parse entities");
-      Parse_Entities (Lang, Buffer.all, CB'Unrestricted_Access);
+      Parse_Entities
+        (Lang, Buffer (Buffer'First .. Buffer_Last), CB'Unrestricted_Access);
 
       if Last_Idx /= 0 then
          Ada.Strings.Unbounded.Append
            (Printout,
-            Backend.Filter (Buffer (Last_Idx + 1 .. Buffer'Last)));
+            Command.Backend.Filter (Buffer (Last_Idx + 1 .. Buffer_Last)));
       end if;
 
       Insert
@@ -1816,17 +1839,18 @@ package body Docgen2 is
 
       declare
          Name : constant String :=
-                  Get_Doc_Directory (Kernel) & "src_"
-                  & Backend.To_Destination_Name
-                      (GNATCOLL.VFS.Base_Name (Get_Filename (File)));
+                  Get_Doc_Directory (Command) & "src_"
+                  & Command.Backend.To_Destination_Name
+           (GNATCOLL.VFS.Base_Name (Get_Filename (File)));
       begin
          Ada.Text_IO.Create (File_Handle, Name => Name);
       exception
          when Name_Error =>
-            Insert (Kernel, "Could not create " & Name, Mode => Error);
+            Insert (Command.Kernel, "Could not create " & Name, Mode => Error);
             return;
       end;
 
+      Add_Custom_Index (Command, Translation);
       Ada.Text_IO.Put
         (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
@@ -1837,20 +1861,16 @@ package body Docgen2 is
    ------------------
 
    procedure Generate_Doc
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backend   : Backend_Handle;
-      Options   : Docgen_Options;
+     (Command   : Docgen_Object;
       Xrefs     : Entity_Info_Map.Map;
       Lang      : Language_Access;
       Db        : Entities_Database;
       File      : Source_File;
-      Files     : in out Cross_Ref_List.Vector;
-      Prj_Files : File_Array;
       E_Info    : Entity_Info)
    is
       Tmpl        : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_Spec);
+                      Command.Backend.Get_Template
+                        (Get_System_Dir (Command.Kernel), Tmpl_Spec);
       Translation : Translate_Set;
       Pkg_Found   : Boolean;
       File_Handle : File_Type;
@@ -1874,9 +1894,12 @@ package body Docgen2 is
       --  Get name from E, and formats it to reflect its attribute (abstract,
       --  generic)
 
+      function Is_In_Prj (File : GNATCOLL.VFS.Virtual_File) return Boolean;
+      --  Tell if File is an analysed file of the project
+
       procedure Init_Common_Informations
-        (E_Info   : Entity_Info;
-         Tags     : in out Common_Info_Tags);
+        (E_Info        : Entity_Info;
+         Tags          : in out Common_Info_Tags);
 
       procedure Insert_Common_Informations
         (Tag_Name : String;
@@ -1911,13 +1934,29 @@ package body Docgen2 is
          return To_String (Str);
       end Get_Name;
 
+      ---------------
+      -- Is_In_Prj --
+      ---------------
+
+      function Is_In_Prj (File : GNATCOLL.VFS.Virtual_File) return Boolean is
+      begin
+         for J in Command.Src_Files.First_Index .. Command.Src_Files.Last_Index
+         loop
+            if Command.Src_Files.Element (J) = File then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Is_In_Prj;
+
       ------------------------------
       -- Init_Common_Informations --
       ------------------------------
 
       procedure Init_Common_Informations
-        (E_Info : Entity_Info;
-         Tags   : in out Common_Info_Tags)
+        (E_Info        : Entity_Info;
+         Tags          : in out Common_Info_Tags)
       is
          Ref_Tag    : Tag;
          Calls_Tag  : Tag;
@@ -1930,7 +1969,7 @@ package body Docgen2 is
 
          Append
            (Tags.Src_Tag,
-            Backend.To_Href
+            Command.Backend.To_Href
               (Location => Image (E_Info.Location.File_Loc.Line),
                Src_File => "src_" &
                GNATCOLL.VFS.Base_Name
@@ -1940,23 +1979,13 @@ package body Docgen2 is
          Found := False;
 
          if E_Info.Body_Location /= No_File_Location then
-            declare
-               File : constant GNATCOLL.VFS.Virtual_File :=
-                        Get_Filename (E_Info.Body_Location.File);
-            begin
-               for J in Prj_Files'Range loop
-                  if Prj_Files (J) = File then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-            end;
+            Found := Is_In_Prj (Get_Filename (E_Info.Body_Location.File));
          end if;
 
          if Found then
             Append
               (Tags.Body_Src_Tag,
-               Backend.To_Href
+               Command.Backend.To_Href
                  (Location => Image (E_Info.Body_Location.Line),
                   Src_File => "src_" &
                   GNATCOLL.VFS.Base_Name
@@ -1978,16 +2007,8 @@ package body Docgen2 is
          Append
            (Tags.Description_Tag,
             Filter_Documentation
-              (To_String
-                 (Kernel, Backend,
-                  E_Info.all.Description'Unchecked_Access,
-                  E_Info.Name.all,
-                  Backend.To_Href
-                    (Location_Image (E_Info),
-                     Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
-                     E_Info.Location.Pkg_Nb),
-                  Options.Keep_Formatting),
-               Options));
+              (To_String (E_Info.Description),
+               Command.Options));
 
          for J in E_Info.References.First_Index .. E_Info.References.Last_Index
          loop
@@ -1997,22 +2018,13 @@ package body Docgen2 is
                Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
             begin
-               Found := False;
-
-               for J in Prj_Files'Range loop
-                  if Prj_Files (J) = Src_File then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if Found then
+               if Is_In_Prj (Src_File) then
                   Append
                     (Ref_Tag,
                      Gen_Href
-                       (Backend,
+                       (Command.Backend,
                         Location_Image (Loc),
-                        Backend.To_Href
+                        Command.Backend.To_Href
                           (Image (Loc.Line),
                            "src_" & Base_Name (Src_File),
                            1),
@@ -2043,7 +2055,6 @@ package body Docgen2 is
                             E_Info.Called.Element (J).Location;
                Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
-               Found    : Boolean := False;
 
             begin
                if E_Info.Called.Element (J).Xref /= null
@@ -2056,21 +2067,14 @@ package body Docgen2 is
                     (E_Info.Called.Element (J).Xref.Name.all);
                else
                   Str := To_Unbounded_String
-                    (Gen_Href (Backend, E_Info.Called.Element (J)));
+                    (Gen_Href (Command.Backend, E_Info.Called.Element (J)));
                end if;
 
-               for J in Prj_Files'Range loop
-                  if Prj_Files (J) = Src_File then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if Found then
+               if Is_In_Prj (Src_File) then
                   Str := Str & " defined at " & Gen_Href
-                    (Backend,
+                    (Command.Backend,
                      Location_Image (Loc),
-                     Backend.To_Href
+                     Command.Backend.To_Href
                        (Image (Loc.Line),
                         "src_" & Base_Name (Src_File),
                         1),
@@ -2092,24 +2096,16 @@ package body Docgen2 is
                             E_Info.Calls.Element (J).Location;
                Src_File : constant GNATCOLL.VFS.Virtual_File :=
                             Get_Filename (Loc.File);
-               Found    : Boolean := False;
 
             begin
                Str := To_Unbounded_String
-                 (Gen_Href (Backend, E_Info.Calls.Element (J)));
+                 (Gen_Href (Command.Backend, E_Info.Calls.Element (J)));
 
-               for J in Prj_Files'Range loop
-                  if Prj_Files (J) = Src_File then
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if Found then
+               if Is_In_Prj (Src_File) then
                   Str := Str & " defined at " & Gen_Href
-                    (Backend,
+                    (Command.Backend,
                      Location_Image (Loc),
-                     Backend.To_Href
+                     Command.Backend.To_Href
                        (Image (Loc.Line),
                         "src_" & Base_Name (Src_File),
                         1),
@@ -2129,9 +2125,9 @@ package body Docgen2 is
          Append (Tags.Loc_Tag,
                  Location_Image (E_Info));
          Append (Tags.Instantiation_Tag,
-                 Gen_Href (Backend, E_Info.Instantiated_Entity));
+                 Gen_Href (Command.Backend, E_Info.Instantiated_Entity));
          Append (Tags.Renames_Tag,
-                 Gen_Href (Backend, E_Info.Renamed_Entity));
+                 Gen_Href (Command.Backend, E_Info.Renamed_Entity));
          Append (Tags.Cat_Tag, Image (E_Info.Lang_Category));
       end Init_Common_Informations;
 
@@ -2241,7 +2237,7 @@ package body Docgen2 is
                --  directly
                Append
                  (Printout,
-                  Backend.Gen_Tag
+                  Command.Backend.Gen_Tag
                     (Entity, Extract (Sloc_Start.Index, Sloc_End.Index)));
 
             else
@@ -2261,7 +2257,7 @@ package body Docgen2 is
                   --  Identifier of current entity.
                   Append
                     (Printout,
-                     Backend.Gen_Tag
+                     Command.Backend.Gen_Tag
                        (Entity,
                         Extract (Sloc_Start.Index, Sloc_End.Index), True));
 
@@ -2293,9 +2289,9 @@ package body Docgen2 is
                      --  the examined entity is a declaration entity
                      Append
                        (Printout,
-                        Backend.Gen_Tag
+                        Command.Backend.Gen_Tag
                           (Identifier_Text,
-                           Backend.Gen_Ref
+                           Command.Backend.Gen_Ref
                              (Location_Image (EInfo)) &
                            Extract (Sloc_Start.Index, Sloc_End.Index)));
 
@@ -2304,7 +2300,7 @@ package body Docgen2 is
                      --  just generate simple text
                      Append
                        (Printout,
-                        Backend.Gen_Tag
+                        Command.Backend.Gen_Tag
                           (Normal_Text,
                            Extract (Sloc_Start.Index, Sloc_End.Index)));
 
@@ -2314,7 +2310,7 @@ package body Docgen2 is
                      Append
                        (Printout,
                         Gen_Href
-                          (Backend, EInfo,
+                          (Command.Backend, EInfo,
                            Extract (Sloc_Start.Index, Sloc_End.Index)));
                   end if;
                end if;
@@ -2373,26 +2369,17 @@ package body Docgen2 is
          Child_EInfo := Entity_Info_List.Element (Cursor);
 
          if Child_EInfo.Category = Cat_Package then
-            --  Move file's description to main package's description
-            if E_Info.Category = Cat_File
-              and then E_Info.Description /= No_Comment
-              and then Child_EInfo.Description = No_Comment
-            then
-               Child_EInfo.Description := E_Info.Description;
-               E_Info.Description := No_Comment;
-            end if;
-
             Init_Common_Informations (Child_EInfo, Pkg_CI);
             Append (Pkg_Full_Link,
-                    Gen_Href (Backend, Child_EInfo, "Full description"));
+                    Gen_Href
+                      (Command.Backend, Child_EInfo, "Full description"));
 
             if not Child_EInfo.Is_Renaming
               and then not Child_EInfo.Is_Instantiation
             then
                Pkg_Found := True;
                Generate_Doc
-                 (Kernel, Backend, Options, Xrefs, Lang, Db,
-                  File, Files, Prj_Files, Child_EInfo);
+                 (Command, Xrefs, Lang, Db, File, Child_EInfo);
             end if;
          end if;
 
@@ -2424,17 +2411,7 @@ package body Docgen2 is
       declare
          Unit_Comment : constant String :=
                           Filter_Documentation
-                            (To_String
-                               (Kernel,
-                                Backend,
-                                E_Info.Description'Access,
-                                E_Info.Name.all,
-                                Backend.To_Href
-                                  (Location_Image (E_Info),
-                                   Base_Name (Get_Filename (File)),
-                                   E_Info.Location.Pkg_Nb),
-                                Options.Keep_Formatting),
-                             Options);
+                            (To_String (E_Info.Description), Command.Options);
       begin
          if Unit_Comment /= "" then
             Insert (Translation, Assoc ("DESCRIPTION", Unit_Comment));
@@ -2461,11 +2438,11 @@ package body Docgen2 is
                Param_Type := Param.Parameter_Type;
 
                Name_Str := To_Unbounded_String
-                 (Backend.Gen_Tag (Identifier_Text, Get_Name (Param)));
+                 (Command.Backend.Gen_Tag (Identifier_Text, Get_Name (Param)));
 
                if Param_Type /= null then
                   Name_Str := Name_Str & " (" &
-                    Gen_Href (Backend, Param_Type) & ")";
+                  Gen_Href (Command.Backend, Param_Type) & ")";
                end if;
 
                Append (Pkg_Gen_Params, Name_Str);
@@ -2523,7 +2500,7 @@ package body Docgen2 is
                   if Prev_Xref = null
                     or else Xref.Location /= Prev_Xref.Location
                   then
-                     Append (Parent_Tag, Gen_Href (Backend, Xref));
+                     Append (Parent_Tag, Gen_Href (Command.Backend, Xref));
                   end if;
                   Prev_Xref := Xref;
                end loop;
@@ -2542,7 +2519,7 @@ package body Docgen2 is
                   if Prev_Xref = null
                     or else Xref.Location /= Prev_Xref.Location
                   then
-                     Append (Children_Tag, Gen_Href (Backend, Xref));
+                     Append (Children_Tag, Gen_Href (Command.Backend, Xref));
                   end if;
 
                   Prev_Xref := Xref;
@@ -2559,7 +2536,7 @@ package body Docgen2 is
                   Xref := Child_EInfo.Primitive_Ops.Element (J);
 
                   Prim_Op_Str := To_Unbounded_String
-                    (Gen_Href (Backend, Xref));
+                    (Gen_Href (Command.Backend, Xref));
 
                   if Xref.Overriding_Op /= null
                     and then not Xref.Inherited
@@ -2568,7 +2545,7 @@ package body Docgen2 is
                        (Prim_Op_Str,
                         " (overriding " &
                         Gen_Href
-                          (Backend,
+                          (Command.Backend,
                            Xref.Overriding_Op) &
                         ")");
                   end if;
@@ -2626,19 +2603,7 @@ package body Docgen2 is
                   Append
                     (Entry_Descr_Tag,
                      Filter_Documentation
-                       (To_String
-                          (Kernel,
-                           Backend,
-                           E_Entry.Description'Access,
-                           E_Entry.Name.all,
-                           Backend.To_Href
-                             (Location_Image (E_Entry),
-                              Base_Name
-                                (Get_Filename
-                                   (E_Entry.Location.File_Loc.File)),
-                              E_Entry.Location.Pkg_Nb),
-                           Options.Keep_Formatting),
-                        Options));
+                       (To_String (E_Entry.Description), Command.Options));
 
                   Entity_Info_List.Next (Entry_Cursor);
                end loop;
@@ -2665,7 +2630,7 @@ package body Docgen2 is
             Init_Common_Informations (Child_EInfo, Cst_CI);
             Append
               (Cst_Type,
-               Gen_Href (Backend, Child_EInfo.Variable_Type));
+               Gen_Href (Command.Backend, Child_EInfo.Variable_Type));
 
             --  SUBPROGRAMS
          elsif Child_EInfo.Category = Cat_Subprogram then
@@ -2689,12 +2654,13 @@ package body Docgen2 is
                   Param_Type := Param.Parameter_Type;
 
                   Name_Str := To_Unbounded_String
-                    (Backend.Gen_Tag (Identifier_Text, Param.Name.all));
+                    (Command.Backend.Gen_Tag
+                       (Identifier_Text, Param.Name.all));
 
                   if Param_Type /= null then
                      Append
                        (Name_Str,
-                        " (" & Gen_Href (Backend, Param_Type) & ")");
+                        " (" & Gen_Href (Command.Backend, Param_Type) & ")");
                   end if;
 
                   Append (Param_Tag, Name_Str);
@@ -2716,13 +2682,14 @@ package body Docgen2 is
            (Translation,
             Assoc
               ("SOURCE",
-               "src_" & Backend.To_Destination_Name (E_Info.Name.all)));
+               "src_" &
+               Command.Backend.To_Destination_Name (E_Info.Name.all)));
       else
          Insert
            (Translation,
             Assoc
               ("SOURCE",
-               "src_" & Backend.To_Destination_Name
+               "src_" & Command.Backend.To_Destination_Name
                  (Get_Filename (E_Info.Location.File_Loc.File).Base_Name)));
       end if;
 
@@ -2730,61 +2697,32 @@ package body Docgen2 is
         and then E_Info.Body_Location.File /= null
       then
          declare
-            File : constant GNATCOLL.VFS.Virtual_File :=
-                     Get_Filename (E_Info.Body_Location.File);
-            Found : Boolean := False;
+            File  : constant GNATCOLL.VFS.Virtual_File :=
+                      Get_Filename (E_Info.Body_Location.File);
          begin
-            for J in Prj_Files'Range loop
-               if Prj_Files (J) = File then
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-
-            if Found then
+            if Is_In_Prj (File) then
                Insert
                  (Translation,
                   Assoc
                     ("BODY_SOURCE",
-                     "src_" & Backend.To_Destination_Name (File.Base_Name)));
+                     "src_" &
+                     Command.Backend.To_Destination_Name (File.Base_Name)));
             end if;
          end;
       end if;
 
       if E_Info.Category = Cat_File then
-         Files.Append
-           (new Cross_Ref_Record'
-              (Location      => No_File_Location,
-               Name          => new String'
-                 (Backend.To_Destination_Name (E_Info.Name.all)),
-               Xref          => E_Info,
-               Inherited     => False,
-               Overriding_Op => null));
          Ada.Text_IO.Create
            (File_Handle,
-            Name => Get_Doc_Directory (Kernel) &
-              Backend.To_Destination_Name (E_Info.Name.all));
+            Name => Get_Doc_Directory (Command) &
+            Command.Backend.To_Destination_Name (E_Info.Name.all));
       else
-         --  Don't display inner packages in TOC.
-         if E_Info.Location.Pkg_Nb = 1 then
-            Files.Append
-              (new Cross_Ref_Record'
-                 (Location      => E_Info.Location.File_Loc,
-                  Name          => new String'
-                    (Backend.To_Destination_Name
-                       (Get_Filename (E_Info.Location.File_Loc.File).Base_Name,
-                        1)),
-                  Xref          => E_Info,
-                  Inherited     => False,
-                  Overriding_Op => null));
-         end if;
-
          Ada.Text_IO.Create
            (File_Handle,
-            Name => Get_Doc_Directory (Kernel) &
-              Backend.To_Destination_Name
-                (Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
-                 E_Info.Location.Pkg_Nb));
+            Name => Get_Doc_Directory (Command) &
+            Command.Backend.To_Destination_Name
+              (Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
+               E_Info.Location.Pkg_Nb));
       end if;
 
       Insert_Common_Informations ("PKG", Pkg_CI);
@@ -2816,29 +2754,144 @@ package body Docgen2 is
               Assoc ("SUBP_GENERIC_PARAMETERS", Subp_Generic_Params));
       Insert (Translation,
               Assoc ("SUBP_GENERIC_PARAMETERS_LOC", Subp_Generic_Params_Loc));
+      Add_Custom_Index (Command, Translation);
 
       Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
    end Generate_Doc;
 
+   ----------------------
+   -- Add_Custom_Index --
+   ----------------------
+
+   procedure Add_Custom_Index
+     (Cmd   : Docgen_Object;
+      Trans : in out Translate_Set)
+   is
+      Names_Tag : Tag;
+      Files_Tag : Tag;
+   begin
+      for J in Cmd.Custom_Files.First_Index .. Cmd.Custom_Files.Last_Index loop
+         Append (Names_Tag, To_String (Cmd.Custom_Files.Element (J).Name));
+         Append (Files_Tag, To_String (Cmd.Custom_Files.Element (J).Filename));
+      end loop;
+      Insert (Trans, Assoc ("USER_DEFINED_NAMES", Names_Tag));
+      Insert (Trans, Assoc ("USER_DEFINED_FILES", Files_Tag));
+   end Add_Custom_Index;
+
+   ---------------------------
+   -- Generate_User_Indexes --
+   ---------------------------
+
+   procedure Generate_User_Indexes (Command : Docgen_Object) is
+      Tmpl         : constant String :=
+                       Command.Backend.Get_Template
+                         (Get_System_Dir (Command.Kernel),
+                          Tmpl_User_Defined_File);
+      File_Handle  : File_Type;
+      Translation  : Translate_Set;
+   begin
+      Add_Custom_Index (Command, Translation);
+
+      for J in Command.Custom_Files.First_Index ..
+        Command.Custom_Files.Last_Index
+      loop
+         declare
+            Obj : Custom_File_Record renames Command.Custom_Files.Element (J);
+         begin
+            Insert
+              (Translation, Assoc ("NAME", Obj.Name));
+            Insert
+              (Translation, Assoc ("FILE_NAME", Obj.Filename));
+            Insert
+              (Translation, Assoc ("PRINTOUT", Obj.Content));
+
+            declare
+               Name : constant String :=
+                        Get_Doc_Directory (Command) & To_String (Obj.Filename);
+            begin
+               Ada.Text_IO.Create (File_Handle, Name => Name);
+            exception
+               when Name_Error =>
+                  Insert
+                    (Command.Kernel,
+                     "Could not create " & To_String (Obj.Name),
+                     Mode => Error);
+                  return;
+            end;
+
+            Ada.Text_IO.Put
+              (File_Handle, Parse (Tmpl, Translation, Cached => True));
+            Ada.Text_IO.Close (File_Handle);
+         end;
+      end loop;
+   end Generate_User_Indexes;
+
+   ---------------------------------
+   -- Generate_Custom_Docgen_File --
+   ---------------------------------
+
+   procedure Generate_Custom_Docgen_File
+     (Command  : Docgen_Object;
+      Name     : String;
+      Filename : String;
+      Content  : String)
+   is
+   begin
+      Command.Custom_Files.Append
+        ((Name     => To_Unbounded_String (Name),
+          Filename => To_Unbounded_String (Filename),
+          Content  => To_Unbounded_String (Content)));
+   end Generate_Custom_Docgen_File;
+
+   -----------------------
+   -- Generate_Comments --
+   -----------------------
+
+   procedure Generate_Comments (Cmd : Docgen_Object) is
+      Cursor : Entity_Info_Map.Cursor;
+      procedure Internal (Loc : File_Location; Elem : in out Entity_Info);
+      --  Update the comment for Elem
+
+      procedure Internal (Loc : File_Location; Elem : in out Entity_Info) is
+         pragma Unreferenced (Loc);
+      begin
+         Cmd.Current_File := Get_Filename (Elem.Location.File_Loc.File);
+         Analyse_Comment
+           (Elem.Description,
+            Cmd,
+            Elem.Location.File_Loc.File,
+            Elem.Name.all,
+            Cmd.Backend.To_Href
+              (Location_Image (Elem),
+               Base_Name (Get_Filename (Elem.Location.File_Loc.File)),
+               Elem.Location.Pkg_Nb));
+      end Internal;
+
+   begin
+      Cursor := Cmd.EInfos.First;
+      while Entity_Info_Map.Has_Element (Cursor) loop
+         Entity_Info_Map.Update_Element (Cmd.EInfos, Cursor, Internal'Access);
+         Entity_Info_Map.Next (Cursor);
+      end loop;
+   end Generate_Comments;
+
    --------------------
    -- Generate_Xrefs --
    --------------------
 
-   procedure Generate_Xrefs
-     (XRef_List : in out Cross_Ref_List.Vector;
-      EInfo_Map : Entity_Info_Map.Map)
+   procedure Generate_Xrefs (Cmd : Docgen_Object)
    is
       Xref_Cursor  : Cross_Ref_List.Cursor;
       Xref_Node    : Cross_Ref;
       EInfo_Cursor : Entity_Info_Map.Cursor;
 
    begin
-      Xref_Cursor := XRef_List.First;
+      Xref_Cursor := Cmd.Xref_List.First;
 
       while Cross_Ref_List.Has_Element (Xref_Cursor) loop
          Xref_Node := Cross_Ref_List.Element (Xref_Cursor);
-         EInfo_Cursor := EInfo_Map.Find (Xref_Node.Location);
+         EInfo_Cursor := Cmd.EInfos.Find (Xref_Node.Location);
 
          if Entity_Info_Map.Has_Element (EInfo_Cursor) then
             --  We found the referenced node
@@ -2853,18 +2906,14 @@ package body Docgen2 is
    -- Generate_Trees --
    --------------------
 
-   procedure Generate_Trees
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Backend    : Backend_Handle;
-      Class_List : in out Cross_Ref_List.Vector;
-      EInfo_Map  : Entity_Info_Map.Map)
+   procedure Generate_Trees (Cmd : Docgen_Object)
    is
       Tmpl        : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_Class_Tree);
+                      Cmd.Backend.Get_Template
+                        (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree);
       Tmpl_Elem   : constant String :=
-                      Backend.Get_Template
-                        (Get_System_Dir (Kernel), Tmpl_Class_Tree_Elem);
+                      Cmd.Backend.Get_Template
+                        (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree_Elem);
       File_Handle : File_Type;
       Xref_Cursor : Cross_Ref_List.Cursor;
       EInfo       : Entity_Info;
@@ -2902,7 +2951,7 @@ package body Docgen2 is
             return "";
          end if;
 
-         Append (Tree_Tag, Gen_Href (Backend, Class, Name));
+         Append (Tree_Tag, Gen_Href (Cmd.Backend, Class, Name));
          Append (Tree_Loc_Tag, Location_Image (Class));
          Append (Root_Tree_Tag, Depth = 0);
 
@@ -2945,12 +2994,12 @@ package body Docgen2 is
       end Print_Tree;
 
    begin
-      Vector_Sort.Sort (Class_List);
-      Xref_Cursor := Class_List.First;
+      Vector_Sort.Sort (Cmd.Class_List);
+      Xref_Cursor := Cmd.Class_List.First;
 
       while Cross_Ref_List.Has_Element (Xref_Cursor) loop
          Xref := Cross_Ref_List.Element (Xref_Cursor);
-         Map_Cursor := EInfo_Map.Find (Xref.Location);
+         Map_Cursor := Cmd.EInfos.Find (Xref.Location);
 
          if Entity_Info_Map.Has_Element (Map_Cursor) then
             --  We found the referenced node
@@ -2969,10 +3018,11 @@ package body Docgen2 is
       end loop;
 
       Insert (Translation, Assoc ("TREE", Tree_Tag));
+      Add_Custom_Index (Cmd, Translation);
       Ada.Text_IO.Create
         (File_Handle,
-         Name => Get_Doc_Directory (Kernel) &
-           Backend.To_Destination_Name ("tree"));
+         Name => Get_Doc_Directory (Cmd) &
+           Cmd.Backend.To_Destination_Name ("tree"));
       Ada.Text_IO.Put (File_Handle, Parse (Tmpl, Translation, Cached => True));
       Ada.Text_IO.Close (File_Handle);
    end Generate_Trees;
@@ -2981,22 +3031,16 @@ package body Docgen2 is
    -- Generate_Global_Index --
    ---------------------------
 
-   procedure Generate_Global_Index
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Backend   : Backend_Handle;
-      Files     : Cross_Ref_List.Vector;
-      EInfo_Map : Entity_Info_Map.Map;
-      Src_Files : Files_List.Vector)
+   procedure Generate_Global_Index (Cmd : Docgen_Object)
    is
       Tmpl         : constant String :=
-                       Backend.Get_Template
-                         (Get_System_Dir (Kernel), Tmpl_Index);
+                       Cmd.Backend.Get_Template
+                         (Get_System_Dir (Cmd.Kernel), Tmpl_Index);
       Letter       : Character;
       Last_Letter  : Character := ' ';
       Letter_Kind  : Character;
       Map_Cursor   : Entity_Info_Map.Cursor;
       EInfo        : Entity_Info;
-      Xref         : Cross_Ref;
       Translation  : Translate_Set;
       Href_Tag     : Tag;
       Loc_Tag      : Tag;
@@ -3073,16 +3117,22 @@ package body Docgen2 is
          end if;
       end Get_Letter;
 
-   begin
-      for J in Files.First_Index .. Files.Last_Index loop
-         Xref := Files.Element (J);
-         Letter := To_Upper (Xref.Xref.Name (Xref.Xref.Name'First));
+      use type Ada.Containers.Count_Type;
 
+   begin
+      for J in Cmd.Package_List.First_Index .. Cmd.Package_List.Last_Index loop
+         EInfo := Cmd.Package_List.Element (J);
+
+         if EInfo.Children.Length = 1 then
+            EInfo := EInfo.Children.First_Element;
+         end if;
+
+         Letter := To_Upper (EInfo.Name (EInfo.Name'First));
          List_Index := Index (API_Index, Letter);
-         Local_List (List_Index).Append (Xref.Xref);
+         Local_List (List_Index).Append (EInfo);
       end loop;
 
-      Map_Cursor := EInfo_Map.First;
+      Map_Cursor := Cmd.EInfos.First;
 
       while Entity_Info_Map.Has_Element (Map_Cursor) loop
          EInfo := Entity_Info_Map.Element (Map_Cursor);
@@ -3115,9 +3165,9 @@ package body Docgen2 is
          end case;
       end loop;
 
-      for J in Src_Files.First_Index .. Src_Files.Last_Index loop
+      for J in Cmd.Src_Files.First_Index .. Cmd.Src_Files.Last_Index loop
          declare
-            Name : constant String := Src_Files.Element (J).Base_Name;
+            Name : constant String := Cmd.Src_Files.Element (J).Base_Name;
          begin
             Letter := To_Upper (Name (Name'First));
          end;
@@ -3149,10 +3199,11 @@ package body Docgen2 is
             --  short name.
             if J < 28 then
                Append
-                 (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Name.all));
+                 (Href_Tag, Gen_Href (Cmd.Backend, EInfo, EInfo.Name.all));
             else
                Append
-                 (Href_Tag, Gen_Href (Backend, EInfo, EInfo.Short_Name.all));
+                 (Href_Tag,
+                  Gen_Href (Cmd.Backend, EInfo, EInfo.Short_Name.all));
             end if;
 
             Append (Loc_Tag, Location_Image (EInfo));
@@ -3176,18 +3227,21 @@ package body Docgen2 is
                Letter_Kind := 'e';
          end case;
 
+         Add_Custom_Index (Cmd, Translation);
+
          if Letter = '*' then
             Ada.Text_IO.Create
               (File_Handle,
-               Name => Get_Doc_Directory (Kernel) &
-               Backend.To_Destination_Name ("index" & Letter_Kind & "other"));
+               Name => Get_Doc_Directory (Cmd) &
+               Cmd.Backend.To_Destination_Name
+                 ("index" & Letter_Kind & "other"));
          else
             Ada.Text_IO.Create
               (File_Handle,
-               Name => Get_Doc_Directory (Kernel) &
-               Backend.To_Destination_Name ("index" & Letter_Kind & Letter));
+               Name => Get_Doc_Directory (Cmd) &
+               Cmd.Backend.To_Destination_Name
+                 ("index" & Letter_Kind & Letter));
          end if;
-
          Ada.Text_IO.Put
            (File_Handle, Parse (Tmpl, Translation, Cached => True));
          Ada.Text_IO.Close (File_Handle);
@@ -3207,8 +3261,8 @@ package body Docgen2 is
             --  First non empty list... create index.html
             Ada.Text_IO.Create
               (File_Handle,
-               Name => Get_Doc_Directory (Kernel) &
-                 Backend.To_Destination_Name ("index"));
+               Name => Get_Doc_Directory (Cmd) &
+                 Cmd.Backend.To_Destination_Name ("index"));
             Ada.Text_IO.Put
               (File_Handle, Parse (Tmpl, Translation, Cached => True));
             Ada.Text_IO.Close (File_Handle);
@@ -3220,10 +3274,10 @@ package body Docgen2 is
       Clear (Kind_Tag);
 
       Last_Letter := ' ';
-      for J in Src_Files.First_Index .. Src_Files.Last_Index + 1 loop
-         if J <= Src_Files.Last_Index then
+      for J in Cmd.Src_Files.First_Index .. Cmd.Src_Files.Last_Index + 1 loop
+         if J <= Cmd.Src_Files.Last_Index then
             declare
-               Name : constant String := Src_Files.Element (J).Base_Name;
+               Name : constant String := Cmd.Src_Files.Element (J).Base_Name;
             begin
                Letter := To_Upper (Name (Name'First));
             end;
@@ -3243,8 +3297,8 @@ package body Docgen2 is
 
             Ada.Text_IO.Create
               (File_Handle,
-               Name => Get_Doc_Directory (Kernel) &
-               Backend.To_Destination_Name ("indexs" & Last_Letter));
+               Name => Get_Doc_Directory (Cmd) &
+               Cmd.Backend.To_Destination_Name ("indexs" & Last_Letter));
             Ada.Text_IO.Put
               (File_Handle, Parse (Tmpl, Translation, Cached => True));
             Ada.Text_IO.Close (File_Handle);
@@ -3254,54 +3308,91 @@ package body Docgen2 is
             Clear (Kind_Tag);
          end if;
 
-         exit when J > Src_Files.Last_Index;
+         exit when J > Cmd.Src_Files.Last_Index;
 
          Last_Letter := Letter;
 
          Append
            (Href_Tag,
-            Backend.Gen_Href
-              (Src_Files.Element (J).Base_Name,
-               Backend.To_Destination_Name
-                 ("src_" & Src_Files.Element (J).Base_Name),
-               Src_Files.Element (J).Base_Name));
+            Cmd.Backend.Gen_Href
+              (Cmd.Src_Files.Element (J).Base_Name,
+               Cmd.Backend.To_Destination_Name
+                 ("src_" & Cmd.Src_Files.Element (J).Base_Name),
+               Cmd.Src_Files.Element (J).Base_Name));
       end loop;
 
       Open_Html
-        (Kernel      => Kernel,
-         URL_Or_File => Get_Doc_Directory (Kernel) &
-         Backend.To_Destination_Name ("index"));
+        (Kernel      => Cmd.Kernel,
+         URL_Or_File => Get_Doc_Directory (Cmd) &
+         Cmd.Backend.To_Destination_Name ("index"));
    end Generate_Global_Index;
 
    ----------------------------
    -- Generate_Support_Files --
    ----------------------------
 
-   procedure Generate_Support_Files
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Backend : Backend_Handle)
+   procedure Generate_Support_Files (Cmd : Docgen_Object)
    is
       Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
-                  Create (Backend.Get_Support_Dir (Get_System_Dir (Kernel)));
+                  Create
+                    (Cmd.Backend.Get_Support_Dir
+                       (Get_System_Dir (Cmd.Kernel)));
       Dst_Dir : constant String :=
-                  Get_Doc_Directory (Kernel);
+                  Get_Doc_Directory (Cmd);
       Success : Boolean;
    begin
       Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Success);
       pragma Assert (Success);
    end Generate_Support_Files;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (D : Docgen_Object) return GPS.Kernel.Kernel_Handle is
+   begin
+      return D.Kernel;
+   end Get_Kernel;
+
+   -----------------
+   -- Get_Backend --
+   -----------------
+
+   function Get_Backend
+     (D : Docgen_Object) return Docgen2_Backend.Backend_Handle is
+   begin
+      return D.Backend;
+   end Get_Backend;
+
+   -----------------
+   -- Get_Options --
+   -----------------
+
+   function Get_Options (D : Docgen_Object) return Docgen_Options is
+   begin
+      return D.Options;
+   end Get_Options;
+
    -----------------------
    -- Get_Doc_Directory --
    -----------------------
 
-   function Get_Doc_Directory
-     (Kernel : not null access Kernel_Handle_Record'Class) return String is
+   function Get_Doc_Directory (Object : Docgen_Object) return String is
    begin
       return File_Utils.Name_As_Directory
         (Object_Path
-           (Get_Root_Project (Get_Registry (Kernel).all),
+           (Get_Root_Project (Get_Registry (Object.Kernel).all),
             False, False)) & "doc/";
    end Get_Doc_Directory;
+
+   ----------------------
+   -- Get_Current_File --
+   ----------------------
+
+   function Get_Current_File
+     (Object : Docgen_Object) return GNATCOLL.VFS.Virtual_File is
+   begin
+      return Object.Current_File;
+   end Get_Current_File;
 
 end Docgen2;

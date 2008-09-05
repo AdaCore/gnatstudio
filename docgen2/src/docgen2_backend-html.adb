@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with String_Utils;          use String_Utils;
 
 package body Docgen2_Backend.HTML is
@@ -42,8 +41,8 @@ package body Docgen2_Backend.HTML is
             return System_Dir & "share/gps/docgen2/tree_elem.tmpl";
          when Tmpl_Index =>
             return System_Dir & "share/gps/docgen2/entities.tmpl";
-         when Tmpl_TOC =>
-            return System_Dir & "share/gps/docgen2/index.tmpl";
+         when Tmpl_User_Defined_File =>
+            return System_Dir & "share/gps/docgen2/userdef.tmpl";
          when Tmpl_Src =>
             return System_Dir & "share/gps/docgen2/src.tmpl";
          when Tmpl_Src_Index =>
@@ -166,53 +165,8 @@ package body Docgen2_Backend.HTML is
       S        : String) return String
    is
       pragma Unreferenced (Backend);
-
-      function Replace
-        (S      : String;
-         C      : Character;
-         Entity : String) return String;
-      --  Replace all occurences of C by Entity
-
-      -------------
-      -- Replace --
-      -------------
-
-      function Replace
-        (S      : String;
-         C      : Character;
-         Entity : String) return String
-      is
-         Idx  : Natural;
-         Nxt  : Natural;
-         Res  : Unbounded_String;
-
-      begin
-         Idx := S'First;
-
-         loop
-            Nxt := Idx;
-            Skip_To_Char (S, Nxt, C);
-
-            if Nxt > S'Last then
-               Ada.Strings.Unbounded.Append (Res, S (Idx .. S'Last));
-               exit;
-            end if;
-
-            Ada.Strings.Unbounded.Append (Res, S (Idx .. Nxt - 1));
-            Ada.Strings.Unbounded.Append (Res, Entity);
-            Idx := Nxt + 1;
-         end loop;
-
-         return To_String (Res);
-      end Replace;
-
    begin
-      return Replace
-        (Replace
-           (Replace
-              (S, '&', "&amp;"),
-            '<', "&lt;"),
-         '>', "&gt;");
+      return XML_Protect (S);
    end Filter;
 
    -------------

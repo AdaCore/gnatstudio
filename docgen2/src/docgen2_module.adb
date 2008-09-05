@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
@@ -28,7 +27,7 @@ with Gtkada.File_Selector;        use Gtkada.File_Selector;
 
 with Default_Preferences;         use Default_Preferences;
 with Docgen2;                     use Docgen2;
-with Docgen2.Hooks;
+with Docgen2.Scripts;
 with Docgen2_Backend;             use Docgen2_Backend;
 with Docgen2_Backend.HTML;        use Docgen2_Backend.HTML;
 with GPS.Intl;                    use GPS.Intl;
@@ -39,7 +38,6 @@ with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with Projects;                    use Projects;
-with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
@@ -67,9 +65,6 @@ package body Docgen2_Module is
 
       Process_Up_To_Date_Only : Boolean_Preference;
       --  True if docgen should document up to date entities only.
-
-      User_Tags_List          : String_Preference;
-      --  List of space-separated user tags.
 
       Options                 : Docgen_Options;
       --  Group all the preferences
@@ -153,9 +148,6 @@ package body Docgen2_Module is
       function Get_Filter (Regx : String) return Pattern_Matcher_Access;
       --  Return an access to a pattern, or null if the string is empty
 
-      function Get_Tags (Tags_List : String) return User_Tags_List.Vector;
-      --  Return a list of tags from the space-separated list in string.
-
       ----------------
       -- Get_Filter --
       ----------------
@@ -170,22 +162,6 @@ package body Docgen2_Module is
          end if;
       end Get_Filter;
 
-      function Get_Tags (Tags_List : String) return User_Tags_List.Vector is
-         List : User_Tags_List.Vector;
-         Idx  : Natural;
-         Nxt  : Natural;
-      begin
-         Idx := Tags_List'First;
-         while Idx <= Tags_List'Last loop
-            Nxt := Idx;
-            Skip_To_Char (Tags_List, Nxt, ' ');
-            List.Append (To_Unbounded_String (Tags_List (Idx .. Nxt - 1)));
-            Idx := Nxt + 1;
-         end loop;
-
-         return List;
-      end Get_Tags;
-
       pragma Unreferenced (Kernel);
    begin
       Docgen_Module (Docgen_Module_Id).Options :=
@@ -199,10 +175,7 @@ package body Docgen2_Module is
          References         =>
            Docgen_Module (Docgen_Module_Id).Show_References.Get_Pref,
          Process_Up_To_Date_Only =>
-           Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref,
-         User_Tags               =>
-           Get_Tags (Docgen_Module (Docgen_Module_Id).User_Tags_List.Get_Pref),
-         Keep_Formatting         => True);
+           Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref);
 
    exception
       when E : others =>
@@ -321,6 +294,7 @@ package body Docgen2_Module is
    procedure Register_Commands
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
+      Docgen2.Scripts.Register_Commands (Kernel);
       Register_Command
         (Kernel, "generate_doc", 0, 0, File_Commands_Handler'Access,
          Get_File_Class (Kernel));
@@ -499,23 +473,11 @@ package body Docgen2_Module is
             & " cross ref informations."),
          Label   => -"Up-to-date files only");
 
-      Docgen_Module (Docgen_Module_Id).User_Tags_List := Create
-        (Get_Preferences (Kernel),
-         Name    => "Doc-User-Tags",
-         Default => "summary description parameter exception seealso",
-         Page    => -"Documentation",
-         Doc     =>
-            -("List of space separated xml tags used to better format the"
-             & " documentation extracted from the source comments."),
-         Label   => -"User defined tags");
-
       Add_Hook
         (Kernel, Preferences_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
          Name => "docgen.on_preferences_changed");
       On_Preferences_Changed (Kernel);
-
-      Docgen2.Hooks.Register_Hook (Kernel);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu

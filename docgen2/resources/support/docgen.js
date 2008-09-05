@@ -19,7 +19,7 @@ function onloadDoc() {
   var link1, link2;
 
   setLinksForTag ('h2', '');
-  link1 = setLinksForTag ('h3', 'hidden');
+  link1 = setLinksForTag ('h3', '');
   link2 = setLinksForTag ('h4', 'hidden');
 
   if (link1 | link2) {
