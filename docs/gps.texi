@@ -10001,44 +10001,15 @@ documentation on its usage.
 For those interested, this also contains the plug-in itself, so that
 this can act as an example to create your own customization script.
 
-The second page in the notebook can be used to edit the initialization
-commands. This commands will be executed after the module has been
-loaded (and never if the module is not loaded). This will typically be
-used to change some of the configuration variables for the plug-in (as
-documented in the plug-in itself).
-
-Technically, the list of plug-in to load or not to load, and their
-initialization commands are stored in the file
-@file{HOME/.gps/startup.xml}. The list of initialization commands has
-the same format as used when creating GPS actions (@pxref{Defining
-Actions}). The graphical editor in the Plug-Ins Editor makes it
-easier to edit the commands.
-
-There are currently three kinds of commands that you can execute (you
-can have any number of them, in any order you wish): GPS shell
-commands, Python commands and external commands. External commands are
-spawned outside of GPS, and can be used for instance to launch a
-command such as @code{ls} or @code{gnatls -v}. In case the external
-command returns an exit status different from 0, you can specify a
-list of commands to execute (known as @code{on-failure} commands).
-
-To add any of the three kinds of commands, click on the appropriate
-@code{Add} button. This adds the commands just after the currently
-selected one (or at the end if none is selected). If you have first
-selected a @code{on-failure} node, the new command will execute only
-when the command to which on-failure is attached fails. If you want to
-add another command to execute in case of failure, select that first
-command, and click @code{Add} again. If you then want to add a command
-to execute when the first external command succeeded, select that
-external command.
+Technically, the list of plug-in to load or not to load
+are stored in the file
+@file{HOME/.gps/startup.xml}. 
 
 If you have modified anything through this dialog (the list of plug-ins
-to load or unload, or any of the initialization commands), you will
+to load or unload), you will
 need to restart GPS. GPS cannot unload a module, since it can have too
 many possible effects on GPS (adding menus, overriding key
-shortcuts, @dots{}). Likewise, re-executing initialization commands
-immediately might be too late, since once they are running some of the
-scripts might not take the changes into account.
+shortcuts, @dots{}). 
 
 A dialog is displayed asking you whether you would like to exit GPS
 now. This will properly save all your files.

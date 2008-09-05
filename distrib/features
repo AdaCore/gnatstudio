@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 03, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 05, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -19,6 +19,12 @@ NF-43-H903-013 SPARK plug-in improved (2008-09-03)
 
   Many improvements have been made to the spark plug-in to improve the user
   experience.
+
+NF-43-H903-005 Plugins configured with preferences (2008-09-05)
+
+  The various GPS plugins are now configured through the usual Preferences
+  dialog, rather than requiring the user to enter python commands in the
+  Plug-ins dialog
 
 NF-43-H821-010 VCS_Patch_Root can be specified as relative path (2008-08-28)
 
