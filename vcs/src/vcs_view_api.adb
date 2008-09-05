@@ -3095,7 +3095,9 @@ package body VCS_View_API is
       Status := Get_Cache
         (Get_Status_Cache, Create (String_List.Head (Files))).Status;
 
-      if Status.Repository_Revision = null then
+      if Status.Repository_Revision = null
+        or else Status.Repository_Revision.all = "n/a"
+      then
          if Status.Working_Revision = null then
             Revision := new String'("");
          else
