@@ -78,21 +78,40 @@ class ScreenshotTagHandler (GPS.DocgenTagHandler):
         <div class='comment'>""" % (img)
 
    def on_exit (self, docgen):
-      content=""
+      if len (self.pictureslist) == 0:
+         return
 
+      # first print the right-side box containing the group index
+      content=""
+      content += """<div class='default' id='rightSide'>"""
+      content += """<div id='rightSideInside'>"""
+      content += """<div id='Index'>"""
+      content += """<h2>Index</h2>"""
+      content += """<ul>"""
+      n = 0
+      for pict in sorted(self.pictureslist.keys()):
+         content += """<li><a href="#%d">%s</a></li>""" % (n, pict)
+         n += 1
+      content += """</ul></div></div></div>"""
+
+      content += """<div class='default' id='documentation'>"""
+      content += """<div class="title">Widget Screenshots</div>"""
+      n = 0
       for pict in sorted(self.pictureslist.keys()):
          content += """
             <div class='subprograms'>
               <div class='class'>
+                <a name="%d"></a>
                 <h3>%s</h3>
                 <div class='comment'>
                   <a href="%s">%s</a>
                 </div>
               </div>
-            </div>""" % (pict, self.pictureslist[pict][0], self.pictureslist[pict][1])
+            </div>""" % (n, pict, self.pictureslist[pict][0], self.pictureslist[pict][1])
+         n += 1
+      content += """</div>"""
 
-      if content != "":
-         docgen.generate_index_file ("Widget Screenshots", "screenshots.html", content);
+      docgen.generate_index_file ("Widget Screenshots", "screenshots.html", content);
 
 class GroupTagHandler (GPS.DocgenTagHandler):
    """Handling for <group>A Group of packages</group>"""
@@ -113,11 +132,28 @@ class GroupTagHandler (GPS.DocgenTagHandler):
       return " "
 
    def on_exit (self, docgen):
-      content=""
+      if len (self.groups) == 0:
+         return
 
+      # first print the right-side box containing the group index
+      content=""
+      content += """<div class='default' id='rightSide'>"""
+      content += """<div id='rightSideInside'>"""
+      content += """<div id='Index'>"""
+      content += """<h2>Index</h2>"""
+      content += """<ul>"""
+      n = 0
       for group in sorted(self.groups.keys()):
-         content += "<p><h1>%s</h1>\n" % (group)
-         for href in self.groups[group]:
+         content += """<li><a href="#%d">%s</a></li>""" % (n, group)
+         n += 1
+      content += """</ul></div></div></div>"""
+
+      content += """<div class="title">Widget Groups</div>"""
+      n = 0
+      for group in sorted(self.groups.keys()):
+         content += """<p><a name="%d"></a><h1>%s</h1>\n""" % (n, group)
+         n += 1
+         for href in sorted(self.groups[group]):
             content += "%s<br/>\n" % (href)
          content += "</p>\n"
 
