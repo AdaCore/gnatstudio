@@ -18,8 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Commands.Custom;          use Commands, Commands.Custom;
-with Commands.Interactive;     use Commands.Interactive;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
@@ -78,14 +76,9 @@ package body Startup_Module is
       Description : Gtk_Text_Buffer;
       Implementation : Gtk_Text_Buffer;
       Script_Name : Gtk_Label;
-      Init        : Gtk_Box;
-      Init_Box    : Gtk_Box;
 
       Edited_Iter         : Gtk_Tree_Iter;
       --  Currently selected script
-
-      Init_Editor         : Commands.Interactive.Command_Editor;
-      --  Graphical editor for the initialization commands
    end record;
    type Startup_Editor is access all Startup_Editor_Record'Class;
 
@@ -104,10 +97,6 @@ package body Startup_Module is
 
    procedure Save (Editor : access Startup_Editor_Record'Class);
    --  Save the changes done in Editor into the kernel
-
-   procedure Save_Initialization_String
-     (Editor : access Startup_Editor_Record'Class);
-   --  Save the currently edited initialization string into the tree
 
    procedure Set_Modified
      (Editor : access Startup_Editor_Record'Class;
@@ -137,31 +126,6 @@ package body Startup_Module is
       Set (Editor.Model, Iter, Column_Background, "grey");
    end Set_Modified;
 
-   --------------------------------
-   -- Save_Initialization_String --
-   --------------------------------
-
-   procedure Save_Initialization_String
-     (Editor : access Startup_Editor_Record'Class)
-   is
-      XML, Old       : Node_Ptr;
-   begin
-      if Editor.Init_Editor /= null then
-         XML := To_XML (Editor.Init_Editor);
-
-         Old := +Get_Address
-           (Editor.Model, Editor.Edited_Iter, Column_Initialize);
-         if not Is_Equal (Old, XML.Child) then
-            Set (Editor.Model, Editor.Edited_Iter, Column_Initialize,
-                 +Deep_Copy (XML.Child));
-            Set_Modified (Editor, Editor.Edited_Iter);
-         end if;
-
-         Free (XML);
-         Editor.Init_Editor := null;
-      end if;
-   end Save_Initialization_String;
-
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -176,17 +140,10 @@ package body Startup_Module is
       End_Of_Descr : Integer;
       Contents   : String_Access;
       File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Init       : Glib.Xml_Int.Node_Ptr;
-      Command    : Custom_Command_Access;
    begin
-      Save_Initialization_String (Ed);
-
       Get_Selected (Selection, Model, Iter);
       if Iter /= Null_Iter then
          Ed.Edited_Iter := Iter;
-
-         Set_Sensitive
-           (Ed.Init_Box, Get_Boolean (Ed.Model, Iter, Column_Load));
 
          Set_Text (Ed.Script_Name, Get_String (Model, Iter, Column_Name));
 
@@ -255,25 +212,6 @@ package body Startup_Module is
             end if;
             Free (Contents);
          end if;
-
-         Remove_All_Children (Ed.Init);
-         Init := +Get_Address (Model, Iter, Column_Initialize);
-
-         Command := new Custom_Command;
-         Create
-           (Item                 => Command,
-            Name                 => Get_String (Model, Iter, Column_Name),
-            Kernel               => Ed.Kernel,
-            Command              => Init);
-         Ed.Init_Editor := Create_Command_Editor (Command, Ed.Kernel);
-         Destroy (Command_Access (Command));
-
-         if Ed.Init_Editor /= null then
-            Pack_Start
-              (Ed.Init, Ed.Init_Editor, Expand => True, Fill => True);
-         end if;
-
-         Show_All (Ed.Init);
       end if;
    end On_Selection_Changed;
 
@@ -289,8 +227,6 @@ package body Startup_Module is
       Label  : Gtk_Label;
       Must_Restart : Boolean := False;
    begin
-      Save_Initialization_String (Editor);
-
       Iter := Get_Iter_First (Editor.Model);
       while Iter /= Null_Iter loop
          if Get_Boolean (Editor.Model, Iter, Column_Modified) then
@@ -435,17 +371,6 @@ package body Startup_Module is
       Set_Wrap_Mode (Text, Wrap_None);
       Set_Editable (Text, False);
       Modify_Font (Text, Default_Style.Get_Pref_Font);
-
-      Gtk_New (Scrolled);
-      Gtk_New (Label, -"Initialization");
-      Append_Page (Note, Scrolled, Label);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-
-      Gtk_New_Vbox (Editor.Init_Box);
-      Add_With_Viewport (Scrolled, Editor.Init_Box);
-
-      Gtk_New_Vbox (Editor.Init);
-      Pack_Start (Editor.Init_Box, Editor.Init, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
       Gtk_New (Label, -"Implementation");
