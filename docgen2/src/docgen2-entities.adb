@@ -30,12 +30,11 @@ with String_Utils;              use String_Utils;
 
 package body Docgen2.Entities is
 
-   procedure Free (List : in out Cross_Ref_List.Vector);
-   --  Free memory used by the List
-
    procedure Xref_Free (Xref : in out Cross_Ref);
    --  Free memory used by Xref
 
+   procedure EInfo_List_Free
+     (EInfo : in out Entity_Info);
    procedure EInfo_Free
      (Loc   : File_Location;
       EInfo : in out Entity_Info);
@@ -60,15 +59,26 @@ package body Docgen2.Entities is
       end if;
    end Xref_Free;
 
-   ----------
-   -- Free --
-   ----------
+   ----------------
+   -- EInfo_Free --
+   ----------------
 
    procedure EInfo_Free
      (Loc   : File_Location;
       EInfo : in out Entity_Info)
    is
       pragma Unreferenced (Loc);
+   begin
+      EInfo_List_Free (EInfo);
+   end EInfo_Free;
+
+   ---------------------
+   -- EInfo_List_Free --
+   ---------------------
+
+   procedure EInfo_List_Free
+     (EInfo : in out Entity_Info)
+   is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Entity_Info_Record, Entity_Info);
    begin
@@ -83,9 +93,6 @@ package body Docgen2.Entities is
       Free (EInfo.Name);
       Free (EInfo.Printout);
       EInfo.Generic_Params.Clear;
-      Xref_Free (EInfo.Renamed_Entity);
-      Xref_Free (EInfo.Instantiated_Entity);
-      Xref_Free (EInfo.Full_Declaration);
       EInfo.Children.Clear;
       EInfo.References.Clear;
       EInfo.Calls.Clear;
@@ -93,25 +100,16 @@ package body Docgen2.Entities is
 
       case EInfo.Category is
          when Cat_Class =>
-            Free (EInfo.Parents);
-            Free (EInfo.Class_Children);
-            Free (EInfo.Primitive_Ops);
-
-         when Cat_Variable =>
-            Xref_Free (EInfo.Variable_Type);
-
-         when Cat_Parameter =>
-            Xref_Free (EInfo.Parameter_Type);
-
-         when Cat_Subprogram | Cat_Entry =>
-            Xref_Free (EInfo.Return_Type);
+            EInfo.Parents.Clear;
+            EInfo.Class_Children.Clear;
+            EInfo.Primitive_Ops.Clear;
 
          when others =>
             null;
       end case;
 
       Internal (EInfo);
-   end EInfo_Free;
+   end EInfo_List_Free;
 
    ----------------------
    -- Ensure_Loc_Index --
@@ -244,6 +242,19 @@ package body Docgen2.Entities is
    begin
       for J in List.First_Index .. List.Last_Index loop
          List.Update_Element (J, Xref_Free'Access);
+      end loop;
+
+      List.Clear;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Entity_Info_List.Vector) is
+   begin
+      for J in List.First_Index .. List.Last_Index loop
+         List.Update_Element (J, EInfo_List_Free'Access);
       end loop;
 
       List.Clear;

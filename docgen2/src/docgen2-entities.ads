@@ -128,7 +128,7 @@ package Docgen2.Entities is
          --  Printout location (includes preceding keywords as 'package',
          --  'procedure' and so on)
 
-         Body_Location        : File_Location;
+         Body_Location        : File_Location := No_File_Location;
          --  Entity's body location in line/column/file format
 
          Is_Abstract          : Boolean := False;
@@ -212,7 +212,9 @@ package Docgen2.Entities is
      (File_Location, Entity_Info, Hash, Equivalent_Keys);
    --  A hashed set of nodes, identified by their 'loc' attribute
 
+   procedure Free (List : in out Entity_Info_List.Vector);
    procedure Free (List : in out Entity_Info_Map.Map);
+   procedure Free (List : in out Cross_Ref_List.Vector);
    --  Free memory used by List
 
    function To_Category (Category : Language_Category)

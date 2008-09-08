@@ -535,6 +535,7 @@ package body Docgen2 is
       begin
          E_Info := new Entity_Info_Record (Category => To_Category (Cat));
          E_Info.Lang_Category := Cat;
+         E_Info.Body_Location := No_File_Location;
 
          if Loc /= No_File_Location then
             if Context_Elem.Pkg_Entity /= null then
@@ -758,13 +759,9 @@ package body Docgen2 is
                        Context.Comments);
 
                   --  ??? need a better handling of formal parameters types
-                  Param_EInfo.Parameter_Type := new Cross_Ref_Record'
-                    (Name          => new String'
-                       (Kind_To_String (Get_Kind (Param_Entity))),
-                     Location      => No_File_Location,
-                     Xref          => null,
-                     Inherited     => False,
-                     Overriding_Op => null);
+                  Param_EInfo.Parameter_Type := Create_Xref
+                    (Name => Kind_To_String (Get_Kind (Param_Entity)),
+                     Loc  => No_File_Location);
 
                   E_Info.Generic_Params.Append (Param_EInfo);
 
@@ -961,6 +958,8 @@ package body Docgen2 is
                         end if;
                      end loop;
                   end;
+
+                  Destroy (Iter);
                end;
 
             when Cat_Variable =>
@@ -1547,12 +1546,12 @@ package body Docgen2 is
 
             Templates_Parser.Release_Cache;
             Free (Command.EInfos);
-            --  Don't free the internal data of those lists, as they are just
-            --  pointers to the Documentation structure, which has already been
-            --  freed in Command.EInfos
-            Command.Xref_List.Clear;
-            Command.Package_List.Clear;
+            Free (Command.Package_List);
+            Free (Command.Xref_List);
+            --  Just clear the Class list as all xref are already freed by
+            --  the previous global xref list cleanup.
             Command.Class_List.Clear;
+            --  Files are controlled objects that do not need explicit cleanup
             Command.Src_Files.Clear;
 
             Thaw (Database);
@@ -1644,8 +1643,7 @@ package body Docgen2 is
       Parse_All_LI_Information (Kernel, P, Recursive);
 
       declare
-         Source_Files  : constant File_Array_Access :=
-                           Get_Source_Files (P, Recursive);
+         Source_Files  : File_Array_Access := Get_Source_Files (P, Recursive);
       begin
          C := new Docgen_Command;
 
@@ -1658,6 +1656,7 @@ package body Docgen2 is
          end loop;
          C.Options        := Options;
          C.Analysis_Ctxt.Iter := Null_Construct_Tree_Iterator;
+         Unchecked_Free (Source_Files);
       end;
 
       Launch_Background_Command

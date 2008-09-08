@@ -671,6 +671,7 @@ package body Projects is
       Index   : Natural := 1;
       P       : Project_Type;
       Sources : File_Array_Access;
+      Ret     : File_Array_Access;
 
    begin
       if not Recursive then
@@ -720,7 +721,9 @@ package body Projects is
             Next (Iter);
          end loop;
 
-         return new File_Array'(Sources (Sources'First .. Index - 1));
+         Ret := new File_Array'(Sources (Sources'First .. Index - 1));
+         Unchecked_Free (Sources);
+         return Ret;
       end;
    end Get_Source_Files;
 
