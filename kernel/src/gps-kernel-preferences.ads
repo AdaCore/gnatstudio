@@ -109,7 +109,6 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics
        (Entities.Queries.Dispatching_Menu_Policy);
 
-
    -----------------------
    -- List of constants --
    -----------------------
