@@ -3406,6 +3406,11 @@ time.  After a global look up, information is cached in memory, so that
 further global queries will be faster.
 @end table
 
+@item Show expanded code
+For Ada files only, this entry will generate a .dg file using your gnat
+compiler, and will open this file at the location corresponding to the current
+source line.
+
 @end table
 
 @c --------------------------------------------------------------------
