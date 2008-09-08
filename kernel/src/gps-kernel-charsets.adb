@@ -160,7 +160,7 @@ package body GPS.Kernel.Charsets is
    -- Edit --
    ----------
 
-   function Edit
+   overriding function Edit
      (Pref               : access Charset_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class;
       Tips               : Gtk.Tooltips.Gtk_Tooltips)
