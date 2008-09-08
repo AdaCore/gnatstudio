@@ -16,6 +16,18 @@ def create_dg (f, str):
 
   res.close()
 
+def edit_dg (dg, line):
+  buf = GPS.EditorBuffer.get (GPS.File (dg), force=True)
+  loc = GPS.EditorLocation (buf, 1, 1)
+  (frm, to) = loc.search ("^-- " + `line` + ":", regexp=True)
+  if frm:
+    buf.current_view().goto (frm.forward_line (1))
+  GPS.MDI.get_by_child (buf.current_view()).raise_window()
+
+def on_exit (process, status, full_output):
+  create_dg (process.dg, full_output)
+  edit_dg (process.dg, process.line)
+
 def show_gnatdg():
   """Show the .dg file of the current file"""
   GPS.MDI.save_all (False)
@@ -30,16 +42,11 @@ def show_gnatdg():
                  package="ide", index="ada")
     cmd = gnatmake + " -q -P" + GPS.Project.root().file().name() + \
           " -f -c -u -gnatc -gnatws -gnatGL " + file
-    str = GPS.Process (cmd).get_result()
-    create_dg (dg, str)
-
-  buf = GPS.EditorBuffer.get (GPS.File (dg), force=True)
-  GPS.MDI.get_by_child (buf.current_view()).raise_window()
-  loc = GPS.EditorLocation (buf, 1, 1)
-  (frm, to) = loc.search ("^-- " + `line` + ":", regexp=True)
-
-  if frm:
-    buf.current_view().goto (frm.forward_line (1))
+    proc = GPS.Process (cmd, on_exit=on_exit)
+    proc.dg = dg
+    proc.line = line
+  else:
+    edit_dg (dg, line)
 
 def on_gps_started (hook):
   GPS.parse_xml ("""<action name="show expanded code" category="Ada" output="none">
