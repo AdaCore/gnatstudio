@@ -238,4 +238,10 @@
       </Category>
     </Categories>
   </Language>
+
+  <Language>
+    <Name>GNAT Expanded Code</Name>
+    <Parent>Ada</Parent>
+    <Body_Suffix>.dg</Body_Suffix>
+  </Language>
 </GPS>
