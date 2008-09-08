@@ -1003,6 +1003,7 @@ package body Project_Viewers is
       pragma Unreferenced (Page, Full_Project);
       Switches : Switches_Editors.Switches_Edit;
    begin
+      Run_Hook (Kernel, Project_Editor_Hook);
       Gtk_New (Switches, Kernel);
       Show_All (Switches);
       Set_Switches (Switches, Project);
