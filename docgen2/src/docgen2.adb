@@ -2528,33 +2528,39 @@ package body Docgen2 is
 
                --  Init primitive operations
                Vector_Sort.Sort (Child_EInfo.Primitive_Ops);
+               Prev_Xref := null;
 
                for J in Child_EInfo.Primitive_Ops.First_Index ..
                  Child_EInfo.Primitive_Ops.Last_Index
                loop
                   Xref := Child_EInfo.Primitive_Ops.Element (J);
 
-                  Prim_Op_Str := To_Unbounded_String
-                    (Gen_Href (Command.Backend, Xref));
-
-                  if Xref.Overriding_Op /= null
-                    and then not Xref.Inherited
+                  if Prev_Xref = null
+                    or else Prev_Xref.Location /= Xref.Location
                   then
-                     Append
-                       (Prim_Op_Str,
-                        " (overriding " &
-                        Gen_Href
-                          (Command.Backend,
-                           Xref.Overriding_Op) &
-                        ")");
-                  end if;
+                     Prev_Xref := Xref;
+                     Prim_Op_Str := To_Unbounded_String
+                       (Gen_Href (Command.Backend, Xref));
 
-                  if Xref.Inherited then
-                     Append
-                       (Prim_Op_Str, " (Inherited)");
-                  end if;
+                     if Xref.Overriding_Op /= null
+                       and then not Xref.Inherited
+                     then
+                        Append
+                          (Prim_Op_Str,
+                           " (overriding " &
+                           Gen_Href
+                             (Command.Backend,
+                              Xref.Overriding_Op) &
+                           ")");
+                     end if;
 
-                  Append (Prim_Tag, Prim_Op_Str);
+                     if Xref.Inherited then
+                        Append
+                          (Prim_Op_Str, " (Inherited)");
+                     end if;
+
+                     Append (Prim_Tag, Prim_Op_Str);
+                  end if;
                end loop;
 
                Append (Class_Primitives, Prim_Tag);
@@ -3136,7 +3142,9 @@ package body Docgen2 is
       while Entity_Info_Map.Has_Element (Map_Cursor) loop
          EInfo := Entity_Info_Map.Element (Map_Cursor);
 
-         if EInfo.Category /= Cat_Parameter then
+         if EInfo.Category /= Cat_Parameter
+           and then not EInfo.Hidden
+         then
             Letter := To_Upper (EInfo.Short_Name (EInfo.Short_Name'First));
             List_Index := Index (Entity_Index, Letter);
             Local_List (List_Index).Append (EInfo);

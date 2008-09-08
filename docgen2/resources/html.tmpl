@@ -387,7 +387,7 @@
                   / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
                  @@END_IF@@
               </h3>
-              <div class='details'>@_REPLACE(\(/<table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</td></tr></table>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\s*\<span/;</td></tr><tr><td></td><td><span):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
+              <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
               @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
               <div class='profile'>
                 <h4>References:</h4>
@@ -433,7 +433,7 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        <div class='details'>@_REPLACE(\(/<table><tr><td>\(</td><td>):REPLACE(\)[ \n]*/\)</td></tr></table>):REPLACE_ALL(span\>\s*[:]/span></td><td>:):REPLACE_ALL(;\s*\<span/;</td></tr><tr><td></td><td><span):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</div>
+        <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</div>
         @@IF@@ @_EXIST:SUBP_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
