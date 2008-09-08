@@ -345,7 +345,7 @@ package body GPS.Location_View is
 
    type Clear_Locations_View_Command is new Interactive_Command
       with null record;
-   function Execute
+   overriding function Execute
      (Command : access Clear_Locations_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove everything in the Location_View
@@ -443,7 +443,7 @@ package body GPS.Location_View is
       View : Location_View;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -453,7 +453,7 @@ package body GPS.Location_View is
    -- Execute --
    -------------
 
-   procedure Execute
+   overriding procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
@@ -2797,7 +2797,7 @@ package body GPS.Location_View is
    -- Execute --
    -------------
 
-   function Execute
+   overriding function Execute
      (Command : access Clear_Locations_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

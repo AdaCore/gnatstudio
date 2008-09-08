@@ -87,7 +87,7 @@ package body Default_Preferences.Enums is
    -- Free --
    ----------
 
-   procedure Free (Pref : in out Choice_Preference_Record) is
+   overriding procedure Free (Pref : in out Choice_Preference_Record) is
    begin
       Free (Pref.Choices);
       Free (Preference_Record (Pref));
