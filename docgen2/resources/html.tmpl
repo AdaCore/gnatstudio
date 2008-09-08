@@ -71,11 +71,7 @@
       @@INCLUDE@@ index_entry.tmpl @_SUBP_@ @_SUBP_LOC_@ subp-spec
       @@END_TABLE@@
       @@TABLE@@
-        @@IF@@ @_EXIST:TASK_ENTRY_@
-          @@TABLE@@
-            @@INCLUDE@@ index_entry.tmpl @_TASK_ENTRY_PARENT_@.@_TASK_ENTRY_@ @_TASK_ENTRY_LOC_@ subp-spec
-          @@END_TABLE@@
-        @@END_IF@@
+        @@INCLUDE@@ index_entry.tmpl @_TASK_ENTRY_PARENT_@.@_TASK_ENTRY_@ @_TASK_ENTRY_LOC_@ subp-spec
       @@END_TABLE@@
       new Array ('dummy', '', ''));
     printIndexList (names);
@@ -101,11 +97,7 @@
       <li class='subp-spec'><a href="#@_SUBP_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):SUBP_@</a></li>
       @@END_TABLE@@
       @@TABLE@@
-        @@IF@@ @_EXIST:TASK_ENTRY_@
-          @@TABLE@@
-            <li class='subp-spec'><a href="#@_TASK_ENTRY_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TASK_ENTRY_@</a></li>
-          @@END_TABLE@@
-        @@END_IF@@
+        <li class='subp-spec'><a href="#@_TASK_ENTRY_LOC_@">@_REPLACE_ALL(([.])/.<wbr/>):REPLACE_ALL((_)/_<wbr/>):TASK_ENTRY_@</a></li>
       @@END_TABLE@@
     </ul>
   </noscript>
@@ -260,11 +252,8 @@
            / <a href="@_TASK_BODY_SRC_@" title="Goto body">Body</a>
           @@END_IF@@
         </h3>
-        @@IF@@ @_EXIST:TASK_ENTRY_@
-        <div>Entries:</div>
-        @@TABLE@@
-          <div><a href="#@_TASK_ENTRY_LOC_@">@_TASK_ENTRY_@</a></div>
-        @@END_TABLE@@
+        @@IF@@ @_EXIST:TASK_ENTRIES_HREF_@
+        <div class="details"><b>Entries:</b>@_TASK_ENTRIES_HREF_@</div>
         @@END_IF@@
         @@IF@@ @_EXIST:TASK_REFERENCES_@
         <div class='profile'>
@@ -371,50 +360,43 @@
   @@IF@@ @_EXIST:SUBP_@ OR @_EXIST:TASK_ENTRY_@
     <div class='subprograms'>
       <h1><a name='Methods' id='Methods'></a>Subprograms &amp; Entries</h1>
-      @@TABLE@@
-        @@IF@@ @_EXIST:TASK_ENTRY_@
         @@TABLE@@
-          <div class='class'>
-            <div>
-              <h3>
-                <a name='@_TASK_ENTRY_LOC_@' id='@_TASK_ENTRY_LOC_@'></a>
-                <span class="type">
-                  <a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a>
-                </span>
-                .@_TASK_ENTRY_@
-                 - <a href="@_TASK_ENTRY_SRC_@" title="Goto spec">Spec</a>
-                 @@IF@@  @_EXIST:TASK_ENTRY_BODY_SRC_@
-                  / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
-                 @@END_IF@@
-              </h3>
-              <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
-              @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
-              <div class='profile'>
-                <h4>References:</h4>
-                @@TABLE@@
-                  @@IF@@ @_NO_SPACE:TASK_ENTRY_REFERENCES_@ /= ""
-                  <div><i>@_TASK_ENTRY_REFERENCES_@</i></div>
-                  @@END_IF@@
-                @@END_TABLE@@
-              </div>
+        <div class='class'>
+          <div>
+            <h3>
+              <a name='@_TASK_ENTRY_LOC_@' id='@_TASK_ENTRY_LOC_@'></a>
+              <span class="type"><a href="#@_TASK_ENTRY_PARENT_LOC_@">@_TASK_ENTRY_PARENT_@</a></span>.@_TASK_ENTRY_@
+              - <a href="@_TASK_ENTRY_SRC_@" title="Goto spec">Spec</a>
+              @@IF@@  @_EXIST:TASK_ENTRY_BODY_SRC_@
+               / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
               @@END_IF@@
-              @@IF@@ @_EXIST:TASK_ENTRY_CALLED_@
-              <div class='profile'>
-                <h4>Called by:</h4>
-                @@TABLE@@
-                  @@IF@@ @_NO_SPACE:TASK_ENTRY_CALLED_@ /= ""
-                  <div><i>@_TASK_ENTRY_CALLED_@</i></div>
-                  @@END_IF@@
-                @@END_TABLE@@
-              </div>
-              @@END_IF@@
-              @@IF@@ @_NO_SPACE:TASK_ENTRY_DESCRIPTION_@ /= ""
-              <div class='comment'>@_TASK_ENTRY_DESCRIPTION_@</div>
-              @@END_IF@@
+            </h3>
+            <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
+            @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
+            <div class='profile'>
+              <h4>References:</h4>
+              @@TABLE@@
+                @@IF@@ @_NO_SPACE:TASK_ENTRY_REFERENCES_@ /= ""
+                <div><i>@_TASK_ENTRY_REFERENCES_@</i></div>
+                @@END_IF@@
+              @@END_TABLE@@
             </div>
+            @@END_IF@@
+            @@IF@@ @_EXIST:TASK_ENTRY_CALLED_@
+            <div class='profile'>
+              <h4>Called by:</h4>
+              @@TABLE@@
+                @@IF@@ @_NO_SPACE:TASK_ENTRY_CALLED_@ /= ""
+                <div><i>@_TASK_ENTRY_CALLED_@</i></div>
+                @@END_IF@@
+              @@END_TABLE@@
+            </div>
+            @@END_IF@@
+            @@IF@@ @_NO_SPACE:TASK_ENTRY_DESCRIPTION_@ /= ""
+            <div class='comment'>@_TASK_ENTRY_DESCRIPTION_@</div>
+            @@END_IF@@
           </div>
-        @@END_TABLE@@
-        @@END_IF@@
+        </div>
       @@END_TABLE@@
       @@TABLE@@
       <div class="class">

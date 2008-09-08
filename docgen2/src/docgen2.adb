@@ -2345,13 +2345,10 @@ package body Docgen2 is
       Task_CI                 : Common_Info_Tags;
       Task_Type               : Vector_Tag;
       Task_Is_Type            : Vector_Tag;
-      Task_Entry              : Vector_Tag;
-      Task_Entry_Cat          : Vector_Tag;
+      Task_Entry_CI           : Common_Info_Tags;
+      Task_Entry_Hrefs        : Vector_Tag;
       Task_Entry_Parent       : Vector_Tag;
       Task_Entry_Parent_Loc   : Vector_Tag;
-      Task_Entry_Loc          : Vector_Tag;
-      Task_Entry_Description  : Vector_Tag;
-      Task_Entry_Printout     : Vector_Tag;
       Type_CI                 : Common_Info_Tags;
       Cst_CI                  : Common_Info_Tags;
       Cst_Type                : Vector_Tag;
@@ -2575,15 +2572,10 @@ package body Docgen2 is
 
             --  Init entities common information
             declare
-               Entry_Tag        : Vector_Tag;
-               Entry_Cat_Tag    : Vector_Tag;
-               Entry_Parent_Tag : Vector_Tag;
-               Entry_P_Loc_Tag  : Vector_Tag;
-               Entry_Loc_Tag    : Vector_Tag;
-               Entry_Print_Tag  : Vector_Tag;
-               Entry_Descr_Tag  : Vector_Tag;
-               Entry_Cursor     : Entity_Info_List.Cursor;
-               E_Entry          : Entity_Info;
+               Entries_Href : Unbounded_String;
+               Entry_Cursor : Entity_Info_List.Cursor;
+               E_Entry      : Entity_Info;
+               First        : Boolean := True;
 
             begin
                Init_Common_Informations (Child_EInfo, Task_CI);
@@ -2594,32 +2586,33 @@ package body Docgen2 is
 
                while Entity_Info_List.Has_Element (Entry_Cursor) loop
                   E_Entry := Entity_Info_List.Element (Entry_Cursor);
+                  Init_Common_Informations (E_Entry, Task_Entry_CI);
 
-                  Append (Entry_Tag, E_Entry.Name.all);
-                  Append (Entry_Cat_Tag, Image (E_Entry.Lang_Category));
-                  Append (Entry_Parent_Tag, Child_EInfo.Name.all);
-                  Append (Entry_P_Loc_Tag,
-                          Location_Image (Child_EInfo));
-                  Append (Entry_Loc_Tag,
-                          Location_Image (E_Entry));
-                  Format_Printout (E_Entry);
-                  Append (Entry_Print_Tag, E_Entry.Printout.all);
+                  if First then
+                     First := False;
+                  else
+                     Append (Entries_Href, ", ");
+                  end if;
 
                   Append
-                    (Entry_Descr_Tag,
-                     Filter_Documentation
-                       (To_String (E_Entry.Description), Command.Options));
+                    (Entries_Href,
+                     Command.Backend.Gen_Href
+                       (E_Entry.Name.all,
+                        Command.Backend.To_Href
+                          (Location_Image (E_Entry),
+                           Base_Name
+                             (Get_Filename
+                                (E_Entry.Location.File_Loc.File)),
+                           E_Entry.Location.Pkg_Nb),
+                        E_Entry.Name.all));
 
+                  Append (Task_Entry_Parent, Child_EInfo.Name.all);
+                  Append (Task_Entry_Parent_Loc,
+                          Location_Image (Child_EInfo));
                   Entity_Info_List.Next (Entry_Cursor);
                end loop;
 
-               Append (Task_Entry, Entry_Tag);
-               Append (Task_Entry_Cat, Entry_Cat_Tag);
-               Append (Task_Entry_Parent, Entry_Parent_Tag);
-               Append (Task_Entry_Parent_Loc, Entry_P_Loc_Tag);
-               Append (Task_Entry_Loc, Entry_Loc_Tag);
-               Append (Task_Entry_Description, Entry_Descr_Tag);
-               Append (Task_Entry_Printout, Entry_Print_Tag);
+               Append (Task_Entry_Hrefs, Entries_Href);
             end;
 
             --  TYPES HANDLING --
@@ -2742,15 +2735,11 @@ package body Docgen2 is
       Insert_Common_Informations ("TASK", Task_CI);
       Insert (Translation, Assoc ("TASK_TYPE", Task_Type));
       Insert (Translation, Assoc ("TASK_IS_TYPE", Task_Is_Type));
-      Insert (Translation, Assoc ("TASK_ENTRY", Task_Entry));
-      Insert (Translation, Assoc ("TASK_ENTRY_CAT", Task_Entry_Cat));
+      Insert_Common_Informations ("TASK_ENTRY", Task_Entry_CI);
+      Insert (Translation, Assoc ("TASK_ENTRIES_HREF", Task_Entry_Hrefs));
       Insert (Translation, Assoc ("TASK_ENTRY_PARENT", Task_Entry_Parent));
       Insert (Translation,
               Assoc ("TASK_ENTRY_PARENT_LOC", Task_Entry_Parent_Loc));
-      Insert (Translation, Assoc ("TASK_ENTRY_LOC", Task_Entry_Loc));
-      Insert (Translation,
-              Assoc ("TASK_ENTRY_DESCRIPTION", Task_Entry_Description));
-      Insert (Translation, Assoc ("TASK_ENTRY_PRINTOUT", Task_Entry_Printout));
       Insert_Common_Informations ("TYPE", Type_CI);
       Insert_Common_Informations ("CST", Cst_CI);
       Insert (Translation, Assoc ("CST_TYPE", Cst_Type));
