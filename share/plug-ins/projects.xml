@@ -46,7 +46,7 @@
           <choice>avr-gnatmake</choice>
           <choice>dotnet-gnatmake</choice>
           <choice>gnaampmake</choice>
-          <choice>jgnatmake</choice>
+          <choice>jvm-gnatmake</choice>
           <string />
       </specialized_index>
       <specialized_index value="C">
@@ -82,7 +82,7 @@
        <choice>avr-gnatls</choice>
        <choice>dotnet-gnatls</choice>
        <choice>gnaampls</choice>
-       <choice>jgnatls</choice>
+       <choice>jvm-gnatls</choice>
        <string />
    </project_attribute>
 
@@ -108,7 +108,7 @@
        <choice>avr-gnat</choice>
        <choice>dotnet-gnat</choice>
        <choice>gnaampcmd</choice>
-       <choice>jgnatcmd</choice>
+       <choice>jvm-gnat</choice>
        <string />
    </project_attribute>
 
