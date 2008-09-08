@@ -32,14 +32,16 @@ package body Switches_Parser is
    -------------------------
 
    procedure Parse_Switches_Node
-     (Current_Tool_Name    : String;
-      Current_Tool_Config  : out Switches_Editor_Config;
-      Error_Message : out Unbounded_String;
-      Finder        : Other_Config_Finder;
-      Node          : Glib.Xml_Int.Node_Ptr)
+     (Current_Tool_Name   : String;
+      Current_Tool_Config : out Switches_Editor_Config;
+      Error_Message       : out Unbounded_String;
+      Finder              : Other_Config_Finder;
+      Node                : Glib.Xml_Int.Node_Ptr)
    is
-      Char       : constant String := Get_Attribute (Node, "switch_char", "-");
-      Default_Sep : constant String := Get_Attribute (Node, "separator", "");
+      Char        : constant String :=
+                      Get_Attribute (Node, "switch_char", "-");
+      Default_Sep : constant String :=
+                      Get_Attribute (Node, "separator", "");
 
       Scrolled_Window   : Boolean;
       Show_Command_Line : Boolean;
@@ -72,7 +74,7 @@ package body Switches_Parser is
       function Process_Combo_Entry_Nodes
         (Parent : Node_Ptr) return Combo_Switch_Array;
       --  Return the contents of all the <radio-entry> and
-      --  <combo-entry> nodes of Parent
+      --  <combo-entry> nodes of Parent.
 
       procedure Parse_Popup_Or_Main
         (N     : Node_Ptr;
@@ -80,7 +82,7 @@ package body Switches_Parser is
       --  Parse the subnodes of <switches>
 
       procedure Log_Error (S : String);
-      --  Append S to the error log.
+      --  Append S to the error log
 
       procedure Log_Error (S : String) is
       begin
@@ -187,6 +189,7 @@ package body Switches_Parser is
 
          if Master_Page = Current_Tool_Name then
             Config := Current_Tool_Config;
+
          else
             if Finder = null then
                Log_Error (-("<dependency> node not supported."));
@@ -222,7 +225,7 @@ package body Switches_Parser is
         (Parent : Node_Ptr;
          Radio  : Radio_Switch)
       is
-         N            : Node_Ptr := Parent.Child;
+         N : Node_Ptr := Parent.Child;
       begin
          while N /= null loop
             if N.Tag.all = "radio-entry" then
@@ -397,8 +400,8 @@ package body Switches_Parser is
 
       procedure Process_Field_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
-         Label   : constant String := Get_Attribute (N, "label");
-         Switch  : constant String := Get_Attribute (N, "switch");
+         Label     : constant String := Get_Attribute (N, "label");
+         Switch    : constant String := Get_Attribute (N, "switch");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -503,6 +506,7 @@ package body Switches_Parser is
                Column     => Col,
                Add_Before => Get_Attribute (N, "before") = "true",
                Popup      => Popup);
+
          else
             declare
                Default : constant String :=
@@ -568,8 +572,8 @@ package body Switches_Parser is
       ----------------------------
 
       procedure Process_Expansion_Node (N : Node_Ptr) is
-         Switch       : constant String := Get_Attribute (N, "switch");
-         Alias        : constant String := Get_Attribute (N, "alias");
+         Switch : constant String := Get_Attribute (N, "switch");
+         Alias  : constant String := Get_Attribute (N, "alias");
       begin
          if Switch = "" then
             Log_Error
@@ -617,7 +621,7 @@ package body Switches_Parser is
             elsif N2.Tag.all = "dependency" then
                Process_Dependency_Node (N2);
             elsif N2.Tag.all = "default-value-dependency" then
-               --  Process this node after all other nodes have been parsed.
+               --  Process this node after all other nodes have been parsed
                null;
             elsif N2.Tag.all = "expansion" then
                Process_Expansion_Node (N2);

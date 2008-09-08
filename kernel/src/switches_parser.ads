@@ -32,11 +32,11 @@ package Switches_Parser is
    --  See Parse_Switches_Node
 
    procedure Parse_Switches_Node
-     (Current_Tool_Name    : String;
-      Current_Tool_Config  : out Switches_Editor_Config;
-      Error_Message        : out Unbounded_String;
-      Finder               : Other_Config_Finder;
-      Node                 : Glib.Xml_Int.Node_Ptr);
+     (Current_Tool_Name   : String;
+      Current_Tool_Config : out Switches_Editor_Config;
+      Error_Message       : out Unbounded_String;
+      Finder              : Other_Config_Finder;
+      Node                : Glib.Xml_Int.Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
    --  Current_Tool_Name is the name of the tool we are currently parsing.
    --  Node contains the XML data to parse.
