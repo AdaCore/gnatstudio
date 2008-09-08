@@ -17,12 +17,12 @@ def create_dg (f, str):
   res.close()
 
 def edit_dg (dg, line):
-  buf = GPS.EditorBuffer.get (GPS.File (dg), force=True)
+  buf = GPS.EditorBuffer.get (GPS.File (dg))
+  GPS.MDI.get_by_child (buf.current_view()).raise_window()
   loc = GPS.EditorLocation (buf, 1, 1)
   (frm, to) = loc.search ("^-- " + `line` + ":", regexp=True)
   if frm:
     buf.current_view().goto (frm.forward_line (1))
-  GPS.MDI.get_by_child (buf.current_view()).raise_window()
 
 def on_exit (process, status, full_output):
   create_dg (process.dg, full_output)
