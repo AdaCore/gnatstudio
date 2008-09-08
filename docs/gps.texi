@@ -3408,8 +3408,10 @@ further global queries will be faster.
 
 @item Show expanded code
 For Ada files only, this entry will generate a .dg file using your gnat
-compiler, and will open this file at the location corresponding to the current
-source line.
+compiler (using the -gnatGL switch), and will open this file at the location
+corresponding to the current source line. this can be useful when investigating
+low-level issues and tracing precisely how the source code is transformed by
+the GNAT front-end.
 
 @end table
 

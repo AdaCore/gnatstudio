@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 05, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 08, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-H908-001 New contextual menu 'Show expanded code' (2008-09-08)
+
+  For Ada files, a new contextual menu entry is provided to navigate in
+  GNAT's expanded source code.
 
 NF-43-H903-013 SPARK plug-in improved (2008-09-03)
 
