@@ -1079,14 +1079,26 @@ package body Docgen2 is
          when Analysis_Setup =>
             Current := 0;
          when Analyse_Files | Analyse_File_Constructs =>
-            Current := Files_List.To_Index (Command.File_Index);
+            if Has_Element (Command.File_Index) then
+               Current := Files_List.To_Index (Command.File_Index);
+            else
+               Current := Total1;
+            end if;
          when Analysis_Tear_Down | Gen_Doc_Setup =>
             Current := Total1;
          when Gen_Doc_Annotated_Src =>
-            Current := Total1 + Files_List.To_Index (Command.File_Index);
+            if Has_Element (Command.File_Index) then
+               Current := Total1 + Files_List.To_Index (Command.File_Index);
+            else
+               Current := 2 * Total1;
+            end if;
          when Gen_Doc_Spec =>
-            Current := 2 * Total1 +
-              Entity_Info_List.To_Index (Command.Cursor);
+            if Entity_Info_List.Has_Element (Command.Cursor) then
+               Current := 2 * Total1 +
+                 Entity_Info_List.To_Index (Command.Cursor);
+            else
+               Current := 2 * Total1 + Total2;
+            end if;
          when Gen_Doc_Tear_Down =>
             Current := 2 * Total1 + Total2;
       end case;
@@ -3252,22 +3264,24 @@ package body Docgen2 is
 
          Add_Custom_Index (Cmd, Translation);
 
-         if Letter = '*' then
-            Ada.Text_IO.Create
-              (File_Handle,
-               Name => Get_Doc_Directory (Cmd) &
-               Cmd.Backend.To_Destination_Name
-                 ("index" & Letter_Kind & "other"));
-         else
-            Ada.Text_IO.Create
-              (File_Handle,
-               Name => Get_Doc_Directory (Cmd) &
-               Cmd.Backend.To_Destination_Name
-                 ("index" & Letter_Kind & Letter));
+         if not Local_List (J).Is_Empty then
+            if Letter = '*' then
+               Ada.Text_IO.Create
+                 (File_Handle,
+                  Name => Get_Doc_Directory (Cmd) &
+                  Cmd.Backend.To_Destination_Name
+                    ("index" & Letter_Kind & "other"));
+            else
+               Ada.Text_IO.Create
+                 (File_Handle,
+                  Name => Get_Doc_Directory (Cmd) &
+                  Cmd.Backend.To_Destination_Name
+                    ("index" & Letter_Kind & Letter));
+            end if;
+            Ada.Text_IO.Put
+              (File_Handle, Parse (Tmpl, Translation, Cached => True));
+            Ada.Text_IO.Close (File_Handle);
          end if;
-         Ada.Text_IO.Put
-           (File_Handle, Parse (Tmpl, Translation, Cached => True));
-         Ada.Text_IO.Close (File_Handle);
 
          --  Special handling for the first non empty lists: we need
          --  this list to be named entities.html, so that other files
