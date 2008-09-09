@@ -1524,6 +1524,7 @@ gvd_close_tty (TTY_Handle* t)
 }
 
 void
-gvd_setup_winsize (pty_desc *desc, int rows, int columns) {
+gvd_setup_winsize (void *desc, int rows, int columns)
+{
 }
 #endif /* WIN32 */
