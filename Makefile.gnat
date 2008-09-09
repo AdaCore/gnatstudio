@@ -106,8 +106,9 @@ GNAT_SOURCES= \
   sinput-p.adb \
   sinput.ads \
   sinput.adb \
-  snames.ads \
-  snames.adb \
+  snames.ads-tmpl \
+  snames.adb-tmpl \
+  snames.h-tmpl \
   stand.ads \
   stand.adb \
   stringt.ads \
@@ -139,6 +140,7 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb \
   impunit.adb \
+  xsnamest.adb \
   g-comlin.ads \
   g-comlin.adb \
   gnat_style.css
