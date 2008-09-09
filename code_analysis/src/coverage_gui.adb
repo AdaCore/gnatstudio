@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
 
-with Language;      use Language;
+with Language;                  use Language;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 with Language.Unknown;          use Language.Unknown;
@@ -211,7 +211,7 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access)
    is
-      Line_Info  : Line_Information_Data;
+      Line_Info : Line_Information_Data;
    begin
       Code_Analysis_GUI.Initialize_Graphics (Kernel);
 
@@ -241,7 +241,7 @@ package body Coverage_GUI is
    --------------------------------------
 
    procedure Remove_File_Coverage_Annotations
-     (Kernel : Kernel_Handle;
+     (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
       Remove_Line_Information_Column
@@ -427,7 +427,7 @@ package body Coverage_GUI is
     Projects : Code_Analysis_Tree)
    is
       use Project_Maps;
-      Map_Cur  : Project_Maps.Cursor := Projects.First;
+      Map_Cur : Project_Maps.Cursor := Projects.First;
    begin
       for J in 1 .. Integer (Projects.Length) loop
          Clear_Project_Locations (Kernel, Element (Map_Cur));
@@ -441,8 +441,8 @@ package body Coverage_GUI is
    --------------------
 
    function Find_Gcov_File
-     (Kernel  : Kernel_Handle;
-      Source  : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
+     (Kernel : Kernel_Handle;
+      Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
       Gcov_Root : String_Access;
       Result    : GNATCOLL.VFS.Virtual_File;
@@ -465,7 +465,7 @@ package body Coverage_GUI is
               (Get_Root_Project (Get_Registry (Kernel).all), False, False)
             & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
       else
-         --  Look for the gcov file in the path pointed by GCOV_ROOT.
+         --  Look for the gcov file in the path pointed by GCOV_ROOT
          Result := Create
            (Gcov_Root.all & Directory_Separator &
             Base_Name (Source) & Gcov_Extension_Cst);
@@ -498,6 +498,7 @@ package body Coverage_GUI is
                return True;
             end if;
          end;
+
       else
          if Prj_Node.Analysis_Data.Coverage_Data /= null and then
            Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then

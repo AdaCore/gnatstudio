@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,16 +24,16 @@
 
 with GNATCOLL.Traces;
 with Glib;
-with GPS.Kernel;    use GPS.Kernel;
-with GPS.Intl;      use GPS.Intl;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with Traces;        use Traces;
-with Code_Analysis; use Code_Analysis;
+with GPS.Kernel;      use GPS.Kernel;
+with GPS.Intl;        use GPS.Intl;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with Traces;          use Traces;
+with Code_Analysis;   use Code_Analysis;
 
 package Coverage_GUI is
 
    Gcov_Extension_Cst : constant String := ".gcov";
-   --  Constant String that represents the extension of GCOV files.
+   --  Constant String that represents the extension of GCOV files
 
    CodeAnalysis_Cst   : constant String := "CodeAnalysis";
    Coverage_Category  : constant Glib.UTF8_String := -"Uncovered lines";
@@ -47,7 +47,7 @@ package Coverage_GUI is
    procedure Add_Gcov_Project_Info
      (Kernel   : Kernel_Handle;
       Prj_Node : Project_Access);
-   --  Try to load Gcov information for every files of the given project.
+   --  Try to load Gcov information for every files of the given project
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
@@ -82,36 +82,36 @@ package Coverage_GUI is
    procedure Add_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Add the coverage annotation columns to the corresponding src_editor.
+   --  Add the coverage annotation columns to the corresponding src_editor
 
    procedure Remove_File_Coverage_Annotations
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Removes coverage annotations of src_editor of the given file.
+   --  Removes coverage annotations of src_editor of the given file
 
    procedure List_File_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access);
-   --  Add to the Locations view the not covered lines of the given File_Node.
+   --  Add to the Locations view the not covered lines of the given File_Node
 
    procedure List_Project_Uncovered_Lines
      (Kernel       : Kernel_Handle;
       Project_Node : Project_Access);
-   --  Add to the location view the not covered lines of the given Project.
+   --  Add to the location view the not covered lines of the given Project
 
    procedure Add_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
-   --  Add coverage annotations of the src_editors of the files of the project.
+   --  Add coverage annotations of the src_editors of the files of the project
 
    procedure Remove_Project_Coverage_Annotations
      (Kernel : Kernel_Handle; Project_Node : Project_Access);
-   --  Removes coverage annotations from the src_editors of the project files.
+   --  Removes coverage annotations from the src_editors of the project files
 
    procedure List_Subprogram_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access);
-   --  Add to the Locations view the not covered lines of the given Subprogram.
+   --  Add to the Locations view the not covered lines of the given Subprogram
 
    procedure Show_All_Coverage_Information
      (Kernel   : Kernel_Handle;
@@ -128,9 +128,9 @@ package Coverage_GUI is
    --  Remove every coverage annotations of opened source file editors.
 
    function Find_Gcov_File
-     (Kernel  : Kernel_Handle;
-      Source  : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
-   --  Return the gcov file associated with Source.
+     (Kernel : Kernel_Handle;
+      Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
+   --  Return the gcov file associated with Source
 
    function Have_Gcov_Info
      (Projects : Code_Analysis_Tree;

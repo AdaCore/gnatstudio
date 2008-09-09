@@ -76,7 +76,7 @@ package GNAT.Expect.TTY is
      (Descriptor : in out TTY_Process_Descriptor'Class;
       Rows       : Natural;
       Columns    : Natural);
-   --  Sets up the size of the terminal as reported to the spawned process.
+   --  Sets up the size of the terminal as reported to the spawned process
 
 private
 
@@ -114,7 +114,7 @@ private
       Args  : System.Address);
 
    type TTY_Process_Descriptor is new Process_Descriptor with record
-      Process   : System.Address;  --  Underlying structure used in C.
+      Process   : System.Address;  --  Underlying structure used in C
       Use_Pipes : Boolean := True;
    end record;
 

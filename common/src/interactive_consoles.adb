@@ -124,50 +124,50 @@ package body Interactive_Consoles is
    procedure Mark_Set_Handler
      (Console : access Gtk_Widget_Record'Class;
       Params  : Glib.Values.GValues);
-   --  Prevent cursor movements before the prompt.
+   --  Prevent cursor movements before the prompt
 
    function Button_Press_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Handler for the "button_press_event" signal.
+   --  Handler for the "button_press_event" signal
 
    function Button_Release_Handler
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
-   --  Handler for the "button_release_event" signal.
+   --  Handler for the "button_release_event" signal
 
    function Key_Press_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Handler for the "key_press_event" signal.
+   --  Handler for the "key_press_event" signal
 
    procedure Selection_Received_Handler
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
-   --  Handler for the "selection_received" signal.
+   --  Handler for the "selection_received" signal
 
    procedure Size_Allocate_Handler
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
-   --  Handler for the "size_allocate" signal.
+   --  Handler for the "size_allocate" signal
 
    function Delete_Event_Handler
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Handler for the "delete_event" signal.
+   --  Handler for the "delete_event" signal
 
    procedure Replace_Cursor (Console : Interactive_Console);
-   --  If the cursor is in a forbidden zone, place it at the prompt.
+   --  If the cursor is in a forbidden zone, place it at the prompt
 
    function Place_Cursor_At_Prompt
      (Console : Interactive_Console) return Boolean;
-   --  Place the cursor at the prompt mark.
+   --  Place the cursor at the prompt mark
 
    procedure Destroy_Idle (Console : in out Interactive_Console);
-   --  Destroy handler for idle callbacks.
+   --  Destroy handler for idle callbacks
 
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class);
-   --  Called when the console is destroyed.
+   --  Called when the console is destroyed
 
    procedure Insert_And_Execute
      (Object : access Gtk_Widget_Record'Class;
@@ -314,7 +314,7 @@ package body Interactive_Consoles is
          Console.Took_Grab := False;
 
          --  Grab the mouse, keyboard,... so as to avoid recursive loops in
-         --  GPS (user selecting a menu while python is running)
+         --  GPS (user selecting a menu while python is running).
          Ref (Console.Console);
 
          if Get_Window (Console.Console) /= null then
@@ -323,7 +323,7 @@ package body Interactive_Consoles is
             --  filter for that menu), no need to take another. In fact,
             --  taking another would break the above scenario, since in
             --  gtkmenu.c the handler for grab_notify cancels the menu when
-            --  another grab is taken (G305-005)
+            --  another grab is taken (G305-005).
 
             if Gtk.Main.Grab_Get_Current = null then
                Gtk.Main.Grab_Add (Console.Console);
@@ -388,7 +388,7 @@ package body Interactive_Consoles is
       pragma Unreferenced (Console, Dead);
    begin
       --  Process all gtk+ events, so that the text becomes visible
-      --  immediately, even if the python program hasn't finished executing
+      --  immediately, even if the python program hasn't finished executing.
 
       --  Note: since we have grabed the mouse and keyboards, events will only
       --  be sent to the python console, thus avoiding recursive loops inside
@@ -418,7 +418,7 @@ package body Interactive_Consoles is
    -----------------------------------
 
    function Get_Or_Create_Virtual_Console
-     (Console       : Interactive_Console) return Virtual_Console is
+     (Console : Interactive_Console) return Virtual_Console is
    begin
       if Console = null then
          return null;
@@ -536,7 +536,7 @@ package body Interactive_Consoles is
 
       --  Read current user input (there might be none!). Then remove it from
       --  the console temporarily, so that output is not intermixed with user
-      --  input. It will be put back after the output in Terminate_Output
+      --  input. It will be put back after the output in Terminate_Output.
       if Console.User_Input = null then
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
          Console.User_Input := new String'
@@ -568,7 +568,7 @@ package body Interactive_Consoles is
          Console.External_Messages_Tag, Prompt_Iter, Last_Iter);
 
       --  Move the prompt mark at the end of the output, so that user input is
-      --  only read from that point on
+      --  only read from that point on.
 
       if Show_Prompt then
          Display_Prompt (Console);
@@ -881,7 +881,7 @@ package body Interactive_Consoles is
                Errors       => Errors'Unchecked_Access);
          begin
             --  Preserve the focus on the console after an interactive
-            --  execution
+            --  execution.
 
             Grab_Focus (Console.View);
 
@@ -1028,7 +1028,7 @@ package body Interactive_Consoles is
                H       : String_List_Access;
             begin
                --  Move the prompt mark, since the text has been submitted
-               --  and should not be submitted again later
+               --  and should not be submitted again later.
                Display_Prompt (Console);
 
                if Command = ""
@@ -1036,7 +1036,7 @@ package body Interactive_Consoles is
                  and then Console.History /= null
                then
                   --  Move the prompt mark, since the text has been submitted
-                  --  and should not be submitted again later
+                  --  and should not be submitted again later.
                   if not Console.Command_Received then
                      return True;
                   end if;
@@ -1250,7 +1250,7 @@ package body Interactive_Consoles is
       Free (C.Prompt);
       Free (C.User_Input);
 
-      --  Disconnect virtual console (used in scripts) and real console.
+      --  Disconnect virtual console (used in scripts) and real console
 
       if C.Virtual /= null then
          if Interactive_Virtual_Console (C.Virtual).Script /= null then
@@ -1331,7 +1331,7 @@ package body Interactive_Consoles is
       --  The buffer should be destroyed when the view is destroyed
       --  ??? Perhaps we should store it in the module_id, and always reuse it
       --  when the console is created. This allows the user to destroy the
-      --  console without losing its contents
+      --  console without losing its contents.
       Unref (Console.Buffer);
 
       Gtk_New (Console.Uneditable_Tag);
@@ -1776,7 +1776,7 @@ package body Interactive_Consoles is
 
    begin
       --  Initialize the locations array, so that we try and match the regexps
-      --  as few times as possible for efficiency
+      --  as few times as possible for efficiency.
       for L in Locs'Range loop
          Update_Pattern_Loc (L, Link);
          Link := Link.Next;

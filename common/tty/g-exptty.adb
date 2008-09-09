@@ -135,7 +135,6 @@ package body GNAT.Expect.TTY is
          S       : in out String;
          Length  : Natural;
          Ret     : out Natural);
-      --  ??? missing spec
       pragma Import (C, Internal, "gvd_send_header");
 
    begin
