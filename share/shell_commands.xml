@@ -3518,7 +3518,7 @@ def my_print(msg):
    print (msg)
    sys.stdout.set_console()
 
-def on_match (self, unmatched, matched):
+def on_match (self, matched, unmatched):
    my_print "on_match (" + self.id + ")=" + matched
    self.kill()
 
@@ -3536,7 +3536,7 @@ A similar example can be implemented by using a new class. This is slightly
 cleaner, since it doesn't pollute the global namespace.
 
 class My_Gdb (GPS.Process):
-   def matched (self, unmatched, matched):
+   def matched (self, matched, unmatched):
       my_print ("matched " + self.id)
       self.kill()
 
