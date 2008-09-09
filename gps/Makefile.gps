@@ -101,9 +101,9 @@ endif
 ifeq ($(MAIN_ROOT),True)
 
    ifeq ($(OS),Windows_NT)
-      default: resources do_links gpslink all
+      default: resources do_links all
    else
-      default: do_links gpslink all
+      default: do_links all
    endif
 
    resources: force
@@ -115,10 +115,6 @@ ifeq ($(MAIN_ROOT),True)
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 	@sed -e 's/GNAT.Command_Line/GComLin/g' ../gnat_src/g-comlin.ads > ../gnat/gcomlin.ads
 	@sed -e 's/GNAT.Command_Line/GComLin/g' ../gnat_src/g-comlin.adb > ../gnat/gcomlin.adb
-
-
-   gpslink: force
-	cd $(GPS_OBJ_DIR); gnatmake -q -a ../src/gpslink
 
    include ../Makefile.gnat
    include ../builder/src/Makefile.generic
