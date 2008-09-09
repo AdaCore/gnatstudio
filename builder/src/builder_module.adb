@@ -75,6 +75,7 @@ with Histories;                 use Histories;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 
 with Basic_Types;
+with OS_Utils;                  use OS_Utils;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
@@ -563,16 +564,26 @@ package body Builder_Module is
                                  (Get_Project (Kernel),
                                   Compiler_Command_Attribute,
                                   Index => "Ada");
+                  First    : Natural := Gnatmake'First;
+
                begin
                   if Gnatmake'Length > 9
                     and then Gnatmake
                       (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
                   then
                      Old_Vars := Vars;
+
+                     for J in reverse Gnatmake'First .. Gnatmake'Last - 9 loop
+                        if Is_Directory_Separator (Gnatmake (J)) then
+                           First := J + 1;
+                           exit;
+                        end if;
+                     end loop;
+
                      Vars := new Argument_List'
                        (new String'
                           ("--target=" &
-                           Gnatmake (Gnatmake'First .. Gnatmake'Last - 9)) &
+                           Gnatmake (First .. Gnatmake'Last - 9)) &
                         Vars.all);
                      Basic_Types.Unchecked_Free (Old_Vars);
                   end if;
