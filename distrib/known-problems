@@ -1,18 +1,18 @@
 Known Problems fixed in GPS 4.3.0
 
-- H903-019: Generated documentation is displayed incorrectly with IE6
-  Problem:    The documentation generator engine of GPS generates html code
-              that uses the CSS style "white-space: pre;" which is not handled
-              by IE6.
-  Workaround: Use Firefox, IE7, Opera or Safari. They are known to handle
-              correctly this CSS style.
-
 - H909-012: Wrong setting of gprbuild --target switch
   Problem:    When using a full pathname for the gnatmake command in the
               project file (e.g. "c:/gnatpro/bin/powerpc-elf-gnatmake"), GPS
               will launch gprbuild with the wrong --target switch.
   Workaround: Launch gprbuild using the Build->Make->Custom... menu, or use
               gprmake.
+
+- H903-019: Generated documentation is displayed incorrectly with IE6
+  Problem:    The documentation generator engine of GPS generates html code
+              that uses the CSS style "white-space: pre;" which is not handled
+              by IE6.
+  Workaround: Use Firefox, IE7, Opera or Safari. They are known to handle
+              correctly this CSS style.
 
 - H902-002: Duplicate locations for SPARK Examiner error messages
   Problem:    If you use the spark module and examine a file, it happens
