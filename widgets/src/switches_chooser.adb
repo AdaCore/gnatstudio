@@ -589,8 +589,13 @@ package body Switches_Chooser is
       Count : Natural := 0;
    begin
       Start (Cmd, Iter, Expanded => Expanded);
+
       while Has_More (Iter) loop
          Count := Count + 1;
+
+         if Is_New_Section (Iter) then
+            Count := Count + 1;
+         end if;
 
          if Current_Separator (Iter) = " "
            and then Current_Parameter (Iter) /= ""
@@ -604,6 +609,7 @@ package body Switches_Chooser is
       Result := new String_List (1 .. Count);
       Count := Result'First;
       Start (Cmd, Iter, Expanded => Expanded);
+
       while Has_More (Iter) loop
          if Is_New_Section (Iter) then
             Result (Count) := new String'(Current_Section (Iter));
