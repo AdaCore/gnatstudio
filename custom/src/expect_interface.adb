@@ -63,6 +63,8 @@ package body Expect_Interface is
    Before_Kill_Cst      : aliased constant String := "before_kill";
    Remote_Server_Cst    : aliased constant String := "remote_server";
    Show_Command_Cst     : aliased constant String := "show_command";
+   Single_Line_Cst       : aliased constant String := "single_line_regexp";
+   Case_Sensitive_Cst   : aliased constant String := "case_sensitive_regexp";
 
    Constructor_Args : constant Cst_Argument_List :=
                         (2  => Command_Cst'Access,
@@ -75,7 +77,9 @@ package body Expect_Interface is
                          9  => Progress_Total_Cst'Access,
                          10 => Before_Kill_Cst'Access,
                          11 => Remote_Server_Cst'Access,
-                         12 => Show_Command_Cst'Access);
+                         12 => Show_Command_Cst'Access,
+                         13 => Single_Line_Cst'Access,
+                         14 => Case_Sensitive_Cst'Access);
 
    Send_Args : constant Cst_Argument_List :=
                  (Command_Cst'Access, Add_Lf_Cst'Access);
@@ -786,7 +790,10 @@ package body Expect_Interface is
             Show_Bar        : constant Boolean := Nth_Arg (Data, 6, True);
             Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
             Remote_Server   : constant String := Nth_Arg (Data, 11, "");
+            Single_Line     : constant Boolean := Nth_Arg (Data, 13, False);
+            Case_Sensitive  : constant Boolean := Nth_Arg (Data, 14, True);
             Success         : Boolean;
+            Flags           : Regexp_Flags := Multiple_Lines;
 
          begin
             if Command_Line = "" then
@@ -814,8 +821,16 @@ package body Expect_Interface is
             end if;
 
             if Regexp /= "" then
+               if Single_Line then
+                  Flags := Flags or GNAT.Regpat.Single_Line;
+               end if;
+
+               if not Case_Sensitive then
+                  Flags := Flags or GNAT.Regpat.Case_Insensitive;
+               end if;
+
                D.Pattern :=
-                 new Pattern_Matcher'(Compile (Regexp, Multiple_Lines));
+                 new Pattern_Matcher'(Compile (Regexp, Flags));
             end if;
 
             --  Get the Server_Type value
@@ -999,7 +1014,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 12,
+         Maximum_Args => 14,
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Register_Command

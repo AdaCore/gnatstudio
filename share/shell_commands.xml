@@ -3078,11 +3078,12 @@ Access the various suggested fixes through the methods of the Codefix class</des
               def on_output (self, matched, unmatched):
                 self.write (unmatched + matched)
               def on_exit (self, status, full_output):
-                self.destroy ()
+                try: self.destroy ()
+                except: pass  # Might already have been destroyed
               def on_input (self, input):
                 self.send (input)
               def on_destroy (self):
-                self.kill ()
+                self.kill ()  # Will call on_exit
               def __init__ (self, process, args=""):
                 GPS.Console.__init__ \
 		   (self, process, \
@@ -3566,9 +3567,14 @@ My_Gdb()
       <param name="before_kill" default="None">A subprogram</param>
       <param name="remote_server" default="">A string. Possible values are "GPS_Server", the empty string (equivalent to "GPS_Server"), "Build_Server", "Debug_Server", "Execution_Server".</param>
       <param name="show_command" default="False">A boolean</param>
+      <param name="single_line_regexp" default="False">A boolean</param>
+      <param name="case_sensitive_regexp" default="True">A boolean<param>
       <description>Spawn specified command. Command can include triple-quoted strings, similar to python, which will always be preserved as one argument.
 
  If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
+
+regexp is always compiled with the multi_line option, so that "^" and "$" also match at the beginning and end of each line, not just the whole output. You can optionally compile it with the single_line option whereby "." also matches the newline character. Likewise you can set the regexp to be case insensitive by setting case_sensitive_regexp to False.
+
 on_match is a subprogram called with the parameters:
   $1 = the instance of GPS.Process
   $2 = the string which matched the regexp

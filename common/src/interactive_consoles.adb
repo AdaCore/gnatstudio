@@ -240,7 +240,9 @@ package body Interactive_Consoles is
    overriding procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
+      if Console.Console /= null then
+         Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
+      end if;
    end Insert_Text;
 
    ----------------
@@ -1187,8 +1189,6 @@ package body Interactive_Consoles is
         (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Hyper_Link_Record, Hyper_Links);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Virtual_Console_Record'Class, Virtual_Console);
       C     : constant Interactive_Console := Interactive_Console (Console);
       L, L2 : Hyper_Links;
    begin
@@ -1224,8 +1224,13 @@ package body Interactive_Consoles is
               (Interactive_Virtual_Console (C.Virtual).Script, null);
          end if;
          Interactive_Virtual_Console (C.Virtual).Console := null;
-         Unchecked_Free (C.Virtual);
-         --  C.Virtual := null;
+
+         --  Do not free memory, since we could still have instances of
+         --  GPS.Console around. This memory will be freed when the last
+         --  such instance is destroed
+         --  Unchecked_Free (C.Virtual);
+
+         C.Virtual := null;
       end if;
    end On_Destroy;
 
