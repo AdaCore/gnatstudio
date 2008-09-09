@@ -1555,6 +1555,12 @@ package body Docgen2 is
             Command.Src_Files.Clear;
 
             Thaw (Database);
+
+            GPS.Kernel.Console.Insert
+              (Command.Kernel,
+               -"Documentation generated successfully in " &
+               Get_Doc_Directory (Docgen_Object (Command)));
+
             return Success;
       end case;
 
@@ -3338,10 +3344,12 @@ package body Docgen2 is
                Cmd.Src_Files.Element (J).Base_Name));
       end loop;
 
-      Open_Html
-        (Kernel      => Cmd.Kernel,
-         URL_Or_File => Get_Doc_Directory (Cmd) &
-         Cmd.Backend.To_Destination_Name ("index"));
+      if Cmd.Options.Spawn_Browser then
+         Open_Html
+           (Kernel      => Cmd.Kernel,
+            URL_Or_File => Get_Doc_Directory (Cmd) &
+            Cmd.Backend.To_Destination_Name ("index"));
+      end if;
    end Generate_Global_Index;
 
    ----------------------------

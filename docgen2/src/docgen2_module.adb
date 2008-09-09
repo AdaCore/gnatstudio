@@ -66,6 +66,9 @@ package body Docgen2_Module is
       Process_Up_To_Date_Only : Boolean_Preference;
       --  True if docgen should document up to date entities only.
 
+      Spawn_Browser           : Boolean_Preference;
+      --  True if docgen should spawn a browser after documentation generation.
+
       Options                 : Docgen_Options;
       --  Group all the preferences
 
@@ -165,17 +168,19 @@ package body Docgen2_Module is
       pragma Unreferenced (Kernel);
    begin
       Docgen_Module (Docgen_Module_Id).Options :=
-        (Process_Body_Files =>
+        (Process_Body_Files      =>
            Docgen_Module (Docgen_Module_Id).Generate_Body_Files.Get_Pref,
-         Comments_Filter =>
+         Comments_Filter         =>
            Get_Filter
              (Docgen_Module (Docgen_Module_Id).Comments_Filter.Get_Pref),
-         Show_Private       =>
+         Show_Private            =>
            Docgen_Module (Docgen_Module_Id).Show_Private_Entities.Get_Pref,
-         References         =>
+         References              =>
            Docgen_Module (Docgen_Module_Id).Show_References.Get_Pref,
          Process_Up_To_Date_Only =>
-           Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref);
+           Docgen_Module (Docgen_Module_Id).Process_Up_To_Date_Only.Get_Pref,
+         Spawn_Browser           =>
+           Docgen_Module (Docgen_Module_Id).Spawn_Browser.Get_Pref);
 
    exception
       when E : others =>
@@ -472,6 +477,16 @@ package body Docgen2_Module is
             -("Whether Docgen should only document files with up-to-date"
             & " cross ref informations."),
          Label   => -"Up-to-date files only");
+
+      Docgen_Module (Docgen_Module_Id).Spawn_Browser := Create
+        (Get_Preferences (Kernel),
+         Name => "Doc-Spawn-Browser",
+         Default => True,
+         Page    => -"Documentation",
+         Doc     =>
+         -("Whether Docgen should spawn a browser after having generated"
+           & " the documentation."),
+         Label   => -"Spawn a browser");
 
       Add_Hook
         (Kernel, Preferences_Changed_Hook,

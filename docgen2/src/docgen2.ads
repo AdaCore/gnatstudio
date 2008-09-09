@@ -65,6 +65,8 @@ package Docgen2 is
       --  Adding information like "subprogram called by..."
       Process_Up_To_Date_Only : Boolean := True;
       --  True if docgen should process only files having up-to-date cross refs
+      Spawn_Browser           : Boolean := True;
+      --  True if docgen should spawn a browser after having generated the doc
    end record;
 
    procedure Generate
