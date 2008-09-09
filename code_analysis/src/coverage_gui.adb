@@ -26,11 +26,12 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
+
+with Language;      use Language;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
-with Language.Tree.Database;
-with Language.Tree;             use Language.Tree;
 with Language.Unknown;          use Language.Unknown;
+with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
@@ -46,9 +47,9 @@ package body Coverage_GUI is
      (Kernel   : Kernel_Handle;
       Prj_Node : Project_Access)
    is
-      Src_Files : GNATCOLL.VFS.File_Array_Access;
-      Src_File  : GNATCOLL.VFS.Virtual_File;
-      Cov_File  : GNATCOLL.VFS.Virtual_File;
+      Src_Files : File_Array_Access;
+      Src_File  : Virtual_File;
+      Cov_File  : Virtual_File;
    begin
       --  get every source files of the project
       --  check if they are associated with gcov info
@@ -65,7 +66,13 @@ package body Coverage_GUI is
             GPS.Kernel.Console.Insert
               (Kernel,
                -"Could not find coverage file " & Full_Name (Cov_File).all);
-            Set_Error (Get_Or_Create (Prj_Node, Src_File), File_Not_Found);
+
+            declare
+               File_Node : constant Code_Analysis.File_Access :=
+                             Get_Or_Create (Prj_Node, Src_File);
+            begin
+               Set_Error (File_Node, File_Not_Found);
+            end;
          end if;
       end loop;
 
@@ -80,11 +87,10 @@ package body Coverage_GUI is
 
    procedure Add_Gcov_File_Info
      (Kernel       : Kernel_Handle;
-      Src_File     : GNATCOLL.VFS.Virtual_File;
+      Src_File     : Virtual_File;
       Cov_File     : GNATCOLL.VFS.Virtual_File;
       Project_Node : Project_Access)
    is
-      use Language.Tree.Database;
       File_Contents : GNAT.Strings.String_Access;
       File_Node     : constant Code_Analysis.File_Access
         := Get_Or_Create (Project_Node, Src_File);
