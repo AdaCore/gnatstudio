@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +22,8 @@ with Interfaces.C.Strings;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with GNAT.OS_Lib;
+with GNAT.Expect;
+with GNAT.Regpat;
 with GNAT.Strings;
 
 package Basic_Types is
@@ -33,6 +34,9 @@ package Basic_Types is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
    --  Free the array, but not the strings it contains.
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
 
    subtype Unchecked_String is String (Positive);
    pragma Suppress (All_Checks, Unchecked_String);

@@ -3122,6 +3122,7 @@ If this is not the desired behavior, you can also call destroy() on the console,
 The subprogram on_input is called whenever the user has entered a new command in the console and pressed &lt;enter&gt; to execute it. It is called with the following parameters:
    - $1: The instance of the GPS.Console
    - $2: The command to execute
+See the subprogram GPS.Console.set_prompt_regexp for proper handling of input in the console.
 
 The subprogram on_destroy is called whenever the user closes the console. It is called with a single parameter:
    - $1: The instance of the GPS.Console

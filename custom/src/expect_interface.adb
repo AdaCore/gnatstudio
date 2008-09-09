@@ -32,6 +32,7 @@ with GNATCOLL.Traces;             use GNATCOLL.Traces;
 
 with Gtk.Main;                use Gtk.Main;
 
+with Basic_Types;             use Basic_Types;
 with Custom_Module;           use Custom_Module;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -88,10 +89,6 @@ package body Expect_Interface is
 
    Expect_Args : constant Cst_Argument_List :=
                    (Regexp_Cst'Access, Timeout_Cst'Access);
-
-   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;

@@ -181,6 +181,11 @@ package body Interactive_Consoles is
    --  Execute Command, store it in the history, and display its result
    --  in the console
 
+   procedure Display_Text_As_Prompt
+     (Console : access Interactive_Console_Record'Class; Txt : String);
+   --  Display Txt as if it was a prompt. Txt might be the empty string, which
+   --  only results in moving the prompt mark
+
    procedure Insert_UTF8_With_Tag
      (Console        : access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
@@ -238,7 +243,8 @@ package body Interactive_Consoles is
    -----------------
 
    overriding procedure Insert_Text
-     (Console : access Interactive_Virtual_Console_Record; Txt : String) is
+     (Console : access Interactive_Virtual_Console_Record; Txt : String)
+   is
    begin
       if Console.Console /= null then
          Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
@@ -273,11 +279,9 @@ package body Interactive_Consoles is
       if Console.Console.Prompt.all /= "" then
          --  If the console has its own prompt, so ignore the one passed in
          --  parameter.
-         Display_Prompt (Console.Console);
+         Display_Text_As_Prompt (Console.Console, Console.Console.Prompt.all);
       else
-         Set_Prompt (Console.Console, Txt);
-         Display_Prompt (Console.Console);
-         Set_Prompt (Console.Console, "");
+         Display_Text_As_Prompt (Console.Console, Txt);
       end if;
    end Insert_Prompt;
 
@@ -414,7 +418,7 @@ package body Interactive_Consoles is
    -----------------------------------
 
    function Get_Or_Create_Virtual_Console
-     (Console : Interactive_Console) return Virtual_Console is
+     (Console       : Interactive_Console) return Virtual_Console is
    begin
       if Console = null then
          return null;
@@ -530,10 +534,14 @@ package body Interactive_Consoles is
       Internal := Console.Internal_Insert;
       Get_End_Iter (Console.Buffer, Last_Iter);
 
+      --  Read current user input (there might be none!). Then remove it from
+      --  the console temporarily, so that output is not intermixed with user
+      --  input. It will be put back after the output in Terminate_Output
       if Console.User_Input = null then
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
          Console.User_Input := new String'
            (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
+         Delete (Console.Buffer, Prompt_Iter, Last_Iter);
       end if;
    end Prepare_For_Output;
 
@@ -547,23 +555,33 @@ package body Interactive_Consoles is
       Show_Prompt : Boolean)
    is
       Last_Iter   : Gtk_Text_Iter;
-      Success     : Boolean;
       Prompt_Iter : Gtk_Text_Iter;
    begin
+      --  Protect the text we just output so that it is not editable by users
+
       Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
       Get_End_Iter (Console.Buffer, Last_Iter);
       Apply_Tag
         (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
-
-      Forward_Chars (Prompt_Iter, Console.User_Input'Length, Success);
       Apply_Tag
         (Console.Buffer,
-         Console.External_Messages_Tag,
-         Prompt_Iter, Last_Iter);
+         Console.External_Messages_Tag, Prompt_Iter, Last_Iter);
+
+      --  Move the prompt mark at the end of the output, so that user input is
+      --  only read from that point on
 
       if Show_Prompt then
          Display_Prompt (Console);
+      else
+         Display_Text_As_Prompt (Console, "");
       end if;
+
+      --  Put back the partial input the user had started typing (was saved in
+      --  Prepare_For_Ouptut).
+
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Insert (Console.Buffer, Last_Iter, Console.User_Input.all);
+      Free (Console.User_Input);
 
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
@@ -1009,12 +1027,17 @@ package body Interactive_Consoles is
                            Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                H       : String_List_Access;
             begin
+               --  Move the prompt mark, since the text has been submitted
+               --  and should not be submitted again later
+               Display_Prompt (Console);
+
                if Command = ""
                  and then Console.Empty_Equals_Repeat
                  and then Console.History /= null
                then
+                  --  Move the prompt mark, since the text has been submitted
+                  --  and should not be submitted again later
                   if not Console.Command_Received then
-                     Display_Prompt (Console);
                      return True;
                   end if;
 
@@ -1050,23 +1073,24 @@ package body Interactive_Consoles is
          return False;
    end Key_Press_Handler;
 
-   --------------------
-   -- Display_Prompt --
-   --------------------
+   ----------------------------
+   -- Display_Text_As_Prompt --
+   ----------------------------
 
-   procedure Display_Prompt
-     (Console : access Interactive_Console_Record'Class)
+   procedure Display_Text_As_Prompt
+     (Console : access Interactive_Console_Record'Class; Txt : String)
    is
       First_Iter  : Gtk_Text_Iter;
       Prompt_Iter : Gtk_Text_Iter;
-
-      Offset : Gint;
+      Offset      : Gint;
    begin
       if not Console.Input_Blocked then
          Get_End_Iter (Console.Buffer, First_Iter);
          Offset := Get_Offset (First_Iter);
 
-         Insert (Console.Buffer, First_Iter, Console.Prompt.all);
+         if Txt /= "" then
+            Insert (Console.Buffer, First_Iter, Txt);
+         end if;
 
          Get_End_Iter (Console.Buffer, Prompt_Iter);
          Get_Iter_At_Offset (Console.Buffer, First_Iter, Offset);
@@ -1081,6 +1105,16 @@ package body Interactive_Consoles is
 
       Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
       Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
+   end Display_Text_As_Prompt;
+
+   --------------------
+   -- Display_Prompt --
+   --------------------
+
+   procedure Display_Prompt
+     (Console : access Interactive_Console_Record'Class) is
+   begin
+      Display_Text_As_Prompt (Console, Console.Prompt.all);
    end Display_Prompt;
 
    ----------------------------
