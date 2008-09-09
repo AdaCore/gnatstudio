@@ -122,7 +122,7 @@
     <h1><a name='Description' id='Description'></a>Description</h1>
     <div class="class">
     @@IF@@ @_NO_SPACE:PRINTOUT_@ /= ""
-    <div class='details'>@_PRINTOUT_@</div>
+    <div class='details'><pre>@_PRINTOUT_@</pre></div>
     @@END_IF@@
     @@IF@@ @_NO_SPACE:DESCRIPTION_@ /= ""
     <div class='comment'>@_DESCRIPTION_@</div>
@@ -159,7 +159,7 @@
         <div class='details'>@_PKG_FULL_LINK_@</div>
       @@ELSE@@
         @@IF@@ @_NO_SPACE:PKG_PRINTOUT_@ /= ""
-        <div class='details'>@_PKG_PRINTOUT_@</div>
+        <div class='details'><pre>@_PKG_PRINTOUT_@</pre></div>
         @@END_IF@@
         @@IF@@ @_NO_SPACE:PKG_DESCRIPTION_@ /= ""
         <div class='comment'>@_PKG_DESCRIPTION_@</div>
@@ -182,7 +182,7 @@
          / <a href="@_CLASS_BODY_SRC_@" title="Goto body">Body</a>
         @@END_IF@@
       </h3>
-      <div class='details'>@_CLASS_PRINTOUT_@</div>
+      <div class='details'><pre>@_CLASS_PRINTOUT_@</pre></div>
       @@IF@@ (@_EXIST:CLASS_PARENTS_@) or (@_EXIST:CLASS_CHILDREN_@) or (@_EXIST:CLASS_PRIMITIVES_@)
       <div class='profile'>
         @@IF@@ @_EXIST:CLASS_PARENTS_@
@@ -305,7 +305,7 @@
            / <a href="@_TYPE_BODY_SRC_@" title="Goto body">Body</a>
           @@END_IF@@
         </h3>
-        <div class='details'>@_TYPE_PRINTOUT_@</div>
+        <div class='details'><pre>@_TYPE_PRINTOUT_@</pre></div>
         @@IF@@ @_EXIST:TYPE_REFERENCES_@
         <div class='profile'>
             <h4>References:</h4>
@@ -338,7 +338,7 @@
            / <a href="@_CST_BODY_SRC_@" title="Goto body">Body</a>
           @@END_IF@@
         </h3>
-        <div class='details'>@_CST_PRINTOUT_@</div>
+        <div class='details'><pre>@_CST_PRINTOUT_@</pre></div>
         @@IF@@ @_EXIST:CST_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>
@@ -371,7 +371,7 @@
                / <a href="@_TASK_ENTRY_BODY_SRC_@" title="Goto body">Body</a>
               @@END_IF@@
             </h3>
-            <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</div>
+            <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):TASK_ENTRY_PRINTOUT_@</pre></div>
             @@IF@@ @_EXIST:TASK_ENTRY_REFERENCES_@
             <div class='profile'>
               <h4>References:</h4>
@@ -415,7 +415,7 @@
           @@END_TABLE@@
         </div>
         @@END_IF@@
-        <div class='details'>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</div>
+        <div class='details'><pre>@_REPLACE((\()/<table><tr><td>\1</td><td>):REPLACE((\);?)[ \n]*/\1</td></tr></table>):REPLACE_ALL((span\>)\s*([:])/\1</td><td>\2):REPLACE_ALL((;)\s*(\<span)/\1</td></tr><tr><td></td><td>\2):REPLACE_ALL(\n/):SUBP_PRINTOUT_@</pre></div>
         @@IF@@ @_EXIST:SUBP_REFERENCES_@
         <div class='profile'>
           <h4>References:</h4>

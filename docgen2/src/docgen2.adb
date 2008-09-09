@@ -1683,18 +1683,37 @@ package body Docgen2 is
    is
       Last_Idx     : Natural := 0;
       Printout     : Unbounded_String;
+      Current_Line : Unbounded_String;
       File_Handle  : File_Type;
       Translation  : Translate_Set;
-      Line_Nb      : Natural := 0;
+      Line_Nb      : Natural := 1;
       Tmpl         : constant String :=
                        Command.Backend.Get_Template
                          (Get_System_Dir (Command.Kernel), Tmpl_Src);
+
+      function Filter (S : String) return String;
+      function Print_Entity (S : String) return String;
+      --  Callbacks used when formatting output
 
       function CB
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean;
+      --  Callback for entity parser
+
+      function Filter (S : String) return String is
+      begin
+         return Command.Backend.Filter (S);
+      end Filter;
+
+      The_Entity : Language_Entity;
+
+      function Print_Entity (S : String) return String is
+      begin
+         return Command.Backend.Gen_Tag
+           (The_Entity, Command.Backend.Filter (S));
+      end Print_Entity;
 
       --------
       -- CB --
@@ -1716,10 +1735,12 @@ package body Docgen2 is
       begin
          --  Print all text between previous call and current one
          if Last_Idx /= 0 then
-            Ada.Strings.Unbounded.Append
-              (Printout,
-               Command.Backend.Filter
-                 (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1)));
+            Command.Backend.Handle_Code
+              (Buffer (Last_Idx + 1 .. Sloc_Start.Index - 1),
+               Printout,
+               Current_Line,
+               Line_Nb,
+               Filter'Access);
          end if;
 
          Last_Idx := Sloc_End.Index;
@@ -1730,28 +1751,15 @@ package body Docgen2 is
             --  For all entities that are not identifiers, print them
             --  directly
 
-            Ada.Strings.Unbounded.Append
-              (Printout,
-               Command.Backend.Gen_Tag
-                 (Entity,
-                  Command.Backend.Filter
-                    (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
+            The_Entity := Entity;
+            Command.Backend.Handle_Code
+              (Buffer (Sloc_Start.Index .. Sloc_End.Index),
+               Printout,
+               Current_Line,
+               Line_Nb,
+               Print_Entity'Access);
 
          else
-            --  Print line number for all identifiers (one per line only).
-            if Sloc_Start.Line > Line_Nb then
-               Line_Nb := Sloc_Start.Line;
-
-               declare
-                  Line : constant String := Natural'Image (Line_Nb);
-               begin
-                  Ada.Strings.Unbounded.Append
-                    (Printout,
-                     Command.Backend.Gen_Ref
-                       (Line (Line'First + 1 .. Line'Last)));
-               end;
-            end if;
-
             --  If entity is an identifier or a partial identifier, then try
             --  to find its corresponding Entity_Info
 
@@ -1780,9 +1788,10 @@ package body Docgen2 is
 
                --  Print href to entity declaration
                Ada.Strings.Unbounded.Append
-                 (Printout,
+                 (Current_Line,
                   Gen_Href
-                    (Command.Backend, EInfo,
+                    (Command.Backend,
+                     EInfo,
                      Command.Backend.Filter
                        (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
 
@@ -1794,7 +1803,7 @@ package body Docgen2 is
             then
                --  the examined entity is a declaration entity
                Ada.Strings.Unbounded.Append
-                 (Printout,
+                 (Current_Line,
                   Command.Backend.Gen_Tag
                     (Identifier_Text,
                      Command.Backend.Filter
@@ -1803,13 +1812,13 @@ package body Docgen2 is
             else
                --  No declaration associated with examined entity
                --  just generate simple text
-               Ada.Strings.Unbounded.Append
-                 (Printout,
-                  Command.Backend.Gen_Tag
-                    (Normal_Text,
-                     Command.Backend.Filter
-                       (Buffer (Sloc_Start.Index .. Sloc_End.Index))));
-
+               The_Entity := Normal_Text;
+               Command.Backend.Handle_Code
+                 (Buffer (Sloc_Start.Index .. Sloc_End.Index),
+                  Printout,
+                  Current_Line,
+                  Line_Nb,
+                  Print_Entity'Access);
             end if;
          end if;
 
@@ -1822,14 +1831,26 @@ package body Docgen2 is
 
    begin
       Trace (Me, "Parse entities");
+
+      Command.Backend.Begin_Handle_Code
+        (Printout, Current_Line);
+
       Parse_Entities
         (Lang, Buffer (Buffer'First .. Buffer_Last), CB'Unrestricted_Access);
 
       if Last_Idx /= 0 then
-         Ada.Strings.Unbounded.Append
-           (Printout,
-            Command.Backend.Filter (Buffer (Last_Idx + 1 .. Buffer_Last)));
+         Command.Backend.Handle_Code
+           (Buffer (Last_Idx + 1 .. Buffer_Last),
+            Printout,
+            Current_Line,
+            Line_Nb,
+            Filter'Access);
       end if;
+
+      Command.Backend.End_Handle_Code
+        (Printout,
+         Current_Line,
+         Line_Nb);
 
       Insert
         (Translation, Assoc ("SOURCE_FILE", Get_Filename (File).Base_Name));

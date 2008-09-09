@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Maps;      use Ada.Strings.Maps;
 with String_Utils;          use String_Utils;
 
 package body Docgen2_Backend.HTML is
@@ -215,5 +217,93 @@ package body Docgen2_Backend.HTML is
       return "<div class=""" & User_Tag & """ " & Attributes & ">" &
         Value & "</div>";
    end Gen_User_Tag;
+
+   -----------------------
+   -- Begin_Handle_Code --
+   -----------------------
+
+   overriding procedure Begin_Handle_Code
+     (Backend : access HTML_Backend_Record;
+      Buffer  : in out Unbounded_String;
+      Current : out Unbounded_String)
+   is
+      pragma Unreferenced (Backend);
+   begin
+      Append (Buffer, "<ol>");
+      Current := Null_Unbounded_String;
+   end Begin_Handle_Code;
+
+   ---------------------
+   -- End_Handle_Code --
+   ---------------------
+
+   overriding procedure End_Handle_Code
+     (Backend  : access HTML_Backend_Record;
+      Buffer   : in out Unbounded_String;
+      Current  : in out Unbounded_String;
+      Line     : in out Natural)
+   is
+   begin
+      if Current /= Null_Unbounded_String then
+         Backend.Handle_Code
+           ("" & ASCII.LF, Buffer, Current, Line, null);
+      end if;
+
+      Append (Buffer, "</ol>");
+   end End_Handle_Code;
+
+   -----------------
+   -- Handle_Code --
+   -----------------
+
+   overriding procedure Handle_Code
+     (Backend : access HTML_Backend_Record;
+      Text    :        String;
+      Buffer  : in out Unbounded_String;
+      Current : in out Unbounded_String;
+      Line    : in out Natural;
+      Cb      : access function (S : String) return String)
+   is
+      pragma Unreferenced (Backend);
+      Idx  : Natural;
+      Prev : Natural := Text'First;
+
+   begin
+      loop
+         Idx := Index (Text, Set => To_Set (ASCII.LF), From => Prev);
+
+         if Idx >= Text'First then
+            if Cb /= null then
+               Append (Current, Cb (Text (Prev .. Idx - 1)));
+            else
+               Append (Current, Text (Prev .. Idx - 1));
+            end if;
+         else
+            if Cb /= null then
+               Append (Current, Cb (Text (Prev .. Text'Last)));
+            else
+               Append (Current, Text (Prev .. Text'Last));
+            end if;
+
+            exit;
+         end if;
+
+         declare
+            Line_Str : constant String := Natural'Image (Line);
+         begin
+            Append
+              (Buffer,
+               "<li><pre><a name=""" &
+               Line_Str (Line_Str'First + 1 .. Line_Str'Last) &
+               """></a>" & To_String (Current) & " </pre></li>" & ASCII.LF);
+         end;
+
+         Line := Line + 1;
+         Current := Null_Unbounded_String;
+         Prev := Idx + 1;
+
+         exit when Prev > Text'Last;
+      end loop;
+   end Handle_Code;
 
 end Docgen2_Backend.HTML;

@@ -43,6 +43,11 @@ a.hide:visited
    margin-right: 5px;
 }
 
+pre
+{
+   margin: 0px;
+}
+
 div.topBar
 {
    position: fixed;
@@ -284,17 +289,14 @@ div.subprograms div.details
    padding-left: 5px;
    padding-top: 3px;
    padding-bottom: 3px;
-   white-space: pre;
    background: #fafaff;
 }
 div.subprograms div.details div
 {
-   white-space: normal;
    padding-left: 0px;
 }
 div.subprograms div.details table
 {
-   white-space: normal;
    padding-left: 20px;
 }
 div.subprograms div.details span.keyword
@@ -313,7 +315,6 @@ div.subprograms div.details span.comment
 }
 div.subprograms div.comment
 {
-   white-space: pre-wrap;
    border-top: 1px dotted #c0c0c0;
    background: white;
    padding-left: 5px;

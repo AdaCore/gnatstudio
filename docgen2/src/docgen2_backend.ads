@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Language; use Language;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Language;              use Language;
 
 package Docgen2_Backend is
 
@@ -131,5 +132,29 @@ package Docgen2_Backend is
    --  Filter the text so that it is compatible with the backend.
    --  For example: for html backend, it will replace '<' '>' and '&' by
    --  respectively &lt; &gt; and &amp;
+
+   procedure Begin_Handle_Code
+     (Backend : access Backend_Record;
+      Buffer  : in out Unbounded_String;
+      Current : out Unbounded_String) is abstract;
+   --  See inherited doc
+
+   procedure End_Handle_Code
+     (Backend : access Backend_Record;
+      Buffer  : in out Unbounded_String;
+      Current : in out Unbounded_String;
+      Line    : in out Natural) is abstract;
+   --  See inherited doc
+
+   procedure Handle_Code
+     (Backend : access Backend_Record;
+      Text    :        String;
+      Buffer  : in out Unbounded_String;
+      Current : in out Unbounded_String;
+      Line    : in out Natural;
+      Cb      : access function (S : String) return String) is abstract;
+   --  Append new text to S, so that all LF characters are formatted for code
+   --  output.
+   --  Each new line appened is filtered via Cb
 
 end Docgen2_Backend;

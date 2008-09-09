@@ -91,4 +91,26 @@ package Docgen2_Backend.HTML is
       S        : String) return String;
    --  See inherited doc
 
+   overriding procedure Begin_Handle_Code
+     (Backend : access HTML_Backend_Record;
+      Buffer  : in out Unbounded_String;
+      Current : out Unbounded_String);
+   --  See inherited doc
+
+   overriding procedure End_Handle_Code
+     (Backend : access HTML_Backend_Record;
+      Buffer  : in out Unbounded_String;
+      Current : in out Unbounded_String;
+      Line    : in out Natural);
+   --  See inherited doc
+
+   overriding procedure Handle_Code
+     (Backend : access HTML_Backend_Record;
+      Text    :        String;
+      Buffer  : in out Unbounded_String;
+      Current : in out Unbounded_String;
+      Line    : in out Natural;
+      Cb      : access function (S : String) return String);
+   --  See inherited doc
+
 end Docgen2_Backend.HTML;
