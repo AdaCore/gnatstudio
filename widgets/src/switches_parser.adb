@@ -22,10 +22,22 @@ with Glib.Xml_Int; use Glib.Xml_Int;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;
 
-with GPS.Intl; use GPS.Intl;
 with Traces;   use Traces;
 
 package body Switches_Parser is
+
+   function "-" (Msg : String) return String;
+   --  Convenient shortcut to the Gettext function.
+
+   ---------
+   -- "-" --
+   ---------
+
+   function "-" (Msg : String) return String is
+   begin
+      --  ??? Provide implementation
+      return Msg;
+   end "-";
 
    -------------------------
    -- Parse_Switches_Node --
