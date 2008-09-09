@@ -1261,7 +1261,7 @@ package body Interactive_Consoles is
 
          --  Do not free memory, since we could still have instances of
          --  GPS.Console around. This memory will be freed when the last
-         --  such instance is destroed
+         --  such instance is destroyed
          --  Unchecked_Free (C.Virtual);
 
          C.Virtual := null;
