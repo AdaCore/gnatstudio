@@ -725,10 +725,7 @@ package body Task_Manager.GUI is
          return;
       end if;
 
-      --  If the manager is in Need_Global_Refresh mode, then do not refresh
-      --  the command, this will be handled by the next global refresh.
-      if Manager.Need_Global_Refresh
-        or else not (Index in Manager.Queues'Range)
+      if not (Index in Manager.Queues'Range)
         or else not Manager.Queues (Index).Need_Refresh
       then
          return;
