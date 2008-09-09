@@ -65,6 +65,8 @@ package body Expect_Interface is
    Show_Command_Cst     : aliased constant String := "show_command";
    Single_Line_Cst       : aliased constant String := "single_line_regexp";
    Case_Sensitive_Cst   : aliased constant String := "case_sensitive_regexp";
+   Rows_Cst             : aliased constant String := "rows";
+   Columns_Cst          : aliased constant String := "columns";
 
    Constructor_Args : constant Cst_Argument_List :=
                         (2  => Command_Cst'Access,
@@ -952,6 +954,13 @@ package body Expect_Interface is
             Till_End => True);
          Set_Return_Value (Data, D.Status);
 
+      elsif Command = "set_size" then
+         Name_Parameters (Data, (1 => Rows_Cst'Access,
+                                 2 => Columns_Cst'Access));
+         D := Get_Data (Data, 1);
+         Set_Size (TTY_Process_Descriptor'Class (D.Pd.all),
+                   Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
          D := Get_Data (Data, 1);
@@ -1042,6 +1051,12 @@ package body Expect_Interface is
       Register_Command
         (Kernel, "expect",
          Minimum_Args => 1,
+         Maximum_Args => 2,
+         Class        => Process_Class,
+         Handler      => Custom_Spawn_Handler'Access);
+      Register_Command
+        (Kernel, "set_size",
+         Minimum_Args => 2,
          Maximum_Args => 2,
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);

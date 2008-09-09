@@ -28,11 +28,16 @@ with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with Glib.Object;             use Glib.Object;
+with Glib.Values;             use Glib.Values;
+with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Object;              use Gtk.Object;
+with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Widget;              use Gtk.Widget;
+with Pango.Font;              use Pango.Font;
+with Pango.Layout;            use Pango.Layout;
 
 with Basic_Types;             use Basic_Types;
 with Commands.Interactive;    use Commands, Commands.Interactive;
@@ -44,6 +49,7 @@ with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
@@ -115,6 +121,12 @@ package body GPS.Kernel.Scripts is
      (Console : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type);
    --  Called when an interactive console is destroyed
+
+   procedure On_Console_Resize
+     (Console    : access Gtk_Widget_Record'Class;
+      Args       : Glib.Values.GValues;
+      Subprogram : Subprogram_Type);
+   --  Called when an interactive console is resized
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -263,10 +275,12 @@ package body GPS.Kernel.Scripts is
    Accept_Input_Cst : aliased constant String := "accept_input";
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
+   On_Resize_Cst    : aliased constant String := "on_resize";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
-      On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access);
+      On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
+      On_Resize_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -1380,6 +1394,49 @@ package body GPS.Kernel.Scripts is
       end if;
    end On_Console_Destroy;
 
+   -----------------------
+   -- On_Console_Resize --
+   -----------------------
+
+   procedure On_Console_Resize
+     (Console    : access Gtk_Widget_Record'Class;
+      Args       : Glib.Values.GValues;
+      Subprogram : Subprogram_Type)
+   is
+      Inst   : constant Class_Instance :=
+                 Get_Instance (Get_Script (Subprogram.all), Console);
+      Alloc  : constant Gtk_Allocation_Access := To_Allocation (Args, 1);
+      Script : constant Scripting_Language := Get_Script (Subprogram.all);
+   begin
+      if Script /= null then
+         declare
+            Font : constant Pango_Font_Description :=
+              GPS.Kernel.Preferences.Default_Style.Get_Pref_Font;
+            W2, H2, Tmp2 : Gint;
+            Layout : Pango_Layout;
+
+            C : Callback_Data'Class := Create (Script, 3);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Layout := Create_Pango_Layout
+              (Get_View (Interactive_Console (Console)));
+            Set_Font_Description (Layout, Font);
+            Set_Text (Layout, "mmmmmmmmmmm");
+            Get_Pixel_Size (Layout, W2, Tmp2);
+            Set_Text (Layout, "fp");
+            Get_Pixel_Size (Layout, Tmp2, H2);
+            Unref (Layout);
+
+            Set_Nth_Arg (C, 1, Inst);
+            Set_Nth_Arg (C, 2, Integer (Alloc.Height / H2));
+            Set_Nth_Arg (C, 3, Integer (Alloc.Width * 10 / W2));
+            Tmp := Execute (Subprogram, C);
+            Free (C);
+         end;
+      end if;
+   end On_Console_Resize;
+
    -----------------------------
    -- Console_Command_Handler --
    -----------------------------
@@ -1398,6 +1455,7 @@ package body GPS.Kernel.Scripts is
             On_Input     : constant Subprogram_Type := Nth_Arg (Data, 4, null);
             On_Destroy   : constant Subprogram_Type := Nth_Arg (Data, 5, null);
             Accept_Input : constant Boolean := Nth_Arg (Data, 6, True);
+            On_Resize    : constant Subprogram_Type := Nth_Arg (Data, 7, null);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -1439,6 +1497,13 @@ package body GPS.Kernel.Scripts is
                Subprogram_Callback.Connect
                  (Console, Signal_Destroy, On_Console_Destroy'Access,
                   User_Data => On_Destroy);
+            end if;
+
+            if Console /= null and then On_Resize /= null then
+               Subprogram_Callback.Connect
+                 (Console, Signal_Size_Allocate,
+                  On_Console_Resize'Access,
+                  User_Data => On_Resize);
             end if;
          end;
 
@@ -1633,7 +1698,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 5,
+         Maximum_Args => 6,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command

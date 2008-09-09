@@ -356,6 +356,27 @@ gvd_setup_parent_communication
   return 0;
 }
 
+/* gvd_setup_winsize - Sets up the size of the terminal
+ * This lets the process know the size of the terminal
+ */
+
+void gvd_setup_winsize (pty_desc *desc, int rows, int columns) {
+#ifdef TIOCGWINSZ
+  struct winsize s;
+  s.ws_row = (unsigned short)rows;
+  s.ws_col = (unsigned short)columns;
+  s.ws_xpixel = 0;
+  s.ws_ypixel = 0;
+  ioctl (desc->master_fd, TIOCSWINSZ, &s);
+#ifdef SIGWINCH
+  if (desc->child_pid > 0) {
+     /* Let the process know about the change in size */
+     kill (desc->child_pid, SIGWINCH);
+  }
+#endif
+#endif
+}
+
 /* gvd_setup_child_communication - interface to external world. Should be
  * called after forking in the child process. On Unixes, this function
  * first adjust the line setting, set standard output, input and error and
@@ -368,7 +389,8 @@ gvd_setup_parent_communication
  *   this function should not return
  */
 int
-gvd_setup_child_communication (pty_desc *desc, char **new_argv) {
+gvd_setup_child_communication (pty_desc *desc, char **new_argv,
+                               int Use_Pipes) {
   int status;
   int pid = getpid ();
 
@@ -394,6 +416,7 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv) {
 
   /* adjust tty settings */
   child_setup_tty (desc->slave_fd);
+  gvd_setup_winsize (desc, 24, 80); /* To prevent errors in some shells */
 
   /* stdin, stdout and stderr should be now our tty */
   dup2 (desc->slave_fd, 0);
@@ -411,7 +434,6 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv) {
   /* return the pid */
   return pid;
 }
-
 
 /* send_signal_via_characters - Send a characters that will trigger a signal
  * in the child process.
@@ -1501,4 +1523,7 @@ gvd_close_tty (TTY_Handle* t)
   free (t);
 }
 
+void
+gvd_setup_winsize (pty_desc *desc, int rows, int columns) {
+}
 #endif /* WIN32 */

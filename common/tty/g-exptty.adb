@@ -23,6 +23,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with System;      use System;
 
@@ -159,6 +160,24 @@ package body GNAT.Expect.TTY is
             Str, Add_LF, Empty_Buffer);
       end if;
    end Send;
+
+   --------------
+   -- Set_Size --
+   --------------
+
+   procedure Set_Size
+     (Descriptor : in out TTY_Process_Descriptor'Class;
+      Rows       : Natural;
+      Columns    : Natural)
+   is
+      procedure Internal (Process : System.Address; R, C : Integer);
+      pragma Import (C, Internal, "gvd_setup_winsize");
+
+   begin
+      if Descriptor.Process /= System.Null_Address then
+         Internal (Descriptor.Process, Rows, Columns);
+      end if;
+   end Set_Size;
 
    -----------------------
    -- Pseudo_Descriptor --

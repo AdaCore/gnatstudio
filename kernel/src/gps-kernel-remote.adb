@@ -3654,7 +3654,6 @@ package body GPS.Kernel.Remote is
       Exec                  : String_Access;
       Old_Dir               : String_Access;
       Args                  : Argument_List_Access;
-      L_Args                : Argument_List_Access := null;
 
       function Check_Exec (Exec : String) return String_Access;
       --  Check that executable is on the path, and return the full path if
@@ -3768,24 +3767,12 @@ package body GPS.Kernel.Remote is
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
          begin
-            if L_Args /= null then
-               Non_Blocking_Spawn
-                 (Pd.all,
-                  L_Args (L_Args'First).all,
-                  L_Args (L_Args'First + 1 .. L_Args'Last) &
-                  Args.all,
-                  Buffer_Size => 0,
-                  Err_To_Out  => True);
-               Free (L_Args);
-
-            else
-               Non_Blocking_Spawn
-                 (Pd.all,
-                  Args (Args'First).all,
-                  Args (Args'First + 1 .. Args'Last),
-                  Buffer_Size => 0,
-                  Err_To_Out  => True);
-            end if;
+            Non_Blocking_Spawn
+              (Pd.all,
+               Args (Args'First).all,
+               Args (Args'First + 1 .. Args'Last),
+               Buffer_Size => 0,
+               Err_To_Out  => True);
 
          exception
             when Invalid_Process =>

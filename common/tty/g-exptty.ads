@@ -72,6 +72,12 @@ package GNAT.Expect.TTY is
    --  Tell Expect.TTY wether to use Pipes or Console (on windows). Need to be
    --  set before spawning the process. Default is to use Pipes.
 
+   procedure Set_Size
+     (Descriptor : in out TTY_Process_Descriptor'Class;
+      Rows       : Natural;
+      Columns    : Natural);
+   --  Sets up the size of the terminal as reported to the spawned process.
+
 private
 
    overriding procedure Close

@@ -3108,6 +3108,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <param name="on_input" default="">A subprogram, see the description below</param>
       <param name="on_destroy" default="">A subprogram</param>
       <param name="accept_input" default="True">A boolean</param>
+      <param name="on_resize" default="">A subprogram</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
 
 You cannot create the Python and Shell consoles through this call. If you do, an exception is raised. Instead, use GPS.execute_action ("/Tools/Consoles/Python"), and then get a handle on the console through GPS.Console. This is because these two consoles are tightly associated with each of the scripting languages.
@@ -3123,7 +3124,10 @@ The subprogram on_input is called whenever the user has entered a new command in
    - $2: The command to execute
 
 The subprogram on_destroy is called whenever the user closes the console. It is called with a single parameter:
-   - $1: The instance of the GPS.Console</description>
+   - $1: The instance of the GPS.Console
+
+The subprogram on_resize is called whenever the console is resized by the user. It is passed three parameters: $1 is the instance of GPS.Console, $2 is the number of visible rows in the console, and $3 is the number of visible columns. This is mostly useful when a process is running in the console, in which case you can use GPS.Process.set_size to let the process know about the size. Note that the size passed to this callback is conservative: since all characters might not have the same size, GPS tries to compute the maximal number of visible characters and pass this to the callback, but the exact number of characters might depend on the font.
+</description>
   </shell_doc>
 
   <shell_doc name="GPS.Console.write">
@@ -3598,6 +3602,13 @@ If show_command is set, then the command line used to spawn the new Process is d
 
 An exception is raised if the process could not be spawned.</description>
       <see_also name="GPS.Process"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Process.set_size">
+      <param name="self">The instance of GPS.Process</param>
+      <param name="rows">An integer</param>
+      <param name="columns">An integer</param>
+      <description>Tells the process about the size of its terminal. Rows and columns should (but need not) be the number of visible rows and columns of the terminal in which the process is running.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Process.send">
