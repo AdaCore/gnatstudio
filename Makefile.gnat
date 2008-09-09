@@ -141,6 +141,8 @@ GNAT_SOURCES= \
   widechar.adb \
   impunit.adb \
   xsnamest.adb \
+  xutil.ads \
+  xutil.adb \
   g-comlin.ads \
   g-comlin.adb \
   gnat_style.css
