@@ -170,6 +170,11 @@ package body Remote_Views is
       Modified : Boolean);
    --  Set font style according to the modified state
 
+   function Get_Modified
+     (View     : Remote_View;
+      Gentry   : Gtk_Entry) return Boolean;
+   --  Get the modified state of the entry
+
    procedure On_Combo_Changed
      (Combo : access Gtk_Widget_Record'Class;
       User  : Remote_Data);
@@ -605,19 +610,44 @@ package body Remote_Views is
          Show_All (List);
       end Set_Servers_List;
 
+      Entries : array (Distant_Server_Type) of String_Access;
+      States  : array (Distant_Server_Type) of Boolean;
+
    begin
+      for S in Distant_Server_Type'Range loop
+         declare
+            The_Entry : Gtk_Entry renames
+                           Get_Entry (View.Servers_Combo (S));
+            Old_Server : constant String :=
+                           Get_Text (The_Entry);
+         begin
+            for J in 1 .. Get_Nb_Machine_Descriptor loop
+               if Locale_To_UTF8 (Get_Nickname (J)) = Old_Server then
+                  Entries (S) := new String'(Get_Text (The_Entry));
+                  States (S) := Get_Modified (Remote_View (View), The_Entry);
+                  exit;
+               end if;
+            end loop;
+
+            if Entries (S) = null then
+               Entries (S) := new String'(Get_Printable_Nickname (S));
+               States (S) := False;
+            end if;
+         end;
+      end loop;
+
       Set_Servers_List (Get_List (View.Servers_Combo (GPS_Server)));
 
       for S in Distant_Server_Type'Range loop
-         Set_Servers_List (Get_List (View.Servers_Combo (S)));
-
          --  Set server for full view
          declare
             The_Entry : Gtk_Entry renames Get_Entry (View.Servers_Combo (S));
          begin
-            Set_Text (The_Entry,
-                      Get_Printable_Nickname (S));
-            Set_Modified (Remote_View (View), The_Entry, False);
+            Set_Servers_List (Get_List (View.Servers_Combo (S)));
+
+            Set_Text (The_Entry, Entries (S).all);
+            Set_Modified (Remote_View (View), The_Entry, States (S));
+            Free (Entries (S));
          end;
       end loop;
 
@@ -685,6 +715,18 @@ package body Remote_Views is
          Set_Style (Gentry, View.Normal_Style);
       end if;
    end Set_Modified;
+
+   ------------------
+   -- Get_Modified --
+   ------------------
+
+   function Get_Modified
+     (View     : Remote_View;
+      Gentry   : Gtk_Entry) return Boolean
+   is
+   begin
+      return Get_Style (Gentry) = View.Modified_Style;
+   end Get_Modified;
 
    ----------------------
    -- On_Combo_Changed --
