@@ -955,8 +955,10 @@ package body Expect_Interface is
          Name_Parameters (Data, (1 => Rows_Cst'Access,
                                  2 => Columns_Cst'Access));
          D := Get_Data (Data, 1);
-         Set_Size (TTY_Process_Descriptor'Class (D.Pd.all),
-                   Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+         if D.Pd /= null then
+            Set_Size (TTY_Process_Descriptor'Class (D.Pd.all),
+                      Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+         end if;
 
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);

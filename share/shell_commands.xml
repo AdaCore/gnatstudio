@@ -3072,6 +3072,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       </example>
       <example lang="python">
          The following example shows an integration between the GPS.Console and GPS.Process classes, so that a window containing a shell can be added to GPS.
+Note that this class is in fact available directly through "from gps_utils.console_process import Console_Process" if you need it in your own scripts.
 
             import GPS
             class Console_Process (GPS.Console, GPS.Process):

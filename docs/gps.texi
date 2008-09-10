@@ -14597,17 +14597,8 @@ If python support has been enabled, the python shell is accessible through the
 @code{Python} window at the bottom of the GPS window. You can also
 display it by using the menu @file{Tools->Consoles->Python}.
 
-You can type @code{help(GPS)} in the python console to see the list of
-functions exported by GPS to python. If you want to save the output of
-this (or any) command to a file, you can do:
-
-@smallexample
->>> e=file("/tmp/gps-help.txt", "w")
->>> sys.stdout=e
->>> help(GPS)
->>> e.flush()
->>> sys.stdout=sys.__stdout__
-@end smallexample
+The full documentation on what GPS makes visible through python is available
+through the @code{/Help/Python extensions}.
 
 The same example that was used to show the GPS shell follows, now using
 python. As you can notice, the name of the commands is
@@ -14713,16 +14704,14 @@ you need to provide several things:
 @item The python files themselves. This is a set of @file{.py} files, which
  the user should install in the @file{plug-ins} directory.
 
-@item An XML file with the format described in the customization section
+@item Optionally: an XML file with the format described in the customization section
  of this documentation. This XML file should create a set of actions,
  through the @code{<action>} tag, exported to the user. This allows him
  to either create menus to execute these commands or to bind them to special
- key shortcuts
+ key shortcuts. The menus can be created directly in python, with the
+ @code{GPS.Menu} class. The same XML can in fact be directly embedded in the
+ python file itself and executed through @code{GPS.parse_xml}.
 @end itemize
-
-Alternatively, your python script can call the command @code{GPS.parse_xml}
-to specify some inline XML tags to interpret. These tags can directly create
-the new menus or key bindings associated with your command.
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
@@ -14817,7 +14806,7 @@ GPS.Hook ("file_edited").add (on_edition)
 @end smallexample
 
 Things are in fact slightly more complex if you want to pass methods
-are arguments. Python has basically three notions of callable
+as arguments. Python has basically three notions of callable
 subprograms, detailed below. The following examples all create a combo
 box in the toolbar, which calls a subprogram whenever its value is
 changed. The documentation for the combo box indicates that the
@@ -14942,6 +14931,58 @@ class MyClass:
 
 MyClass()
 @end smallexample
+
+It is often convenient to use the object-oriented approach when writing
+python scripts. If for instance you want to spawn an external process,
+GPS provides the @code{GPS.Process} class. When you create an instance,
+you specify a callback to be called when some input is made available
+by the process. Matching the above example, the code would look something
+like:
+
+@smallexample
+class MyClass:
+  def __init__ (self):
+     self.process = GPS.Process 
+         ("command_line", on_match = self.on_match)
+
+  def on_match (self, process, matched, unmatched);
+     print "Process output: " + unmatched + matched + "\n"
+@end smallexample
+
+A more natural approach, rather than having a class that has a process
+field, is to directly extend the @code{GPS.Process} class, as in:
+
+@smallexample
+class MyClass (GPS.Process):
+  def __init__ (self):
+     GPS.Process.__init__ \
+        (self, "command_line", on_match = self.on_match)
+
+  def on_match (self, matched, unmatched);
+     print "Process output: " + unmatched + matched + "\n"
+@end smallexample
+
+Any command that can be used on a process (such as @code{send}) can then
+directly be used on instances of MyClass.
+
+There is one non-obvious improvement in the code above: the @code{on_match}
+callback has one less parameter. What happens is the following: as per
+the documentation of @code{GPS.Process.__init__}, GPS gives three arguments
+to its @code{on_match} callback: the instance of the process (@code{process}
+in the first example above), the string that matched the regular expression,
+and the string before that match.
+
+In the first example above, we are passing @code{self.on_match}, ie a
+bound method, as a callback. That tells python that it should automatically,
+and transparently, add an extra first parameter when calling
+@code{MyClass.on_match}, which is @code{self}. This is why the first example
+has four parameters to @code{on_match}.
+
+However, the second example only has three parameters, because GPS has
+detected that @code{self} (the instance of @code{MyClass}) and the
+instance of @code{GPS.Process} are the same in this case. Thus it doesn't
+add an extra parameter (@code{self} and @code{process} would have been
+the same).
 
 @end itemize
 

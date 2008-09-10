@@ -105,27 +105,23 @@ Preference ("Plugins/Makefile/make switches").create (
 if Preference ("Plugins/Makefile/ant_support").get():
    from xml.sax import handler, make_parser
 
-class Console_Process (Console, Process):
+from gps_utils.console_process import Console_Process
 
+class Makefile_Process (Console_Process):
    # This regexp matches the output of the GNAT compiler to report its progress. Change
    # this if your compiler outputs this information differently.
    progress_regexp = "^completed ([0-9]+) out of ([0-9]+) \\(([^\n]*)%\\)\\.\\.\\.\\n"
 
    def on_output (self, unmatched, matched):
       """Called when new output is available from make"""
-      self.write (unmatched + matched)
+      Console_Process.on_output (self, unmatched, matched)
       self.cumulated_output = self.cumulated_output + unmatched + matched
       Locations.parse \
         (output   = unmatched + matched,
          category = locations_category)
 
-   def on_input (self, input):
-      """Called when the user has sent input in the console"""
-      self.send (input)
-
    def on_exit (self, status, remaining_output):
-      self.write (remaining_output)
-      self.write ("exit status: " + `status`)
+      Console_Process.on_exit (self, status, remaining_output)
 
       # Among other things, this automatically reparses xref if the user
       # has set the preference for it
@@ -133,25 +129,13 @@ class Console_Process (Console, Process):
       Codefix.parse (category=locations_category,
                      output=self.cumulated_output)
 
-   def on_destroy (self):
-      """If the console is destroyed, we kill the make process as well"""
-      self.kill ()
-
    def __init__ (self, process, args=""):
       Locations.remove_category (locations_category)
-      Console.__init__ (self, "",
-                        on_input=Console_Process.on_input,
-                        on_destroy=Console_Process.on_destroy,
-                        force=True)
+      Console_Process.__init__ (self, process, args, close_on_exit=False)
       self.clear()
       self.write (process + " " + args + "\n")
       MDI.get ("Messages").raise_window()
       self.cumulated_output = ""
-      Process.__init__ (self, process + ' ' + args + "",
-                        regexp="^.+\\n",
-                        progress_regexp=Console_Process.progress_regexp,
-                        on_exit=Console_Process.on_exit,
-                        on_match=Console_Process.on_output)
 
 class Builder:
    def compute_buildfile (self):
@@ -195,7 +179,7 @@ class Builder:
       args = switches + " " + self.extra_switches + " " \
          + " -f " + basename (self.buildfile) + " " + target + " " \
          + self.get_scenario_variables(project)
-      return Console_Process (make, args) 
+      return Makefile_Process (make, args) 
 
    def get_scenario_variables(self,project):
        return ""
