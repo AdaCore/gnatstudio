@@ -665,10 +665,17 @@ package body GPS.Kernel.Task_Manager is
 
    function Get_Data
      (Instance : Class_Instance)
-      return Scheduled_Command_Access is
+      return Scheduled_Command_Access
+   is
+      Cmd : Command_Property_Access;
    begin
-      return Command_Property_Access
-        (Instance_Property'(Get_Data (Instance, Command_Class_Name))).Command;
+      Cmd := Command_Property_Access
+        (Instance_Property'(Get_Data (Instance, Command_Class_Name)));
+      if Cmd = null then
+         return null;
+      else
+         return Cmd.Command;
+      end if;
    exception
       when Invalid_Data =>
          return null;
