@@ -37,6 +37,8 @@ package body GVD.Scripts is
    Debugger_Hook_Data_Type        : constant Hook_Type := "Debugger";
    Debugger_String_Hook_Data_Type : constant Hook_Type := "Debugger_String";
 
+   Show_In_Console_Cst : aliased constant String := "show_in_console";
+
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -283,15 +285,25 @@ package body GVD.Scripts is
          Name_Parameters
            (Data,
             (1 => Arg_Cmd'Unchecked_Access,
-             2 => Arg_Output'Unchecked_Access));
+             2 => Arg_Output'Unchecked_Access,
+             3 => Show_In_Console_Cst'Access));
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Set_Return_Value
-           (Data, Process_User_Command
+
+         if Nth_Arg (Data, 4, False) then
+            Process_User_Command
               (Debugger       => Process,
                Command        => Nth_Arg (Data, 2),
-               Output_Command => Nth_Arg (Data, 3, True),
-               Mode           => GVD.Types.Hidden));
+               Output_Command => False,  --  Done by Visible parameter
+               Mode           => GVD.Types.Visible);
+         else
+            Set_Return_Value
+              (Data, Process_User_Command
+                 (Debugger       => Process,
+                  Command        => Nth_Arg (Data, 2),
+                  Output_Command => Nth_Arg (Data, 3, True),
+                  Mode           => GVD.Types.Hidden));
+         end if;
 
       elsif Command = "non_blocking_send" then
          Name_Parameters
@@ -390,7 +402,7 @@ package body GVD.Scripts is
       Register_Command
         (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
          Static_Method => True);
-      Register_Command (Kernel, "send", 1, 2, Shell_Handler'Access, Class);
+      Register_Command (Kernel, "send", 1, 3, Shell_Handler'Access, Class);
       Register_Command
         (Kernel, "non_blocking_send", 1, 1, Shell_Handler'Access, Class);
 

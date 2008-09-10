@@ -4121,8 +4121,10 @@ GPS.Hook ("debugger_process_stopped").add (debugger_stopped)
      <param name="self">An instance of GPS.Debugger</param>
      <param name="cmd">A string</param>
      <param name="output" default="true">A boolean</param>
+     <param name="show_in_console" default="false">A boolean</param>
      <return>A string</return>
-     <description>This command executes cmd in the debugger, and returns the output of the debugger. GPS is blocked while cmd is executing on the debugger. If output is true, the command is displayed in the console. In any case, the output of the debugger is not shown in the console</description>
+     <description>This command executes cmd in the debugger. GPS is blocked while cmd is executing on the debugger. If output is true, the command is displayed in the console.
+If show_in_console is True, the output of the command is displayed in the debugger console, but is not returned by this function. If show_in_console is False, the result is not displayed in the console, but is returned by this function</description>
      <see_also name="GPS.Debugger.non_blocking_send" />
    </shell_doc>
 
