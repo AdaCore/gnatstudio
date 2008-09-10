@@ -154,28 +154,50 @@ When this command is executed after a repeat_next command, the whole line is del
    </action>
 """)
 
-## The blocks for which we want to display boxes
-subprogram_box_blocks={}
-for b in ["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
-          "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"]:
-  subprogram_box_blocks[b]=1
+def goto_subprogram_start (cursor):
+   """Return an EditorLocation corresponding to the subprogram in which
+      cursor is"""
+   blocks = {"CAT_PROCEDURE":1, "CAT_FUNCTION":1, "CAT_ENTRY":1,
+             "CAT_PROTECTED":1, "CAT_TASK":1, "CAT_PACKAGE":1}
+
+   if cursor.block_type() == "CAT_UNKNOWN":
+      return None
+
+   min = cursor.buffer().beginning_of_buffer()
+   while not blocks.has_key (cursor.block_type()) and cursor > min:
+     cursor = cursor.block_start() - 1
+
+   if cursor > min: return cursor
+   else:            return None
+
+def get_local_vars (subprogram):
+   """Return a list of GPS.Entity that are variables local to the
+      subprogram. It might not work accurately with nested subprograms"""
+   result = []
+   if subprogram:
+      locFile = subprogram.body().file()
+      locFrom = subprogram.body().line()
+      locTo   = subprogram.end_of_scope().line()
+
+      for e in locFile.entities (local=True):
+          decl = e.declaration()
+          if e.category() == "object" \
+             and decl.file() == locFile \
+             and decl.line() >= locFrom \
+             and decl.line() <= locTo:
+                result.append (e)
+
+   return result
 
 def add_subprogram_box():
    """ Insert in the current editor a box just before the current subprogram
        starts """
 
    buffer  = GPS.EditorBuffer.get ()
-   loc     = buffer.current_view().cursor()
    initial = loc.create_mark()
-   min     = buffer.beginning_of_buffer()
 
-   if loc.block_type() == "CAT_UNKNOWN":
-      return
-
-   while (not subprogram_box_blocks.has_key (loc.block_type())) and (loc > min):
-      loc = loc.block_start() - 1
-
-   if loc > min:
+   loc = goto_subprogram_start (buffer.current_view().cursor())
+   if loc:
       name = loc.block_name()
       loc = loc.block_start().beginning_of_line();
       dashes = '-' * (len (name) + 6)
