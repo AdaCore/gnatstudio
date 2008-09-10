@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,10 +17,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides the implementation for a general interactive console.
+--  This package provides the implementation for a general interactive console
+
+with System;
+
+with GNAT.Expect;
+with GNAT.Regpat;
+with GNATCOLL.Scripts;
+with GNAT.Strings;
 
 with Gdk.Color;   use Gdk.Color;
-
 with Glib;
 with Gtk.Enums;
 with Gtk.Main;
@@ -29,17 +35,11 @@ with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Scrolled_Window;
+with Pango.Font;
 
-with GNAT.Expect;
-with GNAT.Regpat;
-with GNATCOLL.Scripts;
-with GNAT.Strings;
 with Histories;
 with GUI_Utils;
 with String_List_Utils;
-with System;
-
-with Pango.Font;
 
 package Interactive_Consoles is
 
@@ -67,7 +67,7 @@ package Interactive_Consoles is
       Input     : String;
       User_Data : System.Address) return String;
    --  A command handler that executes Input into the scripting language
-   --  associated with Console
+   --  associated with Console.
 
    function Default_Completion_Handler
      (Input     : String;
@@ -76,7 +76,7 @@ package Interactive_Consoles is
    --  The default completion handler for a console, which queries the
    --  associated scripting language.
    --  When called, User_Data will be the Console itself, and not the one
-   --  passed to Gtk_New
+   --  passed to Gtk_New.
 
    function Default_Interrupt_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -113,7 +113,7 @@ package Interactive_Consoles is
       Highlight           : Gdk_Color := Null_Color;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    procedure Insert
      (Console        : access Interactive_Console_Record;
@@ -142,7 +142,7 @@ package Interactive_Consoles is
    --  character has been read
 
    procedure Clear (Console : access Interactive_Console_Record);
-   --  Clear all the text in the Console.
+   --  Clear all the text in the Console
 
    procedure Enable_Prompt_Display
      (Console : access Interactive_Console_Record;
@@ -152,11 +152,11 @@ package Interactive_Consoles is
 
    function Is_Editable
      (Console : access Interactive_Console_Record) return Boolean;
-   --  Return whether the console is user editable, or read-only.
+   --  Return whether the console is user editable, or read-only
 
    procedure Display_Prompt
      (Console : access Interactive_Console_Record'Class);
-   --  Displays the prompt at the end of the current text.
+   --  Displays the prompt at the end of the current text
 
    procedure Set_Prompt
      (Console : access Interactive_Console_Record;
@@ -185,7 +185,7 @@ package Interactive_Consoles is
       User_Data : System.Address := System.Null_Address);
    --  Set Handler to be called when ctrl-c is pressed in the interactive
    --  console. A default interrupt handler is provided that asks the scripting
-   --  language to do the necessary work
+   --  language to do the necessary work.
 
    function Interrupt
      (Console : access Interactive_Console_Record'Class) return Boolean;
@@ -196,21 +196,21 @@ package Interactive_Consoles is
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
       Color   : Gdk_Color);
-   --  Set the color used for highlighting tags.
+   --  Set the color used for highlighting tags
 
    function Get_Chars
      (Console : access Interactive_Console_Record) return String;
-   --  Return the contents of the console window.
+   --  Return the contents of the console window
 
    function Get_History
      (Console : access Interactive_Console_Record)
       return GNAT.Strings.String_List_Access;
-   --  Return the command history.
+   --  Return the command history
 
    function Get_View
      (Console : access Interactive_Console_Record)
       return Gtk.Text_View.Gtk_Text_View;
-   --  Return the text view.
+   --  Return the text view
 
    -----------------
    -- Hyper links --
@@ -227,7 +227,7 @@ package Interactive_Consoles is
    --  Called when a link is clicked on
 
    procedure On_Destroy (Link : in out Hyper_Link_Callback_Record) is null;
-   --  Called when Link is destroyed.
+   --  Called when Link is destroyed
 
    procedure Create_Hyper_Link
      (Console  : access Interactive_Console_Record;
@@ -263,7 +263,7 @@ package Interactive_Consoles is
      (Console : Interactive_Console)
       return GNATCOLL.Scripts.Virtual_Console;
    --  Return the virtual console attached to Console.
-   --  Create one if necessary
+   --  Create one if necessary.
 
    function Get_Console
      (Virtual : GNATCOLL.Scripts.Virtual_Console) return Interactive_Console;
@@ -297,26 +297,26 @@ private
       View   : Gtk.Text_View.Gtk_Text_View;
 
       Prompt : GNAT.Strings.String_Access;
-      --  The prompt to be displayed.
+      --  The prompt to be displayed
 
       Prompt_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The position after which the user can insert text.
+      --  The position after which the user can insert text
 
       Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The insert position.
+      --  The insert position
 
       Internal_Insert : Boolean := False;
       --  Whether internal functions are writing in the console buffer.
       --  Prevents recursion in the handler for "insert_text".
 
       Uneditable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag indicating uneditable text.
+      --  A tag indicating uneditable text
 
       Prompt_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used to distinguish the prompt from the rest of the text.
+      --  A tag used to distinguish the prompt from the rest of the text
 
       Highlight_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      --  A tag used to distinguish highlighted text.
+      --  A tag used to distinguish highlighted text
 
       External_Messages_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag used to identify messages that were generated by GPS but not
@@ -333,7 +333,7 @@ private
       --  input.
 
       Input_Blocked : Boolean := False;
-      --  Set to True means that the console is in uneditable mode.
+      --  Set to True means that the console is in uneditable mode
 
       Message_Was_Displayed : Boolean := False;
       --  Indicate that a message was displayed, ie the last input point is
@@ -345,18 +345,18 @@ private
       --  beginning.
 
       Current_Position : Integer := -1;
-      --  The current position when browsing the command history.
+      --  The current position when browsing the command history
 
       Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
       Idle_Registered : Boolean := False;
-      --  The handler for idle callbacks.
+      --  The handler for idle callbacks
 
       Empty_Equals_Repeat : Boolean := True;
       --  Whether an empty command should be equivalent to repeating the
       --  last command.
 
       Highlight    : Gdk_Color := Null_Color;
-      --  The color used for highlighting.
+      --  The color used for highlighting
 
       Waiting_For_Input : Boolean := False;
       --  Whether the console is blocked in a call to readline()
@@ -368,7 +368,7 @@ private
       Links_Count : Natural := 0;
       --  List of hyper links that have been registered for this console
       --  Links_Count indicates the number of links that have been registered,
-      --  for efficiency
+      --  for efficiency.
    end record;
 
 end Interactive_Consoles;

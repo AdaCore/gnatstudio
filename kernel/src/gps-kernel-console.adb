@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
 with GNAT.IO;                use GNAT.IO;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
 with Glib.Xml_Int;           use Glib.Xml_Int;
@@ -46,7 +47,6 @@ with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body GPS.Kernel.Console is
 
@@ -78,7 +78,7 @@ package body GPS.Kernel.Console is
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
-   --  Called when the console has been destroyed.
+   --  Called when the console has been destroyed
 
    function Console_Delete_Event
      (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
@@ -119,7 +119,7 @@ package body GPS.Kernel.Console is
      (Child : access GPS_Console_MDI_Child_Record) return Boolean
    is
       Console : constant Interactive_Console :=
-        Interactive_Console (Get_Widget (Child));
+                  Interactive_Console (Get_Widget (Child));
    begin
       return Interrupt (Console);
    end Interrupt;
