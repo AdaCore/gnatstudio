@@ -119,6 +119,17 @@ package GPS.Kernel.MDI is
    --     Start_Group (Get_Command_Queue (Child))
    --  By default, it returns Null_Command_Queue
 
+   function Interrupt
+     (Child : access GPS_MDI_Child_Record) return Boolean;
+   --  The user has selected the /Tools/Interrupt menu while this Child has
+   --  the focus. If this function returns False (the default), this indicates
+   --  the control-C could not be handled by the child itself, and we
+   --  proceed with the default implementation of /Tools/Interrupt which is to
+   --  kill the last process that was started.
+   --  But the child can decide to process the interrupt itself (and do
+   --  something less drastic than killing the whole process), and return
+   --  True.
+
 private
 
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record

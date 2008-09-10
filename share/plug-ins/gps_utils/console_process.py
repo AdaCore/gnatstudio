@@ -61,6 +61,12 @@ class Console_Process (GPS.Console, GPS.Process):
        processes like gdb or unix shells"""
     self.set_size (rows, columns)
 
+  def on_interrupt (self):
+    """This method is called when the user presses control-c in the
+       console. This interrupts the command we are currently processing"""
+    GPS.Logger ("CONSOLE_PROCESS").log ("MANU on_interrupt")
+    self.interrupt()
+
   def __init__ (self, process, args="", close_on_exit=True):
     """Spawn a new interactive process and show its input/output in a
        new GPS console. The process is created so that it does not
@@ -72,6 +78,7 @@ class Console_Process (GPS.Console, GPS.Process):
       on_input = self.on_input,
       on_destroy = self.on_destroy,
       on_resize = self.on_resize,
+      on_interrupt = self.on_interrupt,
       force = True)
     GPS.Process.__init__ (
       self, process + " " + args, ".+",

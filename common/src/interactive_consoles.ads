@@ -180,11 +180,18 @@ package Interactive_Consoles is
    --  language associated with the console, if there is any.
 
    procedure Set_Interrupt_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Handler : Interrupt_Handler);
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Interrupt_Handler;
+      User_Data : System.Address := System.Null_Address);
    --  Set Handler to be called when ctrl-c is pressed in the interactive
    --  console. A default interrupt handler is provided that asks the scripting
    --  language to do the necessary work
+
+   function Interrupt
+     (Console : access Interactive_Console_Record'Class) return Boolean;
+   --  Handles a control-C in the console.
+   --  Returns False if not interrupt handler was set or the handler did not
+   --  perform anything.
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
@@ -280,7 +287,10 @@ private
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
       Completion : GUI_Utils.Completion_Handler;
-      Interrupt  : Interrupt_Handler;
+
+      Interrupt           : Interrupt_Handler;
+      Interrupt_User_Data : System.Address;
+
       User_Data  : System.Address;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;

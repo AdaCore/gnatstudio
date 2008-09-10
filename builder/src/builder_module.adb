@@ -1860,8 +1860,17 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
-      Interrupt_Latest_Task (Kernel);
+      --  Check whether the current MDI child can handle interrupt on its own
+
+      if Child = null
+        or else Child.all not in GPS_MDI_Child_Record'Class
+        or else not Interrupt (GPS_MDI_Child (Child))
+      then
+         --  Else default is to kill the last process we started
+         Interrupt_Latest_Task (Kernel);
+      end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);

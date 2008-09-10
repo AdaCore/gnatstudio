@@ -3110,6 +3110,7 @@ Note that this class is in fact available directly through "from gps_utils.conso
       <param name="on_destroy" default="">A subprogram</param>
       <param name="accept_input" default="True">A boolean</param>
       <param name="on_resize" default="">A subprogram</param>
+      <param name="on_interrupt" default="">A subprogram</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
 
 You cannot create the Python and Shell consoles through this call. If you do, an exception is raised. Instead, use GPS.execute_action ("/Tools/Consoles/Python"), and then get a handle on the console through GPS.Console. This is because these two consoles are tightly associated with each of the scripting languages.
@@ -3129,6 +3130,8 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
    - $1: The instance of the GPS.Console
 
 The subprogram on_resize is called whenever the console is resized by the user. It is passed three parameters: $1 is the instance of GPS.Console, $2 is the number of visible rows in the console, and $3 is the number of visible columns. This is mostly useful when a process is running in the console, in which case you can use GPS.Process.set_size to let the process know about the size. Note that the size passed to this callback is conservative: since all characters might not have the same size, GPS tries to compute the maximal number of visible characters and pass this to the callback, but the exact number of characters might depend on the font.
+
+The subprogram on_interrupt is called when the user presses control-c in the console. It receives a single parameter, which is the instance of GPS.Console. By default a control-c is handled by GPS itself and will kill the last process that was started.
 </description>
   </shell_doc>
 

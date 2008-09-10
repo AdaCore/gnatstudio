@@ -70,6 +70,11 @@ package body GPS.Kernel.Console is
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
 
+   type GPS_Console_MDI_Child_Record is new GPS_MDI_Child_Record
+      with null record;
+   overriding function Interrupt
+     (Child : access GPS_Console_MDI_Child_Record) return Boolean;
+
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
@@ -105,6 +110,19 @@ package body GPS.Kernel.Console is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
+
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   overriding function Interrupt
+     (Child : access GPS_Console_MDI_Child_Record) return Boolean
+   is
+      Console : constant Interactive_Console :=
+        Interactive_Console (Get_Widget (Child));
+   begin
+      return Interrupt (Console);
+   end Interrupt;
 
    -----------------
    -- Get_Console --
@@ -425,15 +443,18 @@ package body GPS.Kernel.Console is
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
+            NChild := new GPS_Console_MDI_Child_Record;
+
             if Module /= null then
-               Gtk_New (NChild, Console,
-                        Group               => Group_Consoles,
-                        Focus_Widget        => Gtk_Widget (Get_View (Console)),
-                        Module              => Module_ID (Module),
-                        Desktop_Independent => True);
+               GPS.Kernel.MDI.Initialize
+                 (NChild, Console,
+                  Group               => Group_Consoles,
+                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
+                  Module              => Module_ID (Module),
+                  Desktop_Independent => True);
 
             else
-               GPS.Kernel.MDI.Gtk_New
+               GPS.Kernel.MDI.Initialize
                  (NChild, Console,
                   Group               => Group_Consoles,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)),

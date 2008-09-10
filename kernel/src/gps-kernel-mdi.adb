@@ -571,4 +571,16 @@ package body GPS.Kernel.MDI is
       return Commands.Null_Command_Queue;
    end Get_Command_Queue;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   function Interrupt
+     (Child : access GPS_MDI_Child_Record) return Boolean
+   is
+      pragma Unreferenced (Child);
+   begin
+      return False;
+   end Interrupt;
+
 end GPS.Kernel.MDI;

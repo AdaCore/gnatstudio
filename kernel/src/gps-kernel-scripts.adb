@@ -178,6 +178,12 @@ package body GPS.Kernel.Scripts is
       Input   : String; User_Data : System.Address) return String;
    --  Called when input is available on a console
 
+   function On_Console_Interrupt
+     (Console : access Interactive_Console_Record'Class;
+      Data    : System.Address) return Boolean;
+   --  Called when the user has pressed control-c in the console and a custom
+   --  callback was set from GPS.Console()
+
    procedure Console_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles command related to GPS.Console
@@ -276,11 +282,12 @@ package body GPS.Kernel.Scripts is
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
    On_Resize_Cst    : aliased constant String := "on_resize";
+   On_Interrupt_Cst : aliased constant String := "on_interrupt";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
-      On_Resize_Cst'Access);
+      On_Resize_Cst'Access, On_Interrupt_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -1403,10 +1410,9 @@ package body GPS.Kernel.Scripts is
       Args       : Glib.Values.GValues;
       Subprogram : Subprogram_Type)
    is
-      Inst   : constant Class_Instance :=
-                 Get_Instance (Get_Script (Subprogram.all), Console);
-      Alloc  : constant Gtk_Allocation_Access := To_Allocation (Args, 1);
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
+      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
+      Alloc  : constant Gtk_Allocation_Access := To_Allocation (Args, 1);
    begin
       if Script /= null then
          declare
@@ -1437,6 +1443,30 @@ package body GPS.Kernel.Scripts is
       end if;
    end On_Console_Resize;
 
+   --------------------------
+   -- On_Console_Interrupt --
+   --------------------------
+
+   function On_Console_Interrupt
+     (Console : access Interactive_Console_Record'Class;
+      Data    : System.Address) return Boolean
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Subprogram_Type);
+      Subprogram : constant Subprogram_Type := Convert (Data);
+      Script : constant Scripting_Language := Get_Script (Subprogram.all);
+      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
+      C      : Callback_Data'Class         := Create (Script, 1);
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Set_Nth_Arg (C, 1, Inst);
+      Tmp := Execute (Subprogram, C);
+      Free (C);
+
+      return True;
+   end On_Console_Interrupt;
+
    -----------------------------
    -- Console_Command_Handler --
    -----------------------------
@@ -1456,6 +1486,7 @@ package body GPS.Kernel.Scripts is
             On_Destroy   : constant Subprogram_Type := Nth_Arg (Data, 5, null);
             Accept_Input : constant Boolean := Nth_Arg (Data, 6, True);
             On_Resize    : constant Subprogram_Type := Nth_Arg (Data, 7, null);
+            On_Interrupt : constant Subprogram_Type := Nth_Arg (Data, 8, null);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -1504,6 +1535,12 @@ package body GPS.Kernel.Scripts is
                  (Console, Signal_Size_Allocate,
                   On_Console_Resize'Access,
                   User_Data => On_Resize);
+            end if;
+
+            if Console /= null and then On_Interrupt /= null then
+               Set_Interrupt_Handler
+                 (Console, On_Console_Interrupt'Access,
+                  User_Data => On_Interrupt.all'Address);
             end if;
          end;
 
@@ -1698,7 +1735,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 6,
+         Maximum_Args => 7,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command

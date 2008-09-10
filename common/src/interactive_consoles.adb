@@ -903,6 +903,20 @@ package body Interactive_Consoles is
          return "";
    end Default_Command_Handler;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   function Interrupt
+     (Console : access Interactive_Console_Record'Class) return Boolean is
+   begin
+      if Console.Interrupt /= null then
+         return Console.Interrupt (Console, Console.Interrupt_User_Data);
+      end if;
+
+      return False;
+   end Interrupt;
+
    -----------------------
    -- Key_Press_Handler --
    -----------------------
@@ -988,16 +1002,6 @@ package body Interactive_Consoles is
                end if;
                Console.Internal_Insert := False;
                return True;
-            end if;
-
-         when GDK_C =>
-            if not Console.Waiting_For_Input
-              and then Console.Interrupt /= null
-              and then Get_State (Event) = (Control_Mask or Shift_Mask)
-            then
-               return Console.Interrupt (Console, Console.User_Data);
-            else
-               return False;
             end if;
 
          when GDK_Return | GDK_KP_Enter =>
@@ -1467,10 +1471,12 @@ package body Interactive_Consoles is
    ---------------------------
 
    procedure Set_Interrupt_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Handler : Interrupt_Handler) is
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Interrupt_Handler;
+      User_Data : System.Address := System.Null_Address) is
    begin
       Console.Interrupt := Handler;
+      Console.Interrupt_User_Data := User_Data;
    end Set_Interrupt_Handler;
 
    -------------------------
