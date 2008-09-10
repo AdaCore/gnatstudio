@@ -7944,6 +7944,11 @@ generated documentation. The templates used for generating the documentation
 can be found under @file{<install_dir>/share/gps/docgen2}. If you need a
 different layout as the proposed one, you can change directly those files.
 
+Starting with GPS 4.3, user-defined structured comments can now be used to
+improve the generated documentation. To define your own structured comments,
+you should refer to the GPS python extension documentation (from GPS Help menu,
+choose 'Python extensions').
+
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
@@ -9854,6 +9859,11 @@ A regular expression used to filter to comments found in the source code before
 using them for generating documentation. For example "^!.*" will remove all
 comments starting with '!'.
 
+@item Spawn a browser
+
+If enabled, a browser is spawned after each documentation generation to view
+the generated files. This browser is not spawned if disabled.
+
 @end table
 
 @end itemize
@@ -10011,13 +10021,13 @@ this can act as an example to create your own customization script.
 
 Technically, the list of plug-in to load or not to load
 are stored in the file
-@file{HOME/.gps/startup.xml}. 
+@file{HOME/.gps/startup.xml}.
 
 If you have modified anything through this dialog (the list of plug-ins
 to load or unload), you will
 need to restart GPS. GPS cannot unload a module, since it can have too
 many possible effects on GPS (adding menus, overriding key
-shortcuts, @dots{}). 
+shortcuts, @dots{}).
 
 A dialog is displayed asking you whether you would like to exit GPS
 now. This will properly save all your files.

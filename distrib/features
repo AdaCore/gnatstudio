@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 08, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 10, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -212,6 +212,12 @@ NF-43-GC19-021 New plug-in to reset GPS Windows registry settings (2008-01-30)
   breaks those default settings. By running this new plug-in (Help/Reset
   Registry) all the values are restored to their GPS default values.
 
+NF-43-GC19-017 User tags handling in documentation generation (2008-09-10)
+
+  The documentation generation facility has been enhanced to handle custom
+  user tags. Code comments can now be structured with pseudo-xml tags to
+  produce better formatted documentation.
+
 NF-43-GC12-017 Align on arrows working in case statement (2007-12-29)
 
   The align plug-in has been enhanced to support arrows inside
@@ -326,7 +332,7 @@ NF-43-EA12-009 Debugger contextual menu handles expressions (2008-08-19)
   to display a variable. For instance, if you leave your cursor on X in
   "A.X", then the command sent to the debugger is "print a.x". This also
   works with more complex expressions like "A(5)  .   X" (or if there are
-  comments in the middle of the expression). 
+  comments in the middle of the expression).
 
 NF-43-D811-007 Ability to define new language categories (2008-03-12)
 
