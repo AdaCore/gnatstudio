@@ -252,6 +252,7 @@ Scripting GPS
 * Hooks::
 
 Python FAQ
+* Hello World! in python::
 * Spawning external processes::
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
@@ -14947,6 +14948,7 @@ This section lists some of the problems that have been encountered while using
 Python inside GPS. This is not a general Python discussion.
 
 @menu
+* Hello World! in python::
 * Spawning external processes::
 * Redirecting the output of spawned processes::
 * Contextual menus on object directories only::
@@ -14957,6 +14959,42 @@ Python inside GPS. This is not a general Python discussion.
 * Hiding contextual menus::
 * Creating custom graphical interfaces::
 @end menu
+
+@c -------------------------------------------
+@node Hello World! in python
+@subsubsection Hello World! in python
+
+Writing a python script to interact with GPS is very simple. Here we show
+how to create a new menu in GPS that when clicked, diplays a dialog saying
+the famous ``Hello World!''.
+
+Here is the code that you need to put in hello_world.py:
+
+@smallexample
+import GPS
+
+def hello_world (self):
+   GPS.MDI.dialog ("Hello World!")
+
+GPS.Menu.create ("/Help/Hello World!", on_activate=hello_world)
+@end smallexample
+
+In order to use this plug-in, you can launch GPS with the following command
+line:
+
+@smallexample
+$ gps --load=python:hello_world.py
+@end smallexample
+
+If would want the plug-in to be loaded everytime you launch GPS without having
+to specify it on the command line, you should copy hello_world.py to your
+@code{$HOME/.gps/plug-ins/} directory or @code{%USERPROFILE%\.gps\} under
+Windows.
+
+Alternatively, you can add the directory in which you plug-in is located to
+you @code{GPS_CUSTOM_PATH} environment variable.
+For a description of the various environment variables used by GPS,
+@pxref{Environment Variables}.
 
 @c -------------------------------------------
 @node Spawning external processes
