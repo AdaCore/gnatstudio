@@ -329,9 +329,14 @@ package body Expect_Interface is
    --------------
 
    function Get_Data (Inst : Class_Instance) return Custom_Action_Access is
+      Action : constant Action_Property_Access := Action_Property_Access
+        (Instance_Property'(Get_Data (Inst, Process_Class_Name)));
    begin
-      return Action_Property_Access
-        (Instance_Property'(Get_Data (Inst, Process_Class_Name))).Action;
+      if Action = null then
+         return null;
+      else
+         return Action.Action;
+      end if;
    end Get_Data;
 
    --------------
@@ -923,7 +928,7 @@ package body Expect_Interface is
       elsif Command = "send" then
          Name_Parameters (Data, Send_Args);
          D := Get_Data (Data, 1);
-         if D.Pd /= null then
+         if D /= null and then D.Pd /= null then
             Send (D.Pd.all,
                   Str => Nth_Arg (Data, 2),
                   Add_LF => Nth_Arg (Data, 3, True));
@@ -931,31 +936,33 @@ package body Expect_Interface is
 
       elsif Command = "interrupt" then
          D := Get_Data (Data, 1);
-         if D.Pd /= null then
+         if D /= null and then D.Pd /= null then
             Interrupt (D.Pd.all);
          end if;
 
       elsif Command = "kill" then
          D := Get_Data (Data, 1);
-         if D.Pd /= null then
+         if D /= null and then D.Pd /= null then
             Close (D.Pd.all);
          end if;
 
       elsif Command = "wait" then
          D := Get_Data (Data, 1);
-         E := Interactive_Expect
-           (Kernel   => Get_Kernel (Data),
-            Action   => D,
-            Timeout  => -1,
-            Pattern  => "",
-            Till_End => True);
-         Set_Return_Value (Data, D.Status);
+         if D /= null and then D.Pd /= null then
+            E := Interactive_Expect
+              (Kernel   => Get_Kernel (Data),
+               Action   => D,
+               Timeout  => -1,
+               Pattern  => "",
+               Till_End => True);
+            Set_Return_Value (Data, D.Status);
+         end if;
 
       elsif Command = "set_size" then
          Name_Parameters (Data, (1 => Rows_Cst'Access,
                                  2 => Columns_Cst'Access));
          D := Get_Data (Data, 1);
-         if D.Pd /= null then
+         if D /= null and then D.Pd /= null then
             Set_Size (TTY_Process_Descriptor'Class (D.Pd.all),
                       Nth_Arg (Data, 2), Nth_Arg (Data, 3));
          end if;
@@ -963,37 +970,42 @@ package body Expect_Interface is
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
          D := Get_Data (Data, 1);
-         E := Interactive_Expect
-           (Kernel   => Get_Kernel (Data),
-            Action   => D,
-            Timeout  => Nth_Arg (Data, 3, -1),
-            Pattern  => Nth_Arg (Data, 2),
-            Till_End => False);
-         if D.Pd /= null then
-            if D.Processed_Output /= null then
-               Set_Return_Value (Data, D.Processed_Output.all);
-               Free (D.Processed_Output);
+         if D /= null then
+            E := Interactive_Expect
+              (Kernel   => Get_Kernel (Data),
+               Action   => D,
+               Timeout  => Nth_Arg (Data, 3, -1),
+               Pattern  => Nth_Arg (Data, 2),
+               Till_End => False);
+            if D.Pd /= null then
+               if D.Processed_Output /= null then
+                  Set_Return_Value (Data, D.Processed_Output.all);
+                  Free (D.Processed_Output);
+               else
+                  Set_Return_Value (Data, "");
+               end if;
             else
-               Set_Return_Value (Data, "");
+               Set_Return_Value (Data, "Process terminated");
             end if;
-         else
-            Set_Return_Value (Data, "Process terminated");
          end if;
 
       elsif Command = "get_result" then
          D := Get_Data (Data, 1);
 
-         --  Wait till end
-         E := Interactive_Expect
-           (Kernel   => Get_Kernel (Data),
-            Action   => D,
-            Timeout  => -1,
-            Pattern  => "",
-            Till_End => True);
+         if D /= null then
+            --  Wait till end
+            E := Interactive_Expect
+              (Kernel   => Get_Kernel (Data),
+               Action   => D,
+               Timeout  => -1,
+               Pattern  => "",
+               Till_End => True);
 
-         Set_Return_Value
-           (Data,
-            To_String (D.Processed_Output) & To_String (D.Unmatched_Output));
+            Set_Return_Value
+              (Data,
+               To_String (D.Processed_Output)
+               & To_String (D.Unmatched_Output));
+         end if;
       end if;
 
    exception

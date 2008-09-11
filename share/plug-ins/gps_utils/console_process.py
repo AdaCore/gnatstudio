@@ -73,18 +73,23 @@ class Console_Process (GPS.Console, GPS.Process):
        appear in the task manager, and therefore the user can exit GPS
        without being asked whether or not to kill the process."""
     self.close_on_exit = close_on_exit
-    GPS.Console.__init__ (
-      self, process.split()[0],
-      on_input = self.on_input,
-      on_destroy = self.on_destroy,
-      on_resize = self.on_resize,
-      on_interrupt = self.on_interrupt,
-      force = True)
-    GPS.Process.__init__ (
-      self, process + " " + args, ".+",
-      single_line_regexp=True,  # For efficiency
-      task_manager=False,
-      on_exit = self.on_exit,
-     on_match = self.on_output)
+    try:
+      GPS.Console.__init__ (
+        self, process.split()[0],
+        on_input = self.on_input,
+        on_destroy = self.on_destroy,
+        on_resize = self.on_resize,
+        on_interrupt = self.on_interrupt,
+        force = True)
+      GPS.Process.__init__ (
+        self, process + " " + args, ".+",
+        single_line_regexp=True,  # For efficiency
+        task_manager=False,
+        on_exit = self.on_exit,
+        on_match = self.on_output)
+      GPS.MDI.get_by_child (self).raise_window ()
+    except:
+      self.destroy()
+      self.kill()
+      GPS.Console().write ("Could not spawn: " + process + " " + args + "\n")
 
-    GPS.MDI.get_by_child (self).raise_window ()
