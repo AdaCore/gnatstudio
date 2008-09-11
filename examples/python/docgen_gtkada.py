@@ -50,24 +50,27 @@ class ScreenshotTagHandler (GPS.DocgenTagHandler):
 
    def on_match (self, docgen, attrs, value, entity_name, entity_href):
       file = docgen.get_current_file()
-      dir = file.project().file().directory()+"../../share/doc/gtkada/gtkada_rm/"
+      dir = os.path.normpath (
+         os.path.join (file.project().file().directory(),
+         "../../share/doc/gtkada/gtkada_rm/"))
+      fullfile = os.path.join (dir, value)
 
       try:
-         os.stat(dir+value)
+         os.stat(fullfile)
          pict = value
       except:
          try:
-            os.stat(dir+value+".png")
+            os.stat(fullfile+".png")
             pict = value + ".png"
          except:
             try:
-               os.stat(dir+value+".jpg")
+               os.stat(fullfile+".jpg")
                pict = value + ".jpg"
             except:
-               GPS.Console ("Messages").write ("could not find screenshot %s\n" % (value))
+               GPS.Console ("Messages").write ("could not find screenshot %s\n" % (fullfile))
                return ""
 
-      img = """<img src="%s%s" alt="%s" style="border: 0px;"/>""" % (dir, pict, pict)
+      img = """<img src="file://%s" alt="%s" style="border: 0px;"/>""" % (os.path.join (dir, pict), pict)
 
       self.pictureslist[entity_name] = [entity_href, img]
       return """</div>
