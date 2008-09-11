@@ -15,6 +15,11 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
+NF-43-H908-010 New plugin to include a unix shell (2008-09-11)
+
+  A new plugin (not loaded by default) is now provided which allows you
+  to open a GPS console executing a Unix shell.
+
 NF-43-H908-001 New contextual menu 'Show expanded code' (2008-09-08)
 
   For Ada files, a new contextual menu entry is provided to navigate in
