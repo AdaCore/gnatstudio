@@ -1,4 +1,4 @@
-"""This plug-in will spawn a Unix shell console in your GPS
+"""This plug-in will spawn a Unix/Windows shell console in your GPS
 
    When spawning zsh, it is recommended that your .zshrc file contains
    the following:
@@ -35,8 +35,11 @@ class Unix_Shell (Ansi_Console, Console_Process):
     Console_Process.__init__ (self, process, args)
 
 def create_default_shell (menu):
-    """Spawns the user's shell as read from the environment variable SHELL"""
+  """Spawns the user's shell as read from the environment variable SHELL"""
+  if os.getenv ("SHELL"):
     Unix_Shell (os.getenv ("SHELL"), "-i")
+  elif os.getenv ("COMSPEC"):
+    Unix_Shell (os.getenv ("COMSPEC"))
 
-GPS.Menu.create ("/Tools/Consoles/unix shell", create_default_shell)
+GPS.Menu.create ("/Tools/Consoles/OS Shell", create_default_shell)
 
