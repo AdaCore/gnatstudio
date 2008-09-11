@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2007, AdaCore                 --
+--                  Copyright (C) 2000-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Glib;                       use Glib;
 with Glib.Convert;
@@ -53,7 +54,7 @@ with Traces;                     use Traces;
 
 package body Debugger is
 
-   use String_History;
+   use String_History, Language_Lists;
 
    Me : constant Debug_Handle := Create ("Debugger");
 
@@ -152,7 +153,7 @@ package body Debugger is
    begin
       if Type_Str'Length /= 0 then
          Parse_Type
-           (Language_Debugger_Access (Debugger.The_Language),
+           (Language_Debugger_Access (Get_Language (Debugger)),
             Type_Str, Entity, Index, Result);
       end if;
 
@@ -180,7 +181,7 @@ package body Debugger is
 
       if Value_Found then
          Parse_Value
-           (Language_Debugger_Access (Debugger.The_Language),
+           (Language_Debugger_Access (Get_Language (Debugger)),
             Type_Str, Index, Value, Repeat_Num);
       end if;
    end Parse_Value;
@@ -191,10 +192,20 @@ package body Debugger is
 
    procedure Set_Language
      (Debugger     : access Debugger_Root;
-      The_Language : Language.Language_Access) is
+      The_Language : Language.Language_Access)
+   is
+      C : Language_Lists.Cursor := First (Debugger.Languages);
    begin
-      Language.Free (Debugger.The_Language);
-      Debugger.The_Language := The_Language;
+      while Has_Element (C) loop
+         if Element (C) = The_Language then
+            Debugger.The_Language := C;
+            return;
+         end if;
+         Next (C);
+      end loop;
+
+      Append (Debugger.Languages, The_Language);
+      Debugger.The_Language := Last (Debugger.Languages);
    end Set_Language;
 
    ------------------
@@ -202,9 +213,23 @@ package body Debugger is
    ------------------
 
    function Get_Language
-     (Debugger : access Debugger_Root) return Language.Language_Access is
+     (Debugger : access Debugger_Root;
+      Lang     : String := "") return Language.Language_Access
+   is
+      C : Language_Lists.Cursor;
    begin
-      return Debugger.The_Language;
+      if Lang = "" then
+         return Element (Debugger.The_Language);
+      end if;
+
+      C := First (Debugger.Languages);
+      while Has_Element (C) loop
+         if Equal (Get_Name (Element (C)), Lang, Case_Sensitive => False) then
+            return Element (C);
+         end if;
+         Next (C);
+      end loop;
+      return null;
    end Get_Language;
 
    ---------------------
@@ -1036,5 +1061,47 @@ package body Debugger is
    begin
       return Debugger.Execution_Window;
    end Separate_Execution_Window;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close (Debugger : access Debugger_Root) is
+      Result : Expect_Match;
+      C : Language_Lists.Cursor := First (Debugger.Languages);
+      Lang : Language.Language_Access;
+   begin
+      while Has_Element (C) loop
+         Lang := Element (C);
+         Language.Free (Lang);
+         Next (C);
+      end loop;
+      Clear (Debugger.Languages);
+
+      if Get_Descriptor (Get_Process (Debugger)) /= null then
+         begin
+            --  Ensure that the debugger is terminated before closing the pipes
+            --  and trying to kill it abruptly.
+
+            begin
+               Wait (Get_Process (Debugger), Result, ".+", Timeout => 200);
+            exception
+               when Process_Died =>
+                  --  This is somewhat expected... RIP.
+                  null;
+            end;
+            Close (Get_Descriptor (Get_Process (Debugger)).all);
+         exception
+            when Process_Died =>
+               null;
+         end;
+      end if;
+
+      Free (Debugger.Process);
+      Free (Debugger.Remote_Target);
+      Free (Debugger.Remote_Protocol);
+
+      --  ??? Shouldn't we free Command_Queue
+   end Close;
 
 end Debugger;

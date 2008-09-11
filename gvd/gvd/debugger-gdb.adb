@@ -292,12 +292,18 @@ package body Debugger.Gdb is
       Matched : Match_Array)
    is
       Debugger   : constant Debugger_Access := Process.Debugger;
+      Lang    : constant String := Str (Matched (3).First .. Matched (3).Last);
       Language   : Language_Access;
 
    begin
-      declare
-         Lang : constant String := Str (Matched (3).First .. Matched (3).Last);
-      begin
+      --  Is this a language we have seen before ? If yes, reuse it in case
+      --  it needs to dynamically query the debugger to find out if a
+      --  feature is supported, to avoid doing it every time we switch to
+      --  that language
+
+      Language := Get_Language (Debugger, Lang);
+
+      if Language = null then
          if Lang = "ada" then
             Language := new Gdb_Ada_Language;
          elsif Lang = "c" then
@@ -308,18 +314,23 @@ package body Debugger.Gdb is
             --  Do not change the current language if gdb isn't able to
             --  tell what the new language is
             return;
-
          else
             Output_Error
               (GPS_Window (Process.Window).Kernel,
                (-"Language unknown, defaulting to C: ") & Lang);
-            Language := new Gdb_C_Language;
+
+            --  We need to check whether we already have C defined:
+            Language := Get_Language (Debugger, "c");
+            if Language = null then
+               Language := new Gdb_C_Language;
+            end if;
          end if;
 
-         Set_Language (Debugger, Language);
          Set_Debugger
            (Language_Debugger_Access (Language), Debugger.all'Access);
-      end;
+      end if;
+
+      Set_Language (Debugger, Language);
    end Language_Filter;
 
    --------------------
@@ -970,55 +981,28 @@ package body Debugger.Gdb is
    -----------
 
    overriding procedure Close (Debugger : access Gdb_Debugger) is
-      Result : Expect_Match;
    begin
       --  If the debugger process is dead, do not attempt to communicate
       --  with the underlying process.
 
-      if Get_Descriptor (Get_Process (Debugger)) = null
-        or else Get_Pid
-          (Get_Descriptor
-            (Get_Process (Debugger)).all) = GNAT.Expect.Invalid_Pid
+      if Get_Descriptor (Get_Process (Debugger)) /= null
+        and then Get_Pid (Get_Descriptor (Get_Process (Debugger)).all) /=
+          GNAT.Expect.Invalid_Pid
       then
-         Free (Debugger.Process);
-         Free (Debugger.Remote_Target);
-         Free (Debugger.Remote_Protocol);
-         return;
+         --  In case the debugger was waiting for some input, or was busy
+         --  processing a command.
+         --  Try to handle case were gdb is waiting on a user question.
+
+         if Command_In_Process (Debugger.Process) then
+            Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
+            Interrupt (Debugger);
+         end if;
+
+         --  Now exit the debugger
+         Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
       end if;
 
-      --  In case the debugger was waiting for some input, or was busy
-      --  processing a command.
-      --  Try to handle case were gdb is waiting on a user question.
-
-      if Command_In_Process (Debugger.Process) then
-         Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
-         Interrupt (Debugger);
-      end if;
-
-      --  Now exit the debugger
-      Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
-
-      --  Ensure that gdb is terminated before closing the pipes and trying to
-      --  kill it abruptly.
-
-      begin
-         Wait (Get_Process (Debugger), Result, ".+", Timeout => 200);
-      exception
-         when Process_Died =>
-            --  This is somewhat expected... RIP.
-            null;
-      end;
-
-      begin
-         Close (Get_Descriptor (Get_Process (Debugger)).all);
-      exception
-         when Process_Died =>
-            null;
-      end;
-
-      Free (Debugger.Process);
-      Free (Debugger.Remote_Target);
-      Free (Debugger.Remote_Protocol);
+      Close (Debugger_Root (Debugger.all)'Access);
    end Close;
 
    -----------------------

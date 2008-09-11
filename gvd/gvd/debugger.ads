@@ -31,6 +31,7 @@ with GVD.Proc_Utils;
 with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package Debugger is
 
@@ -160,7 +161,7 @@ package Debugger is
    --  Return a regular expression that should match everything that should
    --  be highlighted in the debugger text window.
 
-   procedure Close (Debugger : access Debugger_Root) is abstract;
+   procedure Close (Debugger : access Debugger_Root);
    --  Terminates the external process and clean up associated data.
 
    function Get_Process
@@ -172,12 +173,13 @@ package Debugger is
      (Debugger     : access Debugger_Root;
       The_Language : Language.Language_Access);
    --  Set the language associated with a debugger.
-   --  Note that this procedure will free the previous language associated
-   --  with Debugger, if any.
 
    function Get_Language
-     (Debugger : access Debugger_Root) return Language.Language_Access;
-   --  Return the current language associated with a debugger.
+     (Debugger : access Debugger_Root;
+      Lang     : String := "") return Language.Language_Access;
+   --  Return the language_access for a specific language ("ada", "c", ...).
+   --  This might return null if Set_Language was never called for that
+   --  language. If Lang is the empty string, returns the current language.
 
    procedure Detect_Language (Debugger : access Debugger_Root);
    --  Try to detect the current language associated with the debugger.
@@ -933,11 +935,24 @@ private
       Next            : Command_Access;
    end record;
 
+   package Language_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Language.Language_Access, Language."=");
+
    type Debugger_Root is abstract tagged record
       Kernel       : Kernel_Handle;
       Process      : Process_Proxies.Process_Proxy_Access := null;
       Window       : Gtk.Window.Gtk_Window;
-      The_Language : Language.Language_Access;
+
+      Languages    : Language_Lists.List;
+      --  The list of languages in use for this debugger. New elements are
+      --  added to the list when the current language changes. We reuse
+      --  elements from the list when going back to a language already seen so
+      --  that we can initialize internal data for these languages based on
+      --  dynamically queried debugger features, without doing so every time
+      --  the language changes.
+
+      The_Language : Language_Lists.Cursor := Language_Lists.No_Element;
+      --  The current language
 
       Is_Started  : Boolean := False;
       --  True when the debugger session has been started (ie the execution

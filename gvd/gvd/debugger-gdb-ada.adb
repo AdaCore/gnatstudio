@@ -17,17 +17,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings;   use Ada.Strings;
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
-with Items.Arrays;  use Items.Arrays;
-with Items.Classes; use Items.Classes;
-with Items.Records; use Items.Records;
-with Items.Simples; use Items.Simples;
-with Items;         use Items;
-with Language.Ada;  use Language.Ada;
-with Language.Debugger; use Language.Debugger;
-with String_Utils;  use String_Utils;
+with Ada.Strings;           use Ada.Strings;
+with GNATCOLL.Tribooleans;  use GNATCOLL.Tribooleans;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with Items.Arrays;          use Items.Arrays;
+with Items.Classes;         use Items.Classes;
+with Items.Records;         use Items.Records;
+with Items.Simples;         use Items.Simples;
+with Items;                 use Items;
+with Language.Ada;          use Language.Ada;
+with Language.Debugger;     use Language.Debugger;
+with String_Utils;          use String_Utils;
 
 package body Debugger.Gdb.Ada is
 
@@ -179,25 +181,47 @@ package body Debugger.Gdb.Ada is
       Temporary : Boolean := False;
       Unhandled : Boolean := False) return String
    is
-      pragma Unreferenced (Debugger);
+      Break : aliased constant String := "break";
+      Catch : aliased constant String := "catch";
+
+      Command : access constant String := Break'Access;
+
    begin
+      if Debugger.Use_Catch_For_Exceptions = Indeterminate then
+         --  Check whether we should use "catch" or "break" to set a breakpoint
+         --  on exceptions. The former is the newer syntax, but wasn't
+         --  supported in older versions of the debugger
+
+         declare
+            Help : constant String := Send_Full
+              (Get_Debugger (Debugger), "help catch");
+         begin
+            Debugger.Use_Catch_For_Exceptions :=
+              To_TriBoolean (Index (Help, "catch exception") >= 1);
+         end;
+      end if;
+
+      if Debugger.Use_Catch_For_Exceptions = GNATCOLL.Tribooleans.True then
+         Command := Catch'Access;
+      end if;
+
       if Unhandled then
          if Temporary then
-            return "tbreak exception unhandled";
+            return "t" & Command.all & " exception unhandled";
          else
-            return "break exception unhandled";
+            return Command.all & " exception unhandled";
          end if;
       elsif Name /= "" and then Name /= "all" then
          if Temporary then
-            return "tbreak exception " & Name;
+            return "t" & Command.all & " exception " & Name;
          else
-            return "break exception " & Name;
+            return Command.all & " exception " & Name;
          end if;
       else
          if Temporary then
-            return "tbreak exception";
+            return "t" & Command.all & " exception";
          else
-            return "break exception";
+            return Command.all & " exception";
          end if;
       end if;
    end Break_Exception;

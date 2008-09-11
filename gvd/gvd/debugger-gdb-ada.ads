@@ -25,6 +25,7 @@
 with Items.Arrays;
 with Language; use Language;
 with Language.Debugger;
+with GNATCOLL.Tribooleans;
 
 package Debugger.Gdb.Ada is
 
@@ -148,7 +149,14 @@ package Debugger.Gdb.Ada is
 private
 
    type Gdb_Ada_Language is new
-     Language.Debugger.Language_Debugger with null record;
+     Language.Debugger.Language_Debugger with
+      record
+         Use_Catch_For_Exceptions : GNATCOLL.Tribooleans.Triboolean :=
+           GNATCOLL.Tribooleans.Indeterminate;
+         --  Whether we should use "catch" or "break" to set a breakpoint on
+         --  exceptions. This is initialized the first time we set a breakpoint
+         --  on exception
+      end record;
 
    overriding function Get_Name (Lang : access Gdb_Ada_Language) return String;
    --  See inherited documentation
