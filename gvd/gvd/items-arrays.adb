@@ -443,7 +443,7 @@ package body Items.Arrays is
          return null;
       end if;
 
-      for J in Item.Values'Range loop
+      for J in Item.Values'First .. Item.Last_Value loop
          if Item.Values (J).Value /= null
            and then Item.Values (J).Value'Tag = Repeat_Type'Tag
            and then Item.Values (J).Index <= Elem_Index

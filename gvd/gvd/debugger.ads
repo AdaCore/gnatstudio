@@ -171,7 +171,7 @@ package Debugger is
 
    procedure Set_Language
      (Debugger     : access Debugger_Root;
-      The_Language : Language.Language_Access);
+      The_Language : access Language.Language_Root'Class);
    --  Set the language associated with a debugger.
 
    function Get_Language

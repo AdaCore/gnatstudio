@@ -192,7 +192,7 @@ package body Debugger is
 
    procedure Set_Language
      (Debugger     : access Debugger_Root;
-      The_Language : Language.Language_Access)
+      The_Language : access Language.Language_Root'Class)
    is
       C : Language_Lists.Cursor := First (Debugger.Languages);
    begin
@@ -204,7 +204,7 @@ package body Debugger is
          Next (C);
       end loop;
 
-      Append (Debugger.Languages, The_Language);
+      Append (Debugger.Languages, Language_Access (The_Language));
       Debugger.The_Language := Last (Debugger.Languages);
    end Set_Language;
 
@@ -1078,7 +1078,9 @@ package body Debugger is
       end loop;
       Clear (Debugger.Languages);
 
-      if Get_Descriptor (Get_Process (Debugger)) /= null then
+      if Get_Process (Debugger) /= null
+        and then Get_Descriptor (Get_Process (Debugger)) /= null
+      then
          begin
             --  Ensure that the debugger is terminated before closing the pipes
             --  and trying to kill it abruptly.

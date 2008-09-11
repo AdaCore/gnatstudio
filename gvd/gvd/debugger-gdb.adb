@@ -985,7 +985,8 @@ package body Debugger.Gdb is
       --  If the debugger process is dead, do not attempt to communicate
       --  with the underlying process.
 
-      if Get_Descriptor (Get_Process (Debugger)) /= null
+      if Get_Process (Debugger) /= null
+        and then Get_Descriptor (Get_Process (Debugger)) /= null
         and then Get_Pid (Get_Descriptor (Get_Process (Debugger)).all) /=
           GNAT.Expect.Invalid_Pid
       then

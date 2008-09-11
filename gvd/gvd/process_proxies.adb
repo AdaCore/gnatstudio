@@ -45,9 +45,11 @@ package body Process_Proxies is
         (Boolean, Boolean_Access);
 
    begin
-      Free_Internal (Proxy.Descriptor);
-      Free_Internal (Proxy.Command_In_Process);
-      Free_Internal (Proxy);
+      if Proxy /= null then
+         Free_Internal (Proxy.Descriptor);
+         Free_Internal (Proxy.Command_In_Process);
+         Free_Internal (Proxy);
+      end if;
    end Free;
 
    --------------------
