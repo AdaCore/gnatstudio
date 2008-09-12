@@ -666,7 +666,7 @@ package body Expect_Interface is
          end if;
 
          --  Check for matching output. We use a very small timeout so that
-         --  we can also periodicallt process gtk+ events
+         --  we can also periodically process gtk+ events
 
          if Pattern = "" then
             Expect (Action.Pd.all, Result, ".+", Timeout => 5);
@@ -701,8 +701,12 @@ package body Expect_Interface is
       Exit_Why := Exit_Type'(Died);
 
    exception
-      when others =>
+      when Process_Died =>
          Exit_Cb (Action.all);
+         Action.In_Expect := False;
+         Exit_Why := Exit_Type'(Died);
+
+      when others =>
          Action.In_Expect := False;
          Exit_Why := Exit_Type'(Died);
    end Interactive_Expect;
