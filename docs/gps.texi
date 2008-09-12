@@ -7752,6 +7752,13 @@ commands such as @code{help}.
 @cindex python
 Open a python console to access the python interpreter.
 @xref{The Shell and Python Windows}.
+
+@item OS Shell
+@cindex shell
+Open an OS (Windows or Unix) console, using the environment variables
+@code{SHELL} and @code{COMSPEC} to determine which shell to use. This is
+currently a relatively simple implementation, without support for e.g.
+completion or ANSI codes.
 @end table
 
 @item Coverage
