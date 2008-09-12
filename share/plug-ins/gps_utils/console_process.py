@@ -64,8 +64,15 @@ class Console_Process (GPS.Console, GPS.Process):
   def on_interrupt (self):
     """This method is called when the user presses control-c in the
        console. This interrupts the command we are currently processing"""
-    GPS.Logger ("CONSOLE_PROCESS").log ("MANU on_interrupt")
     self.interrupt()
+
+  def on_completion (self, input):
+    """The user has pressed <tab> in the console. The default is just to
+       insert the \t character, but if you are driving a process that knows
+       about completion, such as an OS shell for instance, you could have
+       a different implementation. input is the full input till, but not
+       including, the tab character"""
+    self.write ("\n")
 
   def __init__ (self, process, args="", close_on_exit=True):
     """Spawn a new interactive process and show its input/output in a
@@ -80,6 +87,7 @@ class Console_Process (GPS.Console, GPS.Process):
         on_destroy = self.on_destroy,
         on_resize = self.on_resize,
         on_interrupt = self.on_interrupt,
+        on_completion = self.on_completion,
         force = True)
       GPS.Process.__init__ (
         self, process + " " + args, ".+",
