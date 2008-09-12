@@ -8,7 +8,6 @@ This is only to be used on Windows plateforms.
 """
 
 import GPS
-from _winreg import *
 
 def on_gps_started (hook_name):
    "Initializes this module."
@@ -19,7 +18,7 @@ def on_gps_started (hook_name):
    </action>
 
    <menu action='Reset Registry' before="About">
-      <title>/Help/Reset Registry</title>
+      <title>/Help/Reset Windows Registry</title>
    </menu>""")
 
 def write_gnat_reg (ext, val):
@@ -33,5 +32,10 @@ def reset_registry():
     write_gnat_reg (".ali", "GNAT.ali_file")
     write_gnat_reg (".gpr", "GNAT.project_file")
     write_gnat_reg (".o", "GNAT.object_file")
+    GPS.Console ("Messages").write ("Windows registry reset for GPS.\n")
 
-GPS.Hook ("gps_started").add (on_gps_started)
+try:
+  from _winreg import *
+  GPS.Hook ("gps_started").add (on_gps_started)
+except:
+  pass
