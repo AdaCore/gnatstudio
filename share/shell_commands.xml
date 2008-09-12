@@ -3596,7 +3596,7 @@ before_kill is a subprogram called just before the process is about to be killed
 on_exit is a subprogram called when the process has exited. You can no longer send input to it at this stage. Its parameters are:
   $1 = the instance of GPS.Process
   $2 = the exit status
-  $3 = the entire output of the process
+  $3 = the output of the process since the last call to on_match
 
 If the parameter task_manager is set to True, the process will be visible in the GPS task manager, and can be interrupted or paused by users. Otherwise, it will simply be running in the background, and never visible to the user.
 If progress_regexp is specified, then the output of the process will be scanned for this regexp. The part that match will not be returned to on_match. Instead, they will be used to guess the current progress of the command. Two groups of parenthesis are parsed, the one at progress_current, and the one at progress_total. The number returned for each of these groups indicate the current progress of the command, and the total that must be reached for this command to complete. For instance, if your process outputs lines like "done 2 out of 5", you should create a regular expression that matches the 2 and the 5 to guess the current progress. As a result, a progress bar is displayed in the task manager of GPS, and will allow users to monitor commands.
@@ -3626,7 +3626,7 @@ An exception is raised if the process could not be spawned.</description>
   <shell_doc name="GPS.Process.get_result">
       <param name="self">The instance of GPS.Process</param>
       <return>A string</return>
-      <description>Wait till the process terminates, and return its output. This is similar to connecting to the on_exit callback, but is easier to use in synchronous programs</description>
+      <description>Wait till the process terminates, and return its output. This is the output since the call to get_result, ie if you call get_result after performing some calls to expect, the returned string does not return the output that was already returned by expect.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Process.interrupt">
@@ -3644,9 +3644,10 @@ An exception is raised if the process could not be spawned.</description>
       <param name="regexp">A string</param>
       <param name="timeout" default="-1">An integer, in milliseconds</param>
       <return>A string</return>
-      <description>Block the execution of the script until either regexp has been seen in the output of the command, or the timeout has expired. If the timeout is negative, wait forever until we see the regexp or the process finishes its execution. While in such a call, the usual on_match callback will not be called.
-
-This command returns the output of the process since the last call to expect, and up to the point where regexp matched</description>
+      <description>Block the execution of the script until either regexp has been seen in the output of the command, or the timeout has expired. If the timeout is negative, wait forever until we see the regexp or the process finishes its execution.
+While in such a call, the usual on_match callback is called as usual, so you might need to add an explicit test in your on_match callback not to do anything in this case.
+This command returns the output of the process since the start of the call to expect and up to the end of the text that matched regexp. Note that it will also include the output that was sent to the on_match callback while expect was running. It will not however include output already returned by a previous call to expect (nor does it guarantee that two successive calls to expect will return the full output of the process, since some output might have been matched by on_match between the two calls, and would not be returned by the second expect).
+If a timeout occurred or the process terminated, an exception is raised</description>
     <example lang="python">
        proc = GPS.Process ("/bin/sh")
        print ("Output till prompt=" + proc.expect (">"))

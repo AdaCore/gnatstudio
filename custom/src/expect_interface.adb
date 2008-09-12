@@ -107,8 +107,15 @@ package body Expect_Interface is
       Progress_Current : Natural := 1;  --  Parenthesis within the regexp
       Progress_Final   : Natural := 2;  --  Parenthesis within the regexp
 
-      Processed_Output : String_Access;
+      In_Expect        : Boolean := False;
+      --  True if we are processing the 'GPS.Process.expect' function. This
+      --  temporarily disables periodically checking for matching output for
+      --  On_Match.
+
       Unmatched_Output : String_Access;
+      --  Output of the process since the last time On_Match was called (ie
+      --  since the last time Pattern matched).
+
    end record;
 
    overriding function Name (X : access Custom_Action_Record) return String;
@@ -183,13 +190,19 @@ package body Expect_Interface is
    --  Interactive command handler for the expect interface
 
    type Exit_Type is (Matched, Timed_Out, Died);
-   function Interactive_Expect
+   procedure Interactive_Expect
      (Kernel   : access Kernel_Handle_Record'Class;
       Action   : Custom_Action_Access;
       Timeout  : Integer := 200;
       Pattern  : String := "";
-      Till_End : Boolean := True) return Exit_Type;
-   --  Execute a call to Expect, but process the gtk+ events periodically
+      Output   : out String_Access;
+      Exit_Why : out Exit_Type);
+   --  Execute a call to Expect, but process the gtk+ events periodically.
+   --  If the pattern is the empty string, this function will only return when
+   --  the process has terminated (you must however set the timeout to -1).
+   --  On exit, Output contains the whole output of the process since the start
+   --  of the call, no matter what was sent to On_Match in the meantime. It is
+   --  the responsability of the caller to free Output
 
    ----------
    -- Name --
@@ -213,7 +226,6 @@ package body Expect_Interface is
       Free (X.Command);
       Unchecked_Free (X.Pattern);
       Free (X.Unmatched_Output);
-      Free (X.Processed_Output);
       Free (X.On_Exit);
       Free (X.On_Match);
       Unchecked_Free (X.Progress_Regexp);
@@ -294,10 +306,12 @@ package body Expect_Interface is
          end if;
 
       elsif Command.Pd /= null then
-         Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
-         if Result /= Expect_Timeout then
-            Output_Cb (Custom_Action_Access (Command),
-                       Strip_CR (Expect_Out (Command.Pd.all)));
+         if not Command.In_Expect then
+            Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
+            if Result /= Expect_Timeout then
+               Output_Cb (Custom_Action_Access (Command),
+                          Strip_CR (Expect_Out (Command.Pd.all)));
+            end if;
          end if;
 
          return Execute_Again;
@@ -308,13 +322,17 @@ package body Expect_Interface is
    exception
       when Process_Died =>
 
-         if Command.Pd /= null then
+         if not Command.In_Expect and then Command.Pd /= null then
             Output_Cb (Custom_Action_Access (Command),
                        Strip_CR (Expect_Out (Command.Pd.all)));
          end if;
 
          Close (Command.Pd.all, Command.Status);
-         Exit_Cb (Command.all);
+
+         if not Command.In_Expect then
+            Exit_Cb (Command.all);
+         end if;
+
          Command.Pd := null;
 
          if Command.Status /= 0 then
@@ -403,8 +421,7 @@ package body Expect_Interface is
             begin
                Set_Nth_Arg (C, 1, D.Inst);
                Set_Nth_Arg (C, 2, D.Status);
-               Set_Nth_Arg (C, 3, To_String (D.Processed_Output)
-                            & To_String (D.Unmatched_Output));
+               Set_Nth_Arg (C, 3, To_String (D.Unmatched_Output));
                Tmp := Execute (D.On_Exit, C);
                Free (C);
             end;
@@ -433,8 +450,7 @@ package body Expect_Interface is
                  (Get_Script (D.Inst), Arguments_Count => 2);
             begin
                Set_Nth_Arg (C, 1, D.Inst);
-               Set_Nth_Arg (C, 2, To_String (D.Processed_Output)
-                            & To_String (D.Unmatched_Output));
+               Set_Nth_Arg (C, 2, To_String (D.Unmatched_Output));
                Tmp := Execute (D.Before_Kill, C);
                Free (C);
             end;
@@ -585,19 +601,10 @@ package body Expect_Interface is
          end if;
       end loop;
 
-      --  If we have matched something, do the necessary adjustments
+      --  If we have matched something, do the necessary adjustments.
+      --  Reduce the output that we have already matched
 
       if Beg_Index > D.Unmatched_Output'First then
-         --  Add the matched output to the stored output, if necessary
-
-         if D.On_Exit /= null then
-            Concat (D.Processed_Output,
-                    (D.Unmatched_Output
-                       (D.Unmatched_Output'First .. Beg_Index - 1)));
-         end if;
-
-         --  Reduce the output that we have already matched
-
          declare
             S : constant String := D.Unmatched_Output (Beg_Index .. End_Index);
          begin
@@ -613,97 +620,91 @@ package body Expect_Interface is
    -- Interactive_Expect --
    ------------------------
 
-   function Interactive_Expect
+   procedure Interactive_Expect
      (Kernel   : access Kernel_Handle_Record'Class;
       Action   : Custom_Action_Access;
       Timeout  : Integer := 200;
       Pattern  : String := "";
-      Till_End : Boolean := True) return Exit_Type
+      Output   : out String_Access;
+      Exit_Why : out Exit_Type)
    is
       Regexp  : constant Pattern_Matcher := Compile (Pattern, Multiple_Lines);
       Dead    : Boolean;
       Start   : Ada.Calendar.Time;
-      Tmp     : String_Access;
-      Matches : Match_Array (0 .. 0);
+      Result  : Expect_Match;
       pragma Unreferenced (Kernel, Dead);
 
    begin
-      Start := Ada.Calendar.Clock;
-
       if Active (Me) then
          Trace (Me, "Expect " & Pattern & " Timeout=" & Timeout'Img);
       end if;
 
-      if Action.Processed_Output /= null then
-         Free (Action.Processed_Output);
-      end if;
+      Free (Output);
+      Output := new String'("");
+
+      --  Set the In_Expect flag so that Execute does not perform its own
+      --  call to Expect, thus consuming all characters. This is taken care of
+      --  below, instead
+
+      Action.In_Expect := True;
+
+      Start := Ada.Calendar.Clock;
 
       while Action.Pd /= null loop
          --  Check for timeout
 
-         if not Till_End
-           and then Timeout /= -1
+         if Timeout /= -1
            and then Ada.Calendar.Clock > Start + (Duration (Timeout) / 1000.0)
          then
             if Active (Me) then
                Trace (Me, "Interactive_Expect: Timed out");
             end if;
 
-            return Exit_Type'(Timed_Out);
+            Action.In_Expect := False;
+            Exit_Why := Exit_Type'(Timed_Out);
+            return;
          end if;
 
-         if not Till_End
-           and then Action.Unmatched_Output /= null
-         then
-            Match (Regexp, Action.Unmatched_Output.all, Matches);
+         --  Check for matching output. We use a very small timeout so that
+         --  we can also periodicallt process gtk+ events
 
-            if Matches (0) /= No_Match then
-               Tmp := Action.Processed_Output;
-               if Tmp = null then
-                  Action.Processed_Output := new String'
-                    (Action.Unmatched_Output
-                       (Action.Unmatched_Output'First .. Matches (0).Last));
-               else
-                  Action.Processed_Output := new String'
-                    (Tmp.all & Action.Unmatched_Output
-                       (Action.Unmatched_Output'First .. Matches (0).Last));
-                  Free (Tmp);
-               end if;
+         if Pattern = "" then
+            Expect (Action.Pd.all, Result, ".+", Timeout => 5);
+         else
+            Expect (Action.Pd.all, Result, Regexp, Timeout => 5);
+         end if;
 
-               if Matches (0).Last = Action.Unmatched_Output'Last then
-                  Free (Action.Unmatched_Output);
-               else
-                  declare
-                     Str : constant String :=
-                             Action.Unmatched_Output
-                               (Matches (0).Last + 1 ..
-                                  Action.Unmatched_Output'Last);
-                  begin
-                     Free (Action.Unmatched_Output);
-                     Action.Unmatched_Output := new String'(Str);
-                  end;
-               end if;
+         --  Let the On_Match callback know about the output
 
-               if Active (Me) then
-                  Trace (Me, "Interactive_Expect: Matched " & Pattern);
-               end if;
+         declare
+            Str : constant String := Strip_CR (Expect_Out (Action.Pd.all));
+         begin
+            Output_Cb (Action, Str);
+            Concat (Output, Str);
+         end;
 
-               return Exit_Type'(Matched);
-            end if;
+         if Pattern /= "" and then Result = 1 then
+            Trace (Me, "Interactive_Expect: Matched");
+            Action.In_Expect := False;
+            Exit_Why := Exit_Type'(Matched);
+            return;
          end if;
 
          if Gtk.Main.Events_Pending then
             Dead := Gtk.Main.Main_Iteration;
          end if;
-
       end loop;
 
-      return Exit_Type'(Died);
+      --  Unreachable, if the process dies we get an exception
+
+      Action.In_Expect := False;
+      Exit_Why := Exit_Type'(Died);
 
    exception
       when others =>
-         Trace (Me, "Interactive_Expect: exception");
-         return Exit_Type'(Died);
+         Exit_Cb (Action.all);
+         Action.In_Expect := False;
+         Exit_Why := Exit_Type'(Died);
    end Interactive_Expect;
 
    ---------------------
@@ -779,8 +780,9 @@ package body Expect_Interface is
       E               : Exit_Type;
       Created_Command : Scheduled_Command_Access;
       Dead            : Boolean;
+      Output_Str      : String_Access;
       Q_Id            : constant String := Get_New_Queue_Id;
-      pragma Unreferenced (E, Dead);
+      pragma Unreferenced (Dead);
 
    begin
       if Command = Constructor_Method then
@@ -949,12 +951,14 @@ package body Expect_Interface is
       elsif Command = "wait" then
          D := Get_Data (Data, 1);
          if D /= null and then D.Pd /= null then
-            E := Interactive_Expect
+            Interactive_Expect
               (Kernel   => Get_Kernel (Data),
                Action   => D,
                Timeout  => -1,
                Pattern  => "",
-               Till_End => True);
+               Output   => Output_Str,
+               Exit_Why => E);
+            Free (Output_Str);
             Set_Return_Value (Data, D.Status);
          end if;
 
@@ -971,22 +975,30 @@ package body Expect_Interface is
          Name_Parameters (Data, Expect_Args);
          D := Get_Data (Data, 1);
          if D /= null then
-            E := Interactive_Expect
+            Interactive_Expect
               (Kernel   => Get_Kernel (Data),
                Action   => D,
                Timeout  => Nth_Arg (Data, 3, -1),
                Pattern  => Nth_Arg (Data, 2),
-               Till_End => False);
-            if D.Pd /= null then
-               if D.Processed_Output /= null then
-                  Set_Return_Value (Data, D.Processed_Output.all);
-                  Free (D.Processed_Output);
-               else
-                  Set_Return_Value (Data, "");
-               end if;
-            else
-               Set_Return_Value (Data, "Process terminated");
-            end if;
+               Output   => Output_Str,
+               Exit_Why => E);
+
+            case E is
+               when Matched =>
+                  if D.Pd /= null then
+                     Set_Return_Value (Data, Output_Str.all);
+                  else
+                     Set_Error_Msg (Data, "Process terminated");
+                  end if;
+
+               when Timed_Out =>
+                  Set_Error_Msg (Data, "timed out");
+
+               when Died =>
+                  Set_Error_Msg (Data, "Process terminated");
+            end case;
+
+            Free (Output_Str);
          end if;
 
       elsif Command = "get_result" then
@@ -994,17 +1006,16 @@ package body Expect_Interface is
 
          if D /= null then
             --  Wait till end
-            E := Interactive_Expect
+            Interactive_Expect
               (Kernel   => Get_Kernel (Data),
                Action   => D,
                Timeout  => -1,
                Pattern  => "",
-               Till_End => True);
+               Output   => Output_Str,
+               Exit_Why => E);
 
-            Set_Return_Value
-              (Data,
-               To_String (D.Processed_Output)
-               & To_String (D.Unmatched_Output));
+            Set_Return_Value (Data, Output_Str.all);
+            Free (Output_Str);
          end if;
       end if;
 
