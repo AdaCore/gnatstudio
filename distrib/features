@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 11, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 12, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -15,10 +15,10 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
-NF-43-H908-010 New plugin to include a unix shell (2008-09-11)
+NF-43-H908-010 New plug-in to run an OS unix shell (2008-09-11)
 
-  A new plugin (not loaded by default) is now provided which allows you
-  to open a GPS console executing a Unix shell.
+  A new plugin is provided which allows you to open a GPS console executing
+  a Unix or Windows shell.
 
 NF-43-H908-001 New contextual menu 'Show expanded code' (2008-09-08)
 
