@@ -71,6 +71,7 @@ package Interactive_Consoles is
 
    function Default_Completion_Handler
      (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
       return String_List_Utils.String_List.List;
    --  The default completion handler for a console, which queries the
@@ -121,18 +122,26 @@ package Interactive_Consoles is
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True);
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False);
    procedure Insert_UTF8
      (Console        : access Interactive_Console_Record;
       UTF8           : Glib.UTF8_String;
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True);
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False);
    --  Suspend the user insertion and insert Text as an information message.
    --  If Add_To_History is True, the inserted text will be inserted in the
    --  user command history.
    --  If Show_Prompt is true, then a prompt is printed after the text.
+   --  If Text_Is_Input is true, the text is added as if the user was typing it
+   --  in the console. This text will thus remaing editable later one. On the
+   --  other hand is Text_Is_Input is false, the text is marked as read ony,
+   --  the prompt mark is moved at the end, and the currently edited user input
+   --  is also moved after the text. The text is thus considered as part of
+   --  output from the process that the console shows.
 
    function Read
      (Console    : access Interactive_Console_Record;
@@ -143,6 +152,9 @@ package Interactive_Consoles is
 
    procedure Clear (Console : access Interactive_Console_Record);
    --  Clear all the text in the Console
+
+   procedure Clear_Input (Console : access Interactive_Console_Record);
+   --  Clear the current input line (up to the last prompt)
 
    procedure Enable_Prompt_Display
      (Console : access Interactive_Console_Record;
@@ -171,8 +183,9 @@ package Interactive_Consoles is
    --  Reset the command handler for the console
 
    procedure Set_Completion_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Handler : GUI_Utils.Completion_Handler);
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : GUI_Utils.Completion_Handler;
+      User_Data : System.Address);
    --  Set Handler as the default completion handler for the console.
    --  User_Data passed to Handler is the same one that is passed to the
    --  Command_Handler.
@@ -211,6 +224,11 @@ package Interactive_Consoles is
      (Console : access Interactive_Console_Record)
       return Gtk.Text_View.Gtk_Text_View;
    --  Return the text view
+
+   function From_View
+     (View    : access Gtk.Text_View.Gtk_Text_View_Record'Class)
+     return Interactive_Console;
+   --  Return the console associated with the text view
 
    -----------------
    -- Hyper links --
@@ -286,7 +304,9 @@ private
    with record
       Handler    : Command_Handler;
       Virtual    : GNATCOLL.Scripts.Virtual_Console;
-      Completion : GUI_Utils.Completion_Handler;
+
+      Completion           : GUI_Utils.Completion_Handler;
+      Completion_User_Data : System.Address;
 
       Interrupt           : Interrupt_Handler;
       Interrupt_User_Data : System.Address;

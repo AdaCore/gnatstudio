@@ -128,6 +128,13 @@ package body GPS.Kernel.Scripts is
       Subprogram : Subprogram_Type);
    --  Called when an interactive console is resized
 
+   function On_Console_Completion
+     (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      User_Data : System.Address)
+      return String_List_Utils.String_List.List;
+   --  Called when the user has pressed <tab>
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
@@ -278,16 +285,18 @@ package body GPS.Kernel.Scripts is
                                 (1 => Name_Cst'Access,
                                  2 => Value_Cst'Access);
 
-   Accept_Input_Cst : aliased constant String := "accept_input";
-   On_Input_Cst     : aliased constant String := "on_input";
-   On_Destroy_Cst   : aliased constant String := "on_destroy";
-   On_Resize_Cst    : aliased constant String := "on_resize";
-   On_Interrupt_Cst : aliased constant String := "on_interrupt";
+   Accept_Input_Cst  : aliased constant String := "accept_input";
+   On_Input_Cst      : aliased constant String := "on_input";
+   On_Destroy_Cst    : aliased constant String := "on_destroy";
+   On_Resize_Cst     : aliased constant String := "on_resize";
+   On_Interrupt_Cst  : aliased constant String := "on_interrupt";
+   On_Completion_Cst : aliased constant String := "on_completion";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
-      On_Resize_Cst'Access, On_Interrupt_Cst'Access);
+      On_Resize_Cst'Access, On_Interrupt_Cst'Access,
+      On_Completion_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -1352,6 +1361,35 @@ package body GPS.Kernel.Scripts is
       end if;
    end Context_Command_Handler;
 
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Subprogram_Type);
+
+   ---------------------------
+   -- On_Console_Completion --
+   ---------------------------
+
+   function On_Console_Completion
+     (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      User_Data : System.Address)
+      return String_List_Utils.String_List.List
+   is
+      On_Completion : constant Subprogram_Type := Convert (User_Data);
+      Console  : constant Interactive_Console := From_View (View);
+      Instance : constant Class_Instance :=
+        Get_Instance (Get_Script (On_Completion.all), Console);
+      C        : Callback_Data'Class :=
+        Create (Get_Script (On_Completion.all), 2);
+      Tmp      : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Set_Nth_Arg (C, 1, Instance);
+      Set_Nth_Arg (C, 2, Input);
+      Tmp := Execute (On_Completion, C);
+      Free (C);
+      return String_List_Utils.String_List.Null_List;
+   end On_Console_Completion;
+
    ----------------------
    -- On_Console_Input --
    ----------------------
@@ -1360,8 +1398,6 @@ package body GPS.Kernel.Scripts is
      (Console : access Interactive_Console_Record'Class;
       Input   : String; User_Data : System.Address) return String
    is
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Subprogram_Type);
       On_Input : constant Subprogram_Type := Convert (User_Data);
       Instance : constant Class_Instance :=
                    Get_Instance (Get_Script (On_Input.all), Console);
@@ -1487,6 +1523,8 @@ package body GPS.Kernel.Scripts is
             Accept_Input : constant Boolean := Nth_Arg (Data, 6, True);
             On_Resize    : constant Subprogram_Type := Nth_Arg (Data, 7, null);
             On_Interrupt : constant Subprogram_Type := Nth_Arg (Data, 8, null);
+            On_Completion : constant Subprogram_Type :=
+              Nth_Arg (Data, 9, null);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -1542,6 +1580,12 @@ package body GPS.Kernel.Scripts is
                  (Console, On_Console_Interrupt'Access,
                   User_Data => On_Interrupt.all'Address);
             end if;
+
+            if Console /= null and then On_Completion /= null then
+               Set_Completion_Handler
+                 (Console, On_Console_Completion'Access,
+                  User_Data => On_Completion.all'Address);
+            end if;
          end;
 
       elsif Command = "accept_input" then
@@ -1550,6 +1594,12 @@ package body GPS.Kernel.Scripts is
             Set_Return_Value (Data, Is_Editable (Console));
          else
             Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
+
+      elsif Command = "clear_input" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         if Console /= null then
+            Clear_Input (Console);
          end if;
 
       elsif Command = "enable_input" then
@@ -1585,6 +1635,13 @@ package body GPS.Kernel.Scripts is
             when GNAT.Regpat.Expression_Error =>
                Set_Error_Msg (Data, "Invalid regular expression");
          end;
+
+      elsif Command = "add_input" then
+         Name_Parameters (Data, (1 => Text_Cst'Access));
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         Insert (Console, Nth_Arg (Data, 2), Add_LF => False,
+                 Add_To_History => False, Text_Is_Input => True,
+                 Show_Prompt => False);
 
       elsif Command = "write_with_links" then
          Name_Parameters (Data, Write_With_Link_Args);
@@ -1735,7 +1792,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 7,
+         Maximum_Args => 8,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
@@ -1745,7 +1802,17 @@ package body GPS.Kernel.Scripts is
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command
+        (Kernel, "add_input",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
         (Kernel, "accept_input",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "clear_input",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command

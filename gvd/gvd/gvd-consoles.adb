@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with System;                 use System;
 
 with Glib;                   use Glib;
@@ -28,6 +27,7 @@ with Gtk.Main;               use Gtk.Main;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Object;             use Gtk.Object;
+with Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
@@ -139,7 +139,9 @@ package body GVD.Consoles is
       Initialize         => Initialize);
 
    function Complete_Command
-     (Input  : String; Console : System.Address)
+     (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      User_Data : System.Address)
       return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
@@ -321,13 +323,14 @@ package body GVD.Consoles is
    ----------------------
 
    function Complete_Command
-     (Input  : String; Console : System.Address)
-     return String_List_Utils.String_List.List
+     (Input   : String;
+      View    : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      User_Data : System.Address)
+      return String_List_Utils.String_List.List
    is
+      pragma Unreferenced (User_Data);
       use String_List_Utils.String_List;
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Debugger_Console);
-      C      : constant Debugger_Console := Convert (Console);
+      C     : constant Debugger_Console := Debugger_Console (From_View (View));
       Result : List;
    begin
       if Get_Process (C) = null then
@@ -434,7 +437,8 @@ package body GVD.Consoles is
         (Get_History (Kernel).all, "gvd_console", True, True);
 
       Set_Highlight_Color    (Console, Debugger_Highlight_Color.Get_Pref);
-      Set_Completion_Handler (Console, Complete_Command'Access);
+      Set_Completion_Handler
+        (Console, Complete_Command'Access, System.Null_Address);
       Widget_Callback.Object_Connect
         (Get_View (Console), Signal_Grab_Focus, On_Grab_Focus'Access, Console);
 

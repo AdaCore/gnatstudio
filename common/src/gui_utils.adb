@@ -1242,13 +1242,13 @@ package body GUI_Utils is
    -------------------
 
    procedure Do_Completion
-     (View            : access Gtk_Text_View_Record'Class;
+     (View            : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       Completion      : Completion_Handler;
       Prompt_End_Mark : Gtk_Text_Mark;
       Uneditable_Tag  : Gtk_Text_Tag;
       User_Data       : System.Address)
    is
-      Buffer                 : constant Gtk_Text_Buffer := Get_Buffer (View);
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View);
       Prompt_Iter, Last_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Prompt_Iter, Prompt_End_Mark);
@@ -1258,7 +1258,7 @@ package body GUI_Utils is
          use String_List_Utils.String_List;
          Text          : constant String :=
                            Get_Slice (Buffer, Prompt_Iter, Last_Iter);
-         Completions   : List :=  Completion (Text, User_Data);
+         Completions   : List :=  Completion (Text, View, User_Data);
          Prefix        : constant String := Longest_Prefix (Completions);
          Node          : List_Node;
          Line          : Gint;
@@ -1315,18 +1315,21 @@ package body GUI_Utils is
          end if;
 
          --  Insert the completion, if any.
-         Get_End_Iter (Buffer, Pos);
 
-         if Prefix'Length > Text'Length then
-            Insert (Buffer, Pos,
-                    Prefix (Prefix'First + Text'Length .. Prefix'Last));
+         if Completions /= Null_List then
+            Get_End_Iter (Buffer, Pos);
+
+            if Prefix'Length > Text'Length then
+               Insert (Buffer, Pos,
+                       Prefix (Prefix'First + Text'Length .. Prefix'Last));
+            end if;
+
+            if not More_Than_One then
+               Insert (Buffer, Pos, " ");
+            end if;
+
+            Free (Completions);
          end if;
-
-         if not More_Than_One then
-            Insert (Buffer, Pos, " ");
-         end if;
-
-         Free (Completions);
       end;
    end Do_Completion;
 

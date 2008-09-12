@@ -163,6 +163,7 @@ package GUI_Utils is
 
    type Completion_Handler is access function
      (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address)
       return String_List_Utils.String_List.List;
    --  This function should return a list of adequate elements that all

@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
-with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;              use System;
 
@@ -63,10 +62,6 @@ package body Interactive_Consoles is
    Me : constant Debug_Handle := Create ("Console");
 
    package Console_Idle is new Gtk.Main.Idle (Interactive_Console);
-   function UC is new Ada.Unchecked_Conversion
-     (System.Address, Interactive_Console);
-   function UC is new Ada.Unchecked_Conversion
-     (Interactive_Console, System.Address);
 
    ---------------------------------
    -- Interactive_Virtual_Console --
@@ -193,13 +188,15 @@ package body Interactive_Consoles is
       Highlight      : Boolean := False;
       Highlight_Tag  : Gtk_Text_Tag;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True);
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False);
    --  Same as Insert_UTF8, but the tag to use for highlighting is specified
 
    procedure Prepare_For_Output
-     (Console     : access Interactive_Console_Record'Class;
-      Internal    : out Boolean;
-      Last_Iter   : out Gtk_Text_Iter);
+     (Console        : access Interactive_Console_Record'Class;
+      Text_Is_Input  : Boolean := False;
+      Internal       : out Boolean;
+      Last_Iter      : out Gtk_Text_Iter);
    procedure Terminate_Output
      (Console       : access Interactive_Console_Record'Class;
       Internal      : Boolean;
@@ -489,12 +486,19 @@ package body Interactive_Consoles is
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True)
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False)
    is
       UTF8 : constant String := Glib.Convert.Locale_To_UTF8 (Text);
    begin
-      Insert_UTF8
-        (Console, UTF8, Add_LF, Highlight, Add_To_History, Show_Prompt);
+      Insert_UTF8_With_Tag
+        (Console, UTF8,
+         Add_LF         => Add_LF,
+         Highlight      => Highlight,
+         Highlight_Tag  => Console.Highlight_Tag,
+         Add_To_History => Add_To_History,
+         Show_Prompt    => Show_Prompt,
+         Text_Is_Input  => Text_Is_Input);
    end Insert;
 
    -----------------
@@ -507,7 +511,8 @@ package body Interactive_Consoles is
       Add_LF         : Boolean := True;
       Highlight      : Boolean := False;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True)
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False)
    is
    begin
       Insert_UTF8_With_Tag
@@ -517,8 +522,21 @@ package body Interactive_Consoles is
          Highlight      => Highlight,
          Highlight_Tag  => Console.Highlight_Tag,
          Add_To_History => Add_To_History,
-         Show_Prompt    => Show_Prompt);
+         Show_Prompt    => Show_Prompt,
+         Text_Is_Input  => Text_Is_Input);
    end Insert_UTF8;
+
+   -----------------
+   -- Clear_Input --
+   -----------------
+
+   procedure Clear_Input (Console : access Interactive_Console_Record) is
+      Prompt_Iter, Last_Iter : Gtk_Text_Iter;
+   begin
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+   end Clear_Input;
 
    ------------------------
    -- Prepare_For_Output --
@@ -526,6 +544,7 @@ package body Interactive_Consoles is
 
    procedure Prepare_For_Output
      (Console   : access Interactive_Console_Record'Class;
+      Text_Is_Input  : Boolean := False;
       Internal  : out Boolean;
       Last_Iter : out Gtk_Text_Iter)
    is
@@ -537,7 +556,7 @@ package body Interactive_Consoles is
       --  Read current user input (there might be none!). Then remove it from
       --  the console temporarily, so that output is not intermixed with user
       --  input. It will be put back after the output in Terminate_Output.
-      if Console.User_Input = null then
+      if not Text_Is_Input and then Console.User_Input = null then
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
          Console.User_Input := new String'
            (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
@@ -598,13 +617,58 @@ package body Interactive_Consoles is
       Highlight      : Boolean := False;
       Highlight_Tag  : Gtk_Text_Tag;
       Add_To_History : Boolean := False;
-      Show_Prompt    : Boolean := True)
+      Show_Prompt    : Boolean := True;
+      Text_Is_Input  : Boolean := False)
    is
-      Last_Iter : Gtk_Text_Iter;
-      Internal  : Boolean;
+      Last_Iter, Prompt_Iter, Tmp_Iter : Gtk_Text_Iter;
+      Internal, Success : Boolean;
+      Count     : Natural := 0;
 
    begin
-      Prepare_For_Output (Console, Internal, Last_Iter);
+      --  Special case: if the text starts with ^H characters, we delete that
+      --  many characters from the input. If we are editing after the prompt,
+      --  we delete up to the prompt character only (since the rest is not
+      --  editable anyway there is nothing specific to do). The rest of the
+      --  text is then added, but is marked as user input if we were in the
+      --  middle of user input.
+      --  In particular, this is useful when doing completion in a shell
+      --  window, since the shell emits these characters while the user
+      --  circulates through all possible completions
+
+      if UTF8 /= "" and then UTF8 (UTF8'First) = ASCII.BS then
+         for U in UTF8'Range loop
+            if UTF8 (U) = ASCII.BS then
+               Count := Count + 1;
+            else
+               exit;
+            end if;
+         end loop;
+
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+         if Get_Offset (Last_Iter) /= Get_Offset (Prompt_Iter) then
+            --  in user edition
+            Copy (Last_Iter, Dest => Tmp_Iter);
+            Backward_Chars (Tmp_Iter, Gint (Count), Success);
+            if Get_Offset (Tmp_Iter) < Get_Offset (Prompt_Iter) then
+               Copy (Prompt_Iter, Dest => Tmp_Iter);
+            end if;
+
+            Delete (Console.Buffer, Tmp_Iter, Last_Iter);
+
+            --  We could use Insert recursively with Text_Is_Input set to True
+            Insert (Console.Buffer, Tmp_Iter,
+                    UTF8 (UTF8'First + Count .. UTF8'Last));
+            return;
+
+         else
+            --  Do nothing, we'll display the BS as special characters in the
+            --  console
+            null;
+         end if;
+      end if;
+
+      Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
 
       if Add_LF then
          if Highlight then
@@ -621,18 +685,20 @@ package body Interactive_Consoles is
          Insert (Console.Buffer, Last_Iter, UTF8);
       end if;
 
-      if Add_To_History and then Console.History /= null then
-         if UTF8 (UTF8'Last) = ASCII.LF then
-            Histories.Add_To_History
-              (Console.History.all, History_Key (Console.Key.all),
-               UTF8 (UTF8'First .. UTF8'Last - 1));
-         else
-            Histories.Add_To_History
-              (Console.History.all, History_Key (Console.Key.all), UTF8);
+      if not Text_Is_Input then
+         if Add_To_History and then Console.History /= null then
+            if UTF8 (UTF8'Last) = ASCII.LF then
+               Histories.Add_To_History
+                 (Console.History.all, History_Key (Console.Key.all),
+                  UTF8 (UTF8'First .. UTF8'Last - 1));
+            else
+               Histories.Add_To_History
+                 (Console.History.all, History_Key (Console.Key.all), UTF8);
+            end if;
          end if;
-      end if;
 
-      Terminate_Output (Console, Internal, Show_Prompt);
+         Terminate_Output (Console, Internal, Show_Prompt);
+      end if;
    end Insert_UTF8_With_Tag;
 
    -----------------
@@ -814,9 +880,11 @@ package body Interactive_Consoles is
 
    function Default_Completion_Handler
      (Input     : String;
+      View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
       User_Data : System.Address) return String_List_Utils.String_List.List
    is
-      Console     : constant Interactive_Console := UC (User_Data);
+      pragma Unreferenced (User_Data);
+      Console     : constant Interactive_Console := From_View (View);
       Completions : String_Lists.List;
       C           : String_Lists.Cursor;
       Result      : String_List_Utils.String_List.List :=
@@ -990,7 +1058,7 @@ package body Interactive_Consoles is
                      Completion      => Default_Completion_Handler'Access,
                      Prompt_End_Mark => Console.Prompt_Mark,
                      Uneditable_Tag  => Console.Uneditable_Tag,
-                     User_Data       => UC (Console));
+                     User_Data       => Console.Completion_User_Data);
 
                else
                   Do_Completion
@@ -998,7 +1066,7 @@ package body Interactive_Consoles is
                      Completion      => Console.Completion,
                      Prompt_End_Mark => Console.Prompt_Mark,
                      Uneditable_Tag  => Console.Uneditable_Tag,
-                     User_Data       => Console.User_Data);
+                     User_Data       => Console.Completion_User_Data);
                end if;
                Console.Internal_Insert := False;
                return True;
@@ -1423,8 +1491,11 @@ package body Interactive_Consoles is
 
       Console.Prompt_Mark := Create_Mark (Console.Buffer, "", Iter);
       Console.Insert_Mark := Get_Insert (Console.Buffer);
-      Console.Completion  := Default_Completion_Handler'Access;
-      Console.Interrupt   := Default_Interrupt_Handler'Access;
+
+      Set_Completion_Handler
+        (Console, Default_Completion_Handler'Access, User_Data);
+      Set_Interrupt_Handler
+        (Console, Default_Interrupt_Handler'Access, User_Data);
 
       Console.Internal_Insert := False;
 
@@ -1460,10 +1531,12 @@ package body Interactive_Consoles is
    ----------------------------
 
    procedure Set_Completion_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Handler : Completion_Handler) is
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : GUI_Utils.Completion_Handler;
+      User_Data : System.Address) is
    begin
-      Console.Completion := Handler;
+      Console.Completion           := Handler;
+      Console.Completion_User_Data := User_Data;
    end Set_Completion_Handler;
 
    ---------------------------
@@ -1669,6 +1742,18 @@ package body Interactive_Consoles is
       return Console.View;
    end Get_View;
 
+   ---------------
+   -- From_View --
+   ---------------
+
+   function From_View
+     (View    : access Gtk.Text_View.Gtk_Text_View_Record'Class)
+      return Interactive_Console
+   is
+   begin
+      return Interactive_Console (Get_Parent (View));
+   end From_View;
+
    ----------
    -- Read --
    ----------
@@ -1788,7 +1873,9 @@ package body Interactive_Consoles is
          Link := Link.Next;
       end loop;
 
-      Prepare_For_Output (Console, Internal, Last_Iter);
+      Prepare_For_Output
+        (Console, Text_Is_Input => False,
+         Internal => Internal, Last_Iter => Last_Iter);
 
       while Index <= Text'Last loop
          Min         := Text'Last + 1;
