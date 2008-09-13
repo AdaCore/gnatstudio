@@ -330,6 +330,11 @@ class Dynamic_Contextual (GPS.Contextual):
       self.create_dynamic (on_activate = self.on_activate,
                            filter      = self.filter,
                            factory     = self.factory)
+      # Needed to initialize ispell external process, we do not want to
+      # initialize it while creating the contextual menu as it would take
+      # too much time. This initialization time badly interact with the
+      # contextual menu.
+      ispell.restart_if_needed()
 
    def filter (self, context):
       """Decide whether the contextual menu should be made visible"""
