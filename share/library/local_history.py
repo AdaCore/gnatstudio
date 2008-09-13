@@ -239,7 +239,7 @@ class LocalHistory:
         for index, r in enumerate (revisions):
           xml = xml + "  <revision name='" + r + "' date='" \
              + dates[index] + "' />"
-        
+
         xml = xml + "</local_history>"
 
         view = XMLViewer ("History",
@@ -268,10 +268,10 @@ def on_file_saved (hook, file):
      Logger ("LocalHist").log ("Unexpected exception " + traceback.format_exc())
 
 def contextual_filter (context):
-   try: 
+   try:
      hist = LocalHistory (context.file())
      return hist.has_local_history ()
-   except: 
+   except:
      return False
 
 def contextual_factory (context):
@@ -307,7 +307,7 @@ def on_diff (context, choice, choice_index):
 
 def on_patch (context, choice, choice_index):
    hist = LocalHistory (context.file())
-   hist.show_diff (context.revisions [choice_index], 
+   hist.show_diff (context.revisions [choice_index],
                    context.revisions_menu [choice_index])
 
 def on_view_all (context):
@@ -318,7 +318,7 @@ def register_module (hook):
    """Activate this local history module if RCS is found on the path"""
 
    if has_RCS_on_path():
-     Hook ("file_saved").add (on_file_saved, last = True)     
+     Hook ("file_saved").add (on_file_saved, last = True)
      Contextual ("Local History Revert to").create_dynamic \
        (factory     = contextual_factory,
         on_activate = on_revert,
@@ -337,5 +337,5 @@ def register_module (hook):
      Contextual ("Local History/View").create \
        (on_activate = on_view_all,
         filter      = contextual_filter)
-   
+
 Hook ("gps_started").add (register_module)

@@ -33,6 +33,6 @@ Menu.create ("/Edit/Text Size/Increase Text Size", lambda x: zoom(1.2),
              ref="Preferences", add_before=True)
 Menu.create ("/Edit/Text Size/Decrease Text Size", lambda x: zoom(1/1.2))
 parse_xml ("""
-  <key action="/Edit/Text Size/Increase Text Size">control-plus</key> 
-  <key action="/Edit/Text Size/Decrease Text Size">control-alt-plus</key> 
+  <key action="/Edit/Text Size/Increase Text Size">control-plus</key>
+  <key action="/Edit/Text Size/Decrease Text Size">control-alt-plus</key>
 """)

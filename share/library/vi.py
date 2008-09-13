@@ -148,7 +148,7 @@ class CmdLine (CommandWindow):
            self.current_in_history = -1
            self.write (CmdLine.current_cmd_line)
            self.current_cmd_line = ""
-        
+
 
    def on_activate (self, input):
      """The user has pressed enter"""
@@ -166,9 +166,9 @@ class CmdLine (CommandWindow):
      elif cmd[0] == "$":
         return (buffer.end_of_buffer(), cmd[1:])
      elif cmd[0] == "<":
-        return (buffer.selection_start(), cmd[1:]) 
+        return (buffer.selection_start(), cmd[1:])
      elif cmd[0] == ">":
-        return (buffer.selection_end(), cmd[1:]) 
+        return (buffer.selection_end(), cmd[1:])
      else:
         match = re.search ("([-+]?\d+)(.*)", cmd)
         if match:
@@ -179,7 +179,7 @@ class CmdLine (CommandWindow):
               return (EditorLocation (buffer, line, 1), match.group(2))
         else:
            return (loc,cmd)
-        
+
 
    @staticmethod
    def get_scope (cmd, current, buffer):
@@ -190,7 +190,7 @@ class CmdLine (CommandWindow):
 
      comma = cmd.find (",")
      if comma < 0:
-        l, c = CmdLine.get_loc (cmd, current, buffer) 
+        l, c = CmdLine.get_loc (cmd, current, buffer)
         return (c, l, l)  ## Execute only once
      else:
         l, c = CmdLine.get_loc (cmd[:comma], current, buffer)

@@ -107,7 +107,7 @@ def range_align_on (top, bottom, sep, replace_with=None):
    """
 
    if bottom.beginning_of_line() == bottom:
-      bottom = bottom.forward_char(-1) 
+      bottom = bottom.forward_char(-1)
 
    if not replace_with:
       replace_with = sep
@@ -133,7 +133,7 @@ def range_align_on (top, bottom, sep, replace_with=None):
       line = line.forward_line ()
       if prev == line:
          break
- 
+
    if pos != 0:
      line = top.beginning_of_line ()
      while line <= bottom:
@@ -275,7 +275,7 @@ def on_gps_started (hook_name):
      </action>
      <contextual action="Align formal parameters" >
         <Title>Align/Formal parameters</Title>
-     </contextual>     
+     </contextual>
 
      <action name="Align colons" output="none" category="Ada">
         <description>Aligns colons and trailing text in current selection</description>
@@ -285,7 +285,7 @@ def on_gps_started (hook_name):
      <contextual action="Align colons" >
         <Title>Align/Colons</Title>
      </contextual>
-     
+
      <action name="Align use clauses" output="none" category="Ada">
         <description>Aligns Ada use-clauses in current selection</description>
         <filter module="Source_Editor" language="ada" />
@@ -334,4 +334,3 @@ def on_gps_started (hook_name):
 """)
 
 GPS.Hook ("gps_started").add (on_gps_started)
-

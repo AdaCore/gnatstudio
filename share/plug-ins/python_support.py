@@ -112,7 +112,7 @@ Otherwise, reload the current version of the file."""
 
         ## The proper solution is to execute in the context of the GPS console
         GPS.exec_in_console ("import " + module)
-        
+
   except:
      pass   ## Current context is not a file
 

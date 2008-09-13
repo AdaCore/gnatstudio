@@ -26,7 +26,7 @@ def print_as_dec_run (context):
 
 def in_debugger (context):
    try:
-     return Debugger.get() != None and context.entity() != None 
+     return Debugger.get() != None and context.entity() != None
    except:
      return False
 
@@ -48,6 +48,3 @@ Contextual ("debug print as decimal").create (
 Menu.create (
    path = "/Debug/Data/Graph display local variables",
    on_activate = display_local_vars)
-   
-
-

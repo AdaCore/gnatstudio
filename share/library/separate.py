@@ -18,7 +18,7 @@ lot
 import GPS
 
 def on_goto_separate (context):
-   loc = context.entity().body (2) 
+   loc = context.entity().body (2)
    buffer = GPS.EditorBuffer.get (loc.file())
    buffer.current_view().goto \
       (GPS.EditorLocation (buffer, loc.line(), loc.column()))
@@ -41,6 +41,6 @@ def on_gps_started (hook_name):
      (on_activate=on_goto_separate,
       filter=separate_filter,
       label=separate_label,
-      ref="Go to body") 
+      ref="Go to body")
 
 GPS.Hook ("gps_started").add (on_gps_started)

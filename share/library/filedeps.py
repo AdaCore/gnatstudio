@@ -32,8 +32,8 @@ def dependency_path (from_file, to_file):
    from_file = GPS.File (from_file)
  if not isinstance (to_file, GPS.File):
    to_file = GPS.File (to_file)
- 
- if from_file == to_file: 
+
+ if from_file == to_file:
     return "Same file"
 
  # We do the computation starting from to_file, since it is more efficient
@@ -63,25 +63,25 @@ def dependency_path (from_file, to_file):
 
    for f in imports:
      if f and not deps.has_key (f):
-        to_analyze.append ((f, file)) 
+        to_analyze.append ((f, file))
 
  # Now print the results
 
  target = to_file
  result=""
  while target:
-   result = " -> " + target.name() + "\n" + result 
+   result = " -> " + target.name() + "\n" + result
    if not deps.has_key (target):
       result = "No dependency between these two files"
       break
-   target = deps[target] 
+   target = deps[target]
 
  return result
 
 def print_dependency_path (from_file, to_file):
  GPS.Console().write \
     ("Dependencies from " + os.path.basename (from_file.name())\
-     + " to " + os.path.basename (to_file.name()) + "\n" 
+     + " to " + os.path.basename (to_file.name()) + "\n"
      + dependency_path (from_file, to_file) + "\n")
 
 def interactive_dependency_path (menu):

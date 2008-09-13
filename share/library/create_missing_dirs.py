@@ -30,7 +30,7 @@ def on_project_changed(self):
      prjs = GPS.Project.root().dependencies (True)
      prjs.append (GPS.Project.root())
      created=[]
-     for i in prjs :        
+     for i in prjs :
         dirs=[i.get_attribute_as_string("Exec_Dir"),
               i.get_attribute_as_string("Library_Dir"),
               i.get_attribute_as_string("Object_Dir"),
@@ -50,7 +50,7 @@ def on_project_changed(self):
         GPS.Console("").write("\n")
         GPS.Project.recompute()
 
-GPS.parse_xml("""   
+GPS.parse_xml("""
 <preference name="Auto-Create-Dirs"
    page="General"
    label="Auto Create Missing Dirs"
@@ -60,4 +60,3 @@ GPS.parse_xml("""
 """)
 
 GPS.Hook ("project_view_changed").add (on_project_changed)
-

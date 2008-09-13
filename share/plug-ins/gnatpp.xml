@@ -7,7 +7,7 @@
         - menu /Edit/Pretty Print
         - switches edition through the project editor
 -->
-     
+
 <GPS>
    <action name="Pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the reformated version. Specific formating options can be set in the project file</description>

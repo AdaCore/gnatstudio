@@ -108,5 +108,5 @@ def describe_char (char = None):
    Console().write ("   Unicode: " + `ord (uni)` \
                     + " (U+" + hex (ord (uni))[2:] + ")\n")
    Console().write ("  Category: " + unicodedata.category (uni) + "\n")
-                          
+
 Hook ("gps_started").add (on_gps_started)

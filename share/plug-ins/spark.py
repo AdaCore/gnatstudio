@@ -92,7 +92,7 @@ def pogs_directory():
   for s in sw:
     if s.find (spark_separator + "output_directory=") == 0:
        dir=s[18:]
-  
+
   # Else take the common parent for all sources dirs
   if not dir:
      src = GPS.Project.root().source_dirs (recursive=True)

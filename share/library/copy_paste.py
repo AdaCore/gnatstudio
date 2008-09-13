@@ -118,5 +118,5 @@ def on_gps_started (hook):
       GPS.Contextual ("Cut").create \
         (on_activate=on_cut, filter=on_area, group=-1, \
          visibility_filter=not grey_out_contextual)
- 
+
 GPS.Hook ("gps_started").add (on_gps_started)

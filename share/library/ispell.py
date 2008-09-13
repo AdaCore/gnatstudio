@@ -136,7 +136,7 @@ def on_pref_changed (h):
       elif contextual_menu_type == "dynamic":
          GPS.Logger ("ISPELL").log ("Activate dynamic contextual menu")
          if static: static.hide()
-         if not dynamic: dynamic = Dynamic_Contextual() 
+         if not dynamic: dynamic = Dynamic_Contextual()
          else: dynamic.show()
 
       else:
@@ -268,7 +268,7 @@ def find_current_word (context):
       displayed, and stored in the contextual menu for efficiency, since
       that means we won't have to recompute the info if the user selects
       the menu"""
- 
+
    view = GPS.EditorBuffer.get().current_view()
    cursor = view.cursor()
 
@@ -280,7 +280,7 @@ def find_current_word (context):
       cursor = cursor.forward_char(1)
 
    context.ispell_module_start = start
-   context.ispell_module_end   = cursor 
+   context.ispell_module_end   = cursor
    context.ispell_module_word  = view.buffer().get_chars(start, cursor)
 
 ###################################
@@ -288,18 +288,18 @@ def find_current_word (context):
 ### The following subprograms deal with the static contextual menu, as
 ### described in the header of this file.
 ### It shows how the title of the menu entry can be changed dynamically
-### based on the context 
+### based on the context
 ###################################
 
 class Static_Contextual (GPS.Contextual):
    def __init__ (self):
       """Create a new static contextual menu for spell checking"""
-      GPS.Contextual.__init__ (self, "Spell Check Static") 
+      GPS.Contextual.__init__ (self, "Spell Check Static")
       self.create (on_activate = self.on_activate,
                    filter      = self.filter,
                    label       = self.label)
 
-   def on_activate (self, context): 
+   def on_activate (self, context):
       """Display in the console the message read from ispell"""
       GPS.Console ("Messages").write \
          ("Ispell: " + ispell.read (context.ispell_module_word) + "\n")
@@ -386,7 +386,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
          wait before the window is displayed, not after it has been displayed"""
       if not self.has_window:
          GPS.CommandWindow.__init__ \
-           (self, prompt="(i,a,r,space)", on_key=self.on_key, 
+           (self, prompt="(i,a,r,space)", on_key=self.on_key,
             on_activate=self.on_activate, close_on_activate=False)
          self.set_background (background_color)
          self.has_window = True
@@ -447,7 +447,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
          self.current_line_start.buffer().select (start, stop + 1)
          self.create_window()
          self.write (suggest, 0)
- 
+
       except StopIteration:
          if self.has_window:
             self.destroy()
@@ -493,7 +493,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
             ispell.ignore (buffer.get_chars (start, stop))
             self.local_dict[word] = True
          elif key == "r":
-            self.write ("")         
+            self.write ("")
             self.replace_mode = True
             return True
          elif key.isdigit():
@@ -504,7 +504,7 @@ class SpellCheckBuffer (GPS.CommandWindow):
             except IndexError: return True
          elif key == "Escape":
             self.destroy()
-            return True 
+            return True
          elif key == "space":
             pass
          else:
@@ -521,4 +521,3 @@ class SpellCheckBuffer (GPS.CommandWindow):
          return True
 
 GPS.Hook ("preferences_changed").add (on_pref_changed)
-

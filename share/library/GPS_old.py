@@ -35,11 +35,10 @@ To use, build an instance of GPS.Entity, as usual, and then an instance of this 
 """
 
     def __init__(self, gps_entity):
-       self.gps_entity = gps_entity 
+       self.gps_entity = gps_entity
     def decl_file(self):
        return self.gps_entity.declaration().file()
     def decl_line(self):
        return self.gps_entity.declaration().line()
     def decl_column(self):
        return self.gps_entity.declaration().column()
-

@@ -44,14 +44,14 @@ def rectangle_delete (menu):
     """Delete the selected rectangle"""
 
     buffer = EditorBuffer.get ()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(), 
+    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
                         buffer.selection_end() - 1, False, False)
 
 def rectangle_cut (menu):
     """Cut the selected rectangle into the clipboard"""
 
     buffer = EditorBuffer.get ()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(), 
+    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
                         buffer.selection_end() - 1, True, False)
 
 def rectangle_copy (menu):
@@ -60,7 +60,7 @@ def rectangle_copy (menu):
     buffer = EditorBuffer.get ()
     start  = buffer.selection_start().create_mark()
     end    = buffer.selection_end().create_mark()
-    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(), 
+    apply_on_rectangle (rectangle_cut_func, buffer.selection_start(),
                         buffer.selection_end() - 1, True, True)
     buffer.select (start.location(), end.location())
 
@@ -80,7 +80,7 @@ def rectangle_paste (menu):
 
     except:
       Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
- 
+
 def rectangle_open (menu):
     """Insert blank spaces to fill the selected rectangle.
        This pushes its text to the right"""
@@ -98,7 +98,7 @@ def rectangle_insert (menu, text=None):
        text = MDI.input_dialog ("Text to insert before each line:", "")
        if not text: return
        text = text [0]
-    apply_on_rectangle (rectangle_insert_func, buffer.selection_start(), 
+    apply_on_rectangle (rectangle_insert_func, buffer.selection_start(),
                         buffer.selection_end() - 1, text)
 
 def rectangle_clear (menu):
@@ -196,6 +196,6 @@ def apply_on_rectangle (func, start, end, *args):
         start.buffer().finish_undo_group()
    except:
       Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
-      
+
 
 Hook ("gps_started").add (on_gps_started)

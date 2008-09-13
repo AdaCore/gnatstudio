@@ -1,8 +1,8 @@
 """This plug-in provides routines that insert the text of Ada 95
 language-defined packages, subprograms, and pragmas, as well as
 GNAT-defined packages, pragmas, and attributes.  They are used by
-contextual menus (located at the end of this file) to insert the 
-name (etc) so that the user need not remember the name or exactly 
+contextual menus (located at the end of this file) to insert the
+name (etc) so that the user need not remember the name or exactly
 how to spell it.
 """
 
@@ -31,7 +31,6 @@ def word_case (word):
    #end if
 #end word_case
 
-
 # returns the input in the letter-casing specified by the user's Identifier preference
 def identifier_case (id):
    pref = string.lower (GPS.Preference ("Ada-Ident-Casing").get())
@@ -49,52 +48,40 @@ def identifier_case (id):
    #end if
 #end identifier_case
 
-
-def indented (column):   
+def indented (column):
    return (column * ' ') + (GPS.Preference ("Ada-Indent-Level").get() * ' ')
 #end indented
 
-
-
-#   
+#
 # language-defined pragmas
 #
 
 def insert_All_Calls_Remote ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" All_Calls_Remote[(library_unit_name)]; -- See E.2.3."));
 
-
 def insert_Asynchronous ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Asynchronous(local_name); -- See E.4.1."));
-
 
 def insert_Atomic ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Atomic(local_name); -- See C.6."));
 
-
 def insert_Atomic_Components ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Atomic_Components(array_local_name); -- See C.6."));
-
 
 def insert_Attach_Handler ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Attach_Handler(handler_name, expression); -- See C.3.1."));
 
-
 def insert_Controlled ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Controlled(first_subtype_local_name); -- See 13.11.3."));
-
 
 def insert_Convention ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Convention([Convention =>] convention_identifier,[Entity =>] local_name); -- See B.1."));
 
-
 def insert_Discard_Names ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Discard_Names[([On => ] local_name)]; -- See C.5."));
 
-
 def insert_Elaborate ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Elaborate(library_unit_name{, library_unit_name}); -- See 10.2.1."));
-
 
 def insert_Elaborate_All ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Elaborate_All(library_unit_name{, library_unit_name}); -- See 10.2.1."));
@@ -119,754 +106,568 @@ def insert_Inline ():
 def insert_Inspection_Point ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Inspection_Point[(object_name {, object_name})]; -- See H.3.2."));
 
-
 def insert_Interrupt_Handler ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Interrupt_Handler(handler_name); -- See C.3.1."));
-
 
 def insert_Interrupt_Priority ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Interrupt_Priority[(expression)]; -- See D.1."));
 
-
 def insert_Linker_Options ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Linker_Options(string_expression); -- See B.1."));
-
 
 def insert_List ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" List(identifier); -- See 2.8."));
 
-
 def insert_Locking_Policy ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Locking_Policy(Ceiling_Locking | policy_identifier); -- See D.3."));
-
 
 def insert_Normalize_Scalars ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Normalize_Scalars; -- See H.1."));
 
-
 def insert_Optimize ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Optimize(identifier); -- See 2.8."));
-
 
 def insert_Pack ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Pack(first_subtype_local_name); -- See 13.2."));
 
-
 def insert_Page ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Page; -- See 2.8."));
-
 
 def insert_Preelaborate ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Preelaborate[(library_unit_name)]; -- See 10.2.1."));
 
-
 def insert_Priority ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Priority(expression); -- See D.1."));
-
 
 def insert_Pure ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Pure[(library_unit_name)]; -- See 10.2.1."));
 
-
 def insert_Queuing_Policy ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Queuing_Policy(FIFO_Queuing | Priority_Queuing | policy_identifier); -- See D.4."));
-
 
 def insert_Remote_Call_Interface ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Remote_Call_Interface[(library_unit_name)]; -- See E.2.3."));
 
-
 def insert_Remote_Types ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Remote_Types[(library_unit_name)]; -- See E.2.2."));
-
 
 def insert_Restrictions ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Restrictions(restriction{, restriction}); -- See 13.12."));
 
-
 def insert_Reviewable ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Reviewable; -- See H.3.1."));
-
 
 def insert_Shared_Passive ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Shared_Passive[(library_unit_name)]; -- See E.2.1."));
 
-
 def insert_Storage_Size ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Storage_Size(expression); -- See 13.3."));
-
 
 def insert_Suppress ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Suppress(identifier [, [On =>] name]); -- See 11.5."));
 
-
 def insert_Task_Dispatching_Policy ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Task_Dispatching_Policy(FIFO_Within_Priorities | policy_identifier); -- See D.2.2."));
-
 
 def insert_Volatile ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Volatile(local_name); -- See C.6."));
 
-
 def insert_Volatile_Components ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Volatile_Components(array_local_name); -- See C.6."));
 
-
-#   
+#
 # language-defined packages
 #
 
 def insert_Asynchronous_Task_Control():
    GPS.Editor.insert_text (identifier_case ("Ada.Asynchronous_Task_Control"));
 
-
 def insert_Calendar():
    GPS.Editor.insert_text (identifier_case ("Ada.Calendar"));
-
 
 def insert_Characters():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters"));
 
-
 def insert_Characters_Handling():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters.Handling"));
-
 
 def insert_Characters_Latin_1():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters.Latin_1"));
 
-
 def insert_Command_Line():
    GPS.Editor.insert_text (identifier_case ("Ada.Command_Line"));
-
 
 def insert_Decimal():
    GPS.Editor.insert_text (identifier_case ("Ada.Decimal"));
 
-
 def insert_Direct_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Direct_IO"));
-
 
 def insert_Dynamic_Priorities():
    GPS.Editor.insert_text (identifier_case ("Ada.Dynamic_Priorities"));
 
-
 def insert_Exceptions():
    GPS.Editor.insert_text (identifier_case ("Ada.Exceptions"));
-
 
 def insert_Finalization():
    GPS.Editor.insert_text (identifier_case ("Ada.Finalization"));
 
-
 def insert_Finalization_Controlled():
    GPS.Editor.insert_text (identifier_case ("Ada.Finalization.Controlled"));
-
 
 def insert_Finalization_Limited_Controlled():
    GPS.Editor.insert_text (identifier_case ("Ada.Finalization.Limited_Controlled"));
 
-
 def insert_Interrupts():
    GPS.Editor.insert_text (identifier_case ("Ada.Interrupts"));
-
 
 def insert_Interrupts_Names():
    GPS.Editor.insert_text (identifier_case ("Ada.Interrupts.Names"));
 
-
 def insert_Numerics():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics"));
-
 
 def insert_Complex_Elementary_Functions():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Complex_Elementary_Functions"));
 
-
 def insert_Complex_Types():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Complex_Types"));
-
 
 def insert_Discrete_Random():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Discrete_Random"));
 
-
 def insert_Elementary_Functions():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Elementary_Functions"));
-
 
 def insert_Float_Random():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Float_Random"));
 
-
 def insert_Generic_Complex_Elementary_Functions():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Generic_Complex_Elementary_Functions"));
-
 
 def insert_Generic_Complex_Types():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Generic_Complex_Types"));
 
-
 def insert_Generic_Elementary_Functions():
    GPS.Editor.insert_text (identifier_case ("Ada.Numerics.Generic_Elementary_Functions"));
-
 
 def insert_Real_Time():
    GPS.Editor.insert_text (identifier_case ("Ada.Real_Time"));
 
-
 def insert_Sequential_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Sequential_IO"));
-
 
 def insert_Storage_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Storage_IO"));
 
-
 def insert_Streams():
    GPS.Editor.insert_text (identifier_case ("Ada.Streams"));
-
 
 def insert_Streams_Stream_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Streams.Stream_IO"));
 
-
 def insert_Strings():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings"));
-
 
 def insert_Strings_Bounded():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Bounded"));
 
-
 def insert_Strings_Fixed():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Fixed"));
-
 
 def insert_Strings_Maps():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Maps"));
 
-
 def insert_Strings_Maps_Constants():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Maps.Constants"));
-
 
 def insert_Strings_Unbounded():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Unbounded"));
 
-
 def insert_Strings_Wide_Bounded():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Bounded"));
-
 
 def insert_Strings_Wide_Fixed():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Fixed"));
 
-
 def insert_Strings_Wide_Maps():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Maps"));
-
 
 def insert_Strings_Wide_Maps_Wide_Constants():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Maps.Wide_Constants"));
 
-
 def insert_Strings_Wide_Unbounded():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Unbounded"));
-
 
 def insert_Synchronous_Task_Control():
    GPS.Editor.insert_text (identifier_case ("Ada.Synchronous_Task_Control"));
 
-
 def insert_Tags():
    GPS.Editor.insert_text (identifier_case ("Ada.Tags"));
-
 
 def insert_Task_Attributes():
    GPS.Editor.insert_text (identifier_case ("Ada.Task_Attributes"));
 
-
 def insert_Task_Identification():
    GPS.Editor.insert_text (identifier_case ("Ada.Task_Identification"));
-
 
 def insert_Text_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO"));
 
-
 def insert_Text_IO_Complex_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Complex_IO"));
-
 
 def insert_Text_IO_Editing():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Editing"));
 
-
 def insert_Text_IO_Enumeration_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Enumeration_IO"));
-
 
 def insert_Text_IO_Fixed_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Fixed_IO"));
 
-
 def insert_Text_IO_Float_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Float_IO"));
-
 
 def insert_Text_IO_Integer_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Integer_IO"));
 
-
 def insert_Text_IO_Modular_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Modular_IO"));
-
 
 def insert_Text_IO_Text_Streams():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.Text_Streams"));
 
-
 def insert_Unchecked_Conversion():
    GPS.Editor.insert_text (identifier_case ("Ada.Unchecked_Conversion"));
-
 
 def insert_Unchecked_Deallocation():
    GPS.Editor.insert_text (identifier_case ("Ada.Unchecked_Deallocation"));
 
-
 def insert_Wide_Text_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Wide_Text_IO"));
-
 
 def insert_Wide_Text_IO_Complex_IO():
    GPS.Editor.insert_text (identifier_case ("Ada.Wide_Text_IO.Complex_IO"));
 
-
 def insert_Wide_Text_IO_Editing():
    GPS.Editor.insert_text (identifier_case ("Ada.Wide_Text_IO.Editing"));
-
 
 def insert_Wide_Text_IO_Text_Streams():
    GPS.Editor.insert_text (identifier_case ("Ada.Wide_Text_IO.Text_Streams"));
 
-
 def insert_Interfaces():
    GPS.Editor.insert_text (identifier_case ("Interfaces"));
-
 
 def insert_Interfaces_C():
    GPS.Editor.insert_text (identifier_case ("Interfaces.C"));
 
-
 def insert_Interfaces_C_Pointers():
    GPS.Editor.insert_text (identifier_case ("Interfaces.C.Pointers"));
-
 
 def insert_Interfaces_C_Strings():
    GPS.Editor.insert_text (identifier_case ("Interfaces.C.Strings"));
 
-
 def insert_Interfaces_Cobol():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Cobol"));
-
 
 def insert_Interfaces_Fortran():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Fortran"));
 
-
 def insert_System():
    GPS.Editor.insert_text (identifier_case ("System"));
-
 
 def insert_Address_To_Access_Conversions():
    GPS.Editor.insert_text (identifier_case ("System.Address_To_Access_Conversions"));
 
-
 def insert_Machine_Code():
    GPS.Editor.insert_text (identifier_case ("System.Machine_Code"));
-
 
 # def insert_RPC():
 #    GPS.Editor.insert_text (identifier_case ("System.RPC"));
 
-
 def insert_Storage_Elements():
    GPS.Editor.insert_text (identifier_case ("System.Storage_Elements"));
-
 
 def insert_Storage_Pools():
    GPS.Editor.insert_text (identifier_case ("System.Storage_Pools"));
 
-
-#   
+#
 # gnat-defined names
 #
 
 def insert_System_Wch_Con ():
    GPS.Editor.insert_text (identifier_case ("System.Wch_Con"));
 
-
 def insert_System_Task_Info ():
    GPS.Editor.insert_text (identifier_case ("System.Task_Info"));
-
 
 def insert_System_Partition_Interface ():
    GPS.Editor.insert_text (identifier_case ("System.Partition_Interface"));
 
-
 def insert_System_Memory ():
    GPS.Editor.insert_text (identifier_case ("System.Memory"));
-
 
 def insert_System_Assertions ():
    GPS.Editor.insert_text (identifier_case ("System.Assertions"));
 
-
 def insert_System_Address_Image ():
    GPS.Editor.insert_text (identifier_case ("System.Address_Image"));
-
 
 def insert_Interfaces_VxWorks_IO ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.VxWorks_IO"));
 
-
 def insert_Interfaces_VxWorks ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.VxWorks"));
-
 
 def insert_Interfaces_Packed_Decimal ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Packed_Decimal"));
 
-
 def insert_Interfaces_Os2lib_Threads ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Os2lib_Threads"));
-
 
 def insert_Interfaces_Os2lib_Synchronization ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Os2lib_Synchronization"));
 
-
 def insert_Interfaces_Os2lib_Errors ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Os2lib_Errors"));
-
 
 def insert_Interfaces_Os2lib ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.Os2lib"));
 
-
 def insert_Interfaces_CPP ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.CPP"));
-
 
 def insert_Interfaces_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.C_Streams"));
 
-
 def insert_Interfaces_C_Extensions ():
    GPS.Editor.insert_text (identifier_case ("Interfaces.C_Extensions"));
-
 
 def insert_GNAT_Wide_String_Split ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Wide_String_Split"));
 
-
 def insert_GNAT_Traceback_Symbolic ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Traceback_Symbolic"));
-
 
 def insert_GNAT_Traceback ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Traceback"));
 
-
 def insert_GNAT_Threads ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Threads"));
-
 
 def insert_GNAT_Task_Lock ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Task_Lock"));
 
-
 def insert_GNAT_Table ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Table"));
-
 
 def insert_GNAT_Strings ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Strings"));
 
-
 def insert_GNAT_String_Split ():
    GPS.Editor.insert_text (identifier_case ("GNAT.String_Split"));
-
 
 def insert_GNAT_Spitbol_Table_VString ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spitbol_Table_VString"));
 
-
 def insert_GNAT_Spitbol_Table_Integer ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spitbol_Table_Integer"));
-
 
 def insert_GNAT_Spitbol_Table_Boolean ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spitbol_Table_Boolean"));
 
-
 def insert_GNAT_Spitbol_Patterns ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spitbol_Patterns"));
-
 
 def insert_GNAT_Spitbol ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spitbol"));
 
-
 def insert_GNAT_Spell_Checker ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Spell_Checker"));
-
 
 def insert_GNAT_Source_Info ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Source_Info"));
 
-
 def insert_GNAT_Sockets ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Sockets"));
-
 
 def insert_GNAT_Signals ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Signals"));
 
-
 def insert_GNAT_Semaphores ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Semaphores"));
-
 
 def insert_GNAT_Regpat ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Regpat"));
 
-
 def insert_GNAT_Registry ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Registry"));
-
 
 def insert_GNAT_Regexp ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Regexp"));
 
-
 def insert_GNAT_Perfect_Hash_Generators ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Perfect_Hash_Generators"));
-
 
 def insert_GNAT_OS_Lib ():
    GPS.Editor.insert_text (identifier_case ("GNAT.OS_Lib"));
 
-
 def insert_GNAT_Most_Recent_Exception ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Most_Recent_Exception"));
-
 
 def insert_GNAT_Memory_Dump ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Memory_Dump"));
 
-
 def insert_GNAT_MD5 ():
    GPS.Editor.insert_text (identifier_case ("GNAT.MD5"));
-
 
 def insert_GNAT_Lock_Files ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Lock_Files"));
 
-
 def insert_GNAT_IO_Aux ():
    GPS.Editor.insert_text (identifier_case ("GNAT.IO_Aux"));
-
 
 def insert_GNAT_IO ():
    GPS.Editor.insert_text (identifier_case ("GNAT.IO"));
 
-
 def insert_GNAT_Heap_Sort_G ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Heap_Sort_G"));
-
 
 def insert_GNAT_Heap_Sort_A ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Heap_Sort_A"));
 
-
 def insert_GNAT_Heap_Sort ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Heap_Sort"));
-
 
 def insert_GNAT_HTable ():
    GPS.Editor.insert_text (identifier_case ("GNAT.HTable"));
 
-
 def insert_GNAT_Float_Control ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Float_Control"));
-
 
 def insert_GNAT_Expect ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Expect"));
 
-
 def insert_GNAT_Exceptions ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Exceptions"));
-
 
 def insert_GNAT_Exception_Traces ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Exception_Traces"));
 
-
 def insert_GNAT_Exception_Actions ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Exception_Actions"));
-
 
 def insert_GNAT_Dynamic_Tables ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Dynamic_Tables"));
 
-
 def insert_GNAT_Dynamic_HTables ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Dynamic_HTables"));
-
 
 def insert_GNAT_Directory_Operations ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Directory_Operations"));
 
-
 def insert_GNAT_Debug_Utilities ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Debug_Utilities"));
-
 
 def insert_GNAT_Debug_Pools ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Debug_Pools"));
 
-
 def insert_GNAT_Current_Exception ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Current_Exception"));
-
 
 def insert_GNAT_Ctrl_C ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Ctrl_C"));
 
-
 def insert_GNAT_Compiler_Version ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Compiler_Version"));
-
 
 def insert_GNAT_Command_Line ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Command_Line"));
 
-
 def insert_GNAT_Case_Util ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Case_Util"));
-
 
 def insert_GNAT_Calendar_Time_IO ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Calendar.Time_IO"));
 
-
 def insert_GNAT_Calendar ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Calendar"));
-
 
 def insert_GNAT_CRC32 ():
    GPS.Editor.insert_text (identifier_case ("GNAT.CRC32"));
 
-
 def insert_GNAT_CGI_Debug ():
    GPS.Editor.insert_text (identifier_case ("GNAT.CGI_Debug"));
-
 
 def insert_GNAT_CGI_Cookie ():
    GPS.Editor.insert_text (identifier_case ("GNAT.CGI_Cookie"));
 
-
 def insert_GNAT_CGI ():
    GPS.Editor.insert_text (identifier_case ("GNAT.CGI"));
-
 
 def insert_GNAT_Bubble_Sort_G ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Bubble_Sort_G"));
 
-
 def insert_GNAT_Bubble_Sort_A ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Bubble_Sort_A"));
-
 
 def insert_GNAT_Bubble_Sort ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Bubble_Sort"));
 
-
 def insert_GNAT_Bounded_Mailboxes ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Bounded_Mailboxes"));
-
 
 def insert_GNAT_Bounded_Buffers ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Bounded_Buffers"));
 
-
 def insert_GNAT_Array_Split ():
    GPS.Editor.insert_text (identifier_case ("GNAT.Array_Split"));
-
 
 def insert_GNAT_AWK ():
    GPS.Editor.insert_text (identifier_case ("GNAT.AWK"));
 
-
 def insert_Ada_Wide_Text_IO_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Ada.Wide_Text_IO.C_Streams"));
-
 
 def insert_Ada_Text_IO_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Ada.Text_IO.C_Streams"));
 
-
 def insert_Ada_Strings_Wide_Unbounded_Wide_Text_IO ():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Wide_Unbounded.Wide_Text_IO"));
-
 
 def insert_Ada_Strings_Unbounded_Text_IO ():
    GPS.Editor.insert_text (identifier_case ("Ada.Strings.Unbounded.Text_IO"));
 
-
 def insert_Ada_Streams_Stream_IO_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Ada.Streams.Stream_IO.C_Streams"));
-
 
 def insert_Ada_Sequential_IO_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Ada.Sequential_IO.C_Streams"));
 
-
 def insert_Ada_Exceptions_Traceback ():
    GPS.Editor.insert_text (identifier_case ("Ada.Exceptions.Traceback"));
-
 
 def insert_Ada_Exceptions_Is_Null_Occurrence ():
    GPS.Editor.insert_text (identifier_case ("Ada.Exceptions.Is_Null_Occurrence"));
 
-
 def insert_Ada_Direct_IO_C_Streams ():
    GPS.Editor.insert_text (identifier_case ("Ada.Direct_IO.C_Streams"));
-
 
 def insert_Ada_Command_Line_Remove ():
    GPS.Editor.insert_text (identifier_case ("Ada.Command_Line.Remove"));
 
-
 def insert_Ada_Command_Line_Environment ():
    GPS.Editor.insert_text (identifier_case ("Ada.Command_Line.Environment"));
-
 
 def insert_Ada_Characters_Wide_Latin_9 ():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters.Wide_Latin_9"));
 
-
 def insert_Ada_Characters_Wide_Latin_1 ():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters.Wide_Latin_1"));
 
-
 def insert_Ada_Characters_Latin_9 ():
    GPS.Editor.insert_text (identifier_case ("Ada.Characters.Latin_9"));
-
 
 #
 # gnat-defined pragmas
@@ -875,34 +676,26 @@ def insert_Ada_Characters_Latin_9 ():
 def insert_Abort_Defer ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Abort_Defer;"));
 
-
 def insert_Ada_83 ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Ada_83;"));
-
 
 def insert_Ada_95 ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Ada_95;"));
 
-
 def insert_Annotate ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Annotate (IDENTIFIER {, ARG});"));
-
 
 def insert_Assert ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Assert ( boolean_EXPRESSION [, static_string_EXPRESSION]);"));
 
-
 def insert_Ast_Entry ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" AST_Entry (entry_IDENTIFIER);"));
-
 
 def insert_C_Pass_By_Copy ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" C_Pass_By_Copy ([Max_Size =>] static_integer_EXPRESSION);"));
 
-
 def insert_Comment ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Comment (static_string_EXPRESSION);"));
-
 
 def insert_Common_Object ():
    col = GPS.current_context().location().column()-1
@@ -911,32 +704,25 @@ def insert_Common_Object ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Size     =>] EXTERNAL_SYMBOL]);"));
 
-
 def insert_Compile_Time_Warning ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Compile_Time_Warning (boolean_EXPRESSION, static_string_EXPRESSION);"));
-
 
 def insert_Complex_Representation ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Complex_Representation ([Entity =>] LOCAL_NAME);"));
 
-
 def insert_Component_Alignment ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Component_Alignment ([Form =>] ALIGNMENT_CHOICE [, [Name =>] type_LOCAL_NAME]);"));
-
 
 def insert_Convention_Identifier ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Convention_Identifier ([Name =>]       IDENTIFIER,"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("[Convention =>] convention_IDENTIFIER);"));
 
-
 def insert_CPP_Class ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Class ([Entity =>] LOCAL_NAME);"));
 
-
 def insert_CPP_Constructor ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Constructor ([Entity =>] LOCAL_NAME);"));
-
 
 def insert_CPP_Virtual ():
    col = GPS.current_context().location().column()-1
@@ -945,7 +731,6 @@ def insert_CPP_Virtual ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Vtable_Ptr =>] vtable_ENTITY]"))
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Position   =>] static_integer_EXPRESSION]);"));
 
-
 def insert_CPP_Vtable ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" CPP_Vtable"));
@@ -953,14 +738,11 @@ def insert_CPP_Vtable ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Vtable_Ptr  =>] vtable_ENTITY"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Entry_Count =>] static_integer_EXPRESSION);"));
 
-
 def insert_Debug ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Debug (PROCEDURE_CALL_WITHOUT_SEMICOLON);"));
 
-
 def insert_Elaboration_Checks ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Elaboration_Checks (RM | Static);"));
-
 
 def insert_Eliminate ():
    col = GPS.current_context().location().column()-1
@@ -971,7 +753,6 @@ def insert_Eliminate ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [,[Result_Type =>]  result_SUBTYPE_NAME]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [,[Homonym_Number =>]  INTEGER_LITERAL]);"));
 
-
 def insert_Export_Exception ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Export_Exception"));
@@ -979,7 +760,6 @@ def insert_Export_Exception ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL,]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Form     =>] Ada | VMS]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Code     =>] static_integer_EXPRESSION]);"));
-
 
 def insert_Export_Function ():
    col = GPS.current_context().location().column()-1
@@ -991,14 +771,12 @@ def insert_Export_Function ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Mechanism        =>] MECHANISM]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Result_Mechanism =>] MECHANISM_NAME]"));
 
-
 def insert_Export_Object ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Export_Object"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Internal =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Size     =>] EXTERNAL_SYMBOL]"));
-
 
 def insert_Export_Procedure ():
    col = GPS.current_context().location().column()-1
@@ -1008,13 +786,11 @@ def insert_Export_Procedure ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Parameter_Types =>] PARAMETER_TYPES]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Mechanism       =>] MECHANISM]);"));
 
-
 def insert_Export_Value ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Export_Value"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Value =>] static_integer_EXPRESSION"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Link_Name =>] static_string_EXPRESSION);"));
-
 
 def insert_Export_Valued_Procedure ():
    col = GPS.current_context().location().column()-1
@@ -1024,10 +800,8 @@ def insert_Export_Valued_Procedure ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Parameter_Types =>] PARAMETER_TYPES]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Mechanism       =>] MECHANISM]);"));
 
-
 def insert_Extend_System ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Extend_System ([Name =>] IDENTIFIER);"));
-
 
 def insert_External ():
    col = GPS.current_context().location().column()-1
@@ -1037,22 +811,17 @@ def insert_External ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External_Name =>] static_string_EXPRESSION]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Link_Name     =>] static_string_EXPRESSION ]);"));
 
-
 def insert_External_Name_Casing ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" External_Name_Casing (Uppercase | Lowercase [, Uppercase | Lowercase | As_Is]);"));
-
 
 def insert_Finalize_Storage_Only ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Finalize_Storage_Only (first_subtype_LOCAL_NAME);"));
 
-
 def insert_Float_Representation ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Float_Representation (FLOAT_REP);"));
 
-
 def insert_Ident ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Ident (static_string_EXPRESSION);"));
-
 
 def insert_Import_Exception ():
    col = GPS.current_context().location().column()-1
@@ -1061,7 +830,6 @@ def insert_Import_Exception ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Form     =>] Ada | VMS]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Code     =>] static_integer_EXPRESSION]);"));
-
 
 def insert_Import_Function ():
    col = GPS.current_context().location().column()-1
@@ -1074,14 +842,12 @@ def insert_Import_Function ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Result_Mechanism         =>] MECHANISM_NAME]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [First_Optional_Parameter =>] IDENTIFIER]);"));
 
-
 def insert_Import_Object ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Import_Object"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Internal    =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Size     =>] EXTERNAL_SYMBOL]);"));
-
 
 def insert_Import_Procedure ():
    col = GPS.current_context().location().column()-1
@@ -1092,7 +858,6 @@ def insert_Import_Procedure ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("[, [Mechanism                =>] MECHANISM]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("[, [First_Optional_Parameter =>] IDENTIFIER]);"));
 
-
 def insert_Import_Valued_Procedure ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Import_Valued_Procedure"));
@@ -1102,18 +867,14 @@ def insert_Import_Valued_Procedure ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Mechanism                =>] MECHANISM]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [First_Optional_Parameter =>] IDENTIFIER]);"));
 
-
 def insert_Initialize_Scalars ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Initialize_Scalars;"));
-
 
 def insert_Inline_Always ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Inline_Always (NAME [, NAME]);"));
 
-
 def insert_Inline_Generic ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Inline_Generic (generic_package_NAME);"));
-
 
 def insert_Interface ():
    col = GPS.current_context().location().column()-1
@@ -1123,7 +884,6 @@ def insert_Interface ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External_Name =>] static_string_expression]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Link_Name     =>] static_string_expression]);"));
 
-
 def insert_Interface_Name ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Interface_Name"));
@@ -1131,22 +891,17 @@ def insert_Interface_Name ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External_Name =>] static_string_EXPRESSION]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Link_Name     =>] static_string_EXPRESSION]);"));
 
-
 def insert_Interrupt_State ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Interrupt_State (Name => value, State => SYSTEM | RUNTIME | USER);"));
-
 
 def insert_Keep_Names ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Keep_Names ([On =>] enumeration_first_subtype_LOCAL_NAME);"));
 
-
 def insert_License ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" License (Unrestricted | GPL | Modified_GPL | Restricted);"));
 
-
 def insert_Link_With ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Link_With (static_string_EXPRESSION {,static_string_EXPRESSION});"));
-
 
 def insert_Linker_Alias ():
    col = GPS.current_context().location().column()-1
@@ -1154,17 +909,14 @@ def insert_Linker_Alias ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Entity =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Alias  =>] static_string_EXPRESSION);"));
 
-
 def insert_Linker_Section ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Linker_Section"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Entity    =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Section =>] static_string_EXPRESSION);"));
 
-
 def insert_Long_Float ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Long_Float (FLOAT_FORMAT);"));
-
 
 def insert_Machine_Attribute ():
    col = GPS.current_context().location().column()-1
@@ -1172,26 +924,20 @@ def insert_Machine_Attribute ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Attribute_Name =>] string_EXPRESSION"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Entity       =>] LOCAL_NAME);"));
 
-
 def insert_Main_Storage ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Main_Storage (MAIN_STORAGE_OPTION [, MAIN_STORAGE_OPTION]);"));
-
 
 def insert_No_Return ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" No_Return (procedure_LOCAL_NAME);"));
 
-
 def insert_Obsolescent ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Obsolescent [(static_string_EXPRESSION)];"));
-
 
 def insert_Polling ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Polling (ON | OFF);"));
 
-
 def insert_Propagate_Exceptions ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Propagate_Exceptions (subprogram_LOCAL_NAME);"));
-
 
 def insert_Psect_Object ():
    col = GPS.current_context().location().column()-1
@@ -1200,26 +946,20 @@ def insert_Psect_Object ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [External =>] EXTERNAL_SYMBOL]"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Size     =>] EXTERNAL_SYMBOL]);"));
 
-
 def insert_Pure_Function ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Pure_Function ([Entity =>] function_LOCAL_NAME);"));
-
 
 def insert_Ravenscar ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Ravenscar;"));
 
-
 def insert_Restriction_Warnings ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Restriction_Warnings (restriction_IDENTIFIER {, restriction_IDENTIFIER});"));
-
 
 def insert_Source_File_Name ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Source_File_Name ([Unit_Name =>] unit_NAME, Spec_File_Name => STRING_LITERAL);"));
 
-
 def insert_Source_Reference ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Source_Reference (INTEGER_LITERAL, STRING_LITERAL);"));
-
 
 def insert_Stream_Convert ():
    col = GPS.current_context().location().column()-1
@@ -1228,26 +968,20 @@ def insert_Stream_Convert ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Read   =>] function_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Write  =>] function_NAME);"));
 
-
 def insert_Style_Checks ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Style_Checks (string_LITERAL | ALL_CHECKS | On | Off [, LOCAL_NAME]);"));
-
 
 def insert_Suppress_Exception_Locations ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Suppress_Exception_Locations;"));
 
-
 def insert_Suppress_Initialization ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Suppress_Initialization ([Entity =>] type_Name);"));
-
 
 def insert_Task_Info ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Task_Info (expression);"));
 
-
 def insert_Task_Name ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Task_Name (string_EXPRESSION);"));
-
 
 def insert_Task_Storage ():
    col = GPS.current_context().location().column()-1
@@ -1255,57 +989,44 @@ def insert_Task_Storage ():
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Task_Type =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, Top_Guard =>] static_integer_EXPRESSION);"));
 
-
 def insert_Thread_Body ():
    col = GPS.current_context().location().column()-1
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Thread_Body"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case ("([Entity =>] LOCAL_NAME"));
    GPS.Editor.insert_text ("\n" + indented(col) + identifier_case (" [, [Secondary_Stack_Size =>] static_integer_EXPRESSION)];"));
 
-
 def insert_Time_Slice ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Time_Slice (static_duration_EXPRESSION);"));
-
 
 def insert_Unchecked_Union ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Unchecked_Union (first_subtype_LOCAL_NAME);"));
 
-
 def insert_Unimplemented_Unit ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Unimplemented_Unit;"));
-
 
 def insert_Universal_Data ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Universal_Data [(library_unit_Name)];"));
 
-
 def insert_Unreferenced ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Unreferenced (local_Name {, local_Name});"));
-
 
 def insert_Unreserve_All_Interrupts ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Unreserve_All_Interrupts;"));
 
-
 def insert_Unsuppress ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Unsuppress (IDENTIFIER [, [On =>] NAME]);"));
-
 
 def insert_Use_VADS_Size ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Use_VADS_Size;"));
 
-
 def insert_Validity_Checks ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Validity_Checks (string_LITERAL | ALL_CHECKS | On | Off);"));
-
 
 def insert_Warnings ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Warnings (On | Off [, LOCAL_NAME]);"));
 
-
 def insert_Weak_External ():
    GPS.Editor.insert_text (word_case ("pragma") + identifier_case (" Weak_External ([Entity =>] LOCAL_NAME);"));
-
 
 #
 # gnat-defined attributes
@@ -1314,183 +1035,137 @@ def insert_Weak_External ():
 def insert_Abort_Signal ():
    GPS.Editor.insert_text (identifier_case ("Standard'Abort_Signal"));
 
-
 def insert_Address_Size ():
    GPS.Editor.insert_text (identifier_case ("Standard'Address_Size"));
-
 
 def insert_Asm_Input ():
    GPS.Editor.insert_text (identifier_case ("Asm_Input"));
 
-
 def insert_Asm_Output ():
    GPS.Editor.insert_text (identifier_case ("Asm_Output"));
-
 
 def insert_AST_Entry ():
    GPS.Editor.insert_text (identifier_case ("AST_Entry"));
 
-
 def insert_Bit ():
    GPS.Editor.insert_text (identifier_case ("Bit"));
-
 
 def insert_Bit_Position ():
    GPS.Editor.insert_text (identifier_case ("Bit_Position"));
 
-
 def insert_Code_Address ():
    GPS.Editor.insert_text (identifier_case ("Code_Address"));
-
 
 def insert_Default_Bit_Order ():
    GPS.Editor.insert_text (identifier_case ("Standard'Default_Bit_Order"));
 
-
 def insert_Elaborated ():
    GPS.Editor.insert_text (identifier_case ("Elaborated"));
-
 
 def insert_Elab_Body ():
    GPS.Editor.insert_text (identifier_case ("Elab_Body"));
 
-
 def insert_Elab_Spec ():
    GPS.Editor.insert_text (identifier_case ("Elab_Spec"));
-
 
 def insert_Emax ():
    GPS.Editor.insert_text (identifier_case ("Emax"));
 
-
 def insert_Enum_Rep ():
    GPS.Editor.insert_text (identifier_case ("Enum_Rep"));
-
 
 def insert_Epsilon ():
    GPS.Editor.insert_text (identifier_case ("Epsilon"));
 
-
 def insert_Fixed_Value ():
    GPS.Editor.insert_text (identifier_case ("Fixed_Value"));
-
 
 def insert_Has_Discriminants ():
    GPS.Editor.insert_text (identifier_case ("Has_Discriminants"));
 
-
 def insert_Img ():
    GPS.Editor.insert_text (identifier_case ("Img"));
-
 
 def insert_Integer_Value ():
    GPS.Editor.insert_text (identifier_case ("Integer_Value"));
 
-
 def insert_Large ():
    GPS.Editor.insert_text (identifier_case ("Large"));
-
 
 def insert_Machine_Size ():
    GPS.Editor.insert_text (identifier_case ("Machine_Size"));
 
-
 def insert_Mantissa ():
    GPS.Editor.insert_text (identifier_case ("Mantissa"));
-
 
 def insert_Max_Interrupt_Priority ():
    GPS.Editor.insert_text (identifier_case ("Standard'Max_Interrupt_Priority"));
 
-
 def insert_Max_Priority ():
    GPS.Editor.insert_text (identifier_case ("Standard'Max_Priority"));
-
 
 def insert_Maximum_Alignment ():
    GPS.Editor.insert_text (identifier_case ("Standard'Maximum_Alignment"));
 
-
 def insert_Mechanism_Code ():
    GPS.Editor.insert_text (identifier_case ("Mechanism_Code"));
-
 
 def insert_Null_Parameter ():
    GPS.Editor.insert_text (identifier_case ("Null_Parameter"));
 
-
 def insert_Object_Size ():
    GPS.Editor.insert_text (identifier_case ("Object_Size"));
-
 
 def insert_Passed_By_Reference ():
    GPS.Editor.insert_text (identifier_case ("Passed_By_Reference"));
 
-
 def insert_Range_Length ():
    GPS.Editor.insert_text (identifier_case ("Range_Length"));
-
 
 def insert_Safe_Emax ():
    GPS.Editor.insert_text (identifier_case ("Safe_Emax"));
 
-
 def insert_Safe_Large ():
    GPS.Editor.insert_text (identifier_case ("Safe_Large"));
-
 
 def insert_Small ():
    GPS.Editor.insert_text (identifier_case ("Small"));
 
-
 def insert_Storage_Unit ():
    GPS.Editor.insert_text (identifier_case ("Standard'Storage_Unit"));
-
 
 def insert_Target_Name ():
    GPS.Editor.insert_text (identifier_case ("Standard'Target_Name"));
 
-
 def insert_Tick ():
    GPS.Editor.insert_text (identifier_case ("Standard'Tick"));
-
 
 def insert_To_Address ():
    GPS.Editor.insert_text (identifier_case ("System'To_Address"));
 
-
 def insert_Type_Class ():
    GPS.Editor.insert_text (identifier_case ("Type_Class"));
-
 
 def insert_Unconstrained_Array ():
    GPS.Editor.insert_text (identifier_case ("Unconstrained_Array"));
 
-
 def insert_Universal_Literal_String ():
    GPS.Editor.insert_text (identifier_case ("Universal_Literal_String"));
-
 
 def insert_Unrestricted_Access ():
    GPS.Editor.insert_text (identifier_case ("Unrestricted_Access"));
 
-
 def insert_VADS_Size ():
    GPS.Editor.insert_text (identifier_case ("VADS_Size"));
-
 
 def insert_Value_Size ():
    GPS.Editor.insert_text (identifier_case ("Value_Size"));
 
-
 def insert_Wchar_T_Size ():
    GPS.Editor.insert_text (identifier_case ("Standard'Wchar_T_Size"));
 
-
 def insert_Word_Size ():
    GPS.Editor.insert_text (identifier_case ("Standard'Word_Size"));
-
-
 
 # the GNAT-defined attributes
 
@@ -1856,9 +1531,6 @@ GPS.parse_xml ("""
      </contextual>
 
 """)
-
-
-
 
 # the GNAT-defined pragmas
 
@@ -2511,10 +2183,6 @@ GPS.parse_xml ("""
         <Title>Insert/GNAT pragma/Abort_Defer</Title>
      </contextual>
 """)
-
-
-
-
 
 # the GNAT-defined names
 
@@ -3257,9 +2925,6 @@ GPS.parse_xml ("""
 
 """)
 
-
-
-
 # the "Ada pragmas" submenu
 
 GPS.parse_xml ("""
@@ -3567,7 +3232,6 @@ GPS.parse_xml ("""
         <Title>Insert/Standard pragma/All_Calls_Remote</Title>
      </contextual>
 """)
-
 
 # the predefined names
 
@@ -4124,5 +3788,3 @@ GPS.parse_xml ("""
         <Title>Insert/Standard name/Tasking/Asynchronous_Task_Control</Title>
      </contextual>
 """)
-
-

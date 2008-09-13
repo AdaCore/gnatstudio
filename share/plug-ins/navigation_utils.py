@@ -5,7 +5,7 @@ reuse in your own scripts.
 In particular, it provides the following GPS actions, to which you can
 bind key shortcuts through the menu /Edit/Key shortcuts:
   - "goto declaration or body"
-  - "goto other file" 
+  - "goto other file"
 """
 
 

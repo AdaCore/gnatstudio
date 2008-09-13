@@ -59,12 +59,12 @@ class Output:
         Console().write (" - " + dependency.name() + "\n")
      elif newdep or not show_diff:
         Console().write (" + " + dependency.name() + "\n")
-  
+
   def explain_dependency (self, file, depends_on):
      """Explains the last add_dependency: file depends on depends_on"""
      if Preference ("Plugins/dependencies/show_source").get():
         Console().write \
-          ("   => " + basename (file.name())  + 
+          ("   => " + basename (file.name())  +
            " depends on " + basename (depends_on.name()) + "\n")
 
   def close (self):
@@ -102,7 +102,7 @@ class XMLOutput:
      else:
         extra = "extra=''"
      self.xml = self.xml + "<dependency name='" + dependency.name() + "' " + extra + ">\n"
-    
+
   def explain_dependency (self, file, depends_on):
      self.xml = self.xml + \
        "<file src='" + file.name() + "'>" + depends_on.name() + "</file>\n"
@@ -131,11 +131,11 @@ class XMLOutput:
      elif node_name == "file":
         return [basename (attr["src"]), basename (value)]
      return []
-  
+
   def close (self):
      self.close_project ()
      self.xml = self.xml + "</projects>\n"
-     view = XMLViewer (name    = "Project dependencies", 
+     view = XMLViewer (name    = "Project dependencies",
                        columns = 2,
                        sorted = True,
                        parser  = self.parse_xml_node,

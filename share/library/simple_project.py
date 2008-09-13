@@ -32,11 +32,11 @@ GPS.parse_xml ("""
   <menu action="simple_project_from_dialog">
      <title>/Project/Create from Dialog</title>
   </menu>
-   
+
   <menu action="simple_project_from_current">
      <title>/Project/Create from Current File</title>
   </menu>
-   
+
   <menu action="simple_project_and_main">
      <title>/Project/Create Project and Main Unit</title>
   </menu>
@@ -86,4 +86,3 @@ def create_project_and_main():
    if not os.path.isdir (dir): os.mkdir (dir)
    os.chdir (dir)
    create_from_main (main, create_main=1)
-

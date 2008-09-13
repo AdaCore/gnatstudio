@@ -136,7 +136,7 @@ def preferences_changed (hook):
      on_compilation_finished (hook, "")
 
   else:
-     if hooks_set: 
+     if hooks_set:
         Hook ("file_edited").remove (on_file_edited)
         Hook ("file_changed_on_disk").remove (on_file_edited)
         Hook ("compilation_finished").remove (on_compilation_finished)
@@ -152,4 +152,3 @@ Menu.create ("/Navigate/Highlight Dispatching Calls",
              on_highlight_dispatching_calls,
              ref = "Find All References",
              add_before = False)
-

@@ -45,7 +45,7 @@
 
    These scenario variables are defined in the project file, and should have
    the same name as in the Makefile or the AntFile.
-      
+
    Any time a project is loaded or reloaded, GPS will update the /Build/Ant
    and /Build/Makefile menus to add entries corresponding to the targets
    available in the Makefile or AntFile.
@@ -179,11 +179,11 @@ class Builder:
       args = switches + " " + self.extra_switches + " " \
          + " -f " + basename (self.buildfile) + " " + target + " " \
          + self.get_scenario_variables(project)
-      return Makefile_Process (make, args) 
+      return Makefile_Process (make, args)
 
    def get_scenario_variables(self,project):
        return ""
-       
+
    def destroy_menus (self):
       """Destroy all menus associated with the build file"""
 
@@ -366,7 +366,7 @@ def on_gps_started (hook_name):
    Makefile()
    if Preference ("Plugins/Makefile/ant_support").get():
       Antfile()
-   
+
 
 ## Register the project attributes early so that the project loaded
 ## from the command line doesn't display warnings
