@@ -179,7 +179,7 @@ class Ispell:
               (self.cmd, before_kill=self.before_kill, task_manager=False)
            result = self.proc.expect ("^.*\\n", timeout=2000)
         except:
-           GPS.Console ("Messages").write ("Could not start external command: " + self.cmd)
+           GPS.Console ("Messages").write ("Could not start external command: " + self.cmd + "\n")
 
    def read (self, words):
       """Run ispell to find out the possible correction for the words.
