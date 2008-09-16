@@ -15,6 +15,10 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
+NF-43-H916-007 Support for Xorg libraries (2008-09-16)
+
+  GPS now runs under recent Linux distribs using the Xorg libraries.
+
 NF-43-H908-010 New plug-in to run an OS unix shell (2008-09-11)
 
   A new plugin is provided which allows you to open a GPS console executing
