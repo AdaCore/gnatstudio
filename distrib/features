@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 12, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 16, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -209,11 +209,11 @@ NF-43-H110-009 Improved indentation of "raise with" (2008-02-20)
   The Ada 2005 construct "raise Exception with msg" is now better indented,
   in particular when a line break is added as part of this construct.
 
-NF-43-GC31-001 Debugger users new "catch exception" syntax (2008-09-11)
+NF-43-GC31-001 Debugger uses new "catch exception" syntax (2008-09-11)
 
-  The debugger interface now uses gdb's new "catch exception" syntax instead
-  of "break exception". This has no user visible change, but prepares the
-  ground for later changes in gdb itself
+  The debugger interface now uses gdb's new "catch exception" syntax when
+  available instead of "break exception". This has no user visible change,
+  but prepares the ground for later changes in gdb itself.
 
 NF-43-GC19-021 New plug-in to reset GPS Windows registry settings (2008-01-30)
 
