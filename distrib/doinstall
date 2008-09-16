@@ -104,7 +104,7 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd $basedir
 
-  rm -rf $basedir/lib/gps $basedir/bin/gps*
+  rm -rf $basedir/lib/gps* $basedir/bin/gps*
   rm -f $basedir/share/gps/plug-ins/*.xml
   rm -f $basedir/share/gps/library/*.py
 
@@ -113,6 +113,15 @@ install_binaries() {
   # copying junk files
 
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
+
+  if [ -d lib/gps-xorg ]; then
+    if [ -f /etc/X11/xorg.conf ]; then
+      ln -s gps-xorg lib/gps
+    else
+      # /etc/X11/XF86Config
+      ln -s gps-xfree lib/gps
+    fi
+  fi
 
   for d in etc/pango etc/gtk-2.0; do
     if [ -d $d ]; then
