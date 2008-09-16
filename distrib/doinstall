@@ -20,7 +20,7 @@ current_dir=`/bin/pwd`
 ## Sets the variable  $basedir
 ask_basedir() {
    clear
-   default_dir=`(type gnatmake | cut -d' ' -f3) 2>/dev/null`
+   default_dir=`type gnatmake 2>/dev/null| cut -d' ' -f3`
    default_dir=`dirname $default_dir 2>/dev/null`
 
    if [ "$default_dir" != "" -a "$default_dir" != "." -a "$default_dir" != "/usr/bin" ]; then
@@ -115,7 +115,7 @@ install_binaries() {
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
 
   if [ -d lib/gps-xorg ]; then
-    if [ -x /usr/X11R6/bin/Xorg ]; then
+    if [ "`type Xorg 2>/dev/null | cut -d' ' -f3`" != "" ]; then
       ln -s gps-xorg lib/gps
     else
       ln -s gps-xfree lib/gps
