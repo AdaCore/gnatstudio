@@ -115,10 +115,9 @@ install_binaries() {
   (cd $current_dir; tar cf - bin etc lib share) | tar xf -
 
   if [ -d lib/gps-xorg ]; then
-    if [ -f /etc/X11/xorg.conf ]; then
+    if [ -x /usr/X11R6/bin/Xorg ]; then
       ln -s gps-xorg lib/gps
     else
-      # /etc/X11/XF86Config
       ln -s gps-xfree lib/gps
     fi
   fi
