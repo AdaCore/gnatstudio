@@ -2311,7 +2311,8 @@ package body Projects.Registry is
       Direct_Only : Boolean := True) return Boolean
    is
       Belong : constant Directory_Dependency :=
-                 Get (Registry.Data.Directories, Directory);
+                 Get (Registry.Data.Directories,
+                      Name_As_Directory (Directory));
    begin
       return Belong = Direct
         or else (not Direct_Only and then Belong = As_Parent);

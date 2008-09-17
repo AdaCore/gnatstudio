@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.0
 
+- H915-002: File view from project filter no working
+  Problem:    On the file view when activating the
+              "Show files from project only" filter there is nothing
+              displayed.
+  Workaround: Do not activate the filter or use the project explorer
+
 - H909-012: Wrong setting of gprbuild --target switch
   Problem:    When using a full pathname for the gnatmake command in the
               project file (e.g. "c:/gnatpro/bin/powerpc-elf-gnatmake"), GPS
