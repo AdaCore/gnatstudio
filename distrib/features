@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 16, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Sep 17, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -15,9 +15,12 @@ of the feature.
 New features in GPS 4.3.0
 -------------------------
 
-NF-43-H916-007 Support for Xorg libraries (2008-09-16)
+NF-43-H916-007 Support for Xorg libraries under GNU/Linux (2008-09-16)
 
   GPS now runs under recent Linux distribs using the Xorg libraries.
+  Previousely, GPS was compatible with Xfree libraries only, unless you
+  removed the <install>/lib/gps directory. This work around is no longer
+  necessary.
 
 NF-43-H908-010 New plug-in to run an OS unix shell (2008-09-11)
 
