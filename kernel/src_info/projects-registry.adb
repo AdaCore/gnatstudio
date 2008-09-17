@@ -63,9 +63,9 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Projects.Registry is
 
-   Me : constant Debug_Handle := Create ("Projects.Registry");
+   Me      : constant Debug_Handle := Create ("Projects.Registry");
    Me_Gnat : constant Debug_Handle :=
-     Create ("Projects.GNAT", GNATCOLL.Traces.Off);
+               Create ("Projects.GNAT", GNATCOLL.Traces.Off);
 
    Project_Backward_Compatibility : constant Boolean := True;
    --  Should be set to true if saved project should be compatible with GNAT
@@ -190,7 +190,7 @@ package body Projects.Registry is
       Trusted_Mode : Boolean := True;
       --  Whether we are in trusted mode when recomputing the project view
 
-      --  Implicit dependency on the global htables in the Prj.* packages.
+      --  Implicit dependency on the global htables in the Prj.* packages
    end record;
 
    procedure Add_Foreign_Source_Files
@@ -898,7 +898,7 @@ package body Projects.Registry is
    is
       procedure Register_Directory (Directory : String);
       --  Register Directory as belonging to Project.
-      --  The parent directories are also registered
+      --  The parent directories are also registered.
 
       ------------------------
       -- Register_Directory --

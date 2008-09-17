@@ -78,7 +78,7 @@ package body Project_Explorers_Files is
    Explorer_Files_Module_Id     : Module_ID;
 
    File_View_Shows_Only_Project : constant History_Key :=
-     "explorers-file-show-project-only";
+                                    "explorers-file-show-project-only";
 
    type Explorer_Module_Record is new Module_ID_Record with null record;
    overriding procedure Default_Context_Factory
@@ -583,6 +583,7 @@ package body Project_Explorers_Files is
          --  current directory will be returned
          D.Norm_Dir := new String'
            (Name_As_Directory (Normalize_Pathname (Dir)));
+
       else
          D.Norm_Dir := new String'
            (Name_As_Directory (Normalize_Pathname (Dir)));
@@ -611,6 +612,7 @@ package body Project_Explorers_Files is
               File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
             Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
          end if;
+
       else
          loop
             exit when not Read_Directory (D);
@@ -942,7 +944,7 @@ package body Project_Explorers_Files is
          declare
             Iter_Name : constant String :=
                          Get_String (T.File_Model, Iter, Absolute_Name_Column);
-            N_Type : constant Node_Types := Node_Types'Val
+            N_Type    : constant Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
          begin
@@ -1081,6 +1083,7 @@ package body Project_Explorers_Files is
                Null_Iter, 1, Get_Current_Dir, True);
             String_List_Utils.String_List.Free (Inc);
          end;
+
       else
          Get_Local_Filesystem.Get_Logical_Drives (Buffer, Len);
 
@@ -1499,9 +1502,9 @@ package body Project_Explorers_Files is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Files        : Project_Explorer_Files;
-      Child        : MDI_Child;
-      C2           : MDI_Explorer_Child;
+      Files : Project_Explorer_Files;
+      Child : MDI_Child;
+      C2    : MDI_Explorer_Child;
    begin
       --  Start with the files view, so that if both are needed, the project
       --  view ends up on top of the files view

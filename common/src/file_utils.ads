@@ -36,11 +36,11 @@ package File_Utils is
 
    function Is_Case_Sensitive
      (Server : Server_Type := GPS_Server) return Boolean;
-   --  Return true if filenames are case sensitive on the server.
+   --  Return true if filenames are case sensitive on the server
 
    function File_Equal
      (File1, File2 : String;
-      Server : Server_Type := GPS_Server) return Boolean;
+      Server       : Server_Type := GPS_Server) return Boolean;
    --  Perform a comparison of file, taking into account the case sensitivity
    --  depending on Server's OS.
 
@@ -71,7 +71,7 @@ package File_Utils is
    --  as this does not make sense for a source filename.
 
    function To_Unix_Pathname (Path : String) return String;
-   --  Convert all occurences of Directory_Separator to '/'.
+   --  Convert all occurences of Directory_Separator to '/'
 
    function To_Host_Pathname (Path : String) return String;
    --  By default, return Path.

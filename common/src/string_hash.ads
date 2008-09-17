@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2007, AdaCore           --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,7 +40,7 @@ package String_Hash is
    --  be made too small.
 
    function Hash (Key : String) return Name_Htable_Num;
-   --  See HTables for documentation.
+   --  See HTables for documentation
 
    function Equal (Key1, Key2 : String) return Boolean;
    --  Whether the two keys are equal, depending on Case_Sensitive
@@ -53,6 +53,6 @@ package String_Hash is
       Key          => String,
       Hash         => Hash,
       Equal        => Equal);
-   --  See HTables for documentation.
+   --  See HTables for documentation
 
 end String_Hash;
