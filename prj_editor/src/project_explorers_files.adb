@@ -585,7 +585,7 @@ package body Project_Explorers_Files is
            (Name_As_Directory (Normalize_Pathname (Dir)));
       else
          D.Norm_Dir := new String'
-           (Name_As_Directory ((Normalize_Pathname (Dir))));
+           (Name_As_Directory (Normalize_Pathname (Dir)));
       end if;
 
       D.Norm_Dest     := new String'
