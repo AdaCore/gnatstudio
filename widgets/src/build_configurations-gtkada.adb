@@ -1,0 +1,894 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                    Copyright (C) 2008, AdaCore                    --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Ada.Exceptions; use Ada.Exceptions;
+
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
+
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Image;                use Gtk.Image;
+with Gtk.Combo_Box;
+with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Viewport;             use Gtk.Viewport;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+
+with Gtkada.Tree_View;    use Gtkada.Tree_View;
+
+with Switches_Chooser.Gtkada; use Switches_Chooser.Gtkada;
+
+package body Build_Configurations.Gtkada is
+
+   --  ??? Add facility to rename a target
+
+   ---------------
+   -- Constants --
+   ---------------
+
+   --  Tree view constants
+
+   Icon_Column : constant := 0; --  Contains the icon
+   Name_Column : constant := 1; --  Contains the displayed name, as markup
+   Num_Column  : constant := 2;
+   --  Contains the number of the corresponding page in the main notebook
+
+   -----------------
+   -- Local types --
+   -----------------
+
+   type Target_UI_Record is new Gtk_Hbox_Record with record
+      Registry : Build_Config_Registry_Access;
+
+      Target   : Target_Access;
+
+      Frame    : Gtk_Frame;
+      --  The frame that contains the elements to describe the switches
+
+      Editor   : Switches_Editor := null;
+      --  The one switch editor for the target, if there is only one command
+
+      Command_Entry : Gtk_Entry;
+      --  The entry containing the command
+
+      Model_Entry   : Gtk_Entry;
+      --  The entry containing the model
+   end record;
+   type Target_UI_Access is access all Target_UI_Record'Class;
+
+   type Build_UI_Record is new Gtk_Hbox_Record with record
+      Registry : Build_Config_Registry_Access;
+
+      Notebook : Gtk_Notebook;
+      --  The main notebook
+
+      View     : Tree_View;
+      --  The tree
+   end record;
+   type Build_UI_Access is access all Build_UI_Record'Class;
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Gtk_New
+     (Target_UI : out Target_UI_Access;
+      Registry  : Build_Config_Registry_Access);
+   --  Create a new target_UI
+
+   function "-" (Msg : String) return String;
+   --  Convenient shortcut to the Gettext function.
+
+   function Switches_For_Target
+     (UI       : access Build_UI_Record'Class;
+      Target   : Target_Access) return Target_UI_Access;
+   --  Return the widget controlling the switches for Target.
+
+   procedure Set_Switches (UI : Target_UI_Access);
+   --  Set the graphical elements in UI that represent
+
+   function Columns_Types return GType_Array;
+   --  Returns the types for the columns in the Model.
+   --  This is not implemented as
+   --       Columns_Types : constant GType_Array ...
+   --  because Gdk.Pixbuf.Get_Type cannot be called before
+   --  Gtk.Main.Init.
+
+   procedure On_Selection_Changed (UI : access Build_UI_Record'Class);
+   --  Called when the selection has changed in the tree view
+
+   procedure On_Add_Target (UI : access Build_UI_Record'Class);
+   --  Launch the "add target" dialog
+
+   procedure On_Remove_Target (UI : access Build_UI_Record'Class);
+   --  Remove currently selected target from UI.
+
+   procedure On_Duplicate_Target (UI : access Build_UI_Record'Class);
+   --  Launch the "duplicate target" dialog
+
+   procedure On_Target_Model_Changed (UI : access Build_UI_Record'Class);
+   --  The target model has changed
+
+   procedure Save_Command_Lines (UI : access Build_UI_Record'Class);
+   --  Saves the command lines of one target
+
+   procedure Refresh (UI : access Build_UI_Record'Class);
+   --  Clear the variant areas of the UI (notebook and tree view) and fill
+   --  them with the information contained in the Registry.
+
+   --------------------
+   -- Local Packages --
+   --------------------
+
+   package Build_UI_Callback is new Callback (Build_UI_Record);
+   use Build_UI_Callback;
+
+   package Target_UI_Callback is new Callback (Target_UI_Record);
+   use Target_UI_Callback;
+
+   ---------
+   -- "-" --
+   ---------
+
+   function "-" (Msg : String) return String is
+   begin
+      --  ??? Provide implementation
+      return Msg;
+   end "-";
+
+   -------------------
+   -- Columns_Types --
+   -------------------
+
+   function Columns_Types return GType_Array is
+   begin
+      return GType_Array'
+        (Icon_Column => GType_String,
+         Name_Column => GType_String,
+         Num_Column  => GType_Int);
+   end Columns_Types;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Target_UI : out Target_UI_Access;
+      Registry  : Build_Config_Registry_Access) is
+   begin
+      Target_UI := new Target_UI_Record;
+      Target_UI.Registry := Registry;
+      Initialize_Vbox (Target_UI);
+   end Gtk_New;
+
+   ------------------------
+   -- Save_Command_Lines --
+   ------------------------
+
+   procedure Save_Command_Lines (UI : access Build_UI_Record'Class) is
+      T : Target_UI_Access;
+      CL : GNAT.OS_Lib.Argument_List_Access;
+
+      use type GNAT.OS_Lib.Argument_List;
+   begin
+      for J in 1 .. UI.Registry.Targets.Length loop
+         T := Target_UI_Access (Get_Nth_Page (UI.Notebook, Gint (J)));
+
+         CL := Get_Command_Line (T.Editor, False);
+
+         Set_Command_Line
+           (UI.Registry, T.Target,
+            (1 => new String'(Get_Text (T.Command_Entry))) & CL.all);
+         Unchecked_Free (CL);
+      end loop;
+   end Save_Command_Lines;
+
+   -----------------------------
+   -- On_Target_Model_Changed --
+   -----------------------------
+
+   procedure On_Target_Model_Changed (UI : access Build_UI_Record'Class) is
+      T    : Target_UI_Access;
+      It   : Gtk_Tree_Iter;
+      M    : Gtk_Tree_Model;
+   begin
+      --  Find the current target UI
+
+      T := Target_UI_Access
+        (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
+
+      --  If the selection is empty, reset it and do nothing
+
+      if Get_Text (T.Model_Entry) = "" then
+         Set_Text (T.Model_Entry, To_String (T.Target.Model.Name));
+         return;
+      end if;
+
+      --  If the selection already matches the model, do nothing
+
+      if Get_Text (T.Model_Entry) = T.Target.Model.Name then
+         return;
+      end if;
+
+      --  Change the model
+      Change_Model
+        (UI.Registry, To_String (T.Target.Name), Get_Text (T.Model_Entry));
+
+      --  Refresh the icon in the tree view
+
+      if T.Target.Icon = "" then
+         Get_Selected (Get_Selection (UI.View), M, It);
+
+         if It /= Null_Iter then --  It should not be null, but test for safety
+            Set (UI.View.Model, It, Icon_Column,
+                 To_String (T.Target.Model.Icon));
+         end if;
+      end if;
+
+      --  Change the widgets
+      Remove (T.Frame, Get_Child (T.Frame));
+
+      --  Set the new widgets
+      Set_Switches (T);
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Target_Model_Changed;
+
+   ------------------
+   -- Set_Switches --
+   ------------------
+
+   procedure Set_Switches (UI : Target_UI_Access) is
+      Scrolled : Gtk_Scrolled_Window;
+      Tooltips : Gtk_Tooltips;
+      Hbox     : Gtk_Hbox;
+      use type GNAT.OS_Lib.Argument_List_Access;
+   begin
+
+      Gtk_New (Tooltips);
+      --  ??? this should be gotten from the global UI.
+
+      --  Create the switches editor
+
+      Gtk_New (UI.Editor, UI.Target.Model.Switches, Tooltips, False);
+
+      --  Create the "current command" entry
+
+      Gtk_New (UI.Command_Entry);
+
+      Hbox := Gtk_Hbox (Get_Parent (Get_Entry (UI.Editor)));
+      Pack_Start (Hbox, UI.Command_Entry, False, False, 0);
+      Reorder_Child (Hbox, UI.Command_Entry, 0);
+      --  Set initial values of command line and switches entries
+
+      if UI.Target.Command_Line /= null
+        and then UI.Target.Command_Line'Length > 0
+      then
+         Set_Text
+           (UI.Command_Entry,
+            UI.Target.Command_Line (UI.Target.Command_Line'First).all);
+
+         Set_Command_Line
+           (UI.Editor,
+            UI.Target.Command_Line (UI.Target.Command_Line'First + 1
+             .. UI.Target.Command_Line'Last));
+      end if;
+
+      Gtk_New (Scrolled);
+      Set_Shadow_Type (Scrolled, Shadow_None);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Add_With_Viewport (Scrolled, UI.Editor);
+      Set_Shadow_Type (Gtk_Viewport (Get_Child (Scrolled)), Shadow_None);
+
+      Set_Border_Width (Scrolled, 2);
+
+      Add (UI.Frame, Scrolled);
+      Show_All (UI.Frame);
+   end Set_Switches;
+
+   -------------------------
+   -- Switches_For_Target --
+   -------------------------
+
+   function Switches_For_Target
+     (UI       : access Build_UI_Record'Class;
+      Target   : Target_Access) return Target_UI_Access
+   is
+      use type GNAT.OS_Lib.Argument_List_Access;
+
+      Label    : Gtk_Label;
+      Box      : Target_UI_Access;
+
+      Model_Box : Gtk_Hbox;
+      Combo     : Gtk_Combo_Box_Entry;
+      Model     : Gtk_Tree_Store;
+
+      function Columns return GType_Array;
+      --  Used for the models combo
+
+      function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter;
+      --  Return the iter corresponding to category Cat.
+
+      --  We reuse the global constants Icon_Column = 0, Name_Column = 1
+      Desc_Column       : constant := 2;
+      Whitespace_Column : constant := 3;
+
+      ----------------------------
+      -- Get_Or_Create_Category --
+      ----------------------------
+
+      function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter is
+         It : Gtk_Tree_Iter;
+      begin
+         It := Get_Iter_First (Model);
+
+         while It /= Null_Iter loop
+            if Get_String (Model, It, Desc_Column) = Cat then
+               return It;
+            end if;
+            Next (Model, It);
+         end loop;
+
+         --  We reach this point if no iter was found: create it
+         Append (Model, It, Null_Iter);
+         Set (Model, It, Desc_Column, "<b>" & Cat & "</b>");
+         Set (Model, It, Name_Column, "");
+
+         return It;
+      end Get_Or_Create_Category;
+
+      -------------
+      -- Columns --
+      -------------
+
+      function Columns return GType_Array is
+      begin
+         return GType_Array'
+           (Icon_Column       => GType_String,
+            Name_Column       => GType_String,
+            Desc_Column       => GType_String,
+            Whitespace_Column => GType_String);
+      end Columns;
+
+      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
+      Text_Renderer : Gtk_Cell_Renderer_Text;
+
+      Col  : Gtk_Cell_Layout;
+      Iter : Gtk_Tree_Iter;
+
+      use Model_Map;
+      C   : Cursor;
+      M   : Target_Model_Access;
+
+   begin
+
+      --  Global box
+
+      Gtk_New (Box, UI.Registry);
+      Box.Target := Target;
+
+      --  Create the model combo
+
+      Gtk_New_Hbox (Model_Box);
+
+      Gtk_New (Model, Columns);
+
+      Gtk_New (Combo);
+      Set_Model (Combo, Gtk_Tree_Model (Model));
+      Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
+      Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
+
+      Set_Editable (Box.Model_Entry, False);
+
+      Set_Text_Column (Combo, Name_Column);
+      Col := Gtk.Combo_Box_Entry."+" (Combo);
+
+      Gtk_New (Text_Renderer);
+      Pack_Start (Col, Text_Renderer, False);
+      Add_Attribute (Col, Text_Renderer, "text", Whitespace_Column);
+
+      Gtk_New (Icon_Renderer);
+      Pack_Start (Col, Icon_Renderer, False);
+      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+
+      Gtk_New (Text_Renderer);
+      Pack_Start (Col, Text_Renderer, False);
+      Add_Attribute (Col, Text_Renderer, "markup", Desc_Column);
+
+      Reorder (Col, Icon_Renderer, 0);
+
+      Pack_End (Model_Box, Combo, False, False, 0);
+
+      Gtk_New (Label, -"Target type ");
+      Pack_End (Model_Box, Label, False, False, 3);
+
+      Pack_Start (Box, Model_Box, False, False, 0);
+
+      --  Fill the model combo
+
+      C := UI.Registry.Models.First;
+
+      while Has_Element (C) loop
+         M := Element (C);
+
+         if M.Category = "" then
+            Iter := Null_Iter;
+         else
+            Iter := Get_Or_Create_Category (To_String (M.Category));
+         end if;
+
+         Append (Model, Iter, Iter);
+
+         Set (Model, Iter, Name_Column, To_String (M.Name));
+         Set (Model, Iter, Icon_Column, To_String (M.Icon));
+         Set (Model, Iter, Desc_Column, To_String (M.Description));
+         Set (Model, Iter, Whitespace_Column, "        ");
+
+         Next (C);
+      end loop;
+
+      --  Connect to a change in the model combo
+
+      Object_Connect
+        (Widget      => Combo,
+         Name        => Gtk.Combo_Box.Signal_Changed,
+         Cb          => On_Target_Model_Changed'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      Gtk_New (Box.Frame);
+      Gtk_New (Label);
+      Set_Use_Markup (Label, True);
+      Set_Markup (Label, "Switches");
+      Set_Label_Widget (Box.Frame, Label);
+      Pack_Start (Box, Box.Frame, True, True, 0);
+
+      Set_Switches (Box);
+      return Box;
+   end Switches_For_Target;
+
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed (UI : access Build_UI_Record'Class) is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Num   : Gint;
+   begin
+      Get_Selected (Get_Selection (UI.View), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Num := Get_Int (UI.View.Model, Iter, Num_Column);
+         Set_Current_Page (UI.Notebook, Num);
+      end if;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Selection_Changed;
+
+   --------------------------
+   -- Configuration_Dialog --
+   --------------------------
+
+   procedure Configuration_Dialog
+     (Registry : Build_Config_Registry_Access)
+   is
+      UI     : Build_UI_Access;
+      Dialog : Gtk_Dialog;
+      Vbox   : Gtk_Vbox;
+
+      Col           : Gtk_Tree_View_Column;
+      Text_Renderer : Gtk_Cell_Renderer_Text;
+      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
+
+      Buttons       : Gtk_Hbox;
+      Button        : Gtk_Button;
+      Image         : Gtk_Image;
+
+      Scrolled : Gtk_Scrolled_Window;
+
+      Dummy : Gint;
+      pragma Unreferenced (Dummy);
+   begin
+      Gtk_New (Dialog => Dialog,
+               Title  => -"Build Configuration",
+               Parent => null,
+               Flags  => Modal or Destroy_With_Parent or No_Separator);
+
+      Set_Default_Size (Dialog, 750, 550);
+
+      UI := new Build_UI_Record;
+      Initialize_Hbox (UI);
+
+      UI.Registry := Registry;
+
+      --  Create the tree view
+      Gtk_New (UI.View, Columns_Types);
+      Set_Headers_Visible (UI.View, False);
+
+      Gtk_New (Col);
+
+      Gtk_New (Icon_Renderer);
+      Gtk_New (Text_Renderer);
+
+      Pack_Start (Col, Icon_Renderer, False);
+      Pack_Start (Col, Text_Renderer, False);
+      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+      Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
+      Dummy := Append_Column (UI.View, Col);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+      Set_Shadow_Type (Scrolled, Shadow_In);
+      Add (Scrolled, UI.View);
+
+      Gtk_New_Vbox (Vbox);
+      Pack_Start (Vbox, Scrolled, True, True, 0);
+
+      --  Create the Add/Remove/Duplicate buttons
+      Gtk_New_Hbox (Buttons, Spacing => 3);
+
+      Gtk_New (Button);
+      Gtk_New (Image, Stock_Add, Icon_Size_Menu);
+      Set_Image (Button, Image);
+      Set_Relief (Button, Relief_None);
+      Pack_Start (Buttons, Button, False, False, 0);
+      Object_Connect
+        (Widget      => Button,
+         Name        => Gtk.Button.Signal_Clicked,
+         Cb          => On_Add_Target'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      Gtk_New (Button);
+      Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
+      Set_Image (Button, Image);
+      Set_Relief (Button, Relief_None);
+      Pack_Start (Buttons, Button, False, False, 0);
+      Object_Connect
+        (Widget      => Button,
+         Name        => Gtk.Button.Signal_Clicked,
+         Cb          => On_Remove_Target'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      Gtk_New (Button);
+      Gtk_New (Image, Stock_New, Icon_Size_Menu);
+      Set_Image (Button, Image);
+      Set_Relief (Button, Relief_None);
+      Pack_Start (Buttons, Button, False, False, 0);
+      Object_Connect
+        (Widget      => Button,
+         Name        => Gtk.Button.Signal_Clicked,
+         Cb          => On_Duplicate_Target'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      Pack_Start (UI, Vbox, False, True, 0);
+
+      Gtk_New_Vbox (Vbox);
+      Pack_Start (UI, Vbox, True, True, 3);
+
+--      Pack_Start (Hbox, Buttons, False, False, 0);
+      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+
+      --  Create the main notebook
+
+      Gtk_New (UI.Notebook);
+      Set_Show_Tabs (UI.Notebook, False);
+      Set_Show_Border (UI.Notebook, False);
+      Pack_Start (Vbox, UI.Notebook, True, True, 0);
+
+      --  Create page 0 in the notebook
+      declare
+         Label : Gtk_Label;
+      begin
+         Gtk_New (Label);
+         Set_Use_Markup (Label, True);
+         Set_Markup (Label, -"Select a target to configure.");
+         Append_Page (UI.Notebook, Label);
+      end;
+
+      Object_Connect
+        (Widget      => Get_Selection (UI.View),
+         Name        => Gtk.Tree_Selection.Signal_Changed,
+         Cb          => On_Selection_Changed'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      --  Create the dialog buttons
+
+      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+--        Gtk_New_Hbox (Buttons, Spacing => 3, Homogeneous => True);
+--
+--        Gtk_New_From_Stock (Button, Stock_Cancel);
+--        Pack_End (Buttons, Button, False, True, 0);
+--        Object_Connect
+--          (Widget      => Button,
+--           Name        => Gtk.Button.Signal_Clicked,
+--           Cb          => On_Cancel'Access,
+--           Slot_Object => UI,
+--           After       => True);
+--
+--        Gtk_New_From_Stock (Button, Stock_Ok);
+--        Pack_End (Buttons, Button, False, True, 0);
+--        Object_Connect
+--          (Widget      => Button,
+--           Name        => Gtk.Button.Signal_Clicked,
+--           Cb          => On_OK'Access,
+--           Slot_Object => UI,
+--           After       => True);
+--
+--        Pack_End (Get_Action_Area (Dialog), Buttons, False, False, 0);
+
+      --  Add everything to the dialog/window
+
+      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Set_Has_Separator (Dialog, False);
+
+      Refresh (UI);
+
+      Show_All (Dialog);
+
+      --  Select the first target of the first category, initially
+
+      Set_Current_Page (UI.Notebook, 1);
+
+      declare
+         Path : Gtk_Tree_Path;
+      begin
+         Path := Gtk_New ("0:0");
+         Select_Path (Get_Selection (UI.View), Path);
+         Path_Free (Path);
+      end;
+
+      --  Run the dialog
+
+      loop
+         case Run (Dialog) is
+            when Gtk_Response_Apply =>
+               null;
+            when Gtk_Response_OK =>
+               Save_Command_Lines (UI);
+               Destroy (Dialog);
+               exit;
+            when Gtk_Response_Cancel =>
+               Destroy (Dialog);
+               exit;
+            when others =>
+               null;
+         end case;
+      end loop;
+   end Configuration_Dialog;
+
+   -------------------
+   -- On_Add_Target --
+   -------------------
+
+   procedure On_Add_Target (UI : access Build_UI_Record'Class) is
+   begin
+      null;
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Add_Target;
+
+   ----------------------
+   -- On_Remove_Target --
+   ----------------------
+
+   procedure On_Remove_Target (UI : access Build_UI_Record'Class) is
+   begin
+      null;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Remove_Target;
+
+   -------------------------
+   -- On_Duplicate_Target --
+   -------------------------
+
+   procedure On_Duplicate_Target (UI : access Build_UI_Record'Class) is
+   begin
+      null;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Duplicate_Target;
+
+   --------------------------
+   -- Single_Target_Dialog --
+   --------------------------
+
+   function Single_Target_Dialog
+     (Registry : Build_Config_Registry_Access;
+      Target   : String) return GNAT.OS_Lib.Argument_List
+   is
+   begin
+      --  Generated stub: replace with real body!
+      raise Program_Error;
+      return Single_Target_Dialog (Registry => Registry,
+                                   Target   => Target);
+   end Single_Target_Dialog;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh (UI : access Build_UI_Record'Class) is
+
+      Count : Gint := 1;
+      --  Indicates the number of the target that we are currently adding
+
+      procedure Add_Target
+        (View   : Tree_View;
+         Target : Target_Access);
+      --  Add Target to View.
+
+      ----------------
+      -- Add_Target --
+      ----------------
+
+      procedure Add_Target
+        (View   : Tree_View;
+         Target : Target_Access)
+      is
+         function Get_Or_Create_Category
+           (C : Unbounded_String) return Gtk_Tree_Iter;
+         --  Return iter corresponding to category C, creating it if necessary
+
+         ----------------------------
+         -- Get_Or_Create_Category --
+         ----------------------------
+
+         function Get_Or_Create_Category
+           (C : Unbounded_String) return Gtk_Tree_Iter
+         is
+            function Get_Category_Name (S : Unbounded_String) return String;
+            --  Return the string to store in model for category S
+
+            -----------------------
+            -- Get_Category_Name --
+            -----------------------
+
+            function Get_Category_Name (S : Unbounded_String) return String is
+            begin
+               return "<b>" & To_String (S) & "</b>";
+            end Get_Category_Name;
+
+            Iter     : Gtk_Tree_Iter;
+            Cat_Name : constant String := Get_Category_Name (C);
+         begin
+            Iter := Get_Iter_First (View.Model);
+
+            --  Look for existing top-level iter with the right name
+            while Iter /= Null_Iter loop
+               if Get_String (View.Model, Iter, Name_Column) = Cat_Name then
+                  return Iter;
+               end if;
+
+               Next (View.Model, Iter);
+            end loop;
+
+            --  We have not found our iter, create it now
+            Append (View.Model, Iter, Null_Iter);
+            Set (View.Model, Iter, Name_Column, Cat_Name);
+
+            --  Category iters correspond to page 0 in the main notebook
+            Set (View.Model, Iter, Num_Column, 0);
+            return Iter;
+         end Get_Or_Create_Category;
+
+         Category : Gtk_Tree_Iter;
+         Iter     : Gtk_Tree_Iter;
+
+         Icon_Str : Unbounded_String;
+      begin
+         Category := Get_Or_Create_Category (Target.Category);
+
+         Append (View.Model, Iter, Category);
+         Set (View.Model, Iter, Name_Column, To_String (Target.Name));
+         Set (View.Model, Iter, Num_Column, Count);
+
+         if Target.Icon /= "" then
+            Icon_Str := Target.Icon;
+         elsif Target.Model.Icon /= "" then
+            Icon_Str := Target.Model.Icon;
+         end if;
+
+         if Icon_Str /= "" then
+            Set (View.Model, Iter, Icon_Column, To_String (Icon_Str));
+         end if;
+      end Add_Target;
+
+      use Target_Map;
+      C : Cursor;
+
+   begin
+      --  Empty the tree
+
+      Clear (UI.View.Model);
+
+      --  Empty the notebook
+
+      --  Note that we keep page 0 in the notebook: this is the empty page
+      for J in reverse 1 .. Get_N_Pages (UI.Notebook) - 1 loop
+         Remove_Page (UI.Notebook, J);
+      end loop;
+
+      --  Fill the tree and the notebook
+
+      C := UI.Registry.Targets.First;
+
+      --  Iterate over all targets
+      while Has_Element (C) loop
+         --  Add the target in the tree_view
+         Add_Target (UI.View, Element (C));
+
+         --  Add the page in the notebook
+         Append_Page
+           (UI.Notebook, Switches_For_Target (UI, Element (C)));
+
+         Count := Count + 1;
+         Next (C);
+      end loop;
+
+      Expand_All (UI.View);
+   end Refresh;
+
+end Build_Configurations.Gtkada;
