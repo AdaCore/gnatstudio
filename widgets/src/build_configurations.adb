@@ -206,6 +206,11 @@ package body Build_Configurations is
          return;
       end if;
 
+      if Name = "" then
+         Log (Registry, -"Cannot create target with an empty name");
+         return;
+      end if;
+
       The_Model := Registry.Models.Element (To_Unbounded_String (Model));
 
       Target := new Target_Type;
@@ -557,9 +562,14 @@ package body Build_Configurations is
          N.Child := new Node;
          N.Child.Tag := new String'("icon");
          N.Child.Value := new String'(To_String (Target.Icon));
-         N.Child.Next := Command_Line_To_XML (Target.Command_Line.all);
+
+         if Target.Command_Line /= null then
+            N.Child.Next := Command_Line_To_XML (Target.Command_Line.all);
+         end if;
       else
-         N.Child := Command_Line_To_XML (Target.Command_Line.all);
+         if Target.Command_Line /= null then
+            N.Child := Command_Line_To_XML (Target.Command_Line.all);
+         end if;
       end if;
 
       return N;
