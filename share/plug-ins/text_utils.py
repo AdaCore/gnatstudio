@@ -194,6 +194,7 @@ def add_subprogram_box():
        starts """
 
    buffer  = GPS.EditorBuffer.get ()
+   loc = buffer.current_view().cursor()
    initial = loc.create_mark()
 
    loc = goto_subprogram_start (buffer.current_view().cursor())
