@@ -25,6 +25,7 @@ with Gtk.Box;                use Gtk.Box;
 with Gtk.Button;             use Gtk.Button;
 with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtkada.Check_Button;    use Gtkada.Check_Button;
+with Gtk.Container;          use Gtk.Container;
 with Gtk.Combo;              use Gtk.Combo;
 with Gtk.Dialog;             use Gtk.Dialog;
 with Gtk.Editable;           use Gtk.Editable;
@@ -459,18 +460,21 @@ package body Switches_Chooser.Gtkada is
         and then S.Typ /= Switch_Radio
         and then S.Typ /= Switch_Popup
       then
-         Gtk_New_Hbox  (Hbox, False, 0);
-         Pack_Start    (Box, Hbox, Expand => False);
-         Gtk_New       (Label, To_String (S.Label));
-         Pack_Start    (Hbox, Label, Expand => False);
-         Set_Alignment (Label, 0.0, 0.5);
-         Add_Widget    (Size, Label);
+         Gtk_New_Hbox  (Hbox, False, Spacing => 3);
+         Pack_Start    (Box, Hbox, Expand => False, Padding => 0);
+
+         if S.Label /= "" then
+            Gtk_New       (Label, To_String (S.Label));
+            Pack_Start    (Hbox, Label, Expand => False, Padding => 0);
+            Set_Alignment (Label, 0.0, 0.5);
+            Add_Widget    (Size, Label);
+         end if;
       end if;
 
       case S.Typ is
          when Switch_Check =>
             Gtk_New    (Check, To_String (S.Label), S.Default_State);
-            Pack_Start (Box, Check, Expand => False);
+            Pack_Start (Box, Check, Expand => False, Padding => 0);
             Set_Tooltip (Editor, Check, Switch, S);
             User_Widget_Callback.Connect
               (Check, Gtk.Toggle_Button.Signal_Toggled,
@@ -488,7 +492,7 @@ package body Switches_Chooser.Gtkada is
 
             if S.As_File then
                Gtk_New (Button, -"Browse");
-               Pack_Start (Hbox, Button, Expand => False);
+               Pack_Start (Hbox, Button, Expand => False, Padding => 0);
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked, Browse_File'Access,
                   Slot_Object => Field, User_Data =>
@@ -496,7 +500,7 @@ package body Switches_Chooser.Gtkada is
 
             elsif S.As_Directory then
                Gtk_New (Button, -"Browse");
-               Pack_Start (Hbox, Button, Expand => False);
+               Pack_Start (Hbox, Button, Expand => False, Padding => 0);
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked,
                   Browse_Directory'Access,
@@ -531,7 +535,7 @@ package body Switches_Chooser.Gtkada is
                         Gtk_New
                           (Radio, Group => Radio,
                            Label => To_String (S2.Label));
-                        Pack_Start (Box, Radio, Expand => False);
+                        Pack_Start (Box, Radio, Expand => False, Padding => 0);
                         Set_Tooltip (Editor, Radio, Switch2, S2);
                         User_Widget_Callback.Connect
                           (Radio, Gtk.Toggle_Button.Signal_Toggled,
@@ -547,7 +551,7 @@ package body Switches_Chooser.Gtkada is
          when Switch_Combo =>
             Gtk_New (Combo);
             Set_Tooltip (Editor, Combo, Switch, S);
-            Pack_Start (Hbox, Combo, True, True, 0);
+            Pack_Start (Hbox, Combo, True, True, Padding => 0);
 
             Combo_Iter := First (S.Entries);
             while Has_Element (Combo_Iter) loop
@@ -568,9 +572,10 @@ package body Switches_Chooser.Gtkada is
               (Gtk_Button_Record with
                Switch => To_Index (Switch));
 
-            Gtk_New_Hbox  (Hbox, False, 0);
+            Gtk_New_Hbox  (Hbox, False, Spacing => 3);
             Gtk_New       (Label, To_String (S.Label) & ": ");
-            Pack_Start    (Hbox, Label, Expand => True, Fill => True);
+            Pack_Start    (Hbox, Label,
+                           Expand => True, Fill => True, Padding => 0);
             Set_Alignment (Label, 0.0, 0.5);
 
             Gtk_New       (Label, "...");
@@ -579,7 +584,7 @@ package body Switches_Chooser.Gtkada is
 
             Gtk.Button.Initialize (Pop, "");
             Add (Pop, Hbox);
-            Pack_Start (Box, Pop, False);
+            Pack_Start (Box, Pop, False, True, 0);
             User_Widget_Callback.Connect
               (Pop, Gtk.Button.Signal_Clicked,
                On_Popup_Button_Clicked'Access,
@@ -609,6 +614,24 @@ package body Switches_Chooser.Gtkada is
       Subtable : Gtk_Table;
       Col_Span, Line_Span : Positive;
       Col, Line           : Positive;
+      Label    : Gtk_Label;
+
+      procedure Add_To_Frame (Widget : access Gtk_Container_Record'Class);
+      --  Add Widget to F, with some padding
+
+      ------------------
+      -- Add_To_Frame --
+      ------------------
+
+      procedure Add_To_Frame (Widget : access Gtk_Container_Record'Class) is
+         HBox : Gtk_Box;
+      begin
+         Gtk_New_Hbox (HBox);
+         Set_Border_Width (Widget, 3);
+         Pack_Start (HBox, Widget, True, True, Padding => 7);
+         Add (F, HBox);
+      end Add_To_Frame;
+
    begin
       for L in 1 .. Lines loop
          for C in 1 .. Columns loop
@@ -629,7 +652,8 @@ package body Switches_Chooser.Gtkada is
                   then
                      if Boxes (L, C) = null then
                         Gtk_New (F);
-                        Set_Border_Width (F, 5);
+                        Set_Border_Width (F, 3);
+                        Set_Shadow_Type (F, Shadow_None);
                         Col_Span := 1;
                         Line_Span := 1;
                         Col := C;
@@ -644,7 +668,14 @@ package body Switches_Chooser.Gtkada is
                              and then Frame.Column <= C
                              and then Frame.Column + Frame.Col_Span - 1 >= C
                            then
-                              Set_Label (F, To_String (Frame.Title));
+                              Gtk_New (Label);
+                              Set_Use_Markup (Label, True);
+                              Set_Markup
+                                (Label,
+                                 "<b>" & To_String (Frame.Title)
+                                 & "</b>");
+                              Set_Label_Widget (F, Label);
+                              Set_Label_Align (F, 0.0, 0.0);
                               Col_Span  := Frame.Col_Span;
                               Col       := Frame.Column;
                               Line_Span := Frame.Line_Span;
@@ -659,14 +690,15 @@ package body Switches_Chooser.Gtkada is
                            Guint (Col - 1),
                            Guint (Col - 1 + Col_Span),
                            Guint (Line - 1),
-                           Guint (Line - 1 + Line_Span));
+                           Guint (Line - 1 + Line_Span),
+                           Yoptions => Expand or Fill);
 
                         if Config.Scrolled_Window then
                            Gtk_New (Scrolled);
                            Set_Policy
                              (Scrolled, Policy_Automatic, Policy_Automatic);
                            Set_Shadow_Type (Scrolled, Shadow_None);
-                           Add (F, Scrolled);
+                           Add_To_Frame (Scrolled);
                         end if;
 
                         if Col_Span > 1 or else Line_Span > 1 then
@@ -701,7 +733,7 @@ package body Switches_Chooser.Gtkada is
                            if Scrolled /= null then
                               Add_With_Viewport (Scrolled, Subtable);
                            else
-                              Add (F, Subtable);
+                              Add_To_Frame (Subtable);
                            end if;
 
                         else
@@ -710,7 +742,7 @@ package body Switches_Chooser.Gtkada is
                            if Scrolled /= null then
                               Add_With_Viewport (Scrolled, Boxes (L, C));
                            else
-                              Add (F, Boxes (L, C));
+                              Add_To_Frame (Boxes (L, C));
                            end if;
 
                         end if;
@@ -770,10 +802,16 @@ package body Switches_Chooser.Gtkada is
 
       Gtk_New (Editor.Ent);
       if Config.Show_Command_Line then
-         Attach (Editor, Editor.Ent,
-                 0, Guint (Config.Columns),
-                 Guint (Config.Lines), Guint (Config.Lines) + 1,
-                 Yoptions => 0);
+         declare
+            Hbox : Gtk_Hbox;
+         begin
+            Gtk_New_Hbox (Hbox);
+            Pack_Start (Hbox, Editor.Ent, True, True, 0);
+            Attach (Editor, Hbox,
+                    0, Guint (Config.Columns),
+                    Guint (Config.Lines), Guint (Config.Lines) + 1,
+                    Yoptions => 0);
+         end;
          Widget_Callback.Object_Connect
            (Editor.Ent, Gtk.Editable.Signal_Changed,
             Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),
@@ -782,5 +820,15 @@ package body Switches_Chooser.Gtkada is
 
       On_Command_Line_Changed (Editor.all, "");
    end Initialize;
+
+   ---------------
+   -- Get_Entry --
+   ---------------
+
+   function Get_Entry
+     (Editor : access Switches_Editor_Record'Class) return Gtk_Entry is
+   begin
+      return Editor.Ent;
+   end Get_Entry;
 
 end Switches_Chooser.Gtkada;
