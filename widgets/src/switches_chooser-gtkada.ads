@@ -45,6 +45,12 @@ package Switches_Chooser.Gtkada is
    --  Use_Native_Dialogs applies to the file selector and directory selector
    --  dialogs
 
+   function Get_Entry
+     (Editor : access Switches_Editor_Record'Class)
+      return Gtk.GEntry.Gtk_Entry;
+   --  Return the switches entry.
+   --  Note that the parent of the switches entry should be a Hbox.
+
 private
    type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
