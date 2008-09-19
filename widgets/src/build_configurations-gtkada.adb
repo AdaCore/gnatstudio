@@ -22,7 +22,6 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
 
-with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
@@ -33,14 +32,12 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Tooltips;             use Gtk.Tooltips;
@@ -48,9 +45,10 @@ with Gtk.Viewport;             use Gtk.Viewport;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 
-with Gtkada.Tree_View;    use Gtkada.Tree_View;
-
 with Switches_Chooser.Gtkada; use Switches_Chooser.Gtkada;
+
+with Build_Configurations.Gtkada.Dialogs;
+use Build_Configurations.Gtkada.Dialogs;
 
 package body Build_Configurations.Gtkada is
 
@@ -82,24 +80,10 @@ package body Build_Configurations.Gtkada is
       Editor   : Switches_Editor := null;
       --  The one switch editor for the target, if there is only one command
 
-      Command_Entry : Gtk_Entry;
-      --  The entry containing the command
-
       Model_Entry   : Gtk_Entry;
       --  The entry containing the model
    end record;
    type Target_UI_Access is access all Target_UI_Record'Class;
-
-   type Build_UI_Record is new Gtk_Hbox_Record with record
-      Registry : Build_Config_Registry_Access;
-
-      Notebook : Gtk_Notebook;
-      --  The main notebook
-
-      View     : Tree_View;
-      --  The tree
-   end record;
-   type Build_UI_Access is access all Build_UI_Record'Class;
 
    -----------------------
    -- Local subprograms --
@@ -203,16 +187,13 @@ package body Build_Configurations.Gtkada is
       T : Target_UI_Access;
       CL : GNAT.OS_Lib.Argument_List_Access;
 
-      use type GNAT.OS_Lib.Argument_List;
    begin
       for J in 1 .. UI.Registry.Targets.Length loop
          T := Target_UI_Access (Get_Nth_Page (UI.Notebook, Gint (J)));
 
          CL := Get_Command_Line (T.Editor, False);
 
-         Set_Command_Line
-           (UI.Registry, T.Target,
-            (1 => new String'(Get_Text (T.Command_Entry))) & CL.all);
+         Set_Command_Line (UI.Registry, T.Target, CL.all);
          Unchecked_Free (CL);
       end loop;
    end Save_Command_Lines;
@@ -278,7 +259,6 @@ package body Build_Configurations.Gtkada is
    procedure Set_Switches (UI : Target_UI_Access) is
       Scrolled : Gtk_Scrolled_Window;
       Tooltips : Gtk_Tooltips;
-      Hbox     : Gtk_Hbox;
       use type GNAT.OS_Lib.Argument_List_Access;
    begin
 
@@ -291,24 +271,12 @@ package body Build_Configurations.Gtkada is
 
       --  Create the "current command" entry
 
-      Gtk_New (UI.Command_Entry);
-
-      Hbox := Gtk_Hbox (Get_Parent (Get_Entry (UI.Editor)));
-      Pack_Start (Hbox, UI.Command_Entry, False, False, 0);
-      Reorder_Child (Hbox, UI.Command_Entry, 0);
       --  Set initial values of command line and switches entries
 
       if UI.Target.Command_Line /= null
         and then UI.Target.Command_Line'Length > 0
       then
-         Set_Text
-           (UI.Command_Entry,
-            UI.Target.Command_Line (UI.Target.Command_Line'First).all);
-
-         Set_Command_Line
-           (UI.Editor,
-            UI.Target.Command_Line (UI.Target.Command_Line'First + 1
-             .. UI.Target.Command_Line'Last));
+         Set_Command_Line (UI.Editor, UI.Target.Command_Line.all);
       end if;
 
       Gtk_New (Scrolled);
@@ -333,72 +301,12 @@ package body Build_Configurations.Gtkada is
    is
       use type GNAT.OS_Lib.Argument_List_Access;
 
-      Label    : Gtk_Label;
-      Box      : Target_UI_Access;
-
-      Model_Box : Gtk_Hbox;
+      Label     : Gtk_Label;
+      Box       : Target_UI_Access;
       Combo     : Gtk_Combo_Box_Entry;
-      Model     : Gtk_Tree_Store;
-
-      function Columns return GType_Array;
-      --  Used for the models combo
-
-      function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter;
-      --  Return the iter corresponding to category Cat.
-
-      --  We reuse the global constants Icon_Column = 0, Name_Column = 1
-      Desc_Column       : constant := 2;
-      Whitespace_Column : constant := 3;
-
-      ----------------------------
-      -- Get_Or_Create_Category --
-      ----------------------------
-
-      function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter is
-         It : Gtk_Tree_Iter;
-      begin
-         It := Get_Iter_First (Model);
-
-         while It /= Null_Iter loop
-            if Get_String (Model, It, Desc_Column) = Cat then
-               return It;
-            end if;
-            Next (Model, It);
-         end loop;
-
-         --  We reach this point if no iter was found: create it
-         Append (Model, It, Null_Iter);
-         Set (Model, It, Desc_Column, "<b>" & Cat & "</b>");
-         Set (Model, It, Name_Column, "");
-
-         return It;
-      end Get_Or_Create_Category;
-
-      -------------
-      -- Columns --
-      -------------
-
-      function Columns return GType_Array is
-      begin
-         return GType_Array'
-           (Icon_Column       => GType_String,
-            Name_Column       => GType_String,
-            Desc_Column       => GType_String,
-            Whitespace_Column => GType_String);
-      end Columns;
-
-      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
-      Text_Renderer : Gtk_Cell_Renderer_Text;
-
-      Col  : Gtk_Cell_Layout;
-      Iter : Gtk_Tree_Iter;
-
-      use Model_Map;
-      C   : Cursor;
-      M   : Target_Model_Access;
+      Model_Box : Gtk_Hbox;
 
    begin
-
       --  Global box
 
       Gtk_New (Box, UI.Registry);
@@ -408,31 +316,7 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New_Hbox (Model_Box);
 
-      Gtk_New (Model, Columns);
-
-      Gtk_New (Combo);
-      Set_Model (Combo, Gtk_Tree_Model (Model));
-      Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
-      Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
-
-      Set_Editable (Box.Model_Entry, False);
-
-      Set_Text_Column (Combo, Name_Column);
-      Col := Gtk.Combo_Box_Entry."+" (Combo);
-
-      Gtk_New (Text_Renderer);
-      Pack_Start (Col, Text_Renderer, False);
-      Add_Attribute (Col, Text_Renderer, "text", Whitespace_Column);
-
-      Gtk_New (Icon_Renderer);
-      Pack_Start (Col, Icon_Renderer, False);
-      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
-
-      Gtk_New (Text_Renderer);
-      Pack_Start (Col, Text_Renderer, False);
-      Add_Attribute (Col, Text_Renderer, "markup", Desc_Column);
-
-      Reorder (Col, Icon_Renderer, 0);
+      Combo := Models_Combo (UI);
 
       Pack_End (Model_Box, Combo, False, False, 0);
 
@@ -440,29 +324,9 @@ package body Build_Configurations.Gtkada is
       Pack_End (Model_Box, Label, False, False, 3);
 
       Pack_Start (Box, Model_Box, False, False, 0);
-
-      --  Fill the model combo
-
-      C := UI.Registry.Models.First;
-
-      while Has_Element (C) loop
-         M := Element (C);
-
-         if M.Category = "" then
-            Iter := Null_Iter;
-         else
-            Iter := Get_Or_Create_Category (To_String (M.Category));
-         end if;
-
-         Append (Model, Iter, Iter);
-
-         Set (Model, Iter, Name_Column, To_String (M.Name));
-         Set (Model, Iter, Icon_Column, To_String (M.Icon));
-         Set (Model, Iter, Desc_Column, To_String (M.Description));
-         Set (Model, Iter, Whitespace_Column, "        ");
-
-         Next (C);
-      end loop;
+      Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
+      Set_Editable (Box.Model_Entry, False);
+      Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
 
       --  Connect to a change in the model combo
 
@@ -644,27 +508,7 @@ package body Build_Configurations.Gtkada is
       Button := Gtk_Button
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
---        Gtk_New_Hbox (Buttons, Spacing => 3, Homogeneous => True);
---
---        Gtk_New_From_Stock (Button, Stock_Cancel);
---        Pack_End (Buttons, Button, False, True, 0);
---        Object_Connect
---          (Widget      => Button,
---           Name        => Gtk.Button.Signal_Clicked,
---           Cb          => On_Cancel'Access,
---           Slot_Object => UI,
---           After       => True);
---
---        Gtk_New_From_Stock (Button, Stock_Ok);
---        Pack_End (Buttons, Button, False, True, 0);
---        Object_Connect
---          (Widget      => Button,
---           Name        => Gtk.Button.Signal_Clicked,
---           Cb          => On_OK'Access,
---           Slot_Object => UI,
---           After       => True);
---
---        Pack_End (Get_Action_Area (Dialog), Buttons, False, False, 0);
+      Set_Default_Response (Dialog, Gtk_Response_OK);
 
       --  Add everything to the dialog/window
 
@@ -711,8 +555,19 @@ package body Build_Configurations.Gtkada is
    -------------------
 
    procedure On_Add_Target (UI : access Build_UI_Record'Class) is
+      Name, Model, Cat : Unbounded_String;
+      Cancelled        : Boolean;
    begin
-      null;
+      Add_Target_Dialog (UI, Model, Name, Cat, Cancelled);
+
+      if not Cancelled then
+         Create_Target
+           (Registry => UI.Registry,
+            Name     => To_String (Name),
+            Category => To_String (Cat),
+            Model    => To_String (Model));
+         Refresh (UI);
+      end if;
    exception
       when E : others =>
          Log
@@ -761,10 +616,6 @@ package body Build_Configurations.Gtkada is
       return Single_Target_Dialog (Registry => Registry,
                                    Target   => Target);
    end Single_Target_Dialog;
-
-   -------------
-   -- Refresh --
-   -------------
 
    -------------
    -- Refresh --
@@ -887,6 +738,8 @@ package body Build_Configurations.Gtkada is
          Count := Count + 1;
          Next (C);
       end loop;
+
+      Show_All (UI.Notebook);
 
       Expand_All (UI.View);
    end Refresh;
