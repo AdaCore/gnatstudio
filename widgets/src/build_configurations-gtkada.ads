@@ -22,7 +22,14 @@
 --
 --  It is intended to depend on GtkAda but not on GPS.
 
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
+
 package Build_Configurations.Gtkada is
+
+   type Build_UI_Record is new Gtk_Hbox_Record with private;
+   type Build_UI_Access is access all Build_UI_Record'Class;
 
    procedure Configuration_Dialog
      (Registry : Build_Config_Registry_Access);
@@ -34,5 +41,17 @@ package Build_Configurations.Gtkada is
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
    --  expanded.
+
+private
+
+   type Build_UI_Record is new Gtk_Hbox_Record with record
+      Registry : Build_Config_Registry_Access;
+
+      Notebook : Gtk_Notebook;
+      --  The main notebook
+
+      View     : Tree_View;
+      --  The tree
+   end record;
 
 end Build_Configurations.Gtkada;
