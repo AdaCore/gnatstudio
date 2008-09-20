@@ -30,11 +30,11 @@
 --  NOTE: this package is meant to remain independent of GPS in order to
 --  facilitate factorizing code with other IDEs.
 
-with GNAT.OS_Lib;
-
+with Ada.Containers.Ordered_Maps;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Ada.Containers.Ordered_Maps;
+
+with GNAT.OS_Lib;
 
 with Switches_Chooser; use Switches_Chooser;
 
@@ -187,7 +187,7 @@ package Build_Configurations is
    function Get_Switch_Value
      (Target : Target_Access;
       Switch : String) return String;
-   --  Return the value of Switch as configured in Target.
+   --  Return the value of Switch as configured in Target
 
    -----------------------
    -- XML import/export --
@@ -237,7 +237,7 @@ package Build_Configurations is
      (Registry : Build_Config_Registry_Access;
       XML      : Node_Ptr);
    --  Load multiple targets from XML
-   --  See Save_All_Targets_To_XML for the format XML should be in
+   --  See Save_All_Targets_To_XML for the format XML should be in.
 
    -------------------------
    -- Creating a registry --
@@ -280,7 +280,7 @@ private
       --  models in a hierarchical fashion
 
       Description : Unbounded_String;
-      --  A one-line description of the target model.
+      --  A one-line description of the target model
 
       Icon     : Unbounded_String;
       --  The string contains a stock identifier
@@ -340,7 +340,7 @@ private
 
    type Target_Type is record
       Name : Unbounded_String;
-      --  The name of the Target.
+      --  The name of the Target
 
       Category : Unbounded_String;
       --  The category of the target, used for purposes of displaying the

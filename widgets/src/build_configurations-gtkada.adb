@@ -45,7 +45,7 @@ with Gtk.Viewport;             use Gtk.Viewport;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 
-with Switches_Chooser.Gtkada; use Switches_Chooser.Gtkada;
+with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
@@ -70,17 +70,16 @@ package body Build_Configurations.Gtkada is
    -----------------
 
    type Target_UI_Record is new Gtk_Hbox_Record with record
-      Registry : Build_Config_Registry_Access;
+      Registry    : Build_Config_Registry_Access;
+      Target      : Target_Access;
 
-      Target   : Target_Access;
-
-      Frame    : Gtk_Frame;
+      Frame       : Gtk_Frame;
       --  The frame that contains the elements to describe the switches
 
-      Editor   : Switches_Editor := null;
+      Editor      : Switches_Editor := null;
       --  The one switch editor for the target, if there is only one command
 
-      Model_Entry   : Gtk_Entry;
+      Model_Entry : Gtk_Entry;
       --  The entry containing the model
    end record;
    type Target_UI_Access is access all Target_UI_Record'Class;
@@ -95,12 +94,12 @@ package body Build_Configurations.Gtkada is
    --  Create a new target_UI
 
    function "-" (Msg : String) return String;
-   --  Convenient shortcut to the Gettext function.
+   --  Convenient shortcut to the Gettext function
 
    function Switches_For_Target
      (UI       : access Build_UI_Record'Class;
       Target   : Target_Access) return Target_UI_Access;
-   --  Return the widget controlling the switches for Target.
+   --  Return the widget controlling the switches for Target
 
    procedure Set_Switches (UI : Target_UI_Access);
    --  Set the graphical elements in UI that represent
@@ -119,7 +118,7 @@ package body Build_Configurations.Gtkada is
    --  Launch the "add target" dialog
 
    procedure On_Remove_Target (UI : access Build_UI_Record'Class);
-   --  Remove currently selected target from UI.
+   --  Remove currently selected target from UI
 
    procedure On_Duplicate_Target (UI : access Build_UI_Record'Class);
    --  Launch the "duplicate target" dialog
@@ -184,7 +183,7 @@ package body Build_Configurations.Gtkada is
    ------------------------
 
    procedure Save_Command_Lines (UI : access Build_UI_Record'Class) is
-      T : Target_UI_Access;
+      T  : Target_UI_Access;
       CL : GNAT.OS_Lib.Argument_List_Access;
 
    begin
@@ -203,9 +202,9 @@ package body Build_Configurations.Gtkada is
    -----------------------------
 
    procedure On_Target_Model_Changed (UI : access Build_UI_Record'Class) is
-      T    : Target_UI_Access;
-      It   : Gtk_Tree_Iter;
-      M    : Gtk_Tree_Model;
+      T  : Target_UI_Access;
+      It : Gtk_Tree_Iter;
+      M  : Gtk_Tree_Model;
    begin
       --  Find the current target UI
 
@@ -263,7 +262,7 @@ package body Build_Configurations.Gtkada is
    begin
 
       Gtk_New (Tooltips);
-      --  ??? this should be gotten from the global UI.
+      --  ??? this should be gotten from the global UI
 
       --  Create the switches editor
 
@@ -296,8 +295,8 @@ package body Build_Configurations.Gtkada is
    -------------------------
 
    function Switches_For_Target
-     (UI       : access Build_UI_Record'Class;
-      Target   : Target_Access) return Target_UI_Access
+     (UI     : access Build_UI_Record'Class;
+      Target : Target_Access) return Target_UI_Access
    is
       use type GNAT.OS_Lib.Argument_List_Access;
 
@@ -473,7 +472,6 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (UI, Vbox, True, True, 3);
 
---      Pack_Start (Hbox, Buttons, False, False, 0);
       Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
 
       --  Create the main notebook
@@ -581,7 +579,6 @@ package body Build_Configurations.Gtkada is
    procedure On_Remove_Target (UI : access Build_UI_Record'Class) is
    begin
       null;
-
    exception
       when E : others =>
          Log
@@ -595,7 +592,6 @@ package body Build_Configurations.Gtkada is
    procedure On_Duplicate_Target (UI : access Build_UI_Record'Class) is
    begin
       null;
-
    exception
       when E : others =>
          Log
@@ -608,13 +604,11 @@ package body Build_Configurations.Gtkada is
 
    function Single_Target_Dialog
      (Registry : Build_Config_Registry_Access;
-      Target   : String) return GNAT.OS_Lib.Argument_List
-   is
+      Target   : String) return GNAT.OS_Lib.Argument_List is
    begin
       --  Generated stub: replace with real body!
       raise Program_Error;
-      return Single_Target_Dialog (Registry => Registry,
-                                   Target   => Target);
+      return Single_Target_Dialog (Registry => Registry, Target => Target);
    end Single_Target_Dialog;
 
    -------------
@@ -629,7 +623,7 @@ package body Build_Configurations.Gtkada is
       procedure Add_Target
         (View   : Tree_View;
          Target : Target_Access);
-      --  Add Target to View.
+      --  Add Target to View
 
       ----------------
       -- Add_Target --

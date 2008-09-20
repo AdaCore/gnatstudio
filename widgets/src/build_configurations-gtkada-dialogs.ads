@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package defines utilities and dialogs used by the GtkAda-based GUI.
+--  This package defines utilities and dialogs used by the GtkAda-based GUI
 
 with Gtk.Combo_Box_Entry; use Gtk.Combo_Box_Entry;
 
@@ -25,7 +25,7 @@ package Build_Configurations.Gtkada.Dialogs is
 
    function Models_Combo
      (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Entry;
-   --  Create and return a combo box allowing choice between the models in UI.
+   --  Create and return a combo box allowing choice between the models in UI
 
    procedure Add_Target_Dialog
      (UI        : access Build_UI_Record'Class;

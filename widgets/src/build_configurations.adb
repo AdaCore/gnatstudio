@@ -34,7 +34,7 @@ package body Build_Configurations is
    --  Add Target to Registry
 
    function "-" (Msg : String) return String;
-   --  Convenient shortcut to the Gettext function.
+   --  Convenient shortcut to the Gettext function
 
    function Command_Line_To_XML
      (CL : GNAT.OS_Lib.Argument_List) return Node_Ptr;
@@ -130,6 +130,7 @@ package body Build_Configurations is
                if Child.Value /= null then
                   Model.Icon := To_Unbounded_String (Child.Value.all);
                end if;
+
             else
                Log
                  (Registry,
@@ -162,9 +163,7 @@ package body Build_Configurations is
 
       use type Glib.String_Ptr;
    begin
-      if XML = null
-        or else XML.Tag = null
-      then
+      if XML = null or else XML.Tag = null then
          Log (Registry, -"Error: empty XML passed to builder configuration");
          return;
       end if;
@@ -379,8 +378,7 @@ package body Build_Configurations is
    function Get_Command_Line_Unexpanded
      (Registry : Build_Config_Registry_Access;
       Mode     : String;
-      Target   : Target_Access)
-      return GNAT.OS_Lib.Argument_List
+      Target   : Target_Access) return GNAT.OS_Lib.Argument_List
    is
       Current_Mode : Build_Mode_Access;
       Empty        : constant Argument_List (1 .. 0) := (others => null);
@@ -415,9 +413,7 @@ package body Build_Configurations is
 
    function Get_Switch_Value
      (Target : Target_Access;
-      Switch : String)
-      return String
-   is
+      Switch : String) return String is
    begin
       --  Generated stub: replace with real body!
       raise Program_Error;
@@ -712,9 +708,7 @@ package body Build_Configurations is
       N := XML.Child;
 
       while N /= null loop
-         Load_Target_From_XML (Registry => Registry,
-                               XML      => N);
-
+         Load_Target_From_XML (Registry => Registry, XML => N);
          N := N.Next;
       end loop;
    end Load_All_Targets_From_XML;

@@ -40,13 +40,13 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 package body Build_Configurations.Gtkada.Dialogs is
 
-   Icon_Column : constant := 0; --  Contains the icon
-   Name_Column : constant := 1; --  Contains the displayed name, as markup
+   Icon_Column       : constant := 0; -- Contains the icon
+   Name_Column       : constant := 1; -- Contains the displayed name, as markup
    Desc_Column       : constant := 2;
    Whitespace_Column : constant := 3;
 
    function "-" (Msg : String) return String;
-   --  Convenient shortcut to the Gettext function.
+   --  Convenient shortcut to the Gettext function
 
    procedure Information (Message : String);
    --  Launch an information dialog containing Message, with just an OK button
@@ -92,7 +92,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Used for the models combo
 
       function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter;
-      --  Return the iter corresponding to category Cat.
+      --  Return the iter corresponding to category Cat
 
       ----------------------------
       -- Get_Or_Create_Category --
@@ -138,8 +138,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       Iter : Gtk_Tree_Iter;
 
       use Model_Map;
-      C   : Cursor;
-      M   : Target_Model_Access;
+      C  : Cursor;
+      M  : Target_Model_Access;
    begin
       Gtk_New (Combo);
       Gtk_New (Model, Columns);
@@ -279,13 +279,17 @@ package body Build_Configurations.Gtkada.Dialogs is
                function Strip (S : String) return String;
                --  Strip S of pango markup
 
+               -----------
+               -- Strip --
+               -----------
+
                function Strip (S : String) return String is
                begin
                   return S (S'First + 3 .. S'Last - 4);
                end Strip;
 
                Str : constant String :=
-                 Strip (Get_String (UI.View.Model, Iter, Name_Column));
+                       Strip (Get_String (UI.View.Model, Iter, Name_Column));
             begin
                Append_Text (Combo, Str);
 
@@ -317,8 +321,8 @@ package body Build_Configurations.Gtkada.Dialogs is
       loop
          case Run (Dialog) is
             when Gtk_Response_OK =>
-               Name := To_Unbounded_String (Get_Text (Name_E));
-               Model := To_Unbounded_String (Get_Text (Model_E));
+               Name     := To_Unbounded_String (Get_Text (Name_E));
+               Model    := To_Unbounded_String (Get_Text (Model_E));
                Category := To_Unbounded_String (Get_Text (Cat_E));
 
                --  Verify that the name is not empty
@@ -330,6 +334,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                   Information
                     (-"A target named """ & To_String (Name)
                      & """ already exists.");
+
                else
                   Destroy (Dialog);
                   exit;
@@ -353,8 +358,7 @@ package body Build_Configurations.Gtkada.Dialogs is
      (UI        : access Build_UI_Record'Class;
       Target    : Target_Access;
       Name      : out Unbounded_String;
-      Cancelled : out Boolean)
-   is
+      Cancelled : out Boolean) is
    begin
       --  Generated stub: replace with real body!
       raise Program_Error;
