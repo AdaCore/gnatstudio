@@ -3593,7 +3593,7 @@ My_Gdb()
       <param name="remote_server" default="">A string. Possible values are "GPS_Server", the empty string (equivalent to "GPS_Server"), "Build_Server", "Debug_Server", "Execution_Server".</param>
       <param name="show_command" default="False">A boolean</param>
       <param name="single_line_regexp" default="False">A boolean</param>
-      <param name="case_sensitive_regexp" default="True">A boolean<param>
+      <param name="case_sensitive_regexp" default="True">A boolean</param>
       <description>Spawn specified command. Command can include triple-quoted strings, similar to python, which will always be preserved as one argument.
 
  If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
