@@ -43,10 +43,8 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Viewport;             use Gtk.Viewport;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
 
 with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
 
@@ -75,6 +73,8 @@ package body Build_Configurations.Gtkada is
    type Target_UI_Record is new Gtk_Hbox_Record with record
       Registry    : Build_Config_Registry_Access;
       Target      : Target_Access;
+
+      Tooltips    : Gtk_Tooltips;
 
       Frame        : Gtk_Frame;
       --  The frame that contains the elements to describe the switches
@@ -298,16 +298,11 @@ package body Build_Configurations.Gtkada is
 
    procedure Set_Switches (UI : Target_UI_Access) is
       Scrolled : Gtk_Scrolled_Window;
-      Tooltips : Gtk_Tooltips;
       use type GNAT.OS_Lib.Argument_List_Access;
    begin
-
-      Gtk_New (Tooltips);
-      --  ??? this should be gotten from the global UI
-
       --  Create the switches editor
 
-      Gtk_New (UI.Editor, UI.Target.Model.Switches, Tooltips, False);
+      Gtk_New (UI.Editor, UI.Target.Model.Switches, UI.Tooltips, False);
 
       --  Create the "current command" entry
 
@@ -355,6 +350,8 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New (Box, UI.Registry);
       Box.Target := Target;
+
+      Box.Tooltips := UI.Tooltips;
 
       --  Create the model combo
 
@@ -514,7 +511,9 @@ package body Build_Configurations.Gtkada is
    --------------------------
 
    procedure Configuration_Dialog
-     (Registry : Build_Config_Registry_Access)
+     (Registry : Build_Config_Registry_Access;
+      Parent   : Gtk_Window   := null;
+      Tooltips : Gtk_Tooltips := null)
    is
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
@@ -535,8 +534,12 @@ package body Build_Configurations.Gtkada is
    begin
       Gtk_New (Dialog => Dialog,
                Title  => -"Build Configuration",
-               Parent => null,
+               Parent => Parent,
                Flags  => Modal or Destroy_With_Parent or No_Separator);
+
+      if Parent /= null then
+         Set_Transient_For (Dialog, Parent);
+      end if;
 
       Set_Default_Size (Dialog, 750, 550);
 
@@ -544,6 +547,12 @@ package body Build_Configurations.Gtkada is
       Initialize_Hbox (UI);
 
       UI.Registry := Registry;
+
+      if Tooltips = null then
+         Gtk_New (UI.Tooltips);
+      else
+         UI.Tooltips := Tooltips;
+      end if;
 
       --  Create the tree view
       Gtk_New (UI.View, Columns_Types);
@@ -788,7 +797,6 @@ package body Build_Configurations.Gtkada is
    -------------
 
    procedure Refresh (UI : access Build_UI_Record'Class) is
-
       Count : Gint := 1;
       --  Indicates the number of the target that we are currently adding
 
