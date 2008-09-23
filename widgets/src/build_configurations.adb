@@ -543,6 +543,7 @@ package body Build_Configurations is
    is
       pragma Unreferenced (Registry);
       N   : Node_Ptr;
+      C   : Node_Ptr;
    begin
       N := new Node;
       N.Tag := new String'("target");
@@ -554,18 +555,35 @@ package body Build_Configurations is
          "name=""" & To_String (Target.Name) & """");
       --  Insert a <icon> node if needed
 
-      if Target.Icon /= "" then
-         N.Child := new Node;
-         N.Child.Tag := new String'("icon");
-         N.Child.Value := new String'(To_String (Target.Icon));
+      N.Child := new Node;
+      C := N.Child;
+      C.Tag := new String'("in-toolbar");
+      C.Value := new String'(Target.Properties.Icon_In_Toolbar'Img);
 
-         if Target.Command_Line /= null then
-            N.Child.Next := Command_Line_To_XML (Target.Command_Line.all);
-         end if;
-      else
-         if Target.Command_Line /= null then
-            N.Child := Command_Line_To_XML (Target.Command_Line.all);
-         end if;
+      if Target.Icon /= "" then
+         C.Next := new Node;
+         C := C.Next;
+         C.Tag := new String'("icon");
+         C.Value := new String'(To_String (Target.Icon));
+      end if;
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("launch-mode");
+      C.Value := new String'(Target.Properties.Launch_Mode'Img);
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("read-only");
+      C.Value := new String'(Target.Properties.Read_Only'Img);
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("key");
+      C.Value := new String'(To_String (Target.Properties.Key));
+
+      if Target.Command_Line /= null then
+         C.Next := Command_Line_To_XML (Target.Command_Line.all);
       end if;
 
       return N;
@@ -635,16 +653,31 @@ package body Build_Configurations is
       Child := XML.Child;
 
       while Child /= null loop
-         if Child.Tag.all = "icon" then
-            if Child.Value = null then
-               Log (Registry, -"Warning: empty <icon> node in target");
-            else
-               Target.Icon := To_Unbounded_String (Child.Value.all);
-            end if;
-
-         elsif Child.Tag.all = "command-line" then
+         if Child.Tag.all = "command-line" then
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
+
+         elsif Child.Value = null then
+            Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
+
+         elsif Child.Tag.all = "launch-mode" then
+            Target.Properties.Launch_Mode := Launch_Mode_Type'Value
+              (Child.Value.all);
+
+         elsif Child.Tag.all = "icon" then
+            Target.Icon := To_Unbounded_String (Child.Value.all);
+
+         elsif Child.Tag.all = "in-toolbar" then
+            Target.Properties.Icon_In_Toolbar := Boolean'Value
+              (Child.Value.all);
+
+         elsif Child.Tag.all = "key" then
+            Target.Properties.Key := To_Unbounded_String (Child.Value.all);
+
+         elsif Child.Tag.all = "read-only" then
+            Target.Properties.Read_Only := Boolean'Value
+              (Child.Value.all);
+
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")
                  & Child.Tag.all);
@@ -712,5 +745,14 @@ package body Build_Configurations is
          N := N.Next;
       end loop;
    end Load_All_Targets_From_XML;
+
+   --------------------
+   -- Get_Properties --
+   --------------------
+
+   function Get_Properties (Target : Target_Access) return Target_Properties is
+   begin
+      return Target.Properties;
+   end Get_Properties;
 
 end Build_Configurations;
