@@ -139,6 +139,37 @@ package Build_Configurations is
    --  New_Name must be a name which does not correspond to an already defined
    --  target.
 
+   -----------------------
+   -- Target properties --
+   -----------------------
+
+   type Launch_Mode_Type is
+     (Manually_With_Dialog,
+      --  Target is build when requested by user, and display a dialog for
+      --  allowing extra arguments whenever launched
+
+      Manually,
+      --  Target should be built when requested by user
+
+      On_File_Save
+      --  Target should be built when saving a source file
+     );
+
+   type Target_Properties is record
+      Launch_Mode     : Launch_Mode_Type := Manually;
+      Icon_In_Toolbar : Boolean          := False;
+      --  Whether to display an icon in the toolbar
+
+      Read_Only       : Boolean          := False;
+      --  When set to True, the target cannot be renamed or removed
+
+      Key             : Unbounded_String;
+      --  The key to which the target is bound
+   end record;
+
+   function Get_Properties (Target : Target_Access) return Target_Properties;
+   --  Return the properties for Target
+
    ----------------
    -- Build Mode --
    ----------------
@@ -197,6 +228,10 @@ package Build_Configurations is
    --
    --  <target name="TARGET_NAME" model="MODEL_NAME" category="CATEGORY">
    --     <icon>ICON</icon>
+   --     <in-toolbar>IN_TOOLBAR</in-toolbar>
+   --     <read-only>RO</read-only>
+   --     <key>KEY</key>
+   --     <launch-mode>LAUNCH_MODE</launch-mode>
    --     <command-line>
    --           <arg>COMMAND</arg>
    --           <arg>ARG1</arg>
@@ -207,7 +242,13 @@ package Build_Configurations is
    --
    --  Where
    --     TARGET_NAME  is the name of the target
-   --     CATEGORY     is the category of the target
+   --     CATEGORY     is the category of the targe
+   --     RO           (boolean) indicates whether the target can be modified
+   --     LAUNCH_MODE  is the launch mode
+   --     IN_TOOLBAR   (boolean) indicates whether the target should show up
+   --                  in the toolbar
+   --     KEY          the key bound to the target
+
    --     MODEL_NAME   is the name of the target model
    --     COMMAND      (optional) is a string containing the executable
    --     ARG1..ARGN   (optional) arguments
@@ -312,30 +353,6 @@ private
 
       Switches : GNAT.OS_Lib.Argument_List_Access;
       --  The additional switches appended at the end of the command
-   end record;
-
-   type Launch_Mode_Type is
-     (Manually_With_Dialog,
-      --  Target is build when requested by user, and display a dialog for
-      --  allowing extra arguments whenever launched
-
-      Manually,
-      --  Target should be built when requested by user
-
-      On_File_Save
-      --  Target should be built when saving a source file
-     );
-
-   type Target_Properties is record
-      Launch_Mode     : Launch_Mode_Type := Manually;
-      Icon_In_Toolbar : Boolean          := False;
-      --  Whether to display an icon in the toolbar
-
-      Predefined      : Boolean          := False;
-      --  When set to True, the target cannot be renamed or removed
-
-      Key             : Unbounded_String;
-      --  The key to which the target is bound
    end record;
 
    type Target_Type is record
