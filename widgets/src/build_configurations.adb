@@ -755,4 +755,58 @@ package body Build_Configurations is
       return Target.Properties;
    end Get_Properties;
 
+   ----------------------
+   -- Get_First_Target --
+   ----------------------
+
+   function Get_First_Target
+     (Registry : Build_Config_Registry_Access) return Target_Cursor is
+   begin
+      return Target_Cursor (Registry.Targets.First);
+   end Get_First_Target;
+
+   ----------------
+   -- Get_Target --
+   ----------------
+
+   function Get_Target (Cursor : Target_Cursor) return Target_Access is
+   begin
+      if Has_Element (Cursor) then
+         return Element (Cursor);
+      else
+         return null;
+      end if;
+   end Get_Target;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Cursor : in out Target_Cursor) is
+   begin
+      Target_Map.Next (Target_Map.Cursor (Cursor));
+   end Next;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Target : Target_Access) return String is
+   begin
+      return To_String (Target.Name);
+   end Get_Name;
+
+   --------------
+   -- Get_Icon --
+   --------------
+
+   function Get_Icon (Target : Target_Access) return String is
+   begin
+      if Target.Icon = "" then
+         return To_String (Target.Model.Icon);
+      else
+         return To_String (Target.Icon);
+      end if;
+   end Get_Icon;
+
 end Build_Configurations;
