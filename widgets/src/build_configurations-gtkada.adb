@@ -25,7 +25,8 @@ with Glib.Object; use Glib.Object;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
-with Gtk.Combo_Box;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.GEntry;               use Gtk.GEntry;
@@ -33,7 +34,9 @@ with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Table;                use Gtk.Table;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -73,14 +76,18 @@ package body Build_Configurations.Gtkada is
       Registry    : Build_Config_Registry_Access;
       Target      : Target_Access;
 
-      Frame       : Gtk_Frame;
+      Frame        : Gtk_Frame;
       --  The frame that contains the elements to describe the switches
 
-      Editor      : Switches_Editor := null;
+      Editor       : Switches_Editor := null;
       --  The one switch editor for the target, if there is only one command
 
-      Model_Entry : Gtk_Entry;
+      Model_Entry  : Gtk_Entry;
       --  The entry containing the model
+
+      Icon_Entry   : Gtk_Entry;
+      Icon_Check   : Gtk_Check_Button;
+      Launch_Combo : Gtk_Combo_Box;
    end record;
    type Target_UI_Access is access all Target_UI_Record'Class;
 
@@ -100,6 +107,11 @@ package body Build_Configurations.Gtkada is
      (UI       : access Build_UI_Record'Class;
       Target   : Target_Access) return Target_UI_Access;
    --  Return the widget controlling the switches for Target
+
+   function Get_Selected_Target
+     (UI : access Build_UI_Record'Class)
+      return Target_Access;
+   --  Return the currently selected target, or null
 
    procedure Set_Switches (UI : Target_UI_Access);
    --  Set the graphical elements in UI that represent
@@ -126,8 +138,8 @@ package body Build_Configurations.Gtkada is
    procedure On_Target_Model_Changed (UI : access Build_UI_Record'Class);
    --  The target model has changed
 
-   procedure Save_Command_Lines (UI : access Build_UI_Record'Class);
-   --  Saves the command lines of one target
+   procedure Save_Targets (UI : access Build_UI_Record'Class);
+   --  Saves the command lines and options of all targets into the registry
 
    procedure Refresh (UI : access Build_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
@@ -178,11 +190,11 @@ package body Build_Configurations.Gtkada is
       Initialize_Vbox (Target_UI);
    end Gtk_New;
 
-   ------------------------
-   -- Save_Command_Lines --
-   ------------------------
+   ------------------
+   -- Save_Targets --
+   ------------------
 
-   procedure Save_Command_Lines (UI : access Build_UI_Record'Class) is
+   procedure Save_Targets (UI : access Build_UI_Record'Class) is
       T  : Target_UI_Access;
       CL : GNAT.OS_Lib.Argument_List_Access;
 
@@ -190,12 +202,41 @@ package body Build_Configurations.Gtkada is
       for J in 1 .. UI.Registry.Targets.Length loop
          T := Target_UI_Access (Get_Nth_Page (UI.Notebook, Gint (J)));
 
+         --  Save the command line
          CL := Get_Command_Line (T.Editor, False);
-
          Set_Command_Line (UI.Registry, T.Target, CL.all);
          Unchecked_Free (CL);
+
+         --  Save the options
+         T.Target.Properties.Launch_Mode :=
+           Launch_Mode_Type'Val (Get_Active (T.Launch_Combo));
+
+         T.Target.Icon := To_Unbounded_String (Get_Text (T.Icon_Entry));
+         T.Target.Properties.Icon_In_Toolbar := Get_Active (T.Icon_Check);
       end loop;
-   end Save_Command_Lines;
+   end Save_Targets;
+
+   -------------------------
+   -- Get_Selected_Target --
+   -------------------------
+
+   function Get_Selected_Target
+     (UI : access Build_UI_Record'Class)
+      return Target_Access
+   is
+      T : Target_UI_Access;
+      N : Gint;
+   begin
+      N := Get_Current_Page (UI.Notebook);
+
+      if N = 0 then
+         return null;
+      end if;
+
+      T := Target_UI_Access (Get_Nth_Page (UI.Notebook, N));
+
+      return T.Target;
+   end Get_Selected_Target;
 
    -----------------------------
    -- On_Target_Model_Changed --
@@ -300,10 +341,14 @@ package body Build_Configurations.Gtkada is
    is
       use type GNAT.OS_Lib.Argument_List_Access;
 
-      Label     : Gtk_Label;
-      Box       : Target_UI_Access;
-      Combo     : Gtk_Combo_Box_Entry;
-      Model_Box : Gtk_Hbox;
+      Sep           : Gtk_Hseparator;
+      Table         : Gtk_Table;
+      Hbox          : Gtk_Hbox;
+      Label         : Gtk_Label;
+      Box           : Target_UI_Access;
+      Combo         : Gtk_Combo_Box_Entry;
+      Model_Box     : Gtk_Hbox;
+      Options_Frame : Gtk_Frame;
 
    begin
       --  Global box
@@ -335,6 +380,101 @@ package body Build_Configurations.Gtkada is
          Cb          => On_Target_Model_Changed'Access,
          Slot_Object => UI,
          After       => True);
+
+      --  Add the options frame
+
+      Gtk_New (Options_Frame);
+      Gtk_New (Label);
+      Set_Use_Markup (Label, True);
+      Set_Markup (Label, "Options");
+      Set_Label_Widget (Options_Frame, Label);
+
+      Gtk_New (Table, 2, 3, False);
+      Set_Border_Width (Table, 5);
+      Add (Options_Frame, Table);
+
+      Gtk_New_Hbox (Hbox);
+      Set_Spacing (Hbox, 3);
+      Gtk_New (Label, "Launch mode");
+      Pack_Start (Hbox, Label, False, False, 0);
+      Attach (Table,
+              Child         => Hbox,
+              Left_Attach   => 0,
+              Right_Attach  => 1,
+              Top_Attach    => 0,
+              Bottom_Attach => 1,
+              Xoptions      => Expand or Fill);
+
+      Gtk_New_Text (Box.Launch_Combo);
+      for J in Launch_Mode_Type loop
+         Append_Text (Box.Launch_Combo, J'Img);
+      end loop;
+      Gtk_New_Hbox (Hbox);
+      Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
+
+      Attach (Table,
+              Child         => Hbox,
+              Left_Attach   => 1,
+              Right_Attach  => 2,
+              Top_Attach    => 0,
+              Bottom_Attach => 1,
+              Xoptions      => Expand or Fill);
+
+      Gtk_New (Box.Icon_Check, "Display button in toolbar");
+
+      Attach (Table,
+              Child         => Box.Icon_Check,
+              Left_Attach   => 2,
+              Right_Attach  => 3,
+              Top_Attach    => 0,
+              Bottom_Attach => 1);
+
+      Gtk_New_Hbox (Hbox);
+      Set_Spacing (Hbox, 3);
+
+      Gtk_New (Label, "Icon");
+      Pack_Start (Hbox, Label, False, False, 0);
+      Attach (Table,
+              Child         => Hbox,
+              Left_Attach   => 0,
+              Right_Attach  => 1,
+              Top_Attach    => 1,
+              Bottom_Attach => 2,
+              Xoptions      => Expand or Fill);
+
+      Gtk_New (Box.Icon_Entry);
+      Gtk_New_Hbox (Hbox);
+      Pack_Start (Hbox, Box.Icon_Entry, False, False, 0);
+
+      Attach (Table,
+              Child         => Hbox,
+              Left_Attach   => 1,
+              Right_Attach  => 2,
+              Top_Attach    => 1,
+              Bottom_Attach => 2,
+              Xoptions      => Expand or Fill);
+
+      Pack_Start (Box, Options_Frame, False, False, 3);
+
+      if 1 = 2 then
+         Gtk_New_Hseparator (Sep);
+         Pack_Start (Box, Sep, False, False, 3);
+      end if;
+
+      --  Initialize the options
+
+      Set_Active (Box.Launch_Combo,
+                  Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
+
+      if Target.Icon = "" then
+         Set_Text (Box.Icon_Entry, To_String (Target.Model.Icon));
+      else
+         Set_Text (Box.Icon_Entry, To_String (Target.Icon));
+      end if;
+
+      Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
+
+      --  Add the switches frame
 
       Gtk_New (Box.Frame);
       Gtk_New (Label);
@@ -534,9 +674,10 @@ package body Build_Configurations.Gtkada is
       loop
          case Run (Dialog) is
             when Gtk_Response_Apply =>
-               null;
+               Save_Targets (UI);
+
             when Gtk_Response_OK =>
-               Save_Command_Lines (UI);
+               Save_Targets (UI);
                Destroy (Dialog);
                exit;
             when Gtk_Response_Cancel =>
@@ -577,8 +718,21 @@ package body Build_Configurations.Gtkada is
    ----------------------
 
    procedure On_Remove_Target (UI : access Build_UI_Record'Class) is
+      Target    : Target_Access;
+      Cancelled : Boolean;
    begin
-      null;
+      Target := Get_Selected_Target (UI);
+      if Target = null then
+         return;
+      end if;
+
+      Delete_Target_Dialog (UI, Target, Cancelled);
+
+      if not Cancelled then
+         Remove_Target (UI.Registry, To_String (Target.Name));
+         Refresh (UI);
+      end if;
+
    exception
       when E : others =>
          Log
@@ -590,8 +744,26 @@ package body Build_Configurations.Gtkada is
    -------------------------
 
    procedure On_Duplicate_Target (UI : access Build_UI_Record'Class) is
+      Target    : Target_Access;
+      Name, Cat : Unbounded_String;
+      Cancelled : Boolean;
    begin
-      null;
+      Target := Get_Selected_Target (UI);
+      if Target = null then
+         return;
+      end if;
+
+      Clone_Target_Dialog (UI, Target, Name, Cat, Cancelled);
+
+      if not Cancelled then
+         Duplicate_Target
+           (UI.Registry,
+            To_String (Target.Name),
+            To_String (Name),
+            To_String (Cat));
+         Refresh (UI);
+      end if;
+
    exception
       when E : others =>
          Log
