@@ -51,6 +51,11 @@ package body Build_Configurations.Gtkada.Dialogs is
    procedure Information (Message : String);
    --  Launch an information dialog containing Message, with just an OK button
 
+   function New_Target_Name_Is_Valid
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean;
+   --  Return True is Name is a valid new target name for Registry
+
    ---------
    -- "-" --
    ---------
@@ -189,6 +194,30 @@ package body Build_Configurations.Gtkada.Dialogs is
       return Combo;
    end Models_Combo;
 
+   ------------------------------
+   -- New_Target_Name_Is_Valid --
+   ------------------------------
+
+   function New_Target_Name_Is_Valid
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean is
+   begin
+      --  Verify that the name is not empty
+      if Name = "" then
+         Information (-"Note: targets must have a non-empty name.");
+         return False;
+      end if;
+
+      --  Verify that no target with this name exists
+      if Registry.Targets.Contains (Name) then
+         Information
+           (-"A target named """ & To_String (Name) & """ already exists.");
+         return False;
+      end if;
+
+      return True;
+   end New_Target_Name_Is_Valid;
+
    -----------------------
    -- Add_Target_Dialog --
    -----------------------
@@ -325,17 +354,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                Model    := To_Unbounded_String (Get_Text (Model_E));
                Category := To_Unbounded_String (Get_Text (Cat_E));
 
-               --  Verify that the name is not empty
-               if Name = "" then
-                  Information (-"Note: targets must have a non-empty name.");
-
-                  --  Verify that no target with this name exists
-               elsif UI.Registry.Targets.Contains (Name) then
-                  Information
-                    (-"A target named """ & To_String (Name)
-                     & """ already exists.");
-
-               else
+               if New_Target_Name_Is_Valid (UI.Registry, Name) then
                   Destroy (Dialog);
                   exit;
                end if;
@@ -358,10 +377,174 @@ package body Build_Configurations.Gtkada.Dialogs is
      (UI        : access Build_UI_Record'Class;
       Target    : Target_Access;
       Name      : out Unbounded_String;
-      Cancelled : out Boolean) is
+      Category  : out Unbounded_String;
+      Cancelled : out Boolean)
+   is
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
+      Combo  : Gtk_Combo_Box_Entry;
+      Label  : Gtk_Label;
+
+      Name_E  : Gtk_Entry;
+      Cat_E   : Gtk_Entry;
+      Table   : Gtk_Table;
+
+      Hbox    : Gtk_Hbox;
+      M       : Gtk_List_Store;
+      Iter    : Gtk_Tree_Iter;
+
    begin
-      --  Generated stub: replace with real body!
-      raise Program_Error;
+      Cancelled := False;
+
+      Gtk_New (Dialog);
+      Set_Title (Dialog, -"Clone target");
+
+      Gtk_New (Table, 3, 2, False);
+
+      --  Add the name entry
+      Gtk_New (Label, -"Target name");
+      Gtk_New_Hbox (Hbox);
+      Pack_Start (Hbox, Label, False, False, 0);
+      Attach (Table, Hbox, 0, 1, 0, 1, Expand or Fill, 0, 3, 3);
+
+      Gtk_New (Name_E);
+      Set_Text (Name_E, (-"Copy of ") & To_String (Target.Name));
+      Select_Region (Name_E, 0);
+
+      Attach (Table, Name_E, 1, 2, 0, 1, Expand or Fill, 0, 3, 3);
+
+      --  Enter some relevant text and select it
+
+      --  Add the category entry
+
+      Gtk_New (Label, -"Target category");
+      Gtk_New_Hbox (Hbox);
+      Pack_Start (Hbox, Label, False, False, 0);
+      Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
+
+      Gtk_New (M, GType_Array'(0 => GType_String));
+      Gtk_New_With_Model (Combo, M, 0);
+      Cat_E := Gtk_Entry (Get_Child (Combo));
+
+      Iter := Get_Iter_First (UI.View.Model);
+
+      while Iter /= Null_Iter loop
+         if Get_Int (UI.View.Model, Iter, 2) = 0 then
+            --  This is to test that the iter is a category iter
+
+            declare
+               function Strip (S : String) return String;
+               --  Strip S of pango markup
+
+               function Strip (S : String) return String is
+               begin
+                  return S (S'First + 3 .. S'Last - 4);
+               end Strip;
+
+               Str : constant String :=
+                 Strip (Get_String (UI.View.Model, Iter, Name_Column));
+            begin
+               Append_Text (Combo, Str);
+
+               if Get_Text (Cat_E) = "" then
+                  Set_Text (Cat_E, Str);
+               end if;
+            end;
+         end if;
+
+         Next (UI.View.Model, Iter);
+      end loop;
+
+      Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
+      --  ??? make this a combo-box-entry with the already existing categories
+
+      Pack_Start (Get_Vbox (Dialog), Table, False, False, 3);
+
+      --  Add the buttons
+
+      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+      Set_Default_Response (Dialog, Gtk_Response_OK);
+      Show_All (Dialog);
+
+      --  Run the dialog
+
+      loop
+         case Run (Dialog) is
+            when Gtk_Response_OK =>
+               Name := To_Unbounded_String (Get_Text (Name_E));
+               Category := To_Unbounded_String (Get_Text (Cat_E));
+
+               if New_Target_Name_Is_Valid (UI.Registry, Name) then
+                  Destroy (Dialog);
+                  exit;
+               end if;
+
+            when Gtk_Response_Cancel =>
+               Cancelled := True;
+               Destroy (Dialog);
+               exit;
+            when others =>
+               null;
+         end case;
+      end loop;
    end Clone_Target_Dialog;
+
+   --------------------------
+   -- Delete_Target_Dialog --
+   --------------------------
+
+   procedure Delete_Target_Dialog
+     (UI        : access Build_UI_Record'Class;
+      Target    : Target_Access;
+      Cancelled : out Boolean)
+   is
+      pragma Unreferenced (UI);
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
+      Label  : Gtk_Label;
+
+   begin
+      Cancelled := False;
+
+      Gtk_New (Dialog);
+      Set_Title (Dialog, -"Delete target?");
+
+      --  Add the name entry
+      Gtk_New (Label, (-"Target") & ASCII.LF & """" & To_String (Target.Name)
+              & """" & ASCII.LF & "will be deleted. Continue?");
+
+      Pack_Start (Get_Vbox (Dialog), Label);
+
+      --  Add the buttons
+
+      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+      Set_Default_Response (Dialog, Gtk_Response_Cancel);
+      Show_All (Dialog);
+
+      --  Run the dialog
+
+      loop
+         case Run (Dialog) is
+            when Gtk_Response_OK =>
+               Destroy (Dialog);
+               exit;
+
+            when Gtk_Response_Cancel =>
+               Cancelled := True;
+               Destroy (Dialog);
+               exit;
+            when others =>
+               null;
+         end case;
+      end loop;
+   end Delete_Target_Dialog;
 
 end Build_Configurations.Gtkada.Dialogs;
