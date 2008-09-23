@@ -220,6 +220,12 @@ package Build_Configurations is
       Switch : String) return String;
    --  Return the value of Switch as configured in Target
 
+   function Get_Name (Target : Target_Access) return String;
+   --  Return the name of Target
+
+   function Get_Icon (Target : Target_Access) return String;
+   --  Return the stock-id corresponding to the icon for target.
+
    -----------------------
    -- XML import/export --
    -----------------------
@@ -290,6 +296,22 @@ package Build_Configurations is
    function Create (Logger : Logger_Type) return Build_Config_Registry_Access;
    --  Create a new registry
 
+   -----------------------------------
+   -- Iterating through the targets --
+   -----------------------------------
+
+   type Target_Cursor is limited private;
+
+   function Get_First_Target
+     (Registry : Build_Config_Registry_Access) return Target_Cursor;
+   --  Get a cursor to the first registered target
+
+   function Get_Target (Cursor : Target_Cursor) return Target_Access;
+   --  Return the target pointed to by cursor, or null if it doesn't exist
+
+   procedure Next (Cursor : in out Target_Cursor);
+   --  Iterate to the next target
+
 private
 
    -- Packages --
@@ -297,6 +319,8 @@ private
    package Target_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
       Element_Type => Target_Access);
+
+   type Target_Cursor is new Target_Map.Cursor;
 
    package Build_Mode_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
