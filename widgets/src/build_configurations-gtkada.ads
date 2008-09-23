@@ -24,6 +24,9 @@
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Window;               use Gtk.Window;
+
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
 package Build_Configurations.Gtkada is
@@ -32,7 +35,9 @@ package Build_Configurations.Gtkada is
    type Build_UI_Access is access all Build_UI_Record'Class;
 
    procedure Configuration_Dialog
-     (Registry : Build_Config_Registry_Access);
+     (Registry : Build_Config_Registry_Access;
+      Parent   : Gtk_Window   := null;
+      Tooltips : Gtk_Tooltips := null);
    --  Launch the full configuration dialog
 
    function Single_Target_Dialog
@@ -49,6 +54,9 @@ private
 
       Notebook : Gtk_Notebook;
       --  The main notebook
+
+      Tooltips : Gtk_Tooltips;
+      --  The tooltips used in the dialog
 
       View     : Tree_View;
       --  The tree
