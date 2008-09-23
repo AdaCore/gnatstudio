@@ -34,6 +34,7 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
 
 with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
@@ -251,6 +252,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Cancelled := False;
 
       Gtk_New (Dialog);
+      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
       Set_Title (Dialog, -"New target");
 
       Gtk_New (Table, 3, 2, False);
@@ -398,6 +400,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Cancelled := False;
 
       Gtk_New (Dialog);
+      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
       Set_Title (Dialog, -"Clone target");
 
       Gtk_New (Table, 3, 2, False);
@@ -502,7 +505,6 @@ package body Build_Configurations.Gtkada.Dialogs is
       Target    : Target_Access;
       Cancelled : out Boolean)
    is
-      pragma Unreferenced (UI);
       Dialog : Gtk_Dialog;
       Button : Gtk_Button;
       pragma Unreferenced (Button);
@@ -512,6 +514,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Cancelled := False;
 
       Gtk_New (Dialog);
+      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
       Set_Title (Dialog, -"Delete target?");
 
       --  Add the name entry
