@@ -39,7 +39,14 @@ package Build_Configurations.Gtkada.Dialogs is
      (UI        : access Build_UI_Record'Class;
       Target    : Target_Access;
       Name      : out Unbounded_String;
+      Category  : out Unbounded_String;
       Cancelled : out Boolean);
    --  Launch a "Clone target" dialog
+
+   procedure Delete_Target_Dialog
+     (UI        : access Build_UI_Record'Class;
+      Target    : Target_Access;
+      Cancelled : out Boolean);
+   --  Launch a "delete target?" confirmation dialog
 
 end Build_Configurations.Gtkada.Dialogs;
