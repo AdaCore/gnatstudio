@@ -393,7 +393,9 @@ package body Build_Configurations is
          return Empty;
       end if;
 
-      Current_Mode := Registry.Modes.Element (To_Unbounded_String (Mode));
+      if Registry.Modes.Contains (To_Unbounded_String (Mode)) then
+         Current_Mode := Registry.Modes.Element (To_Unbounded_String (Mode));
+      end if;
 
       if Current_Mode = null
         or else Current_Mode.Switches = null
@@ -593,9 +595,10 @@ package body Build_Configurations is
    -- Load_Target_From_XML --
    --------------------------
 
-   procedure Load_Target_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr)
+   function Load_Target_From_XML
+     (Registry     : Build_Config_Registry_Access;
+      XML          : Node_Ptr;
+      Allow_Update : Boolean) return Target_Access
    is
       Child  : Node_Ptr;
       Target : Target_Access;
@@ -606,12 +609,12 @@ package body Build_Configurations is
         or else XML.Tag = null
       then
          Log (Registry, -"Error: empty XML passed to target builder");
-         return;
+         return null;
       end if;
 
       if XML.Tag.all /= "target" then
          Log (Registry, -"Error: wrong XML passed to target builder");
-         return;
+         return null;
       end if;
 
       --  Main node
@@ -624,30 +627,42 @@ package body Build_Configurations is
          if Name = "" then
             Log (Registry,
                  -"Error: <target> node should have a ""name"" attribute");
-            return;
+            return null;
          end if;
          if Category = "" then
             Log (Registry,
                  -"Error: <target> node should have a ""category"" attribute");
-            return;
+            return null;
          end if;
          if Model = "" then
             Log (Registry,
                  -"Error: <target> node should have a ""model"" attribute");
-            return;
+            return null;
          end if;
 
          if not Registry.Models.Contains (To_Unbounded_String (Model)) then
             Log (Registry, (-"Error: unknown target model: ") & Model);
-            return;
+            return null;
          end if;
 
-         Target := new Target_Type;
-         Target.Name  := To_Unbounded_String (Name);
-         Target.Category := To_Unbounded_String (Category);
-         Target.Model := Registry.Models.Element (To_Unbounded_String (Model));
+         if Registry.Targets.Contains (To_Unbounded_String (Name)) then
+            if Allow_Update then
+               Target := Registry.Targets.Element (To_Unbounded_String (Name));
+            else
+               Log (Registry, -"Target with that name already registered: "
+                    & Name);
+               return null;
+            end if;
 
-         Add_Target (Registry, Target);
+         else
+            Target := new Target_Type;
+            Target.Name  := To_Unbounded_String (Name);
+            Target.Category := To_Unbounded_String (Category);
+            Target.Model := Registry.Models.Element
+              (To_Unbounded_String (Model));
+
+            Add_Target (Registry, Target);
+         end if;
       end;
 
       Child := XML.Child;
@@ -685,6 +700,8 @@ package body Build_Configurations is
 
          Child := Child.Next;
       end loop;
+
+      return Target;
    end Load_Target_From_XML;
 
    -----------------------------
@@ -728,6 +745,8 @@ package body Build_Configurations is
       XML      : Node_Ptr)
    is
       N : Node_Ptr;
+      T : Target_Access;
+      pragma Unreferenced (T);
       use type Glib.String_Ptr;
    begin
       if XML = null
@@ -741,7 +760,8 @@ package body Build_Configurations is
       N := XML.Child;
 
       while N /= null loop
-         Load_Target_From_XML (Registry => Registry, XML => N);
+         T := Load_Target_From_XML
+           (Registry => Registry, XML => N, Allow_Update => True);
          N := N.Next;
       end loop;
    end Load_All_Targets_From_XML;
@@ -808,5 +828,16 @@ package body Build_Configurations is
          return To_String (Target.Icon);
       end if;
    end Get_Icon;
+
+   -------------------------
+   -- Is_Registered_Model --
+   -------------------------
+
+   function Is_Registered_Model
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean is
+   begin
+      return Registry.Models.Contains (Name);
+   end Is_Registered_Model;
 
 end Build_Configurations;
