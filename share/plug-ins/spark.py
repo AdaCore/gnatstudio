@@ -442,7 +442,7 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
-     <external>spark ~help</external>
+     <external>spark -help</external>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
