@@ -511,9 +511,10 @@ package body Build_Configurations.Gtkada is
    --------------------------
 
    procedure Configuration_Dialog
-     (Registry : Build_Config_Registry_Access;
-      Parent   : Gtk_Window   := null;
-      Tooltips : Gtk_Tooltips := null)
+     (Registry     : Build_Config_Registry_Access;
+      Parent       : Gtk_Window   := null;
+      Tooltips     : Gtk_Tooltips := null;
+      Changes_Made : out Boolean)
    is
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
@@ -532,6 +533,8 @@ package body Build_Configurations.Gtkada is
       Dummy : Gint;
       pragma Unreferenced (Dummy);
    begin
+      Changes_Made := False;
+
       Gtk_New (Dialog => Dialog,
                Title  => -"Build Configuration",
                Parent => Parent,
@@ -684,10 +687,12 @@ package body Build_Configurations.Gtkada is
          case Run (Dialog) is
             when Gtk_Response_Apply =>
                Save_Targets (UI);
+               Changes_Made := True;
 
             when Gtk_Response_OK =>
                Save_Targets (UI);
                Destroy (Dialog);
+               Changes_Made := True;
                exit;
             when Gtk_Response_Cancel =>
                Destroy (Dialog);
