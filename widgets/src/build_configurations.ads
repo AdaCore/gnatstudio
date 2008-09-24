@@ -101,6 +101,11 @@ package Build_Configurations is
    --     COMMAND      (optional) is a string containing the default executable
    --     ARG1..ARGN   (optional) default arguments
 
+   function Is_Registered_Model
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean;
+   --  Return True if name corresponds to a registered model
+
    --------------------------
    -- Manipulating targets --
    --------------------------
@@ -265,12 +270,18 @@ package Build_Configurations is
       Target   : Target_Access) return Node_Ptr;
    --  Write Target to XML format
 
-   procedure Load_Target_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr);
+   function Load_Target_From_XML
+     (Registry     : Build_Config_Registry_Access;
+      XML          : Node_Ptr;
+      Allow_Update : Boolean) return Target_Access;
    --  Read a target from a XML node and load it in Registry.
    --  Note: this must be called only after all necessary target models have
    --  been loaded.
+   --  If a target with the same identifier already exists:
+   --      - if Allow_Update is False, no target is added
+   --      - if Allow_Update is True, then the existing target is updated with
+   --        the properties and command line described in XML.
+   --  Return the new Target, or null if the target could not be created.
 
    function Save_All_Targets_To_XML
      (Registry : Build_Config_Registry_Access) return Node_Ptr;
