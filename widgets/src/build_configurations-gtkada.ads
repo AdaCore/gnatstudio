@@ -35,10 +35,13 @@ package Build_Configurations.Gtkada is
    type Build_UI_Access is access all Build_UI_Record'Class;
 
    procedure Configuration_Dialog
-     (Registry : Build_Config_Registry_Access;
-      Parent   : Gtk_Window   := null;
-      Tooltips : Gtk_Tooltips := null);
+     (Registry     : Build_Config_Registry_Access;
+      Parent       : Gtk_Window   := null;
+      Tooltips     : Gtk_Tooltips := null;
+      Changes_Made : out Boolean);
    --  Launch the full configuration dialog
+   --  Changes_Made is set to True if the user caused some changes that
+   --  need to be saved (in other words, if the  user clicked "OK" or "Apply").
 
    function Single_Target_Dialog
      (Registry : Build_Config_Registry_Access;
