@@ -620,9 +620,11 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      Last_Iter, Prompt_Iter, Tmp_Iter : Gtk_Text_Iter;
-      Internal, Success : Boolean;
-      Count     : Natural := 0;
+      --        Last_Iter, Prompt_Iter, Tmp_Iter : Gtk_Text_Iter;
+      Last_Iter : Gtk_Text_Iter;
+      Internal : Boolean;
+--        Success : Boolean;
+--        Count     : Natural := 0;
 
    begin
       --  Special case: if the text starts with ^H characters, we delete that
@@ -635,39 +637,41 @@ package body Interactive_Consoles is
       --  window, since the shell emits these characters while the user
       --  circulates through all possible completions
 
-      if UTF8 /= "" and then UTF8 (UTF8'First) = ASCII.BS then
-         for U in UTF8'Range loop
-            if UTF8 (U) = ASCII.BS then
-               Count := Count + 1;
-            else
-               exit;
-            end if;
-         end loop;
+--        if UTF8 /= "" and then UTF8 (UTF8'First) = ASCII.BS then
+--           for U in UTF8'Range loop
+--              if UTF8 (U) = ASCII.BS then
+--                 Count := Count + 1;
+--              else
+--                 exit;
+--              end if;
+--           end loop;
+--
+--           Get_End_Iter (Console.Buffer, Last_Iter);
+--         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+--           if Get_Offset (Last_Iter) /= Get_Offset (Prompt_Iter) then
+--              --  in user edition
+--              Copy (Last_Iter, Dest => Tmp_Iter);
+--              Backward_Chars (Tmp_Iter, Gint (Count), Success);
+--              if Get_Offset (Tmp_Iter) < Get_Offset (Prompt_Iter) then
+--                 Copy (Prompt_Iter, Dest => Tmp_Iter);
+--              end if;
+--
+--              Delete (Console.Buffer, Tmp_Iter, Last_Iter);
+--
+--          --  We could use Insert recursively with Text_Is_Input set to True
+--              Insert (Console.Buffer, Tmp_Iter,
+--                      UTF8 (UTF8'First + Count .. UTF8'Last));
+--              return;
+--
+--           else
+--            --  Do nothing, we'll display the BS as special characters in the
+--              --  console
+--              null;
+--           end if;
+--        end if;
 
-         Get_End_Iter (Console.Buffer, Last_Iter);
-         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-         if Get_Offset (Last_Iter) /= Get_Offset (Prompt_Iter) then
-            --  in user edition
-            Copy (Last_Iter, Dest => Tmp_Iter);
-            Backward_Chars (Tmp_Iter, Gint (Count), Success);
-            if Get_Offset (Tmp_Iter) < Get_Offset (Prompt_Iter) then
-               Copy (Prompt_Iter, Dest => Tmp_Iter);
-            end if;
-
-            Delete (Console.Buffer, Tmp_Iter, Last_Iter);
-
-            --  We could use Insert recursively with Text_Is_Input set to True
-            Insert (Console.Buffer, Tmp_Iter,
-                    UTF8 (UTF8'First + Count .. UTF8'Last));
-            return;
-
-         else
-            --  Do nothing, we'll display the BS as special characters in the
-            --  console
-            null;
-         end if;
-      end if;
-
+      Trace (Me, "MANU Insert_UTF8_With_Tag txt=" & UTF8
+             & " show_prompt=" & Show_Prompt'Img);
       Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
 
       if Add_LF then
@@ -936,6 +940,7 @@ package body Interactive_Consoles is
    is
       pragma Unreferenced (User_Data);
    begin
+      Trace (Me, "MANU Default_Command_Handler");
       if Console.Virtual /= null
         and then Interactive_Virtual_Console (Console.Virtual).Script /= null
       then
@@ -948,6 +953,7 @@ package body Interactive_Consoles is
                Hide_Output  => False,
                Errors       => Errors'Unchecked_Access);
          begin
+            Trace (Me, "MANU Default_Command_Handler done, s=" & S);
             --  Preserve the focus on the console after an interactive
             --  execution.
 
@@ -1099,10 +1105,6 @@ package body Interactive_Consoles is
                            Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                H       : String_List_Access;
             begin
-               --  Move the prompt mark, since the text has been submitted
-               --  and should not be submitted again later.
-               Display_Prompt (Console);
-
                if Command = ""
                  and then Console.Empty_Equals_Repeat
                  and then Console.History /= null
@@ -1110,6 +1112,7 @@ package body Interactive_Consoles is
                   --  Move the prompt mark, since the text has been submitted
                   --  and should not be submitted again later.
                   if not Console.Command_Received then
+                     Display_Prompt (Console);
                      return True;
                   end if;
 
@@ -1161,6 +1164,7 @@ package body Interactive_Consoles is
          Offset := Get_Offset (First_Iter);
 
          if Txt /= "" then
+            Trace (Me, "MANU Display_Text_As_Prompt Txt=" & Txt);
             Insert (Console.Buffer, First_Iter, Txt);
          end if;
 
