@@ -1828,7 +1828,7 @@ The index only needs to be specified if it applies to that attribute.</descripti
      <return>hash table associating variable names and values</return>
      <description>Return the list of scenario variables for the current project hierarchy, and their current value. These variables are visible at the top of the Project View in the GPS window. The initial value for these variables is set from the environment variables' value when GPS is started. However, changing the value of the environment variable later on doesn't change the value of the scenario variable.</description>
      <example lang="python">
-        GPS.scenario_variables["foo"]
+        GPS.Project.scenario_variables()["foo"]
         returns the current value for the variable foo
      </example>
      <see_also name="GPS.Project.set_scenario_variable()" />
