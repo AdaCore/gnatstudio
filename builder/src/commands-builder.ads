@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2007, AdaCore              --
+--                     Copyright (C) 2003-2008, AdaCore              --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,8 @@
 
 with GPS.Kernel;
 with Glib;
+
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Commands.Builder is
 
@@ -42,6 +44,17 @@ package Commands.Builder is
    --  necessary, hide the progress output, and display the other outputs in
    --  the console. Error messages are displayed in the locations window.
    --
+   --  If Quiet is False, output will be displayed in the Messages window
    --  Output can contain multiple lines.
+
+   procedure Launch_Build_Command
+     (Kernel         : GPS.Kernel.Kernel_Handle;
+      CL             : GNAT.OS_Lib.String_List_Access;
+      Locations_Name : String);
+   --  Launch a build command.
+   --  CL is the command line. The first item in CL should be the executable
+   --  and the rest are arguments.
+   --  Locations_Name is the name used to display locations in the Locations
+   --  View.
 
 end Commands.Builder;
