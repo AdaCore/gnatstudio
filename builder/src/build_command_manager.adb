@@ -21,8 +21,15 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
+with GNATCOLL.Templates; use GNATCOLL.Templates;
+
+with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
+with GPS.Kernel.Macros;  use GPS.Kernel.Macros;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Intl;           use GPS.Intl;
+
+with Commands.Builder;   use Commands.Builder;
 
 with Traces;             use Traces;
 
@@ -41,8 +48,9 @@ package body Build_Command_Manager is
    --  CL must contain at least one element.
 
    function Expand_Arg
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Arg    : String) return Argument_List;
+     (Kernel  : GPS.Kernel.Kernel_Handle;
+      Context : GPS.Kernel.Selection_Context;
+      Arg     : String) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
 
@@ -51,12 +59,53 @@ package body Build_Command_Manager is
    ----------------
 
    function Expand_Arg
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      Arg    : String) return Argument_List is
-      pragma Unreferenced (Kernel);
+     (Kernel  : GPS.Kernel.Kernel_Handle;
+      Context : GPS.Kernel.Selection_Context;
+      Arg     : String) return Argument_List
+   is
+      function Substitution
+        (Param  : String; Quoted : Boolean) return String;
+      --  Wrapper around GPS.Kernel.Macros.Substitute
+
+      ------------------
+      -- Substitution --
+      ------------------
+
+      function Substitution
+        (Param : String; Quoted : Boolean) return String
+      is
+         Done : aliased Boolean := False;
+      begin
+         return GPS.Kernel.Macros.Substitute
+           (Param, Context, Quoted, Done'Access);
+      end Substitution;
+
    begin
-      --  ??? this is a dummy implementation, connect to the proper module!
-      return (1 => new String'(Arg));
+      --  ??? Special case for "%X"
+      --  We are implementing a special case here since GPS.Kernel.Macros
+      --  does not support returning an Argument_List.
+      --  See H926-007.
+
+      if Arg = "%X" then
+         declare
+            Vars : Argument_List_Access := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
+            --  ??? Scenario_Variables_Cmd_Line should be modified to
+            --  return an Argument_List[_Access].
+            Res  : constant Argument_List := Vars.all;
+         begin
+            Unchecked_Free (Vars);
+            return Res;
+         end;
+
+      else
+         return (1 => new String'
+                   (GNATCOLL.Templates.Substitute
+                    (Str => Arg,
+                     Delimiter => GPS.Kernel.Macros.Special_Character,
+                     Callback  => Substitution'Unrestricted_Access)));
+      end if;
+
    end Expand_Arg;
 
    -------------------------
@@ -68,12 +117,11 @@ package body Build_Command_Manager is
       CL     : Argument_List) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
-
-      Index : Natural := 1;
+      Index  : Natural := 1;
       --  Index of the next free element in Result.
 
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
    begin
-
       for J in CL'Range loop
          if CL (J) = null then
             --  This should not happen
@@ -84,7 +132,7 @@ package body Build_Command_Manager is
 
          declare
             Expanded : constant Argument_List :=
-              Expand_Arg (Kernel, CL (J).all);
+              Expand_Arg (Kernel, Context, CL (J).all);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
@@ -172,9 +220,10 @@ package body Build_Command_Manager is
          end loop;
       end if;
 
-      --  Create the build command
-
       --  Launch the build command
+
+      Launch_Build_Command (Kernel, Full, "builder");
+      --  ??? change the name of the category
    end Launch_Target;
 
 end Build_Command_Manager;
