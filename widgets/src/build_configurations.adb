@@ -37,7 +37,8 @@ package body Build_Configurations is
    --  Convenient shortcut to the Gettext function
 
    function Command_Line_To_XML
-     (CL : GNAT.OS_Lib.Argument_List) return Node_Ptr;
+     (CL  : GNAT.OS_Lib.Argument_List;
+      Tag : String) return Node_Ptr;
    function XML_To_Command_Line
      (N : Node_Ptr) return GNAT.OS_Lib.Argument_List;
    --  Convert between a command line to/from the following XML representation
@@ -470,12 +471,13 @@ package body Build_Configurations is
    -------------------------
 
    function Command_Line_To_XML
-     (CL : GNAT.OS_Lib.Argument_List) return Node_Ptr
+     (CL   : GNAT.OS_Lib.Argument_List;
+      Tag  : String) return Node_Ptr
    is
       N, Arg : Node_Ptr;
    begin
       N := new Node;
-      N.Tag := new String'("command-line");
+      N.Tag := new String'(Tag);
 
       if CL'Length <= 0 then
          return N;
@@ -585,7 +587,13 @@ package body Build_Configurations is
       C.Value := new String'(To_String (Target.Properties.Key));
 
       if Target.Command_Line /= null then
-         C.Next := Command_Line_To_XML (Target.Command_Line.all);
+         C.Next := Command_Line_To_XML
+           (Target.Command_Line.all, "command-line");
+      end if;
+
+      if Target.Default_Command_Line /= null then
+         C.Next := Command_Line_To_XML
+           (Target.Default_Command_Line.all, "default-command-line");
       end if;
 
       return N;
@@ -669,8 +677,23 @@ package body Build_Configurations is
 
       while Child /= null loop
          if Child.Tag.all = "command-line" then
+            if Target.Command_Line /= null then
+               Free (Target.Command_Line);
+            end if;
+
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
+
+         elsif Child.Tag.all = "default-command-line" then
+            Target.Default_Command_Line := new GNAT.OS_Lib.Argument_List'
+              (XML_To_Command_Line (Child));
+
+            --  If the command line is null when reading the default command
+            --  line, then it should be set to the default command line.
+            if Target.Command_Line = null then
+               Target.Command_Line := new GNAT.OS_Lib.Argument_List'
+                 (XML_To_Command_Line (Child));
+            end if;
 
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
