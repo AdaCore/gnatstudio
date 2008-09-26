@@ -49,9 +49,6 @@ package body Build_Configurations.Gtkada.Dialogs is
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function
 
-   procedure Information (Message : String);
-   --  Launch an information dialog containing Message, with just an OK button
-
    function New_Target_Name_Is_Valid
      (Registry : Build_Config_Registry_Access;
       Name     : Unbounded_String) return Boolean;
@@ -496,6 +493,26 @@ package body Build_Configurations.Gtkada.Dialogs is
       end loop;
    end Clone_Target_Dialog;
 
+   -------------------
+   -- Yes_No_Dialog --
+   -------------------
+
+   function Yes_No_Dialog
+     (UI : access Build_UI_Record'Class;
+      M  : String) return Boolean
+   is
+      Buttons : Message_Dialog_Buttons;
+   begin
+      Buttons := Message_Dialog
+        (Msg            => M,
+         Dialog_Type    => Information,
+         Buttons        => Button_Yes or Button_No,
+         Default_Button => Button_No,
+         Parent         => Gtk_Window (Get_Toplevel (UI)));
+
+      return (Buttons and Button_Yes) /= 0;
+   end Yes_No_Dialog;
+
    --------------------------
    -- Delete_Target_Dialog --
    --------------------------
@@ -505,49 +522,21 @@ package body Build_Configurations.Gtkada.Dialogs is
       Target    : Target_Access;
       Cancelled : out Boolean)
    is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      pragma Unreferenced (Button);
-      Label  : Gtk_Label;
-
    begin
       Cancelled := False;
 
-      Gtk_New (Dialog);
-      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
-      Set_Title (Dialog, -"Delete target?");
+      if Target.Properties.Read_Only then
+         Information
+           (-"This target is a predefined target, and cannot be removed");
+         Cancelled := True;
+         return;
+      end if;
 
-      --  Add the name entry
-      Gtk_New (Label, (-"Target") & ASCII.LF & """" & To_String (Target.Name)
-              & """" & ASCII.LF & "will be deleted. Continue?");
-
-      Pack_Start (Get_Vbox (Dialog), Label);
-
-      --  Add the buttons
-
-      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Button := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
-
-      Set_Default_Response (Dialog, Gtk_Response_Cancel);
-      Show_All (Dialog);
-
-      --  Run the dialog
-
-      loop
-         case Run (Dialog) is
-            when Gtk_Response_OK =>
-               Destroy (Dialog);
-               exit;
-
-            when Gtk_Response_Cancel =>
-               Cancelled := True;
-               Destroy (Dialog);
-               exit;
-            when others =>
-               null;
-         end case;
-      end loop;
+      Cancelled := not Yes_No_Dialog
+        (UI => UI,
+         M  => (-"About to suppress target") & ASCII.LF
+         & "'" & To_String (Target.Name)
+         & "'." & ASCII.LF & "Would you like to continue?");
    end Delete_Target_Dialog;
 
 end Build_Configurations.Gtkada.Dialogs;
