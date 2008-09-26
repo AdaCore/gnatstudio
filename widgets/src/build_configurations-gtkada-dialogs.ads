@@ -49,4 +49,13 @@ package Build_Configurations.Gtkada.Dialogs is
       Cancelled : out Boolean);
    --  Launch a "delete target?" confirmation dialog
 
+   procedure Information (Message : String);
+   --  Launch an information dialog containing Message, with just an OK button
+
+   function Yes_No_Dialog
+     (UI : access Build_UI_Record'Class;
+      M  : String) return Boolean;
+   --  Display a dialog for string M that has "Yes" and "No" buttons.
+   --  Return True if the "Yes" button was pressed, False otherwise.
+
 end Build_Configurations.Gtkada.Dialogs;
