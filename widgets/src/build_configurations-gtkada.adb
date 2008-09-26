@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
@@ -43,15 +44,18 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Viewport;             use Gtk.Viewport;
+--  with Gtk.Viewport;             use Gtk.Viewport;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
+with GUI_Utils;                use GUI_Utils;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
 
 package body Build_Configurations.Gtkada is
+
+   use GNAT.OS_Lib;
 
    --  ??? Add facility to rename a target
 
@@ -138,12 +142,58 @@ package body Build_Configurations.Gtkada is
    procedure On_Target_Model_Changed (UI : access Build_UI_Record'Class);
    --  The target model has changed
 
+   procedure On_Revert_Target (UI : access Build_UI_Record'Class);
+   --  Revert current target to default command line
+
    procedure Save_Targets (UI : access Build_UI_Record'Class);
    --  Saves the command lines and options of all targets into the registry
 
    procedure Refresh (UI : access Build_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
    --  them with the information contained in the Registry.
+
+   function Beautify (S : String) return String;
+   --  Take a string coming from a 'Image and make it fit for GUI display
+
+   function Uglify (S : String) return String;
+   pragma Unreferenced (Uglify);
+   --  Inverse operation to Beautify
+
+   --------------
+   -- Beautify --
+   --------------
+
+   function Beautify (S : String) return String is
+      R : String := S;
+   begin
+      for J in R'First + 1 .. R'Last loop
+         if R (J) = '_' then
+            R (J) := ' ';
+         else
+            R (J) := To_Lower (R (J));
+         end if;
+      end loop;
+
+      return R;
+   end Beautify;
+
+   ------------
+   -- Uglify --
+   ------------
+
+   function Uglify (S : String) return String is
+      R : String := S;
+   begin
+      for J in R'First + 1 .. R'Last loop
+         if R (J) = ' ' then
+            R (J) := '_';
+         else
+            R (J) := To_Upper (R (J));
+         end if;
+      end loop;
+
+      return R;
+   end Uglify;
 
    --------------------
    -- Local Packages --
@@ -238,6 +288,32 @@ package body Build_Configurations.Gtkada is
       return T.Target;
    end Get_Selected_Target;
 
+   ----------------------
+   -- On_Revert_Target --
+   ----------------------
+
+   procedure On_Revert_Target (UI : access Build_UI_Record'Class) is
+      T  : Target_UI_Access;
+   begin
+      if not Yes_No_Dialog (UI, "Revert to original command line?") then
+         return;
+      end if;
+
+      --  Find the current target UI
+
+      T := Target_UI_Access
+        (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
+
+      if T.Target.Default_Command_Line /= null then
+         Set_Command_Line (T.Editor, T.Target.Default_Command_Line.all);
+      end if;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Revert_Target;
+
    -----------------------------
    -- On_Target_Model_Changed --
    -----------------------------
@@ -297,8 +373,6 @@ package body Build_Configurations.Gtkada is
    ------------------
 
    procedure Set_Switches (UI : Target_UI_Access) is
-      Scrolled : Gtk_Scrolled_Window;
-      use type GNAT.OS_Lib.Argument_List_Access;
    begin
       --  Create the switches editor
 
@@ -314,15 +388,7 @@ package body Build_Configurations.Gtkada is
          Set_Command_Line (UI.Editor, UI.Target.Command_Line.all);
       end if;
 
-      Gtk_New (Scrolled);
-      Set_Shadow_Type (Scrolled, Shadow_None);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Add_With_Viewport (Scrolled, UI.Editor);
-      Set_Shadow_Type (Gtk_Viewport (Get_Child (Scrolled)), Shadow_None);
-
-      Set_Border_Width (Scrolled, 2);
-
-      Add (UI.Frame, Scrolled);
+      Add (UI.Frame, UI.Editor);
       Show_All (UI.Frame);
    end Set_Switches;
 
@@ -334,16 +400,15 @@ package body Build_Configurations.Gtkada is
      (UI     : access Build_UI_Record'Class;
       Target : Target_Access) return Target_UI_Access
    is
-      use type GNAT.OS_Lib.Argument_List_Access;
-
       Sep           : Gtk_Hseparator;
       Table         : Gtk_Table;
       Hbox          : Gtk_Hbox;
       Label         : Gtk_Label;
       Box           : Target_UI_Access;
       Combo         : Gtk_Combo_Box_Entry;
-      Model_Box     : Gtk_Hbox;
+      Top_Box       : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
+      Button        : Gtk_Button;
 
    begin
       --  Global box
@@ -353,18 +418,34 @@ package body Build_Configurations.Gtkada is
 
       Box.Tooltips := UI.Tooltips;
 
-      --  Create the model combo
+      Gtk_New_Hbox (Top_Box);
+      Set_Spacing (Top_Box, 3);
 
-      Gtk_New_Hbox (Model_Box);
+      --  Create the "revert" button for targets that have a default command
+      --  line
+
+      if Target.Default_Command_Line /= null then
+         Gtk_New_From_Stock_And_Label
+           (Button, "gtk-refresh", " Revert ");
+         Pack_End (Top_Box, Button, False, False, 0);
+
+         Object_Connect
+           (Widget      => Button,
+            Name        => Gtk.Button.Signal_Clicked,
+            Cb          => On_Revert_Target'Access,
+            Slot_Object => UI,
+            After       => True);
+      end if;
+
+      --  Create the model combo
 
       Combo := Models_Combo (UI);
 
-      Pack_End (Model_Box, Combo, False, False, 0);
-
       Gtk_New (Label, -"Target type ");
-      Pack_End (Model_Box, Label, False, False, 3);
+      Pack_Start (Top_Box, Label, False, False, 0);
+      Pack_Start (Top_Box, Combo, False, False, 0);
 
-      Pack_Start (Box, Model_Box, False, False, 0);
+      Pack_Start (Box, Top_Box, False, False, 0);
       Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
       Set_Editable (Box.Model_Entry, False);
       Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
@@ -404,7 +485,7 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New_Text (Box.Launch_Combo);
       for J in Launch_Mode_Type loop
-         Append_Text (Box.Launch_Combo, J'Img);
+         Append_Text (Box.Launch_Combo, Beautify (J'Img));
       end loop;
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
