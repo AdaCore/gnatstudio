@@ -44,7 +44,6 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
---  with Gtk.Viewport;             use Gtk.Viewport;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
