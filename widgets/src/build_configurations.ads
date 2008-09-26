@@ -249,6 +249,9 @@ package Build_Configurations is
    --                ...
    --           <arg>ARGN</arg>
    --     </command-line>
+   --     <default-command-line>
+   --          (same syntax as command-line)
+   --     </default-command-line>
    --  </target>
    --
    --  Where
@@ -406,6 +409,10 @@ private
 
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
+
+      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      --  The default command line for this target.
+      --  This is used to implement the "reset" button on targets.
 
       Properties : Target_Properties;
       --  The set of target properties
