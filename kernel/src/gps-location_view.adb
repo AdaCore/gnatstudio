@@ -3200,7 +3200,7 @@ package body GPS.Location_View is
       Real_Last     : Natural;
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
-      Length        : Natural := 0;
+      Length        : constant Natural := 0;
       C             : Style_Access;
 
       -----------------
@@ -3218,10 +3218,6 @@ package body GPS.Location_View is
       end Get_Message;
 
    begin
-      if Quiet then
-         Length := 1;
-      end if;
-
       while Start <= Text'Last loop
          --  Parse Text line by line and look for file locations
 
