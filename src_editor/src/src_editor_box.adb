@@ -1406,9 +1406,10 @@ package body Src_Editor_Box is
                     Parse_Expression_Backward_To_String
                       (Get_Language (Get_Buffer (Editor)),
                        Buffer       => Str.all,
-                       Start_Offset => Integer (Get_Offset (Entity_End)) + 2));
-               --  "+1" because Get_Offset is zero-based, and another "+1"
-               --  because Entity_End points just before the end.
+                       Start_Offset => Integer (Get_Offset (Entity_End))));
+               --  No additional offset needed here: Str'First is always 1 in
+               --  this context, Entity_End points to the character _after_
+               --  the last character in entity, but Get_Offset is zero-based.
 
                Free (Str);
             end;
