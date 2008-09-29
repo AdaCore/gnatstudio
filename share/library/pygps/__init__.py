@@ -228,7 +228,12 @@ try:
        open_project_properties, open_project_wizard,..."""
     def internal_on_open (on_open, widgets, windows, args, kwargs):
        dialog = [w for w in gtk.window_list_toplevels() \
-                 if not w in windows and w.flags () & gtk.MAPPED][0]
+                 if not w in windows and w.flags () & gtk.MAPPED]
+       if not dialog:
+          # Will try again after same timeout or idle
+          return True
+       dialog = dialog[0]
+
        params = tuple \
          ([dialog] + [get_widget_by_name (name, dialog) for name in widgets])
        apply (on_open, params + args, kwargs)
