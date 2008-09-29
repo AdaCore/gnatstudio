@@ -188,6 +188,24 @@ package body GPS.Kernel.Actions is
       return Action;
    end Register_Action;
 
+   -----------------------
+   -- Unregister_Action --
+   -----------------------
+
+   procedure Unregister_Action
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) is
+   begin
+      loop
+         exit when Get
+           (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name))
+           = null;
+
+         Remove (Actions_Htable_Access (Kernel.Actions).Table,
+                 To_Lower (Name));
+      end loop;
+   end Unregister_Action;
+
    -----------
    -- Start --
    -----------
