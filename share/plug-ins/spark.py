@@ -350,11 +350,11 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKFormat">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="3" columns="2" switch_char="~">
+    <switches lines="3" columns="3" switch_char="~">
       <title line="1" column="1">Global variables modes</title>
       <radio line="1" column="1">
-            <radio-entry label="Unchanged" switch="~noadd_modes" />
-            <radio-entry label="Add modes to procedures" switch="~add_modes" />
+        <radio-entry label="Unchanged" switch="~noadd_modes" />
+        <radio-entry label="Add modes to procedures" switch="~add_modes" />
       </radio>
       <title line="1" column="2">Function globals</title>
       <radio line="1" column="2">
@@ -362,6 +362,12 @@ a = """<?xml version="1.0"?>
             <radio-entry label="Force 'in'" switch="~d=i" />
             <radio-entry label="Force unmoded" switch="~d=u" />
       </radio>
+      <title line="1" column="3">Order</title>
+      <radio line="1" column="3">
+        <radio-entry label="Declaration" switch="~order=declaration" />
+        <radio-entry label="Alphabetic" switch="~order=alphabetic" />
+      </radio>
+
       <title line="2" column="1">Annotation compression</title>
       <radio line="2" column="1">
         <radio-entry label="Compress" switch="~compress" />
@@ -369,6 +375,7 @@ a = """<?xml version="1.0"?>
       </radio>
       <title line="2" column="2">Annotations</title>
       <field line="2" column="2" label="Annotation Character" switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+
       <title line="3" column="1" column-span="2">Indentation</title>
       <field line="3" column="1" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
       <field line="3" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
@@ -386,10 +393,24 @@ a = """<?xml version="1.0"?>
   <tool name="POGS">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="1" switch_char="~">
+    <switches lines="2" switch_char="~">
       <title line="1">Options</title>
-      <check line="1" label="Plain Output" switch="~p" />
-      <check line="1" label="Ignore Dates" switch="~i" />
+      <check line="1" label="Plain Output"
+       tip="Prevent release information and file paths being output to .sum file"
+       switch="~p" />
+      <check line="1" label="Ignore Dates"
+       tip="Prevent checking of date and time stamps of VCs and Proof Log files"
+       switch="~i" />
+
+      <title line="2">Output</title>
+      <radio line="2">
+        <radio-entry label="Default" tip="Default output" switch="" />
+        <radio-entry label="Short summary"
+         tip="Prevent per-subprogram analysis section being output to .sum file"
+         switch="~s" />
+        <radio-entry label="XML" tip="Output summary information in XML format"
+         switch="~x" />
+      </radio>
     </switches>
   </tool>
 
@@ -398,12 +419,17 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches lines="2" switch_char="~">
       <title line="1">Input File Options</title>
-         <field line="1" label=" Directory "  switch="~dir=" />
-         <field line="1" label=" Include " switch="~inc=" />
-         <field line="1" label=" Exclude " switch="~e=" />
-      <title line="2">Input File Options</title>
-         <field line="2" label=" Index "  switch="~ind=" />
-         <field line="2" label=" Meta " switch="~m=" />
+      <field line="1" label="Directory" as-directory="true" switch="~dir=" />
+      <field line="1" label="Include" switch="~inc=" />
+      <field line="1" label="Exclude" switch="~e=" />
+
+      <title line="2">Output File Options</title>
+      <field line="2" label="Index" as-file="true" switch="~ind=" />
+      <field line="2" label="Meta" as-file="true" switch="~m=" />
+      <check line="2" label="No index file"
+             tip="Suppress generation of index file" switch="~noindexfile" />
+      <check line="2" label="No meta file"
+             tip="Suppress generation of meta file" switch="~nometafile" />
     </switches>
   </tool>
 
