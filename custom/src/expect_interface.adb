@@ -101,7 +101,6 @@ package body Expect_Interface is
       Pd               : Process_Descriptor_Access;
       Status           : Integer := 0;
       Started          : Boolean;
-      Terminated       : Boolean;
       Inst             : Class_Instance;
       Progress_Regexp  : Pattern_Matcher_Access;
       Progress_Current : Natural := 1;  --  Parenthesis within the regexp
@@ -430,6 +429,7 @@ package body Expect_Interface is
             D.On_Exit := null;
          end if;
 
+         D.Pd := null;
       end if;
 
       --  ??? Add exception handler ?
