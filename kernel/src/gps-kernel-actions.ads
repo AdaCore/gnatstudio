@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -77,6 +76,11 @@ package GPS.Kernel.Actions is
    --  will not be shown in the keybinding editor.
    --  Defined_In indicates in which file the action is defined. By default, it
    --  is considered as a builtin action.
+
+   procedure Unregister_Action
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String);
+   --  Remove action named Name from the table of actions
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
