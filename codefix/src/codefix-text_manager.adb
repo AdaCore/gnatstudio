@@ -1587,31 +1587,33 @@ package body Codefix.Text_Manager is
          Policy : Replace_Blanks_Policy;
          Pos    : Bound_Type)
       is
-         Line  : constant String := Dest_Text.Get_Line (Around, 1);
-         Begin_Blanks : Char_Index;
-         End_Blanks   : Char_Index;
+         Line : constant String := Dest_Text.Get_Line (Around, 1);
+         Begin_Text : Char_Index;
+         End_Text   : Char_Index;
          Tmp_Cursor   : Text_Cursor := Around;
          Blank_Length : Char_Index;
       begin
          case Pos is
             when First =>
-               Begin_Blanks := To_Char_Index (Around.Col - 1, Line);
+               End_Text := To_Char_Index (Tmp_Cursor.Col, Line);
+               Begin_Text := End_Text - 1;
+
             when Last =>
-               Begin_Blanks := To_Char_Index (Around.Col + 1, Line);
+               Begin_Text := To_Char_Index (Tmp_Cursor.Col, Line);
+               End_Text := Begin_Text + 1;
+
          end case;
 
-         Skip_Blanks (Line, Integer (Begin_Blanks), -1);
-         End_Blanks := Begin_Blanks + 1;
-         Skip_Blanks (Line, Integer (End_Blanks), 1);
-         Blank_Length := End_Blanks - Begin_Blanks - 1;
+         Skip_Blanks (Line, Integer (End_Text), 1);
+         Skip_Blanks (Line, Integer (Begin_Text), -1);
 
-         if Blank_Length /= 0 then
-            if Begin_Blanks = 0 then
-               Tmp_Cursor.Col := 1;
-            else
-               Tmp_Cursor.Col := To_Column_Index (Begin_Blanks, Line) + 1;
-            end if;
+         if Begin_Text = 0 then
+            Tmp_Cursor.Col := 1;
+         else
+            Tmp_Cursor.Col := To_Column_Index (Begin_Text, Line) + 1;
          end if;
+
+         Blank_Length := End_Text - Begin_Text - 1;
 
          case Policy is
             when Keep =>
@@ -1624,6 +1626,7 @@ package body Codefix.Text_Manager is
       end Replace_Blank_Slice;
 
       Last_Begin_Line : Integer;
+      --  Index of the last start of line in New_Text.
 
    begin
       Dest_Text.Replace (Dest_Start, Dest_Stop, New_Text);
@@ -1640,13 +1643,30 @@ package body Codefix.Text_Manager is
          end if;
       end loop;
 
-      Dest_Stop.Col :=
-        To_Column_Index
-          (Char_Index (New_Text'Last),
-           New_Text (Last_Begin_Line .. New_Text'Last));
-
       if Last_Begin_Line = New_Text'First then
-         Dest_Stop.Col := Dest_Start.Col + Dest_Stop.Col;
+         --  If there is only one line, then add the length of the added text
+         --  to the position of the first column to have the new last column
+
+         declare
+            Line  : constant String := This.Get_Line (Dest_Start, 1);
+            Index : constant Char_Index :=
+              To_Char_Index (Dest_Start.Col, Line)
+              + New_Text'Length - 1;
+         begin
+            Dest_Stop.Col := To_Column_Index (Index, Line);
+         end;
+      else
+         --  If there are several lines, then get the position of the last one.
+
+         declare
+            subtype Line_Indexes is String
+              (1 .. New_Text'Last - Last_Begin_Line + 1);
+         begin
+            Dest_Stop.Col :=
+              To_Column_Index
+                (Char_Index (New_Text'Last - Last_Begin_Line + 1),
+                 Line_Indexes (New_Text (Last_Begin_Line .. New_Text'Last)));
+         end;
       end if;
 
       Mark_Start := new Mark_Abstr'Class'(This.Get_New_Mark (Dest_Start));
