@@ -26,6 +26,11 @@
 with GPS.Kernel;
 with Build_Configurations; use Build_Configurations;
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
+
 package Build_Command_Manager is
 
    procedure Launch_Target
@@ -33,5 +38,33 @@ package Build_Command_Manager is
       Registry    : Build_Config_Registry_Access;
       Target_Name : String);
    --  Launch a build of target named Target_Name
+
+   -------------------
+   -- Build_Command --
+   -------------------
+
+   --  The Build_Command acts simply as a wrapper around Launch_Target.
+   --  Used for defining build actions.
+
+   type Build_Command is new Interactive_Command with record
+      Target_Name : Unbounded_String;
+      Registry    : Build_Config_Registry_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+   end record;
+   type Build_Command_Access is access all Build_Command'Class;
+
+   overriding
+   function Execute
+     (Command : access Build_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   --  See inherited documentation
+
+   procedure Create
+     (Item        : out Build_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String);
+   --  Create a build command
 
 end Build_Command_Manager;

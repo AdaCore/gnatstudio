@@ -21,7 +21,6 @@
 
 with GPS.Kernel;
 with Glib;
-
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Commands.Builder is
@@ -39,22 +38,26 @@ package Commands.Builder is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : Commands.Command_Access;
       Output  : Glib.UTF8_String;
-      Quiet   : Boolean);
+      Quiet   : Boolean;
+      Target  : String := "");
    --  Process the builder output: update the progress bar in Command as
    --  necessary, hide the progress output, and display the other outputs in
    --  the console. Error messages are displayed in the locations window.
    --
    --  If Quiet is False, output will be displayed in the Messages window
    --  Output can contain multiple lines.
+   --
+   --  Target indicates the name of the target being built.
 
    procedure Launch_Build_Command
      (Kernel         : GPS.Kernel.Kernel_Handle;
       CL             : GNAT.OS_Lib.String_List_Access;
-      Locations_Name : String);
+      Target_Name    : String;
+      Quiet          : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
-   --  Locations_Name is the name used to display locations in the Locations
-   --  View.
+   --  Target_Name is the name of the target being launched.
+   --  If Quiet is False, the cursor will jump to the first error.
 
 end Commands.Builder;

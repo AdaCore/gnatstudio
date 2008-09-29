@@ -52,7 +52,7 @@
 --       defined in Builder_Facility_Module
 --   (5) commands defined in Commands.Builder
 --   (6) GUI defined in Build_Configurations.GtkAda
---   (7) to be defined
+--   (7) in GPS.Kernel.Macros
 --
 --   Dependencies
 --              (4) depends only on XmlAda

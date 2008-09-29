@@ -19,8 +19,9 @@
 
 with Ada.Strings;           use Ada.Strings;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.String_Split;     use GNAT.String_Split;
@@ -45,6 +46,15 @@ with UTF8_Utils;            use UTF8_Utils;
 package body Commands.Builder is
 
    type Build_Callback_Data is new Callback_Data_Record with record
+      Target_Name : Unbounded_String;
+      --  The name of the target being built
+
+      Quiet : Boolean := False;
+      --  Whether the target should be Quiet.
+      --  A Quiet target does not cause the cursor to jump to the first
+      --  error found. This is useful for builds that occur on saving, or in
+      --  a background mode.
+
       Buffer : Unbounded_String;
       --  Stores the incomplete lines returned by the compilation process
 
@@ -79,6 +89,11 @@ package body Commands.Builder is
    procedure End_Build_Callback (Data : Process_Data; Status : Integer);
    --  Called at the end of the build
 
+   function Target_Name_To_Locations_Category
+     (Name : Unbounded_String) return String;
+   --  Return the name of the locations category associated with the build of
+   --  target Name.
+
    -------------
    -- Destroy --
    -------------
@@ -88,17 +103,35 @@ package body Commands.Builder is
       null;
    end Destroy;
 
+   ---------------------------------------
+   -- Target_Name_To_Locations_Category --
+   ---------------------------------------
+
+   function Target_Name_To_Locations_Category
+     (Name : Unbounded_String) return String is
+   begin
+      if Name = "" then
+         return Error_Category;
+      else
+         return -"Build results: " & To_String (Name);
+      end if;
+   end Target_Name_To_Locations_Category;
+
    ------------------------
    -- End_Build_Callback --
    ------------------------
 
    procedure End_Build_Callback
-     (Data : Process_Data; Status : Integer) is
+     (Data : Process_Data; Status : Integer)
+   is
+      Locations_Category : constant String :=
+        Target_Name_To_Locations_Category
+          (Build_Callback_Data (Data.Callback_Data.all).Target_Name);
    begin
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
 
-      if Category_Count (Data.Kernel, Error_Category) = 0
+      if Category_Count (Data.Kernel, Locations_Category) = 0
         and then Status /= 0
       then
          Console.Raise_Console (Data.Kernel);
@@ -107,7 +140,7 @@ package body Commands.Builder is
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
 
-      Compilation_Finished (Data.Kernel, Error_Category);
+      Compilation_Finished (Data.Kernel, Locations_Category);
    end End_Build_Callback;
 
    --------------------
@@ -117,6 +150,9 @@ package body Commands.Builder is
    procedure Build_Callback (Data : Process_Data; Output : String) is
       Last_EOL : Natural := 1;
       Str      : GNAT.OS_Lib.String_Access;
+
+      Build_Data : Build_Callback_Data
+        renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -125,8 +161,7 @@ package body Commands.Builder is
          --  in the current buffer.
 
          if Last_EOL = 0 then
-            Append
-              (Build_Callback_Data (Data.Callback_Data.all).Buffer, Output);
+            Append (Build_Data.Buffer, Output);
             return;
          end if;
 
@@ -140,18 +175,15 @@ package body Commands.Builder is
 
       if Output'Length > 0 then
          Str := new String'
-           (To_String (Build_Callback_Data (Data.Callback_Data.all).Buffer)
+           (To_String (Build_Data.Buffer)
             & Output (Output'First .. Last_EOL - 1) & ASCII.LF);
 
-         Build_Callback_Data (Data.Callback_Data.all).Buffer :=
+         Build_Data.Buffer :=
            To_Unbounded_String (Output (Last_EOL + 1 .. Output'Last));
 
       elsif Data.Process_Died then
-         Str := new String'
-           (To_String (Build_Callback_Data (Data.Callback_Data.all).Buffer)
-            & ASCII.LF);
-         Build_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Null_Unbounded_String;
+         Str := new String'(To_String (Build_Data.Buffer) & ASCII.LF);
+         Build_Data.Buffer := Null_Unbounded_String;
       else
          return;
       end if;
@@ -178,14 +210,16 @@ package body Commands.Builder is
                  (Kernel  => Data.Kernel,
                   Command => Data.Command,
                   Output  => Str.all,
-                  Quiet   => False);
+                  Quiet   => Build_Data.Quiet,
+                  Target  => To_String (Build_Data.Target_Name));
 
             else
                Process_Builder_Output
                  (Kernel  => Data.Kernel,
                   Command => Data.Command,
                   Output  => Output (1 .. Len),
-                  Quiet   => False);
+                  Quiet   => Build_Data.Quiet,
+                  Target  => To_String (Build_Data.Target_Name));
             end if;
          else
             Console.Insert
@@ -278,7 +312,8 @@ package body Commands.Builder is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : Commands.Command_Access;
       Output  : Glib.UTF8_String;
-      Quiet   : Boolean)
+      Quiet   : Boolean;
+      Target  : String := "")
    is
       Start   : Integer := Output'First;
       Matched : Match_Array (0 .. 3);
@@ -302,7 +337,7 @@ package body Commands.Builder is
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
            (Kernel_Handle (Kernel),
-            -Error_Category,
+            Target_Name_To_Locations_Category (To_Unbounded_String (Target)),
             Builder_Errors_Style,
             Builder_Warnings_Style,
             Builder_Style_Style,
@@ -316,16 +351,24 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel         : Kernel_Handle;
-      CL             : GNAT.OS_Lib.String_List_Access;
-      Locations_Name : String)
+     (Kernel      : Kernel_Handle;
+      CL          : GNAT.OS_Lib.String_List_Access;
+      Target_Name : String;
+      Quiet       : Boolean)
    is
       Data    : Build_Callback_Data_Access;
       Success : Boolean;
+
    begin
       Data := new Build_Callback_Data;
+      Data.Target_Name := To_Unbounded_String (Target_Name);
+      Data.Quiet := Quiet;
 
-      if Compilation_Starting (Kernel, Locations_Name, Quiet => False) then
+      if Compilation_Starting
+        (Kernel,
+         Target_Name_To_Locations_Category (Data.Target_Name),
+         Quiet => Quiet)
+      then
          String_List_Utils.String_List.Append
            (Data.Output,
             Argument_List_To_Quoted_String (CL.all, Quote_Backslash => False));
@@ -349,7 +392,6 @@ package body Commands.Builder is
 
          --  ??? check value of Success
       end if;
-
    end Launch_Build_Command;
 
 end Commands.Builder;

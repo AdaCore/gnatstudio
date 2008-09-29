@@ -174,8 +174,9 @@ package body Build_Command_Manager is
       Registry    : Build_Config_Registry_Access;
       Target_Name : String)
    is
-      T    : Target_Access;
-      Full : Argument_List_Access;
+      T     : Target_Access;
+      Full  : Argument_List_Access;
+      Quiet : Boolean;
    begin
       --  Get the target
 
@@ -222,8 +223,51 @@ package body Build_Command_Manager is
 
       --  Launch the build command
 
-      Launch_Build_Command (Kernel, Full, "builder");
+      case Get_Properties (T).Launch_Mode is
+         when On_File_Save =>
+            Quiet := True;
+         when Manually | Manually_With_Dialog =>
+            Quiet := False;
+      end case;
+
+      Launch_Build_Command (Kernel, Full, Target_Name, Quiet);
       --  ??? change the name of the category
    end Launch_Target;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   function Execute
+     (Command : access Build_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      --  ??? We should use the command context
+      pragma Unreferenced (Context);
+   begin
+      Launch_Target (Kernel      => Command.Kernel,
+                     Registry    => Command.Registry,
+                     Target_Name => To_String (Command.Target_Name));
+      return Success;
+   end Execute;
+
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item        : out Build_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String)
+   is
+   begin
+      Item := new Build_Command;
+      Item.Kernel := Kernel;
+      Item.Registry := Registry;
+      Item.Target_Name := To_Unbounded_String (Target_Name);
+   end Create;
 
 end Build_Command_Manager;

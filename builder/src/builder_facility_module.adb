@@ -34,8 +34,14 @@ with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Location_View;         use GPS.Location_View;
 with Traces;                    use Traces;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -51,6 +57,9 @@ package body Builder_Facility_Module is
 
    package Buttons_Map is new Ada.Containers.Ordered_Maps
      (Unbounded_String, Gtk_Tool_Button);
+
+   package Actions_List is new Ada.Containers.Doubly_Linked_Lists
+     (Unbounded_String);
 
    package Target_XML_List is new Ada.Containers.Doubly_Linked_Lists
      (Node_Ptr);
@@ -79,6 +88,13 @@ package body Builder_Facility_Module is
       --  Doing this means that targets can be passed to the module *before*
       --  their corresponding models. This way, there is no load order to
       --  maintain, and scripts can be executed in any order.
+
+      Currently_Saving : Boolean := False;
+      --  Whether the module is currently reacting to the File_Saved hook.
+      --  See implementation of On_File_Save.
+
+      Actions : Actions_List.List;
+      --  The list of currently registered builder actions
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -135,6 +151,103 @@ package body Builder_Facility_Module is
    procedure Load_Targets;
    --  Save/Load the targets in the user-defined XML
 
+   procedure On_File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when a file has been saved
+
+   procedure Clear_Compilation_Output
+     (Kernel   : Kernel_Handle;
+      Category : String);
+   --  Clear the compiler output, the console, and the locations view for
+   --  Category.
+
+   function On_Compilation_Starting
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
+   --  Called when a file has been saved
+
+   procedure Add_Action_For_Target (T : Target_Access);
+   --  Register a Kernel Action to build T
+
+   procedure Add_Actions_For_All_Targets;
+   --  Register Kernel Actions for all targets
+
+   procedure Remove_All_Actions;
+   --  Unregister all previously registered Kernel Actions
+
+   function Action_Name (T : Target_Access) return String;
+   --  Return the name of the Kernel Action to build T
+
+   -----------------
+   -- Action_Name --
+   -----------------
+
+   function Action_Name (T : Target_Access) return String is
+   begin
+      return (-"Build target '") & Get_Name (T) & "'";
+   end Action_Name;
+
+   ---------------------------
+   -- Add_Action_For_Target --
+   ---------------------------
+
+   procedure Add_Action_For_Target (T : Target_Access) is
+      C    : Build_Command_Access;
+      N    : constant String := Get_Name (T);
+      Name : constant String := Action_Name (T);
+   begin
+      Create (C, Get_Kernel, Builder_Module_ID.Registry, N);
+
+      Register_Action (Kernel      => Get_Kernel,
+                       Name        => Name,
+                       Command     => C,
+                       Description => (-"Build target ") & N,
+                       Filter      => null,
+                       Category    => -"Build",
+                       Defined_In  => GNATCOLL.VFS.No_File);
+
+      Builder_Module_ID.Actions.Append (To_Unbounded_String (Name));
+   end Add_Action_For_Target;
+
+   ---------------------------------
+   -- Add_Actions_For_All_Targets --
+   ---------------------------------
+
+   procedure Add_Actions_For_All_Targets is
+      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      T : Target_Access;
+   begin
+      loop
+         T := Get_Target (C);
+         exit when T = null;
+
+         Add_Action_For_Target (T);
+
+         Next (C);
+      end loop;
+   end Add_Actions_For_All_Targets;
+
+   ------------------------
+   -- Remove_All_Actions --
+   ------------------------
+
+   procedure Remove_All_Actions is
+      use Actions_List;
+      C : Actions_List.Cursor;
+   begin
+      loop
+         C := Builder_Module_ID.Actions.First;
+
+         exit when not Has_Element (C);
+
+         Unregister_Action (Kernel => Get_Kernel,
+                            Name   => To_String (Element (C)));
+
+         Builder_Module_ID.Actions.Delete (C);
+      end loop;
+   end Remove_All_Actions;
+
    ----------------------
    -- Get_Targets_File --
    ----------------------
@@ -189,6 +302,95 @@ package body Builder_Facility_Module is
       end if;
    end Load_Targets;
 
+   ------------------------------
+   -- Clear_Compilation_Output --
+   ------------------------------
+
+   procedure Clear_Compilation_Output
+     (Kernel   : Kernel_Handle;
+      Category : String) is
+   begin
+      Console.Clear (Kernel);
+      Remove_Location_Category (Kernel, Category);
+   end Clear_Compilation_Output;
+
+   -----------------------------
+   -- On_Compilation_Starting --
+   -----------------------------
+
+   function On_Compilation_Starting
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
+   is
+      D : constant String_Boolean_Hooks_Args :=
+            String_Boolean_Hooks_Args (Data.all);
+   begin
+      --  Small issue here: if the user cancels the compilation in one of the
+      --  custom hooks the user might have connected, then all changes done
+      --  here (increase Build_Count) will not be undone since
+      --  On_Compilation_Finished is not called.
+
+      --  Ask for saving sources/projects before building.
+      --  Do this before checking the project, in case we have a default
+      --  project whose name is changed when saving
+
+      if not D.Bool
+        and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
+      then
+         return False;
+      end if;
+
+      Clear_Compilation_Output (Kernel_Handle (Kernel), D.Value);
+      --  ??? need to add support for this
+--        Interrupt_Xrefs_Loading (Kernel);
+
+      if not D.Bool then
+         Console.Raise_Console (Kernel);
+      end if;
+
+      return True;
+   end On_Compilation_Starting;
+
+   -------------------
+   -- On_File_Saved --
+   -------------------
+
+   procedure On_File_Saved
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Data);
+      C : Build_Configurations.Target_Cursor :=
+        Get_First_Target (Builder_Module_ID.Registry);
+      T : Target_Access;
+   begin
+      --  Protect against the following recursion:
+      --   a script connects the action Compilation_Starting to the saving
+      --   of a file, and this causes Compile through this procedure.
+      --  This should not happen in GPS, but we protect against this
+      --  possibility occurring in user scripts.
+
+      if Builder_Module_ID.Currently_Saving then
+         return;
+      end if;
+
+      Builder_Module_ID.Currently_Saving := True;
+
+      loop
+         T := Get_Target (C);
+         exit when T = null;
+
+         if Get_Properties (T).Launch_Mode = On_File_Save then
+            Launch_Target (Kernel      => Kernel_Handle (Kernel),
+                           Registry    => Builder_Module_ID.Registry,
+                           Target_Name => Get_Name (T));
+         end if;
+         Next (C);
+      end loop;
+
+      Builder_Module_ID.Currently_Saving := False;
+   end On_File_Saved;
+
    -----------------------------
    -- Attempt_Target_Register --
    -----------------------------
@@ -218,10 +420,12 @@ package body Builder_Facility_Module is
          T := Load_Target_From_XML
            (Builder_Module_ID.Registry, XML, Allow_Update);
 
-         if T /= null
-           and then Get_Properties (T).Icon_In_Toolbar
-         then
-            Install_Button_For_Target (T);
+         if T /= null then
+            Add_Action_For_Target (T);
+
+            if Get_Properties (T).Icon_In_Toolbar then
+               Install_Button_For_Target (T);
+            end if;
          end if;
 
       else
@@ -368,8 +572,13 @@ package body Builder_Facility_Module is
          Changes_Made);
 
       if Changes_Made then
+         --  Handle the toolbar
          Clear_Toolbar_Buttons;
          Install_Toolbar_Buttons;
+
+         --  Recreate the actions
+         Remove_All_Actions;
+         Add_Actions_For_All_Targets;
 
          --  Save the user-defined targets
          Save_Targets;
@@ -390,7 +599,6 @@ package body Builder_Facility_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Module, File);
-      T            : Target_Access;
       Allow_Update : Boolean;
       Model_Name   : Unbounded_String;
       L            : Target_XML_List.List;
@@ -421,14 +629,10 @@ package body Builder_Facility_Module is
                C := L.First;
 
                while Has_Element (C) loop
-                  T := Load_Target_From_XML
-                    (Builder_Module_ID.Registry, Element (C), True);
-
-                  if T /= null
-                    and then Get_Properties (T).Icon_In_Toolbar
-                  then
-                     Install_Button_For_Target (T);
-                  end if;
+                  --  Register the target
+                  Attempt_Target_Register
+                    (XML          => Element (C),
+                     Allow_Update => True);
 
                   --  Free memory
                   declare
@@ -468,6 +672,17 @@ package body Builder_Facility_Module is
       Register_Menu (Kernel, "/_" & (-"New builder"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Build, -"Build Manager", "",
                      On_Build_Manager'Access);
+
+      --  Connect to the File_Saved_Hook
+      Add_Hook (Kernel, File_Saved_Hook,
+                Wrapper (On_File_Saved'Access),
+                Name  => "builder_facility_module.file_saved");
+
+      --  Connect to the Compilation_Starting_Hook
+
+      Add_Hook (Kernel, Compilation_Starting_Hook,
+                Wrapper (On_Compilation_Starting'Access),
+                Name => "builder_facility_module.compilation_starting");
 
       --  Load the user-defined targets.
       Load_Targets;
