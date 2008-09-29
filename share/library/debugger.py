@@ -15,12 +15,21 @@
    It adds a way to ignore exceptions raised at specific source locations,
    while still stopping on all other exceptions. The source locations are
    set through the contextual menu "Ignore exception breakpoints" (and removed
-   likewise), and are preserved between GPS sessions.
+   likewise), and are preserved between GPS sessions if the preference is set
+   appropriately
 """
 
 
+###########################################################################
+## No user customization below this line
+###########################################################################
+
 from GPS import *
 import text_utils, re, os.path
+
+Preference ("Plugins/debugger/save_autocont_br").create (
+   "Preserve auto-cont breakpoints", "boolean",
+   """If set, the source locations where the debugger should not stop on an exception are preserved across GPS sessions. If unset, you'll have to reset them the next time you start the debugger, but on the other hand this might work better when the source code has changed""", True)
 
 def in_debugger (context):
    return Debugger.get() != None
@@ -110,7 +119,8 @@ def add_breakpoint_exception (context):
       autocont_br.remove (f)
    else:
       autocont_br.add (f)
-   Project.root().set_property ("autocont_br", "--".join (autocont_br), True)
+   if Preference ("Plugins/debugger/save_autocont_br").get():
+      Project.root().set_property ("autocont_br", "--".join (autocont_br), True)
 
 def on_project_view_changed (h):
    global autocont_br
