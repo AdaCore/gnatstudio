@@ -1058,8 +1058,8 @@ package body GNAT.Expect.TTY.Remote is
    is
       Fd     : Process_Descriptor_Access;
       Result : Expect_Match;
-      Regexp : constant Pattern_Matcher
-        := Compile ("^[^\n]*\n", Single_Line or Multiple_Lines);
+      Regexp : constant Pattern_Matcher :=
+                 Compile ("^[^\n]*\n", Single_Line or Multiple_Lines);
 
    begin
       Remote_Spawn
