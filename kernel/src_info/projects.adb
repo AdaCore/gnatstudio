@@ -581,36 +581,42 @@ package body Projects is
       -------------------
 
       function Handle_Subdir (Path : String) return String is
-         Iter : File_Utils.Path_Iterator;
-         Ret  : Unbounded_String;
       begin
          if From_Subdir = "" then
             return Path;
          end if;
 
-         Iter := File_Utils.Start (Path);
-         while not At_End (Path, Iter) loop
-            declare
-               Dir : constant GNATCOLL.VFS.Virtual_File :=
-                       GNATCOLL.VFS.Create (Current (Path, Iter));
-               Subdir : constant GNATCOLL.VFS.Virtual_File :=
-                          GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
-            begin
-               Append (Ret, Path_Separator);
+         declare
+            Iter : File_Utils.Path_Iterator;
+            Ret  : Unbounded_String;
+         begin
+            Iter := File_Utils.Start (Path);
+            while not At_End (Path, Iter) loop
+               declare
+                  Dir : constant GNATCOLL.VFS.Virtual_File :=
+                          GNATCOLL.VFS.Create (Current (Path, Iter));
+                  Subdir : constant GNATCOLL.VFS.Virtual_File :=
+                             GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
+               begin
+                  Append (Ret, Path_Separator);
 
-               if Subdir.Is_Directory then
-                  Append (Ret, Subdir.Full_Name.all);
-               else
-                  Trace (Me, "Object_Path: no subdir " & From_Subdir &
-                         " in " & Subdir.Full_Name.all);
-                  Append (Ret, Dir.Full_Name.all);
-               end if;
-            end;
+                  if Subdir.Is_Directory then
+                     Append (Ret, Subdir.Full_Name.all);
+                  else
+                     if Active (Me) then
+                        Trace (Me, "Object_Path: no subdir " & From_Subdir &
+                               " in " & Subdir.Full_Name.all);
+                     end if;
 
-            Iter := Next (Path, Iter);
-         end loop;
+                     Append (Ret, Dir.Full_Name.all);
+                  end if;
+               end;
 
-         return To_String (Ret);
+               Iter := Next (Path, Iter);
+            end loop;
+
+            return To_String (Ret);
+         end;
       end Handle_Subdir;
 
       View : constant Project_Id := Get_View (Project);
