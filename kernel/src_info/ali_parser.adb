@@ -1416,7 +1416,11 @@ package body ALI_Parser is
          begin
             while Dir = null and then Last >= Short_ALI_Filename'First loop
                declare
-                  Path : constant String := Object_Path (P, False);
+                  Path : constant String :=
+                           Object_Path
+                             (P, False,
+                              From_Subdir =>
+                                Get_Xrefs_Subdir (Handler.Registry));
                   File : constant String :=
                     Locale_From_UTF8
                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
@@ -1560,7 +1564,11 @@ package body ALI_Parser is
 
       while P /= No_Project loop
          declare
-            Path : constant String := Object_Path (P, False);
+            Path : constant String :=
+                     Object_Path
+                       (P, False,
+                        From_Subdir =>
+                          Get_Xrefs_Subdir (Handler.Registry));
          begin
             if Is_Directory (Path) then
                Open (Dir, Path);
@@ -1791,8 +1799,11 @@ package body ALI_Parser is
 
       if Source /= null
         and then Get_LI (Source) /= null
-        and then Name_As_Directory (Object_Path
-          (Get_Project (Get_LI (Source)), Recursive => False)) =
+        and then Name_As_Directory
+          (Object_Path
+               (Get_Project (Get_LI (Source)),
+                Recursive   => False,
+                From_Subdir => Get_Xrefs_Subdir (Handler.Registry))) =
         Dir_Name (Get_LI_Filename (Get_LI (Source))).all
       then
          if not Update_ALI (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
@@ -1936,7 +1947,11 @@ package body ALI_Parser is
          exit when P = No_Project;
 
          declare
-            Objects  : constant String := Object_Path (P, Recursive => False);
+            Objects  : constant String :=
+                         Object_Path
+                           (P, False,
+                            From_Subdir =>
+                              Get_Xrefs_Subdir (Handler.Registry));
             Dir_Iter : Path_Iterator := Start (Objects);
          begin
             while not At_End (Objects, Dir_Iter) loop

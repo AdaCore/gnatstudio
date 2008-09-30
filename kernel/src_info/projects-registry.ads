@@ -106,6 +106,11 @@ package Projects.Registry is
    --  Return the list of sources found in the predefined project (e.g. the Ada
    --  runtime). Returned memory must be freed by the caller
 
+   function Get_Xrefs_Subdir
+     (Registry : Project_Registry) return String;
+   --  Return the object dir's subdirectory containing the cross reference
+   --  files (ali files).
+
    procedure Set_Predefined_Source_Path
      (Registry : in out Project_Registry; Path : String);
    --  Set the predefined source path
@@ -117,6 +122,10 @@ package Projects.Registry is
    procedure Set_Predefined_Project_Path
      (Registry : in out Project_Registry; Path : String);
    --  Set the predefined project path
+
+   procedure Set_Xrefs_Subdir
+     (Registry : in out Project_Registry; Subdir : String);
+   --  Set the object dirs subdirectory for xrefs.
 
    ----------------------
    -- Loading projects --

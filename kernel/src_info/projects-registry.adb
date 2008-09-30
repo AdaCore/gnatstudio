@@ -181,6 +181,9 @@ package body Projects.Registry is
       Predefined_Source_Files : GNATCOLL.VFS.File_Array_Access;
       --  The list of source files in Predefined_Source_Path
 
+      Xrefs_Subdir : GNAT.Strings.String_Access;
+      --  Object dirs subdirectory containing the cross-refs.
+
       Extensions : Languages_Htable.String_Hash_Table.HTable;
       --  The extensions registered for each language
 
@@ -2365,6 +2368,35 @@ package body Projects.Registry is
    begin
       return Prj.Ext.Project_Path;
    end Get_Predefined_Project_Path;
+
+   ----------------------
+   -- Set_Xrefs_Subdir --
+   ----------------------
+
+   procedure Set_Xrefs_Subdir
+     (Registry : in out Project_Registry; Subdir : String)
+   is
+   begin
+      if Registry.Data.Xrefs_Subdir /= null then
+         GNAT.Strings.Free (Registry.Data.Xrefs_Subdir);
+      end if;
+
+      Registry.Data.Xrefs_Subdir := new String'(Subdir);
+   end Set_Xrefs_Subdir;
+
+   ----------------------
+   -- Get_Xrefs_Subdir --
+   ----------------------
+
+   function Get_Xrefs_Subdir
+     (Registry : Project_Registry) return String is
+   begin
+      if Registry.Data.Xrefs_Subdir = null then
+         return "";
+      end if;
+
+      return Registry.Data.Xrefs_Subdir.all;
+   end Get_Xrefs_Subdir;
 
    --------------
    -- Get_Tree --

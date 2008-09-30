@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Text_IO;                use Ada, Ada.Text_IO;
@@ -568,16 +569,59 @@ package body Projects is
    function Object_Path
      (Project             : Project_Type;
       Recursive           : Boolean;
-      Including_Libraries : Boolean := True) return String
+      Including_Libraries : Boolean := True;
+      From_Subdir         : String := "") return String
    is
+      function Handle_Subdir (Path : String) return String;
+      --  for all directories defined in Path, detect if "From_Subdir" exists,
+      --  and return it instead.
+
+      -------------------
+      -- Handle_Subdir --
+      -------------------
+
+      function Handle_Subdir (Path : String) return String is
+         Iter : File_Utils.Path_Iterator;
+         Ret  : Unbounded_String;
+      begin
+         if From_Subdir = "" then
+            return Path;
+         end if;
+
+         Iter := File_Utils.Start (Path);
+         while not At_End (Path, Iter) loop
+            declare
+               Dir : constant GNATCOLL.VFS.Virtual_File :=
+                       GNATCOLL.VFS.Create (Current (Path, Iter));
+               Subdir : constant GNATCOLL.VFS.Virtual_File :=
+                          GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
+            begin
+               Append (Ret, Path_Separator);
+
+               if Subdir.Is_Directory then
+                  Append (Ret, Subdir.Full_Name.all);
+               else
+                  Trace (Me, "Object_Path: no subdir " & From_Subdir &
+                         " in " & Subdir.Full_Name.all);
+                  Append (Ret, Dir.Full_Name.all);
+               end if;
+            end;
+
+            Iter := Next (Path, Iter);
+         end loop;
+
+         return To_String (Ret);
+      end Handle_Subdir;
+
       View : constant Project_Id := Get_View (Project);
    begin
       if View = Prj.No_Project then
          return "";
 
       elsif Recursive then
-         return Prj.Env.Ada_Objects_Path
-           (View, Project.View_Tree, Including_Libraries).all;
+         return Handle_Subdir
+           (Prj.Env.Ada_Objects_Path
+              (View, Project.View_Tree, Including_Libraries).all);
 
       elsif Including_Libraries
         and then Projects_Table (Project)(View).Library
@@ -587,20 +631,22 @@ package body Projects is
          if Projects_Table (Project)(View).Object_Directory =
                                              No_Path_Information
          then
-            return Get_String
-              (Projects_Table (Project)(View).Library_ALI_Dir.Name);
+            return Handle_Subdir
+              (Get_String
+                 (Projects_Table (Project) (View).Library_ALI_Dir.Name));
          else
-            return Get_String
-              (Projects_Table (Project)(View).Object_Directory.Display_Name)
-              & Path_Separator & Get_String
-              (Projects_Table (Project)(View).Library_ALI_Dir.Name);
+            return Handle_Subdir
+              (Get_String
+                (Projects_Table (Project) (View).Object_Directory.Display_Name)
+               & Path_Separator & Get_String
+                 (Projects_Table (Project) (View).Library_ALI_Dir.Name));
          end if;
       elsif Projects_Table (Project)(View).Object_Directory /=
                                              No_Path_Information
       then
-         return Get_String
-                  (Projects_Table
-                     (Project)(View).Object_Directory.Display_Name);
+         return Handle_Subdir
+           (Get_String
+              (Projects_Table (Project) (View).Object_Directory.Display_Name));
 
       else
          return "";
