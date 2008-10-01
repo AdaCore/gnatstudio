@@ -277,11 +277,12 @@ package body Debugger is
       Debugger.Kernel  := Kernel_Handle (Kernel);
 
       GPS.Kernel.Remote.Spawn
-        (Kernel        => Debugger.Kernel,
-         Arguments     => The_Args,
-         Server        => Debug_Server,
-         Pd            => Descriptor,
-         Success       => Success);
+        (Kernel            => Debugger.Kernel,
+         Arguments         => The_Args,
+         Server            => Debug_Server,
+         Use_Compiler_Path => True,
+         Pd                => Descriptor,
+         Success           => Success);
       Free (The_Args (The_Args'First));
 
       if not Success

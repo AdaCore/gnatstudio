@@ -1879,10 +1879,11 @@ package body Src_Editor_Module is
             begin
                Launch_Process
                  (Kernel,
-                  Command   => Cmd (Cmd'First).all,
-                  Arguments => Cmd (Cmd'First + 1 .. Cmd'Last),
-                  Console   => Get_Console (Kernel),
-                  Success   => Success);
+                  Command          => Cmd (Cmd'First).all,
+                  Arguments        => Cmd (Cmd'First + 1 .. Cmd'Last),
+                  Is_Compiler_Exec => False,
+                  Console          => Get_Console (Kernel),
+                  Success          => Success);
                Free (Cmd);
             end;
          end if;

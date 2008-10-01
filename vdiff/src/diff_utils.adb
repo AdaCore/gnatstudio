@@ -24,14 +24,16 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+
+with Dualcompilation;        use Dualcompilation;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -132,7 +134,7 @@ package body Diff_Utils is
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
-      Cmd := Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
+      Cmd := Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd.all = "" then
          Trace (Me, "command not found: " & Diff_Command);
@@ -207,7 +209,7 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      :=
-        Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
+        Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Insert (Kernel,

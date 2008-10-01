@@ -377,6 +377,7 @@ package body Commands.Builder is
            (Kernel,
             Command              => CL (CL'First).all,
             Arguments            => CL (CL'First + 1 .. CL'Last),
+            Is_Compiler_Exec     => True,
             Server               => Build_Server,
             Console              => Get_Console (Kernel),
             Show_Command         => True,

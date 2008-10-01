@@ -188,13 +188,14 @@ package Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean := True;
-      From_Subdir         : String := "") return String;
+      Xrefs_Dirs          : Boolean := True) return String;
    --  Return the object path for this project. If Recursive is True, it also
    --  includes the object path for all imported projects.
    --  The empty string is returned if the project doesn't have any object
    --  directory (i.e. the user explicitely set it to the empty string).
-   --  If From_Subdir is set to a non-empty string, then the object directories
-   --  subdirectory 'From_Subdir' is returned if it exists.
+   --  If an Xrefs Subdir is set in the project registry to a non-empty string,
+   --  and Xrefs_Dir is set, then the corresponding subdirectory is returned if
+   --  it exists.
 
    function Directory_Contains_Files
      (Project   : Project_Type;

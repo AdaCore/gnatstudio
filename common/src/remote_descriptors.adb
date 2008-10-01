@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +19,8 @@
 
 with Password_Manager;     use Password_Manager;
 
+with Dualcompilation;
 with GNAT.Regpat;          use GNAT.Regpat;
-with GNAT.OS_Lib;
 
 package body Remote_Descriptors is
 
@@ -60,7 +59,7 @@ package body Remote_Descriptors is
       Login_Ptrn      : Pattern_Matcher_Access;
 
    begin
-      Full_Exec := GNAT.OS_Lib.Locate_Exec_On_Path (Start_Command);
+      Full_Exec := Dualcompilation.Locate_Tool_Executable (Start_Command);
 
       if Full_Exec = null then
          return;

@@ -68,18 +68,23 @@ package GPS.Kernel.Remote is
    --  Same as above, with From and To servers identified by their nickname
 
    procedure Spawn
-     (Kernel           : Kernel_Handle;
-      Arguments        : GNAT.OS_Lib.Argument_List;
-      Server           : Server_Type;
-      Pd               : out GNAT.Expect.Process_Descriptor_Access;
-      Success          : out Boolean;
-      Use_Ext_Terminal : Boolean := False;
-      Console          : Interactive_Consoles.Interactive_Console := null;
-      Show_Command     : Boolean := True;
-      Directory        : String := "";
-      Use_Pipes        : Boolean := True);
+     (Kernel            : Kernel_Handle;
+      Arguments         : GNAT.OS_Lib.Argument_List;
+      Server            : Server_Type;
+      Use_Compiler_Path : Boolean;
+      Pd                : out GNAT.Expect.Process_Descriptor_Access;
+      Success           : out Boolean;
+      Use_Ext_Terminal  : Boolean := False;
+      Console           : Interactive_Consoles.Interactive_Console := null;
+      Show_Command      : Boolean := True;
+      Directory         : String := "";
+      Use_Pipes         : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
+   --  If Use_Compiler_Path is set, then the exec file is searched for in the
+   --  compilation toolchain path if defined. If unset, and the server is the
+   --  build server, and the dual compilation mode is activated, then the spawn
+   --  is done on the local server.
    --  If Use_Ext_Terminal is not null, then the program is executed in a
    --  separate terminal.
    --  If Console is not null, and Show_Command is set, outputs the command

@@ -155,6 +155,7 @@ Searching and Replacing
 
 Compilation/Build
 * The Build Menu::
+* The Dual Compilation Mode::
 
 Source Browsing
 * General Issues::
@@ -4985,6 +4986,7 @@ errors or warnings (see @ref{Code Fixing}).
 
 @menu
 * The Build Menu::
+* The Dual Compilation Mode::
 @end menu
 
 @node The Build Menu
@@ -5119,6 +5121,12 @@ that process.
 
 If your application is build through a Makefile, you should probably load
 the @file{Makefile.py} startup script (see the menu @code{/Tools/Plug-ins}).
+
+@node The Dual Compilation Mode
+@section The Dual Compilation Mode
+@noindent
+
+??? TODO
 
 @c --------------------------------------------------------------------
 @node Source Browsing
@@ -10387,6 +10395,15 @@ This tag accepts the following attributes:
    @xref{Remote operations}, for explanation of
    what these servers are.
 
+   @item is-compiler-cmd (optional)
+   @cindex dual-compilation
+   This attribute can be used to tell GPS that the spawned command is part of
+   the compilation toolchain. This is useful when the compiler tool-chain is in
+   a specific path, only accessible when the dual-compilation mode is
+   activated. The accepted values are @code{"false"} (default) and
+   @code{"true"}.
+   @xref{The Dual Compilation Mode}, for explanation of the dual compilation mode.
+
    @item check-password (optional)
    @cindex password
    This attribute can be used to tell GPS to check and handle password prompts
@@ -14949,7 +14966,7 @@ like:
 @smallexample
 class MyClass:
   def __init__ (self):
-     self.process = GPS.Process 
+     self.process = GPS.Process
          ("command_line", on_match = self.on_match)
 
   def on_match (self, process, matched, unmatched);

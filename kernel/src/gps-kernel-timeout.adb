@@ -55,6 +55,7 @@ package body GPS.Kernel.Timeout is
    type Console_Process_Data is new GObject_Record with record
       Args                 : String_List_Access := null;
       Server               : Server_Type;
+      Is_Compiler_Exec     : Boolean;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
       Show_In_Task_Manager : Boolean;
@@ -225,6 +226,7 @@ package body GPS.Kernel.Timeout is
          Spawn (Command.Data.D.Kernel,
                 Command.Data.Args.all,
                 Command.Data.Server,
+                Command.Data.Is_Compiler_Exec,
                 Command.Data.D.Descriptor,
                 Success,
                 Command.Data.Use_Ext_Terminal,
@@ -547,6 +549,7 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Is_Compiler_Exec     : Boolean;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -584,8 +587,6 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C := new Monitor_Command;
-      C.Data := new Console_Process_Data;
-      Initialize (C.Data);
 
       No_Handler.Id := Null_Handler_Id;
 
@@ -596,33 +597,39 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C.Name := new String'(Command);
-      C.Data.Args                 := new String_List'
-        ((1 => new String'(Command)) & Clone (Arguments));
-      C.Data.Server               := Server;
-      C.Data.Console              := Console;
-      C.Data.Use_Ext_Terminal     := Use_Ext_Terminal;
-      C.Data.Directory            := new String'(Directory);
-      C.Data.Delete_Id            := No_Handler;
-      C.Data.Show_In_Task_Manager := Show_In_Task_Manager;
-      C.Data.Show_Output          := Show_Output;
-      C.Data.Show_Command         := Show_Command;
-      C.Data.Show_Exit_Status     := Show_Exit_Status;
-      C.Data.Strip_CR             := Strip_CR;
-      C.Data.Use_Pipes            := Use_Pipes;
-      C.Data.Synchronous          := Synchronous;
-      C.Data.Expect_Regexp        := Expect_Regexp;
-      C.Data.D                    := (Kernel        => Kernel,
-                                      Descriptor    => null,
-                                      Callback      => Callback,
-                                      Exit_Cb       => Exit_Cb,
-                                      Callback_Data => Callback_Data,
-                                      Command       => Command_Access (C),
-                                      Process_Died  => False);
-      C.Data.Died                 := False;
-      C.Data.Interrupted          := False;
-      C.Data.Started              := False;
-      C.Data.Id                   := 0;
-      C.Data.Timeout              := Timeout;
+      C.Data := new Console_Process_Data'
+        (GObject_Record with
+         Args                 => new String_List'
+                             ((1 => new String'(Command)) & Clone (Arguments)),
+         Server               => Server,
+         Is_Compiler_Exec     => Is_Compiler_Exec,
+         Console              => Console,
+         Use_Ext_Terminal     => Use_Ext_Terminal,
+         Directory            => new String'(Directory),
+         Delete_Id            => No_Handler,
+         Show_In_Task_Manager => Show_In_Task_Manager,
+         Show_Output          => Show_Output,
+         Show_Command         => Show_Command,
+         Show_Exit_Status     => Show_Exit_Status,
+         Strip_CR             => Strip_CR,
+         Use_Pipes            => Use_Pipes,
+         Synchronous          => Synchronous,
+         Expect_Regexp        => Expect_Regexp,
+         D                    => (Kernel        => Kernel,
+                                  Descriptor    => null,
+                                  Callback      => Callback,
+                                  Exit_Cb       => Exit_Cb,
+                                  Callback_Data => Callback_Data,
+                                  Command       => Command_Access (C),
+                                  Process_Died  => False),
+         Died                 => False,
+         Interrupted          => False,
+         Started              => False,
+         Start_Time           =>
+           Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
+         Id                   => 0,
+         Timeout              => Timeout);
+      Initialize (C.Data);
       Ref (C.Data);
 
       if Synchronous then
@@ -667,6 +674,7 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Is_Compiler_Exec     : Boolean;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -689,6 +697,7 @@ package body GPS.Kernel.Timeout is
         (Kernel               => Kernel,
          Command              => Command,
          Arguments            => Arguments,
+         Is_Compiler_Exec     => Is_Compiler_Exec,
          Server               => GPS_Server,
          Console              => Console,
          Callback             => Callback,
@@ -734,6 +743,7 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
+      Is_Compiler_Exec     : Boolean;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -759,6 +769,7 @@ package body GPS.Kernel.Timeout is
         (Kernel               => Kernel,
          Command              => Command,
          Arguments            => Arguments,
+         Is_Compiler_Exec     => Is_Compiler_Exec,
          Server               => Server,
          Console              => Console,
          Callback             => Callback,

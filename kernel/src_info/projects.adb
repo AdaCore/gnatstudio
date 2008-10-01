@@ -570,7 +570,7 @@ package body Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean := True;
-      From_Subdir         : String := "") return String
+      Xrefs_Dirs          : Boolean := True) return String
    is
       function Handle_Subdir (Path : String) return String;
       --  for all directories defined in Path, detect if "From_Subdir" exists,
@@ -582,15 +582,23 @@ package body Projects is
 
       function Handle_Subdir (Path : String) return String is
       begin
-         if From_Subdir = "" then
+         if not Xrefs_Dirs
+           or else
+             Get_Xrefs_Subdir (Project_Registry (Get_Registry (Project))) = ""
+         then
             return Path;
          end if;
 
          declare
-            Iter : File_Utils.Path_Iterator;
-            Ret  : Unbounded_String;
+            From_Subdir : constant String :=
+                            Get_Xrefs_Subdir
+                              (Project_Registry (Get_Registry (Project)));
+            Iter        : File_Utils.Path_Iterator;
+            Ret         : Unbounded_String := Null_Unbounded_String;
+
          begin
             Iter := File_Utils.Start (Path);
+
             while not At_End (Path, Iter) loop
                declare
                   Dir : constant GNATCOLL.VFS.Virtual_File :=
@@ -598,7 +606,9 @@ package body Projects is
                   Subdir : constant GNATCOLL.VFS.Virtual_File :=
                              GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
                begin
-                  Append (Ret, Path_Separator);
+                  if Ret /= Null_Unbounded_String then
+                     Append (Ret, Path_Separator);
+                  end if;
 
                   if Subdir.Is_Directory then
                      Append (Ret, Subdir.Full_Name.all);

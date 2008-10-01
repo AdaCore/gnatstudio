@@ -34,6 +34,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences.Enums; use Default_Preferences;
+with Dualcompilation;           use Dualcompilation;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -327,7 +328,7 @@ package body External_Editor_Module is
             end;
 
             if Args'Length /= 0 then
-               Path := Locate_Exec_On_Path (Args (Args'First).all);
+               Path := Locate_Tool_Executable (Args (Args'First).all);
 
                if Path /= null then
                   Free (Path);
@@ -343,7 +344,7 @@ package body External_Editor_Module is
             Args := Argument_String_To_List
               (Clients (C).Lisp_Command_Name.all);
 
-            Path := Locate_Exec_On_Path (Args (Args'First).all);
+            Path := Locate_Tool_Executable (Args (Args'First).all);
             if Path /= null then
                Free (Path);
             else
@@ -355,7 +356,7 @@ package body External_Editor_Module is
          end if;
 
          if Match and then Clients (C).Extra_Test /= null then
-            Path := Locate_Exec_On_Path (Clients (C).Extra_Test.all);
+            Path := Locate_Tool_Executable (Clients (C).Extra_Test.all);
             if Path /= null then
                Free (Path);
             else
@@ -554,7 +555,7 @@ package body External_Editor_Module is
 
       for S in Servers'Range loop
          Args := Argument_String_To_List (Servers (S).Command_Name.all);
-         Path := Locate_Exec_On_Path (Args (Args'First).all);
+         Path := Locate_Tool_Executable (Args (Args'First).all);
 
          if Path /= null then
             Substitute
@@ -663,7 +664,7 @@ package body External_Editor_Module is
          E => Extended_Lisp);
 
       if Args'Length /= 0 then
-         Path := Locate_Exec_On_Path (Args (Args'First).all);
+         Path := Locate_Tool_Executable (Args (Args'First).all);
       else
          Insert (Kernel, """" & Get_Pref (Custom_Editor)
                     & """ is not a valid external editor",

@@ -108,6 +108,7 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Docgen2_Module;
+with Dualcompilation_Module;
 with External_Editor_Module;
 with GPS.Location_View;
 with GVD_Module;
@@ -205,6 +206,8 @@ procedure GPS.Main is
                       Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
    Remote_View_Trace      : constant Debug_Handle :=
                       Create ("MODULE.Remote_View", GNATCOLL.Traces.On);
+   Dualcompilation_Trace  : constant Debug_Handle :=
+                      Create ("MODULE.Dualcompilation", GNATCOLL.Traces.On);
 
    GPS_Started_Hook       : constant Hook_Name := "gps_started";
 
@@ -1284,6 +1287,10 @@ procedure GPS.Main is
 
       if Active (Project_Browser_Trace) then
          Browsers.Projects.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Dualcompilation_Trace) then
+         Dualcompilation_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Entities_Browser_Trace) then

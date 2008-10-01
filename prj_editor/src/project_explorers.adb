@@ -51,7 +51,6 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Label;                 use Gtk.Label;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
@@ -669,7 +668,6 @@ package body Project_Explorers is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
-      Label    : Gtk_Label;
       H1       : Refresh_Hook;
       H2       : Project_Hook;
       Tooltip  : Explorer_Tooltips_Access;
@@ -680,7 +678,6 @@ package body Project_Explorers is
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Gtk_New (Label, -"Project View");
       Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
 
       Init_Graphics (Gtk_Widget (Explorer));
@@ -1486,7 +1483,8 @@ package body Project_Explorers is
       Project  : Project_Type)
    is
       Obj  : constant String :=
-               Name_As_Directory (Object_Path (Project, False));
+               Name_As_Directory
+                 (Object_Path (Project, False, Xrefs_Dirs => False));
       Exec : constant String := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;

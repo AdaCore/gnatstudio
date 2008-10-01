@@ -49,6 +49,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
+with Dualcompilation;            use Dualcompilation;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -1815,7 +1816,7 @@ package body GVD.Process is
                   --  If the Exec is not an absolute path and it is not found
                   --  from the current directory, try to locate it on path.
 
-                  Exec := Locate_Exec_On_Path (Exec_Name);
+                  Exec := Locate_Compiler_Executable (Exec_Name);
 
                   if Exec /= null then
                      Module := Create

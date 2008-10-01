@@ -63,8 +63,9 @@ package body Expect_Interface is
    Progress_Total_Cst   : aliased constant String := "progress_total";
    Before_Kill_Cst      : aliased constant String := "before_kill";
    Remote_Server_Cst    : aliased constant String := "remote_server";
+   Is_Compiler_Cmd_Cst  : aliased constant String := "is_compiler_cmd";
    Show_Command_Cst     : aliased constant String := "show_command";
-   Single_Line_Cst       : aliased constant String := "single_line_regexp";
+   Single_Line_Cst      : aliased constant String := "single_line_regexp";
    Case_Sensitive_Cst   : aliased constant String := "case_sensitive_regexp";
    Rows_Cst             : aliased constant String := "rows";
    Columns_Cst          : aliased constant String := "columns";
@@ -80,9 +81,10 @@ package body Expect_Interface is
                          9  => Progress_Total_Cst'Access,
                          10 => Before_Kill_Cst'Access,
                          11 => Remote_Server_Cst'Access,
-                         12 => Show_Command_Cst'Access,
-                         13 => Single_Line_Cst'Access,
-                         14 => Case_Sensitive_Cst'Access);
+                         12 => Is_Compiler_Cmd_Cst'Access,
+                         13 => Show_Command_Cst'Access,
+                         14 => Single_Line_Cst'Access,
+                         15 => Case_Sensitive_Cst'Access);
 
    Send_Args : constant Cst_Argument_List :=
                  (Command_Cst'Access, Add_Lf_Cst'Access);
@@ -93,6 +95,7 @@ package body Expect_Interface is
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
       Server           : Server_Type;
+      Is_Compiler_Cmd  : Boolean;
       Command          : Argument_List_Access;
       Show_Command     : Boolean;
       On_Match         : Subprogram_Type;
@@ -277,6 +280,7 @@ package body Expect_Interface is
               (Kernel,
                Command.Command.all,
                Command.Server,
+               Command.Is_Compiler_Cmd,
                Command.Pd,
                Res,
                Console      => Get_Console (Kernel),
@@ -800,8 +804,8 @@ package body Expect_Interface is
             Show_Bar        : constant Boolean := Nth_Arg (Data, 6, True);
             Progress_Regexp : constant String := Nth_Arg (Data, 7, "");
             Remote_Server   : constant String := Nth_Arg (Data, 11, "");
-            Single_Line     : constant Boolean := Nth_Arg (Data, 13, False);
-            Case_Sensitive  : constant Boolean := Nth_Arg (Data, 14, True);
+            Single_Line     : constant Boolean := Nth_Arg (Data, 14, False);
+            Case_Sensitive  : constant Boolean := Nth_Arg (Data, 15, True);
             Success         : Boolean;
             Flags           : Regexp_Flags := Multiple_Lines;
 
@@ -817,11 +821,12 @@ package body Expect_Interface is
             D              := new Custom_Action_Record;
             D.Command      := Argument_String_To_List_With_Triple_Quotes
               (Command_Line);
-            D.On_Match     := Nth_Arg (Data, 4, null);
-            D.On_Exit      := Nth_Arg (Data, 5, null);
-            D.Before_Kill  := Nth_Arg (Data, 10, null);
-            D.Show_Command := Nth_Arg (Data, 12, False);
-            D.Inst         := Inst;
+            D.On_Match        := Nth_Arg (Data, 4, null);
+            D.On_Exit         := Nth_Arg (Data, 5, null);
+            D.Before_Kill     := Nth_Arg (Data, 10, null);
+            D.Is_Compiler_Cmd := Nth_Arg (Data, 12, False);
+            D.Show_Command    := Nth_Arg (Data, 13, False);
+            D.Inst            := Inst;
 
             if Progress_Regexp /= "" then
                D.Progress_Regexp := new Pattern_Matcher'
@@ -875,6 +880,7 @@ package body Expect_Interface is
                     (Kernel,
                      D.Command.all,
                      D.Server,
+                     D.Is_Compiler_Cmd,
                      D.Pd,
                      Success,
                      Console      => Get_Console (Kernel),

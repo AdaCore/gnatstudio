@@ -394,21 +394,22 @@ package body Remote_Sync_Module is
       --  Windows
       Launch_Process
         (Kernel_Handle (Kernel),
-         Command       => "rsync",
-         Arguments     => Build_Arg,
-         Console       => Get_Console (Kernel),
-         Show_Command  => Rsync_Data.Print_Command,
-         Show_Output   => Real_Print_Output,
-         Success       => Success,
-         Line_By_Line  => False,
-         Callback      => Parse_Rsync_Output'Access,
-         Exit_Cb       => Rsync_Terminated'Access,
-         Callback_Data => new Rsync_Callback_Data'(Cb_Data),
-         Queue_Id      => Rsync_Data.Queue_Id,
-         Synchronous   => Rsync_Data.Synchronous,
-         Timeout       => Machine.Timeout,
-         Strip_CR      => False,
-         Use_Pipes     => False);
+         Command           => "rsync",
+         Arguments         => Build_Arg,
+         Is_Compiler_Exec  => False,
+         Console           => Get_Console (Kernel),
+         Show_Command      => Rsync_Data.Print_Command,
+         Show_Output       => Real_Print_Output,
+         Success           => Success,
+         Line_By_Line      => False,
+         Callback          => Parse_Rsync_Output'Access,
+         Exit_Cb           => Rsync_Terminated'Access,
+         Callback_Data     => new Rsync_Callback_Data'(Cb_Data),
+         Queue_Id          => Rsync_Data.Queue_Id,
+         Synchronous       => Rsync_Data.Synchronous,
+         Timeout           => Machine.Timeout,
+         Strip_CR          => False,
+         Use_Pipes         => False);
 
       Success := Rsync_Module.Ret_Data.Status = 0 and then Success;
       return Success;

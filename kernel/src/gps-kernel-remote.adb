@@ -83,6 +83,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
+with Dualcompilation;            use Dualcompilation;
 with Filesystems;                use Filesystems;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
@@ -2707,7 +2708,8 @@ package body GPS.Kernel.Remote is
         (Kernel, Server_Config_Changed_Hook, Server_Config_Changed_Hook_Type);
 
       --  Register build server connected hook
-      Register_Hook_No_Args (Kernel, Build_Server_Connected_Hook);
+      Register_Hook_No_Args
+        (Kernel, Build_Server_Connected_Hook);
 
       --  Register server list changed hook
       Register_Hook_No_Args
@@ -3640,16 +3642,17 @@ package body GPS.Kernel.Remote is
    -----------
 
    procedure Spawn
-     (Kernel           : Kernel_Handle;
-      Arguments        : GNAT.OS_Lib.Argument_List;
-      Server           : Server_Type;
-      Pd               : out GNAT.Expect.Process_Descriptor_Access;
-      Success          : out Boolean;
-      Use_Ext_Terminal : Boolean := False;
-      Console          : Interactive_Consoles.Interactive_Console := null;
-      Show_Command     : Boolean := True;
-      Directory        : String := "";
-      Use_Pipes        : Boolean := True)
+     (Kernel            : Kernel_Handle;
+      Arguments         : GNAT.OS_Lib.Argument_List;
+      Server            : Server_Type;
+      Use_Compiler_Path : Boolean;
+      Pd                : out GNAT.Expect.Process_Descriptor_Access;
+      Success           : out Boolean;
+      Use_Ext_Terminal  : Boolean := False;
+      Console           : Interactive_Consoles.Interactive_Console := null;
+      Show_Command      : Boolean := True;
+      Directory         : String := "";
+      Use_Pipes         : Boolean := True)
    is
       Exec                  : String_Access;
       Old_Dir               : String_Access;
@@ -3662,6 +3665,9 @@ package body GPS.Kernel.Remote is
       procedure On_New_Connection (Server_Name : String);
       --  Executed when a new connection is performed
 
+      function Is_Local_Server return Boolean;
+      --  Tell if the execution server is local
+
       ----------------
       -- Check_Exec --
       ----------------
@@ -3670,7 +3676,11 @@ package body GPS.Kernel.Remote is
          Full_Exec : String_Access;
          Norm_Exec : String_Access;
       begin
-         Full_Exec := Locate_Exec_On_Path (Exec);
+         if Use_Compiler_Path then
+            Full_Exec := Locate_Compiler_Executable (Exec);
+         else
+            Full_Exec := Locate_Tool_Executable (Exec);
+         end if;
 
          if Full_Exec = null then
             Insert
@@ -3701,12 +3711,25 @@ package body GPS.Kernel.Remote is
          end if;
       end On_New_Connection;
 
+      ---------------------
+      -- Is_Local_Server --
+      ---------------------
+
+      function Is_Local_Server return Boolean is
+      begin
+         return Is_Local (Server)
+           or else
+             (Is_Dualcompilation_Active
+              and then Server = Build_Server
+              and then not Use_Compiler_Path);
+      end Is_Local_Server;
+
    begin
       Success := False;
 
       --  First verify the executable to be launched
 
-      if Is_Local (Server) then
+      if Is_Local_Server then
          Exec := Check_Exec (Arguments (Arguments'First).all);
 
          if Exec = null then
@@ -3723,7 +3746,7 @@ package body GPS.Kernel.Remote is
       if Console /= null
         and then Show_Command
       then
-         if Is_Local (Server) then
+         if Is_Local_Server then
             Insert (Console,
                     Argument_List_To_String (Arguments),
                     Add_LF => True);
@@ -3735,7 +3758,7 @@ package body GPS.Kernel.Remote is
          end if;
       end if;
 
-      if Is_Local (Server) then
+      if Is_Local_Server then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
          Set_Use_Pipes (TTY_Process_Descriptor (Pd.all), Use_Pipes);
 

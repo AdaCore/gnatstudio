@@ -53,6 +53,7 @@ class Gcov_Process (GPS.Console, GPS.Process):
 
       GPS.Process.__init__ \
          (self, process + ' ' + args, ".+", \
+          remote_server="Build_Server", is_compiler_cmd=True, \
           on_exit=Gcov_Process.on_exit, \
           on_match=Gcov_Process.on_output)
 

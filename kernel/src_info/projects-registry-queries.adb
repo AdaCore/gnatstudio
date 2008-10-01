@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2007                      --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +24,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with Dualcompilation;           use Dualcompilation;
 with GPS.Intl;                  use GPS.Intl;
 with Prj.Ext;                   use Prj.Ext;
 with Prj;                       use Prj;
@@ -105,7 +105,8 @@ package body Projects.Registry.Queries is
          if Is_Local (Build_Server) then
             declare
                Gnatls_Path : GNAT.Strings.String_Access :=
-                     Locate_Exec_On_Path (Gnatls_Args (Gnatls_Args'First).all);
+                               Locate_Compiler_Executable
+                                 (Gnatls_Args (Gnatls_Args'First).all);
             begin
                if Gnatls_Path = null then
                   Success := False;

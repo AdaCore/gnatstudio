@@ -1,0 +1,38 @@
+ifeq ($(DUALCOMPILATION_PROJECT),)
+DUALCOMPILATION_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   DUALCOMPILATION_ROOT=True
+endif
+
+DUALCOMPILATION_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(DUALCOMPILATION_BASE_DIR)/../common
+include $(BASE_DIR)/Makefile.common
+BASE_DIR=$(DUALCOMPILATION_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+
+DUALCOMPILATION_SRC_DIRS = $(DUALCOMPILATION_BASE_DIR)/src
+SRC_DIRS += $(DUALCOMPILATION_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(DUALCOMPILATION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+DUALCOMPILATION_SRCS := \
+  $(foreach name,$(DUALCOMPILATION_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+DUALCOMPILATION_OBJ_DIR = $(DUALCOMPILATION_BASE_DIR)/obj
+OBJ_DIR = $(DUALCOMPILATION_OBJ_DIR)
+
+PROJECT_FILE = dualcompilation
+
+ifneq ($(strip $(DUALCOMPILATION_SRCS)),)
+   LIBS := $(DUALCOMPILATION_OBJ_DIR)/libdualcompilation$(AR_EXT) $(LIBS)
+endif
+
+ifeq ($(DUALCOMPILATION_ROOT),True)
+   include ../builder/src/Makefile.generic
+else
+   DEPS_PROJECTS += $(DUALCOMPILATION_BASE_DIR)/dualcompilation
+endif
+
+endif

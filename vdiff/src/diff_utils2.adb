@@ -26,6 +26,7 @@ pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
+with Dualcompilation;        use Dualcompilation;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
@@ -251,7 +252,7 @@ package body Diff_Utils2 is
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
-      Cmd := Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
+      Cmd := Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -328,7 +329,7 @@ package body Diff_Utils2 is
    begin
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      :=
-        Locate_Exec_On_Path (Unquote (Cmd_Args (Cmd_Args'First).all));
+        Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -462,7 +463,7 @@ package body Diff_Utils2 is
 
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
-      Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+      Cmd      := Locate_Tool_Executable (Cmd_Args (Cmd_Args'First).all);
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
