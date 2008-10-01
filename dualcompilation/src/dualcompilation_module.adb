@@ -155,19 +155,27 @@ package body Dualcompilation_Module is
            (Active               => Property.Active,
             Tool_Search_Path     => Property.Tools_Path.all,
             Compiler_Search_Path => Property.Compiler_Path.all);
-      elsif Getenv ("GPS_TEST_DUALCOMPILATION") /= null then
-         Projects.Registry.Set_Xrefs_Subdir
-           (GPS.Kernel.Project.Get_Registry (Kernel).all,
-            "xrefs");
-         Dualcompilation.Set_Dualcompilation_Properties
-           (Active               => True,
-            Tool_Search_Path     => "",
-            Compiler_Search_Path => Getenv ("GPS_TEST_DUALCOMPILATION").all);
       else
-         Dualcompilation.Set_Dualcompilation_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => "",
-            Compiler_Search_Path => "");
+         declare
+            Env : String_Access := Getenv ("GPS_TEST_DUALCOMPILATION");
+         begin
+            if Env /= null and then Env.all /= "" then
+               Projects.Registry.Set_Xrefs_Subdir
+                 (GPS.Kernel.Project.Get_Registry (Kernel).all,
+                  "xrefs");
+               Dualcompilation.Set_Dualcompilation_Properties
+                 (Active               => True,
+                  Tool_Search_Path     => "",
+                  Compiler_Search_Path => Env.all);
+            else
+               Dualcompilation.Set_Dualcompilation_Properties
+                 (Active               => Property.Active,
+                  Tool_Search_Path     => "",
+                  Compiler_Search_Path => "");
+            end if;
+
+            Free (Env);
+         end;
       end if;
    end Register_Module;
 
