@@ -70,6 +70,32 @@ package body Dualcompilation is
    end Is_Dualcompilation_Active;
 
    --------------------------
+   -- Get_Tool_Search_Path --
+   --------------------------
+
+   function Get_Tool_Search_Path return String is
+   begin
+      if not Property.Active or else Property.Tools_Path = null then
+         return "";
+      end if;
+
+      return Property.Tools_Path.all;
+   end Get_Tool_Search_Path;
+
+   ------------------------------
+   -- Get_Compiler_Search_Path --
+   ------------------------------
+
+   function Get_Compiler_Search_Path return String is
+   begin
+      if not Property.Active or else Property.Compiler_Path = null then
+         return "";
+      end if;
+
+      return Property.Compiler_Path.all;
+   end Get_Compiler_Search_Path;
+
+   --------------------------
    -- Internal_Locate_Exec --
    --------------------------
 

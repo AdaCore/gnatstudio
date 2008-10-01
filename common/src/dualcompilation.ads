@@ -24,8 +24,14 @@ package Dualcompilation is
    function Is_Dualcompilation_Active return Boolean;
    --  Tell if the dual compilation mode is active
 
+   function Get_Tool_Search_Path return String;
+   --  Get the tool search path
+
    function Locate_Tool_Executable (Exec_Name : String) return String_Access;
    --  Locate a tool executable on path
+
+   function Get_Compiler_Search_Path return String;
+   --  Get the compiler search path
 
    function Locate_Compiler_Executable
      (Exec_Name : String) return String_Access;

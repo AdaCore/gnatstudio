@@ -1705,7 +1705,7 @@ package body Builder_Module is
         (Kernel_Handle (Kernel),
          Command          => Run.Command.all,
          Arguments        => Run.Arguments.all,
-         Is_Compiler_Exec => True,
+         Is_Compiler_Exec => False,
          Server           => Execution_Server,
          Console          => Console,
          Success          => Success,

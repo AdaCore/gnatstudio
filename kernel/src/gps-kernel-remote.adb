@@ -3789,13 +3789,34 @@ package body GPS.Kernel.Remote is
 
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
+         declare
+            Oldpath : String_Access;
          begin
+            if Is_Dualcompilation_Active then
+               Oldpath := Getenv ("PATH");
+               if Use_Compiler_Path then
+                  Setenv ("PATH", Get_Compiler_Search_Path &
+                          Path_Separator &
+                          Oldpath.all);
+               else
+                  Setenv ("PATH", Get_Tool_Search_Path &
+                          Path_Separator &
+                          Oldpath.all);
+               end if;
+               Trace (Me, Getenv ("PATH").all);
+            end if;
+
             Non_Blocking_Spawn
               (Pd.all,
                Args (Args'First).all,
                Args (Args'First + 1 .. Args'Last),
                Buffer_Size => 0,
                Err_To_Out  => True);
+
+            if Is_Dualcompilation_Active then
+               Setenv ("PATH", Oldpath.all);
+               Free (Oldpath);
+            end if;
 
          exception
             when Invalid_Process =>
