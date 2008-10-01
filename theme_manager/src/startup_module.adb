@@ -465,7 +465,7 @@ package body Startup_Module is
         (Kernel, '/' & (-"Tools"),
          -"_Plug-ins",
          Callback => On_Edit_Startup_Scripts'Access,
-         Ref_Item => "Macro",
+         Ref_Item => "Dual Compilation Mode",
          Add_Before => False);
    end Register_Module;
 

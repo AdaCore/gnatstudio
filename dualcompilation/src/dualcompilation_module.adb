@@ -18,13 +18,18 @@
 -----------------------------------------------------------------------
 
 with System.OS_Lib;            use System.OS_Lib;
+with Glib.Object;              use Glib.Object;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with Projects.Registry;
+with Gtk.Dialog;               use Gtk.Dialog;
 with Traces;                   use Traces;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
-with GPS.Kernel.Project;
 
-with Dualcompilation; use Dualcompilation;
+with Dualcompilation;          use Dualcompilation;
+with Dualcompilation_Dialog;   use Dualcompilation_Dialog;
+with Entities;
 
 package body Dualcompilation_Module is
 
@@ -42,6 +47,10 @@ package body Dualcompilation_Module is
      (Property : in out Dualcomp_Property; From : Glib.Xml_Int.Node_Ptr);
    overriding procedure Destroy (Property : in out Dualcomp_Property);
    --  See inherited doc.
+
+   procedure On_Menu
+     (Widget : access GObject_Record'Class; Kernel : GPS.Kernel.Kernel_Handle);
+   --  Tools->Dual COmpilation Mode menu
 
    function Get_Property return Dualcomp_Property'Class;
    --  Retrieve the global property
@@ -116,6 +125,57 @@ package body Dualcompilation_Module is
       Free (Property.Compiler_Path);
    end Destroy;
 
+   -------------
+   -- On_Menu --
+   -------------
+
+   procedure On_Menu
+     (Widget : access GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      Property    : Dualcomp_Property := Dualcomp_Property (Get_Property);
+      Prop_Access : Property_Access;
+      Dialog      : Dualcompilation_Dialog.Dualc_Dialog;
+      Resp        : Gtk_Response_Type;
+   begin
+      if Property.Active then
+         Gtk_New
+           (Dialog, Widget,
+            True, Property.Tools_Path.all, Property.Compiler_Path.all);
+      else
+         Gtk_New
+           (Dialog, Widget, False, "", "");
+      end if;
+
+      Resp := Dialog.Run;
+
+      if Resp = Gtk_Response_OK then
+         Property.Active := Get_Active (Dialog);
+         Property.Tools_Path := new String'(Get_Tools_Path (Dialog));
+         Property.Compiler_Path := new String'(Get_Compiler_Path (Dialog));
+         Prop_Access := new Dualcomp_Property'(Property);
+         Set_Property
+           (Kernel,
+            Index_Name  => "dualcompilation_properties",
+            Index_Value => "property",
+            Name        => "property",
+            Property    => Prop_Access,
+            Persistent  => True);
+
+         Dualcompilation.Set_Dualcompilation_Properties
+           (Active               => Property.Active,
+            Tool_Search_Path     => Property.Tools_Path.all,
+            Compiler_Search_Path => Property.Compiler_Path.all);
+
+         --  We need to recompute the project view, and reset the whole
+         --  entities database to fully recompute the default paths.
+         GPS.Kernel.Project.Recompute_View (Kernel);
+         Entities.Reset (GPS.Kernel.Get_Database (Kernel));
+      end if;
+
+      Destroy (Dialog);
+   end On_Menu;
+
    ------------------
    -- Get_Property --
    ------------------
@@ -126,9 +186,9 @@ package body Dualcompilation_Module is
    begin
       Get_Property
         (Property,
-         Index_Name  => "module",
-         Index_Value => "dualcompilation",
-         Name        => "configuration",
+         Index_Name  => "dualcompilation_properties",
+         Index_Value => "property",
+         Name        => "property",
          Found       => Success);
 
       if not Success then
@@ -147,7 +207,11 @@ package body Dualcompilation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Property : constant Dualcomp_Property'Class := Get_Property;
+      Tools    : constant String := '/' & (-"Tools") & '/';
    begin
+      Register_Menu
+        (Kernel, Tools, -"_Dual Compilation Mode", "", On_Menu'Access);
+
       if Property.Tools_Path /= null
         and then Property.Compiler_Path /= null
       then
@@ -156,26 +220,10 @@ package body Dualcompilation_Module is
             Tool_Search_Path     => Property.Tools_Path.all,
             Compiler_Search_Path => Property.Compiler_Path.all);
       else
-         declare
-            Env : String_Access := Getenv ("GPS_TEST_DUALCOMPILATION");
-         begin
-            if Env /= null and then Env.all /= "" then
-               Projects.Registry.Set_Xrefs_Subdir
-                 (GPS.Kernel.Project.Get_Registry (Kernel).all,
-                  "xrefs");
-               Dualcompilation.Set_Dualcompilation_Properties
-                 (Active               => True,
-                  Tool_Search_Path     => "",
-                  Compiler_Search_Path => Env.all);
-            else
-               Dualcompilation.Set_Dualcompilation_Properties
-                 (Active               => Property.Active,
-                  Tool_Search_Path     => "",
-                  Compiler_Search_Path => "");
-            end if;
-
-            Free (Env);
-         end;
+         Dualcompilation.Set_Dualcompilation_Properties
+           (Active               => Property.Active,
+            Tool_Search_Path     => "",
+            Compiler_Search_Path => "");
       end if;
    end Register_Module;
 
