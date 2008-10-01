@@ -212,6 +212,7 @@ package body GPS.Kernel.Project is
          --  predefined paths.
 
          if Use_Cache
+           and then not Is_Local (Build_Server)
            and then Handle.Gnatls_Cache /= null
            and then Handle.Gnatls_Cache.all = Gnatls
            and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
@@ -734,8 +735,8 @@ package body GPS.Kernel.Project is
 
    begin
       Push_State (Kernel_Handle (Handle), Busy);
-      Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
+      Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
 
       --  The list of source or ALI files might have changed, so we need to
       --  reset the cache containing LI information, otherwise this cache might
