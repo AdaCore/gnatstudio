@@ -1914,6 +1914,21 @@ package body GVD.Process is
 
       Exec := Get_Executable (Debugger.Debugger);
 
+      if not Is_Regular_File (Exec) then
+         declare
+            Buttons : Message_Dialog_Buttons;
+            pragma Unreferenced (Buttons);
+         begin
+            Buttons := Message_Dialog
+              (Msg =>
+               -"The executable specified with --debug does not exist on disk",
+               Dialog_Type => Error,
+               Buttons => Button_OK,
+               Title =>  -"Executable not found",
+               Parent => Get_Main_Window (Kernel));
+         end;
+      end if;
+
       declare
          List : Argument_List := Get_Attribute_Value (Project, Main_Attribute);
       begin

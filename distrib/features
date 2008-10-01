@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Sep 27, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Oct 01, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -338,6 +338,11 @@ NF-43-FC10-002 Code fixing uses the real indentation (2007-12-17)
   When the compiler detects an intendation problem, and doesn't propose the
   actual expected column, the auto fix proposed by GPS is now more accurate,
   using the same indentation engine & preferences as the editor.
+
+NF-43-FB20-009 Error message when --debug executable not found (2008-10-01)
+
+  When the executable specified with --debug is not found, an error dialog
+  is now displayed by GPS.
 
 NF-43-F324-007 Fixing "multiple blank lines" error message (2008-08-13)
 
