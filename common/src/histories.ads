@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,6 +37,9 @@ package Histories is
 
    type History_Key is new String;
    type History_Key_Type is (Strings, Booleans);
+
+   No_History : constant History_Record;
+   No_Key     : constant History_Key := "";
 
    procedure Load (Hist : in out History_Record; File_Name : String);
    --  Load Hist from file File_Name
@@ -220,5 +223,8 @@ private
       Max_Length : Positive := Positive'Last;
       Table      : HTable_Access := new History_Hash.String_Hash_Table.HTable;
    end record;
+
+   No_History : constant History_Record :=
+     (Positive'Last, null);
 
 end Histories;
