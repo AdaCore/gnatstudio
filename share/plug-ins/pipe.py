@@ -1,5 +1,6 @@
 """Processes a text selection through an external shell command, and
    substitutes it with the output of that command.
+   If no text is selected, simply insert he output of the external command.
 
    This is similar to vi's ! command. For instance, you can use this
    script to run a select chunk of text through the following shell
@@ -90,6 +91,9 @@ class ShellProcess (CommandWindow):
 
 def on_gps_started (hook):
    Menu.create ("/Edit/Selection/Pipe in external program...",
+                on_activate=lambda menu: ShellProcess())
+   Menu.create ("/Edit/Insert Shell Output...",
+                ref = "Insert File...", add_before=False,
                 on_activate=lambda menu: ShellProcess())
 
    if os_utils.locate_exec_on_path ("fmt") != "":

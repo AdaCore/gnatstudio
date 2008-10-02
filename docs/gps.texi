@@ -2209,6 +2209,12 @@ Select the whole contents of the current source editor.
 Open a file selection dialog and insert the contents of this file in
 the current source editor, at the current cursor location.
 
+@item Insert Shell Output...
+Open an input window at the bottom of the GPS window where you can specify any
+external command. The output of the command will be inserted at the current
+editor location in case of success. If text is selected, the text is passed
+to the external command and replaced by the command's output.
+
 @item Format Selection
 @cindex format selection
 Indent and format the selection or the current line.
