@@ -95,25 +95,25 @@ def on_gps_started (hook):
                    ref = "Refill", add_before=False,
                    on_activate=lambda menu: fmt_selection())
 
-parse_xml ("""
-  <action name="Pipe" output="none">
-     <description>Process the current selection through a shell command,
-        and replace it with the output of that command.</description>
-     <filter id="Source editor" />
-     <shell lang="python">pipe.ShellProcess()</shell>
-  </action>
-  <action name="Fmt selection" output="none">
-     <description>Process the current selection through the "fmt" command
-        to reformat paragraphs</description>
-     <filter id="Source editor" />
-     <shell lang="python">pipe.fmt_selection()</shell>
-  </action>
-  <menu action="Pipe">
-    <title>/Edit/Selection/Pipe in external program...</title>
-  </menu>
-  <menu action="Pipe" after="Insert File...">
-    <title>/Edit/Insert Shell Output...</title>
-  </menu>
-""")
+   parse_xml ("""
+     <action name="Pipe" output="none">
+        <description>Process the current selection through a shell command,
+           and replace it with the output of that command.</description>
+        <filter id="Source editor" />
+        <shell lang="python">pipe.ShellProcess()</shell>
+     </action>
+     <action name="Fmt selection" output="none">
+        <description>Process the current selection through the "fmt" command
+           to reformat paragraphs</description>
+        <filter id="Source editor" />
+        <shell lang="python">pipe.fmt_selection()</shell>
+     </action>
+     <menu action="Pipe">
+       <title>/Edit/Selection/Pipe in external program...</title>
+     </menu>
+     <menu action="Pipe" after="Insert File...">
+       <title>/Edit/Insert Shell Output...</title>
+     </menu>
+   """)
 
 Hook ("gps_started").add (on_gps_started)
