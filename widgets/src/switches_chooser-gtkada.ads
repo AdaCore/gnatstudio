@@ -22,6 +22,8 @@ with Gtk.Table;
 with Gtk.Tooltips;
 with Gtk.Widget;
 
+with Histories; use Histories;
+
 package Switches_Chooser.Gtkada is
 
    package Gtk_Switches_Editors is new Switches_Editors
@@ -35,12 +37,16 @@ package Switches_Chooser.Gtkada is
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
-      Use_Native_Dialogs : Boolean);
+      Use_Native_Dialogs : Boolean;
+      History            : History_Record;
+      Key                : History_Key);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
-      Use_Native_Dialogs : Boolean);
+      Use_Native_Dialogs : Boolean;
+      History            : History_Record;
+      Key                : History_Key);
    --  Create a new switches editor based on Config.
    --  Use_Native_Dialogs applies to the file selector and directory selector
    --  dialogs
@@ -49,7 +55,6 @@ package Switches_Chooser.Gtkada is
      (Editor : access Switches_Editor_Record'Class)
       return Gtk.GEntry.Gtk_Entry;
    --  Return the switches entry.
-   --  Note that the parent of the switches entry should be a Hbox.
 
 private
    type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
