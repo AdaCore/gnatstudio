@@ -53,6 +53,7 @@ with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
+with Histories;                 use Histories;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Switches_Editors is
@@ -148,7 +149,9 @@ package body Switches_Editors is
         (Editor             => Page,
          Config             => Tool.Config,
          Tooltips           => Get_Tooltips (Kernel),
-         Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref);
+         Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
+         History            => No_History,
+         Key                => No_Key);
       Widget_Callback.Connect (Page, Signal_Destroy, Page_Destroyed'Access);
 
       Page.Switches  := In_Editor;
