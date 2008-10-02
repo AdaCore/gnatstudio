@@ -157,7 +157,10 @@ package body Build_Configurations is
             Error_Message       => M,
             Finder              => null,
             Node                => N);
-         Log (Registry, To_String (M));
+
+         if M /= "" then
+            Log (Registry, To_String (M));
+         end if;
 
          Model.Switches := Switches;
       end Parse_Switches_Node;
@@ -178,6 +181,15 @@ package body Build_Configurations is
 
       --  Parse the XML
       Parse_Target_Model_Node (XML);
+
+      --  Detect whether the model exists
+
+      if Registry.Models.Contains (Model.Name) then
+         Log (Registry,
+              (-"Error: a model is already registered with the name '")
+              & To_String (Model.Name) & "'");
+         return;
+      end if;
 
       --  Register the model
       Registry.Models.Insert (Model.Name, new Target_Model_Type'(Model));
