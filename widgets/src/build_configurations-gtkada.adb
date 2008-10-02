@@ -35,7 +35,6 @@ with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -108,8 +107,10 @@ package body Build_Configurations.Gtkada is
 
    function Switches_For_Target
      (UI       : access Build_UI_Record'Class;
-      Target   : Target_Access) return Target_UI_Access;
+      Target   : Target_Access;
+      Single : Boolean) return Target_UI_Access;
    --  Return the widget controlling the switches for Target
+   --  If Single is True, do not display the options, the models combo, etc.
 
    function Get_Selected_Target
      (UI : access Build_UI_Record'Class)
@@ -375,7 +376,13 @@ package body Build_Configurations.Gtkada is
    begin
       --  Create the switches editor
 
-      Gtk_New (UI.Editor, UI.Target.Model.Switches, UI.Tooltips, False);
+      Gtk_New
+        (UI.Editor,
+         UI.Target.Model.Switches,
+         UI.Tooltips,
+         False,
+         No_History,
+         No_Key);
 
       --  Create the "current command" entry
 
@@ -397,9 +404,9 @@ package body Build_Configurations.Gtkada is
 
    function Switches_For_Target
      (UI     : access Build_UI_Record'Class;
-      Target : Target_Access) return Target_UI_Access
+      Target : Target_Access;
+      Single : Boolean) return Target_UI_Access
    is
-      Sep           : Gtk_Hseparator;
       Table         : Gtk_Table;
       Hbox          : Gtk_Hbox;
       Label         : Gtk_Label;
@@ -417,147 +424,149 @@ package body Build_Configurations.Gtkada is
 
       Box.Tooltips := UI.Tooltips;
 
-      Gtk_New_Hbox (Top_Box);
-      Set_Spacing (Top_Box, 3);
+      if not Single then
+         Gtk_New_Hbox (Top_Box);
+         Set_Spacing (Top_Box, 3);
 
-      --  Create the "revert" button for targets that have a default command
-      --  line
+         --  Create the "revert" button for targets that have a default command
+         --  line
 
-      if Target.Default_Command_Line /= null then
-         Gtk_New_From_Stock_And_Label
-           (Button, "gtk-refresh", " Revert ");
-         Pack_End (Top_Box, Button, False, False, 0);
+         if Target.Default_Command_Line /= null then
+            Gtk_New_From_Stock_And_Label (Button, "gtk-refresh", " Revert ");
+            Pack_End (Top_Box, Button, False, False, 0);
+
+            Object_Connect
+              (Widget      => Button,
+               Name        => Gtk.Button.Signal_Clicked,
+               Cb          => On_Revert_Target'Access,
+               Slot_Object => UI,
+               After       => True);
+         end if;
+
+         --  Create the model combo
+
+         Combo := Models_Combo (UI);
+
+         Gtk_New (Label, -"Target type ");
+         Pack_Start (Top_Box, Label, False, False, 0);
+         Pack_Start (Top_Box, Combo, False, False, 0);
+
+         Pack_Start (Box, Top_Box, False, False, 0);
+         Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
+         Set_Editable (Box.Model_Entry, False);
+         Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
+
+         --  Connect to a change in the model combo
 
          Object_Connect
-           (Widget      => Button,
-            Name        => Gtk.Button.Signal_Clicked,
-            Cb          => On_Revert_Target'Access,
+           (Widget      => Combo,
+            Name        => Gtk.Combo_Box.Signal_Changed,
+            Cb          => On_Target_Model_Changed'Access,
             Slot_Object => UI,
             After       => True);
+
+         --  Add the options frame
+
+         Gtk_New (Options_Frame);
+         Gtk_New (Label);
+         Set_Use_Markup (Label, True);
+         Set_Markup (Label, "Options");
+         Set_Label_Widget (Options_Frame, Label);
+
+         Gtk_New (Table, 2, 3, False);
+         Set_Border_Width (Table, 5);
+         Add (Options_Frame, Table);
+
+         Gtk_New_Hbox (Hbox);
+         Set_Spacing (Hbox, 3);
+         Gtk_New (Label, "Launch mode");
+         Pack_Start (Hbox, Label, False, False, 0);
+         Attach (Table,
+                 Child         => Hbox,
+                 Left_Attach   => 0,
+                 Right_Attach  => 1,
+                 Top_Attach    => 0,
+                 Bottom_Attach => 1,
+                 Xoptions      => Expand or Fill);
+
+         Gtk_New_Text (Box.Launch_Combo);
+         for J in Launch_Mode_Type loop
+            Append_Text (Box.Launch_Combo, Beautify (J'Img));
+         end loop;
+         Gtk_New_Hbox (Hbox);
+         Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
+
+         Attach (Table,
+                 Child         => Hbox,
+                 Left_Attach   => 1,
+                 Right_Attach  => 2,
+                 Top_Attach    => 0,
+                 Bottom_Attach => 1,
+                 Xoptions      => Expand or Fill);
+
+         Gtk_New (Box.Icon_Check, "Display button in toolbar");
+
+         Attach (Table,
+                 Child         => Box.Icon_Check,
+                 Left_Attach   => 2,
+                 Right_Attach  => 3,
+                 Top_Attach    => 0,
+                 Bottom_Attach => 1);
+
+         Gtk_New_Hbox (Hbox);
+         Set_Spacing (Hbox, 3);
+
+         Gtk_New (Label, "Icon");
+         Pack_Start (Hbox, Label, False, False, 0);
+         Attach (Table,
+                 Child         => Hbox,
+                 Left_Attach   => 0,
+                 Right_Attach  => 1,
+                 Top_Attach    => 1,
+                 Bottom_Attach => 2,
+                 Xoptions      => Expand or Fill);
+
+         Gtk_New (Box.Icon_Entry);
+         Gtk_New_Hbox (Hbox);
+         Pack_Start (Hbox, Box.Icon_Entry, False, False, 0);
+
+         Attach (Table,
+                 Child         => Hbox,
+                 Left_Attach   => 1,
+                 Right_Attach  => 2,
+                 Top_Attach    => 1,
+                 Bottom_Attach => 2,
+                 Xoptions      => Expand or Fill);
+
+         Pack_Start (Box, Options_Frame, False, False, 3);
+
+         --  Initialize the options
+
+         Set_Active (Box.Launch_Combo,
+                     Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
+
+         if Target.Icon = "" then
+            Set_Text (Box.Icon_Entry, To_String (Target.Model.Icon));
+         else
+            Set_Text (Box.Icon_Entry, To_String (Target.Icon));
+         end if;
+
+         Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
       end if;
-
-      --  Create the model combo
-
-      Combo := Models_Combo (UI);
-
-      Gtk_New (Label, -"Target type ");
-      Pack_Start (Top_Box, Label, False, False, 0);
-      Pack_Start (Top_Box, Combo, False, False, 0);
-
-      Pack_Start (Box, Top_Box, False, False, 0);
-      Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
-      Set_Editable (Box.Model_Entry, False);
-      Set_Text (Box.Model_Entry, To_String (Target.Model.Name));
-
-      --  Connect to a change in the model combo
-
-      Object_Connect
-        (Widget      => Combo,
-         Name        => Gtk.Combo_Box.Signal_Changed,
-         Cb          => On_Target_Model_Changed'Access,
-         Slot_Object => UI,
-         After       => True);
-
-      --  Add the options frame
-
-      Gtk_New (Options_Frame);
-      Gtk_New (Label);
-      Set_Use_Markup (Label, True);
-      Set_Markup (Label, "Options");
-      Set_Label_Widget (Options_Frame, Label);
-
-      Gtk_New (Table, 2, 3, False);
-      Set_Border_Width (Table, 5);
-      Add (Options_Frame, Table);
-
-      Gtk_New_Hbox (Hbox);
-      Set_Spacing (Hbox, 3);
-      Gtk_New (Label, "Launch mode");
-      Pack_Start (Hbox, Label, False, False, 0);
-      Attach (Table,
-              Child         => Hbox,
-              Left_Attach   => 0,
-              Right_Attach  => 1,
-              Top_Attach    => 0,
-              Bottom_Attach => 1,
-              Xoptions      => Expand or Fill);
-
-      Gtk_New_Text (Box.Launch_Combo);
-      for J in Launch_Mode_Type loop
-         Append_Text (Box.Launch_Combo, Beautify (J'Img));
-      end loop;
-      Gtk_New_Hbox (Hbox);
-      Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
-
-      Attach (Table,
-              Child         => Hbox,
-              Left_Attach   => 1,
-              Right_Attach  => 2,
-              Top_Attach    => 0,
-              Bottom_Attach => 1,
-              Xoptions      => Expand or Fill);
-
-      Gtk_New (Box.Icon_Check, "Display button in toolbar");
-
-      Attach (Table,
-              Child         => Box.Icon_Check,
-              Left_Attach   => 2,
-              Right_Attach  => 3,
-              Top_Attach    => 0,
-              Bottom_Attach => 1);
-
-      Gtk_New_Hbox (Hbox);
-      Set_Spacing (Hbox, 3);
-
-      Gtk_New (Label, "Icon");
-      Pack_Start (Hbox, Label, False, False, 0);
-      Attach (Table,
-              Child         => Hbox,
-              Left_Attach   => 0,
-              Right_Attach  => 1,
-              Top_Attach    => 1,
-              Bottom_Attach => 2,
-              Xoptions      => Expand or Fill);
-
-      Gtk_New (Box.Icon_Entry);
-      Gtk_New_Hbox (Hbox);
-      Pack_Start (Hbox, Box.Icon_Entry, False, False, 0);
-
-      Attach (Table,
-              Child         => Hbox,
-              Left_Attach   => 1,
-              Right_Attach  => 2,
-              Top_Attach    => 1,
-              Bottom_Attach => 2,
-              Xoptions      => Expand or Fill);
-
-      Pack_Start (Box, Options_Frame, False, False, 3);
-
-      if 1 = 2 then
-         Gtk_New_Hseparator (Sep);
-         Pack_Start (Box, Sep, False, False, 3);
-      end if;
-
-      --  Initialize the options
-
-      Set_Active (Box.Launch_Combo,
-                  Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
-
-      if Target.Icon = "" then
-         Set_Text (Box.Icon_Entry, To_String (Target.Model.Icon));
-      else
-         Set_Text (Box.Icon_Entry, To_String (Target.Icon));
-      end if;
-
-      Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
 
       --  Add the switches frame
 
       Gtk_New (Box.Frame);
-      Gtk_New (Label);
-      Set_Use_Markup (Label, True);
-      Set_Markup (Label, "Switches");
-      Set_Label_Widget (Box.Frame, Label);
+
+      if Single then
+         Set_Shadow_Type (Box.Frame, Shadow_None);
+      else
+         Gtk_New (Label);
+         Set_Use_Markup (Label, True);
+         Set_Markup (Label, "Switches");
+         Set_Label_Widget (Box.Frame, Label);
+      end if;
+
       Pack_Start (Box, Box.Frame, True, True, 0);
 
       Set_Switches (Box);
@@ -868,13 +877,113 @@ package body Build_Configurations.Gtkada is
    -- Single_Target_Dialog --
    --------------------------
 
-   function Single_Target_Dialog
+   procedure Single_Target_Dialog
      (Registry : Build_Config_Registry_Access;
-      Target   : String) return GNAT.OS_Lib.Argument_List is
+      Parent   : Gtk_Window   := null;
+      Tooltips : Gtk_Tooltips := null;
+      Target   : String;
+      History  : in out History_Record;
+      Result   : out GNAT.OS_Lib.Argument_List_Access)
+   is
+      Key    : constant History_Key
+        := "command line for " & History_Key (Target);
+      UI     : Build_UI_Access;
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Button;
+      pragma Unreferenced (Button);
+
+      Ent    : Gtk_Entry;
+
+      Dummy : Gint;
+      pragma Unreferenced (Dummy);
+
+      Target_UI : Target_UI_Access;
    begin
-      --  Generated stub: replace with real body!
-      raise Program_Error;
-      return Single_Target_Dialog (Registry => Registry, Target => Target);
+      --  Return immediately if the target does not exist.
+
+      if not Registry.Targets.Contains (To_Unbounded_String (Target)) then
+         return;
+      end if;
+
+      Gtk_New (Dialog => Dialog,
+               Title  => (-"Build target '") & Target & "'",
+               Parent => Parent,
+               Flags  => Modal or Destroy_With_Parent or No_Separator);
+
+      if Parent /= null then
+         Set_Transient_For (Dialog, Parent);
+      end if;
+
+      Set_Default_Size (Dialog, 320, 200);
+
+      UI := new Build_UI_Record;
+      Initialize_Hbox (UI);
+
+      UI.Registry := Registry;
+
+      if Tooltips = null then
+         Gtk_New (UI.Tooltips);
+      else
+         UI.Tooltips := Tooltips;
+      end if;
+
+      --  Add everything to the dialog/window
+
+      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Set_Has_Separator (Dialog, False);
+
+      --  Create the target UI itself
+
+      Target_UI := Switches_For_Target
+        (UI     => UI,
+         Target => Registry.Targets.Element (To_Unbounded_String (Target)),
+         Single => True);
+
+      Pack_Start (UI, Target_UI, True, True, 3);
+
+      --  Create the dialog buttons
+
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Execute, Gtk_Response_OK));
+
+      Set_Default_Response (Dialog, Gtk_Response_OK);
+
+--        Set_Flags (Button, Flags (Button) or Can_Default);
+--        Set_Default (Dialog, Button);
+--
+
+      --  Grab the focus on the entry, select the text, and make it activate
+      --  the default, so that the user only has to press Enter if he is
+      --  happy with the selection.
+      Ent := Get_Entry (Target_UI.Editor);
+      Grab_Focus (Ent);
+      Select_Region (Ent, 0);
+      Set_Activates_Default (Ent, True);
+
+      --  Show the dialog
+
+      Show_All (Dialog);
+
+      --  Run the dialog
+
+      loop
+         case Run (Dialog) is
+
+            when Gtk_Response_OK =>
+               Result := Get_Command_Line (Target_UI.Editor, False);
+               Add_To_History
+                 (History, Key,
+                  Get_Text (Get_Entry (Target_UI.Editor)));
+               Destroy (Dialog);
+            when Gtk_Response_Cancel =>
+               Destroy (Dialog);
+            when others =>
+               null;
+         end case;
+      end loop;
    end Single_Target_Dialog;
 
    -------------
@@ -992,7 +1101,7 @@ package body Build_Configurations.Gtkada is
 
          --  Add the page in the notebook
          Append_Page
-           (UI.Notebook, Switches_For_Target (UI, Element (C)));
+           (UI.Notebook, Switches_For_Target (UI, Element (C), False));
 
          Count := Count + 1;
          Next (C);
