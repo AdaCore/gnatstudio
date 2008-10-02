@@ -769,10 +769,12 @@ package body Switches_Chooser.Gtkada is
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
-      Use_Native_Dialogs : Boolean) is
+      Use_Native_Dialogs : Boolean;
+      History            : History_Record;
+      Key                : History_Key) is
    begin
       Editor := new Switches_Editor_Record;
-      Initialize (Editor, Config, Tooltips, Use_Native_Dialogs);
+      Initialize (Editor, Config, Tooltips, Use_Native_Dialogs, History, Key);
    end Gtk_New;
 
    ----------------
@@ -783,10 +785,16 @@ package body Switches_Chooser.Gtkada is
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
-      Use_Native_Dialogs : Boolean) is
+      Use_Native_Dialogs : Boolean;
+      History            : History_Record;
+      Key                : History_Key)
+   is
+      Combo                   : Gtk_Combo;
+      Widget_For_Command_Line : Gtk_Widget;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
       Editor.Tooltips       := Tooltips;
+
       Initialize (Editor.all, Config);
       Gtk.Table.Initialize
         (Editor,
@@ -800,13 +808,22 @@ package body Switches_Chooser.Gtkada is
          Lines     => Config.Lines,
          Columns   => Config.Columns);
 
-      Gtk_New (Editor.Ent);
+      if History = No_History then
+         Gtk_New (Editor.Ent);
+         Widget_For_Command_Line := Gtk_Widget (Editor.Ent);
+      else
+         Gtk_New (Combo);
+         Editor.Ent := Get_Entry (Combo);
+         Widget_For_Command_Line := Gtk_Widget (Combo);
+         Get_History (History, Key, Combo, False, False);
+      end if;
+
       if Config.Show_Command_Line then
          declare
             Hbox : Gtk_Hbox;
          begin
             Gtk_New_Hbox (Hbox);
-            Pack_Start (Hbox, Editor.Ent, True, True, 0);
+            Pack_Start (Hbox, Widget_For_Command_Line, True, True, 0);
             Attach (Editor, Hbox,
                     0, Guint (Config.Columns),
                     Guint (Config.Lines), Guint (Config.Lines) + 1,
