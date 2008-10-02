@@ -29,6 +29,8 @@ with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
+with Histories;                use Histories;
+
 package Build_Configurations.Gtkada is
 
    type Build_UI_Record is new Gtk_Hbox_Record with private;
@@ -43,12 +45,19 @@ package Build_Configurations.Gtkada is
    --  Changes_Made is set to True if the user caused some changes that
    --  need to be saved (in other words, if the  user clicked "OK" or "Apply").
 
-   function Single_Target_Dialog
+   procedure Single_Target_Dialog
      (Registry : Build_Config_Registry_Access;
-      Target   : String) return GNAT.OS_Lib.Argument_List;
+      Parent   : Gtk_Window   := null;
+      Tooltips : Gtk_Tooltips := null;
+      Target   : String;
+      History  : in out History_Record;
+      Result   : out GNAT.OS_Lib.Argument_List_Access);
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
    --  expanded.
+   --  Use History to prefill the dialog.
+   --  Result is set to null if the user canceled the dialog, otherwise to the
+   --  the unexpanded command line.
 
 private
 
