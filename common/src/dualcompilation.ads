@@ -27,11 +27,15 @@ package Dualcompilation is
    function Get_Tool_Search_Path return String;
    --  Get the tool search path
 
-   function Locate_Tool_Executable (Exec_Name : String) return String_Access;
-   --  Locate a tool executable on path
-
    function Get_Compiler_Search_Path return String;
    --  Get the compiler search path
+
+   function Locate_Exec (Exec_Name : String; Path : String)
+                         return String_Access;
+   --  Locate exec on specified Path.
+
+   function Locate_Tool_Executable (Exec_Name : String) return String_Access;
+   --  Locate a tool executable on path
 
    function Locate_Compiler_Executable
      (Exec_Name : String) return String_Access;

@@ -47,16 +47,18 @@ package body Dualcompilation is
       Free (Property.Tools_Path);
       Free (Property.Compiler_Path);
 
-      if Active then
-         Property :=
-           (Active        => True,
-            Tools_Path    => new String'(Tool_Search_Path),
-            Compiler_Path => new String'(Compiler_Search_Path));
+      Property.Active := Active;
+
+      if Tool_Search_Path /= "" then
+         Property.Tools_Path := new String'(Tool_Search_Path);
       else
-         Property :=
-           (Active        => False,
-            Tools_Path    => null,
-            Compiler_Path => null);
+         Property.Tools_Path := null;
+      end if;
+
+      if Compiler_Search_Path /= "" then
+         Property.Compiler_Path := new String'(Compiler_Search_Path);
+      else
+         Property.Compiler_Path := null;
       end if;
    end Set_Dualcompilation_Properties;
 
@@ -95,12 +97,12 @@ package body Dualcompilation is
       return Property.Compiler_Path.all;
    end Get_Compiler_Search_Path;
 
-   --------------------------
-   -- Internal_Locate_Exec --
-   --------------------------
+   -----------------
+   -- Locate_Exec --
+   -----------------
 
-   function Internal_Locate_Exec
-     (Exec_Name : String; Extra_Path : String) return String_Access
+   function Locate_Exec
+     (Exec_Name : String; Path : String) return String_Access
    is
       function Internal (C_Exec, C_Path : System.Address)
                          return System.Address;
@@ -113,7 +115,7 @@ package body Dualcompilation is
       pragma Import (C, Strlen, "strlen");
 
       C_Exec_Name : String := Exec_Name & ASCII.NUL;
-      C_Path      : String := Extra_Path & ASCII.NUL;
+      C_Path      : String := Path & ASCII.NUL;
       C_Ret       : System.Address;
       C_Ret_Len   : Integer;
       Result      : String_Access;
@@ -128,7 +130,7 @@ package body Dualcompilation is
       end if;
 
       if C_Ret_Len = 0 then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return null;
       else
          declare
             subtype Path_String is String (1 .. C_Ret_Len);
@@ -162,6 +164,24 @@ package body Dualcompilation is
          end if;
 
          return Result;
+      end if;
+   end Locate_Exec;
+
+   --------------------------
+   -- Internal_Locate_Exec --
+   --------------------------
+
+   function Internal_Locate_Exec
+     (Exec_Name : String; Extra_Path : String) return String_Access
+   is
+      Ret : String_Access;
+   begin
+      Ret := Locate_Exec (Exec_Name, Extra_Path);
+
+      if Ret = null then
+         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+      else
+         return Ret;
       end if;
    end Internal_Locate_Exec;
 

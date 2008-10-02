@@ -17,19 +17,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System.OS_Lib;            use System.OS_Lib;
-with Glib.Object;              use Glib.Object;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Gtk.Dialog;               use Gtk.Dialog;
-with Traces;                   use Traces;
-with GPS.Intl;                 use GPS.Intl;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
+with System.OS_Lib;             use System.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Traces;                    use Traces;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 
-with Dualcompilation;          use Dualcompilation;
-with Dualcompilation_Dialog;   use Dualcompilation_Dialog;
+with Dualcompilation;           use Dualcompilation;
+with Dualcompilation_Dialog;    use Dualcompilation_Dialog;
 with Entities;
+with Projects;
 
 package body Dualcompilation_Module is
 
@@ -133,45 +137,89 @@ package body Dualcompilation_Module is
      (Widget : access GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Property    : Dualcomp_Property := Dualcomp_Property (Get_Property);
       Prop_Access : Property_Access;
       Dialog      : Dualcompilation_Dialog.Dualc_Dialog;
       Resp        : Gtk_Response_Type;
+      Exec        : String_Access;
+      Compiler    : constant String :=
+                      Projects.Get_Attribute_Value
+                        (GPS.Kernel.Project.Get_Project (Kernel),
+                         Projects.Compiler_Command_Attribute,
+                         Default => "gnatmake",
+                         Index   => "Ada");
    begin
       if Property.Active then
          Gtk_New
-           (Dialog, Widget,
+           (Dialog, Kernel,
             True, Property.Tools_Path.all, Property.Compiler_Path.all);
       else
-         Gtk_New
-           (Dialog, Widget, False, "", "");
+         declare
+            Path : String_Access := Locate_Exec_On_Path (Compiler);
+         begin
+            if Path /= null then
+               Gtk_New
+                 (Dialog, Kernel, False,
+                  Dir_Name (Path.all), Dir_Name (Path.all));
+            else
+               Gtk_New
+                 (Dialog, Kernel, False, "", "");
+            end if;
+
+            Free (Path);
+         end;
       end if;
 
-      Resp := Dialog.Run;
+      loop
+         Resp := Dialog.Run;
+         exit when Resp /= Gtk_Response_OK;
 
-      if Resp = Gtk_Response_OK then
          Property.Active := Get_Active (Dialog);
          Property.Tools_Path := new String'(Get_Tools_Path (Dialog));
          Property.Compiler_Path := new String'(Get_Compiler_Path (Dialog));
-         Prop_Access := new Dualcomp_Property'(Property);
-         Set_Property
-           (Kernel,
-            Index_Name  => "dualcompilation_properties",
-            Index_Value => "property",
-            Name        => "property",
-            Property    => Prop_Access,
-            Persistent  => True);
 
-         Dualcompilation.Set_Dualcompilation_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => Property.Tools_Path.all,
-            Compiler_Search_Path => Property.Compiler_Path.all);
+         if Property.Active then
+            --  ??? Should we do it also for the tools path ?
+            Exec := Locate_Exec (Compiler, Property.Compiler_Path.all);
+         end if;
 
-         --  We need to recompute the project view, and reset the whole
-         --  entities database to fully recompute the default paths.
-         GPS.Kernel.Project.Recompute_View (Kernel);
-         Entities.Reset (GPS.Kernel.Get_Database (Kernel));
-      end if;
+         if not Property.Active or else Exec /= null then
+            Prop_Access := new Dualcomp_Property'(Property);
+            Set_Property
+              (Kernel,
+               Index_Name  => "dualcompilation_properties",
+               Index_Value => "property",
+               Name        => "property",
+               Property    => Prop_Access,
+               Persistent  => True);
+
+            Dualcompilation.Set_Dualcompilation_Properties
+              (Active               => Property.Active,
+               Tool_Search_Path     => Property.Tools_Path.all,
+               Compiler_Search_Path => Property.Compiler_Path.all);
+
+            --  We need to recompute the project view, and reset the whole
+            --  entities database to fully recompute the default paths.
+            GPS.Kernel.Project.Recompute_View (Kernel);
+            Entities.Reset (GPS.Kernel.Get_Database (Kernel));
+
+            exit;
+         else
+            declare
+               Dead : Gtkada.Dialogs.Message_Dialog_Buttons;
+               pragma Unreferenced (Dead);
+            begin
+               Dead := Gtkada.Dialogs.Message_Dialog
+                 (-"The selected compiler path do not contain a compiler.",
+                  Dialog_Type    => Gtkada.Dialogs.Error,
+                  Buttons        => Gtkada.Dialogs.Button_OK,
+                  Title          => -"Invalid compiler path",
+                  Parent         => Gtk_Window (Dialog));
+            end;
+         end if;
+
+      end loop;
 
       Destroy (Dialog);
    end On_Menu;

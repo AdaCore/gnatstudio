@@ -17,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object; use Glib.Object;
 with Gtk.Dialog;  use Gtk.Dialog;
 with Gtk.Frame;   use Gtk.Frame;
 with Gtk.GEntry;  use Gtk.GEntry;
+
+with GPS.Kernel;  use GPS.Kernel;
 
 package Dualcompilation_Dialog is
 
@@ -29,7 +30,7 @@ package Dualcompilation_Dialog is
 
    procedure Gtk_New
      (Widget        : out Dualc_Dialog;
-      Parent        : access GObject_Record'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active        : Boolean;
       Tools_Path    : String;
       Compiler_Path : String);
