@@ -90,12 +90,6 @@ class ShellProcess (CommandWindow):
       pipe (shell_command)
 
 def on_gps_started (hook):
-   Menu.create ("/Edit/Selection/Pipe in external program...",
-                on_activate=lambda menu: ShellProcess())
-   Menu.create ("/Edit/Insert Shell Output...",
-                ref = "Insert File...", add_before=False,
-                on_activate=lambda menu: ShellProcess())
-
    if os_utils.locate_exec_on_path ("fmt") != "":
       Menu.create ("/Edit/Selection/Refill with fmt",
                    ref = "Refill", add_before=False,
@@ -108,14 +102,18 @@ parse_xml ("""
      <filter id="Source editor" />
      <shell lang="python">pipe.ShellProcess()</shell>
   </action>
-
-  <action name="Fmt selection">
+  <action name="Fmt selection" output="none">
      <description>Process the current selection through the "fmt" command
         to reformat paragraphs</description>
      <filter id="Source editor" />
      <shell lang="python">pipe.fmt_selection()</shell>
   </action>
+  <menu action="Pipe">
+    <title>/Edit/Selection/Pipe in external program...</title>
+  </menu>
+  <menu action="Pipe" after="Insert File...">
+    <title>/Edit/Insert Shell Output...</title>
+  </menu>
 """)
 
 Hook ("gps_started").add (on_gps_started)
-
