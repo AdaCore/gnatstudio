@@ -671,7 +671,7 @@ package body GPS.Kernel.Preferences is
       Current_Line_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",
-         Default => "#FFC38D",
+         Default => "#D1DCFC",
          Doc     => -"Color for highlighting the current line",
          Label   => -"Current line color",
          Page    => -"Editor/Fonts & Colors");
@@ -679,7 +679,7 @@ package body GPS.Kernel.Preferences is
       Current_Block_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Block-Color",
-         Default => "#BBBBFF",
+         Default => "#9C9CFF",
          Doc     => -"Color for highlighting the current block",
          Label   => -"Current block color",
          Page    => -"Editor/Fonts & Colors");
@@ -842,7 +842,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Errors-Src-Highlight-Color",
          Label   => -"Errors highlighting",
          Doc     => -"Color used to highlight errors in the source editors",
-         Default => "#FF6D6D",
+         Default => "#FFB7B7",
          Page    => -"Messages");
 
       Warning_Src_Highlight := Create
@@ -850,7 +850,7 @@ package body GPS.Kernel.Preferences is
          Name    => "Warnings-Src-Highlight-Color",
          Label   => -"Warnings highlighting",
          Doc     => -"Color used to highlight warnings in the source editors",
-         Default => "#FFB46D",
+         Default => "#FFCC9C",
          Page    => -"Messages");
 
       Style_Src_Highlight := Create
@@ -859,7 +859,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Style errors highlighting",
          Doc     =>
            -"Color used to highlight style errors in the source editors",
-         Default => "#EEFF6D",
+         Default => "#FFFFAD",
          Page    => -"Messages");
 
       Search_Src_Highlight := Create
