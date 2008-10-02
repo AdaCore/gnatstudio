@@ -58,6 +58,12 @@ NF-43-H814-009 Add support for removing activity log (2008-09-01)
 
   It is now possible to remove the main activity log.
 
+NF-43-H813-019 New colors for message highlighting (2008-10-02)
+
+  The default colors for highlighting compiler output (errors, warnings, style
+  errors) and for highlighing the current line and current block have been
+  updated, for better readability.
+
 NF-43-H812-004 New debugger preference: Debugger Windows (2008-08-14)
 
   A new preference was added, available in the Debugger tab. It lets
