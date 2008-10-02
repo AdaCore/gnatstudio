@@ -99,6 +99,7 @@ with Browsers.Projects;
 with Revision_Views;
 with Buffer_Views;
 with Builder_Module;
+with Builder_Facility_Module;
 with Call_Graph_Views;
 with Casing_Exceptions;
 with Clipboard_Views;
@@ -180,6 +181,8 @@ procedure GPS.Main is
                               Create ("MODULE.Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Builder", GNATCOLL.Traces.On);
+   New_Builder_Trace   : constant Debug_Handle :=
+                           Create ("MODULE.New_Builder", GNATCOLL.Traces.Off);
    GVD_Trace              : constant Debug_Handle :=
                               Create ("MODULE.GVD", GNATCOLL.Traces.On);
    Aunit_Trace            : constant Debug_Handle :=
@@ -1329,6 +1332,10 @@ procedure GPS.Main is
 
       if Active (Builder_Trace) then
          Builder_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (New_Builder_Trace) then
+         Builder_Facility_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GVD_Trace) then
