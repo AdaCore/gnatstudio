@@ -1209,7 +1209,6 @@ package body GVD_Module is
       Msg2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       Key1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       Key2         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
-      WTX_Version  : Natural;
 
    begin
       --  If the user has already requested to stop at the beginning (Start
@@ -1228,9 +1227,7 @@ package body GVD_Module is
       --  If we are debugging against VxWorks we as for the entry point to be
       --  executed, and we enable the multi-tasks-mode checkbox.
 
-      Info_WTX (Process.Debugger, WTX_Version);
-
-      if WTX_Version = 2 then
+      if VxWorks_Version (Process.Debugger) = Vx5 then
          --  Change the message in the dialog window indicating that the entry
          --  point needs to be specified together with the arguments.
 
@@ -1269,7 +1266,7 @@ package body GVD_Module is
          then
             --  For VxWorks we need to set the desired multi-tasks-mode mode
 
-            if WTX_Version = 2 then
+            if VxWorks_Version (Process.Debugger) = Vx5 then
                if Is_Multitask then
                   Send
                     (Process.Debugger,

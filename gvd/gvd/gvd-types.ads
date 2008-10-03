@@ -106,6 +106,10 @@ package GVD.Types is
    --  How breakpoints are identified. Currently, the debuggers supported
    --  by gvd all associate numbers with breakpoints.
 
+   type VxWorks_Version_Type is (Vx_None, Vx5, Vx6, Vx653, Vx_Unknown);
+   --  Used to keep track of the VxWorks version running on the target, as
+   --  different versions have different debugging capabilities
+
    type Scope_Type is (Current_Task, Tasks_In_PD, Any_Task, No_Scope);
    type Action_Type is (Current_Task, Tasks_In_PD, All_Tasks, No_Action);
    --  For the VxWorks AE debugger, specify the "scope" (which tasks

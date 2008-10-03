@@ -335,9 +335,11 @@ package Debugger.Gdb is
       Info     : out PD_Information_Array;
       Len      : out Natural);
 
-   overriding procedure Info_WTX
-     (Debugger : access Gdb_Debugger;
-      Version  : out Natural);
+   overriding procedure Set_VxWorks_Version
+     (Debugger : access Gdb_Debugger; Force : Boolean := False);
+
+   overriding function VxWorks_Version
+     (Debugger : access Gdb_Debugger) return GVD.Types.VxWorks_Version_Type;
 
    overriding procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
@@ -434,7 +436,7 @@ private
       Stored_Language  : GNAT.Strings.String_Access;
       WTX_List         : GNAT.Strings.String_Access;
       WTX_Index        : Natural;
-      WTX_Version      : Integer := -1;
+      VxWorks_Version  : GVD.Types.VxWorks_Version_Type := GVD.Types.Vx_None;
       Endian           : Endian_Type := Unknown_Endian;
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;

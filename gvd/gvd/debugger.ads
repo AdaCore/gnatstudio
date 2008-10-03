@@ -773,12 +773,15 @@ package Debugger is
    --  Return the current list of protection domains.
    --  GDB_COMMAND: "info pds"
 
-   procedure Info_WTX
-     (Debugger : access Debugger_Root;
-      Version  : out Natural) is abstract;
-   --  Return the version of the wtx protocol used by the debugger, or
-   --  0 if the protocol is not supported.
-   --  GDB_COMMAND: "info wtx"
+   procedure Set_VxWorks_Version
+     (Debugger : access Debugger_Root; Force : Boolean := False)
+     is abstract;
+   --  Determine the VxWorks version running on the target
+
+   function VxWorks_Version
+     (Debugger : access Debugger_Root)
+     return GVD.Types.VxWorks_Version_Type is abstract;
+   --  Retrieve the VxWorks version stored in the debugger record
 
    -----------------------------
    -- Source Related Commands --

@@ -1017,6 +1017,7 @@ package body Debugger.Gdb is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
+      Set_VxWorks_Version (Debugger, Force => True);
    end Connect_To_Target;
 
    --------------
@@ -1069,6 +1070,7 @@ package body Debugger.Gdb is
             end if;
          end;
 
+         Set_VxWorks_Version (Debugger);
          Debugger.Target_Connected := True;
       end if;
    end Connect_To_Target_If_Needed;
@@ -2287,31 +2289,44 @@ package body Debugger.Gdb is
          end if;
    end Info_PD;
 
-   --------------
-   -- Info_WTX --
-   --------------
+   -------------------------
+   -- Set_VxWorks_Version --
+   -------------------------
 
-   overriding procedure Info_WTX
-     (Debugger : access Gdb_Debugger;
-      Version  : out Natural) is
+   overriding procedure Set_VxWorks_Version
+     (Debugger : access Gdb_Debugger; Force : Boolean := False) is
    begin
-      if Debugger.WTX_Version = -1 then
+      if Force or else Debugger.VxWorks_Version = Vx_None then
          declare
             Output : constant String :=
-              Send (Debugger, "info wtx", Mode => Internal);
+              Send (Debugger, "info wtx vxworks-version", Mode => Internal);
          begin
-            if Output = "WTX protocol version 2" then
-               Debugger.WTX_Version := 2;
-            elsif Output = "WTX protocol version 3" then
-               Debugger.WTX_Version := 3;
+            if Output'Length >= 17 then
+               if Output (1 .. 17) = "VxWorks version 5" then
+                  Debugger.VxWorks_Version := Vx5;
+               elsif Output (1 .. 17) = "VxWorks version 6" then
+                  Debugger.VxWorks_Version := Vx6;
+               elsif Output (1 .. 11) = "VxWorks 653" then
+                  Debugger.VxWorks_Version := Vx653;
+               else
+                  Debugger.VxWorks_Version := Vx_Unknown;
+               end if;
             else
-               Debugger.WTX_Version := 0;
+               Debugger.VxWorks_Version := Vx_Unknown;
             end if;
          end;
       end if;
+   end Set_VxWorks_Version;
 
-      Version := Debugger.WTX_Version;
-   end Info_WTX;
+   ---------------------
+   -- VxWorks_Version --
+   ---------------------
+
+   overriding function VxWorks_Version
+     (Debugger : access Gdb_Debugger) return VxWorks_Version_Type is
+   begin
+      return Debugger.VxWorks_Version;
+   end VxWorks_Version;
 
    ---------------------
    -- Lines_With_Code --
@@ -3114,8 +3129,6 @@ package body Debugger.Gdb is
       Index           : Natural := S'First;
       Tmp             : Natural;
 
-      WTX_Version : Natural;
-
       Breakpoint_Number          : Long_Integer;
       Previous_Breakpoint_Number : Long_Integer := 0;
 
@@ -3495,9 +3508,7 @@ package body Debugger.Gdb is
          end loop;
 
          --  Fill the breakpoints extra information
-         Info_WTX (Debugger, WTX_Version);
-
-         if WTX_Version = 3 then
+         if VxWorks_Version (Debugger) = Vx653 then
             Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
 
          else
@@ -4055,8 +4066,12 @@ package body Debugger.Gdb is
             new String'
               (Send (Debugger, "info wtx threads", Mode => Internal));
 
-         if Index (Debugger.WTX_List.all, Undefined_Info_Command) /= 0
-           or else Index (Debugger.WTX_List.all, Unexpected_Arguments) /= 0
+         if Debugger.WTX_List'Length > Undefined_Info_Command'Length
+           and then
+             Debugger.WTX_List
+               (Debugger.WTX_List'First
+                 .. Debugger.WTX_List'First + Undefined_Command'Length - 1)
+              = Undefined_Command
          then
             Free (Debugger.WTX_List);
             Debugger.WTX_List :=

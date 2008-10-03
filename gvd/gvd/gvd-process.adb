@@ -981,7 +981,6 @@ package body GVD.Process is
       Window      : constant GPS_Window := GPS_Window (Process.Window);
       Buttons     : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
-      WTX_Version : Natural := 0;
       Widget      : Gtk_Menu_Item;
 
    begin
@@ -1052,8 +1051,8 @@ package body GVD.Process is
         (Window.Kernel, -"/Debug/Data/Protection Domains");
 
       if Widget /= null then
-         Info_WTX (Process.Debugger, WTX_Version);
-         Set_Sensitive (Widget, WTX_Version >= 3);
+         Set_Sensitive
+           (Widget, VxWorks_Version (Process.Debugger) = Vx653);
       end if;
 
       --  If some unattached dialogs exist, claim them

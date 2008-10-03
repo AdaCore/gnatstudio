@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2007                      --
---                              AdaCore                              --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -646,9 +645,7 @@ package body Breakpoints_Editor is
 
    procedure Run_Advanced_Dialog
      (Editor  : access Breakpoint_Editor_Record'Class;
-      Current : Integer)
-   is
-      WTX_Version : Natural;
+      Current : Integer) is
    begin
       --  Create all three dialogs
 
@@ -663,9 +660,7 @@ package body Breakpoints_Editor is
         (Editor.Advanced_Breakpoints, Editor.Process.Breakpoints (Current));
       Show_All (Editor.Advanced_Breakpoints);
 
-      Info_WTX (Editor.Process.Debugger, WTX_Version);
-
-      if WTX_Version = 3 then
+      if VxWorks_Version (Editor.Process.Debugger) = Vx653 then
          Set_Show_Tabs (Editor.Advanced_Breakpoints.Main_Notebook);
       else
          Hide (Editor.Advanced_Breakpoints.Scope_Box);
@@ -680,7 +675,7 @@ package body Breakpoints_Editor is
          --  default" checkbox for the scope and action values, send the
          --  appropriate commands to the debugger
 
-         if WTX_Version = 3 then
+         if VxWorks_Version (Editor.Process.Debugger) = Vx653 then
             declare
                Scope_Value  : Scope_Type;
                Action_Value : Action_Type;
