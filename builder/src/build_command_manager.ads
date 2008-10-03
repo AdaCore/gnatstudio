@@ -34,9 +34,10 @@ with Commands.Interactive; use Commands.Interactive;
 package Build_Command_Manager is
 
    procedure Launch_Target
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
-      Target_Name : String);
+     (Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Force_Dialog : Boolean);
    --  Launch a build of target named Target_Name
 
    -------------------
@@ -47,9 +48,10 @@ package Build_Command_Manager is
    --  Used for defining build actions.
 
    type Build_Command is new Interactive_Command with record
-      Target_Name : Unbounded_String;
-      Registry    : Build_Config_Registry_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
+      Target_Name  : Unbounded_String;
+      Registry     : Build_Config_Registry_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Force_Dialog : Boolean;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
@@ -61,10 +63,13 @@ package Build_Command_Manager is
    --  See inherited documentation
 
    procedure Create
-     (Item        : out Build_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
-      Target_Name : String);
+     (Item         : out Build_Command_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Force_Dialog : Boolean);
    --  Create a build command
+   --  Force_Dialog indicates that the command should always be launched
+   --  through the interactive dialog.
 
 end Build_Command_Manager;
