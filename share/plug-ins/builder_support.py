@@ -130,6 +130,7 @@ Syntax_Check_Target = """
        <arg>-gnats</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
+       <arg>%X</arg>
        <arg>%f</arg>
     </default-command-line>
 </target>
