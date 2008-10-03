@@ -28,6 +28,12 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+
+with Projects;                  use Projects;
+with Projects.Registry;         use Projects.Registry;
+
+with Commands.Interactive;        use Commands.Interactive;
 
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
@@ -40,6 +46,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
 with Traces;                    use Traces;
@@ -50,7 +57,9 @@ with Build_Command_Manager;     use Build_Command_Manager;
 
 package body Builder_Facility_Module is
 
-   Me : constant Debug_Handle := Create ("Builder_Facility_Module");
+   Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
+   Main_Menu : constant String := '/' & ("New builder") & '/';
+   --  -"New builder"
 
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Tool_Button_Record, String);
@@ -58,7 +67,7 @@ package body Builder_Facility_Module is
    package Buttons_Map is new Ada.Containers.Ordered_Maps
      (Unbounded_String, Gtk_Tool_Button);
 
-   package Actions_List is new Ada.Containers.Doubly_Linked_Lists
+   package String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
 
    package Target_XML_List is new Ada.Containers.Doubly_Linked_Lists
@@ -93,8 +102,12 @@ package body Builder_Facility_Module is
       --  Whether the module is currently reacting to the File_Saved hook.
       --  See implementation of On_File_Save.
 
-      Actions : Actions_List.List;
+      Actions : String_List.List;
       --  The list of currently registered builder actions
+
+      Menus : String_List.List;
+      --  The set of menu items that need to be removed when reloading the
+      --  targets
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -131,6 +144,15 @@ package body Builder_Facility_Module is
 
    procedure Install_Button_For_Target (Target : Target_Access);
    --  Install one button in the toolbar
+
+   procedure Clear_Menus;
+   --  Remove the target build menus
+
+   procedure Install_Menus;
+   --  Install menus for all the targets
+
+   procedure Add_Menu_For_Target (Target : Target_Access);
+   --  Create a menu item to build Target
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
    --  Return the file where user targets are stored.
@@ -197,7 +219,7 @@ package body Builder_Facility_Module is
       N    : constant String := Get_Name (T);
       Name : constant String := Action_Name (T);
    begin
-      Create (C, Get_Kernel, Builder_Module_ID.Registry, N);
+      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, False);
 
       Register_Action (Kernel      => Get_Kernel,
                        Name        => Name,
@@ -233,8 +255,8 @@ package body Builder_Facility_Module is
    ------------------------
 
    procedure Remove_All_Actions is
-      use Actions_List;
-      C : Actions_List.Cursor;
+      use String_List;
+      C : String_List.Cursor;
    begin
       loop
          C := Builder_Module_ID.Actions.First;
@@ -359,10 +381,10 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Data);
-      C : Build_Configurations.Target_Cursor :=
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      C         : Build_Configurations.Target_Cursor :=
         Get_First_Target (Builder_Module_ID.Registry);
-      T : Target_Access;
+      T         : Target_Access;
    begin
       --  Protect against the following recursion:
       --   a script connects the action Compilation_Starting to the saving
@@ -376,14 +398,36 @@ package body Builder_Facility_Module is
 
       Builder_Module_ID.Currently_Saving := True;
 
+      --  We run this hook only when a source file has changed.
+      --  For other files (for instance revision logs), we do not want to
+      --  compile.
+
+      declare
+         P : Project_Type;
+      begin
+         P := Get_Project_From_File
+           (Registry          => Project_Registry
+              (Get_Registry (Get_Kernel).all),
+            Source_Filename   => File_Data.File,
+            Root_If_Not_Found => False);
+
+         --  No project was found for the file: this is not a source file, so
+         --  return now.
+         if P = No_Project then
+            Builder_Module_ID.Currently_Saving := False;
+            return;
+         end if;
+      end;
+
       loop
          T := Get_Target (C);
          exit when T = null;
 
          if Get_Properties (T).Launch_Mode = On_File_Save then
-            Launch_Target (Kernel      => Kernel_Handle (Kernel),
-                           Registry    => Builder_Module_ID.Registry,
-                           Target_Name => Get_Name (T));
+            Launch_Target (Kernel       => Kernel_Handle (Kernel),
+                           Registry     => Builder_Module_ID.Registry,
+                           Target_Name  => Get_Name (T),
+                           Force_Dialog => False);
          end if;
          Next (C);
       end loop;
@@ -426,6 +470,8 @@ package body Builder_Facility_Module is
             if Get_Properties (T).Icon_In_Toolbar then
                Install_Button_For_Target (T);
             end if;
+
+            Add_Menu_For_Target (T);
          end if;
 
       else
@@ -507,7 +553,7 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Launch_Target (Get_Kernel, Builder_Module_ID.Registry, Name);
+      Launch_Target (Get_Kernel, Builder_Module_ID.Registry, Name, False);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -520,19 +566,87 @@ package body Builder_Facility_Module is
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
       Button : Gtk.Tool_Button.Gtk_Tool_Button;
+      Name   : constant String := Get_Name (Target);
    begin
       Gtk_New_From_Stock (Button, Get_Icon (Target));
-      Set_Label (Button, Get_Name (Target));
+      Set_Label (Button, Name);
       Builder_Module_ID.Buttons.Insert
-        (To_Unbounded_String (Get_Name (Target)), Button);
+        (To_Unbounded_String (Name), Button);
       Insert (Toolbar => Toolbar, Item    => Button);
+      Set_Tooltip (Button, Get_Tooltips (Get_Kernel),
+                   (-"Build target '") & Name & "'");
       Show_All (Button);
 
       String_Callback.Connect
         (Button, "clicked",
          On_Button_Click'Access,
-         Get_Name (Target));
+         Name);
    end Install_Button_For_Target;
+
+   -------------------------
+   -- Add_Menu_For_Target --
+   -------------------------
+
+   procedure Add_Menu_For_Target (Target : Target_Access) is
+      C    : Build_Command_Access;
+      Name : constant String := Get_Name (Target);
+      Cat_Path : constant String := Main_Menu & Get_Category (Target);
+   begin
+      --  Find the menu for the category
+      if Find_Menu_Item (Get_Kernel, Cat_Path) = null then
+         --  We have not found a menu item: this means we are about to create
+         --  it, so add it to the list of menu items
+         Builder_Module_ID.Menus.Append (To_Unbounded_String (Cat_Path));
+      end if;
+
+      Create (C, Get_Kernel, Builder_Module_ID.Registry, Name, True);
+      Register_Menu (Kernel      => Get_Kernel,
+                     Parent_Path => Cat_Path,
+                     Text        => Name,
+                     Stock_Image => Get_Icon (Target),
+                     Callback    => null,
+                     Command     => Interactive_Command_Access (C));
+   end Add_Menu_For_Target;
+
+   -----------------
+   -- Clear_Menus --
+   -----------------
+
+   procedure Clear_Menus is
+      use String_List;
+      C : String_List.Cursor;
+      M : Gtk_Menu_Item;
+   begin
+      C := Builder_Module_ID.Menus.First;
+
+      while Has_Element (C) loop
+         M := Find_Menu_Item (Get_Kernel, To_String (Element (C)));
+
+         if M /= null then
+            Destroy (M);
+         end if;
+
+         Next (C);
+      end loop;
+   end Clear_Menus;
+
+   -------------------
+   -- Install_Menus --
+   -------------------
+
+   procedure Install_Menus is
+      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      T : Target_Access;
+
+   begin
+      loop
+         T := Get_Target (C);
+         exit when T = null;
+
+         Add_Menu_For_Target (T);
+         Next (C);
+      end loop;
+   end Install_Menus;
 
    -----------------------------
    -- Install_Toolbar_Buttons --
@@ -579,6 +693,10 @@ package body Builder_Facility_Module is
          --  Recreate the actions
          Remove_All_Actions;
          Add_Actions_For_All_Targets;
+
+         --  Recreate the menu
+         Clear_Menus;
+         Install_Menus;
 
          --  Save the user-defined targets
          Save_Targets;
@@ -657,7 +775,6 @@ package body Builder_Facility_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Build : constant String := '/' & (-"New builder") & '/';
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -670,7 +787,7 @@ package body Builder_Facility_Module is
          Module_Name => "Builder Facility");
 
       Register_Menu (Kernel, "/_" & (-"New builder"), Ref_Item => -"Tools");
-      Register_Menu (Kernel, Build, -"Build Manager", "",
+      Register_Menu (Kernel, Main_Menu, -"Build Manager", "",
                      On_Build_Manager'Access);
 
       --  Connect to the File_Saved_Hook
