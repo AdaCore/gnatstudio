@@ -31,6 +31,8 @@ with GPS.Intl;           use GPS.Intl;
 
 with Commands.Builder;   use Commands.Builder;
 
+with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
+
 with Traces;             use Traces;
 
 package body Build_Command_Manager is
@@ -170,13 +172,15 @@ package body Build_Command_Manager is
    -------------------
 
    procedure Launch_Target
-     (Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
-      Target_Name : String)
+     (Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Force_Dialog : Boolean)
    is
-      T     : Target_Access;
-      Full  : Argument_List_Access;
-      Quiet : Boolean;
+      T            : Target_Access;
+      Full         : Argument_List_Access;
+      Quiet        : Boolean;
+      Command_Line : Argument_List_Access;
    begin
       --  Get the target
 
@@ -189,28 +193,50 @@ package body Build_Command_Manager is
          return;
       end if;
 
-      --  Get the unexpanded command line
+      if Force_Dialog
+        or else Get_Properties (T).Launch_Mode = Manually_With_Dialog
+      then
+         --  Use the single target dialog to get the unexpanded command line
+         Single_Target_Dialog
+           (Registry => Registry,
+            Parent   => Get_Main_Window (Kernel),
+            Tooltips => Get_Tooltips (Kernel),
+            Target   => Target_Name,
+            History  => Get_History (Kernel).all,
+            Result   => Command_Line);
 
-      declare
-         --  ??? the mode string is left empty, as support for modes is not
-         --  implemented yet
-         CL : constant Argument_List :=
-           Get_Command_Line_Unexpanded (Registry, "", T);
-      begin
-         --  Sanity check that the command line contains at least one element
-         --  (the command itself). It can happen that this is not the case
-         --  if the user has modified the command by hand.
-
-         if CL'Length = 0 then
-            Insert
-              (Kernel, -"Command line is empty for target: " & Target_Name);
+         if Command_Line = null then
+            --  The dialog was cancelled: return
             return;
          end if;
 
-         --  Expand the command line
+         Full := Expand_Command_Line (Kernel, Command_Line.all);
 
-         Full := Expand_Command_Line (Kernel, CL);
-      end;
+         Free (Command_Line);
+      else
+         --  Get the unexpanded command line from the target
+
+         declare
+            --  ??? the mode string is left empty, as support for modes is not
+            --  implemented yet
+            CL : constant Argument_List :=
+              Get_Command_Line_Unexpanded (Registry, "", T);
+         begin
+            --  Sanity check that the command line contains at least one item
+            --  (the command itself). It can happen that this is not the case
+            --  if the user has modified the command by hand.
+
+            if CL'Length = 0 then
+               Insert
+                 (Kernel, -"Command line is empty for target: " & Target_Name);
+               return;
+            end if;
+
+            --  Expand the command line
+
+            Full := Expand_Command_Line (Kernel, CL);
+         end;
+      end if;
 
       --  Trace the command line, for debug purposes
       if Full = null then
@@ -247,9 +273,10 @@ package body Build_Command_Manager is
       --  ??? We should use the command context
       pragma Unreferenced (Context);
    begin
-      Launch_Target (Kernel      => Command.Kernel,
-                     Registry    => Command.Registry,
-                     Target_Name => To_String (Command.Target_Name));
+      Launch_Target (Kernel       => Command.Kernel,
+                     Registry     => Command.Registry,
+                     Target_Name  => To_String (Command.Target_Name),
+                     Force_Dialog => Command.Force_Dialog);
       return Success;
    end Execute;
 
@@ -258,16 +285,18 @@ package body Build_Command_Manager is
    ------------
 
    procedure Create
-     (Item        : out Build_Command_Access;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      Registry    : Build_Config_Registry_Access;
-      Target_Name : String)
+     (Item         : out Build_Command_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Force_Dialog : Boolean)
    is
    begin
       Item := new Build_Command;
       Item.Kernel := Kernel;
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
+      Item.Force_Dialog := Force_Dialog;
    end Create;
 
 end Build_Command_Manager;
