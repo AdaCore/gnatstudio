@@ -24,6 +24,7 @@ with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with OS_Utils;                use OS_Utils;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
 with Remote.Path.Translator;  use Remote.Path.Translator;
@@ -230,13 +231,46 @@ package body GPS.Kernel.Macros is
          return String_Utils.Protect
            (Krunch (Entity_Name_Information (Context)));
 
-      elsif Param = "gnatmake" then
+      elsif Param = "builder" then
          declare
             Prj : constant Project_Type := Get_Project (Get_Kernel (Context));
+            Gnatmake : constant String :=
+                         Get_Attribute_Value
+                           (Prj, Compiler_Command_Attribute,
+                            Default => "gnatmake",
+                            Index   => "Ada");
+            First    : Natural := Gnatmake'First;
+
          begin
-            return Get_Attribute_Value
-              (Prj, Compiler_Command_Attribute,
-               Default => "gnatmake", Index => "ada");
+            if Multi_Language_Build.Get_Pref then
+               case Multi_Language_Builder_Policy
+                     '(Multi_Language_Builder.Get_Pref)
+               is
+                  when Gprmake  =>
+                     return "gprmake";
+                  when Gprbuild =>
+                     if Gnatmake'Length > 9
+                       and then Gnatmake
+                         (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
+                     then
+                        for J in reverse Gnatmake'First
+                                          .. Gnatmake'Last - 9
+                        loop
+                           if Is_Directory_Separator (Gnatmake (J)) then
+                              First := J + 1;
+                              exit;
+                           end if;
+                        end loop;
+
+                        return "gprbuild --target="
+                          & Gnatmake (First .. Gnatmake'Last - 9);
+                     else
+                        return "gprbuild";
+                     end if;
+               end case;
+            else
+               return Gnatmake;
+            end if;
          end;
 
       elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then

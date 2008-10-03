@@ -12,7 +12,8 @@ Gnatmake_Model_Template = """
 <target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>
    <command-line>
-      <arg>%gnatmake</arg>
+      <arg>%builder</arg>
+      <arg>-d</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
    </command-line>
@@ -28,12 +29,12 @@ Gnatmake_Model_Template = """
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
            column="2"
            tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+     <check label="Progress bar" switch="-d" column="2"
+            tip="Display a progress bar with information about how many files are left to be compiled" />
      <check label="Keep going" switch="-k" column="2"
             tip="Continue as much as possible after a compilation error" />
      <check label="Debug information" switch="-g" column="2"
             tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
-     <check label="Use mapping file" switch="-C" column="2"
-            tip="Use a mapping file. A mapping file is a way to communicate to the compiler two mappings: from unit name to file names, and from file names to path names. This will generally improve the compilation time" />
      <check label="Syntax check" switch="-gnats" line="2"
             tip="Perform syntax check, no compilation occurs" />
      <check label="Semantic check" switch="-gnatc" line="2"
@@ -94,7 +95,8 @@ Compile_All_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
+       <arg>-d</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
@@ -112,7 +114,7 @@ Compile_File_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
@@ -130,13 +132,17 @@ Syntax_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%gnatmake</arg>
-       <arg>-gnats</arg>
+       <arg>%builder</arg>
+       <arg>-q</arg>
+       <arg>-ws</arg>
+       <arg>-c</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
+       <arg>-cargs</arg>
+       <arg>-gnats</arg>
     </default-command-line>
 </target>
 """
@@ -148,18 +154,22 @@ Semantic_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%gnatmake</arg>
-       <arg>-gnatc</arg>
+       <arg>%builder</arg>
+       <arg>-q</arg>
+       <arg>-ws</arg>
+       <arg>-c</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
+       <arg>-cargs</arg>
+       <arg>-gnatc</arg>
     </default-command-line>
 </target>
 """
 
-# This is a target to compile the current file using the gnatmake model
+# This is a target to clear the current project using the gprclean model
 Clean_Project_Target = """
 <target model="gprclean" category="Project" name="Clean">
     <in-toolbar>FALSE</in-toolbar>
