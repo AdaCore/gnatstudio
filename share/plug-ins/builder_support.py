@@ -6,13 +6,40 @@ from GPS import *
 # This contains a list of project-specific targets
 project_targets = []
 
-# This is an XML model that works for all but the most ancient versions of
-# gnatmake
+# This is an XML model for all GNAT builders (gnatmake, gprbuild, gprmake)
+Builder_Model_Template = """
+<target-model name="builder" category="">
+   <description>Generic GNAT builder</description>
+   <command-line>
+      <arg>%builder</arg>
+      <arg>-d</arg>
+      <arg>%eL</arg>
+      <arg>-P%PP</arg>
+   </command-line>
+   <icon>gtk-media-play</icon>
+   <switches command="%(tool_name)s" columns="2" lines="2">
+     <title column="1" line="1" >Dependencies</title>
+     <title column="1" line="2" >Checks</title>
+     <title column="2" line="1" >Compilation</title>
+     <check label="Recompile if switches changed" switch="-s"
+            tip="Recompile if compiler switches have changed since last compilation" />
+     <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
+           column="2"
+           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+     <check label="Progress bar" switch="-d" column="2"
+            tip="Display a progress bar with information about how many files are left to be compiled" />
+     <check label="Keep going" switch="-k" column="2"
+            tip="Continue as much as possible after a compilation error" />
+   </switches>
+</target-model>
+"""
+
+# This is an XML model for gnatmake
 Gnatmake_Model_Template = """
 <target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>
    <command-line>
-      <arg>%builder</arg>
+      <arg>%gnatmake</arg>
       <arg>-d</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
@@ -89,7 +116,7 @@ Custom_Target = """
 
 # This is a target to compile the current file using the gnatmake model
 Compile_All_Target = """
-<target model="gnatmake" category="Project" name="Compile all">
+<target model="builder" category="Project" name="Compile all">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -108,13 +135,14 @@ Compile_All_Target = """
 
 # This is a target to compile the current file using the gnatmake model
 Compile_File_Target = """
-<target model="gnatmake" category="File" name="Compile file">
+<target model="builder" category="File" name="Compile file">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
        <arg>%builder</arg>
+       <arg>-ws</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
@@ -132,17 +160,14 @@ Syntax_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%builder</arg>
+       <arg>%gnatmake</arg>
        <arg>-q</arg>
-       <arg>-ws</arg>
-       <arg>-c</arg>
+       <arg>-gnats</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
-       <arg>-cargs</arg>
-       <arg>-gnats</arg>
     </default-command-line>
 </target>
 """
@@ -154,17 +179,14 @@ Semantic_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>%builder</arg>
+       <arg>%gnatmake</arg>
        <arg>-q</arg>
-       <arg>-ws</arg>
-       <arg>-c</arg>
+       <arg>-gnatc</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
-       <arg>-cargs</arg>
-       <arg>-gnatc</arg>
     </default-command-line>
 </target>
 """
@@ -210,6 +232,7 @@ def register_models():
     """ Register the models for building using standard tools
     """
     parse_xml (Gnatmake_Model_Template)
+    parse_xml (Builder_Model_Template)
     parse_xml (Custom_Model_Template)
     parse_xml (Gprclean_Model_Template)
 

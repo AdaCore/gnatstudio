@@ -231,6 +231,13 @@ package body GPS.Kernel.Macros is
          return String_Utils.Protect
            (Krunch (Entity_Name_Information (Context)));
 
+      elsif Param = "gnatmake" then
+         return Get_Attribute_Value
+                  (Get_Project (Get_Kernel (Context)),
+                   Compiler_Command_Attribute,
+                   Default => "gnatmake",
+                   Index   => "Ada");
+
       elsif Param = "builder" then
          declare
             Prj : constant Project_Type := Get_Project (Get_Kernel (Context));

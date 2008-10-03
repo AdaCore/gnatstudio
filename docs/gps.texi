@@ -10794,6 +10794,9 @@ Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported sub projects,
 recursively.
 
+@item %gnatmake
+Replaced by the gnatmake executable configured in your project file.
+
 @item %builder
 Replaced by the default builder configured in GPS.
 This can be e.g. @code{gnatmake}, or @code{gprbuild}.
