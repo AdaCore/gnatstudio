@@ -22,14 +22,15 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with Entities;                use Entities;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
 with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNAT.Strings;
-with GNATCOLL.Templates;          use GNATCOLL.Templates;
+with GNATCOLL.Templates;      use GNATCOLL.Templates;
 
 package body GPS.Kernel.Macros is
 
@@ -184,6 +185,13 @@ package body GPS.Kernel.Macros is
          if Entity /= null then
             --  Get the name from the context, to have the proper casing
             return Krunch (Entity_Name_Information (Context));
+         end if;
+
+      elsif Param = "eL" then
+         if Trusted_Mode.Get_Pref then
+            return "";
+         else
+            return "-eL";
          end if;
 
       elsif Param = "l" then

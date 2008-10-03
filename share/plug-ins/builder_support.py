@@ -13,6 +13,7 @@ Gnatmake_Model_Template = """
    <description>Build with gnatmake</description>
    <command-line>
       <arg>%gnatmake</arg>
+      <arg>%eL</arg>
       <arg>-P%PP</arg>
    </command-line>
    <icon>gtk-media-play</icon>
@@ -47,6 +48,7 @@ Gprclean_Model_Template = """
    <description>Clean compilation artefacts with gprclean</description>
    <command-line>
       <arg>gprclean</arg>
+      <arg>%eL</arg>
       <arg>-P%PP</arg>
    </command-line>
    <icon>gtk-media-play</icon>
@@ -95,6 +97,7 @@ Compile_All_Target = """
        <arg>%gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
+       <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
     </default-command-line>
@@ -112,6 +115,7 @@ Compile_File_Target = """
        <arg>%gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
+       <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
@@ -129,6 +133,7 @@ Syntax_Check_Target = """
        <arg>%gnatmake</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
+       <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
@@ -146,7 +151,9 @@ Semantic_Check_Target = """
        <arg>%gnatmake</arg>
        <arg>-gnatc</arg>
        <arg>-u</arg>
+       <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%X</arg>
        <arg>%f</arg>
     </default-command-line>
 </target>
@@ -162,6 +169,7 @@ Clean_Project_Target = """
     <default-command-line>
        <arg>gprclean</arg>
        <arg>-r</arg>
+       <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
     </default-command-line>
