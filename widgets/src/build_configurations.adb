@@ -837,7 +837,7 @@ package body Build_Configurations is
    -- Next --
    ----------
 
-   procedure Next (Cursor : in out Target_Cursor) is
+   overriding procedure Next (Cursor : in out Target_Cursor) is
    begin
       Target_Map.Next (Target_Map.Cursor (Cursor));
    end Next;
