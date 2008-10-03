@@ -978,8 +978,10 @@ package body Build_Configurations.Gtkada is
                  (History, Key,
                   Get_Text (Get_Entry (Target_UI.Editor)));
                Destroy (Dialog);
+               exit;
             when Gtk_Response_Cancel =>
                Destroy (Dialog);
+               exit;
             when others =>
                null;
          end case;
@@ -1047,6 +1049,7 @@ package body Build_Configurations.Gtkada is
             --  We have not found our iter, create it now
             Append (View.Model, Iter, Null_Iter);
             Set (View.Model, Iter, Name_Column, Cat_Name);
+            Set (View.Model, Iter, Icon_Column, "gps-folder-open");
 
             --  Category iters correspond to page 0 in the main notebook
             Set (View.Model, Iter, Num_Column, 0);
