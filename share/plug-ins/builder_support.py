@@ -16,8 +16,9 @@ Gnatmake_Model_Template = """
       <arg>-P%PP</arg>
    </command-line>
    <icon>gtk-media-play</icon>
-   <switches command="%(tool_name)s" columns="2">
+   <switches command="%(tool_name)s" columns="2" lines="2">
      <title column="1" line="1" >Dependencies</title>
+     <title column="1" line="2" >Checks</title>
      <title column="2" line="1" >Compilation</title>
      <check label="Recompile if switches changed" switch="-s"
             tip="Recompile if compiler switches have changed since last compilation" />
@@ -32,6 +33,10 @@ Gnatmake_Model_Template = """
             tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
      <check label="Use mapping file" switch="-C" column="2"
             tip="Use a mapping file. A mapping file is a way to communicate to the compiler two mappings: from unit name to file names, and from file names to path names. This will generally improve the compilation time" />
+     <check label="Syntax check" switch="-gnats" line="2"
+            tip="Perform syntax check, no compilation occurs" />
+     <check label="Semantic check" switch="-gnatc" line="2"
+            tip="Perform syntax and semantic check only, no compilation occurs" />
    </switches>
 </target-model>
 """
@@ -86,47 +91,79 @@ Compile_All_Target = """
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <command-line>
+    <default-command-line>
        <arg>gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </command-line>
+    </default-command-line>
 </target>
 """
 
 # This is a target to compile the current file using the gnatmake model
 Compile_File_Target = """
-<target model="gnatmake" category="Project" name="Compile file">
+<target model="gnatmake" category="File" name="Compile file">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <command-line>
+    <default-command-line>
        <arg>gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%f</arg>
-    </command-line>
+    </default-command-line>
+</target>
+"""
+
+Syntax_Check_Target = """
+<target model="gnatmake" category="File" name="Check syntax">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gtk-media-play</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>gnatmake</arg>
+       <arg>-gnats</arg>
+       <arg>-u</arg>
+       <arg>-P%PP</arg>
+       <arg>%f</arg>
+    </default-command-line>
+</target>
+"""
+
+Semantic_Check_Target = """
+<target model="gnatmake" category="File" name="Check semantic">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gtk-media-play</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>gnatmake</arg>
+       <arg>-gnatc</arg>
+       <arg>-u</arg>
+       <arg>-P%PP</arg>
+       <arg>%f</arg>
+    </default-command-line>
 </target>
 """
 
 # This is a target to compile the current file using the gnatmake model
 Clean_Project_Target = """
 <target model="gprclean" category="Project" name="Clean">
-    <in-toolbar>TRUE</in-toolbar>
+    <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-clear</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <command-line>
+    <default-command-line>
        <arg>gprclean</arg>
        <arg>-r</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </command-line>
+    </default-command-line>
 </target>
 """
 
@@ -147,6 +184,8 @@ def create_global_targets():
     parse_xml (Compile_All_Target)
     parse_xml (Clean_Project_Target)
     parse_xml (Custom_Target)
+    parse_xml (Syntax_Check_Target)
+    parse_xml (Semantic_Check_Target)
 
 def register_models():
     """ Register the models for building using standard tools
