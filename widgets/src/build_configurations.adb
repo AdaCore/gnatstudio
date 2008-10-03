@@ -851,6 +851,15 @@ package body Build_Configurations is
       return To_String (Target.Name);
    end Get_Name;
 
+   ------------------
+   -- Get_Category --
+   ------------------
+
+   function Get_Category (Target : Target_Access) return String is
+   begin
+      return To_String (Target.Category);
+   end Get_Category;
+
    --------------
    -- Get_Icon --
    --------------
