@@ -1755,7 +1755,7 @@ package body Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Result : Boolean := False;
+      Count : Integer := 0;
 
       function On_Callee
         (Callee, Primitive_Of : Entity_Information) return Boolean;
@@ -1764,8 +1764,10 @@ package body Src_Editor_Box is
       is
          pragma Unreferenced (Callee, Primitive_Of);
       begin
-         Result := True;
-         return False;
+         --  Consider dispatching calls only if we find more than one
+         --  potential target, to avoid creating submenu with only one entry
+         Count := Count + 1;
+         return Count <= 1;
       end On_Callee;
 
    begin
@@ -1776,7 +1778,7 @@ package body Src_Editor_Box is
          On_Callee => On_Callee'Access,
          Policy    => Submenu_For_Dispatching_Calls.Get_Pref);
       Pop_State (Get_Kernel (Context));
-      return Result;
+      return Count > 1;
    end Filter_Matches_Primitive;
 
    -------------
