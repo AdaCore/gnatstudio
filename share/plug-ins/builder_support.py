@@ -9,7 +9,7 @@ project_targets = []
 # This is an XML model that works for all but the most ancient versions of
 # gnatmake
 Gnatmake_Model_Template = """
-<target-model name="gnatmake" category="Project">
+<target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>
    <command-line>
       <arg>gnatmake</arg>
@@ -43,7 +43,7 @@ Gnatmake_Model_Template = """
 
 # This is an XML model for gprclean
 Gprclean_Model_Template = """
-<target-model name="gprclean" category="Project">
+<target-model name="gprclean" category="">
    <description>Clean compilation artefacts with gprclean</description>
    <command-line>
       <arg>gprclean</arg>
@@ -63,7 +63,7 @@ Gprclean_Model_Template = """
 
 # This is a minimal XML model, used for launching custom commands
 Custom_Model_Template = """
-<target-model name="custom" category="Project">
+<target-model name="custom" category="">
    <description>Launch a custom build command</description>
    <icon>gtk-execute</icon>
    <switches command="">
@@ -74,7 +74,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="Project" name="Custom">
+<target model="custom" category="" name="Custom">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-execute</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -86,7 +86,7 @@ Custom_Target = """
 
 # This is a target to compile the current file using the gnatmake model
 Compile_All_Target = """
-<target model="gnatmake" category="Project" name="Compile all">
+<target model="gnatmake" category="" name="Compile all">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
