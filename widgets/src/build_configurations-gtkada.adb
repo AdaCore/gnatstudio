@@ -914,8 +914,6 @@ package body Build_Configurations.Gtkada is
          Set_Transient_For (Dialog, Parent);
       end if;
 
-      Set_Default_Size (Dialog, 320, 200);
-
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
 
