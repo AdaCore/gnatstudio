@@ -12,7 +12,7 @@ Gnatmake_Model_Template = """
 <target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>
    <command-line>
-      <arg>gnatmake</arg>
+      <arg>%gnatmake</arg>
       <arg>-P%PP</arg>
    </command-line>
    <icon>gtk-media-play</icon>
@@ -74,7 +74,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="" name="Custom">
+<target model="custom" category="Project" name="Custom">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-execute</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -86,13 +86,13 @@ Custom_Target = """
 
 # This is a target to compile the current file using the gnatmake model
 Compile_All_Target = """
-<target model="gnatmake" category="" name="Compile all">
+<target model="gnatmake" category="Project" name="Compile all">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>gnatmake</arg>
+       <arg>%gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
@@ -109,7 +109,7 @@ Compile_File_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>gnatmake</arg>
+       <arg>%gnatmake</arg>
        <arg>-c</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
@@ -126,7 +126,7 @@ Syntax_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>gnatmake</arg>
+       <arg>%gnatmake</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
@@ -142,7 +142,7 @@ Semantic_Check_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>gnatmake</arg>
+       <arg>%gnatmake</arg>
        <arg>-gnatc</arg>
        <arg>-u</arg>
        <arg>-P%PP</arg>
