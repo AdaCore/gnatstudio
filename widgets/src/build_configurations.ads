@@ -228,6 +228,9 @@ package Build_Configurations is
    function Get_Name (Target : Target_Access) return String;
    --  Return the name of Target
 
+   function Get_Category (Target : Target_Access) return String;
+   --  Return the category of Target
+
    function Get_Icon (Target : Target_Access) return String;
    --  Return the stock-id corresponding to the icon for target.
 
