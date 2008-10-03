@@ -28,6 +28,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
+with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 
 with Projects;                  use Projects;
@@ -775,6 +776,9 @@ package body Builder_Facility_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Space : Gtk_Separator_Tool_Item;
+      Mitem : Gtk_Menu_Item;
+
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -790,6 +794,9 @@ package body Builder_Facility_Module is
       Register_Menu (Kernel, Main_Menu, -"Build Manager", "",
                      On_Build_Manager'Access);
 
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & (-"New builder"), Mitem);
+
       --  Connect to the File_Saved_Hook
       Add_Hook (Kernel, File_Saved_Hook,
                 Wrapper (On_File_Saved'Access),
@@ -800,6 +807,12 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compilation_Starting_Hook,
                 Wrapper (On_Compilation_Starting'Access),
                 Name => "builder_facility_module.compilation_starting");
+
+      --  Insert a separator in the toolbar
+
+      Gtk_New (Space);
+      Set_Draw (Space, True);
+      Insert (Get_Toolbar (Kernel), Space);
 
       --  Load the user-defined targets.
       Load_Targets;
