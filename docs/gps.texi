@@ -10794,6 +10794,19 @@ Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported sub projects,
 recursively.
 
+@item %gnatmake
+Replaced by the compiler to use for the Ada language, as defined in the
+ project. This is configured in the Languages tab of the Project Properties
+ editor.
+
+@item %X
+Replaced by a list of switches of the form -X<variable>=<value>, where
+<variable> is the name of a scenario variable and <value> its current
+value, as configured in the Scenario View. All the scenario variables
+defined in the current project tree will be listed.
+Note: this macro is only available in the commands defined in the Build
+ Manager and the Build Launcher dialogs.
+
 @item %%
 Replaced by the % sign.
 @end table
@@ -16600,6 +16613,10 @@ default encoding isn't appropriate.
 @cindex history
 Contains the state and history of combo boxes (e.g. the
 @code{Run->Custom...} dialog).
+
+   @item $HOME/.gps/targets.xml
+@cindex targets
+Contains the build targets defined by the user.
 
    @item $HOME/.gps/preferences
 @cindex preferences
