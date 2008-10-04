@@ -15,6 +15,7 @@ Builder_Model_Template = """
       <arg>-d</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
    </command-line>
    <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="2" lines="2">
@@ -43,6 +44,7 @@ Gnatmake_Model_Template = """
       <arg>-d</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
    </command-line>
    <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="2" lines="2">
@@ -70,14 +72,15 @@ Gnatmake_Model_Template = """
 </target-model>
 """
 
-# This is an XML model for gprclean
+# This is an XML model for gnatclean/gprclean
 Gprclean_Model_Template = """
 <target-model name="gprclean" category="">
-   <description>Clean compilation artefacts with gprclean</description>
+   <description>Clean compilation artefacts with gnatclean/gprclean</description>
    <command-line>
-      <arg>gprclean</arg>
+      <arg>%gprclean</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
    </command-line>
    <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="1">
@@ -199,7 +202,7 @@ Clean_Project_Target = """
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
-       <arg>gprclean</arg>
+       <arg>%gprclean</arg>
        <arg>-r</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>

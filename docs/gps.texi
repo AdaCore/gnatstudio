@@ -10801,6 +10801,10 @@ Replaced by the gnatmake executable configured in your project file.
 Replaced by the default builder configured in GPS.
 This can be e.g. @code{gnatmake}, or @code{gprbuild}.
 
+@item %gprclean
+Replaced by the default cleaner configured in GPS.
+This can be e.g. @code{gnat clean}, or @code{gprclean}.
+
 @item %eL
 Replaced by either an empty string, or @code{-eL}, depending on whether the
 @code{Fast Project Loading} preference if set or not.

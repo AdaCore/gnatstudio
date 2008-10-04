@@ -238,9 +238,13 @@ package body GPS.Kernel.Macros is
                    Default => "gnatmake",
                    Index   => "Ada");
 
-      elsif Param = "builder" then
+      elsif Param = "builder"
+        or else Param = "gprclean"
+      then
          declare
-            Prj : constant Project_Type := Get_Project (Get_Kernel (Context));
+            Builder  : constant Boolean := Param = "builder";
+            Prj      : constant Project_Type :=
+                         Get_Project (Get_Kernel (Context));
             Gnatmake : constant String :=
                          Get_Attribute_Value
                            (Prj, Compiler_Command_Attribute,
@@ -249,34 +253,43 @@ package body GPS.Kernel.Macros is
             First    : Natural := Gnatmake'First;
 
          begin
-            if Multi_Language_Build.Get_Pref then
-               case Multi_Language_Builder_Policy
-                     '(Multi_Language_Builder.Get_Pref)
-               is
-                  when Gprmake  =>
-                     return "gprmake";
-                  when Gprbuild =>
-                     if Gnatmake'Length > 9
-                       and then Gnatmake
-                         (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
-                     then
-                        for J in reverse Gnatmake'First
-                                          .. Gnatmake'Last - 9
-                        loop
-                           if Is_Directory_Separator (Gnatmake (J)) then
-                              First := J + 1;
-                              exit;
-                           end if;
-                        end loop;
-
-                        return "gprbuild --target="
-                          & Gnatmake (First .. Gnatmake'Last - 9);
-                     else
-                        return "gprbuild";
+            if Multi_Language_Build.Get_Pref
+              and then Multi_Language_Builder.Get_Pref = Gprbuild
+            then
+               if Gnatmake'Length > 9
+                 and then Gnatmake
+                   (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
+               then
+                  for J in reverse Gnatmake'First .. Gnatmake'Last - 9 loop
+                     if Is_Directory_Separator (Gnatmake (J)) then
+                        First := J + 1;
+                        exit;
                      end if;
-               end case;
+                  end loop;
+
+                  if Builder then
+                     return "gprbuild --target="
+                       & Gnatmake (First .. Gnatmake'Last - 9);
+                  else
+                     return "gprclean --target="
+                       & Gnatmake (First .. Gnatmake'Last - 9);
+                  end if;
+
+               elsif Builder then
+                  return "gprbuild";
+               else
+                  return "gprclean";
+               end if;
+
+            elsif Builder then
+               if Multi_Language_Build.Get_Pref then
+                  return "gprmake";
+               else
+                  return Gnatmake;
+               end if;
             else
-               return Gnatmake;
+               return Get_Attribute_Value
+                        (Prj, GNAT_Attribute, Default => "gnat") & " clean";
             end if;
          end;
 
