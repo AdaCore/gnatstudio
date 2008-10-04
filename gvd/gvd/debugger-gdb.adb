@@ -177,10 +177,6 @@ package body Debugger.Gdb is
    Undefined_Command         : constant String := "Undefined command";
    --  Another string used to detect undefined commands.
 
-   Unexpected_Arguments      : constant String :=
-                                "warning: Unexpected arguments";
-   --  Yet another string used to detect undefined commands.
-
    Undefined_Info_Command    : constant String := "Undefined info command";
    --  Another string used to detect undefined info commands.
 
