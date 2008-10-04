@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
---                Copyright (C) 2000-2008, AdaCore                   --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,47 +17,48 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Strings;             use Ada.Strings;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with Ada.Tags;                use Ada.Tags;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings;               use Ada.Strings;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Expect;             use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
-pragma Warnings (On);
-with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect;               use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
+pragma Warnings (On);
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
-with Gtk.Window;              use Gtk.Window;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Config;                  use Config;
-with Debugger.Gdb.Ada;        use Debugger.Gdb.Ada;
-with Debugger.Gdb.C;          use Debugger.Gdb.C;
-with Debugger.Gdb.Cpp;        use Debugger.Gdb.Cpp;
-with Default_Preferences;     use Default_Preferences;
-with File_Utils;              use File_Utils;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Main_Window;         use GPS.Main_Window;
-with GVD.Dialogs;             use GVD.Dialogs;
-with GVD.Preferences;         use GVD.Preferences;
-with GVD.Process;             use GVD.Process;
-with GVD.Scripts;             use GVD.Scripts;
-with GVD.Trace;               use GVD.Trace;
-with GVD.Types;               use GVD.Types;
-with Items.Arrays;            use Items.Arrays;
-with Items.Classes;           use Items.Classes;
-with Items.Records;           use Items.Records;
-with Items.Simples;           use Items.Simples;
-with Items;                   use Items;
-with Language.Debugger;       use Language.Debugger;
-with Language;                use Language;
-with Process_Proxies;         use Process_Proxies;
-with Remote.Path.Translator;  use Remote, Remote.Path.Translator;
-with String_Utils;            use String_Utils;
+with Gtk.Window;                use Gtk.Window;
+
+with Config;                    use Config;
+with Debugger.Gdb.Ada;          use Debugger.Gdb.Ada;
+with Debugger.Gdb.C;            use Debugger.Gdb.C;
+with Debugger.Gdb.Cpp;          use Debugger.Gdb.Cpp;
+with Default_Preferences;       use Default_Preferences;
+with File_Utils;                use File_Utils;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GVD.Dialogs;               use GVD.Dialogs;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Process;               use GVD.Process;
+with GVD.Scripts;               use GVD.Scripts;
+with GVD.Trace;                 use GVD.Trace;
+with GVD.Types;                 use GVD.Types;
+with Items.Arrays;              use Items.Arrays;
+with Items.Classes;             use Items.Classes;
+with Items.Records;             use Items.Records;
+with Items.Simples;             use Items.Simples;
+with Items;                     use Items;
+with Language.Debugger;         use Language.Debugger;
+with Language;                  use Language;
+with Process_Proxies;           use Process_Proxies;
+with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with String_Utils;              use String_Utils;
 
 package body Debugger.Gdb is
 
@@ -72,22 +73,22 @@ package body Debugger.Gdb is
    --  be used several times when receiving long results from commands.
 
    Prompt_Length             : constant := 6;
-   --  Length of the prompt ("(gdb) ").
+   --  Length of the prompt ("(gdb) ")
 
    Gdb_Command               : constant String := "gdb";
-   --  Name of the command to launch gdb.
+   --  Name of the command to launch gdb
 
    Gdb_Options               : constant String := "-nw -q";
-   --  Options always passed to gdb.
+   --  Options always passed to gdb
 
    Highlight_Pattern         : constant Pattern_Matcher :=
      Compile ("^\(gdb\) ", Multiple_Lines);
-   --  Matches everything that should be highlighted in the debugger window.
+   --  Matches everything that should be highlighted in the debugger window
 
    File_Name_Pattern         : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
               & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$", Multiple_Lines);
-   --  Matches a file name/line indication in gdb's output.
+   --  Matches a file name/line indication in gdb's output
 
    File_Name_Pattern2        : constant Pattern_Matcher :=
      Compile ("^([^:\n]+):(\d+): No such file or directory.", Multiple_Lines);
@@ -98,15 +99,15 @@ package body Debugger.Gdb is
    Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
-   --  Pattern used to detect language changes in the debugger.
+   --  Pattern used to detect language changes in the debugger
 
    Terminate_Pattern         : constant Pattern_Matcher := Compile
      ("^Program exited (normally|with code)", Multiple_Lines);
-   --  Pattern used to detect when the debuggee terminates.
+   --  Pattern used to detect when the debuggee terminates
 
    Running_Pattern           : constant Pattern_Matcher := Compile
      ("^The program is not being run.", Multiple_Lines);
-   --  Pattern used to detect when the debuggee is not running.
+   --  Pattern used to detect when the debuggee is not running
 
    Frame_Pattern             : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
@@ -172,13 +173,13 @@ package body Debugger.Gdb is
      ("(b~.+\.adb)|(b_.+\.c)");
 
    No_Definition_Of          : constant String := "No definition of";
-   --  String used to detect undefined commands.
+   --  String used to detect undefined commands
 
    Undefined_Command         : constant String := "Undefined command";
-   --  Another string used to detect undefined commands.
+   --  Another string used to detect undefined commands
 
    Undefined_Info_Command    : constant String := "Undefined info command";
-   --  Another string used to detect undefined info commands.
+   --  Another string used to detect undefined info commands
 
    List_Lines                : constant String := "^done,lines=[";
    --  Used to parse output of -symbol-list-lines command
@@ -187,31 +188,31 @@ package body Debugger.Gdb is
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect a change in the current language.
+   --  Filter used to detect a change in the current language
 
    procedure Running_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect when the program no longer runs.
+   --  Filter used to detect when the program no longer runs
 
    procedure Question_Filter1
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect questions from gdb.
+   --  Filter used to detect questions from gdb
 
    procedure Question_Filter2
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect y/n questions from gdb.
+   --  Filter used to detect y/n questions from gdb
 
    procedure Continuation_Line_Filter
      (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
-   --  Filter used to detect commands handled on multiple lines.
+   --  Filter used to detect commands handled on multiple lines
 
    procedure Parse_Backtrace_Info
      (S     : String;
@@ -227,7 +228,7 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Arguments : String;
       Mode      : Command_Type := Hidden);
-   --  Set the debuggee arguments to Arguments.
+   --  Set the debuggee arguments to Arguments
 
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
@@ -240,7 +241,7 @@ package body Debugger.Gdb is
 
    procedure Restore_Language
      (Debugger : access Gdb_Debugger);
-   --  Restore the language that was active before Switch_Language was called.
+   --  Restore the language that was active before Switch_Language was called
 
    function Get_Module (Executable : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the name of the module contained in Executable
@@ -253,7 +254,7 @@ package body Debugger.Gdb is
    --  protocol.
 
    procedure Connect_To_Target_If_Needed (Debugger : access Gdb_Debugger);
-   --  Connect to the target if not already connected.
+   --  Connect to the target if not already connected
 
    --------------------------
    -- Detect_Debugger_Mode --
@@ -666,7 +667,7 @@ package body Debugger.Gdb is
       Binary         => "/t",
       Hexadecimal    => "/x",
       Octal          => "/o");
-   --  Array used by Value_Of to print values in various formats.
+   --  Array used by Value_Of to print values in various formats
 
    overriding function Value_Of
      (Debugger : access Gdb_Debugger;
@@ -878,7 +879,7 @@ package body Debugger.Gdb is
         (Get_Process (Debugger), Num, Compile ("^\(.+\).*$", Multiple_Lines),
          Timeout => -1);
 
-      --  Make sure that the prompt is what we are expecting.
+      --  Make sure that the prompt is what we are expecting
       Send (Debugger, "set prompt (gdb) ", Mode => Internal);
       Send (Debugger, "set width 0", Mode => Internal);
       Send (Debugger, "set height 0", Mode => Internal);
@@ -899,7 +900,7 @@ package body Debugger.Gdb is
       --  Interactive questions are better left to the GUI itself.
       Send (Debugger, "set confirm off", Mode => Internal);
 
-      --  Load the module to debug, if any.
+      --  Load the module to debug, if any
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
@@ -1095,7 +1096,7 @@ package body Debugger.Gdb is
       Process             : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
-      --  Launch a "file" or "load" command and display it if relevant.
+      --  Launch a "file" or "load" command and display it if relevant
 
       -------------------------------
       -- Launch_Command_And_Output --
@@ -1139,7 +1140,7 @@ package body Debugger.Gdb is
          Launch_Command_And_Output ("file");
       end if;
 
-      --  Connect to the remote target if needed.
+      --  Connect to the remote target if needed
 
       Connect_To_Target_If_Needed (Debugger);
 
@@ -1174,7 +1175,7 @@ package body Debugger.Gdb is
             Debugger_Executable_Changed_Hook);
       end if;
 
-      --  Get the name and line of the initial file.
+      --  Get the name and line of the initial file
 
       if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
          Switch_Language (Debugger, "c");
@@ -1349,7 +1350,7 @@ package body Debugger.Gdb is
 
    exception
       when Constraint_Error =>
-         --  Most likely the underlying process died.
+         --  Most likely the underlying process died
          null;
    end Attach_Process;
 
@@ -3227,7 +3228,7 @@ package body Debugger.Gdb is
 
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            --  Translate the matched filename into local file if needed.
+            --  Translate the matched filename into local file if needed
             Br (Num).File := Create_From_Base
               (To_Local
                  (S (Matched (1).First .. Matched (1).Last),
@@ -3858,7 +3859,7 @@ package body Debugger.Gdb is
             end if;
 
             while S_Index <= Last loop
-               --  Detect actual data : 0xXX... right after an ASCII.HT.
+               --  Detect actual data : 0xXX... right after an ASCII.HT
 
                if S (S_Index) = '0' then
                   if S (S_Index - 1) = ASCII.HT then
@@ -3873,7 +3874,7 @@ package body Debugger.Gdb is
          end;
       else
          while S_Index <= Last loop
-            --  Detect actual data : 0xXX... right after an ASCII.HT.
+            --  Detect actual data : 0xXX... right after an ASCII.HT
 
             if S (S_Index) = '0' then
                if S (S_Index - 1) = ASCII.HT then
@@ -3887,14 +3888,14 @@ package body Debugger.Gdb is
          end loop;
       end if;
 
-      --  Fill the values that could not be accessed with "-".
+      --  Fill the values that could not be accessed with "-"
       while Result_Index <= Result'Last loop
          Result (Result_Index) := '-';
          Result_Index := Result_Index + 1;
       end loop;
 
       if Endian = Little_Endian and then not Bytes then
-         --  We need to reverse the blocks.
+         --  We need to reverse the blocks
 
          for J in 1 .. Result'Length / 16 loop
             declare
@@ -3953,7 +3954,7 @@ package body Debugger.Gdb is
          return "";
       end if;
 
-      --  Find the last occurence of "0x" in the string.
+      --  Find the last occurence of "0x" in the string
       loop
          Skip_To_Char (S, Index, 'x', Step => -1);
 
@@ -4013,7 +4014,7 @@ package body Debugger.Gdb is
       Num         : Integer := 0;
 
    begin
-      --  Find the number of words in the list.
+      --  Find the number of words in the list
 
       for Index in S'Range loop
          if S (Index) = ASCII.LF then
@@ -4025,7 +4026,7 @@ package body Debugger.Gdb is
          Num := Num + 1;
       end if;
 
-      --  Fill the string array with the proper values.
+      --  Fill the string array with the proper values
       declare
          Result : GNAT.Strings.String_List (1 .. Num);
       begin
