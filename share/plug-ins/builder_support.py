@@ -224,7 +224,7 @@ Semantic_Check_Target = """
 
 # Targets to clear the current project using the gprclean model
 Clean_Targets = """
-<target model="gprclean" category="Project" name="Clean Root">
+<target model="gprclean" category="Project" name="C_lean Root">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-clear</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -237,7 +237,7 @@ Clean_Targets = """
        <arg>%X</arg>
     </default-command-line>
 </target>
-<target model="gprclean" category="Project" name="Clean All">
+<target model="gprclean" category="Project" name="Clean _All">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-clear</icon>
     <launch-mode>MANUALLY</launch-mode>
