@@ -319,6 +319,7 @@ package Projects is
 
    Source_Dirs_Attribute           : constant Attribute_Pkg;
    Source_Files_Attribute          : constant Attribute_Pkg;
+   GNAT_Attribute                  : constant Attribute_Pkg;
    Gnatlist_Attribute              : constant Attribute_Pkg;
    Compiler_Command_Attribute      : constant Attribute_Pkg;
    Debugger_Command_Attribute      : constant Attribute_Pkg;
@@ -758,6 +759,7 @@ private
    Source_Files_Attribute     : constant Attribute_Pkg := "source_files";
    Locally_Removed_Files_Attribute : constant Attribute_Pkg :=
                                        "locally_removed_files";
+   GNAT_Attribute             : constant Attribute_Pkg := "ide#gnat";
    Gnatlist_Attribute         : constant Attribute_Pkg := "ide#gnatlist";
    Compiler_Command_Attribute : constant Attribute_Pkg :=
                                   "ide#compiler_command";
