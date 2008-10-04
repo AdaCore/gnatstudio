@@ -20,7 +20,6 @@ Builder_Model_Template = """
    <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="2" lines="2">
      <title column="1" line="1" >Dependencies</title>
-     <title column="1" line="2" >Checks</title>
      <title column="2" line="1" >Compilation</title>
      <check label="Recompile if switches changed" switch="-s"
             tip="Recompile if compiler switches have changed since last compilation" />
@@ -107,7 +106,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="Project" name="Custom">
+<target model="custom" category="Project" name="Custom...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-execute</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -117,9 +116,9 @@ Custom_Target = """
 </target>
 """
 
-# This is a target to compile the current file using the gnatmake model
-Compile_All_Target = """
-<target model="builder" category="Project" name="Compile all">
+# Targets to compile all project files using the builder model
+Compile_All_Targets = """
+<target model="builder" category="Project" name="_Build All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -127,8 +126,36 @@ Compile_All_Target = """
     <default-command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+    </default-command-line>
+</target>
+<target model="builder" category="Project" name="_Compile All">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gtk-media-play</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>%builder</arg>
+       <arg>-c</arg>
+       <arg>-U</arg>
+       <arg>-d</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+    </default-command-line>
+</target>
+<target model="builder" category="Project" name="Compile _Root">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gtk-media-play</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>%builder</arg>
        <arg>-c</arg>
        <arg>-u</arg>
+       <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
@@ -136,9 +163,9 @@ Compile_All_Target = """
 </target>
 """
 
-# This is a target to compile the current file using the gnatmake model
+# This is a target to compile the current file using the builder model
 Compile_File_Target = """
-<target model="builder" category="File" name="Compile file">
+<target model="builder" category="_File_" name="_Compile File">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -151,13 +178,14 @@ Compile_File_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%f</arg>
+       <arg>%F</arg>
     </default-command-line>
+    <key>shift-F4</key>
 </target>
 """
 
 Syntax_Check_Target = """
-<target model="gnatmake" category="File" name="Check syntax">
+<target model="gnatmake" category="_File_" name="Check _Syntax">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -170,13 +198,13 @@ Syntax_Check_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%f</arg>
+       <arg>%F</arg>
     </default-command-line>
 </target>
 """
 
 Semantic_Check_Target = """
-<target model="gnatmake" category="File" name="Check semantic">
+<target model="gnatmake" category="_File_" name="Check S_emantic">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gtk-media-play</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -189,14 +217,27 @@ Semantic_Check_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%f</arg>
+       <arg>%F</arg>
     </default-command-line>
 </target>
 """
 
-# This is a target to clear the current project using the gprclean model
-Clean_Project_Target = """
-<target model="gprclean" category="Project" name="Clean">
+# Targets to clear the current project using the gprclean model
+Clean_Targets = """
+<target model="gprclean" category="Project" name="Clean Root">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gtk-clear</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>%gprclean</arg>
+       <arg></arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+    </default-command-line>
+</target>
+<target model="gprclean" category="Project" name="Clean All">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gtk-clear</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -224,20 +265,20 @@ def remove_project_targets():
 def create_global_targets():
     """ Register global targets, ie targets which are the same in all projects
     """
-    parse_xml (Compile_File_Target)
-    parse_xml (Compile_All_Target)
-    parse_xml (Clean_Project_Target)
-    parse_xml (Custom_Target)
     parse_xml (Syntax_Check_Target)
     parse_xml (Semantic_Check_Target)
+    parse_xml (Compile_File_Target)
+    parse_xml (Compile_All_Targets)
+    parse_xml (Clean_Targets)
+    parse_xml (Custom_Target)
 
 def register_models():
     """ Register the models for building using standard tools
     """
-    parse_xml (Gnatmake_Model_Template)
     parse_xml (Builder_Model_Template)
-    parse_xml (Custom_Model_Template)
+    parse_xml (Gnatmake_Model_Template)
     parse_xml (Gprclean_Model_Template)
+    parse_xml (Custom_Model_Template)
 
 def on_project_recomputed (hook_name):
     """ Add the project-specific targets to the Build Manager """
