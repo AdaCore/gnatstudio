@@ -591,18 +591,26 @@ package body Builder_Facility_Module is
    procedure Add_Menu_For_Target (Target : Target_Access) is
       C    : Build_Command_Access;
       Name : constant String := Get_Name (Target);
-      Cat_Path : constant String := Main_Menu & Get_Category (Target);
+      Category : constant String := Get_Category (Target);
+      Cat_Path : Unbounded_String := To_Unbounded_String (Main_Menu);
+
    begin
+      if Category (Category'First) /= '_'
+        and then Category (Category'Last) /= '_'
+      then
+         Append (Cat_Path, Category);
+      end if;
+
       --  Find the menu for the category
-      if Find_Menu_Item (Get_Kernel, Cat_Path) = null then
+      if Find_Menu_Item (Get_Kernel, To_String (Cat_Path)) = null then
          --  We have not found a menu item: this means we are about to create
          --  it, so add it to the list of menu items
-         Builder_Module_ID.Menus.Append (To_Unbounded_String (Cat_Path));
+         Builder_Module_ID.Menus.Append (Cat_Path);
       end if;
 
       Create (C, Get_Kernel, Builder_Module_ID.Registry, Name, True);
       Register_Menu (Kernel      => Get_Kernel,
-                     Parent_Path => Cat_Path,
+                     Parent_Path => To_String (Cat_Path),
                      Text        => Name,
                      Stock_Image => Get_Icon (Target),
                      Callback    => null,
