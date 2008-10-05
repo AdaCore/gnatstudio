@@ -10800,10 +10800,14 @@ Replaced by the gnatmake executable configured in your project file.
 @item %builder
 Replaced by the default builder configured in GPS.
 This can be e.g. @code{gnatmake}, or @code{gprbuild}.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
 
 @item %gprclean
 Replaced by the default cleaner configured in GPS.
 This can be e.g. @code{gnat clean}, or @code{gprclean}.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
 
 @item %eL
 Replaced by either an empty string, or @code{-eL}, depending on whether the
@@ -10817,7 +10821,7 @@ Replaced by a list of switches of the form -X<variable>=<value>, where
 value, as configured in the Scenario View. All the scenario variables
 defined in the current project tree will be listed.
 Note: this macro is only available in the commands defined in the Build
- Manager and the Build Launcher dialogs.
+Manager and the Build Launcher dialogs.
 
 @item %%
 Replaced by the % sign.

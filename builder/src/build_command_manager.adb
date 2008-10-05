@@ -26,6 +26,7 @@ with GNATCOLL.Templates; use GNATCOLL.Templates;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Macros;  use GPS.Kernel.Macros;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Intl;           use GPS.Intl;
 
@@ -33,6 +34,8 @@ with Commands.Builder;   use Commands.Builder;
 
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
+with OS_Utils;           use OS_Utils;
+with Projects;           use Projects;
 with Traces;             use Traces;
 
 package body Build_Command_Manager is
@@ -98,6 +101,64 @@ package body Build_Command_Manager is
          begin
             Unchecked_Free (Vars);
             return Res;
+         end;
+
+      --  ??? Ditto for %builder and %gprclean
+      elsif Arg = "%builder"
+        or else Arg = "%gprclean"
+      then
+         declare
+            Builder  : constant Boolean := Arg = "%builder";
+            Prj      : constant Project_Type :=
+                         Get_Project (Get_Kernel (Context));
+            Gnatmake : constant String :=
+                         Get_Attribute_Value
+                           (Prj, Compiler_Command_Attribute,
+                            Default => "gnatmake",
+                            Index   => "Ada");
+            First    : Natural := Gnatmake'First;
+
+         begin
+            if Multi_Language_Build.Get_Pref
+              and then Multi_Language_Builder.Get_Pref = Gprbuild
+            then
+               if Gnatmake'Length > 9
+                 and then Gnatmake
+                   (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
+               then
+                  for J in reverse Gnatmake'First .. Gnatmake'Last - 9 loop
+                     if Is_Directory_Separator (Gnatmake (J)) then
+                        First := J + 1;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if Builder then
+                     return (new String'("gprbuild"), new String'("--target="
+                       & Gnatmake (First .. Gnatmake'Last - 9)));
+                  else
+                     return (new String'("gprclean"), new String'("--target="
+                       & Gnatmake (First .. Gnatmake'Last - 9)));
+                  end if;
+
+               elsif Builder then
+                  return (1 => new String'("gprbuild"));
+               else
+                  return (1 => new String'("gprclean"));
+               end if;
+
+            elsif Builder then
+               if Multi_Language_Build.Get_Pref then
+                  return (1 => new String'("gprmake"));
+               else
+                  return (1 => new String'(Gnatmake));
+               end if;
+            else
+               return
+                 (new String'(Get_Attribute_Value
+                   (Prj, GNAT_Attribute, Default => "gnat")),
+                  new String'("clean"));
+            end if;
          end;
 
       else
