@@ -66,6 +66,7 @@ ifeq ($(OS),Windows_NT)
 endif
 	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	$(RM) $(sharedir)/gps/library/*.py
+	$(RM) $(sharedir)/gps/plug-ins/*.py
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
