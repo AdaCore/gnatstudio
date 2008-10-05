@@ -231,7 +231,6 @@ Clean_Targets = """
     <read-only>TRUE</read-only>
     <default-command-line>
        <arg>%gprclean</arg>
-       <arg></arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
