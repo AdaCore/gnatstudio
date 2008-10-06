@@ -509,7 +509,7 @@ package body Src_Editor_View is
    begin
       --  Now that the window is realized, we can set the font and
       --  the size of the left border window size.
-      Set_Font (View, View.Pango_Font);
+      Set_Font (View, Default_Style.Get_Pref_Font);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1539,7 +1539,6 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Kernel);
       Source : constant Source_View := Source_View (Hook.View);
-      Descr  : Pango_Font_Description;
       Layout : Pango_Layout;
       Color  : Gdk_Color;
       Height : Gint;
@@ -1547,13 +1546,12 @@ package body Src_Editor_View is
    begin
       --  Set the font.
 
-      Descr := Default_Style.Get_Pref_Font;
-      Set_Font (Source, Descr);
+      Set_Font (Source, Default_Style.Get_Pref_Font);
 
       --  Recompute the width of one character.
 
       Layout := Create_Pango_Layout (Source);
-      Set_Font_Description (Layout, Descr);
+      Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
       Set_Text (Layout, "m");
       Get_Pixel_Size (Layout, Source.Char_Width, Height);
       Unref (Layout);
@@ -1648,8 +1646,6 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class;
       Font : Pango.Font.Pango_Font_Description) is
    begin
-      View.Pango_Font := Font;
-
       --  Make sure the widget is already realized. Otherwise, the
       --  layout and style are not created yet.
       if Realized_Is_Set (View) then
@@ -2216,7 +2212,7 @@ package body Src_Editor_View is
          View.Buffer_Bottom_Line := View.Bottom_Line;
 
          Layout := Create_Pango_Layout (View);
-         Set_Font_Description (Layout, View.Pango_Font);
+         Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
 
          Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 

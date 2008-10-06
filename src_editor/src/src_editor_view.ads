@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2007, AdaCore                --
+--                   Copyright (C) 2001-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,6 @@ with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtkada.Text_View;       use Gtkada.Text_View;
-with Pango.Font;
 
 with GPS.Kernel;
 with GPS.Kernel.MDI;
@@ -166,7 +165,6 @@ private
       Kernel              : GPS.Kernel.Kernel_Handle;
       Saved_Cursor_Mark   : Gtk_Text_Mark;
 
-      Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
       Side_Background_GC  : Gdk.GC.Gdk_GC;
       Default_GC          : Gdk.GC.Gdk_GC;
