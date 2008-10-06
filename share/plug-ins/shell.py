@@ -41,5 +41,5 @@ def create_default_shell (menu):
   elif os.getenv ("COMSPEC"):
     Unix_Shell (os.getenv ("COMSPEC"))
 
-GPS.Menu.create ("/Tools/Consoles/OS Shell", create_default_shell)
+GPS.Menu.create ("/Tools/Consoles/_OS Shell", create_default_shell)
 
