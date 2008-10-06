@@ -614,7 +614,8 @@ package body Builder_Facility_Module is
                      Text        => Name,
                      Stock_Image => Get_Icon (Target),
                      Callback    => null,
-                     Command     => Interactive_Command_Access (C));
+                     Command     => Interactive_Command_Access (C),
+                     Ref_Item    => -"Build Manager");
    end Add_Menu_For_Target;
 
    -----------------
@@ -785,8 +786,6 @@ package body Builder_Facility_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Space : Gtk_Separator_Tool_Item;
-      Mitem : Gtk_Menu_Item;
-
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -801,9 +800,6 @@ package body Builder_Facility_Module is
       Register_Menu (Kernel, "/_" & (-"New builder"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu, -"Build Manager", "",
                      On_Build_Manager'Access);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, "/_" & (-"New builder"), Mitem);
 
       --  Connect to the File_Saved_Hook
       Add_Hook (Kernel, File_Saved_Hook,
