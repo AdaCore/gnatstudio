@@ -75,7 +75,7 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Update the filedeps.py script. You do not need a new version of
               GPS.
 
-- H714-013: protection domains menu disabled with wtx4 debugger
+- H714-013: Protection domains menu disabled with wtx4 debugger
   Problem:    The "Protection Domains" menu entry is not enabled when
               using a VxWorks653 wtx4-based debugger
   Workaround: Use the debugger console to access this information. Use
