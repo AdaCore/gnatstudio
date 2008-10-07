@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2006                          --
---                             AdaCore                               --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +25,12 @@ package Remote is
      (GPS_Server,
       Build_Server,
       Execution_Server,
-      Debug_Server);
+      Debug_Server,
+      Tools_Server);
+   --  GPS_Server is always the local server
+   --  Tools_Server is a special value pointing to Build_Server in the
+   --   general case, but is the local server when the dual compilation
+   --   mode is activated
 
    Local_Nickname : constant String;
 
@@ -34,7 +38,7 @@ package Remote is
      range Build_Server .. Debug_Server;
 
    procedure Assign
-     (Server   : Server_Type;
+     (Server   : Distant_Server_Type;
       Nickname : String);
 
    function Is_Local (Server : Server_Type) return Boolean;

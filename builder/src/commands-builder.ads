@@ -22,6 +22,7 @@
 with GPS.Kernel;
 with Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Remote;      use Remote;
 
 package Commands.Builder is
 
@@ -53,6 +54,7 @@ package Commands.Builder is
      (Kernel         : GPS.Kernel.Kernel_Handle;
       CL             : GNAT.OS_Lib.String_List_Access;
       Target_Name    : String;
+      Server         : Server_Type;
       Quiet          : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable

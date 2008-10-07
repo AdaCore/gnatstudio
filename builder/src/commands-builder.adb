@@ -37,7 +37,6 @@ with GPS.Location_View;     use GPS.Location_View;
 with Builder_Module;        use Builder_Module;
 with GPS.Intl;              use GPS.Intl;
 
-with Remote;                use Remote;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with Basic_Types;           use Basic_Types;
@@ -351,10 +350,11 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel      : Kernel_Handle;
-      CL          : GNAT.OS_Lib.String_List_Access;
-      Target_Name : String;
-      Quiet       : Boolean)
+     (Kernel         : Kernel_Handle;
+      CL             : GNAT.OS_Lib.String_List_Access;
+      Target_Name    : String;
+      Server         : Server_Type;
+      Quiet          : Boolean)
    is
       Data    : Build_Callback_Data_Access;
       Success : Boolean;
@@ -377,8 +377,7 @@ package body Commands.Builder is
            (Kernel,
             Command              => CL (CL'First).all,
             Arguments            => CL (CL'First + 1 .. CL'Last),
-            Is_Compiler_Exec     => True,
-            Server               => Build_Server,
+            Server               => Server,
             Console              => Get_Console (Kernel),
             Show_Command         => True,
             Show_Output          => False,

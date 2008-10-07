@@ -162,6 +162,11 @@ package Build_Configurations is
 
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
+
+      Use_Tools_Path  : Boolean          := False;
+      --  Whether to use the old compiler path of the tools path in dual
+      --  compilation mode
+
       Icon_In_Toolbar : Boolean          := False;
       --  Whether to display an icon in the toolbar
 

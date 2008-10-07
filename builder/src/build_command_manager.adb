@@ -36,6 +36,7 @@ with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
 with OS_Utils;           use OS_Utils;
 with Projects;           use Projects;
+with Remote;             use Remote;
 with Traces;             use Traces;
 
 package body Build_Command_Manager is
@@ -47,7 +48,8 @@ package body Build_Command_Manager is
 
    function Expand_Command_Line
      (Kernel : GPS.Kernel.Kernel_Handle;
-      CL     : Argument_List) return Argument_List_Access;
+      CL     : Argument_List;
+      Server : Server_Type) return Argument_List_Access;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
@@ -55,7 +57,8 @@ package body Build_Command_Manager is
    function Expand_Arg
      (Kernel  : GPS.Kernel.Kernel_Handle;
       Context : GPS.Kernel.Selection_Context;
-      Arg     : String) return Argument_List;
+      Arg     : String;
+      Server  : Server_Type) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
 
@@ -66,7 +69,8 @@ package body Build_Command_Manager is
    function Expand_Arg
      (Kernel  : GPS.Kernel.Kernel_Handle;
       Context : GPS.Kernel.Selection_Context;
-      Arg     : String) return Argument_List
+      Arg     : String;
+      Server  : Server_Type) return Argument_List
    is
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
@@ -82,7 +86,7 @@ package body Build_Command_Manager is
          Done : aliased Boolean := False;
       begin
          return GPS.Kernel.Macros.Substitute
-           (Param, Context, Quoted, Done'Access);
+           (Param, Context, Quoted, Done'Access, Server => Server);
       end Substitution;
 
    begin
@@ -177,7 +181,8 @@ package body Build_Command_Manager is
 
    function Expand_Command_Line
      (Kernel : GPS.Kernel.Kernel_Handle;
-      CL     : Argument_List) return Argument_List_Access
+      CL     : Argument_List;
+      Server : Server_Type) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
       Index  : Natural := 1;
@@ -195,7 +200,7 @@ package body Build_Command_Manager is
 
          declare
             Expanded : constant Argument_List :=
-              Expand_Arg (Kernel, Context, CL (J).all);
+              Expand_Arg (Kernel, Context, CL (J).all, Server);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
@@ -242,6 +247,7 @@ package body Build_Command_Manager is
       Full         : Argument_List_Access;
       Quiet        : Boolean;
       Command_Line : Argument_List_Access;
+      Server       : Server_Type;
    begin
       --  Get the target
 
@@ -252,6 +258,12 @@ package body Build_Command_Manager is
          Insert
            (Kernel, (-"Build target not found in registry: ") & Target_Name);
          return;
+      end if;
+
+      if Get_Properties (T).Use_Tools_Path then
+         Server := Tools_Server;
+      else
+         Server := Build_Server;
       end if;
 
       if Force_Dialog
@@ -271,7 +283,7 @@ package body Build_Command_Manager is
             return;
          end if;
 
-         Full := Expand_Command_Line (Kernel, Command_Line.all);
+         Full := Expand_Command_Line (Kernel, Command_Line.all, Server);
 
          Free (Command_Line);
       else
@@ -295,7 +307,7 @@ package body Build_Command_Manager is
 
             --  Expand the command line
 
-            Full := Expand_Command_Line (Kernel, CL);
+            Full := Expand_Command_Line (Kernel, CL, Server);
          end;
       end if;
 
@@ -317,7 +329,8 @@ package body Build_Command_Manager is
             Quiet := False;
       end case;
 
-      Launch_Build_Command (Kernel, Full, Target_Name, Quiet);
+      Launch_Build_Command
+        (Kernel, Full, Target_Name, Server, Quiet);
       --  ??? change the name of the category
    end Launch_Target;
 

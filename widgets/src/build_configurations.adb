@@ -590,6 +590,11 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
+      C.Tag := new String'("use-tools-path");
+      C.Value := new String'(Target.Properties.Use_Tools_Path'Img);
+
+      C.Next := new Node;
+      C := C.Next;
       C.Tag := new String'("read-only");
       C.Value := new String'(Target.Properties.Read_Only'Img);
 
@@ -726,6 +731,10 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "read-only" then
             Target.Properties.Read_Only := Boolean'Value
+              (Child.Value.all);
+
+         elsif Child.Tag.all = "use-tools-path" then
+            Target.Properties.Use_Tools_Path := Boolean'Value
               (Child.Value.all);
 
          else

@@ -76,8 +76,10 @@ package body Remote_Views is
 
    Module_Name : constant String := "Remote_View";
 
-   type Sync_Buttons_Array is array (Server_Type) of Gtk_Button;
-   type Server_Combo_Array is array (Server_Type) of Gtkada_Combo;
+   subtype Config_Servers is Server_Type range GPS_Server .. Debug_Server;
+
+   type Sync_Buttons_Array is array (Config_Servers) of Gtk_Button;
+   type Server_Combo_Array is array (Config_Servers) of Gtkada_Combo;
 
    type Remote_View_Record is new Gtk_Scrolled_Window_Record with record
       Main_Table         : Gtk.Table.Gtk_Table;
@@ -274,7 +276,7 @@ package body Remote_Views is
          Set_State (View.Pane, Expanded);
       end if;
 
-      for S in Server_Type'Range loop
+      for S in Config_Servers'Range loop
          Gtk_New (View.Servers_Combo (S));
          Set_Editable (Get_Entry (View.Servers_Combo (S)), False);
          Set_Width_Chars (Get_Entry (View.Servers_Combo (S)), 0);

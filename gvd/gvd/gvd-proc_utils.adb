@@ -121,7 +121,6 @@ package body GVD.Proc_Utils is
       Spawn (Kernel,
              Args.all,
              Debug_Server,
-             True,
              Handle.Descriptor,
              Success);
       if Success then

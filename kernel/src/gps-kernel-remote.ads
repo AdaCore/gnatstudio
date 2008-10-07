@@ -71,7 +71,6 @@ package GPS.Kernel.Remote is
      (Kernel            : Kernel_Handle;
       Arguments         : GNAT.OS_Lib.Argument_List;
       Server            : Server_Type;
-      Use_Compiler_Path : Boolean;
       Pd                : out GNAT.Expect.Process_Descriptor_Access;
       Success           : out Boolean;
       Use_Ext_Terminal  : Boolean := False;
@@ -81,10 +80,8 @@ package GPS.Kernel.Remote is
       Use_Pipes         : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
-   --  If Use_Compiler_Path is set, then the exec file is searched for in the
-   --  compilation toolchain path if defined. If unset, and the server is the
-   --  build server, and the dual compilation mode is activated, then the spawn
-   --  is done on the local server.
+   --  See remote.ads for explanations on Server values, in particular
+   --  the Tools_Server and its relationship with the dual compilation module.
    --  If Use_Ext_Terminal is not null, then the program is executed in a
    --  separate terminal.
    --  If Console is not null, and Show_Command is set, outputs the command
@@ -153,7 +150,7 @@ package GPS.Kernel.Remote is
    type Server_Config_Changed_Hooks_Args
      (Nickname_Length : Natural) is new Hooks_Data with
    record
-      Server   : Server_Type;
+      Server   : Distant_Server_Type;
       --  The server type modified
       Nickname : String (1 .. Nickname_Length);
       --  The new server nickname attached to it
@@ -184,7 +181,7 @@ package GPS.Kernel.Remote is
 
    procedure Assign
      (Kernel     : Kernel_Handle;
-      Server     : Server_Type;
+      Server     : Distant_Server_Type;
       Nickname   : String;
       Prj_File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Reload_Prj : Boolean := False);

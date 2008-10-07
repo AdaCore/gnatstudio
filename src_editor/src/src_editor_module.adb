@@ -1881,7 +1881,6 @@ package body Src_Editor_Module is
                  (Kernel,
                   Command          => Cmd (Cmd'First).all,
                   Arguments        => Cmd (Cmd'First + 1 .. Cmd'Last),
-                  Is_Compiler_Exec => False,
                   Console          => Get_Console (Kernel),
                   Success          => Success);
                Free (Cmd);

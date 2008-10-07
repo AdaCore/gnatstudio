@@ -2652,9 +2652,9 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Server_Config_Changed_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
-      Server : Server_Type;
+      Server : Distant_Server_Type;
    begin
-      Server  := Server_Type'Value (String'(Nth_Arg (Data, 2)));
+      Server  := Distant_Server_Type'Value (String'(Nth_Arg (Data, 2)));
 
       declare
          Nickname  : constant String := Nth_Arg (Data, 3);
@@ -2681,7 +2681,7 @@ package body GPS.Kernel.Remote is
             new Callback_Data'Class'(Create (Script, 3));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
-      Set_Nth_Arg (D.all, 2, Server_Type'Image (Data.Server));
+      Set_Nth_Arg (D.all, 2, Distant_Server_Type'Image (Data.Server));
       Set_Nth_Arg (D.all, 3, Data.Nickname);
       return D;
    end Create_Callback_Data;
@@ -3382,7 +3382,7 @@ package body GPS.Kernel.Remote is
 
    procedure Assign
      (Kernel     : Kernel_Handle;
-      Server     : Server_Type;
+      Server     : Distant_Server_Type;
       Nickname   : String;
       Prj_File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Reload_Prj : Boolean := False)
@@ -3645,7 +3645,6 @@ package body GPS.Kernel.Remote is
      (Kernel            : Kernel_Handle;
       Arguments         : GNAT.OS_Lib.Argument_List;
       Server            : Server_Type;
-      Use_Compiler_Path : Boolean;
       Pd                : out GNAT.Expect.Process_Descriptor_Access;
       Success           : out Boolean;
       Use_Ext_Terminal  : Boolean := False;
@@ -3665,9 +3664,6 @@ package body GPS.Kernel.Remote is
       procedure On_New_Connection (Server_Name : String);
       --  Executed when a new connection is performed
 
-      function Is_Local_Server return Boolean;
-      --  Tell if the execution server is local
-
       ----------------
       -- Check_Exec --
       ----------------
@@ -3676,7 +3672,7 @@ package body GPS.Kernel.Remote is
          Full_Exec : String_Access;
          Norm_Exec : String_Access;
       begin
-         if Use_Compiler_Path then
+         if Server = Build_Server then
             Full_Exec := Locate_Compiler_Executable (Exec);
          else
             Full_Exec := Locate_Tool_Executable (Exec);
@@ -3711,25 +3707,12 @@ package body GPS.Kernel.Remote is
          end if;
       end On_New_Connection;
 
-      ---------------------
-      -- Is_Local_Server --
-      ---------------------
-
-      function Is_Local_Server return Boolean is
-      begin
-         return Is_Local (Server)
-           or else
-             (Is_Dualcompilation_Active
-              and then Server = Build_Server
-              and then not Use_Compiler_Path);
-      end Is_Local_Server;
-
    begin
       Success := False;
 
       --  First verify the executable to be launched
 
-      if Is_Local_Server then
+      if Is_Local (Server) then
          Exec := Check_Exec (Arguments (Arguments'First).all);
 
          if Exec = null then
@@ -3746,7 +3729,7 @@ package body GPS.Kernel.Remote is
       if Console /= null
         and then Show_Command
       then
-         if Is_Local_Server then
+         if Is_Local (Server) then
             Insert (Console,
                     Argument_List_To_String (Arguments),
                     Add_LF => True);
@@ -3758,7 +3741,7 @@ package body GPS.Kernel.Remote is
          end if;
       end if;
 
-      if Is_Local_Server then
+      if Is_Local (Server) then
          Pd := new GNAT.Expect.TTY.TTY_Process_Descriptor;
          Set_Use_Pipes (TTY_Process_Descriptor (Pd.all), Use_Pipes);
 
@@ -3794,7 +3777,7 @@ package body GPS.Kernel.Remote is
          begin
             if Is_Dualcompilation_Active then
                Oldpath := Getenv ("PATH");
-               if Use_Compiler_Path then
+               if Server = Build_Server then
                   Setenv ("PATH", Get_Compiler_Search_Path &
                           Path_Separator &
                           Oldpath.all);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2007                       --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings; use GNAT.Strings;
+with Dualcompilation;
 
 package body Remote is
 
@@ -29,7 +30,7 @@ package body Remote is
       --  Identifier of the server
    end record;
 
-   type Servers_Config is array (Server_Type) of Server_Config;
+   type Servers_Config is array (Distant_Server_Type) of Server_Config;
 
    Servers : Servers_Config :=
                (others => (Is_Local => True, Nickname => new String'("")));
@@ -41,7 +42,7 @@ package body Remote is
    ------------
 
    procedure Assign
-     (Server   : Server_Type;
+     (Server   : Distant_Server_Type;
       Nickname : String)
    is
    begin
@@ -61,7 +62,17 @@ package body Remote is
 
    function Is_Local (Server : Server_Type) return Boolean is
    begin
-      return Servers (Server).Is_Local;
+      if Server in Distant_Server_Type then
+         return Servers (Server).Is_Local;
+      elsif Server = Tools_Server then
+         if Dualcompilation.Is_Dualcompilation_Active then
+            return True;
+         else
+            return Servers (Build_Server).Is_Local;
+         end if;
+      else
+         return True;
+      end if;
    end Is_Local;
 
    ------------------
@@ -72,6 +83,8 @@ package body Remote is
    begin
       if Is_Local (Server) then
          return "";
+      elsif Server = Tools_Server then
+         return Servers (Build_Server).Nickname.all;
       else
          return Servers (Server).Nickname.all;
       end if;
@@ -85,6 +98,8 @@ package body Remote is
    begin
       if Is_Local (Server) then
          return Local_Nickname;
+      elsif Server = Tools_Server then
+         return Servers (Build_Server).Nickname.all;
       else
          return Servers (Server).Nickname.all;
       end if;

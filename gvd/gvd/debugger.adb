@@ -280,7 +280,6 @@ package body Debugger is
         (Kernel            => Debugger.Kernel,
          Arguments         => The_Args,
          Server            => Debug_Server,
-         Use_Compiler_Path => True,
          Pd                => Descriptor,
          Success           => Success);
       Free (The_Args (The_Args'First));

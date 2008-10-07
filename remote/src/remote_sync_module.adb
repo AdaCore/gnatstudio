@@ -396,7 +396,6 @@ package body Remote_Sync_Module is
         (Kernel_Handle (Kernel),
          Command           => "rsync",
          Arguments         => Build_Arg,
-         Is_Compiler_Exec  => False,
          Console           => Get_Console (Kernel),
          Show_Command      => Rsync_Data.Print_Command,
          Show_Output       => Real_Print_Output,
