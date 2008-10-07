@@ -265,6 +265,7 @@ class gnatMakeProc:
          # Then retrieve warnings/style/restriction checks from gnatmake
          self.msg = ""
          process = GPS.Process (self.gnatCmd + " make -h", "^.+$",
+                                remote_server="Build_Server",
                                 on_match=self.add_switch)
          process.get_result()
       return True
