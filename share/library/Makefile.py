@@ -134,7 +134,7 @@ class Makefile_Process (Console_Process):
       Console_Process.__init__ (self, process, args, close_on_exit=False)
       self.clear()
       self.write (process + " " + args + "\n")
-      MDI.get ("Messages").raise_window()
+      self.show ()
       self.cumulated_output = ""
 
 class Builder:
@@ -224,6 +224,7 @@ class Builder:
                 if t != "IGNORE":
                    t = t.replace ("\\", '\\\\')
                    t = t.replace ("/", '\/')
+                   t = t.replace ("_", "__")
                    m = Menu.create \
                      (self.menu_name + t,
                       on_activate = self.on_build_target)

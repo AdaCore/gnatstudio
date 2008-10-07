@@ -74,7 +74,7 @@ class Console_Process (GPS.Console, GPS.Process):
        including, the tab character"""
     self.write ("\n")
 
-  def __init__ (self, process, args="", close_on_exit=True):
+  def __init__ (self, process, args="", close_on_exit=True, force = False):
     """Spawn a new interactive process and show its input/output in a
        new GPS console. The process is created so that it does not
        appear in the task manager, and therefore the user can exit GPS
@@ -88,7 +88,7 @@ class Console_Process (GPS.Console, GPS.Process):
         on_resize = self.on_resize,
         on_interrupt = self.on_interrupt,
         on_completion = self.on_completion,
-        force = True)
+        force = force)
       GPS.Process.__init__ (
         self, process + " " + args, ".+",
         single_line_regexp=True,  # For efficiency
