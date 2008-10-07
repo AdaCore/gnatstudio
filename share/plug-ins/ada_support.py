@@ -156,7 +156,12 @@ class gnatMakeProc:
 
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
-
+      if not os.path.isfile (self.gnatCmd):
+         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
+      if self.gnatCmd == "":
+         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
+         GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
+         return
       # gnat check command changed: we reinitialize the rules list
       if prev_cmd != self.gnatCmd:
          try:
@@ -259,6 +264,14 @@ class gnatMakeProc:
       if self.gnatCmd != "":
          # Then retrieve warnings/style/restriction checks from gnatmake
          self.msg = ""
+         # ??? We don't spawn this process on the build server as this leads
+         # to undesired results: this spawn command becomes asynchronous
+         # because of the rsync commands that are enqueued. Thus the result
+         # of the gnatmake -h analysis arrives after the switches dialog is
+         # created, leading to empty boxes.
+         # The behavior is then to try getting a valid gnat make command from
+         # the local machine, and fallback to the default switches if not
+         # found.
          process = GPS.Process (self.gnatCmd + " make -h", "^.+\r?$",
                                 on_match=self.add_switch)
          process.get_result()
