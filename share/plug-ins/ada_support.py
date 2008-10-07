@@ -156,12 +156,6 @@ class gnatMakeProc:
 
       if self.gnatCmd == "":
          self.gnatCmd = "gnat"
-      if not os.path.isfile (self.gnatCmd):
-         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
-      if self.gnatCmd == "":
-         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
-         GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
-         return
 
       # gnat check command changed: we reinitialize the rules list
       if prev_cmd != self.gnatCmd:
@@ -170,6 +164,7 @@ class gnatMakeProc:
          except:
             print "Exception thrown in ada_support.py"
             xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
+         GPS.Console ("Messages").write (xmlCompiler)
          GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
 
    def add_switch (self, process, matched, unmatched):
@@ -264,8 +259,7 @@ class gnatMakeProc:
       if self.gnatCmd != "":
          # Then retrieve warnings/style/restriction checks from gnatmake
          self.msg = ""
-         process = GPS.Process (self.gnatCmd + " make -h", "^.+$",
-                                remote_server="Build_Server",
+         process = GPS.Process (self.gnatCmd + " make -h", "^.+\r?$",
                                 on_match=self.add_switch)
          process.get_result()
       return True
