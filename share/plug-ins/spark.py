@@ -79,7 +79,7 @@ def examine_file (file):
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
   GPS.Console (spark_console).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Process (cmd, remote_server="Build_Server", is_compiler_cmd=True, regexp=".+", on_match=on_match, on_exit=on_exit)
+  GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
 
 def pogs_directory():
@@ -118,7 +118,7 @@ def show_pogs_file():
   cmd = "pogs " + sw
   GPS.Console (pogs_console).clear ()
   GPS.Console (pogs_console).write (cmd + "\n")
-  GPS.Console (pogs_console).write (GPS.Process (cmd, remote_server="Build_Server", is_compiler_cmd=True).get_result())
+  GPS.Console (pogs_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
   GPS.MDI.get (pogs_console).raise_window ()
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
@@ -175,7 +175,7 @@ def sparkmake ():
   cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
   GPS.Console (spark_console).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server", is_compiler_cmd=True).get_result())
+  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
   GPS.MDI.get (spark_console).raise_window ()
 
 a = """<?xml version="1.0"?>
@@ -450,7 +450,7 @@ a = """<?xml version="1.0"?>
      <shell>MDI.save_all false</shell>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
-     <external output="SPARK Output" server="build_server" is-compiler-cmd="true">sparkformat %1 %f</external>
+     <external output="SPARK Output" server="build_server">sparkformat %1 %f</external>
      <shell>Editor.edit %f 0 0 0 true</shell>
   </action>
 
@@ -460,7 +460,7 @@ a = """<?xml version="1.0"?>
      <shell>Locations.remove_category Examiner</shell>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output" server="build_server" is-compiler-cmd="true">spark %1 ~brief @%f</external>
+     <external output="SPARK Output" server="build_server">spark %1 ~brief @%f</external>
      <on-failure>
           <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
@@ -468,14 +468,14 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARK help" output="SPARK Help" category="Spark">
-     <external server="build_server" is-compiler-cmd="true">spark ~help</external>
+     <external server="build_server">spark ~help</external>
   </action>
 
   <action name="Simplify file" category="Spark" output="none">
     <filter language="VCG" />
     <shell>Project %p</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <external server="build_server" is-compiler-cmd="true" output="Simplifier Output">spadesimp %f %1</external>
+    <external server="build_server" output="Simplifier Output">spadesimp %f %1</external>
   </action>
 
   <action name="Simplify all" category="Spark" output="none">
@@ -483,7 +483,7 @@ a = """<?xml version="1.0"?>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
     <shell>Project %P</shell>
     <shell>Project.get_tool_switches_as_string %1 "SPARKSimp" </shell>
-    <external server="build_server" is-compiler-cmd="true" output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
+    <external server="build_server" output="SPARKSimp Output">sparksimp %1 ~sargs %3 </external>
   </action>
 
   <action name="POGS" category="Spark" output="none">

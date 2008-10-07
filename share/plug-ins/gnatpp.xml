@@ -19,7 +19,7 @@
       <shell>Project.scenario_variables_cmd_line -X</shell>
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
-      <external output="" server="build_server">%1 pretty -rf %pps %3 "%F"</external>
+      <external output="" server="tools_server">%1 pretty -rf %pps %3 "%F"</external>
       <on-failure>
         <shell>Locations.parse """%1 """ "Pretty printer"</shell>
       </on-failure>
@@ -69,12 +69,12 @@
             <combo-entry label="Compact" value="2" />
             <combo-entry label="Uncompact" value="3" />
          </combo>
-         <combo label="Comment" switch="-c" line="3" noswitch="1" nodigit="1" >
+         <combo label="Comment" switch="-c" line="3" noswitch="1" nodigit="1" separator="">
             <combo-entry label="GNAT style line indentation" value="1" />
             <combo-entry label="Standard line indentation" value="2" />
          </combo>
-         <check label="GNAT style beginning" switch="-c3" line="3" />
-         <check label="Reformat blocks" switch="-c4" line="3" />
+         <check label="GNAT style beginning" switch="-c3" line="3"/>
+         <check label="Reformat blocks" switch="-c4" line="3"/>
 
          <check label="Colons in declarations" switch="-A1" line="4" />
          <check label="Assignments in declarations" switch="-A2" line="4" />

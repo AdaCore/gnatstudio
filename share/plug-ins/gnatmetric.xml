@@ -22,7 +22,7 @@
      <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
      <shell>echo %1 metric -x "%pps"</shell>
      <external
-      server="build_server"
+      server="tools_server"
       progress-regexp="completed (\d+) out of (\d+).*"
       progress-current="1"
       progress-final="2"
@@ -39,7 +39,7 @@
      <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
      <shell>echo %1 metric -x "%PPs"</shell>
      <external
-      server="build_server"
+      server="tools_server"
       progress-regexp="completed (\d+) out of (\d+).*"
       progress-current="1"
       progress-final="2"
@@ -59,7 +59,7 @@
      <shell output="none">Project.root</shell>
      <shell output="none">Project.get_attribute_as_string %1 "gnat" "ide"</shell>
      <shell>echo %1 metric -x "%pps" "%F"</shell>
-     <external server="build_server">%2 metric -x "%pps" "%F"</external>
+     <external server="tools_server">%2 metric -x "%pps" "%F"</external>
      <shell>Locations.parse "%1" metrics</shell>
      <shell show-command="false" output="none">XMLViewer.create_metric "Metrics (%f)"</shell>
      <shell show-command="false">XMLViewer.parse %1 metrix.xml</shell>

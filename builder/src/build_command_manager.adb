@@ -260,11 +260,7 @@ package body Build_Command_Manager is
          return;
       end if;
 
-      if Get_Properties (T).Use_Tools_Path then
-         Server := Tools_Server;
-      else
-         Server := Build_Server;
-      end if;
+      Server := Get_Properties (T).Server;
 
       if Force_Dialog
         or else Get_Properties (T).Launch_Mode = Manually_With_Dialog

@@ -8600,12 +8600,24 @@ the synchronization process.
 @c -----------------------------------------------------------------------
 
 @noindent
-GPS defines three different remote operation categories: Build operations,
-Debug operations and Execution operations. All compiler related
-operations are performed on the Build_Server. The debugger is run on
+GPS defines four different remote operation categories: Build operations,
+Debug operations, Execution operations and Tools operations. All compiler
+related operations are performed on the Build_Server. The Tools server is
+somewhat special and will be explained later. The debugger is run on
 the Debug_Server, and the project's resulting programs are run on the
 Execution_Server. The GPS_Server (the local machine) is used for all
 other operations.
+
+The Tools server is defined to handle all compiler related operations that do
+not depend on a specific compiler version. It is used in dual compilation mode
+to determine whether the action can be safely run using a bleeding edge
+compiler toolchain (this is the tools server), or whether we need to stick with
+a specific older compiler version.
+
+In case the remote mode is activated, and the dual compilation mode is not,
+then all Tools server operations are executed on the build server. Else, if the
+dual compilation mode is activated, then the tools server operations are always
+executed on the local machine.
 
 @c -----------------------------------------------------------------------
 @node The remote view
@@ -10397,18 +10409,9 @@ This tag accepts the following attributes:
    @item server (optional)
    This attribute can be used to execute the external command on a remote
    server. The accepted values are @code{"gps_server"} (default),
-   @code{"build_server"}, @code{"execution_server"} and @code{"debug_server"}.
-   @xref{Remote operations}, for explanation of
-   what these servers are.
-
-   @item is-compiler-cmd (optional)
-   @cindex dual-compilation
-   This attribute can be used to tell GPS that the spawned command is part of
-   the compilation toolchain. This is useful when the compiler tool-chain is in
-   a specific path, only accessible when the dual-compilation mode is
-   activated. The accepted values are @code{"false"} (default) and
-   @code{"true"}.
-   @xref{The Dual Compilation Mode}, for explanation of the dual compilation mode.
+   @code{"build_server"}, @code{"execution_server"}, @code{"debug_server"} and
+   @code{"tools_server"}.
+   @xref{Remote operations}, for explanation of what these servers are.
 
    @item check-password (optional)
    @cindex password

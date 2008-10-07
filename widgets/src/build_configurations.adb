@@ -590,8 +590,8 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
-      C.Tag := new String'("use-tools-path");
-      C.Value := new String'(Target.Properties.Use_Tools_Path'Img);
+      C.Tag := new String'("server");
+      C.Value := new String'(Target.Properties.Server'Img);
 
       C.Next := new Node;
       C := C.Next;
@@ -730,12 +730,10 @@ package body Build_Configurations is
             Target.Properties.Key := To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "read-only" then
-            Target.Properties.Read_Only := Boolean'Value
-              (Child.Value.all);
+            Target.Properties.Read_Only := Boolean'Value (Child.Value.all);
 
-         elsif Child.Tag.all = "use-tools-path" then
-            Target.Properties.Use_Tools_Path := Boolean'Value
-              (Child.Value.all);
+         elsif Child.Tag.all = "server" then
+            Target.Properties.Server := Server_Type'Value (Child.Value.all);
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")

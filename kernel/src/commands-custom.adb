@@ -123,7 +123,6 @@ package body Commands.Custom is
                Script               : Scripting_Language;
             when Component_External =>
                Server               : Server_Type;      --  "server" attribute
-               Is_Compiler_Cmd      : Boolean := False; --  "is-compiler-cmd"
                Check_Password       : Boolean := False; --  "check-password"
                Show_In_Task_Manager : Boolean;          --  "show-task-manager"
                Progress_Regexp      : String_Access;    --  "progress-regexp"
@@ -865,9 +864,6 @@ package body Commands.Custom is
                               (Command, "progress-hide", "true") = "true";
       Server            : constant String :=
                             Get_Attribute (Command, "server", "gps_server");
-      Is_Compiler_Cmd   : constant Boolean :=
-                            Get_Attribute
-                              (Command, "is-compiler-cmd", "false") = "true";
       Check_Password    : constant Boolean :=
                             Get_Attribute
                               (Command, "check-password", "false") = "true";
@@ -897,7 +893,6 @@ package body Commands.Custom is
         (Command_Component_Record with
          The_Type             => Component_External,
          Server               => Server_T,
-         Is_Compiler_Cmd      => Is_Compiler_Cmd,
          Check_Password       => Check_Password,
          Show_Command         => Show_C,
          Output               => Outp,
@@ -1459,7 +1454,6 @@ package body Commands.Custom is
                  (Command.Kernel,
                   Command              => Args (Args'First).all,
                   Arguments            => Args (Args'First + 1 .. Args'Last),
-                  Is_Compiler_Exec     => False,
                   Server               => Component.Server,
                   Console              => Console,
                   Callback             => Store_Command_Output'Access,

@@ -560,6 +560,7 @@ class gnatCheckProc:
          # First get gnatcheck rules
          self.msg = ""
          process = GPS.Process (self.gnatCmd + " check -h", "^.+$",
+                                remote_server = "Tools_Server",
                                 on_match=self.add_rule)
          process.get_result()
 
@@ -572,6 +573,7 @@ class gnatCheckProc:
          # Then retrieve warnings/style/restriction checks from gnatmake
          self.msg = ""
          process = GPS.Process (self.gnatCmd + " make -h", "^.+$",
+                                remote_server = "Tools_Server",
                                 on_match=self.add_gnat_rule)
          process.get_result()
       return True
@@ -655,6 +657,7 @@ class gnatCheckProc:
                              progress_regexp="^ *completed (\d*) out of (\d*) .*$",
                              progress_current = 1,
                              progress_total = 2,
+                             remote_server = "Tools_Server",
                              show_command = True)
 
    def check_project (self, project, recursive=False):
@@ -767,7 +770,7 @@ def on_gps_started (hook_name):
    GPS.parse_xml ("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
      <language>Ada</language>
-     <switches lines="1" use_scrolled_window="true" sections="-rules">
+     <switches lines="1" sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
         <check label="debug mode" switch="-d" line="1"/>
         <field label="Coding standard file" switch="-from" separator="=" as-file="true" line="1" section="-rules"/>

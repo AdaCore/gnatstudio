@@ -55,7 +55,6 @@ package body GPS.Kernel.Timeout is
    type Console_Process_Data is new GObject_Record with record
       Args                 : String_List_Access := null;
       Server               : Server_Type;
-      Is_Compiler_Exec     : Boolean;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
       Show_In_Task_Manager : Boolean;
@@ -226,7 +225,6 @@ package body GPS.Kernel.Timeout is
          Spawn (Command.Data.D.Kernel,
                 Command.Data.Args.all,
                 Command.Data.Server,
-                Command.Data.Is_Compiler_Exec,
                 Command.Data.D.Descriptor,
                 Success,
                 Command.Data.Use_Ext_Terminal,
@@ -549,7 +547,6 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Is_Compiler_Exec     : Boolean;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -602,7 +599,6 @@ package body GPS.Kernel.Timeout is
          Args                 => new String_List'
                              ((1 => new String'(Command)) & Clone (Arguments)),
          Server               => Server,
-         Is_Compiler_Exec     => Is_Compiler_Exec,
          Console              => Console,
          Use_Ext_Terminal     => Use_Ext_Terminal,
          Directory            => new String'(Directory),
@@ -674,7 +670,6 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Is_Compiler_Exec     : Boolean;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
@@ -697,7 +692,6 @@ package body GPS.Kernel.Timeout is
         (Kernel               => Kernel,
          Command              => Command,
          Arguments            => Arguments,
-         Is_Compiler_Exec     => Is_Compiler_Exec,
          Server               => GPS_Server,
          Console              => Console,
          Callback             => Callback,
@@ -743,7 +737,6 @@ package body GPS.Kernel.Timeout is
      (Kernel               : Kernel_Handle;
       Command              : String;
       Arguments            : GNAT.OS_Lib.Argument_List;
-      Is_Compiler_Exec     : Boolean;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -769,7 +762,6 @@ package body GPS.Kernel.Timeout is
         (Kernel               => Kernel,
          Command              => Command,
          Arguments            => Arguments,
-         Is_Compiler_Exec     => Is_Compiler_Exec,
          Server               => Server,
          Console              => Console,
          Callback             => Callback,

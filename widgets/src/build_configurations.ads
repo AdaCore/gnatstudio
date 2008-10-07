@@ -36,6 +36,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
 
+with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
 
 with Glib.Xml_Int;     use Glib.Xml_Int;
@@ -163,9 +164,8 @@ package Build_Configurations is
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
 
-      Use_Tools_Path  : Boolean          := False;
-      --  Whether to use the old compiler path of the tools path in dual
-      --  compilation mode
+      Server          : Server_Type      := Build_Server;
+      --  The server used for executing this target
 
       Icon_In_Toolbar : Boolean          := False;
       --  Whether to display an icon in the toolbar
@@ -260,6 +260,7 @@ package Build_Configurations is
    --     <default-command-line>
    --          (same syntax as command-line)
    --     </default-command-line>
+   --     <server>SERVER</server>
    --  </target>
    --
    --  Where
@@ -275,6 +276,8 @@ package Build_Configurations is
    --     COMMAND      (optional) is a string containing the executable
    --     ARG1..ARGN   (optional) arguments
    --     ICON         (optional) is a stock identifier
+   --     SERVER       (optional, default "Build_Server") the server used for
+   --                     executing the action.
 
    function Save_Target_To_XML
      (Registry : Build_Config_Registry_Access;
