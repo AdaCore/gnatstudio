@@ -849,7 +849,7 @@ package body GNAT.Expect.TTY.Remote is
               (Descriptor.Machine.Sessions (Session_Nb).Pd,
                Descriptor.Machine.Desc.Dbg,
                Descriptor.Shell.Init_Cmds (J).all);
-            Wait_For_Prompt (True);
+            Wait_For_Prompt (False);
          end loop;
 
          if Descriptor.Machine.Desc.Extra_Init_Commands /= null then
@@ -968,7 +968,9 @@ package body GNAT.Expect.TTY.Remote is
          --  First protect spaces in arguments
 
          for J in The_Args'Range loop
-            if The_Args (J) (The_Args (J)'First) /= '"' then
+            if The_Args (J)'Length > 0
+              and then The_Args (J) (The_Args (J)'First) /= '"'
+            then
                Space_Loop :
                for K in The_Args (J)'Range loop
                   if The_Args (J) (K) = ' ' then
