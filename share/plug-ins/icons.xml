@@ -256,6 +256,58 @@
     <icon id="gps-gcov-non-covered"   file="../icons/9px/non_executed_code.png">
        <alternate                     file="../icons/9px/non_executed_code.png" size="1" />
     </icon>
+
+    <!--  Builder icons -->
+
+    <icon id="gps-build-all"       label="Build all"
+                                      file="../icons/24px/build_all_24.png" >
+       <alternate                     file="../icons/16px/build_all_16.png" size="1" />
+       <alternate                     file="../icons/18px/build_all_18.png" size="2" />
+    </icon>
+
+     <icon id="gps-build-main"       label="Build main"
+                                      file="../icons/24px/build_main_24.png" >
+       <alternate                     file="../icons/16px/build_main_16.png" size="1" />
+       <alternate                     file="../icons/18px/build_main_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-clean"       label="Clean"
+                                      file="../icons/24px/cleanup_24.png" >
+       <alternate                     file="../icons/16px/cleanup_16.png" size="1" />
+       <alternate                     file="../icons/18px/cleanup_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-compile"       label="Compile"
+                                      file="../icons/24px/compile_24.png" >
+       <alternate                     file="../icons/16px/compile_16.png" size="1" />
+       <alternate                     file="../icons/18px/compile_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-compute-xref"       label="Compute Xref"
+                                      file="../icons/24px/compute_xref_24.png" >
+       <alternate                     file="../icons/16px/compute_xref_16.png" size="1" />
+       <alternate                     file="../icons/18px/compute_xref_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-custom-build"       label="Custom build"
+                                      file="../icons/24px/custom_build_24.png" >
+       <alternate                     file="../icons/16px/custom_build_16.png" size="1" />
+       <alternate                     file="../icons/18px/custom_build_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-semantic-check"       label="Semantic check"
+                                      file="../icons/24px/semantic_check_24.png" >
+       <alternate                     file="../icons/16px/semantic_check_16.png" size="1" />
+       <alternate                     file="../icons/18px/semantic_check_18.png" size="2" />
+    </icon>
+
+    <icon id="gps-syntax-check"       label="Syntax check"
+                                      file="../icons/24px/syntax_check_24.png" >
+       <alternate                     file="../icons/16px/syntax_check_16.png" size="1" />
+       <alternate                     file="../icons/18px/syntax_check_18.png" size="2" />
+    </icon>
+
+
   </stock>
 
 </GPS>
