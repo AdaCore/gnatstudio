@@ -38,8 +38,7 @@ package Histories is
    type History_Key is new String;
    type History_Key_Type is (Strings, Booleans);
 
-   No_History : constant History_Record;
-   No_Key     : constant History_Key := "";
+   No_Key : constant History_Key := "";
 
    procedure Load (Hist : in out History_Record; File_Name : String);
    --  Load Hist from file File_Name
