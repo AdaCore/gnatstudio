@@ -3980,6 +3980,18 @@
    fun:gps__kernel__kernel_desktop__parse_pane_node
 }
 
+{
+   Leak in pango_font_map_load_fontset
+   Memcheck:Leak
+   fun:realloc
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   fun:FcFontRenderPrepare
+   obj:*libpangoft*
+   fun:pango_font_map_load_fontset
+}
+
 #### This warning occurs when loading a pixmap in GVD. A potential
 #### bug in gdk apparently
 

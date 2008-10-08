@@ -201,7 +201,7 @@ package body Language.C is
    end Keywords;
 
    overriding function Keywords
-     (Lang : access C_Language) return Pattern_Matcher_Access
+     (Lang : access C_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

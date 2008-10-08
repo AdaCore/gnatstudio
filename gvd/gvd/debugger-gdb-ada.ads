@@ -25,6 +25,7 @@
 with Items.Arrays;
 with Language; use Language;
 with Language.Debugger;
+with GNAT.Expect;
 with GNATCOLL.Tribooleans;
 
 package Debugger.Gdb.Ada is
@@ -40,7 +41,8 @@ package Debugger.Gdb.Ada is
      (Lang : access Gdb_Ada_Language; Str : String) return Boolean;
 
    overriding function Keywords
-     (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access;
+     (Lang : access Gdb_Ada_Language)
+      return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Keywords
      (Lang : access Gdb_Ada_Language) return GNAT.Strings.String_List;

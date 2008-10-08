@@ -21,6 +21,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 
 with Glib;                    use Glib;
@@ -34,6 +35,7 @@ with Language.Ada;
 with Language.C;
 with Language.Cpp;
 with Language.Java;
+with Basic_Types;
 with Entities;
 with Dummy_Parser;              use Dummy_Parser;
 with Language_Handlers;         use Language_Handlers;
@@ -51,8 +53,6 @@ package body Language.Custom is
 
    Me : constant Debug_Handle := Create ("Language.Custom");
 
-   No_Match : aliased Pattern_Matcher := Never_Match;
-
    procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
      (Project_Field_Array, Project_Field_Array_Access);
 
@@ -62,7 +62,7 @@ package body Language.Custom is
       Comment_Start                 => "",
       Comment_End                   => "",
       New_Line_Comment_Start        => null,
-      New_Line_Comment_Start_Regexp => No_Match'Access,
+      New_Line_Comment_Start_Regexp => null,
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,
@@ -158,17 +158,52 @@ package body Language.Custom is
       return Naming_Editors.Language_Naming_Editor (Naming);
    end Custom_Naming_Scheme_Editor;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Lang : in out Custom_Language) is
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+        (Explorer_Categories, Explorer_Categories_Access);
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+        (Project_Field_Array, Project_Field_Array_Access);
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+        (Gunichar_Array, Gunichar_Array_Access);
+   begin
+      if Lang.Categories /= null then
+         Language.Free (Lang.Categories.all);
+         Unchecked_Free (Lang.Categories);
+      end if;
+
+      Basic_Types.Unchecked_Free (Lang.Keywords);
+      GNAT.Strings.Free (Lang.Keywords_Regexp);
+      GNAT.Strings.Free (Lang.Keywords_List);
+      Glib.Free (Lang.Name);
+      Unchecked_Free (Lang.Word_Chars);
+
+      if Lang.Context /= Null_Context'Access then
+         Free (Lang.Context);
+      end if;
+
+      if Lang.Project_Fields /= null then
+         Free (Lang.Project_Fields.all);
+         Unchecked_Free (Lang.Project_Fields);
+      end if;
+   end Free;
+
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Lang    : access Custom_Language'Class;
-      Handler : access Language_Handler_Record'Class;
+     (Handler : access Language_Handler_Record'Class;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top     : Glib.Xml_Int.Node_Ptr)
    is
       use type Strings.String_Access;
+
+      Lang : constant Custom_Language_Access :=
+        new Language.Custom.Custom_Language;
 
       N, Node                 : Node_Ptr;
       Parent                  : Node_Ptr;
@@ -350,7 +385,7 @@ package body Language.Custom is
 
    begin  -- Initialize
       Lang.Next := Custom_Root;
-      Custom_Root := Custom_Language_Access (Lang);
+      Custom_Root := Lang;
 
       Lang.Name := new String'(Get_String (Get_Field (Top, "Name")));
 
@@ -504,7 +539,7 @@ package body Language.Custom is
          end if;
 
          if New_Line_Comment_Start = null then
-            Lang.Context.New_Line_Comment_Start_Regexp := No_Match'Access;
+            Lang.Context.New_Line_Comment_Start_Regexp := null;
          else
             if Contains_Special_Characters (New_Line_Comment_Start.all) then
                Lang.Context.New_Line_Comment_Start_Regexp :=
@@ -705,7 +740,7 @@ package body Language.Custom is
    begin
       if Lang.Keywords = null then
          if Lang.Parent = null then
-            return No_Match'Access;
+            return null;
          else
             return Keywords (Lang.Parent);
          end if;

@@ -21,6 +21,7 @@ with Ada.Strings.Maps;  use Ada.Strings.Maps;
 with Glib;
 with Case_Handling;
 with Generic_List;
+with GNAT.Expect;
 with GNAT.Regpat;       use GNAT;
 with GNAT.Strings;
 
@@ -31,6 +32,7 @@ package Language is
 
    Unexpected_Type : exception;
 
+   procedure Free (Lang : in out Language_Root) is null;
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null
 
@@ -85,15 +87,14 @@ package Language is
    --  First is required so that regexps can be used to match on e.g. start
    --  of lines.
 
-   type Pattern_Matcher_Access is access all Regpat.Pattern_Matcher;
-
    function Keywords
      (Lang : access Language_Root) return Strings.String_Access is abstract;
    --  Returns the uncompiled keyword regular expression. This string is used
    --  to create the pattern matcher as returned by the version below.
 
    function Keywords
-     (Lang : access Language_Root) return Pattern_Matcher_Access is abstract;
+     (Lang : access Language_Root)
+      return GNAT.Expect.Pattern_Matcher_Access is abstract;
    --  Return a regular expression that matches the keywords for the current
    --  language.
    --  Note: we return an access type (instead of a Pattern_Matcher) for
@@ -206,7 +207,7 @@ package Language is
       --  How comments start. These comments end on the next newline
       --  character. If null, use New_Line_Comment_Start_Regexp instead.
 
-      New_Line_Comment_Start_Regexp : Pattern_Matcher_Access;
+      New_Line_Comment_Start_Regexp : GNAT.Expect.Pattern_Matcher_Access;
       --  How comments start. These comments end on the next newline
       --  character. If null, use New_Line_Comment_Start instead.
 
@@ -239,6 +240,9 @@ package Language is
    function Get_Language_Context
      (Lang : access Language_Root) return Language_Context_Access is abstract;
    --  Return the context to use for a specific language
+
+   procedure Free (Context : in out Language_Context_Access);
+   --  Free the memory allocated for Context
 
    -------------------
    -- Parsing files --
@@ -714,7 +718,7 @@ package Language is
    type Explorer_Category is record
       Category       : Language_Category;
       Category_Name  : Strings.String_Access;
-      Regexp         : Pattern_Matcher_Access;
+      Regexp         : GNAT.Expect.Pattern_Matcher_Access;
       Position_Index : Natural;
       End_Index      : Natural;
       Make_Entry     : Make_Entry_Func;
@@ -738,6 +742,10 @@ package Language is
    --  A list of categories. Each category is assigned an internal number which
    --  is the index in this table, and is passed to each Make_Entry_Func
    --  functions.
+
+   procedure Free (Category   : in out Explorer_Category);
+   procedure Free (Categories : in out Explorer_Categories);
+   --  Free the memory allocated for the parameter
 
    function Explorer_Regexps
      (Lang : access Language_Root) return Explorer_Categories;

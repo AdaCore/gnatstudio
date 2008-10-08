@@ -83,6 +83,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
+with Basic_Types;
 with Dualcompilation;            use Dualcompilation;
 with Filesystems;                use Filesystems;
 with GUI_Utils;                  use GUI_Utils;
@@ -3250,6 +3251,11 @@ package body GPS.Kernel.Remote is
                Extra_Prompt_Array        => Extra_Ptrns,
                Use_Cr_Lf                 => Use_Cr_Lf,
                Use_Pipes                 => Use_Pipes);
+
+            --  The contents of those string_list is freed when the descriptor
+            --  is freed, but we still need to free the array itself
+            Basic_Types.Unchecked_Free (Start_Command_User_Args);
+            Basic_Types.Unchecked_Free (Start_Command_Common_Args);
          end;
 
          Glib.Xml_Int.Free (Name);

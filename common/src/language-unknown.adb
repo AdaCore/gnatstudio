@@ -96,7 +96,7 @@ package body Language.Unknown is
    end Keywords;
 
    overriding function Keywords
-     (Lang : access Unknown_Language) return Pattern_Matcher_Access
+     (Lang : access Unknown_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

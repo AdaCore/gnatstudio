@@ -67,7 +67,8 @@ package body Debugger.Gdb.Ada is
    --------------
 
    overriding function Keywords
-     (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access
+     (Lang : access Gdb_Ada_Language)
+      return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

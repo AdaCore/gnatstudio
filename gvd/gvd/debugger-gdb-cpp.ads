@@ -23,6 +23,7 @@
 --  See language.ads and language-debugger.ads for a complete spec.
 
 with Items.Arrays;
+with GNAT.Expect;
 with Language; use Language;
 with Language.Debugger;
 
@@ -39,7 +40,8 @@ package Debugger.Gdb.Cpp is
      (Lang : access Gdb_Cpp_Language; Str : String) return Boolean;
 
    overriding function Keywords
-     (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access;
+     (Lang : access Gdb_Cpp_Language)
+      return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Keywords
      (Lang : access Gdb_Cpp_Language) return GNAT.Strings.String_List;

@@ -20,6 +20,7 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Regpat;               use GNAT.Regpat;
 
@@ -321,14 +322,16 @@ package body Src_Contexts is
 
                      else
                         if Lang.New_Line_Comment_Start = null then
-                           Match (Lang.New_Line_Comment_Start_Regexp.all,
-                                  Buffer, Matches, Pos);
+                           if Lang.New_Line_Comment_Start_Regexp /= null then
+                              Match (Lang.New_Line_Comment_Start_Regexp.all,
+                                     Buffer, Matches, Pos);
 
-                           if Matches (0) /= No_Match then
-                              State := Mono_Comments;
-                              Section_End := Pos - 1;
-                              Pos := Matches (0).Last + 1;
-                              exit;
+                              if Matches (0) /= No_Match then
+                                 State := Mono_Comments;
+                                 Section_End := Pos - 1;
+                                 Pos := Matches (0).Last + 1;
+                                 exit;
+                              end if;
                            end if;
                         else
                            if Pos <= Buffer'Last -

@@ -284,7 +284,7 @@ package body Case_Handling is
 
       if C.S /= null then
          String_Hash_Table.Reset (C.S.all);
-         Unchecked_Free (C.E);
+         Unchecked_Free (C.S);
       end if;
    end Destroy;
 

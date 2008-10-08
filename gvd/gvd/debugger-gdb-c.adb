@@ -45,7 +45,8 @@ package body Debugger.Gdb.C is
    --------------
 
    overriding function Keywords
-     (Lang : access Gdb_C_Language) return Pattern_Matcher_Access
+     (Lang : access Gdb_C_Language)
+      return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

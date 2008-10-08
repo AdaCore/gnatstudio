@@ -111,7 +111,7 @@ package body Language.Java is
    end Keywords;
 
    overriding function Keywords
-     (Lang : access Java_Language) return Pattern_Matcher_Access
+     (Lang : access Java_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

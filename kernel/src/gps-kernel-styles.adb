@@ -296,18 +296,21 @@ package body GPS.Kernel.Styles is
          Child.Tag := new String'("name");
          Child.Value := new String'(Get_Key (Iter));
          Add_Child (Node, Child, True);
+
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("desc");
          if Info.Description /= null then
             Child.Value := new String'(Info.Description.all);
          end if;
          Add_Child (Node, Child, True);
+
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("fg");
          if Info.Foreground.Value /= null then
             Child.Value := new String'(Info.Foreground.Value.all);
          end if;
          Add_Child (Node, Child, True);
+
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("bg");
          if Info.Background.Value /= null then
@@ -321,6 +324,8 @@ package body GPS.Kernel.Styles is
       end loop;
 
       Print (Main, Full_Name (File).all, Success);
+
+      Free (Main);
 
       if not Success then
          Report_Preference_File_Error (Kernel, Full_Name (File).all);

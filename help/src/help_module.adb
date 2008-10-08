@@ -738,6 +738,7 @@ package body Help_Module is
 
    procedure On_Destroy (Item : access Gtk_Widget_Record'Class) is
    begin
+      Free (String_Menu_Item (Item).URL);
       Free (String_Menu_Item (Item).Shell);
       Free (String_Menu_Item (Item).Shell_Lang);
    end On_Destroy;

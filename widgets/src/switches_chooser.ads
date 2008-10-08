@@ -63,7 +63,7 @@ package Switches_Chooser is
    --  line.
    --   for example: "cargs bargs largs"
 
-   procedure Free (Config : in out Switches_Editor_Config) is null;
+   procedure Free (Config : in out Switches_Editor_Config);
    --  Free the memory associated with Config.
    --  Does nothing for now, but at least ensures that appropriate calls are
    --  done where needed.

@@ -34,7 +34,7 @@ package Language.Cpp is
    ------------------
 
    overriding function Keywords
-     (Lang : access Cpp_Language) return Pattern_Matcher_Access;
+     (Lang : access Cpp_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access;

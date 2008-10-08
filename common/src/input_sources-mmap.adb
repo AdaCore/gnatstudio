@@ -78,6 +78,7 @@ package body Input_Sources.Mmap is
    overriding procedure Close (Input : in out Mmap_Input) is
    begin
       Close (Input.File);
+      Input_Sources.Close (Input_Source (Input));
       Input.Index := Natural'Last;
    end Close;
 

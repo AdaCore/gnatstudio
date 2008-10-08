@@ -21,8 +21,7 @@
 --
 --  See package VCS for a complete spec of this package.
 
-with Ada.Unchecked_Deallocation;
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Expect; use GNAT.Expect;
 with GNAT.Strings;
 
 package VCS.Generic_VCS is
@@ -181,12 +180,8 @@ package VCS.Generic_VCS is
 
 private
 
-   type Pattern_Matcher_Access is access Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Pattern_Matcher, Pattern_Matcher_Access);
-
    type Regexp_Status_Record is record
-      Regexp : Pattern_Matcher_Access;
+      Regexp : GNAT.Expect.Pattern_Matcher_Access;
       Index  : Natural;
    end record;
 
@@ -196,7 +191,7 @@ private
    package Status_Parser is new Generic_List (Regexp_Status_Record);
 
    type Status_Parser_Record is record
-      Regexp               : Pattern_Matcher_Access;
+      Regexp               : GNAT.Expect.Pattern_Matcher_Access;
       Matches_Num          : Natural := 0;
       Status_Identifiers   : Status_Parser.List;
 
@@ -210,6 +205,9 @@ private
       Sym_Index            : Natural := 0;
       Pattern              : GNAT.Strings.String_Access;
    end record;
+
+   procedure Free (S : in out Status_Parser_Record);
+   --  Free memory associated to X
 
    type Generic_VCS_Record is new VCS_Record with record
       Id       : GNAT.Strings.String_Access;

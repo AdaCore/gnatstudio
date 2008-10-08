@@ -20,7 +20,9 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Basic_Types;
 with Glib.Unicode;                use Glib, Glib.Unicode;
+with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with String_Utils;                use String_Utils;
 
@@ -80,11 +82,29 @@ package body Language is
    -- Free --
    ----------
 
+   procedure Free (Context : in out Language_Context_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Language_Context, Language_Context_Access);
+   begin
+      if Context /= null then
+         Basic_Types.Unchecked_Free (Context.New_Line_Comment_Start_Regexp);
+         GNAT.Strings.Free (Context.New_Line_Comment_Start);
+         Unchecked_Free (Context);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Lang : in out Language_Access) is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Language_Root'Class, Language_Access);
    begin
-      Internal (Lang);
+      if Lang /= null then
+         Free (Lang.all);
+         Internal (Lang);
+      end if;
    end Free;
 
    procedure Free (List : in out Construct_List) is
@@ -109,6 +129,27 @@ package body Language is
       List.First   := null;
       List.Current := null;
       List.Last    := null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Category   : in out Explorer_Category) is
+   begin
+      GNAT.Strings.Free (Category.Category_Name);
+      Basic_Types.Unchecked_Free (Category.Regexp);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Categories : in out Explorer_Categories) is
+   begin
+      for C in Categories'Range loop
+         Free (Categories (C));
+      end loop;
    end Free;
 
    --------------------
@@ -151,7 +192,7 @@ package body Language is
    is
       Context       : constant Language_Context_Access :=
                         Get_Language_Context (Language_Access (Lang));
-      Keys          : constant Pattern_Matcher_Access :=
+      Keys          : constant GNAT.Expect.Pattern_Matcher_Access :=
                         Keywords (Language_Access (Lang));
       Buffer_Length : constant Natural := Buffer'Last - First + 1;
       Matched       : Match_Array (0 .. 1);
@@ -212,9 +253,11 @@ package body Language is
       if Context.New_Line_Comment_Start /= null then
          Found := Context.New_Line_Comment_Start.all =
            Buffer (First .. First + Context.New_Line_Comment_Start'Length - 1);
-      else
+      elsif Context.New_Line_Comment_Start_Regexp /= null then
          Found := Match (Context.New_Line_Comment_Start_Regexp.all,
                          Buffer (First .. Buffer'Last));
+      else
+         Found := False;
       end if;
 
       if Found  then
@@ -297,13 +340,14 @@ package body Language is
       --  ??? It is assumed the regexp should check at the current char
       --  only, not beyond for efficiency...
 
-      Match (Keys.all, Buffer (First .. Buffer'Last), Matched);
-
-      if Matched (0) /= No_Match then
-         Next_Char := UTF8_Next_Char (Buffer, Matched (0).Last);
-         Column := Column + Matched (0).Last - Matched (0).First + 1;
-         Entity := Keyword_Text;
-         return;
+      if Keys /= null then
+         Match (Keys.all, Buffer (First .. Buffer'Last), Matched);
+         if Matched (0) /= No_Match then
+            Next_Char := UTF8_Next_Char (Buffer, Matched (0).Last);
+            Column := Column + Matched (0).Last - Matched (0).First + 1;
+            Entity := Keyword_Text;
+            return;
+         end if;
       end if;
 
       --  Another special character, not part of a word: just skip it, before

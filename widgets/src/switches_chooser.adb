@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with String_Utils;               use String_Utils;
 
@@ -34,6 +35,45 @@ package body Switches_Chooser is
    --  might have no separator.
    --  If it is ASCII.LF, the switch takes no parameter.
    --  If it is ASCII.CR, the switch takes an optional parameter
+
+   procedure Free_List (Deps : in out Dependency_Description_Access);
+   --  Free the whole list of dependencies
+
+   ---------------
+   -- Free_List --
+   ---------------
+
+   procedure Free_List (Deps : in out Dependency_Description_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Dependency_Description, Dependency_Description_Access);
+      N : Dependency_Description_Access;
+   begin
+      while Deps /= null loop
+         N := Deps.Next;
+         Free (Deps.Slave_Tool);
+         Free (Deps.Master_Switch);
+         Free (Deps.Slave_Switch);
+         Free (Deps.Master_Section);
+         Free (Deps.Slave_Section);
+         Unchecked_Free (Deps);
+         Deps := N;
+      end loop;
+   end Free_List;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Config : in out Switches_Editor_Config) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Switches_Editor_Config_Record, Switches_Editor_Config);
+   begin
+      if Config /= null then
+         Free (Config.Config);
+         Free_List (Config.Dependencies);
+         Unchecked_Free (Config);
+      end if;
+   end Free;
 
    ------------
    -- Create --

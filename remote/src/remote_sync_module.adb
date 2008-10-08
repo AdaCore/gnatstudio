@@ -69,6 +69,8 @@ package body Remote_Sync_Module is
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
+   overriding procedure Destroy (Module : in out Rsync_Module_Record);
+
    overriding procedure Customize
      (Module : access Rsync_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -131,6 +133,15 @@ package body Remote_Sync_Module is
       Add_Hook
         (Kernel, Rsync_Action_Hook, Wrapper (On_Rsync_Hook'Access), "rsync");
    end Register_Module;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Rsync_Module_Record) is
+   begin
+      Free (Module.Rsync_Args);
+   end Destroy;
 
    ---------------
    -- Customize --

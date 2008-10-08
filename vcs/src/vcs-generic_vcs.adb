@@ -22,6 +22,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
@@ -30,6 +31,7 @@ with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
+with Basic_Types;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
@@ -286,18 +288,52 @@ package body VCS.Generic_VCS is
    -- Free --
    ----------
 
-   procedure Free (X : in out Generic_VCS_Access) is
-      pragma Warnings (Off, X);
+   procedure Free (S : in out Status_Parser_Record) is
    begin
-      GNAT.Strings.Free (X.Id);
+      Basic_Types.Unchecked_Free (S.Regexp);
+      GNAT.Strings.Free (S.Pattern);
+      Status_Parser.Free (S.Status_Identifiers);
+   end Free;
 
-      for J in X.Commands'Range loop
-         GNAT.Strings.Free (X.Commands (J));
-      end loop;
+   ----------
+   -- Free --
+   ----------
 
-      for J in X.Labels'Range loop
-         GNAT.Strings.Free (X.Labels (J));
-      end loop;
+   procedure Free (X : in out Generic_VCS_Access) is
+      procedure Free (A : in out Action_Array);
+      procedure Free (A : in out Action_Array) is
+      begin
+         for J in A'Range loop
+            GNAT.Strings.Free (A (J));
+         end loop;
+      end Free;
+
+      procedure Free (S : in out Status_Array_Access);
+      procedure Free (S : in out Status_Array_Access) is
+      begin
+         for J in S'Range loop
+            Free (S (J));
+         end loop;
+         Unchecked_Free (S);
+      end Free;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Generic_VCS_Record'Class, Generic_VCS_Access);
+   begin
+      if X /= null then
+         GNAT.Strings.Free (X.Id);
+         Basic_Types.Unchecked_Free (X.Parent_Revision_Regexp);
+         Basic_Types.Unchecked_Free (X.Branch_Root_Revision_Regexp);
+         Free (X.Status);
+         Free (X.Commands);
+         Free (X.Labels);
+         Free (X.Status_Parser);
+         Free (X.Local_Status_Parser);
+         Free (X.Annotations_Parser);
+         Free (X.Log_Parser);
+         Free (X.Revision_Parser);
+         Unchecked_Free (X);
+      end if;
    end Free;
 
    -------------
@@ -1305,7 +1341,7 @@ package body VCS.Generic_VCS is
                         Status_Parser.Append
                           (Parser.Status_Identifiers, (Regexp, Num));
                      else
-                        Unchecked_Free (Regexp);
+                        Basic_Types.Unchecked_Free (Regexp);
                      end if;
 
                   exception
@@ -2240,7 +2276,7 @@ package body VCS.Generic_VCS is
 
    procedure Free (X : in out Regexp_Status_Record) is
    begin
-      Unchecked_Free (X.Regexp);
+      Basic_Types.Unchecked_Free (X.Regexp);
    end Free;
 
 end VCS.Generic_VCS;

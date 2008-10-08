@@ -85,7 +85,8 @@ package body Debugger.Gdb.Cpp is
    --------------
 
    overriding function Keywords
-     (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access
+     (Lang : access Gdb_Cpp_Language)
+      return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

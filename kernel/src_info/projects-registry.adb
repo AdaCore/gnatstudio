@@ -1933,6 +1933,8 @@ package body Projects.Registry is
    -------------
 
    procedure Destroy (Registry : in out Project_Registry) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Registry_Data, Project_Registry_Data_Access);
       Naming  : Naming_Scheme_Access;
       Naming2 : Naming_Scheme_Access;
    begin
@@ -1949,6 +1951,11 @@ package body Projects.Registry is
             Unchecked_Free (Naming);
             Naming := Naming2;
          end loop;
+
+         Languages_Htable.String_Hash_Table.Reset (Registry.Data.Extensions);
+         Free (Registry.Data.Tree);
+         Free (Registry.Data.View_Tree);
+         Unchecked_Free (Registry.Data);
       end if;
    end Destroy;
 

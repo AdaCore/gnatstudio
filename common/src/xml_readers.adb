@@ -268,6 +268,7 @@ package body XML_Readers is
    begin
       Open (File, Input);
       Parse (1, Input, Tree, Error);
+      Close (Input);
    end Parse;
 
    -----------

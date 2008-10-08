@@ -24,6 +24,7 @@
 with Items.Arrays;
 with Language; use Language;
 with Language.Debugger;
+with GNAT.Expect;
 
 package Debugger.Gdb.C is
 
@@ -38,7 +39,8 @@ package Debugger.Gdb.C is
      (Lang : access Gdb_C_Language; Str : String) return Boolean;
 
    overriding function Keywords
-     (Lang : access Gdb_C_Language) return Pattern_Matcher_Access;
+     (Lang : access Gdb_C_Language)
+      return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Keywords
      (Lang : access Gdb_C_Language) return GNAT.Strings.String_List;

@@ -23,6 +23,7 @@
 with Interfaces.C.Strings;
 with System;
 
+with GNAT.Expect;
 with GNAT.Strings;
 
 with Glib.Xml_Int;
@@ -36,13 +37,14 @@ package Language.Custom is
    type Custom_Language_Access is access all Custom_Language'Class;
 
    procedure Initialize
-     (Lang    : access Custom_Language'Class;
-      Handler : access Language_Handlers.Language_Handler_Record'Class;
+     (Handler : access Language_Handlers.Language_Handler_Record'Class;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Top     : Glib.Xml_Int.Node_Ptr);
-   --  Initialize Lang based on the contents of an XML node.
+   --  Initialize a new language based on the contents of an XML node.
    --  The language and its extensions are automatically registered in the
    --  handler.
+
+   overriding procedure Free (Lang : in out Custom_Language);
 
    -------------
    -- Parsing --
@@ -55,7 +57,7 @@ package Language.Custom is
      (Lang : access Custom_Language) return Strings.String_Access;
 
    overriding function Keywords
-     (Lang : access Custom_Language) return Pattern_Matcher_Access;
+     (Lang : access Custom_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List;
@@ -321,7 +323,7 @@ private
 
    type Custom_Language is new Language_Root with record
       Categories       : Explorer_Categories_Access;
-      Keywords         : Pattern_Matcher_Access;
+      Keywords         : GNAT.Expect.Pattern_Matcher_Access;
       Keywords_Regexp  : Strings.String_Access;
       Keywords_List    : GNAT.Strings.String_List_Access;
       Context          : Language_Context_Access;

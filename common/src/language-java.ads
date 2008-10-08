@@ -35,7 +35,7 @@ package Language.Java is
      (Lang : access Java_Language) return Strings.String_Access;
 
    overriding function Keywords
-     (Lang : access Java_Language) return Pattern_Matcher_Access;
+     (Lang : access Java_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
    overriding function Keywords
      (Lang : access Java_Language) return GNAT.Strings.String_List;

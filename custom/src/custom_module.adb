@@ -132,6 +132,10 @@ package body Custom_Module is
    procedure On_Activate (Menu : access Gtk_Widget_Record'Class);
    --  Called when a Subprogram_Type_Menu is activated
 
+   procedure On_Destroy_Subprogram_Menu
+     (Menu : access Gtk_Widget_Record'Class);
+   --  Called when a subprogram_type_menu is destroyed
+
    overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -1233,7 +1237,6 @@ package body Custom_Module is
       ---------------
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
-         Lang : Custom_Language_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -1242,9 +1245,7 @@ package body Custom_Module is
          end if;
 
          if To_Lower (Current_Node.Tag.all) = "language" then
-            --  ??? Lang is never freed
-            Lang := new Language.Custom.Custom_Language;
-            Initialize (Lang, Handler, Kernel, Current_Node);
+            Initialize (Handler, Kernel, Current_Node);
 
          elsif Current_Node.Tag.all = "menu" then
             Parse_Menu_Node (Current_Node, Parent_Path);
@@ -1415,6 +1416,8 @@ package body Custom_Module is
                Menu.On_Activate := Nth_Arg (Data, 2, null);
                Widget_Callback.Connect
                  (Menu, Signal_Activate, On_Activate'Access);
+               Widget_Callback.Connect
+                 (Menu, "destroy", On_Destroy_Subprogram_Menu'Access);
                Set_Accel_Path
                  (Menu, "<gps>" & Path, Get_Default_Accelerators (Kernel));
 
@@ -1464,6 +1467,16 @@ package body Custom_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Menu_Handler;
+
+   --------------------------------
+   -- On_Destroy_Subprogram_Menu --
+   --------------------------------
+
+   procedure On_Destroy_Subprogram_Menu
+     (Menu : access Gtk_Widget_Record'Class) is
+   begin
+      Free (Subprogram_Type_Menu (Menu).On_Activate);
+   end On_Destroy_Subprogram_Menu;
 
    ------------------------
    -- Contextual_Handler --
