@@ -125,6 +125,14 @@
        <alternate                     file="../icons/16px/debug_indicator.png" size="1" />
     </icon>
 
+    <icon id="gps-debugger-line-might-have-code" file="../icons/9px/line_might_have_code.png">
+       <alternate                                file="../icons/9px/line_might_have_code.png" size="1" />
+    </icon>
+
+    <icon id="gps-debugger-line-has-code" file="../icons/9px/line_has_code.png">
+       <alternate                                file="../icons/9px/line_has_code.png" size="1" />
+    </icon>
+
     <!-- General-purpose icons -->
 
     <icon id="gps-file"               file="../icons/16px/file.png" />

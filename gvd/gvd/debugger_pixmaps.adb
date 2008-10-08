@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Pixmaps_IDE;    use Pixmaps_IDE;
 with Gtk.Enums;      use Gtk.Enums;
 
 package body Debugger_Pixmaps is
@@ -30,8 +28,10 @@ package body Debugger_Pixmaps is
    procedure Init_Graphics (Widget : Gtk_Widget) is
    begin
       if Line_Has_Code_Pixbuf = Null_Pixbuf then
-         Line_Has_Code_Pixbuf := Gdk_New_From_Xpm_Data (dot_xpm);
-         Line_Might_Have_Code_Pixbuf := Gdk_New_From_Xpm_Data (grey_dot_xpm);
+         Line_Has_Code_Pixbuf := Render_Icon
+           (Widget, "gps-debugger-line-has-code", Icon_Size_Menu);
+         Line_Might_Have_Code_Pixbuf := Render_Icon
+           (Widget, "gps-debugger-line-might-have-code", Icon_Size_Menu);
          Line_Has_Breakpoint_Pixbuf := Render_Icon
            (Widget, "gps-debugger-break", Icon_Size_Menu);
          Current_Line_Pixbuf := Render_Icon

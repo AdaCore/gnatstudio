@@ -643,7 +643,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Src_X    => 0,
                   Src_Y    => 0,
                   Dest_X   => Starting_X,
-                  Dest_Y   => Y_Pix_In_Window,
+                  Dest_Y   => Y_Pix_In_Window + (Line_Height -
+                    Get_Height (Line_Info.Info.Image)) / 2,
                   Width    => -1,
                   Height   => -1);
             end if;
