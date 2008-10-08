@@ -770,7 +770,7 @@ package body Switches_Chooser.Gtkada is
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
-      History            : History_Record;
+      History            : Histories.History;
       Key                : History_Key) is
    begin
       Editor := new Switches_Editor_Record;
@@ -786,7 +786,7 @@ package body Switches_Chooser.Gtkada is
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
-      History            : History_Record;
+      History            : Histories.History;
       Key                : History_Key)
    is
       Combo                   : Gtk_Combo;
@@ -808,14 +808,14 @@ package body Switches_Chooser.Gtkada is
          Lines     => Config.Lines,
          Columns   => Config.Columns);
 
-      if History = No_History then
+      if History = null then
          Gtk_New (Editor.Ent);
          Widget_For_Command_Line := Gtk_Widget (Editor.Ent);
       else
          Gtk_New (Combo);
          Editor.Ent := Get_Entry (Combo);
          Widget_For_Command_Line := Gtk_Widget (Combo);
-         Get_History (History, Key, Combo, False, False);
+         Get_History (History.all, Key, Combo, False, False);
       end if;
 
       if Config.Show_Command_Line then

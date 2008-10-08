@@ -38,14 +38,14 @@ package Switches_Chooser.Gtkada is
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
-      History            : History_Record;
+      History            : Histories.History;
       Key                : History_Key);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Tooltips           : Gtk.Tooltips.Gtk_Tooltips;
       Use_Native_Dialogs : Boolean;
-      History            : History_Record;
+      History            : Histories.History;
       Key                : History_Key);
    --  Create a new switches editor based on Config.
    --  Use_Native_Dialogs applies to the file selector and directory selector
