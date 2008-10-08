@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Glib.Object;               use Glib.Object;
@@ -268,7 +268,7 @@ package body VCS_Module is
    overriding procedure Destroy (Module : in out VCS_Module_ID_Record) is
    begin
       Free (Module.VCS_List);
-      Clear_Cache (Module.Cached_Status);
+      Clear_Cache (Module.Cached_Status, Free_Memory => True);
    end Destroy;
 
    ------------------

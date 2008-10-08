@@ -1760,7 +1760,11 @@ package body GPS.Kernel.Scripts is
       Name   : String;
       Base   : Class_Type := No_Class) return Class_Type is
    begin
-      return New_Class (Get_Scripts (Kernel), Name, Base);
+      if Kernel = null then
+         return No_Class;
+      else
+         return New_Class (Get_Scripts (Kernel), Name, Base);
+      end if;
    end New_Class;
 
    --------------------------------------

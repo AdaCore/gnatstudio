@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;           use GNAT;
 with GNAT.Strings;
 
@@ -51,9 +52,16 @@ package body VCS_Status is
    -- Clear_Cache --
    -----------------
 
-   procedure Clear_Cache (Cache : Status_Cache) is
+   procedure Clear_Cache
+     (Cache : in out Status_Cache; Free_Memory : Boolean := False)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Status_Hash.HTable, HTable_Access);
    begin
       Status_Hash.Reset (Cache.T.all);
+      if Free_Memory then
+         Unchecked_Free (Cache.T);
+      end if;
    end Clear_Cache;
 
    ----------

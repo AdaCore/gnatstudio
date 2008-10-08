@@ -1584,17 +1584,13 @@ package body GPS.Kernel is
       Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);
 
-      --  We do not finalize the scripts module anymore in order to allow
-      --  user scripts to perform some very last processing.
-      --  GPS.Kernel.Scripts.Fdinalize (Handle);
-
       Destroy (Language_Handler (Handle.Lang_Handler));
       --  Destroy (Handle.Database);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
 
-      --  Destroy (Handle.Scripts);
+      Destroy (Handle.Scripts);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.

@@ -52,7 +52,8 @@ package VCS_Status is
       Status : in out Line_Record);
    --  Record the Status for the given file
 
-   procedure Clear_Cache (Cache : Status_Cache);
+   procedure Clear_Cache
+     (Cache : in out Status_Cache; Free_Memory : Boolean := False);
    --  Clear all recorded file status
 
    function Has_Status

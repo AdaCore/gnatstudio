@@ -1215,6 +1215,7 @@ package body Custom_Module is
                               -Get_Attribute (Child, "label"),
                              0, 0, "");
                            Add (Stock);
+                           Free (Stock);  --  gtk+ took its own copy
                         end;
 
                      else
