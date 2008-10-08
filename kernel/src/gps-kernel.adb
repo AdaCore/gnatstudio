@@ -1594,7 +1594,7 @@ package body GPS.Kernel is
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
 
-      Destroy (Handle.Scripts);
+      --  Destroy (Handle.Scripts);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
