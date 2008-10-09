@@ -635,7 +635,7 @@ package body Build_Configurations is
       N.Attributes := new String'
         ("model=""" & To_String (Target.Model.Name) & """ " &
          "category=""" & To_String (Target.Category) & """ " &
-         "name=""" & To_String (Target.Name) & """");
+         "name=""" & To_String (Target.Menu_Name) & """");
       --  Insert a <icon> node if needed
 
       N.Child := new Node;
