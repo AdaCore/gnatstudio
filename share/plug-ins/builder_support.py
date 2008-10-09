@@ -132,7 +132,6 @@ Compile_All_Targets = """
     </default-command-line>
 </target>
 <target model="builder" category="Project" name="_Compile All">
-    <in-toolbar>TRUE</in-toolbar>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
@@ -147,7 +146,6 @@ Compile_All_Targets = """
     </default-command-line>
 </target>
 <target model="builder" category="Project" name="Compile _Root">
-    <in-toolbar>TRUE</in-toolbar>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
