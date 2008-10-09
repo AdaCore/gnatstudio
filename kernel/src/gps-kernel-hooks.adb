@@ -1246,8 +1246,8 @@ package body GPS.Kernel.Hooks is
         (Hook_User_Data, Hook_User_Data_Access);
       D : Hook_User_Data_Access := Convert (Data);
    begin
-      Remove_Hook (D.Kernel, D.Name.all, D.Func);
       D.Func.Ref_Count := D.Func.Ref_Count - 1;
+      Remove_Hook (D.Kernel, D.Name.all, D.Func);
       Free (D.Name);
       Unchecked_Free (D);
    end Remove_Hook_Cb;

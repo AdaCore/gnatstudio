@@ -220,6 +220,10 @@ package body GPS.Kernel.Console is
       pragma Unreferenced (Console);
    begin
       return True;
+      --  ??? False if the kernel is being destroyed, so that we ultimately
+      --  destroy the console. Perhaps the MDI should not check for
+      --  delete_event when it is being destroyed ?
+
    end Console_Delete_Event;
 
    ------------------------

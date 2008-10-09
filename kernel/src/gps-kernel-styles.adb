@@ -414,14 +414,13 @@ package body GPS.Kernel.Styles is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Style_Record, Style_Access);
    begin
-      if 1 = 1 then
-         return;
+      if Style /= null then
+         Free (Style.Name);
+         Free (Style.Description);
+         Free (Style.Foreground);
+         Free (Style.Background);
+         Unchecked_Free (Style);
       end if;
-      Free (Style.Name);
-      Free (Style.Description);
-      Free (Style.Foreground);
-      Free (Style.Background);
-      Unchecked_Free (Style);
    end Free;
 
    ----------

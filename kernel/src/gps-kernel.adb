@@ -1794,14 +1794,6 @@ package body GPS.Kernel is
             --  they will be freed in turn. If Filter was not registered, we
             --  have a memory leaks any so things do not really matter
             null;
---
---              Free (Filter.And1);   --  only if not registered
---              Free (Filter.And2);
---           when Filter_Or =>
---              Free (Filter.Or1);
---              Free (Filter.Or2);
---           when Filter_Not =>
---              Free (Filter.Not1);
       end case;
       Free (Action_Filter_Record (Filter));
    end Free;
@@ -2317,8 +2309,10 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Hook_Description_Base'Class, Hook_Description_Base_Access);
    begin
-      Free (L.all);
-      Unchecked_Free (L);
+      if L /= null then
+         Free (L.all);
+         Unchecked_Free (L);
+      end if;
    end Free;
 
    -------------
