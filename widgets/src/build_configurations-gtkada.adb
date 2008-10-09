@@ -915,7 +915,7 @@ package body Build_Configurations.Gtkada is
    begin
       --  Return immediately if the target does not exist.
 
-      if not Registry.Targets.Contains (To_Unbounded_String (Target)) then
+      if not Contains (Registry.Targets, To_Unbounded_String (Target)) then
          return;
       end if;
 
@@ -950,7 +950,7 @@ package body Build_Configurations.Gtkada is
       Target_UI := Switches_For_Target
         (UI      => UI,
          History => UI.History,
-         Target  => Registry.Targets.Element (To_Unbounded_String (Target)),
+         Target  => Get_Target_From_Name (Registry, Target),
          Single  => True);
 
       Pack_Start (UI, Target_UI, True, True, 3);
@@ -1098,7 +1098,7 @@ package body Build_Configurations.Gtkada is
          end if;
       end Add_Target;
 
-      use Target_Map;
+      use Target_List;
       C : Cursor;
 
    begin
