@@ -1495,7 +1495,6 @@ package body GPS.Location_View is
       pragma Unreferenced (Dummy);
 
    begin
-      Gtk_New (Pixbuf_Rend);
       Set_Rules_Hint (Tree, False);
 
       Gtk_New (View.Action_Column);
