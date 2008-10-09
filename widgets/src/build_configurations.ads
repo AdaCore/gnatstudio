@@ -231,7 +231,11 @@ package Build_Configurations is
    --  Return the value of Switch as configured in Target
 
    function Get_Name (Target : Target_Access) return String;
-   --  Return the name of Target
+   --  Return the name of Target.
+
+   function Get_Menu_Name (Target : Target_Access) return String;
+   --  Return the menu name of Target, ie a name where an underscore indicates
+   --  the position of the key shortcut.
 
    function Get_Category (Target : Target_Access) return String;
    --  Return the category of Target
@@ -407,6 +411,9 @@ private
    type Target_Type is record
       Name : Unbounded_String;
       --  The name of the Target
+
+      Menu_Name : Unbounded_String;
+      --  The name of the menu to display target.
 
       Category : Unbounded_String;
       --  The category of the target, used for purposes of displaying the
