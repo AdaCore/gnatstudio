@@ -1452,9 +1452,6 @@ package body Projects.Registry is
          Src := String_Elements (Registry) (Src).Next;
       end loop;
 
-      --  Table is no longer needed
-      Boolean_Htable.String_Hash_Table.Reset (Seen);
-
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
 
       while Dirs_List /= Nil_String loop
@@ -1473,6 +1470,7 @@ package body Projects.Registry is
       then
          Set_Source_Files;
          Free (Languages);
+         Boolean_Htable.String_Hash_Table.Reset (Seen);
          return;
       end if;
 
@@ -1656,6 +1654,7 @@ package body Projects.Registry is
          end if;
       end if;
 
+      Boolean_Htable.String_Hash_Table.Reset (Seen);
       Free (Languages);
       Free (Dirs);
    end Add_Foreign_Source_Files;
