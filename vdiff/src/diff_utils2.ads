@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007                      --
---                              AdaCore                              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -147,7 +146,7 @@ package Diff_Utils2 is
    function Diff3
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List;
-   --  Execute diff on File1,File2 and File3 and return a list of differences.
+   --  Execute diff on File1,File2 and File3 and return a list of differences
 
    function Simplify
      (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;

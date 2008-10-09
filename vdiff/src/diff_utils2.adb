@@ -632,8 +632,8 @@ package body Diff_Utils2 is
 
       procedure Cb
         (Old_Obj, New_Obj : Character;
-         State : String_Diff.Diff_State);
-      --  Callback for the diff procedure.
+         State            : String_Diff.Diff_State);
+      --  Callback for the diff procedure
 
       --------
       -- Cb --
@@ -641,7 +641,7 @@ package body Diff_Utils2 is
 
       procedure Cb
         (Old_Obj, New_Obj : Character;
-         State : String_Diff.Diff_State)
+         State            : String_Diff.Diff_State)
       is
          pragma Unreferenced (Old_Obj, New_Obj);
          Action : Diff_Action;

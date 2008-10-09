@@ -833,13 +833,13 @@ package body Vdiff2_Module.Utils is
       Loc     : constant T_Loc := Curr_Chunk.Location;
       Ref     : constant T_Loc := Item.Ref_File;
       VRange  : T_VRange :=
-        (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
+                  (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
       VFile   : constant T_VFile :=
-        (Item.Files (1), Item.Files (2), Item.Files (3));
+                  (Item.Files (1), Item.Files (2), Item.Files (3));
       VOffset : constant T_VOffset :=
-        ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
-         (Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First),
-         (Curr_Chunk.Range3.Last - Curr_Chunk.Range3.First));
+                  ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
+                   (Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First),
+                   (Curr_Chunk.Range3.Last - Curr_Chunk.Range3.First));
       VStyle  : T_VStr;
 
    begin
