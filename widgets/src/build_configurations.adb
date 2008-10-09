@@ -22,7 +22,7 @@ with Switches_Parser;
 package body Build_Configurations is
 
    use GNAT.OS_Lib;
-   use Target_Map;
+   use Target_List;
 
    ------------------------
    -- Local declarations --
@@ -368,6 +368,28 @@ package body Build_Configurations is
       end loop;
    end Set_Command_Line;
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (List : Target_List.List; Key : Unbounded_String) return Boolean
+   is
+      C : Cursor;
+   begin
+      C := List.First;
+
+      while Has_Element (C) loop
+         if Element (C).Name = Key then
+            return True;
+         end if;
+
+         Next (C);
+      end loop;
+
+      return False;
+   end Contains;
+
    ----------------
    -- Add_Target --
    ----------------
@@ -376,12 +398,12 @@ package body Build_Configurations is
      (Registry : Build_Config_Registry_Access;
       Target   : Target_Access) is
    begin
-      if Registry.Targets.Contains (Target.Name) then
+      if Contains (Registry.Targets, Target.Name) then
          Log (Registry, -("Target with this name already exists: ")
               & To_String (Target.Name));
       end if;
 
-      Registry.Targets.Insert (Target.Name, Target);
+      Registry.Targets.Append (Target);
    end Add_Target;
 
    -------------------
@@ -390,9 +412,20 @@ package body Build_Configurations is
 
    procedure Remove_Target
      (Registry    : Build_Config_Registry_Access;
-      Target_Name : String) is
+      Target_Name : String)
+   is
+      C : Cursor;
    begin
-      Registry.Targets.Exclude (To_Unbounded_String (Target_Name));
+      C := Registry.Targets.First;
+
+      while Has_Element (C) loop
+         if To_String (Element (C).Name) = Target_Name then
+            Registry.Targets.Delete (C);
+            exit;
+         end if;
+
+         Next (C);
+      end loop;
    end Remove_Target;
 
    --------------------------
@@ -401,13 +434,21 @@ package body Build_Configurations is
 
    function Get_Target_From_Name
      (Registry : Build_Config_Registry_Access;
-      Name     : String) return Target_Access is
+      Name     : String) return Target_Access
+   is
+      C : Cursor;
    begin
-      if Registry.Targets.Contains (To_Unbounded_String (Name)) then
-         return Registry.Targets.Element (To_Unbounded_String (Name));
-      else
-         return null;
-      end if;
+      C := Registry.Targets.First;
+
+      while Has_Element (C) loop
+         if To_String (Element (C).Name) = Name then
+            return Element (C);
+         end if;
+
+         Next (C);
+      end loop;
+
+      return null;
    end Get_Target_From_Name;
 
    ---------------------------------
@@ -696,9 +737,9 @@ package body Build_Configurations is
             return null;
          end if;
 
-         if Registry.Targets.Contains (To_Unbounded_String (Name)) then
+         if Contains (Registry.Targets, To_Unbounded_String (Name)) then
             if Allow_Update then
-               Target := Registry.Targets.Element (To_Unbounded_String (Name));
+               Target := Get_Target_From_Name (Registry, Name);
             else
                Log (Registry, -"Target with that name already registered: "
                     & Name);
@@ -873,7 +914,7 @@ package body Build_Configurations is
 
    overriding procedure Next (Cursor : in out Target_Cursor) is
    begin
-      Target_Map.Next (Target_Map.Cursor (Cursor));
+      Target_List.Next (Target_List.Cursor (Cursor));
    end Next;
 
    --------------
