@@ -589,8 +589,10 @@ package body Builder_Facility_Module is
    -------------------------
 
    procedure Add_Menu_For_Target (Target : Target_Access) is
-      C    : Build_Command_Access;
-      Name : constant String := Get_Name (Target);
+      C         : Build_Command_Access;
+      Name      : constant String := Get_Name (Target);
+      Menu_Name : constant String := Get_Menu_Name (Target);
+
       Category : constant String := Get_Category (Target);
       Cat_Path : Unbounded_String := To_Unbounded_String (Main_Menu);
 
@@ -611,11 +613,13 @@ package body Builder_Facility_Module is
       Create (C, Get_Kernel, Builder_Module_ID.Registry, Name, True);
       Register_Menu (Kernel      => Get_Kernel,
                      Parent_Path => To_String (Cat_Path),
-                     Text        => Name,
+                     Text        => Menu_Name,
                      Stock_Image => Get_Icon (Target),
                      Callback    => null,
                      Command     => Interactive_Command_Access (C),
                      Ref_Item    => -"Build Manager");
+
+      Builder_Module_ID.Menus.Append (Cat_Path & Name);
    end Add_Menu_For_Target;
 
    -----------------
