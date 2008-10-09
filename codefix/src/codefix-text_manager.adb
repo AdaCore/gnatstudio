@@ -1569,8 +1569,8 @@ package body Codefix.Text_Manager is
       Position       : File_Cursor;
       Len            : Integer;
       New_Text       : String;
-      Blanks_Before  : Replace_Blanks_Policy := Keep;
-      Blanks_After   : Replace_Blanks_Policy := Keep)
+      Blanks_Before  : Replace_Blanks_Policy;
+      Blanks_After   : Replace_Blanks_Policy)
    is
       Dest_Start : File_Cursor := Position;
       Dest_Stop  : File_Cursor := Position;
