@@ -978,6 +978,15 @@ package body Build_Configurations.Gtkada is
               and then List (List'First) /= null
             then
                Set_Text (Ent, List (List'First).all);
+            else
+               --  If the history was initially empty, add the contents of the
+               --  entry to it. That way, the user can always find the original
+               --  command line through the history.
+
+               Add_To_History
+                 (History.all,
+                  Target_To_Key (Target_UI.Target),
+                  Get_Text (Get_Entry (Target_UI.Editor)));
             end if;
          end;
       end if;
