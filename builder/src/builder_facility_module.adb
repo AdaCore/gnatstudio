@@ -56,6 +56,8 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Build_Command_Manager;     use Build_Command_Manager;
 
+with Commands.Builder;          use Commands.Builder;
+
 package body Builder_Facility_Module is
 
    Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
@@ -208,7 +210,7 @@ package body Builder_Facility_Module is
 
    function Action_Name (T : Target_Access) return String is
    begin
-      return (-"Build target '") & Get_Name (T) & "'";
+      return Get_Name (T);
    end Action_Name;
 
    ---------------------------
@@ -331,10 +333,12 @@ package body Builder_Facility_Module is
 
    procedure Clear_Compilation_Output
      (Kernel   : Kernel_Handle;
-      Category : String) is
+      Category : String)
+   is
+      pragma Unreferenced (Category);
    begin
       Console.Clear (Kernel);
-      Remove_Location_Category (Kernel, Category);
+      Remove_Location_Category (Kernel, Error_Category);
    end Clear_Compilation_Output;
 
    -----------------------------
@@ -574,8 +578,7 @@ package body Builder_Facility_Module is
       Builder_Module_ID.Buttons.Insert
         (To_Unbounded_String (Name), Button);
       Insert (Toolbar => Toolbar, Item    => Button);
-      Set_Tooltip (Button, Get_Tooltips (Get_Kernel),
-                   (-"Build target '") & Name & "'");
+      Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
       Show_All (Button);
 
       String_Callback.Connect
