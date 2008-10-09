@@ -831,6 +831,11 @@ GPS.parse_xml ("""
       <description>Update the cross-reference information stored in GPS. This needs to be called after major changes to the sources only, since GPS itself is able to work with partially up-to-date information</description>
   </shell_doc>
 
+  <shell_doc name="GPS.compute_xref_bg">
+      <description>Update in the background cross-reference information stored in GPS.</description>
+      <see_also name="GPS.compute_xref()"/>
+  </shell_doc>
+
   <shell_doc name="GPS.get_build_output">
       <return>List of strings, one per line in the output of the build</return>
       <description>Return the result of the last compilation command</description>
