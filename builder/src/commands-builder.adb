@@ -245,6 +245,7 @@ package body Commands.Builder is
       Output           : String;
       Quiet            : Boolean := False)
    is
+      pragma Unreferenced (Category);
       Last  : Natural;
       Lines : Slice_Set;
    begin
@@ -285,7 +286,7 @@ package body Commands.Builder is
       Parse_File_Locations
         (Kernel,
          Output,
-         Category           => Category,
+         Category           => Commands.Builder.Error_Category,
          Highlight          => True,
          Highlight_Category => Error_Category,
          Style_Category     => Style_Category,
