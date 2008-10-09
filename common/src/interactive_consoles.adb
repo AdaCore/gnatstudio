@@ -1125,6 +1125,12 @@ package body Interactive_Consoles is
                         H (H'First + Console.Current_Position + 1).all);
                      return True;
                   end if;
+
+               else
+                  --  Move the prompt mark, so that what the user has typed
+                  --  is not moved back to after the output of the command, as
+                  --  if the user was still typing it
+                  Display_Text_As_Prompt (Console, "");
                end if;
 
                Execute_Command (Console, Command);
