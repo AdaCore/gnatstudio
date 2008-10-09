@@ -30,7 +30,9 @@
 --  NOTE: this package is meant to remain independent of GPS in order to
 --  facilitate factorizing code with other IDEs.
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
+
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
@@ -345,11 +347,14 @@ private
 
    -- Packages --
 
-   package Target_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Target_Access);
+   package Target_List is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type    => Target_Access);
 
-   type Target_Cursor is new Target_Map.Cursor;
+   function Contains
+     (List : Target_List.List; Key : Unbounded_String) return Boolean;
+   --  Return true if List contains a target with name Key.
+
+   type Target_Cursor is new Target_List.Cursor;
 
    package Build_Mode_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
@@ -390,7 +395,7 @@ private
       Models  : Model_Map.Map;
       --  Contains all registered models
 
-      Targets : Target_Map.Map;
+      Targets : Target_List.List;
       --  Contains all registered targets
 
       Modes   : Build_Mode_Map.Map;
