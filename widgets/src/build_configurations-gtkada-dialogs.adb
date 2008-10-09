@@ -358,12 +358,10 @@ package body Build_Configurations.Gtkada.Dialogs is
                   exit;
                end if;
 
-            when Gtk_Response_Cancel =>
+            when others =>
                Cancelled := True;
                Destroy (Dialog);
                exit;
-            when others =>
-               null;
          end case;
       end loop;
    end Add_Target_Dialog;
@@ -483,12 +481,10 @@ package body Build_Configurations.Gtkada.Dialogs is
                   exit;
                end if;
 
-            when Gtk_Response_Cancel =>
+            when others =>
                Cancelled := True;
                Destroy (Dialog);
                exit;
-            when others =>
-               null;
          end case;
       end loop;
    end Clone_Target_Dialog;

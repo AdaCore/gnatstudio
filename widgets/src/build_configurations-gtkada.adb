@@ -800,11 +800,10 @@ package body Build_Configurations.Gtkada is
                Destroy (Dialog);
                Changes_Made := True;
                exit;
-            when Gtk_Response_Cancel =>
+
+            when others =>
                Destroy (Dialog);
                exit;
-            when others =>
-               null;
          end case;
       end loop;
    end Configuration_Dialog;
@@ -959,10 +958,9 @@ package body Build_Configurations.Gtkada is
       --  Create the dialog buttons
 
       Button := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
-
-      Button := Gtk_Button
         (Add_Button (Dialog, Stock_Execute, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -997,26 +995,17 @@ package body Build_Configurations.Gtkada is
 
       --  Run the dialog
 
-      loop
-         case Run (Dialog) is
+      if Run (Dialog) = Gtk_Response_OK then
+         Result := Get_Command_Line (Target_UI.Editor, False);
+         if History /= null then
+            Add_To_History
+              (History.all,
+               Target_To_Key (Target_UI.Target),
+               Get_Text (Get_Entry (Target_UI.Editor)));
+         end if;
+      end if;
 
-            when Gtk_Response_OK =>
-               Result := Get_Command_Line (Target_UI.Editor, False);
-               if History /= null then
-                  Add_To_History
-                    (History.all,
-                     Target_To_Key (Target_UI.Target),
-                     Get_Text (Get_Entry (Target_UI.Editor)));
-               end if;
-               Destroy (Dialog);
-               exit;
-            when Gtk_Response_Cancel =>
-               Destroy (Dialog);
-               exit;
-            when others =>
-               null;
-         end case;
-      end loop;
+      Destroy (Dialog);
    end Single_Target_Dialog;
 
    -------------
