@@ -207,7 +207,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       end if;
 
       --  Verify that no target with this name exists
-      if Registry.Targets.Contains (Name) then
+      if Contains (Registry.Targets, Name) then
          Information
            (-"A target named """ & To_String (Name) & """ already exists.");
          return False;
