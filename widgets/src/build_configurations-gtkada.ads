@@ -50,7 +50,7 @@ package Build_Configurations.Gtkada is
       Parent   : Gtk_Window   := null;
       Tooltips : Gtk_Tooltips := null;
       Target   : String;
-      History  : in out History_Record;
+      History  : Histories.History;
       Result   : out GNAT.OS_Lib.Argument_List_Access);
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
@@ -72,6 +72,9 @@ private
 
       View     : Tree_View;
       --  The tree
+
+      History : Histories.History;
+      --  Reference to the History
    end record;
 
 end Build_Configurations.Gtkada;

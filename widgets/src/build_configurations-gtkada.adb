@@ -50,6 +50,7 @@ with GUI_Utils;                use GUI_Utils;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
+with GNAT.Strings;
 
 package body Build_Configurations.Gtkada is
 
@@ -87,6 +88,8 @@ package body Build_Configurations.Gtkada is
       Model_Entry  : Gtk_Entry;
       --  The entry containing the model
 
+      History      : Histories.History;
+
       Icon_Entry   : Gtk_Entry;
       Icon_Check   : Gtk_Check_Button;
       Launch_Combo : Gtk_Combo_Box;
@@ -108,7 +111,8 @@ package body Build_Configurations.Gtkada is
    function Switches_For_Target
      (UI       : access Build_UI_Record'Class;
       Target   : Target_Access;
-      Single : Boolean) return Target_UI_Access;
+      Single   : Boolean;
+      History  : Histories.History) return Target_UI_Access;
    --  Return the widget controlling the switches for Target
    --  If Single is True, do not display the options, the models combo, etc.
 
@@ -158,6 +162,18 @@ package body Build_Configurations.Gtkada is
    function Uglify (S : String) return String;
    pragma Unreferenced (Uglify);
    --  Inverse operation to Beautify
+
+   function Target_To_Key (T : Target_Access) return History_Key;
+   --  Return a History_Key for storing command line for T.
+
+   -------------------
+   -- Target_To_Key --
+   -------------------
+
+   function Target_To_Key (T : Target_Access) return History_Key is
+   begin
+      return History_Key (To_String (T.Name));
+   end Target_To_Key;
 
    --------------
    -- Beautify --
@@ -381,8 +397,8 @@ package body Build_Configurations.Gtkada is
          UI.Target.Model.Switches,
          UI.Tooltips,
          False,
-         No_History,
-         No_Key);
+         UI.History,
+         Target_To_Key (UI.Target));
 
       --  Create the "current command" entry
 
@@ -403,9 +419,10 @@ package body Build_Configurations.Gtkada is
    -------------------------
 
    function Switches_For_Target
-     (UI     : access Build_UI_Record'Class;
-      Target : Target_Access;
-      Single : Boolean) return Target_UI_Access
+     (UI       : access Build_UI_Record'Class;
+      Target   : Target_Access;
+      Single   : Boolean;
+      History  : Histories.History) return Target_UI_Access
    is
       Table         : Gtk_Table;
       Hbox          : Gtk_Hbox;
@@ -421,7 +438,7 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New (Box, UI.Registry);
       Box.Target := Target;
-
+      Box.History := History;
       Box.Tooltips := UI.Tooltips;
 
       if not Single then
@@ -882,11 +899,9 @@ package body Build_Configurations.Gtkada is
       Parent   : Gtk_Window   := null;
       Tooltips : Gtk_Tooltips := null;
       Target   : String;
-      History  : in out History_Record;
+      History  : Histories.History;
       Result   : out GNAT.OS_Lib.Argument_List_Access)
    is
-      Key    : constant History_Key
-        := "command line for " & History_Key (Target);
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
       Button : Gtk_Button;
@@ -918,6 +933,7 @@ package body Build_Configurations.Gtkada is
       Initialize_Hbox (UI);
 
       UI.Registry := Registry;
+      UI.History  := History;
 
       if Tooltips = null then
          Gtk_New (UI.Tooltips);
@@ -933,9 +949,10 @@ package body Build_Configurations.Gtkada is
       --  Create the target UI itself
 
       Target_UI := Switches_For_Target
-        (UI     => UI,
-         Target => Registry.Targets.Element (To_Unbounded_String (Target)),
-         Single => True);
+        (UI      => UI,
+         History => UI.History,
+         Target  => Registry.Targets.Element (To_Unbounded_String (Target)),
+         Single  => True);
 
       Pack_Start (UI, Target_UI, True, True, 3);
 
@@ -949,14 +966,27 @@ package body Build_Configurations.Gtkada is
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
---        Set_Flags (Button, Flags (Button) or Can_Default);
---        Set_Default (Dialog, Button);
---
+      Ent := Get_Entry (Target_UI.Editor);
+
+      --  Set the entry to the latest history.
+
+      if History /= null then
+         declare
+            List : constant GNAT.Strings.String_List_Access :=
+              Get_History (History.all, Target_To_Key (Target_UI.Target));
+         begin
+            if List /= null
+              and then List'Length /= 0
+              and then List (List'First) /= null
+            then
+               Set_Text (Ent, List (List'First).all);
+            end if;
+         end;
+      end if;
 
       --  Grab the focus on the entry, select the text, and make it activate
       --  the default, so that the user only has to press Enter if he is
       --  happy with the selection.
-      Ent := Get_Entry (Target_UI.Editor);
       Grab_Focus (Ent);
       Select_Region (Ent, 0);
       Set_Activates_Default (Ent, True);
@@ -972,9 +1002,12 @@ package body Build_Configurations.Gtkada is
 
             when Gtk_Response_OK =>
                Result := Get_Command_Line (Target_UI.Editor, False);
-               Add_To_History
-                 (History, Key,
-                  Get_Text (Get_Entry (Target_UI.Editor)));
+               if History /= null then
+                  Add_To_History
+                    (History.all,
+                     Target_To_Key (Target_UI.Target),
+                     Get_Text (Get_Entry (Target_UI.Editor)));
+               end if;
                Destroy (Dialog);
                exit;
             when Gtk_Response_Cancel =>
@@ -1102,7 +1135,8 @@ package body Build_Configurations.Gtkada is
 
          --  Add the page in the notebook
          Append_Page
-           (UI.Notebook, Switches_For_Target (UI, Element (C), False));
+           (UI.Notebook,
+            Switches_For_Target (UI, Element (C), False, UI.History));
 
          Count := Count + 1;
          Next (C);
