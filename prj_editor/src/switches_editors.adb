@@ -150,7 +150,7 @@ package body Switches_Editors is
          Config             => Tool.Config,
          Tooltips           => Get_Tooltips (Kernel),
          Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
-         History            => No_History,
+         History            => null,
          Key                => No_Key);
       Widget_Callback.Connect (Page, Signal_Destroy, Page_Destroyed'Access);
 
