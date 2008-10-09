@@ -332,6 +332,8 @@ package body VCS.Generic_VCS is
          Free (X.Annotations_Parser);
          Free (X.Log_Parser);
          Free (X.Revision_Parser);
+
+         Free (VCS_Record (X.all));
          Unchecked_Free (X);
       end if;
    end Free;
@@ -367,16 +369,6 @@ package body VCS.Generic_VCS is
          return "";
       end if;
    end Name;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ref : access Generic_VCS_Record) is
-      pragma Unreferenced (Ref);
-   begin
-      null;
-   end Free;
 
    -------------------------
    -- Generic_Dir_Command --

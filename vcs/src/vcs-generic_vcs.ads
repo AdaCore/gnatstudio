@@ -33,8 +33,6 @@ package VCS.Generic_VCS is
 
    overriding function Name (Ref : access Generic_VCS_Record) return String;
 
-   procedure Free (Ref : access Generic_VCS_Record);
-
    overriding procedure Get_Status
      (Rep        : access Generic_VCS_Record;
       Filenames  : String_List.List;

@@ -237,8 +237,7 @@ package body Cpp_Module is
 
       Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
-      LI      : LI_Handler := Create_GLI_Handler
-        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
+      LI      : LI_Handler;
 
    begin
       if Active (Use_GLI_Trace) then

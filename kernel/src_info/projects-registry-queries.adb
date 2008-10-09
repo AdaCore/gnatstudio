@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
@@ -57,6 +58,8 @@ package body Projects.Registry.Queries is
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
       E_Handler    : Error_Handler := Null_E_Handler)
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Process_Descriptor'Class, Process_Descriptor_Access);
       Current         : GNAT.Strings.String_Access := new String'("");
       Object_Path_Set : Boolean := False;
 
@@ -204,6 +207,7 @@ package body Projects.Registry.Queries is
 
          Free (Current);
          Close (Fd.all);
+         Unchecked_Free (Fd);
    end Compute_Predefined_Paths;
 
 end Projects.Registry.Queries;

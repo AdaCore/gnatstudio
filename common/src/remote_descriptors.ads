@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2006-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,6 +87,9 @@ package Remote_Descriptors is
    --  Use_Pipes                 : tell if the tool is launched in pipe or tty
    --                               mode. Only applicable on Windows (no effect
    --                               on other machines)
+
+   procedure Finalize;
+   --  Free all memory occupied by registered remote descriptors
 
    type Extra_Prompts_Access is access all Extra_Prompts;
 

@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with Password_Manager;     use Password_Manager;
-
+with Ada.Unchecked_Deallocation;
+with Basic_Types;          use Basic_Types;
 with Dualcompilation;
 with GNAT.Regpat;          use GNAT.Regpat;
 
@@ -31,6 +32,76 @@ package body Remote_Descriptors is
                     Compile ("^[^\n]*([Ll]ogin|[Nn]ame)[^\n]*: *$",
                              Multiple_Lines or Single_Line);
    --  Default regexp for login prompt
+
+   procedure Free (Descr : in out Remote_Descriptor_Access);
+   procedure Free (Prompt : in out Extra_Prompt);
+   procedure Free (Prompt : in out Extra_Prompts);
+   --  Free the parameter
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Prompt : in out Extra_Prompt) is
+   begin
+      Unchecked_Free (Prompt.Ptrn);
+      case Prompt.Auto_Answer is
+         when True =>
+            Free (Prompt.Answer);
+         when False =>
+            Free (Prompt.Question);
+      end case;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Prompt : in out Extra_Prompts) is
+   begin
+      for P in Prompt'Range loop
+         Free (Prompt (P));
+      end loop;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Descr : in out Remote_Descriptor_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Remote_Descriptor_Record, Remote_Descriptor_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Extra_Prompts, Extra_Prompts_Access);
+   begin
+      if Descr /= null then
+         Free (Descr.Name);
+         Free (Descr.Start_Cmd);
+         Free (Descr.Start_Cmd_Common_Args);
+         Free (Descr.Start_Cmd_User_Args);
+         Free (Descr.Send_Interrupt);
+         Unchecked_Free (Descr.User_Prompt_Ptrn);
+         Unchecked_Free (Descr.Password_Prompt_Ptrn);
+         Unchecked_Free (Descr.Passphrase_Prompt_Ptrn);
+         Free (Descr.Extra_Prompt_Array.all);
+         Unchecked_Free (Descr.Extra_Prompt_Array);
+         Unchecked_Free (Descr);
+      end if;
+   end Free;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   procedure Finalize is
+      N : Remote_Descriptor_Access;
+   begin
+      while Remote_Descriptor_List /= null loop
+         N := Remote_Descriptor_List.Next;
+         Free (Remote_Descriptor_List);
+         Remote_Descriptor_List := N;
+      end loop;
+   end Finalize;
 
    ----------------------------------
    -- Add_Remote_Access_Descriptor --
@@ -50,8 +121,7 @@ package body Remote_Descriptors is
       Use_Pipes                 : Boolean := False)
    is
       --  ??? Add max_password_prompt in parameters
-      Remote          : constant Remote_Descriptor_Access :=
-                          new Remote_Descriptor_Record;
+      Remote          : Remote_Descriptor_Access;
       Full_Exec       : String_Access;
       Send_Intr       : String_Access;
       Password_Ptrn   : Pattern_Matcher_Access;
@@ -61,9 +131,7 @@ package body Remote_Descriptors is
    begin
       Full_Exec := Dualcompilation.Locate_Tool_Executable (Start_Command);
 
-      if Full_Exec = null then
-         return;
-      end if;
+      Remote := new Remote_Descriptor_Record;
 
       if Send_Interrupt = null or else Send_Interrupt.all = "" then
          Send_Intr := null;
@@ -110,6 +178,16 @@ package body Remote_Descriptors is
          Use_Pipes              => Use_Pipes,
          Max_Password_Prompt    => 3,
          Next                   => Remote_Descriptor_List);
+
+      --  Only test this after creating Remote, so that we can appropriately
+      --  free the memory. Otherwise we would have to duplicate the code for
+      --  Free here to be sure we free all the fields.
+
+      if Full_Exec = null then
+         Free (Remote);
+         return;
+      end if;
+
       Remote_Descriptor_List := Remote;
    end Add_Remote_Access_Descriptor;
 

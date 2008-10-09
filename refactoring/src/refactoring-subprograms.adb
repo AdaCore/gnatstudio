@@ -614,11 +614,12 @@ package body Refactoring.Subprograms is
    procedure Register_Refactoring
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      C : constant Interactive_Command_Access := new Extract_Method_Command;
+      C : Interactive_Command_Access;
       Filter : Action_Filter;
    begin
       --  Disabled for now
       if False then
+         C := new Extract_Method_Command;
          Filter := new Is_Area_Context;
          Register_Contextual_Menu
            (Kernel,

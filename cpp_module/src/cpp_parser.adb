@@ -171,6 +171,7 @@ package body CPP_Parser is
       Languages : access Abstract_Language_Handler_Record'Class;
       File_Name : GNATCOLL.VFS.Virtual_File;
       Result    : out Language.Construct_List);
+   overriding procedure Destroy (Handler : in out CPP_Handler_Record);
    --  See doc for inherited subprograms
 
    type Iterator_State_Type is
@@ -3230,6 +3231,16 @@ package body CPP_Parser is
       end if;
 
       Unchecked_Free (Iterator.Current_Files);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Handler : in out CPP_Handler_Record) is
+   begin
+      GNAT.Strings.Free (Handler.DBIMP_Path);
+      GNAT.Strings.Free (Handler.CBrowser_Path);
    end Destroy;
 
    ---------------------

@@ -3991,6 +3991,48 @@
    obj:*libpangoft*
    fun:pango_font_map_load_fontset
 }
+{
+   Leak in pango_font_map_load_fontset
+   Memcheck:Leak
+   fun:malloc
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libexpat*
+   obj:*libexpat*
+   fun:XML_ParseBuffer
+}
+{
+   Leak in pango_font_map_load_fontset
+   Memcheck:Leak
+   fun:malloc
+   fun:FcStrCopy
+}
+{
+   Leak in pango_font_map_load_fontset
+   Memcheck:Leak
+   fun:malloc
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   fun:FcFontRenderPrepare
+}
+{
+   When creating new gobject classes, we create a once-in-a-lifetime record
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:ada_initialize_class_record
+}
+{
+   When creating new gobject classes, we create a once-in-a-lifetime record
+   Memcheck:Leak
+   fun:malloc
+   fun:g_malloc
+   fun:g_strdup
+   fun:ada_initialize_class_record
+}
+
 
 #### This warning occurs when loading a pixmap in GVD. A potential
 #### bug in gdk apparently

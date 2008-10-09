@@ -92,6 +92,7 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
+with Remote_Descriptors;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
@@ -1564,9 +1565,11 @@ package body GPS.Kernel is
       Destroy (Handle.Preferences);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
+      Free (Handle.GNAT_Version);
       Free (Handle.Home_Dir);
       Free (Handle.Prefix);
       Free (Handle.Construct_Database);
+      Remote_Descriptors.Finalize;
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
@@ -1847,6 +1850,7 @@ package body GPS.Kernel is
 
    procedure Free (Tool : in out Tool_Properties_Record) is
    begin
+      Free (Tool.Tool_Name);
       Free (Tool.Project_Package);
       Free (Tool.Project_Attribute);
       Free (Tool.Project_Index);

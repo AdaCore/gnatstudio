@@ -145,9 +145,8 @@ package body VCS is
    ----------
 
    procedure Free (Ref : in out VCS_Record) is
-      pragma Unreferenced (Ref);
    begin
-      null;
+      GNAT.Strings.Free (Ref.Ignore_Filename);
    end Free;
 
    ----------

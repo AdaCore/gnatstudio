@@ -79,6 +79,7 @@ package body GPS.Kernel.Actions is
       --  be referring to it. It will be freed when the whole htable is
       --  reset
 
+      Free (Action.Category);
       Free (Action.Description);
       Unchecked_Free (Action);
    end Free;

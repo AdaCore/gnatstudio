@@ -1621,6 +1621,7 @@ package body Default_Preferences is
       Free (Pref.Font_Descr);
       Free (Pref.Style_Fg);
       Free (Pref.Style_Bg);
+      Free (Preference_Record (Pref));
    end Free;
 
    ----------------------

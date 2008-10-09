@@ -423,9 +423,10 @@ package body GPS.Kernel.Remote is
    overriding procedure Save
      (Property : access Servers_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr);
-
    overriding procedure Load
      (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr);
+   overriding procedure Destroy
+     (Property : in out Servers_Property);
 
    ----------------------------
    -- Project load utilities --
@@ -465,6 +466,17 @@ package body GPS.Kernel.Remote is
    function From_Callback_Data_Server_Config_Changed_Hook
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  retrieve hook data from callback data
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Property : in out Servers_Property) is
+   begin
+      for C in Property.Servers'Range loop
+         Free (Property.Servers (C).Nickname);
+      end loop;
+   end Destroy;
 
    ----------
    -- Free --
@@ -726,6 +738,8 @@ package body GPS.Kernel.Remote is
                Child := Child.Next;
             end loop;
          end if;
+
+         Free (File);
       end if;
    end Load_Remote_Config;
 
@@ -3204,7 +3218,6 @@ package body GPS.Kernel.Remote is
          declare
             Extra_Ptrns : Extra_Prompts (1 .. Extra_Ptrn_Length);
             Auto_Answer : Boolean;
-            Str_Access  : Glib.String_Ptr;
 
          begin
             Child := Node.Child;
@@ -3215,20 +3228,19 @@ package body GPS.Kernel.Remote is
                   Extra_Ptrn_Length := Extra_Ptrn_Length + 1;
                   Auto_Answer := Boolean'Value
                     (Get_Attribute (Child, "auto_answer", "true"));
-                  Str_Access := Child.Value;
 
                   if Auto_Answer then
                      Extra_Ptrns (Extra_Ptrn_Length) :=
                        (Auto_Answer => True,
                         Ptrn        => new Pattern_Matcher'(Compile
-                          (Str_Access.all, Single_Line or Multiple_Lines)),
+                          (Child.Value.all, Single_Line or Multiple_Lines)),
                         Answer      => new String'(Get_Attribute
                           (Child, "answer", "")));
                   else
                      Extra_Ptrns (Extra_Ptrn_Length) :=
                        (Auto_Answer => False,
                         Ptrn        => new Pattern_Matcher'(Compile
-                          (Str_Access.all, Single_Line or Multiple_Lines)),
+                          (Child.Value.all, Single_Line or Multiple_Lines)),
                         Question    => new String'(Get_Attribute
                           (Child, "question", "")));
                   end if;
