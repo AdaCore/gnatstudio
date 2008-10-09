@@ -271,7 +271,7 @@ package body Build_Command_Manager is
             Parent   => Get_Main_Window (Kernel),
             Tooltips => Get_Tooltips (Kernel),
             Target   => Target_Name,
-            History  => Get_History (Kernel).all,
+            History  => Get_History (Kernel),
             Result   => Command_Line);
 
          if Command_Line = null then
