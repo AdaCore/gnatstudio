@@ -49,6 +49,10 @@ package body Build_Configurations is
    --             <arg>ARGN</arg>
    --          </command-line>
 
+   function Process_Underscores (S : String) return String;
+   --  Remove S stripped of single underscores, and with multiple underscores
+   --  concatenated into one.
+
    ---------
    -- "-" --
    ---------
@@ -58,6 +62,27 @@ package body Build_Configurations is
       --  ??? Provide implementation
       return Msg;
    end "-";
+
+   -------------------------
+   -- Process_Underscores --
+   -------------------------
+
+   function Process_Underscores (S : String) return String is
+      S2 : String := S;
+      J2 : Natural := S'First;
+   begin
+      for J in S'Range loop
+         S2 (J2) := S (J);
+
+         if S (J) /= '_'
+           or else (J > S'First and then S (J - 1) = '_')
+         then
+            J2 := J2 + 1;
+         end if;
+      end loop;
+
+      return S2 (S2'First .. J2 - 1);
+   end Process_Underscores;
 
    ---------
    -- Log --
@@ -226,7 +251,8 @@ package body Build_Configurations is
       The_Model := Registry.Models.Element (To_Unbounded_String (Model));
 
       Target := new Target_Type;
-      Target.Name := To_Unbounded_String (Name);
+      Target.Name := To_Unbounded_String (Process_Underscores (Name));
+      Target.Menu_Name := To_Unbounded_String (Name);
       Target.Category := To_Unbounded_String (Category);
       Target.Model := The_Model;
 
@@ -681,7 +707,8 @@ package body Build_Configurations is
 
          else
             Target := new Target_Type;
-            Target.Name  := To_Unbounded_String (Name);
+            Target.Name  := To_Unbounded_String (Process_Underscores (Name));
+            Target.Menu_Name := To_Unbounded_String (Name);
             Target.Category := To_Unbounded_String (Category);
             Target.Model := Registry.Models.Element
               (To_Unbounded_String (Model));
@@ -857,6 +884,15 @@ package body Build_Configurations is
    begin
       return To_String (Target.Name);
    end Get_Name;
+
+   -------------------
+   -- Get_Menu_Name --
+   -------------------
+
+   function Get_Menu_Name (Target : Target_Access) return String is
+   begin
+      return To_String (Target.Menu_Name);
+   end Get_Menu_Name;
 
    ------------------
    -- Get_Category --
