@@ -1330,6 +1330,15 @@ package body Builder_Module is
 
          Launch_Synchronous (Command_Access (C), 0.01);
          Destroy (Command_Access (C));
+
+      elsif Command = "compute_xref_bg" then
+         Xref_Commands.Create
+           (C, -"Computing C/C++ xref info",
+            new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
+            Xref_Iterate'Access);
+
+         Launch_Background_Command
+           (Kernel, Command_Access (C), True, True, "");
       end if;
    end Compile_Command;
 
