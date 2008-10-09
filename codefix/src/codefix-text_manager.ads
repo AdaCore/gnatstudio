@@ -608,11 +608,18 @@ package Codefix.Text_Manager is
    type Replace_Blanks_Policy is (Keep, One, None);
 
    procedure Replace
-     (This                      : in out Text_Navigator_Abstr'Class;
-      Dest_Start, Dest_Stop     : in out File_Cursor;
-      Source_Start, Source_Stop : File_Cursor'Class;
-      Blanks_Before             : Replace_Blanks_Policy := Keep;
-      Blanks_After              : Replace_Blanks_Policy := Keep);
+     (This          : in out Text_Navigator_Abstr'Class;
+      Position      : File_Cursor;
+      Len           : Integer;
+      New_Text      : String;
+      Blanks_Before : Replace_Blanks_Policy := Keep;
+      Blanks_After  : Replace_Blanks_Policy := Keep);
+   procedure Replace
+     (This                  : in out Text_Navigator_Abstr'Class;
+      Dest_Start, Dest_Stop : in out File_Cursor;
+      New_Text              : String;
+      Blanks_Before         : Replace_Blanks_Policy := Keep;
+      Blanks_After          : Replace_Blanks_Policy := Keep);
    --  Replace in this the text from Start to Stop by the one from Source_Start
    --  to Source_End. If Blank_pos is None, blanks will be removed, if it's
    --  One, only one blank will be put. At the end of the process, Dest_Start

@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with GNAT.Case_Util;    use GNAT.Case_Util;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
@@ -1563,14 +1565,36 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Replace
+     (This           : in out Text_Navigator_Abstr'Class;
+      Position       : File_Cursor;
+      Len            : Integer;
+      New_Text       : String;
+      Blanks_Before  : Replace_Blanks_Policy := Keep;
+      Blanks_After   : Replace_Blanks_Policy := Keep)
+   is
+      Dest_Start : File_Cursor := Position;
+      Dest_Stop  : File_Cursor := Position;
+      Line       : constant String := This.Get_Line (Position, 1);
+   begin
+      Dest_Stop.Col := To_Column_Index
+        (To_Char_Index (Dest_Start.Col, Line) + Char_Index (Len), Line);
+
+      Replace
+        (This          => This,
+         Dest_Start    => Dest_Start,
+         Dest_Stop     => Dest_Stop,
+         New_Text      => New_Text,
+         Blanks_Before => Blanks_Before,
+         Blanks_After  => Blanks_After);
+   end Replace;
+
+   procedure Replace
      (This                      : in out Text_Navigator_Abstr'Class;
       Dest_Start, Dest_Stop     : in out File_Cursor;
-      Source_Start, Source_Stop : File_Cursor'Class;
+      New_Text                  : String;
       Blanks_Before             : Replace_Blanks_Policy := Keep;
       Blanks_After              : Replace_Blanks_Policy := Keep)
    is
-      New_Text : constant String := This.Get (Source_Start, Source_Stop);
-
       Dest_Text : constant Ptr_Text := This.Get_File (Dest_Start.File);
 
       Mark_Start, Mark_Stop : Ptr_Mark;
@@ -2166,10 +2190,25 @@ package body Codefix.Text_Manager is
       begin
          Text := Current_Text.Get_File (Current_Word.File);
 
-         Text.Replace
-           (Cursor    => Current_Word,
-            Len       => Match'Length,
-            New_Value => This.Str_Expected.all);
+         declare
+            Lower_Expected : constant String :=
+              To_Lower (This.Str_Expected.all);
+         begin
+            --   ??? We might be interrested by other cases here...
+            if Lower_Expected = "is" then
+               Current_Text.Replace
+                 (Position      => Current_Word,
+                  Len           => Match'Length,
+                  New_Text      => This.Str_Expected.all,
+                  Blanks_Before => One,
+                  Blanks_After  => Keep);
+            else
+               Text.Replace
+                 (Cursor    => Current_Word,
+                  Len       => Match'Length,
+                  New_Value => This.Str_Expected.all);
+            end if;
+         end;
 
          if This.Do_Indentation then
             Text.Indent_Line (Current_Word);

@@ -1006,8 +1006,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text.Replace
         (Destination_Begin,
          Destination_End,
-         Source_Begin,
-         Source_End,
+         Current_Text.Get (Source_Begin, Source_End),
          This.Blank_Before,
          This.Blank_After);
 
