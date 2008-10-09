@@ -79,6 +79,10 @@ package body GPS.Kernel.Actions is
       --  be referring to it. It will be freed when the whole htable is
       --  reset
 
+      --  Do not free the Action.Filter, which will be taken care of when the
+      --  kernel itself is destroyed. This means that filters always have a
+      --  lifespan equal to that of GPS
+
       Free (Action.Category);
       Free (Action.Description);
       Unchecked_Free (Action);
@@ -174,6 +178,14 @@ package body GPS.Kernel.Actions is
       if Category /= "" then
          Cat := new String'(Category);
       end if;
+
+      --  Handle memory management for the filter
+
+      if Filter /= null then
+         Register_Filter (Kernel, Filter, Name => "");
+      end if;
+
+      --  Create the action
 
       Action := new Action_Record'
         (Commands.Interactive.Interactive_Command_Access (Command),
@@ -305,6 +317,7 @@ package body GPS.Kernel.Actions is
          Get_Next (X.Table, Iter);
       end loop;
 
+      --  Free the actions and their filters
       Reset (X.Table);
    end Reset;
 

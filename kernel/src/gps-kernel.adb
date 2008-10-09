@@ -1583,6 +1583,8 @@ package body GPS.Kernel is
       --        Unref (Handle.Last_Context_For_Contextual);
 
       Reset (Handle.Actions);
+      Reset (Handle.Action_Filters);
+      Action_Filters_List.Free (Handle.All_Action_Filters);
       Reset (Handle.Styles);
       Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);
@@ -1764,15 +1766,59 @@ package body GPS.Kernel is
       return Iter;
    end Start;
 
-   ----------------
-   -- Do_Nothing --
-   ----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Do_Nothing (Filter : in out Action_Filter) is
-      pragma Unreferenced (Filter);
+   procedure Free (Filter : in out Action_Filter_Record) is
    begin
-      null;
-   end Do_Nothing;
+      Free (Filter.Error_Msg);
+      Free (Filter.Name);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Filter : in out Base_Action_Filter_Record) is
+   begin
+      case Filter.Kind is
+         when Standard_Filter =>
+            Free (Filter.Language);
+            Free (Filter.Shell);
+            Free (Filter.Shell_Lang);
+            Free (Filter.Module);
+         when Filter_And | Filter_Or | Filter_Not =>
+            --  Not need to free anything here: as per Register_Filter, the
+            --  subfilters have already been registered if Filter was, and thus
+            --  they will be freed in turn. If Filter was not registered, we
+            --  have a memory leaks any so things do not really matter
+            null;
+--
+--              Free (Filter.And1);   --  only if not registered
+--              Free (Filter.And2);
+--           when Filter_Or =>
+--              Free (Filter.Or1);
+--              Free (Filter.Or2);
+--           when Filter_Not =>
+--              Free (Filter.Not1);
+      end case;
+      Free (Action_Filter_Record (Filter));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Filter : in out Action_Filter) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Action_Filter_Record'Class, Action_Filter);
+   begin
+      if Filter /= null then
+         Free (Filter.all);
+         Unchecked_Free (Filter);
+      end if;
+   end Free;
 
    ----------
    -- Next --
@@ -1799,13 +1845,55 @@ package body GPS.Kernel is
    ---------------------
 
    procedure Register_Filter
-     (Kernel : access Kernel_Handle_Record;
-      Filter : access Action_Filter_Record'Class;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Action_Filter_Record;
       Name   : String) is
    begin
-      Free (Filter.Name);
-      Filter.Name := new String'(Name);
-      Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
+      --  We can't rename an already named filter, since the hash table would
+      --  not work correctly anymore
+
+      Assert (Me, Name = ""
+              or else Filter.Name = null or else Filter.Name.all = "",
+              "A named filter is being renamed");
+
+      if Name /= "" then
+         Free (Filter.Name);
+         Filter.Name := new String'(Name);
+         Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
+      end if;
+
+      if not Filter.Registered then
+         Action_Filters_List.Append
+           (Kernel.All_Action_Filters, Action_Filter (Filter));
+         Filter.Registered := True;
+      end if;
+   end Register_Filter;
+
+   ---------------------
+   -- Register_Filter --
+   ---------------------
+
+   overriding procedure Register_Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Base_Action_Filter_Record;
+      Name   : String) is
+   begin
+      Register_Filter (Kernel, Action_Filter_Record (Filter.all)'Access, Name);
+      case Filter.Kind is
+         when Standard_Filter =>
+            null;
+
+         when Filter_And =>
+            Register_Filter (Kernel, Filter.And1, "");
+            Register_Filter (Kernel, Filter.And2, "");
+
+         when Filter_Or =>
+            Register_Filter (Kernel, Filter.Or1, "");
+            Register_Filter (Kernel, Filter.Or2, "");
+
+         when Filter_Not =>
+            Register_Filter (Kernel, Filter.Not1, "");
+      end case;
    end Register_Filter;
 
    ------------
@@ -1998,7 +2086,7 @@ package body GPS.Kernel is
       Module     : String := "") return Action_Filter
    is
       F : constant Base_Action_Filter :=
-            new Base_Action_Filter_Record (Standard_Filter);
+        new Base_Action_Filter_Record (Standard_Filter);
    begin
       if Language /= "" then
          F.Language := new String'(Language);
@@ -2026,6 +2114,7 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_And, Error_Msg => null, Name => null,
+         Registered => False,
          And1 => Action_Filter (Filter1), And2 => Action_Filter (Filter2));
    end "and";
 
@@ -2039,6 +2128,7 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Or, Error_Msg => null, Name => null,
+         Registered => False,
          Or1  => Action_Filter (Filter1), Or2 => Action_Filter (Filter2));
    end "or";
 
@@ -2051,6 +2141,7 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Not, Error_Msg => null, Name => null,
+         Registered => False,
          Not1  => Action_Filter (Filter));
    end "not";
 

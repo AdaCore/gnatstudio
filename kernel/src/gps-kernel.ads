@@ -45,6 +45,7 @@ with Basic_Types;
 with Basic_Mapper;
 with Entities;
 with Entities.Queries;
+with Generic_List;
 with HTables;
 with Language_Handlers;
 with Language.Tree.Database;
@@ -419,9 +420,22 @@ package GPS.Kernel is
    --  Whether the context matches Filter.
    --  Context doesn't need to be Ref-ed or Unref-ed.
 
+   procedure Register_Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Action_Filter_Record;
+      Name   : String);
+   --  The goal of this procedure is twofold:
+   --    * If a name is specified, the filter will be accessible from other
+   --      places in GPS, including scripts, through calls to Lookup_Filter
+   --    * Whether the name is specified or not, this ensures that the filter
+   --      will be properly freed when GPS exits. When you create new filter
+   --      types that embed other filters, you should override this procedure
+   --      so that it calls the inherited version and calls Register_Filter on
+   --      each of the filters it embeds
+
    type Base_Action_Filter_Record (<>)
       is new Action_Filter_Record with private;
-   type Base_Action_Filter is access Base_Action_Filter_Record'Class;
+   type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
 
    function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
@@ -437,6 +451,11 @@ package GPS.Kernel is
    --  It does a logical AND for all its attributes specified as parameters.
    --  The default values for the parameters indicate that no special filter
    --  is done for this particular parameter.
+
+   procedure Free (Filter : in out Action_Filter_Record);
+   --  Free the memory associated with the filter. This must never be called
+   --  directly and is only needed for the kernel itself. But it needs to be
+   --  overridable for new filter types.
 
    function "and"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
@@ -463,12 +482,10 @@ package GPS.Kernel is
      (Filter  : Action_Filter; Context : Selection_Context) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
-   procedure Register_Filter
-     (Kernel : access Kernel_Handle_Record;
-      Filter : access Action_Filter_Record'Class;
+   overriding procedure Register_Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Base_Action_Filter_Record;
       Name   : String);
-   --  Record the filter in the kernel, so that it is can be referenced in
-   --  other places.
 
    function Lookup_Filter
      (Kernel : access Kernel_Handle_Record;
@@ -752,6 +769,13 @@ private
    type Action_Filter_Record is abstract tagged record
       Error_Msg : GNAT.Strings.String_Access;
       Name      : GNAT.Strings.String_Access;
+
+      Registered : Boolean := False;
+      --  For proper memory management, all filters are kept on an internal
+      --  list, and freed on exit (we never need to deallocate a filter
+      --  apart from that in general). They are added automatically to the list
+      --  the first time they are used, so users do not need to do anything
+      --  special except use them
    end record;
 
    type Base_Action_Filter_Record (Kind : Filter_Type)
@@ -774,6 +798,8 @@ private
             Not1 : Action_Filter;
       end case;
    end record;
+
+   overriding procedure Free (Filter : in out Base_Action_Filter_Record);
 
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
@@ -871,11 +897,14 @@ private
    procedure Reset (X : access Root_Table) is abstract;
    --  Reset the table
 
-   procedure Do_Nothing (Filter : in out Action_Filter);
-   --  Do nothing
-
+   procedure Do_Nothing (Filter : in out Action_Filter) is null;
    package Action_Filters_Htable is new String_Hash
      (Action_Filter, Do_Nothing, null);
+   --  We never free the filter from this hash-table. This is done in the list
+   --  that stores all actions
+
+   procedure Free (Filter : in out Action_Filter);
+   package Action_Filters_List is new Generic_List (Action_Filter, Free);
 
    type Action_Filter_Iterator is record
       Iterator : Action_Filters_Htable.String_Hash_Table.Iterator;
@@ -943,6 +972,7 @@ private
       --  The hooks registered in the kernel
 
       Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
+      All_Action_Filters : Action_Filters_List.List;
       --  The action contexts registered in the kernel
 
       Modules_List : System.Address := System.Null_Address;
