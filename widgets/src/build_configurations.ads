@@ -321,7 +321,10 @@ package Build_Configurations is
    -- Creating a registry --
    -------------------------
 
-   type Message_Mode is (Info, Error);
+   type Message_Mode is (Info, Error, Trace);
+   --  Info is an information message for the user.
+   --  Error is an error that should be reported to the user.
+   --  Trace is a debugging trace.
    type Logger_Type is access procedure (M : String; Mode : Message_Mode);
 
    function Create (Logger : Logger_Type) return Build_Config_Registry_Access;
@@ -415,7 +418,8 @@ private
 
    type Target_Type is record
       Name : Unbounded_String;
-      --  The name of the Target
+      --  The name of the Target. This is the unique name that identifies
+      --  the Target: there is only one target for each Name in the Registry.
 
       Menu_Name : Unbounded_String;
       --  The name of the menu to display target.
