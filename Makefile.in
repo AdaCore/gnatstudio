@@ -64,9 +64,9 @@ ifeq ($(OS),Windows_NT)
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.xml
 	$(RM) share/plug-ins/subversion_native_windows.xml
 endif
-	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	$(RM) $(sharedir)/gps/library/*.py
 	$(RM) $(sharedir)/gps/plug-ins/*.py
+	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/*.png) | (cd $(sharedir)/gps; tar xf -)
@@ -84,12 +84,9 @@ endif
 	(cd examples; tar cf - --exclude .svn . ) | (cd $(examplesdir); tar xf -)
 
 install: install-common
-ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
+ifeq ($(OS),Windows_NT)
 	$(MAKE) -C common/expect install
-else
-	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
-	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
 endif
 	$(MAKE) -C kernel/src_info/sn/snsrc install
 
