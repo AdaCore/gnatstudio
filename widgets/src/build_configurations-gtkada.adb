@@ -45,6 +45,7 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
 
+with String_Utils;             use String_Utils;
 with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
 with GUI_Utils;                use GUI_Utils;
 
@@ -906,7 +907,29 @@ package body Build_Configurations.Gtkada is
       Button : Gtk_Button;
       pragma Unreferenced (Button);
 
-      Ent    : Gtk_Entry;
+      function Exists
+        (List : GNAT.Strings.String_List_Access;
+         Item : String) return Boolean;
+      --  Return true if Item is found in List
+
+      function Exists
+        (List : GNAT.Strings.String_List_Access;
+         Item : String) return Boolean is
+      begin
+         if List = null then
+            return False;
+         end if;
+
+         for J in List'Range loop
+            if List (J).all = Item then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Exists;
+
+      Ent : Gtk_Entry;
 
       Dummy : Gint;
       pragma Unreferenced (Dummy);
@@ -970,23 +993,29 @@ package body Build_Configurations.Gtkada is
 
       if History /= null then
          declare
-            List : constant GNAT.Strings.String_List_Access :=
+            List    : constant GNAT.Strings.String_List_Access :=
               Get_History (History.all, Target_To_Key (Target_UI.Target));
+            Default : constant String :=
+              Argument_List_To_String (Target_UI.Target.Command_Line.all);
+
          begin
             if List /= null
               and then List'Length /= 0
               and then List (List'First) /= null
+              and then Exists (List, Default)
             then
                Set_Text (Ent, List (List'First).all);
             else
-               --  If the history was initially empty, add the contents of the
-               --  entry to it. That way, the user can always find the original
+               --  If not already done, add the contents of the entry to the
+               --  history. That way, the user can always find the original
                --  command line through the history.
+               --  Note that we always look for the entry in the history,
+               --  since the default command may have changed since last time.
 
                Add_To_History
                  (History.all,
                   Target_To_Key (Target_UI.Target),
-                  Get_Text (Get_Entry (Target_UI.Editor)));
+                  Default);
             end if;
          end;
       end if;
