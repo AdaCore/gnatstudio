@@ -29,25 +29,35 @@ package Dualcompilation_Dialog is
    type Dualc_Dialog is access all Dualc_Dialog_Record;
 
    procedure Gtk_New
-     (Widget        : out Dualc_Dialog;
-      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Active        : Boolean;
-      Tools_Path    : String;
-      Compiler_Path : String);
+     (Widget            : out Dualc_Dialog;
+      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Active            : Boolean;
+      Tools_Path        : String;
+      Use_Xrefs_Subdirs : Boolean;
+      Compiler_Path     : String);
 
    function Get_Active
      (Widget : access Dualc_Dialog_Record'Class) return Boolean;
+   --  Whether the dual compilation mode should be activated
+
+   function Get_Use_Xrefs_Subdir
+     (Widget : access Dualc_Dialog_Record'Class) return Boolean;
+   --  Whether we should read ali files from a separate xrefs subdir
 
    function Get_Tools_Path
      (Widget : access Dualc_Dialog_Record'Class) return String;
+   --  Get the path where to find the Bleeding edge compiler
 
    function Get_Compiler_Path
      (Widget : access Dualc_Dialog_Record'Class) return String;
+   --  Get the path where to find the regular compiler
 
 private
 
    type Dualc_Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
+      Kernel         : Kernel_Handle;
       Active         : Boolean;
+      Xrefs_Subdir   : Boolean;
       Frame          : Gtk.Frame.Gtk_Frame;
       Tools_Entry    : Gtk.GEntry.Gtk_Entry;
       Compiler_Entry : Gtk.GEntry.Gtk_Entry;

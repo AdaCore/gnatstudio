@@ -287,7 +287,7 @@ package body Build_Command_Manager is
          return;
       end if;
 
-      Server := Get_Properties (T).Server;
+      Server := Get_Server (T);
 
       if Force_Dialog
         or else Get_Properties (T).Launch_Mode = Manually_With_Dialog

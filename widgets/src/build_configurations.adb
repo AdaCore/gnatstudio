@@ -157,6 +157,9 @@ package body Build_Configurations is
                   Model.Icon := To_Unbounded_String (Child.Value.all);
                end if;
 
+            elsif Child.Tag.all = "server" then
+               Model.Server := Server_Type'Value (Child.Value.all);
+
             else
                Log
                  (Registry,
@@ -661,11 +664,6 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
-      C.Tag := new String'("server");
-      C.Value := new String'(Target.Properties.Server'Img);
-
-      C.Next := new Node;
-      C := C.Next;
       C.Tag := new String'("read-only");
       C.Value := new String'(Target.Properties.Read_Only'Img);
 
@@ -804,9 +802,6 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "read-only" then
             Target.Properties.Read_Only := Boolean'Value (Child.Value.all);
-
-         elsif Child.Tag.all = "server" then
-            Target.Properties.Server := Server_Type'Value (Child.Value.all);
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")
@@ -948,6 +943,15 @@ package body Build_Configurations is
    begin
       return To_String (Target.Category);
    end Get_Category;
+
+   ----------------
+   -- Get_Server --
+   ----------------
+
+   function Get_Server (Target : Target_Access) return Server_Type is
+   begin
+      return Target.Model.Server;
+   end Get_Server;
 
    --------------
    -- Get_Icon --

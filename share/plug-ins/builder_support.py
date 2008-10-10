@@ -116,6 +116,37 @@ Custom_Target = """
 </target>
 """
 
+# This is an XML model for cross-ref generation
+Xrefs_Model_Template = """
+<target-model name="xref_generation" category="">
+   <description>Generate cross-references</description>
+   <command-line>
+      <arg>%gnatmake</arg>
+      <arg>-gnatc</arg>
+      <arg>-gnatQ</arg>
+      <arg>-k</arg>
+      <arg>--subdirs=xrefs</arg>
+      <arg>-gnatws</arg>
+      <arg>-gnatyN</arg>
+      <arg>-gnatVn</arg>
+      <arg>-d</arg>
+      <arg>%eL</arg>
+      <arg>-P%PP</arg>
+      <arg>%X</arg>
+   </command-line>
+   <icon>gps-build-all</icon>
+   <server>Tools_Server</server>
+   <switches command="%(tool_name)s" columns="1" lines="1">
+     <check label="Minimal recompilation" switch="-m"
+            tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
+     <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
+           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+     <check label="Progress bar" switch="-d"
+            tip="Display a progress bar with information about how many files are left to be compiled" />
+   </switches>
+</target-model>
+"""
+
 # Targets to compile all project files using the builder model
 Compile_All_Targets = """
 <target model="builder" category="Project" name="_Build All">
@@ -276,6 +307,7 @@ def register_models():
     parse_xml (Gnatmake_Model_Template)
     parse_xml (Gprclean_Model_Template)
     parse_xml (Custom_Model_Template)
+    parse_xml (Xrefs_Model_Template)
 
 def on_project_recomputed (hook_name):
     """ Add the project-specific targets to the Build Manager """

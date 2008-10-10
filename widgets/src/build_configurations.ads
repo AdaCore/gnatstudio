@@ -82,6 +82,7 @@ package Build_Configurations is
    --  <target-model name="NAME" category="CATEGORY">
    --          <icon>ICON</icon>
    --          <description>DESCRIPTION</description>
+   --          <server>SERVER</server>
    --          <command-line>
    --             <arg>COMMAND</arg>
    --             <arg>ARG1</arg>
@@ -97,10 +98,12 @@ package Build_Configurations is
    --     NAME is the name of the target model
    --     CATEGORY is the model category
    --     DESCRIPTION is the description of the target model
+   --     SERVER       (optional, default "Build_Server") the server used for
+   --                     executing the action.
    --     COMMAND_N are the various commands supported by the target_model
    --     DEFAULT_COMMAND_LINE is the initial command line
-   --     ICON (optional) represents a stock icon to serve as default for
-   --                     targets of this model
+   --     ICON         (optional) represents a stock icon to serve as default
+   --                     for targets of this model
    --     COMMAND      (optional) is a string containing the default executable
    --     ARG1..ARGN   (optional) default arguments
 
@@ -165,9 +168,6 @@ package Build_Configurations is
 
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
-
-      Server          : Server_Type      := Build_Server;
-      --  The server used for executing this target
 
       Icon_In_Toolbar : Boolean          := False;
       --  Whether to display an icon in the toolbar
@@ -245,6 +245,9 @@ package Build_Configurations is
    function Get_Icon (Target : Target_Access) return String;
    --  Return the stock-id corresponding to the icon for target.
 
+   function Get_Server (Target : Target_Access) return Server_Type;
+   --  Return the server_type that will run the target
+
    -----------------------
    -- XML import/export --
    -----------------------
@@ -266,7 +269,6 @@ package Build_Configurations is
    --     <default-command-line>
    --          (same syntax as command-line)
    --     </default-command-line>
-   --     <server>SERVER</server>
    --  </target>
    --
    --  Where
@@ -282,8 +284,6 @@ package Build_Configurations is
    --     COMMAND      (optional) is a string containing the executable
    --     ARG1..ARGN   (optional) arguments
    --     ICON         (optional) is a stock identifier
-   --     SERVER       (optional, default "Build_Server") the server used for
-   --                     executing the action.
 
    function Save_Target_To_XML
      (Registry : Build_Config_Registry_Access;
@@ -374,24 +374,27 @@ private
    -- Types --
 
    type Target_Model_Type is record
-      Name : Unbounded_String;
+      Name                 : Unbounded_String;
       --  The name of a target model
 
-      Category : Unbounded_String;
+      Category             : Unbounded_String;
       --  The category of the model, used for purposes of displaying the
       --  models in a hierarchical fashion
 
-      Description : Unbounded_String;
+      Description          : Unbounded_String;
       --  A one-line description of the target model
 
-      Icon     : Unbounded_String;
+      Icon                 : Unbounded_String;
       --  The string contains a stock identifier
 
-      Switches : Switches_Editor_Config;
+      Switches             : Switches_Editor_Config;
       --  The configuration of switches to display in the target
 
       Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  The command line to use when creating targets of this model
+
+      Server               : Server_Type      := Build_Server;
+      --  The server used for executing this target
    end record;
 
    type Build_Config_Registry is record

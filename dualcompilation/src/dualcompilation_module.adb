@@ -22,8 +22,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -32,16 +30,17 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 
 with Dualcompilation;           use Dualcompilation;
 with Dualcompilation_Dialog;    use Dualcompilation_Dialog;
-with Entities;
 with Projects;
+with Projects.Registry;
 
 package body Dualcompilation_Module is
 
    type Dualcomp_Property is new GPS.Kernel.Properties.Property_Record
    with record
-      Active        : Boolean;
-      Tools_Path    : String_Access;
-      Compiler_Path : String_Access;
+      Active           : Boolean;
+      Tools_Path       : String_Access;
+      Use_Xrefs_Subdir : Boolean;
+      Compiler_Path    : String_Access;
    end record;
 
    overriding procedure Save
@@ -75,6 +74,12 @@ package body Dualcompilation_Module is
          Add_Child (Node, Child);
       end if;
 
+      if Property.Use_Xrefs_Subdir then
+         Child := new Glib.Xml_Int.Node;
+         Child.Tag := new String'("use_xrefs_subdir");
+         Add_Child (Node, Child);
+      end if;
+
       if Property.Tools_Path /= null then
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("tools_path");
@@ -105,12 +110,17 @@ package body Dualcompilation_Module is
    begin
       Child := Find_Tag (From.Child, "active");
       Property.Active := Child /= null;
+
+      Child := Find_Tag (From.Child, "use_xrefs_subdir");
+      Property.Use_Xrefs_Subdir := Child /= null;
+
       Child := Find_Tag (From.Child, "tools_path");
       if Child /= null then
          Property.Tools_Path := new String'(Child.Value.all);
       else
          Property.Tools_Path := new String'("");
       end if;
+
       Child := Find_Tag (From.Child, "compiler_path");
       if Child /= null then
          Property.Compiler_Path := new String'(Child.Value.all);
@@ -138,88 +148,120 @@ package body Dualcompilation_Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Property    : Dualcomp_Property := Dualcomp_Property (Get_Property);
-      Prop_Access : Property_Access;
-      Dialog      : Dualcompilation_Dialog.Dualc_Dialog;
-      Resp        : Gtk_Response_Type;
-      Exec        : String_Access;
-      Compiler    : constant String :=
-                      Projects.Get_Attribute_Value
-                        (GPS.Kernel.Project.Get_Project (Kernel),
-                         Projects.Compiler_Command_Attribute,
-                         Default => "gnatmake",
-                         Index   => "Ada");
+      Property      : Dualcomp_Property := Dualcomp_Property (Get_Property);
+      Prop_Access   : Property_Access;
+      Dialog        : Dualcompilation_Dialog.Dualc_Dialog;
+      Resp          : Gtk_Response_Type;
+      Compiler      : constant String :=
+                        Projects.Get_Attribute_Value
+                          (GPS.Kernel.Project.Get_Project (Kernel),
+                           Projects.Compiler_Command_Attribute,
+                           Default => "gnatmake",
+                           Index   => "Ada");
+      Default_Path  : String_Access;
+      Tools_Path    : String_Access;
+      Compiler_Path : String_Access;
+      Xrefs_Change  : Boolean;
+
    begin
-      if Property.Active then
-         Gtk_New
-           (Dialog, Kernel,
-            True, Property.Tools_Path.all, Property.Compiler_Path.all);
-      else
+      if Property.Tools_Path = null
+        or else Property.Tools_Path.all = ""
+        or else Property.Compiler_Path = null
+        or else Property.Compiler_Path.all = ""
+      then
          declare
             Path : String_Access := Locate_Exec_On_Path (Compiler);
          begin
             if Path /= null then
-               Gtk_New
-                 (Dialog, Kernel, False,
-                  Dir_Name (Path.all), Dir_Name (Path.all));
+               Default_Path := new String'(Dir_Name (Path.all));
+               Free (Path);
             else
-               Gtk_New
-                 (Dialog, Kernel, False, "", "");
+               Default_Path := new String'("");
             end if;
-
-            Free (Path);
          end;
       end if;
 
-      loop
-         Resp := Dialog.Run;
-         exit when Resp /= Gtk_Response_OK;
+      if Property.Tools_Path = null then
+         Tools_Path := Default_Path;
+      elsif Property.Tools_Path.all = "" then
+         Tools_Path := Default_Path;
+      else
+         Tools_Path := Property.Tools_Path;
+      end if;
 
+      if Property.Compiler_Path = null then
+         Compiler_Path := Default_Path;
+      elsif Property.Compiler_Path.all = "" then
+         Compiler_Path := Default_Path;
+      else
+         Compiler_Path := Property.Compiler_Path;
+      end if;
+
+      Gtk_New
+        (Dialog, Kernel, Property.Active,
+         Tools_Path.all, Property.Use_Xrefs_Subdir,
+         Compiler_Path.all);
+
+      if Default_Path /= null then
+         Free (Default_Path);
+      end if;
+
+      Resp := Dialog.Run;
+
+      if Resp = Gtk_Response_OK then
          Property.Active := Get_Active (Dialog);
          Property.Tools_Path := new String'(Get_Tools_Path (Dialog));
          Property.Compiler_Path := new String'(Get_Compiler_Path (Dialog));
+         Property.Use_Xrefs_Subdir := Get_Use_Xrefs_Subdir (Dialog);
 
-         if Property.Active then
-            --  ??? Should we do it also for the tools path ?
-            Exec := Locate_Exec (Compiler, Property.Compiler_Path.all);
-         end if;
+         Prop_Access := new Dualcomp_Property'(Property);
+         Set_Property
+           (Kernel,
+            Index_Name  => "dualcompilation_properties",
+            Index_Value => "property",
+            Name        => "property",
+            Property    => Prop_Access,
+            Persistent  => True);
 
-         if not Property.Active or else Exec /= null then
-            Prop_Access := new Dualcomp_Property'(Property);
-            Set_Property
-              (Kernel,
-               Index_Name  => "dualcompilation_properties",
-               Index_Value => "property",
-               Name        => "property",
-               Property    => Prop_Access,
-               Persistent  => True);
+         Dualcompilation.Set_Dualcompilation_Properties
+           (Active               => Property.Active,
+            Tool_Search_Path     => Property.Tools_Path.all,
+            Compiler_Search_Path => Property.Compiler_Path.all);
 
-            Dualcompilation.Set_Dualcompilation_Properties
-              (Active               => Property.Active,
-               Tool_Search_Path     => Property.Tools_Path.all,
-               Compiler_Search_Path => Property.Compiler_Path.all);
+         Xrefs_Change := False;
+         if Property.Active
+           and then Property.Use_Xrefs_Subdir
+         then
+            if Projects.Registry.Get_Xrefs_Subdir
+              (Get_Registry (Kernel).all) /= "xrefs"
+            then
+               Xrefs_Change := True;
+               Projects.Registry.Set_Xrefs_Subdir
+                 (Get_Registry (Kernel).all, "xrefs");
+            end if;
 
-            --  We need to recompute the project view, and reset the whole
-            --  entities database to fully recompute the default paths.
-            GPS.Kernel.Project.Recompute_View (Kernel);
-            Entities.Reset (GPS.Kernel.Get_Database (Kernel));
+            --  ??? Todo: initialize a new cross-ref builder target
 
-            exit;
          else
-            declare
-               Dead : Gtkada.Dialogs.Message_Dialog_Buttons;
-               pragma Unreferenced (Dead);
-            begin
-               Dead := Gtkada.Dialogs.Message_Dialog
-                 (-"The selected compiler path do not contain a compiler.",
-                  Dialog_Type    => Gtkada.Dialogs.Error,
-                  Buttons        => Gtkada.Dialogs.Button_OK,
-                  Title          => -"Invalid compiler path",
-                  Parent         => Gtk_Window (Dialog));
-            end;
+            if Projects.Registry.Get_Xrefs_Subdir
+              (Get_Registry (Kernel).all) /= ""
+            then
+               Xrefs_Change := True;
+               Projects.Registry.Set_Xrefs_Subdir
+                 (Get_Registry (Kernel).all, "");
+            end if;
+
+            --  ??? Todo: disable the cross-ref target (at least ask the user
+            --  whether we should do it or not).
          end if;
 
-      end loop;
+         if Xrefs_Change then
+            --  We need to recompute the project view to recompute the default
+            --  paths.
+            GPS.Kernel.Project.Recompute_View (Kernel);
+         end if;
+
+      end if;
 
       Destroy (Dialog);
    end On_Menu;
@@ -241,7 +283,10 @@ package body Dualcompilation_Module is
 
       if not Success then
          return Dualcomp_Property'
-           (Active => False, Tools_Path => null, Compiler_Path => null);
+           (Active           => False,
+            Tools_Path       => null,
+            Use_Xrefs_Subdir => False,
+            Compiler_Path    => null);
       else
          return Property;
       end if;

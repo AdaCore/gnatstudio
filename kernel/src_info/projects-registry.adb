@@ -2392,7 +2392,9 @@ package body Projects.Registry is
          GNAT.Strings.Free (Registry.Data.Xrefs_Subdir);
       end if;
 
-      Registry.Data.Xrefs_Subdir := new String'(Subdir);
+      if Subdir /= "" then
+         Registry.Data.Xrefs_Subdir := new String'(Subdir);
+      end if;
    end Set_Xrefs_Subdir;
 
    ----------------------
