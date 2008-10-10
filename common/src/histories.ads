@@ -80,7 +80,7 @@ package Histories is
       Key         : History_Key;
       Allow       : Boolean;
       Merge_First : Boolean := False);
-   --  Indicates whether Key allows duplicates. If it doesn, adding an entry
+   --  Indicates whether Key allows duplicates. If it doesn't, adding an entry
    --  that already exists to the history will simply move it to the first
    --  position. If Allow is True, a copy is inserted at the first position,
    --  but other similar entries are not removed.
