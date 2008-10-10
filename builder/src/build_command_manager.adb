@@ -46,6 +46,9 @@ package body Build_Command_Manager is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
+   Invalid_Argument : exception;
+   --  Raised by Expand_Arg below.
+
    function Expand_Command_Line
      (Kernel : GPS.Kernel.Kernel_Handle;
       CL     : Argument_List;
@@ -61,6 +64,8 @@ package body Build_Command_Manager is
       Server  : Server_Type) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
+   --  Will raise Invalid_Argument if an invalid/non existent argument is
+   --  found.
 
    ----------------
    -- Expand_Arg --
@@ -83,10 +88,15 @@ package body Build_Command_Manager is
       function Substitution
         (Param : String; Quoted : Boolean) return String
       is
-         Done : aliased Boolean := False;
-      begin
-         return GPS.Kernel.Macros.Substitute
+         Done   : aliased Boolean := False;
+         Result : constant String := GPS.Kernel.Macros.Substitute
            (Param, Context, Quoted, Done'Access, Server => Server);
+      begin
+         if Result = "" then
+            raise Invalid_Argument;
+         else
+            return Result;
+         end if;
       end Substitution;
 
    begin
@@ -106,6 +116,14 @@ package body Build_Command_Manager is
             Unchecked_Free (Vars);
             return Res;
          end;
+
+      --  ??? Ditto for %eL
+      elsif Arg = "%eL" then
+         if Trusted_Mode.Get_Pref then
+            return (1 .. 0 => null);
+         else
+            return (1 => new String'("-eL"));
+         end if;
 
       --  ??? Ditto for %builder and %gprclean
       elsif Arg = "%builder"
@@ -172,7 +190,6 @@ package body Build_Command_Manager is
                      Delimiter => GPS.Kernel.Macros.Special_Character,
                      Callback  => Substitution'Unrestricted_Access)));
       end if;
-
    end Expand_Arg;
 
    -------------------------
@@ -193,7 +210,9 @@ package body Build_Command_Manager is
       for J in CL'Range loop
          if CL (J) = null then
             --  This should not happen
-            Insert (Kernel, (-"Invalid command line"));
+            Insert
+              (Kernel, (-"Invalid command line"),
+               Mode => Error);
             Free (Result);
             return null;
          end if;
@@ -231,6 +250,14 @@ package body Build_Command_Manager is
          Unchecked_Free (Result);
          return Real_Result;
       end;
+
+   exception
+      when Invalid_Argument =>
+         Insert
+           (Kernel, (-"Invalid context, cannot build"),
+            Mode => Console.Error);
+         Free (Result);
+         return null;
    end Expand_Command_Line;
 
    -------------------
@@ -280,8 +307,8 @@ package body Build_Command_Manager is
          end if;
 
          Full := Expand_Command_Line (Kernel, Command_Line.all, Server);
-
          Free (Command_Line);
+
       else
          --  Get the unexpanded command line from the target
 
@@ -310,7 +337,8 @@ package body Build_Command_Manager is
       --  Trace the command line, for debug purposes
       if Full = null then
          Trace (Me, "Macro expansion resulted in empty command line");
-      else
+         return;
+      elsif Active (Me) then
          for J in Full'Range loop
             Trace (Me, "Arg: """ & Full (J).all & """");
          end loop;
