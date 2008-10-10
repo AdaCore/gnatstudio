@@ -73,8 +73,13 @@ package body Builder_Facility_Module is
    package String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
 
+   type Model_And_Target_XML is record
+      Model_Name : Unbounded_String;
+      XML        : Node_Ptr;
+   end record;
+
    package Target_XML_List is new Ada.Containers.Doubly_Linked_Lists
-     (Node_Ptr);
+     (Model_And_Target_XML);
 
    use Target_XML_List;
 
@@ -91,12 +96,12 @@ package body Builder_Facility_Module is
       Buttons  : Buttons_Map.Map;
       --  The set of toolbar buttons
 
-      Unregistered_Targets : Target_Map.Map;
+      Unregistered_Targets : Target_XML_List.List;
       --  This is a set of targets that could not be registered because their
       --  model was not registered at the time the module parsed this target.
       --  Every time a new model is registered, the module will look at this
       --  list of unregistered targets, and register all targets corresponding
-      --  to the new model.
+      --  to the known models.
       --  Doing this means that targets can be passed to the module *before*
       --  their corresponding models. This way, there is no load order to
       --  maintain, and scripts can be executed in any order.
@@ -450,7 +455,6 @@ package body Builder_Facility_Module is
    is
       Model_Name : Unbounded_String;
       T          : Target_Access;
-      List       : Target_XML_List.List;
       use Target_Map;
 
    begin
@@ -469,7 +473,18 @@ package body Builder_Facility_Module is
          T := Load_Target_From_XML
            (Builder_Module_ID.Registry, XML, Allow_Update);
 
-         if T /= null then
+         --  The target might already be registered, if we are calling this
+         --  with Allow_Update (for example when a target coming from the
+         --  targets.xml file overrides the default values).
+         --  In this case, we do not want to create the actions, menus, and
+         --  toolbars a second time.
+         --  We test whether we have previously registered this target by
+         --  looking it up in the registered actions.
+
+         if T /= null
+           and then not Builder_Module_ID.Actions.Contains
+             (To_Unbounded_String (Get_Name (T)))
+         then
             Add_Action_For_Target (T);
 
             if Get_Properties (T).Icon_In_Toolbar then
@@ -483,22 +498,12 @@ package body Builder_Facility_Module is
          --  The model is not registered: add XML to the list of unregistered
          --  targets
 
-         --  Look for a list for the same model name
-
-         if Builder_Module_ID.Unregistered_Targets.Contains (Model_Name) then
-            List := Builder_Module_ID.Unregistered_Targets.Element
-              (Model_Name);
-
-            if Allow_Update then
-               List.Append (Deep_Copy (XML));
-            else
-               List.Prepend (Deep_Copy (XML));
-            end if;
-
-            Builder_Module_ID.Unregistered_Targets.Replace (Model_Name, List);
+         if Allow_Update then
+            Builder_Module_ID.Unregistered_Targets.Append
+              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML)));
          else
-            List.Append (Deep_Copy (XML));
-            Builder_Module_ID.Unregistered_Targets.Insert (Model_Name, List);
+            Builder_Module_ID.Unregistered_Targets.Prepend
+              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML)));
          end if;
       end if;
    end Attempt_Target_Register;
@@ -508,10 +513,17 @@ package body Builder_Facility_Module is
    ---------
 
    procedure Log (M : String; Mode : Message_Mode) is
-      pragma Unreferenced (Mode);
-      Kernel : constant Kernel_Handle := Get_Kernel (Builder_Module_ID.all);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Builder_Module_ID.all);
+      Message : constant String := (-"Build facility: ") & M;
    begin
-      Insert (Kernel, (-"Build facility: ") & M);
+      case Mode is
+         when Info =>
+            Insert (Kernel, Message, Mode => Info);
+         when Error =>
+            Insert (Kernel, Message, Mode => Error);
+         when Trace =>
+            Trace (Me, Message);
+      end case;
    end Log;
 
    ----------------
@@ -545,7 +557,6 @@ package body Builder_Facility_Module is
       --  Remove all buttons from registry
 
       Builder_Module_ID.Buttons.Clear;
-
    end Clear_Toolbar_Buttons;
 
    ---------------------
@@ -735,8 +746,6 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Module, File);
       Allow_Update : Boolean;
-      Model_Name   : Unbounded_String;
-      L            : Target_XML_List.List;
       C            : Target_XML_List.Cursor;
 
    begin
@@ -755,33 +764,34 @@ package body Builder_Facility_Module is
          --  We have just added a model: register any target pending on this
          --  model.
 
-         Model_Name := To_Unbounded_String (Get_Attribute (Node, "name", ""));
+         C := Builder_Module_ID.Unregistered_Targets.First;
 
-         if Builder_Module_ID.Unregistered_Targets.Contains (Model_Name) then
-            L := Builder_Module_ID.Unregistered_Targets.Element (Model_Name);
+         --  Browse through all targets until we have found a target with an
+         --  unknown model.
+         while Has_Element (C) loop
+            if Is_Registered_Model
+              (Registry => Builder_Module_ID.Registry,
+               Name     => Element (C).Model_Name)
+            then
+               Attempt_Target_Register
+                 (XML          => Element (C).XML,
+                  Allow_Update => True);
 
-            if not L.Is_Empty then
-               C := L.First;
+               --  Free memory
+               declare
+                  Node_To_Free : Node_Ptr := Element (C).XML;
+               begin
+                  Free (Node_To_Free);
+               end;
 
-               while Has_Element (C) loop
-                  --  Register the target
-                  Attempt_Target_Register
-                    (XML          => Element (C),
-                     Allow_Update => True);
-
-                  --  Free memory
-                  declare
-                     Node_To_Free : Node_Ptr := Element (C);
-                  begin
-                     Free (Node_To_Free);
-                  end;
-
-                  Next (C);
-               end loop;
-
-               Builder_Module_ID.Unregistered_Targets.Delete (Model_Name);
+               Builder_Module_ID.Unregistered_Targets.Delete (C);
+               C := Builder_Module_ID.Unregistered_Targets.First;
+            else
+               --  The target we are looking at has a model which is not
+               --  known: exit.
+               exit;
             end if;
-         end if;
+         end loop;
       end if;
    end Customize;
 
