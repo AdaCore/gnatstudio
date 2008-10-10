@@ -401,8 +401,12 @@ package body Build_Configurations is
       if Contains (Registry.Targets, Target.Name) then
          Log (Registry, -("Target with this name already exists: ")
               & To_String (Target.Name));
+         return;
       end if;
 
+      Log (Registry,
+           "Creating target '" & To_String (Target.Name) & "'",
+           Trace);
       Registry.Targets.Append (Target);
    end Add_Target;
 
@@ -712,11 +716,12 @@ package body Build_Configurations is
       --  Main node
 
       declare
-         Name     : constant String := (Get_Attribute (XML, "name", ""));
-         Category : constant String := (Get_Attribute (XML, "category", ""));
-         Model    : constant String := (Get_Attribute (XML, "model", ""));
+         Menu_Name : constant String := (Get_Attribute (XML, "name", ""));
+         Target_Name : constant String := Process_Underscores (Menu_Name);
+         Category  : constant String := (Get_Attribute (XML, "category", ""));
+         Model     : constant String := (Get_Attribute (XML, "model", ""));
       begin
-         if Name = "" then
+         if Menu_Name = "" then
             Log (Registry,
                  -"Error: <target> node should have a ""name"" attribute");
             return null;
@@ -737,19 +742,19 @@ package body Build_Configurations is
             return null;
          end if;
 
-         if Contains (Registry.Targets, To_Unbounded_String (Name)) then
+         if Contains (Registry.Targets, To_Unbounded_String (Target_Name)) then
             if Allow_Update then
-               Target := Get_Target_From_Name (Registry, Name);
+               Target := Get_Target_From_Name (Registry, Target_Name);
             else
                Log (Registry, -"Target with that name already registered: "
-                    & Name);
+                    & Target_Name, Mode => Trace);
                return null;
             end if;
 
          else
             Target := new Target_Type;
-            Target.Name  := To_Unbounded_String (Process_Underscores (Name));
-            Target.Menu_Name := To_Unbounded_String (Name);
+            Target.Name  := To_Unbounded_String (Target_Name);
+            Target.Menu_Name := To_Unbounded_String (Menu_Name);
             Target.Category := To_Unbounded_String (Category);
             Target.Model := Registry.Models.Element
               (To_Unbounded_String (Model));
