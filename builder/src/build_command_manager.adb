@@ -37,6 +37,7 @@ with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with OS_Utils;           use OS_Utils;
 with Projects;           use Projects;
 with Remote;             use Remote;
+with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 
 package body Build_Command_Manager is
@@ -50,32 +51,38 @@ package body Build_Command_Manager is
    --  Raised by Expand_Arg below.
 
    function Expand_Command_Line
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      CL     : Argument_List;
-      Server : Server_Type) return Argument_List_Access;
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      CL       : Argument_List;
+      Server   : Server_Type;
+      Simulate : Boolean := False) return Argument_List_Access;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
+   --  If Simulate is true, never fail on unknown parameters.
 
    function Expand_Arg
-     (Kernel  : GPS.Kernel.Kernel_Handle;
-      Context : GPS.Kernel.Selection_Context;
-      Arg     : String;
-      Server  : Server_Type) return Argument_List;
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      Context  : GPS.Kernel.Selection_Context;
+      Arg      : String;
+      Server   : Server_Type;
+      Simulate : Boolean) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
    --  found.
+   --  If Simulate is true, Invalid_Argument will never be raised, and no
+   --  expansion will be done.
 
    ----------------
    -- Expand_Arg --
    ----------------
 
    function Expand_Arg
-     (Kernel  : GPS.Kernel.Kernel_Handle;
-      Context : GPS.Kernel.Selection_Context;
-      Arg     : String;
-      Server  : Server_Type) return Argument_List
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      Context  : GPS.Kernel.Selection_Context;
+      Arg      : String;
+      Server   : Server_Type;
+      Simulate : Boolean) return Argument_List
    is
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
@@ -93,7 +100,11 @@ package body Build_Command_Manager is
            (Param, Context, Quoted, Done'Access, Server => Server);
       begin
          if Result = "" then
-            raise Invalid_Argument;
+            if Simulate then
+               return '%' & Param;
+            else
+               raise Invalid_Argument;
+            end if;
          else
             return Result;
          end if;
@@ -197,15 +208,17 @@ package body Build_Command_Manager is
    -------------------------
 
    function Expand_Command_Line
-     (Kernel : GPS.Kernel.Kernel_Handle;
-      CL     : Argument_List;
-      Server : Server_Type) return Argument_List_Access
+     (Kernel   : GPS.Kernel.Kernel_Handle;
+      CL       : Argument_List;
+      Server   : Server_Type;
+      Simulate : Boolean := False) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
       Index  : Natural := 1;
       --  Index of the next free element in Result.
 
       Context : constant Selection_Context := Get_Current_Context (Kernel);
+
    begin
       for J in CL'Range loop
          if CL (J) = null then
@@ -219,7 +232,7 @@ package body Build_Command_Manager is
 
          declare
             Expanded : constant Argument_List :=
-              Expand_Arg (Kernel, Context, CL (J).all, Server);
+              Expand_Arg (Kernel, Context, CL (J).all, Server, Simulate);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
@@ -275,6 +288,22 @@ package body Build_Command_Manager is
       Quiet        : Boolean;
       Command_Line : Argument_List_Access;
       Server       : Server_Type;
+
+      function Expand_Cmd_Line (CL : String) return String;
+      --  Callback for Single_Target_Dialog
+
+      function Expand_Cmd_Line (CL : String) return String is
+         CL_Args : Argument_List_Access := Argument_String_To_List (CL);
+         Args    : Argument_List_Access :=
+           Expand_Command_Line (Kernel, CL_Args.all, Server, Simulate => True);
+         Res     : constant String := Argument_List_To_String (Args.all);
+
+      begin
+         Free (CL_Args);
+         Free (Args);
+         return Res;
+      end Expand_Cmd_Line;
+
    begin
       --  Get the target
 
@@ -294,12 +323,13 @@ package body Build_Command_Manager is
       then
          --  Use the single target dialog to get the unexpanded command line
          Single_Target_Dialog
-           (Registry => Registry,
-            Parent   => Get_Main_Window (Kernel),
-            Tooltips => Get_Tooltips (Kernel),
-            Target   => Target_Name,
-            History  => Get_History (Kernel),
-            Result   => Command_Line);
+           (Registry        => Registry,
+            Parent          => Get_Main_Window (Kernel),
+            Tooltips        => Get_Tooltips (Kernel),
+            Target          => Target_Name,
+            History         => Get_History (Kernel),
+            Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
+            Result          => Command_Line);
 
          if Command_Line = null then
             --  The dialog was cancelled: return

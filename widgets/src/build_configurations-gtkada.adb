@@ -26,12 +26,9 @@ with Glib.Object; use Glib.Object;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Image;                use Gtk.Image;
-with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Combo_Box_Entry;      use Gtk.Combo_Box_Entry;
+with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
@@ -46,7 +43,6 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
 
 with String_Utils;             use String_Utils;
-with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
 with GUI_Utils;                use GUI_Utils;
 
 with Build_Configurations.Gtkada.Dialogs;
@@ -69,33 +65,6 @@ package body Build_Configurations.Gtkada is
    Name_Column : constant := 1; --  Contains the displayed name, as markup
    Num_Column  : constant := 2;
    --  Contains the number of the corresponding page in the main notebook
-
-   -----------------
-   -- Local types --
-   -----------------
-
-   type Target_UI_Record is new Gtk_Hbox_Record with record
-      Registry    : Build_Config_Registry_Access;
-      Target      : Target_Access;
-
-      Tooltips    : Gtk_Tooltips;
-
-      Frame        : Gtk_Frame;
-      --  The frame that contains the elements to describe the switches
-
-      Editor       : Switches_Editor := null;
-      --  The one switch editor for the target, if there is only one command
-
-      Model_Entry  : Gtk_Entry;
-      --  The entry containing the model
-
-      History      : Histories.History;
-
-      Icon_Entry   : Gtk_Entry;
-      Icon_Check   : Gtk_Check_Button;
-      Launch_Combo : Gtk_Combo_Box;
-   end record;
-   type Target_UI_Access is access all Target_UI_Record'Class;
 
    -----------------------
    -- Local subprograms --
@@ -156,6 +125,9 @@ package body Build_Configurations.Gtkada is
    procedure Refresh (UI : access Build_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
    --  them with the information contained in the Registry.
+
+   procedure On_Entry_Changed (UI : access Build_UI_Record'Class);
+   --  "changed" callback for target UI entry
 
    function Beautify (S : String) return String;
    --  Take a string coming from a 'Image and make it fit for GUI display
@@ -306,11 +278,28 @@ package body Build_Configurations.Gtkada is
    end Get_Selected_Target;
 
    ----------------------
+   -- On_Entry_Changed --
+   ----------------------
+
+   procedure On_Entry_Changed (UI : access Build_UI_Record'Class) is
+      T : constant Target_UI_Access := UI.Target_UI;
+   begin
+      Set_Text
+        (T.Expanded_Entry,
+         UI.Expand_Cmd_Line (Get_Text (Get_Entry (T.Editor))));
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Entry_Changed;
+
+   ----------------------
    -- On_Revert_Target --
    ----------------------
 
    procedure On_Revert_Target (UI : access Build_UI_Record'Class) is
-      T  : Target_UI_Access;
+      T : Target_UI_Access;
    begin
       if not Yes_No_Dialog (UI, "Revert to original command line?") then
          return;
@@ -588,6 +577,24 @@ package body Build_Configurations.Gtkada is
       Pack_Start (Box, Box.Frame, True, True, 0);
 
       Set_Switches (Box);
+
+      if Single then
+         Object_Connect
+           (Widget      => Get_Entry (Box.Editor),
+            Name        => Gtk.Editable.Signal_Changed,
+            Cb          => On_Entry_Changed'Access,
+            Slot_Object => UI,
+            After       => True);
+
+         Gtk_New (Box.Expanded_Entry);
+         Set_Text
+           (Box.Expanded_Entry,
+            UI.Expand_Cmd_Line (Get_Text (Get_Entry (Box.Editor))));
+         Set_Editable (Box.Expanded_Entry, False);
+         Set_Sensitive (Box.Expanded_Entry, False);
+         Pack_Start (Box, Box.Expanded_Entry, True, True, 0);
+      end if;
+
       return Box;
    end Switches_For_Target;
 
@@ -895,12 +902,13 @@ package body Build_Configurations.Gtkada is
    --------------------------
 
    procedure Single_Target_Dialog
-     (Registry : Build_Config_Registry_Access;
-      Parent   : Gtk_Window   := null;
-      Tooltips : Gtk_Tooltips := null;
-      Target   : String;
-      History  : Histories.History;
-      Result   : out GNAT.OS_Lib.Argument_List_Access)
+     (Registry        : Build_Config_Registry_Access;
+      Parent          : Gtk_Window   := null;
+      Tooltips        : Gtk_Tooltips := null;
+      Target          : String;
+      History         : Histories.History;
+      Expand_Cmd_Line : Cmd_Line_Expander;
+      Result          : out GNAT.OS_Lib.Argument_List_Access)
    is
       UI     : Build_UI_Access;
       Dialog : Gtk_Dialog;
@@ -934,7 +942,6 @@ package body Build_Configurations.Gtkada is
       Dummy : Gint;
       pragma Unreferenced (Dummy);
 
-      Target_UI : Target_UI_Access;
    begin
       --  Return immediately if the target does not exist.
 
@@ -954,6 +961,7 @@ package body Build_Configurations.Gtkada is
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
 
+      UI.Expand_Cmd_Line := Expand_Cmd_Line;
       UI.Registry := Registry;
       UI.History  := History;
 
@@ -970,13 +978,13 @@ package body Build_Configurations.Gtkada is
 
       --  Create the target UI itself
 
-      Target_UI := Switches_For_Target
+      UI.Target_UI := Switches_For_Target
         (UI      => UI,
          History => UI.History,
          Target  => Get_Target_From_Name (Registry, Target),
          Single  => True);
 
-      Pack_Start (UI, Target_UI, True, True, 3);
+      Pack_Start (UI, UI.Target_UI, True, True, 3);
 
       --  Create the dialog buttons
 
@@ -987,16 +995,16 @@ package body Build_Configurations.Gtkada is
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
-      Ent := Get_Entry (Target_UI.Editor);
+      Ent := Get_Entry (UI.Target_UI.Editor);
 
       --  Set the entry to the latest history.
 
       if History /= null then
          declare
             List    : constant GNAT.Strings.String_List_Access :=
-              Get_History (History.all, Target_To_Key (Target_UI.Target));
+              Get_History (History.all, Target_To_Key (UI.Target_UI.Target));
             Default : constant String :=
-              Argument_List_To_String (Target_UI.Target.Command_Line.all);
+              Argument_List_To_String (UI.Target_UI.Target.Command_Line.all);
 
          begin
             if List /= null
@@ -1005,7 +1013,7 @@ package body Build_Configurations.Gtkada is
               and then Exists (List, Default)
             then
                Set_Text (Ent, List (List'First).all);
-               Set_Command_Line (Target_UI.Editor, List (List'First).all);
+               Set_Command_Line (UI.Target_UI.Editor, List (List'First).all);
             else
                --  If not already done, add the contents of the entry to the
                --  history. That way, the user can always find the original
@@ -1015,7 +1023,7 @@ package body Build_Configurations.Gtkada is
 
                Add_To_History
                  (History.all,
-                  Target_To_Key (Target_UI.Target),
+                  Target_To_Key (UI.Target_UI.Target),
                   Default);
             end if;
          end;
@@ -1035,12 +1043,12 @@ package body Build_Configurations.Gtkada is
       --  Run the dialog
 
       if Run (Dialog) = Gtk_Response_OK then
-         Result := Get_Command_Line (Target_UI.Editor, False);
+         Result := Get_Command_Line (UI.Target_UI.Editor, False);
          if History /= null then
             Add_To_History
               (History.all,
-               Target_To_Key (Target_UI.Target),
-               Get_Text (Get_Entry (Target_UI.Editor)));
+               Target_To_Key (UI.Target_UI.Target),
+               Get_Text (Get_Entry (UI.Target_UI.Editor)));
          end if;
       end if;
 
