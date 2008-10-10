@@ -581,7 +581,7 @@ package body Build_Configurations.Gtkada is
       else
          Gtk_New (Label);
          Set_Use_Markup (Label, True);
-         Set_Markup (Label, "Switches");
+         Set_Markup (Label, "Command line");
          Set_Label_Widget (Box.Frame, Label);
       end if;
 
@@ -1005,6 +1005,7 @@ package body Build_Configurations.Gtkada is
               and then Exists (List, Default)
             then
                Set_Text (Ent, List (List'First).all);
+               Set_Command_Line (Target_UI.Editor, List (List'First).all);
             else
                --  If not already done, add the contents of the entry to the
                --  history. That way, the user can always find the original
