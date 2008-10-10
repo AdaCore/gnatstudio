@@ -10817,6 +10817,8 @@ Replaced by either an empty string, or @code{-eL}, depending on whether the
 @code{Fast Project Loading} preference if set or not.
 @code{-eL} is used by GNAT tools to specify whether symbolink links
 should be followed or not when parsing projects.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
 
 @item %X
 Replaced by a list of switches of the form -X<variable>=<value>, where
