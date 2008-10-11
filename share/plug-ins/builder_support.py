@@ -106,7 +106,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="Project" name="Custom...">
+<target model="custom" category="Project" name="Custom Build...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-custom-build</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -253,26 +253,26 @@ Semantic_Check_Target = """
 
 # Targets to clear the current project using the gprclean model
 Clean_Targets = """
-<target model="gprclean" category="Project" name="C_lean Root">
-    <in-toolbar>FALSE</in-toolbar>
-    <icon>gps-clean</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <read-only>TRUE</read-only>
-    <default-command-line>
-       <arg>%gprclean</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-    </default-command-line>
-</target>
-<target model="gprclean" category="Project" name="Clean _All">
-    <in-toolbar>FALSE</in-toolbar>
+<target model="gprclean" category="Clean" name="Clean _All">
+    <in-toolbar>TRUE</in-toolbar>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <default-command-line>
        <arg>%gprclean</arg>
        <arg>-r</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+    </default-command-line>
+</target>
+<target model="gprclean" category="Clean" name="C_lean Root">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gps-clean</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <default-command-line>
+       <arg>%gprclean</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
