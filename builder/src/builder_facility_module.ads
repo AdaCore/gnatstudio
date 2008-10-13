@@ -60,11 +60,17 @@
 --  (1) (2) (3) (5) depend on GPS internals
 
 with GPS.Kernel;
+with Build_Configurations;
 
 package Builder_Facility_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module
+
+private
+
+   function Registry return Build_Configurations.Build_Config_Registry_Access;
+   --  Return the registry stored in the module
 
 end Builder_Facility_Module;
