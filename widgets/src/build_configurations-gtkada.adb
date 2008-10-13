@@ -284,9 +284,15 @@ package body Build_Configurations.Gtkada is
    procedure On_Entry_Changed (UI : access Build_UI_Record'Class) is
       T : constant Target_UI_Access := UI.Target_UI;
    begin
-      Set_Text
-        (T.Expanded_Entry,
-         UI.Expand_Cmd_Line (Get_Text (Get_Entry (T.Editor))));
+      if UI.Expand_Cmd_Line = null then
+         Set_Text
+           (T.Expanded_Entry,
+            Get_Text (Get_Entry (T.Editor)));
+      else
+         Set_Text
+           (T.Expanded_Entry,
+            UI.Expand_Cmd_Line (Get_Text (Get_Entry (T.Editor))));
+      end if;
 
    exception
       when E : others =>
@@ -587,9 +593,17 @@ package body Build_Configurations.Gtkada is
             After       => True);
 
          Gtk_New (Box.Expanded_Entry);
-         Set_Text
-           (Box.Expanded_Entry,
-            UI.Expand_Cmd_Line (Get_Text (Get_Entry (Box.Editor))));
+
+         if UI.Expand_Cmd_Line = null then
+            Set_Text
+              (Box.Expanded_Entry,
+               Get_Text (Get_Entry (Box.Editor)));
+         else
+            Set_Text
+              (Box.Expanded_Entry,
+               UI.Expand_Cmd_Line (Get_Text (Get_Entry (Box.Editor))));
+         end if;
+
          Set_Editable (Box.Expanded_Entry, False);
          Set_Sensitive (Box.Expanded_Entry, False);
          Pack_Start (Box, Box.Expanded_Entry, True, True, 0);

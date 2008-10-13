@@ -67,7 +67,7 @@ package Build_Configurations.Gtkada is
    --  Result is set to null if the user canceled the dialog, otherwise to the
    --  the unexpanded command line.
    --  Expand_Cmd_Line will be used to expand meta characters in a command
-   --  line.
+   --  line if not null.
 
 private
 
