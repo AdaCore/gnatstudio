@@ -10617,6 +10617,52 @@ when you are writing a full python script, and want to test for yourself
 whether the context is properly defined.
 
 @table @code
+@item %a
+If the user clicked within the Locations Window, this is the name of the
+category to which the current line belongs
+
+@item %builder
+Replaced by the default builder configured in GPS.
+This can be e.g. @code{gnatmake}, or @code{gprbuild}.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
+
+@item %c
+This is the column number on which the user clicked.
+Python equivalent:
+@smallexample
+GPS.current_context().column()
+@end smallexample
+
+@item %d
+The current directory.
+Python equivalent:
+@smallexample
+GPS.current_context().directory()
+@end smallexample
+
+@item %dk
+The krunched name of the current directory.
+
+@item %e
+Name of the entity the user clicked on.
+Python equivalent:
+@smallexample
+GPS.current_context().entity().name()
+@end smallexample
+
+@item %ek
+Krunched name of the entity the user clicked on.
+This is the same as @code{%e}, except long names are shorted as in @code{%fk}.
+
+@item %eL
+Replaced by either an empty string, or @code{-eL}, depending on whether the
+@code{Fast Project Loading} preference if set or not.
+@code{-eL} is used by GNAT tools to specify whether symbolink links
+should be followed or not when parsing projects.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
+
 @item %f
 Base name of the currently selected file.
 Python equivalent:
@@ -10638,44 +10684,20 @@ This is the same as %f, except that long names are shortened, and their middle
 letters are replaced by "[...]". This should be used in particular in menu
 labels, to keep the menus narrow.
 
-@item %e
-Name of the entity the user clicked on.
-Python equivalent:
-@smallexample
-GPS.current_context().entity().name()
-@end smallexample
+@item %fp
+Base name of the currently selected file. If the file is not part of the project
+tree, or no file is selected, generate an error on the Messages window.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
 
-@item %ek
-Krunched name of the entity the user clicked on.
-This is the same as @code{%e}, except long names are shorted as in @code{%fk}.
+@item %gnatmake
+Replaced by the gnatmake executable configured in your project file.
 
-@item %d
-The current directory.
-Python equivalent:
-@smallexample
-GPS.current_context().directory()
-@end smallexample
-
-@item %dk
-The krunched name of the current directory.
-
-@item %l
-This is the line number on which the user clicked.
-Python equivalent:
-@smallexample
-GPS.current_context().line()
-@end smallexample
-
-@item %c
-This is the column number on which the user clicked.
-Python equivalent:
-@smallexample
-GPS.current_context().column()
-@end smallexample
-
-@item %a
-If the user clicked within the Locations Window, this is the name of the
-category to which the current line belongs
+@item %gprclean
+Replaced by the default cleaner configured in GPS.
+This can be e.g. @code{gnat clean}, or @code{gprclean}.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
 
 @item %i
 If the user clicked within the Project View, this is the name of the parent
@@ -10683,14 +10705,12 @@ project, ie the one that is importing the one the user clicked on. Note that
 with this definition of parent project, a given project might have multiple
 parents. The one that is returned is read from the Project View itself.
 
-@item %s
-This is the text selected by the user, if a single line was selected. When
-multiple lines were selected, this returns the empty string
-
-@item %S
-This is either the text selected by the user, of the current entity if there
-is no selection. If the entity is part of an expression ("A.B.C"), then the
-whole expression is used instead of the entity name.
+@item %l
+This is the line number on which the user clicked.
+Python equivalent:
+@smallexample
+GPS.current_context().line()
+@end smallexample
 
 @item %p
 The current project. This is the name of the project, not the project file, ie
@@ -10779,6 +10799,25 @@ name of that file. This file is never deleted by GPS, it is your responsibility
 to do so.
 @end table
 
+@item %s
+This is the text selected by the user, if a single line was selected. When
+multiple lines were selected, this returns the empty string
+
+@item %S
+This is either the text selected by the user, of the current entity if there
+is no selection. If the entity is part of an expression ("A.B.C"), then the
+whole expression is used instead of the entity name.
+
+@item %X
+Replaced by a list of switches of the form -X<variable>=<value>, where
+<variable> is the name of a scenario variable and <value> its current
+value, as configured in the Scenario View. All the scenario variables
+defined in the current project tree will be listed.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
+
+@item %%
+Replaced by the % sign.
 @end table
 
 @cindex example
@@ -10796,40 +10835,6 @@ sub projects, recursively.
 Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported sub projects,
 recursively.
-
-@item %gnatmake
-Replaced by the gnatmake executable configured in your project file.
-
-@item %builder
-Replaced by the default builder configured in GPS.
-This can be e.g. @code{gnatmake}, or @code{gprbuild}.
-Note: this macro is only available in the commands defined in the Build
-Manager and the Build Launcher dialogs.
-
-@item %gprclean
-Replaced by the default cleaner configured in GPS.
-This can be e.g. @code{gnat clean}, or @code{gprclean}.
-Note: this macro is only available in the commands defined in the Build
-Manager and the Build Launcher dialogs.
-
-@item %eL
-Replaced by either an empty string, or @code{-eL}, depending on whether the
-@code{Fast Project Loading} preference if set or not.
-@code{-eL} is used by GNAT tools to specify whether symbolink links
-should be followed or not when parsing projects.
-Note: this macro is only available in the commands defined in the Build
-Manager and the Build Launcher dialogs.
-
-@item %X
-Replaced by a list of switches of the form -X<variable>=<value>, where
-<variable> is the name of a scenario variable and <value> its current
-value, as configured in the Scenario View. All the scenario variables
-defined in the current project tree will be listed.
-Note: this macro is only available in the commands defined in the Build
-Manager and the Build Launcher dialogs.
-
-@item %%
-Replaced by the % sign.
 @end table
 
 Another type of macros are expanded before commands are executed: These
