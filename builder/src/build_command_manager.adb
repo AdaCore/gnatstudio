@@ -202,19 +202,25 @@ package body Build_Command_Manager is
             File : constant Virtual_File := File_Information (Context);
          begin
             if File = No_File then
-               Console.Insert
-                 (Kernel, -"No file selected", Mode => Console.Error);
-               raise Invalid_Argument;
-
+               if Simulate then
+                  return (1 => new String'("<current-file>"));
+               else
+                  Console.Insert
+                    (Kernel, -"No file selected", Mode => Console.Error);
+                  raise Invalid_Argument;
+               end if;
             elsif Get_Project_From_File
               (Get_Registry (Kernel).all, File, False) = No_Project
             then
-               Console.Insert
-                 (Kernel, -"Could not determine the project for file: "
-                  & Full_Name (File).all,
-                  Mode => Console.Error);
-               raise Invalid_Argument;
-
+               if Simulate then
+                  return (1 => new String'("<current-file>"));
+               else
+                  Console.Insert
+                    (Kernel, -"Could not determine the project for file: "
+                     & Full_Name (File).all,
+                     Mode => Console.Error);
+                  raise Invalid_Argument;
+               end if;
             else
                return (1 => new String'(Base_Name (File)));
             end if;
