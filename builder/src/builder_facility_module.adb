@@ -54,6 +54,7 @@ with Traces;                    use Traces;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
 
 with Commands.Builder;          use Commands.Builder;
@@ -834,6 +835,11 @@ package body Builder_Facility_Module is
                 Wrapper (On_Compilation_Starting'Access),
                 Name => "builder_facility_module.compilation_starting");
 
+      --  Register the shell commands
+
+      Builder_Facility_Module.Scripts.Register_Commands
+        (Kernel_Handle (Kernel));
+
       --  Insert a separator in the toolbar
 
       Gtk_New (Space);
@@ -843,5 +849,15 @@ package body Builder_Facility_Module is
       --  Load the user-defined targets.
       Load_Targets;
    end Register_Module;
+
+   --------------
+   -- Registry --
+   --------------
+
+   function Registry
+     return Build_Configurations.Build_Config_Registry_Access is
+   begin
+      return Builder_Module_ID.Registry;
+   end Registry;
 
 end Builder_Facility_Module;
