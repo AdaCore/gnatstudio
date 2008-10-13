@@ -950,7 +950,7 @@ package body Build_Configurations.Gtkada is
       end if;
 
       Gtk_New (Dialog => Dialog,
-               Title  => (-"Build target '") & Target & "'",
+               Title  => Target,
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent or No_Separator);
 
