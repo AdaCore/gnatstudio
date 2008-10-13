@@ -62,7 +62,10 @@ package body GPS.Kernel.Actions is
          Activate (Menu);
          return Success;
       else
-         Trace (Me, "Can't execute " & Command.Menu_Name.all);
+         Console.Insert
+           (Command.Kernel,
+            (-"Can't execute ") & Command.Menu_Name.all,
+            Mode => Error);
          return Failure;
       end if;
    end Execute;
