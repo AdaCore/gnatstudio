@@ -379,7 +379,7 @@ package body Build_Command_Manager is
       case Get_Properties (T).Launch_Mode is
          when On_File_Save =>
             Quiet := True;
-         when Manually | Manually_With_Dialog =>
+         when Manually | Manually_With_No_Dialog | Manually_With_Dialog =>
             Quiet := False;
       end case;
 

@@ -624,7 +624,12 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Menus.Append (Cat_Path);
       end if;
 
-      Create (C, Get_Kernel, Builder_Module_ID.Registry, Name, True);
+      Create
+        (C,
+         Get_Kernel,
+         Builder_Module_ID.Registry,
+         Name,
+         Get_Properties (Target).Launch_Mode = Manually);
       Register_Menu (Kernel      => Get_Kernel,
                      Parent_Path => To_String (Cat_Path),
                      Text        => Menu_Name,

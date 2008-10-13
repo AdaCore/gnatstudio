@@ -155,12 +155,17 @@ package Build_Configurations is
    -----------------------
 
    type Launch_Mode_Type is
-     (Manually_With_Dialog,
-      --  Target is build when requested by user, and display a dialog for
-      --  allowing extra arguments whenever launched
+     (Manually,
+      --  Target should be built when requested by user. Won't use a dialog for
+      --  buttons, but will for menus.
 
-      Manually,
-      --  Target should be built when requested by user
+      Manually_With_Dialog,
+      --  Target is built when requested by user, and display a dialog for
+      --  allowing extra arguments whenever launched.
+
+      Manually_With_No_Dialog,
+      --  Target should be built when requested by user, never using an
+      --  extra dialog.
 
       On_File_Save
       --  Target should be built when saving a source file
