@@ -169,7 +169,6 @@ class gnatMakeProc:
          except:
             print "Exception thrown in ada_support.py"
             xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
-         GPS.Console ("Messages").write (xmlCompiler)
          GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
 
    def add_switch (self, process, matched, unmatched):
