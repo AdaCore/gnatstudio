@@ -22,15 +22,18 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with GNATCOLL.Templates; use GNATCOLL.Templates;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.Macros;  use GPS.Kernel.Macros;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Macros;      use GPS.Kernel.Macros;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Intl;               use GPS.Intl;
+with Projects.Registry;      use Projects.Registry;
 
-with Commands.Builder;   use Commands.Builder;
+with Commands.Builder; use Commands.Builder;
 
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 
@@ -194,6 +197,28 @@ package body Build_Command_Manager is
             end if;
          end;
 
+      elsif Arg = "%fp" then
+         declare
+            File : constant Virtual_File := File_Information (Context);
+         begin
+            if File = No_File then
+               Console.Insert
+                 (Kernel, -"No file selected", Mode => Console.Error);
+               raise Invalid_Argument;
+
+            elsif Get_Project_From_File
+              (Get_Registry (Kernel).all, File, False) = No_Project
+            then
+               Console.Insert
+                 (Kernel, -"Could not determine the project for file: "
+                  & Full_Name (File).all,
+                  Mode => Console.Error);
+               raise Invalid_Argument;
+
+            else
+               return (1 => new String'(Base_Name (File)));
+            end if;
+         end;
       else
          return (1 => new String'
                    (GNATCOLL.Templates.Substitute
