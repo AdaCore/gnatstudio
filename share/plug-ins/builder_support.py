@@ -213,7 +213,7 @@ Compile_File_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%f</arg>
+       <arg>%fp</arg>
     </default-command-line>
     <key>shift-F4</key>
 </target>
@@ -249,7 +249,7 @@ Semantic_Check_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%F</arg>
+       <arg>%fp</arg>
     </default-command-line>
 </target>
 """
