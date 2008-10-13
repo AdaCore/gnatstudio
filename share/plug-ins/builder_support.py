@@ -21,6 +21,7 @@ Builder_Model_Template = """
    <switches command="%(tool_name)s" columns="2" lines="2">
      <title column="1" line="1" >Dependencies</title>
      <title column="2" line="1" >Compilation</title>
+     <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
             tip="Recompile if compiler switches have changed since last compilation" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
@@ -30,6 +31,8 @@ Builder_Model_Template = """
             tip="Display a progress bar with information about how many files are left to be compiled" />
      <check label="Keep going" switch="-k" column="2"
             tip="Continue as much as possible after a compilation error" />
+     <check label="Create object dirs" switch="-p" line="2" column="2"
+            tip="Create missing object and library directories" />
    </switches>
 </target-model>
 """
@@ -50,6 +53,7 @@ Gnatmake_Model_Template = """
      <title column="1" line="1" >Dependencies</title>
      <title column="1" line="2" >Checks</title>
      <title column="2" line="1" >Compilation</title>
+     <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
             tip="Recompile if compiler switches have changed since last compilation" />
      <check label="Minimal recompilation" switch="-m"
@@ -67,6 +71,8 @@ Gnatmake_Model_Template = """
             tip="Perform syntax check, no compilation occurs" />
      <check label="Semantic check" switch="-gnatc" line="2"
             tip="Perform syntax and semantic check only, no compilation occurs" />
+     <check label="Create object dirs" switch="-p" line="2" column="2"
+            tip="Create missing object and library directories" />
    </switches>
 </target-model>
 """
@@ -134,7 +140,7 @@ Xrefs_Model_Template = """
       <arg>-P%PP</arg>
       <arg>%X</arg>
    </command-line>
-   <icon>gps-build-all</icon>
+   <icon>gps-compute-xref</icon>
    <server>Tools_Server</server>
    <switches command="%(tool_name)s" columns="1" lines="1">
      <check label="Minimal recompilation" switch="-m"
