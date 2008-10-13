@@ -811,8 +811,8 @@ package body Builder_Facility_Module is
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
-      --  Initialise the registy
-      Builder_Module_ID.Registry := Create (Log'Unrestricted_Access);
+      --  Initialise the registry
+      Builder_Module_ID.Registry := Create (Log'Access);
 
       Register_Module
         (Module      => Builder_Module_ID,
