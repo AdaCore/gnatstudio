@@ -213,7 +213,7 @@ Compile_File_Target = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%F</arg>
+       <arg>%f</arg>
     </default-command-line>
     <key>shift-F4</key>
 </target>
@@ -230,9 +230,6 @@ Syntax_Check_Target = """
        <arg>-q</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
        <arg>%F</arg>
     </default-command-line>
 </target>
