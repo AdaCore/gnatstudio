@@ -2388,7 +2388,9 @@ package body Builder_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
+      if Builder_Module_ID /= null then
+         String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
+      end if;
    end Append_To_Build_Output;
 
    ---------------------
