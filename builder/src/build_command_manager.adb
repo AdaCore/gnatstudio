@@ -405,7 +405,8 @@ package body Build_Command_Manager is
 
             if CL'Length = 0 then
                Insert
-                 (Kernel, -"Command line is empty for target: " & Target_Name);
+                 (Kernel, -"Command line is empty for target: " & Target_Name,
+                  Mode => Error);
                return;
             end if;
 
