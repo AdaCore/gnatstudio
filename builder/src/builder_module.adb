@@ -42,7 +42,6 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
-with Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -115,12 +114,6 @@ package body Builder_Module is
    Custom_Make_Suffix  : constant String := "Custom...";
    Current_Make_Suffix : constant String := "<current file>";
    Project_Make_Suffix : constant String := "Compile all sources";
-   All_Make_Suffix     : constant String := "All";
-   --  Name for various menus (need to be translated through)
-   --      -"Custom..."
-   --      -"<current file>"
-   --      -"Compile all sources"
-   --      -"All"
 
    Unique_Compile : aliased constant String := "-u";
    Follow_Links   : aliased constant String := "-eL";
@@ -162,7 +155,6 @@ package body Builder_Module is
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
-      Make_Menu  : Gtk.Menu.Gtk_Menu;
       Run_Menu   : Gtk.Menu.Gtk_Menu;
       --  The build menu, updated automatically every time the list of main
       --  units changes.
@@ -298,13 +290,6 @@ package body Builder_Module is
       Library : String);
    --  Add new entry for a library project
 
-   procedure Add_Root_Project_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean);
-   --  Add default entries in the Build menu
-   --  (build "all", "compile all sources")
-
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
@@ -347,10 +332,6 @@ package body Builder_Module is
    --  Build->Make menu.
    --  If Data contains a null file name, then the current file is compiled.
 
-   procedure On_Build_Project
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Make->All/Compile all sources menus
-
    procedure On_Build_Library
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  To build a library project
@@ -372,10 +353,6 @@ package body Builder_Module is
    --  the main units of Project are built (Main_Units = True), or all the
    --  files in the project are built.
    --  Extra_Args will be added at the end of the argument list.
-
-   procedure On_Custom
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Build->Custom... menu
 
    procedure On_Compute_Xref
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -933,17 +910,6 @@ package body Builder_Module is
    end On_Build;
 
    ----------------------
-   -- On_Build_Project --
-   ----------------------
-
-   procedure On_Build_Project
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
-   begin
-      On_Build
-        (Kernel_Handle (Kernel), Data.File, Data.Project, Main_Units => True);
-   end On_Build_Project;
-
-   ----------------------
    -- On_Build_Library --
    ----------------------
 
@@ -1249,83 +1215,6 @@ package body Builder_Module is
            (Kernel, Command_Access (C), True, True, "");
       end if;
    end Compile_Command;
-
-   ---------------
-   -- On_Custom --
-   ---------------
-
-   procedure On_Custom
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Cmd : constant String := Simple_Entry_Dialog
-        (Parent   => Get_Current_Window (Kernel),
-         Title    => -"Custom Execution",
-         Message  => -"Enter the command to execute:",
-         Position => Gtk.Enums.Win_Pos_Mouse,
-         History  => Get_History (Kernel),
-         Key      => "gps_custom_command");
-      Success : Boolean;
-      Args    : Argument_List_Access;
-
-   begin
-      if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
-         return;
-      end if;
-
-      if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
-         if Shell_Env /= "" and then Is_Local (Build_Server) then
-            --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
-            --  is local.
-
-            Args := new Argument_List'(new String'("-c"), new String'(Cmd));
-            Launch_Process
-              (Kernel,
-               Command              => Shell_Env,
-               Arguments            => Args.all,
-               Server               => Build_Server,
-               Console              => Get_Console (Kernel),
-               Show_Command         => True,
-               Show_Output          => False,
-               Callback_Data        => new Files_Callback_Data,
-               Success              => Success,
-               Line_By_Line         => False,
-               Callback             => Parse_Compiler_Output'Access,
-               Exit_Cb              => Free_Temporary_Files'Access,
-               Show_In_Task_Manager => True,
-               Synchronous          => False,
-               Show_Exit_Status     => True);
-
-         else
-            Args := Argument_String_To_List (Cmd);
-
-            --  ??? Is this always the Build_Server ? Should ask the user ?
-
-            Launch_Process
-              (Kernel,
-               Command              => Args (Args'First).all,
-               Arguments            => Args (Args'First + 1 .. Args'Last),
-               Server               => Build_Server,
-               Console              => Get_Console (Kernel),
-               Show_Command         => True,
-               Show_Output          => False,
-               Callback_Data        => new Files_Callback_Data,
-               Success              => Success,
-               Line_By_Line         => False,
-               Callback             => Parse_Compiler_Output'Access,
-               Exit_Cb              => Free_Temporary_Files'Access,
-               Show_In_Task_Manager => True,
-               Synchronous          => False,
-               Show_Exit_Status     => True);
-         end if;
-
-         Free (Args);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Custom;
 
    ------------------
    -- Xref_Iterate --
@@ -1848,52 +1737,6 @@ package body Builder_Module is
             File    => No_File));
    end Add_Build_Menu;
 
-   ---------------------------------
-   -- Add_Root_Project_Build_Menu --
-   ---------------------------------
-
-   procedure Add_Root_Project_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Set_Shortcut : Boolean)
-   is
-      pragma Warnings (Off, Menu);
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-      Mitem : Dynamic_Menu_Item;
-   begin
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -Project_Make_Suffix);
-      Append (Menu, Mitem);
-
-      if Set_Shortcut then
-         Set_Accel_Path
-           (Mitem, Make_Menu_Prefix & (Project_Make_Suffix), Group);
-      end if;
-
-      File_Project_Cb.Object_Connect
-        (Mitem, Signal_Activate, On_Build'Access,
-         Slot_Object => Kernel,
-         User_Data   => File_Project_Record'
-           (Project => Get_Project (Kernel),
-            File    => GNATCOLL.VFS.No_File));
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -All_Make_Suffix);
-      Append (Menu, Mitem);
-
-      if Set_Shortcut then
-         Set_Accel_Path
-           (Mitem, Make_Menu_Prefix & All_Make_Suffix, Group);
-      end if;
-
-      File_Project_Cb.Object_Connect
-        (Mitem, Signal_Activate, On_Build_Project'Access,
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Project => Get_Project (Kernel),
-            File    => GNATCOLL.VFS.No_File));
-   end Add_Root_Project_Build_Menu;
-
    ------------------
    -- Add_Run_Menu --
    ------------------
@@ -2013,7 +1856,6 @@ package body Builder_Module is
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       Mitem : Gtk_Menu_Item;
-      Menu1 : Gtk_Menu renames Builder_Module_ID.Make_Menu;
       Menu2 : Gtk_Menu renames Builder_Module_ID.Run_Menu;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
@@ -2047,11 +1889,6 @@ package body Builder_Module is
          Current_Project  : Project_Type := Current (Iter);
          Set_Shortcut     : Boolean := True;
       begin
-         if Builder_Module_ID.Make_Menu /= null then
-            Remove_All_Children (Builder_Module_ID.Make_Menu,
-                                 Is_Dynamic_Menu_Item'Access);
-         end if;
-
          if Builder_Module_ID.Run_Menu /= null then
             Remove_All_Children (Builder_Module_ID.Run_Menu,
                                  Is_Dynamic_Menu_Item'Access);
@@ -2099,13 +1936,6 @@ package body Builder_Module is
                   if Mains'Length /= 0 then
                      Set_Shortcut := Current_Project = Loaded_Project;
 
-                     Add_Build_Menu
-                       (Menu         => Builder_Module_ID.Make_Menu,
-                        Project      => Context_Project,
-                        Kernel       => Kernel,
-                        Mains        => Mains,
-                        Set_Shortcut => Set_Shortcut);
-
                      Add_Run_Menu
                        (Menu         => Builder_Module_ID.Run_Menu,
                         Project      => Context_Project,
@@ -2125,30 +1955,6 @@ package body Builder_Module is
 
          Free (Loaded_Mains);
       end;
-
-      Add_Root_Project_Build_Menu (Builder_Module_ID.Make_Menu, Kernel, True);
-
-      --  No main program?
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -Current_Make_Suffix);
-      Append (Menu1, Mitem);
-      Set_Accel_Path
-        (Mitem, Make_Menu_Prefix & Current_Make_Suffix, Group);
-      File_Project_Cb.Object_Connect
-        (Mitem, Signal_Activate, On_Build'Access,
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Project => No_Project,
-            File    => GNATCOLL.VFS.No_File));
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
-      Append (Menu1, Mitem);
-      Kernel_Callback.Connect
-        (Mitem, Signal_Activate, On_Custom'Access,
-         User_Data => Kernel_Handle (Kernel));
-      Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
 
       --  Should be able to run any program
 
@@ -2173,7 +1979,6 @@ package body Builder_Module is
         (Mitem, Signal_Activate, On_Run_Last_Launched'Access,
          User_Data => Kernel_Handle (Kernel));
 
-      Show_All (Menu1);
       Show_All (Menu2);
 
       if Automatic_Xrefs_Load.Get_Pref then
