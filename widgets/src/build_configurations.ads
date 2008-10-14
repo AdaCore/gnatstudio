@@ -271,9 +271,6 @@ package Build_Configurations is
    --                ...
    --           <arg>ARGN</arg>
    --     </command-line>
-   --     <default-command-line>
-   --          (same syntax as command-line)
-   --     </default-command-line>
    --  </target>
    --
    --  Where
@@ -298,14 +295,18 @@ package Build_Configurations is
    function Load_Target_From_XML
      (Registry     : Build_Config_Registry_Access;
       XML          : Node_Ptr;
-      Allow_Update : Boolean) return Target_Access;
+      From_User    : Boolean) return Target_Access;
    --  Read a target from a XML node and load it in Registry.
    --  Note: this must be called only after all necessary target models have
    --  been loaded.
-   --  If a target with the same identifier already exists:
-   --      - if Allow_Update is False, no target is added
-   --      - if Allow_Update is True, then the existing target is updated with
-   --        the properties and command line described in XML.
+   --  From_User indicates whether the target comes from the user configuration
+   --  file.
+   --      - if From_User is False, the target is created and copied
+   --           to the original targets. If the target already exists, an
+   --           error is raised
+   --      - if From_User is True, then the existing target is updated with
+   --           the properties and command line described in XML. The original
+   --           targets list is not modified.
    --  Return the new Target, or null if the target could not be created.
 
    function Save_All_Targets_To_XML
@@ -350,6 +351,11 @@ package Build_Configurations is
 
    procedure Next (Cursor : in out Target_Cursor);
    --  Iterate to the next target
+
+   procedure Revert_Target
+     (Registry : Build_Config_Registry_Access;
+      Target   : String);
+   --  Revert Target to its original
 
 private
 
@@ -409,6 +415,9 @@ private
       Targets : Target_List.List;
       --  Contains all registered targets
 
+      Original_Targets : Target_List.List;
+      --  Contains a copy of all targets as they were originally created
+
       Modes   : Build_Mode_Map.Map;
       --  Contains all registered modes
 
@@ -444,10 +453,6 @@ private
 
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
-
-      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
-      --  The default command line for this target.
-      --  This is used to implement the "reset" button on targets.
 
       Properties : Target_Properties;
       --  The set of target properties
