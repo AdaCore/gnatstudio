@@ -651,6 +651,7 @@ package body Build_Configurations is
       if Target.Command_Line /= null then
          C.Next := Command_Line_To_XML
            (Target.Command_Line.all, "command-line");
+         C := C.Next;
       end if;
 
       if Target.Default_Command_Line /= null then
