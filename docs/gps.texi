@@ -155,7 +155,6 @@ Searching and Replacing
 
 Compilation/Build
 * The Build Menu::
-* The Dual Compilation Mode::
 
 Source Browsing
 * General Issues::
@@ -4992,7 +4991,6 @@ errors or warnings (see @ref{Code Fixing}).
 
 @menu
 * The Build Menu::
-* The Dual Compilation Mode::
 @end menu
 
 @node The Build Menu
@@ -5105,7 +5103,6 @@ not needed, @xref{Support for Cross-References}.
    variable is defined (to e.g. @code{/bin/sh}), then the syntax used to
    execute the command is the one for this shell. Otherwise, the command
    will be spawned directly by GPS without any shell interpretation.
-   @end table
 
    @item Last Launched
    This menu spawns the same command you previously spawned through the Run
@@ -5113,6 +5110,16 @@ not needed, @xref{Support for Cross-References}.
    dialog to a key shortcut through the @code{/Edit/Key Shortcuts} menu, this
    provides a convenient way to spawn the same command multiple times
 
+   @end table
+
+@item Settings
+   @table @i
+   @item Targets
+   @c ??? TODO
+   @item Toolchains
+   @c ??? TODO
+
+   @end table
 @end table
 
 The @code{Tools->Interrupt} menu can be used to interrupt the last compilation
@@ -5127,12 +5134,6 @@ that process.
 
 If your application is build through a Makefile, you should probably load
 the @file{Makefile.py} startup script (see the menu @code{/Tools/Plug-ins}).
-
-@node The Dual Compilation Mode
-@section The Dual Compilation Mode
-@noindent
-
-??? TODO
 
 @c --------------------------------------------------------------------
 @node Source Browsing
