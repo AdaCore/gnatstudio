@@ -112,7 +112,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="_Project" name="Custom Build...">
+<target model="custom" category="_Project" name="Custom _Build...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-custom-build</icon>
     <launch-mode>MANUALLY</launch-mode>
