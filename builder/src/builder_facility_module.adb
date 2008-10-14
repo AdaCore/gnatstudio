@@ -821,7 +821,7 @@ package body Builder_Facility_Module is
          Module_Name => "Builder Facility");
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
-      Register_Menu (Kernel, Main_Menu & (-"_Settings"), -"_Targets", "",
+      Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
                      On_Build_Manager'Access);
 
       --  Connect to the File_Saved_Hook

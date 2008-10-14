@@ -664,7 +664,7 @@ package body Build_Configurations.Gtkada is
       Changes_Made := False;
 
       Gtk_New (Dialog => Dialog,
-               Title  => -"Build Configuration",
+               Title  => -"Target Configuration",
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent or No_Separator);
 
