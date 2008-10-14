@@ -348,7 +348,8 @@ package body Commands.Builder is
       CL             : GNAT.OS_Lib.String_List_Access;
       Target_Name    : String;
       Server         : Server_Type;
-      Quiet          : Boolean)
+      Quiet          : Boolean;
+      Synchronous    : Boolean)
    is
       Data    : Build_Callback_Data_Access;
       Success : Boolean;
@@ -382,7 +383,7 @@ package body Commands.Builder is
             Callback             => Build_Callback'Access,
             Exit_Cb              => End_Build_Callback'Access,
             Show_In_Task_Manager => True,
-            Synchronous          => False,
+            Synchronous          => Synchronous,
             Show_Exit_Status     => True);
 
          --  ??? check value of Success
