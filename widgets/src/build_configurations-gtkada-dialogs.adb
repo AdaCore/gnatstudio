@@ -229,6 +229,7 @@ package body Build_Configurations.Gtkada.Dialogs is
    is
       Button : Gtk_Button;
       pragma Unreferenced (Button);
+      Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
       Dialog : Gtk_Dialog;
       Combo  : Gtk_Combo_Box_Entry;
       Label  : Gtk_Label;
@@ -248,9 +249,11 @@ package body Build_Configurations.Gtkada.Dialogs is
    begin
       Cancelled := False;
 
-      Gtk_New (Dialog);
-      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
-      Set_Title (Dialog, -"New target");
+      Gtk_New (Dialog => Dialog,
+               Title  => -"New target",
+               Parent => Parent,
+               Flags  => Modal or Destroy_With_Parent);
+      Set_Transient_For (Dialog, Parent);
 
       Gtk_New (Table, 3, 2, False);
 
@@ -380,6 +383,7 @@ package body Build_Configurations.Gtkada.Dialogs is
       Dialog : Gtk_Dialog;
       Button : Gtk_Button;
       pragma Unreferenced (Button);
+      Parent : constant Gtk_Window := Gtk_Window (Get_Toplevel (UI));
       Combo  : Gtk_Combo_Box_Entry;
       Label  : Gtk_Label;
 
@@ -394,9 +398,11 @@ package body Build_Configurations.Gtkada.Dialogs is
    begin
       Cancelled := False;
 
-      Gtk_New (Dialog);
-      Set_Transient_For (Dialog, Gtk_Window (Get_Toplevel (UI)));
-      Set_Title (Dialog, -"Clone target");
+      Gtk_New (Dialog => Dialog,
+               Title  => -"Clone target",
+               Parent => Parent,
+               Flags  => Modal or Destroy_With_Parent);
+      Set_Transient_For (Dialog, Parent);
 
       Gtk_New (Table, 3, 2, False);
 

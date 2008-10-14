@@ -715,6 +715,9 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Add, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
+      Set_Tip (Tooltips    => UI.Tooltips,
+               Widget      => Button,
+               Tip_Text    => -"Add new target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -727,6 +730,9 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
+      Set_Tip (Tooltips    => UI.Tooltips,
+               Widget      => Button,
+               Tip_Text    => -"Remove selected target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -739,6 +745,9 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Image, Stock_New, Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
+      Set_Tip (Tooltips    => UI.Tooltips,
+               Widget      => Button,
+               Tip_Text    => -"Clone selected target");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
