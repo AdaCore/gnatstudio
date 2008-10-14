@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings; use GNAT.Strings;
-with Dualcompilation;
+with Toolchains;
 
 package body Remote is
 
@@ -65,7 +65,7 @@ package body Remote is
       if Server in Distant_Server_Type then
          return Servers (Server).Is_Local;
       elsif Server = Tools_Server then
-         if Dualcompilation.Is_Dualcompilation_Active then
+         if Toolchains.Is_Toolchains_Active then
             return True;
          else
             return Servers (Build_Server).Is_Local;

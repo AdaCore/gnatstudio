@@ -84,7 +84,6 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Basic_Types;
-with Dualcompilation;            use Dualcompilation;
 with Filesystems;                use Filesystems;
 with GUI_Utils;                  use GUI_Utils;
 with Interactive_Consoles;       use Interactive_Consoles;
@@ -92,6 +91,7 @@ with Projects;                   use Projects;
 with Remote.Path.Translator;     use Remote.Path, Remote.Path.Translator;
 with Shell_Descriptors;          use Shell_Descriptors;
 with String_Utils;               use String_Utils;
+with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
 with XML_Parsers;
 
@@ -3793,17 +3793,19 @@ package body GPS.Kernel.Remote is
          declare
             Oldpath : String_Access;
          begin
-            if Is_Dualcompilation_Active then
+            if Is_Toolchains_Active then
                Oldpath := Getenv ("PATH");
+
                if Server = Build_Server then
-                  Setenv ("PATH", Get_Compiler_Search_Path &
-                          Path_Separator &
-                          Oldpath.all);
+                  Setenv
+                    ("PATH", Get_Compiler_Search_Path & Path_Separator &
+                     Oldpath.all);
                else
-                  Setenv ("PATH", Get_Tool_Search_Path &
-                          Path_Separator &
-                          Oldpath.all);
+                  Setenv
+                    ("PATH", Get_Tool_Search_Path & Path_Separator &
+                     Oldpath.all);
                end if;
+
                Trace (Me, Getenv ("PATH").all);
             end if;
 
@@ -3814,7 +3816,7 @@ package body GPS.Kernel.Remote is
                Buffer_Size => 0,
                Err_To_Out  => True);
 
-            if Is_Dualcompilation_Active then
+            if Is_Toolchains_Active then
                Setenv ("PATH", Oldpath.all);
                Free (Oldpath);
             end if;

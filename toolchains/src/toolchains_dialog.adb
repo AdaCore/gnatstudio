@@ -35,21 +35,21 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
-with Dualcompilation;           use Dualcompilation;
+with Toolchains;                use Toolchains;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 
-package body Dualcompilation_Dialog is
+package body Toolchains_Dialog is
 
-   package Dualc_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Dualc_Dialog);
+   package Dialog_Callback is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Dialog);
 
    type Entry_Callback_Data is record
-      The_Entry : Gtk_Entry;
-      Dialog    : Dualc_Dialog;
+      E : Gtk_Entry;
+      D : Dialog;
    end record;
 
    package Entry_Callback is new Gtk.Handlers.User_Callback
@@ -57,12 +57,12 @@ package body Dualcompilation_Dialog is
 
    procedure Activate_Toggled
      (Toggle : access Gtk_Widget_Record'Class;
-      Dialog : Dualc_Dialog);
+      D      : Dialog);
    --  Called when the 'Activate' check button is toggled
 
    procedure Xrefs_Toggled
      (Toggle : access Gtk_Widget_Record'Class;
-      Dialog : Dualc_Dialog);
+      D      : Dialog);
    --  Called when the 'Activate' check button is toggled
 
    procedure On_Browse
@@ -76,11 +76,11 @@ package body Dualcompilation_Dialog is
 
    procedure Activate_Toggled
      (Toggle : access Gtk_Widget_Record'Class;
-      Dialog : Dualc_Dialog)
+      D      : Dialog)
    is
    begin
-      Dialog.Active := Get_Active (Gtk_Check_Button (Toggle));
-      Set_Sensitive (Dialog.Frame, Dialog.Active);
+      D.Active := Get_Active (Gtk_Check_Button (Toggle));
+      Set_Sensitive (D.Frame, D.Active);
 
    exception
       when E : others =>
@@ -93,10 +93,10 @@ package body Dualcompilation_Dialog is
 
    procedure Xrefs_Toggled
      (Toggle : access Gtk_Widget_Record'Class;
-      Dialog : Dualc_Dialog)
+      D      : Dialog)
    is
    begin
-      Dialog.Xrefs_Subdir := Get_Active (Gtk_Check_Button (Toggle));
+      D.Xrefs_Subdir := Get_Active (Gtk_Check_Button (Toggle));
 
    exception
       when E : others =>
@@ -111,8 +111,7 @@ package body Dualcompilation_Dialog is
      (Button : access Gtk_Widget_Record'Class;
       Data   : Entry_Callback_Data)
    is
-      Current_Dir : constant String :=
-                      Get_Text (Data.The_Entry);
+      Current_Dir : constant String := Get_Text (Data.E);
       Start_Dir   : Virtual_File;
    begin
       if Current_Dir /= "" then
@@ -132,7 +131,7 @@ package body Dualcompilation_Dialog is
                     Parent         => Gtk_Window (Get_Toplevel (Button)));
          Compiler : constant String :=
                       Projects.Get_Attribute_Value
-                        (GPS.Kernel.Project.Get_Project (Data.Dialog.Kernel),
+                        (GPS.Kernel.Project.Get_Project (Data.D.Kernel),
                          Projects.Compiler_Command_Attribute,
                          Default => "gnatmake",
                          Index   => "Ada");
@@ -144,7 +143,7 @@ package body Dualcompilation_Dialog is
             if Exec /= null then
                --  OK, we could locate a valid compiler.
                Free (Exec);
-               Set_Text (Data.The_Entry, Dir.Full_Name.all);
+               Set_Text (Data.E, Dir.Full_Name.all);
 
             else
                --  No compiler found: let's display an error.
@@ -158,10 +157,10 @@ package body Dualcompilation_Dialog is
                      Dialog_Type    => Gtkada.Dialogs.Error,
                      Buttons        => Button_OK + Button_Cancel,
                      Title          => -"Invalid compiler path",
-                     Parent         => Gtk_Window (Data.Dialog));
+                     Parent         => Gtk_Window (Data.D));
 
                   if Resp = Button_OK then
-                     Set_Text (Data.The_Entry, Dir.Full_Name.all);
+                     Set_Text (Data.E, Dir.Full_Name.all);
                   end if;
                end;
             end if;
@@ -178,7 +177,7 @@ package body Dualcompilation_Dialog is
    -------------
 
    procedure Gtk_New
-     (Widget            : out Dualc_Dialog;
+     (Widget            : out Dialog;
       Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active            : Boolean;
       Tools_Path        : String;
@@ -195,25 +194,25 @@ package body Dualcompilation_Dialog is
       pragma Unreferenced (Dead);
 
    begin
-      Widget := new Dualc_Dialog_Record;
+      Widget := new Dialog_Record;
       Widget.Kernel       := Kernel_Handle (Kernel);
       Widget.Active       := Active;
       Widget.Xrefs_Subdir := Use_Xrefs_Subdirs;
 
       Initialize
         (Widget,
-         Title  => -"Dual compilation setup",
+         Title  => -"Toolchains Configuration",
          Parent => GPS.Kernel.Get_Main_Window (Kernel),
          Flags  => Modal);
 
       Dead := Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK);
       Dead := Widget.Add_Button (Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
 
-      Gtk_New (Check, -"Activate the dual compilation mode");
+      Gtk_New (Check, -"Activate the toolchains setup");
       Show_All (Check);
       Set_Active (Check, Widget.Active);
       Widget.Get_Vbox.Add (Check);
-      Dualc_Callback.Connect
+      Dialog_Callback.Connect
         (Check, Signal_Toggled, Activate_Toggled'Access, Widget);
 
       Gtk_New (Widget.Frame, -"Paths");
@@ -247,11 +246,9 @@ package body Dualcompilation_Dialog is
            "Note concerning the interraction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
-           "this path will be ignored. However, the dual compilation mode " &
-           "still applies, as actions that would normally execute with this " &
-           "path will continue to be executed on the remote host, while " &
-           "actions that are executed using the tools path will be executed " &
-           "locally."));
+           "this path will be ignored, and the regular server's search path " &
+           "will be used. However, actions executed using the Tools path " &
+           "will be executed locally."));
 
       Gtk_New (Label, -"Tools path");
       Set_Alignment (Label, 1.0, 0.5);
@@ -266,7 +263,13 @@ package body Dualcompilation_Dialog is
         (Tips, Widget.Tools_Entry,
          -("This path will be used to spawn all actions not related to code" &
            " generation. These actions are (the list is not exclusive)" &
-           " gnatcheck, gnatmetrics, cross-reference generation."));
+           " gnatcheck, gnatmetrics, cross-reference generation." &
+           ASCII.LF & ASCII.LF &
+           "Note concerning the interraction with the remote mode:" &
+           ASCII.LF &
+           "In case you have defined a build server for your project, then " &
+           "defining a tools path will make all actions enumerated above " &
+           "execute locally using the tools path."));
 
       for J in 1 .. 2 loop
          Gtk_New (Browse);
@@ -285,14 +288,14 @@ package body Dualcompilation_Dialog is
             Entry_Callback.Connect
               (Browse, Signal_Clicked,
                On_Browse'Access,
-               (The_Entry => Widget.Compiler_Entry,
-                Dialog    => Widget));
+               (E => Widget.Compiler_Entry,
+                D => Widget));
          else
             Entry_Callback.Connect
               (Browse, Signal_Clicked,
                On_Browse'Access,
-               (The_Entry => Widget.Compiler_Entry,
-                Dialog    => Widget));
+               (E => Widget.Compiler_Entry,
+                D => Widget));
          end if;
       end loop;
 
@@ -304,18 +307,18 @@ package body Dualcompilation_Dialog is
       Attach (Table, Check, 0, 2, 2, 3);
       Set_Tip
         (Tips, Check,
-         -("If checked, then GPS will create a new Build target for " &
-           "automatically generating cross reference files using the " &
-           "compiler found in the tools path. Those cross reference files " &
-           "are placed in a specific subdirectory, so will not interract " &
-           "with object and cross reference files generated by the " &
-           "regular compiler used for actually building the project." &
+         -("If checked, then GPS will automatically generate cross reference" &
+           " files (.ali files) upon compilations. It will use the compiler" &
+           " found in the tools path to generate those cross reference files" &
+           " and will place them in a specific subdirectory, so as not to" &
+           " interract with objects and cross reference files generated by" &
+           " the regular compiler used for actually building the project." &
            ASCII.LF & ASCII.LF &
-           "This functionnality is mainly used to allow full GPS " &
+           "This functionnality is used to allow full GPS " &
            "functionalities with old compilers. If you need to use an old " &
            "compiler with your project, then you might consider using this " &
            "feature."));
-      Dualc_Callback.Connect
+      Dialog_Callback.Connect
         (Check, Signal_Toggled, Xrefs_Toggled'Access, Widget);
 
    end Gtk_New;
@@ -325,7 +328,7 @@ package body Dualcompilation_Dialog is
    ----------------
 
    function Get_Active
-     (Widget : access Dualc_Dialog_Record'Class) return Boolean
+     (Widget : access Dialog_Record'Class) return Boolean
    is
    begin
       return Widget.Active;
@@ -336,7 +339,7 @@ package body Dualcompilation_Dialog is
    --------------------------
 
    function Get_Use_Xrefs_Subdir
-     (Widget : access Dualc_Dialog_Record'Class) return Boolean
+     (Widget : access Dialog_Record'Class) return Boolean
    is
    begin
       return Widget.Xrefs_Subdir;
@@ -347,7 +350,7 @@ package body Dualcompilation_Dialog is
    --------------------
 
    function Get_Tools_Path
-     (Widget : access Dualc_Dialog_Record'Class) return String is
+     (Widget : access Dialog_Record'Class) return String is
    begin
       return Get_Text (Widget.Tools_Entry);
    end Get_Tools_Path;
@@ -357,9 +360,9 @@ package body Dualcompilation_Dialog is
    -----------------------
 
    function Get_Compiler_Path
-     (Widget : access Dualc_Dialog_Record'Class) return String is
+     (Widget : access Dialog_Record'Class) return String is
    begin
       return Get_Text (Widget.Compiler_Entry);
    end Get_Compiler_Path;
 
-end Dualcompilation_Dialog;
+end Toolchains_Dialog;

@@ -49,7 +49,6 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
-with Dualcompilation;            use Dualcompilation;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -82,8 +81,9 @@ with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
 with Remote.Path.Translator;     use Remote.Path.Translator;
 with String_Utils;               use String_Utils;
+with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GVD.Process is
    Me : constant Debug_Handle := Create ("GVD.Process");

@@ -109,13 +109,13 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Docgen2_Module;
-with Dualcompilation_Module;
 with External_Editor_Module;
 with GPS.Location_View;
 with GVD_Module;
 with Help_Module;
 with KeyManager_Module;
 with KeyManager_Module.Macros;
+with Toolchains_Module;
 with Ada_Semantic_Tree_Module;
 with Navigation_Module;
 with Outline_View;
@@ -182,7 +182,7 @@ procedure GPS.Main is
    Builder_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Builder", GNATCOLL.Traces.On);
    New_Builder_Trace   : constant Debug_Handle :=
-                           Create ("MODULE.New_Builder", GNATCOLL.Traces.Off);
+                           Create ("MODULE.New_Builder", GNATCOLL.Traces.On);
    GVD_Trace              : constant Debug_Handle :=
                               Create ("MODULE.GVD", GNATCOLL.Traces.On);
    Aunit_Trace            : constant Debug_Handle :=
@@ -209,8 +209,8 @@ procedure GPS.Main is
                       Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
    Remote_View_Trace      : constant Debug_Handle :=
                       Create ("MODULE.Remote_View", GNATCOLL.Traces.On);
-   Dualcompilation_Trace  : constant Debug_Handle :=
-                      Create ("MODULE.Dualcompilation", GNATCOLL.Traces.On);
+   Toolchains_Trace       : constant Debug_Handle :=
+                      Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
 
    GPS_Started_Hook       : constant Hook_Name := "gps_started";
 
@@ -1292,10 +1292,6 @@ procedure GPS.Main is
          Browsers.Projects.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (Dualcompilation_Trace) then
-         Dualcompilation_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
       if Active (Entities_Browser_Trace) then
          Browsers.Entities.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1330,12 +1326,16 @@ procedure GPS.Main is
          External_Editor_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (New_Builder_Trace) then
+         Builder_Facility_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
       if Active (Builder_Trace) then
          Builder_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (New_Builder_Trace) then
-         Builder_Facility_Module.Register_Module (GPS_Main.Kernel);
+      if Active (Toolchains_Trace) then
+         Toolchains_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (GVD_Trace) then

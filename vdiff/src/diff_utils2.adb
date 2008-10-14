@@ -26,7 +26,7 @@ pragma Warnings (On);
 with GNAT.Regpat;            use GNAT.Regpat;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
-with Dualcompilation;        use Dualcompilation;
+with Toolchains;             use Toolchains;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;

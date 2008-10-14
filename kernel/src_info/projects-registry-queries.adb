@@ -25,12 +25,12 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
-with Dualcompilation;           use Dualcompilation;
 with GPS.Intl;                  use GPS.Intl;
 with Prj.Ext;                   use Prj.Ext;
 with Prj;                       use Prj;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with String_Utils;              use String_Utils;
+with Toolchains;                use Toolchains;
 with Traces;                    use Traces;
 
 package body Projects.Registry.Queries is

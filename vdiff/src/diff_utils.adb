@@ -28,7 +28,7 @@ with GNAT.Regpat;            use GNAT.Regpat;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
-with Dualcompilation;        use Dualcompilation;
+with Toolchains;             use Toolchains;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;

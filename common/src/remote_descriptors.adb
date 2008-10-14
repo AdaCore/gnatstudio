@@ -20,7 +20,7 @@
 with Password_Manager;     use Password_Manager;
 with Ada.Unchecked_Deallocation;
 with Basic_Types;          use Basic_Types;
-with Dualcompilation;
+with Toolchains;
 with GNAT.Regpat;          use GNAT.Regpat;
 
 package body Remote_Descriptors is
@@ -129,7 +129,7 @@ package body Remote_Descriptors is
       Login_Ptrn      : Pattern_Matcher_Access;
 
    begin
-      Full_Exec := Dualcompilation.Locate_Tool_Executable (Start_Command);
+      Full_Exec := Toolchains.Locate_Tool_Executable (Start_Command);
 
       Remote := new Remote_Descriptor_Record;
 

@@ -28,14 +28,14 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 
-with Dualcompilation;           use Dualcompilation;
-with Dualcompilation_Dialog;    use Dualcompilation_Dialog;
+with Toolchains;                use Toolchains;
+with Toolchains_Dialog;         use Toolchains_Dialog;
 with Projects;
 with Projects.Registry;
 
-package body Dualcompilation_Module is
+package body Toolchains_Module is
 
-   type Dualcomp_Property is new GPS.Kernel.Properties.Property_Record
+   type Toolchains_Property is new GPS.Kernel.Properties.Property_Record
    with record
       Active           : Boolean;
       Tools_Path       : String_Access;
@@ -44,18 +44,18 @@ package body Dualcompilation_Module is
    end record;
 
    overriding procedure Save
-     (Property : access Dualcomp_Property;
+     (Property : access Toolchains_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr);
    overriding procedure Load
-     (Property : in out Dualcomp_Property; From : Glib.Xml_Int.Node_Ptr);
-   overriding procedure Destroy (Property : in out Dualcomp_Property);
+     (Property : in out Toolchains_Property; From : Glib.Xml_Int.Node_Ptr);
+   overriding procedure Destroy (Property : in out Toolchains_Property);
    --  See inherited doc.
 
    procedure On_Menu
      (Widget : access GObject_Record'Class; Kernel : GPS.Kernel.Kernel_Handle);
-   --  Tools->Dual COmpilation Mode menu
+   --  Config menu
 
-   function Get_Property return Dualcomp_Property'Class;
+   function Get_Property return Toolchains_Property'Class;
    --  Retrieve the global property
 
    ----------
@@ -63,7 +63,7 @@ package body Dualcompilation_Module is
    ----------
 
    overriding procedure Save
-     (Property : access Dualcomp_Property;
+     (Property : access Toolchains_Property;
       Node     : in out Glib.Xml_Int.Node_Ptr)
    is
       Child : Glib.Xml_Int.Node_Ptr;
@@ -104,7 +104,7 @@ package body Dualcompilation_Module is
    ----------
 
    overriding procedure Load
-     (Property : in out Dualcomp_Property; From : Glib.Xml_Int.Node_Ptr)
+     (Property : in out Toolchains_Property; From : Glib.Xml_Int.Node_Ptr)
    is
       Child : Glib.Xml_Int.Node_Ptr;
    begin
@@ -133,7 +133,7 @@ package body Dualcompilation_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Property : in out Dualcomp_Property) is
+   overriding procedure Destroy (Property : in out Toolchains_Property) is
    begin
       Free (Property.Tools_Path);
       Free (Property.Compiler_Path);
@@ -148,9 +148,10 @@ package body Dualcompilation_Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Property      : Dualcomp_Property := Dualcomp_Property (Get_Property);
+      Property      : Toolchains_Property :=
+                        Toolchains_Property (Get_Property);
       Prop_Access   : Property_Access;
-      Dialog        : Dualcompilation_Dialog.Dualc_Dialog;
+      Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
       Compiler      : constant String :=
                         Projects.Get_Attribute_Value
@@ -214,16 +215,16 @@ package body Dualcompilation_Module is
          Property.Compiler_Path := new String'(Get_Compiler_Path (Dialog));
          Property.Use_Xrefs_Subdir := Get_Use_Xrefs_Subdir (Dialog);
 
-         Prop_Access := new Dualcomp_Property'(Property);
+         Prop_Access := new Toolchains_Property'(Property);
          Set_Property
            (Kernel,
-            Index_Name  => "dualcompilation_properties",
+            Index_Name  => "toolchains_properties",
             Index_Value => "property",
             Name        => "property",
             Property    => Prop_Access,
             Persistent  => True);
 
-         Dualcompilation.Set_Dualcompilation_Properties
+         Toolchains.Set_Toolchains_Properties
            (Active               => Property.Active,
             Tool_Search_Path     => Property.Tools_Path.all,
             Compiler_Search_Path => Property.Compiler_Path.all);
@@ -270,19 +271,19 @@ package body Dualcompilation_Module is
    -- Get_Property --
    ------------------
 
-   function Get_Property return Dualcomp_Property'Class is
-      Property : Dualcomp_Property;
+   function Get_Property return Toolchains_Property'Class is
+      Property : Toolchains_Property;
       Success  : Boolean;
    begin
       Get_Property
         (Property,
-         Index_Name  => "dualcompilation_properties",
+         Index_Name  => "toolchains_properties",
          Index_Value => "property",
          Name        => "property",
          Found       => Success);
 
       if not Success then
-         return Dualcomp_Property'
+         return Toolchains_Property'
            (Active           => False,
             Tools_Path       => null,
             Use_Xrefs_Subdir => False,
@@ -299,7 +300,7 @@ package body Dualcompilation_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Property : constant Dualcomp_Property'Class := Get_Property;
+      Property : constant Toolchains_Property'Class := Get_Property;
       Tools    : constant String := '/' & (-"Build/Settings") & '/';
    begin
       Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
@@ -307,16 +308,16 @@ package body Dualcompilation_Module is
       if Property.Tools_Path /= null
         and then Property.Compiler_Path /= null
       then
-         Dualcompilation.Set_Dualcompilation_Properties
+         Toolchains.Set_Toolchains_Properties
            (Active               => Property.Active,
             Tool_Search_Path     => Property.Tools_Path.all,
             Compiler_Search_Path => Property.Compiler_Path.all);
       else
-         Dualcompilation.Set_Dualcompilation_Properties
+         Toolchains.Set_Toolchains_Properties
            (Active               => Property.Active,
             Tool_Search_Path     => "",
             Compiler_Search_Path => "");
       end if;
    end Register_Module;
 
-end Dualcompilation_Module;
+end Toolchains_Module;

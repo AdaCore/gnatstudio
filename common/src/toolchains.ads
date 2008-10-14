@@ -17,12 +17,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;
+with System.OS_Lib; use System.OS_Lib;
 
-package Dualcompilation_Module is
+package Toolchains is
 
-   procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the module
+   function Is_Toolchains_Active return Boolean;
+   --  Tell if the multiple toolchains mode is active
 
-end Dualcompilation_Module;
+   function Get_Tool_Search_Path return String;
+   --  Get the tool search path
+
+   function Get_Compiler_Search_Path return String;
+   --  Get the compiler search path
+
+   function Locate_Exec (Exec_Name : String; Path : String)
+                         return String_Access;
+   --  Locate exec on specified Path.
+
+   function Locate_Tool_Executable (Exec_Name : String) return String_Access;
+   --  Locate a tool executable on path
+
+   function Locate_Compiler_Executable
+     (Exec_Name : String) return String_Access;
+   --  Locate a compiler executable on path
+
+   procedure Set_Toolchains_Properties
+     (Active               : Boolean;
+      Tool_Search_Path     : String;
+      Compiler_Search_Path : String);
+   --  Set the toolchains selections global properties
+
+end Toolchains;
