@@ -342,18 +342,6 @@ package body Builder_Module is
    -- Menu Callbacks --
    --------------------
 
-   procedure On_Check_Syntax
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Build->Check Syntax menu
-
-   procedure On_Check_Semantic
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Build->Check Semantic menu
-
-   procedure On_Compile
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Build->Compile menu
-
    procedure On_Build
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Build->Make menu.
@@ -966,57 +954,6 @@ package body Builder_Module is
         (Kernel_Handle (Kernel), No_File, Data.Project, Library => True);
    end On_Build_Library;
 
-   ---------------------
-   -- On_Check_Syntax --
-   ---------------------
-
-   procedure On_Check_Syntax
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-
-   begin
-      if Has_File_Information (Context) then
-         Compile_File
-           (Kernel,
-            File_Information (Context),
-            Kind => Check_Syntax);
-      else
-         Console.Insert
-           (Kernel, -"No file selected, cannot check syntax",
-            Mode => Console.Error);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Check_Syntax;
-
-   -----------------------
-   -- On_Check_Semantic --
-   -----------------------
-
-   procedure On_Check_Semantic
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-   begin
-      if Has_File_Information (Context) then
-         Compile_File
-           (Kernel,
-            File_Information (Context),
-            Kind => Check_Semantic);
-      else
-         Console.Insert
-           (Kernel, -"No file selected, cannot check semantic",
-            Mode => Console.Error);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Check_Semantic;
-
    ------------------
    -- Compile_File --
    ------------------
@@ -1312,28 +1249,6 @@ package body Builder_Module is
            (Kernel, Command_Access (C), True, True, "");
       end if;
    end Compile_Command;
-
-   ----------------
-   -- On_Compile --
-   ----------------
-
-   procedure On_Compile
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Context : constant Selection_Context := Get_Current_Context (Kernel);
-   begin
-      if Has_File_Information (Context) then
-         Compile_File (Kernel, File_Information (Context));
-      else
-         Console.Insert
-           (Kernel, -"No file selected, cannot compile",
-            Mode => Console.Error);
-      end if;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Compile;
 
    ---------------
    -- On_Custom --
@@ -2349,6 +2264,7 @@ package body Builder_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      New_Build_Menu : constant String := '/' & (-"_Builder") & '/';
       Build : constant String := '/' & (-"Build") & '/';
       Tools : constant String := '/' & (-"Tools") & '/';
       Mitem : Gtk_Menu_Item;
@@ -2364,12 +2280,6 @@ package body Builder_Module is
          Priority    => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
-      Register_Menu (Kernel, Build, -"Check _Syntax", "",
-                     On_Check_Syntax'Access);
-      Register_Menu (Kernel, Build, -"Check S_emantic", "",
-                     On_Check_Semantic'Access);
-      Register_Menu (Kernel, Build, -"_Compile File", "",
-                     On_Compile'Access, null, GDK_F4, Shift_Mask);
 
       Register_Contextual_Submenu
         (Kernel,
@@ -2382,17 +2292,10 @@ package body Builder_Module is
          Filter  => Lookup_Filter (Kernel, "Project only"),
          Submenu => new Run_Contextual);
 
-      --  Dynamic make menu
-
-      Mitem := Register_Menu (Kernel, Build, -"_Make", "", null);
-      Gtk_New (Menu);
-      Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
-      Set_Submenu (Mitem, Menu);
-
       --  Dynamic run menu
 
       Mitem := Register_Menu
-        (Kernel, Build, -"_Run", Stock_Execute, null);
+        (Kernel, New_Build_Menu, -"_Run", Stock_Execute, null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
