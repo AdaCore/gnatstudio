@@ -30,7 +30,6 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
@@ -117,9 +116,6 @@ package body Builder_Module is
 
    Unique_Compile : aliased constant String := "-u";
    Follow_Links   : aliased constant String := "-eL";
-   Quiet_Opt      : aliased String := "-q";
-   Syntax_Check   : aliased String := "-gnats";
-   Semantic_Check : aliased String := "-gnatc";
    --  ??? Shouldn't have hard-coded options
 
    Sources_Load_Chunk : constant Integer := 1;
@@ -400,28 +396,6 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Command handler for the "compile" command
-
-   type Compile_Kind is (Compile, Check_Syntax, Check_Semantic);
-
-   procedure Compile_File
-     (Kernel      : Kernel_Handle;
-      File        : Virtual_File;
-      Synchronous : Boolean := False;
-      Kind        : Compile_Kind := Compile;
-      Quiet       : Boolean := False;
-      Shadow      : Boolean := False;
-      Extra_Args  : Argument_List_Access := null);
-   --  Launch a compilation command for File.
-   --  If Synchronous is true, then this procedure will not return until the
-   --  file is fully compiled; all other GPS operations are blocked while the
-   --  compilation takes place in this case.
-   --  If Syntax_Only is True, perform only syntax checks.
-   --  If Quiet is True, compile only in the background, without showing the
-   --  compilation command.
-   --  If Shadow is True, then a new file and an extending project will be
-   --  created, and those files will be deleted after the compilation command
-   --  ends.
-   --  The Extra_Args passed will be added at the end of the argument list.
 
    procedure Clear_Compilation_Output
      (Kernel : Kernel_Handle;
@@ -920,211 +894,6 @@ package body Builder_Module is
         (Kernel_Handle (Kernel), No_File, Data.Project, Library => True);
    end On_Build_Library;
 
-   ------------------
-   -- Compile_File --
-   ------------------
-
-   procedure Compile_File
-     (Kernel      : Kernel_Handle;
-      File        : Virtual_File;
-      Synchronous : Boolean := False;
-      Kind        : Compile_Kind := Compile;
-      Quiet       : Boolean := False;
-      Shadow      : Boolean := False;
-      Extra_Args  : Argument_List_Access := null)
-   is
-      Prj             : constant Project_Type := Get_Project (Kernel);
-      Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
-      Cmd             : OS_Lib.String_Access;
-      Fd              : Process_Descriptor_Access;
-      Local_File      : OS_Lib.String_Access;
-      Lang            : String :=
-                          Get_Language_From_File
-                            (Get_Language_Handler (Kernel), File);
-      Common_Args     : Argument_List_Access;
-      Args            : Argument_List_Access;
-      Shadow_Path     : OS_Lib.String_Access;
-      Compilable_File : Virtual_File := File;
-      Success         : Boolean;
-      Cb_Data         : Files_Callback_Data_Access;
-      Syntax          : Command_Syntax;
-
-   begin
-      --  Is there a file to compile ?
-
-      if File = GNATCOLL.VFS.No_File then
-         if not Quiet then
-            Console.Insert
-              (Kernel, -"No file name, cannot compile",
-               Mode => Console.Error);
-         end if;
-
-         return;
-      end if;
-
-      To_Lower (Lang);
-
-      --  Determine the project for the file
-
-      if Get_Project_From_File (Get_Registry (Kernel).all, File, False)
-        = No_Project
-      then
-         if not Quiet then
-            Console.Insert
-              (Kernel, -"Could not determine the project for file: "
-               & Full_Name (File).all,
-               Mode => Console.Error);
-         end if;
-
-         return;
-      end if;
-
-      --  Determine the language for the file
-
-      if Lang = "" then
-         if not Quiet then
-            Console.Insert
-              (Kernel, -"Could not determine the language for file: "
-               & Full_Name (File).all,
-               Mode => Console.Error);
-         end if;
-
-         return;
-
-      elsif Lang = "ada" then
-         Cmd := new String'
-           (Get_Attribute_Value
-              (Prj, Compiler_Command_Attribute,
-               Default => "gnatmake", Index => "ada"));
-         Syntax := GNAT_Syntax;
-
-         case Kind is
-            when Check_Syntax =>
-               Common_Args := new Argument_List'
-                 (Quiet_Opt'Access, Syntax_Check'Access);
-            when Check_Semantic =>
-               Common_Args := new Argument_List'
-                 (Quiet_Opt'Access, Semantic_Check'Access);
-            when Compile =>
-               Common_Args := new Argument_List'(1 .. 0 => null);
-         end case;
-
-      else
-         if Multi_Language_Builder.Get_Pref = Gprmake then
-            Cmd := new String'("gprmake");
-            Syntax := GPRmake_Syntax;
-         else
-            Cmd := new String'("gprbuild");
-            Syntax := GPRbuild_Syntax;
-         end if;
-
-         Common_Args := new Argument_List'(1 .. 0 => null);
-      end if;
-
-      Cb_Data := new Files_Callback_Data;
-
-      if Shadow then
-         --  Create a temporary project, and a temporary file containing the
-         --  buffer data, so as to be able to compile the file without saving
-         --  the buffer to disk.
-
-         declare
-            Tmp_Dir      : constant String :=
-              Get_Local_Filesystem.Get_Tmp_Directory;
-            Temp_Project : constant Virtual_File :=
-                             Create (Tmp_Dir & "ext.gpr");
-            Temp_File    : constant Virtual_File :=
-                             Create (Tmp_Dir & Base_Name (File));
-            Writable     : Writable_File;
-         begin
-            --  Do nothing if one of the files already exists
-
-            if not Is_Regular_File (Temp_Project) then
-               --  Write the temporary project file
-               Writable := Write_File (Temp_Project);
-               Write
-                 (Writable,
-                  "project ext extends """
-                  & Full_Name (Project_Path (Prj)).all & """ is"
-                  & ASCII.LF & "end ext;");
-               Close (Writable);
-            end if;
-
-            if not Is_Regular_File (Temp_File) then
-               --  Write the temporary buffer file
-               Execute_GPS_Shell_Command
-                 (Kernel, "Editor.save_buffer " & Full_Name (File).all & " " &
-                  Full_Name (Temp_File).all);
-            end if;
-
-            Local_File := new String'(Full_Name (Temp_File).all);
-            Shadow_Path := new String'(Full_Name (Temp_Project).all);
-            Compilable_File := Temp_File;
-            Change_Dir (Tmp_Dir);
-
-            Cb_Data.Files :=
-              new File_Array'(1 => Temp_File, 2 => Temp_Project);
-         end;
-
-      else
-         Local_File := new String'(Full_Name (File).all);
-         Change_Dir (Dir_Name (Project_Path (Prj)).all);
-         Shadow_Path := new String'("");
-      end if;
-
-      if Extra_Args /= null then
-         declare
-            Garbage_Args : Argument_List_Access := Common_Args;
-         begin
-            Common_Args :=
-              new Argument_List'(Common_Args.all & Extra_Args.all);
-            Basic_Types.Unchecked_Free (Garbage_Args);
-         end;
-      end if;
-
-      Args := Compute_Arguments
-        (Kernel, Prj, Shadow_Path.all, Compilable_File, Syntax,
-         Compile_Only => True);
-
-      --  Remove the entry corresponding to file in the location view.
-      --  This is needed otherwise the location view is not cleared in case
-      --  there is another compilation running.
-
-      Remove_Location_Category (Kernel, Error_Category, File);
-
-      if Compilation_Starting (Kernel, Error_Category, Quiet => Quiet) then
-         Launch_Process
-           (Kernel,
-            Command              => Cmd.all,
-            Arguments            => Common_Args.all & Args.all,
-            Server               => Build_Server,
-            Console              => Get_Console (Kernel),
-            Show_Command         => not Quiet,
-            Show_Output          => False,
-            Callback_Data        => Cb_Data.all'Access,
-            Success              => Success,
-            Line_By_Line         => False,
-            Callback             => Parse_Compiler_Output'Access,
-            Exit_Cb              => Free_Temporary_Files'Access,
-            Show_In_Task_Manager => True,
-            Synchronous          => Synchronous,
-            Show_Exit_Status     => True);
-      end if;
-
-      Free (Args);
-      Basic_Types.Unchecked_Free (Common_Args);
-      Free (Cmd);
-      Free (Local_File);
-      Free (Shadow_Path);
-      Change_Dir (Old_Dir);
-
-   exception
-      when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command", Mode => Console.Error);
-         Change_Dir (Old_Dir);
-         Free (Fd);
-   end Compile_File;
-
    ---------------------
    -- Compile_Command --
    ---------------------
@@ -1138,35 +907,7 @@ package body Builder_Module is
       C          : Xref_Commands.Generic_Asynchronous_Command_Access;
       Extra_Args : Argument_List_Access;
    begin
-      if Command = "check_syntax" then
-         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Info,
-                       Synchronous => True,
-                       Kind        => Check_Syntax);
-
-      elsif Command = "check_semantic" then
-         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Info,
-                       Synchronous => True,
-                       Kind        => Check_Semantic);
-
-      elsif Command = "shadow_check_syntax" then
-         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Info,
-                       Synchronous => False,
-                       Kind        => Check_Syntax,
-                       Quiet       => True,
-                       Shadow      => True);
-
-      elsif Command = "shadow_check_semantic" then
-         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Compile_File (Get_Kernel (Data), Info,
-                       Synchronous => False,
-                       Kind        => Check_Semantic,
-                       Quiet       => True,
-                       Shadow      => True);
-
-      elsif Command = "make" then
+      if Command = "make" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Extra_Args := Argument_String_To_List (Nth_Arg (Data, 2, ""));
 
@@ -2146,14 +1887,6 @@ package body Builder_Module is
          Func   => Wrapper (On_Project_Changed'Access),
          Name   => "interrupt_xrefs_loading");
 
-      Register_Command
-        (Kernel, "check_syntax",
-         Class   => Get_File_Class (Kernel),
-         Handler => Compile_Command'Access);
-      Register_Command
-        (Kernel, "shadow_check_syntax",
-         Class   => Get_File_Class (Kernel),
-         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "make",
          Minimum_Args => 0,
