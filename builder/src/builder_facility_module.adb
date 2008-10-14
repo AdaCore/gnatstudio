@@ -118,6 +118,9 @@ package body Builder_Facility_Module is
       Menus : String_List.List;
       --  The set of menu items that need to be removed when reloading the
       --  targets
+
+      Output     : String_List_Utils.String_List.List;
+      --  The last build output
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -189,8 +192,10 @@ package body Builder_Facility_Module is
    --  Called when a file has been saved
 
    procedure Clear_Compilation_Output
-     (Kernel   : Kernel_Handle;
-      Category : String);
+     (Kernel          : Kernel_Handle;
+      Category        : String;
+      Clear_Console   : Boolean;
+      Clear_Locations : Boolean);
    --  Clear the compiler output, the console, and the locations view for
    --  Category.
 
@@ -339,13 +344,22 @@ package body Builder_Facility_Module is
    ------------------------------
 
    procedure Clear_Compilation_Output
-     (Kernel   : Kernel_Handle;
-      Category : String)
+     (Kernel          : Kernel_Handle;
+      Category        : String;
+      Clear_Console   : Boolean;
+      Clear_Locations : Boolean)
    is
       pragma Unreferenced (Category);
    begin
-      Console.Clear (Kernel);
-      Remove_Location_Category (Kernel, Error_Category);
+      if Clear_Console then
+         Console.Clear (Kernel);
+      end if;
+
+      if Clear_Locations then
+         Remove_Location_Category (Kernel, Error_Category);
+      end if;
+
+      String_List_Utils.String_List.Free (Builder_Module_ID.Output);
    end Clear_Compilation_Output;
 
    -----------------------------
@@ -357,7 +371,9 @@ package body Builder_Facility_Module is
       Data   : access Hooks_Data'Class) return Boolean
    is
       D : constant String_Boolean_Hooks_Args :=
-            String_Boolean_Hooks_Args (Data.all);
+        String_Boolean_Hooks_Args (Data.all);
+      Quiet : constant Boolean := D.Bool;
+      --  Whether the
    begin
       --  Small issue here: if the user cancels the compilation in one of the
       --  custom hooks the user might have connected, then all changes done
@@ -368,17 +384,21 @@ package body Builder_Facility_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
-      if not D.Bool
+      if not Quiet
         and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
       then
          return False;
       end if;
 
-      Clear_Compilation_Output (Kernel_Handle (Kernel), D.Value);
+      Clear_Compilation_Output
+        (Kernel_Handle (Kernel), D.Value,
+         Clear_Console   => not Quiet,
+         Clear_Locations => True);
+
       --  ??? need to add support for this
 --        Interrupt_Xrefs_Loading (Kernel);
 
-      if not D.Bool then
+      if not Quiet then
          Console.Raise_Console (Kernel);
       end if;
 
@@ -875,5 +895,29 @@ package body Builder_Facility_Module is
    begin
       return Builder_Module_ID.Registry;
    end Registry;
+
+   ----------------------------
+   -- Append_To_Build_Output --
+   ----------------------------
+
+   procedure Append_To_Build_Output
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line   : String)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Builder_Module_ID /= null then
+         String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
+      end if;
+   end Append_To_Build_Output;
+
+   ----------------------
+   -- Get_Build_Output --
+   ----------------------
+
+   function Get_Build_Output return String_List_Utils.String_List.List is
+   begin
+      return Builder_Module_ID.Output;
+   end Get_Build_Output;
 
 end Builder_Facility_Module;
