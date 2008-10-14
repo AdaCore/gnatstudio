@@ -180,7 +180,7 @@ procedure GPS.Main is
    Codefix_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Debug_Handle :=
-                              Create ("MODULE.Builder", GNATCOLL.Traces.On);
+                              Create ("MODULE.Builder", GNATCOLL.Traces.Off);
    New_Builder_Trace   : constant Debug_Handle :=
                            Create ("MODULE.New_Builder", GNATCOLL.Traces.On);
    GVD_Trace              : constant Debug_Handle :=
