@@ -460,8 +460,8 @@ package body Build_Configurations.Gtkada is
 
          Combo := Models_Combo (UI);
 
-         Gtk_New (Label, -"Target type ");
-         Pack_Start (Top_Box, Label, False, False, 0);
+         Gtk_New (Label, -"Target type");
+         Pack_Start (Top_Box, Label, False, False, 2);
          Pack_Start (Top_Box, Combo, True, True, 0);
 
          Pack_Start (Box, Top_Box, False, False, 0);
