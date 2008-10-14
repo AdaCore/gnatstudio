@@ -27,9 +27,4 @@ package Builder_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
-   procedure Append_To_Build_Output
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String);
-   --  Register Line as part of the current compilation output
-
 end Builder_Module;
