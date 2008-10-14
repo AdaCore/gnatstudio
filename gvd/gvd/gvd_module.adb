@@ -38,6 +38,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Separator_Tool_Item;    use Gtk.Separator_Tool_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -139,6 +140,7 @@ package body GVD_Module is
       File_Hook                      : File_Edited_Hook;
       Lines_Hook                     : Lines_Revealed_Hook;
 
+      Space_Separator                : Gtk_Separator_Tool_Item;
       Cont_Button,
       Step_Button,
       Next_Button,
@@ -527,6 +529,11 @@ package body GVD_Module is
          return;
       end if;
 
+      Gtk_New (GVD_Module_ID.Space_Separator);
+      Set_Draw (GVD_Module_ID.Space_Separator, True);
+      Insert (Toolbar, GVD_Module_ID.Space_Separator);
+      Show_All (GVD_Module_ID.Space_Separator);
+
       Gtk_New_From_Stock (GVD_Module_ID.Cont_Button, "gps-debugger-run");
       Set_Name (GVD_Module_ID.Cont_Button, "gps-debugger-run-button");
       Set_Tooltip (GVD_Module_ID.Cont_Button, Get_Tooltips (Kernel),
@@ -593,6 +600,7 @@ package body GVD_Module is
 
    begin
       if Toolbar /= null and then GVD_Module_ID.Cont_Button /= null then
+         Remove (Toolbar, GVD_Module_ID.Space_Separator);
          Remove (Toolbar, GVD_Module_ID.Cont_Button);
          Remove (Toolbar, GVD_Module_ID.Step_Button);
          Remove (Toolbar, GVD_Module_ID.Next_Button);
