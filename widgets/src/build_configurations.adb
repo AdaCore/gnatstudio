@@ -50,6 +50,105 @@ package body Build_Configurations is
    --             <arg>ARGN</arg>
    --          </command-line>
 
+   function Copy (T : Target_Access) return Target_Access;
+   --  Allocate and return a deep copy of T.
+
+   function Deep_Copy (CL : Argument_List_Access) return Argument_List_Access;
+   --  Allocate and return a deep copy of CL.
+
+   function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean;
+   --  Deep comparison between T1 and T2.
+
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Deep_Copy
+     (CL : Argument_List_Access) return Argument_List_Access
+   is
+      CL2 : Argument_List_Access;
+   begin
+      if CL = null then
+         return null;
+      end if;
+
+      CL2 := new Argument_List (CL'Range);
+      for J in CL'Range loop
+         if CL (J) /= null then
+            CL2 (J) := new String'(CL (J).all);
+         end if;
+      end loop;
+      return CL2;
+   end Deep_Copy;
+
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy (T : Target_Access) return Target_Access is
+      T2 : Target_Access;
+   begin
+      T2 := new Target_Type;
+      T2.Name := T.Name;
+      T2.Menu_Name := T.Menu_Name;
+      T2.Category  := T.Category;
+      T2.Model     := T.Model;
+      T2.Icon      := T.Icon;
+      T2.Command_Line := Deep_Copy (T.Command_Line);
+      T2.Properties := T.Properties;
+      return T2;
+   end Copy;
+
+   ------------
+   -- Equals --
+   ------------
+
+   function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean is
+      function Equals (A, B : Argument_List_Access) return Boolean;
+      --  Comparison function
+
+      function Equals (A, B : Argument_List_Access) return Boolean is
+      begin
+         if A = null and then B = null then
+            return True;
+         end if;
+
+         if        A = null
+           or else B = null
+           or else A'First /= B'First
+           or else A'Last /= B'Last
+         then
+            return False;
+         end if;
+
+         for J in A'Range loop
+            if not (A (J) = null and then B (J) = null) then
+               if A (J) = null
+                 or else B (J) = null
+                 or else A (J).all /= B (J).all
+               then
+                  return False;
+               end if;
+            end if;
+         end loop;
+         return True;
+      end Equals;
+
+   begin
+      if        T1.Name       /= T2.Name
+        or else T1.Menu_Name  /= T2.Menu_Name
+        or else T1.Category   /= T2.Category
+        or else T1.Model      /= T2.Model
+        or else T1.Icon       /= T2.Icon
+        or else T1.Properties /= T2.Properties
+        or else not Equals (T1.Command_Line, T2.Command_Line)
+      then
+         return False;
+      end if;
+
+      return True;
+   end Equals;
+
    ---------
    -- "-" --
    ---------
@@ -654,11 +753,6 @@ package body Build_Configurations is
          C := C.Next;
       end if;
 
-      if Target.Default_Command_Line /= null then
-         C.Next := Command_Line_To_XML
-           (Target.Default_Command_Line.all, "default-command-line");
-      end if;
-
       return N;
    end Save_Target_To_XML;
 
@@ -667,9 +761,9 @@ package body Build_Configurations is
    --------------------------
 
    function Load_Target_From_XML
-     (Registry     : Build_Config_Registry_Access;
-      XML          : Node_Ptr;
-      Allow_Update : Boolean) return Target_Access
+     (Registry  : Build_Config_Registry_Access;
+      XML       : Node_Ptr;
+      From_User : Boolean) return Target_Access
    is
       Child  : Node_Ptr;
       Target : Target_Access;
@@ -718,7 +812,9 @@ package body Build_Configurations is
          end if;
 
          if Contains (Registry.Targets, To_Unbounded_String (Target_Name)) then
-            if Allow_Update then
+            if From_User then
+               --  In this case, it is OK to overwrite the data contained in
+               --  the target.
                Target := Get_Target_From_Name (Registry, Target_Name);
             else
                Log (Registry, -"Target with that name already registered: "
@@ -742,23 +838,8 @@ package body Build_Configurations is
 
       while Child /= null loop
          if Child.Tag.all = "command-line" then
-            if Target.Command_Line /= null then
-               Free (Target.Command_Line);
-            end if;
-
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
-
-         elsif Child.Tag.all = "default-command-line" then
-            Target.Default_Command_Line := new GNAT.OS_Lib.Argument_List'
-              (XML_To_Command_Line (Child));
-
-            --  If the command line is null when reading the default command
-            --  line, then it should be set to the default command line.
-            if Target.Command_Line = null then
-               Target.Command_Line := new GNAT.OS_Lib.Argument_List'
-                 (XML_To_Command_Line (Child));
-            end if;
 
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
@@ -788,6 +869,11 @@ package body Build_Configurations is
          Child := Child.Next;
       end loop;
 
+      --  At this point, the target data has been updated. If this target is
+      --  not from the user configuration, copy it to the original targets.
+
+      Registry.Original_Targets.Append (Copy (Target));
+
       return Target;
    end Load_Target_From_XML;
 
@@ -801,6 +887,9 @@ package body Build_Configurations is
       N     : Node_Ptr;
       Child : Node_Ptr;
       C     : Cursor;
+      C2    : Cursor;
+      Name  : Unbounded_String;
+      Equals_To_Original : Boolean;
 
    begin
       N := new Node;
@@ -809,12 +898,30 @@ package body Build_Configurations is
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
-         if Child = null then
-            N.Child := Save_Target_To_XML (Registry, Element (C));
-            Child := N.Child;
-         else
-            Child.Next := Save_Target_To_XML (Registry, Element (C));
-            Child := Child.Next;
+         --  Check whether the target has been modified. If so, save it.
+
+         Name := Element (C).Name;
+         Equals_To_Original := False;
+         C2 := Registry.Original_Targets.First;
+
+         while Has_Element (C2) loop
+            if Element (C2).Name = Name then
+               if Equals (Element (C2), Element (C)) then
+                  Equals_To_Original := True;
+               end if;
+               exit;
+            end if;
+            Next (C2);
+         end loop;
+
+         if not Equals_To_Original then
+            if Child = null then
+               N.Child := Save_Target_To_XML (Registry, Element (C));
+               Child := N.Child;
+            else
+               Child.Next := Save_Target_To_XML (Registry, Element (C));
+               Child := Child.Next;
+            end if;
          end if;
 
          Next (C);
@@ -848,7 +955,7 @@ package body Build_Configurations is
 
       while N /= null loop
          T := Load_Target_From_XML
-           (Registry => Registry, XML => N, Allow_Update => True);
+           (Registry => Registry, XML => N, From_User => True);
          N := N.Next;
       end loop;
    end Load_All_Targets_From_XML;
@@ -953,5 +1060,42 @@ package body Build_Configurations is
    begin
       return Registry.Models.Contains (Name);
    end Is_Registered_Model;
+
+   -------------------
+   -- Revert_Target --
+   -------------------
+
+   procedure Revert_Target
+     (Registry : Build_Config_Registry_Access;
+      Target   : String)
+   is
+      O, C : Cursor;
+   begin
+      O := Registry.Targets.First;
+
+      while Has_Element (O) loop
+         if Element (O).Name = Target then
+            exit;
+         end if;
+
+         Next (O);
+      end loop;
+
+      if not Has_Element (O) then
+         Log (Registry, "Revert_Target: original target not found", Trace);
+         return;
+      end if;
+
+      C := Registry.Original_Targets.First;
+
+      while Has_Element (C) loop
+         if Element (C).Name = Target then
+            Registry.Targets.Replace_Element (O, Copy (Element (C)));
+            exit;
+         end if;
+
+         Next (C);
+      end loop;
+   end Revert_Target;
 
 end Build_Configurations;
