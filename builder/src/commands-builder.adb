@@ -29,18 +29,19 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;       use GNAT.Expect.TTY;
 pragma Warnings (On);
 
+with GNATCOLL.Scripts.Utils;
+
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Styles;     use GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
 with GPS.Location_View;     use GPS.Location_View;
-with Builder_Module;        use Builder_Module;
 with GPS.Intl;              use GPS.Intl;
-
-with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with Basic_Types;           use Basic_Types;
 with UTF8_Utils;            use UTF8_Utils;
+
+with Builder_Facility_Module; use Builder_Facility_Module;
 
 package body Commands.Builder is
 
@@ -56,10 +57,8 @@ package body Commands.Builder is
 
       Buffer : Unbounded_String;
       --  Stores the incomplete lines returned by the compilation process
-
-      Output     : String_List_Utils.String_List.List;
-      --  The full build output
    end record;
+
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
    overriding procedure Destroy (Data : in out Build_Callback_Data);
 
@@ -364,9 +363,10 @@ package body Commands.Builder is
          Target_Name_To_Locations_Category (Data.Target_Name),
          Quiet => Quiet)
       then
-         String_List_Utils.String_List.Append
-           (Data.Output,
-            Argument_List_To_Quoted_String (CL.all, Quote_Backslash => False));
+         Append_To_Build_Output
+           (Kernel,
+            GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
+              (CL.all, Quote_Backslash => False));
 
          Launch_Process
            (Kernel,
