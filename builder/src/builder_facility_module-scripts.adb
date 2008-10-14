@@ -26,6 +26,7 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with GPS.Intl;           use GPS.Intl;
 
 with Build_Configurations; use Build_Configurations;
+with String_List_Utils;  use String_List_Utils;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -94,6 +95,8 @@ package body Builder_Facility_Module.Scripts is
    is
       Target_Class : constant Class_Type :=
         Get_Target_Class (Get_Kernel (Data));
+      use String_List;
+      Node       : List_Node;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
@@ -133,6 +136,17 @@ package body Builder_Facility_Module.Scripts is
 
             --  ??? Need to update the IDE items: icon, menu, and build action.
          end;
+
+      elsif Command = "get_build_output" then
+         Node := First (Get_Build_Output);
+
+         Set_Return_Value_As_List (Data);
+         while Node /= Null_Node loop
+            Set_Return_Value
+              (Data, String_List_Utils.String_List.Data (Node));
+
+            Node := Next (Node);
+         end loop;
       end if;
    end Shell_Handler;
 
@@ -152,6 +166,10 @@ package body Builder_Facility_Module.Scripts is
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "get_build_output",
+         Handler => Shell_Handler'Access);
    end Register_Commands;
 
 end Builder_Facility_Module.Scripts;
