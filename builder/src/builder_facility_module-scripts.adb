@@ -44,6 +44,8 @@ package body Builder_Facility_Module.Scripts is
    --  NOTE: these constants must match the names of the predefined targets
    --  registered in builder_support.py.
    Compile_File_Target : constant String := "Compile File";
+   Check_Syntax_Target : constant String := "Check Syntax";
+   Check_Semantic_Target : constant String := "Check Semantic";
 
    --  BuildTarget class
 
@@ -184,6 +186,29 @@ package body Builder_Facility_Module.Scripts is
                         Force_Dialog => False);
 
          Free (Extra_Args);
+
+      elsif Command = "check_syntax" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Launch_Target (Kernel       => Kernel,
+                        Registry     => Registry,
+                        Target_Name  => Check_Syntax_Target,
+                        Force_File   => Info,
+                        Extra_Args   => null,
+                        Quiet        => False,
+                        Synchronous  => True,
+                        Force_Dialog => False);
+
+      elsif Command = "check_semantic" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Launch_Target (Kernel       => Kernel,
+                        Registry     => Registry,
+                        Target_Name  => Check_Semantic_Target,
+                        Force_File   => Info,
+                        Extra_Args   => null,
+                        Quiet        => False,
+                        Synchronous  => True,
+                        Force_Dialog => False);
+
       end if;
    end Shell_Handler;
 
