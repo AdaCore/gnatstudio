@@ -234,7 +234,7 @@ package body Builder_Facility_Module is
       N    : constant String := Get_Name (T);
       Name : constant String := Action_Name (T);
    begin
-      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, False);
+      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, False, False);
 
       Register_Action (Kernel      => Get_Kernel,
                        Name        => Name,
@@ -459,6 +459,13 @@ package body Builder_Facility_Module is
             Launch_Target (Kernel       => Kernel_Handle (Kernel),
                            Registry     => Builder_Module_ID.Registry,
                            Target_Name  => Get_Name (T),
+                           Force_File   => No_File,
+                           --  We do not pass File_Data.File as Force_File,
+                           --  as we do not want to compile, for instance,
+                           --  when the current file has no associated project.
+                           Extra_Args   => null,
+                           Quiet        => True,
+                           Synchronous  => False,
                            Force_Dialog => False);
          end if;
          Next (C);
@@ -591,7 +598,9 @@ package body Builder_Facility_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Launch_Target (Get_Kernel, Builder_Module_ID.Registry, Name, False);
+      Launch_Target
+        (Get_Kernel, Builder_Module_ID.Registry, Name, No_File,
+         null, False, False, False);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -654,6 +663,7 @@ package body Builder_Facility_Module is
          Get_Kernel,
          Builder_Module_ID.Registry,
          Name,
+         False,
          Get_Properties (Target).Launch_Mode = Manually);
       Register_Menu (Kernel      => Get_Kernel,
                      Parent_Path => To_String (Cat_Path),
