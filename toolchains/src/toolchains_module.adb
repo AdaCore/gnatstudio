@@ -286,7 +286,7 @@ package body Toolchains_Module is
          return Toolchains_Property'
            (Active           => False,
             Tools_Path       => null,
-            Use_Xrefs_Subdir => False,
+            Use_Xrefs_Subdir => True,
             Compiler_Path    => null);
       else
          return Property;

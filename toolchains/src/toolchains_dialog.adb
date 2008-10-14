@@ -208,7 +208,7 @@ package body Toolchains_Dialog is
       Dead := Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK);
       Dead := Widget.Add_Button (Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
 
-      Gtk_New (Check, -"Activate the toolchains setup");
+      Gtk_New (Check, -"Activate multiple toolchains setup");
       Show_All (Check);
       Set_Active (Check, Widget.Active);
       Widget.Get_Vbox.Add (Check);
@@ -265,7 +265,7 @@ package body Toolchains_Dialog is
            " generation. These actions are (the list is not exclusive)" &
            " gnatcheck, gnatmetrics, cross-reference generation." &
            ASCII.LF & ASCII.LF &
-           "Note concerning the interraction with the remote mode:" &
+           "Note concerning the interaction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
            "defining a tools path will make all actions enumerated above " &
