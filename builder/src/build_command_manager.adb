@@ -19,6 +19,8 @@
 
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 with GNATCOLL.Templates; use GNATCOLL.Templates;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
@@ -323,6 +325,8 @@ package body Build_Command_Manager is
       Synchronous  : Boolean;
       Force_Dialog : Boolean)
    is
+      Prj          : constant Project_Type := Get_Project (Kernel);
+      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
       T            : Target_Access;
       Full         : Argument_List_Access;
       Command_Line : Argument_List_Access;
@@ -428,9 +432,10 @@ package body Build_Command_Manager is
 
       --  Launch the build command
 
+      Change_Dir (Dir_Name (Project_Path (Prj)).all);
       Launch_Build_Command
         (Kernel, Full, Target_Name, Server, Quiet, Synchronous);
-      --  ??? change the name of the category
+      Change_Dir (Old_Dir);
    end Launch_Target;
 
    -------------
