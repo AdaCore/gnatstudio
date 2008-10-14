@@ -51,6 +51,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
 with Traces;                    use Traces;
+with String_Utils;              use String_Utils;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -62,7 +63,7 @@ with Commands.Builder;          use Commands.Builder;
 package body Builder_Facility_Module is
 
    Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
-   Main_Menu : constant String := '/' & ("Build") & '/';
+   Main_Menu : constant String := '/' & ("_Builder") & '/';
    --  -"Build"
 
    package String_Callback is new Gtk.Handlers.User_Callback
@@ -611,18 +612,21 @@ package body Builder_Facility_Module is
       Category : constant String := Get_Category (Target);
       Cat_Path : Unbounded_String := To_Unbounded_String (Main_Menu);
 
+      Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
+        and then Category (Category'Last) = '_';
    begin
-      if Category (Category'First) /= '_'
-        or else Category (Category'Last) /= '_'
-      then
+      if not Toplevel_Menu then
          Append (Cat_Path, Category);
-      end if;
 
-      --  Find the menu for the category
-      if Find_Menu_Item (Get_Kernel, To_String (Cat_Path)) = null then
-         --  We have not found a menu item: this means we are about to create
-         --  it, so add it to the list of menu items
-         Builder_Module_ID.Menus.Append (Cat_Path);
+         --  Find the menu for the category
+         if Find_Menu_Item
+           (Get_Kernel,
+            Strip_Single_Underscores (To_String (Cat_Path))) = null
+         then
+            --  We have not found a menu item: this means we are about to
+            --  create it, so add it to the list of menu items
+            Builder_Module_ID.Menus.Append (Cat_Path);
+         end if;
       end if;
 
       Create
@@ -639,7 +643,12 @@ package body Builder_Facility_Module is
                      Command     => Interactive_Command_Access (C),
                      Ref_Item    => -"Settings");
 
-      Builder_Module_ID.Menus.Append (Cat_Path & Name);
+      if Toplevel_Menu then
+         Builder_Module_ID.Menus.Prepend
+           (To_Unbounded_String (Main_Menu & Name));
+      else
+         Builder_Module_ID.Menus.Prepend (Cat_Path & "/" & Name);
+      end if;
    end Add_Menu_For_Target;
 
    -----------------
@@ -654,10 +663,17 @@ package body Builder_Facility_Module is
       C := Builder_Module_ID.Menus.First;
 
       while Has_Element (C) loop
-         M := Find_Menu_Item (Get_Kernel, To_String (Element (C)));
+         --  Find_Menu_Item expects menu names stripped of their underscores,
+         --  so call Strip_Single_Underscore here.
+         M := Find_Menu_Item
+           (Get_Kernel,
+            Strip_Single_Underscores (To_String (Element (C))));
 
          if M /= null then
             Destroy (M);
+         else
+            Trace (Me, "Menu not found: "
+                   & Strip_Single_Underscores (To_String (Element (C))));
          end if;
 
          Next (C);
@@ -820,7 +836,7 @@ package body Builder_Facility_Module is
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
 
-      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
+      Register_Menu (Kernel, "/_" & (-"Builder"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
                      On_Build_Manager'Access);
 
