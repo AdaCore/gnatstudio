@@ -23,13 +23,15 @@
 --
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GPS.Kernel;
-with Build_Configurations; use Build_Configurations;
 
+with Build_Configurations;  use Build_Configurations;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Commands;              use Commands;
+with Commands.Interactive;  use Commands.Interactive;
 
-with Commands;             use Commands;
-with Commands.Interactive; use Commands.Interactive;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package Build_Command_Manager is
 
@@ -37,8 +39,21 @@ package Build_Command_Manager is
      (Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Force_File   : Virtual_File;
+      Extra_Args   : Argument_List_Access;
+      Quiet        : Boolean;
+      Synchronous  : Boolean;
       Force_Dialog : Boolean);
    --  Launch a build of target named Target_Name
+   --  If Force_Dialog, always popup the single target dialog.
+   --  If Force_File is not set to No_File, then force the command to work
+   --  on this file. (This is needed to support GPS scripting).
+   --  Extra_Args may point to a list of unexpanded args.
+   --  If Quiet is true:
+   --    - files are not saved before build launch
+   --    - the console is not raised when launching the build
+   --    - the console is not cleared when launching the build
+   --  If Synchronous is True, GPS will block until the command is terminated.
 
    -------------------
    -- Build_Command --
@@ -52,6 +67,7 @@ package Build_Command_Manager is
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
       Force_Dialog : Boolean;
+      Quiet        : Boolean;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
@@ -67,6 +83,7 @@ package Build_Command_Manager is
       Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Quiet        : Boolean;
       Force_Dialog : Boolean);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
