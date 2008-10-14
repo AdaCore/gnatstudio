@@ -462,7 +462,7 @@ package body Build_Configurations.Gtkada is
 
          Gtk_New (Label, -"Target type ");
          Pack_Start (Top_Box, Label, False, False, 0);
-         Pack_Start (Top_Box, Combo, False, False, 0);
+         Pack_Start (Top_Box, Combo, True, True, 0);
 
          Pack_Start (Box, Top_Box, False, False, 0);
          Box.Model_Entry := Gtk_Entry (Get_Child (Combo));
