@@ -160,19 +160,19 @@ Compile_All_Targets = """
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </default-command-line>
+    </command-line>
 </target>
 <target model="builder" category="_Project" name="_Compile All Sources">
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%builder</arg>
        <arg>-c</arg>
        <arg>-U</arg>
@@ -180,7 +180,7 @@ Compile_All_Targets = """
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </default-command-line>
+    </command-line>
 </target>
 """
 
@@ -193,7 +193,7 @@ Compile_File_Target = """
     <icon>gps-compile</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%builder</arg>
        <arg>-ws</arg>
        <arg>-c</arg>
@@ -202,7 +202,7 @@ Compile_File_Target = """
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%fp</arg>
-    </default-command-line>
+    </command-line>
     <key>shift-F4</key>
 </target>
 """
@@ -215,13 +215,13 @@ Syntax_Check_Target = """
     <icon>gps-syntax-check</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
        <arg>%F</arg>
-    </default-command-line>
+    </command-line>
 </target>
 """
 
@@ -233,7 +233,7 @@ Semantic_Check_Target = """
     <icon>gps-semantic-check</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
        <arg>-gnatc</arg>
@@ -242,7 +242,7 @@ Semantic_Check_Target = """
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%fp</arg>
-    </default-command-line>
+    </command-line>
 </target>
 """
 
@@ -253,25 +253,25 @@ Clean_Targets = """
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%gprclean</arg>
        <arg>-r</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </default-command-line>
+    </command-line>
 </target>
 <target model="gprclean" category="C_lean" name="Clean _Root">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
-    <default-command-line>
+    <command-line>
        <arg>%gprclean</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-    </default-command-line>
+    </command-line>
 </target>
 """
 
@@ -318,6 +318,7 @@ def on_gps_started (hook_name):
     # Create the global targets
     create_global_targets()
 
+    # Now update the contents
     GPS.Hook ("project_view_changed").add (on_project_recomputed)
 
 
