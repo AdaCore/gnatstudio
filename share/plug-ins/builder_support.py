@@ -207,6 +207,8 @@ Compile_File_Target = """
 </target>
 """
 
+# NOTE: the name of this command must be kept in sync with the constant in
+# Builder_Facility_Module.Scripts.
 Syntax_Check_Target = """
 <target model="gnatmake" category="_File_" name="Check _Syntax">
     <in-toolbar>TRUE</in-toolbar>
@@ -223,6 +225,8 @@ Syntax_Check_Target = """
 </target>
 """
 
+# NOTE: the name of this command must be kept in sync with the constant in
+# Builder_Facility_Module.Scripts.
 Semantic_Check_Target = """
 <target model="gnatmake" category="_File_" name="Check S_emantic">
     <in-toolbar>TRUE</in-toolbar>
