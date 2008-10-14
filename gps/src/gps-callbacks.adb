@@ -22,8 +22,10 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk_Utils;                 use Gtk_Utils;
 
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with Traces;                    use Traces;
@@ -90,6 +92,19 @@ package body GPS.Callbacks is
       end if;
 
       Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
+
+      --  Add separator in build menu, which cannot be added before, since
+      --  user plug-ins may add new menus based on the 'Build/Settings' menu.
+      --  ??? this is a little bit kludgy, but will do for now.
+
+      declare
+         Mitem : Gtk_Menu_Item;
+      begin
+         Gtk_New (Mitem);
+         Register_Menu
+           (GPS_Main.Kernel, -"/Build", Mitem, Ref_Item => -"Settings");
+      end;
+
       return False;
    exception
       when E : others =>
