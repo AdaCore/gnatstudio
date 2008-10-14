@@ -1395,4 +1395,25 @@ package body String_Utils is
       return Result;
    end Revert;
 
+   ------------------------------
+   -- Strip_Single_Underscores --
+   ------------------------------
+
+   function Strip_Single_Underscores (S : String) return String is
+      S2 : String := S;
+      J2 : Natural := S'First;
+   begin
+      for J in S'Range loop
+         S2 (J2) := S (J);
+
+         if S (J) /= '_'
+           or else (J > S'First and then S (J - 1) = '_')
+         then
+            J2 := J2 + 1;
+         end if;
+      end loop;
+
+      return S2 (S2'First .. J2 - 1);
+   end Strip_Single_Underscores;
+
 end String_Utils;
