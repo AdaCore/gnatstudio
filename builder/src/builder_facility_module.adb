@@ -62,8 +62,8 @@ with Commands.Builder;          use Commands.Builder;
 package body Builder_Facility_Module is
 
    Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
-   Main_Menu : constant String := '/' & ("New builder") & '/';
-   --  -"New builder"
+   Main_Menu : constant String := '/' & ("Build") & '/';
+   --  -"Build"
 
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Tool_Button_Record, String);
@@ -637,7 +637,7 @@ package body Builder_Facility_Module is
                      Stock_Image => Get_Icon (Target),
                      Callback    => null,
                      Command     => Interactive_Command_Access (C),
-                     Ref_Item    => -"Build Manager");
+                     Ref_Item    => -"Settings");
 
       Builder_Module_ID.Menus.Append (Cat_Path & Name);
    end Add_Menu_For_Target;
@@ -820,8 +820,8 @@ package body Builder_Facility_Module is
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
 
-      Register_Menu (Kernel, "/_" & (-"New builder"), Ref_Item => -"Tools");
-      Register_Menu (Kernel, Main_Menu, -"Build _Manager", "",
+      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
+      Register_Menu (Kernel, Main_Menu & (-"_Settings"), -"_Targets", "",
                      On_Build_Manager'Access);
 
       --  Connect to the File_Saved_Hook

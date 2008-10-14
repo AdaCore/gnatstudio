@@ -300,10 +300,9 @@ package body Dualcompilation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Property : constant Dualcomp_Property'Class := Get_Property;
-      Tools    : constant String := '/' & (-"Tools") & '/';
+      Tools    : constant String := '/' & (-"Build/Settings") & '/';
    begin
-      Register_Menu
-        (Kernel, Tools, -"_Dual Compilation Mode", "", On_Menu'Access);
+      Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
 
       if Property.Tools_Path /= null
         and then Property.Compiler_Path /= null
