@@ -613,7 +613,7 @@ package body Builder_Facility_Module is
 
    begin
       if Category (Category'First) /= '_'
-        and then Category (Category'Last) /= '_'
+        or else Category (Category'Last) /= '_'
       then
          Append (Cat_Path, Category);
       end if;
