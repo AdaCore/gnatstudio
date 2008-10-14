@@ -18,6 +18,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+
+with GNAT.OS_Lib;
+
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
@@ -25,13 +30,22 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 with GPS.Intl;           use GPS.Intl;
 
-with Build_Configurations; use Build_Configurations;
+with Build_Command_Manager; use Build_Command_Manager;
+with Build_Configurations;  use Build_Configurations;
+
 with String_List_Utils;  use String_List_Utils;
 
 package body Builder_Facility_Module.Scripts is
 
+   ----------------
+   --  Constants --
+   ----------------
+
+   --  NOTE: these constants must match the names of the predefined targets
+   --  registered in builder_support.py.
+   Compile_File_Target : constant String := "Compile File";
+
    --  BuildTarget class
-   --
 
    Target_Name_Cst   : aliased constant String := "target_name";
    Target_Class_Name : constant String := "BuildTarget";
@@ -59,6 +73,10 @@ package body Builder_Facility_Module.Scripts is
 
    function Get_Target_Name (Inst : Class_Instance) return String;
    --  Convenience function to get the target stored in Inst.
+
+   procedure Free (Ar : in out GNAT.OS_Lib.String_List);
+   procedure Free (Ar : in out GNAT.OS_Lib.String_List_Access);
+   --  Free the memory associate with Ar
 
    ---------------------
    -- Get_Target_Name --
@@ -96,7 +114,10 @@ package body Builder_Facility_Module.Scripts is
       Target_Class : constant Class_Type :=
         Get_Target_Class (Get_Kernel (Data));
       use String_List;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Node       : List_Node;
+      Extra_Args : GNAT.OS_Lib.Argument_List_Access;
+      Info       : Virtual_File;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
@@ -147,6 +168,22 @@ package body Builder_Facility_Module.Scripts is
 
             Node := Next (Node);
          end loop;
+
+      elsif Command = "compile" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+           (Nth_Arg (Data, 2, ""));
+
+         Launch_Target (Kernel       => Kernel,
+                        Registry     => Registry,
+                        Target_Name  => Compile_File_Target,
+                        Force_File   => Info,
+                        Extra_Args   => Extra_Args,
+                        Quiet        => False,
+                        Synchronous  => True,
+                        Force_Dialog => False);
+
+         Free (Extra_Args);
       end if;
    end Shell_Handler;
 
@@ -170,6 +207,38 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "get_build_output",
          Handler => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "compile",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class   => Get_File_Class (Kernel),
+         Handler => Shell_Handler'Access);
    end Register_Commands;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ar : in out GNAT.OS_Lib.String_List) is
+      use GNAT.OS_Lib;
+   begin
+      for A in Ar'Range loop
+         Free (Ar (A));
+      end loop;
+   end Free;
+
+   procedure Free (Ar : in out GNAT.OS_Lib.String_List_Access) is
+      use GNAT.OS_Lib;
+      procedure Free is new
+        Ada.Unchecked_Deallocation (GNAT.OS_Lib.String_List,
+                                    GNAT.OS_Lib.String_List_Access);
+
+   begin
+      if Ar /= null then
+         Free (Ar.all);
+         Free (Ar);
+      end if;
+   end Free;
 
 end Builder_Facility_Module.Scripts;
