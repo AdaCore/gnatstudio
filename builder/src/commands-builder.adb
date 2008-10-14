@@ -121,16 +121,12 @@ package body Commands.Builder is
    ------------------------
 
    procedure End_Build_Callback
-     (Data : Process_Data; Status : Integer)
-   is
-      Locations_Category : constant String :=
-        Target_Name_To_Locations_Category
-          (Build_Callback_Data (Data.Callback_Data.all).Target_Name);
+     (Data : Process_Data; Status : Integer) is
    begin
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
 
-      if Category_Count (Data.Kernel, Locations_Category) = 0
+      if Category_Count (Data.Kernel, Error_Category) = 0
         and then Status /= 0
       then
          Console.Raise_Console (Data.Kernel);
@@ -139,7 +135,7 @@ package body Commands.Builder is
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
 
-      Compilation_Finished (Data.Kernel, Locations_Category);
+      Compilation_Finished (Data.Kernel, Error_Category);
    end End_Build_Callback;
 
    --------------------
@@ -249,9 +245,7 @@ package body Commands.Builder is
       Last  : Natural;
       Lines : Slice_Set;
    begin
-      if not Quiet then
-         Insert (Kernel, Output, Add_LF => False);
-      end if;
+      Insert (Kernel, Output, Add_LF => False);
 
       if Output'Length = 0
         or else
