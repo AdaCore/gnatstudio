@@ -1,0 +1,15 @@
+with "../common/common";
+with "gtkada";
+with "../kernel/kernel";
+with "../shared";
+
+project Toolchains is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+
+   package Compiler renames Shared.Compiler;
+   package IDE renames Shared.IDE;
+
+end Toolchains;

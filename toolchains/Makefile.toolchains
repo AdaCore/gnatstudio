@@ -1,0 +1,38 @@
+ifeq ($(TOOLCHAINS_PROJECT),)
+TOOLCHAINS_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   TOOLCHAINS_ROOT=True
+endif
+
+TOOLCHAINS_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(TOOLCHAINS_BASE_DIR)/../common
+include $(BASE_DIR)/Makefile.common
+BASE_DIR=$(TOOLCHAINS_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+
+TOOLCHAINS_SRC_DIRS = $(TOOLCHAINS_BASE_DIR)/src
+SRC_DIRS += $(TOOLCHAINS_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(TOOLCHAINS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+TOOLCHAINS_SRCS := \
+  $(foreach name,$(TOOLCHAINS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+TOOLCHAINS_OBJ_DIR = $(TOOLCHAINS_BASE_DIR)/obj
+OBJ_DIR = $(TOOLCHAINS_OBJ_DIR)
+
+PROJECT_FILE = toolchains
+
+ifneq ($(strip $(TOOLCHAINS_SRCS)),)
+   LIBS := $(TOOLCHAINS_OBJ_DIR)/libtoolchains$(AR_EXT) $(LIBS)
+endif
+
+ifeq ($(TOOLCHAINS_ROOT),True)
+   include ../builder/src/Makefile.generic
+else
+   DEPS_PROJECTS += $(TOOLCHAINS_BASE_DIR)/toolchains
+endif
+
+endif

@@ -16,7 +16,7 @@ with "../custom/custom";
 with "../distrib";
 with "../docgen2/docgen2";
 with "../docs/docs";
-with "../dualcompilation/dualcompilation";
+with "../toolchains/toolchains";
 with "../gvd/gvd";
 with "../help/help";
 with "../kernel/kernel";
