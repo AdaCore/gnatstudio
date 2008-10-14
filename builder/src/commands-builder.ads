@@ -55,11 +55,13 @@ package Commands.Builder is
       CL             : GNAT.OS_Lib.String_List_Access;
       Target_Name    : String;
       Server         : Server_Type;
-      Quiet          : Boolean);
+      Quiet          : Boolean;
+      Synchronous    : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
    --  Target_Name is the name of the target being launched.
-   --  If Quiet is False, the cursor will jump to the first error.
+   --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
+   --  Synchronous.
 
 end Commands.Builder;
