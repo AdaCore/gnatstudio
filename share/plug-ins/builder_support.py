@@ -185,6 +185,8 @@ Compile_All_Targets = """
 """
 
 # This is a target to compile the current file using the builder model
+# NOTE: the name of this command must be kept in sync with the constant in
+# Builder_Facility_Module.Scripts.
 Compile_File_Target = """
 <target model="builder" category="_File_" name="_Compile File">
     <in-toolbar>TRUE</in-toolbar>
