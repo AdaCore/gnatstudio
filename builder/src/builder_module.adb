@@ -79,7 +79,6 @@ with OS_Utils;                  use OS_Utils;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
-with String_List_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
@@ -170,9 +169,6 @@ package body Builder_Module is
 
       Last_Project_For_Menu : Projects.Project_Type := Projects.No_Project;
       --  Project used to fill the Run_Menu and Make_Menu
-
-      Output     : String_List_Utils.String_List.List;
-      --  The last build output
 
       Last_Run_Cmd  : Run_Description;
       --  The last command spawned from the run menu
@@ -504,8 +500,6 @@ package body Builder_Module is
          --  are located under the Error_Category hierarchy in the locations
          --  window.
       end if;
-
-      String_List_Utils.String_List.Free (Builder_Module_ID.Output);
    end Clear_Compilation_Output;
 
    -----------------------
@@ -906,11 +900,6 @@ package body Builder_Module is
       end case;
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
-         String_List_Utils.String_List.Append
-           (Builder_Module_ID.Output,
-            Cmd.all & " "
-            & Argument_List_To_Quoted_String
-              (Args.all, Quote_Backslash => False));
          Launch_Process
            (Kernel,
             Command              => Cmd.all,
@@ -1201,11 +1190,6 @@ package body Builder_Module is
       Remove_Location_Category (Kernel, Error_Category, File);
 
       if Compilation_Starting (Kernel, Error_Category, Quiet => Quiet) then
-         String_List_Utils.String_List.Append
-           (Builder_Module_ID.Output,
-            Cmd.all & " " & Argument_List_To_Quoted_String
-              (Common_Args.all & Args.all, Quote_Backslash => False));
-
          Launch_Process
            (Kernel,
             Command              => Cmd.all,
@@ -1246,9 +1230,7 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      use String_List_Utils.String_List;
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Node       : List_Node;
       Info       : Virtual_File;
       C          : Xref_Commands.Generic_Asynchronous_Command_Access;
       Extra_Args : Argument_List_Access;
@@ -1310,17 +1292,6 @@ package body Builder_Module is
          end;
 
          Free (Extra_Args);
-
-      elsif Command = "get_build_output" then
-         Node := First (Builder_Module_ID.Output);
-
-         Set_Return_Value_As_List (Data);
-         while Node /= Null_Node loop
-            Set_Return_Value
-              (Data, String_List_Utils.String_List.Data (Node));
-
-            Node := Next (Node);
-         end loop;
 
       elsif Command = "compute_xref" then
          Xref_Commands.Create
@@ -1393,8 +1364,6 @@ package body Builder_Module is
             --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
             --  is local.
 
-            String_List_Utils.String_List.Append
-              (Builder_Module_ID.Output, Shell_Env & " -c " & Cmd);
             Args := new Argument_List'(new String'("-c"), new String'(Cmd));
             Launch_Process
               (Kernel,
@@ -1417,11 +1386,6 @@ package body Builder_Module is
             Args := Argument_String_To_List (Cmd);
 
             --  ??? Is this always the Build_Server ? Should ask the user ?
-            String_List_Utils.String_List.Append
-              (Builder_Module_ID.Output,
-               Args (Args'First).all & " "
-               & Argument_List_To_Quoted_String
-                 (Args (Args'First + 1 .. Args'Last)));
 
             Launch_Process
               (Kernel,
@@ -2378,21 +2342,6 @@ package body Builder_Module is
       Free (Mains);
    end Append_To_Menu;
 
-   ----------------------------
-   -- Append_To_Build_Output --
-   ----------------------------
-
-   procedure Append_To_Build_Output
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Builder_Module_ID /= null then
-         String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
-      end if;
-   end Append_To_Build_Output;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2520,9 +2469,6 @@ package body Builder_Module is
          Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "compute_xref",
-         Handler => Compile_Command'Access);
-      Register_Command
-        (Kernel, "get_build_output",
          Handler => Compile_Command'Access);
    end Register_Module;
 
