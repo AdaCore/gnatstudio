@@ -1451,17 +1451,15 @@ package body GPS.Location_View is
             Dummy := Expand_Row (View.Tree, Path, False);
             Path_Free (Path);
 
-            if not Quiet then
-               declare
-                  MDI   : constant MDI_Window := Get_MDI (View.Kernel);
-                  Child : constant MDI_Child :=
-                    Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
-               begin
-                  if Child /= null then
-                     Raise_Child (Child, Give_Focus => False);
-                  end if;
-               end;
-            end if;
+            declare
+               MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+               Child : constant MDI_Child :=
+                 Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
+            begin
+               if Child /= null then
+                  Raise_Child (Child, Give_Focus => False);
+               end if;
+            end;
 
             Path := Get_Path (Model, File_Iter);
             Dummy := Expand_Row (View.Tree, Path, False);
