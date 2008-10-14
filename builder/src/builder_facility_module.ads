@@ -61,12 +61,23 @@
 
 with GPS.Kernel;
 with Build_Configurations;
+with String_List_Utils;
 
 package Builder_Facility_Module is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module
+
+   procedure Append_To_Build_Output
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Line   : String);
+   --  Register Line as part of the current compilation output
+
+   function Get_Build_Output return String_List_Utils.String_List.List;
+   --  Return the last build output.
+   --  User should not free the result nor store a pointer to the result, as
+   --  this might get invalidated as soon as a new compilation starts.
 
 private
 
