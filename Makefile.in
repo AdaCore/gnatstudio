@@ -56,6 +56,9 @@ ifeq ($(OS),Windows_NT)
 		share/plug-ins/_subversion_ \
 		> share/plug-ins/subversion_native_windows.xml
 endif
+	$(RM) $(sharedir)/gps/library/*.py
+	$(RM) $(sharedir)/gps/library/*.xml
+	$(RM) $(sharedir)/gps/plug-ins/*.py
 # update runtime.xml before copying the plug-ins files.
 	(cd distrib; $(PERL) from_impunit.pl)
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
@@ -64,8 +67,6 @@ ifeq ($(OS),Windows_NT)
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.xml
 	$(RM) share/plug-ins/subversion_native_windows.xml
 endif
-	$(RM) $(sharedir)/gps/library/*.py
-	$(RM) $(sharedir)/gps/plug-ins/*.py
 	$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/plug-ins/gnat_switches.py
 	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/gps_utils/*.py) | (cd $(sharedir)/gps; tar xf -)

@@ -108,6 +108,7 @@ install_binaries() {
   rm -f $basedir/share/gps/plug-ins/*.xml
   rm -f $basedir/share/gps/plug-ins/*.py*
   rm -f $basedir/share/gps/library/*.py*
+  rm -f $basedir/share/gps/library/*.xml
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
