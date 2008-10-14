@@ -78,6 +78,7 @@ package body Builder_Facility_Module is
    type Model_And_Target_XML is record
       Model_Name : Unbounded_String;
       XML        : Node_Ptr;
+      From_User  : Boolean;
    end record;
 
    package Target_XML_List is new Ada.Containers.Doubly_Linked_Lists
@@ -170,11 +171,11 @@ package body Builder_Facility_Module is
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
    --  Return the file where user targets are stored.
 
-   procedure Attempt_Target_Register (XML : Node_Ptr; Allow_Update : Boolean);
+   procedure Attempt_Target_Register (XML : Node_Ptr; From_User : Boolean);
    --  Attempt to register target described in XML. If the model is not
    --  registered yet, add this target to the list of unregistered targets.
-   --  Allow_Update indicates whether the data in the target can overwrite
-   --  data in previously registered targets of the same type.
+   --  From_User indicates whether the target is loaded from the user saved
+   --  file.
 
    procedure On_Button_Click
      (Widget : access Gtk_Tool_Button_Record'Class;
@@ -203,6 +204,10 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
    --  Called when a file has been saved
+
+   procedure On_GPS_Started
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when GPS is starting
 
    procedure Add_Action_For_Target (T : Target_Access);
    --  Register a Kernel Action to build T
@@ -362,6 +367,18 @@ package body Builder_Facility_Module is
       String_List_Utils.String_List.Free (Builder_Module_ID.Output);
    end Clear_Compilation_Output;
 
+   --------------------
+   -- On_GPS_Started --
+   --------------------
+
+   procedure On_GPS_Started
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Load_Targets;
+   end On_GPS_Started;
+
    -----------------------------
    -- On_Compilation_Starting --
    -----------------------------
@@ -479,8 +496,8 @@ package body Builder_Facility_Module is
    -----------------------------
 
    procedure Attempt_Target_Register
-     (XML          : Node_Ptr;
-      Allow_Update : Boolean)
+     (XML       : Node_Ptr;
+      From_User : Boolean)
    is
       Model_Name : Unbounded_String;
       T          : Target_Access;
@@ -500,7 +517,7 @@ package body Builder_Facility_Module is
          --  The model is registered: add the target immediately
 
          T := Load_Target_From_XML
-           (Builder_Module_ID.Registry, XML, Allow_Update);
+           (Builder_Module_ID.Registry, XML, From_User);
 
          --  The target might already be registered, if we are calling this
          --  with Allow_Update (for example when a target coming from the
@@ -527,12 +544,12 @@ package body Builder_Facility_Module is
          --  The model is not registered: add XML to the list of unregistered
          --  targets
 
-         if Allow_Update then
+         if From_User then
             Builder_Module_ID.Unregistered_Targets.Append
-              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML)));
+              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML), From_User));
          else
             Builder_Module_ID.Unregistered_Targets.Prepend
-              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML)));
+              (Model_And_Target_XML'(Model_Name, Deep_Copy (XML), From_User));
          end if;
       end if;
    end Attempt_Target_Register;
@@ -797,8 +814,8 @@ package body Builder_Facility_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Module, File);
-      Allow_Update : Boolean;
-      C            : Target_XML_List.Cursor;
+      From_User : Boolean;
+      C         : Target_XML_List.Cursor;
 
    begin
       if Node.Tag.all = "target" then
@@ -807,8 +824,8 @@ package body Builder_Facility_Module is
          --  case we allow the XML to update the values of a previously
          --  registered target.
 
-         Allow_Update := (Level = User_Specific);
-         Attempt_Target_Register (Node, Allow_Update);
+         From_User := (Level = User_Specific);
+         Attempt_Target_Register (Node, From_User);
 
       elsif Node.Tag.all = "target-model" then
          Create_Model_From_XML (Builder_Module_ID.Registry, Node);
@@ -826,8 +843,8 @@ package body Builder_Facility_Module is
                Name     => Element (C).Model_Name)
             then
                Attempt_Target_Register
-                 (XML          => Element (C).XML,
-                  Allow_Update => True);
+                 (XML       => Element (C).XML,
+                  From_User => Element (C).From_User);
 
                --  Free memory
                declare
@@ -893,7 +910,9 @@ package body Builder_Facility_Module is
       Insert (Get_Toolbar (Kernel), Space);
 
       --  Load the user-defined targets.
-      Load_Targets;
+      Add_Hook (Kernel, "gps_started",
+                Wrapper (On_GPS_Started'Access),
+                Name  => "builder_facility_module.gps_started");
    end Register_Module;
 
    --------------
