@@ -112,7 +112,7 @@ Custom_Model_Template = """
 # This is an empty target using the Custom model
 
 Custom_Target = """
-<target model="custom" category="Project" name="Custom Build...">
+<target model="custom" category="_Project" name="Custom Build...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-custom-build</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -155,7 +155,7 @@ Xrefs_Model_Template = """
 
 # Targets to compile all project files using the builder model
 Compile_All_Targets = """
-<target model="builder" category="Project" name="_Build All">
+<target model="builder" category="_Project" name="_Build All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -168,7 +168,7 @@ Compile_All_Targets = """
        <arg>%X</arg>
     </default-command-line>
 </target>
-<target model="builder" category="Project" name="_Compile All">
+<target model="builder" category="_Project" name="_Compile All">
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
@@ -182,7 +182,7 @@ Compile_All_Targets = """
        <arg>%X</arg>
     </default-command-line>
 </target>
-<target model="builder" category="Project" name="Compile _Root">
+<target model="builder" category="_Project" name="Compile _Root">
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
@@ -200,7 +200,7 @@ Compile_All_Targets = """
 
 # This is a target to compile the current file using the builder model
 Compile_File_Target = """
-<target model="builder" category="_File_" name="Compile _File">
+<target model="builder" category="_File_" name="_Compile File">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-compile</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -256,7 +256,7 @@ Semantic_Check_Target = """
 
 # Targets to clear the current project using the gprclean model
 Clean_Targets = """
-<target model="gprclean" category="Clean" name="Clean _All">
+<target model="gprclean" category="C_lean" name="Clean _All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -269,7 +269,7 @@ Clean_Targets = """
        <arg>%X</arg>
     </default-command-line>
 </target>
-<target model="gprclean" category="Clean" name="C_lean Root">
+<target model="gprclean" category="C_lean" name="Clean _Root">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY</launch-mode>
