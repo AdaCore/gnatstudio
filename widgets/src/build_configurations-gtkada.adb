@@ -316,9 +316,14 @@ package body Build_Configurations.Gtkada is
       T := Target_UI_Access
         (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
 
-      if T.Target.Default_Command_Line /= null then
-         Set_Command_Line (T.Editor, T.Target.Default_Command_Line.all);
-      end if;
+      --  Revert to the original target
+      Revert_Target (UI.Registry, To_String (T.Target.Name));
+
+      --  Reset dangling pointer. Should be done in the following call to
+      --  Refresh, but do it for safety.
+      T.Target := null;
+
+      Refresh (UI);
 
    exception
       when E : others =>
@@ -441,20 +446,19 @@ package body Build_Configurations.Gtkada is
          Gtk_New_Hbox (Top_Box);
          Set_Spacing (Top_Box, 3);
 
-         --  Create the "revert" button for targets that have a default command
-         --  line
+         --  Create the "revert" button.
+         --  ??? We should only put a revert button when there is an original
+         --  target
 
-         if Target.Default_Command_Line /= null then
-            Gtk_New_From_Stock_And_Label (Button, "gtk-refresh", " Revert ");
-            Pack_End (Top_Box, Button, False, False, 0);
+         Gtk_New_From_Stock_And_Label (Button, "gtk-refresh", " Revert ");
+         Pack_End (Top_Box, Button, False, False, 0);
 
-            Object_Connect
-              (Widget      => Button,
-               Name        => Gtk.Button.Signal_Clicked,
-               Cb          => On_Revert_Target'Access,
-               Slot_Object => UI,
-               After       => True);
-         end if;
+         Object_Connect
+           (Widget      => Button,
+            Name        => Gtk.Button.Signal_Clicked,
+            Cb          => On_Revert_Target'Access,
+            Slot_Object => UI,
+            After       => True);
 
          --  Create the model combo
 
