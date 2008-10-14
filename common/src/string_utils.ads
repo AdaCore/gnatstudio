@@ -240,6 +240,12 @@ package String_Utils is
    function Strip_Quotes (S : String) return String;
    --  Remove the quotes and the spaces at the beginning and end of S
 
+   function Strip_Single_Underscores (S : String) return String;
+   --  Remove S stripped of single underscores, and with multiple underscores
+   --  concatenated into one.
+   --  This is used to process menu shortcuts, for example
+   --    Strip_Single_Underscores ("/_Project/C_lean") returns "/Project/Clean"
+
    function Image (N : Integer) return String;
    --  Create a string image of the given Integer
 
