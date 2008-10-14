@@ -1325,8 +1325,8 @@ procedure GPS.Main is
       end if;
 
       if Active (Builder_Trace) then
-         Builder_Module.Register_Module (GPS_Main.Kernel);
          Builder_Facility_Module.Register_Module (GPS_Main.Kernel);
+         Builder_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Toolchains_Trace) then
