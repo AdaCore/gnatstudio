@@ -155,7 +155,7 @@ Xrefs_Model_Template = """
 
 # Targets to compile all project files using the builder model
 Compile_All_Targets = """
-<target model="builder" category="_Project" name="_Build All">
+<target model="builder" category="_Project" name="_Make All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -168,7 +168,7 @@ Compile_All_Targets = """
        <arg>%X</arg>
     </default-command-line>
 </target>
-<target model="builder" category="_Project" name="_Compile All">
+<target model="builder" category="_Project" name="_Compile All Sources">
     <icon>gps-build-all</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
@@ -176,20 +176,6 @@ Compile_All_Targets = """
        <arg>%builder</arg>
        <arg>-c</arg>
        <arg>-U</arg>
-       <arg>-d</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-    </default-command-line>
-</target>
-<target model="builder" category="_Project" name="Compile _Root">
-    <icon>gps-build-all</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <read-only>TRUE</read-only>
-    <default-command-line>
-       <arg>%builder</arg>
-       <arg>-c</arg>
-       <arg>-u</arg>
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
