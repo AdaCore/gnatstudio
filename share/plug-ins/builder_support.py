@@ -200,7 +200,7 @@ Compile_All_Targets = """
 
 # This is a target to compile the current file using the builder model
 Compile_File_Target = """
-<target model="builder" category="_File_" name="_Compile File">
+<target model="builder" category="_File_" name="Compile _File">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-compile</icon>
     <launch-mode>MANUALLY</launch-mode>
