@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,10 +54,10 @@ package String_Utils is
    --  Use with Skip_To_Column to go to a specific position in a buffer.
 
    procedure Skip_To_Column
-     (Buffer        : String;
-      Columns       : Natural := 0;
-      Index         : in out Natural;
-      Tab_Width     : Integer := 8);
+     (Buffer    : String;
+      Columns   : Natural := 0;
+      Index     : in out Natural;
+      Tab_Width : Integer := 8);
    --  Assuming Index points to the begining of a line (as is the case after
    --  Skip_Lines for instance), jump to the specific column on that line.
    --  This procedure handles tabulations.
@@ -162,10 +162,10 @@ package String_Utils is
    --  equivalent to Substring.
 
    procedure Parse_Cst_String
-     (Type_Str : String;
-      Index    : in out Natural;
-      Str      : out String;
-      Str_Last : out Natural;
+     (Type_Str          : String;
+      Index             : in out Natural;
+      Str               : out String;
+      Str_Last          : out Natural;
       Backslash_Special : Boolean := True);
    --  Parse the string pointed to by Index, and copy the result in Str.
    --  Index must point to the opening " character, and will be set to
@@ -241,7 +241,7 @@ package String_Utils is
    --  Remove the quotes and the spaces at the beginning and end of S
 
    function Strip_Single_Underscores (S : String) return String;
-   --  Remove S stripped of single underscores, and with multiple underscores
+   --  Return S stripped of single underscores, and with multiple underscores
    --  concatenated into one.
    --  This is used to process menu shortcuts, for example
    --    Strip_Single_Underscores ("/_Project/C_lean") returns "/Project/Clean"
