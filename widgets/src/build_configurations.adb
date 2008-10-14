@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Switches_Parser;
+with String_Utils;    use String_Utils;
 
 package body Build_Configurations is
 
@@ -49,10 +50,6 @@ package body Build_Configurations is
    --             <arg>ARGN</arg>
    --          </command-line>
 
-   function Process_Underscores (S : String) return String;
-   --  Remove S stripped of single underscores, and with multiple underscores
-   --  concatenated into one.
-
    ---------
    -- "-" --
    ---------
@@ -62,27 +59,6 @@ package body Build_Configurations is
       --  ??? Provide implementation
       return Msg;
    end "-";
-
-   -------------------------
-   -- Process_Underscores --
-   -------------------------
-
-   function Process_Underscores (S : String) return String is
-      S2 : String := S;
-      J2 : Natural := S'First;
-   begin
-      for J in S'Range loop
-         S2 (J2) := S (J);
-
-         if S (J) /= '_'
-           or else (J > S'First and then S (J - 1) = '_')
-         then
-            J2 := J2 + 1;
-         end if;
-      end loop;
-
-      return S2 (S2'First .. J2 - 1);
-   end Process_Underscores;
 
    ---------
    -- Log --
@@ -254,7 +230,7 @@ package body Build_Configurations is
       The_Model := Registry.Models.Element (To_Unbounded_String (Model));
 
       Target := new Target_Type;
-      Target.Name := To_Unbounded_String (Process_Underscores (Name));
+      Target.Name := To_Unbounded_String (Strip_Single_Underscores (Name));
       Target.Menu_Name := To_Unbounded_String (Name);
       Target.Category := To_Unbounded_String (Category);
       Target.Model := The_Model;
@@ -715,7 +691,7 @@ package body Build_Configurations is
 
       declare
          Menu_Name : constant String := (Get_Attribute (XML, "name", ""));
-         Target_Name : constant String := Process_Underscores (Menu_Name);
+         Target_Name : constant String := Strip_Single_Underscores (Menu_Name);
          Category  : constant String := (Get_Attribute (XML, "category", ""));
          Model     : constant String := (Get_Attribute (XML, "model", ""));
       begin
