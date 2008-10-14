@@ -19,11 +19,7 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-
 with GNATCOLL.Templates; use GNATCOLL.Templates;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
-
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -54,21 +50,23 @@ package body Build_Command_Manager is
    --  Raised by Expand_Arg below.
 
    function Expand_Command_Line
-     (Kernel   : GPS.Kernel.Kernel_Handle;
-      CL       : Argument_List;
-      Server   : Server_Type;
-      Simulate : Boolean := False) return Argument_List_Access;
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      CL         : Argument_List;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Simulate   : Boolean := False) return Argument_List_Access;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
 
    function Expand_Arg
-     (Kernel   : GPS.Kernel.Kernel_Handle;
-      Context  : GPS.Kernel.Selection_Context;
-      Arg      : String;
-      Server   : Server_Type;
-      Simulate : Boolean) return Argument_List;
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      Context    : GPS.Kernel.Selection_Context;
+      Arg        : String;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Simulate   : Boolean) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
@@ -81,11 +79,12 @@ package body Build_Command_Manager is
    ----------------
 
    function Expand_Arg
-     (Kernel   : GPS.Kernel.Kernel_Handle;
-      Context  : GPS.Kernel.Selection_Context;
-      Arg      : String;
-      Server   : Server_Type;
-      Simulate : Boolean) return Argument_List
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      Context    : GPS.Kernel.Selection_Context;
+      Arg        : String;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Simulate   : Boolean) return Argument_List
    is
       function Substitution
         (Param  : String; Quoted : Boolean) return String;
@@ -198,6 +197,10 @@ package body Build_Command_Manager is
          end;
 
       elsif Arg = "%fp" then
+         if Force_File /= No_File then
+            return (1 => new String'(Base_Name (Force_File)));
+         end if;
+
          declare
             File : constant Virtual_File := File_Information (Context);
          begin
@@ -239,10 +242,11 @@ package body Build_Command_Manager is
    -------------------------
 
    function Expand_Command_Line
-     (Kernel   : GPS.Kernel.Kernel_Handle;
-      CL       : Argument_List;
-      Server   : Server_Type;
-      Simulate : Boolean := False) return Argument_List_Access
+     (Kernel     : GPS.Kernel.Kernel_Handle;
+      CL         : Argument_List;
+      Server     : Server_Type;
+      Force_File : Virtual_File;
+      Simulate   : Boolean := False) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
       Index  : Natural := 1;
@@ -263,7 +267,8 @@ package body Build_Command_Manager is
 
          declare
             Expanded : constant Argument_List :=
-              Expand_Arg (Kernel, Context, CL (J).all, Server, Simulate);
+              Expand_Arg
+                (Kernel, Context, CL (J).all, Server, Force_File, Simulate);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
@@ -312,11 +317,14 @@ package body Build_Command_Manager is
      (Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Force_File   : Virtual_File;
+      Extra_Args   : Argument_List_Access;
+      Quiet        : Boolean;
+      Synchronous  : Boolean;
       Force_Dialog : Boolean)
    is
       T            : Target_Access;
       Full         : Argument_List_Access;
-      Quiet        : Boolean;
       Command_Line : Argument_List_Access;
       Server       : Server_Type;
 
@@ -326,7 +334,8 @@ package body Build_Command_Manager is
       function Expand_Cmd_Line (CL : String) return String is
          CL_Args : Argument_List_Access := Argument_String_To_List (CL);
          Args    : Argument_List_Access :=
-           Expand_Command_Line (Kernel, CL_Args.all, Server, Simulate => True);
+           Expand_Command_Line
+             (Kernel, CL_Args.all, Server, Force_File, Simulate => True);
          Res     : constant String := Argument_List_To_String (Args.all);
 
       begin
@@ -367,7 +376,14 @@ package body Build_Command_Manager is
             return;
          end if;
 
-         Full := Expand_Command_Line (Kernel, Command_Line.all, Server);
+         if Extra_Args = null then
+            Full := Expand_Command_Line
+              (Kernel, Command_Line.all, Server, Force_File);
+         else
+            Full := Expand_Command_Line
+              (Kernel, Command_Line.all & Extra_Args.all, Server, Force_File);
+         end if;
+
          Free (Command_Line);
 
       else
@@ -391,7 +407,12 @@ package body Build_Command_Manager is
 
             --  Expand the command line
 
-            Full := Expand_Command_Line (Kernel, CL, Server);
+            if Extra_Args = null then
+               Full := Expand_Command_Line (Kernel, CL, Server, Force_File);
+            else
+               Full := Expand_Command_Line
+                 (Kernel, CL & Extra_Args.all, Server, Force_File);
+            end if;
          end;
       end if;
 
@@ -407,15 +428,8 @@ package body Build_Command_Manager is
 
       --  Launch the build command
 
-      case Get_Properties (T).Launch_Mode is
-         when On_File_Save =>
-            Quiet := True;
-         when Manually | Manually_With_No_Dialog | Manually_With_Dialog =>
-            Quiet := False;
-      end case;
-
       Launch_Build_Command
-        (Kernel, Full, Target_Name, Server, Quiet);
+        (Kernel, Full, Target_Name, Server, Quiet, Synchronous);
       --  ??? change the name of the category
    end Launch_Target;
 
@@ -435,7 +449,11 @@ package body Build_Command_Manager is
       Launch_Target (Kernel       => Command.Kernel,
                      Registry     => Command.Registry,
                      Target_Name  => To_String (Command.Target_Name),
-                     Force_Dialog => Command.Force_Dialog);
+                     Force_File   => No_File,
+                     Extra_Args   => null,
+                     Quiet        => Command.Quiet,
+                     Force_Dialog => Command.Force_Dialog,
+                     Synchronous  => False);
       return Success;
    end Execute;
 
@@ -448,6 +466,7 @@ package body Build_Command_Manager is
       Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Quiet        : Boolean;
       Force_Dialog : Boolean)
    is
    begin
@@ -456,6 +475,7 @@ package body Build_Command_Manager is
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Force_Dialog := Force_Dialog;
+      Item.Quiet := Quiet;
    end Create;
 
 end Build_Command_Manager;
