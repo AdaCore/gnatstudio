@@ -260,6 +260,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the models combo
 
       Gtk_New (Label, -"Target type");
+      Set_Tip
+        (UI.Tooltips,
+         Label,
+         -"Select the target type/model");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 1, 2, Expand or Fill, 0, 3, 3);
@@ -267,6 +271,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       Combo := Models_Combo (UI);
       Model_E := Gtk_Entry (Get_Child (Combo));
       Set_Editable (Model_E, False);
+      Set_Tip
+        (UI.Tooltips,
+         Combo,
+         -"Select the target type/model");
 
       C := UI.Registry.Models.First;
       if Has_Element (C) then
@@ -292,6 +300,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       --  Add the category entry
 
       Gtk_New (Label, -"Target category");
+      Set_Tip
+        (UI.Tooltips,
+         Label,
+         -"Type a new category name, or select an existing one");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 2, 3, Expand or Fill, 0, 3, 3);
@@ -299,6 +311,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       Gtk_New (M, GType_Array'(0 => GType_String));
       Gtk_New_With_Model (Combo, M, 0);
       Cat_E := Gtk_Entry (Get_Child (Combo));
+      Set_Tip
+        (UI.Tooltips,
+         Combo,
+         -"Type a new category name, or select an existing one");
 
       Iter := Get_Iter_First (UI.View.Model);
 
