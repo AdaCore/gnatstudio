@@ -184,6 +184,24 @@ Compile_All_Targets = """
 </target>
 """
 
+Build_Main_Target = """
+<target model="builder" category="_Project" name="Build Main">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gps-build-main</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <represents-mains>TRUE</represents-mains>
+    <command-line>
+       <arg>%builder</arg>
+       <arg>-d</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%M</arg>
+    </command-line>
+</target>
+"""
+
 # This is a target to compile the current file using the builder model
 # NOTE: the name of this command must be kept in sync with the constant in
 # Builder_Facility_Module.Scripts.
@@ -291,6 +309,7 @@ def create_global_targets():
     parse_xml (Syntax_Check_Target)
     parse_xml (Semantic_Check_Target)
     parse_xml (Compile_File_Target)
+    parse_xml (Build_Main_Target)
     parse_xml (Compile_All_Targets)
     parse_xml (Clean_Targets)
     parse_xml (Custom_Target)
