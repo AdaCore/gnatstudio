@@ -90,10 +90,7 @@ package body Build_Configurations is
    begin
       T2 := new Target_Type;
       T2.Name := T.Name;
-      T2.Menu_Name := T.Menu_Name;
-      T2.Category  := T.Category;
       T2.Model     := T.Model;
-      T2.Icon      := T.Icon;
       T2.Command_Line := Deep_Copy (T.Command_Line);
       T2.Properties := T.Properties;
       return T2;
@@ -136,10 +133,7 @@ package body Build_Configurations is
 
    begin
       if        T1.Name       /= T2.Name
-        or else T1.Menu_Name  /= T2.Menu_Name
-        or else T1.Category   /= T2.Category
         or else T1.Model      /= T2.Model
-        or else T1.Icon       /= T2.Icon
         or else T1.Properties /= T2.Properties
         or else not Equals (T1.Command_Line, T2.Command_Line)
       then
@@ -330,8 +324,8 @@ package body Build_Configurations is
 
       Target := new Target_Type;
       Target.Name := To_Unbounded_String (Strip_Single_Underscores (Name));
-      Target.Menu_Name := To_Unbounded_String (Name);
-      Target.Category := To_Unbounded_String (Category);
+      Target.Properties.Menu_Name := To_Unbounded_String (Name);
+      Target.Properties.Category := To_Unbounded_String (Category);
       Target.Model := The_Model;
 
       if The_Model.Default_Command_Line /= null then
@@ -716,8 +710,8 @@ package body Build_Configurations is
       --  Main node
       N.Attributes := new String'
         ("model=""" & To_String (Target.Model.Name) & """ " &
-         "category=""" & To_String (Target.Category) & """ " &
-         "name=""" & To_String (Target.Menu_Name) & """");
+         "category=""" & To_String (Target.Properties.Category) & """ " &
+         "name=""" & To_String (Target.Properties.Menu_Name) & """");
       --  Insert a <icon> node if needed
 
       N.Child := new Node;
@@ -725,11 +719,11 @@ package body Build_Configurations is
       C.Tag := new String'("in-toolbar");
       C.Value := new String'(Target.Properties.Icon_In_Toolbar'Img);
 
-      if Target.Icon /= "" then
+      if Target.Properties.Icon /= "" then
          C.Next := new Node;
          C := C.Next;
          C.Tag := new String'("icon");
-         C.Value := new String'(To_String (Target.Icon));
+         C.Value := new String'(To_String (Target.Properties.Icon));
       end if;
 
       C.Next := new Node;
@@ -740,6 +734,11 @@ package body Build_Configurations is
       C.Next := new Node;
       C := C.Next;
       C.Tag := new String'("read-only");
+      C.Value := new String'(Target.Properties.Read_Only'Img);
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("represents-mains");
       C.Value := new String'(Target.Properties.Read_Only'Img);
 
       C.Next := new Node;
@@ -825,8 +824,8 @@ package body Build_Configurations is
          else
             Target := new Target_Type;
             Target.Name  := To_Unbounded_String (Target_Name);
-            Target.Menu_Name := To_Unbounded_String (Menu_Name);
-            Target.Category := To_Unbounded_String (Category);
+            Target.Properties.Menu_Name := To_Unbounded_String (Menu_Name);
+            Target.Properties.Category := To_Unbounded_String (Category);
             Target.Model := Registry.Models.Element
               (To_Unbounded_String (Model));
 
@@ -849,7 +848,7 @@ package body Build_Configurations is
               (Child.Value.all);
 
          elsif Child.Tag.all = "icon" then
-            Target.Icon := To_Unbounded_String (Child.Value.all);
+            Target.Properties.Icon := To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "in-toolbar" then
             Target.Properties.Icon_In_Toolbar := Boolean'Value
@@ -860,6 +859,10 @@ package body Build_Configurations is
 
          elsif Child.Tag.all = "read-only" then
             Target.Properties.Read_Only := Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "represents-mains" then
+            Target.Properties.Represents_Mains :=
+              Boolean'Value (Child.Value.all);
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")
@@ -1016,7 +1019,7 @@ package body Build_Configurations is
 
    function Get_Menu_Name (Target : Target_Access) return String is
    begin
-      return To_String (Target.Menu_Name);
+      return To_String (Target.Properties.Menu_Name);
    end Get_Menu_Name;
 
    ------------------
@@ -1025,7 +1028,7 @@ package body Build_Configurations is
 
    function Get_Category (Target : Target_Access) return String is
    begin
-      return To_String (Target.Category);
+      return To_String (Target.Properties.Category);
    end Get_Category;
 
    ----------------
@@ -1043,10 +1046,10 @@ package body Build_Configurations is
 
    function Get_Icon (Target : Target_Access) return String is
    begin
-      if Target.Icon = "" then
+      if Target.Properties.Icon = "" then
          return To_String (Target.Model.Icon);
       else
-         return To_String (Target.Icon);
+         return To_String (Target.Properties.Icon);
       end if;
    end Get_Icon;
 
