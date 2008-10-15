@@ -253,6 +253,7 @@ package body Build_Configurations.Gtkada is
          T.Target.Properties.Icon :=
            To_Unbounded_String (Get_Text (T.Icon_Entry));
          T.Target.Properties.Icon_In_Toolbar := Get_Active (T.Icon_Check);
+         T.Target.Properties.Represents_Mains := Get_Active (T.Main_Check);
       end loop;
    end Save_Targets;
 
@@ -525,13 +526,20 @@ package body Build_Configurations.Gtkada is
                  Xoptions      => Expand or Fill);
 
          Gtk_New (Box.Icon_Check, "Display button in toolbar");
-
          Attach (Table,
                  Child         => Box.Icon_Check,
                  Left_Attach   => 2,
                  Right_Attach  => 3,
                  Top_Attach    => 0,
                  Bottom_Attach => 1);
+
+         Gtk_New (Box.Main_Check, "Multiple main target");
+         Attach (Table,
+                 Child         => Box.Main_Check,
+                 Left_Attach   => 2,
+                 Right_Attach  => 3,
+                 Top_Attach    => 1,
+                 Bottom_Attach => 2);
 
          Gtk_New_Hbox (Hbox);
          Set_Spacing (Hbox, 3);
@@ -572,6 +580,7 @@ package body Build_Configurations.Gtkada is
          end if;
 
          Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
+         Set_Active (Box.Main_Check, Target.Properties.Represents_Mains);
       end if;
 
       --  Add the switches frame
