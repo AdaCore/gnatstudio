@@ -76,8 +76,8 @@ package body Builder_Facility_Module is
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Tool_Button_Record, Target_And_Main);
 
-   package Buttons_Map is new Ada.Containers.Ordered_Maps
-     (Unbounded_String, Gtk_Tool_Button);
+   package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
+     (Gtk_Tool_Button);
 
    package String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
@@ -103,7 +103,7 @@ package body Builder_Facility_Module is
    with record
       Registry : Build_Config_Registry_Access;
 
-      Buttons  : Buttons_Map.Map;
+      Buttons  : Buttons_List.List;
       --  The set of toolbar buttons
 
       Unregistered_Targets : Target_XML_List.List;
@@ -606,9 +606,9 @@ package body Builder_Facility_Module is
 
    procedure Clear_Toolbar_Buttons is
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Get_Kernel);
-      use Buttons_Map;
+      use Buttons_List;
 
-      C : Buttons_Map.Cursor;
+      C : Buttons_List.Cursor;
    begin
       --  Browse through the registry and remove already added buttons
 
@@ -671,8 +671,7 @@ package body Builder_Facility_Module is
       begin
          Gtk_New_From_Stock (Button, Get_Icon (Target));
          Set_Label (Button, Name);
-         Builder_Module_ID.Buttons.Insert
-           (To_Unbounded_String (Name), Button);
+         Builder_Module_ID.Buttons.Prepend (Button);
          Insert (Toolbar => Toolbar, Item    => Button);
 
          if Main = "" then
