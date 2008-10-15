@@ -78,6 +78,20 @@ package body Build_Command_Manager is
    --  If Simulate is true, Invalid_Argument will never be raised, and no
    --  expansion will be done.
 
+   procedure Free (Ar : in out Argument_List);
+   --  Free memory associated to Ar.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ar : in out Argument_List) is
+   begin
+      for A in Ar'Range loop
+         Free (Ar (A));
+      end loop;
+   end Free;
+
    ----------------
    -- Expand_Arg --
    ----------------
@@ -502,6 +516,69 @@ package body Build_Command_Manager is
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Main := To_Unbounded_String (Main);
+      Item.Force_Dialog := Force_Dialog;
+      Item.Quiet := Quiet;
+   end Create;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   function Execute
+     (Command : access Build_Main_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      Mains  : Argument_List :=
+        Get_Attribute_Value
+          (Get_Root_Project (Get_Registry (Command.Kernel).all),
+           Attribute => Main_Attribute);
+
+   begin
+      if not (Command.Main in 1 .. Mains'Length) then
+         Insert (Command.Kernel,
+                 (-"This project does not contain") & Command.Main'Img
+                 & (-" main files"), Mode => Error);
+         return Failure;
+      end if;
+
+      Launch_Target
+        (Kernel       => Command.Kernel,
+         Registry     => Command.Registry,
+         Target_Name  => To_String (Command.Target_Name),
+         Force_File   => No_File,
+         Extra_Args   => null,
+         Quiet        => Command.Quiet,
+         Force_Dialog => Command.Force_Dialog,
+         Synchronous  => False,
+         Main         => Mains (Mains'First - 1 + Command.Main).all);
+
+      Free (Mains);
+
+      return Success;
+   end Execute;
+
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item         : out Build_Main_Command_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Main         : Natural;
+      Quiet        : Boolean;
+      Force_Dialog : Boolean)
+   is
+   begin
+      Item := new Build_Main_Command;
+      Item.Kernel := Kernel;
+      Item.Registry := Registry;
+      Item.Target_Name := To_Unbounded_String (Target_Name);
+      Item.Main := Main;
       Item.Force_Dialog := Force_Dialog;
       Item.Quiet := Quiet;
    end Create;
