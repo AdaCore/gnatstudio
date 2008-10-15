@@ -250,7 +250,8 @@ package body Build_Configurations.Gtkada is
          T.Target.Properties.Launch_Mode :=
            Launch_Mode_Type'Val (Get_Active (T.Launch_Combo));
 
-         T.Target.Icon := To_Unbounded_String (Get_Text (T.Icon_Entry));
+         T.Target.Properties.Icon :=
+           To_Unbounded_String (Get_Text (T.Icon_Entry));
          T.Target.Properties.Icon_In_Toolbar := Get_Active (T.Icon_Check);
       end loop;
    end Save_Targets;
@@ -366,7 +367,7 @@ package body Build_Configurations.Gtkada is
 
       --  Refresh the icon in the tree view
 
-      if T.Target.Icon = "" then
+      if T.Target.Properties.Icon = "" then
          Get_Selected (Get_Selection (UI.View), M, It);
 
          if It /= Null_Iter then --  It should not be null, but test for safety
@@ -564,10 +565,10 @@ package body Build_Configurations.Gtkada is
          Set_Active (Box.Launch_Combo,
                      Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
 
-         if Target.Icon = "" then
+         if Target.Properties.Icon = "" then
             Set_Text (Box.Icon_Entry, To_String (Target.Model.Icon));
          else
-            Set_Text (Box.Icon_Entry, To_String (Target.Icon));
+            Set_Text (Box.Icon_Entry, To_String (Target.Properties.Icon));
          end if;
 
          Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
@@ -1157,14 +1158,14 @@ package body Build_Configurations.Gtkada is
 
          Icon_Str : Unbounded_String;
       begin
-         Category := Get_Or_Create_Category (Target.Category);
+         Category := Get_Or_Create_Category (Target.Properties.Category);
 
          Append (View.Model, Iter, Category);
          Set (View.Model, Iter, Name_Column, To_String (Target.Name));
          Set (View.Model, Iter, Num_Column, Count);
 
-         if Target.Icon /= "" then
-            Icon_Str := Target.Icon;
+         if Target.Properties.Icon /= "" then
+            Icon_Str := Target.Properties.Icon;
          elsif Target.Model.Icon /= "" then
             Icon_Str := Target.Model.Icon;
          end if;
