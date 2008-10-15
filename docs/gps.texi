@@ -10817,6 +10817,11 @@ defined in the current project tree will be listed.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
+@item %M
+Replaced by the base filename of the Main source being considered for building.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
+
 @item %%
 Replaced by the % sign.
 @end table
