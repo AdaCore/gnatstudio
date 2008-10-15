@@ -115,7 +115,7 @@ Custom_Target = """
 <target model="custom" category="_Project" name="Custom _Build...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-custom-build</icon>
-    <launch-mode>MANUALLY</launch-mode>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line />
     <key>F9</key>
@@ -198,6 +198,19 @@ Build_Main_Target = """
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%M</arg>
+    </command-line>
+</target>
+<target model="builder" category="_Project" name="Build &quot;current file&quot;">
+    <icon>gps-build-main</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+       <arg>%builder</arg>
+       <arg>-d</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
     </command-line>
 </target>
 """
