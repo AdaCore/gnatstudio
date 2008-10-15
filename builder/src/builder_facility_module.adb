@@ -688,7 +688,7 @@ package body Builder_Facility_Module is
                      Stock_Image => Get_Icon (Target),
                      Callback    => null,
                      Command     => Interactive_Command_Access (C),
-                     Ref_Item    => -"Settings");
+                     Ref_Item    => -"Run");
 
       if Toplevel_Menu then
          Builder_Module_ID.Menus.Prepend

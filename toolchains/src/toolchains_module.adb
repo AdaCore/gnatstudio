@@ -301,7 +301,7 @@ package body Toolchains_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Property : constant Toolchains_Property'Class := Get_Property;
-      Tools    : constant String := '/' & (-"Build/Settings") & '/';
+      Tools    : constant String := '/' & (-"Builder/Settings") & '/';
    begin
       Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
 

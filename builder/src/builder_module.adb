@@ -1832,10 +1832,14 @@ package body Builder_Module is
       --  Dynamic run menu
 
       Mitem := Register_Menu
-        (Kernel, New_Build_Menu, -"_Run", Stock_Execute, null);
+        (Kernel, New_Build_Menu, -"_Run", Stock_Execute,
+         null, Ref_Item => "Settings");
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, New_Build_Menu, Mitem, Ref_Item => -"Settings");
 
       declare
          Result : constant String := Add_Customization_String
