@@ -174,8 +174,11 @@ package Build_Configurations is
    type Target_Properties is record
       Launch_Mode     : Launch_Mode_Type := Manually;
 
-      Icon_In_Toolbar : Boolean          := False;
+      In_Toolbar : Boolean          := False;
       --  Whether to display an icon in the toolbar
+
+      In_Menu    : Boolean          := True;
+      --  Whether to display an item in the menu
 
       Read_Only       : Boolean          := False;
       --  When set to True, the target cannot be renamed or removed
@@ -275,6 +278,7 @@ package Build_Configurations is
    --  <target name="TARGET_NAME" model="MODEL_NAME" category="CATEGORY">
    --     <icon>ICON</icon>
    --     <in-toolbar>IN_TOOLBAR</in-toolbar>
+   --     <in-menu>IN_MENU</in-menu>
    --     <read-only>RO</read-only>
    --     <represents-mains>RM</represents-mains>
    --     <key>KEY</key>
@@ -295,7 +299,9 @@ package Build_Configurations is
    --                            fact a series of mains.
    --     LAUNCH_MODE  is the launch mode
    --     IN_TOOLBAR   (boolean) indicates whether the target should show up
-   --                  in the toolbar
+   --                  in the toolbar - False by default
+   --     IN_MENU      (boolean) indicates whether the target should show up
+   --                  in the menu - True by default
    --     KEY          the key bound to the target
 
    --     MODEL_NAME   is the name of the target model
