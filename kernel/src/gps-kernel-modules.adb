@@ -1250,7 +1250,8 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
       Action      : Action_Record_Access := null;
-      Filter      : Action_Filter  := null)
+      Filter      : Action_Filter  := null;
+      Mnemonics   : Boolean := True)
    is
       Item : Gtk_Menu_Item;
       pragma Unreferenced (Item);
@@ -1258,7 +1259,7 @@ package body GPS.Kernel.Modules is
       Item := Register_Menu
         (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
          Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive, Action,
-         Filter);
+         Filter, Mnemonics);
    end Register_Menu;
 
    ---------------------
@@ -1313,7 +1314,8 @@ package body GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
       Action      : Action_Record_Access := null;
-      Filter      : Action_Filter  := null) return Gtk_Menu_Item
+      Filter      : Action_Filter  := null;
+      Mnemonics   : Boolean := True) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
 
@@ -1350,9 +1352,18 @@ package body GPS.Kernel.Modules is
 
    begin
       if Stock_Image = "" then
-         Gtk_New_With_Mnemonic (Item, Text);
+         if Mnemonics then
+            Gtk_New_With_Mnemonic (Item, Text);
+         else
+            Gtk_New (Item, Text);
+         end if;
       else
-         Gtk_New_With_Mnemonic (Image, Text);
+         if Mnemonics then
+            Gtk_New_With_Mnemonic (Image, Text);
+         else
+            Gtk_New (Image, Text);
+         end if;
+
          Gtk_New (Pix, Stock_Image, Icon_Size_Menu);
          Set_Image (Image, Pix);
          Item := Gtk_Menu_Item (Image);
