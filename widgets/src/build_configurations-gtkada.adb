@@ -307,7 +307,9 @@ package body Build_Configurations.Gtkada is
    procedure On_Revert_Target (UI : access Build_UI_Record'Class) is
       T : Target_UI_Access;
    begin
-      if not Yes_No_Dialog (UI, "Revert to original command line?") then
+      if not Yes_No_Dialog
+        (UI, -"Revert to original settings for this target?")
+      then
          return;
       end if;
 
