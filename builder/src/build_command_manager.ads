@@ -43,7 +43,8 @@ package Build_Command_Manager is
       Extra_Args   : Argument_List_Access;
       Quiet        : Boolean;
       Synchronous  : Boolean;
-      Force_Dialog : Boolean);
+      Force_Dialog : Boolean;
+      Main         : String);
    --  Launch a build of target named Target_Name
    --  If Force_Dialog, always popup the single target dialog.
    --  If Force_File is not set to No_File, then force the command to work
@@ -54,6 +55,7 @@ package Build_Command_Manager is
    --    - the console is not raised when launching the build
    --    - the console is not cleared when launching the build
    --  If Synchronous is True, GPS will block until the command is terminated.
+   --  Main, if not empty, indicates the main to build.
 
    -------------------
    -- Build_Command --
@@ -64,6 +66,7 @@ package Build_Command_Manager is
 
    type Build_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
+      Main         : Unbounded_String;
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
       Force_Dialog : Boolean;
@@ -83,6 +86,7 @@ package Build_Command_Manager is
       Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Main         : String;
       Quiet        : Boolean;
       Force_Dialog : Boolean);
    --  Create a build command
