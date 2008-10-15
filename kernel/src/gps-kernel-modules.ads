@@ -614,7 +614,8 @@ package GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
       Action      : Action_Record_Access := null;
-      Filter      : Action_Filter  := null);
+      Filter      : Action_Filter  := null;
+      Mnemonics   : Boolean := True);
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback. The latter is all of:
    --     - Callback parameter if the Filter parameter matches
@@ -626,6 +627,7 @@ package GPS.Kernel.Modules is
    --  Sensitive indicates whether the menu item is created sensitive or not.
    --  Do not bind a default key to the action if you are already binding one
    --  to the menu. This would result in executing the action twice otherwise.
+   --  Mnemonics indicates whether the menu should be created with mnemonics.
 
    function Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -640,7 +642,8 @@ package GPS.Kernel.Modules is
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
       Action      : Action_Record_Access := null;
-      Filter      : Action_Filter  := null) return Gtk.Menu_Item.Gtk_Menu_Item;
+      Filter      : Action_Filter  := null;
+      Mnemonics   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created
 
    procedure Register_Dynamic_Menu
