@@ -358,6 +358,11 @@ package body Builder_Facility_Module is
             C := C.Next;
          end loop;
       end if;
+
+      Clear_Menus;
+      Install_Menus;
+      Clear_Toolbar_Buttons;
+      Install_Toolbar_Buttons;
    end Load_Targets;
 
    ------------------------------
@@ -552,9 +557,7 @@ package body Builder_Facility_Module is
          then
             Add_Action_For_Target (T);
 
-            if Get_Properties (T).Icon_In_Toolbar then
-               Install_Button_For_Target (T);
-            end if;
+            Install_Button_For_Target (T);
 
             Add_Menu_For_Target (T);
          end if;
@@ -690,7 +693,9 @@ package body Builder_Facility_Module is
       end Button_For_Target;
 
    begin
-      if Target = null then
+      if Target = null
+        or else not Get_Properties (Target).In_Toolbar
+      then
          return;
       end if;
 
@@ -767,6 +772,11 @@ package body Builder_Facility_Module is
       end Menu_For_Action;
 
    begin
+      --  Do nothing is the target is not supposed to be shown in the menu
+      if not Get_Properties (Target).In_Menu then
+         return;
+      end if;
+
       if not Toplevel_Menu then
          Append (Cat_Path, Category);
 
@@ -867,9 +877,7 @@ package body Builder_Facility_Module is
          T := Get_Target (C);
          exit when T = null;
 
-         if Get_Properties (T).Icon_In_Toolbar then
-            Install_Button_For_Target (T);
-         end if;
+         Install_Button_For_Target (T);
 
          Next (C);
       end loop;
