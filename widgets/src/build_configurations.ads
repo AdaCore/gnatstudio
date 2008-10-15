@@ -180,8 +180,21 @@ package Build_Configurations is
       Read_Only       : Boolean          := False;
       --  When set to True, the target cannot be renamed or removed
 
+      Represents_Mains : Boolean := False;
+      --  Whether the target represents a series of mains
+
       Key             : Unbounded_String;
       --  The key to which the target is bound
+
+      Icon     : Unbounded_String;
+      --  The string contains a stock identifier
+
+      Menu_Name : Unbounded_String;
+      --  The name of the menu to display target.
+
+      Category : Unbounded_String;
+      --  The category of the target, used for purposes of displaying the
+      --  targets in a hierarchical fashion
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -263,6 +276,7 @@ package Build_Configurations is
    --     <icon>ICON</icon>
    --     <in-toolbar>IN_TOOLBAR</in-toolbar>
    --     <read-only>RO</read-only>
+   --     <represents-mains>RM</represents-mains>
    --     <key>KEY</key>
    --     <launch-mode>LAUNCH_MODE</launch-mode>
    --     <command-line>
@@ -277,6 +291,8 @@ package Build_Configurations is
    --     TARGET_NAME  is the name of the target
    --     CATEGORY     is the category of the targe
    --     RO           (boolean) indicates whether the target can be modified
+   --     RM           (boolean) indicates whether the target represents in
+   --                            fact a series of mains.
    --     LAUNCH_MODE  is the launch mode
    --     IN_TOOLBAR   (boolean) indicates whether the target should show up
    --                  in the toolbar
@@ -438,18 +454,8 @@ private
       --  The name of the Target. This is the unique name that identifies
       --  the Target: there is only one target for each Name in the Registry.
 
-      Menu_Name : Unbounded_String;
-      --  The name of the menu to display target.
-
-      Category : Unbounded_String;
-      --  The category of the target, used for purposes of displaying the
-      --  targets in a hierarchical fashion
-
       Model    : Target_Model_Access;
       --  The model of which the Target is an instance
-
-      Icon     : Unbounded_String;
-      --  The string contains a stock identifier
 
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
