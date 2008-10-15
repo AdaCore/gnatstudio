@@ -21,6 +21,7 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib;        use Glib;
+with Glib.Convert;
 with Glib.Object; use Glib.Object;
 
 with Gtk.Button;               use Gtk.Button;
@@ -252,7 +253,8 @@ package body Build_Configurations.Gtkada is
 
          T.Target.Properties.Icon :=
            To_Unbounded_String (Get_Text (T.Icon_Entry));
-         T.Target.Properties.Icon_In_Toolbar := Get_Active (T.Icon_Check);
+         T.Target.Properties.In_Toolbar := Get_Active (T.Icon_Check);
+         T.Target.Properties.In_Menu    := Get_Active (T.Menu_Check);
          T.Target.Properties.Represents_Mains := Get_Active (T.Main_Check);
       end loop;
    end Save_Targets;
@@ -494,7 +496,7 @@ package body Build_Configurations.Gtkada is
          Set_Markup (Label, "Options");
          Set_Label_Widget (Options_Frame, Label);
 
-         Gtk_New (Table, 2, 3, False);
+         Gtk_New (Table, 3, 3, False);
          Set_Border_Width (Table, 5);
          Add (Options_Frame, Table);
 
@@ -533,13 +535,21 @@ package body Build_Configurations.Gtkada is
                  Top_Attach    => 0,
                  Bottom_Attach => 1);
 
+         Gtk_New (Box.Menu_Check, "Display item in menu");
+         Attach (Table,
+                 Child         => Box.Menu_Check,
+                 Left_Attach   => 2,
+                 Right_Attach  => 3,
+                 Top_Attach    => 1,
+                 Bottom_Attach => 2);
+
          Gtk_New (Box.Main_Check, "Multiple main target");
          Attach (Table,
                  Child         => Box.Main_Check,
                  Left_Attach   => 2,
                  Right_Attach  => 3,
-                 Top_Attach    => 1,
-                 Bottom_Attach => 2);
+                 Top_Attach    => 2,
+                 Bottom_Attach => 3);
 
          Gtk_New_Hbox (Hbox);
          Set_Spacing (Hbox, 3);
@@ -579,7 +589,8 @@ package body Build_Configurations.Gtkada is
             Set_Text (Box.Icon_Entry, To_String (Target.Properties.Icon));
          end if;
 
-         Set_Active (Box.Icon_Check, Target.Properties.Icon_In_Toolbar);
+         Set_Active (Box.Icon_Check, Target.Properties.In_Toolbar);
+         Set_Active (Box.Menu_Check, Target.Properties.In_Menu);
          Set_Active (Box.Main_Check, Target.Properties.Represents_Mains);
       end if;
 
@@ -1135,7 +1146,9 @@ package body Build_Configurations.Gtkada is
 
             function Get_Category_Name (S : Unbounded_String) return String is
             begin
-               return "<b>" & To_String (S) & "</b>";
+               return "<b>"
+                 & Glib.Convert.Escape_Text (To_String (S))
+                 & "</b>";
             end Get_Category_Name;
 
             Iter     : Gtk_Tree_Iter;
@@ -1170,7 +1183,8 @@ package body Build_Configurations.Gtkada is
          Category := Get_Or_Create_Category (Target.Properties.Category);
 
          Append (View.Model, Iter, Category);
-         Set (View.Model, Iter, Name_Column, To_String (Target.Name));
+         Set (View.Model, Iter, Name_Column,
+              Glib.Convert.Escape_Text (To_String (Target.Name)));
          Set (View.Model, Iter, Num_Column, Count);
 
          if Target.Properties.Icon /= "" then
