@@ -215,7 +215,7 @@ Build_Main_Target = """
        <arg>%M</arg>
     </command-line>
 </target>
-<target model="builder" category="_Project" name="Build &quot;current file&quot;">
+<target model="builder" category="_Project" name="Build &lt;current file&gt;">
     <icon>gps-build-main</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
