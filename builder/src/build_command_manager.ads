@@ -93,4 +93,39 @@ package Build_Command_Manager is
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.
 
+   ------------------------
+   -- Build_Main_Command --
+   ------------------------
+
+   --  A command specialized in building a main, when knowing only its number.
+
+   type Build_Main_Command is new Interactive_Command with record
+      Target_Name  : Unbounded_String;
+      Main         : Natural;
+      Registry     : Build_Config_Registry_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Force_Dialog : Boolean;
+      Quiet        : Boolean;
+   end record;
+   type Build_Main_Command_Access is access all Build_Main_Command'Class;
+
+   overriding
+   function Execute
+     (Command : access Build_Main_Command;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   --  See inherited documentation
+
+   procedure Create
+     (Item         : out Build_Main_Command_Access;
+      Kernel       : GPS.Kernel.Kernel_Handle;
+      Registry     : Build_Config_Registry_Access;
+      Target_Name  : String;
+      Main         : Natural;
+      Quiet        : Boolean;
+      Force_Dialog : Boolean);
+   --  Create a build command
+   --  Force_Dialog indicates that the command should always be launched
+   --  through the interactive dialog.
+
 end Build_Command_Manager;
