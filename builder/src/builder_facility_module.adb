@@ -22,6 +22,8 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
@@ -66,8 +68,13 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
+   type Target_And_Main is record
+      Target : Unbounded_String;
+      Main   : Unbounded_String;
+   end record;
+
    package String_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Tool_Button_Record, String);
+     (Gtk_Tool_Button_Record, Target_And_Main);
 
    package Buttons_Map is new Ada.Containers.Ordered_Maps
      (Unbounded_String, Gtk_Tool_Button);
@@ -179,7 +186,7 @@ package body Builder_Facility_Module is
 
    procedure On_Button_Click
      (Widget : access Gtk_Tool_Button_Record'Class;
-      Name   : String);
+      Data   : Target_And_Main);
    --  Called when a user clicks on a toolbar button.
    --  Name is the name of the target corresponding to that button.
 
@@ -221,6 +228,9 @@ package body Builder_Facility_Module is
    function Action_Name (T : Target_Access) return String;
    --  Return the name of the Kernel Action to build T
 
+   procedure Free (Ar : in out Argument_List);
+   --  Free memory associated to Ar.
+
    -----------------
    -- Action_Name --
    -----------------
@@ -239,7 +249,13 @@ package body Builder_Facility_Module is
       N    : constant String := Get_Name (T);
       Name : constant String := Action_Name (T);
    begin
-      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, False, False);
+      --  We do not add actions for targets that represent mains, this is
+      --  handled via the <item1>, <item2> (...) mechanism.
+      if Get_Properties (T).Represents_Mains then
+         return;
+      end if;
+
+      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, False);
 
       Register_Action (Kernel      => Get_Kernel,
                        Name        => Name,
@@ -483,7 +499,10 @@ package body Builder_Facility_Module is
                            Extra_Args   => null,
                            Quiet        => True,
                            Synchronous  => False,
-                           Force_Dialog => False);
+                           Force_Dialog => False,
+                           Main         => "");
+            --  ??? Should we attempt to a "relevant" main when
+            --  in On_File_Save mode?
          end if;
          Next (C);
       end loop;
@@ -611,17 +630,31 @@ package body Builder_Facility_Module is
 
    procedure On_Button_Click
      (Widget : access Gtk_Tool_Button_Record'Class;
-      Name   : String)
+      Data   : Target_And_Main)
    is
       pragma Unreferenced (Widget);
    begin
       Launch_Target
-        (Get_Kernel, Builder_Module_ID.Registry, Name, No_File,
-         null, False, False, False);
+        (Get_Kernel,
+         Builder_Module_ID.Registry,
+         To_String (Data.Target),
+         No_File,
+         null, False, False, False, To_String (Data.Main));
    exception
       when E : others =>
          Trace (Exception_Handle, E);
    end On_Button_Click;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ar : in out Argument_List) is
+   begin
+      for A in Ar'Range loop
+         Free (Ar (A));
+      end loop;
+   end Free;
 
    -------------------------------
    -- Install_Button_For_Target --
@@ -630,20 +663,57 @@ package body Builder_Facility_Module is
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
       Button : Gtk.Tool_Button.Gtk_Tool_Button;
-      Name   : constant String := Get_Name (Target);
-   begin
-      Gtk_New_From_Stock (Button, Get_Icon (Target));
-      Set_Label (Button, Name);
-      Builder_Module_ID.Buttons.Insert
-        (To_Unbounded_String (Name), Button);
-      Insert (Toolbar => Toolbar, Item    => Button);
-      Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
-      Show_All (Button);
 
-      String_Callback.Connect
-        (Button, "clicked",
-         On_Button_Click'Access,
-         Name);
+      procedure Button_For_Target (Name : String; Main : String);
+      --  Create one button for target Name and main Main
+
+      procedure Button_For_Target (Name : String; Main : String) is
+      begin
+         Gtk_New_From_Stock (Button, Get_Icon (Target));
+         Set_Label (Button, Name);
+         Builder_Module_ID.Buttons.Insert
+           (To_Unbounded_String (Name), Button);
+         Insert (Toolbar => Toolbar, Item    => Button);
+
+         if Main = "" then
+            Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
+         else
+            Set_Tooltip
+              (Button, Get_Tooltips (Get_Kernel), Name & ": " & Main);
+         end if;
+
+         Show_All (Button);
+
+         String_Callback.Connect
+           (Button, "clicked",
+            On_Button_Click'Access,
+            (To_Unbounded_String (Name), To_Unbounded_String (Main)));
+      end Button_For_Target;
+
+   begin
+      if Target = null then
+         return;
+      end if;
+
+      if Get_Properties (Target).Represents_Mains then
+         declare
+            Mains  : Argument_List :=
+              Get_Attribute_Value
+                (Get_Root_Project (Get_Registry (Get_Kernel).all),
+                 Attribute => Main_Attribute);
+         begin
+            --  ??? Replace this with collapsible-button when implemented.
+            for J in Mains'Range loop
+               if Mains (J) /= null then
+                  Button_For_Target (Get_Name (Target), Mains (J).all);
+               end if;
+            end loop;
+
+            Free (Mains);
+         end;
+      else
+         Button_For_Target (Get_Name (Target), "");
+      end if;
    end Install_Button_For_Target;
 
    -------------------------
@@ -651,15 +721,52 @@ package body Builder_Facility_Module is
    -------------------------
 
    procedure Add_Menu_For_Target (Target : Target_Access) is
-      C         : Build_Command_Access;
-      Name      : constant String := Get_Name (Target);
-      Menu_Name : constant String := Get_Menu_Name (Target);
-
       Category : constant String := Get_Category (Target);
       Cat_Path : Unbounded_String := To_Unbounded_String (Main_Menu);
 
       Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
         and then Category (Category'Last) = '_';
+
+      procedure Menu_For_Action
+        (Parent_Path : String;
+         Name        : String;
+         Main        : String;
+         Menu_Name   : String);
+      --  Add a menu at Parent_Path for target named Name, with menu name
+      --  Menu_Name
+
+      procedure Menu_For_Action
+        (Parent_Path : String;
+         Name        : String;
+         Main        : String;
+         Menu_Name   : String)
+      is
+         C : Build_Command_Access;
+      begin
+         Create
+           (C,
+            Get_Kernel,
+            Builder_Module_ID.Registry,
+            Name,
+            Main,
+            False,
+            Get_Properties (Target).Launch_Mode = Manually);
+         Register_Menu (Kernel      => Get_Kernel,
+                        Parent_Path => Parent_Path,
+                        Text        => Menu_Name,
+                        Stock_Image => Get_Icon (Target),
+                        Callback    => null,
+                        Command     => Interactive_Command_Access (C),
+                        Ref_Item    => -"Run");
+
+         if Toplevel_Menu then
+            Builder_Module_ID.Menus.Prepend
+              (To_Unbounded_String (Main_Menu & Name));
+         else
+            Builder_Module_ID.Menus.Prepend (Cat_Path & "/" & Name);
+         end if;
+      end Menu_For_Action;
+
    begin
       if not Toplevel_Menu then
          Append (Cat_Path, Category);
@@ -675,26 +782,29 @@ package body Builder_Facility_Module is
          end if;
       end if;
 
-      Create
-        (C,
-         Get_Kernel,
-         Builder_Module_ID.Registry,
-         Name,
-         False,
-         Get_Properties (Target).Launch_Mode = Manually);
-      Register_Menu (Kernel      => Get_Kernel,
-                     Parent_Path => To_String (Cat_Path),
-                     Text        => Menu_Name,
-                     Stock_Image => Get_Icon (Target),
-                     Callback    => null,
-                     Command     => Interactive_Command_Access (C),
-                     Ref_Item    => -"Run");
+      if Get_Properties (Target).Represents_Mains then
+         declare
+            Mains  : Argument_List :=
+              Get_Attribute_Value
+                (Get_Root_Project (Get_Registry (Get_Kernel).all),
+                 Attribute => Main_Attribute);
+         begin
+            for J in Mains'Range loop
+               if Mains (J) /= null then
+                  Menu_For_Action (Parent_Path => To_String (Cat_Path),
+                                   Name        => Get_Name (Target),
+                                   Main        => Mains (J).all,
+                                   Menu_Name   => Mains (J).all);
+               end if;
+            end loop;
 
-      if Toplevel_Menu then
-         Builder_Module_ID.Menus.Prepend
-           (To_Unbounded_String (Main_Menu & Name));
+            Free (Mains);
+         end;
       else
-         Builder_Module_ID.Menus.Prepend (Cat_Path & "/" & Name);
+         Menu_For_Action (Parent_Path => To_String (Cat_Path),
+                          Name        => Get_Name (Target),
+                          Main        => "",
+                          Menu_Name   => Get_Menu_Name (Target));
       end if;
    end Add_Menu_For_Target;
 
