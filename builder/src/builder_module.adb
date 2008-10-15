@@ -1840,8 +1840,8 @@ package body Builder_Module is
       declare
          Result : constant String := Add_Customization_String
            (Kernel        => Kernel,
-            Customization => "<key action='/Build/Make/item1'>F4</key>"
-            & "<key action='/Build/Run/item1'>shift-F2</key>"
+            Customization =>
+              "<key action='/Build/Run/item1'>shift-F2</key>"
             & "<key action='/Build/Make/Custom...'>F9</key>",
             From_File     => "builder module");
       begin
