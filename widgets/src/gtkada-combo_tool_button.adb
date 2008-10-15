@@ -280,6 +280,7 @@ package body Gtkada.Combo_Tool_Button is
    exception
       when E : others =>
          Traces.Trace (Traces.Exception_Handle, E);
+         return False;
    end On_Button_Press;
 
    ---------------
