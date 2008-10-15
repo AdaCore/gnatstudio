@@ -709,15 +709,18 @@ package body Build_Configurations is
 
       --  Main node
       N.Attributes := new String'
-        ("model=""" & To_String (Target.Model.Name) & """ " &
-         "category=""" & To_String (Target.Properties.Category) & """ " &
-         "name=""" & To_String (Target.Properties.Menu_Name) & """");
+        ("model="""
+         & XML_Protect (To_String (Target.Model.Name)) & """ " &
+         "category="""
+         & XML_Protect (To_String (Target.Properties.Category)) & """ " &
+         "name="""
+         & XML_Protect (To_String (Target.Properties.Menu_Name)) & """");
       --  Insert a <icon> node if needed
 
       N.Child := new Node;
       C := N.Child;
       C.Tag := new String'("in-toolbar");
-      C.Value := new String'(Target.Properties.Icon_In_Toolbar'Img);
+      C.Value := new String'(Target.Properties.In_Toolbar'Img);
 
       if Target.Properties.Icon /= "" then
          C.Next := new Node;
@@ -725,6 +728,11 @@ package body Build_Configurations is
          C.Tag := new String'("icon");
          C.Value := new String'(To_String (Target.Properties.Icon));
       end if;
+
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("in-menu");
+      C.Value := new String'(Target.Properties.In_Menu'Img);
 
       C.Next := new Node;
       C := C.Next;
@@ -739,7 +747,7 @@ package body Build_Configurations is
       C.Next := new Node;
       C := C.Next;
       C.Tag := new String'("represents-mains");
-      C.Value := new String'(Target.Properties.Read_Only'Img);
+      C.Value := new String'(Target.Properties.Represents_Mains'Img);
 
       C.Next := new Node;
       C := C.Next;
@@ -851,8 +859,10 @@ package body Build_Configurations is
             Target.Properties.Icon := To_Unbounded_String (Child.Value.all);
 
          elsif Child.Tag.all = "in-toolbar" then
-            Target.Properties.Icon_In_Toolbar := Boolean'Value
-              (Child.Value.all);
+            Target.Properties.In_Toolbar := Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "in-menu" then
+            Target.Properties.In_Menu := Boolean'Value (Child.Value.all);
 
          elsif Child.Tag.all = "key" then
             Target.Properties.Key := To_Unbounded_String (Child.Value.all);
