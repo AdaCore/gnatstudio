@@ -183,7 +183,8 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => Extra_Args,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False);
+                        Force_Dialog => False,
+                        Main         => "");
 
          Free (Extra_Args);
 
@@ -196,7 +197,8 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => null,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False);
+                        Force_Dialog => False,
+                        Main         => "");
 
       elsif Command = "check_semantic" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -207,7 +209,8 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => null,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False);
+                        Force_Dialog => False,
+                        Main         => "");
 
       end if;
    end Shell_Handler;
