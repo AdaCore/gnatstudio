@@ -1801,8 +1801,7 @@ package body Builder_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      New_Build_Menu : constant String := '/' & (-"_Builder") & '/';
-      Build : constant String := '/' & (-"Build") & '/';
+      Build_Menu : constant String := '/' & (-"_Build") & '/';
       Tools : constant String := '/' & (-"Tools") & '/';
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
@@ -1832,14 +1831,11 @@ package body Builder_Module is
       --  Dynamic run menu
 
       Mitem := Register_Menu
-        (Kernel, New_Build_Menu, -"_Run", Stock_Execute,
+        (Kernel, Build_Menu, -"_Run", Stock_Execute,
          null, Ref_Item => "Settings");
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
-
-      Gtk_New (Mitem);
-      Register_Menu (Kernel, New_Build_Menu, Mitem, Ref_Item => -"Settings");
 
       declare
          Result : constant String := Add_Customization_String
@@ -1855,14 +1851,17 @@ package body Builder_Module is
       end;
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Build, Mitem);
+      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
 
       Register_Menu
-        (Kernel, Build, -"Recompute C/C++ _Xref info", "",
-         On_Compute_Xref'Access);
+        (Kernel, Build_Menu, -"Recompute C/C++ _Xref info", "",
+         On_Compute_Xref'Access, Ref_Item => "Settings");
       Register_Menu
-        (Kernel, Build, -"Load Xref info in memory", "",
-         On_Load_Xref_In_Memory'Access);
+        (Kernel, Build_Menu, -"Load Xref info in memory", "",
+         On_Load_Xref_In_Memory'Access, Ref_Item => "Settings");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Tools, Mitem);

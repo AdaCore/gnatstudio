@@ -63,7 +63,7 @@ with Commands.Builder;          use Commands.Builder;
 package body Builder_Facility_Module is
 
    Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
-   Main_Menu : constant String := '/' & ("_Builder") & '/';
+   Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
    package String_Callback is new Gtk.Handlers.User_Callback
@@ -883,7 +883,7 @@ package body Builder_Facility_Module is
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
 
-      Register_Menu (Kernel, "/_" & (-"Builder"), Ref_Item => -"Tools");
+      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
                      On_Build_Manager'Access);
 
