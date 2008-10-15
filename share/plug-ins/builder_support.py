@@ -24,15 +24,22 @@ Builder_Model_Template = """
      <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
             tip="Recompile if compiler switches have changed since last compilation" />
+     <check label="Keep going" switch="-k"
+            tip="Continue as much as possible after a compilation error" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
            column="2"
            tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
      <check label="Progress bar" switch="-d" column="2"
             tip="Display a progress bar with information about how many files are left to be compiled" />
-     <check label="Keep going" switch="-k" column="2"
-            tip="Continue as much as possible after a compilation error" />
+     <check label="Compile only" switch="-c" column="2"
+            tip="Perform only compilation, no bind/link" />
+     <check label="Quiet mode" switch="-q" column="2"
+            tip="Be quiet/terse in output messages" />
      <check label="Create object dirs" switch="-p" line="2" column="2"
             tip="Create missing object and library directories" />
+     <spin label="Project verbosity" switch="-vP" min="0" max="2" default="1"
+           line="2" column="2"
+           tip="Specify verbosity when parsing project files" />
    </switches>
 </target-model>
 """
@@ -58,21 +65,29 @@ Gnatmake_Model_Template = """
             tip="Recompile if compiler switches have changed since last compilation" />
      <check label="Minimal recompilation" switch="-m"
             tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
+     <check label="Keep going" switch="-k"
+            tip="Continue as much as possible after a compilation error" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
            column="2"
            tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
      <check label="Progress bar" switch="-d" column="2"
             tip="Display a progress bar with information about how many files are left to be compiled" />
-     <check label="Keep going" switch="-k" column="2"
-            tip="Continue as much as possible after a compilation error" />
+     <check label="Compile only" switch="-c" column="2"
+            tip="Perform only compilation, no bind/link" />
+     <check label="Quiet mode" switch="-q" column="2"
+            tip="Be quiet/terse in output messages" />
      <check label="Debug information" switch="-g" column="2"
             tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
+
      <check label="Syntax check" switch="-gnats" line="2"
             tip="Perform syntax check, no compilation occurs" />
      <check label="Semantic check" switch="-gnatc" line="2"
             tip="Perform syntax and semantic check only, no compilation occurs" />
      <check label="Create object dirs" switch="-p" line="2" column="2"
             tip="Create missing object and library directories" />
+     <spin label="Project verbosity" switch="-vP" min="0" max="2" default="1"
+           line="2" column="2"
+           tip="Specify verbosity when parsing project files" />
    </switches>
 </target-model>
 """
@@ -249,6 +264,7 @@ Syntax_Check_Target = """
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
+       <arg>-c</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
        <arg>%F</arg>
@@ -267,6 +283,7 @@ Semantic_Check_Target = """
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
+       <arg>-c</arg>
        <arg>-gnatc</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
