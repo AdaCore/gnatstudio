@@ -755,13 +755,17 @@ package body Builder_Facility_Module is
             Main,
             False,
             Get_Properties (Target).Launch_Mode = Manually);
+
          Register_Menu (Kernel      => Get_Kernel,
                         Parent_Path => Parent_Path,
                         Text        => Menu_Name,
                         Stock_Image => Get_Icon (Target),
                         Callback    => null,
                         Command     => Interactive_Command_Access (C),
-                        Ref_Item    => -"Run");
+                        Ref_Item    => -"Run",
+                        --  Do not use mnemonics if we are registering a
+                        --  main, as this is a file name in this case.
+                        Mnemonics   => Main = "");
 
          if Toplevel_Menu then
             Builder_Module_ID.Menus.Prepend
