@@ -38,6 +38,8 @@ with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
 
+with Traces;
+
 package body Gtkada.Combo_Tool_Button is
 
    type Gtkada_Icon_Widget_Record is new
@@ -227,6 +229,10 @@ package body Gtkada.Combo_Tool_Button is
       State : constant Gtk_State_Type := Get_State (Button);
    begin
       Set_State (Widget.Menu_Button, State);
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_State;
 
    ------------------------
@@ -241,6 +247,10 @@ package body Gtkada.Combo_Tool_Button is
    begin
       Widget.Icon_Button.Clicked;
       Widget.Menu_Button.Set_Active (False);
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_Menu_Deactivate;
 
    ---------------
@@ -266,6 +276,10 @@ package body Gtkada.Combo_Tool_Button is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_Button_Press;
 
    ---------------
@@ -289,6 +303,9 @@ package body Gtkada.Combo_Tool_Button is
             0, 0);
          Select_First (Widget.Menu, False);
       end if;
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_Toggle;
 
    -------------------
@@ -302,6 +319,10 @@ package body Gtkada.Combo_Tool_Button is
       pragma Unreferenced (Menu);
    begin
       Gtkada_Icon_Widget (Attach_Widget).Menu := null;
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end Menu_Detacher;
 
    -------------------
@@ -358,16 +379,9 @@ package body Gtkada.Combo_Tool_Button is
          X := X + Widget.Get_Allocation_Width - Menu_Req.Width;
       end if;
 
---  if ((*y + priv->arrow_button->allocation.height + menu_req.height) <=
---        monitor.y + monitor.height)
---    y += priv->arrow_button->allocation.height;
---  else if ((*y - menu_req.height) >= monitor.y)
---    *y -= menu_req.height;
---  else if (monitor.y + monitor.height -
---            (*y + priv->arrow_button->allocation.height) > *y)
---    *y += priv->arrow_button->allocation.height;
---  else
---    *y -= menu_req.height;
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end Menu_Position;
 
    --------------------------------------------------------------------------
@@ -398,6 +412,10 @@ package body Gtkada.Combo_Tool_Button is
       pragma Unreferenced (Button);
    begin
       Tool_Button_Callback.Emit_By_Name (Widget, Signal_Clicked);
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_Icon_Widget_Clicked;
 
    -----------------
@@ -409,6 +427,10 @@ package body Gtkada.Combo_Tool_Button is
    is
    begin
       Set_Icon_Size (Button.Icon_Widget, Button.Get_Icon_Size);
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end Update_Icon;
 
    Class_Record : GObject_Class := Uninitialized_Class;
