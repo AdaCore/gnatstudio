@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
@@ -46,6 +47,7 @@ package body Builder_Facility_Module.Scripts is
    Compile_File_Target : constant String := "Compile File";
    Check_Syntax_Target : constant String := "Check Syntax";
    Check_Semantic_Target : constant String := "Check Semantic";
+   Build_Main_Target : constant String := "Build Main";
 
    --  BuildTarget class
 
@@ -241,7 +243,30 @@ package body Builder_Facility_Module.Scripts is
          Minimum_Args => 0,
          Maximum_Args => 1,
          Class   => Get_File_Class (Kernel),
-         Handler => Shell_Handler'Access);
+         Handler      => Shell_Handler'Access);
+
+      --  Register the "build main number x" actions
+
+      for J in 1 .. 4 loop
+         declare
+            C : Build_Main_Command_Access;
+         begin
+            Create (C, Kernel, Registry, Build_Main_Target,
+                    J, False, False);
+            Register_Action
+              (Kernel      => Kernel,
+               Name        => (-"Build Main Number") & J'Img,
+               Command     => C,
+               Description => (-"Build the main source number") & J'Img,
+               Filter      => null,
+               Category    => -"Build",
+               Defined_In  => GNATCOLL.VFS.No_File);
+         end;
+      end loop;
+
+      Bind_Default_Key (Kernel      => Kernel,
+                        Action      => (-"Build Main Number 1"),
+                        Default_Key => "F4");
    end Register_Commands;
 
    ----------
