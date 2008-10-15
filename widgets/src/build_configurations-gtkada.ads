@@ -90,7 +90,9 @@ private
 
       Icon_Entry     : Gtk_Entry;
       Icon_Check     : Gtk_Check_Button;
+      Menu_Check     : Gtk_Check_Button;
       Main_Check     : Gtk_Check_Button;
+
       Launch_Combo   : Gtk_Combo_Box;
 
       Expanded_Entry : Gtk_Entry;
