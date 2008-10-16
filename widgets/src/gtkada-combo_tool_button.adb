@@ -59,7 +59,7 @@ package body Gtkada.Combo_Tool_Button is
    type Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Stock_Id : Unbounded_String;
       Label    : Gtk_Label;
-      Data     : access User_Data'Class;
+      Data     : User_Data;
    end record;
    type Menu_Item is access all Menu_Item_Record'Class;
 
@@ -67,7 +67,7 @@ package body Gtkada.Combo_Tool_Button is
      (Item     : out Menu_Item;
       Label    : String;
       Stock_Id : String;
-      Data     : access User_Data'Class);
+      Data     : User_Data);
 
    procedure Set_Highlight
      (Item  : access Menu_Item_Record'Class;
@@ -150,7 +150,7 @@ package body Gtkada.Combo_Tool_Button is
      (Item     : out Menu_Item;
       Label    : String;
       Stock_Id : String;
-      Data     : access User_Data'Class)
+      Data     : User_Data)
    is
       Icon : Gtk_Image;
       Hbox : Gtk_Hbox;
@@ -487,7 +487,7 @@ package body Gtkada.Combo_Tool_Button is
      (Widget   : access Gtkada_Combo_Tool_Button_Record;
       Item     : String;
       Stock_Id : String := "";
-      Data     : access User_Data'Class := null)
+      Data     : User_Data := null)
    is
       First  : constant Boolean := Widget.Items.Is_Empty;
       M_Item : Menu_Item;
@@ -595,7 +595,7 @@ package body Gtkada.Combo_Tool_Button is
 
    function Get_Selected_Item_Data
      (Widget : access Gtkada_Combo_Tool_Button_Record)
-      return access User_Data'Class
+      return User_Data
    is
       Item : constant Menu_Item := Menu_Item (Widget.Menu.Get_Active);
    begin

@@ -41,13 +41,16 @@ package Gtkada.Combo_Tool_Button is
       Stock_Id : String);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads)
 
-   type User_Data is abstract tagged null record;
+   type User_Data_Record is abstract tagged null record;
+   type User_Data is access all User_Data_Record'Class;
+   --  Some data that are attached to selectable items. These can be easily
+   --  retrieved on the selected item.
 
    procedure Add_Item
      (Widget   : access Gtkada_Combo_Tool_Button_Record;
       Item     : String;
       Stock_Id : String := "";
-      Data     : access User_Data'Class := null);
+      Data     : User_Data := null);
    --  Add an item in the button items list.
 
    procedure Select_Item
@@ -61,7 +64,8 @@ package Gtkada.Combo_Tool_Button is
 
    function Get_Selected_Item_Data
      (Widget : access Gtkada_Combo_Tool_Button_Record)
-      return access User_Data'Class;
+      return User_Data;
+   --  Get the data attached to the selected item.
 
    procedure Clear_Items
      (Widget : access Gtkada_Combo_Tool_Button_Record);

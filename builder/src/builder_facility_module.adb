@@ -30,8 +30,10 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
+with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
@@ -68,7 +70,8 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
-   type Target_And_Main is record
+   type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
+   with record
       Target : Unbounded_String;
       Main   : Unbounded_String;
    end record;
@@ -76,8 +79,11 @@ package body Builder_Facility_Module is
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Tool_Button_Record, Target_And_Main);
 
+   package Combo_Callback is new Gtk.Handlers.Callback
+     (Gtkada_Combo_Tool_Button_Record);
+
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
-     (Gtk_Tool_Button);
+     (Gtk_Tool_Item);
 
    package String_List is new Ada.Containers.Doubly_Linked_Lists
      (Unbounded_String);
@@ -189,6 +195,10 @@ package body Builder_Facility_Module is
       Data   : Target_And_Main);
    --  Called when a user clicks on a toolbar button.
    --  Name is the name of the target corresponding to that button.
+
+   procedure On_Combo_Click
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
+   --  Called when a user clicks on a toolbar combo button.
 
    procedure Save_Targets;
    procedure Load_Targets;
@@ -648,6 +658,31 @@ package body Builder_Facility_Module is
          Trace (Exception_Handle, E);
    end On_Button_Click;
 
+   --------------------
+   -- On_Combo_Click --
+   --------------------
+
+   procedure On_Combo_Click
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class)
+   is
+      Data : constant Gtkada.Combo_Tool_Button.User_Data :=
+               Get_Selected_Item_Data (Widget);
+   begin
+      if Data /= null then
+         Launch_Target
+           (Get_Kernel,
+            Builder_Module_ID.Registry,
+            To_String (Target_And_Main (Data.all).Target),
+            No_File,
+            null, False, False, False,
+            To_String (Target_And_Main (Data.all).Main));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Combo_Click;
+
    ----------
    -- Free --
    ----------
@@ -665,31 +700,55 @@ package body Builder_Facility_Module is
 
    procedure Install_Button_For_Target (Target : Target_Access) is
       Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
-      Button : Gtk.Tool_Button.Gtk_Tool_Button;
+      Button : Gtk.Tool_Item.Gtk_Tool_Item;
 
-      procedure Button_For_Target (Name : String; Main : String);
+      procedure Button_For_Target
+        (Name  : String;
+         Mains : Argument_List);
       --  Create one button for target Name and main Main
 
-      procedure Button_For_Target (Name : String; Main : String) is
+      procedure Button_For_Target
+        (Name  : String;
+         Mains : Argument_List)
+      is
       begin
-         Gtk_New_From_Stock (Button, Get_Icon (Target));
-         Set_Label (Button, Name);
-         Builder_Module_ID.Buttons.Prepend (Button);
-         Insert (Toolbar => Toolbar, Item    => Button);
-
-         if Main = "" then
-            Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
+         if Mains'Length = 0 then
+            declare
+               Widget : Gtk.Tool_Button.Gtk_Tool_Button;
+            begin
+               Gtk_New_From_Stock (Widget, Get_Icon (Target));
+               Set_Label (Widget, Name);
+               String_Callback.Connect
+                 (Widget, "clicked",
+                  On_Button_Click'Access,
+                  (To_Unbounded_String (Name), Null_Unbounded_String));
+               Button := Gtk_Tool_Item (Widget);
+            end;
          else
-            Set_Tooltip
-              (Button, Get_Tooltips (Get_Kernel), Name & ": " & Main);
+            declare
+               Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
+            begin
+               Gtk_New (Widget, Get_Icon (Target));
+               for J in Mains'Range loop
+                  Widget.Add_Item
+                    (Mains (J).all, Get_Icon (Target),
+                     new Target_And_Main'
+                       (To_Unbounded_String (Name),
+                        To_Unbounded_String (Mains (J).all)));
+               end loop;
+
+               Combo_Callback.Connect
+                 (Widget, "clicked",
+                  On_Combo_Click'Access);
+               Button := Gtk_Tool_Item (Widget);
+            end;
          end if;
 
+         Builder_Module_ID.Buttons.Prepend (Button);
+         Insert (Toolbar => Toolbar, Item    => Button);
+         Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
          Show_All (Button);
 
-         String_Callback.Connect
-           (Button, "clicked",
-            On_Button_Click'Access,
-            (To_Unbounded_String (Name), To_Unbounded_String (Main)));
       end Button_For_Target;
 
    begin
@@ -706,17 +765,11 @@ package body Builder_Facility_Module is
                 (Get_Root_Project (Get_Registry (Get_Kernel).all),
                  Attribute => Main_Attribute);
          begin
-            --  ??? Replace this with collapsible-button when implemented.
-            for J in Mains'Range loop
-               if Mains (J) /= null then
-                  Button_For_Target (Get_Name (Target), Mains (J).all);
-               end if;
-            end loop;
-
+            Button_For_Target (Get_Name (Target), Mains);
             Free (Mains);
          end;
       else
-         Button_For_Target (Get_Name (Target), "");
+         Button_For_Target (Get_Name (Target), (1 .. 0 => <>));
       end if;
    end Install_Button_For_Target;
 
