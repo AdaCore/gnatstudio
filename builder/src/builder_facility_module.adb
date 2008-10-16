@@ -740,8 +740,7 @@ package body Builder_Facility_Module is
       Set_Tooltip
         (Widget, Tip,
          To_String (Target_And_Main (Data.all).Target) &
-         " - " &
-         Get_Selected_Item (Widget));
+         ": " & Get_Selected_Item (Widget));
    end On_Combo_Selection;
 
    ----------

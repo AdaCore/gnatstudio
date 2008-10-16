@@ -355,6 +355,9 @@ package body Builder_Facility_Module.Scripts is
       Bind_Default_Key (Kernel      => Kernel,
                         Action      => -"Custom Build...",
                         Default_Key => "F9");
+      Bind_Default_Key (Kernel      => Kernel,
+                        Action      => -"Compile File",
+                        Default_Key => "shift-F4");
    end Register_Commands;
 
    ----------
