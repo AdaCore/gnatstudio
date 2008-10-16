@@ -358,7 +358,7 @@ def on_project_recomputed (hook_name):
     remove_project_targets()
     create_project_targets()
 
-def on_gps_started (hook_name):
+def load_builder_data ():
     """ Add the project-specific targets to the Build Manager """
 
     # Register the models
@@ -371,4 +371,4 @@ def on_gps_started (hook_name):
     GPS.Hook ("project_view_changed").add (on_project_recomputed)
 
 
-GPS.Hook ("gps_started").add (on_gps_started)
+load_builder_data()
