@@ -394,6 +394,9 @@ package body Build_Command_Manager is
       Server := Get_Server (T);
 
       if Dialog = Force_Dialog
+        or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
+                  and then Get_Properties (T).Launch_Mode
+                  /= Manually_With_No_Dialog)
         or else (Dialog = Default and then
                     Get_Properties (T).Launch_Mode = Manually_With_Dialog)
       then
