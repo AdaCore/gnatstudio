@@ -19,7 +19,6 @@
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
-with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Window;               use Gdk.Window;
@@ -47,9 +46,11 @@ package body Gtkada.Combo_Tool_Button is
 
    Class_Record : GObject_Class := Uninitialized_Class;
    Signals : constant chars_ptr_array :=
-               (1 => New_String (String (Signal_Clicked)));
+               (1 => New_String (String (Signal_Clicked)),
+                2 => New_String (String (Signal_Selection_Changed)));
    Signal_Parameters : constant Signal_Parameter_Types :=
-                         (1 => (1 => GType_None));
+                         (1 => (1 => GType_None),
+                          2 => (1 => GType_None));
 
    ---------------
    -- Menu_Item --
@@ -536,6 +537,9 @@ package body Gtkada.Combo_Tool_Button is
             --  This updates the icon
             On_Toolbar_Reconfigured (Widget);
             Widget.Selected := J;
+
+            Tool_Button_Callback.Emit_By_Name
+              (Widget, Signal_Selection_Changed);
 
             return;
 

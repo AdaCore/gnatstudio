@@ -29,6 +29,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
@@ -81,6 +82,9 @@ package body Builder_Facility_Module is
 
    package Combo_Callback is new Gtk.Handlers.Callback
      (Gtkada_Combo_Tool_Button_Record);
+
+   package Combo_Tips_Callback is new Gtk.Handlers.User_Callback
+     (Gtkada_Combo_Tool_Button_Record, Gtk.Tooltips.Gtk_Tooltips);
 
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
@@ -202,6 +206,11 @@ package body Builder_Facility_Module is
    procedure On_Combo_Click
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user clicks on a toolbar combo button.
+
+   procedure On_Combo_Selection
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
+      Tip    : Gtk_Tooltips);
+   --  Called when a user selects a new item from the combo.
 
    procedure Save_Targets;
    procedure Load_Targets;
@@ -716,6 +725,24 @@ package body Builder_Facility_Module is
          Trace (Exception_Handle, E);
    end On_Combo_Click;
 
+   ------------------------
+   -- On_Combo_Selection --
+   ------------------------
+
+   procedure On_Combo_Selection
+     (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
+      Tip    : Gtk_Tooltips)
+   is
+      Data : constant Gtkada.Combo_Tool_Button.User_Data :=
+               Get_Selected_Item_Data (Widget);
+   begin
+      Set_Tooltip
+        (Widget, Tip,
+         To_String (Target_And_Main (Data.all).Target) &
+         " - " &
+         Get_Selected_Item (Widget));
+   end On_Combo_Selection;
+
    ----------
    -- Free --
    ----------
@@ -751,16 +778,20 @@ package body Builder_Facility_Module is
                Widget : Gtk.Tool_Button.Gtk_Tool_Button;
                Main   : Unbounded_String;
             begin
-               if Mains'Length = 0 then
-                  Main := Null_Unbounded_String;
-               else
-                  Main := To_Unbounded_String (Mains (Mains'First).all);
-               end if;
-
                Gtk_New_From_Stock (Widget, Get_Icon (Target));
                Set_Label (Widget, Name);
+
+               if Mains'Length = 0 then
+                  Main := Null_Unbounded_String;
+                  Set_Tooltip (Widget, Get_Tooltips (Get_Kernel), Name);
+               else
+                  Main := To_Unbounded_String (Mains (Mains'First).all);
+                  Set_Tooltip (Widget, Get_Tooltips (Get_Kernel),
+                               Name & " - " & To_String (Main));
+               end if;
+
                String_Callback.Connect
-                 (Widget, "clicked",
+                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
                   On_Button_Click'Access,
                   (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
@@ -770,6 +801,12 @@ package body Builder_Facility_Module is
                Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
             begin
                Gtk_New (Widget, Get_Icon (Target));
+               --  Connect to this signal to automatically update the tooltips
+               --  when a new main file is selected
+               Combo_Tips_Callback.Connect
+                 (Widget, Signal_Selection_Changed,
+                  On_Combo_Selection'Access, Get_Tooltips (Get_Kernel));
+
                for J in Mains'Range loop
                   Widget.Add_Item
                     (Mains (J).all, Get_Icon (Target),
@@ -787,7 +824,6 @@ package body Builder_Facility_Module is
 
          Builder_Module_ID.Buttons.Prepend (Button);
          Insert (Toolbar => Toolbar, Item    => Button);
-         Set_Tooltip (Button, Get_Tooltips (Get_Kernel), Name);
          Show_All (Button);
 
       end Button_For_Target;

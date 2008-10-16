@@ -20,6 +20,7 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
+with Glib;                     use Glib;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
@@ -70,6 +71,29 @@ package Gtkada.Combo_Tool_Button is
    procedure Clear_Items
      (Widget : access Gtkada_Combo_Tool_Button_Record);
    --  Clear the Items list.
+
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "clicked"
+   --    procedure Handler
+   --     (Button : access Gtkada_Combo_Tool_Button_Record'Class);
+   --    Emitted when the button has been clicked on by the user. This is the
+   --    signal you should use to start your own actions.
+   --
+   --  - "selection_changed"
+   --    procedure Handler
+   --     (Button : access Gtkada_Combo_Tool_Button_Record'Class);
+   --    Emitted when the selected item has been changed by the user.
+   --
+   --  </signals>
+
+   Signal_Clicked           : constant Glib.Signal_Name := "clicked";
+   Signal_Selection_Changed : constant Glib.Signal_Name := "selection_changed";
 
 private
 
