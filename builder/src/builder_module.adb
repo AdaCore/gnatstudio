@@ -22,7 +22,6 @@ with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with System;
 
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
@@ -40,7 +39,6 @@ with Glib.Object;               use Glib.Object;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -102,16 +100,11 @@ package body Builder_Module is
    --  The key in the history for the check button
    --  "run in executable directory"
 
-   Make_Menu_Prefix : constant String := "<gps>/Build/Make/";
    Run_Menu_Prefix : constant String := "<gps>/Build/Run/";
-   --  Prefixes used in the accel path for the various menus
-
    Item_Accel_Path : constant String := "item";
    --  Prefix used in accel path for items defined in this module
 
    Custom_Make_Suffix  : constant String := "Custom...";
-   Current_Make_Suffix : constant String := "<current file>";
-   Project_Make_Suffix : constant String := "Compile all sources";
 
    Unique_Compile : aliased constant String := "-u";
    Follow_Links   : aliased constant String := "-eL";
@@ -153,9 +146,6 @@ package body Builder_Module is
       Run_Menu   : Gtk.Menu.Gtk_Menu;
       --  The build menu, updated automatically every time the list of main
       --  units changes.
-
-      Last_Project_For_Menu : Projects.Project_Type := Projects.No_Project;
-      --  Project used to fill the Run_Menu and Make_Menu
 
       Last_Run_Cmd  : Run_Description;
       --  The last command spawned from the run menu
@@ -272,11 +262,9 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : String_List;
-      Set_Shortcut : Boolean);
+      Mains        : String_List);
    --  Add new entries for all the main subprograms of Project.
    --  If Menu is null, a new one is created if there are any entries
-   --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
 
    procedure Add_Build_Menu
      (Menu    : in out Gtk_Menu;
@@ -307,9 +295,6 @@ package body Builder_Module is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
-
-   procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class);
-   --  Remove from the accel_map the key bindings set for previous projects
 
    procedure Parse_Compiler_Output (Data : Process_Data; Output : String);
    --  Called whenever new output from the compiler is available
@@ -1319,10 +1304,8 @@ package body Builder_Module is
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List;
-      Set_Shortcut : Boolean)
+      Mains        : Argument_List)
    is
-      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
       Mitem : Dynamic_Menu_Item;
       Main  : Virtual_File;
       Tmp   : Boolean;
@@ -1357,12 +1340,6 @@ package body Builder_Module is
                User_Data   => File_Project_Record'
                  (Project => Project,
                   File    => Main));
-
-            if Set_Shortcut and then M = Mains'First then
-               Set_Accel_Path
-                 (Mitem, Make_Menu_Prefix & Item_Accel_Path & Image (M),
-                  Group);
-            end if;
          end if;
       end loop;
    end Add_Build_Menu;
@@ -1446,68 +1423,6 @@ package body Builder_Module is
       end loop;
    end Add_Run_Menu;
 
-   -----------------------
-   -- Cleanup_Accel_Map --
-   -----------------------
-
-   procedure Cleanup_Accel_Map (Kernel : access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
-
-      procedure Cleanup_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean);
-      --  Remove one specific binding if necessary
-
-      ---------------------
-      -- Cleanup_Binding --
-      ---------------------
-
-      procedure Cleanup_Binding
-        (Data       : System.Address;
-         Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean)
-      is
-         pragma Unreferenced (Data, Accel_Key, Accel_Mods, Changed);
-         Tmp : Boolean;
-         pragma Unreferenced (Tmp);
-
-      begin
-         --  We reset the entries to "" so that two keybindings with the same
-         --  name don't appear in the list.
-         if Accel_Path'Length >
-             Make_Menu_Prefix'Length + Item_Accel_Path'Length
-           and then Accel_Path
-             (Accel_Path'First ..
-                  Accel_Path'First + Make_Menu_Prefix'Length
-                  + Item_Accel_Path'Length - 1) =
-               Make_Menu_Prefix & Item_Accel_Path
-           and then Accel_Path /= Make_Menu_Prefix & Custom_Make_Suffix
-           and then Accel_Path /= Make_Menu_Prefix & Current_Make_Suffix
-           and then Accel_Path /= Make_Menu_Prefix & Project_Make_Suffix
-         then
-            Tmp := Change_Entry (Accel_Path, 0, 0, True);
-
-         elsif Accel_Path'Length > Run_Menu_Prefix'Length
-           and then Accel_Path
-             (Accel_Path'First ..
-                  Accel_Path'First + Run_Menu_Prefix'Length - 1) =
-               Run_Menu_Prefix
-           and then Accel_Path /= Run_Menu_Prefix & Custom_Make_Suffix
-         then
-            Tmp := Change_Entry (Accel_Path, 0, 0, True);
-         end if;
-      end Cleanup_Binding;
-
-   begin
-      Gtk.Accel_Map.Foreach
-        (System.Null_Address, Cleanup_Binding'Unrestricted_Access);
-   end Cleanup_Accel_Map;
-
    ---------------------
    -- On_View_Changed --
    ---------------------
@@ -1517,14 +1432,6 @@ package body Builder_Module is
       Menu2 : Gtk_Menu renames Builder_Module_ID.Run_Menu;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
-      --  Free the previous shortcuts if needed. We only keep the ones from
-      --  the current project, to avoid an ever expending custom_keys file,
-      --  and to limit the change of a duplicate key binding appearing in the
-      --  menu.
-      if Builder_Module_ID.Last_Project_For_Menu /= Get_Project (Kernel) then
-         Cleanup_Accel_Map (Kernel);
-      end if;
-
       --  Only add the shortcuts for the root project
       --  Special case: if the root project is an extending project (which is
       --  the case as soon as one of the other projects in the hierarchy is
@@ -1675,8 +1582,7 @@ package body Builder_Module is
            (Menu         => M,
             Project      => Project_Information (Context),
             Kernel       => Get_Kernel (Context),
-            Mains        => Mains,
-            Set_Shortcut => False);
+            Mains        => Mains);
       end if;
       Free (Mains);
 
