@@ -53,10 +53,21 @@ package body Builder_Facility_Module.Scripts is
    --  BuildTarget class
 
    Target_Name_Cst   : aliased constant String := "target_name";
+   Main_Name_Cst     : aliased constant String := "main_name";
+   Force_Cst         : aliased constant String := "force";
+   File_Cst          : aliased constant String := "file";
+   Extra_Args_Cst    : aliased constant String := "extra_args";
+
    Target_Class_Name : constant String := "BuildTarget";
 
    Constructor_Args : constant Cst_Argument_List :=
      (2 => Target_Name_Cst'Access);
+
+   Execute_Args : constant Cst_Argument_List :=
+     (2 => Main_Name_Cst'Access,
+      3 => File_Cst'Access,
+      4 => Force_Cst'Access,
+      5 => Extra_Args_Cst'Access);
 
    type Target_Property is new Instance_Property_Record with record
       Target_Name : Unbounded_String;
@@ -163,6 +174,45 @@ package body Builder_Facility_Module.Scripts is
             --  ??? Need to update the IDE items: icon, menu, and build action.
          end;
 
+      elsif Command = "execute" then
+         Name_Parameters (Data, Execute_Args);
+
+         declare
+            Inst  : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
+            Main  : constant String := Nth_Arg (Data, 2, "");
+            Force : constant Boolean := Nth_Arg (Data, 4, False);
+            Name  : constant String := Get_Target_Name (Inst);
+            Mode  : Dialog_Mode := Default;
+         begin
+            Info := Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)));
+
+            if Base_Name (Info) = "" then
+               Info := No_File;
+            end if;
+
+            Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+              (Nth_Arg (Data, 5, ""));
+
+            if Name = "" then
+               Set_Error_Msg (Data, -"Invalid target");
+               return;
+            end if;
+
+            if Force then
+               Mode := Force_No_Dialog;
+            end if;
+
+            Launch_Target (Kernel       => Kernel,
+                           Registry     => Registry,
+                           Target_Name  => Name,
+                           Force_File   => Info,
+                           Extra_Args   => Extra_Args,
+                           Quiet        => False,
+                           Synchronous  => True,
+                           Dialog       => Mode,
+                           Main         => Main);
+         end;
+
       elsif Command = "get_build_output" then
          Node := First (Get_Build_Output);
 
@@ -186,7 +236,7 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => Extra_Args,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False,
+                        Dialog       => Default,
                         Main         => "");
 
          Free (Extra_Args);
@@ -203,7 +253,7 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => Extra_Args,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False,
+                        Dialog       => Default,
                         Main         => "");
 
          Free (Extra_Args);
@@ -217,7 +267,7 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => null,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False,
+                        Dialog       => Default,
                         Main         => "");
 
       elsif Command = "check_semantic" then
@@ -229,7 +279,7 @@ package body Builder_Facility_Module.Scripts is
                         Extra_Args   => null,
                         Quiet        => False,
                         Synchronous  => True,
-                        Force_Dialog => False,
+                        Dialog       => Default,
                         Main         => "");
 
       end if;
@@ -249,6 +299,13 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "remove",
          Minimum_Args => 0,
          Maximum_Args => 0,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "execute",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
@@ -279,7 +336,7 @@ package body Builder_Facility_Module.Scripts is
             C : Build_Main_Command_Access;
          begin
             Create (C, Kernel, Registry, Build_Main_Target,
-                    J, False, False);
+                    J, False, Default);
             Register_Action
               (Kernel      => Kernel,
                Name        => (-"Build Main Number") & J'Img,
