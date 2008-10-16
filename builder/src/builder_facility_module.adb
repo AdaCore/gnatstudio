@@ -135,6 +135,9 @@ package body Builder_Facility_Module is
 
       Output     : String_List_Utils.String_List.List;
       --  The last build output
+
+      Build_Count : Natural;
+      --  The number of builds currently running
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -220,7 +223,12 @@ package body Builder_Facility_Module is
    function On_Compilation_Starting
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
-   --  Called when a file has been saved
+   --  Called when the compilation is starting
+
+   procedure On_Compilation_Finished
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the compilation has ended
 
    procedure On_GPS_Started
      (Kernel : access Kernel_Handle_Record'Class);
@@ -442,7 +450,9 @@ package body Builder_Facility_Module is
       Clear_Compilation_Output
         (Kernel_Handle (Kernel), D.Value,
          Clear_Console   => not Quiet,
-         Clear_Locations => True);
+         Clear_Locations => Builder_Module_ID.Build_Count = 0);
+
+      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
       --  ??? need to add support for this
 --        Interrupt_Xrefs_Loading (Kernel);
@@ -453,6 +463,28 @@ package body Builder_Facility_Module is
 
       return True;
    end On_Compilation_Starting;
+
+   -----------------------------
+   -- On_Compilation_Finished --
+   -----------------------------
+
+   procedure On_Compilation_Finished
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      if Builder_Module_ID.Build_Count > 0 then
+         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
+      end if;
+
+      --  ??? To be ported.
+--        if Builder_Module_ID.Build_Count = 0 then
+--           if Automatic_Xrefs_Load.Get_Pref then
+--              Load_Xref_In_Memory (Kernel);
+--           end if;
+--        end if;
+   end On_Compilation_Finished;
 
    -------------------
    -- On_File_Saved --
@@ -1084,6 +1116,10 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compilation_Starting_Hook,
                 Wrapper (On_Compilation_Starting'Access),
                 Name => "builder_facility_module.compilation_starting");
+
+      Add_Hook (Kernel, Compilation_Finished_Hook,
+                Wrapper (On_Compilation_Finished'Access),
+                Name => "builder_facility_module.compilation_finished");
 
       --  Register the shell commands
 
