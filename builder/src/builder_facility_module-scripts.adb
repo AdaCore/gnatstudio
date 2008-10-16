@@ -184,7 +184,8 @@ package body Builder_Facility_Module.Scripts is
             Name  : constant String := Get_Target_Name (Inst);
             Mode  : Dialog_Mode := Default;
          begin
-            Info := Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)));
+            Info := Get_Data
+              (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
 
             if Base_Name (Info) = "" then
                Info := No_File;
@@ -304,7 +305,7 @@ package body Builder_Facility_Module.Scripts is
 
       Register_Command
         (Kernel, "execute",
-         Minimum_Args => 2,
+         Minimum_Args => 0,
          Maximum_Args => 4,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
