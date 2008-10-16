@@ -215,6 +215,9 @@ Build_Main_Target = """
        <arg>%M</arg>
     </command-line>
 </target>
+"""
+
+Build_Current_Target = """
 <target model="builder" category="_Project" name="Build &lt;current file&gt;">
     <icon>gps-build-main</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -341,6 +344,7 @@ def create_global_targets():
     parse_xml (Compile_File_Target)
     parse_xml (Build_Main_Target)
     parse_xml (Compile_All_Targets)
+    parse_xml (Build_Current_Target)
     parse_xml (Clean_Targets)
     parse_xml (Custom_Target)
 
