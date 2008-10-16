@@ -265,7 +265,8 @@ package body Builder_Facility_Module is
          return;
       end if;
 
-      Create (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, False);
+      Create
+        (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, Default);
 
       Register_Action (Kernel      => Get_Kernel,
                        Name        => Name,
@@ -514,7 +515,7 @@ package body Builder_Facility_Module is
                            Extra_Args   => null,
                            Quiet        => True,
                            Synchronous  => False,
-                           Force_Dialog => False,
+                           Dialog       => Default,
                            Main         => "");
             --  ??? Should we attempt to a "relevant" main when
             --  in On_File_Save mode?
@@ -652,7 +653,7 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Registry,
          To_String (Data.Target),
          No_File,
-         null, False, False, False, To_String (Data.Main));
+         null, False, False, Default, To_String (Data.Main));
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -674,7 +675,7 @@ package body Builder_Facility_Module is
             Builder_Module_ID.Registry,
             To_String (Target_And_Main (Data.all).Target),
             No_File,
-            null, False, False, False,
+            null, False, False, Default,
             To_String (Target_And_Main (Data.all).Main));
       end if;
 
@@ -819,7 +820,7 @@ package body Builder_Facility_Module is
             Name,
             Main,
             False,
-            Get_Properties (Target).Launch_Mode = Manually);
+            Default);
 
          Register_Menu (Kernel      => Get_Kernel,
                         Parent_Path => Parent_Path,
