@@ -508,8 +508,7 @@ package body Build_Command_Manager is
       Target_Name  : String;
       Main         : String;
       Quiet        : Boolean;
-      Force_Dialog : Boolean)
-   is
+      Force_Dialog : Boolean) is
    begin
       Item := new Build_Command;
       Item.Kernel := Kernel;
@@ -527,8 +526,7 @@ package body Build_Command_Manager is
    overriding
    function Execute
      (Command : access Build_Main_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
       Mains  : Argument_List :=
@@ -537,7 +535,7 @@ package body Build_Command_Manager is
            Attribute => Main_Attribute);
 
    begin
-      if not (Command.Main in 1 .. Mains'Length) then
+      if Command.Main not in 1 .. Mains'Length then
          Insert (Command.Kernel,
                  (-"This project does not contain") & Command.Main'Img
                  & (-" main files"), Mode => Error);
