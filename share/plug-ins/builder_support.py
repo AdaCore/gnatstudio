@@ -262,7 +262,7 @@ Syntax_Check_Target = """
 <target model="gnatmake" category="_File_" name="Check _Syntax">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-syntax-check</icon>
-    <launch-mode>MANUALLY</launch-mode>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <command-line>
@@ -285,7 +285,7 @@ Semantic_Check_Target = """
 <target model="gnatmake" category="_File_" name="Check S_emantic">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-semantic-check</icon>
-    <launch-mode>MANUALLY</launch-mode>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <command-line>
