@@ -20,9 +20,9 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tool_Item;
 
 package Gtkada.Combo_Tool_Button is
@@ -41,37 +41,26 @@ package Gtkada.Combo_Tool_Button is
       Stock_Id : String);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads)
 
-   procedure Set_Menu
-     (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Menu   : Gtk_Menu);
-   --  Replace the inner menu by Menu.
-
    procedure Add_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Item   : String);
+     (Widget   : access Gtkada_Combo_Tool_Button_Record;
+      Item     : String;
+      Stock_Id : String := "");
    --  Add an item in the button items list.
-
-   procedure Add_Menu_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record;
-      Item   : Gtk_Menu_Item);
 
    procedure Select_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record;
       Item   : String);
    --  Select Item from the list.
 
-   procedure Clear_Items
-     (Widget : access Gtkada_Combo_Tool_Button_Record);
-   --  Clear the Items list.
-
    function Get_Selected_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record) return String;
    --  Get the currently selected item
 
-private
+   procedure Clear_Items
+     (Widget : access Gtkada_Combo_Tool_Button_Record);
+   --  Clear the Items list.
 
-   type Gtkada_Icon_Widget_Record;
-   type Gtkada_Icon_Widget_Access is access all Gtkada_Icon_Widget_Record;
+private
 
    package Strings_Vector is new Ada.Containers.Vectors
      (Natural, Ada.Strings.Unbounded.Unbounded_String);
@@ -80,7 +69,10 @@ private
      Gtk.Tool_Item.Gtk_Tool_Item_Record with record
       Items       : Strings_Vector.Vector;
       Selected    : Strings_Vector.Extended_Index;
-      Icon_Widget : Gtkada_Icon_Widget_Access;
+      Menu_Button : Gtk_Toggle_Button;
+      Icon_Button : Gtk_Button;
+      Menu        : Gtk_Menu;
+      Stock_Id    : Unbounded_String;
    end record;
 
 end Gtkada.Combo_Tool_Button;
