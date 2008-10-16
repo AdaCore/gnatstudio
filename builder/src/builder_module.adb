@@ -1708,7 +1708,7 @@ package body Builder_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object, Builder);
-      --  The filter garantees we are on a File_Selection_Context
+      --  The filter guarantees we are on a File_Selection_Context
 
       Library_Name : constant String :=
                        Get_Attribute_Value
@@ -1791,8 +1791,6 @@ package body Builder_Module is
          Kernel      => Kernel,
          Module_Name => "Builder",
          Priority    => Default_Priority);
-
-      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
 
       Register_Contextual_Submenu
         (Kernel,
