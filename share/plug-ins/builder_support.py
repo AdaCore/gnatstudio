@@ -271,7 +271,10 @@ Syntax_Check_Target = """
        <arg>-c</arg>
        <arg>-gnats</arg>
        <arg>-u</arg>
-       <arg>%F</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
     </command-line>
 </target>
 """
