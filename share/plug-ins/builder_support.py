@@ -264,6 +264,7 @@ Syntax_Check_Target = """
     <icon>gps-syntax-check</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>
@@ -283,6 +284,7 @@ Semantic_Check_Target = """
     <icon>gps-semantic-check</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
     <command-line>
        <arg>%gnatmake</arg>
        <arg>-q</arg>

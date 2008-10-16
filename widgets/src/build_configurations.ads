@@ -183,6 +183,10 @@ package Build_Configurations is
       Read_Only       : Boolean          := False;
       --  When set to True, the target cannot be renamed or removed
 
+      Server           : Server_Type := GPS_Server;
+      --  Server used to launch the target. If equal to GPS_Server, then its
+      --  model's server is used.
+
       Represents_Mains : Boolean := False;
       --  Whether the target represents a series of mains
 
@@ -283,6 +287,7 @@ package Build_Configurations is
    --     <represents-mains>RM</represents-mains>
    --     <key>KEY</key>
    --     <launch-mode>LAUNCH_MODE</launch-mode>
+   --     <server>SERVER</server>
    --     <command-line>
    --           <arg>COMMAND</arg>
    --           <arg>ARG1</arg>
@@ -303,6 +308,7 @@ package Build_Configurations is
    --     IN_MENU      (boolean) indicates whether the target should show up
    --                  in the menu - True by default
    --     KEY          the key bound to the target
+   --     SERVER       the server used to launch the target
 
    --     MODEL_NAME   is the name of the target model
    --     COMMAND      (optional) is a string containing the executable

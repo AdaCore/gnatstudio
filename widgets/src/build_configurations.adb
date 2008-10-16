@@ -754,6 +754,11 @@ package body Build_Configurations is
       C.Tag := new String'("key");
       C.Value := new String'(To_String (Target.Properties.Key));
 
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("server");
+      C.Value := new String'(Target.Properties.Server'Img);
+
       if Target.Command_Line /= null then
          C.Next := Command_Line_To_XML
            (Target.Command_Line.all, "command-line");
@@ -873,6 +878,9 @@ package body Build_Configurations is
          elsif Child.Tag.all = "represents-mains" then
             Target.Properties.Represents_Mains :=
               Boolean'Value (Child.Value.all);
+
+         elsif Child.Tag.all = "server" then
+            Target.Properties.Server := Server_Type'Value (Child.Value.all);
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")
@@ -1047,7 +1055,11 @@ package body Build_Configurations is
 
    function Get_Server (Target : Target_Access) return Server_Type is
    begin
-      return Target.Model.Server;
+      if Target.Properties.Server = GPS_Server then
+         return Target.Model.Server;
+      else
+         return Target.Properties.Server;
+      end if;
    end Get_Server;
 
    --------------
