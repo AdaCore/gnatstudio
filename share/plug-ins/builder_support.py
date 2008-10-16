@@ -315,7 +315,7 @@ Clean_Targets = """
 <target model="gprclean" category="C_lean" name="Clean _Root">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-clean</icon>
-    <launch-mode>MANUALLY</launch-mode>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
        <arg>%gprclean</arg>
