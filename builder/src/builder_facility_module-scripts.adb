@@ -352,6 +352,9 @@ package body Builder_Facility_Module.Scripts is
       Bind_Default_Key (Kernel      => Kernel,
                         Action      => (-"Build Main Number 1"),
                         Default_Key => "F4");
+      Bind_Default_Key (Kernel      => Kernel,
+                        Action      => -"Custom Build...",
+                        Default_Key => "F9");
    end Register_Commands;
 
    ----------
