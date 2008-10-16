@@ -44,7 +44,6 @@
 --                                    v                        | its output
 --                      Command takes care of its output      -+
 --
---
 --   (1) GUI elements registered in Builder_Facility_Module
 --   (2) defined in Builder_Facility_Module.Scripts
 --   (3) defined in Build_Command_Manager
@@ -58,7 +57,15 @@
 --              (4) depends only on XmlAda
 --              (6) depends on (4) and on GtkAda
 --  (1) (2) (3) (5) depend on GPS internals
+--
+--  --------------------------------------------
+--
+--  Items under the responsibility of Builder_Module
+--
+--   The Run... Menu
+--   The loading of Xref
 
+with GNAT.OS_Lib;
 with GPS.Kernel;
 with Build_Configurations;
 with String_List_Utils;
@@ -78,6 +85,12 @@ package Builder_Facility_Module is
    --  Return the last build output.
    --  User should not free the result nor store a pointer to the result, as
    --  this might get invalidated as soon as a new compilation starts.
+
+   function Get_Mains
+     (Kernel : GPS.Kernel.Kernel_Handle) return GNAT.OS_Lib.Argument_List;
+   --  Return the list of mains corresponding to the currently loaded project
+   --  tree.
+   --  Caller must free the result.
 
 private
 
