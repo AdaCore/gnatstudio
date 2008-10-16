@@ -35,6 +35,10 @@ package Commands.Builder is
    Shadow_Category  : constant String := "Syntax check";
    --  -"Syntax check"
 
+   function Target_Name_To_Locations_Category (Name : String) return String;
+   --  Return the name of the locations category associated with the build of
+   --  target Name.
+
    procedure Process_Builder_Output
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command : Commands.Command_Access;

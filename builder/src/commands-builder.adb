@@ -87,11 +87,6 @@ package body Commands.Builder is
    procedure End_Build_Callback (Data : Process_Data; Status : Integer);
    --  Called at the end of the build
 
-   function Target_Name_To_Locations_Category
-     (Name : Unbounded_String) return String;
-   --  Return the name of the locations category associated with the build of
-   --  target Name.
-
    -------------
    -- Destroy --
    -------------
@@ -105,13 +100,12 @@ package body Commands.Builder is
    -- Target_Name_To_Locations_Category --
    ---------------------------------------
 
-   function Target_Name_To_Locations_Category
-     (Name : Unbounded_String) return String is
+   function Target_Name_To_Locations_Category (Name : String) return String is
    begin
       if Name = "" then
          return Error_Category;
       else
-         return -"Build results: " & To_String (Name);
+         return -"Build results: " & Name;
       end if;
    end Target_Name_To_Locations_Category;
 
@@ -330,7 +324,7 @@ package body Commands.Builder is
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
            (Kernel_Handle (Kernel),
-            Target_Name_To_Locations_Category (To_Unbounded_String (Target)),
+            Target_Name_To_Locations_Category (Target),
             Builder_Errors_Style,
             Builder_Warnings_Style,
             Builder_Style_Style,
@@ -361,7 +355,7 @@ package body Commands.Builder is
 
       if Compilation_Starting
         (Kernel,
-         Target_Name_To_Locations_Category (Data.Target_Name),
+         To_String (Data.Target_Name),
          Quiet => Quiet)
       then
          Append_To_Build_Output

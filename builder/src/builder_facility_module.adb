@@ -531,7 +531,7 @@ package body Builder_Facility_Module is
       end if;
 
       Clear_Compilation_Output
-        (Kernel_Handle (Kernel), D.Value,
+        (Kernel_Handle (Kernel), Target_Name_To_Locations_Category (D.Value),
          Clear_Console   => (not Quiet)
            and then Builder_Module_ID.Build_Count = 0,
          Clear_Locations => Builder_Module_ID.Build_Count = 0);
