@@ -35,9 +35,14 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package Build_Command_Manager is
 
-   type Dialog_Mode is (Force_Dialog, Force_No_Dialog, Default);
-   --  Force_Dialog means that the dialog should be displayed
+   type Dialog_Mode is
+     (Force_Dialog, Force_No_Dialog,
+      Force_Dialog_Unless_Disabled_By_Target,
+      Default);
+   --  Force_Dialog means that the dialog should always be displayed
    --  Force_No_Dialog means that the dialog should not be displayed
+   --  Force_Dialog_Unless_Disabled_By_Target means that the dialog should
+   --    be displayed, unless the target launches with Manually_With_No_Dialog
    --  Default means that the target default should be enforced
 
    procedure Launch_Target
