@@ -550,9 +550,9 @@ a = """<?xml version="1.0"?>
   <!-- Shortcut keys -->
 
   <key action="Examine file">F8</key>
-  <key action="SPARKFormat file">F9</key>
   <key action="Simplify all">F10</key>
   <key action="POGS">F11</key>
+  <key action="SPARKFormat file">F12</key>
 
 </SPARK>
 
