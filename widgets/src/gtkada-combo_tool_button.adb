@@ -36,7 +36,6 @@ with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Traces;
-with Ada.Text_IO;
 
 package body Gtkada.Combo_Tool_Button is
 
@@ -180,8 +179,6 @@ package body Gtkada.Combo_Tool_Button is
      (Item  : access Menu_Item_Record'Class;
       State : Boolean) is
    begin
-      Ada.Text_IO.Put_Line ("Item label is " & Item.Label.Get_Text &
-                            ": Highlight to " & State'Img);
       if State then
          Item.Label.Set_Label ("<b>" & Item.Label.Get_Text & "</b>");
       else
