@@ -262,35 +262,35 @@ package body Builder_Facility_Module is
    procedure Free (Ar : in out Argument_List);
    --  Free memory associated to Ar.
 
-   function Get_Mains return Argument_List;
-   --  Return the list of mains corresponding to the currently loaded project
-   --  tree.
-
    ---------------
    -- Get_Mains --
    ---------------
 
-   function Get_Mains return Argument_List is
-      Kernel : constant Kernel_Handle := Get_Kernel;
+   function Get_Mains (Kernel : Kernel_Handle) return Argument_List is
 
-      Loaded_Project   : constant Project_Type := Get_Project (Kernel);
-      Loaded_Mains     : constant Argument_List :=
+      Base_Project     : Project_Type;
+
+      Root_Project : constant Project_Type := Get_Project (Kernel);
+      Root_Mains   : Argument_List :=
         Get_Attribute_Value
-          (Loaded_Project,
+          (Root_Project,
            Attribute => Main_Attribute);
-      Extended_Project : constant Project_Type :=
-        Parent_Project (Loaded_Project);
    begin
-      if Extended_Project = No_Project then
-         return Loaded_Mains;
+      Base_Project := Extended_Project (Root_Project);
+
+      if Base_Project = No_Project
+        or else Base_Project = Root_Project
+      then
+         --  The root project is the main project
+         return Root_Mains;
       else
          declare
-            Extended_Mains : Argument_List :=
+            Base_Mains : constant Argument_List :=
               Get_Attribute_Value
-                (Loaded_Project,
+                (Base_Project,
                  Attribute => Main_Attribute);
             Mains : Argument_List
-              (1 .. Loaded_Mains'Length + Extended_Mains'Length);
+              (1 .. Root_Mains'Length + Base_Mains'Length);
             Index : Natural; --  Points to the first free element in Mains
 
             function Is_Already_In_Mains (S : String) return Boolean;
@@ -298,8 +298,8 @@ package body Builder_Facility_Module is
 
             function Is_Already_In_Mains (S : String) return Boolean is
             begin
-               for J in Loaded_Mains'Range loop
-                  if Loaded_Mains (J).all = S then
+               for J in Base_Mains'Range loop
+                  if Base_Mains (J).all = S then
                      return True;
                   end if;
                end loop;
@@ -311,21 +311,21 @@ package body Builder_Facility_Module is
             --  plus the mains contained in the Extended project and which
             --  are not in the Loaded mains.
 
-            if Extended_Mains'Length = 0 then
-               return Loaded_Mains;
+            if Base_Mains'Length = 0 then
+               return Root_Mains;
             end if;
 
-            Mains (1 .. Loaded_Mains'Length) := Loaded_Mains;
-            Index := Loaded_Mains'Length + 1;
+            Mains (1 .. Base_Mains'Length) := Base_Mains;
+            Index := Base_Mains'Length + 1;
 
-            for K in Extended_Mains'Range loop
-               if not Is_Already_In_Mains (Extended_Mains (K).all) then
-                  Mains (Index) := new String'(Extended_Mains (K).all);
+            for K in Root_Mains'Range loop
+               if not Is_Already_In_Mains (Root_Mains (K).all) then
+                  Mains (Index) := new String'(Root_Mains (K).all);
                   Index := Index + 1;
                end if;
             end loop;
 
-            Free (Extended_Mains);
+            Free (Root_Mains);
 
             return Mains (1 .. Index - 1);
          end;
@@ -537,9 +537,6 @@ package body Builder_Facility_Module is
          Clear_Locations => Builder_Module_ID.Build_Count = 0);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-      --  ??? need to add support for this
---        Interrupt_Xrefs_Loading (Kernel);
 
       if not Quiet then
          Console.Raise_Console (Kernel);
@@ -929,7 +926,7 @@ package body Builder_Facility_Module is
 
       if Get_Properties (Target).Represents_Mains then
          declare
-            Mains  : Argument_List := Get_Mains;
+            Mains  : Argument_List := Get_Mains (Get_Kernel);
          begin
             --  Do not display if no main is available.
             if Mains'Length > 0 then
@@ -1020,7 +1017,7 @@ package body Builder_Facility_Module is
 
       if Get_Properties (Target).Represents_Mains then
          declare
-            Mains  : Argument_List := Get_Mains;
+            Mains  : Argument_List := Get_Mains (Get_Kernel);
          begin
             for J in Mains'Range loop
                if Mains (J) /= null then
