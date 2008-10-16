@@ -140,7 +140,7 @@ package body Builder_Facility_Module is
       Output     : String_List_Utils.String_List.List;
       --  The last build output
 
-      Build_Count : Natural;
+      Build_Count : Natural := 0;
       --  The number of builds currently running
    end record;
 
@@ -243,6 +243,10 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when GPS is starting
 
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
+   --  Called every time the project view has changed, ie potentially the list
+   --  of main units.
+
    procedure Add_Action_For_Target (T : Target_Access);
    --  Register a Kernel Action to build T
 
@@ -257,6 +261,76 @@ package body Builder_Facility_Module is
 
    procedure Free (Ar : in out Argument_List);
    --  Free memory associated to Ar.
+
+   function Get_Mains return Argument_List;
+   --  Return the list of mains corresponding to the currently loaded project
+   --  tree.
+
+   ---------------
+   -- Get_Mains --
+   ---------------
+
+   function Get_Mains return Argument_List is
+      Kernel : constant Kernel_Handle := Get_Kernel;
+
+      Loaded_Project   : constant Project_Type := Get_Project (Kernel);
+      Loaded_Mains     : constant Argument_List :=
+        Get_Attribute_Value
+          (Loaded_Project,
+           Attribute => Main_Attribute);
+      Extended_Project : constant Project_Type :=
+        Parent_Project (Loaded_Project);
+   begin
+      if Extended_Project = No_Project then
+         return Loaded_Mains;
+      else
+         declare
+            Extended_Mains : Argument_List :=
+              Get_Attribute_Value
+                (Loaded_Project,
+                 Attribute => Main_Attribute);
+            Mains : Argument_List
+              (1 .. Loaded_Mains'Length + Extended_Mains'Length);
+            Index : Natural; --  Points to the first free element in Mains
+
+            function Is_Already_In_Mains (S : String) return Boolean;
+            --  Return True if S is in Loaded_Mains
+
+            function Is_Already_In_Mains (S : String) return Boolean is
+            begin
+               for J in Loaded_Mains'Range loop
+                  if Loaded_Mains (J).all = S then
+                     return True;
+                  end if;
+               end loop;
+               return False;
+            end Is_Already_In_Mains;
+
+         begin
+            --  The real Mains is the concatenation of the project mains,
+            --  plus the mains contained in the Extended project and which
+            --  are not in the Loaded mains.
+
+            if Extended_Mains'Length = 0 then
+               return Loaded_Mains;
+            end if;
+
+            Mains (1 .. Loaded_Mains'Length) := Loaded_Mains;
+            Index := Loaded_Mains'Length + 1;
+
+            for K in Extended_Mains'Range loop
+               if not Is_Already_In_Mains (Extended_Mains (K).all) then
+                  Mains (Index) := new String'(Extended_Mains (K).all);
+                  Index := Index + 1;
+               end if;
+            end loop;
+
+            Free (Extended_Mains);
+
+            return Mains (1 .. Index - 1);
+         end;
+      end if;
+   end Get_Mains;
 
    -----------------
    -- Action_Name --
@@ -473,6 +547,24 @@ package body Builder_Facility_Module is
 
       return True;
    end On_Compilation_Starting;
+
+   ---------------------
+   -- On_View_Changed --
+   ---------------------
+
+   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
+      pragma Unreferenced (Kernel);
+   begin
+      --  Clear the items that might depend on the number of mains
+
+      Clear_Menus;
+      Install_Menus;
+      Clear_Toolbar_Buttons;
+      Install_Toolbar_Buttons;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_View_Changed;
 
    -----------------------------
    -- On_Compilation_Finished --
@@ -837,10 +929,7 @@ package body Builder_Facility_Module is
 
       if Get_Properties (Target).Represents_Mains then
          declare
-            Mains  : Argument_List :=
-              Get_Attribute_Value
-                (Get_Root_Project (Get_Registry (Get_Kernel).all),
-                 Attribute => Main_Attribute);
+            Mains  : Argument_List := Get_Mains;
          begin
             --  Do not display if no main is available.
             if Mains'Length > 0 then
@@ -931,10 +1020,7 @@ package body Builder_Facility_Module is
 
       if Get_Properties (Target).Represents_Mains then
          declare
-            Mains  : Argument_List :=
-              Get_Attribute_Value
-                (Get_Root_Project (Get_Registry (Get_Kernel).all),
-                 Attribute => Main_Attribute);
+            Mains  : Argument_List := Get_Mains;
          begin
             for J in Mains'Range loop
                if Mains (J) /= null then
@@ -1156,6 +1242,12 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compilation_Finished_Hook,
                 Wrapper (On_Compilation_Finished'Access),
                 Name => "builder_facility_module.compilation_finished");
+
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_View_Changed_Hook,
+         Func   => Wrapper (On_View_Changed'Access),
+         Name   => "builder_facility_module.on_view_changed");
 
       --  Register the shell commands
 
