@@ -459,7 +459,7 @@ package body Builder_Facility_Module is
       Clear_Compilation_Output
         (Kernel_Handle (Kernel), D.Value,
          Clear_Console   => (not Quiet)
-         and then Builder_Module_ID.Build_Count = 0,
+           and then Builder_Module_ID.Build_Count = 0,
          Clear_Locations => Builder_Module_ID.Build_Count = 0);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
