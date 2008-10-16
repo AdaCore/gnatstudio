@@ -45,6 +45,7 @@ package body Builder_Facility_Module.Scripts is
    --  NOTE: these constants must match the names of the predefined targets
    --  registered in builder_support.py.
    Compile_File_Target : constant String := "Compile File";
+   Build_File_Target : constant String := "Build <current file>";
    Check_Syntax_Target : constant String := "Check Syntax";
    Check_Semantic_Target : constant String := "Check Semantic";
    Build_Main_Target : constant String := "Build Main";
@@ -190,6 +191,23 @@ package body Builder_Facility_Module.Scripts is
 
          Free (Extra_Args);
 
+      elsif Command = "make" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+           (Nth_Arg (Data, 2, ""));
+
+         Launch_Target (Kernel       => Kernel,
+                        Registry     => Registry,
+                        Target_Name  => Build_File_Target,
+                        Force_File   => Info,
+                        Extra_Args   => Extra_Args,
+                        Quiet        => False,
+                        Synchronous  => True,
+                        Force_Dialog => False,
+                        Main         => "");
+
+         Free (Extra_Args);
+
       elsif Command = "check_syntax" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
          Launch_Target (Kernel       => Kernel,
@@ -238,8 +256,17 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "get_build_output",
          Handler => Shell_Handler'Access);
 
+      --  File commands
+
       Register_Command
         (Kernel, "compile",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class   => Get_File_Class (Kernel),
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "make",
          Minimum_Args => 0,
          Maximum_Args => 1,
          Class   => Get_File_Class (Kernel),

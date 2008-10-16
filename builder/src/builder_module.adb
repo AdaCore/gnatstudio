@@ -902,33 +902,10 @@ package body Builder_Module is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Info       : Virtual_File;
-      C          : Xref_Commands.Generic_Asynchronous_Command_Access;
-      Extra_Args : Argument_List_Access;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      C      : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
-      if Command = "make" then
-         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
-         Extra_Args := Argument_String_To_List (Nth_Arg (Data, 2, ""));
-
-         declare
-            Project : constant Project_Type := Get_Project_From_File
-              (Registry => Project_Registry
-                 (Get_Registry (Get_Kernel (Data)).all),
-               Source_Filename   => Info,
-               Root_If_Not_Found => True);
-         begin
-            On_Build
-              (Get_Kernel (Data),
-               File        => Info,
-               Project     => Project,
-               Synchronous => True,
-               Extra_Args  => Extra_Args);
-         end;
-
-         Free (Extra_Args);
-
-      elsif Command = "compute_xref" then
+      if Command = "compute_xref" then
          Xref_Commands.Create
            (C, -"Computing C/C++ xref info",
             new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
@@ -1890,12 +1867,6 @@ package body Builder_Module is
          Func   => Wrapper (On_Project_Changed'Access),
          Name   => "interrupt_xrefs_loading");
 
-      Register_Command
-        (Kernel, "make",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class   => Get_File_Class (Kernel),
-         Handler => Compile_Command'Access);
       Register_Command
         (Kernel, "compute_xref",
          Handler => Compile_Command'Access);
