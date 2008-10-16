@@ -35,6 +35,11 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package Build_Command_Manager is
 
+   type Dialog_Mode is (Force_Dialog, Force_No_Dialog, Default);
+   --  Force_Dialog means that the dialog should be displayed
+   --  Force_No_Dialog means that the dialog should not be displayed
+   --  Default means that the target default should be enforced
+
    procedure Launch_Target
      (Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
@@ -43,7 +48,7 @@ package Build_Command_Manager is
       Extra_Args   : Argument_List_Access;
       Quiet        : Boolean;
       Synchronous  : Boolean;
-      Force_Dialog : Boolean;
+      Dialog       : Dialog_Mode;
       Main         : String);
    --  Launch a build of target named Target_Name
    --  If Force_Dialog, always popup the single target dialog.
@@ -69,7 +74,7 @@ package Build_Command_Manager is
       Main         : Unbounded_String;
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
-      Force_Dialog : Boolean;
+      Dialog       : Dialog_Mode;
       Quiet        : Boolean;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
@@ -88,7 +93,7 @@ package Build_Command_Manager is
       Target_Name  : String;
       Main         : String;
       Quiet        : Boolean;
-      Force_Dialog : Boolean);
+      Dialog       : Dialog_Mode);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.
@@ -104,7 +109,7 @@ package Build_Command_Manager is
       Main         : Natural;
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
-      Force_Dialog : Boolean;
+      Dialog       : Dialog_Mode;
       Quiet        : Boolean;
    end record;
    type Build_Main_Command_Access is access all Build_Main_Command'Class;
@@ -123,7 +128,7 @@ package Build_Command_Manager is
       Target_Name  : String;
       Main         : Natural;
       Quiet        : Boolean;
-      Force_Dialog : Boolean);
+      Dialog       : Dialog_Mode);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.
