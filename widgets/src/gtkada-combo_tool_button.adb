@@ -36,6 +36,7 @@ with Gtk.Tool_Item;            use Gtk.Tool_Item;
 with Gtk.Widget;               use Gtk.Widget;
 
 with Traces;
+with Ada.Text_IO;
 
 package body Gtkada.Combo_Tool_Button is
 
@@ -51,6 +52,27 @@ package body Gtkada.Combo_Tool_Button is
    Signal_Parameters : constant Signal_Parameter_Types :=
                          (1 => (1 => GType_None));
 
+   ---------------
+   -- Menu_Item --
+   ---------------
+
+   type Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      Stock_Id : Unbounded_String;
+      Label    : Gtk_Label;
+      Data     : access User_Data'Class;
+   end record;
+   type Menu_Item is access all Menu_Item_Record'Class;
+
+   procedure Gtk_New
+     (Item     : out Menu_Item;
+      Label    : String;
+      Stock_Id : String;
+      Data     : access User_Data'Class);
+
+   procedure Set_Highlight
+     (Item  : access Menu_Item_Record'Class;
+      State : Boolean);
+
    --------------
    -- Handlers --
    --------------
@@ -62,7 +84,7 @@ package body Gtkada.Combo_Tool_Button is
      (Gtk_Button_Record, Gtkada_Combo_Tool_Button);
 
    package Items_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Menu_Item_Record, Gtkada_Combo_Tool_Button);
+     (Menu_Item_Record, Gtkada_Combo_Tool_Button);
 
    package Menu_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Menu_Record, Gtkada_Combo_Tool_Button);
@@ -117,8 +139,55 @@ package body Gtkada.Combo_Tool_Button is
       Widget : Gtkada_Combo_Tool_Button);
 
    procedure On_Menu_Item_Activated
-     (Item   : access Gtk_Menu_Item_Record'Class;
+     (Item   : access Menu_Item_Record'Class;
       Widget : Gtkada_Combo_Tool_Button);
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Item     : out Menu_Item;
+      Label    : String;
+      Stock_Id : String;
+      Data     : access User_Data'Class)
+   is
+      Icon : Gtk_Image;
+      Hbox : Gtk_Hbox;
+   begin
+      Item := new Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Item, "");
+      Item.Data     := Data;
+      Item.Stock_Id := To_Unbounded_String (Stock_Id);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
+      Item.Add (Hbox);
+
+      Gtk_New (Icon, Stock_Id, Icon_Size_Menu);
+      Hbox.Pack_Start (Icon, False, False, 0);
+
+      Gtk_New (Item.Label, Label);
+      Item.Label.Set_Use_Markup (True);
+      Hbox.Pack_Start (Item.Label, True, True, 0);
+      Show_All (Item);
+   end Gtk_New;
+
+   -------------------
+   -- Set_Highlight --
+   -------------------
+
+   procedure Set_Highlight
+     (Item  : access Menu_Item_Record'Class;
+      State : Boolean) is
+   begin
+      Ada.Text_IO.Put_Line ("Item label is " & Item.Label.Get_Text &
+                            ": Highlight to " & State'Img);
+      if State then
+         Item.Label.Set_Label ("<b>" & Item.Label.Get_Text & "</b>");
+      else
+         Item.Label.Set_Label (Item.Label.Get_Text);
+      end if;
+   end Set_Highlight;
 
    --------------
    -- On_State --
@@ -283,12 +352,11 @@ package body Gtkada.Combo_Tool_Button is
    ----------------------------
 
    procedure On_Menu_Item_Activated
-     (Item   : access Gtk_Menu_Item_Record'Class;
+     (Item   : access Menu_Item_Record'Class;
       Widget : Gtkada_Combo_Tool_Button)
    is
-      Label : constant Gtk_Label := Gtk_Label (Item.Get_Child);
    begin
-      Select_Item (Widget, Label.Get_Text);
+      Select_Item (Widget, Item.Label.Get_Text);
       Tool_Button_Callback.Emit_By_Name (Widget, Signal_Clicked);
    end On_Menu_Item_Activated;
 
@@ -301,8 +369,15 @@ package body Gtkada.Combo_Tool_Button is
    is
       Icon : Gtk_Image;
       Req  : Gtk_Requisition;
+      Item : constant Menu_Item := Menu_Item (Button.Menu.Get_Active);
+
    begin
-      Gtk_New (Icon, To_String (Button.Stock_Id), Button.Get_Icon_Size);
+      if Item /= null then
+         Gtk_New (Icon, To_String (Item.Stock_Id), Button.Get_Icon_Size);
+      else
+         Gtk_New (Icon, To_String (Button.Stock_Id), Button.Get_Icon_Size);
+      end if;
+
       Set_Image (Button.Icon_Button, Icon);
       Size_Request (Button.Icon_Button, Req);
       Set_Size_Request
@@ -377,10 +452,6 @@ package body Gtkada.Combo_Tool_Button is
       --  Create a default menu widget.
       Clear_Items (Button);
 
-      Add_Item (Button, "Item 1");
-      Add_Item (Button, "Item 2");
-      Select_Item (Button, "Item 2");
-
       --  Update icon size upon toolbar reconfigured
       Tool_Button_Callback.Connect
         (Button, Signal_Toolbar_Reconfigured,
@@ -415,29 +486,29 @@ package body Gtkada.Combo_Tool_Button is
    procedure Add_Item
      (Widget   : access Gtkada_Combo_Tool_Button_Record;
       Item     : String;
-      Stock_Id : String := "")
+      Stock_Id : String := "";
+      Data     : access User_Data'Class := null)
    is
-      pragma Unreferenced (Stock_Id);
       First  : constant Boolean := Widget.Items.Is_Empty;
-      M_Item : Gtk_Menu_Item;
+      M_Item : Menu_Item;
 
    begin
-      Gtk_New (M_Item, Item);
+      if Stock_Id /= "" then
+         Gtk_New (M_Item, Item, Stock_Id, Data);
+      else
+         Gtk_New (M_Item, Item, To_String (Widget.Stock_Id), Data);
+      end if;
+
       Widget.Menu.Add (M_Item);
-      Show_All (M_Item);
-      Add (Widget.Menu, M_Item);
       Items_Callback.Connect
         (M_Item, Gtk.Menu_Item.Signal_Activate, On_Menu_Item_Activated'Access,
          Gtkada_Combo_Tool_Button (Widget));
 
       Widget.Items.Append (To_Unbounded_String (Item));
-      Widget.Menu_Button.Set_Sensitive (True);
 
       if First then
-         Widget.Selected := Widget.Items.First_Index;
-         Widget.Menu.Set_Active (0);
-         Widget.Menu.Select_Item
-           (Widget.Menu.Get_Active);
+         Widget.Menu_Button.Set_Sensitive (True);
+         Widget.Select_Item (Item);
       end if;
    end Add_Item;
 
@@ -450,11 +521,24 @@ package body Gtkada.Combo_Tool_Button is
       Item   : String)
    is
       Elem   : constant Unbounded_String := To_Unbounded_String (Item);
+      M_Item : Menu_Item;
    begin
+      if Widget.Selected /= No_Index then
+         --  A bit weird, but with Menu API, the only way to retrieve an item
+         --  from its place number is to set it active first, then get the
+         --  active menu_item ...
+         Widget.Menu.Set_Active (Guint (Widget.Selected));
+         Menu_Item (Widget.Menu.Get_Active).Set_Highlight (False);
+      end if;
+
       for J in Widget.Items.First_Index .. Widget.Items.Last_Index loop
          if Widget.Items.Element (J) = Elem then
-            Widget.Selected := J;
             Widget.Menu.Set_Active (Guint (J));
+            M_Item := Menu_Item (Widget.Menu.Get_Active);
+            M_Item.Set_Highlight (True);
+            --  This updates the icon
+            On_Toolbar_Reconfigured (Widget);
+            Widget.Selected := J;
 
             return;
 
@@ -470,7 +554,6 @@ package body Gtkada.Combo_Tool_Button is
    procedure Clear_Items (Widget : access Gtkada_Combo_Tool_Button_Record) is
    begin
       Widget.Items.Clear;
-      Widget.Selected := No_Index;
 
       if Widget.Menu /= null then
          if Visible_Is_Set (Widget.Menu) then
@@ -495,15 +578,32 @@ package body Gtkada.Combo_Tool_Button is
    -----------------------
 
    function Get_Selected_Item
-     (Widget : access Gtkada_Combo_Tool_Button_Record) return String is
+     (Widget : access Gtkada_Combo_Tool_Button_Record) return String
+   is
+      Item : constant Menu_Item := Menu_Item (Widget.Menu.Get_Active);
    begin
-      if Widget.Selected >= Widget.Items.First_Index
-        and then Widget.Selected <= Widget.Items.Last_Index
-      then
-         return To_String (Widget.Items.Element (Widget.Selected));
+      if Item /= null then
+         return Item.Label.Get_Text;
       else
          return "";
       end if;
    end Get_Selected_Item;
+
+   ----------------------------
+   -- Get_Selected_Item_Data --
+   ----------------------------
+
+   function Get_Selected_Item_Data
+     (Widget : access Gtkada_Combo_Tool_Button_Record)
+      return access User_Data'Class
+   is
+      Item : constant Menu_Item := Menu_Item (Widget.Menu.Get_Active);
+   begin
+      if Item /= null then
+         return Item.Data;
+      else
+         return null;
+      end if;
+   end Get_Selected_Item_Data;
 
 end Gtkada.Combo_Tool_Button;
