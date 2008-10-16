@@ -25,7 +25,6 @@ with Gdk.Pixmap;                use Gdk.Pixmap;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -946,8 +945,7 @@ package body Outline_View is
                                     Show_Profiles      => Show_Profiles,
                                     Max_Profile_Length => 500);
                   begin
-                     Set (Model, Iter, Display_Name_Column,
-                          Escape_Text (Profile));
+                     Set (Model, Iter, Display_Name_Column, Profile);
                   end Display_Profile;
 
                   Set (Model, Iter, Entity_Name_Column,
