@@ -58,7 +58,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -397,11 +396,6 @@ package body Builder_Module is
       Command : String);
    --  Command handler for the "compile" command
 
-   procedure Clear_Compilation_Output
-     (Kernel : Kernel_Handle;
-      Shadow : Boolean);
-   --  Clear the compiler output, the console, and the result view
-
    -------------
    -- Destroy --
    -------------
@@ -420,26 +414,6 @@ package body Builder_Module is
    begin
       return W'Tag = Dynamic_Menu_Item_Record'Tag;
    end Is_Dynamic_Menu_Item;
-
-   ------------------------------
-   -- Clear_Compilation_Output --
-   ------------------------------
-
-   procedure Clear_Compilation_Output
-     (Kernel : Kernel_Handle;
-      Shadow : Boolean) is
-   begin
-      if Shadow then
-         Remove_Location_Category (Kernel, Shadow_Category);
-      else
-         Console.Clear (Kernel);
-         Remove_Location_Category (Kernel, Error_Category);
-
-         --  We do not need to remove Warning/Style_Category since these
-         --  are located under the Error_Category hierarchy in the locations
-         --  window.
-      end if;
-   end Clear_Compilation_Output;
 
    -----------------------
    -- Compute_Arguments --
@@ -1058,35 +1032,10 @@ package body Builder_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant String_Boolean_Hooks_Args :=
-            String_Boolean_Hooks_Args (Data.all);
+      pragma Unreferenced (Data);
    begin
-      --  Small issue here: if the user cancels the compilation in one of the
-      --  custom hooks the user might have connected, then all changes done
-      --  here (increase Build_Count) will not be undone since
-      --  On_Compilation_Finished is not called.
-
-      --  Ask for saving sources/projects before building.
-      --  Do this before checking the project, in case we have a default
-      --  project whose name is changed when saving
-
-      if not D.Bool
-        and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
-      then
-         return False;
-      end if;
-
-      if not D.Bool and then Builder_Module_ID.Build_Count = 0 then
-         Clear_Compilation_Output (Kernel_Handle (Kernel), False);
-      end if;
-
       Interrupt_Xrefs_Loading (Kernel);
-
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-      if not D.Bool then
-         Console.Raise_Console (Kernel);
-      end if;
 
       return True;
    end On_Compilation_Starting;
@@ -1609,7 +1558,7 @@ package body Builder_Module is
          --  project main files only if the loaded project has none. This
          --  means that it will work when the current project inherits its Main
          --  attribute from the extended project or when it redefines it except
-         --  with an empy list in which case the extended project main files
+         --  with an empty list in which case the extended project main files
          --  should be looked at but they are not.
          --
          --  2. We only consider the project extended by the lodaded project as
