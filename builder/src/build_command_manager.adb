@@ -41,6 +41,8 @@ with Remote;             use Remote;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 
+with Builder_Facility_Module; use Builder_Facility_Module;
+
 package body Build_Command_Manager is
 
    Me : constant Debug_Handle := Create ("Build_Command_Manager");
@@ -533,10 +535,7 @@ package body Build_Command_Manager is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      Mains  : Argument_List :=
-        Get_Attribute_Value
-          (Get_Root_Project (Get_Registry (Command.Kernel).all),
-           Attribute => Main_Attribute);
+      Mains  : Argument_List := Get_Mains (Command.Kernel);
 
    begin
       if Command.Main not in 1 .. Mains'Length then
