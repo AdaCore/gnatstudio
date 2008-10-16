@@ -977,7 +977,7 @@ package body Builder_Facility_Module is
             Name,
             Main,
             False,
-            Default);
+            Force_Dialog_Unless_Disabled_By_Target);
 
          Register_Menu (Kernel      => Get_Kernel,
                         Parent_Path => Parent_Path,
