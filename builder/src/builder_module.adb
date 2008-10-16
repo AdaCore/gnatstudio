@@ -1818,8 +1818,7 @@ package body Builder_Module is
          Result : constant String := Add_Customization_String
            (Kernel        => Kernel,
             Customization =>
-              "<key action='/Build/Run/item1'>shift-F2</key>"
-            & "<key action='/Build/Make/Custom...'>F9</key>",
+              "<key action='/Build/Run/item1'>shift-F2</key>",
             From_File     => "builder module");
       begin
          if Result /= "" then
