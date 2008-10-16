@@ -712,16 +712,24 @@ package body Builder_Facility_Module is
          Mains : Argument_List)
       is
       begin
-         if Mains'Length = 0 then
+         --  In case only one main is available, create a simple button
+         if Mains'Length <= 1 then
             declare
                Widget : Gtk.Tool_Button.Gtk_Tool_Button;
+               Main   : Unbounded_String;
             begin
+               if Mains'Length = 0 then
+                  Main := Null_Unbounded_String;
+               else
+                  Main := To_Unbounded_String (Mains (Mains'First).all);
+               end if;
+
                Gtk_New_From_Stock (Widget, Get_Icon (Target));
                Set_Label (Widget, Name);
                String_Callback.Connect
                  (Widget, "clicked",
                   On_Button_Click'Access,
-                  (To_Unbounded_String (Name), Null_Unbounded_String));
+                  (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
             end;
          else
@@ -765,7 +773,11 @@ package body Builder_Facility_Module is
                 (Get_Root_Project (Get_Registry (Get_Kernel).all),
                  Attribute => Main_Attribute);
          begin
-            Button_For_Target (Get_Name (Target), Mains);
+            --  Do not display if no main is available.
+            if Mains'Length > 0 then
+               Button_For_Target (Get_Name (Target), Mains);
+            end if;
+
             Free (Mains);
          end;
       else
