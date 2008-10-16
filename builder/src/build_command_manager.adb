@@ -353,7 +353,7 @@ package body Build_Command_Manager is
       Extra_Args   : Argument_List_Access;
       Quiet        : Boolean;
       Synchronous  : Boolean;
-      Force_Dialog : Boolean;
+      Dialog       : Dialog_Mode;
       Main         : String)
    is
       Prj          : constant Project_Type := Get_Project (Kernel);
@@ -393,8 +393,9 @@ package body Build_Command_Manager is
 
       Server := Get_Server (T);
 
-      if Force_Dialog
-        or else Get_Properties (T).Launch_Mode = Manually_With_Dialog
+      if Dialog = Force_Dialog
+        or else (Dialog = Default and then
+                    Get_Properties (T).Launch_Mode = Manually_With_Dialog)
       then
          --  Use the single target dialog to get the unexpanded command line
          Single_Target_Dialog
@@ -491,7 +492,7 @@ package body Build_Command_Manager is
                      Force_File   => No_File,
                      Extra_Args   => null,
                      Quiet        => Command.Quiet,
-                     Force_Dialog => Command.Force_Dialog,
+                     Dialog       => Command.Dialog,
                      Synchronous  => False,
                      Main         => To_String (Command.Main));
       return Success;
@@ -508,14 +509,14 @@ package body Build_Command_Manager is
       Target_Name  : String;
       Main         : String;
       Quiet        : Boolean;
-      Force_Dialog : Boolean) is
+      Dialog       : Dialog_Mode) is
    begin
       Item := new Build_Command;
       Item.Kernel := Kernel;
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Main := To_Unbounded_String (Main);
-      Item.Force_Dialog := Force_Dialog;
+      Item.Dialog := Dialog;
       Item.Quiet := Quiet;
    end Create;
 
@@ -549,7 +550,7 @@ package body Build_Command_Manager is
          Force_File   => No_File,
          Extra_Args   => null,
          Quiet        => Command.Quiet,
-         Force_Dialog => Command.Force_Dialog,
+         Dialog       => Command.Dialog,
          Synchronous  => False,
          Main         => Mains (Mains'First - 1 + Command.Main).all);
 
@@ -569,7 +570,7 @@ package body Build_Command_Manager is
       Target_Name  : String;
       Main         : Natural;
       Quiet        : Boolean;
-      Force_Dialog : Boolean)
+      Dialog       : Dialog_Mode)
    is
    begin
       Item := new Build_Main_Command;
@@ -577,7 +578,7 @@ package body Build_Command_Manager is
       Item.Registry := Registry;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Main := Main;
-      Item.Force_Dialog := Force_Dialog;
+      Item.Dialog := Dialog;
       Item.Quiet := Quiet;
    end Create;
 
