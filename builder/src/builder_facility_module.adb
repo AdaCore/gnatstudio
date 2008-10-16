@@ -787,7 +787,7 @@ package body Builder_Facility_Module is
                else
                   Main := To_Unbounded_String (Mains (Mains'First).all);
                   Set_Tooltip (Widget, Get_Tooltips (Get_Kernel),
-                               Name & " - " & To_String (Main));
+                               Name & ": " & To_String (Main));
                end if;
 
                String_Callback.Connect
