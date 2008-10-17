@@ -1282,25 +1282,25 @@ package body Builder_Facility_Module is
             Mode    : Mode_Record;
          begin
             Tooltip := To_Unbounded_String
-              (-"  Select the build mode:");
+              (-"Select the build mode:");
 
             C := Builder_Module_ID.Modes.First;
 
             while Has_Element (C) loop
                Mode := Element (C);
                Tooltip := Tooltip & ASCII.LF
-                 & "    " & Mode.Name  & ": " & Mode.Description & "  ";
+                 & "  " & Mode.Name  & ": " & Mode.Description & "  ";
 
                if Mode.Args /= null
                  and then Mode.Args'Length /= 0
                then
-                  Tooltip := Tooltip & ASCII.LF & "      (";
+                  Tooltip := Tooltip & ASCII.LF & "    (";
 
                   for J in Mode.Args'Range loop
                      Tooltip := Tooltip & " " & Mode.Args (J).all;
                   end loop;
 
-                  Tooltip := Tooltip & " )  ";
+                  Tooltip := Tooltip & " )";
                end if;
 
                Set_Tooltip
