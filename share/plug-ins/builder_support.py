@@ -348,16 +348,6 @@ Build_Modes = """
 
 """
 
-def create_project_targets():
-    """ Register targets for building the main files of the project
-    """
-    # ??? to be implemented
-
-def remove_project_targets():
-    """ Unregister project-specific targets
-    """
-    # ??? to be implemented (need an API to remove targets)
-
 def create_global_targets():
     """ Register global targets, ie targets which are the same in all projects
     """
@@ -379,11 +369,6 @@ def register_models():
     parse_xml (Custom_Model_Template)
     parse_xml (Xrefs_Model_Template)
 
-def on_project_recomputed (hook_name):
-    """ Add the project-specific targets to the Build Manager """
-    remove_project_targets()
-    create_project_targets()
-
 def load_builder_data ():
     """ Add the project-specific targets to the Build Manager """
 
@@ -395,9 +380,5 @@ def load_builder_data ():
 
     # Create the global targets
     create_global_targets()
-
-    # Now update the contents
-    GPS.Hook ("project_view_changed").add (on_project_recomputed)
-
 
 load_builder_data()
