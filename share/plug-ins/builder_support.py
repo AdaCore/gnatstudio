@@ -133,7 +133,6 @@ Custom_Target = """
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line />
-    <key>F9</key>
 </target>
 """
 
@@ -252,7 +251,6 @@ Compile_File_Target = """
        <arg>%X</arg>
        <arg>%fp</arg>
     </command-line>
-    <key>shift-F4</key>
 </target>
 """
 
