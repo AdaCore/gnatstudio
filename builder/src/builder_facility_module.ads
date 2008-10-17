@@ -59,6 +59,28 @@
 --  (1) (2) (3) (5) depend on GPS internals
 --
 --  --------------------------------------------
+--  Syntax of the XML to describes mode
+--     <builder-mode name="NAME">
+--        <description>DESCRIPTION</description>
+--        <supported-model>MODEL_1</supported-model>
+--                    (...)
+--        <supported-model>MODEL_N</supported-model>
+--        <extra-args>
+--           <arg>ARG_1</arg>
+--               (...)
+--           <arg>ARG_N</arg>
+--        </extra-args>
+--
+--    Where:
+--          NAME         is the name of the mode (displayed in the combo entry)
+--          DESCRIPTION  a description of the model (displayed in the tooltip)
+--          MODEL_X      is a model supported by the mode
+--          ARG_1..N     are the extra arguments appended to the command line
+--
+--    As a convention, if there is no <supported-model> node, this means that
+--    the mode supports all models.
+--
+--  --------------------------------------------
 --
 --  Items under the responsibility of Builder_Module
 --
@@ -91,6 +113,12 @@ package Builder_Facility_Module is
    --  Return the list of mains corresponding to the currently loaded project
    --  tree.
    --  Caller must free the result.
+
+   function Get_Current_Mode_Args
+     (Model : String) return GNAT.OS_Lib.Argument_List;
+   --  Return the arguments that we need to add when building a target of
+   --  model Model, with the currently selected mode.
+   --  The caller must not modify or free the result.
 
 private
 

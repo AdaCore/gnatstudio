@@ -1123,4 +1123,13 @@ package body Build_Configurations is
       end loop;
    end Revert_Target;
 
+   ---------------
+   -- Get_Model --
+   ---------------
+
+   function Get_Model (Target : Target_Access) return String is
+   begin
+      return To_String (Target.Model.Name);
+   end Get_Model;
+
 end Build_Configurations;

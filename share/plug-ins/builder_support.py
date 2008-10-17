@@ -328,6 +328,26 @@ Clean_Targets = """
 </target>
 """
 
+Build_Modes = """
+ <builder-mode name="Default">
+  <description>Build with default switches defined in the project</description>
+ </builder-mode>
+
+ <builder-mode name="Debug">
+  <description>Build with debug information</description>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=debug</arg>
+     <arg>-cargs</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+  </extra-args>
+ </builder-mode>
+
+"""
+
 def create_project_targets():
     """ Register targets for building the main files of the project
     """
@@ -366,6 +386,9 @@ def on_project_recomputed (hook_name):
 
 def load_builder_data ():
     """ Add the project-specific targets to the Build Manager """
+
+    # Register the modes
+    parse_xml (Build_Modes)
 
     # Register the models
     register_models()

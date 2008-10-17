@@ -273,6 +273,9 @@ package Build_Configurations is
    function Get_Server (Target : Target_Access) return Server_Type;
    --  Return the server_type that will run the target
 
+   function Get_Model (Target : Target_Access) return String;
+   --  Return the name of the model for Target
+
    -----------------------
    -- XML import/export --
    -----------------------

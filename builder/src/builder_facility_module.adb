@@ -27,6 +27,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tooltips;              use Gtk.Tooltips;
@@ -108,6 +109,16 @@ package body Builder_Facility_Module is
    --  The key in this map is a model name, and the element is a set of XML
    --  describing targets associated with this model.
 
+   type Mode_Record is record
+      Name        : Unbounded_String;
+      Description : Unbounded_String;
+      Models      : String_List.List;
+      Args        : Argument_List_Access;
+   end record;
+
+   package Mode_Map is new Ada.Containers.Ordered_Maps
+     (Unbounded_String, Mode_Record);
+
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -142,6 +153,13 @@ package body Builder_Facility_Module is
 
       Build_Count : Natural := 0;
       --  The number of builds currently running
+
+      Modes       : Mode_Map.Map;
+      --  The registered modes
+
+      Modes_Toolbar_Item : Gtk_Tool_Item;
+      Modes_Combo : Gtk_Combo_Box;
+      --  The toolbar item containing the modes.
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -261,6 +279,10 @@ package body Builder_Facility_Module is
 
    procedure Free (Ar : in out Argument_List);
    --  Free memory associated to Ar.
+
+   procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr);
+   --  Parse XML node describing a mode. See spec for a description of the
+   --  XML format.
 
    ---------------
    -- Get_Mains --
@@ -1141,6 +1163,147 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Build_Manager;
 
+   ---------------------
+   -- Parse_Mode_Node --
+   ---------------------
+
+   procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr) is
+      Mode : Mode_Record;
+      C    : Node_Ptr;
+      First_Mode : Boolean := False;
+
+      procedure Parse_Node (N : Node_Ptr);
+      --  Parse children of <builder-mode> nodes
+
+      ----------------
+      -- Parse_Node --
+      ----------------
+
+      procedure Parse_Node (N : Node_Ptr) is
+         C     : Node_Ptr;
+         Count : Natural := 0;
+      begin
+         if N.Tag.all = "description" then
+            Mode.Description := To_Unbounded_String (N.Value.all);
+         elsif N.Tag.all = "supported-model" then
+            Mode.Models.Append (To_Unbounded_String (N.Value.all));
+         elsif N.Tag.all = "extra-args" then
+            --  Count the nodes
+            C := N.Child;
+            while C /= null loop
+               Count := Count + 1;
+               C := C.Next;
+            end loop;
+
+            --  Create the argument list
+            declare
+               Args : Argument_List (1 .. Count);
+            begin
+               C := N.Child;
+               Count := 0;
+               while C /= null loop
+                  Count := Count + 1;
+                  Args (Count) := new String'(C.Value.all);
+                  C := C.Next;
+               end loop;
+
+               Mode.Args := new Argument_List'(Args);
+            end;
+         end if;
+      end Parse_Node;
+
+   begin
+      --  Create the mode
+
+      --  Safety check
+      if XML.Tag.all /= "builder-mode" then
+         return;
+      end if;
+
+      Mode.Name := To_Unbounded_String (Get_Attribute (XML, "name", ""));
+
+      if Mode.Name = "" then
+         return;
+      end if;
+
+      C := XML.Child;
+
+      while C /= null loop
+         Parse_Node (C);
+         C := C.Next;
+      end loop;
+
+      --  We now have a complete mode. Add it to the list of supported modes
+
+      Builder_Module_ID.Modes.Insert (Mode.Name, Mode);
+
+      --  Add the mode to the combo
+
+      --  If the combo is not created, create it now.
+
+      if Builder_Module_ID.Modes_Combo = null then
+         First_Mode := True;
+         Gtk_New_Text (Builder_Module_ID.Modes_Combo);
+
+         --  ... and add it to the toolbar
+         Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
+         Builder_Module_ID.Modes_Toolbar_Item.Add
+           (Builder_Module_ID.Modes_Combo);
+         Insert (Get_Toolbar (Get_Kernel),
+                 Builder_Module_ID.Modes_Toolbar_Item);
+         Show_All (Builder_Module_ID.Modes_Toolbar_Item);
+      end if;
+
+      --  Now, insert the mode in the combo
+
+      Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
+
+      --  Set the initial value of the mode to the first mode in the list
+      --  ??? This should be loaded/saved in a hidden preference
+      if First_Mode then
+         Set_Active (Builder_Module_ID.Modes_Combo, 0);
+      end if;
+
+      --  Regenerate the tooltips for the combo box
+
+      declare
+         Tooltip : Unbounded_String;
+         C       : Mode_Map.Cursor;
+         use Mode_Map;
+         Mode    : Mode_Record;
+      begin
+         Tooltip := To_Unbounded_String
+           (-"  Select the build mode:");
+
+         C := Builder_Module_ID.Modes.First;
+
+         while Has_Element (C) loop
+            Mode := Element (C);
+            Tooltip := Tooltip & ASCII.LF
+              & "    " & Mode.Name  & ": " & Mode.Description & "  ";
+
+            if Mode.Args /= null
+              and then Mode.Args'Length /= 0
+            then
+               Tooltip := Tooltip & ASCII.LF & "      (";
+
+               for J in Mode.Args'Range loop
+                  Tooltip := Tooltip & " " & Mode.Args (J).all;
+               end loop;
+
+               Tooltip := Tooltip & " )  ";
+            end if;
+
+            Set_Tooltip
+              (Builder_Module_ID.Modes_Toolbar_Item,
+               Get_Tooltips (Get_Kernel),
+               To_String (Tooltip));
+
+            Next (C);
+         end loop;
+      end;
+   end Parse_Mode_Node;
+
    ---------------
    -- Customize --
    ---------------
@@ -1199,6 +1362,9 @@ package body Builder_Facility_Module is
                exit;
             end if;
          end loop;
+
+      elsif Node.Tag.all = "builder-mode" then
+         Parse_Mode_Node (Node);
       end if;
    end Customize;
 
@@ -1296,5 +1462,54 @@ package body Builder_Facility_Module is
    begin
       return Builder_Module_ID.Output;
    end Get_Build_Output;
+
+   ---------------------------
+   -- Get_Current_Mode_Args --
+   ---------------------------
+
+   function Get_Current_Mode_Args (Model : String) return Argument_List is
+      Empty : constant Argument_List (1 .. 0) := (others => null);
+      Mode  : Mode_Record;
+      use String_List;
+      C : String_List.Cursor;
+   begin
+      if Model = ""
+        or else Builder_Module_ID.Modes_Combo = null
+      then
+         return Empty;
+      end if;
+
+      --  Get the currently selected mode.
+
+      Mode := Builder_Module_ID.Modes.Element
+        (To_Unbounded_String
+           (Get_Active_Text (Builder_Module_ID.Modes_Combo)));
+
+      if Mode.Args = null
+        or else Mode.Args'Length = 0
+      then
+         return Empty;
+      end if;
+
+      --  Look if Mode supports Model
+
+      --  By convention, if there is no list of supported models, this means
+      --  the mode supports all models.
+      if Mode.Models.Is_Empty then
+         return Mode.Args.all;
+      end if;
+
+      C := Mode.Models.First;
+
+      while Has_Element (C) loop
+         if Element (C) = Model then
+            return Mode.Args.all;
+         end if;
+
+         Next (C);
+      end loop;
+
+      return Empty;
+   end Get_Current_Mode_Args;
 
 end Builder_Facility_Module;

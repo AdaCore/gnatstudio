@@ -375,6 +375,7 @@ package body Build_Command_Manager is
       T            : Target_Access;
       Full         : Argument_List_Access;
       Command_Line : Argument_List_Access;
+      All_Extra_Args : Argument_List_Access;
       Server       : Server_Type;
 
       function Expand_Cmd_Line (CL : String) return String;
@@ -405,6 +406,17 @@ package body Build_Command_Manager is
          return;
       end if;
 
+      --  Compute the extra args, taking into account the mode and the
+      --  extra args explicitely passed.
+
+      if Extra_Args /= null then
+         All_Extra_Args := new Argument_List'
+           (Get_Current_Mode_Args (Get_Model (T)) & Extra_Args.all);
+      else
+         All_Extra_Args := new Argument_List'
+           (Get_Current_Mode_Args (Get_Model (T)));
+      end if;
+
       Server := Get_Server (T);
 
       if Dialog = Force_Dialog
@@ -429,12 +441,12 @@ package body Build_Command_Manager is
             return;
          end if;
 
-         if Extra_Args = null then
+         if All_Extra_Args = null then
             Full := Expand_Command_Line
               (Kernel, Command_Line.all, Server, Force_File, Main);
          else
             Full := Expand_Command_Line
-              (Kernel, Command_Line.all & Extra_Args.all,
+              (Kernel, Command_Line.all & All_Extra_Args.all,
                Server, Force_File, Main);
          end if;
 
@@ -462,12 +474,12 @@ package body Build_Command_Manager is
 
             --  Expand the command line
 
-            if Extra_Args = null then
+            if All_Extra_Args = null then
                Full := Expand_Command_Line
                  (Kernel, CL, Server, Force_File, Main);
             else
                Full := Expand_Command_Line
-                 (Kernel, CL & Extra_Args.all, Server, Force_File, Main);
+                 (Kernel, CL & All_Extra_Args.all, Server, Force_File, Main);
             end if;
          end;
       end if;
@@ -488,6 +500,8 @@ package body Build_Command_Manager is
       Launch_Build_Command
         (Kernel, Full, Target_Name, Server, Quiet, Synchronous);
       Change_Dir (Old_Dir);
+
+      Unchecked_Free (All_Extra_Args);
    end Launch_Target;
 
    -------------
