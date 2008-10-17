@@ -510,17 +510,14 @@ package body Build_Command_Manager is
       if Full = null then
          Trace (Me, "Macro expansion resulted in empty command line");
          return;
-      elsif Active (Me) then
-         for J in Full'Range loop
-            Trace (Me, "Arg: """ & Full (J).all & """");
-         end loop;
       end if;
 
       --  Launch the build command
 
       Change_Dir (Dir_Name (Project_Path (Prj)).all);
       Launch_Build_Command
-        (Kernel, Full, Target_Name, Server, Quiet, Synchronous);
+        (Kernel, Full, Target_Name, Server, Quiet, Synchronous,
+         Uses_Shell (T));
       Change_Dir (Old_Dir);
 
       Unchecked_Free (All_Extra_Args);

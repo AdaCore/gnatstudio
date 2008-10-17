@@ -40,10 +40,13 @@ with GPS.Intl;              use GPS.Intl;
 with Traces;                use Traces;
 with Basic_Types;           use Basic_Types;
 with UTF8_Utils;            use UTF8_Utils;
+with String_Utils;          use String_Utils;
 
 with Builder_Facility_Module; use Builder_Facility_Module;
 
 package body Commands.Builder is
+
+   Shell_Env : constant String := Getenv ("SHELL").all;
 
    type Build_Callback_Data is new Callback_Data_Record with record
       Target_Name : Unbounded_String;
@@ -343,11 +346,12 @@ package body Commands.Builder is
       Target_Name    : String;
       Server         : Server_Type;
       Quiet          : Boolean;
-      Synchronous    : Boolean)
+      Synchronous    : Boolean;
+      Use_Shell      : Boolean)
    is
       Data    : Build_Callback_Data_Access;
       Success : Boolean;
-
+      Args    : Argument_List_Access;
    begin
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
@@ -363,22 +367,50 @@ package body Commands.Builder is
             GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
               (CL.all, Quote_Backslash => False));
 
-         Launch_Process
-           (Kernel,
-            Command              => CL (CL'First).all,
-            Arguments            => CL (CL'First + 1 .. CL'Last),
-            Server               => Server,
-            Console              => Get_Console (Kernel),
-            Show_Command         => True,
-            Show_Output          => False,
-            Callback_Data        => Data.all'Access,
-            Success              => Success,
-            Line_By_Line         => False,
-            Callback             => Build_Callback'Access,
-            Exit_Cb              => End_Build_Callback'Access,
-            Show_In_Task_Manager => True,
-            Synchronous          => Synchronous,
-            Show_Exit_Status     => True);
+         if Use_Shell
+           and then Shell_Env /= ""
+           and then Is_Local (Server)
+         then
+            Args := new Argument_List'(new String'("-c"), new String'
+                                         (Argument_List_To_String (CL.all)));
+
+            Launch_Process
+              (Kernel,
+               Command              => Shell_Env,
+               Arguments            => Args.all,
+               Server               => Server,
+               Console              => Get_Console (Kernel),
+               Show_Command         => True,
+               Show_Output          => False,
+               Callback_Data        => Data.all'Access,
+               Success              => Success,
+               Line_By_Line         => False,
+               Callback             => Build_Callback'Access,
+               Exit_Cb              => End_Build_Callback'Access,
+               Show_In_Task_Manager => True,
+               Synchronous          => Synchronous,
+               Show_Exit_Status     => True);
+
+            Free (Args);
+
+         else
+            Launch_Process
+              (Kernel,
+               Command              => CL (CL'First).all,
+               Arguments            => CL (CL'First + 1 .. CL'Last),
+               Server               => Server,
+               Console              => Get_Console (Kernel),
+               Show_Command         => True,
+               Show_Output          => False,
+               Callback_Data        => Data.all'Access,
+               Success              => Success,
+               Line_By_Line         => False,
+               Callback             => Build_Callback'Access,
+               Exit_Cb              => End_Build_Callback'Access,
+               Show_In_Task_Manager => True,
+               Synchronous          => Synchronous,
+               Show_Exit_Status     => True);
+         end if;
 
          --  ??? check value of Success
       end if;

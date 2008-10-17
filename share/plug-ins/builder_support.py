@@ -119,6 +119,7 @@ Custom_Model_Template = """
 <target-model name="custom" category="">
    <description>Launch a custom build command</description>
    <icon>gps-custom-build</icon>
+   <uses-shell>TRUE</uses-shell>
    <switches command="">
    </switches>
 </target-model>

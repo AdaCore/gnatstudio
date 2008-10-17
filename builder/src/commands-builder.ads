@@ -60,11 +60,14 @@ package Commands.Builder is
       Target_Name    : String;
       Server         : Server_Type;
       Quiet          : Boolean;
-      Synchronous    : Boolean);
+      Synchronous    : Boolean;
+      Use_Shell      : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
    --  Target_Name is the name of the target being launched.
+   --  If Use_Shell, and if the SHELL environment variable is defined,
+   --  then call the command through $SHELL -c "command line".
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
    --  Synchronous.
 

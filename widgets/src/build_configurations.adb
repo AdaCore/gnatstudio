@@ -229,6 +229,9 @@ package body Build_Configurations is
             elsif Child.Tag.all = "server" then
                Model.Server := Server_Type'Value (Child.Value.all);
 
+            elsif Child.Tag.all = "uses-shell" then
+               Model.Uses_Shell := Boolean'Value (Child.Value.all);
+
             else
                Log
                  (Registry,
@@ -1131,5 +1134,14 @@ package body Build_Configurations is
    begin
       return To_String (Target.Model.Name);
    end Get_Model;
+
+   ----------------
+   -- Uses_Shell --
+   ----------------
+
+   function Uses_Shell (Target : Target_Access) return Boolean is
+   begin
+      return Target.Model.Uses_Shell;
+   end Uses_Shell;
 
 end Build_Configurations;

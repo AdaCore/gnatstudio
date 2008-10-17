@@ -83,6 +83,7 @@ package Build_Configurations is
    --          <icon>ICON</icon>
    --          <description>DESCRIPTION</description>
    --          <server>SERVER</server>
+   --          <uses-shell>USES_SHELL</uses_shell>
    --          <command-line>
    --             <arg>COMMAND</arg>
    --             <arg>ARG1</arg>
@@ -100,6 +101,8 @@ package Build_Configurations is
    --     DESCRIPTION is the description of the target model
    --     SERVER       (optional, default "Build_Server") the server used for
    --                     executing the action.
+   --     USES_SHELL   (optional, default False) - whether the commands need
+   --                     to be launched through $SHELL -c "command line"
    --     COMMAND_N are the various commands supported by the target_model
    --     DEFAULT_COMMAND_LINE is the initial command line
    --     ICON         (optional) represents a stock icon to serve as default
@@ -273,6 +276,9 @@ package Build_Configurations is
    function Get_Server (Target : Target_Access) return Server_Type;
    --  Return the server_type that will run the target
 
+   function Uses_Shell (Target : Target_Access) return Boolean;
+   --  Return True if the target uses the $SHELL -cmd "command" to build
+
    function Get_Model (Target : Target_Access) return String;
    --  Return the name of the model for Target
 
@@ -437,6 +443,10 @@ private
 
       Server               : Server_Type      := Build_Server;
       --  The server used for executing this target
+
+      Uses_Shell           : Boolean := False;
+      --  If True, the commands inheriting from this model need to be launched
+      --  throuhg $SHELL -c "command line"
    end record;
 
    type Build_Config_Registry is record
