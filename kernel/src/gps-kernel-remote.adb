@@ -3785,7 +3785,15 @@ package body GPS.Kernel.Remote is
          end if;
 
          if Active (Me) then
-            Trace (Me, "Spawning " & Argument_List_To_String (Args.all));
+            Trace (Me, "Spawning");
+
+            if Args /= null then
+               for J in Args'Range loop
+                  if Args (J) /= null then
+                     Trace (Me, "Arg: """ & Args (J).all & """");
+                  end if;
+               end loop;
+            end if;
          end if;
 
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
