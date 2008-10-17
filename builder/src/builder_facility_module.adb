@@ -1289,18 +1289,19 @@ package body Builder_Facility_Module is
             while Has_Element (C) loop
                Mode := Element (C);
                Tooltip := Tooltip & ASCII.LF
-                 & "  " & Mode.Name  & ": " & Mode.Description & "  ";
+                 & "    " & Mode.Name  & ": " & Mode.Description & "  ";
 
                if Mode.Args /= null
                  and then Mode.Args'Length /= 0
                then
-                  Tooltip := Tooltip & ASCII.LF & "    (";
+                  Tooltip := Tooltip & ASCII.LF & "        ("
+                    & Mode.Args (Mode.Args'First).all;
 
-                  for J in Mode.Args'Range loop
+                  for J in Mode.Args'First + 1 .. Mode.Args'Last loop
                      Tooltip := Tooltip & " " & Mode.Args (J).all;
                   end loop;
 
-                  Tooltip := Tooltip & " )";
+                  Tooltip := Tooltip & ")";
                end if;
 
                Set_Tooltip
