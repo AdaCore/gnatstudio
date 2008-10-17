@@ -28,6 +28,7 @@ with Gtk.Combo_Box;    use Gtk.Combo_Box;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtk.GEntry;       use Gtk.GEntry;
 with Gtk.Notebook;     use Gtk.Notebook;
+with Gtk.Text_View;    use Gtk.Text_View;
 with Gtk.Tooltips;     use Gtk.Tooltips;
 with Gtk.Window;       use Gtk.Window;
 
@@ -95,7 +96,7 @@ private
 
       Launch_Combo   : Gtk_Combo_Box;
 
-      Expanded_Entry : Gtk_Entry;
+      Expanded_Entry : Gtk_Text_View;
    end record;
    type Target_UI_Access is access all Target_UI_Record'Class;
 

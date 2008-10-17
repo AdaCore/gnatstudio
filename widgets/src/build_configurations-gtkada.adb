@@ -35,6 +35,7 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -290,11 +291,11 @@ package body Build_Configurations.Gtkada is
    begin
       if UI.Expand_Cmd_Line = null then
          Set_Text
-           (T.Expanded_Entry,
+           (Get_Buffer (T.Expanded_Entry),
             Get_Text (Get_Entry (T.Editor)));
       else
          Set_Text
-           (T.Expanded_Entry,
+           (Get_Buffer (T.Expanded_Entry),
             UI.Expand_Cmd_Line (Get_Text (Get_Entry (T.Editor))));
       end if;
 
@@ -623,17 +624,21 @@ package body Build_Configurations.Gtkada is
 
          if UI.Expand_Cmd_Line = null then
             Set_Text
-              (Box.Expanded_Entry,
+              (Get_Buffer (Box.Expanded_Entry),
                Get_Text (Get_Entry (Box.Editor)));
          else
             Set_Text
-              (Box.Expanded_Entry,
+              (Get_Buffer (Box.Expanded_Entry),
                UI.Expand_Cmd_Line (Get_Text (Get_Entry (Box.Editor))));
          end if;
 
          Set_Editable (Box.Expanded_Entry, False);
          Set_Sensitive (Box.Expanded_Entry, False);
-         Pack_Start (Box, Box.Expanded_Entry, True, True, 0);
+         Set_Wrap_Mode (Box.Expanded_Entry, Wrap_Word);
+         Gtk_New (Options_Frame);
+         Set_Shadow_Type (Options_Frame, Shadow_None);
+         Add (Options_Frame, Box.Expanded_Entry);
+         Pack_Start (Box, Options_Frame, True, True, 0);
       end if;
 
       return Box;
@@ -1007,6 +1012,8 @@ package body Build_Configurations.Gtkada is
       if Parent /= null then
          Set_Transient_For (Dialog, Parent);
       end if;
+
+      Set_Default_Size (Dialog, 600, 0);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
