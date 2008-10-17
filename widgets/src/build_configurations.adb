@@ -829,8 +829,8 @@ package body Build_Configurations is
                --  the target.
                Target := Get_Target_From_Name (Registry, Target_Name);
             else
-               Log (Registry, -"Target with that name already registered: "
-                    & Target_Name, Mode => Trace);
+               Log (Registry, -"Error: target already registered: "
+                    & Target_Name);
                return null;
             end if;
 
