@@ -10810,10 +10810,20 @@ is no selection. If the entity is part of an expression ("A.B.C"), then the
 whole expression is used instead of the entity name.
 
 @item %X
-Replaced by a list of switches of the form -X<variable>=<value>, where
+Replaced by a list of switches of the form @code{-X<variable>=<value>}, where
 <variable> is the name of a scenario variable and <value> its current
 value, as configured in the Scenario View. All the scenario variables
 defined in the current project tree will be listed.
+Note: this macro is only available in the commands defined in the Build
+Manager and the Build Launcher dialogs.
+
+@item %vars
+Replaced by a list of switches of the form @code{<variable>=<value>}, where
+<variable> is the name of a scenario variable and <value> its current
+value, as configured in the Scenario View. All the scenario variables
+defined in the current project tree will be listed.
+Alternatively, you can also use @code{%vars(-D)} to generate a list of
+switches of the form @code{-D<variable>=<value>}.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 

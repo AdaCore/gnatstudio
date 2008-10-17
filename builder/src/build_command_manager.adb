@@ -154,6 +154,28 @@ package body Build_Command_Manager is
             return Res;
          end;
 
+      --  ??? Ditto for %vars
+      elsif Arg = "%vars" then
+         declare
+            Vars : Argument_List_Access := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, ""));
+            Res  : constant Argument_List := Vars.all;
+         begin
+            Unchecked_Free (Vars);
+            return Res;
+         end;
+
+      --  ??? Would be nice to support a generic %vars(xxx)
+      elsif Arg = "%vars(-D)" then
+         declare
+            Vars : Argument_List_Access := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, "-D"));
+            Res  : constant Argument_List := Vars.all;
+         begin
+            Unchecked_Free (Vars);
+            return Res;
+         end;
+
       --  ??? Ditto for %eL
       elsif Arg = "%eL" then
          if Trusted_Mode.Get_Pref then
