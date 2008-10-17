@@ -62,6 +62,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
+      Subdir     : String;
       Simulate   : Boolean := False) return Argument_List_Access;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
@@ -75,6 +76,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
+      Subdir     : String;
       Simulate   : Boolean) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
@@ -108,6 +110,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
+      Subdir     : String;
       Simulate   : Boolean) return Argument_List
    is
       function Substitution
@@ -122,17 +125,24 @@ package body Build_Command_Manager is
         (Param : String; Quoted : Boolean) return String
       is
          Done   : aliased Boolean := False;
-         Result : constant String := GPS.Kernel.Macros.Substitute
-           (Param, Context, Quoted, Done'Access, Server => Server);
       begin
-         if Result = "" then
-            if Simulate then
-               return '%' & Param;
-            else
-               raise Invalid_Argument;
-            end if;
+         if Param = "subdir" then
+            return Subdir;
          else
-            return Result;
+            declare
+               Result : constant String := GPS.Kernel.Macros.Substitute
+                 (Param, Context, Quoted, Done'Access, Server => Server);
+            begin
+               if Result = "" then
+                  if Simulate then
+                     return '%' & Param;
+                  else
+                     raise Invalid_Argument;
+                  end if;
+               else
+                  return Result;
+               end if;
+            end;
          end if;
       end Substitution;
 
@@ -313,6 +323,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
+      Subdir     : String;
       Simulate   : Boolean := False) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
@@ -336,7 +347,7 @@ package body Build_Command_Manager is
             Expanded : constant Argument_List :=
               Expand_Arg
                 (Kernel, Context, CL (J).all, Server,
-                 Force_File, Main, Simulate);
+                 Force_File, Main, Subdir, Simulate);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
@@ -400,21 +411,129 @@ package body Build_Command_Manager is
       All_Extra_Args : Argument_List_Access;
       Server       : Server_Type;
 
-      function Expand_Cmd_Line (CL : String) return String;
-      --  Callback for Single_Target_Dialog
+      procedure Launch_For_Mode (Mode : String; Quiet : Boolean);
+      --  Compute and launch the command, for the given mode.
 
-      function Expand_Cmd_Line (CL : String) return String is
-         CL_Args : Argument_List_Access := Argument_String_To_List (CL);
-         Args    : Argument_List_Access :=
-           Expand_Command_Line
-             (Kernel, CL_Args.all, Server, Force_File, Main, Simulate => True);
-         Res     : constant String := Argument_List_To_String (Args.all);
+      ---------------------
+      -- Launch_For_Mode --
+      ---------------------
+
+      procedure Launch_For_Mode (Mode : String; Quiet : Boolean) is
+
+         Subdir : constant String := Get_Mode_Subdir (Mode);
+
+         function Expand_Cmd_Line (CL : String) return String;
+         --  Callback for Single_Target_Dialog
+
+         function Expand_Cmd_Line (CL : String) return String is
+            CL_Args : Argument_List_Access := Argument_String_To_List (CL);
+            Args    : Argument_List_Access :=
+              Expand_Command_Line
+                (Kernel, CL_Args.all, Server, Force_File, Main, Subdir,
+                 Simulate => True);
+            Res     : constant String := Argument_List_To_String (Args.all);
+
+         begin
+            Free (CL_Args);
+            Free (Args);
+            return Res;
+         end Expand_Cmd_Line;
 
       begin
-         Free (CL_Args);
-         Free (Args);
-         return Res;
-      end Expand_Cmd_Line;
+         --  Compute the extra args, taking into account the mode and the
+         --  extra args explicitely passed.
+
+         if Extra_Args /= null then
+            All_Extra_Args := new Argument_List'
+              (Get_Mode_Args (Get_Model (T), Mode) & Extra_Args.all);
+         else
+            All_Extra_Args := new Argument_List'
+              (Get_Mode_Args (Get_Model (T), Mode));
+         end if;
+
+         Server := Get_Server (T);
+
+         if Dialog = Force_Dialog
+           or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
+                     and then Get_Properties (T).Launch_Mode
+                     /= Manually_With_No_Dialog)
+           or else (Dialog = Default and then
+                       Get_Properties (T).Launch_Mode = Manually_With_Dialog)
+         then
+            --  Use the single target dialog to get the unexpanded command line
+            Single_Target_Dialog
+              (Registry        => Registry,
+               Parent          => Get_Main_Window (Kernel),
+               Tooltips        => Get_Tooltips (Kernel),
+               Target          => Target_Name,
+               History         => Get_History (Kernel),
+               Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
+               Result          => Command_Line);
+
+            if Command_Line = null then
+               --  The dialog was cancelled: return
+               return;
+            end if;
+
+            if All_Extra_Args = null then
+               Full := Expand_Command_Line
+                 (Kernel, Command_Line.all, Server, Force_File, Main, Subdir);
+            else
+               Full := Expand_Command_Line
+                 (Kernel, Command_Line.all & All_Extra_Args.all,
+                  Server, Force_File, Main, Subdir);
+            end if;
+
+            Free (Command_Line);
+
+         else
+            --  Get the unexpanded command line from the target
+
+            declare
+               CL : constant Argument_List :=
+                 Get_Command_Line_Unexpanded (Registry, T);
+            begin
+               --  Sanity check that the command line contains at least one
+               --  item (the command itself). It can happen that this is not
+               --  the case if the user has modified the command by hand.
+
+               if CL'Length = 0 then
+                  Insert
+                    (Kernel,
+                     -"Command line is empty for target: " & Target_Name,
+                     Mode => Error);
+                  return;
+               end if;
+
+               --  Expand the command line
+
+               if All_Extra_Args = null then
+                  Full := Expand_Command_Line
+                    (Kernel, CL, Server, Force_File, Main, Subdir);
+               else
+                  Full := Expand_Command_Line
+                    (Kernel, CL & All_Extra_Args.all,
+                     Server, Force_File, Main, Subdir);
+               end if;
+            end;
+         end if;
+
+         --  Trace the command line, for debug purposes
+         if Full = null then
+            Trace (Me, "Macro expansion resulted in empty command line");
+            return;
+         end if;
+
+         --  Launch the build command
+
+         Change_Dir (Dir_Name (Project_Path (Prj)).all);
+         Launch_Build_Command
+           (Kernel, Full, Target_Name, Server, Quiet, Synchronous,
+            Uses_Shell (T));
+         Change_Dir (Old_Dir);
+
+         Unchecked_Free (All_Extra_Args);
+      end Launch_For_Mode;
 
    begin
       --  Get the target
@@ -424,103 +543,21 @@ package body Build_Command_Manager is
       if T = null then
          --  This should never happen
          Insert
-           (Kernel, (-"Build target not found in registry: ") & Target_Name);
+           (Kernel,
+            (-"Build target not found in registry: ") & Target_Name);
          return;
       end if;
 
-      --  Compute the extra args, taking into account the mode and the
-      --  extra args explicitely passed.
+      declare
+         Modes : Argument_List := Get_List_Of_Modes (Get_Model (T));
+      begin
+         for J in Modes'Range loop
+            --  All modes after Modes'First are Ninja modes
+            Launch_For_Mode (Modes (J).all, Quiet or else J > Modes'First);
+         end loop;
 
-      if Extra_Args /= null then
-         All_Extra_Args := new Argument_List'
-           (Get_Current_Mode_Args (Get_Model (T)) & Extra_Args.all);
-      else
-         All_Extra_Args := new Argument_List'
-           (Get_Current_Mode_Args (Get_Model (T)));
-      end if;
-
-      Server := Get_Server (T);
-
-      if Dialog = Force_Dialog
-        or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
-                  and then Get_Properties (T).Launch_Mode
-                  /= Manually_With_No_Dialog)
-        or else (Dialog = Default and then
-                    Get_Properties (T).Launch_Mode = Manually_With_Dialog)
-      then
-         --  Use the single target dialog to get the unexpanded command line
-         Single_Target_Dialog
-           (Registry        => Registry,
-            Parent          => Get_Main_Window (Kernel),
-            Tooltips        => Get_Tooltips (Kernel),
-            Target          => Target_Name,
-            History         => Get_History (Kernel),
-            Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
-            Result          => Command_Line);
-
-         if Command_Line = null then
-            --  The dialog was cancelled: return
-            return;
-         end if;
-
-         if All_Extra_Args = null then
-            Full := Expand_Command_Line
-              (Kernel, Command_Line.all, Server, Force_File, Main);
-         else
-            Full := Expand_Command_Line
-              (Kernel, Command_Line.all & All_Extra_Args.all,
-               Server, Force_File, Main);
-         end if;
-
-         Free (Command_Line);
-
-      else
-         --  Get the unexpanded command line from the target
-
-         declare
-            --  ??? the mode string is left empty, as support for modes is not
-            --  implemented yet
-            CL : constant Argument_List :=
-              Get_Command_Line_Unexpanded (Registry, "", T);
-         begin
-            --  Sanity check that the command line contains at least one item
-            --  (the command itself). It can happen that this is not the case
-            --  if the user has modified the command by hand.
-
-            if CL'Length = 0 then
-               Insert
-                 (Kernel, -"Command line is empty for target: " & Target_Name,
-                  Mode => Error);
-               return;
-            end if;
-
-            --  Expand the command line
-
-            if All_Extra_Args = null then
-               Full := Expand_Command_Line
-                 (Kernel, CL, Server, Force_File, Main);
-            else
-               Full := Expand_Command_Line
-                 (Kernel, CL & All_Extra_Args.all, Server, Force_File, Main);
-            end if;
-         end;
-      end if;
-
-      --  Trace the command line, for debug purposes
-      if Full = null then
-         Trace (Me, "Macro expansion resulted in empty command line");
-         return;
-      end if;
-
-      --  Launch the build command
-
-      Change_Dir (Dir_Name (Project_Path (Prj)).all);
-      Launch_Build_Command
-        (Kernel, Full, Target_Name, Server, Quiet, Synchronous,
-         Uses_Shell (T));
-      Change_Dir (Old_Dir);
-
-      Unchecked_Free (All_Extra_Args);
+         Free (Modes);
+      end;
    end Launch_Target;
 
    -------------

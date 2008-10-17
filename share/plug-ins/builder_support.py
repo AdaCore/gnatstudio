@@ -336,14 +336,28 @@ Build_Modes = """
 
  <builder-mode name="Debug">
   <description>Build with debug information</description>
+  <subdir>debug</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
-     <arg>--subdirs=debug</arg>
+     <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>-g</arg>
      <arg>-O0</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="xref">
+  <description>Build with debug information</description>
+  <subdir>xref</subdir>
+  <ninja>TRUE</ninja>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>generate_some_xrefs</arg>
   </extra-args>
  </builder-mode>
 

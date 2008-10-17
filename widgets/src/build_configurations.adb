@@ -536,14 +536,11 @@ package body Build_Configurations is
 
    function Get_Command_Line_Unexpanded
      (Registry : Build_Config_Registry_Access;
-      Mode     : String;
       Target   : Target_Access) return GNAT.OS_Lib.Argument_List
    is
-      Current_Mode : Build_Mode_Access;
-      Empty        : constant Argument_List (1 .. 0) := (others => null);
+      pragma Unreferenced (Registry);
+      Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
-      --  ??? We should do macro expansion here!
-
       if Target = null
         or else Target.Command_Line = null
       then
@@ -552,20 +549,7 @@ package body Build_Configurations is
          return Empty;
       end if;
 
-      if Registry.Modes.Contains (To_Unbounded_String (Mode)) then
-         Current_Mode := Registry.Modes.Element (To_Unbounded_String (Mode));
-      end if;
-
-      if Current_Mode = null
-        or else Current_Mode.Switches = null
-        or else Current_Mode.Switches'Length = 0
-      then
-         --  There is no mode, or the mode brings no switches
-         return Target.Command_Line.all;
-      else
-         return Target.Command_Line.all
-           & Current_Mode.Switches.all;
-      end if;
+      return Target.Command_Line.all;
    end Get_Command_Line_Unexpanded;
 
    ----------------------
@@ -589,25 +573,6 @@ package body Build_Configurations is
    begin
       GNAT.OS_Lib.Free (Target.Command_Line);
    end Free;
-
-   -----------------
-   -- Create_Mode --
-   -----------------
-
-   procedure Create_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : String;
-      Switches : GNAT.OS_Lib.Argument_List)
-   is
-      Mode : Build_Mode_Access;
-   begin
-      Mode := new Build_Mode;
-
-      Mode.Name := To_Unbounded_String (Name);
-      Mode.Switches := new GNAT.OS_Lib.Argument_List'(Switches);
-
-      Registry.Modes.Insert (Mode.Name, Mode);
-   end Create_Mode;
 
    ------------
    -- Create --

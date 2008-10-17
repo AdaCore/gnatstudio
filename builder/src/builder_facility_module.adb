@@ -114,6 +114,10 @@ package body Builder_Facility_Module is
       Description : Unbounded_String;
       Models      : String_List.List;
       Args        : Argument_List_Access;
+      Ninja       : Boolean := False;
+      Active      : Boolean := False;
+      --  Relevant only for Ninja modes. Indicates whether the mode is active.
+      Subdir      : Unbounded_String;
    end record;
 
    package Mode_Map is new Ada.Containers.Ordered_Maps
@@ -1187,6 +1191,10 @@ package body Builder_Facility_Module is
             Mode.Description := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "supported-model" then
             Mode.Models.Append (To_Unbounded_String (N.Value.all));
+         elsif N.Tag.all = "ninja" then
+            Mode.Ninja := Boolean'Value (N.Value.all);
+         elsif N.Tag.all = "subdir" then
+            Mode.Subdir := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "extra-args" then
             --  Count the nodes
             C := N.Child;
@@ -1237,71 +1245,73 @@ package body Builder_Facility_Module is
 
       Builder_Module_ID.Modes.Insert (Mode.Name, Mode);
 
-      --  Add the mode to the combo
+      --  Add the mode to the combo if it is not a ninja mode.
 
-      --  If the combo is not created, create it now.
+      if not Mode.Ninja then
+         --  If the combo is not created, create it now.
 
-      if Builder_Module_ID.Modes_Combo = null then
-         First_Mode := True;
-         Gtk_New_Text (Builder_Module_ID.Modes_Combo);
+         if Builder_Module_ID.Modes_Combo = null then
+            First_Mode := True;
+            Gtk_New_Text (Builder_Module_ID.Modes_Combo);
 
-         --  ... and add it to the toolbar
-         Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
-         Builder_Module_ID.Modes_Toolbar_Item.Add
-           (Builder_Module_ID.Modes_Combo);
-         Insert (Get_Toolbar (Get_Kernel),
-                 Builder_Module_ID.Modes_Toolbar_Item);
-         Show_All (Builder_Module_ID.Modes_Toolbar_Item);
+            --  ... and add it to the toolbar
+            Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
+            Builder_Module_ID.Modes_Toolbar_Item.Add
+              (Builder_Module_ID.Modes_Combo);
+            Insert (Get_Toolbar (Get_Kernel),
+                    Builder_Module_ID.Modes_Toolbar_Item);
+            Show_All (Builder_Module_ID.Modes_Toolbar_Item);
+         end if;
+
+         --  Now, insert the mode in the combo
+
+         Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
+
+         --  Set the initial value of the mode to the first mode in the list
+         --  ??? This should be loaded/saved in a hidden preference
+         if First_Mode then
+            Set_Active (Builder_Module_ID.Modes_Combo, 0);
+         end if;
+
+         --  Regenerate the tooltips for the combo box
+
+         declare
+            Tooltip : Unbounded_String;
+            C       : Mode_Map.Cursor;
+            use Mode_Map;
+            Mode    : Mode_Record;
+         begin
+            Tooltip := To_Unbounded_String
+              (-"  Select the build mode:");
+
+            C := Builder_Module_ID.Modes.First;
+
+            while Has_Element (C) loop
+               Mode := Element (C);
+               Tooltip := Tooltip & ASCII.LF
+                 & "    " & Mode.Name  & ": " & Mode.Description & "  ";
+
+               if Mode.Args /= null
+                 and then Mode.Args'Length /= 0
+               then
+                  Tooltip := Tooltip & ASCII.LF & "      (";
+
+                  for J in Mode.Args'Range loop
+                     Tooltip := Tooltip & " " & Mode.Args (J).all;
+                  end loop;
+
+                  Tooltip := Tooltip & " )  ";
+               end if;
+
+               Set_Tooltip
+                 (Builder_Module_ID.Modes_Toolbar_Item,
+                  Get_Tooltips (Get_Kernel),
+                  To_String (Tooltip));
+
+               Next (C);
+            end loop;
+         end;
       end if;
-
-      --  Now, insert the mode in the combo
-
-      Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
-
-      --  Set the initial value of the mode to the first mode in the list
-      --  ??? This should be loaded/saved in a hidden preference
-      if First_Mode then
-         Set_Active (Builder_Module_ID.Modes_Combo, 0);
-      end if;
-
-      --  Regenerate the tooltips for the combo box
-
-      declare
-         Tooltip : Unbounded_String;
-         C       : Mode_Map.Cursor;
-         use Mode_Map;
-         Mode    : Mode_Record;
-      begin
-         Tooltip := To_Unbounded_String
-           (-"  Select the build mode:");
-
-         C := Builder_Module_ID.Modes.First;
-
-         while Has_Element (C) loop
-            Mode := Element (C);
-            Tooltip := Tooltip & ASCII.LF
-              & "    " & Mode.Name  & ": " & Mode.Description & "  ";
-
-            if Mode.Args /= null
-              and then Mode.Args'Length /= 0
-            then
-               Tooltip := Tooltip & ASCII.LF & "      (";
-
-               for J in Mode.Args'Range loop
-                  Tooltip := Tooltip & " " & Mode.Args (J).all;
-               end loop;
-
-               Tooltip := Tooltip & " )  ";
-            end if;
-
-            Set_Tooltip
-              (Builder_Module_ID.Modes_Toolbar_Item,
-               Get_Tooltips (Get_Kernel),
-               To_String (Tooltip));
-
-            Next (C);
-         end loop;
-      end;
    end Parse_Mode_Node;
 
    ---------------
@@ -1463,30 +1473,26 @@ package body Builder_Facility_Module is
       return Builder_Module_ID.Output;
    end Get_Build_Output;
 
-   ---------------------------
-   -- Get_Current_Mode_Args --
-   ---------------------------
+   -------------------
+   -- Get_Mode_Args --
+   -------------------
 
-   function Get_Current_Mode_Args (Model : String) return Argument_List is
+   function Get_Mode_Args
+     (Model : String; Mode : String) return GNAT.OS_Lib.Argument_List
+   is
       Empty : constant Argument_List (1 .. 0) := (others => null);
-      Mode  : Mode_Record;
+      M     : Mode_Record;
       use String_List;
       C : String_List.Cursor;
    begin
-      if Model = ""
-        or else Builder_Module_ID.Modes_Combo = null
-      then
+      if Model = "" then
          return Empty;
       end if;
 
-      --  Get the currently selected mode.
+      M := Builder_Module_ID.Modes.Element (To_Unbounded_String (Mode));
 
-      Mode := Builder_Module_ID.Modes.Element
-        (To_Unbounded_String
-           (Get_Active_Text (Builder_Module_ID.Modes_Combo)));
-
-      if Mode.Args = null
-        or else Mode.Args'Length = 0
+      if M.Args = null
+        or else M.Args'Length = 0
       then
          return Empty;
       end if;
@@ -1495,21 +1501,107 @@ package body Builder_Facility_Module is
 
       --  By convention, if there is no list of supported models, this means
       --  the mode supports all models.
-      if Mode.Models.Is_Empty then
-         return Mode.Args.all;
+      if M.Models.Is_Empty then
+         return M.Args.all;
       end if;
 
-      C := Mode.Models.First;
+      C := M.Models.First;
 
       while Has_Element (C) loop
          if Element (C) = Model then
-            return Mode.Args.all;
+            return M.Args.all;
          end if;
 
          Next (C);
       end loop;
 
       return Empty;
-   end Get_Current_Mode_Args;
+   end Get_Mode_Args;
+
+   ---------------------
+   -- Get_Mode_Subdir --
+   ---------------------
+
+   function Get_Mode_Subdir (Mode : String) return String is
+   begin
+      return To_String
+        (Builder_Module_ID.Modes.Element (To_Unbounded_String (Mode)).Subdir);
+   end Get_Mode_Subdir;
+
+   -----------------------
+   -- Get_List_Of_Modes --
+   -----------------------
+
+   function Get_List_Of_Modes
+     (Model : String) return GNAT.OS_Lib.Argument_List
+   is
+      Result : Argument_List (1 .. Natural (Builder_Module_ID.Modes.Length));
+      Index  : Natural;
+      --  The first available element in Result;
+
+      use Mode_Map;
+      C : Mode_Map.Cursor;
+      Mode : Mode_Record;
+   begin
+      if Builder_Module_ID.Modes_Combo = null
+        or else Result'Length = 0
+      then
+         return (1 => new String'(""));
+      end if;
+
+      --  The first mode is the one selected in the combo
+
+      Result (1) := new String'
+        (Get_Active_Text (Builder_Module_ID.Modes_Combo));
+      Index := 2;
+
+      --  Find all the ninja modes
+
+      C := Builder_Module_ID.Modes.First;
+
+      while Has_Element (C) loop
+         Mode := Element (C);
+
+         if Mode.Ninja
+           and then Mode.Active
+         then
+            declare
+               use String_List;
+               C2 : String_List.Cursor;
+            begin
+               C2 := Mode.Models.First;
+
+               while Has_Element (C2) loop
+                  if Element (C2) = Model then
+                     Result (Index) := new String'(To_String (Mode.Name));
+                     Index := Index + 1;
+                  end if;
+
+                  Next (C2);
+               end loop;
+            end;
+         end if;
+
+         Next (C);
+      end loop;
+
+      return Result (1 .. Index - 1);
+   end Get_List_Of_Modes;
+
+   -------------------
+   -- Activate_Mode --
+   -------------------
+
+   procedure Activate_Mode (Mode : String; Active : Boolean) is
+      M : Mode_Record;
+      U : constant Unbounded_String := To_Unbounded_String (Mode);
+   begin
+      if Builder_Module_ID.Modes.Contains (U) then
+         M := Builder_Module_ID.Modes.Element (U);
+         M.Active := Active;
+
+         Builder_Module_ID.Modes.Replace (U, M);
+      end if;
+   end Activate_Mode;
 
 end Builder_Facility_Module;

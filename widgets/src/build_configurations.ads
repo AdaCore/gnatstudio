@@ -210,32 +210,12 @@ package Build_Configurations is
    function Get_Properties (Target : Target_Access) return Target_Properties;
    --  Return the properties for Target
 
-   ----------------
-   -- Build Mode --
-   ----------------
-
-   type Build_Mode is private;
-   type Build_Mode_Access is access Build_Mode;
-   --  The Build Mode is a global setting that affects all builds.
-   --  For example, the following Build Modes can be implemented:
-   --     - "default" : the project decides of all compile switches
-   --     - "debug"   : switches "-g -O0 --subdirs=debug" added to all builds
-   --     - "gcov"    : same thing for gcov switches
-   --  and so forth.
-
-   procedure Create_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : String;
-      Switches : GNAT.OS_Lib.Argument_List);
-   --  Create a new mode and register it
-
    ------------------------------------
    -- Accessing target-specific data --
    ------------------------------------
 
    function Get_Command_Line_Unexpanded
      (Registry : Build_Config_Registry_Access;
-      Mode     : String;
       Target   : Target_Access)
       return GNAT.OS_Lib.Argument_List;
    --  Return the full command line associated with Target, with macros not
@@ -407,10 +387,6 @@ private
 
    type Target_Cursor is new Target_List.Cursor;
 
-   package Build_Mode_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Build_Mode_Access);
-
    package Model_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => Unbounded_String,
       Element_Type => Target_Model_Access);
@@ -459,19 +435,8 @@ private
       Original_Targets : Target_List.List;
       --  Contains a copy of all targets as they were originally created
 
-      Modes   : Build_Mode_Map.Map;
-      --  Contains all registered modes
-
       Logger  : Logger_Type := null;
       --  A procedure to log messages
-   end record;
-
-   type Build_Mode is record
-      Name     : Unbounded_String;
-      --  The name of the mode
-
-      Switches : GNAT.OS_Lib.Argument_List_Access;
-      --  The additional switches appended at the end of the command
    end record;
 
    type Target_Type is record

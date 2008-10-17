@@ -62,6 +62,8 @@
 --  Syntax of the XML to describes mode
 --     <builder-mode name="NAME">
 --        <description>DESCRIPTION</description>
+--        <subdir>SUBDIR</subdir>
+--        <ninja>NINJA</ninja>
 --        <supported-model>MODEL_1</supported-model>
 --                    (...)
 --        <supported-model>MODEL_N</supported-model>
@@ -74,6 +76,20 @@
 --    Where:
 --          NAME         is the name of the mode (displayed in the combo entry)
 --          DESCRIPTION  a description of the model (displayed in the tooltip)
+--          SUBDIR       is a base name of a subdirectory (for object and
+--                        exec dirs, for instance) to use when this mode is
+--                        active. This gets substituted to the %subdir argument
+--          NINJA        (optional, default False) a ninja mode is a mode that
+--                       has the following properties:
+--                         - it does not appear in the graphical elements
+--                         - whenever a target is launched, if the ninja
+--                           mode applies to the model of that target, then
+--                           the target is launched again immediately with the
+--                           extra arguments of the ninja project. This is
+--                           done only if the mode is Active (see
+--                            Activate/Deactivate_Mode below)
+--                         - a ninja project always launches targets in Quiet
+--                           mode
 --          MODEL_X      is a model supported by the mode
 --          ARG_1..N     are the extra arguments appended to the command line
 --
@@ -114,11 +130,23 @@ package Builder_Facility_Module is
    --  tree.
    --  Caller must free the result.
 
-   function Get_Current_Mode_Args
+   function Get_Mode_Subdir (Mode : String) return String;
+   --  Return the special directory ("subdir") for Mode
+
+   function Get_Mode_Args
+     (Model : String; Mode : String) return GNAT.OS_Lib.Argument_List;
+   --  Return the extra args for mode Mode, if the mode applies to model Model
+   --  Caller must *not* free the result.
+
+   function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List;
-   --  Return the arguments that we need to add when building a target of
-   --  model Model, with the currently selected mode.
-   --  The caller must not modify or free the result.
+   --  Return the list of modes in which to build a target. This means
+   --  the current mode, and any ninja mode pertaining to this model.
+   --  Caller must free the result;
+
+   procedure Activate_Mode (Mode : String; Active : Boolean);
+   --  Activate or deactivate Mode.
+   --  By default, modes are not active.
 
 private
 
