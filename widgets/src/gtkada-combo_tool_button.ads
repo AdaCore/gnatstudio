@@ -21,7 +21,9 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 with Glib;                     use Glib;
+with Gtk.Arrow;                use Gtk.Arrow;
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Fixed;                use Gtk.Fixed;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tool_Item;
@@ -104,6 +106,8 @@ private
      Gtk.Tool_Item.Gtk_Tool_Item_Record with record
       Items       : Strings_Vector.Vector;
       Selected    : Strings_Vector.Extended_Index;
+      Arrow       : Gtk_Arrow;
+      Fixed       : Gtk_Fixed;
       Menu_Button : Gtk_Toggle_Button;
       Icon_Button : Gtk_Button;
       Menu        : Gtk_Menu;
