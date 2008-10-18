@@ -829,6 +829,31 @@ package body Switches_Chooser.Gtkada is
                     Guint (Config.Lines), Guint (Config.Lines) + 1,
                     Yoptions => 0);
          end;
+         Set_Tip
+           (Tooltips,
+            Editor.Ent,
+            -"The following macros are available from this command line:" &
+            ASCII.LF &
+            "    %builder: multi-language builder (e.g. gnatmake, gprbuild)" &
+            ASCII.LF &
+            "    %gnatmake: gnatmake command configured in your project" &
+            ASCII.LF &
+            "    %gprclean: clean tool (e.g. gnat clean, gprclean)" &
+            ASCII.LF &
+            "    %eL: replaced by -eL if Fast Project Loading pref is set" &
+            ASCII.LF &
+            "    %fp: base name of the selected source file" &
+            ASCII.LF &
+            "    %F: full name of the selected source file" &
+            ASCII.LF &
+            "    %M: base name of main source being considered" &
+            ASCII.LF &
+            "    %PP: pathname of the root project" &
+            ASCII.LF &
+            "    %vars: list of var=value switches from project variables" &
+            ASCII.LF &
+            "    %X: list of -Xvar=value switches from project variables"
+           );
          Widget_Callback.Object_Connect
            (Editor.Ent, Gtk.Editable.Signal_Changed,
             Widget_Callback.To_Marshaller (On_Command_Line_Changed'Access),
