@@ -330,11 +330,11 @@ Clean_Targets = """
 """
 
 Build_Modes = """
- <builder-mode name="Default">
+ <builder-mode name="default">
   <description>Build with default switches defined in the project</description>
  </builder-mode>
 
- <builder-mode name="Debug">
+ <builder-mode name="debug">
   <description>Build with debug information</description>
   <subdir>debug</subdir>
   <supported-model>builder</supported-model>
@@ -348,8 +348,38 @@ Build_Modes = """
   </extra-args>
  </builder-mode>
 
+ <builder-mode name="gcov">
+  <description>Build with gcov support</description>
+  <subdir>gcov</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>--coverage</arg>
+     <arg>-largs</arg>
+     <arg>--coverage</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="gprof">
+  <description>Build with gprof support</description>
+  <subdir>gprof</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-pg</arg>
+     <arg>-largs</arg>
+     <arg>-pg</arg>
+  </extra-args>
+ </builder-mode>
+
  <builder-mode name="xref">
-  <description>Build with debug information</description>
+  <description>Generate cross-reference information</description>
   <subdir>xref</subdir>
   <ninja>TRUE</ninja>
   <supported-model>builder</supported-model>
