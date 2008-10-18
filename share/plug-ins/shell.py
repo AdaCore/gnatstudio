@@ -32,7 +32,7 @@ class Unix_Shell (Ansi_Console, Console_Process):
   def __init__ (self, process, args=""):
     os.putenv ("EMACS", "t") # Emulate whas emacs does, since some shells
                              # rely on this (zsh)
-    Console_Process.__init__ (self, process, args, force = True)
+    Console_Process.__init__ (self, process, args)
 
 def create_default_shell (menu):
   """Spawns the user's shell as read from the environment variable SHELL"""
