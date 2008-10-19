@@ -361,6 +361,14 @@ package body Build_Configurations.Gtkada.Dialogs is
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
+
+      --  Grab the focus on the entry, select the text, and make it activate
+      --  the default, so that the user only has to press Enter if he is
+      --  happy with the selection.
+      Grab_Focus (Name_E);
+      Select_Region (Name_E, 0);
+      Set_Activates_Default (Name_E, True);
+
       Show_All (Dialog);
 
       --  Run the dialog
@@ -496,6 +504,14 @@ package body Build_Configurations.Gtkada.Dialogs is
         (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
+
+      --  Grab the focus on the entry, select the text, and make it activate
+      --  the default, so that the user only has to press Enter if he is
+      --  happy with the selection.
+      Grab_Focus (Name_E);
+      Select_Region (Name_E, 0);
+      Set_Activates_Default (Name_E, True);
+
       Show_All (Dialog);
 
       --  Run the dialog
