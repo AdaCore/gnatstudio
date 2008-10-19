@@ -3448,8 +3448,8 @@ package body GPS.Kernel.Remote is
                     Get_Nickname (Build_Server));
          else
             Trace (Me, "Asking project reload");
-            Id := Reload_Timeout.Add (Timeout, Reload_Prj_Cb'Access,
-                                      Load_Data);
+            Id := Reload_Timeout.Add
+              (Timeout, Reload_Prj_Cb'Access, Load_Data);
          end if;
       end if;
 

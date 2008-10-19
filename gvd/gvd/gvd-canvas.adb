@@ -107,7 +107,7 @@ package body GVD.Canvas is
 
    Graph_Cmd_Format2 : constant Pattern_Matcher := Compile
      ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
-   --  Second possible set of commands.
+   --  Second possible set of commands
 
    Graph_Cmd_Format3 : constant Pattern_Matcher := Compile
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
@@ -127,7 +127,7 @@ package body GVD.Canvas is
 
          Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
          Selected_Component      : Items.Generic_Type_Access := null;
-         --  The currently selected item, and its specific component.
+         --  The currently selected item, and its specific component
 
          Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
          Item_Contextual_Menu       : Gtk.Menu.Gtk_Menu;
@@ -245,7 +245,7 @@ package body GVD.Canvas is
    --  zoom_out.
 
    Zoom_Steps : constant := 3;
-   --  Number of steps while zooming in or out.
+   --  Number of steps while zooming in or out
 
    --------------------
    -- Local Packages --
@@ -264,12 +264,12 @@ package body GVD.Canvas is
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Canvas : GVD_Canvas);
-   --  Callback for the "align on grid" contextual menu item.
+   --  Callback for the "align on grid" contextual menu item
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Canvas : GVD_Canvas);
-   --  Callback for the "detect aliases" contextual menu item.
+   --  Callback for the "detect aliases" contextual menu item
 
    procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
@@ -280,12 +280,12 @@ package body GVD.Canvas is
    procedure Change_Format
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Change the display format of a specific item.
+   --  Change the display format of a specific item
 
    procedure Clone_Component
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Clone the item or its selected component.
+   --  Clone the item or its selected component
 
    procedure Display_Expression (Canvas : access Gtk_Widget_Record'Class);
    --  Popup a dialog to display any expression in the canvas
@@ -304,7 +304,7 @@ package body GVD.Canvas is
    procedure Hide_All
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Hide all the subcomponents of the selected item.
+   --  Hide all the subcomponents of the selected item
 
    procedure Set_Value
      (Widget  : access Gtk_Widget_Record'Class;
@@ -314,7 +314,7 @@ package body GVD.Canvas is
    procedure Show_All
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Show all the subcomponents of the selected item.
+   --  Show all the subcomponents of the selected item
 
    procedure View_Into_Memory
      (Widget  : access Gtk_Widget_Record'Class;
@@ -325,17 +325,17 @@ package body GVD.Canvas is
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Item   : Item_Record);
-   --  Callback for the "update value" contextual menu item.
+   --  Callback for the "update value" contextual menu item
 
    procedure Undisplay_Item
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Hide all the subcomponents of the selected item.
+   --  Hide all the subcomponents of the selected item
 
    procedure Toggle_Refresh_Mode
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
-   --  Toggle between "auto_refresh" and "frozen" modes.
+   --  Toggle between "auto_refresh" and "frozen" modes
 
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class);
    --  Reallocate all the fonts, with the appropriate size given the current
@@ -348,7 +348,7 @@ package body GVD.Canvas is
 
    function Contextual_Background_Menu_Destroy
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
-   --  Called when the contexual menu is destroyed.
+   --  Called when the contexual menu is destroyed
 
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
    --  "Refresh" contextual menu
@@ -359,7 +359,7 @@ package body GVD.Canvas is
    procedure On_Background_Click
      (Canvas : access Glib.Object.GObject_Record'Class;
       Event  : Gdk.Event.Gdk_Event);
-   --  Called for clicks in the background of the canvas.
+   --  Called for clicks in the background of the canvas
 
    procedure Unselect_All
      (Process : access GVD.Process.Visual_Debugger_Record'Class);
@@ -798,7 +798,7 @@ package body GVD.Canvas is
 
    exception
       when E : Constraint_Error => Traces.Trace (Exception_Handle, E);
-         --  Usually because Find_Item returned a null value.
+         --  Usually because Find_Item returned a null value
          GVD.Trace.Output_Error
            (GPS_Window (Process.Window).Kernel,
             (-" Error while processing: ") & Cmd);
@@ -1200,7 +1200,7 @@ package body GVD.Canvas is
    procedure Preferences_Changed
      (Canvas  : access GVD_Canvas_Record'Class)
    is
-      Win : Gdk.Window.Gdk_Window;
+      Win  : Gdk.Window.Gdk_Window;
       Item : Canvas_Item;
       Iter : Item_Iterator;
       Hide : constant Boolean := Hide_Big_Items.Get_Pref;
@@ -1565,7 +1565,7 @@ package body GVD.Canvas is
 
       Gtk_New (Canvas.Item_Contextual_Menu);
 
-      --  Display "Close" option.
+      --  Display "Close" option
 
       Gtk_New (Mitem, Label => -"Close" & " " & Get_Name (Item));
       Item_Handler.Connect
@@ -1818,7 +1818,7 @@ package body GVD.Canvas is
       Gtk_New (Mitem);
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      --  Display "Toggle auto-refresh" option.
+      --  Display "Toggle auto-refresh" option
 
       Gtk_New (Check, "Auto refresh");
       Set_Active (Check, Get_Auto_Refresh (Display_Item (Item)));

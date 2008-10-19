@@ -20,6 +20,11 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;
+
+with GNATCOLL.VFS;
+
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -30,14 +35,9 @@ with Glib;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GNATCOLL.VFS;
-
-with GNAT.Regpat;               use GNAT.Regpat;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Basic_Types;               use Basic_Types;
-
 with Generic_List;
-with GNAT.Strings;
 
 package GPS.Location_View is
 
@@ -48,16 +48,16 @@ package GPS.Location_View is
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register the shell commands for this module. This must be a separate
    --  subprogram, since the console is loaded before all other modules,
-   --  including the scripting languages
+   --  including the scripting languages.
 
    type Location_View_Record is new Gtk_Hbox_Record with private;
    type Location_View is access all Location_View_Record'Class;
 
    procedure Gtk_New
-     (View        : out Location_View;
-      Kernel      : Kernel_Handle;
-      Module      : Abstract_Module_ID);
-   --  Create a new Location_View.
+     (View   : out Location_View;
+      Kernel : Kernel_Handle;
+      Module : Abstract_Module_ID);
+   --  Create a new Location_View
 
    procedure Initialize
      (View   : access Location_View_Record'Class;
