@@ -350,7 +350,6 @@ package body Build_Configurations is
    is
       The_Target : Target_Access;
       The_Model  : Target_Model_Access;
-      Empty      : constant Argument_List (1 .. 0) := (others => null);
    begin
       --  Lookup the model
 
@@ -374,12 +373,34 @@ package body Build_Configurations is
 
       The_Target.Model := The_Model;
 
+      --  Only change the executable name from the command line, and keep the
+      --  previous argument list, which should be a good appromixation in most
+      --  cases, except when the model's command line is empty, in which case,
+      --  reset the command line.
+
       if The_Model.Default_Command_Line = null then
-         Set_Command_Line (Registry, The_Target, Empty);
+         Set_Command_Line (Registry, The_Target, (1 .. 0 => null));
       else
-         Set_Command_Line
-           (Registry, The_Target,
-            The_Model.Default_Command_Line.all);
+         declare
+            Old_Cmd_Line : constant Argument_List :=
+              Get_Command_Line_Unexpanded (Registry, The_Target);
+            New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
+
+         begin
+            New_Cmd_Line (New_Cmd_Line'First) :=
+              new String'(The_Model.Default_Command_Line
+                          (The_Model.Default_Command_Line'First).all);
+
+            for J in New_Cmd_Line'First + 1 .. New_Cmd_Line'Last loop
+               New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
+            end loop;
+
+            Set_Command_Line (Registry, The_Target, New_Cmd_Line);
+
+            for J in New_Cmd_Line'Range loop
+               Free (New_Cmd_Line (J));
+            end loop;
+         end;
       end if;
    end Change_Model;
 
