@@ -120,10 +120,11 @@ package Build_Configurations is
    --------------------------
 
    procedure Create_Target
-     (Registry : Build_Config_Registry_Access;
-      Name     : String;
-      Category : String;
-      Model    : String);
+     (Registry     : Build_Config_Registry_Access;
+      Name         : String;
+      Category     : String;
+      Model        : String;
+      Command_Line : GNAT.OS_Lib.Argument_List := (1 .. 0 => null));
    --  Create a target from the given model and add it to the registry
 
    procedure Change_Model

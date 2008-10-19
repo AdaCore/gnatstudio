@@ -303,7 +303,8 @@ package body Build_Configurations is
      (Registry     : Build_Config_Registry_Access;
       Name         : String;
       Category     : String;
-      Model        : String)
+      Model        : String;
+      Command_Line : Argument_List := (1 .. 0 => null))
    is
       Target    : Target_Access;
       The_Model : Target_Model_Access;
@@ -331,7 +332,9 @@ package body Build_Configurations is
       Target.Properties.Category := To_Unbounded_String (Category);
       Target.Model := The_Model;
 
-      if The_Model.Default_Command_Line /= null then
+      if Command_Line'Length > 0 then
+         Set_Command_Line (Registry, Target, Command_Line);
+      elsif The_Model.Default_Command_Line /= null then
          Set_Command_Line
            (Registry, Target, The_Model.Default_Command_Line.all);
       end if;
@@ -430,10 +433,13 @@ package body Build_Configurations is
          return;
       end if;
 
-      Create_Target (Registry => Registry,
-                     Name     => New_Name,
-                     Category => New_Category,
-                     Model    => To_String (Src.Model.Name));
+      --  ??? need to also copy the target properties
+      Create_Target (Registry     => Registry,
+                     Name         => New_Name,
+                     Category     => New_Category,
+                     Model        => To_String (Src.Model.Name),
+                     Command_Line =>
+                       Get_Command_Line_Unexpanded (Registry, Src));
    end Duplicate_Target;
 
    ----------------------
