@@ -580,6 +580,11 @@ package body GPS.Location_View is
       View.Idle_Redraw_Registered := False;
 
       return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         View.Idle_Redraw_Registered := False;
+         return False;
    end Idle_Redraw;
 
    -------------------
