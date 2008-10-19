@@ -50,6 +50,7 @@ package Build_Configurations is
    --  A target registry contains a list of targets and current values for
    --  those targets. Each target in a target registry is identified by an
    --  unique name.
+   --  Contains also a list of build modes.
 
    type Target_Type is private;
    type Target_Access is access Target_Type;
@@ -153,6 +154,57 @@ package Build_Configurations is
    --  Utility function to create a duplicate of target named Src_Name.
    --  New_Name must be a name which does not correspond to an already defined
    --  target.
+
+   -----------------
+   -- Build Modes --
+   -----------------
+
+   package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
+     (Unbounded_String);
+
+   type Mode_Record is record
+      Name        : Unbounded_String;
+      Description : Unbounded_String;
+      Models      : Unbounded_String_List.List;
+      Args        : GNAT.OS_Lib.Argument_List_Access;
+      Ninja       : Boolean := False;
+      Active      : Boolean := False;
+      --  Relevant only for Ninja modes. Indicates whether the mode is active.
+      Subdir      : Unbounded_String;
+   end record;
+
+   package Mode_Map is new Ada.Containers.Ordered_Maps
+     (Unbounded_String, Mode_Record);
+
+   function Element_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Mode_Record;
+   --  Return the mode element from Registry corresponding to Name
+
+   function Contains_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean;
+   --  Return the mode element from Registry corresponding to Name
+
+   function First_Mode
+     (Registry : Build_Config_Registry_Access) return Mode_Map.Cursor;
+   --  Return the first mode element from Registry
+
+   function Number_Of_Modes
+     (Registry : Build_Config_Registry_Access) return Natural;
+   --  Return the number of mode from Registry
+
+   procedure Insert_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record);
+   --  Insert the given mode
+
+   procedure Replace_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record);
+   --  Replace the given mode (given by its name) by contents of Mode
 
    -----------------------
    -- Target properties --
@@ -435,6 +487,9 @@ private
 
       Original_Targets : Target_List.List;
       --  Contains a copy of all targets as they were originally created
+
+      Modes : Mode_Map.Map;
+      --  The registered modes
 
       Logger  : Logger_Type := null;
       --  A procedure to log messages

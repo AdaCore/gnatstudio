@@ -90,9 +90,6 @@ package body Builder_Facility_Module is
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
 
-   package String_List is new Ada.Containers.Doubly_Linked_Lists
-     (Unbounded_String);
-
    type Model_And_Target_XML is record
       Model_Name : Unbounded_String;
       XML        : Node_Ptr;
@@ -108,20 +105,6 @@ package body Builder_Facility_Module is
      (Unbounded_String, Target_XML_List.List);
    --  The key in this map is a model name, and the element is a set of XML
    --  describing targets associated with this model.
-
-   type Mode_Record is record
-      Name        : Unbounded_String;
-      Description : Unbounded_String;
-      Models      : String_List.List;
-      Args        : Argument_List_Access;
-      Ninja       : Boolean := False;
-      Active      : Boolean := False;
-      --  Relevant only for Ninja modes. Indicates whether the mode is active.
-      Subdir      : Unbounded_String;
-   end record;
-
-   package Mode_Map is new Ada.Containers.Ordered_Maps
-     (Unbounded_String, Mode_Record);
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -145,10 +128,10 @@ package body Builder_Facility_Module is
       --  Whether the module is currently reacting to the File_Saved hook.
       --  See implementation of On_File_Save.
 
-      Actions : String_List.List;
+      Actions : Unbounded_String_List.List;
       --  The list of currently registered builder actions
 
-      Menus : String_List.List;
+      Menus : Unbounded_String_List.List;
       --  The set of menu items that need to be removed when reloading the
       --  targets
 
@@ -157,9 +140,6 @@ package body Builder_Facility_Module is
 
       Build_Count : Natural := 0;
       --  The number of builds currently running
-
-      Modes       : Mode_Map.Map;
-      --  The registered modes
 
       Modes_Toolbar_Item : Gtk_Tool_Item;
       Modes_Combo : Gtk_Combo_Box;
@@ -419,8 +399,8 @@ package body Builder_Facility_Module is
    ------------------------
 
    procedure Remove_All_Actions is
-      use String_List;
-      C : String_List.Cursor;
+      use Unbounded_String_List;
+      C : Unbounded_String_List.Cursor;
    begin
       loop
          C := Builder_Module_ID.Actions.First;
@@ -1069,8 +1049,8 @@ package body Builder_Facility_Module is
    -----------------
 
    procedure Clear_Menus is
-      use String_List;
-      C : String_List.Cursor;
+      use Unbounded_String_List;
+      C : Unbounded_String_List.Cursor;
       M : Gtk_Menu_Item;
    begin
       C := Builder_Module_ID.Menus.First;
@@ -1243,7 +1223,7 @@ package body Builder_Facility_Module is
 
       --  We now have a complete mode. Add it to the list of supported modes
 
-      Builder_Module_ID.Modes.Insert (Mode.Name, Mode);
+      Insert_Mode (Builder_Module_ID.Registry, Mode.Name, Mode);
 
       --  Add the mode to the combo if it is not a ninja mode.
 
@@ -1284,7 +1264,7 @@ package body Builder_Facility_Module is
             Tooltip := To_Unbounded_String
               (-"Select the build mode:");
 
-            C := Builder_Module_ID.Modes.First;
+            C := Build_Configurations.First_Mode (Builder_Module_ID.Registry);
 
             while Has_Element (C) loop
                Mode := Element (C);
@@ -1483,14 +1463,15 @@ package body Builder_Facility_Module is
    is
       Empty : constant Argument_List (1 .. 0) := (others => null);
       M     : Mode_Record;
-      use String_List;
-      C : String_List.Cursor;
+      use Unbounded_String_List;
+      C : Unbounded_String_List.Cursor;
    begin
       if Model = "" then
          return Empty;
       end if;
 
-      M := Builder_Module_ID.Modes.Element (To_Unbounded_String (Mode));
+      M := Element_Mode
+        (Builder_Module_ID.Registry, To_Unbounded_String (Mode));
 
       if M.Args = null
         or else M.Args'Length = 0
@@ -1526,7 +1507,8 @@ package body Builder_Facility_Module is
    function Get_Mode_Subdir (Mode : String) return String is
    begin
       return To_String
-        (Builder_Module_ID.Modes.Element (To_Unbounded_String (Mode)).Subdir);
+        (Element_Mode
+           (Builder_Module_ID.Registry, To_Unbounded_String (Mode)).Subdir);
    end Get_Mode_Subdir;
 
    -----------------------
@@ -1536,7 +1518,8 @@ package body Builder_Facility_Module is
    function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List
    is
-      Result : Argument_List (1 .. Natural (Builder_Module_ID.Modes.Length));
+      Result : Argument_List
+        (1 .. Number_Of_Modes (Builder_Module_ID.Registry));
       Index  : Natural;
       --  The first available element in Result;
 
@@ -1558,7 +1541,7 @@ package body Builder_Facility_Module is
 
       --  Find all the ninja modes
 
-      C := Builder_Module_ID.Modes.First;
+      C := First_Mode (Builder_Module_ID.Registry);
 
       while Has_Element (C) loop
          Mode := Element (C);
@@ -1567,8 +1550,8 @@ package body Builder_Facility_Module is
            and then Mode.Active
          then
             declare
-               use String_List;
-               C2 : String_List.Cursor;
+               use Unbounded_String_List;
+               C2 : Unbounded_String_List.Cursor;
             begin
                C2 := Mode.Models.First;
 
@@ -1597,11 +1580,11 @@ package body Builder_Facility_Module is
       M : Mode_Record;
       U : constant Unbounded_String := To_Unbounded_String (Mode);
    begin
-      if Builder_Module_ID.Modes.Contains (U) then
-         M := Builder_Module_ID.Modes.Element (U);
+      if Contains_Mode (Builder_Module_ID.Registry, U) then
+         M := Element_Mode (Builder_Module_ID.Registry, U);
          M.Active := Active;
 
-         Builder_Module_ID.Modes.Replace (U, M);
+         Replace_Mode (Builder_Module_ID.Registry, U, M);
       end if;
    end Activate_Mode;
 

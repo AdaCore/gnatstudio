@@ -442,6 +442,72 @@ package body Build_Configurations is
                        Get_Command_Line_Unexpanded (Registry, Src));
    end Duplicate_Target;
 
+   ------------------
+   -- Element_Mode --
+   ------------------
+
+   function Element_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Mode_Record is
+   begin
+      return Registry.Modes.Element (Name);
+   end Element_Mode;
+
+   ---------------------
+   -- Number_Of_Modes --
+   ---------------------
+
+   function Number_Of_Modes
+     (Registry : Build_Config_Registry_Access) return Natural is
+   begin
+      return Natural (Mode_Map.Length (Registry.Modes));
+   end Number_Of_Modes;
+
+   -------------------
+   -- Contains_Mode --
+   -------------------
+
+   function Contains_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String) return Boolean is
+   begin
+      return Registry.Modes.Contains (Name);
+   end Contains_Mode;
+
+   ----------------
+   -- First_Mode --
+   ----------------
+
+   function First_Mode
+     (Registry : Build_Config_Registry_Access) return Mode_Map.Cursor is
+   begin
+      return Registry.Modes.First;
+   end First_Mode;
+
+   -----------------
+   -- Insert_Mode --
+   -----------------
+
+   procedure Insert_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record) is
+   begin
+      Registry.Modes.Insert (Name, Mode);
+   end Insert_Mode;
+
+   ------------------
+   -- Replace_Mode --
+   ------------------
+
+   procedure Replace_Mode
+     (Registry : Build_Config_Registry_Access;
+      Name     : Unbounded_String;
+      Mode     : Mode_Record) is
+   begin
+      Registry.Modes.Replace (Name, Mode);
+   end Replace_Mode;
+
    ----------------------
    -- Set_Command_Line --
    ----------------------
