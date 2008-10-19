@@ -1,13 +1,10 @@
-"""This file provides default data to the GPS Build Manager"""
+<?xml version="1.0" ?>
+<!--  This file provides default build models and targets for GPS
+  -->
 
-import GPS, sys, os.path
-from GPS import *
-
-# This contains a list of project-specific targets
-project_targets = []
-
-# This is an XML model for all GNAT builders (gnatmake, gprbuild, gprmake)
-Builder_Model_Template = """
+<GPS>
+<!-- This is an XML model for all GNAT builders (gnatmake, gprbuild, gprmake)
+  -->
 <target-model name="builder" category="">
    <description>Generic GNAT builder</description>
    <command-line>
@@ -42,10 +39,8 @@ Builder_Model_Template = """
            tip="Specify verbosity when parsing project files" />
    </switches>
 </target-model>
-"""
 
-# This is an XML model for gnatmake
-Gnatmake_Model_Template = """
+<!-- This is an XML model for gnatmake -->
 <target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>
    <command-line>
@@ -90,10 +85,8 @@ Gnatmake_Model_Template = """
            tip="Specify verbosity when parsing project files" />
    </switches>
 </target-model>
-"""
 
-# This is an XML model for gnatclean/gprclean
-Gprclean_Model_Template = """
+<!-- This is an XML model for gnatclean/gprclean -->
 <target-model name="gprclean" category="">
    <description>Clean compilation artefacts with gnatclean/gprclean</description>
    <command-line>
@@ -112,10 +105,8 @@ Gprclean_Model_Template = """
             tip="Clean all projects recursively" />
    </switches>
 </target-model>
-"""
 
-# This is a minimal XML model, used for launching custom commands
-Custom_Model_Template = """
+<!-- This is a minimal XML model, used for launching custom commands -->
 <target-model name="custom" category="">
    <description>Launch a custom build command</description>
    <icon>gps-custom-build</icon>
@@ -123,22 +114,8 @@ Custom_Model_Template = """
    <switches command="">
    </switches>
 </target-model>
-"""
 
-# This is an empty target using the Custom model
-
-Custom_Target = """
-<target model="custom" category="_Project" name="Custom _Build...">
-    <in-toolbar>FALSE</in-toolbar>
-    <icon>gps-custom-build</icon>
-    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
-    <read-only>TRUE</read-only>
-    <command-line />
-</target>
-"""
-
-# This is an XML model for cross-ref generation
-Xrefs_Model_Template = """
+<!-- This is an XML model for cross-ref generation -->
 <target-model name="xref_generation" category="">
    <description>Generate cross-references</description>
    <command-line>
@@ -166,10 +143,85 @@ Xrefs_Model_Template = """
             tip="Display a progress bar with information about how many files are left to be compiled" />
    </switches>
 </target-model>
-"""
 
-# Targets to compile all project files using the builder model
-Compile_All_Targets = """
+<!-- NOTE: the name of this command must be kept in sync with the constant in
+     Builder_Facility_Module.Scripts.  -->
+<target model="gnatmake" category="_File_" name="Check _Syntax">
+    <icon>gps-syntax-check</icon>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
+    <command-line>
+       <arg>%gnatmake</arg>
+       <arg>-q</arg>
+       <arg>-c</arg>
+       <arg>-gnats</arg>
+       <arg>-u</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
+    </command-line>
+</target>
+
+<!-- NOTE: the name of this command must be kept in sync with the constant in
+     Builder_Facility_Module.Scripts.  -->
+<target model="gnatmake" category="_File_" name="Check S_emantic">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gps-semantic-check</icon>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
+    <command-line>
+       <arg>%gnatmake</arg>
+       <arg>-q</arg>
+       <arg>-c</arg>
+       <arg>-gnatc</arg>
+       <arg>-u</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
+    </command-line>
+</target>
+
+<!-- This is a target to compile the current file using the builder model
+     NOTE: the name of this command must be kept in sync with the constant in
+     Builder_Facility_Module.Scripts.  -->
+<target model="builder" category="_File_" name="_Compile File">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gps-compile</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+       <arg>%builder</arg>
+       <arg>-ws</arg>
+       <arg>-c</arg>
+       <arg>-u</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%fp</arg>
+    </command-line>
+</target>
+
+<target model="builder" category="_Project" name="Build Main">
+    <in-toolbar>TRUE</in-toolbar>
+    <icon>gps-build-main</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <represents-mains>TRUE</represents-mains>
+    <command-line>
+       <arg>%builder</arg>
+       <arg>-d</arg>
+       <arg>%eL</arg>
+       <arg>-P%PP</arg>
+       <arg>%X</arg>
+       <arg>%M</arg>
+    </command-line>
+</target>
+
+<!-- Targets to compile all project files using the builder model  -->
 <target model="builder" category="_Project" name="_Build All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-build-all</icon>
@@ -197,27 +249,7 @@ Compile_All_Targets = """
        <arg>%X</arg>
     </command-line>
 </target>
-"""
 
-Build_Main_Target = """
-<target model="builder" category="_Project" name="Build Main">
-    <in-toolbar>TRUE</in-toolbar>
-    <icon>gps-build-main</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <read-only>TRUE</read-only>
-    <represents-mains>TRUE</represents-mains>
-    <command-line>
-       <arg>%builder</arg>
-       <arg>-d</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-       <arg>%M</arg>
-    </command-line>
-</target>
-"""
-
-Build_Current_Target = """
 <target model="builder" category="_Project" name="Build &lt;current file&gt;">
     <icon>gps-build-main</icon>
     <launch-mode>MANUALLY</launch-mode>
@@ -231,77 +263,8 @@ Build_Current_Target = """
        <arg>%fp</arg>
     </command-line>
 </target>
-"""
 
-# This is a target to compile the current file using the builder model
-# NOTE: the name of this command must be kept in sync with the constant in
-# Builder_Facility_Module.Scripts.
-Compile_File_Target = """
-<target model="builder" category="_File_" name="_Compile File">
-    <in-toolbar>TRUE</in-toolbar>
-    <icon>gps-compile</icon>
-    <launch-mode>MANUALLY</launch-mode>
-    <read-only>TRUE</read-only>
-    <command-line>
-       <arg>%builder</arg>
-       <arg>-ws</arg>
-       <arg>-c</arg>
-       <arg>-u</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-       <arg>%fp</arg>
-    </command-line>
-</target>
-"""
-
-# NOTE: the name of this command must be kept in sync with the constant in
-# Builder_Facility_Module.Scripts.
-Syntax_Check_Target = """
-<target model="gnatmake" category="_File_" name="Check _Syntax">
-    <icon>gps-syntax-check</icon>
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
-    <read-only>TRUE</read-only>
-    <server>Tools_Server</server>
-    <command-line>
-       <arg>%gnatmake</arg>
-       <arg>-q</arg>
-       <arg>-c</arg>
-       <arg>-gnats</arg>
-       <arg>-u</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-       <arg>%fp</arg>
-    </command-line>
-</target>
-"""
-
-# NOTE: the name of this command must be kept in sync with the constant in
-# Builder_Facility_Module.Scripts.
-Semantic_Check_Target = """
-<target model="gnatmake" category="_File_" name="Check S_emantic">
-    <in-toolbar>TRUE</in-toolbar>
-    <icon>gps-semantic-check</icon>
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
-    <read-only>TRUE</read-only>
-    <server>Tools_Server</server>
-    <command-line>
-       <arg>%gnatmake</arg>
-       <arg>-q</arg>
-       <arg>-c</arg>
-       <arg>-gnatc</arg>
-       <arg>-u</arg>
-       <arg>%eL</arg>
-       <arg>-P%PP</arg>
-       <arg>%X</arg>
-       <arg>%fp</arg>
-    </command-line>
-</target>
-"""
-
-# Targets to clear the current project using the gprclean model
-Clean_Targets = """
+<!-- Targets to clear the current project using the gprclean model  -->
 <target model="gprclean" category="C_lean" name="Clean _All">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-clean</icon>
@@ -327,103 +290,14 @@ Clean_Targets = """
        <arg>%X</arg>
     </command-line>
 </target>
-"""
 
-Build_Modes = """
- <builder-mode name="default">
-  <description>Build with default switches defined in the project</description>
- </builder-mode>
+<!-- This is an empty target using the Custom model  -->
 
- <builder-mode name="debug">
-  <description>Build with debug information</description>
-  <subdir>debug</subdir>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
-  <extra-args>
-     <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>-g</arg>
-     <arg>-O0</arg>
-  </extra-args>
- </builder-mode>
-
- <builder-mode name="gcov">
-  <description>Build with gcov support</description>
-  <subdir>gcov</subdir>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
-  <extra-args>
-     <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>--coverage</arg>
-     <arg>-largs</arg>
-     <arg>--coverage</arg>
-  </extra-args>
- </builder-mode>
-
- <builder-mode name="gprof">
-  <description>Build with gprof support</description>
-  <subdir>gprof</subdir>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
-  <extra-args>
-     <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>-pg</arg>
-     <arg>-largs</arg>
-     <arg>-pg</arg>
-  </extra-args>
- </builder-mode>
-
- <builder-mode name="xref">
-  <description>Generate cross-reference information</description>
-  <subdir>xref</subdir>
-  <ninja>TRUE</ninja>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
-  <extra-args>
-     <arg>--subdirs=%subdir</arg>
-     <arg>generate_some_xrefs</arg>
-  </extra-args>
- </builder-mode>
-
-"""
-
-def create_global_targets():
-    """ Register global targets, ie targets which are the same in all projects
-    """
-    parse_xml (Syntax_Check_Target)
-    parse_xml (Semantic_Check_Target)
-    parse_xml (Compile_File_Target)
-    parse_xml (Build_Main_Target)
-    parse_xml (Compile_All_Targets)
-    parse_xml (Build_Current_Target)
-    parse_xml (Clean_Targets)
-    parse_xml (Custom_Target)
-
-def register_models():
-    """ Register the models for building using standard tools
-    """
-    parse_xml (Builder_Model_Template)
-    parse_xml (Gnatmake_Model_Template)
-    parse_xml (Gprclean_Model_Template)
-    parse_xml (Custom_Model_Template)
-    parse_xml (Xrefs_Model_Template)
-
-def load_builder_data ():
-    """ Add the project-specific targets to the Build Manager """
-
-    # Register the modes
-    parse_xml (Build_Modes)
-
-    # Register the models
-    register_models()
-
-    # Create the global targets
-    create_global_targets()
-
-load_builder_data()
+<target model="custom" category="_Project" name="Custom _Build...">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gps-custom-build</icon>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line />
+</target>
+</GPS>
