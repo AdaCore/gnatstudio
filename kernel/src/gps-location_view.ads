@@ -219,8 +219,8 @@ private
 
       --  Idle handlers
 
-      Idle_Handler    : Timeout_Handler_Id;
-      Idle_Registered : Boolean := False;
+      Idle_Redraw_Handler    : Timeout_Handler_Id;
+      Idle_Redraw_Registered : Boolean := False;
 
       Idle_Row_Handler    : Timeout_Handler_Id;
       Idle_Row_Registered : Boolean := False;

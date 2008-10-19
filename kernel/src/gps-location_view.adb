@@ -577,7 +577,7 @@ package body GPS.Location_View is
          Next (View.Tree.Model, Category_Iter);
       end loop;
 
-      View.Idle_Registered := False;
+      View.Idle_Redraw_Registered := False;
 
       return False;
    end Idle_Redraw;
@@ -588,13 +588,13 @@ package body GPS.Location_View is
 
    procedure Redraw_Totals (View : access Location_View_Record'Class) is
    begin
-      if View.Idle_Registered then
+      if View.Idle_Redraw_Registered then
          return;
       end if;
 
-      View.Idle_Handler := View_Idle.Add
+      View.Idle_Redraw_Handler := View_Idle.Add
         (500, Idle_Redraw'Access, Location_View (View));
-      View.Idle_Registered := True;
+      View.Idle_Redraw_Registered := True;
    end Redraw_Totals;
 
    -------------------
@@ -1633,9 +1633,9 @@ package body GPS.Location_View is
       Unref (V.Category_Pixbuf);
       Unref (V.File_Pixbuf);
 
-      if V.Idle_Registered then
-         Timeout_Remove (V.Idle_Handler);
-         V.Idle_Registered := False;
+      if V.Idle_Redraw_Registered then
+         Timeout_Remove (V.Idle_Redraw_Handler);
+         V.Idle_Redraw_Registered := False;
       end if;
 
       if V.Idle_Row_Registered then
