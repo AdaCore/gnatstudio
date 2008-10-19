@@ -30,6 +30,7 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Glib;
 
 with GPS.Kernel;                use GPS.Kernel;
@@ -216,8 +217,13 @@ private
 
       Action_Column   : Gtk_Tree_View_Column;
 
+      --  Idle handlers
+
       Idle_Handler    : Timeout_Handler_Id;
       Idle_Registered : Boolean := False;
+
+      Idle_Row_Handler    : Timeout_Handler_Id;
+      Idle_Row_Registered : Boolean := False;
 
       Sort_By_Category : Boolean := False;
       --  Whether the view should be sorted by category
@@ -235,6 +241,9 @@ private
       --  Index of the secondary column
       SFL : Natural;
       --  Index of the secondary line
+
+      Row : Gtk_Tree_Iter;
+      --  Used to record the row to make visible, see Idle_Show_Row
    end record;
 
 end GPS.Location_View;

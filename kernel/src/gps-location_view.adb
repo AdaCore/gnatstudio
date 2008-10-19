@@ -42,7 +42,6 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -88,6 +87,13 @@ package body GPS.Location_View is
       Data   : access Hooks_Data'Class);
    --  Called whenever the location in the current editor has changed, so that
    --  we can highlight the corresponding line in the locations window
+
+   function Idle_Show_Row (View : Location_View) return Boolean;
+   --  Idle callback used to ensure that the proper path on the location view
+   --  is visible.
+
+   procedure Show_Row (View : access Location_View_Record'Class);
+   --  Register the Idle callback above
 
    ---------------------
    -- Local constants --
@@ -386,7 +392,7 @@ package body GPS.Location_View is
    --  If Length = 0, highlight the whole line, otherwise use highlight_range.
 
    procedure On_Row_Expanded
-     (Widget : access Gtk_Widget_Record'Class;
+     (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal
 
@@ -590,6 +596,69 @@ package body GPS.Location_View is
         (500, Idle_Redraw'Access, Location_View (View));
       View.Idle_Registered := True;
    end Redraw_Totals;
+
+   -------------------
+   -- Idle_Show_Row --
+   -------------------
+
+   function Idle_Show_Row (View : Location_View) return Boolean is
+      Path                 : constant Gtk_Tree_Path :=
+                               Get_Path (Get_Model (View.Tree), View.Row);
+      Start_Path, End_Path : Gtk_Tree_Path;
+      Success              : Boolean;
+      Res                  : Gint;
+   begin
+      Get_Visible_Range (View.Tree, Start_Path, End_Path, Success);
+
+      --  Ensure that when a row is expanded some children are visible
+
+      Down (Path);
+
+      if N_Children (Get_Model (View.Tree), View.Row) > 1 then
+         --  More than one child, try to display the first child and the
+         --  following one. This is cleaner as a row returned as visible even
+         --  if partially on the screen. So if the second child is at least
+         --  partly visible we know for sure that the first child is fully
+         --  visible.
+         Next (Path);
+      end if;
+
+      Res := Compare (Path, End_Path);
+
+      if Res >= 0 then
+         --  Path is the last path visible, scoll to see some entries under
+         --  this node.
+         Scroll_To_Cell (View.Tree, Path, null, True, 0.9, 0.1);
+      end if;
+
+      Path_Free (Path);
+      Path_Free (Start_Path);
+      Path_Free (End_Path);
+
+      View.Idle_Row_Registered := False;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         View.Idle_Row_Registered := False;
+         return False;
+   end Idle_Show_Row;
+
+   --------------
+   -- Show_Row --
+   --------------
+
+   procedure Show_Row (View : access Location_View_Record'Class) is
+   begin
+      if View.Idle_Row_Registered then
+         return;
+      end if;
+
+      View.Idle_Row_Handler := View_Idle.Add
+        (200, Idle_Show_Row'Access, Location_View (View));
+      View.Idle_Row_Registered := True;
+   end Show_Row;
 
    -----------------
    -- Create_Mark --
@@ -1569,6 +1638,10 @@ package body GPS.Location_View is
          V.Idle_Registered := False;
       end if;
 
+      if V.Idle_Row_Registered then
+         Timeout_Remove (V.Idle_Row_Handler);
+         V.Idle_Row_Registered := False;
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
@@ -1854,8 +1927,11 @@ package body GPS.Location_View is
          View,
          After => False);
 
-      Widget_Callback.Connect
-        (View.Tree, Signal_Row_Expanded, On_Row_Expanded'Access);
+      Widget_Callback.Object_Connect
+        (View.Tree,
+         Signal_Row_Expanded, On_Row_Expanded'Access,
+         Slot_Object => View,
+         After       => True);
 
       Register_Contextual_Menu
         (View.Kernel,
@@ -1892,21 +1968,13 @@ package body GPS.Location_View is
    ---------------------
 
    procedure On_Row_Expanded
-     (Widget : access Gtk_Widget_Record'Class;
+     (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+      View : constant Location_View := Location_View (Object);
    begin
-      Get_Tree_Iter (Nth (Params, 1), Iter);
-      Path := Get_Path (Get_Model (Tree), Iter);
-
-      if Get_Depth (Path) < 3 then
-         Scroll_To_Cell (Tree, Path, null, True, 0.1, 0.1);
-      end if;
-
-      Path_Free (Path);
+      Get_Tree_Iter (Nth (Params, 1), View.Row);
+      Show_Row (View);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
