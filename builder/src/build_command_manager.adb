@@ -429,8 +429,8 @@ package body Build_Command_Manager is
             CL_Args : Argument_List_Access := Argument_String_To_List (CL);
             Args    : Argument_List_Access :=
               Expand_Command_Line
-                (Kernel, CL_Args.all, Server, Force_File, Main, Subdir,
-                 Simulate => True);
+                (Kernel, CL_Args.all & All_Extra_Args.all, Server,
+                 Force_File, Main, Subdir, Simulate => True);
             Res     : constant String := Argument_List_To_String (Args.all);
 
          begin
@@ -472,18 +472,13 @@ package body Build_Command_Manager is
 
             if Command_Line = null then
                --  The dialog was cancelled: return
+               Unchecked_Free (All_Extra_Args);
                return;
             end if;
 
-            if All_Extra_Args = null then
-               Full := Expand_Command_Line
-                 (Kernel, Command_Line.all, Server, Force_File, Main, Subdir);
-            else
-               Full := Expand_Command_Line
-                 (Kernel, Command_Line.all & All_Extra_Args.all,
-                  Server, Force_File, Main, Subdir);
-            end if;
-
+            Full := Expand_Command_Line
+              (Kernel, Command_Line.all & All_Extra_Args.all,
+               Server, Force_File, Main, Subdir);
             Free (Command_Line);
 
          else
@@ -502,6 +497,7 @@ package body Build_Command_Manager is
                     (Kernel,
                      -"Command line is empty for target: " & Target_Name,
                      Mode => Error);
+                  Unchecked_Free (All_Extra_Args);
                   return;
                end if;
 
@@ -521,6 +517,7 @@ package body Build_Command_Manager is
          --  Trace the command line, for debug purposes
          if Full = null then
             Trace (Me, "Macro expansion resulted in empty command line");
+            Unchecked_Free (All_Extra_Args);
             return;
          end if;
 
