@@ -1328,12 +1328,10 @@ package body Builder_Facility_Module is
          Changes_Made);
 
       if Changes_Made then
-         --  Handle the toolbar
-         Clear_Toolbar_Buttons;
-         Install_Toolbar_Buttons;
-
-         --  Save the user-defined targets
-         Save_Targets;
+         --  ???
+         --  Reset mode combo box
+         --  Save user-defined modes
+         null;
       end if;
 
    exception
