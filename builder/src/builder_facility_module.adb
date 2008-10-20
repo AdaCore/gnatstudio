@@ -1331,6 +1331,8 @@ package body Builder_Facility_Module is
             C       : Mode_Map.Cursor;
             use Mode_Map;
             Mode    : Mode_Record;
+            Len     : Natural;
+
          begin
             Tooltip := To_Unbounded_String
               (-"Select the build mode:");
@@ -1347,9 +1349,16 @@ package body Builder_Facility_Module is
                then
                   Tooltip := Tooltip & ASCII.LF & "        ("
                     & Mode.Args (Mode.Args'First).all;
+                  Len := Mode.Args (Mode.Args'First)'Length;
 
                   for J in Mode.Args'First + 1 .. Mode.Args'Last loop
+                     if Len > 40 then
+                        Tooltip := Tooltip & ASCII.LF & "         ";
+                        Len := 0;
+                     end if;
+
                      Tooltip := Tooltip & " " & Mode.Args (J).all;
+                     Len := Len + Mode.Args (J)'Length;
                   end loop;
 
                   Tooltip := Tooltip & ")";
