@@ -344,14 +344,17 @@ package body Commands.Builder is
      (Kernel         : Kernel_Handle;
       CL             : GNAT.OS_Lib.String_List_Access;
       Target_Name    : String;
+      Mode_Name      : String;
       Server         : Server_Type;
       Quiet          : Boolean;
       Synchronous    : Boolean;
       Use_Shell      : Boolean)
    is
-      Data    : Build_Callback_Data_Access;
-      Success : Boolean;
-      Args    : Argument_List_Access;
+      Data     : Build_Callback_Data_Access;
+      Success  : Boolean;
+      Args     : Argument_List_Access;
+      Cmd_Name : Unbounded_String;
+
    begin
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
@@ -366,6 +369,13 @@ package body Commands.Builder is
            (Kernel,
             GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
               (CL.all, Quote_Backslash => False));
+
+         if Mode_Name /= "default" then
+            Cmd_Name := To_Unbounded_String
+              (Target_Name & " (" & Mode_Name & ")");
+         else
+            Cmd_Name := To_Unbounded_String (Target_Name);
+         end if;
 
          if Use_Shell
            and then Shell_Env /= ""
@@ -388,6 +398,7 @@ package body Commands.Builder is
                Callback             => Build_Callback'Access,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,
+               Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
                Show_Exit_Status     => True);
 
@@ -408,6 +419,7 @@ package body Commands.Builder is
                Callback             => Build_Callback'Access,
                Exit_Cb              => End_Build_Callback'Access,
                Show_In_Task_Manager => True,
+               Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
                Show_Exit_Status     => True);
          end if;

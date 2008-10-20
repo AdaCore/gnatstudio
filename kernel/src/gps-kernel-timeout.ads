@@ -87,6 +87,7 @@ package GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
@@ -123,11 +124,13 @@ package GPS.Kernel.Timeout is
    --  If Use_Ext_Terminal is true, then the command is launched on an external
    --  terminal instead of an interactive_console
    --
-   --  If Show_In_Task_Manager is true, then a Command wrapper will be set up
-   --  so that the process appears in the task manager and can be interrupted
-   --  by the user. In this case, Synchronous is taken into account to know
-   --  whether Launch_Process should return immediately or wait for the process
-   --  to complete.
+   --  Show_In_Task_Manager tells whether the underlying command should be
+   --  visible in the task manager. If Name_In_Task_Manager is different from
+   --  the empty string, then this command will have this name, else the
+   --  command will be used.
+
+   --  Synchronous is used to know whether Launch_Process should
+   --  return immediately or wait for the process to complete.
    --
    --  If Show_Exit_Status is true, the exit status of the process will be
    --  displayed in the Console.
@@ -159,6 +162,7 @@ package GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
@@ -186,6 +190,7 @@ package GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
       Use_Pipes            : Boolean := True;

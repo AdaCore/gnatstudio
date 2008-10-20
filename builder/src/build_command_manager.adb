@@ -534,7 +534,7 @@ package body Build_Command_Manager is
 
          Change_Dir (Dir_Name (Project_Path (Prj)).all);
          Launch_Build_Command
-           (Kernel, Full, Target_Name, Server, Quiet, Synchronous,
+           (Kernel, Full, Target_Name, Mode, Server, Quiet, Synchronous,
             Uses_Shell (T));
          Change_Dir (Old_Dir);
 

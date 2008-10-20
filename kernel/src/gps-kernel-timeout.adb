@@ -57,7 +57,6 @@ package body GPS.Kernel.Timeout is
       Server               : Server_Type;
       Console              : Interactive_Console;
       Delete_Id            : Gtk.Handlers.Handler_Id;
-      Show_In_Task_Manager : Boolean;
       Strip_CR             : Boolean;
       Use_Pipes            : Boolean;
       Show_Output          : Boolean;
@@ -559,6 +558,7 @@ package body GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
@@ -593,7 +593,12 @@ package body GPS.Kernel.Timeout is
          Expect_Regexp := new Pattern_Matcher'(Compile (".*$", Single_Line));
       end if;
 
-      C.Name := new String'(Command);
+      if Name_In_Task_Manager /= "" then
+         C.Name := new String'(Name_In_Task_Manager);
+      else
+         C.Name := new String'(Command);
+      end if;
+
       C.Data := new Console_Process_Data'
         (GObject_Record with
          Args                 => new String_List'
@@ -603,7 +608,6 @@ package body GPS.Kernel.Timeout is
          Use_Ext_Terminal     => Use_Ext_Terminal,
          Directory            => new String'(Directory),
          Delete_Id            => No_Handler,
-         Show_In_Task_Manager => Show_In_Task_Manager,
          Show_Output          => Show_Output,
          Show_Command         => Show_Command,
          Show_Exit_Status     => Show_Exit_Status,
@@ -681,6 +685,7 @@ package body GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Show_Exit_Status     : Boolean := False;
       Use_Pipes            : Boolean := True;
@@ -704,6 +709,7 @@ package body GPS.Kernel.Timeout is
          Line_By_Line         => Line_By_Line,
          Directory            => Directory,
          Show_In_Task_Manager => Show_In_Task_Manager,
+         Name_In_Task_Manager => Name_In_Task_Manager,
          Queue_Id             => Queue_Id,
          Synchronous          => False,
          Show_Exit_Status     => Show_Exit_Status,
@@ -749,6 +755,7 @@ package body GPS.Kernel.Timeout is
       Line_By_Line         : Boolean := False;
       Directory            : String := "";
       Show_In_Task_Manager : Boolean := True;
+      Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
       Synchronous          : Boolean := False;
       Show_Exit_Status     : Boolean := False;
@@ -774,6 +781,7 @@ package body GPS.Kernel.Timeout is
          Line_By_Line         => Line_By_Line,
          Directory            => Directory,
          Show_In_Task_Manager => Show_In_Task_Manager,
+         Name_In_Task_Manager => Name_In_Task_Manager,
          Queue_Id             => Queue_Id,
          Synchronous          => Synchronous,
          Show_Exit_Status     => Show_Exit_Status,

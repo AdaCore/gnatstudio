@@ -58,6 +58,7 @@ package Commands.Builder is
      (Kernel         : GPS.Kernel.Kernel_Handle;
       CL             : GNAT.OS_Lib.String_List_Access;
       Target_Name    : String;
+      Mode_Name      : String;
       Server         : Server_Type;
       Quiet          : Boolean;
       Synchronous    : Boolean;
