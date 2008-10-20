@@ -14,6 +14,7 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
+     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>-g</arg>
@@ -28,6 +29,7 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
+     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>--coverage</arg>
@@ -43,6 +45,7 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
+     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>-pg</arg>
@@ -53,14 +56,23 @@
 
  <builder-mode name="xref">
   <description>Generate cross-reference information</description>
-  <subdir>xref</subdir>
+  <subdir>.xrefs</subdir>
   <ninja>TRUE</ninja>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
-     <arg>--subdirs=%subdir</arg>
-     <arg>generate_some_xrefs</arg>
+    <arg>-margs</arg>
+    <arg>-gnatc</arg>
+    <arg>-gnatQ</arg>
+    <arg>-k</arg>
+    <arg>--subdirs=%subdir</arg>
+    <arg>-gnatws</arg>
+    <arg>-gnatyN</arg>
+    <arg>-gnatVn</arg>
+    <arg>-d</arg>
+    <arg>-q</arg>
   </extra-args>
  </builder-mode>
+
 </GPS>
