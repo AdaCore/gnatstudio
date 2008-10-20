@@ -182,7 +182,7 @@
   <!-- RSYNC CONFIGURATION -->
 
   <rsync_configuration>
-    <arguments>-az --delete --progress --exclude *.o --exclude *.a</arguments>
+    <arguments>-az --delete --progress --exclude *.o --exclude *.a --exclude .xrefs</arguments>
   </rsync_configuration>
 
 </GPS>
