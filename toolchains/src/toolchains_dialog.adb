@@ -118,7 +118,7 @@ package body Toolchains_Dialog is
    is
       pragma Unreferenced (GEntry);
    begin
-      --  Allow OK if
+      --  Allow OK if the tools path and compiler path are different
       if D.Active
         and then Get_Text (D.Tools_Entry) = Get_Text (D.Compiler_Entry)
       then
