@@ -49,7 +49,16 @@ package Build_Configurations.Gtkada is
       Changes_Made : out Boolean);
    --  Launch the full configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
-   --  need to be saved (in other words, if the  user clicked "OK" or "Apply").
+   --  need to be saved (in other words, if the user clicked "OK" or "Apply").
+
+   procedure Modes_Dialog
+     (Registry     : Build_Config_Registry_Access;
+      Parent       : Gtk_Window   := null;
+      Tooltips     : Gtk_Tooltips := null;
+      Changes_Made : out Boolean);
+   --  Launch the modes configuration dialog
+   --  Changes_Made is set to True if the user caused some changes that
+   --  need to be saved (in other words, if the user clicked "OK" or "Apply").
 
    type Cmd_Line_Expander is access function (CL : String) return String;
 

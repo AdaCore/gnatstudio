@@ -68,6 +68,24 @@ package body Build_Configurations.Gtkada is
    Num_Column  : constant := 2;
    --  Contains the number of the corresponding page in the main notebook
 
+   -----------------
+   -- Local types --
+   -----------------
+
+   type Mode_UI_Record is new Gtk_Hbox_Record with record
+      Registry  : Build_Config_Registry_Access;
+
+      Notebook  : Gtk_Notebook;
+      --  The main notebook
+
+      Tooltips  : Gtk_Tooltips;
+      --  The tooltips used in the dialog
+
+      View      : Tree_View;
+      --  The tree
+   end record;
+   type Mode_UI_Access is access all Mode_UI_Record'Class;
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -104,6 +122,7 @@ package body Build_Configurations.Gtkada is
    --  Gtk.Main.Init.
 
    procedure On_Selection_Changed (UI : access Build_UI_Record'Class);
+   procedure On_Selection_Changed (UI : access Mode_UI_Record'Class);
    --  Called when the selection has changed in the tree view
 
    procedure On_Add_Target (UI : access Build_UI_Record'Class);
@@ -125,6 +144,7 @@ package body Build_Configurations.Gtkada is
    --  Saves the command lines and options of all targets into the registry
 
    procedure Refresh (UI : access Build_UI_Record'Class);
+   procedure Refresh (UI : access Mode_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
    --  them with the information contained in the Registry.
 
@@ -192,6 +212,9 @@ package body Build_Configurations.Gtkada is
 
    package Build_UI_Callback is new Callback (Build_UI_Record);
    use Build_UI_Callback;
+
+   package Mode_UI_Callback is new Callback (Mode_UI_Record);
+   use Mode_UI_Callback;
 
    package Target_UI_Callback is new Callback (Target_UI_Record);
    use Target_UI_Callback;
@@ -666,6 +689,24 @@ package body Build_Configurations.Gtkada is
            (UI.Registry, "Unexpected exception " & Exception_Information (E));
    end On_Selection_Changed;
 
+   procedure On_Selection_Changed (UI : access Mode_UI_Record'Class) is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Num   : Gint;
+   begin
+      Get_Selected (Get_Selection (UI.View), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Num := Get_Int (UI.View.Model, Iter, Num_Column);
+         Set_Current_Page (UI.Notebook, Num);
+      end if;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Selection_Changed;
+
    --------------------------
    -- Configuration_Dialog --
    --------------------------
@@ -870,6 +911,195 @@ package body Build_Configurations.Gtkada is
          end case;
       end loop;
    end Configuration_Dialog;
+
+   ------------------
+   -- Modes_Dialog --
+   ------------------
+
+   procedure Modes_Dialog
+     (Registry     : Build_Config_Registry_Access;
+      Parent       : Gtk_Window   := null;
+      Tooltips     : Gtk_Tooltips := null;
+      Changes_Made : out Boolean)
+   is
+      UI     : Mode_UI_Access;
+      Dialog : Gtk_Dialog;
+      Vbox   : Gtk_Vbox;
+
+      Col           : Gtk_Tree_View_Column;
+      Text_Renderer : Gtk_Cell_Renderer_Text;
+      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
+
+      Buttons       : Gtk_Hbox;
+      Button        : Gtk_Button;
+      Image         : Gtk_Image;
+
+      Scrolled : Gtk_Scrolled_Window;
+
+      Dummy : Gint;
+      pragma Unreferenced (Dummy);
+   begin
+      Changes_Made := False;
+
+      Gtk_New (Dialog => Dialog,
+               Title  => -"Mode Configuration",
+               Parent => Parent,
+               Flags  => Modal or Destroy_With_Parent or No_Separator);
+
+      if Parent /= null then
+         Set_Transient_For (Dialog, Parent);
+      end if;
+
+      Set_Default_Size (Dialog, 750, 550);
+
+      UI := new Mode_UI_Record;
+      Initialize_Hbox (UI);
+
+      UI.Registry := Registry;
+
+      if Tooltips = null then
+         Gtk_New (UI.Tooltips);
+      else
+         UI.Tooltips := Tooltips;
+      end if;
+
+      --  Create the tree view
+      Gtk_New (UI.View, Columns_Types);
+      Set_Headers_Visible (UI.View, False);
+
+      Gtk_New (Col);
+
+      Gtk_New (Icon_Renderer);
+      Gtk_New (Text_Renderer);
+
+      Pack_Start (Col, Icon_Renderer, False);
+      Pack_Start (Col, Text_Renderer, False);
+      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+      Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
+      Dummy := Append_Column (UI.View, Col);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+      Set_Shadow_Type (Scrolled, Shadow_In);
+      Add (Scrolled, UI.View);
+
+      Gtk_New_Vbox (Vbox);
+      Pack_Start (Vbox, Scrolled, True, True, 0);
+
+      --  Create the Add/Remove/Duplicate buttons
+      Gtk_New_Hbox (Buttons, Spacing => 3);
+
+      Gtk_New (Button);
+      Gtk_New (Image, Stock_Add, Icon_Size_Menu);
+      Set_Image (Button, Image);
+      Set_Relief (Button, Relief_None);
+      Set_Tip (Tooltips    => UI.Tooltips,
+               Widget      => Button,
+               Tip_Text    => -"Add new mode");
+      Pack_Start (Buttons, Button, False, False, 0);
+--        Object_Connect
+--          (Widget      => Button,
+--           Name        => Gtk.Button.Signal_Clicked,
+--           Cb          => On_Add_Target'Access,
+--           Slot_Object => UI,
+--           After       => True);
+
+      Gtk_New (Button);
+      Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
+      Set_Image (Button, Image);
+      Set_Relief (Button, Relief_None);
+      Set_Tip (Tooltips    => UI.Tooltips,
+               Widget      => Button,
+               Tip_Text    => -"Remove selected mode");
+      Pack_Start (Buttons, Button, False, False, 0);
+--        Object_Connect
+--          (Widget      => Button,
+--           Name        => Gtk.Button.Signal_Clicked,
+--           Cb          => On_Remove_Target'Access,
+--           Slot_Object => UI,
+--           After       => True);
+
+      Pack_Start (UI, Vbox, False, True, 0);
+
+      Gtk_New_Vbox (Vbox);
+      Pack_Start (UI, Vbox, True, True, 3);
+
+      Pack_Start (Get_Vbox (Dialog), Buttons, False, False, 3);
+
+      --  Create the main notebook
+
+      Gtk_New (UI.Notebook);
+      Set_Show_Tabs (UI.Notebook, False);
+      Set_Show_Border (UI.Notebook, False);
+      Pack_Start (Vbox, UI.Notebook, True, True, 0);
+
+      --  Create page 0 in the notebook
+      declare
+         Label : Gtk_Label;
+      begin
+         Gtk_New (Label);
+         Set_Use_Markup (Label, True);
+         Set_Markup (Label, -"Select a mode to configure.");
+         Append_Page (UI.Notebook, Label);
+      end;
+
+      Object_Connect
+        (Widget      => Get_Selection (UI.View),
+         Name        => Gtk.Tree_Selection.Signal_Changed,
+         Cb          => On_Selection_Changed'Access,
+         Slot_Object => UI,
+         After       => True);
+
+      --  Create the dialog buttons
+
+      Button := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
+      Button := Gtk_Button
+        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+
+      Set_Default_Response (Dialog, Gtk_Response_OK);
+
+      --  Add everything to the dialog/window
+
+      Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
+      Set_Has_Separator (Dialog, False);
+
+      Refresh (UI);
+      Show_All (Dialog);
+
+      --  Select the first target of the first category, initially
+
+      Set_Current_Page (UI.Notebook, 1);
+
+      declare
+         Path : Gtk_Tree_Path;
+      begin
+         Path := Gtk_New ("0");
+         Select_Path (Get_Selection (UI.View), Path);
+         Path_Free (Path);
+      end;
+
+      --  Run the dialog
+
+      loop
+         case Run (Dialog) is
+            when Gtk_Response_Apply =>
+--                 Save_Targets (UI);
+               Changes_Made := True;
+
+            when Gtk_Response_OK =>
+--                 Save_Targets (UI);
+               Destroy (Dialog);
+               Changes_Made := True;
+               exit;
+
+            when others =>
+               Destroy (Dialog);
+               exit;
+         end case;
+      end loop;
+   end Modes_Dialog;
 
    -------------------
    -- On_Add_Target --
@@ -1240,6 +1470,163 @@ package body Build_Configurations.Gtkada is
 
       Show_All (UI.Notebook);
 
+      Expand_All (UI.View);
+   end Refresh;
+
+   procedure Refresh (UI : access Mode_UI_Record'Class) is
+      Count : Gint := 1;
+      --  Indicates the number of the target that we are currently adding
+
+      procedure Add_Mode
+        (View   : Tree_View;
+         Mode   : Mode_Record);
+      --  Add Mode to View
+
+      --------------
+      -- Add_Mode --
+      --------------
+
+      procedure Add_Mode
+        (View  : Tree_View;
+         Mode  : Mode_Record)
+      is
+         function Get_Mode_Name (S : Unbounded_String) return String;
+         --  Return the string to store in model for mode S
+
+         -----------------------
+         -- Get_Category_Name --
+         -----------------------
+
+         function Get_Mode_Name (S : Unbounded_String) return String is
+         begin
+            return "<b>"
+              & Glib.Convert.Escape_Text (To_String (S))
+              & "</b>";
+         end Get_Mode_Name;
+
+         Iter      : Gtk_Tree_Iter;
+         Mode_Name : constant String := Get_Mode_Name (Mode.Name);
+         Table     : Gtk_Table;
+         Ent       : Gtk_GEntry;
+         Label     : Gtk_Label;
+         Check     : Gtk_Check_Button;
+
+         use Unbounded_String_List;
+         C : Cursor;
+         S : Unbounded_String;
+
+      begin
+         Iter := Get_Iter_First (View.Model);
+
+         --  Look for existing top-level iter with the right name
+         while Iter /= Null_Iter loop
+            if Get_String (View.Model, Iter, Name_Column) = Mode_Name then
+               return;
+            end if;
+
+            Next (View.Model, Iter);
+         end loop;
+
+         --  We have not found our iter, create it now
+         Append (View.Model, Iter, Null_Iter);
+         Set (View.Model, Iter, Name_Column, Mode_Name);
+         Set (View.Model, Iter, Icon_Column, "gps-folder-open");
+
+         --  Set the corresponding page in the notebook
+         Set (View.Model, Iter, Num_Column, Count);
+
+         Gtk_New (Table, 5, 2, False);
+
+         Gtk_New (Label, -"Description");
+         Set_Alignment (Label, 0.0, 0.5);
+         Attach (Table, Label, 0, 1, 0, 1, Fill, 0,
+                 Xpadding => 2, Ypadding => 2);
+         Gtk_New (Ent);
+         Set_Text (Ent, To_String (Mode.Description));
+         Attach (Table, Ent, 1, 2, 0, 1, Yoptions => 0);
+
+         Gtk_New (Label, -"Models");
+         Set_Alignment (Label, 0.0, 0.5);
+         Attach (Table, Label, 0, 1, 1, 2, Fill, 0,
+                 Xpadding => 2, Ypadding => 2);
+         Gtk_New (Ent);
+
+         C := First (Mode.Models);
+
+         if Has_Element (C) then
+            loop
+               Append (S, Element (C));
+               Next (C);
+
+               exit when not Has_Element (C);
+
+               Append (S, ",");
+            end loop;
+         end if;
+
+         Set_Text (Ent, To_String (S));
+         Attach (Table, Ent, 1, 2, 1, 2, Ypadding => 2, Yoptions => 0);
+
+         Gtk_New (Label, -"Arguments");
+         Set_Alignment (Label, 0.0, 0.5);
+         Attach (Table, Label, 0, 1, 2, 3, Fill, 0,
+                 Xpadding => 2, Ypadding => 2);
+         Gtk_New (Ent);
+
+         if Mode.Args /= null then
+            Set_Text (Ent, Argument_List_To_String (Mode.Args.all));
+         end if;
+
+         Attach (Table, Ent, 1, 2, 2, 3, Ypadding => 2, Yoptions => 0);
+
+         Gtk_New (Label, -"Subdir");
+         Set_Alignment (Label, 0.0, 0.5);
+         Attach (Table, Label, 0, 1, 3, 4, Fill, 0,
+                 Xpadding => 2, Ypadding => 2);
+         Gtk_New (Ent);
+         Set_Text (Ent, To_String (Mode.Subdir));
+         Attach (Table, Ent, 1, 2, 3, 4, Ypadding => 2, Yoptions => 0);
+
+         Gtk_New (Label, -"Shadow");
+         Set_Alignment (Label, 0.0, 0.5);
+         Attach (Table, Label, 0, 1, 4, 5, Fill, 0,
+                 Xpadding => 2, Ypadding => 2);
+         Gtk_New (Check);
+         Set_Active (Check, Mode.Ninja);
+         Attach (Table, Check, 1, 2, 4, 5, Ypadding => 2, Yoptions => 0);
+
+         --  Add the page in the notebook
+         Append_Page (UI.Notebook, Table);
+      end Add_Mode;
+
+      use Mode_Map;
+      C : Cursor;
+
+   begin
+      --  Empty the tree
+
+      Clear (UI.View.Model);
+
+      --  Empty the notebook
+
+      --  Note that we keep page 0 in the notebook: this is the empty page
+      for J in reverse 1 .. Get_N_Pages (UI.Notebook) - 1 loop
+         Remove_Page (UI.Notebook, J);
+      end loop;
+
+      --  Fill the tree and the notebook
+
+      C := UI.Registry.Modes.First;
+
+      --  Iterate over all targets
+      while Has_Element (C) loop
+         --  Add the target in the tree_view
+         Add_Mode (UI.View, Element (C));
+         Count := Count + 1;
+         Next (C);
+      end loop;
+
+      Show_All (UI.Notebook);
       Expand_All (UI.View);
    end Refresh;
 
