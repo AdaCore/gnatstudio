@@ -63,7 +63,7 @@
 --     <builder-mode name="NAME">
 --        <description>DESCRIPTION</description>
 --        <subdir>SUBDIR</subdir>
---        <ninja>NINJA</ninja>
+--        <shadow>SHADOW</shadow>
 --        <supported-model>MODEL_1</supported-model>
 --                    (...)
 --        <supported-model>MODEL_N</supported-model>
@@ -79,16 +79,16 @@
 --          SUBDIR       is a base name of a subdirectory (for object and
 --                        exec dirs, for instance) to use when this mode is
 --                        active. This gets substituted to the %subdir argument
---          NINJA        (optional, default False) a ninja mode is a mode that
+--          SHADOW      (optional, default False) a shadow mode is a mode that
 --                       has the following properties:
 --                         - it does not appear in the graphical elements
---                         - whenever a target is launched, if the ninja
+--                         - whenever a target is launched, if the shadow
 --                           mode applies to the model of that target, then
 --                           the target is launched again immediately with the
---                           extra arguments of the ninja project. This is
+--                           extra arguments of the shadow project. This is
 --                           done only if the mode is Active (see
 --                            Activate/Deactivate_Mode below)
---                         - a ninja project always launches targets in Quiet
+--                         - a shadow project always launches targets in Quiet
 --                           mode
 --          MODEL_X      is a model supported by the mode
 --          ARG_1..N     are the extra arguments appended to the command line
@@ -141,7 +141,7 @@ package Builder_Facility_Module is
    function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List;
    --  Return the list of modes in which to build a target. This means
-   --  the current mode, and any ninja mode pertaining to this model.
+   --  the current mode, and any shadow mode pertaining to this model.
    --  Caller must free the result;
 
    procedure Activate_Mode (Mode : String; Active : Boolean);
