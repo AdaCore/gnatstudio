@@ -271,6 +271,7 @@ package body Toolchains_Dialog is
            " please choose its bin directory here." &
            ASCII.LF &
            "This path should be different from the tools path." & ASCII.LF &
+           ASCII.LF &
            "Note concerning the interaction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
@@ -293,11 +294,12 @@ package body Toolchains_Dialog is
            " gnatcheck, gnatmetrics, cross-reference generation." &
            ASCII.LF &
            "This path should be different from the compiler path." & ASCII.LF &
+           ASCII.LF &
            "Note concerning the interaction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
            "defining a tools path will make all actions enumerated above " &
-           "execute remotely using the tools path."));
+           "execute locally using the tools path."));
 
       Dialog_Callback.Connect
         (Widget.Compiler_Entry, Signal_Changed, On_Changed'Access, Widget);
