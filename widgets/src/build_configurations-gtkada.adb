@@ -128,6 +128,9 @@ package body Build_Configurations.Gtkada is
    procedure On_Add_Target (UI : access Build_UI_Record'Class);
    --  Launch the "add target" dialog
 
+   procedure On_Add_Mode (UI : access Mode_UI_Record'Class);
+   --  Launch the "add mode" dialog
+
    procedure On_Remove_Target (UI : access Build_UI_Record'Class);
    --  Remove currently selected target from UI
 
@@ -997,12 +1000,12 @@ package body Build_Configurations.Gtkada is
                Widget      => Button,
                Tip_Text    => -"Add new mode");
       Pack_Start (Buttons, Button, False, False, 0);
---        Object_Connect
---          (Widget      => Button,
---           Name        => Gtk.Button.Signal_Clicked,
---           Cb          => On_Add_Target'Access,
---           Slot_Object => UI,
---           After       => True);
+      Object_Connect
+        (Widget      => Button,
+         Name        => Gtk.Button.Signal_Clicked,
+         Cb          => On_Add_Mode'Access,
+         Slot_Object => UI,
+         After       => True);
 
       Gtk_New (Button);
       Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
@@ -1085,11 +1088,11 @@ package body Build_Configurations.Gtkada is
       loop
          case Run (Dialog) is
             when Gtk_Response_Apply =>
---                 Save_Targets (UI);
+--                 Save_Modes (UI);
                Changes_Made := True;
 
             when Gtk_Response_OK =>
---                 Save_Targets (UI);
+--                 Save_Modes (UI);
                Destroy (Dialog);
                Changes_Made := True;
                exit;
@@ -1150,6 +1153,36 @@ package body Build_Configurations.Gtkada is
          Log
            (UI.Registry, "Unexpected exception " & Exception_Information (E));
    end On_Remove_Target;
+
+   -----------------
+   -- On_Add_Mode --
+   -----------------
+
+   procedure On_Add_Mode (UI : access Mode_UI_Record'Class) is
+      Name : Unbounded_String;
+      Mode : Mode_Record;
+   begin
+      Set_Unbounded_String
+        (Name,
+         Query_User (Parent        => Gtk_Window (Get_Toplevel (UI)),
+                     Prompt        => -"Mode Name",
+                     Password_Mode => False,
+                     Urgent        => False));
+
+      if Length (Name) > 0 then
+         Mode.Name := Name;
+         Insert_Mode
+           (Registry => UI.Registry,
+            Name     => Name,
+            Mode     => Mode);
+         Refresh (UI);
+      end if;
+
+   exception
+      when E : others =>
+         Log
+           (UI.Registry, "Unexpected exception " & Exception_Information (E));
+   end On_Add_Mode;
 
    -------------------------
    -- On_Duplicate_Target --
