@@ -167,9 +167,9 @@ package Build_Configurations is
       Description : Unbounded_String;
       Models      : Unbounded_String_List.List;
       Args        : GNAT.OS_Lib.Argument_List_Access;
-      Ninja       : Boolean := False;
+      Shadow      : Boolean := False;
       Active      : Boolean := False;
-      --  Relevant only for Ninja modes. Indicates whether the mode is active.
+      --  Relevant only for Shadow modes. Indicates whether the mode is active.
       Subdir      : Unbounded_String;
    end record;
 

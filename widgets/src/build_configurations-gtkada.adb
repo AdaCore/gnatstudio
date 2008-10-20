@@ -1592,7 +1592,7 @@ package body Build_Configurations.Gtkada is
          Attach (Table, Label, 0, 1, 4, 5, Fill, 0,
                  Xpadding => 2, Ypadding => 2);
          Gtk_New (Check);
-         Set_Active (Check, Mode.Ninja);
+         Set_Active (Check, Mode.Shadow);
          Attach (Table, Check, 1, 2, 4, 5, Ypadding => 2, Yoptions => 0);
 
          --  Add the page in the notebook

@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
-<!--  This file provides default build modes for GPS
- -->
+<!--  This file provides default build modes for GPS  -->
 
 <GPS>
  <builder-mode name="default">
@@ -57,7 +56,7 @@
  <builder-mode name="xref">
   <description>Generate cross-reference information</description>
   <subdir>.xrefs</subdir>
-  <ninja>TRUE</ninja>
+  <shadow>TRUE</shadow>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>

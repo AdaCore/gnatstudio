@@ -1234,8 +1234,8 @@ package body Builder_Facility_Module is
             Mode.Description := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "supported-model" then
             Mode.Models.Append (To_Unbounded_String (N.Value.all));
-         elsif N.Tag.all = "ninja" then
-            Mode.Ninja := Boolean'Value (N.Value.all);
+         elsif N.Tag.all = "shadow" then
+            Mode.Shadow := Boolean'Value (N.Value.all);
          elsif N.Tag.all = "subdir" then
             Mode.Subdir := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "extra-args" then
@@ -1288,9 +1288,9 @@ package body Builder_Facility_Module is
 
       Insert_Mode (Builder_Module_ID.Registry, Mode.Name, Mode);
 
-      --  Add the mode to the combo if it is not a ninja mode.
+      --  Add the mode to the combo if it is not a shadow mode.
 
-      if not Mode.Ninja then
+      if not Mode.Shadow then
          --  If the combo is not created, create it now.
 
          if Builder_Module_ID.Modes_Combo = null then
@@ -1615,14 +1615,14 @@ package body Builder_Facility_Module is
         (Get_Active_Text (Builder_Module_ID.Modes_Combo));
       Index := 2;
 
-      --  Find all the ninja modes
+      --  Find all the shadow modes
 
       C := First_Mode (Builder_Module_ID.Registry);
 
       while Has_Element (C) loop
          Mode := Element (C);
 
-         if Mode.Ninja
+         if Mode.Shadow
            and then Mode.Active
          then
             declare
