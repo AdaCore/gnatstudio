@@ -102,17 +102,22 @@ Ant_Model_Template = """
 </target-model>
 """
 
-# Target to build using the make model
-Make_Target = """
-<target model="make" category="_Makefile" name="_Make default">
-   <icon>gps-build-all</icon>
-   <launch-mode>MANUALLY</launch-mode>
-   <read-only>TRUE</read-only>
-   <command-line>
-      <arg>make</arg>
-      <arg>%vars</arg>
-   </command-line>
-</target>
+# XML used to register new project attributes
+Project_Attributes="""
+  <project_attribute
+    name="makefile"
+    package="Make"
+    editor_section="Make"
+    description="Makefile to use for this project">
+    <string type="file"/>
+  </project_attribute>
+  <project_attribute
+    name="antfile"
+    package="Ant"
+    editor_section="Ant"
+    description="Ant build file to use for this project">
+    <string type="file"/>
+  </project_attribute>
 """
 
 class Builder:
@@ -129,7 +134,7 @@ class Builder:
                pass
 
    def compute_buildfile (self):
-      """Return the build file to use. By default, we look in the project
+      """Compute the build file to use. By default, we look in the project
          itself. If none is specified there, we default on the build file
          found in the same directory as the root project"""
 
@@ -146,6 +151,7 @@ class Builder:
             self.buildfile = join (root_dir, f)
             if isfile (self.buildfile): break
             self.buildfile = None
+      Logger ("MAKE").log ("Build file for " + self.pkg_name + " is " + `self.buildfile`)
 
    def read_targets (self):
       """Read all targets from the build file, and return a list of tuples
@@ -268,6 +274,7 @@ def on_gps_started (hook_name):
       Antfile()
 
 parse_xml (Make_Model_Template)
+parse_xml (Project_Attributes)
 Hook ("gps_started").add (on_gps_started)
 
 if os_utils.locate_exec_on_path ("ant"):
