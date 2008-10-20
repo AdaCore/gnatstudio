@@ -158,9 +158,12 @@ color.
 
 @noindent
 
-Select the menu @code{Build->Make->sdc.adb}: this will launch a complete
-build of the @i{sdc} application. Note also that a key binding
-is associated with this menu item (@key{F4}).
+Select the icon @code{Build Main: sdc.adb} on the toolbar: this will launch
+a complete build of the @i{sdc} application. Note also that you can use a
+key binding directly instead of this tool bar button (@key{F4}), or use the
+corresponding menu item @code{Build->Project->sdc.adb}. If you use the menu
+item, an extra intermediate dialog is displayed showing the actual command
+line that will be used by GPS. Pressing @key{Enter} will launch also the build.
 
 The build has generated a number of errors in a new window: the @i{Locations}
 tree, displayed in the bottom area. The errors are also highlighted in the
