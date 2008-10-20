@@ -60,12 +60,32 @@
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
+  <server>Tools_Server</server>
   <extra-args>
     <arg>-margs</arg>
     <arg>-gnatc</arg>
     <arg>-gnatQ</arg>
     <arg>-k</arg>
     <arg>--subdirs=%subdir</arg>
+    <arg>-gnatws</arg>
+    <arg>-gnatyN</arg>
+    <arg>-gnatVn</arg>
+    <arg>-d</arg>
+    <arg>-q</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="generate xrefs">
+  <description>Generate cross-reference information</description>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model>gprclean</supported-model>
+  <server>Tools_Server</server>
+  <extra-args>
+    <arg>-margs</arg>
+    <arg>-gnatc</arg>
+    <arg>-gnatQ</arg>
+    <arg>-k</arg>
     <arg>-gnatws</arg>
     <arg>-gnatyN</arg>
     <arg>-gnatVn</arg>

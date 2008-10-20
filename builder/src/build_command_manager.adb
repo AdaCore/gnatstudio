@@ -409,7 +409,6 @@ package body Build_Command_Manager is
       Full         : Argument_List_Access;
       Command_Line : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
-      Server       : Server_Type;
 
       procedure Launch_For_Mode
         (Mode   : String;
@@ -427,6 +426,7 @@ package body Build_Command_Manager is
          Shadow : Boolean) is
 
          Subdir : constant String := Get_Mode_Subdir (Mode);
+         Server : Server_Type;
 
          function Expand_Cmd_Line (CL : String) return String;
          --  Callback for Single_Target_Dialog
@@ -457,7 +457,11 @@ package body Build_Command_Manager is
               (Get_Mode_Args (Get_Model (T), Mode));
          end if;
 
-         Server := Get_Server (T);
+         if Is_Server_In_Mode (Mode) then
+            Server := Get_Mode_Server (Mode);
+         else
+            Server := Get_Server (T);
+         end if;
 
          if (not Shadow)
            and then

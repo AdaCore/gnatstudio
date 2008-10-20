@@ -169,6 +169,8 @@ package Build_Configurations is
       Args        : GNAT.OS_Lib.Argument_List_Access;
       Shadow      : Boolean := False;
       Active      : Boolean := False;
+      Is_Server   : Boolean := False;
+      Server      : Remote.Server_Type := Remote.GPS_Server;
       --  Relevant only for Shadow modes. Indicates whether the mode is active.
       Subdir      : Unbounded_String;
    end record;

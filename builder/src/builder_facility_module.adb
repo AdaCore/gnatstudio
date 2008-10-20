@@ -1365,6 +1365,9 @@ package body Builder_Facility_Module is
             Mode.Models.Append (To_Unbounded_String (N.Value.all));
          elsif N.Tag.all = "shadow" then
             Mode.Shadow := Boolean'Value (N.Value.all);
+         elsif N.Tag.all = "server" then
+            Mode.Is_Server := True;
+            Mode.Server := Remote.Server_Type'Value (N.Value.all);
          elsif N.Tag.all = "subdir" then
             Mode.Subdir := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "extra-args" then
@@ -1806,5 +1809,25 @@ package body Builder_Facility_Module is
          Replace_Mode (Builder_Module_ID.Registry, U, M);
       end if;
    end Activate_Mode;
+
+   -----------------------
+   -- Is_Server_In_Mode --
+   -----------------------
+
+   function Is_Server_In_Mode (Mode : String) return Boolean  is
+      U : constant Unbounded_String := To_Unbounded_String (Mode);
+   begin
+      return Element_Mode (Builder_Module_ID.Registry, U).Is_Server;
+   end Is_Server_In_Mode;
+
+   ---------------------
+   -- Get_Mode_Server --
+   ---------------------
+
+   function Get_Mode_Server (Mode : String) return Remote.Server_Type is
+      U : constant Unbounded_String := To_Unbounded_String (Mode);
+   begin
+      return Element_Mode (Builder_Module_ID.Registry, U).Server;
+   end Get_Mode_Server;
 
 end Builder_Facility_Module;

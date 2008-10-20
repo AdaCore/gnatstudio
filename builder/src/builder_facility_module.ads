@@ -107,6 +107,7 @@ with GNAT.OS_Lib;
 with GPS.Kernel;
 with Build_Configurations;
 with String_List_Utils;
+with Remote;
 
 package Builder_Facility_Module is
 
@@ -147,6 +148,12 @@ package Builder_Facility_Module is
    procedure Activate_Mode (Mode : String; Active : Boolean);
    --  Activate or deactivate Mode.
    --  By default, modes are not active.
+
+   function Is_Server_In_Mode (Mode : String) return Boolean;
+   --  Return if a server is defined for the mode.
+
+   function Get_Mode_Server (Mode : String) return Remote.Server_Type;
+   --  Return the server defined for the mode.
 
 private
 
