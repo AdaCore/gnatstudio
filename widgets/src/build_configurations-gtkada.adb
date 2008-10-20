@@ -950,7 +950,7 @@ package body Build_Configurations.Gtkada is
          Set_Transient_For (Dialog, Parent);
       end if;
 
-      Set_Default_Size (Dialog, 750, 550);
+      Set_Default_Size (Dialog, 650, 450);
 
       UI := new Mode_UI_Record;
       Initialize_Hbox (UI);
@@ -986,7 +986,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Vbox (Vbox);
       Pack_Start (Vbox, Scrolled, True, True, 0);
 
-      --  Create the Add/Remove/Duplicate buttons
+      --  Create the Add/Remove buttons
       Gtk_New_Hbox (Buttons, Spacing => 3);
 
       Gtk_New (Button);
