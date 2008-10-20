@@ -27,6 +27,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
+with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Handlers;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -60,6 +61,7 @@ with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Traces;
 
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
@@ -68,7 +70,10 @@ with Commands.Builder;          use Commands.Builder;
 
 package body Builder_Facility_Module is
 
-   Me        : constant Debug_Handle := Create ("Builder_Facility_Module");
+   Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
+   Modes_Trace : constant Debug_Handle :=
+     Create ("Builder.Modes", GNATCOLL.Traces.Off);
+
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
@@ -164,6 +169,10 @@ package body Builder_Facility_Module is
    procedure On_Build_Manager
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Launch the build manager
+
+   procedure On_Modes_Manager
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Launch the mode manager
 
    overriding procedure Customize
      (Module : access Builder_Module_ID_Record;
@@ -1147,14 +1156,44 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Build_Manager;
 
+   ----------------------
+   -- On_Modes_Manager --
+   ----------------------
+
+   procedure On_Modes_Manager
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Changes_Made : Boolean;
+   begin
+      Modes_Dialog
+        (Builder_Module_ID.Registry,
+         Get_Main_Window (Kernel),
+         Get_Tooltips (Kernel),
+         Changes_Made);
+
+      if Changes_Made then
+         --  Handle the toolbar
+         Clear_Toolbar_Buttons;
+         Install_Toolbar_Buttons;
+
+         --  Save the user-defined targets
+         Save_Targets;
+      end if;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Modes_Manager;
+
    ---------------------
    -- Parse_Mode_Node --
    ---------------------
 
    procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr) is
-      Mode : Mode_Record;
-      C    : Node_Ptr;
+      Mode       : Mode_Record;
+      C          : Node_Ptr;
       First_Mode : Boolean := False;
+      Align      : Gtk_Alignment;
 
       procedure Parse_Node (N : Node_Ptr);
       --  Parse children of <builder-mode> nodes
@@ -1235,9 +1274,13 @@ package body Builder_Facility_Module is
             Gtk_New_Text (Builder_Module_ID.Modes_Combo);
 
             --  ... and add it to the toolbar
+
             Gtk_New (Builder_Module_ID.Modes_Toolbar_Item);
-            Builder_Module_ID.Modes_Toolbar_Item.Add
-              (Builder_Module_ID.Modes_Combo);
+            Gtk_New (Align, 0.5, 0.5, 1.0, 0.6);
+            Add (Align, Builder_Module_ID.Modes_Combo);
+
+            Builder_Module_ID.Modes_Toolbar_Item.Add (Align);
+
             Insert (Get_Toolbar (Get_Kernel),
                     Builder_Module_ID.Modes_Toolbar_Item);
             Show_All (Builder_Module_ID.Modes_Toolbar_Item);
@@ -1284,13 +1327,13 @@ package body Builder_Facility_Module is
                   Tooltip := Tooltip & ")";
                end if;
 
-               Set_Tooltip
-                 (Builder_Module_ID.Modes_Toolbar_Item,
-                  Get_Tooltips (Get_Kernel),
-                  To_String (Tooltip));
-
                Next (C);
             end loop;
+
+            Set_Tooltip
+              (Builder_Module_ID.Modes_Toolbar_Item,
+              Get_Tooltips (Get_Kernel),
+              To_String (Tooltip));
          end;
       end if;
    end Parse_Mode_Node;
@@ -1381,6 +1424,11 @@ package body Builder_Facility_Module is
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
                      On_Build_Manager'Access);
+
+      if Active (Modes_Trace) then
+         Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Modes", "",
+                        On_Modes_Manager'Access);
+      end if;
 
       --  Connect to the File_Saved_Hook
       Add_Hook (Kernel, File_Saved_Hook,
