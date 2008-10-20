@@ -281,8 +281,6 @@ if os_utils.locate_exec_on_path ("ant"):
    try:
       from xml.sax import handler, make_parser
       ant_support=True
-      parse_xml (Make_Model_Template)
-      Hook ("gps_started").add (on_gps_started)
    except:
       pass
 
