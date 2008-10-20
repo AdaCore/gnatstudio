@@ -1334,34 +1334,33 @@ package body Builder_Facility_Module is
             Len     : Natural;
 
          begin
-            Tooltip := To_Unbounded_String
-              (-"Select the build mode:");
+            Set_Unbounded_String (Tooltip, -"Select the build mode:");
 
             C := Build_Configurations.First_Mode (Builder_Module_ID.Registry);
 
             while Has_Element (C) loop
                Mode := Element (C);
-               Tooltip := Tooltip & ASCII.LF
-                 & "    " & Mode.Name  & ": " & Mode.Description & "  ";
+               Append (Tooltip, ASCII.LF
+                       & "    " & Mode.Name  & ": " & Mode.Description & "  ");
 
                if Mode.Args /= null
                  and then Mode.Args'Length /= 0
                then
-                  Tooltip := Tooltip & ASCII.LF & "        ("
-                    & Mode.Args (Mode.Args'First).all;
+                  Append (Tooltip, ASCII.LF & "        ("
+                          & Mode.Args (Mode.Args'First).all);
                   Len := Mode.Args (Mode.Args'First)'Length;
 
                   for J in Mode.Args'First + 1 .. Mode.Args'Last loop
                      if Len > 40 then
-                        Tooltip := Tooltip & ASCII.LF & "         ";
+                        Append (Tooltip, ASCII.LF & "         ");
                         Len := 0;
                      end if;
 
-                     Tooltip := Tooltip & " " & Mode.Args (J).all;
+                     Append (Tooltip, " " & Mode.Args (J).all);
                      Len := Len + Mode.Args (J)'Length;
                   end loop;
 
-                  Tooltip := Tooltip & ")";
+                  Append (Tooltip, ")");
                end if;
 
                Next (C);
