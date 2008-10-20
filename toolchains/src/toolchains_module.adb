@@ -24,6 +24,8 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
@@ -32,6 +34,7 @@ with Toolchains;                use Toolchains;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Projects;
 with Projects.Registry;
+with Builder_Facility_Module;
 
 package body Toolchains_Module is
 
@@ -51,12 +54,25 @@ package body Toolchains_Module is
    overriding procedure Destroy (Property : in out Toolchains_Property);
    --  See inherited doc.
 
+   pragma Warnings (Off); --  Yes, it's not dispatching and it's expected.
+   procedure Apply
+     (Property : Toolchains_Property;
+      Kernel   : GPS.Kernel.Kernel_Handle);
+   pragma Warnings (On);
+   --  Applies the property.
+
    procedure On_Menu
      (Widget : access GObject_Record'Class; Kernel : GPS.Kernel.Kernel_Handle);
    --  Config menu
 
-   function Get_Property return Toolchains_Property'Class;
+   pragma Warnings (Off); --  Yes, it's not dispatching and it's expected.
+   function Get_Property return Toolchains_Property;
+   pragma Warnings (On);
    --  Retrieve the global property
+
+   procedure On_GPS_Started
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when GPS is starting
 
    ----------
    -- Save --
@@ -139,6 +155,68 @@ package body Toolchains_Module is
       Free (Property.Compiler_Path);
    end Destroy;
 
+   -----------
+   -- Apply --
+   -----------
+
+   procedure Apply
+     (Property : Toolchains_Property;
+      Kernel   : GPS.Kernel.Kernel_Handle) is
+   begin
+      if Property.Tools_Path /= null
+        and then Property.Compiler_Path /= null
+      then
+         Toolchains.Set_Toolchains_Properties
+           (Active               => Property.Active,
+            Tool_Search_Path     => Property.Tools_Path.all,
+            Compiler_Search_Path => Property.Compiler_Path.all);
+      else
+         Toolchains.Set_Toolchains_Properties
+           (Active               => Property.Active,
+            Tool_Search_Path     => "",
+            Compiler_Search_Path => "");
+      end if;
+
+      if Property.Active
+        and then Property.Use_Xrefs_Subdir
+      then
+         --  ??? .xrefs and mode "xref" should not be string literals, but
+         --  stored somewhere instead.
+         if Projects.Registry.Get_Xrefs_Subdir
+           (Get_Registry (Kernel).all) /= ".xrefs"
+         then
+            Projects.Registry.Set_Xrefs_Subdir
+              (Get_Registry (Kernel).all, ".xrefs");
+            GPS.Kernel.Project.Recompute_View (Kernel);
+         end if;
+
+         Builder_Facility_Module.Activate_Mode ("xref", True);
+
+      else
+         if Projects.Registry.Get_Xrefs_Subdir
+           (Get_Registry (Kernel).all) /= ""
+         then
+            Projects.Registry.Set_Xrefs_Subdir
+              (Get_Registry (Kernel).all, "");
+            GPS.Kernel.Project.Recompute_View (Kernel);
+         end if;
+
+         Builder_Facility_Module.Activate_Mode ("xref", False);
+      end if;
+   end Apply;
+
+   --------------------
+   -- On_GPS_Started --
+   --------------------
+
+   procedure On_GPS_Started
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Property : constant Toolchains_Property := Get_Property;
+   begin
+      Apply (Property, GPS.Kernel.Kernel_Handle (Kernel));
+   end On_GPS_Started;
+
    -------------
    -- On_Menu --
    -------------
@@ -148,8 +226,7 @@ package body Toolchains_Module is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Property      : Toolchains_Property :=
-                        Toolchains_Property (Get_Property);
+      Property      : Toolchains_Property := Get_Property;
       Prop_Access   : Property_Access;
       Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
@@ -162,7 +239,6 @@ package body Toolchains_Module is
       Default_Path  : String_Access;
       Tools_Path    : String_Access;
       Compiler_Path : String_Access;
-      Xrefs_Change  : Boolean;
 
    begin
       if Property.Tools_Path = null
@@ -224,44 +300,7 @@ package body Toolchains_Module is
             Property    => Prop_Access,
             Persistent  => True);
 
-         Toolchains.Set_Toolchains_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => Property.Tools_Path.all,
-            Compiler_Search_Path => Property.Compiler_Path.all);
-
-         Xrefs_Change := False;
-         if Property.Active
-           and then Property.Use_Xrefs_Subdir
-         then
-            if Projects.Registry.Get_Xrefs_Subdir
-              (Get_Registry (Kernel).all) /= "xrefs"
-            then
-               Xrefs_Change := True;
-               Projects.Registry.Set_Xrefs_Subdir
-                 (Get_Registry (Kernel).all, "xrefs");
-            end if;
-
-            --  ??? Todo: initialize a new cross-ref builder target
-
-         else
-            if Projects.Registry.Get_Xrefs_Subdir
-              (Get_Registry (Kernel).all) /= ""
-            then
-               Xrefs_Change := True;
-               Projects.Registry.Set_Xrefs_Subdir
-                 (Get_Registry (Kernel).all, "");
-            end if;
-
-            --  ??? Todo: disable the cross-ref target (at least ask the user
-            --  whether we should do it or not).
-         end if;
-
-         if Xrefs_Change then
-            --  We need to recompute the project view to recompute the default
-            --  paths.
-            GPS.Kernel.Project.Recompute_View (Kernel);
-         end if;
-
+         Apply (Property, Kernel);
       end if;
 
       Destroy (Dialog);
@@ -271,7 +310,7 @@ package body Toolchains_Module is
    -- Get_Property --
    ------------------
 
-   function Get_Property return Toolchains_Property'Class is
+   function Get_Property return Toolchains_Property is
       Property : Toolchains_Property;
       Success  : Boolean;
    begin
@@ -300,24 +339,13 @@ package body Toolchains_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Property : constant Toolchains_Property'Class := Get_Property;
       Tools    : constant String := '/' & (-"Build/Settings") & '/';
    begin
       Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
-
-      if Property.Tools_Path /= null
-        and then Property.Compiler_Path /= null
-      then
-         Toolchains.Set_Toolchains_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => Property.Tools_Path.all,
-            Compiler_Search_Path => Property.Compiler_Path.all);
-      else
-         Toolchains.Set_Toolchains_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => "",
-            Compiler_Search_Path => "");
-      end if;
+      --  Load the property after all modules and plug-ins are loaded.
+      Add_Hook (Kernel, "gps_started",
+                Wrapper (On_GPS_Started'Access),
+                Name  => "toolchains_module.gps_started");
    end Register_Module;
 
 end Toolchains_Module;
