@@ -92,6 +92,9 @@ package body Builder_Facility_Module is
    package Combo_Tips_Callback is new Gtk.Handlers.User_Callback
      (Gtkada_Combo_Tool_Button_Record, Gtk.Tooltips.Gtk_Tooltips);
 
+   package Combo_Box_Callback is new Gtk.Handlers.Callback
+     (Gtk_Combo_Box_Record);
+
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
 
@@ -217,6 +220,10 @@ package body Builder_Facility_Module is
    procedure On_Combo_Click
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user clicks on a toolbar combo button.
+
+   procedure On_Mode_Changed
+     (Widget : access Gtk_Combo_Box_Record'Class);
+   --  Called when a user selects a mode from the Mode combo box.
 
    procedure On_Combo_Selection
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
@@ -847,6 +854,19 @@ package body Builder_Facility_Module is
          ": " & Get_Selected_Item (Widget));
    end On_Combo_Selection;
 
+   ---------------------
+   -- On_Mode_Changed --
+   ---------------------
+
+   procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Record'Class)
+   is
+      Mode : constant String := Get_Active_Text (Widget);
+   begin
+      Projects.Registry.Set_Mode_Subdir
+        (Get_Registry (Get_Kernel).all, Get_Mode_Subdir (Mode));
+      Recompute_View (Get_Kernel);
+   end On_Mode_Changed;
+
    ----------
    -- Free --
    ----------
@@ -1284,6 +1304,10 @@ package body Builder_Facility_Module is
             Insert (Get_Toolbar (Get_Kernel),
                     Builder_Module_ID.Modes_Toolbar_Item);
             Show_All (Builder_Module_ID.Modes_Toolbar_Item);
+            Combo_Box_Callback.Connect
+              (Builder_Module_ID.Modes_Combo,
+               Signal_Changed,
+               On_Mode_Changed'Access);
          end if;
 
          --  Now, insert the mode in the combo

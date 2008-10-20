@@ -570,29 +570,38 @@ package body Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean := True;
-      Xrefs_Dirs          : Boolean := True) return String
+      Xrefs_Dirs          : Boolean := False) return String
    is
       function Handle_Subdir (Path : String) return String;
       --  for all directories defined in Path, detect if "From_Subdir" exists,
       --  and return it instead.
+
+      function Get_Subdir return String;
+      --  Return the object subdir that needs to be used, or empty string
+
+      function Get_Subdir return String is
+         Reg : Project_Registry renames
+                 Project_Registry (Get_Registry (Project));
+      begin
+         if Xrefs_Dirs and then Get_Xrefs_Subdir (Reg) /= "" then
+            return Get_Xrefs_Subdir (Reg);
+         else
+            return Get_Mode_Subdir (Reg);
+         end if;
+      end Get_Subdir;
 
       -------------------
       -- Handle_Subdir --
       -------------------
 
       function Handle_Subdir (Path : String) return String is
+         From_Subdir : constant String := Get_Subdir;
       begin
-         if not Xrefs_Dirs
-           or else
-             Get_Xrefs_Subdir (Project_Registry (Get_Registry (Project))) = ""
-         then
+         if From_Subdir = "" then
             return Path;
          end if;
 
          declare
-            From_Subdir : constant String :=
-                            Get_Xrefs_Subdir
-                              (Project_Registry (Get_Registry (Project)));
             Iter        : File_Utils.Path_Iterator;
             Ret         : Unbounded_String := Null_Unbounded_String;
 
@@ -1620,10 +1629,27 @@ package body Projects is
             Exec : constant String := Get_String
              (Name_Id
               (Projects_Table
-                 (Project)(Get_View (Project)).Exec_Directory.Display_Name));
+                (Project)(Get_View (Project)).Exec_Directory.Display_Name));
+            Reg : Project_Registry renames
+                    Project_Registry (Get_Registry (Project));
          begin
             if Exec /= "" then
-               return Name_As_Directory (Exec);
+               if Get_Mode_Subdir (Reg) = "" then
+                  return Name_As_Directory (Exec);
+               else
+                  declare
+                     Dir : constant GNATCOLL.VFS.Virtual_File :=
+                             GNATCOLL.VFS.Create
+                               (Name_As_Directory (Exec) &
+                                Get_Mode_Subdir (Reg));
+                  begin
+                     if Dir.Is_Directory then
+                        return Dir.Full_Name.all;
+                     else
+                        return Name_As_Directory (Exec);
+                     end if;
+                  end;
+               end if;
             else
                return Name_As_Directory
                  (Object_Path (Project, Recursive => False));

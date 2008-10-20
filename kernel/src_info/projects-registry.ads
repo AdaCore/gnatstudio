@@ -111,6 +111,10 @@ package Projects.Registry is
    --  Return the object dir's subdirectory containing the cross reference
    --  files (ali files).
 
+   function Get_Mode_Subdir
+     (Registry : Project_Registry) return String;
+   --  Return the object dir's subdirectory for the current builder mode.
+
    procedure Set_Predefined_Source_Path
      (Registry : in out Project_Registry; Path : String);
    --  Set the predefined source path
@@ -126,6 +130,10 @@ package Projects.Registry is
    procedure Set_Xrefs_Subdir
      (Registry : in out Project_Registry; Subdir : String);
    --  Set the object dirs subdirectory for xrefs.
+
+   procedure Set_Mode_Subdir
+     (Registry : in out Project_Registry; Subdir : String);
+   --  Set the object dirs subdirectory for current build mode.
 
    ----------------------
    -- Loading projects --

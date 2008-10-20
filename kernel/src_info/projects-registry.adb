@@ -184,6 +184,9 @@ package body Projects.Registry is
       Xrefs_Subdir : GNAT.Strings.String_Access;
       --  Object dirs subdirectory containing the cross-refs.
 
+      Mode_Subdir             : GNAT.Strings.String_Access;
+      --  Object dirs subdirectory for current builder mode.
+
       Extensions : Languages_Htable.String_Hash_Table.HTable;
       --  The extensions registered for each language
 
@@ -2397,6 +2400,23 @@ package body Projects.Registry is
       end if;
    end Set_Xrefs_Subdir;
 
+   ---------------------
+   -- Set_Mode_Subdir --
+   ---------------------
+
+   procedure Set_Mode_Subdir
+     (Registry : in out Project_Registry; Subdir : String)
+   is
+   begin
+      if Registry.Data.Mode_Subdir /= null then
+         GNAT.Strings.Free (Registry.Data.Mode_Subdir);
+      end if;
+
+      if Subdir /= "" then
+         Registry.Data.Mode_Subdir := new String'(Subdir);
+      end if;
+   end Set_Mode_Subdir;
+
    ----------------------
    -- Get_Xrefs_Subdir --
    ----------------------
@@ -2410,6 +2430,20 @@ package body Projects.Registry is
 
       return Registry.Data.Xrefs_Subdir.all;
    end Get_Xrefs_Subdir;
+
+   ---------------------
+   -- Get_Mode_Subdir --
+   ---------------------
+
+   function Get_Mode_Subdir
+     (Registry : Project_Registry) return String is
+   begin
+      if Registry.Data.Mode_Subdir = null then
+         return "";
+      end if;
+
+      return Registry.Data.Mode_Subdir.all;
+   end Get_Mode_Subdir;
 
    --------------
    -- Get_Tree --
