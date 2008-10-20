@@ -411,14 +411,20 @@ package body Build_Command_Manager is
       All_Extra_Args : Argument_List_Access;
       Server       : Server_Type;
 
-      procedure Launch_For_Mode (Mode : String; Quiet : Boolean);
+      procedure Launch_For_Mode
+        (Mode   : String;
+         Quiet  : Boolean;
+         Shadow : Boolean);
       --  Compute and launch the command, for the given mode.
 
       ---------------------
       -- Launch_For_Mode --
       ---------------------
 
-      procedure Launch_For_Mode (Mode : String; Quiet : Boolean) is
+      procedure Launch_For_Mode
+        (Mode   : String;
+         Quiet  : Boolean;
+         Shadow : Boolean) is
 
          Subdir : constant String := Get_Mode_Subdir (Mode);
 
@@ -453,12 +459,15 @@ package body Build_Command_Manager is
 
          Server := Get_Server (T);
 
-         if Dialog = Force_Dialog
-           or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
-                     and then Get_Properties (T).Launch_Mode
-                     /= Manually_With_No_Dialog)
-           or else (Dialog = Default and then
-                       Get_Properties (T).Launch_Mode = Manually_With_Dialog)
+         if (not Shadow)
+           and then
+            (Dialog = Force_Dialog
+              or else (Dialog = Force_Dialog_Unless_Disabled_By_Target
+                        and then Get_Properties (T).Launch_Mode
+                        /= Manually_With_No_Dialog)
+              or else (Dialog = Default
+                        and then Get_Properties (T).Launch_Mode
+                        = Manually_With_Dialog))
          then
             --  Use the single target dialog to get the unexpanded command line
             Single_Target_Dialog
@@ -550,7 +559,10 @@ package body Build_Command_Manager is
       begin
          for J in Modes'Range loop
             --  All modes after Modes'First are Ninja modes
-            Launch_For_Mode (Modes (J).all, Quiet or else J > Modes'First);
+            Launch_For_Mode
+              (Modes (J).all,
+               Quiet or else J > Modes'First,
+               J > Modes'First);
          end loop;
 
          Free (Modes);
