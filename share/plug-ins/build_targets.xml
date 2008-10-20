@@ -292,6 +292,7 @@
 </target>
 <target model="gprclean" category="C_lean" name="Clean _Project">
     <in-toolbar>FALSE</in-toolbar>
+    <in-menu>FALSE</in-menu>
     <icon>gps-clean</icon>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
@@ -302,8 +303,8 @@
        <arg>%X</arg>
     </command-line>
 </target>
-<!-- This is an empty target using the Custom model  -->
 
+<!-- This is an empty target using the Custom model  -->
 <target model="custom" category="_Project" name="Custom _Build...">
     <in-toolbar>FALSE</in-toolbar>
     <icon>gps-custom-build</icon>
@@ -311,4 +312,5 @@
     <read-only>TRUE</read-only>
     <command-line />
 </target>
+
 </GPS>
