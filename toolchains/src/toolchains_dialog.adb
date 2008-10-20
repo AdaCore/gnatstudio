@@ -20,8 +20,8 @@
 with System.OS_Lib;             use System.OS_Lib;
 
 with Glib;                      use Glib;
-with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
@@ -65,6 +65,11 @@ package body Toolchains_Dialog is
       D      : Dialog);
    --  Called when the 'Activate' check button is toggled
 
+   procedure On_Changed
+     (GEntry : access Gtk_Widget_Record'Class;
+      D      : Dialog);
+   --  Called when an entry changed.
+
    procedure On_Browse
      (Button : access Gtk_Widget_Record'Class;
       Data   : Entry_Callback_Data);
@@ -81,7 +86,7 @@ package body Toolchains_Dialog is
    begin
       D.Active := Get_Active (Gtk_Check_Button (Toggle));
       Set_Sensitive (D.Frame, D.Active);
-
+      On_Changed (Toggle, D);
    exception
       when E : others =>
          Trace (Exception_Handle, E);
@@ -102,6 +107,26 @@ package body Toolchains_Dialog is
       when E : others =>
          Trace (Exception_Handle, E);
    end Xrefs_Toggled;
+
+   ----------------
+   -- On_Changed --
+   ----------------
+
+   procedure On_Changed
+     (GEntry : access Gtk_Widget_Record'Class;
+      D      : Dialog)
+   is
+      pragma Unreferenced (GEntry);
+   begin
+      --  Allow OK if
+      if D.Active
+        and then Get_Text (D.Tools_Entry) = Get_Text (D.Compiler_Entry)
+      then
+         Set_Sensitive (D.OK_Button, False);
+      else
+         Set_Sensitive (D.OK_Button, True);
+      end if;
+   end On_Changed;
 
    ---------------
    -- On_Browse --
@@ -205,8 +230,10 @@ package body Toolchains_Dialog is
          Parent => GPS.Kernel.Get_Main_Window (Kernel),
          Flags  => Modal);
 
-      Dead := Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK);
-      Dead := Widget.Add_Button (Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
+      Widget.OK_Button :=
+        Gtk_Button (Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK));
+      Dead :=
+        Widget.Add_Button (Gtk.Stock.Stock_Cancel, Gtk_Response_Cancel);
 
       Gtk_New (Check, -"Activate multiple toolchains setup");
       Show_All (Check);
@@ -271,6 +298,11 @@ package body Toolchains_Dialog is
            "defining a tools path will make all actions enumerated above " &
            "execute locally using the tools path."));
 
+      Dialog_Callback.Connect
+        (Widget.Compiler_Entry, Signal_Changed, On_Changed'Access, Widget);
+      Dialog_Callback.Connect
+        (Widget.Tools_Entry, Signal_Changed, On_Changed'Access, Widget);
+
       for J in 1 .. 2 loop
          Gtk_New (Browse);
          Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
@@ -294,7 +326,7 @@ package body Toolchains_Dialog is
             Entry_Callback.Connect
               (Browse, Signal_Clicked,
                On_Browse'Access,
-               (E => Widget.Compiler_Entry,
+               (E => Widget.Tools_Entry,
                 D => Widget));
          end if;
       end loop;

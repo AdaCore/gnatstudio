@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Button;  use Gtk.Button;
 with Gtk.Dialog;  use Gtk.Dialog;
 with Gtk.Frame;   use Gtk.Frame;
 with Gtk.GEntry;  use Gtk.GEntry;
@@ -56,6 +57,7 @@ private
 
    type Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
       Kernel         : Kernel_Handle;
+      OK_Button      : Gtk_Button;
       Active         : Boolean;
       Xrefs_Subdir   : Boolean;
       Frame          : Gtk.Frame.Gtk_Frame;
