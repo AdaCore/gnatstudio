@@ -19,20 +19,15 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
-with Ada.Strings;               use Ada.Strings;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -59,26 +54,20 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Location_View;         use GPS.Location_View;
 
 with Projects;                  use Projects;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Language_Handlers;         use Language_Handlers;
-with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 
 with Basic_Types;
-with OS_Utils;                  use OS_Utils;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
-with Commands.Builder;          use Commands.Builder;
-
-with UTF8_Utils;                use UTF8_Utils;
 
 with Commands.Generic_Asynchronous;
 
@@ -105,10 +94,6 @@ package body Builder_Module is
    --  Prefix used in accel path for items defined in this module
 
    Custom_Make_Suffix  : constant String := "Custom...";
-
-   Unique_Compile : aliased constant String := "-u";
-   Follow_Links   : aliased constant String := "-eL";
-   --  ??? Shouldn't have hard-coded options
 
    Sources_Load_Chunk : constant Integer := 1;
    --  The size of the chunk of files loaded by the xrefs loader.
@@ -157,18 +142,6 @@ package body Builder_Module is
    --  Data stored with the module id
 
    Builder_Module_ID : Builder_Module_ID_Access;
-
-   type Files_Callback_Data is new Callback_Data_Record with record
-      Files  : File_Array_Access;
-
-      Buffer : Unbounded_String;
-      --  This field is used to store uncomplete lines got during the
-      --  processing of the compilation output.
-   end record;
-   type Files_Callback_Data_Access is access all Files_Callback_Data'Class;
-   overriding procedure Destroy (Data : in out Files_Callback_Data);
-   --  Callback data used for the list of files that need to be freed at the
-   --  end of a compilation.
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
@@ -230,49 +203,6 @@ package body Builder_Module is
    procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar
 
-   type Command_Syntax is (GNAT_Syntax, GPRmake_Syntax, GPRbuild_Syntax);
-   --  Type used in Scenario_Variables_Cmd_Line to determine the command line
-   --  syntax used when setting variables.
-   --  GNAT_Syntax means use the GNAT project file syntax (-XVAR=value)
-   --  Make_Syntax means use the gprmake syntax.
-
-   function Compute_Arguments
-     (Kernel         : Kernel_Handle;
-      Project        : Project_Type;
-      Path           : String;
-      File           : Virtual_File;
-      Syntax         : Command_Syntax;
-      Compile_Only   : Boolean := False;
-      Unique_Project : Boolean := False;
-      Extra_Args     : Argument_List_Access := null)
-      return Argument_List_Access;
-   --  Compute the make arguments compatible with gnatmake/gprmake
-   --  given a Project and File name.
-   --  It is the responsibility of the caller to free the returned object.
-   --
-   --  If File is No_File, then all files of the project will be recompiled.
-   --  If Compile_Only is True, then use compile rather than build syntax.
-   --
-   --  If Path is not empty, use Path as project path.
-   --
-   --  If Extra_Args is not null, then arguments will be copied just before the
-   --  file name in the argument list.
-
-   procedure Add_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : String_List);
-   --  Add new entries for all the main subprograms of Project.
-   --  If Menu is null, a new one is created if there are any entries
-
-   procedure Add_Build_Menu
-     (Menu    : in out Gtk_Menu;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Library : String);
-   --  Add new entry for a library project
-
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
@@ -280,13 +210,6 @@ package body Builder_Module is
       Mains        : Argument_List;
       Set_Shortcut : Boolean);
    --  Same as Add_Build_Menu, but for the Run menu
-
-   type Builder_Contextual is new Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
-     (Builder : access Builder_Contextual;
-      Object  : access GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Run_Contextual is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
@@ -296,43 +219,9 @@ package body Builder_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
 
-   procedure Parse_Compiler_Output (Data : Process_Data; Output : String);
-   --  Called whenever new output from the compiler is available
-
-   procedure Free_Temporary_Files (Data : Process_Data; Status : Integer);
-   --  Free the temporary files that were created for the compilation. The
-   --  list is stored in Data.Callback_Data.
-
    --------------------
    -- Menu Callbacks --
    --------------------
-
-   procedure On_Build
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Make menu.
-   --  If Data contains a null file name, then the current file is compiled.
-
-   procedure On_Build_Library
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  To build a library project
-
-   procedure On_Build
-     (Kernel      : Kernel_Handle;
-      File        : Virtual_File;
-      Project     : Project_Type;
-      Main_Units  : Boolean := False;
-      Library     : Boolean := False;
-      Synchronous : Boolean := False;
-      Extra_Args  : Argument_List_Access := null);
-   --  Same as On_Build.
-   --  If Synchronous is True, this subprogram will block GPS until the
-   --  compilation is finished executing.
-   --  If Project is No_Project and File is VFS.No_File, the current file is
-   --  build.
-   --  If Project is not No_Project and File is VFS.No_File, either
-   --  the main units of Project are built (Main_Units = True), or all the
-   --  files in the project are built.
-   --  Extra_Args will be added at the end of the argument list.
 
    procedure On_Compute_Xref
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -381,15 +270,6 @@ package body Builder_Module is
       Command : String);
    --  Command handler for the "compile" command
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Data : in out Files_Callback_Data) is
-   begin
-      Unchecked_Free (Data.Files);
-   end Destroy;
-
    --------------------------
    -- Is_Dynamic_Menu_Item --
    --------------------------
@@ -399,134 +279,6 @@ package body Builder_Module is
    begin
       return W'Tag = Dynamic_Menu_Item_Record'Tag;
    end Is_Dynamic_Menu_Item;
-
-   -----------------------
-   -- Compute_Arguments --
-   -----------------------
-
-   function Compute_Arguments
-     (Kernel         : Kernel_Handle;
-      Project        : Project_Type;
-      Path           : String;
-      File           : Virtual_File;
-      Syntax         : Command_Syntax;
-      Compile_Only   : Boolean := False;
-      Unique_Project : Boolean := False;
-      Extra_Args     : Argument_List_Access := null)
-      return Argument_List_Access
-   is
-      Project_Str : GNAT.Strings.String_Access;
-      Result      : Argument_List_Access;
-      Vars        : Argument_List_Access;
-
-   begin
-      --  Convert path to Build_Server style
-
-      if Path = "" then
-         Project_Str := new String'
-           (To_Remote (Full_Name (Project_Path (Project)).all,
-                       Build_Server));
-      else
-         Project_Str := new String'(To_Remote (Path, Build_Server));
-      end if;
-
-      --  -XVAR1=value1 [-c] -Pproject [-u] main...
-
-      Vars := Argument_String_To_List
-        (Scenario_Variables_Cmd_Line (Kernel, "-X"));
-
-      case Syntax is
-         when GPRbuild_Syntax | GNAT_Syntax =>
-            if not Trusted_Mode.Get_Pref then
-               declare
-                  Old_Vars : Argument_List_Access := Vars;
-               begin
-                  Vars := new Argument_List'
-                    (new String'(Follow_Links) &
-                     Vars.all);
-                  Basic_Types.Unchecked_Free (Old_Vars);
-               end;
-            end if;
-
-            if Syntax = GPRbuild_Syntax then
-               declare
-                  Old_Vars : Argument_List_Access;
-                  Gnatmake : constant String :=
-                               Get_Attribute_Value
-                                 (Get_Project (Kernel),
-                                  Compiler_Command_Attribute,
-                                  Index => "Ada");
-                  First    : Natural := Gnatmake'First;
-
-               begin
-                  if Gnatmake'Length > 9
-                    and then Gnatmake
-                      (Gnatmake'Last - 8 .. Gnatmake'Last) = "-gnatmake"
-                  then
-                     Old_Vars := Vars;
-
-                     for J in reverse Gnatmake'First .. Gnatmake'Last - 9 loop
-                        if Is_Directory_Separator (Gnatmake (J)) then
-                           First := J + 1;
-                           exit;
-                        end if;
-                     end loop;
-
-                     Vars := new Argument_List'
-                       (new String'
-                          ("--target=" &
-                           Gnatmake (First .. Gnatmake'Last - 9)) &
-                        Vars.all);
-                     Basic_Types.Unchecked_Free (Old_Vars);
-                  end if;
-               end;
-            end if;
-
-         when GPRmake_Syntax =>
-            null;
-      end case;
-
-      declare
-         R_Tmp : Argument_List (1 .. 5);
-         K     : Natural := 0;
-      begin
-         if Compile_Only then
-            K := K + 1;
-            R_Tmp (K) := new String'("-c");
-            K := K + 1;
-            R_Tmp (K) := new String'(Unique_Compile);
-         end if;
-
-         K := K + 1;
-         R_Tmp (K) := new String'("-P" & Project_Str.all);
-
-         if Extra_Args /= null then
-            for J in Extra_Args'Range loop
-               K := K + 1;
-               R_Tmp (K) := new String'(Extra_Args (J).all);
-            end loop;
-         end if;
-
-         if File = GNATCOLL.VFS.No_File then
-            if Unique_Project then
-               K := K + 1;
-               R_Tmp (K) := new String'(Unique_Compile);
-            end if;
-         else
-            K := K + 1;
-            R_Tmp (K) := new String'(Base_Name (File));
-         end if;
-
-         K := K + 1;
-         R_Tmp (K) := new String'("-d");
-
-         Result := new Argument_List'(R_Tmp (1 .. K) & Vars.all);
-      end;
-
-      Basic_Types.Unchecked_Free (Vars);
-      Free (Project_Str);
-      return Result;
-   end Compute_Arguments;
 
    ----------
    -- Free --
@@ -549,309 +301,6 @@ package body Builder_Module is
          Free (Ar);
       end if;
    end Free;
-
-   ---------------------------
-   -- Parse_Compiler_Output --
-   ---------------------------
-
-   procedure Parse_Compiler_Output (Data : Process_Data; Output : String) is
-      Last_EOL : Natural := 1;
-      Str      : GNAT.OS_Lib.String_Access;
-   begin
-      if not Data.Process_Died then
-         Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
-
-         --  In case we did not find any LF in the output, we'll just append it
-         --  in the current buffer.
-
-         if Last_EOL = 0 then
-            Append
-              (Files_Callback_Data (Data.Callback_Data.all).Buffer, Output);
-            return;
-         end if;
-
-      else
-         if Output'Length > 0 then
-            Last_EOL := Output'Length + 1;
-         end if;
-      end if;
-
-      --  Collect the relevant portion of the output
-
-      if Output'Length > 0 then
-         Str := new String'
-           (To_String (Files_Callback_Data (Data.Callback_Data.all).Buffer)
-            & Output (Output'First .. Last_EOL - 1) & ASCII.LF);
-
-         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           To_Unbounded_String (Output (Last_EOL + 1 .. Output'Last));
-
-      elsif Data.Process_Died then
-         Str := new String'
-           (To_String (Files_Callback_Data (Data.Callback_Data.all).Buffer)
-            & ASCII.LF);
-         Files_Callback_Data (Data.Callback_Data.all).Buffer :=
-           Null_Unbounded_String;
-      else
-         return;
-      end if;
-
-      --  If we reach this point, this means we have collected some output to
-      --  parse. In this case, verify that it is proper UTF-8 before
-      --  transmitting it to the rest of GPS.
-
-      --  It is hard to determine which encoding the compiler result is,
-      --  especially given that we are supporting third-party compilers, build
-      --  scripts, etc. Therefore, we call Unknown_To_UTF8.
-
-      declare
-         Output : Basic_Types.Unchecked_String_Access;
-         Len    : Natural;
-         Valid  : Boolean;
-
-         use type Basic_Types.Unchecked_String_Access;
-
-      begin
-         Unknown_To_UTF8 (Str.all, Output, Len, Valid);
-
-         if Valid then
-            if Output = null then
-               Process_Builder_Output
-                 (Kernel  => Data.Kernel,
-                  Command => Data.Command,
-                  Output  => Str.all,
-                  Quiet   => False);
-
-            else
-               Process_Builder_Output
-                 (Kernel  => Data.Kernel,
-                  Command => Data.Command,
-                  Output  => Output (1 .. Len),
-                  Quiet   => False);
-            end if;
-         else
-            Console.Insert
-              (Data.Kernel,
-               -"Could not convert compiler output to UTF8",
-               Mode => Console.Error);
-         end if;
-
-         Free (Str);
-         Basic_Types.Free (Output);
-      end;
-   end Parse_Compiler_Output;
-
-   --------------------------
-   -- Free_Temporary_Files --
-   --------------------------
-
-   procedure Free_Temporary_Files
-     (Data : Process_Data; Status : Integer)
-   is
-      Files   : constant Files_Callback_Data_Access :=
-                  Files_Callback_Data_Access (Data.Callback_Data);
-      Success : Boolean;
-
-   begin
-      if Files /= null and then Files.Files /= null then
-         for F in Files.Files'Range loop
-            if Is_Regular_File (Files.Files (F)) then
-               Trace (Me, "Deleting temporary file "
-                      & Full_Name (Files.Files (F)).all);
-               Delete (Files.Files (F), Success);
-            end if;
-         end loop;
-      end if;
-
-      --  Raise the messages window is compilation was unsuccessful
-      --  and no error was parsed. See D914-005
-
-      if Category_Count (Data.Kernel, Error_Category) = 0
-        and then Status /= 0
-      then
-         Console.Raise_Console (Data.Kernel);
-      end if;
-
-      --  ??? should also pass the Status value to Compilation_Finished
-      --  and to the corresponding hook
-
-      Compilation_Finished (Data.Kernel, Error_Category);
-   end Free_Temporary_Files;
-
-   --------------
-   -- On_Build --
-   --------------
-
-   procedure On_Build
-     (Kernel      : Kernel_Handle;
-      File        : Virtual_File;
-      Project     : Project_Type;
-      Main_Units  : Boolean := False;
-      Library     : Boolean := False;
-      Synchronous : Boolean := False;
-      Extra_Args  : Argument_List_Access := null)
-   is
-      Old_Dir     : constant Dir_Name_Str := Get_Current_Dir;
-      Cmd         : OS_Lib.String_Access;
-      Args        : Argument_List_Access;
-
-      Context     : Selection_Context;
-      Prj         : Project_Type;
-      Langs       : Argument_List :=
-                      Get_Languages (Get_Project (Kernel), Recursive => True);
-      Syntax      : Command_Syntax;
-      Success     : Boolean;
-      Common_Args : Argument_List_Access;
-
-   begin
-      if Langs'Length = 0 then
-         return;
-      end if;
-
-      if Extra_Args /= null then
-         Common_Args := new Argument_List'(Extra_Args.all);
-      else
-         Common_Args := new Argument_List (1 .. 0);
-      end if;
-
-      for F in Langs'Range loop
-         To_Lower (Langs (F).all);
-      end loop;
-
-      if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
-         Syntax := GNAT_Syntax;
-
-      elsif Multi_Language_Build.Get_Pref
-        and then Multi_Language_Builder.Get_Pref = Gprmake
-      then
-         Syntax := GPRmake_Syntax;
-
-      elsif Multi_Language_Build.Get_Pref
-        and then Multi_Language_Builder.Get_Pref = Gprbuild
-      then
-         Syntax := GPRbuild_Syntax;
-
-      else
-         Syntax := GPRbuild_Syntax;
-
-         for J in Langs'Range loop
-            if Langs (J).all = "ada" then
-               Syntax := GNAT_Syntax;
-
-               exit;
-            end if;
-         end loop;
-      end if;
-
-      Free (Langs);
-
-      --  If no file was specified in data, simply compile the current file
-
-      if File = GNATCOLL.VFS.No_File and then Project = No_Project then
-         Context := Get_Current_Context (Kernel);
-
-         if Has_File_Information (Context) then
-            declare
-               F : constant Virtual_File := File_Information (Context);
-
-            begin
-               if Has_Directory_Information (Context) then
-                  Change_Dir (Directory_Information (Context));
-               end if;
-
-               Prj := Extending_Project
-                 (Get_Project_From_File (Get_Registry (Kernel).all, F),
-                  Recurse => True);
-               Args := Compute_Arguments (Kernel, Prj, "", F, Syntax);
-            end;
-
-         --  There is no current file, so we can't compile anything
-
-         else
-            Console.Insert
-              (Kernel, -"No file selected, cannot build",
-               Mode => Console.Error);
-            return;
-         end if;
-
-      else
-         Prj := Extending_Project (Project, Recurse => True);
-         Args := Compute_Arguments
-           (Kernel, Prj, "", File, Syntax,
-            Unique_Project => not Main_Units and not Library,
-            Extra_Args     => Common_Args);
-         Change_Dir (Dir_Name (Project_Path (Project)).all);
-      end if;
-
-      case Syntax is
-         when GNAT_Syntax =>
-            Cmd := new String'
-              (Get_Attribute_Value
-                 (Prj, Compiler_Command_Attribute,
-                  Default => "gnatmake", Index => "ada"));
-
-         when GPRmake_Syntax =>
-            Cmd := new String'("gprmake");
-
-         when GPRbuild_Syntax =>
-            Cmd := new String'("gprbuild");
-      end case;
-
-      if Compilation_Starting (Kernel, Error_Category, Quiet => False) then
-         Launch_Process
-           (Kernel,
-            Command              => Cmd.all,
-            Arguments            => Args.all,
-            Server               => Build_Server,
-            Console              => Get_Console (Kernel),
-            Show_Command         => True,
-            Show_Output          => False,
-            Callback_Data        => new Files_Callback_Data,
-            Success              => Success,
-            Line_By_Line         => False,
-            Callback             => Parse_Compiler_Output'Access,
-            Exit_Cb              => Free_Temporary_Files'Access,
-            Show_In_Task_Manager => True,
-            Synchronous          => Synchronous,
-            Show_Exit_Status     => True);
-      end if;
-
-      Free (Cmd);
-      Free (Args);
-      Basic_Types.Unchecked_Free (Common_Args);
-
-      Change_Dir (Old_Dir);
-
-   exception
-      when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command", Mode => Console.Error);
-         Change_Dir (Old_Dir);
-         Free (Cmd);
-         Free (Args);
-
-      when E : others =>
-         Trace (Exception_Handle, E);
-         Change_Dir (Old_Dir);
-   end On_Build;
-
-   procedure On_Build
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
-   begin
-      On_Build
-        (Kernel_Handle (Kernel), Data.File,
-         Data.Project, Synchronous => False);
-   end On_Build;
-
-   ----------------------
-   -- On_Build_Library --
-   ----------------------
-
-   procedure On_Build_Library
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
-   begin
-      On_Build
-        (Kernel_Handle (Kernel), No_File, Data.Project, Library => True);
-   end On_Build_Library;
 
    ---------------------
    -- Compile_Command --
@@ -1296,82 +745,6 @@ package body Builder_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Tools_Interrupt;
 
-   --------------------
-   -- Add_Build_Menu --
-   --------------------
-
-   procedure Add_Build_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List)
-   is
-      Mitem : Dynamic_Menu_Item;
-      Main  : Virtual_File;
-      Tmp   : Boolean;
-      pragma Unreferenced (Tmp);
-
-   begin
-      if Menu = null then
-         Gtk_New (Menu);
-      end if;
-
-      --  Accelerators were removed when the menu items were destroyed (just
-      --  before the update)
-
-      for M in reverse Mains'Range loop
-         if Mains (M).all /= "" then
-            Mitem := new Dynamic_Menu_Item_Record;
-            Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
-            Prepend (Menu, Mitem);
-
-            --  If the name of the main is not a source file, we might not be
-            --  able to resolve it.
-
-            Main := Create (Mains (M).all, Project);
-            if Main = GNATCOLL.VFS.No_File then
-               Main := Create_From_Base
-                 (Executables_Directory (Project) & Mains (M).all);
-            end if;
-
-            File_Project_Cb.Object_Connect
-              (Mitem, Signal_Activate, On_Build'Access,
-               Slot_Object => Kernel,
-               User_Data   => File_Project_Record'
-                 (Project => Project,
-                  File    => Main));
-         end if;
-      end loop;
-   end Add_Build_Menu;
-
-   --------------------
-   -- Add_Build_Menu --
-   --------------------
-
-   procedure Add_Build_Menu
-     (Menu    : in out Gtk_Menu;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Library : String)
-   is
-      Mitem : Dynamic_Menu_Item;
-   begin
-      if Menu = null then
-         Gtk_New (Menu);
-      end if;
-
-      Mitem := new Dynamic_Menu_Item_Record;
-      Gtk.Menu_Item.Initialize (Mitem, Library);
-      Append (Menu, Mitem);
-
-      File_Project_Cb.Object_Connect
-        (Mitem, Signal_Activate, On_Build_Library'Access,
-         Slot_Object => Kernel,
-         User_Data   => File_Project_Record'
-           (Project => Project,
-            File    => No_File));
-   end Add_Build_Menu;
-
    ------------------
    -- Add_Run_Menu --
    ------------------
@@ -1558,50 +931,6 @@ package body Builder_Module is
    --------------------
 
    overriding procedure Append_To_Menu
-     (Builder : access Builder_Contextual;
-      Object  : access GObject_Record'Class;
-      Context : Selection_Context;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object, Builder);
-      --  The filter guarantees we are on a File_Selection_Context
-
-      Library_Name : constant String :=
-                       Get_Attribute_Value
-                         (Project_Information (Context),
-                          Attribute => Library_Name_Attribute);
-      Mains        : Argument_List :=
-                       Get_Attribute_Value
-                         (Project_Information (Context),
-                          Attribute => Main_Attribute);
-      M            : Gtk_Menu := Gtk_Menu (Menu);
-
-   begin
-      if Mains'Length /= 0 then
-         Add_Build_Menu
-           (Menu         => M,
-            Project      => Project_Information (Context),
-            Kernel       => Get_Kernel (Context),
-            Mains        => Mains);
-      end if;
-      Free (Mains);
-
-      --  Check for library
-
-      if Library_Name /= "" then
-         Add_Build_Menu
-           (Menu    => M,
-            Project => Project_Information (Context),
-            Kernel  => Get_Kernel (Context),
-            Library => Library_Name);
-      end if;
-   end Append_To_Menu;
-
-   --------------------
-   -- Append_To_Menu --
-   --------------------
-
-   overriding procedure Append_To_Menu
      (Factory : access Run_Contextual;
       Object  : access GObject_Record'Class;
       Context : Selection_Context;
@@ -1647,11 +976,6 @@ package body Builder_Module is
          Module_Name => "Builder",
          Priority    => Default_Priority);
 
-      Register_Contextual_Submenu
-        (Kernel,
-         Name    => "Build",
-         Filter  => Lookup_Filter (Kernel, "Project only"),
-         Submenu => new Builder_Contextual);
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Run",
