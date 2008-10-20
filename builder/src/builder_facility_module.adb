@@ -861,10 +861,14 @@ package body Builder_Facility_Module is
    procedure On_Mode_Changed (Widget : access Gtk_Combo_Box_Record'Class)
    is
       Mode : constant String := Get_Active_Text (Widget);
+      Reg  : Project_Registry renames
+               Project_Registry (Get_Registry (Get_Kernel).all);
    begin
-      Projects.Registry.Set_Mode_Subdir
-        (Get_Registry (Get_Kernel).all, Get_Mode_Subdir (Mode));
-      Recompute_View (Get_Kernel);
+      if Projects.Registry.Get_Mode_Subdir (Reg) /= Get_Mode_Subdir (Mode) then
+         Projects.Registry.Set_Mode_Subdir
+           (Reg, Get_Mode_Subdir (Mode));
+         Recompute_View (Get_Kernel);
+      end if;
    end On_Mode_Changed;
 
    ----------
