@@ -30,12 +30,14 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Handlers;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 
 with Projects;                  use Projects;
@@ -53,6 +55,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -74,6 +77,14 @@ package body Builder_Facility_Module is
    Modes_Trace : constant Debug_Handle :=
      Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
+   Build_Main_Target    : constant Unbounded_String :=
+     To_Unbounded_String ("Build Main");
+   Clean_Project_Target : constant Unbounded_String :=
+     To_Unbounded_String ("Clean Project");
+   Build_All_Target : constant Unbounded_String :=
+     To_Unbounded_String ("Build All");
+   --  These target names must be kept in sync with build_targets.xml.
+
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
@@ -84,7 +95,7 @@ package body Builder_Facility_Module is
    end record;
 
    package String_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Tool_Button_Record, Target_And_Main);
+     (Gtk_Widget_Record, Target_And_Main);
 
    package Combo_Callback is new Gtk.Handlers.Callback
      (Gtkada_Combo_Tool_Button_Record);
@@ -159,6 +170,13 @@ package body Builder_Facility_Module is
 
    Builder_Module_ID : Builder_Module_ID_Access;
 
+   type Builder_Contextual is new Submenu_Factory_Record with null record;
+   overriding procedure Append_To_Menu
+     (Builder : access Builder_Contextual;
+      Object  : access GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -211,8 +229,8 @@ package body Builder_Facility_Module is
    --  From_User indicates whether the target is loaded from the user saved
    --  file.
 
-   procedure On_Button_Click
-     (Widget : access Gtk_Tool_Button_Record'Class;
+   procedure On_Button_Or_Menu_Click
+     (Widget : access Gtk_Widget_Record'Class;
       Data   : Target_And_Main);
    --  Called when a user clicks on a toolbar button.
    --  Name is the name of the target corresponding to that button.
@@ -283,6 +301,119 @@ package body Builder_Facility_Module is
    procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
    --  XML format.
+
+   type Dynamic_Menu_Item_Record is new Gtk_Menu_Item_Record with null record;
+   type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
+   --  So that items created for the dynamic Make and Run menus have a special
+   --  type, and we only remove these when refreshing the menu
+
+   procedure Add_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Type;
+      Kernel       : access Kernel_Handle_Record'Class);
+   --  Add new entries for all the main subprograms of Project and for
+   --  the "Clean" item.
+
+   --------------------
+   -- Add_Build_Menu --
+   --------------------
+
+   procedure Add_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Type;
+      Kernel       : access Kernel_Handle_Record'Class)
+   is
+      Mitem : Dynamic_Menu_Item;
+      Tmp   : Boolean;
+      pragma Unreferenced (Tmp);
+
+      Mains : Argument_List :=
+        Get_Attribute_Value
+          (Project,
+           Attribute => Main_Attribute);
+   begin
+      if Menu = null then
+         Gtk_New (Menu);
+      end if;
+
+      --  Add "Clean" item.
+
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, "Clean");
+      Prepend (Menu, Mitem);
+
+      String_Callback.Connect
+        (Mitem, Signal_Activate,
+         On_Button_Or_Menu_Click'Access,
+         (Clean_Project_Target,
+          To_Unbounded_String ("")));
+
+      --  Add "Build all" item.
+
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, "Build all");
+      Prepend (Menu, Mitem);
+
+      String_Callback.Connect
+        (Mitem, Signal_Activate,
+         On_Button_Or_Menu_Click'Access,
+         (Build_All_Target,
+          To_Unbounded_String ("")));
+
+      --  Add items for the mains
+
+      for M in reverse Mains'Range loop
+         if Mains (M).all /= "" then
+            Mitem := new Dynamic_Menu_Item_Record;
+            Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
+            Prepend (Menu, Mitem);
+
+            String_Callback.Connect
+              (Mitem, Signal_Activate,
+               On_Button_Or_Menu_Click'Access,
+               (Build_Main_Target,
+                To_Unbounded_String (Mains (M).all)));
+         end if;
+      end loop;
+
+      Free (Mains);
+   end Add_Build_Menu;
+
+   --------------------
+   -- Append_To_Menu --
+   --------------------
+
+   overriding procedure Append_To_Menu
+     (Builder : access Builder_Contextual;
+      Object  : access GObject_Record'Class;
+      Context : Selection_Context;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object, Builder);
+      --  The filter guarantees we are on a File_Selection_Context
+
+--        Library_Name : constant String :=
+--                         Get_Attribute_Value
+--                           (Project_Information (Context),
+--                            Attribute => Library_Name_Attribute);
+      M            : Gtk_Menu := Gtk_Menu (Menu);
+
+   begin
+      Add_Build_Menu
+        (Menu         => M,
+         Project      => Project_Information (Context),
+         Kernel       => Get_Kernel (Context));
+
+      --  Check for library
+
+--        if Library_Name /= "" then
+--           Add_Build_Menu
+--             (Menu    => M,
+--              Project => Project_Information (Context),
+--              Kernel  => Get_Kernel (Context),
+--              Library => Library_Name);
+--        end if;
+   end Append_To_Menu;
 
    ---------------
    -- Get_Mains --
@@ -791,12 +922,12 @@ package body Builder_Facility_Module is
       Builder_Module_ID.Buttons.Clear;
    end Clear_Toolbar_Buttons;
 
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
+   -----------------------------
+   -- On_Button_Or_Menu_Click --
+   -----------------------------
 
-   procedure On_Button_Click
-     (Widget : access Gtk_Tool_Button_Record'Class;
+   procedure On_Button_Or_Menu_Click
+     (Widget : access Gtk_Widget_Record'Class;
       Data   : Target_And_Main)
    is
       pragma Unreferenced (Widget);
@@ -810,7 +941,7 @@ package body Builder_Facility_Module is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-   end On_Button_Click;
+   end On_Button_Or_Menu_Click;
 
    --------------------
    -- On_Combo_Click --
@@ -920,7 +1051,7 @@ package body Builder_Facility_Module is
 
                String_Callback.Connect
                  (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
-                  On_Button_Click'Access,
+                  On_Button_Or_Menu_Click'Access,
                   (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
             end;
@@ -1465,6 +1596,12 @@ package body Builder_Facility_Module is
          Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Modes", "",
                         On_Modes_Manager'Access);
       end if;
+
+      Register_Contextual_Submenu
+        (Kernel,
+         Name    => "Build",
+         Filter  => Lookup_Filter (Kernel, "Project only"),
+         Submenu => new Builder_Contextual);
 
       --  Connect to the File_Saved_Hook
       Add_Hook (Kernel, File_Saved_Hook,
