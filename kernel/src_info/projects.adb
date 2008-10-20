@@ -622,8 +622,8 @@ package body Projects is
                   if Subdir.Is_Directory then
                      Append (Ret, Subdir.Full_Name.all);
                   else
-                     if Active (Me) then
-                        Trace (Me, "Object_Path: no subdir " & From_Subdir &
+                     if Active (Debug) then
+                        Trace (Debug, "Object_Path: no subdir " & From_Subdir &
                                " in " & Subdir.Full_Name.all);
                      end if;
 
