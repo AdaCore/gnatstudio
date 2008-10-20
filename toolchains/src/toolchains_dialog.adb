@@ -269,13 +269,13 @@ package body Toolchains_Dialog is
            ASCII.LF &
            "To compile your project with a specific version of a compiler," &
            " please choose its bin directory here." &
-           ASCII.LF & ASCII.LF &
-           "Note concerning the interraction with the remote mode:" &
+           ASCII.LF &
+           "This path should be different from the tools path." & ASCII.LF &
+           "Note concerning the interaction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
            "this path will be ignored, and the regular server's search path " &
-           "will be used. However, actions executed using the Tools path " &
-           "will be executed locally."));
+           "will be used."));
 
       Gtk_New (Label, -"Tools path");
       Set_Alignment (Label, 1.0, 0.5);
@@ -291,12 +291,13 @@ package body Toolchains_Dialog is
          -("This path will be used to spawn all actions not related to code" &
            " generation. These actions are (the list is not exclusive)" &
            " gnatcheck, gnatmetrics, cross-reference generation." &
-           ASCII.LF & ASCII.LF &
+           ASCII.LF &
+           "This path should be different from the compiler path." & ASCII.LF &
            "Note concerning the interaction with the remote mode:" &
            ASCII.LF &
            "In case you have defined a build server for your project, then " &
            "defining a tools path will make all actions enumerated above " &
-           "execute locally using the tools path."));
+           "execute remotely using the tools path."));
 
       Dialog_Callback.Connect
         (Widget.Compiler_Entry, Signal_Changed, On_Changed'Access, Widget);
