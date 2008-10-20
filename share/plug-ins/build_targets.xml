@@ -290,7 +290,18 @@
        <arg>%X</arg>
     </command-line>
 </target>
-
+<target model="gprclean" category="C_lean" name="Clean _Project">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gps-clean</icon>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <command-line>
+       <arg>%gprclean</arg>
+       <arg>%eL</arg>
+       <arg>-P%pp</arg>
+       <arg>%X</arg>
+    </command-line>
+</target>
 <!-- This is an empty target using the Custom model  -->
 
 <target model="custom" category="_Project" name="Custom _Build...">
