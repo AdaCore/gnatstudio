@@ -179,6 +179,8 @@ package body Builder_Facility_Module is
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
    --  Data stored with the module id
 
+   overriding procedure Destroy (Module : in out Builder_Module_ID_Record);
+
    Builder_Module_ID : Builder_Module_ID_Access;
 
    type Builder_Contextual is new Submenu_Factory_Record with null record;
@@ -430,6 +432,15 @@ package body Builder_Facility_Module is
 --              Library => Library_Name);
 --        end if;
    end Append_To_Menu;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
+   begin
+      Free (Module.Registry);
+   end Destroy;
 
    ---------------
    -- Get_Mains --

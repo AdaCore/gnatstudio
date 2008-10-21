@@ -59,6 +59,10 @@ package body Build_Configurations is
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean;
    --  Deep comparison between T1 and T2.
 
+   procedure Free (List : in out Target_List.List);
+   procedure Free (Models : in out Model_Map.Map);
+   --  Free memory
+
    ---------------
    -- Deep_Copy --
    ---------------
@@ -1201,5 +1205,71 @@ package body Build_Configurations is
    begin
       return Target.Model.Uses_Shell;
    end Uses_Shell;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Target_List.List) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Target_Type, Target_Access);
+      C : Target_List.Cursor := First (List);
+      T : Target_Access;
+   begin
+      while Has_Element (C) loop
+         T := Element (C);
+
+         --  T.Model;   --  No need to free, references in the Registry
+         Free (T.Command_Line);
+         --  Free (T.Properties);  --  Nothing to free
+
+         Unchecked_Free (T);
+
+         Next (C);
+      end loop;
+
+      Target_List.Clear (List);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Models : in out Model_Map.Map) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Target_Model_Type, Target_Model_Access);
+      use Model_Map;
+
+      C : Model_Map.Cursor := First (Models);
+      M : Target_Model_Access;
+   begin
+      while Has_Element (C) loop
+         M := Element (C);
+
+         Free (M.Default_Command_Line);
+         Free (M.Switches);
+         Unchecked_Free (M);
+
+         Next (C);
+      end loop;
+
+      Model_Map.Clear (Models);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Registry : in out Build_Config_Registry_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Build_Config_Registry, Build_Config_Registry_Access);
+   begin
+      if Registry /= null then
+         Free (Registry.Models);
+         Free (Registry.Targets);
+         Free (Registry.Original_Targets);
+         Unchecked_Free (Registry);
+      end if;
+   end Free;
 
 end Build_Configurations;

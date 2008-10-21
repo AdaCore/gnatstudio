@@ -408,6 +408,9 @@ package Build_Configurations is
    function Create (Logger : Logger_Type) return Build_Config_Registry_Access;
    --  Create a new registry
 
+   procedure Free (Registry : in out Build_Config_Registry_Access);
+   --  Free the memory used by the registry
+
    -----------------------------------
    -- Iterating through the targets --
    -----------------------------------
