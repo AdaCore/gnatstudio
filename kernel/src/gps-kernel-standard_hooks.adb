@@ -231,10 +231,10 @@ package body GPS.Kernel.Standard_Hooks is
       File       : Virtual_File;
       Identifier : String)
    is
-      A : Line_Information_Array (1 .. 0);
+      Data : Line_Information_Data := new Line_Information_Array (1 .. 0);
    begin
-      General_Line_Information
-        (Kernel, File, Identifier, new Line_Information_Array'(A));
+      General_Line_Information (Kernel, File, Identifier, Data);
+      Unchecked_Free (Data);
    end Remove_Line_Information_Column;
 
    --------------------------

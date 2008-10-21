@@ -80,8 +80,6 @@ package body GPS.Kernel.Styles is
 
          if Style = null then
             Style := Get_Or_Create_Style (Kernel, Name, True);
-
-            Style.Name := new String'(Name);
             Style.Description := new String'(Desc);
 
             if Fg /= "" then
@@ -134,10 +132,10 @@ package body GPS.Kernel.Styles is
    is
       pragma Unreferenced (Kernel);
    begin
-      Set_Background (Search_Results_Style, Search_Results_Color.Get_Pref);
-      Set_Background (Builder_Errors_Style, Error_Src_Highlight.Get_Pref);
+      Set_Background (Search_Results_Style,   Search_Results_Color.Get_Pref);
+      Set_Background (Builder_Errors_Style,   Error_Src_Highlight.Get_Pref);
       Set_Background (Builder_Warnings_Style, Warning_Src_Highlight.Get_Pref);
-      Set_Background (Builder_Style_Style, Style_Src_Highlight.Get_Pref);
+      Set_Background (Builder_Style_Style,    Style_Src_Highlight.Get_Pref);
    end Preferences_Changed;
 
    --------------------
@@ -354,19 +352,18 @@ package body GPS.Kernel.Styles is
       --  Read one Style from N.
 
       procedure Read_Style (N : Node_Ptr) is
-         S     : Style_Record;
-         Style : Style_Access;
+         Name  : constant String := Get_Field (N, "name").all;
+         Style : constant Style_Access :=
+           Get_Or_Create_Style (Kernel, Name, True);
       begin
-         S.Name := new String'(Get_Field (N, "name").all);
-         S.Description := new String'(Get_Field (N, "desc").all);
-         S.Foreground.Value := new String'(Get_Field (N, "fg").all);
-         S.Background.Value := new String'(Get_Field (N, "bg").all);
-
-         Style := Get_Or_Create_Style (Kernel, S.Name.all, True);
-         Style.all := S;
+         Free (Style.Description);
+         Style.Description := new String'(Get_Field (N, "desc").all);
+         Set_Foreground (Style, Get_Field (N, "fg").all);
+         Set_Background (Style, Get_Field (N, "bg").all);
 
       exception
-         when E : others => Trace (Exception_Handle, E);
+         when E : others =>
+            Trace (Exception_Handle, E);
       end Read_Style;
 
    begin
@@ -430,6 +427,10 @@ package body GPS.Kernel.Styles is
    procedure Free (Color : in out Color_Record) is
    begin
       Free (Color.Value);
+      if Color.GC /= Null_GC then
+         Unref (Color.GC);
+         Color.GC := Null_GC;
+      end if;
    end Free;
 
    -------------------------
@@ -467,15 +468,7 @@ package body GPS.Kernel.Styles is
          return;
       end if;
 
-      if Style.Foreground.Value /= null then
-         Free (Style.Foreground.Value);
-      end if;
-
-      if Style.Foreground.GC /= Null_GC then
-         Unref (Style.Foreground.GC);
-         Style.Foreground.GC := Null_GC;
-      end if;
-
+      Free (Style.Foreground);
       Style.Foreground.Color := Null_Color;
       Style.Foreground.Value := new String'(Color);
    end Set_Foreground;
@@ -491,15 +484,7 @@ package body GPS.Kernel.Styles is
          return;
       end if;
 
-      if Style.Background.Value /= null then
-         Free (Style.Background.Value);
-      end if;
-
-      if Style.Background.GC /= Null_GC then
-         Unref (Style.Background.GC);
-         Style.Background.GC := Null_GC;
-      end if;
-
+      Free (Style.Background);
       Style.Background.Color := Null_Color;
       Style.Background.Value := new String'(Color);
    end Set_Background;

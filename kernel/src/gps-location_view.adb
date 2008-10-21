@@ -2421,10 +2421,17 @@ package body GPS.Location_View is
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True) return MDI_Child
    is
-      Child     : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Location_View_Record'Tag));
+      Child     : GPS_MDI_Child;
       Locations : Location_View;
    begin
+      if Get_MDI (Kernel) = null then
+         --  This might happen when destroying the code_analysis_module, which
+         --  in turns tries to remove data from the locations view
+         return null;
+      end if;
+
+      Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Location_View_Record'Tag));
       if Child = null then
          if not Allow_Creation then
             return null;
