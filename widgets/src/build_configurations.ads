@@ -173,7 +173,7 @@ package Build_Configurations is
       Active      : Boolean := False;
       Is_Server   : Boolean := False;
       Server      : Remote.Server_Type := Remote.GPS_Server;
-      --  Relevant only for Shadow modes. Indicates whether the mode is active.
+      --  Relevant only for Shadow modes. Indicates whether the mode is active
       Subdir      : Unbounded_String;
    end record;
 
@@ -257,11 +257,11 @@ package Build_Configurations is
       --  The string contains a stock identifier
 
       Menu_Name : Unbounded_String;
-      --  The name of the menu to display target.
+      --  The name of the menu to display target
 
       Category : Unbounded_String;
       --  The category of the target, used for purposes of displaying the
-      --  targets in a hierarchical fashion
+      --  targets in a hierarchical fashion.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -298,7 +298,7 @@ package Build_Configurations is
    --  Return the value of Switch as configured in Target
 
    function Get_Name (Target : Target_Access) return String;
-   --  Return the name of Target.
+   --  Return the name of Target
 
    function Get_Menu_Name (Target : Target_Access) return String;
    --  Return the menu name of Target, ie a name where an underscore indicates
@@ -308,7 +308,7 @@ package Build_Configurations is
    --  Return the category of Target
 
    function Get_Icon (Target : Target_Access) return String;
-   --  Return the stock-id corresponding to the icon for target.
+   --  Return the stock-id corresponding to the icon for target
 
    function Get_Server (Target : Target_Access) return Server_Type;
    --  Return the server_type that will run the target
@@ -367,9 +367,9 @@ package Build_Configurations is
    --  Write Target to XML format
 
    function Load_Target_From_XML
-     (Registry     : Build_Config_Registry_Access;
-      XML          : Node_Ptr;
-      From_User    : Boolean) return Target_Access;
+     (Registry  : Build_Config_Registry_Access;
+      XML       : Node_Ptr;
+      From_User : Boolean) return Target_Access;
    --  Read a target from a XML node and load it in Registry.
    --  Note: this must be called only after all necessary target models have
    --  been loaded.
@@ -443,7 +443,7 @@ private
 
    function Contains
      (List : Target_List.List; Key : Unbounded_String) return Boolean;
-   --  Return true if List contains a target with name Key.
+   --  Return true if List contains a target with name Key
 
    type Target_Cursor is new Target_List.Cursor;
 
@@ -463,7 +463,7 @@ private
 
       Category             : Unbounded_String;
       --  The category of the model, used for purposes of displaying the
-      --  models in a hierarchical fashion
+      --  models in a hierarchical fashion.
 
       Description          : Unbounded_String;
       --  A one-line description of the target model
@@ -482,7 +482,7 @@ private
 
       Uses_Shell           : Boolean := False;
       --  If True, the commands inheriting from this model need to be launched
-      --  throuhg $SHELL -c "command line"
+      --  throuhg $SHELL -c "command line".
    end record;
 
    type Build_Config_Registry is record
@@ -503,17 +503,17 @@ private
    end record;
 
    type Target_Type is record
-      Name : Unbounded_String;
+      Name         : Unbounded_String;
       --  The name of the Target. This is the unique name that identifies
       --  the Target: there is only one target for each Name in the Registry.
 
-      Model    : Target_Model_Access;
+      Model        : Target_Model_Access;
       --  The model of which the Target is an instance
 
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
 
-      Properties : Target_Properties;
+      Properties   : Target_Properties;
       --  The set of target properties
    end record;
 

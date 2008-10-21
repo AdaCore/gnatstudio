@@ -51,13 +51,13 @@ package body Build_Configurations is
    --          </command-line>
 
    function Copy (T : Target_Access) return Target_Access;
-   --  Allocate and return a deep copy of T.
+   --  Allocate and return a deep copy of T
 
    function Deep_Copy (CL : Argument_List_Access) return Argument_List_Access;
-   --  Allocate and return a deep copy of CL.
+   --  Allocate and return a deep copy of CL
 
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean;
-   --  Deep comparison between T1 and T2.
+   --  Deep comparison between T1 and T2
 
    procedure Free (List : in out Target_List.List);
    procedure Free (Models : in out Model_Map.Map);
@@ -90,14 +90,12 @@ package body Build_Configurations is
    ----------
 
    function Copy (T : Target_Access) return Target_Access is
-      T2 : Target_Access;
    begin
-      T2 := new Target_Type;
-      T2.Name := T.Name;
-      T2.Model     := T.Model;
-      T2.Command_Line := Deep_Copy (T.Command_Line);
-      T2.Properties := T.Properties;
-      return T2;
+      return new Target_Type'
+        (Name         => T.Name,
+         Model        => T.Model,
+         Command_Line => Deep_Copy (T.Command_Line),
+         Properties   => T.Properties);
    end Copy;
 
    ------------
@@ -105,8 +103,13 @@ package body Build_Configurations is
    ------------
 
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean is
+
       function Equals (A, B : Argument_List_Access) return Boolean;
       --  Comparison function
+
+      ------------
+      -- Equals --
+      ------------
 
       function Equals (A, B : Argument_List_Access) return Boolean is
       begin
@@ -989,7 +992,7 @@ package body Build_Configurations is
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
-         --  Check whether the target has been modified. If so, save it.
+         --  Check whether the target has been modified. If so, save it
 
          Name := Element (C).Name;
          Equals_To_Original := False;
