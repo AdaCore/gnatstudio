@@ -506,6 +506,8 @@ package body GVD.Scripts is
       Register_Hook_No_Return
         (Kernel, Debugger_Process_Stopped_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
+        (Kernel, Debugger_Process_Terminated_Hook, Debugger_Hook_Data_Type);
+      Register_Hook_No_Return
         (Kernel, Debugger_Context_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
         (Kernel, Debugger_Executable_Changed_Hook, Debugger_Hook_Data_Type);

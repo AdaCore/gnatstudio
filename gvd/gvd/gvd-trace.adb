@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007, AdaCore              --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -154,7 +154,7 @@ package body GVD.Trace is
       Window : constant GPS_Window := To_Main_Window (User_Data);
    begin
       declare
-         Tab : constant Visual_Debugger := Convert (Window, Descriptor);
+         Tab : constant Visual_Debugger := Convert (Window.Kernel, Descriptor);
       begin
          Output_Message
            (Tab, Str,
@@ -176,7 +176,7 @@ package body GVD.Trace is
       Window : constant GPS_Window := To_Main_Window (User_Data);
    begin
       declare
-         Tab : constant Visual_Debugger := Convert (Window, Descriptor);
+         Tab : constant Visual_Debugger := Convert (Window.Kernel, Descriptor);
       begin
          Output_Message
            (Tab, Str,

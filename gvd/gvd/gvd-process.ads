@@ -26,7 +26,6 @@ with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Dialog;
 with Gtk.Main;
-with Gtk.Window;
 with Gtk.Widget;
 
 with Debugger;            use Debugger;
@@ -208,15 +207,14 @@ package GVD.Process is
    --  Return the debugger console associated with Process
 
    function Convert
-     (Main_Debug_Window : access GPS.Main_Window.GPS_Window_Record'Class;
-      Descriptor        : GNAT.Expect.Process_Descriptor'Class)
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Descriptor : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    function Convert
-     (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      Debugger          : access Debugger_Root'Class)
+     (Debugger : access Debugger_Root'Class)
       return Visual_Debugger;
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is

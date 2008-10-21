@@ -530,13 +530,12 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Main_Debug_Window : access GPS_Window_Record'Class;
-      Descriptor        : GNAT.Expect.Process_Descriptor'Class)
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Descriptor : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger
    is
       Process : Visual_Debugger;
-      List    : Debugger_List_Link :=
-                  Get_Debugger_List (Main_Debug_Window.Kernel);
+      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
 
    begin
       while List /= null loop
@@ -568,12 +567,11 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      Debugger          : access Debugger_Root'Class)
+     (Debugger   : access Debugger_Root'Class)
       return Visual_Debugger is
    begin
-      return Convert (GPS_Window (Main_Debug_Window),
-                      Get_Descriptor (Get_Process (Debugger)).all);
+      return Convert
+        (Get_Kernel (Debugger), Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
    ------------------------
@@ -796,7 +794,7 @@ package body GVD.Process is
       Window     : System.Address)
    is
       Process        : constant Visual_Debugger :=
-                         Convert (To_Main_Debug_Window (Window), Descriptor);
+                 Convert (To_Main_Debug_Window (Window).Kernel, Descriptor);
       Tmp_Str        : GNAT.Strings.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Paren_Count);

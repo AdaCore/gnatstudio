@@ -933,6 +933,11 @@ package Debugger is
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger has a separate execution window.
 
+   function Get_Kernel
+     (Debugger : access Debugger_Root'Class)
+      return GPS.Kernel.Kernel_Handle;
+   --  Return the kernel
+
 private
    type Command_Record;
    type Command_Access is access Command_Record;
@@ -949,7 +954,6 @@ private
    type Debugger_Root is abstract tagged record
       Kernel       : Kernel_Handle;
       Process      : Process_Proxies.Process_Proxy_Access := null;
-      Window       : Gtk.Window.Gtk_Window;
 
       Languages    : Language_Lists.List;
       --  The list of languages in use for this debugger. New elements are

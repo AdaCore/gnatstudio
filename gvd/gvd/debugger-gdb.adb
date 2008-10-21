@@ -760,7 +760,8 @@ package body Debugger.Gdb is
                           Argument_String_To_List (Gdb_Options);
       Num_Options     : constant Natural := Gdb_Arguments'Length;
       Local_Arguments : Argument_List
-                          (1 .. Debugger_Args'Length + Num_Options);
+        (1 .. Debugger_Args'Length + Num_Options);
+      Process         : Visual_Debugger;
 
       procedure Free is new Standard.Ada.Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
@@ -784,8 +785,6 @@ package body Debugger.Gdb is
       end Contains;
 
    begin
-      Debugger.Window := Window;
-
       Local_Arguments (1 .. Num_Options) := Gdb_Arguments.all;
       Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) :=
         Debugger_Args;
@@ -829,32 +828,24 @@ package body Debugger.Gdb is
       --  We do that only in graphical mode, since the filter needs to
       --  access the main_debug_window.
 
-      if Window /= null then
-         Add_Regexp_Filter
-           (Convert (Window, Debugger),
-            Language_Filter'Access, Language_Pattern);
+      Process := Convert (Debugger);
 
-         Add_Regexp_Filter
-           (Convert (Window, Debugger),
-            Running_Filter'Access, Terminate_Pattern);
-
-         Add_Regexp_Filter
-           (Convert (Window, Debugger),
-            Running_Filter'Access, Running_Pattern);
+      if Process /= null then
+         Add_Regexp_Filter (Process, Language_Filter'Access, Language_Pattern);
+         Add_Regexp_Filter (Process, Running_Filter'Access, Terminate_Pattern);
+         Add_Regexp_Filter (Process, Running_Filter'Access, Running_Pattern);
 
          --  Set another filter to detect the cases when gdb asks questions,
          --  so that we can display dialogs.
 
          Add_Regexp_Filter
-           (Convert (Window, Debugger),
-            Question_Filter1'Access, Question_Filter_Pattern1);
+           (Process, Question_Filter1'Access, Question_Filter_Pattern1);
 
          Add_Regexp_Filter
-           (Convert (Window, Debugger),
-            Question_Filter2'Access, Question_Filter_Pattern2);
+           (Process, Question_Filter2'Access, Question_Filter_Pattern2);
 
          Add_Regexp_Filter
-           (Convert (Window, Debugger),
+           (Process,
             Continuation_Line_Filter'Access, Continuation_Line_Pattern);
 
          Add_Filter
@@ -875,6 +866,7 @@ package body Debugger.Gdb is
    overriding procedure Initialize (Debugger : access Gdb_Debugger) is
       Num  : Expect_Match;
       Lang : Language_Access;
+      Process : Visual_Debugger;
 
       use GVD;
 
@@ -923,10 +915,10 @@ package body Debugger.Gdb is
          --  must also be initialized.
          --  No need to do anything in text-only mode
 
-         if Debugger.Window /= null then
+         Process := Convert (Debugger);
+         if Process /= null then
             Run_Debugger_Hook
-              (Convert (Debugger.Window, Debugger),
-               Debugger_Executable_Changed_Hook);
+              (Process, Debugger_Executable_Changed_Hook);
          end if;
 
          --  Get the initial file name, so that we can display the appropriate
@@ -963,9 +955,7 @@ package body Debugger.Gdb is
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Visible);
       end if;
 
-      if Debugger.Window /= null
-        and then Debugger.Executable = GNATCOLL.VFS.No_File
-      then
+      if Debugger.Executable = GNATCOLL.VFS.No_File then
          Display_Prompt (Debugger);
       end if;
 
@@ -974,9 +964,7 @@ package body Debugger.Gdb is
       --  leaving, nothing else needs to be done.
 
       when Executable_Not_Found =>
-         if Debugger.Window /= null then
-            Display_Prompt (Debugger);
-         end if;
+         Display_Prompt (Debugger);
    end Initialize;
 
    -----------
@@ -1055,16 +1043,17 @@ package body Debugger.Gdb is
         and then not Debugger.Target_Connected
       then
          declare
+            Process : constant Visual_Debugger := Convert (Debugger);
             Cmd : constant String :=
                     "target " & Debugger.Remote_Protocol.all & " "
                       & Debugger.Remote_Target.all;
          begin
-            if Debugger.Window = null then
+            if Process = null then
                Send (Debugger, Cmd, Mode => Internal);
 
             else
                Output_Text
-                 (Convert (Debugger.Window, Debugger),
+                 (Process,
                   Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
             end if;
 
@@ -1117,8 +1106,7 @@ package body Debugger.Gdb is
             Cmd := new String'(Command & " " & Remote_Exec);
          end if;
 
-         if Debugger.Window /= null then
-            Process := Convert (Debugger.Window, Debugger);
+         if Process /= null then
             Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
          end if;
 
@@ -1138,6 +1126,8 @@ package body Debugger.Gdb is
       end Launch_Command_And_Output;
 
    begin
+      Process := Convert (Debugger);
+
       Debugger.Executable := Executable;
 
       --  Send the "file" command if needed
@@ -1156,9 +1146,7 @@ package body Debugger.Gdb is
          Launch_Command_And_Output ("load");
       end if;
 
-      if Debugger.Window /= null then
-         Display_Prompt (Debugger);
-      end if;
+      Display_Prompt (Debugger);
 
       --  If we are in Cross mode (ie, with the "remote" protocol), the call
       --  to "target" has the side effect of starting the executable.
@@ -1175,10 +1163,8 @@ package body Debugger.Gdb is
       --  correctly updated.
       --  No need to do anything in text-only mode
 
-      if Debugger.Window /= null then
-         Run_Debugger_Hook
-           (Convert (Debugger.Window, Debugger),
-            GVD.Debugger_Executable_Changed_Hook);
+      if Process /= null then
+         Run_Debugger_Hook (Process, GVD.Debugger_Executable_Changed_Hook);
       end if;
 
       --  Get the name and line of the initial file
@@ -2474,12 +2460,15 @@ package body Debugger.Gdb is
    --------------------
 
    overriding procedure Display_Prompt (Debugger : access Gdb_Debugger) is
+      Proc : constant Visual_Debugger := Convert (Debugger);
    begin
-      Output_Text
-        (Convert (Debugger.Window, Debugger),
-         Send_Full (Debugger, "  ", Mode => Internal),
-         Is_Command => False,
-         Set_Position => True);
+      if Proc /= null then
+         Output_Text
+           (Proc,
+            Send_Full (Debugger, "  ", Mode => Internal),
+            Is_Command => False,
+            Set_Position => True);
+      end if;
    end Display_Prompt;
 
    ----------------------
@@ -3239,7 +3228,7 @@ package body Debugger.Gdb is
               (To_Local
                  (S (Matched (1).First .. Matched (1).Last),
                   Debug_Server),
-               GPS_Window (Debugger.Window).Kernel);
+               Debugger.Kernel);
 
             Br (Num).Line := Integer'Value
               (S (Matched (2).First .. Matched (2).Last));

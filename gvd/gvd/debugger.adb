@@ -507,8 +507,8 @@ package body Debugger is
          Set_Is_Started (Debugger, True);
       end if;
 
-      if Debugger.Window /= null then
-         Process := GVD.Process.Convert (Debugger.Window, Debugger);
+      Process := GVD.Process.Convert (Debugger);
+      if Process /= null then
          if not Command_In_Process (Get_Process (Debugger)) then
             --  If we are already processing a command, this means we set a
             --  Force_Send parameter to True in the call to Send. Most notably,
@@ -553,7 +553,6 @@ package body Debugger is
       --  Append the command to the history if necessary
 
       if Index_Non_Blank (Cmd) /= 0
-        and then Debugger.Window /= null
         and then Mode /= Internal
       then
          Data.Mode := Mode;
@@ -584,9 +583,9 @@ package body Debugger is
       --  See also Output_Available for similar handling.
       Set_Command_In_Process (Get_Process (Debugger), False);
 
-      if Debugger.Window /= null then
-         Process := GVD.Process.Convert (Debugger.Window, Debugger);
+      Process := GVD.Process.Convert (Debugger);
 
+      if Process /= null then
          Is_Context := Is_Context_Command
            (Debugger, Process.Current_Command.all);
          Is_Exec    := Is_Execution_Command
@@ -700,8 +699,7 @@ package body Debugger is
                         --  Asynchronous handling of commands, install a
                         --  callback on the debugger's output file descriptor.
 
-                        Process := GVD.Process.Convert
-                          (Debugger.Window, Debugger);
+                        Process := GVD.Process.Convert (Debugger);
                         pragma Assert (Process.Timeout_Id = 0);
 
                         Process.Timeout_Id := Debugger_Timeout.Add
@@ -716,8 +714,7 @@ package body Debugger is
                         --  which is delicate.
 
                         Process_Proxies.Empty_Buffer (Get_Process (Debugger));
-                        Process :=
-                          GVD.Process.Convert (Debugger.Window, Debugger);
+                        Process := GVD.Process.Convert (Debugger);
                         Set_Busy (Process, False);
                      end if;
                   end if;
@@ -731,7 +728,7 @@ package body Debugger is
 
    exception
       when Process_Died =>
-         Process := GVD.Process.Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger);
          Free (Process.Current_Command);
 
          if Process.Exiting then
@@ -799,10 +796,10 @@ package body Debugger is
          Trace (Me, "underlying debugger died unexpectedly in 'send_full'");
          Set_Command_In_Process (Get_Process (Debugger), False);
 
-         if Debugger.Window /= null then
-            Process := GVD.Process.Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger);
+         if Process /= null then
             Free (Process.Current_Command);
-            Set_Busy (GVD.Process.Convert (Debugger.Window, Debugger), False);
+            Set_Busy (Process, False);
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;
@@ -868,11 +865,8 @@ package body Debugger is
       Is_Started : Boolean) is
    begin
       Debugger.Is_Started := Is_Started;
-
-      --  ??? if not Is_Started then
-      --     reset call stack
-      --     reset task/thread windows
-      --  end if;
+      Run_Debugger_Hook
+        (GVD.Process.Convert (Debugger), Debugger_Process_Terminated_Hook);
    end Set_Is_Started;
 
    ------------------
@@ -997,8 +991,8 @@ package body Debugger is
       Skip_Blanks (Command.Cmd.all, First);
 
       if Looking_At (Command.Cmd.all, First, "graph") then
-         if Debugger.Window /= null then
-            Process := GVD.Process.Convert (Debugger.Window, Debugger);
+         Process := GVD.Process.Convert (Debugger);
+         if Process /= null then
             Process_Graph_Cmd (Process, Command.Cmd.all);
          end if;
 
@@ -1142,5 +1136,16 @@ package body Debugger is
 
       --  ??? Shouldn't we free Command_Queue
    end Close;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Debugger : access Debugger_Root'Class)
+      return GPS.Kernel.Kernel_Handle is
+   begin
+      return Debugger.Kernel;
+   end Get_Kernel;
 
 end Debugger;

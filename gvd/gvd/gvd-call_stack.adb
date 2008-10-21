@@ -93,6 +93,8 @@ package body GVD.Call_Stack is
    type Call_Stack is access all Call_Stack_Record'Class;
 
    overriding procedure Update (View   : access Call_Stack_Record);
+   overriding procedure On_Process_Terminated
+     (View : access Call_Stack_Record);
    overriding procedure On_State_Changed
      (View : access Call_Stack_Record; New_State : Debugger_State);
    overriding procedure Load_From_XML
@@ -477,6 +479,16 @@ package body GVD.Call_Stack is
          end if;
       end if;
    end On_State_Changed;
+
+   ---------------------------
+   -- On_Process_Terminated --
+   ---------------------------
+
+   overriding procedure On_Process_Terminated
+     (View : access Call_Stack_Record) is
+   begin
+      Clear (View.Model);
+   end On_Process_Terminated;
 
    ------------
    -- Update --

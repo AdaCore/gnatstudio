@@ -37,6 +37,10 @@ package GVD is
    --  Called when the debugged process ran and then stopped, for instance on
    --  a breakpoint, after a "next" command, ...
 
+   Debugger_Process_Terminated_Hook : constant GPS.Kernel.Hook_Name :=
+     "debugger_process_terminated";
+   --  Called when the debugged process has finished
+
    Debugger_Context_Changed_Hook : constant GPS.Kernel.Hook_Name :=
      "debugger_context_changed";
    --  Called when the context of the debuggee has changed, for instance after

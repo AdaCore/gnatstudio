@@ -95,6 +95,9 @@ package GVD.Generic_View is
    --  Nothing is done when the view is not associated with a debugger.
    --  It does nothing by default.
 
+   procedure On_Process_Terminated (View : access Process_View_Record) is null;
+   --  Called when the debugged process has terminated
+
    procedure On_State_Changed
      (View      : access Process_View_Record;
       New_State : Debugger_State) is null;
@@ -204,6 +207,12 @@ package GVD.Generic_View is
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
          Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
       --  Hook called when the state of the debugger changes
+
+      procedure Process_Terminated
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      --  Called when the process has terminated
+
    end Simple_Views;
 
 private

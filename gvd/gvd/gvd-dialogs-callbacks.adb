@@ -49,8 +49,7 @@ package body GVD.Dialogs.Callbacks is
          Dialog    : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger :=
-           Convert (Dialog.Main_Window, Debugger);
+         Process   : constant Visual_Debugger := Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -86,8 +85,7 @@ package body GVD.Dialogs.Callbacks is
          Dialog    : constant Question_Dialog_Access :=
            Question_Dialog_Access (Get_Toplevel (Object));
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger :=
-           Convert (Dialog.Main_Window, Debugger);
+         Process   : constant Visual_Debugger := Convert (Debugger);
 
       begin
          --  Unregister the dialog, since Send will not take care of it when
@@ -129,8 +127,7 @@ package body GVD.Dialogs.Callbacks is
          pragma Unreferenced (Button);
 
          Debugger  : constant Debugger_Access := Dialog.Debugger;
-         Process   : constant Visual_Debugger :=
-           Convert (Dialog.Main_Window, Debugger);
+         Process   : constant Visual_Debugger := Convert (Debugger);
 
       begin
          while Tmp /= Gint_List.Null_List loop
@@ -175,8 +172,7 @@ package body GVD.Dialogs.Callbacks is
       Dialog   : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger : constant Debugger_Access := Dialog.Debugger;
-      Process  : constant Visual_Debugger :=
-        Convert (Dialog.Main_Window, Debugger);
+      Process  : constant Visual_Debugger := Convert (Debugger);
       Kind     : constant Dialog_Kind := Get_Dialog_Kind (Dialog);
 
    begin

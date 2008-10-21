@@ -425,6 +425,12 @@ When the state is either "busy" or "idle", GPS.Debugger.command will return the 
      <see_also>@hook@ debugger_state_changed</see_also>
   </shell_doc>
 
+  <shell_doc name="@hook@ debugger_process_termianted">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <description>Called when the program being debugged has terminated</description>
+  </shell_doc>
+
   <shell_doc name="@hook@ debugger_context_changed">
      <param name="hook">A string, the name of the hook</param>
      <param name="debugger">An instance of GPS.Debugger</param>

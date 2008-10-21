@@ -379,6 +379,27 @@ package body GVD.Generic_View is
          when E : others => Trace (Exception_Handle, E);
       end State_Changed;
 
+      ------------------------
+      -- Process_Terminated --
+      ------------------------
+
+      procedure Process_Terminated
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      is
+         pragma Unreferenced (Kernel);
+         Process : constant Visual_Debugger := Get_Process (Data);
+         View    : constant Formal_View_Access :=
+                     Formal_View_Access (Get_View (Process));
+      begin
+         if View /= null then
+            On_Process_Terminated (View);
+         end if;
+
+      exception
+         when E : others => Trace (Exception_Handle, E);
+      end Process_Terminated;
+
       --------------------------------
       -- Register_Desktop_Functions --
       --------------------------------
@@ -398,6 +419,9 @@ package body GVD.Generic_View is
          Add_Hook (Kernel, Debugger_State_Changed_Hook,
                    Wrapper (State_Changed'Unrestricted_Access),
                    Name => Module_Name & ".state_changed");
+         Add_Hook (Kernel, Debugger_Process_Terminated_Hook,
+                   Wrapper (Process_Terminated'Unrestricted_Access),
+                   Name => Module_Name & ".process_terminated");
       end Register_Desktop_Functions;
 
    end Simple_Views;

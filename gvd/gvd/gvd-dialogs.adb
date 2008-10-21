@@ -773,7 +773,7 @@ package body GVD.Dialogs is
          Set_Default_Size (Dialog, Gint'Min (Width, 500), 200);
       end if;
 
-      Register_Dialog (Convert (Main_Window, Debugger), Dialog);
+      Register_Dialog (Convert (Debugger), Dialog);
    end Initialize;
 
    ---------------------
