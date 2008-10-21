@@ -84,7 +84,7 @@ package body GPS.Kernel.Timeout is
       Start_Time           : Ada.Calendar.Time;
       --  Start time of the process
 
-      Id                   : G_Source_Id;
+      Id                   : G_Source_Id := -1;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
@@ -193,7 +193,6 @@ package body GPS.Kernel.Timeout is
 
       Free (D.Name);
       Cleanup (D.Data);
-      Unref (D.Data);
    end Free;
 
    -------------
@@ -286,6 +285,11 @@ package body GPS.Kernel.Timeout is
       Status  : Integer;
       Console : Interactive_Console := Data.Console;
    begin
+      if Data.Id /= -1 then
+         Remove (Data.Id);
+         Data.Id := -1;
+      end if;
+
       if Data.D.Descriptor = null then
          return;
       end if;
@@ -347,10 +351,14 @@ package body GPS.Kernel.Timeout is
       Free (Data.D.Descriptor);
       Pop_State (Data.D.Kernel);
 
+      Unchecked_Free (Data.Expect_Regexp);
+
       if Data.D.Callback_Data /= null then
          Destroy (Data.D.Callback_Data.all);
          Unchecked_Free (Data.D.Callback_Data);
       end if;
+
+      Unref (Data);
    end Cleanup;
 
    ----------------
@@ -463,17 +471,13 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.Died := True;
-         Unchecked_Free (Data.Expect_Regexp);
          Cleanup (Data);
-         Unref (Data);
 
          return False;
 
       when E : others =>
          Trace (Exception_Handle, E);
-         Unchecked_Free (Data.Expect_Regexp);
          Cleanup (Data);
-         Unref (Data);
          return False;
    end Process_Cb;
 
@@ -502,10 +506,7 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Remove (Process.Id);
-         Unchecked_Free (Process.Expect_Regexp);
          Cleanup (Process);
-         Unref (Process);
          return "";
    end Data_Handler;
 
@@ -805,8 +806,7 @@ package body GPS.Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
-         Remove (Console.Id);
-         Unref (Console);
+         Cleanup (Console);
          return False;
       end if;
 
@@ -818,10 +818,7 @@ package body GPS.Kernel.Timeout is
          Button_Yes);
 
       if Button = Button_Yes then
-         Remove (Console.Id);
          Cleanup (Console);
-         Unchecked_Free (Console.Expect_Regexp);
-         Unref (Console);
          return False;
 
       else
@@ -831,10 +828,7 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Remove (Console.Id);
-         Unchecked_Free (Console.Expect_Regexp);
          Cleanup (Console);
-         Unref (Console);
          return False;
    end Delete_Handler;
 
