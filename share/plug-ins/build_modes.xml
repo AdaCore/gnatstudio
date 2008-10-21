@@ -62,7 +62,6 @@
     <arg>--subdirs=%subdir</arg>
     <arg>-k</arg>
     <arg>-d</arg>
-    <arg>-cargs</arg>
     <arg>-gnatc</arg>
     <arg>-gnatQ</arg>
     <arg>-gnatws</arg>
