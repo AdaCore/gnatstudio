@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
@@ -394,6 +395,51 @@ package body GVD.Scripts is
             Output_Command => Nth_Arg (Data, 3, True),
             Mode           => GVD.Types.User);
 
+      elsif Command = "command" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         if Process.Current_Command /= null then
+            Set_Return_Value (Data, Process.Current_Command.all);
+         else
+            Set_Return_Value (Data, "");
+         end if;
+
+      elsif Command = "is_exec_command" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         if Process.Current_Command /= null then
+            Set_Return_Value
+              (Data,
+               Is_Execution_Command
+                 (Process.Debugger, Process.Current_Command.all));
+         else
+            Set_Return_Value (Data, False);
+         end if;
+
+      elsif Command = "is_context_command" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         if Process.Current_Command /= null then
+            Set_Return_Value
+              (Data,
+               Is_Context_Command
+                 (Process.Debugger, Process.Current_Command.all));
+         else
+            Set_Return_Value (Data, False);
+         end if;
+
+      elsif Command = "is_break_command" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         if Process.Current_Command /= null then
+            Set_Return_Value
+              (Data,
+               Is_Break_Command
+                 (Process.Debugger, Process.Current_Command.all));
+         else
+            Set_Return_Value (Data, False);
+         end if;
+
       elsif Command = "get_executable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
@@ -488,7 +534,6 @@ package body GVD.Scripts is
       Register_Command (Kernel, "send", 1, 3, Shell_Handler'Access, Class);
       Register_Command
         (Kernel, "non_blocking_send", 1, 1, Shell_Handler'Access, Class);
-
       Register_Command
         (Kernel, "get_executable", 0, 0, Shell_Handler'Access, Class);
       Register_Command (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
@@ -497,6 +542,14 @@ package body GVD.Scripts is
       Register_Command
         (Kernel, "spawn", 1, 2, Shell_Handler'Access, Class,
          Static_Method => True);
+      Register_Command
+        (Kernel, "command", 0, 0, Shell_Handler'Access, Class);
+      Register_Command
+        (Kernel, "is_exec_command", 0, 0, Shell_Handler'Access, Class);
+      Register_Command
+        (Kernel, "is_context_command", 0, 0, Shell_Handler'Access, Class);
+      Register_Command
+        (Kernel, "is_break_command", 0, 0, Shell_Handler'Access, Class);
    end Create_Hooks;
 
 end GVD.Scripts;

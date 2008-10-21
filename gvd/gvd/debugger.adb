@@ -86,7 +86,6 @@ package body Debugger is
 
    procedure Send_Internal_Post
      (Debugger         : access Debugger_Root'Class;
-      Cmd              : String;
       Mode             : Command_Type);
    --  Internal procedure used by Send. This takes care of processing the
    --  output of the debugger, but it doesn't read it.
@@ -500,7 +499,6 @@ package body Debugger is
       Process : Visual_Debugger;
 
    begin
-      Set_Command_In_Process (Get_Process (Debugger));
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       if not Is_Started (Debugger)
@@ -511,6 +509,17 @@ package body Debugger is
 
       if Debugger.Window /= null then
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
+
+         if Process.Current_Command /= null then
+            Assert (Me, Process.Current_Command = null,
+                    "Memory leak, still has cmd="
+                    & Process.Current_Command.all,
+                    Raise_Exception => False);
+         end if;
+
+         Process.Current_Command := new String'(Cmd);
+
+         Set_Command_In_Process (Get_Process (Debugger));
 
          if Mode /= Internal
            and then Is_Execution_Command (Debugger, Cmd)
@@ -528,6 +537,9 @@ package body Debugger is
          if Mode = Visible then
             Output_Text (Process, Cmd & ASCII.LF, True);
          end if;
+
+      else
+         Set_Command_In_Process (Get_Process (Debugger));
       end if;
 
       --  Append the command to the history if necessary
@@ -553,39 +565,48 @@ package body Debugger is
 
    procedure Send_Internal_Post
      (Debugger : access Debugger_Root'Class;
-      Cmd      : String;
       Mode     : Command_Type)
    is
       Process : Visual_Debugger;
       Result  : Boolean;
       pragma Unreferenced (Result);
+      Is_Context, Is_Exec, Is_Break : Boolean;
 
    begin
       --  See also Output_Available for similar handling.
-
       Set_Command_In_Process (Get_Process (Debugger), False);
-
-      if Mode /= Internal and then Process_Command (Debugger) then
-         --  ??? register if needed for hooks
-         --  before returning
-         return;
-      end if;
 
       if Debugger.Window /= null then
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
+
+         Is_Context := Is_Context_Command
+           (Debugger, Process.Current_Command.all);
+         Is_Exec    := Is_Execution_Command
+           (Debugger, Process.Current_Command.all);
+         Is_Break   := Is_Break_Command
+           (Debugger, Process.Current_Command.all);
+
+         Free (Process.Current_Command);
+      end if;
+
+      if Mode /= Internal and then Process_Command (Debugger) then
+         --  ??? register if needed for hooks before returning
+         return;
+      end if;
+
+      if Process /= null then
          Final_Post_Process (Process, Mode);
 
          if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
 
-            if Is_Context_Command (Debugger, Cmd) then
+            if Is_Context then
                Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
-            elsif Is_Execution_Command (Debugger, Cmd) then
+            elsif Is_Exec then
                Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
             end if;
 
-            Update_Breakpoints
-              (Process, Force => Is_Break_Command (Debugger, Cmd));
+            Update_Breakpoints (Process, Force => Is_Break);
          end if;
 
          if Mode >= Visible then
@@ -643,8 +664,7 @@ package body Debugger is
                   if Last > Cmd'Last and then Wait_For_Prompt then
                      Wait_Prompt (Debugger_Access (Debugger));
                      Debugger.Continuation_Line := False;
-                     Send_Internal_Post
-                       (Debugger, Cmd (First .. Last - 1), Mode);
+                     Send_Internal_Post (Debugger, Mode);
                   end if;
 
                when Visible_Command =>
@@ -654,18 +674,14 @@ package body Debugger is
 
                         Wait_Prompt (Debugger_Access (Debugger));
                         Debugger.Continuation_Line := False;
-                        Send_Internal_Post
-                          (Debugger, Cmd (First .. Last - 1), Mode);
+                        Send_Internal_Post (Debugger, Mode);
 
                      else
                         --  Asynchronous handling of commands, install a
                         --  callback on the debugger's output file descriptor.
 
-                        Process :=
-                          GVD.Process.Convert (Debugger.Window, Debugger);
-                        Process.Current_Command :=
-                          new String'(Cmd (First .. Last - 1));
-
+                        Process := GVD.Process.Convert
+                          (Debugger.Window, Debugger);
                         pragma Assert (Process.Timeout_Id = 0);
 
                         Process.Timeout_Id := Debugger_Timeout.Add
@@ -708,6 +724,7 @@ package body Debugger is
               (-"The underlying debugger died unexpectedly. Closing it"),
               Error, Button_OK, Button_OK);
          Set_Command_In_Process (Get_Process (Debugger), False);
+         Free (Process.Current_Command);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
          Close_Debugger (Process);
@@ -743,7 +760,7 @@ package body Debugger is
          S : String :=
            Glib.Convert.Locale_To_UTF8 (Expect_Out (Get_Process (Debugger)));
       begin
-         Send_Internal_Post (Debugger, Cmd, Mode);
+         Send_Internal_Post (Debugger, Mode);
 
          --  Strip CRs in remote mode, as we can't know in advance if the debug
          --  server outputs CR/LF or just LF, and the consequences or removing
@@ -764,6 +781,7 @@ package body Debugger is
 
          if Debugger.Window /= null then
             Process := GVD.Process.Convert (Debugger.Window, Debugger);
+            Free (Process.Current_Command);
             Set_Busy (GVD.Process.Convert (Debugger.Window, Debugger), False);
             Unregister_Dialog (Process);
             Close_Debugger (Process);

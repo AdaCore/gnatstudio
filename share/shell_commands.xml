@@ -412,7 +412,9 @@ It isn't recommended to do any direct graphical action before this hook has been
      <param name="debugger">An instance of GPS.Debugger</param>
      <param name="new_state">A string</param>
      <description>Indicates a change in the status of the debugger: new_state can be one of "none" (the debugger is now terminated), "idle" (the debugger is now waiting for user input) or "busy" (the debugger is now processing a command, and the process is running). As opposed to debugger_process_stopped, this hook is called when the command is just starting its executing (hence the debugger is busy while this hook is called, unless the process immediately stopped).
-This hook is in fact emitted also when internal commands are sent to the debugger, and thus much more often than if it was just reacting to user input. It is therefore recommended that the callback does the minimal amount of work, possibly doing the rest of the work in an idle callback to be executed when GPS is no longer busy.</description>
+This hook is in fact emitted also when internal commands are sent to the debugger, and thus much more often than if it was just reacting to user input. It is therefore recommended that the callback does the minimal amount of work, possibly doing the rest of the work in an idle callback to be executed when GPS is no longer busy.
+If the new state is "busy", you cannot send additional commands to the debugger.
+When the state is either "busy" or "idle", GPS.Debugger.command will return the command that is about to be executed or the command that was just executed and just completed.</description>
   </shell_doc>
 
   <shell_doc name="@hook@ debugger_process_stopped">
@@ -4169,6 +4171,30 @@ If show_in_console is True, the output of the command is displayed in the debugg
      <param name="output" default="true">A boolean</param>
      <description>This command works like send, but is not blocking, and does not return the result.</description>
      <see_also name="GPS.Debugger.send" />
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.command">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>A string</return>
+     <description>Return the command that is being executed in the debugger. This is often only available when called from the debugger_state_changed hook, where it might also indicate the command that just finished</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.is_exec_command">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>A boolean</return>
+     <description>Return true if the command returned by GPS.Debugger.command is likely to modify the stack trace in the debugger ("next", "cont", ...)</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.is_context_command">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>A boolean</return>
+     <description>Return true if the command returned by GPS.Debugger.command is likely to modify the current context (current task, thread,...) after it has finished executing</description>
+   </shell_doc>
+
+   <shell_doc name="GPS.Debugger.is_break_command">
+     <param name="self">An instance of GPS.Debugger</param>
+     <return>A boolean</return>
+     <description>Return true if the command returned by GPS.Debugger.command is likely to modify the list of breakpoints after it has finished executing</description>
    </shell_doc>
 
    <shell_doc name="GPS.Debugger.get_executable">
