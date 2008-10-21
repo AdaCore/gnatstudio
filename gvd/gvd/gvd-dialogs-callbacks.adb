@@ -62,7 +62,8 @@ package body GVD.Dialogs.Callbacks is
          Send (Debugger,
                "y",
                Mode => GVD.Types.Visible,
-               Empty_Buffer => False,
+               Empty_Buffer    => False,
+               Force_Send      => True,
                Wait_For_Prompt => False);
       end;
 
@@ -97,7 +98,8 @@ package body GVD.Dialogs.Callbacks is
          Send (Debugger,
                "n",
                Mode => GVD.Types.Visible,
-               Empty_Buffer => False,
+               Empty_Buffer    => False,
+               Force_Send      => True,
                Wait_For_Prompt => False);
       end;
 
@@ -153,8 +155,9 @@ package body GVD.Dialogs.Callbacks is
 
          Send (Debugger,
                To_String (S),
-               Mode => GVD.Types.Visible,
-               Empty_Buffer => False,
+               Mode            => GVD.Types.Visible,
+               Force_Send      => True,
+               Empty_Buffer    => False,
                Wait_For_Prompt => False);
       end;
 
@@ -190,6 +193,7 @@ package body GVD.Dialogs.Callbacks is
             Send (Debugger,
                   "n",
                   Mode            => GVD.Types.Visible,
+                  Force_Send      => True,
                   Empty_Buffer    => False,
                   Wait_For_Prompt => False);
 
@@ -197,6 +201,7 @@ package body GVD.Dialogs.Callbacks is
             Send (Debugger,
                   "0",
                   Mode            => GVD.Types.Visible,
+                  Force_Send      => True,
                   Empty_Buffer    => False,
                   Wait_For_Prompt => False);
       end case;

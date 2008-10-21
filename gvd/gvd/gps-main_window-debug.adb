@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2000-2008, AdaCore                   --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,6 @@ with Breakpoints_Editor; use Breakpoints_Editor;
 with GVD_Module;         use GVD_Module;
 with GVD.Scripts;        use GVD.Scripts;
 with GVD.Process;        use GVD.Process;
-with GVD.Types;          use GVD.Types;
 with Debugger;           use Debugger;
 with Process_Proxies;    use Process_Proxies;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -112,6 +111,7 @@ package body GPS.Main_Window.Debug is
    is
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       Widget      : Gtk_Menu_Item;
+      WTX_Version : Natural;
       Bp_Editor   : Breakpoint_Editor_Access;
 
       use type Glib.Object.GObject;
@@ -141,7 +141,7 @@ package body GPS.Main_Window.Debug is
       --  This test should also go when we use a debugger_switch signal.
 
       if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Run_Debugger_Hook (Process, Debugger_Executable_Changed_Hook);
+         Run_Debugger_Hook (Process, GVD.Debugger_Executable_Changed_Hook);
       end if;
 
       --  Update the sensitivity of the Data/Protection Domains menu
@@ -151,8 +151,8 @@ package body GPS.Main_Window.Debug is
         (Window.Kernel, -"/Debug/Data/Protection Domains");
 
       if Widget /= null then
-         Set_Sensitive
-            (Widget, VxWorks_Version (Process.Debugger) = Vx653);
+         Info_WTX (Process.Debugger, WTX_Version);
+         Set_Sensitive (Widget, WTX_Version >= 3);
       end if;
    end Switch_Debugger;
 

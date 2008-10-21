@@ -378,6 +378,7 @@ package body Debugger.Gdb is
             Send (Debugger, Result,
                   Mode            => Internal,
                   Empty_Buffer    => False,
+                  Force_Send      => True,
                   Wait_For_Prompt => False);
             return;
          end if;
@@ -398,6 +399,7 @@ package body Debugger.Gdb is
          Send (Debugger, "0",
                Mode            => Internal,
                Empty_Buffer    => False,
+               Force_Send      => True,
                Wait_For_Prompt => False);
          return;
 
@@ -408,6 +410,7 @@ package body Debugger.Gdb is
          Send (Debugger, "1",
                Mode            => Hidden,
                Empty_Buffer    => False,
+               Force_Send      => True,
                Wait_For_Prompt => False);
          return;
       end if;
@@ -474,6 +477,7 @@ package body Debugger.Gdb is
             Send (Debugger, Output,
                   Mode            => Internal,
                   Empty_Buffer    => False,
+                  Force_Send      => True,
                   Wait_For_Prompt => False);
             return;
          end if;
@@ -488,6 +492,7 @@ package body Debugger.Gdb is
          Send (Debugger, "y",
                Mode            => Mode,
                Empty_Buffer    => False,
+               Force_Send      => True,
                Wait_For_Prompt => False);
          return;
       end if;
@@ -557,6 +562,7 @@ package body Debugger.Gdb is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       J, K : Integer;
@@ -587,7 +593,7 @@ package body Debugger.Gdb is
 
       Send
         (Debugger_Root (Debugger.all)'Access, Cmd,
-         Empty_Buffer, Wait_For_Prompt, Mode);
+         Empty_Buffer, Wait_For_Prompt, Force_Send, Mode);
    end Send;
 
    -------------
@@ -1172,7 +1178,7 @@ package body Debugger.Gdb is
       if Debugger.Window /= null then
          Run_Debugger_Hook
            (Convert (Debugger.Window, Debugger),
-            Debugger_Executable_Changed_Hook);
+            GVD.Debugger_Executable_Changed_Hook);
       end if;
 
       --  Get the name and line of the initial file

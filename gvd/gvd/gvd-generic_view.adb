@@ -56,22 +56,6 @@ package body GVD.Generic_View is
       View.Process := Process;
    end Set_Process;
 
-   ---------------
-   -- On_Attach --
-   ---------------
-
-   procedure On_Attach
-     (View    : access Process_View_Record;
-      Process : access Visual_Debugger_Record'Class)
-   is
-      pragma Unreferenced (View, Process);
-   begin
-      null;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end On_Attach;
-
    -----------------
    -- Save_To_XML --
    -----------------
@@ -83,18 +67,6 @@ package body GVD.Generic_View is
    begin
       return null;
    end Save_To_XML;
-
-   -------------------
-   -- Load_From_XML --
-   -------------------
-
-   procedure Load_From_XML
-     (View : access Process_View_Record; XML : Glib.Xml_Int.Node_Ptr)
-   is
-      pragma Unreferenced (View, XML);
-   begin
-      null;
-   end Load_From_XML;
 
    -----------------
    -- Get_Process --
@@ -115,16 +87,6 @@ package body GVD.Generic_View is
    begin
       View.Process := null;
    end Unset_Process;
-
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update (View : access Process_View_Record) is
-      pragma Unreferenced (View);
-   begin
-      null;
-   end Update;
 
    ------------------
    -- Simple_Views --
@@ -396,6 +358,27 @@ package body GVD.Generic_View is
          when E : others => Trace (Exception_Handle, E);
       end On_Update;
 
+      -------------------
+      -- State_Changed --
+      -------------------
+
+      procedure State_Changed
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      is
+         pragma Unreferenced (Kernel);
+         Process : constant Visual_Debugger := Get_Process (Data);
+         View    : constant Formal_View_Access :=
+                     Formal_View_Access (Get_View (Process));
+      begin
+         if View /= null then
+            On_State_Changed (View, Get_State (Data));
+         end if;
+
+      exception
+         when E : others => Trace (Exception_Handle, E);
+      end State_Changed;
+
       --------------------------------
       -- Register_Desktop_Functions --
       --------------------------------
@@ -412,6 +395,9 @@ package body GVD.Generic_View is
          Add_Hook (Kernel, Debugger_Context_Changed_Hook,
                    Wrapper (On_Update'Unrestricted_Access),
                    Name => Module_Name & ".context_changed");
+         Add_Hook (Kernel, Debugger_State_Changed_Hook,
+                   Wrapper (State_Changed'Unrestricted_Access),
+                   Name => Module_Name & ".state_changed");
       end Register_Desktop_Functions;
 
    end Simple_Views;

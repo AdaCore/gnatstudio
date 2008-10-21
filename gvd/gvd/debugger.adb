@@ -418,7 +418,7 @@ package body Debugger is
          --  since we need to handle post processing slightly differently
 
          declare
-            Current_Command : constant String := Process.Current_Command.all;
+            Current_Command : constant String := Get_Command (Process);
             Result          : Boolean;
             pragma Unreferenced (Result);
 
@@ -509,15 +509,23 @@ package body Debugger is
 
       if Debugger.Window /= null then
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
+         if not Command_In_Process (Get_Process (Debugger)) then
+            --  If we are already processing a command, this means we set a
+            --  Force_Send parameter to True in the call to Send. Most notably,
+            --  this is used when sending additional input to the debugger (for
+            --  instance answering a gdb question), and we do not want to
+            --  change the current command in this case.
 
-         if Process.Current_Command /= null then
-            Assert (Me, Process.Current_Command = null,
-                    "Memory leak, still has cmd="
-                    & Process.Current_Command.all,
-                    Raise_Exception => False);
+            if Process.Current_Command /= null then
+               Assert (Me, Process.Current_Command = null,
+                       "Memory leak, still has cmd="
+                       & Process.Current_Command.all
+                       & " while sending " & Cmd,
+                       Raise_Exception => True);
+            end if;
+
+            Process.Current_Command := new String'(Cmd);
          end if;
-
-         Process.Current_Command := new String'(Cmd);
 
          Set_Command_In_Process (Get_Process (Debugger));
 
@@ -633,6 +641,7 @@ package body Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
       Mode            : Command_Type := Hidden)
    is
       Process : Visual_Debugger;
@@ -649,8 +658,19 @@ package body Debugger is
          First := Last;
          Skip_To_Char (Cmd, Last, ASCII.LF);
 
-         if Mode not in Invisible_Command
-           and then Wait_For_Prompt
+         --  Used to have the following text:
+         --    if Mode not in Invisible_Command
+         --       and then Wait_For_Prompt
+         --       and then Command_In_Process (Get_Process (Debugger))
+         --  However, this fails sometimes with gdb: when "cont" terminates the
+         --  program, gdb is emitting a "tty" command while cont is still
+         --  being processed, and therefore the if was changed to the below to
+         --  queue the tty command.
+         --  ??? In fact, I (Manu) am not sure how this was working before: if
+         --  we are waiting for a prompt, we should not be queuing the command
+         --  still this would return to the caller before we saw the prompt.
+
+         if not Force_Send
            and then Command_In_Process (Get_Process (Debugger))
          then
             Queue_Command
@@ -712,6 +732,7 @@ package body Debugger is
    exception
       when Process_Died =>
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
+         Free (Process.Current_Command);
 
          if Process.Exiting then
             return;
@@ -724,7 +745,6 @@ package body Debugger is
               (-"The underlying debugger died unexpectedly. Closing it"),
               Error, Button_OK, Button_OK);
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Free (Process.Current_Command);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
          Close_Debugger (Process);
@@ -849,8 +869,7 @@ package body Debugger is
    begin
       Debugger.Is_Started := Is_Started;
 
-      --  ???
-      --  if not Is_Started then
+      --  ??? if not Is_Started then
       --     reset call stack
       --     reset task/thread windows
       --  end if;

@@ -27,6 +27,7 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.Strings;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with System;                     use System;
 
 with Glib;                       use Glib;
@@ -83,7 +84,6 @@ with Remote.Path.Translator;     use Remote.Path.Translator;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GVD.Process is
    Me : constant Debug_Handle := Create ("GVD.Process");
@@ -587,6 +587,35 @@ package body GVD.Process is
         and then Get_Process (Debugger.Debugger) /= null
         and then Command_In_Process (Get_Process (Debugger.Debugger));
    end Command_In_Process;
+
+   -----------------
+   -- Get_Command --
+   -----------------
+
+   function Get_Command
+     (Process : access Visual_Debugger_Record'Class) return String is
+   begin
+      if Process.Current_Command = null then
+         return "";
+      else
+         return Process.Current_Command.all;
+      end if;
+   end Get_Command;
+
+   ---------------------------
+   --  Is_Execution_Command --
+   ---------------------------
+
+   function Is_Execution_Command
+     (Process : access Visual_Debugger_Record'Class) return Boolean is
+   begin
+      if Process.Current_Command = null then
+         return False;
+      else
+         return Is_Execution_Command
+           (Process.Debugger, Process.Current_Command.all);
+      end if;
+   end Is_Execution_Command;
 
    -----------------
    -- Output_Text --

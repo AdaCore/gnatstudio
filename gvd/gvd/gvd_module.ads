@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 with Glib.Object;
 with GPS.Kernel.Modules;
 with Gtk.Window;
+with GVD;  use GVD;
 
 package GVD_Module is
 
@@ -56,12 +57,6 @@ package GVD_Module is
 
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
-
-   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
-   --  Possible states of a debugger:
-   --  - Debug_None: debugger is not running
-   --  - Debug_Busy: debugger is busy processing a command
-   --  - Debug_Available: debugger is available
 
    procedure Set_Sensitive
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

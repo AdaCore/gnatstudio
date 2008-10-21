@@ -93,6 +93,8 @@ package body GVD.Call_Stack is
    type Call_Stack is access all Call_Stack_Record'Class;
 
    overriding procedure Update (View   : access Call_Stack_Record);
+   overriding procedure On_State_Changed
+     (View : access Call_Stack_Record; New_State : Debugger_State);
    overriding procedure Load_From_XML
      (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr);
    overriding function Save_To_XML
@@ -451,6 +453,31 @@ package body GVD.Call_Stack is
       return N;
    end Save_To_XML;
 
+   ----------------------
+   -- On_State_Changed --
+   ----------------------
+
+   overriding procedure On_State_Changed
+     (View : access Call_Stack_Record; New_State : Debugger_State)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      if New_State = Debug_Busy then
+         --  The debugger is now executing a command that will likely change
+         --  the current stack trace. While it is executing, we do not want to
+         --  keep a visible call stack displayed.
+
+         if Is_Execution_Command (Get_Process (View)) then
+            Clear (View.Model);
+
+            Append (View.Model, Iter, Null_Iter);
+            Set (View.Model, Iter, Frame_Num_Column, 0);
+            Set (View.Model, Iter, Subprog_Name_Column, "Running...");
+            Set_Mode (Get_Selection (View.Tree), Selection_None);
+         end if;
+      end if;
+   end On_State_Changed;
+
    ------------
    -- Update --
    ------------
@@ -516,6 +543,8 @@ package body GVD.Call_Stack is
       end loop;
 
       Free (Bt (1 .. Len));
+
+      Set_Mode (Get_Selection (View.Tree), Selection_Single);
 
       View.Block := True;
       if Get_Iter_First (View.Model) /= Null_Iter then

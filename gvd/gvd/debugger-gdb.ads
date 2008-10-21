@@ -415,6 +415,7 @@ private
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    type Remote_GDB_Mode is (Native, Cross, VxWorks);

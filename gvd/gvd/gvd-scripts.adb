@@ -20,6 +20,7 @@
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
@@ -31,7 +32,6 @@ with GPS.Intl;                use GPS.Intl;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;
 with GVD_Module;              use GVD_Module;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body GVD.Scripts is
 
@@ -94,7 +94,7 @@ package body GVD.Scripts is
       D   : constant Callback_Data_Access :=
               new Callback_Data'Class'(Create (Script, 3));
       Inst : constant Class_Instance :=
-              Get_Or_Create_Instance (Script, Data.Process);
+              Get_Or_Create_Instance (Script, Data.Debugger);
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
@@ -148,7 +148,7 @@ package body GVD.Scripts is
 
       return Debugger_Hooks_States_Data'
         (Hooks_Data with
-         Process   => Process,
+         Debugger  => Process,
          New_State => New_State);
    end From_Callback_Data_Debugger_States;
 
@@ -165,7 +165,7 @@ package body GVD.Scripts is
       D   : constant Callback_Data_Access :=
               new Callback_Data'Class'(Create (Script, 3));
       Inst : constant Class_Instance :=
-               Get_Or_Create_Instance (Script, Data.Process);
+               Get_Or_Create_Instance (Script, Data.Debugger);
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Inst);
@@ -186,7 +186,7 @@ package body GVD.Scripts is
       Args         : constant Debugger_String_Hooks_Data :=
         (Hooks_Data with
          Length   => Debugger_Cmd'Length,
-         Process  => Visual_Debugger (GObject'(Get_Data (Inst))),
+         Debugger => Visual_Debugger (GObject'(Get_Data (Inst))),
          Command  => Debugger_Cmd);
    begin
       return Args;
@@ -214,13 +214,13 @@ package body GVD.Scripts is
    procedure Run_Debugger_States_Hook
      (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
       Hook      : Hook_Name;
-      New_State : GVD_Module.Debugger_State)
+      New_State : Debugger_State)
    is
       Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
       Args   : aliased Debugger_Hooks_States_Data;
    begin
       Args := (Hooks_Data with
-               Process => Visual_Debugger (Debugger),
+               Debugger  => Visual_Debugger (Debugger),
                New_State => New_State);
       Run_Hook (Kernel, Hook, Args'Unchecked_Access);
    end Run_Debugger_States_Hook;
@@ -239,7 +239,7 @@ package body GVD.Scripts is
                  (Hooks_Data with
                   Length   => Command'Length,
                   Command  => Command,
-                  Process  => Visual_Debugger (Debugger));
+                  Debugger => Visual_Debugger (Debugger));
    begin
       Set_Busy (Debugger);
       declare
@@ -261,6 +261,17 @@ package body GVD.Scripts is
    begin
       return Debugger_Hooks_Data_Access (Data).Debugger;
    end Get_Process;
+
+   ---------------
+   -- Get_State --
+   ---------------
+
+   function Get_State
+     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      return Debugger_State is
+   begin
+      return Debugger_Hooks_States_Data_Access (Data).New_State;
+   end Get_State;
 
    ----------------------------
    -- Get_Or_Create_Instance --
@@ -398,23 +409,12 @@ package body GVD.Scripts is
       elsif Command = "command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         if Process.Current_Command /= null then
-            Set_Return_Value (Data, Process.Current_Command.all);
-         else
-            Set_Return_Value (Data, "");
-         end if;
+         Set_Return_Value (Data, Get_Command (Process));
 
       elsif Command = "is_exec_command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         if Process.Current_Command /= null then
-            Set_Return_Value
-              (Data,
-               Is_Execution_Command
-                 (Process.Debugger, Process.Current_Command.all));
-         else
-            Set_Return_Value (Data, False);
-         end if;
+         Set_Return_Value (Data, Is_Execution_Command (Process));
 
       elsif Command = "is_context_command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

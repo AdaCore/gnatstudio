@@ -298,6 +298,17 @@ package GVD.Process is
    --  Destroy any registered dialog.
    --  Nothing happens if there is no such dialog.
 
+   --------------
+   -- Commands --
+   --------------
+
+   function Get_Command
+     (Process : access Visual_Debugger_Record'Class) return String;
+   function Is_Execution_Command
+     (Process : access Visual_Debugger_Record'Class) return Boolean;
+   --  Return the command currently executed in the debugger, and whether it is
+   --  likely to change the callstack when it finishes its execution
+
    --------------------------
    -- Breakpoints handling --
    --------------------------

@@ -114,6 +114,7 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
       Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Send a command to the underlying process associated with Debugger.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
@@ -124,6 +125,10 @@ package Debugger is
    --  If Mode indicates a visible command, it is executed asynchronously,
    --  otherwise it is executed synchronously, ie wait until we get the
    --  prompt.
+   --  If a command is already executing, Cmd will be queued and executed
+   --  afterward. However, in some cases it is necessary to immediately send
+   --  Cmd to the debugger (for instance because the latter is waiting for
+   --  input). In this case, Force_Send might be set to True
 
    function Send_Full
      (Debugger        : access Debugger_Root;

@@ -23,28 +23,34 @@ with GNATCOLL.Scripts;
 
 with GPS.Kernel;       use GPS.Kernel;
 with GPS.Kernel.Hooks;
-with GVD_Module;
 with GVD.Process;
 
 package GVD.Scripts is
 
-   type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with private;
+   type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with record
+      Debugger : GVD.Process.Visual_Debugger;
+   end record;
    type Debugger_Hooks_Data_Access is access all Debugger_Hooks_Data'Class;
    --  Data associated with all the hooks declared in the GVD module.
    --  It contains a pointer to the debugger that generated the event
 
-   type Debugger_Hooks_States_Data is new GPS.Kernel.Hooks.Hooks_Data with
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Debugger_Hooks_Data)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  See inherited documentation
+
+   type Debugger_Hooks_States_Data is new Debugger_Hooks_Data with
       record
-         Process   : GVD.Process.Visual_Debugger;
-         New_State : GVD_Module.Debugger_State;
+         New_State : Debugger_State;
       end record;
    type Debugger_Hooks_States_Data_Access
      is access all Debugger_Hooks_States_Data'Class;
 
    type Debugger_String_Hooks_Data (Length : Natural) is new
-     GPS.Kernel.Hooks.Hooks_Data with
+     Debugger_Hooks_Data with
       record
-         Process : GVD.Process.Visual_Debugger;
          Command : String (1 .. Length);
       end record;
    type Debugger_String_Hooks_Data_Access is access all
@@ -58,7 +64,7 @@ package GVD.Scripts is
    procedure Run_Debugger_States_Hook
      (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
       Hook      : Hook_Name;
-      New_State : GVD_Module.Debugger_State);
+      New_State : Debugger_State);
    --  Run a hook and passes Debugger as a parameter to it
 
    function Run_Debugger_Hook_Until_Not_Empty
@@ -72,50 +78,16 @@ package GVD.Scripts is
       return GVD.Process.Visual_Debugger;
    --  Return the debugger stored in Data
 
+   function Get_State
+     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      return Debugger_State;
+   --  Return the state stored in Data. This only works if Data is of type
+   --  Debugger_Hooks_States_Data, but this subprogram is needed for
+   --  instantiation of GVD.Generic_Views
+
    procedure Create_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create the hooks and shell API
-
-   -----------
-   -- Hooks --
-   -----------
-   --  All these hooks take a Debugger_Hooks_Data in parameter
-
-   Debugger_Process_Stopped_Hook : constant Hook_Name :=
-     "debugger_process_stopped";
-   --  Called when the debugged process ran and then stopped, for instance on
-   --  a breakpoint, after a "next" command, ...
-
-   Debugger_Context_Changed_Hook : constant Hook_Name :=
-     "debugger_context_changed";
-   --  Called when the context of the debuggee has changed, for instance after
-   --  thread switching, frame selection,...
-
-   Debugger_Executable_Changed_Hook : constant Hook_Name :=
-     "debugger_executable_changed";
-   --  Called when the executable associated with the debugger has changed, for
-   --  instance via Debug->Debug->Open File. This is also called initially when
-   --  the executable is given on the command line
-
-   Debugger_State_Changed_Hook : constant Hook_Name :=
-     "debugger_state_changed";
-   --  Called when the state of the debugger changes: the old and new states
-   --  are passed as argument:
-   --     "none": there is no more debugger running
-   --     "busy": the debugger is now processing a command, and for instance
-   --        the debuggee is running
-   --     "idle": the debugger is waiting for user input
-
-   Debugger_Started_Hook    : constant Hook_Name := "debugger_started";
-   --  Debugger_Started_Hook is called after the debugger has been spawn, and
-   --  it is possible to send commands to it.
-   --  Superceded by Debugger_State_Changed_Hook (when old="none")
-
-   Debugger_Terminated_Hook : constant Hook_Name := "debugger_terminated";
-   --  Debugger_Terminated_Hook is called just before the connection to the
-   --  debugger is closed. It is still possible to issue commands to the
-   --  debugger at this stage.
-   --  Superceded by Debugger_State_Changed_Hook (when new="none")
 
    ------------------
    -- Action Hooks --
@@ -139,15 +111,6 @@ package GVD.Scripts is
    --  The string parameter contains the debugger question
 
 private
-   type Debugger_Hooks_Data is new GPS.Kernel.Hooks.Hooks_Data with record
-      Debugger : GVD.Process.Visual_Debugger;
-   end record;
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access Debugger_Hooks_Data)
-      return GNATCOLL.Scripts.Callback_Data_Access;
    overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Hook   : Hook_Name;

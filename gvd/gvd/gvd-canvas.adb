@@ -120,10 +120,7 @@ package body GVD.Canvas is
      (Base_Type                     => General_Browser_Record,
       Base_Type_Access              => General_Browser,
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger               => GVD.Process.Visual_Debugger,
-      Debugger_Process_Stopped_Hook => Debugger_Process_Stopped_Hook,
-      Debugger_Context_Changed_Hook => Debugger_Context_Changed_Hook,
-      Debugger_Terminated_Hook      => Debugger_Terminated_Hook);
+      Visual_Debugger               => GVD.Process.Visual_Debugger);
 
    type GVD_Canvas_Record is new Browser_Views.Process_View_Record with
       record
