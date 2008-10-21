@@ -89,7 +89,7 @@ package body GVD.Process is
    Me : constant Debug_Handle := Create ("GVD.Process");
 
    type GPS_Proxy is new Process_Proxy with record
-      Kernel : Kernel_Handle;
+      Process : Visual_Debugger;
    end record;
    --  GPS specific proxy, used to redefine Set_Command_In_Process
 
@@ -486,9 +486,13 @@ package body GVD.Process is
       Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
 
       if In_Process then
-         Set_Sensitive (Proxy.Kernel, Debug_Busy);
+         Run_Debugger_States_Hook
+           (Proxy.Process, Debugger_State_Changed_Hook, Debug_Busy);
+         Set_Sensitive (Get_Kernel (Proxy.Process), Debug_Busy);
       else
-         Set_Sensitive (Proxy.Kernel, Debug_Available);
+         Run_Debugger_States_Hook
+           (Proxy.Process, Debugger_State_Changed_Hook, Debug_Available);
+         Set_Sensitive (Get_Kernel (Proxy.Process), Debug_Available);
       end if;
    end Set_Command_In_Process;
 
@@ -1216,6 +1220,8 @@ package body GVD.Process is
 
       --  Let all views know that they should close
 
+      Run_Debugger_States_Hook
+        (Process, Debugger_State_Changed_Hook, Debug_None);
       Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
 
       if Process.Breakpoints /= null then
@@ -1842,7 +1848,7 @@ package body GVD.Process is
 
       begin
          Proxy := new GPS_Proxy;
-         GPS_Proxy (Proxy.all).Kernel := Kernel_Handle (Kernel);
+         GPS_Proxy (Proxy.all).Process := Process;
          Configure
            (Process         => Process,
             Kind            => Gdb_Type,
@@ -1881,6 +1887,8 @@ package body GVD.Process is
          end if;
       end if;
 
+      Run_Debugger_States_Hook
+        (Process, Debugger_State_Changed_Hook, Debug_Available);
       Run_Debugger_Hook (Process, Debugger_Started_Hook);
 
       Pop_State (Kernel_Handle (Kernel));

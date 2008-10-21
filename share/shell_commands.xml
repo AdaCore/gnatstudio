@@ -396,18 +396,31 @@ It isn't recommended to do any direct graphical action before this hook has been
      <param name="hook">A string, the name of the hook</param>
      <param name="debugger">An instance of GPS.Debugger</param>
      <description>Hook called when a new debugger has been started</description>
+     <see_also>@hook@ debugger_state_changed</see_also>
   </shell_doc>
 
   <shell_doc name="@hook@ debugger_terminated">
+     <obsolescent />
      <param name="hook">A string, the name of the hook</param>
      <param name="debugger">An instance of GPS.Debugger</param>
-     <description>Hook called when the debugger session has been terminated</description>
+     <description>Hook called when the debugger session has been terminated. It is now recommended that you connect to the debugger_state_changed hook and test whether the new state is "none".</description>
+     <see_also>@hook@ debugger_state_changed</see_also>
+  </shell_doc>
+
+  <shell_doc name="@hook@ debugger_state_changed">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="debugger">An instance of GPS.Debugger</param>
+     <param name="new_state">A string</param>
+     <description>Indicates a change in the status of the debugger: new_state can be one of "none" (the debugger is now terminated), "idle" (the debugger is now waiting for user input) or "busy" (the debugger is now processing a command, and the process is running). As opposed to debugger_process_stopped, this hook is called when the command is just starting its executing (hence the debugger is busy while this hook is called, unless the process immediately stopped).
+This hook is in fact emitted also when internal commands are sent to the debugger, and thus much more often than if it was just reacting to user input. It is therefore recommended that the callback does the minimal amount of work, possibly doing the rest of the work in an idle callback to be executed when GPS is no longer busy.</description>
   </shell_doc>
 
   <shell_doc name="@hook@ debugger_process_stopped">
+     <obsolescent />
      <param name="hook">A string, the name of the hook</param>
      <param name="debugger">An instance of GPS.Debugger</param>
-     <description>Called when the debugger ran and has stopped, for instance when hitting a breakpoint, or after a next command</description>
+     <description>Called when the debugger ran and has stopped, for instance when hitting a breakpoint, or after a next command. If you need to know when the debugger just started processing a command, you can connect to the debugger_state_changed hook instead. Conceptually, you could connect to debugger_state_changed at all times instead of debugger_process_stopped and check when the state is now "idle"</description>
+     <see_also>@hook@ debugger_state_changed</see_also>
   </shell_doc>
 
   <shell_doc name="@hook@ debugger_context_changed">
@@ -4879,7 +4892,7 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
       <param name="file" default="current editor">An instance of GPS.File</param>
       <param name="force" default="false">A boolean</param>
       <param name="open" default="True">A boolean</param>
-      <return>An instance of GPS.Editor.Buffer</return>
+      <return>An instance of GPS.EditorBuffer</return>
       <description>If file is already opened in an editor, get a handle on its buffer. This instance is then shared with all other buffers referencing the same file. As a result, you can for instance associate your own data with the buffer, and retrieve it at any time until the buffer is closed. If the file is not opened yet, it is loaded in a new editor, and a new view is opened at the same time (and thus the editor becomes visible to the user).
 If file is not specified, the current editor is returned, ie the last one that had the keyboard focus.
 
@@ -4897,6 +4910,11 @@ If force is set to true, a reload is forced in case the file is already open.
           ed = GPS.EditorBuffer.get (GPS.File ("a.adb"))
           data = ed.data   # "whatever"
       </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.get_new">
+      <return>An instance of GPS.EditorBuffer</return>
+      <description>Open a new editor on a blank file. This file has no name, and you'll have to provide one when you save it</description>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.list">

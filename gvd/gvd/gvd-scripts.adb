@@ -36,6 +36,7 @@ package body GVD.Scripts is
 
    Debugger_Hook_Data_Type        : constant Hook_Type := "Debugger";
    Debugger_String_Hook_Data_Type : constant Hook_Type := "Debugger_String";
+   Debugger_Hook_States_Data_Type : constant Hook_Type := "Debugger_States";
 
    Show_In_Console_Cst : aliased constant String := "show_in_console";
 
@@ -55,6 +56,8 @@ package body GVD.Scripts is
    function From_Callback_Data_Debugger_String
      (Data : Callback_Data'Class)
       return Hooks_Data'Class;
+   function From_Callback_Data_Debugger_States
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert Data into one of the supported Hooks_Data type for the debugger
 
    --------------------------
@@ -77,6 +80,33 @@ package body GVD.Scripts is
       return D;
    end Create_Callback_Data;
 
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Debugger_Hooks_States_Data)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      D   : constant Callback_Data_Access :=
+              new Callback_Data'Class'(Create (Script, 3));
+      Inst : constant Class_Instance :=
+              Get_Or_Create_Instance (Script, Data.Process);
+   begin
+      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 2, Inst);
+
+      case Data.New_State is
+         when Debug_None      => Set_Nth_Arg (D.all, 3, "none");
+         when Debug_Busy      => Set_Nth_Arg (D.all, 3, "busy");
+         when Debug_Available => Set_Nth_Arg (D.all, 3, "idle");
+      end case;
+
+      return D;
+   end Create_Callback_Data;
+
    ---------------------------------
    -- From_Callback_Data_Debugger --
    ---------------------------------
@@ -91,6 +121,35 @@ package body GVD.Scripts is
       Process := Visual_Debugger (GObject'(Get_Data (Inst)));
       return Debugger_Hooks_Data'(Hooks_Data with Debugger => Process);
    end From_Callback_Data_Debugger;
+
+   ----------------------------------------
+   -- From_Callback_Data_Debugger_States --
+   ----------------------------------------
+
+   function From_Callback_Data_Debugger_States
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Process   : Visual_Debugger;
+      Inst      : Class_Instance;
+      New_S     : constant String := Nth_Arg (Data, 3);
+      New_State : Debugger_State;
+   begin
+      Inst := Nth_Arg (Data, 2, New_Class (Get_Kernel (Data), "Debugger"));
+      Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+
+      if New_S = "none" then
+         New_State := Debug_None;
+      elsif New_S = "busy" then
+         New_State := Debug_Busy;
+      else
+         New_State := Debug_Available;
+      end if;
+
+      return Debugger_Hooks_States_Data'
+        (Hooks_Data with
+         Process   => Process,
+         New_State => New_State);
+   end From_Callback_Data_Debugger_States;
 
    --------------------------
    -- Create_Callback_Data --
@@ -146,6 +205,24 @@ package body GVD.Scripts is
       Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
       Run_Hook (Kernel, Hook, Args'Unchecked_Access);
    end Run_Debugger_Hook;
+
+   ------------------------------
+   -- Run_Debugger_States_Hook --
+   ------------------------------
+
+   procedure Run_Debugger_States_Hook
+     (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
+      Hook      : Hook_Name;
+      New_State : GVD_Module.Debugger_State)
+   is
+      Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
+      Args   : aliased Debugger_Hooks_States_Data;
+   begin
+      Args := (Hooks_Data with
+               Process => Visual_Debugger (Debugger),
+               New_State => New_State);
+      Run_Hook (Kernel, Hook, Args'Unchecked_Access);
+   end Run_Debugger_States_Hook;
 
    ---------------------------------------
    -- Run_Debugger_Hook_Until_Not_Empty --
@@ -373,6 +450,10 @@ package body GVD.Scripts is
          Args_Creator   => From_Callback_Data_Debugger'Access);
       Register_Hook_Data_Type
         (Kernel,
+         Data_Type_Name => Debugger_Hook_States_Data_Type,
+         Args_Creator   => From_Callback_Data_Debugger_States'Access);
+      Register_Hook_Data_Type
+        (Kernel,
          Data_Type_Name => Debugger_String_Hook_Data_Type,
          Args_Creator   => From_Callback_Data_Debugger_String'Access);
 
@@ -382,6 +463,8 @@ package body GVD.Scripts is
         (Kernel, Debugger_Context_Changed_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return
         (Kernel, Debugger_Executable_Changed_Hook, Debugger_Hook_Data_Type);
+      Register_Hook_No_Return
+        (Kernel, Debugger_State_Changed_Hook, Debugger_Hook_States_Data_Type);
       Register_Hook_No_Return
         (Kernel, Debugger_Started_Hook, Debugger_Hook_Data_Type);
       Register_Hook_No_Return

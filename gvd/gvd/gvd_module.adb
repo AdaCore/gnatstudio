@@ -1828,8 +1828,8 @@ package body GVD_Module is
    -------------------
 
    procedure Set_Sensitive
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      State  : Debugger_State)
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      State    : Debugger_State)
    is
       Debug     : constant String := '/' & (-"Debug") & '/';
       Available : constant Boolean := State = Debug_Available;
