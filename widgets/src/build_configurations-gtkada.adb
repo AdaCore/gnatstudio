@@ -1515,6 +1515,25 @@ package body Build_Configurations.Gtkada is
             function Get_Category_Name (S : Unbounded_String) return String;
             --  Return the string to store in model for category S
 
+            function Strip_Underscores (S : String) return String;
+            --  Strip key shortcut underscores from S
+
+            function Strip_Underscores (S : String) return String is
+               Result : String (S'Range);
+               Index  : Natural := Result'First;
+            begin
+               for J in S'Range loop
+                  if S (J) /= '_'
+                    or else (J > S'First and then S (J - 1) = '_')
+                  then
+                     Result (Index) := S (J);
+                     Index := Index + 1;
+                  end if;
+               end loop;
+
+               return Result (Result'First .. Index - 1);
+            end Strip_Underscores;
+
             -----------------------
             -- Get_Category_Name --
             -----------------------
@@ -1522,7 +1541,7 @@ package body Build_Configurations.Gtkada is
             function Get_Category_Name (S : Unbounded_String) return String is
             begin
                return "<b>"
-                 & Glib.Convert.Escape_Text (To_String (S))
+                 & Glib.Convert.Escape_Text (Strip_Underscores (To_String (S)))
                  & "</b>";
             end Get_Category_Name;
 
