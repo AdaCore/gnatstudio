@@ -503,7 +503,7 @@ package body Build_Command_Manager is
                CL : constant Argument_List :=
                       Get_Command_Line_Unexpanded (Registry, T);
                CL_Mode : Argument_List_Access :=
-                           Apply_Mode_Args (Get_Model (T), Mode_Name, CL);
+                           Apply_Mode_Args (Get_Model (T), Mode, CL);
             begin
                --  Sanity check that the command line contains at least one
                --  item (the command itself). It can happen that this is not
