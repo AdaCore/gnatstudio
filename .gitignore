@@ -61,6 +61,10 @@ kernel/src_info/sn/snsrc/snavigator/parsers/assembly/ppc601-eabi/config.h
 kernel/src_info/sn/snsrc/snavigator/parsers/assembly/ppc601-eabi/stamp-h
 kernel/src_info/sn/snsrc/snavigator/stamp-h
 kernel/src_info/sn/snsrc/tcl8.1/unix/tclConfig.sh
+kernel/src_info/sn/snsrc/snavigator/db/dbcp
+kernel/src_info/sn/snsrc/snavigator/db/dbdump
+kernel/src_info/sn/snsrc/snavigator/db/dbimp
+kernel/src_info/sn/snsrc/snavigator/parsers/cpp/cbrowser
 po/Makefile
 share/plug-ins/protocols.xml
 share/plug-ins/runtime.xml
