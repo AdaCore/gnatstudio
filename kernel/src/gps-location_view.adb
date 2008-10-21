@@ -19,6 +19,7 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -1568,6 +1569,7 @@ package body GPS.Location_View is
 
       Unref (V.Category_Pixbuf);
       Unref (V.File_Pixbuf);
+      Unchecked_Free (V.Secondary_File_Pattern);
 
       if V.Idle_Redraw_Registered then
          Timeout_Remove (V.Idle_Redraw_Handler);
@@ -2479,12 +2481,9 @@ package body GPS.Location_View is
      (View : access Location_View_Record'Class)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
+        (Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
    begin
-      if View.Secondary_File_Pattern /= null then
-         Unchecked_Free (View.Secondary_File_Pattern);
-      end if;
-
+      Unchecked_Free (View.Secondary_File_Pattern);
       View.Secondary_File_Pattern := new Pattern_Matcher'
         (Compile (Secondary_File_Pattern.Get_Pref));
       View.SFF := Secondary_File_Pattern_Index.Get_Pref;

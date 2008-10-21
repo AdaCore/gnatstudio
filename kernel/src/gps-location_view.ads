@@ -35,6 +35,9 @@ with Glib;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GNATCOLL.VFS;
+
+with GNAT.Expect;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Basic_Types;               use Basic_Types;
 with Generic_List;
@@ -201,8 +204,6 @@ private
       Children           : List;
    end record;
 
-   type Pattern_Matcher_Access is access Pattern_Matcher;
-
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
@@ -229,7 +230,7 @@ private
       Stored_Locations : List;
 
       --  The following are used for detection of secondary file locations
-      Secondary_File_Pattern : Pattern_Matcher_Access;
+      Secondary_File_Pattern : GNAT.Expect.Pattern_Matcher_Access;
       --  Regexp corresponding to a detection of the secondary file
       SFF : Natural;
       --  Index of the secondary file
