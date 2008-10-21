@@ -11,7 +11,6 @@
   <subdir>debug</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
@@ -25,7 +24,6 @@
   <subdir>gcov</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
@@ -40,7 +38,6 @@
   <subdir>gprof</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
-  <supported-model>gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
