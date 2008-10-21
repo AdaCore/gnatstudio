@@ -24,6 +24,9 @@ with Glib.Object;        use Glib.Object;
 
 with Breakpoints_Editor; use Breakpoints_Editor;
 with Debugger;           use Debugger;
+with Gtk.Tree_Model;     use Gtk.Tree_Model;
+with Gtk.Tree_Store;     use Gtk.Tree_Store;
+with Gtk.Tree_Selection; use Gtk.Tree_Selection;
 with GPS.Intl;           use GPS.Intl;
 with GUI_Utils;          use GUI_Utils;
 with GVD.Code_Editors;   use GVD.Code_Editors;
@@ -241,7 +244,9 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Editor    : constant Breakpoint_Editor_Access :=
-                    Breakpoint_Editor_Access (Object);
+        Breakpoint_Editor_Access (Object);
+      Model     : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (Editor.Breakpoint_List));
       Selection : constant Integer := Get_Selection_Index (Editor);
 
    begin
@@ -250,6 +255,25 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Editor.Process.Breakpoints (Selection).Num,
             Mode => GVD.Types.Visible);
+
+         --  Reselect the next line for convenience, so that the user can
+         --  press "Remove" several times in a row
+
+         if Gint (Selection) >= N_Children (Model, Null_Iter) then
+            Select_Iter
+              (Get_Selection (Editor.Breakpoint_List),
+               Nth_Child
+                 (Model,
+                  Parent => Null_Iter,
+                  N      => N_Children (Model, Null_Iter) - 1));
+         else
+            Select_Iter
+              (Get_Selection (Editor.Breakpoint_List),
+               Nth_Child
+                 (Model,
+                  Parent => Null_Iter,
+                  N      => Gint (Selection)));
+         end if;
       end if;
 
    exception
