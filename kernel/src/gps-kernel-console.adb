@@ -49,7 +49,6 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GPS.Kernel.Console is
-
    type GPS_Message_Record is new Interactive_Console_Record with null record;
    type GPS_Message is access GPS_Message_Record'Class;
    --  Type for the messages window. This is mostly use to have a unique tag
@@ -220,10 +219,6 @@ package body GPS.Kernel.Console is
       pragma Unreferenced (Console);
    begin
       return True;
-      --  ??? False if the kernel is being destroyed, so that we ultimately
-      --  destroy the console. Perhaps the MDI should not check for
-      --  delete_event when it is being destroyed ?
-
    end Console_Delete_Event;
 
    ------------------------
@@ -502,8 +497,10 @@ package body GPS.Kernel.Console is
       if Node.Tag.all = "Message_Window" then
          if Console_Module_Id.Console = null then
             Initialize_Console (User);
+            return Console_Module_Id.Child;
+         else
+            return Console_Module_Id.Child;
          end if;
-         return Find_MDI_Child (Get_MDI (User), Console_Module_Id.Console);
       end if;
 
       return null;
