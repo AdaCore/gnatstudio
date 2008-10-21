@@ -16,7 +16,12 @@
    while still stopping on all other exceptions. The source locations are
    set through the contextual menu "Ignore exception breakpoints" (and removed
    likewise), and are preserved between GPS sessions if the preference is set
-   appropriately
+   appropriately.
+
+   It defines a GPS action (to which key bindings can be set) called
+   "Continue till line" (in the General category of the key shortcut manager).
+   This allows you through a simple key shortcut to automatically continue the
+   debugger till the current line.
 """
 
 
@@ -76,6 +81,26 @@ Contextual ("debug print as decimal").create (
    label       = print_as_dec_label,
    on_activate = print_as_dec_run,
    filter      = in_debugger_on_entity)
+
+####################################
+# Continuing till a specific line
+####################################
+
+def continue_till_line ():
+  context = current_context()
+  try:
+     debug = Debugger.get()
+     debug.send ("tbreak " + context.file().name() + ":" + `context.location().line()`)
+     debug.send ("cont")
+  except:
+     pass  # No debugger active
+
+parse_xml ("""
+  <action name="continue till line">
+    <shell lang="python">debugger.continue_till_line()</shell>
+  </action>
+  <key name="continue till line">ctrl-b</key>
+""")
 
 ####################################
 # Breakpoint exceptions            #
