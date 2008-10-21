@@ -580,13 +580,6 @@ package body GPS.Kernel.Hooks is
       Last   : Boolean := False)
    is
    begin
-      if Active (Me) then
-         Trace
-           (Me,
-            "Adding function to hook " & String (Info.Name.all)
-            & ": " & String (Name));
-      end if;
-
       if Last then
          Append
            (Info.Funcs,
@@ -606,6 +599,13 @@ package body GPS.Kernel.Hooks is
               (new Hook_User_Data'(Kernel_Handle (Kernel),
                new Hook_Name'(Info.Name.all),
                Hook_Function (Func))));
+      end if;
+
+      if Active (Me) then
+         Trace
+           (Me,
+            "Adding function to hook " & String (Info.Name.all)
+            & ": " & String (Name) & " refcount=" & Func.Ref_Count'Img);
       end if;
    end Add_Hook;
 
@@ -1262,8 +1262,12 @@ package body GPS.Kernel.Hooks is
    begin
       F.Func.Ref_Count := F.Func.Ref_Count - 1;
 
+      --  Always free the name, which is associated with a specific node in the
+      --  list. If the same function hook is connected multiple times, it will
+      --  have multiple names every times.
+      Free (F.Name);
+
       if F.Func.Ref_Count = 0 then
-         Free (F.Name);
          Destroy (F.Func.all);
          Unchecked_Free (F.Func);
       end if;
