@@ -80,7 +80,7 @@ package body GPS.Kernel.Actions is
    begin
       --  Do not free Action.Command itself, since some menus might still
       --  be referring to it. It will be freed when the whole htable is
-      --  reset
+      --  reset (since it was registered through Register_Perma_Command)
 
       --  Do not free the Action.Filter, which will be taken care of when the
       --  kernel itself is destroyed. This means that filters always have a
@@ -309,19 +309,7 @@ package body GPS.Kernel.Actions is
    -----------
 
    overriding procedure Reset (X : access Actions_Htable_Record) is
-      Iter   : Iterator;
-      Action : Action_Record_Access;
    begin
-      --  Free all the commands
-      Get_First (X.Table, Iter);
-      loop
-         Action := Get_Element (Iter);
-         exit when Action = null;
-
-         Commands.Unref (Command_Access (Action.Command));
-         Get_Next (X.Table, Iter);
-      end loop;
-
       --  Free the actions and their filters
       Reset (X.Table);
    end Reset;

@@ -76,6 +76,8 @@ package GPS.Kernel.Actions is
    --  will not be shown in the keybinding editor.
    --  Defined_In indicates in which file the action is defined. By default, it
    --  is considered as a builtin action.
+   --  Command is then owned by the kernel, and will be freed when GPS exits.
+   --  You must not call Unref withouth first calling Ref on that command.
 
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;

@@ -2383,9 +2383,21 @@ package body GPS.Kernel is
 
    procedure Register_Perma_Command
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : access Commands.Root_Command'Class) is
+      Command : access Commands.Root_Command'Class)
+   is
+      use Commands.Command_Queues, Commands;
+      L : List_Node := First (Kernel.Perma_Commands);
    begin
-      Commands.Ref (Command);  --  Will only be freed when the kernel exits
+      while L /= Null_Node loop
+         if Data (L) = Commands.Command_Access (Command) then
+            return;  --  Already in list, nothing to do
+         end if;
+
+         L := Next (L);
+      end loop;
+
+      --  Command is not in list: we steal a reference to it.
+
       Commands.Command_Queues.Append
         (Kernel.Perma_Commands, Commands.Command_Access (Command));
    end Register_Perma_Command;

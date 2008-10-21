@@ -156,6 +156,7 @@ package body Custom_Module is
       On_Activate : Subprogram_Type;
    end record;
    type Contextual_Shell_Command is access all Contextual_Shell_Cmd'Class;
+   overriding procedure Free (Cmd : in out Contextual_Shell_Cmd);
    overriding function Execute
      (Command : access Contextual_Shell_Cmd;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -223,6 +224,15 @@ package body Custom_Module is
       Current_Tool : in out Tool_Properties_Record;
       Node         : Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Cmd : in out Contextual_Shell_Cmd) is
+   begin
+      Free (Cmd.On_Activate);
+   end Free;
 
    -------------------------
    -- Parse_Switches_Node --

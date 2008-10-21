@@ -420,6 +420,8 @@ package GPS.Kernel is
    --  commands used in actions or menus (but in such case the command is
    --  automatically added already). A given command can be registered
    --  several times though.
+   --  The current reference to Command is stolen, ie you must not call Unref
+   --  on the command before first calling Ref yourself.
 
    --------------------
    -- Action filters --
