@@ -1556,6 +1556,15 @@
    obj:/opt/gnome/lib/libpangoft2-1.0.so.0.1001.1
 }
 {
+   leak (?) in fontconfig
+   Memcheck:Leak
+   fun:malloc
+   obj:*fontconfig*
+   obj:*fontconfig*
+   fun:FcConfigSubstituteWithPat
+   fun:FcFontRenderPrepare   
+}
+{
    <insert a suppression name here>
    Memcheck:Leak
    fun:_vgrZU_libcZdsoZa_malloc

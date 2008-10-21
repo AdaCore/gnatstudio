@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +29,6 @@ package body Src_Editor_Buffer.Blocks is
 
    use type GNAT.Strings.String_Access;
    use Src_Editor_Buffer.Line_Information;
-   use Block_List;
 
    --------------------
    -- Compute_Blocks --
@@ -78,11 +76,7 @@ package body Src_Editor_Buffer.Blocks is
 
       Buffer.Blocks_Exact := True;
 
-      if Buffer.Line_Data /= null then
-         for Line in Buffer.Line_Data'Range loop
-            Buffer.Line_Data (Line).Block := null;
-         end loop;
-      end if;
+      Reset_Blocks_Info (Buffer.Line_Data);
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);
@@ -99,19 +93,18 @@ package body Src_Editor_Buffer.Blocks is
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
 
-            Block := new Block_Record'
-              (Indentation_Level => 0,
-               Offset_Start      => Current.Sloc_Start.Column,
-               Stored_Offset     => Current.Sloc_Start.Column,
-               First_Line        => Line_Start,
-               Last_Line         => Line_End,
-               Name              => Copy (Current.Name),
-               Block_Type        => Current.Category,
-               GC                => null);
-
             First_Buffer_Line := Get_Buffer_Line (Buffer, Line_Start);
-
             if First_Buffer_Line /= 0 then
+               Block := new Block_Record'
+                 (Indentation_Level => 0,
+                  Offset_Start      => Current.Sloc_Start.Column,
+                  Stored_Offset     => Current.Sloc_Start.Column,
+                  First_Line        => Line_Start,
+                  Last_Line         => Line_End,
+                  Name              => Copy (Current.Name),
+                  Block_Type        => Current.Category,
+                  GC                => null);
+
                for J in Line_Start .. Line_End loop
                   Buffer_Line := Get_Buffer_Line (Buffer, J);
 
@@ -123,8 +116,6 @@ package body Src_Editor_Buffer.Blocks is
                end loop;
 
                Buffer.Line_Data (First_Buffer_Line).Block := Block;
-            else
-               Free_Block (Block);
             end if;
          end if;
 

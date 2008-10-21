@@ -41,7 +41,6 @@ with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
 with Basic_Types;               use Basic_Types;
 with Commands;                  use Commands;
-with Generic_List;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
@@ -959,12 +958,6 @@ private
    -----------------------
 
    type Block_Access is access Block_Record;
-
-   procedure Free_Block (Block : in out Block_Access);
-
-   package Block_List is new Generic_List
-     (Block_Access, Free => Free_Block);
-
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
@@ -1017,6 +1010,9 @@ private
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
+
+   procedure Reset_Blocks_Info (Data : Line_Data_Array_Access);
+   --  Reset block information used by Data
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Data_Array, Line_Data_Array_Access);

@@ -616,17 +616,41 @@ package body Src_Editor_Buffer is
       end if;
    end Free;
 
-   ----------------
-   -- Free_Block --
-   ----------------
+   -----------------------
+   -- Reset_Blocks_Info --
+   -----------------------
 
-   procedure Free_Block (Block : in out Block_Access) is
+   procedure Reset_Blocks_Info (Data : Line_Data_Array_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Block_Record, Block_Access);
+      Block : Block_Access;
    begin
-      GNAT.Strings.Free (Block.Name);
-      Unchecked_Free (Block);
-   end Free_Block;
+      if Data /= null then
+         for Line in Data'Range loop
+            --  Block info is shared among multiple lines, so we need to free
+            --  it only once. It is possible that the same block is used on
+            --  disjoint blocks as well (for instance if we have a nested block
+            --  in the middle)
+
+            if Data (Line).Block /= null then
+               Block := Data (Line).Block;
+
+               --  ??? Would be better to use Block.Last_Line below, but types
+               --  do not match and I am not sure of the index for Data
+               for L in Line .. Data'Last loop
+                  if Data (L).Block = Block then
+                     Data (L).Block := null;
+                  end if;
+               end loop;
+
+               if Block /= null then
+                  GNAT.Strings.Free (Block.Name);
+                  Unchecked_Free (Block);
+               end if;
+            end if;
+         end loop;
+      end if;
+   end Reset_Blocks_Info;
 
    ----------------
    -- Get_String --
@@ -1381,13 +1405,23 @@ package body Src_Editor_Buffer is
          Unchecked_Free (Buffer.Editable_Lines);
       end if;
 
+      Reset_Blocks_Info (Buffer.Line_Data);
+
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
             Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
+            --  Block already freed by the call to Reset_Blocks_Info
          end if;
       end loop;
 
+      Free (Buffer.Constructs);
+
       Unchecked_Free (Buffer.Line_Data);
+      GNAT.Strings.Free (Buffer.Charset);
+
+      Unref (Buffer.Delimiter_Tag);
+      Unref (Buffer.Non_Editable_Tag);
+      Unref (Buffer.Syntax_Tags);
 
       Reset_Completion_Data;
    end Buffer_Destroy;

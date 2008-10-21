@@ -55,6 +55,9 @@ package Src_Highlighting is
    --  Declared as public so that one can retrieve them from the
    --  Source Buffer using its name.
 
+   procedure Unref (Tags : in out Highlighting_Tags);
+   --  Free memory
+
    procedure Create_Syntax_Tags
      (Result                      : in out Highlighting_Tags;
       Keyword_Color               : Gdk.Color.Gdk_Color;

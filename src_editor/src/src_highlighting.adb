@@ -27,6 +27,20 @@ with Language;     use Language;
 
 package body Src_Highlighting is
 
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Tags : in out Highlighting_Tags) is
+   begin
+      for T in Tags'Range loop
+         if Tags (T) /= null then
+            Unref (Tags (T));
+            Tags (T) := null;
+         end if;
+      end loop;
+   end Unref;
+
    --------------------------
    -- Forward_Declarations --
    --------------------------

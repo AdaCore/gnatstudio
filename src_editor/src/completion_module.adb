@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -286,10 +285,18 @@ package body Completion_Module is
          if Completion_Module.Previous_Smart_Completion_Trigger_State
            /= Disabled
          then
+            if Completion_Module.Completion_Triggers_Callback = null then
+               --  ??? Needed so that we can remove it, would be nice if the
+               --  kernel knew how to look inside wrappers.
+               --  This memory is automatically freed when the kernel exits
+               Completion_Module.Completion_Triggers_Callback :=
+                 Wrapper (Character_Added_Hook_Callback'Access);
+            end if;
+
             Add_Hook (Kernel, Character_Added_Hook,
                       Completion_Module.Completion_Triggers_Callback,
                       Name => "completion_module.character_added");
-         else
+         elsif Completion_Module.Completion_Triggers_Callback /= null then
             Remove_Hook (Kernel, Character_Added_Hook,
                          Completion_Module.Completion_Triggers_Callback);
          end if;
@@ -403,8 +410,7 @@ package body Completion_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Completion_Module_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Function_With_Args'Class, Function_With_Args_Access);
+      pragma Unreferenced (Module);
    begin
       if Completion_Module /= null then
          Kill_File_Iteration
@@ -417,8 +423,6 @@ package body Completion_Module is
 
       Reset_Completion_Data;
       Completion_Module := null;
-
-      Unchecked_Free (Module.Completion_Triggers_Callback);
    end Destroy;
 
    -----------------------
@@ -947,7 +951,7 @@ package body Completion_Module is
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
-      if not Get_Writable (Buffer) then
+      if Buffer = null or else not Get_Writable (Buffer) then
          return Commands.Failure;
       end if;
 
@@ -1284,9 +1288,6 @@ package body Completion_Module is
            & "character-triggered smart completion in 'Normal' mode"),
          Label   => -"Smart completion timeout",
          Default => 200);
-
-      Completion_Module.Completion_Triggers_Callback :=
-        Wrapper (Character_Added_Hook_Callback'Access);
 
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion.Get_Pref;

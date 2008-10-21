@@ -55,6 +55,7 @@ package body Commands is
       if Q /= null then
          Free (Q.Undo_Queue);
          Free (Q.Redo_Queue);
+         Free (Q.Queue_Change_Hook);
 
          Free (Q.The_Queue);
          Free (Q.Queue_Change_Hook, Free_Data => False);
