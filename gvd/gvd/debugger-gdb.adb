@@ -4204,7 +4204,9 @@ package body Debugger.Gdb is
    overriding procedure Set_TTY
      (Debugger : access Gdb_Debugger; TTY : String) is
    begin
-      Send (Debugger, "tty " & TTY, Mode => Hidden);
+      if TTY /= "" then
+         Send (Debugger, "tty " & TTY, Mode => Hidden);
+      end if;
    end Set_TTY;
 
 end Debugger.Gdb;
