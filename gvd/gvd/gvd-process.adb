@@ -570,8 +570,15 @@ package body GVD.Process is
      (Debugger   : access Debugger_Root'Class)
       return Visual_Debugger is
    begin
-      return Convert
-        (Get_Kernel (Debugger), Get_Descriptor (Get_Process (Debugger)).all);
+      if Get_Process (Debugger) = null
+        or else Get_Descriptor (Get_Process (Debugger)) = null
+      then
+         return null;
+      else
+         return Convert
+           (Get_Kernel (Debugger),
+            Get_Descriptor (Get_Process (Debugger)).all);
+      end if;
    end Convert;
 
    ------------------------
