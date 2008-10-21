@@ -1,0 +1,60 @@
+# These are unfreed memory (still reachable blocks) detected in python
+# valgrind should not systematically run with these suppressions on, since
+# they might potentially hide real leaks (even though we would likely have
+# a matching Ada leak in any case), but these suppressions might prove
+# useful when analyzing the result of valgrind with --show-reachable=yes
+
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:dictresize
+  fun:PyString_InternInPlace
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:dictresize
+  fun:PyEval_EvalFrameEx
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:dictresize
+  fun:PyDict_SetItemString
+  fun:_PyExc_Init
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:dictresize
+  fun:PyDict_SetItemString
+  fun:PyType_Ready
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:dictresize
+  fun:PyDict_SetItemString
+  fun:PyModule_AddObject
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:malloc
+  fun:PyObject_Malloc
+}
+
+
+
+{
+  GNAT does not release the secondary stack
+  Memcheck:Leak
+  fun:malloc
+  fun:__gnat_malloc
+  fun:system__secondary_stack__ss_allocate
+}
