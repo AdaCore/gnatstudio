@@ -112,12 +112,41 @@ Project_Attributes="""
     <string type="file"/>
   </project_attribute>
   <project_attribute
+    name="Make"
+    package="Make"
+    editor_section="Make"
+    description="Make command to use when parsing Makefile">
+    <string type="" default="make"/>
+  </project_attribute>
+  <project_attribute
+    name="Switches"
+    package="Make"
+    editor_section="Make"
+    description="Switches for the make command">
+    <string type="" default="-k"/>
+  </project_attribute>""")
+
+  <project_attribute
     name="antfile"
     package="Ant"
     editor_section="Ant"
     description="Ant build file to use for this project">
     <string type="file"/>
   </project_attribute>
+  <project_attribute
+    name="Ant"
+    package="Ant"
+    editor_section="Ant"
+    description="Ant command to use when parsing Makefile">
+    <string type="" default="ant"/>
+ </project_attribute>
+ <project_attribute
+    name="Switches"
+    package="Ant"
+    editor_section="Ant"
+    description="Switches for the ant command">
+    <string type="" default="-e"/>
+ </project_attribute>""")
 """
 
 class Builder:
