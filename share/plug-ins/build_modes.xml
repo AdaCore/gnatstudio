@@ -57,7 +57,11 @@
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
   <server>Tools_Server</server>
+  <substitutions>
+    <substitute src="%builder" dest="%gnatmake"/>
+  </substitutions>
   <extra-args>
+    <arg>-margs</arg>
     <arg>--subdirs=%subdir</arg>
     <arg>-k</arg>
     <arg>-d</arg>

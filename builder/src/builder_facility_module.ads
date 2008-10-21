@@ -138,10 +138,11 @@ package Builder_Facility_Module is
    function Get_Mode_Subdir (Mode : String) return String;
    --  Return the special directory ("subdir") for Mode
 
-   function Get_Mode_Args
-     (Model : String; Mode : String) return GNAT.OS_Lib.Argument_List;
-   --  Return the extra args for mode Mode, if the mode applies to model Model
-   --  Caller must *not* free the result.
+   function Apply_Mode_Args
+     (Model : String; Mode : String; Cmd_Line : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List_Access;
+   --  Applies the mode arguments to the command_line passed as argument.
+   --  The returned argument_list should be freed by the caller
 
    function Get_List_Of_Modes
      (Model : String) return GNAT.OS_Lib.Argument_List;

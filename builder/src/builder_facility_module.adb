@@ -1434,6 +1434,32 @@ package body Builder_Facility_Module is
             Mode.Server := Remote.Server_Type'Value (N.Value.all);
          elsif N.Tag.all = "subdir" then
             Mode.Subdir := To_Unbounded_String (N.Value.all);
+         elsif N.Tag.all = "substitutions" then
+            --  Count the nodes
+            C := N.Child;
+            while C /= null loop
+               Count := Count + 1;
+               C := C.Next;
+            end loop;
+
+            --  Create the substitutions lists
+            declare
+               Srcs  : Argument_List (1 .. Count);
+               Dests : Argument_List (1 .. Count);
+            begin
+               C := N.Child;
+               Count := 0;
+               while C /= null loop
+                  Count := Count + 1;
+                  Srcs  (Count) := new String'(Get_Attribute (C, "src"));
+                  Dests (Count) := new String'(Get_Attribute (C, "dest"));
+                  C := C.Next;
+               end loop;
+
+               Mode.Subst_Src  := new Argument_List'(Srcs);
+               Mode.Subst_Dest := new Argument_List'(Dests);
+            end;
+
          elsif N.Tag.all = "extra-args" then
             --  Count the nodes
             C := N.Child;
@@ -1776,51 +1802,118 @@ package body Builder_Facility_Module is
       end if;
    end Get_Build_Output;
 
-   -------------------
-   -- Get_Mode_Args --
-   -------------------
+   ---------------------
+   -- Apply_Mode_Args --
+   ---------------------
 
-   function Get_Mode_Args
-     (Model : String; Mode : String) return GNAT.OS_Lib.Argument_List
+   function Apply_Mode_Args
+     (Model : String; Mode : String; Cmd_Line : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List_Access
    is
-      Empty : constant Argument_List (1 .. 0) := (others => null);
-      M     : Mode_Record;
       use Unbounded_String_List;
-      C : Unbounded_String_List.Cursor;
+      M         : Mode_Record;
+      C         : Unbounded_String_List.Cursor;
+      Res       : Argument_List_Access;
+      Supported : Boolean;
+
    begin
+      Supported := True;
+
       if Model = "" then
-         return Empty;
+         Supported := False;
       end if;
 
-      M := Element_Mode
-        (Builder_Module_ID.Registry, To_Unbounded_String (Mode));
-
-      if M.Args = null
-        or else M.Args'Length = 0
-      then
-         return Empty;
+      if Mode = "" then
+         Supported := False;
       end if;
 
-      --  Look if Mode supports Model
+      if Supported then
+         M := Element_Mode
+           (Builder_Module_ID.Registry, To_Unbounded_String (Mode));
 
-      --  By convention, if there is no list of supported models, this means
-      --  the mode supports all models.
-      if M.Models.Is_Empty then
-         return M.Args.all;
-      end if;
-
-      C := M.Models.First;
-
-      while Has_Element (C) loop
-         if Element (C) = Model then
-            return M.Args.all;
+         if (M.Args = null
+             or else M.Args'Length = 0)
+           and then
+             (M.Subst_Src = null
+              or else M.Subst_Src'Length = 0)
+         then
+            Supported := False;
          end if;
+      end if;
 
-         Next (C);
+      if Supported and then not M.Models.Is_Empty then
+         C := M.Models.First;
+
+         Supported := False;
+         while Has_Element (C) loop
+            if Element (C) = Model then
+               Supported := True;
+               exit;
+            end if;
+
+            Next (C);
+         end loop;
+      end if;
+
+      --  We finished the check to see if the Mode should be active
+      --  If unsupported, return a copy of the initial command line.
+      if not Supported then
+         Res := new Argument_List (Cmd_Line'Range);
+
+         for J in Cmd_Line'Range loop
+            Res (J) := new String'(Cmd_Line (J).all);
+         end loop;
+
+         return Res;
+      end if;
+
+      --  Now let's apply the Mode. First we create the result with enough
+      --  room.
+      if M.Args /= null then
+         Res := new Argument_List (1 .. Cmd_Line'Length + M.Args'Length);
+      else
+         Res := new Argument_List (1 .. Cmd_Line'Length);
+      end if;
+
+      --  Let's apply substitutions if needed
+      if M.Subst_Src /= null then
+         for J in 1 .. Cmd_Line'Length loop
+            declare
+               Found : Boolean := False;
+            begin
+               for K in M.Subst_Src'Range loop
+                  if Cmd_Line (Cmd_Line'First + J - 1).all =
+                    M.Subst_Src (K).all
+                  then
+                     Res (J) := new String'(M.Subst_Dest (K).all);
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Res (J) :=
+                    new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
+               end if;
+            end;
+         end loop;
+
+      else
+         --  Simple copy of the initial command line
+         for J in 1 .. Cmd_Line'Length loop
+            Res (J) :=
+              new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
+         end loop;
+      end if;
+
+      --  Append the extra args
+      for J in 1 .. Res'Last - Cmd_Line'Length loop
+         Res (J + Cmd_Line'Length) :=
+           new String'(M.Args (M.Args'First + J - 1).all);
       end loop;
 
-      return Empty;
-   end Get_Mode_Args;
+      return Res;
+   end Apply_Mode_Args;
 
    ---------------------
    -- Get_Mode_Subdir --

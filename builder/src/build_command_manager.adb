@@ -434,14 +434,17 @@ package body Build_Command_Manager is
 
          function Expand_Cmd_Line (CL : String) return String is
             CL_Args : Argument_List_Access := Argument_String_To_List (CL);
+            Mode_Args : Argument_List_Access :=
+                          Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
             Args    : Argument_List_Access :=
               Expand_Command_Line
-                (Kernel, CL_Args.all & All_Extra_Args.all, Server,
+                (Kernel, Mode_Args.all & All_Extra_Args.all, Server,
                  Force_File, Main, Subdir, Simulate => True);
             Res     : constant String := Argument_List_To_String (Args.all);
 
          begin
             Free (CL_Args);
+            Free (Mode_Args);
             Free (Args);
             return Res;
          end Expand_Cmd_Line;
@@ -451,11 +454,9 @@ package body Build_Command_Manager is
          --  extra args explicitely passed.
 
          if Extra_Args /= null then
-            All_Extra_Args := new Argument_List'
-              (Get_Mode_Args (Get_Model (T), Mode) & Extra_Args.all);
+            All_Extra_Args := new Argument_List'(Extra_Args.all);
          else
-            All_Extra_Args := new Argument_List'
-              (Get_Mode_Args (Get_Model (T), Mode));
+            All_Extra_Args := new Argument_List (1 .. 0);
          end if;
 
          if Is_Server_In_Mode (Mode) then
@@ -500,17 +501,20 @@ package body Build_Command_Manager is
 
             declare
                CL : constant Argument_List :=
-                 Get_Command_Line_Unexpanded (Registry, T);
+                      Get_Command_Line_Unexpanded (Registry, T);
+               CL_Mode : Argument_List_Access :=
+                           Apply_Mode_Args (Get_Model (T), Mode_Name, CL);
             begin
                --  Sanity check that the command line contains at least one
                --  item (the command itself). It can happen that this is not
                --  the case if the user has modified the command by hand.
 
-               if CL'Length = 0 then
+               if CL_Mode'Length = 0 then
                   Insert
                     (Kernel,
                      -"Command line is empty for target: " & Target_Name,
                      Mode => Error);
+                  Free (CL_Mode);
                   Unchecked_Free (All_Extra_Args);
                   return;
                end if;
@@ -519,12 +523,14 @@ package body Build_Command_Manager is
 
                if All_Extra_Args = null then
                   Full := Expand_Command_Line
-                    (Kernel, CL, Server, Force_File, Main, Subdir);
+                    (Kernel, CL_Mode.all, Server, Force_File, Main, Subdir);
                else
                   Full := Expand_Command_Line
-                    (Kernel, CL & All_Extra_Args.all,
+                    (Kernel, CL_Mode.all & All_Extra_Args.all,
                      Server, Force_File, Main, Subdir);
                end if;
+
+               Free (CL_Mode);
             end;
          end if;
 
