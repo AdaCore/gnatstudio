@@ -19,6 +19,7 @@
 
 with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with GNATCOLL.Scripts;                           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;
@@ -127,12 +128,19 @@ package body Code_Analysis_Module is
 
    type Code_Analysis_Module_ID_Record is new Module_ID_Record with record
       Class    : Class_Type;
+
       Analyzes : Code_Analysis_Instances.Set;
+      --  ??? For some reason, it seems this set should always contain at
+      --  least one element (see Register_Module and On_Project_Changing_Hook)
+
       Count    : Integer := 0; -- To name the analysis instances
    end record;
 
    type Code_Analysis_Module_ID_Access is access all
      Code_Analysis_Module_ID_Record'Class;
+
+   overriding procedure Destroy
+     (Module : in out Code_Analysis_Module_ID_Record);
 
    Code_Analysis_Module_ID : Code_Analysis_Module_ID_Access;
 
@@ -449,7 +457,7 @@ package body Code_Analysis_Module is
 
    procedure Destroy_Analysis_Instance
      (Kernel   : Kernel_Handle;
-      Analysis : Code_Analysis_Instance);
+      Analysis : in out Code_Analysis_Instance);
    --  Free the memory used by the given analysis instance
 
    procedure Clear_Analysis_Instance
@@ -568,6 +576,16 @@ package body Code_Analysis_Module is
       Command : String);
    --  Replace the current coverage information in memory with the given
    --  xml-formated file one
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Module : in out Code_Analysis_Module_ID_Record) is
+   begin
+      Destroy_All_Analyzes (Get_Kernel (Module));
+   end Destroy;
 
    --------------------------------------------
    -- CodeAnalysis_Default_Shell_Constructor --
@@ -706,6 +724,7 @@ package body Code_Analysis_Module is
 
       Analysis.Instances  := new Instance_List;
       Analysis.Projects   := new Project_Maps.Map;
+
       Code_Analysis_Module_ID.Analyzes.Insert (Analysis);
       return Analysis;
    end Create_Analysis_Instance;
@@ -1468,6 +1487,7 @@ package body Code_Analysis_Module is
       Cont_N_Anal : Context_And_Analysis)
    is
       pragma Unreferenced (Widget);
+      Analysis : Code_Analysis_Instance;
    begin
       if Message_Dialog
         ((-"Destroy ")
@@ -1476,8 +1496,9 @@ package body Code_Analysis_Module is
          Title => Cont_N_Anal.Analysis.Name.all
             & (-" destruction?")) = 1
       then
+         Analysis := Cont_N_Anal.Analysis;
          Destroy_Analysis_Instance
-           (Get_Kernel (Cont_N_Anal.Context), Cont_N_Anal.Analysis);
+           (Get_Kernel (Cont_N_Anal.Context), Analysis);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1518,7 +1539,6 @@ package body Code_Analysis_Module is
          Title => Integer'Image (Analysis_Nb) & (-" destructions?")) = 1
       then
          Destroy_All_Analyzes (Get_Kernel (Cont_N_Anal.Context));
-         Code_Analysis_Module_ID.Count := 0;
          Dummy := Create_Analysis_Instance;
       end if;
    exception
@@ -1553,7 +1573,6 @@ package body Code_Analysis_Module is
       end;
 
       Destroy_All_Analyzes (Get_Kernel (Data));
-      Code_Analysis_Module_ID.Count := 0;
       Analysis := Create_Analysis_Instance;
       Attach_Instance_And_Analysis (Data, Instance, Analysis);
    exception
@@ -1572,7 +1591,8 @@ package body Code_Analysis_Module is
       pragma Unreferenced (Data, Dummy);
    begin
       Destroy_All_Analyzes (Kernel_Handle (Kernel));
-      Code_Analysis_Module_ID.Count := 0;
+
+      --  ??? Why do we need to insert a dummy element here ?
       Dummy  := Create_Analysis_Instance;
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1587,12 +1607,12 @@ package body Code_Analysis_Module is
       Cur      : Cursor := Code_Analysis_Module_ID.Analyzes.First;
       Analysis : Code_Analysis_Instance;
    begin
-      loop
-         exit when Cur = No_Element;
+      while Has_Element (Cur) loop
          Analysis := Element (Cur);
          Next (Cur);
          Destroy_Analysis_Instance (Kernel, Analysis);
       end loop;
+      Code_Analysis_Module_ID.Count := 0;
    end Destroy_All_Analyzes;
 
    -------------------------------
@@ -1601,8 +1621,10 @@ package body Code_Analysis_Module is
 
    procedure Destroy_Analysis_Instance
      (Kernel   : Kernel_Handle;
-      Analysis : Code_Analysis_Instance)
+      Analysis : in out Code_Analysis_Instance)
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Code_Analysis_Instance_Record, Code_Analysis_Instance);
       Instances : constant Instance_Array := Get_Instances
         (Analysis.Instances.all);
       Property  : Instance_Property;
@@ -1625,11 +1647,14 @@ package body Code_Analysis_Module is
          end if;
       end loop;
 
+      Free (Analysis.Instances);
+
       if Code_Analysis_Module_ID.Analyzes.Contains (Analysis) then
          Code_Analysis_Module_ID.Analyzes.Delete (Analysis);
       end if;
 
       GNAT.Strings.Free (Analysis.Name);
+      Unchecked_Free (Analysis);
    end Destroy_Analysis_Instance;
 
    -----------------------------
@@ -2862,8 +2887,6 @@ package body Code_Analysis_Module is
       Contextual_Menu     : Code_Analysis_Contextual_Menu_Access;
       Code_Analysis_Class : constant Class_Type :=
                               New_Class (Kernel, CodeAnalysis_Cst);
-      Analysis            : Code_Analysis_Instance;
-      pragma Unreferenced (Analysis);
       Tools               : constant String := '/' & (-"Tools");
       Coverage            : constant String := -"Cov_erage";
       Views               : constant String := -"Views";
@@ -2873,7 +2896,11 @@ package body Code_Analysis_Module is
       Single_Analysis_Mode          := Active (Single_Analysis_Trace);
       Code_Analysis_Module_ID       := new Code_Analysis_Module_ID_Record;
       Code_Analysis_Module_ID.Class := Code_Analysis_Class;
-      Analysis                      := Create_Analysis_Instance;
+
+      --  ??? We used to create a dummy analysis instance and put it in the
+      --  list in the module, But in fact this is already added through the
+      --  "project_changing" hook
+
       Contextual_Menu               := new Code_Analysis_Contextual_Menu;
       Register_Module
         (Module      => Code_Analysis_Module_ID,

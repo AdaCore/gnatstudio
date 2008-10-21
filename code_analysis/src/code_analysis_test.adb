@@ -71,7 +71,7 @@ procedure Code_Analysis_Test is
    --        Line 3 4 execution(s)
    --        Line 4 warning: line never executed
 
-   procedure Benchmark (Projects     : Code_Analysis_Tree;
+   procedure Benchmark (Projects     : in out Code_Analysis_Tree;
                         File_Name    : String;
                         Project_File : String;
                         Project_Num  : String;
@@ -79,7 +79,7 @@ procedure Code_Analysis_Test is
    --  builds a big Code_Analysis tree structure and outputs the time needed to
    --  build, perform one request, and destroy the structure
 
-   procedure Treeview (Projects     : Code_Analysis_Tree;
+   procedure Treeview (Projects     : in out Code_Analysis_Tree;
                        File_Name    : String;
                        Project_File : String);
    --  builds a code_analysis structure and display it in a Gtk_Tree_View
@@ -189,7 +189,7 @@ procedure Code_Analysis_Test is
    -- Benchmark --
    ---------------
 
-   procedure Benchmark (Projects     : Code_Analysis_Tree;
+   procedure Benchmark (Projects     : in out Code_Analysis_Tree;
                         File_Name    : String;
                         Project_File : String;
                         Project_Num  : String;
@@ -306,7 +306,7 @@ procedure Code_Analysis_Test is
    --  Number of columns needed to store the coverage information in a
    --  Gtk_Tree_Model
 
-   procedure Treeview (Projects     : Code_Analysis_Tree;
+   procedure Treeview (Projects     : in out Code_Analysis_Tree;
                        File_Name    : String;
                        Project_File : String) is
       Project_Node  : Project_Access;
@@ -374,7 +374,7 @@ procedure Code_Analysis_Test is
       Free_Code_Analysis (Projects);
    end Treeview;
 
-   Projects  : constant Code_Analysis_Tree := new Project_Maps.Map;
+   Projects  : Code_Analysis_Tree := new Project_Maps.Map;
    Arg_Count : constant Natural := 3;
 begin
    if Argument_Count < Arg_Count then

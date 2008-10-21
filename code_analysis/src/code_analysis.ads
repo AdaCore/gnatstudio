@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2007, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -236,7 +236,7 @@ package Code_Analysis is
    -- Free-er --
    -------------
 
-   procedure Free_Code_Analysis (Projects : Code_Analysis_Tree);
+   procedure Free_Code_Analysis (Projects : in out Code_Analysis_Tree);
    --  Free a whole code analysis structure
 
    procedure Unchecked_Free is new

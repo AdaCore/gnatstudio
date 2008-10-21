@@ -332,8 +332,10 @@ package body Code_Analysis is
    -- Free_Code_Analysis --
    ------------------------
 
-   procedure Free_Code_Analysis (Projects : Code_Analysis_Tree) is
+   procedure Free_Code_Analysis (Projects : in out Code_Analysis_Tree) is
       use Project_Maps;
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Maps.Map, Code_Analysis_Tree);
       Cur          : Cursor := Projects.First;
       Project_Node : Project_Access;
    begin
@@ -343,6 +345,7 @@ package body Code_Analysis is
          Project_Maps.Delete (Projects.all, Cur);
          Free_Project (Project_Node);
       end loop;
+      Unchecked_Free (Projects);
    end Free_Code_Analysis;
 
 end Code_Analysis;
