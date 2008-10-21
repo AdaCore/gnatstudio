@@ -13,7 +13,6 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
-     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>-g</arg>
@@ -28,7 +27,6 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
-     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>--coverage</arg>
@@ -44,7 +42,6 @@
   <supported-model>gnatmake</supported-model>
   <supported-model>gprclean</supported-model>
   <extra-args>
-     <arg>-margs</arg>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
      <arg>-pg</arg>
@@ -61,7 +58,6 @@
   <supported-model>gnatmake</supported-model>
   <server>Tools_Server</server>
   <extra-args>
-    <arg>-margs</arg>
     <arg>-gnatc</arg>
     <arg>-gnatQ</arg>
     <arg>-k</arg>
