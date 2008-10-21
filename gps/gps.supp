@@ -3439,7 +3439,7 @@
    fun:pango_font_get_metrics
 }
 {
-   <insert a suppression name here>
+   fontconfig loads fonts once and never releases them
    Memcheck:Leak
    fun:_vgrZU_libcZdsoZa_malloc
    fun:FcLangSetCreate
@@ -3450,9 +3450,7 @@
    fun:FcFontRenderPrepare
    obj:/opt/gnome/lib/libpangoft2-1.0.so.0.1001.1
    fun:pango_font_map_load_fontset
-   obj:/opt/gnome/lib/libpango-1.0.so.0.1001.1
-   fun:pango_itemize_with_base_dir
-   obj:/opt/gnome/lib/libpango-1.0.so.0.1001.1
+   obj:*libpango*
 }
 {
    <insert a suppression name here>
@@ -4007,6 +4005,17 @@
    Leak in pango_font_map_load_fontset
    Memcheck:Leak
    fun:malloc
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libfontconfig*
+   obj:*libexpat*
+   obj:*libexpat*
+   fun:XML_ParseBuffer
+}
+{
+   Leak in pango_font_map_load_fontset
+   Memcheck:Leak
+   fun:malloc
    fun:FcStrCopy
 }
 {
@@ -4058,7 +4067,38 @@
    fun:type_node_fundamental_new_W
    fun:g_type_init_with_debug_flags
 }
-
+{
+   gtk+ types are registered as static variables
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:type_node_any_new_W
+   fun:type_node_fundamental_new_W
+   fun:g_type_register_fundamental
+}
+{
+   parsing gtk+ config file
+   Memcheck:Leak
+   fun:malloc
+   fun:__nss_lookup_function
+   obj:*
+   obj:*
+   fun:getpwnam_r
+   fun:g_get_any_init_do
+   fun:g_get_home_dir
+}
+{
+   parsing gtk+ config file
+   Memcheck:Leak
+   fun:malloc
+   fun:tsearch
+   fun:__nss_lookup_function
+   obj:*
+   obj:*
+   fun:getpwnam_r
+   fun:g_get_any_init_do
+   fun:g_get_home_dir
+}
 
 #### This warning occurs when loading a pixmap in GVD. A potential
 #### bug in gdk apparently
