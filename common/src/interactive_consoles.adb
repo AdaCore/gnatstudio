@@ -310,10 +310,6 @@ package body Interactive_Consoles is
       if Grab then
          Console.Took_Grab := False;
 
-         --  Grab the mouse, keyboard,... so as to avoid recursive loops in
-         --  GPS (user selecting a menu while python is running).
-         Ref (Console.Console);
-
          if Get_Window (Console.Console) /= null then
             --  If we already have a grab (for instance when the user is
             --  displaying a menu and we are running the python command as a
@@ -323,6 +319,10 @@ package body Interactive_Consoles is
             --  another grab is taken (G305-005).
 
             if Gtk.Main.Grab_Get_Current = null then
+               --  Grab the mouse, keyboard,... so as to avoid recursive loops
+               --  in GPS (user selecting a menu while python is running).
+               Ref (Console.Console);
+
                Gtk.Main.Grab_Add (Console.Console);
                Console.Took_Grab := True;
             end if;
@@ -1323,6 +1323,7 @@ package body Interactive_Consoles is
       Unref (C.Prompt_Tag);
       Unref (C.Highlight_Tag);
       Unref (C.External_Messages_Tag);
+      Free (C.Key);
       Free (C.Prompt);
       Free (C.User_Input);
 
