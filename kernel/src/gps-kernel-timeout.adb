@@ -84,7 +84,7 @@ package body GPS.Kernel.Timeout is
       Start_Time           : Ada.Calendar.Time;
       --  Start time of the process
 
-      Id                   : G_Source_Id := -1;
+      Id                   : G_Source_Id := No_Source_Id;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
 
@@ -95,6 +95,10 @@ package body GPS.Kernel.Timeout is
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Callback_Data_Record'Class, Callback_Data_Access);
+
+   Id : Natural := 0;
+   function Get_New_Queue_Id (QId : String) return String;
+   --  Returns a new unique queue id
 
    function Process_Cb (Data : Console_Process) return Boolean;
    --  Generic callback for async spawn of processes
@@ -285,9 +289,9 @@ package body GPS.Kernel.Timeout is
       Status  : Integer;
       Console : Interactive_Console := Data.Console;
    begin
-      if Data.Id /= -1 then
+      if Data.Id /= No_Source_Id then
          Remove (Data.Id);
-         Data.Id := -1;
+         Data.Id := No_Source_Id;
       end if;
 
       if Data.D.Descriptor = null then
@@ -519,10 +523,6 @@ package body GPS.Kernel.Timeout is
    begin
       null;
    end Destroy;
-
-   Id : Natural := 0;
-   function Get_New_Queue_Id (QId : String) return String;
-   --  Returns a new unique queue id
 
    ----------------------
    -- Get_New_Queue_Id --
