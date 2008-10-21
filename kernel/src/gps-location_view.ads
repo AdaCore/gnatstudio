@@ -20,7 +20,6 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
-with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.VFS;
@@ -35,7 +34,6 @@ with Glib;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GNATCOLL.VFS;
 
 with GNAT.Expect;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
