@@ -599,19 +599,20 @@ package body Build_Configurations.Gtkada is
          Set_Tip
            (Box.Tooltips,
             Box.Launch_Combo,
-            -"Specify the launch mode for this target:" & ASCII.LF &
-            "    Manually: target launched explicitly by the user, with" &
-            ASCII.LF &
-            "        an extra dialog showing command line if run via a menu," &
-            ASCII.LF &
-            "        with no dialog if run via a button" & ASCII.LF &
-            "    Manually with dialog: Ditto, always using an extra dialog" &
-            ASCII.LF &
-            "    Manually with no dialog: Ditto, never using an extra dialog" &
-            ASCII.LF &
-            "    On file save: target launched automatically when a file is" &
-            ASCII.LF &
-            "        saved. Can be very useful for e.g. checking file syntax");
+            -("Specify the launch mode for this target:" & ASCII.LF &
+              "    Manually: target launched explicitly by the user, with" &
+              ASCII.LF &
+              "        an extra dialog showing command line if run via a menu,"
+              & ASCII.LF &
+              "        with no dialog if run via a button" & ASCII.LF &
+              "    Manually with dialog: Ditto, always using an extra dialog" &
+              ASCII.LF &
+              "    Manually with no dialog: Ditto, never using an extra dialog"
+              & ASCII.LF &
+              "    On file save: target launched automatically when a file is"
+              & ASCII.LF &
+              "        saved. Can be very useful for e.g. checking file syntax"
+             ));
 
          Gtk_New_Hbox (Hbox);
          Pack_Start (Hbox, Box.Launch_Combo, False, False, 0);
