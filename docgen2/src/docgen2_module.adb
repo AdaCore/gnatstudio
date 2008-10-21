@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
@@ -76,6 +77,8 @@ package body Docgen2_Module is
       --  The backend used to generate documentation
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
+
+   overriding procedure Destroy (Module : in out Docgen_Module_Record);
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -140,6 +143,17 @@ package body Docgen2_Module is
       (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  In order to choose a file and generate its documentation
    --  It calls Generate_File
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Docgen_Module_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Backend_Record'Class, Backend_Handle);
+   begin
+      Unchecked_Free (Module.Backend);
+   end Destroy;
 
    ----------------------------
    -- On_Preferences_Changed --

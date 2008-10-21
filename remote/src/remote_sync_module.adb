@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNAT.Regpat;         use GNAT.Regpat;
 with GNAT.Expect;         use GNAT.Expect;
@@ -139,7 +140,10 @@ package body Remote_Sync_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Rsync_Module_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Return_Data, Return_Data_Access);
    begin
+      Unchecked_Free (Module.Ret_Data);
       Free (Module.Rsync_Args);
    end Destroy;
 

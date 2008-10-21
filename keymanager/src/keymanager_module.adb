@@ -529,14 +529,12 @@ package body KeyManager_Module is
    ----------
 
    procedure Free (Element : in out Key_Description_List) is
-      pragma Warnings (Off, Element);
-      Current : Key_Description_List := Element;
-      N       : Key_Description_List;
+      N : Key_Description_List;
    begin
-      while Current /= null loop
-         N := Current.Next;
-         Free_Non_Recursive (Current);
-         Current := N;
+      while Element /= null loop
+         N := Element.Next;
+         Free_Non_Recursive (Element);
+         Element := N;
       end loop;
    end Free;
 

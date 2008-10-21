@@ -1,3 +1,22 @@
+### Leaks that would be nice to fix eventually.
+### These are memory allocated only once ever in the life of GPS, and that
+### will never be allocated more than once. We just ignore those leaks for
+### now
+
+{
+   Python requires a static string for the program name
+   Memcheck:Leak
+   fun:malloc
+   fun:__gnat_malloc
+   fun:gnatcoll__python__py_setprogramname
+}
+{
+   GNAT's Setenv implementation leaks memory on some system, since it doesn't free the previous value
+   Memcheck:Leak
+   fun:malloc
+   fun:__gnat_setenv
+}
+
 #### Errors in XFree
 {
    Errors in Xserver
@@ -22,6 +41,25 @@
    writev(vector[...])
    fun:__write_nocancel
    fun:_X11TransWrite
+}
+{
+   Elaboration in GNAT
+   Memcheck:Leak
+   fun:malloc
+   fun:__gnat_malloc
+   fun:osint___elabb
+   fun:adainit
+}
+{
+   gtk+ never freed memory
+   Memcheck:Leak
+   fun:malloc
+   obj:*libc*
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwnam_r
+   fun:g_get_any_init_do
 }
 {
    Errors in Xserver
@@ -101,6 +139,18 @@
    fun:gdk_pre_parse_libgtk_only
    obj:/opt/gnome/lib/libgtk-x11-2.0.so.0.800.3
    fun:g_option_context_parse
+}
+{
+   Memory leak in cairo ?
+   Memcheck:Leak
+   fun:malloc
+   obj:*libcairo*
+   obj:*libcairo*
+   obj:*libcairo*
+   obj:*libcairo*
+   obj:*libcairo*
+   obj:*libcairo*
+   fun:cairo_clip_preserve
 }
 {
    Expected memory leak
@@ -3441,14 +3491,14 @@
 {
    fontconfig loads fonts once and never releases them
    Memcheck:Leak
-   fun:_vgrZU_libcZdsoZa_malloc
+   fun:malloc
    fun:FcLangSetCreate
    fun:FcLangSetCopy
    fun:FcValueSave
-   fun:FcPatternAddWithBinding
-   fun:FcPatternAdd
+   obj:*libfontconfig*
+   obj:*libfontconfig*
    fun:FcFontRenderPrepare
-   obj:/opt/gnome/lib/libpangoft2-1.0.so.0.1001.1
+   obj:*libpangoft*
    fun:pango_font_map_load_fontset
    obj:*libpango*
 }

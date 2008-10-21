@@ -1412,6 +1412,7 @@ package body GPS.Kernel.Modules is
       end if;
 
       if Menu_Filter /= null then
+         Register_Filter (Kernel, Menu_Filter, "");  --  Memory management only
          Command_Callback.Object_Connect
            (Get_Toplevel (Item), Signal_Map, Map_Menu'Access,
             Slot_Object => Item,

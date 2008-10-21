@@ -494,6 +494,8 @@ package body Language.Tree.Database is
       procedure Unchecked_Free_Assistant is new
         Standard.Ada.Unchecked_Deallocation
           (Database_Assistant'Class, Database_Assistant_Access);
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+        (Buffer_Provider'Class, Buffer_Provider_Access);
    begin
       Clear (Db);
 
@@ -509,6 +511,8 @@ package body Language.Tree.Database is
 
       Tree_Annotations_Pckg.Free (Db.Tree_Registry);
       Construct_Annotations_Pckg.Free (Db.Construct_Registry);
+
+      Unchecked_Free (Db.Provider);
    end Destroy;
 
    ----------

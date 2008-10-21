@@ -214,12 +214,21 @@ package body Shell_Script is
    -- Register_Module --
    ---------------------
 
+   --  The memory for script is never reclaimed: doing so might
+   --  interfer with some controlled script objects that are only freed when
+   --  the application finalizes, and these objects might store pointers to
+   --  the scripting language. To avoid having a memory leak reported by
+   --  valgrind (where ignoring all leaks from Register_Module might miss some
+   --  real leak in the future), we therefore use a global variable on the
+   --  stack. This is never accessed directly though
+
+   Global_Shell_Script : aliased Shell_GPS_Scripting_Record;
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Script : Shell_Scripting;
+      Script : constant Shell_Scripting := Global_Shell_Script'Access;
    begin
-      Script := new Shell_GPS_Scripting_Record;
       Register_Shell_Scripting (Get_Scripts (Kernel), Script);
       Set_Prompt (Script, "GPS>");
 

@@ -121,7 +121,7 @@ package body Aliases_Module is
    end record;
 
    procedure Free (P : in out Param_Access);
-   --  Free the memory occupied by P
+   --  Free the memory occupied by P and all its siblings
 
    type Alias_Record is record
       Expansion : String_Access;
@@ -500,12 +500,15 @@ package body Aliases_Module is
    procedure Free (P : in out Param_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Param_Record, Param_Access);
+      N : Param_Access;
    begin
-      if P /= null then
+      while P /= null loop
+         N := P.Next;
          Free (P.Name);
          Free (P.Initial);
          Unchecked_Free (P);
-      end if;
+         P := N;
+      end loop;
    end Free;
 
    ----------
@@ -513,15 +516,9 @@ package body Aliases_Module is
    ----------
 
    procedure Free (Alias : in out Alias_Record) is
-      P : Param_Access;
    begin
       Free (Alias.Expansion);
-
-      while Alias.Params /= null loop
-         P := Alias.Params;
-         Alias.Params := P.Next;
-         Free (P);
-      end loop;
+      Free (Alias.Params);
    end Free;
 
    ------------------
@@ -2190,7 +2187,7 @@ package body Aliases_Module is
                   Child := Child.Next;
                end loop;
 
-               --  Do not override a read-only alias: they have been parsed
+               --  Do not override a read-write alias: they have been parsed
                --  before all others, but should in fact have higher priority
 
                Old := Get (Aliases_Module_Id.Aliases, Name);

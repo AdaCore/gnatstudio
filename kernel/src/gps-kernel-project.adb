@@ -266,6 +266,7 @@ package body GPS.Kernel.Project is
          Error_Handler.Handle := Kernel_Handle (Handle);
          Error_Handler.Mode   := Info;
 
+         Free (Handle.GNAT_Version);
          Projects.Registry.Queries.Compute_Predefined_Paths
            (Handle.Registry,
             Handle.GNAT_Version,

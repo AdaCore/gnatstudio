@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -402,7 +403,8 @@ package body Completion_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Completion_Module_Record) is
-      pragma Unreferenced (Module);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Function_With_Args'Class, Function_With_Args_Access);
    begin
       if Completion_Module /= null then
          Kill_File_Iteration
@@ -415,6 +417,8 @@ package body Completion_Module is
 
       Reset_Completion_Data;
       Completion_Module := null;
+
+      Unchecked_Free (Module.Completion_Triggers_Callback);
    end Destroy;
 
    -----------------------

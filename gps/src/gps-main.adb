@@ -458,8 +458,9 @@ procedure GPS.Main is
 
       if Python_Home.all = "" then
          Setenv ("PYTHONHOME", Prefix.all);
-         Free (Python_Home);
       end if;
+
+      Free (Python_Home);
 
       --  Python startup path
 
