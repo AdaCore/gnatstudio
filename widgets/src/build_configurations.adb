@@ -59,6 +59,7 @@ package body Build_Configurations is
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean;
    --  Deep comparison between T1 and T2
 
+   procedure Free (Target : in out Target_Access);
    procedure Free (List : in out Target_List.List);
    procedure Free (Models : in out Model_Map.Map);
    --  Free memory
@@ -599,11 +600,14 @@ package body Build_Configurations is
       Target_Name : String)
    is
       C : Cursor;
+      T : Target_Access;
    begin
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
          if To_String (Element (C).Name) = Target_Name then
+            T := Element (C);
+            Free (T);
             Registry.Targets.Delete (C);
             exit;
          end if;
@@ -923,6 +927,7 @@ package body Build_Configurations is
 
       while Child /= null loop
          if Child.Tag.all = "command-line" then
+            Free (Target.Command_Line);
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
 
@@ -1168,11 +1173,13 @@ package body Build_Configurations is
       Target   : String)
    is
       O, C : Cursor;
+      T    : Target_Access;
    begin
       O := Registry.Targets.First;
 
       while Has_Element (O) loop
          if Element (O).Name = Target then
+            T := Element (O);
             exit;
          end if;
 
@@ -1188,6 +1195,7 @@ package body Build_Configurations is
 
       while Has_Element (C) loop
          if Element (C).Name = Target then
+            Free (T);  --  Free old target
             Registry.Targets.Replace_Element (O, Copy (Element (C)));
             exit;
          end if;
@@ -1218,21 +1226,30 @@ package body Build_Configurations is
    -- Free --
    ----------
 
-   procedure Free (List : in out Target_List.List) is
+   procedure Free (Target : in out Target_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Target_Type, Target_Access);
+   begin
+      if Target /= null then
+         --  Target.Model;   --  No need to free, references in the Registry
+         Free (Target.Command_Line);
+         --  Free (Target.Properties);  --  Nothing to free
+
+         Unchecked_Free (Target);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Target_List.List) is
       C : Target_List.Cursor := First (List);
       T : Target_Access;
    begin
       while Has_Element (C) loop
          T := Element (C);
-
-         --  T.Model;   --  No need to free, references in the Registry
-         Free (T.Command_Line);
-         --  Free (T.Properties);  --  Nothing to free
-
-         Unchecked_Free (T);
-
+         Free (T);
          Next (C);
       end loop;
 

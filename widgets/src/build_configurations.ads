@@ -529,8 +529,6 @@ private
    --  Free memory associated with Target
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Target_Type, Target_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Build_Config_Registry, Build_Config_Registry_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
