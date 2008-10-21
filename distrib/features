@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Oct 03, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Oct 21, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -12,8 +12,8 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
-New features on HEAD
---------------------
+New features on 4.4.x
+---------------------
 
 NF-43-HA03-020 File changed dialog checks for diffs (2008-10-03)
 
