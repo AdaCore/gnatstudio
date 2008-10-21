@@ -629,12 +629,16 @@ package body KeyManager_Module is
          Success : Boolean;
          pragma Unreferenced (Success);
       begin
-         if not Remove_Existing_Actions_For_Shortcut then
+         if not Remove_Existing_Actions_For_Shortcut
+           or else (Default_Key = 0 and then Default_Mod = 0)
+         then
             Binding3 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
 
             --  Check whether the same action is already attached to this key.
             --  ??? When we have a menu, we should check the underlying action
             --  if there is any.
+            --  ??? Not needed if we also have
+            --  Remove_Existing_Shortcuts_For_Action
             Tmp := Binding3;
             while Tmp /= null loop
                if Tmp.Action /= null
@@ -763,7 +767,7 @@ package body KeyManager_Module is
    begin
       --  Are we trying to cancel all bindings to Action ?
       if Remove_Existing_Shortcuts_For_Action
-        or else Key = ""
+        or else Key = "" or else Key = -Disabled_String
       then
          Remove_In_Keymap (Table);
 

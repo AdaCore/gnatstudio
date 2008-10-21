@@ -35,7 +35,6 @@ package body HTables is
 
       procedure Remove
         (Hash_Table : in out HTable;
-         Elmt       : in out Elmt_Ptr;
          Index      : Header_Num;
          K          : Key);
       --  Low-level implementation for Remove
@@ -124,7 +123,7 @@ package body HTables is
          Get_Non_Null (Hash_Table, Iter);
 
          --  Remove old one
-         Remove (Hash_Table, Tmp, Index, Get_Key (Tmp));
+         Remove (Hash_Table, Index, Get_Key (Tmp));
       end Remove_And_Get_Next;
 
       ------------------
@@ -150,10 +149,8 @@ package body HTables is
 
       procedure Remove (Hash_Table : in out HTable; K : Key) is
          Index     : constant Header_Num := Hash (K);
-         Elmt      : Elmt_Ptr;
       begin
-         Elmt := Hash_Table.Table (Index);
-         Remove (Hash_Table, Elmt, Index, K);
+         Remove (Hash_Table, Index, K);
       end Remove;
 
       ------------
@@ -162,11 +159,11 @@ package body HTables is
 
       procedure Remove
         (Hash_Table : in out HTable;
-         Elmt       : in out Elmt_Ptr;
          Index      : Header_Num;
          K          : Key)
       is
          Next_Elmt : Elmt_Ptr;
+         Elmt      : Elmt_Ptr := Hash_Table.Table (Index);
       begin
          if Elmt = Null_Ptr then
             return;
