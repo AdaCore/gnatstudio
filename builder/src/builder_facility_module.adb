@@ -39,6 +39,7 @@ with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
@@ -69,6 +70,7 @@ with GNATCOLL.Traces;
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
 
+with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 
 package body Builder_Facility_Module is
@@ -157,6 +159,9 @@ package body Builder_Facility_Module is
       Output     : String_List_Utils.String_List.List;
       --  The last build output
 
+      Shadow_Output  : String_List_Utils.String_List.List;
+      --  The last build output
+
       Build_Count : Natural := 0;
       --  The number of builds currently running
 
@@ -194,6 +199,10 @@ package body Builder_Facility_Module is
    procedure On_Modes_Manager
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Launch the mode manager
+
+   procedure On_Shadow_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Launch the shadow console
 
    overriding procedure Customize
      (Module : access Builder_Module_ID_Record;
@@ -261,7 +270,8 @@ package body Builder_Facility_Module is
      (Kernel          : Kernel_Handle;
       Category        : String;
       Clear_Console   : Boolean;
-      Clear_Locations : Boolean);
+      Clear_Locations : Boolean;
+      Shadow          : Boolean);
    --  Clear the compiler output, the console, and the locations view for
    --  Category.
 
@@ -628,19 +638,29 @@ package body Builder_Facility_Module is
      (Kernel          : Kernel_Handle;
       Category        : String;
       Clear_Console   : Boolean;
-      Clear_Locations : Boolean)
+      Clear_Locations : Boolean;
+      Shadow          : Boolean)
    is
       pragma Unreferenced (Category);
+      Console : Interactive_Console;
    begin
       if Clear_Console then
-         Console.Clear (Kernel);
+         Console := Get_Build_Console (Kernel, Shadow, False);
+
+         if Console /= null then
+            Clear (Console);
+         end if;
       end if;
 
       if Clear_Locations then
          Remove_Location_Category (Kernel, Error_Category);
       end if;
 
-      String_List_Utils.String_List.Free (Builder_Module_ID.Output);
+      if Shadow then
+         String_List_Utils.String_List.Free (Builder_Module_ID.Shadow_Output);
+      else
+         String_List_Utils.String_List.Free (Builder_Module_ID.Output);
+      end if;
    end Clear_Compilation_Output;
 
    --------------------
@@ -663,10 +683,8 @@ package body Builder_Facility_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant String_Boolean_Hooks_Args :=
-        String_Boolean_Hooks_Args (Data.all);
-      Quiet : constant Boolean := D.Bool;
-      --  Whether the
+      D : constant Compilation_Hooks_Args :=
+        Compilation_Hooks_Args (Data.all);
    begin
       --  Small issue here: if the user cancels the compilation in one of the
       --  custom hooks the user might have connected, then all changes done
@@ -677,7 +695,7 @@ package body Builder_Facility_Module is
       --  Do this before checking the project, in case we have a default
       --  project whose name is changed when saving
 
-      if not Quiet
+      if not (D.Quiet or else D.Shadow)
         and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
       then
          return False;
@@ -685,13 +703,14 @@ package body Builder_Facility_Module is
 
       Clear_Compilation_Output
         (Kernel_Handle (Kernel), Target_Name_To_Locations_Category (D.Value),
-         Clear_Console   => (not Quiet)
-           and then Builder_Module_ID.Build_Count = 0,
-         Clear_Locations => Builder_Module_ID.Build_Count = 0);
+         Clear_Console   => (not D.Quiet)
+           and then (D.Shadow or else Builder_Module_ID.Build_Count = 0),
+         Clear_Locations => Builder_Module_ID.Build_Count = 0,
+         Shadow          => D.Shadow);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
-      if not Quiet then
+      if not (D.Quiet or else D.Shadow) then
          Console.Raise_Console (Kernel);
       end if;
 
@@ -1338,6 +1357,36 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Modes_Manager;
 
+   -----------------------
+   -- On_Shadow_Console --
+   -----------------------
+
+   procedure On_Shadow_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Console : Interactive_Console := Get_Build_Console
+        (Kernel, True, False);
+      use String_List_Utils.String_List;
+      Node    : List_Node;
+   begin
+      if Console = null then
+         Console := Get_Build_Console (Kernel, True, True);
+
+         Node := First (Builder_Module_ID.Shadow_Output);
+
+         while Node /= Null_Node loop
+            Insert (Console, Data (Node));
+            Node := Next (Node);
+         end loop;
+
+      else
+         Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+      end if;
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end On_Shadow_Console;
+
    ---------------------
    -- Parse_Mode_Node --
    ---------------------
@@ -1598,6 +1647,12 @@ package body Builder_Facility_Module is
                         On_Modes_Manager'Access);
       end if;
 
+      Register_Menu (Kernel, Main_Menu & (-"Se_ttings"),
+                     -"Shadow console", "",
+                     On_Shadow_Console'Access,
+                     Ref_Item => "_Toolchains",
+                     Add_Before => False);
+
       Register_Contextual_Submenu
         (Kernel,
          Name    => "Build",
@@ -1658,12 +1713,19 @@ package body Builder_Facility_Module is
 
    procedure Append_To_Build_Output
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String)
+      Line   : String;
+      Shadow : Boolean)
    is
       pragma Unreferenced (Kernel);
    begin
       if Builder_Module_ID /= null then
-         String_List_Utils.String_List.Append (Builder_Module_ID.Output, Line);
+         if Shadow then
+            String_List_Utils.String_List.Append
+             (Builder_Module_ID.Shadow_Output, Line);
+         else
+            String_List_Utils.String_List.Append
+              (Builder_Module_ID.Output, Line);
+         end if;
       end if;
    end Append_To_Build_Output;
 
@@ -1671,9 +1733,14 @@ package body Builder_Facility_Module is
    -- Get_Build_Output --
    ----------------------
 
-   function Get_Build_Output return String_List_Utils.String_List.List is
+   function Get_Build_Output
+     (Shadow : Boolean) return String_List_Utils.String_List.List is
    begin
-      return Builder_Module_ID.Output;
+      if Shadow then
+         return Builder_Module_ID.Shadow_Output;
+      else
+         return Builder_Module_ID.Output;
+      end if;
    end Get_Build_Output;
 
    -------------------

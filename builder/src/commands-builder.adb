@@ -58,6 +58,9 @@ package body Commands.Builder is
       --  error found. This is useful for builds that occur on saving, or in
       --  a background mode.
 
+      Shadow : Boolean := False;
+      --  Whether this is a Shadow build.
+
       Buffer : Unbounded_String;
       --  Stores the incomplete lines returned by the compilation process
    end record;
@@ -76,7 +79,8 @@ package body Commands.Builder is
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
-      Quiet            : Boolean := False);
+      Shadow           : Boolean;
+      Quiet            : Boolean);
    --  Parse the output of build engine and insert the result
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
@@ -111,6 +115,47 @@ package body Commands.Builder is
          return -"Build results: " & Name;
       end if;
    end Target_Name_To_Locations_Category;
+
+   -----------------------
+   -- Get_Build_Console --
+   -----------------------
+
+   function Get_Build_Console
+     (Kernel              : GPS.Kernel.Kernel_Handle;
+      Shadow              : Boolean;
+      Create_If_Not_Exist : Boolean) return Interactive_Console is
+   begin
+      if Shadow then
+         return Create_Interactive_Console
+           (Kernel              => Kernel,
+            Title               => -"Auxiliary compilation",
+            History             => "interactive",
+            Create_If_Not_Exist => Create_If_Not_Exist,
+            Module              => null,
+            Force_Create        => False,
+            Accept_Input        => False);
+      else
+         return Get_Console (Kernel);
+      end if;
+   end Get_Build_Console;
+
+   ------------------------------
+   -- Display_Compiler_Message --
+   ------------------------------
+
+   procedure Display_Compiler_Message
+     (Kernel  : Kernel_Handle;
+      Message : String;
+      Shadow  : Boolean)
+   is
+      Console : Interactive_Console;
+   begin
+      Console := Get_Build_Console (Kernel, Shadow, False);
+
+      if Console /= null then
+         Insert (Console, Message, Add_LF => False);
+      end if;
+   end Display_Compiler_Message;
 
    ------------------------
    -- End_Build_Callback --
@@ -202,6 +247,7 @@ package body Commands.Builder is
                   Command => Data.Command,
                   Output  => Str.all,
                   Quiet   => Build_Data.Quiet,
+                  Shadow  => Build_Data.Shadow,
                   Target  => To_String (Build_Data.Target_Name));
 
             else
@@ -210,6 +256,7 @@ package body Commands.Builder is
                   Command => Data.Command,
                   Output  => Output (1 .. Len),
                   Quiet   => Build_Data.Quiet,
+                  Shadow  => Build_Data.Shadow,
                   Target  => To_String (Build_Data.Target_Name));
             end if;
          else
@@ -235,18 +282,19 @@ package body Commands.Builder is
       Warning_Category : Style_Access;
       Style_Category   : Style_Access;
       Output           : String;
-      Quiet            : Boolean := False)
+      Shadow           : Boolean;
+      Quiet            : Boolean)
    is
       pragma Unreferenced (Category);
       Last  : Natural;
       Lines : Slice_Set;
    begin
-      Insert (Kernel, Output, Add_LF => False);
+      Display_Compiler_Message (Kernel, Output, Shadow);
 
       if Output'Length = 0
         or else
           (Output'Length = 1
-           and then Output (Output'First) = ASCII.LF)
+            and then Output (Output'First) = ASCII.LF)
       then
          return;
       end if;
@@ -270,7 +318,7 @@ package body Commands.Builder is
          Mode       => Single);
 
       for J in 1 .. Slice_Count (Lines) loop
-         Append_To_Build_Output (Kernel, Slice (Lines, J));
+         Append_To_Build_Output (Kernel, Slice (Lines, J), Shadow);
       end loop;
 
       Parse_File_Locations
@@ -303,6 +351,7 @@ package body Commands.Builder is
       Command : Commands.Command_Access;
       Output  : Glib.UTF8_String;
       Quiet   : Boolean;
+      Shadow  : Boolean;
       Target  : String := "")
    is
       Start   : Integer := Output'First;
@@ -326,13 +375,14 @@ package body Commands.Builder is
 
       if Length (Buffer) /= 0 then
          Parse_Compiler_Output
-           (Kernel_Handle (Kernel),
-            Target_Name_To_Locations_Category (Target),
-            Builder_Errors_Style,
-            Builder_Warnings_Style,
-            Builder_Style_Style,
-            To_String (Buffer),
-            Quiet);
+           (Kernel           => Kernel_Handle (Kernel),
+            Category         => Target_Name_To_Locations_Category (Target),
+            Error_Category   => Builder_Errors_Style,
+            Warning_Category => Builder_Warnings_Style,
+            Style_Category   => Builder_Style_Style,
+            Output           => To_String (Buffer),
+            Shadow           => Shadow,
+            Quiet            => Quiet);
       end if;
    end Process_Builder_Output;
 
@@ -347,6 +397,7 @@ package body Commands.Builder is
       Mode_Name      : String;
       Server         : Server_Type;
       Quiet          : Boolean;
+      Shadow         : Boolean;
       Synchronous    : Boolean;
       Use_Shell      : Boolean)
    is
@@ -355,20 +406,25 @@ package body Commands.Builder is
       Args     : Argument_List_Access;
       Cmd_Name : Unbounded_String;
 
+      Console : constant Interactive_Console :=
+        Get_Build_Console (Kernel, Shadow, False);
    begin
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
       Data.Quiet := Quiet;
+      Data.Shadow := Shadow;
 
       if Compilation_Starting
         (Kernel,
          To_String (Data.Target_Name),
-         Quiet => Quiet)
+         Quiet  => Quiet,
+         Shadow => Shadow)
       then
          Append_To_Build_Output
            (Kernel,
             GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
-              (CL.all, Quote_Backslash => False));
+              (CL.all, Quote_Backslash => False),
+            Shadow);
 
          if Mode_Name /= "default" then
             Cmd_Name := To_Unbounded_String
@@ -389,7 +445,7 @@ package body Commands.Builder is
                Command              => Shell_Env,
                Arguments            => Args.all,
                Server               => Server,
-               Console              => Get_Console (Kernel),
+               Console              => Console,
                Show_Command         => True,
                Show_Output          => False,
                Callback_Data        => Data.all'Access,
@@ -410,7 +466,7 @@ package body Commands.Builder is
                Command              => CL (CL'First).all,
                Arguments            => CL (CL'First + 1 .. CL'Last),
                Server               => Server,
-               Console              => Get_Console (Kernel),
+               Console              => Console,
                Show_Command         => True,
                Show_Output          => False,
                Callback_Data        => Data.all'Access,

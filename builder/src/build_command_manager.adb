@@ -538,8 +538,8 @@ package body Build_Command_Manager is
 
          Change_Dir (Dir_Name (Project_Path (Prj)).all);
          Launch_Build_Command
-           (Kernel, Full, Target_Name, Mode, Server, Quiet, Synchronous,
-            Uses_Shell (T));
+           (Kernel, Full, Target_Name, Mode, Server, Quiet, Shadow,
+            Synchronous, Uses_Shell (T));
          Change_Dir (Old_Dir);
 
          Unchecked_Free (All_Extra_Args);
@@ -565,7 +565,7 @@ package body Build_Command_Manager is
             --  All modes after Modes'First are Ninja modes
             Launch_For_Mode
               (Modes (J).all,
-               Quiet or else J > Modes'First,
+               Quiet,
                J > Modes'First);
          end loop;
 

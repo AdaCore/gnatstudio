@@ -117,13 +117,17 @@ package Builder_Facility_Module is
 
    procedure Append_To_Build_Output
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Line   : String);
+      Line   : String;
+      Shadow : Boolean);
    --  Register Line as part of the current compilation output
+   --  Shadow indicates whether to add it to the normal or the shadow output
 
-   function Get_Build_Output return String_List_Utils.String_List.List;
+   function Get_Build_Output
+     (Shadow : Boolean) return String_List_Utils.String_List.List;
    --  Return the last build output.
    --  User should not free the result nor store a pointer to the result, as
    --  this might get invalidated as soon as a new compilation starts.
+   --  Shadow indicates whether to get the normal or the shadow output
 
    function Get_Mains
      (Kernel : GPS.Kernel.Kernel_Handle) return GNAT.OS_Lib.Argument_List;

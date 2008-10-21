@@ -215,7 +215,7 @@ package body Builder_Facility_Module.Scripts is
          end;
 
       elsif Command = "get_build_output" then
-         Node := First (Get_Build_Output);
+         Node := First (Get_Build_Output (Shadow => False));
 
          Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop

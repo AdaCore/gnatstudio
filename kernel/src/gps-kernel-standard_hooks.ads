@@ -85,6 +85,23 @@ package GPS.Kernel.Standard_Hooks is
    --  Type_Name parameter of String_Boolean_Hook_Type
    --  See inherited doc
 
+   Compilation_Hook_Type : constant Hook_Type := "compilation_hook";
+   type Compilation_Hooks_Args (Length : Natural) is new
+     String_Hooks_Args (Length) with
+      record
+         Quiet  : Boolean;
+         Shadow : Boolean;
+      end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Compilation_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  Hooks that take a string and two booleans as a parameter.
+   --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
+   --  Type_Name parameter of String_Boolean_Hook_Type
+   --  See inherited doc
+
    Project_Hook_Type : constant Hook_Type := "project_hooks";
    type Project_Hooks_Args is new Hooks_Data with record
       Project : Projects.Project_Type;

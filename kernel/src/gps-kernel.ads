@@ -682,7 +682,8 @@ package GPS.Kernel is
    function Compilation_Starting
      (Handle   : access Kernel_Handle_Record;
       Category : String;
-      Quiet    : Boolean) return Boolean;
+      Quiet    : Boolean;
+      Shadow   : Boolean) return Boolean;
    --  Runs the "compilation_starting" hook.
    --  The Category corresponds to the location/highlighting category that
    --  will contain the compilation output.

@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2008, AdaCore              --
---                                                                   --
+--                                                                  --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
@@ -23,6 +23,7 @@ with GPS.Kernel;
 with Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Remote;      use Remote;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package Commands.Builder is
 
@@ -44,6 +45,7 @@ package Commands.Builder is
       Command : Commands.Command_Access;
       Output  : Glib.UTF8_String;
       Quiet   : Boolean;
+      Shadow  : Boolean;
       Target  : String := "");
    --  Process the builder output: update the progress bar in Command as
    --  necessary, hide the progress output, and display the other outputs in
@@ -61,6 +63,7 @@ package Commands.Builder is
       Mode_Name      : String;
       Server         : Server_Type;
       Quiet          : Boolean;
+      Shadow         : Boolean;
       Synchronous    : Boolean;
       Use_Shell      : Boolean);
    --  Launch a build command.
@@ -71,5 +74,17 @@ package Commands.Builder is
    --  then call the command through $SHELL -c "command line".
    --  See Build_Command_Manager.Launch_Target for the meanings of Quiet and
    --  Synchronous.
+
+   procedure Display_Compiler_Message
+     (Kernel  : GPS.Kernel.Kernel_Handle;
+      Message : String;
+      Shadow  : Boolean);
+   --  Display Message.
+
+   function Get_Build_Console
+     (Kernel              : GPS.Kernel.Kernel_Handle;
+      Shadow              : Boolean;
+      Create_If_Not_Exist : Boolean) return Interactive_Console;
+   --  Return the console appropriate for showing compiler errors.
 
 end Commands.Builder;

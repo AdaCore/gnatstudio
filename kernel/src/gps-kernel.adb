@@ -570,13 +570,15 @@ package body GPS.Kernel is
    function Compilation_Starting
      (Handle   : access Kernel_Handle_Record;
       Category : String;
-      Quiet    : Boolean) return Boolean
+      Quiet    : Boolean;
+      Shadow   : Boolean) return Boolean
    is
-      Data : aliased String_Boolean_Hooks_Args :=
+      Data : aliased Compilation_Hooks_Args :=
                (Hooks_Data with
                 Length => Category'Length,
                 Value  => Category,
-                Bool   => Quiet);
+                Quiet  => Quiet,
+                Shadow => Shadow);
    begin
       return Run_Hook_Until_Failure
         (Handle, Compilation_Starting_Hook, Data'Unchecked_Access);
