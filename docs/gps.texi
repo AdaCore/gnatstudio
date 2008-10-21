@@ -3093,7 +3093,7 @@ all xref information".
 @cindex C++
 To enable the navigation features for C and C++ source files, you need
 to first generate a database of symbol references, by going through the
-menu Build->Recompute C/C++ Xref info. Messages in the console window
+menu Build->Recompute Xref info. Messages in the console window
 will indicate the state of the processing. Due to the nature of these
 languages, in order to provide accurate cross-references, GPS needs to
 generate the database in two phases: a first pass parses all the files
@@ -3128,7 +3128,7 @@ won't be detected.
 
 The cross-reference information, as mentioned above, is generated either
 by the compiler when you recompile your sources, or explicitly when you
-select the menu @code{Build->Recompute C/C++ Xref info}.
+select the menu @code{Build->Recompute Xref info}.
 
 This information will be loaded in memory automatically by GPS when it
 needs it, and as little as possible, to limit the memory footprint. However,
@@ -4998,15 +4998,24 @@ errors or warnings (see @ref{Code Fixing}).
 @noindent
 The build menu gives access to capabilities related to checking, parsing and
 compiling files, as well as creating and running executables.
+note that this menu is fully configurable via the @code{Targets} dialog,
+so what is documented in this manual are the default menus.
 
 @table @b
 @item Check Syntax
 Check the syntax of the current source file. Display an error message in
 the @i{Messages} window if no file is currently selected.
 
+@item Check Semantic
+Check the semantic of the current source file. Display an error message in
+the @i{Messages} window if no file is currently selected.
+
 @item Compile File
-Compile the current file. Display an error message in the @i{Messages} window if
-no file is selected.
+Compile the current file.
+By default, will display an intermediate dialog where you can add extra
+switches, or simply press @key{Enter} to get the standard (or previous)
+switches.
+Display an error message in the @i{Messages} window if no file is selected.
 
 If errors or warnings occur during the compilation, the corresponding locations
 will appear in the Locations Tree. If the corresponding Preference is set, the
@@ -5015,23 +5024,26 @@ source lines will be highlighted in the editors (see
 To remove the highlighting on these lines, remove the files from the Locations
 Tree.
 
-@item Make
+@item Project
    @table @i
-   @item Compile all sources
-   Compile all source files defined in the currently selected project, or
-   by default the top level project.
+   @item Build <main>
+   The menu will list of all mains defined in your project hierarchy.
+   Each menu item will build the selected main.
 
-   @item All
+   @item Build All
    Build and link all main units defined in your project.
    If no main unit is specified in your project, build all files defined
    in your project and subprojects recursively.
    For a library project file, compile sources and recreate the library
    when needed.
 
-   @item <current file>
+   @item Compile All Sources
+   Compile all source files defined in the top level project.
+
+   @item Build <current file>
    Consider the currently selected file as a main file, and build it.
 
-   @item Custom...
+   @item Custom Build...
    Display a text entry where you can enter any external command. This menu
    is very useful when you already have existing build scripts, make files,
    @dots{} and want to invoke them from GPS. If the @code{SHELL} environment
@@ -5043,28 +5055,15 @@ Tree.
 
 @item Clean
    @table @i
-   @item Root Project
-   Remove all object files and other compilation artifacts associated to the
-   root project. It does not clean objects from other related projects.
-
-   @item all
+   @item Clean All
    Remove all object files and other compilation artifacts associated to all
    projects related to the current one. It allows to restart a complete build
    from scratch.
 
+   @item Clean Root
+   Remove all object files and other compilation artifacts associated to the
+   root project. It does not clean objects from other related projects.
    @end table
-
-@item Recompute C/C++ Xref info
-@cindex C
-@cindex C++
-Recompute the cross-reference information for C and C++ source files.
-@xref{Support for Cross-References}.
-
-@item Load xref info in meomry
-@cindex C
-@cindex C++
-Load all the cross-reference information in memory. This menu is generally
-not needed, @xref{Support for Cross-References}.
 
 @item Run
    @table @i
@@ -5111,6 +5110,18 @@ not needed, @xref{Support for Cross-References}.
    provides a convenient way to spawn the same command multiple times
 
    @end table
+
+@item Recompute Xref info
+@cindex C
+@cindex C++
+Recompute the cross-reference information for Ada, C and C++ source files.
+@xref{Support for Cross-References}.
+
+@item Load xref info in meomry
+@cindex C
+@cindex C++
+Load all the cross-reference information in memory. This menu is generally
+not needed, @xref{Support for Cross-References}.
 
 @item Settings
    @table @i
