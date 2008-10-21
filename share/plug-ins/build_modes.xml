@@ -58,14 +58,15 @@
   <supported-model>gnatmake</supported-model>
   <server>Tools_Server</server>
   <extra-args>
+    <arg>--subdirs=%subdir</arg>
+    <arg>-k</arg>
+    <arg>-d</arg>
+    <arg>-cargs</arg>
     <arg>-gnatc</arg>
     <arg>-gnatQ</arg>
-    <arg>-k</arg>
-    <arg>--subdirs=%subdir</arg>
     <arg>-gnatws</arg>
     <arg>-gnatyN</arg>
     <arg>-gnatVn</arg>
-    <arg>-d</arg>
   </extra-args>
  </builder-mode>
 
