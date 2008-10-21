@@ -28,15 +28,6 @@ with GNATCOLL.VFS;
 
 package GPS.Kernel.Actions is
 
---     generic
---        type Filter_Type (<>) is new Action_Filter_Record with private;
---        type Filter_Type_Access is access all Filter_Type'Class;
---     function Allocate
---       (Kernel : access Kernel_Handle_Record'Class)
---        return Filter_Type_Access;
-   --  Allocate a new filter. This is also stored in an internal list for
-   --  proper memony management
-
    type Action_Record is record
       Command     : Commands.Interactive.Interactive_Command_Access;
       Filter      : Action_Filter;
