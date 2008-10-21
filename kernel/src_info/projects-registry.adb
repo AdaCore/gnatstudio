@@ -56,7 +56,6 @@ with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
-with Sinput.C;
 with Sinput.P;
 with String_Hash;
 with Traces;                    use Traces;
@@ -413,7 +412,7 @@ package body Projects.Registry is
             Prj.Tree.Tree_Private_Part.Projects_Htable.Reset
               (Registry.Data.Tree.Projects_HT);
             Registry.Data.Root := No_Project;
-            Sinput.C.Clear_Source_File_Table;
+            Sinput.P.Clear_Source_File_Table;
             Sinput.P.Reset_First;
          end if;
 
@@ -493,7 +492,7 @@ package body Projects.Registry is
       Name_Buffer (1 .. Name_Len) := Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
-         Sinput.C.Clear_Source_File_Table;
+         Sinput.P.Clear_Source_File_Table;
          Sinput.P.Reset_First;
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
@@ -628,7 +627,7 @@ package body Projects.Registry is
          Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
          Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
 
-         Sinput.C.Clear_Source_File_Table;
+         Sinput.P.Clear_Source_File_Table;
          Sinput.P.Reset_First;
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
