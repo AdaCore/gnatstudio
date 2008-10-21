@@ -456,7 +456,7 @@ package body Commands.Builder is
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
-               Show_Exit_Status     => True);
+               Show_Exit_Status     => not Shadow);
 
             Free (Args);
 
@@ -477,7 +477,7 @@ package body Commands.Builder is
                Show_In_Task_Manager => True,
                Name_In_Task_Manager => To_String (Cmd_Name),
                Synchronous          => Synchronous,
-               Show_Exit_Status     => True);
+               Show_Exit_Status     => not Shadow);
          end if;
 
          --  ??? check value of Success
