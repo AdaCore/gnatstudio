@@ -4032,6 +4032,32 @@
    fun:g_strdup
    fun:ada_initialize_class_record
 }
+{
+   Leaks because python is not killed
+   Memcheck:Leak
+   fun:malloc
+   fun:PyObject_Malloc
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+}
+{
+   Leaks because python is not killed
+   Memcheck:Leak
+   fun:realloc
+   fun:PyObject_Realloc
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+}
+{
+   gtk+ apparently does some allocation it never reclaims
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:type_node_any_new_W
+   fun:type_node_fundamental_new_W
+   fun:g_type_init_with_debug_flags
+}
 
 
 #### This warning occurs when loading a pixmap in GVD. A potential
