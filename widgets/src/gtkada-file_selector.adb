@@ -2103,8 +2103,7 @@ package body Gtkada.File_Selector is
 
          Pack_Start (Hbox7, Hpaned1, True, True, 3);
 
-         Add (Hpaned1,
-           File_Selector_Window.Explorer_Tree);
+         Add (Hpaned1, File_Selector_Window.Explorer_Tree);
 
          Gtk_New (File_Selector_Window.Files_Scrolledwindow);
          Set_Policy

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,8 +117,8 @@ package body Directory_Tree is
    --  because Gdk.Pixbuf.Get_Type cannot be called before
    --  Gtk.Main.Init.
 
-   procedure Free (File : in out Virtual_File);
-   package Dir_List is new Generic_List (Virtual_File, Free => Free);
+   procedure Do_Nothing (File : in out Virtual_File) is null;
+   package Dir_List is new Generic_List (Virtual_File, Free => Do_Nothing);
    use Dir_List;
 
    type Append_Directory_Idle_Data is record
@@ -133,15 +132,7 @@ package body Directory_Tree is
       Physical_Read : Boolean := True;
    end record;
 
-   procedure Free is
-     new Unchecked_Deallocation (Append_Directory_Idle_Data,
-                                 Append_Directory_Idle_Data_Access);
-
-   procedure Free (File : in out Virtual_File) is
-      pragma Unreferenced (File);
-   begin
-      null;
-   end Free;
+   procedure Free (Data : in out Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view.
@@ -299,6 +290,18 @@ package body Directory_Tree is
       Params : GValues);
    --  Callback for a change in the directory tree size.
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Append_Directory_Idle_Data_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
+   begin
+      Dir_List.Free (Data.Dirs);
+      Unchecked_Free (Data);
+   end Free;
+
    ---------------------------
    -- On_Tree_Size_Allocate --
    ---------------------------
@@ -338,6 +341,7 @@ package body Directory_Tree is
          begin
             Get_Value (Tree.File_Model, Iter, File_Column, Value);
             Tree.Current_Dir := GNATCOLL.VFS.GtkAda.Get_File (Value);
+            Unset (Value);
          end;
       end if;
    end On_Tree_Select_Row;
@@ -408,9 +412,9 @@ package body Directory_Tree is
          declare
             Value : GValue;
          begin
-            Get_Value
-              (Tree.File_Model, Parent, File_Column, Value);
+            Get_Value (Tree.File_Model, Parent, File_Column, Value);
             Curr_Dir := Get_File (Value);
+            Unset (Value);
          end;
          --  we changed the remote host. rebuild whole tree
          if Get_Root (Curr_Dir) /= Get_Root (Dir) then
@@ -426,9 +430,9 @@ package body Directory_Tree is
          declare
             Value : GValue;
          begin
-            Get_Value
-              (Tree.File_Model, Iter, File_Column, Value);
+            Get_Value (Tree.File_Model, Iter, File_Column, Value);
             Curr_Dir := Get_File (Value);
+            Unset (Value);
          end;
 
          if Curr_Dir = Dir then
@@ -481,8 +485,10 @@ package body Directory_Tree is
          begin
             Get_Value (Selector.List_Model, Iter, File_Column, Value);
             if Get_File (Value) = File then
+               Unset (Value);
                return Iter;
             end if;
+            Unset (Value);
          end;
 
          Next (Selector.List_Model, Iter);
@@ -613,6 +619,8 @@ package body Directory_Tree is
             begin
                Get_Value (Selector.List_Model, Iter, File_Column, Value);
                Dir  := Get_File (Value);
+               Unset (Value);
+
                Iter := Get_Iter_First (Selector.List_Model);
 
                while Iter /= Null_Iter loop
@@ -623,6 +631,8 @@ package body Directory_Tree is
                   begin
                      Get_Value (Selector.List_Model, Iter, File_Column, Value);
                      Iter_Dir := Get_File (Value);
+                     Unset (Value);
+
                      if Is_Parent (Dir, Iter_Dir) then
                         Delete_Iter := Iter;
                         Next (Selector.List_Model, Iter);
@@ -1021,14 +1031,17 @@ package body Directory_Tree is
    function Get_Single_Selection
      (Selector  : access Directory_Selector_Record'Class) return Virtual_File
    is
-      Iter : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
       Value : GValue;
+      File  : Virtual_File;
    begin
       Iter := Get_First_Selected (Directory_Selector (Selector));
 
       if Iter /= Null_Iter then
          Get_Value (Selector.List_Model, Iter, File_Column, Value);
-         return Get_File (Value);
+         File := Get_File (Value);
+         Unset (Value);
+         return File;
       end if;
 
       return No_File;
@@ -1064,6 +1077,7 @@ package body Directory_Tree is
             begin
                Get_Value (Selector.List_Model, Iter, File_Column, Value);
                Args (Current) := Get_File (Value);
+               Unset (Value);
             end;
             Current := Current + 1;
             Next (Selector.List_Model, Iter);
@@ -1095,7 +1109,6 @@ package body Directory_Tree is
    is
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
-      New_D      : Append_Directory_Idle_Data_Access;
 
    begin
       --  If we are appending at the base, create a node indicating the
@@ -1120,16 +1133,12 @@ package body Directory_Tree is
             Set (D.Explorer.File_Model, Iter, Icon_Column,
                  Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
             D.Base := Iter;
-
             return Read_Directory (D);
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
                  Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
-            New_D := D;
-            Free (New_D);
-
             return False;
          end if;
 
@@ -1183,6 +1192,7 @@ package body Directory_Tree is
             Append (D.Explorer.File_Model, Iter, D.Base);
 
             Init (Value, Get_Virtual_File_Type);
+
             Set_File (Value, Dir);
             Set_Value (D.Explorer.File_Model, Iter, File_Column, Value);
             Unset (Value);
@@ -1266,17 +1276,11 @@ package body Directory_Tree is
          end;
       end loop;
 
-      New_D := D;
-      Free (New_D);
-
       return False;
 
    exception
       when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions.
-
-         New_D := D;
-         Free (New_D);
          return False;
 
       when E : others =>
@@ -1297,8 +1301,7 @@ package body Directory_Tree is
       Idle          : Boolean := False;
       Physical_Read : Boolean := True)
    is
-      D : constant Append_Directory_Idle_Data_Access
-        := new Append_Directory_Idle_Data;
+      D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
       Timeout_Id : Timeout_Handler_Id;
@@ -1319,14 +1322,17 @@ package body Directory_Tree is
          --  Necessary for preserving order in drive names.
 
          if Read_Directory (D) then
-            Timeout_Id :=
-              File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
+            Timeout_Id := File_Append_Directory_Timeout.Add
+              (1, Read_Directory'Access, D, Free'Access);
             Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
+         else
+            Free (D);
          end if;
       else
          loop
             exit when not Read_Directory (D);
          end loop;
+         Free (D);
       end if;
    end File_Append_Directory;
 
@@ -1480,6 +1486,7 @@ package body Directory_Tree is
       pragma Unreferenced (Params);
       E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
+      Clear (E.File_Model);
       File_Remove_Idle_Calls (E);
    end On_File_Destroy;
 
@@ -1507,6 +1514,7 @@ package body Directory_Tree is
          begin
             Get_Value (T.File_Model, Iter, File_Column, Value);
             Iter_Name := Get_File (Value);
+            Unset (Value);
 
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
@@ -1594,6 +1602,7 @@ package body Directory_Tree is
          begin
             Get_Value (T.File_Model, Iter, File_Column, Value);
             Iter_Name := Get_File (Value);
+            Unset (Value);
 
             Free_Children (T, Iter);
             Set (T.File_Model, Iter, Icon_Column,
