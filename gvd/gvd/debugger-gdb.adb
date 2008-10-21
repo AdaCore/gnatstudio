@@ -1021,6 +1021,7 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger, "set args " & Arguments, Mode => Mode);
+      Set_VxWorks_Version (Debugger, Force => True);
    end Set_Args;
 
    --------------------

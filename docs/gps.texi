@@ -6232,6 +6232,10 @@ The breakpoint editor can be accessed from the menu
 of breakpoints: at a source location, on a subprogram, at an executable
 address, on memory access (watchpoints), and on Ada exceptions.
 
+You can double-click on any breakpoint in the list to open the corresponding
+source editor at the right location. Alternatively, you can select the
+breakpoint and then click on the @code{View} button.
+
 The top area provides an interface to create the different kinds of
 breakpoints, while the bottom area lists existing breakpoints and
 their characteristics.

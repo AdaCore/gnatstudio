@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Oct 02, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Oct 03, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -15,10 +15,21 @@ of the feature.
 New features on HEAD
 --------------------
 
+NF-43-HA03-015 Double-clicking in breakpoint window (2008-10-03)
+
+  It is now possible to double-click in the list of breakpoints in
+  the breakpoints editor window to jump to any of these locations.
+
 NF-43-GB03-007 Export debugger data window to png (2008-10-01)
 
   The debugger Data window can now be exported to png like all
   other browsers. Export to SVG is not fully supported yet.
+
+NF-43-G903-012 Call stack window cleared while running (2008-10-02)
+
+  The debugger callstack is now cleared while the debugged program is
+  running or has terminated to avoid confusion arising from an outdated
+  callstack
 
 New features in GPS 4.3.0
 -------------------------
@@ -346,12 +357,6 @@ NF-43-G904-006 Importing predefined projects (2008-08-18)
   installed with the GNAT addons), your project is modified so that the with
   statement does not use absolute paths. This allows you to for instance
   update the version of your compiler without modifying your projects.
-
-NF-43-G903-012 Call stack window cleared while running (2008-10-02)
-
-  The debugger callstack is now cleared while the debugged program is
-  running or has terminated to avoid confusion arising from an outdated
-  callstack
 
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 

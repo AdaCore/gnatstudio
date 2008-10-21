@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -199,6 +199,11 @@ package body Breakpoints_Editor is
 
             return True;
          end if;
+
+      elsif Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         On_View_Clicked (Editor);
       end if;
 
       return False;
@@ -645,7 +650,8 @@ package body Breakpoints_Editor is
 
    procedure Run_Advanced_Dialog
      (Editor  : access Breakpoint_Editor_Record'Class;
-      Current : Integer) is
+      Current : Integer)
+   is
    begin
       --  Create all three dialogs
 
