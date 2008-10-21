@@ -687,13 +687,14 @@ package body GUI_Utils is
    is
       use Widget_List;
       Children : Widget_List.Glist := Get_Children (Container);
+      Iter     : Widget_List.Glist := Children;
       N        : Widget_List.Glist;
       W        : Gtk_Widget;
       Child    : Gtk_Widget;
    begin
-      while Children /= Null_List loop
-         N := Children;
-         Children := Next (Children);
+      while Iter /= Null_List loop
+         N := Iter;
+         Iter := Next (Iter);
          W := Widget_List.Get_Data (N);
 
          if Filter = null or else Filter (W) then
