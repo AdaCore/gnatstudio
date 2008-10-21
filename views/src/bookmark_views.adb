@@ -65,7 +65,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
 with Traces;                    use Traces;
-with Tooltips;
+with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
 
 package body Bookmark_Views is
@@ -242,64 +242,39 @@ package body Bookmark_Views is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Model      : constant Gtk_Tree_Model :=
-                     Get_Model (Tooltip.Bookmark_View.Tree);
+      Model : constant Gtk_Tree_Model :=
+                Get_Model (Tooltip.Bookmark_View.Tree);
+      Iter  : Gtk_Tree_Iter;
+      Text  : GNAT.Strings.String_Access;
+      Data  : Bookmark_Data_Access;
 
-      Window     : Gdk.Window.Gdk_Window;
-      New_Window : Gdk.Window.Gdk_Window;
-      Mask       : Gdk_Modifier_Type;
-      X, Y       : Gint;
-      Path       : Gtk_Tree_Path;
-      Column     : Gtk_Tree_View_Column;
-      Cell_X,
-      Cell_Y     : Gint;
-      Row_Found  : Boolean := False;
-      Iter       : Gtk_Tree_Iter;
-      Selected   : Integer;
-      pragma Unreferenced (Selected);
-
-      Text       : GNAT.Strings.String_Access;
-      Data       : Bookmark_Data_Access;
    begin
       Pixmap := null;
-      Area   := (0, 0, 0, 0);
+      Initialize_Tooltips (Tooltip.Bookmark_View.Tree, Area, Iter);
 
-      Window := Get_Bin_Window (Tooltip.Bookmark_View.Tree);
-      Get_Pointer (Window, X, Y, Mask, New_Window);
+      if Iter /= Null_Iter then
+         Data := Convert (Get_Address (Model, Iter, Data_Column));
 
-      Get_Path_At_Pos
-        (Tooltip.Bookmark_View.Tree, X, Y, Path,
-         Column, Cell_X, Cell_Y, Row_Found);
+         declare
+            Location : constant String := To_String (Data.Marker);
+         begin
+            if Location = Data.Name.all then
+               Text := new String'("Location: " & Location);
+            else
+               Text := new String'
+                 ("Name: " & Data.Name.all & ASCII.LF &
+                  "Location: " & Location);
+            end if;
+         end;
 
-      if not Row_Found then
-         return;
+         Create_Pixmap_From_Text
+           (Text.all,
+            Default_Font.Get_Pref,
+            Tooltip_Color.Get_Pref,
+            Tooltip.Bookmark_View.Tree,
+            Pixmap);
+         Free (Text);
       end if;
-
-      Get_Cell_Area (Tooltip.Bookmark_View.Tree, Path, Column, Area);
-      Iter := Get_Iter (Model, Path);
-      Path_Free (Path);
-      Selected := Integer (Get_Int (Model, Iter, 1));
-
-      Data := Convert (Get_Address (Model, Iter, Data_Column));
-
-      declare
-         Location : constant String := To_String (Data.Marker);
-      begin
-         if Location = Data.Name.all then
-            Text := new String'("Location: " & Location);
-         else
-            Text := new String'
-              ("Name: " & Data.Name.all & ASCII.LF & "Location: " & Location);
-         end if;
-      end;
-
-      Create_Pixmap_From_Text
-        (Text.all,
-         Default_Font.Get_Pref,
-         Tooltip_Color.Get_Pref,
-         Tooltip.Bookmark_View.Tree,
-         Pixmap);
-      Free (Text);
    end Draw;
 
    ---------------------
