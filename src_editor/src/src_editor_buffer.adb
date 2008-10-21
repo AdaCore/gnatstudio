@@ -678,7 +678,8 @@ package body Src_Editor_Buffer is
    end Get_String;
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.Strings.String_Access
+     (Buffer : access Source_Buffer_Record'Class)
+      return GNAT.Strings.String_Access
    is
       Start, The_End : Gtk_Text_Iter;
       Result         : GNAT.Strings.String_Access;
@@ -4412,12 +4413,12 @@ package body Src_Editor_Buffer is
       GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
    end Source_Lines_Revealed;
 
-   ---------------------
-   -- Check_Timestamp --
-   ---------------------
+   ------------------------------
+   -- Check_Timestamp_And_Diff --
+   ------------------------------
 
-   function Check_Timestamp
-     (Buffer : access Source_Buffer_Record;
+   function Check_Timestamp_And_Diff
+     (Buffer : access Source_Buffer_Record'Class;
       Update : Boolean := False) return Boolean
    is
       New_Timestamp : Ada.Calendar.Time;
@@ -4434,10 +4435,30 @@ package body Src_Editor_Buffer is
          if Update then
             Buffer.Timestamp := New_Timestamp;
          end if;
+
+         --  If the timestamp changed, make sure the contents of the file has
+         --  really changed. Otherwise, it might be for instance a VCS that
+         --  modified the timestamps, and we don't need to bother the user
+         --  with that.
+         --  There is unfortunately no function in gtk+ to get the number of
+         --  bytes in a buffer which we could use to speed up the following.
+
+         if not Result then
+            declare
+               Txt  : GNAT.Strings.String_Access := Get_String (Buffer);
+               Disk : GNAT.Strings.String_Access :=
+                 Read_File (Buffer.Filename);
+            begin
+               Result := Txt.all = Disk.all;
+               Trace (Me, "Timestamps differ, files equal ? " & Result'Img);
+               GNAT.Strings.Free (Disk);
+               GNAT.Strings.Free (Txt);
+            end;
+         end if;
       end if;
 
       return Result;
-   end Check_Timestamp;
+   end Check_Timestamp_And_Diff;
 
    -------------------
    -- Register_View --

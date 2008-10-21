@@ -15,6 +15,14 @@ of the feature.
 New features on HEAD
 --------------------
 
+NF-43-HA03-020 File changed dialog checks for diffs (2008-10-03)
+
+  When GPS detects that a file has changed on the disk, it displays
+  a dialog giving the choice between reloading the file or overriding
+  it. This check now uses both the timestamp (as before) and checking
+  the actual contents of the file, so that it pops up less often, in
+  particular when external tools are changing the timestamps
+
 NF-43-HA03-015 Double-clicking in breakpoint window (2008-10-03)
 
   It is now possible to double-click in the list of breakpoints in

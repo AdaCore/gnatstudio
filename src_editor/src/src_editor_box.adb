@@ -1087,7 +1087,7 @@ package body Src_Editor_Box is
          --  and the file on disk has been modified, the idle callback is
          --  called in a loop, and that takes 100% of CPU (G227-035).
          B.Check_Timestamp_Registered :=
-           not Check_Timestamp (B.Source_Buffer, Update => False);
+           not Check_Timestamp_And_Diff (B.Source_Buffer, Update => False);
          return B.Check_Timestamp_Registered;
       end if;
 
@@ -2257,7 +2257,7 @@ package body Src_Editor_Box is
 
          else
             if not Force
-              and then not Check_Timestamp (Editor.Source_Buffer)
+              and then not Check_Timestamp_And_Diff (Editor.Source_Buffer)
               and then Message_Dialog
                 (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
@@ -2315,7 +2315,8 @@ package body Src_Editor_Box is
    begin
       if Get_Filename (Editor.Source_Buffer) /= GNATCOLL.VFS.No_File then
          if Always_Reload
-           or else not Check_Timestamp (Editor.Source_Buffer, Update => True)
+           or else not Check_Timestamp_And_Diff
+             (Editor.Source_Buffer, Update => True)
          then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;

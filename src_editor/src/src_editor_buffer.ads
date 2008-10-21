@@ -511,10 +511,12 @@ package Src_Editor_Buffer is
    --  Emit the signal to the kernel saying that an area in the source
    --  has been revealed.
 
-   function Check_Timestamp
-     (Buffer : access Source_Buffer_Record;
+   function Check_Timestamp_And_Diff
+     (Buffer : access Source_Buffer_Record'Class;
       Update : Boolean := False) return Boolean;
-   --  Check whether the timestamp changed on the disk.
+   --  Check whether the timestamp changed on the disk. If the timestamp has
+   --  changed, also checks whether the file has actually changed on the disk.
+   --
    --  Return True if the file is up-to-date.
    --  If Update is true, the internal timestamp is also updated, so that a
    --  second call to this function will always return False.
@@ -821,7 +823,8 @@ package Src_Editor_Buffer is
    --  lines in the actual Gtk_Text_Buffer, plus 1.
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.Strings.String_Access;
+     (Buffer : access Source_Buffer_Record'Class)
+      return GNAT.Strings.String_Access;
    --  Return the entire editable string, encoded in UTF-8
    --  The caller is responsible for freeing the returned value.
 
