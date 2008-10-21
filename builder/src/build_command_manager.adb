@@ -396,6 +396,7 @@ package body Build_Command_Manager is
      (Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Mode_Name    : String;
       Force_File   : Virtual_File;
       Extra_Args   : Argument_List_Access;
       Quiet        : Boolean;
@@ -558,19 +559,23 @@ package body Build_Command_Manager is
          return;
       end if;
 
-      declare
-         Modes : Argument_List := Get_List_Of_Modes (Get_Model (T));
-      begin
-         for J in Modes'Range loop
-            --  All modes after Modes'First are Ninja modes
-            Launch_For_Mode
-              (Modes (J).all,
-               Quiet,
-               J > Modes'First);
-         end loop;
+      if Mode_Name = "" then
+         declare
+            Modes : Argument_List := Get_List_Of_Modes (Get_Model (T));
+         begin
+            for J in Modes'Range loop
+               --  All modes after Modes'First are Ninja modes
+               Launch_For_Mode
+                 (Modes (J).all,
+                  Quiet,
+                  J > Modes'First);
+            end loop;
 
-         Free (Modes);
-      end;
+            Free (Modes);
+         end;
+      else
+         Launch_For_Mode (Mode_Name, Quiet, False);
+      end if;
    end Launch_Target;
 
    -------------
@@ -589,6 +594,7 @@ package body Build_Command_Manager is
       Launch_Target (Kernel       => Command.Kernel,
                      Registry     => Command.Registry,
                      Target_Name  => To_String (Command.Target_Name),
+                     Mode_Name    => "",
                      Force_File   => No_File,
                      Extra_Args   => null,
                      Quiet        => Command.Quiet,
@@ -644,6 +650,7 @@ package body Build_Command_Manager is
         (Kernel       => Command.Kernel,
          Registry     => Command.Registry,
          Target_Name  => To_String (Command.Target_Name),
+         Mode_Name    => "",
          Force_File   => No_File,
          Extra_Args   => null,
          Quiet        => Command.Quiet,

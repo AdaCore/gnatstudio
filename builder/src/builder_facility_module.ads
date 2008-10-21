@@ -153,13 +153,14 @@ package Builder_Facility_Module is
    --  Activate or deactivate Mode.
    --  By default, modes are not active.
 
+   procedure Set_Subdir (Mode : String; Subdir : String);
+   --  Modifies the Mode's subdir value.
+
    function Is_Server_In_Mode (Mode : String) return Boolean;
    --  Return if a server is defined for the mode.
 
    function Get_Mode_Server (Mode : String) return Remote.Server_Type;
    --  Return the server defined for the mode.
-
-private
 
    function Registry return Build_Configurations.Build_Config_Registry_Access;
    --  Return the registry stored in the module

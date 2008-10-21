@@ -55,7 +55,7 @@
 
  <builder-mode name="xref">
   <description>Generate cross-reference information</description>
-  <subdir>.xrefs</subdir>
+  <subdir>.</subdir>
   <shadow>TRUE</shadow>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
@@ -70,7 +70,6 @@
     <arg>-gnatyN</arg>
     <arg>-gnatVn</arg>
     <arg>-d</arg>
-    <arg>-q</arg>
   </extra-args>
  </builder-mode>
 

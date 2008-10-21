@@ -190,6 +190,7 @@ package body Toolchains_Module is
             GPS.Kernel.Project.Recompute_View (Kernel);
          end if;
 
+         Builder_Facility_Module.Set_Subdir ("xref", ".xrefs");
          Builder_Facility_Module.Activate_Mode ("xref", True);
 
       else
@@ -201,6 +202,7 @@ package body Toolchains_Module is
             GPS.Kernel.Project.Recompute_View (Kernel);
          end if;
 
+         Builder_Facility_Module.Set_Subdir ("xref", ".");
          Builder_Facility_Module.Activate_Mode ("xref", False);
       end if;
    end Apply;

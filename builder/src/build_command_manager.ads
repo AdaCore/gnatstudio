@@ -49,6 +49,7 @@ package Build_Command_Manager is
      (Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Mode_Name    : String;
       Force_File   : Virtual_File;
       Extra_Args   : Argument_List_Access;
       Quiet        : Boolean;
@@ -56,6 +57,8 @@ package Build_Command_Manager is
       Dialog       : Dialog_Mode;
       Main         : String);
    --  Launch a build of target named Target_Name
+   --  If Mode_Name is not the empty string, then the Mode Mode_Name will be
+   --  used.
    --  If Force_Dialog, always popup the single target dialog.
    --  If Force_File is not set to No_File, then force the command to work
    --  on this file. (This is needed to support GPS scripting).

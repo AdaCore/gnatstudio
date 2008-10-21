@@ -61,7 +61,8 @@ with Language_Handlers;         use Language_Handlers;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
-
+with Build_Command_Manager;
+with Builder_Facility_Module;
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
@@ -420,6 +421,16 @@ package body Builder_Module is
 
       C : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
+      Build_Command_Manager.Launch_Target
+        (Kernel,
+         Builder_Facility_Module.Registry,
+         "Build All", "xref",
+         GNATCOLL.VFS.No_File,
+         Extra_Args  => null,
+         Quiet       => True,
+         Synchronous => False,
+         Dialog      => Build_Command_Manager.Force_No_Dialog,
+         Main        => "");
       Xref_Commands.Create
         (C, -"Computing C/C++ xref info",
          new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
@@ -1007,7 +1018,7 @@ package body Builder_Module is
       Register_Menu (Kernel, Build_Menu, Mitem, Ref_Item => -"Settings");
 
       Register_Menu
-        (Kernel, Build_Menu, -"Recompute C/C++ _Xref info", "",
+        (Kernel, Build_Menu, -"Recompute _Xref info", "",
          On_Compute_Xref'Access, Ref_Item => "Settings");
       Register_Menu
         (Kernel, Build_Menu, -"Load Xref info in memory", "",

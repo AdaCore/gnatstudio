@@ -811,6 +811,7 @@ package body Builder_Facility_Module is
             Launch_Target (Kernel       => Kernel_Handle (Kernel),
                            Registry     => Builder_Module_ID.Registry,
                            Target_Name  => Get_Name (T),
+                           Mode_Name    => "",
                            Force_File   => No_File,
                            --  We do not pass File_Data.File as Force_File,
                            --  as we do not want to compile, for instance,
@@ -955,6 +956,7 @@ package body Builder_Facility_Module is
         (Get_Kernel,
          Builder_Module_ID.Registry,
          To_String (Data.Target),
+         "",
          No_File,
          null, False, False, Default, To_String (Data.Main));
    exception
@@ -977,6 +979,7 @@ package body Builder_Facility_Module is
            (Get_Kernel,
             Builder_Module_ID.Registry,
             To_String (Target_And_Main (Data.all).Target),
+            "",
             No_File,
             null, False, False, Default,
             To_String (Target_And_Main (Data.all).Main));
@@ -1874,6 +1877,22 @@ package body Builder_Facility_Module is
          Replace_Mode (Builder_Module_ID.Registry, U, M);
       end if;
    end Activate_Mode;
+
+   ----------------
+   -- Set_Subdir --
+   ----------------
+
+   procedure Set_Subdir (Mode : String; Subdir : String) is
+      M : Mode_Record;
+      U : constant Unbounded_String := To_Unbounded_String (Mode);
+   begin
+      if Contains_Mode (Builder_Module_ID.Registry, U) then
+         M := Element_Mode (Builder_Module_ID.Registry, U);
+         M.Subdir := To_Unbounded_String (Subdir);
+
+         Replace_Mode (Builder_Module_ID.Registry, U, M);
+      end if;
+   end Set_Subdir;
 
    -----------------------
    -- Is_Server_In_Mode --
