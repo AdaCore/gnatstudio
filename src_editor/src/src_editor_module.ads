@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2007, AdaCore                 --
+--                  Copyright (C) 2001-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,6 +207,9 @@ private
 
    type Highlighting_Category_Array_Access is
      access Highlighting_Category_Array;
+
+   procedure Free (Categories : in out Highlighting_Category_Array);
+   --   Free all categories in the array
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Highlighting_Category_Array, Highlighting_Category_Array_Access);

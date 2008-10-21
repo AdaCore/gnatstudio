@@ -3350,6 +3350,17 @@ package body Src_Editor_Module is
       end if;
    end Preferences_Changed;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Categories : in out Highlighting_Category_Array) is
+   begin
+      for C in Categories'Range loop
+         Unchecked_Free (Categories (C));
+      end loop;
+   end Free;
+
    -------------
    -- Destroy --
    -------------
@@ -3395,6 +3406,11 @@ package body Src_Editor_Module is
 
       if File_Unsaved_Pixbuf /= null then
          Unref (File_Unsaved_Pixbuf);
+      end if;
+
+      if Id.Categories /= null then
+         Free (Id.Categories.all);
+         Unchecked_Free (Id.Categories);
       end if;
 
       Src_Editor_Module_Id := null;
