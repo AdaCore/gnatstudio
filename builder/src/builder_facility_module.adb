@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
@@ -35,6 +36,7 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
@@ -67,6 +69,7 @@ with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Traces;
 
+with Histories;                 use Histories;
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
 
@@ -89,6 +92,9 @@ package body Builder_Facility_Module is
 
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
+
+   Mode_Pref : constant History_Key := "Build-Mode";
+   --  History to store which mode is selected.
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -748,13 +754,6 @@ package body Builder_Facility_Module is
       if Builder_Module_ID.Build_Count > 0 then
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
       end if;
-
-      --  ??? To be ported.
---        if Builder_Module_ID.Build_Count = 0 then
---           if Automatic_Xrefs_Load.Get_Pref then
---              Load_Xref_In_Memory (Kernel);
---           end if;
---        end if;
    end On_Compilation_Finished;
 
    -------------------
@@ -821,7 +820,7 @@ package body Builder_Facility_Module is
                            Synchronous  => False,
                            Dialog       => Default,
                            Main         => "");
-            --  ??? Should we attempt to a "relevant" main when
+            --  ??? Should we attempt to compute which is the "relevant" main
             --  in On_File_Save mode?
          end if;
          Next (C);
@@ -1022,6 +1021,8 @@ package body Builder_Facility_Module is
            (Reg, Get_Mode_Subdir (Mode));
          Recompute_View (Get_Kernel);
       end if;
+
+      Add_To_History (Get_History (Get_Kernel).all, Mode_Pref, Mode);
    end On_Mode_Changed;
 
    ----------
@@ -1447,6 +1448,8 @@ package body Builder_Facility_Module is
          end if;
       end Parse_Node;
 
+      use type Glib.Gint;
+
    begin
       --  Create the mode
 
@@ -1502,11 +1505,27 @@ package body Builder_Facility_Module is
 
          Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
 
-         --  Set the initial value of the mode to the first mode in the list
-         --  ??? This should be loaded/saved in a hidden preference
-         if First_Mode then
-            Set_Active (Builder_Module_ID.Modes_Combo, 0);
-         end if;
+         declare
+            H : constant String_List_Access :=
+              Get_History (Get_History (Get_Kernel).all, Mode_Pref);
+         begin
+            if H /= null
+              and then H.all'Length > 0
+            then
+               if H (H'First) /= null
+                 and then To_String (Mode.Name) = H (H'First).all
+               then
+                  Set_Active
+                    (Builder_Module_ID.Modes_Combo,
+                     N_Children (Get_Model (Builder_Module_ID.Modes_Combo))
+                     - 1);
+               end if;
+            else
+               if First_Mode then
+                  Set_Active (Builder_Module_ID.Modes_Combo, 0);
+               end if;
+            end if;
+         end;
 
          --  Regenerate the tooltips for the combo box
 
@@ -1640,6 +1659,8 @@ package body Builder_Facility_Module is
         (Module      => Builder_Module_ID,
          Kernel      => Kernel,
          Module_Name => "Builder Facility");
+
+      --  Register the menus
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Main_Menu & (-"Se_ttings"), -"_Targets", "",
