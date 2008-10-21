@@ -7,15 +7,15 @@
 -->
 
 <gnatr>
-   <action name="compile current file with -gnatR" output="gnatR" category="Builder" >
+   <action name="View types layout in file" output="gnatR" category="Builder" >
       <external >gnatmake -f -gnatc -P%pp -gnatR -u %F</external>
       <filter id="Source editor" />
    </action>
 
    <Submenu>
       <Title>Build</Title>
-      <menu action="compile current file with -gnatR">
-         <Title>Compile current with -gnatR</Title>
+      <menu action="View types layout in file">
+         <Title>View types layout in file</Title>
       </menu>
    </Submenu>
 
