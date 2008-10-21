@@ -96,10 +96,15 @@ def continue_till_line ():
      pass  # No debugger active
 
 parse_xml ("""
-  <action name="continue till line">
+  <action name="continue till line" category="Debugger">
+    <filter id="Debugger active"/>
     <shell lang="python">debugger.continue_till_line()</shell>
+    <description>Continue executing the debuggee until it reaches the current editor line. If this line is never reached, the debugger will not stop</description>
   </action>
-  <key name="continue till line">ctrl-b</key>
+  <menu action="continue till line" after="Continue">
+    <title>/Debug/Continue to current line</title>
+  </menu>
+  <key name="continue till line">control-b</key>
 """)
 
 ####################################
