@@ -124,7 +124,7 @@ Project_Attributes="""
     editor_section="Make"
     description="Switches for the make command">
     <string type="" default="-k"/>
-  </project_attribute>""")
+  </project_attribute>
 
   <project_attribute
     name="antfile"
@@ -146,7 +146,7 @@ Project_Attributes="""
     editor_section="Ant"
     description="Switches for the ant command">
     <string type="" default="-e"/>
- </project_attribute>""")
+ </project_attribute>
 """
 
 class Builder:
