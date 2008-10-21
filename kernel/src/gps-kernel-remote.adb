@@ -2780,6 +2780,8 @@ package body GPS.Kernel.Remote is
          for J in Property.Servers'Range loop
             Srv := Find_Tag (From.Child, Server_Type'Image (J));
 
+            Free (Property.Servers (J).Nickname);
+
             if Srv /= null
               and then Is_Configured (Srv.Value.all)
               and then Srv.Value.all /= ""
@@ -2795,6 +2797,7 @@ package body GPS.Kernel.Remote is
 
       else
          for J in Property.Servers'Range loop
+            Free (Property.Servers (J).Nickname);
             Property.Servers (J) :=
               (Is_Local => True,
                Nickname => new String'(""));
@@ -2850,18 +2853,18 @@ package body GPS.Kernel.Remote is
                   Nickname => new String'(Get_Host (D.File)));
             end loop;
 
-            --  Set the property for loaded project
-            Prop := new Servers_Property'(Property);
-            Set_Property (Kernel,
-                          Local_File, "servers_config", Prop,
-                          Persistent => True);
-
          else
             for J in Property.Servers'Range loop
                Property.Servers (J) := (Is_Local => True,
                                         Nickname => new String'(""));
             end loop;
          end if;
+
+         --  Set the property for loaded project
+         Prop := new Servers_Property'(Property);
+         Set_Property (Kernel,
+                       Local_File, "servers_config", Prop,
+                       Persistent => True);
       end if;
 
       --  Assign servers following property values
@@ -2990,6 +2993,7 @@ package body GPS.Kernel.Remote is
             Cd_Cmd                 : Glib.String_Ptr;
             Get_Status_Cmd         : Glib.String_Ptr;
             Get_Status_Ptrn        : Glib.String_Ptr;
+            Empty_String           : aliased String := "";
 
          begin
             if Shell_Name = "" then
@@ -3047,7 +3051,7 @@ package body GPS.Kernel.Remote is
 
             No_Echo_Cmd := Get_Field (Node, "no_echo_command");
             if No_Echo_Cmd = null then
-               No_Echo_Cmd := new String'("");
+               No_Echo_Cmd := Empty_String'Unchecked_Access;
             end if;
 
             Init_Cmds_Child := Find_Tag (Node.Child, "init_commands");
@@ -3379,6 +3383,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       for J in Property.Servers'Range loop
+         Free (Property.Servers (J).Nickname);
          if Is_Local (J) then
             Property.Servers (J) :=
               (Is_Local => True, Nickname => new String'(""));

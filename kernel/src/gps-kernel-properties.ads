@@ -102,8 +102,26 @@ package GPS.Kernel.Properties is
       Name        : String;
       Found       : out Boolean);
    --  Return the given named property associated with Index.
-   --  Found is set to False if there is no such property.
+   --  null is returned if there is no such property.
    --  Property names are case sensitive.
+   --
+   --  This function might be dangereous in some cases. See for instance the
+   --  following scenario:
+   --      Prop : String_Property_Access := new ... (with a string_access)
+   --      Set_Property (Index, Prop);
+   --      ...
+   --      Prop2 : String_Property;
+   --      Get_Property (Prop2, Index)
+   --      Set_Property (Index, new String_Property'(Prop2));
+   --          the last call would first call Destroy on the previous value of
+   --          the property associated with Index, ie would free the memory
+   --          used by the embedded string_access. Therefore when we set the
+   --          property it now points to deallocated memory
+   --
+   --  We cannot just return an access to Property_Record'Class, because the
+   --  actual type of the property the user expects must be known in advance
+   --  for the case where the value has only been read from XML and not
+   --  converted to Ada yet.
 
    procedure Remove_Property
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
