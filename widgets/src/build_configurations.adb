@@ -62,6 +62,7 @@ package body Build_Configurations is
    procedure Free (Target : in out Target_Access);
    procedure Free (List : in out Target_List.List);
    procedure Free (Models : in out Model_Map.Map);
+   procedure Free (Modes : in out Mode_Map.Map);
    --  Free memory
 
    ---------------
@@ -1285,6 +1286,24 @@ package body Build_Configurations is
    -- Free --
    ----------
 
+   procedure Free (Modes : in out Mode_Map.Map) is
+      use Mode_Map;
+      C : Mode_Map.Cursor := Mode_Map.First (Modes);
+      M : Mode_Record;
+   begin
+      while Has_Element (C) loop
+         M := Element (C);
+         Free (M.Args);
+         Next (C);
+      end loop;
+
+      Mode_Map.Clear (Modes);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Registry : in out Build_Config_Registry_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Build_Config_Registry, Build_Config_Registry_Access);
@@ -1292,6 +1311,7 @@ package body Build_Configurations is
       if Registry /= null then
          Free (Registry.Models);
          Free (Registry.Targets);
+         Free (Registry.Modes);
          Free (Registry.Original_Targets);
          Unchecked_Free (Registry);
       end if;

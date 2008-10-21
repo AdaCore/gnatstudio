@@ -433,27 +433,6 @@ package body Builder_Facility_Module is
 --        end if;
    end Append_To_Menu;
 
-   procedure Free (Modes : in out Mode_Map.Map);
-   --  Free memory
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Modes : in out Mode_Map.Map) is
-      use Mode_Map;
-      C : Mode_Map.Cursor := Mode_Map.First (Modes);
-      M : Mode_Record;
-   begin
-      while Has_Element (C) loop
-         M := Element (C);
-         Free (M.Args);
-         Next (C);
-      end loop;
-
-      Mode_Map.Clear (Modes);
-   end Free;
-
    -------------
    -- Destroy --
    -------------
@@ -461,7 +440,6 @@ package body Builder_Facility_Module is
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
       Free (Module.Registry);
-      Free (Module.Modes);
    end Destroy;
 
    ---------------
