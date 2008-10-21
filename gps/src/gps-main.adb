@@ -1576,6 +1576,7 @@ procedure GPS.Main is
 
       if Batch_File /= null then
          Execute_Batch (Batch_File.all, As_File => True);
+         Free (Batch_File);
       end if;
 
       Started := True;

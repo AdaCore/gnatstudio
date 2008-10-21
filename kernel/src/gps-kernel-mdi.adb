@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2007                      --
---                              AdaCore                              --
+--                      Copyright (C) 2005-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -384,6 +383,8 @@ package body GPS.Kernel.MDI is
          Pack_Start (Get_Vbox (Dialog), Scrolled, Padding => 10);
 
          Gtk_New (View, Gtk_Tree_Model (Model));
+         Unref (Model);
+
          Set_Mode (Get_Selection (View), Selection_Single);
          Add (Scrolled, View);
 

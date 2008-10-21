@@ -117,7 +117,13 @@ package body OS_Utils is
       --  If you are here, the user has typed the executable name with no
       --  directory prefix.
 
-      return Get_Install_Dir (GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name).all);
+      declare
+         Ex : String_Access := GNAT.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         Dir : constant String := Get_Install_Dir (Ex.all);
+      begin
+         Free (Ex);
+         return Dir;
+      end;
    end Executable_Location;
 
    ----------------------------

@@ -1543,6 +1543,8 @@ package body GPS.Kernel is
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Root_Table'Class, Root_Table_Access);
    begin
       Save_Styles
         (Kernel_Handle (Handle),
@@ -1562,6 +1564,7 @@ package body GPS.Kernel is
       end if;
 
       Reset (Handle.Startup_Scripts);
+      Unchecked_Free (Handle.Startup_Scripts);
 
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
@@ -1585,14 +1588,22 @@ package body GPS.Kernel is
       --        Unref (Handle.Last_Context_For_Contextual);
 
       Reset (Handle.Actions);
+      Unchecked_Free (Handle.Actions);
+
       Reset (Handle.Action_Filters);
       Action_Filters_List.Free (Handle.All_Action_Filters);
+
       Reset (Handle.Styles);
+      Unchecked_Free (Handle.Styles);
+
       Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);
 
       Destroy (Language_Handler (Handle.Lang_Handler));
-      --  Destroy (Handle.Database);
+
+      --  ??? Was commented out, with no explanation
+      Destroy (Handle.Database);
+
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
