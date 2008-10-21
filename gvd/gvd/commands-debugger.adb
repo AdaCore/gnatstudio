@@ -64,7 +64,7 @@ package body Commands.Debugger is
          return Failure;
       end if;
 
-      Command.Do_Not_Free := True;
+      Ref (Command);
 
       case Command.BMode is
          when Set =>
@@ -90,14 +90,11 @@ package body Commands.Debugger is
             end if;
       end case;
 
-      Command.Do_Not_Free := False;
-
-      if Command.To_Be_Freed then
-         C := Command_Access (Command);
-         Destroy (C);
-
+      C := Command_Access (Command);
+      Unref (C);
+      if C = null then
+         --  Was freed
          return Failure;
-
       else
          Command_Finished (Command, True);
       end if;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2007, AdaCore                   --
+--                Copyright (C) 2001-2008, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -84,29 +84,35 @@ package body Commands is
       end loop;
    end Empty_Queue;
 
-   -------------
-   -- Destroy --
-   -------------
+   ---------
+   -- Ref --
+   ---------
 
-   procedure Destroy (X : in out Command_Access) is
+   procedure Ref (Command : access Root_Command'Class) is
+   begin
+      Command.Ref_Count := Command.Ref_Count + 1;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Command : in out Command_Access) is
       procedure Unchecked_Free is new Unchecked_Deallocation
         (Root_Command'Class, Command_Access);
    begin
-      if X /= null then
-         if X.Do_Not_Free then
-            X.To_Be_Freed := True;
-
-         else
+      if Command /= null then
+         Command.Ref_Count := Command.Ref_Count - 1;
+         if Command.Ref_Count = 0 then
             --  Do not free commands registered as actions, except if we are
             --  freeing the actions themselves
-
-            Free (X.Next_Commands);
-            Free (X.Alternate_Commands);
-            Free (X.all);
-            Unchecked_Free (X);
+            Free (Command.Next_Commands);
+            Free (Command.Alternate_Commands);
+            Free (Command.all);
+            Unchecked_Free (Command);
          end if;
       end if;
-   end Destroy;
+   end Unref;
 
    ----------
    -- Name --
@@ -163,9 +169,9 @@ package body Commands is
    -------------
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command;
-      High_Priority : Boolean := False) is
+     (Queue               : Command_Queue;
+      Action              : access Root_Command;
+      High_Priority       : Boolean := False) is
    begin
       if Queue = Null_Command_Queue then
          return;

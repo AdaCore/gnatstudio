@@ -1013,7 +1013,7 @@ package body Log_Utils is
       end if;
 
       if Cancel_All then
-         Destroy (First_Check);
+         Unref (First_Check);
       else
          Launch_Background_Command
            (Kernel, First_Check, True, True, Name (Ref));

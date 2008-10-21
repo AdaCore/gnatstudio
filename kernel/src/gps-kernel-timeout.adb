@@ -635,7 +635,7 @@ package body GPS.Kernel.Timeout is
 
       if Synchronous then
          Launch_Monitor_Command_Synchronous (Command_Access (C), 0.1);
-         Destroy (Command_Access (C));
+         Unref (Command_Access (C));
 
       else
          --  ??? Add_Alternate_Action: sync even if main action fails

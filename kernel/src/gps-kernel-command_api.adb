@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2005-2007, AdaCore              --
+--                     Copyright (C) 2005-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,7 +48,7 @@ package body GPS.Kernel.Command_API is
          Data_Command := Get_Data (Command_Instance);
          if Data_Command /= null then
             Remove_Instance (Data_Command, Get_Script (Data));
-            Destroy (Command_Access (Data_Command));
+            Unref (Command_Access (Data_Command));
          end if;
       elsif Command = "list" then
          declare

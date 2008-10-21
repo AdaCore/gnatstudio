@@ -199,6 +199,8 @@ package body GPS.Kernel.Actions is
          Defined_In => Defined_In,
          Overriden  => Overriden);
 
+      Register_Perma_Command (Kernel, Command);
+
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
       return Action;
@@ -316,7 +318,7 @@ package body GPS.Kernel.Actions is
          Action := Get_Element (Iter);
          exit when Action = null;
 
-         Commands.Destroy (Command_Access (Action.Command));
+         Commands.Unref (Command_Access (Action.Command));
          Get_Next (X.Table, Iter);
       end loop;
 

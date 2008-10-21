@@ -335,7 +335,7 @@ package body GPS.Kernel.Task_Manager is
          end loop;
 
          if Command.Destroy_On_Exit then
-            Destroy (Command.Command);
+            Unref (Command.Command);
          end if;
 
          Free (Command.Instances);
@@ -362,7 +362,7 @@ package body GPS.Kernel.Task_Manager is
             --  remove it.
 
             if not Found then
-               Destroy (Command_Access (Dead_Command));
+               Unref (Command_Access (Dead_Command));
             end if;
 
             Free (Command.Instances);
@@ -513,7 +513,7 @@ package body GPS.Kernel.Task_Manager is
       end loop;
 
       Pop_State (Kernel);
-      Destroy (Command_Access (Wrapper));
+      Unref (Command_Access (Wrapper));
    end Launch_Foreground_Command;
 
    ---------------------------

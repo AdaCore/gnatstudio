@@ -2572,14 +2572,6 @@ package body Src_Editor_Module is
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
-      Command := new Indentation_Command;
-      Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Action
-        (Kernel, "Format selection",
-         Command, -"Format the current line or selection",
-         Category => "Editor",
-         Filter => Src_Action_Context);
-
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Move_Command (Command.all).Kind := Word;
@@ -2709,13 +2701,6 @@ package body Src_Editor_Module is
          Filter => Src_Action_Context);
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
-
-      Command := new Goto_Line_Command;
-      Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
-      Register_Contextual_Menu
-        (Kernel, -"Goto line...",
-         Action => Command,
-         Filter => Line_Numbers_Area_Filter);
 
       Command := new Goto_Declaration_Command;
       Register_Contextual_Menu
@@ -3018,6 +3003,11 @@ package body Src_Editor_Module is
          Ref_Item   => "Insert File...",
          Add_Before => False,
          Filter     => Src_Action_Context);
+      Register_Action
+        (Kernel, "Format selection",
+         Command, -"Format the current line or selection",
+         Category => "Editor",
+         Filter => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
@@ -3050,6 +3040,11 @@ package body Src_Editor_Module is
                      Accel_Key   => GDK_G,
                      Accel_Mods  => Control_Mask,
                      Ref_Item    => -"Goto File Spec<->Body");
+      Register_Contextual_Menu
+        (Kernel, -"Goto line...",
+         Action => Command,
+         Filter => Line_Numbers_Area_Filter);
+
       Register_Menu (Kernel, Navigate, -"Goto _Declaration", Stock_Home,
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
       Register_Menu (Kernel, Navigate, -"Goto _Body", "",

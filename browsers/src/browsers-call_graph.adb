@@ -1522,7 +1522,7 @@ package body Browsers.Call_Graph is
 
                Launch_Synchronous (Ref_Command);
                Put_Locations_In_Return (Ref_Command, Data, Show_Ref_Type);
-               Destroy (Command_Access (Ref_Command));
+               Unref (Command_Access (Ref_Command));
 
             else
                --  Not synchronous, return a command

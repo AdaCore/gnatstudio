@@ -1608,6 +1608,8 @@ package body GPS.Kernel is
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
 
+      Commands.Command_Queues.Free (Handle.Perma_Commands);
+
       Destroy (Handle.Scripts);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
@@ -2374,5 +2376,18 @@ package body GPS.Kernel is
                 Data'Unchecked_Access,
                 Set_Busy => False);
    end Push_Marker_In_History;
+
+   ----------------------------
+   -- Register_Perma_Command --
+   ----------------------------
+
+   procedure Register_Perma_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : access Commands.Root_Command'Class) is
+   begin
+      Commands.Ref (Command);  --  Will only be freed when the kernel exits
+      Commands.Command_Queues.Append
+        (Kernel.Perma_Commands, Commands.Command_Access (Command));
+   end Register_Perma_Command;
 
 end GPS.Kernel;

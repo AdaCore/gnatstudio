@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,8 +113,13 @@ package Commands is
    procedure Free (X : in out Root_Command);
    --  Free memory associated to X
 
-   procedure Destroy (X : in out Command_Access);
-   --  Free memory associated with X
+   procedure Ref   (Command : access Root_Command'Class);
+   procedure Unref (Command : in out Command_Access);
+   --  This temporarily prevent freeing the command because it might still be
+   --  in use (in particular this is used for global commands used in actions
+   --  and menus). When Unref is called, if the refcount reaches 0 then the
+   --  command will be freed automatically (this depends on whether we tried
+   --  to free it while a refcount was not null).
 
    -----------------------
    -- Alternate actions --
@@ -123,7 +128,7 @@ package Commands is
    --  only executed depending on the result of the command.
 
    package Command_Queues is
-     new Generic_List (Command_Access, Free => Destroy);
+     new Generic_List (Command_Access, Free => Unref);
 
    procedure Add_Consequence_Action
      (Item   : access Root_Command'Class;
@@ -247,9 +252,9 @@ package Commands is
    --  Ends grouping of commands
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command;
-      High_Priority : Boolean := False);
+     (Queue               : Command_Queue;
+      Action              : access Root_Command;
+      High_Priority       : Boolean := False);
    --  Adds Action to the Queue, and start executing the command immediately
    --  if the queue is empty, or after all commands already in the queue.
    --  The execution is by default synchronous, ie this call will only return
@@ -263,6 +268,10 @@ package Commands is
    --  If High_Priority is True, the only thing that is guaranteed is
    --  that this Action will be executed before all the actions that
    --  were enqueued with High_Priority set to False.
+   --
+   --  This command steals a reference to Action, so that when the queue
+   --  finishes its execution the command is freed. If you need to keep a
+   --  reference to the command, you should call Ref.
 
    function Get_Position (Queue : Command_Queue) return Integer;
    --  Return the position in the queue (see comments for
@@ -379,14 +388,12 @@ private
       --  The following booleans are used to avoid cases when execution of
       --  a command might cause this command to be destroyed in the process.
 
-      Do_Not_Free        : Boolean := False;
+      Ref_Count          : Natural := 1;
       --  Used to indicate that the command is currently being used
-      --  and should not be freed.
-
-      To_Be_Freed        : Boolean := False;
-      --  Indicates that an attempt to free the command was made
-      --  when Do_Not_Free was set, and that the command should be freed
-      --  as soon as possible.
+      --  and should not be freed. A command can only be freed when this is 0.
+      --  Some global commands used in menus and actions have this increased
+      --  by one, and some uses of commands might temporarily increase this
+      --  count.
 
       Group              : Natural := 0;
       --  The group the command belongs to. 0 indicates that the command does

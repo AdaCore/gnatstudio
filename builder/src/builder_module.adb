@@ -321,7 +321,7 @@ package body Builder_Module is
             Xref_Iterate'Access);
 
          Launch_Synchronous (Command_Access (C), 0.01);
-         Destroy (Command_Access (C));
+         Unref (Command_Access (C));
 
       elsif Command = "compute_xref_bg" then
          Xref_Commands.Create

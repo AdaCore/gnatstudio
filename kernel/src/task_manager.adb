@@ -560,11 +560,11 @@ package body Task_Manager is
       Pop_Command  : Command_Access) is
    begin
       if Manager.Push_Command /= null then
-         Destroy (Manager.Push_Command);
+         Unref (Manager.Push_Command);
       end if;
 
       if Manager.Pop_Command /= null then
-         Destroy (Manager.Pop_Command);
+         Unref (Manager.Pop_Command);
       end if;
 
       Manager.Push_Command := Push_Command;
@@ -588,11 +588,11 @@ package body Task_Manager is
       end if;
 
       if Manager.Push_Command /= null then
-         Destroy (Manager.Push_Command);
+         Unref (Manager.Push_Command);
       end if;
 
       if Manager.Pop_Command /= null then
-         Destroy (Manager.Pop_Command);
+         Unref (Manager.Pop_Command);
       end if;
    end Destroy;
 

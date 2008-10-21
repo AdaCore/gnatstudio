@@ -1392,6 +1392,7 @@ package body GPS.Kernel.Modules is
            (Item, Signal_Activate, Execute_Command'Access,
             Slot_Object => Kernel_Handle (Kernel),
             User_Data   => (Kernel_Handle (Kernel), Command, Filter));
+         Register_Perma_Command (Kernel, Command);
       end if;
 
       if Action /= null then
@@ -1610,6 +1611,10 @@ package body GPS.Kernel.Modules is
 
       Show_All (Button);
 
+      if Command /= null then
+         Register_Perma_Command (Kernel, Command);
+      end if;
+
       Command_Callback.Object_Connect
         (Button, Signal_Clicked, Execute_Command'Access,
          Slot_Object => Kernel_Handle (Kernel),
@@ -1635,6 +1640,10 @@ package body GPS.Kernel.Modules is
       Insert (Get_Toolbar (Kernel), Button, -1);
 
       Show_All (Button);
+
+      if Command /= null then
+         Register_Perma_Command (Kernel, Command);
+      end if;
 
       Command_Callback.Object_Connect
         (Button, Signal_Clicked, Execute_Command'Access,
@@ -2021,6 +2030,7 @@ package body GPS.Kernel.Modules is
             Sensitive             => True,
             Filter_For_Visibility => Visibility_Filter,
             Label                 => Contextual_Menu_Label_Creator (Label));
+         Register_Perma_Command (Kernel, Action);
       end if;
 
       Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);
@@ -2087,6 +2097,7 @@ package body GPS.Kernel.Modules is
             Filter_Matched        => False,
             Filter_For_Visibility => Visibility_Filter,
             Label                 => Contextual_Menu_Label_Creator (T));
+         Register_Perma_Command (Kernel, Action);
       end if;
 
       Add_Contextual_Menu (Kernel, Menu, Ref_Item, Add_Before);

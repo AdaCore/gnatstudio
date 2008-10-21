@@ -125,7 +125,7 @@ package body GPS.Kernel.Standard_Hooks is
       Free (X.Tooltip_Text);
 
       if X.Associated_Command /= null then
-         Destroy (X.Associated_Command);
+         Unref (X.Associated_Command);
       end if;
    end Free;
 

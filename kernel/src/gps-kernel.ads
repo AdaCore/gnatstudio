@@ -43,6 +43,7 @@ with Gtkada.MDI;
 
 with Basic_Types;
 with Basic_Mapper;
+with Commands;
 with Entities;
 with Entities.Queries;
 with Generic_List;
@@ -406,6 +407,19 @@ package GPS.Kernel is
    --  Push a new marker in the list of previous locations the user has
    --  visited. This is the basic interface for the handling of the history of
    --  locations. It emits the hook Marker_Added_To_History.
+
+   --------------
+   -- Commands --
+   --------------
+
+   procedure Register_Perma_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : access Commands.Root_Command'Class);
+   --  Register a command to be freed when GPS exits. Such commands must not be
+   --  added to command queues, and therefore this is mostly intended for
+   --  commands used in actions or menus (but in such case the command is
+   --  automatically added already). A given command can be registered
+   --  several times though.
 
    --------------------
    -- Action filters --
@@ -1004,6 +1018,12 @@ private
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
+
+      Perma_Commands : Commands.Command_Queues.List;
+      --  The list of global commands associated with menus, actions or
+      --  contextual menus, so that they can be freed on exit. These commands
+      --  are automatically added to the list when the menu or action is
+      --  created
 
       Last_Context_For_Contextual : Selection_Context := No_Context;
       --  The context used in the last contextual menu.
