@@ -85,6 +85,11 @@ private
       Lang : access Language.Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String;
+   overriding function Get_Component_Name
+     (Item : access Repeat_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String;
    overriding function Get_Component
      (Item : access Repeat_Type;
       X, Y : Glib.Gint) return Generic_Type_Access;

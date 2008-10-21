@@ -222,6 +222,22 @@ package body Items.Repeats is
 
    overriding function Get_Component_Name
      (Item : access Repeat_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String
+   is
+   begin
+      --  Comp is necessarily Item.Item.Value
+
+      return Get_Component_Name (Item.Value, Lang, Name, Comp);
+   end Get_Component_Name;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   overriding function Get_Component_Name
+     (Item : access Repeat_Type;
       Lang : access Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String is

@@ -25,6 +25,7 @@ with GVD.Process;
 with Gdk.Event;
 with Gtkada.Canvas;
 with Debugger;
+with Language;
 
 package Display_Items is
 
@@ -35,6 +36,10 @@ package Display_Items is
    type GVD_Link_Record is new Browsers.Canvas.Browser_Link_Record
       with private;
    type GVD_Link is access all GVD_Link_Record'Class;
+
+   Item_Name_In_Link : constant String := "@";
+   --  Shortcut used to represent the dereferenced item when generating a new
+   --  item.
 
    procedure Gtk_New
      (Item           : out Display_Item;
@@ -143,6 +148,15 @@ package Display_Items is
    --  If Component is null, the whole item is redraw, otherwise only the
    --  specific Component is updated.
 
+   procedure Dereference_Item
+     (Item            : access Display_Item_Record;
+      Deref_Component : Items.Generic_Type_Access;
+      Component_Name  : String;
+      Link_Name       : String);
+   --  Dereference a component of Item ("graph display" on it with a link from
+   --  the item). Link_Name is dereferenced per language rule (ie in Ada .all
+   --  is added).
+
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.
 
@@ -152,6 +166,10 @@ package Display_Items is
 
    function Get_Name (Item : access Display_Item_Record) return String;
    --  Return the name of Item, or "" if there is no such name.
+
+   function Get_Language
+     (Item : access Display_Item_Record) return Language.Language_Access;
+   --  Return the language for Item
 
    function Get_Num (Item : access Display_Item_Record) return Integer;
    --  Return the number of Item.

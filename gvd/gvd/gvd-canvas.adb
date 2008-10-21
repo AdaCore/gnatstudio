@@ -65,6 +65,7 @@ with GVD.Trace;
 with GVD.Types;
 with Items;                  use Items;
 with Items.Simples;          use Items.Simples;
+with Language;               use Language;
 with Pixmaps_IDE;            use Pixmaps_IDE;
 with Std_Dialogs;            use Std_Dialogs;
 with String_Utils;           use String_Utils;
@@ -317,6 +318,11 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
    --  Show all the subcomponents of the selected item
+
+   procedure Dereference_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Dereference all pointers visible in the box
 
    procedure View_Into_Memory
      (Widget  : access Gtk_Widget_Record'Class;
@@ -1454,6 +1460,20 @@ package body GVD.Canvas is
                          Zoom           => 100));
          Append (Menu, Mitem);
 
+         Gtk_New (Mitem, Label => -"Dereference all pointers");
+         Item_Handler.Connect
+           (Mitem, Signal_Activate,
+            Item_Handler.To_Marshaller (Dereference_All'Access),
+            Item_Record'(Name_Length    => Component_Name'Length,
+                         Canvas         => Canvas,
+                         Item           => Display_Item (Item),
+                         Component      => Component,
+                         Component_Name => Component_Name,
+                         Mode           => Value,
+                         Format         => Default_Format,
+                         Zoom           => 100));
+         Append (Menu, Mitem);
+
          --  Display a separator
 
          Gtk_New (Mitem);
@@ -1755,6 +1775,53 @@ package body GVD.Canvas is
    exception
       when E : others => Traces.Trace (Exception_Handle, E);
    end Show_All;
+
+   ---------------------
+   -- Dereference_All --
+   ---------------------
+
+   procedure Dereference_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+      pragma Unreferenced (Widget);
+      Lang : constant Language_Access := Get_Language (Item.Item);
+
+      procedure Dereference_In_Comp
+        (Component : Generic_Type_Access; Name : String);
+      --  Dereference recursively all pointers found in Component
+
+      procedure Dereference_In_Comp
+        (Component : Generic_Type_Access; Name : String)
+      is
+         Iter : Generic_Iterator'Class := Start (Component);
+         Comp : Generic_Type_Access;
+      begin
+         while not At_End (Iter) loop
+            Comp := Data (Iter);
+            if Comp.all in Access_Type'Class then
+               Dereference_Item
+                 (Item            => Item.Item,
+                  Deref_Component => Comp,
+                  Component_Name  => Get_Component_Name
+                    (Component, Lang, Name, Comp),
+                  Link_Name       => Get_Component_Name
+                    (Component, Lang, Item_Name_In_Link, Comp));
+            else
+               Dereference_In_Comp
+                 (Comp, Get_Component_Name (Component, Lang, Name, Comp));
+            end if;
+
+            Next (Iter);
+         end loop;
+      end Dereference_In_Comp;
+
+   begin
+      Dereference_In_Comp (Get_Entity (Item.Item), Get_Name (Item.Item));
+   exception
+      when E : others =>
+         Traces.Trace (Exception_Handle, E);
+   end Dereference_All;
 
    ----------------------
    -- View_Into_Memory --

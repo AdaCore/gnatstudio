@@ -779,6 +779,27 @@ package body Items.Arrays is
 
    overriding function Get_Component_Name
      (Item : access Array_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String
+   is
+   begin
+      for C in Item.Values'Range loop
+         if Item.Values (C).Value = Comp then
+            return Array_Item_Name
+              (Lang, Name, Index_String
+                 (Item.all, Item.Values (C).Index, Item.Num_Dimensions));
+         end if;
+      end loop;
+      return Name;
+   end Get_Component_Name;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   overriding function Get_Component_Name
+     (Item : access Array_Type;
       Lang : access Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String

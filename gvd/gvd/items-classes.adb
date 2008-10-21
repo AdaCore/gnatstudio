@@ -342,6 +342,24 @@ package body Items.Classes is
 
    overriding function Get_Component_Name
      (Item : access Class_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String
+   is
+      pragma Unreferenced (Item, Lang, Comp);
+   begin
+      --  Comp is either one of the ancestors or the child, but in any case
+      --  it doesn't have its own name.
+
+      return Name;
+   end Get_Component_Name;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   overriding function Get_Component_Name
+     (Item : access Class_Type;
       Lang : access Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String

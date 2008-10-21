@@ -306,6 +306,17 @@ package body Items.Simples is
       return Name;
    end Get_Component_Name;
 
+   overriding function Get_Component_Name
+     (Item : access Simple_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String
+   is
+      pragma Unreferenced (Item, Lang, Comp);
+   begin
+      return Name;
+   end Get_Component_Name;
+
    -------------------
    -- Get_Component --
    -------------------

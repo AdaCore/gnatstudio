@@ -665,6 +665,38 @@ package body Items.Records is
 
    overriding function Get_Component_Name
      (Item : access Record_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      Comp : Generic_Type_Access) return String
+   is
+   begin
+      for F in Item.Fields'Range loop
+         if Item.Fields (F).Value = Comp then
+            return Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
+
+         elsif Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               if Generic_Type_Access (Item.Fields (F).Variant_Part (V)) =
+                 Comp
+               then
+                  return Get_Component_Name
+                    (Item.Fields (F).Variant_Part (V),
+                     Lang,
+                     Name,
+                     Comp);
+               end if;
+            end loop;
+         end if;
+      end loop;
+      return Name;
+   end Get_Component_Name;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   overriding function Get_Component_Name
+     (Item : access Record_Type;
       Lang : access Language_Root'Class;
       Name : String;
       X, Y : Glib.Gint) return String

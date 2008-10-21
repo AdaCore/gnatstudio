@@ -77,10 +77,6 @@ package body Display_Items is
    --  Number of buttons in the title bar.
    --  This is not user-configurable.
 
-   Item_Name_In_Link : constant String := "@";
-   --  Shortcut used to represent the dereferenced item when generating a new
-   --  item.
-
    Attach_Links_To_Components : constant Boolean := False;
    --  If True, then the links are attached to the middle of the actual
    --  component that was dereferenced, not to the middle of the item.
@@ -901,21 +897,13 @@ package body Display_Items is
    procedure Dereference_Item
      (Item            : access Display_Item_Record;
       Deref_Component : Generic_Type_Access;
-      X               : Gint;
-      Y               : Gint)
+      Component_Name  : String;
+      Link_Name       : String)
    is
-      Name : constant String := Get_Component_Name
-        (Item.Entity,
-         Get_Language (Item.Debugger.Debugger),
-         Item.Name.all,
-         X, Y);
-      Link_Name : constant String := Dereference_Name
-        (Get_Language (Item.Debugger.Debugger),
-         Get_Component_Name
-           (Item.Entity,
-            Get_Language (Item.Debugger.Debugger), Item_Name_In_Link, X, Y));
       New_Name : constant String := Dereference_Name
-        (Get_Language (Item.Debugger.Debugger), Name);
+        (Get_Language (Item.Debugger.Debugger), Component_Name);
+      Link : constant String := Dereference_Name
+        (Get_Language (Item.Debugger.Debugger), Link_Name);
 
       function Set_Link_Pos
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -948,13 +936,13 @@ package body Display_Items is
          Process_User_Command
            (Item.Debugger,
             "graph display """ & New_Name & """ dependent on"
-            & Integer'Image (Item.Num) & " link_name " & Link_Name,
+            & Integer'Image (Item.Num) & " link_name " & Link,
             Output_Command => True);
       else
          Process_User_Command
            (Item.Debugger,
             "graph print """ & New_Name & """ dependent on"
-            & Integer'Image (Item.Num) & " link_name " & Link_Name,
+            & Integer'Image (Item.Num) & " link_name " & Link,
             Output_Command => True);
       end if;
 
@@ -963,6 +951,43 @@ package body Display_Items is
            (Get_Canvas (Item.Debugger), Set_Link_Pos'Unrestricted_Access);
       end if;
    end Dereference_Item;
+
+   ----------------------
+   -- Dereference_Item --
+   ----------------------
+
+   procedure Dereference_Item
+     (Item            : access Display_Item_Record;
+      Deref_Component : Generic_Type_Access;
+      X               : Gint;
+      Y               : Gint) is
+   begin
+      Dereference_Item
+        (Item, Deref_Component,
+         Component_Name => Get_Component_Name
+           (Item.Entity,
+            Get_Language (Item),
+            Item.Name.all,
+            X, Y),
+         Link_Name      => Get_Component_Name
+           (Item.Entity,
+            Get_Language (Item),
+            Item_Name_In_Link,
+            X, Y));
+   end Dereference_Item;
+
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   function Get_Language
+     (Item : access Display_Item_Record) return Language.Language_Access is
+   begin
+      --  ??? This is incorrect since it returns the current language of the
+      --  compiler, not the one used to create the item. Seems that it has
+      --  worked for several years though
+      return Get_Language (Item.Debugger.Debugger);
+   end Get_Language;
 
    -------------------
    -- Get_Component --

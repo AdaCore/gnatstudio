@@ -232,20 +232,29 @@ package Items is
      (Item : access Generic_Type;
       Lang : access Language.Language_Root'Class;
       Name : String;
-      X, Y : Glib.Gint) return String is abstract;
-   --  Return a string that described the fields at coordinates (X, Y).
-   --  (X, Y) must be relative to the upper-left corner of item.
-   --
+      Comp : Generic_Type_Access) return String is abstract;
+   --  Return a string that describes the field Comp of Item.
+   --  Name is the name of the item itself as it will appear in the resulting
+   --  string.
    --  For instance, clicking on a record field of an an array might return
    --  something like (for the Ada language):  "Name (3, 2).Field"
    --  The resulting string can be used as is by a debugger that understands
    --  Lang.
+   --  Comp must be a direct child of Item, ie returned by the
+   --  Generic_Iterator for Item.
+
+   function Get_Component_Name
+     (Item : access Generic_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String is abstract;
+   --  Same as above but gets the component from its coordinates in the box.
+   --  (X, Y) must be relative to the upper-left corner of item.
+   --
    --  Note also that only visible fields are returned, and that the selected
    --  field is not necessarily the innermost one (if you click for instance
    --  in a record box, outside of any field, then the record itself is
    --  returned).
-   --
-   --  Name is the name of item iself, in case we need to add a suffix to it.
 
    function Get_Component
      (Item : access Generic_Type;
