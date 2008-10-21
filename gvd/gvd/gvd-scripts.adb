@@ -200,11 +200,13 @@ package body GVD.Scripts is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Hook     : Hook_Name)
    is
-      Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
       Args   : aliased Debugger_Hooks_Data;
    begin
-      Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
-      Run_Hook (Kernel, Hook, Args'Unchecked_Access);
+      --  In the case of the gdb testsuite, the debugger is null
+      if Debugger /= null then
+         Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
+         Run_Hook (Debugger.Window.Kernel, Hook, Args'Unchecked_Access);
+      end if;
    end Run_Debugger_Hook;
 
    ------------------------------

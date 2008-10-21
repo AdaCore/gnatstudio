@@ -555,11 +555,11 @@ package body GVD.Process is
          List := List.Next;
       end loop;
 
-      raise Debugger_Not_Found;
+      return null;
 
    exception
       when Constraint_Error =>
-         raise Debugger_Not_Found;
+         return null;
    end Convert;
 
    -------------
@@ -570,15 +570,8 @@ package body GVD.Process is
      (Debugger   : access Debugger_Root'Class)
       return Visual_Debugger is
    begin
-      if Get_Process (Debugger) = null
-        or else Get_Descriptor (Get_Process (Debugger)) = null
-      then
-         return null;
-      else
-         return Convert
-           (Get_Kernel (Debugger),
-            Get_Descriptor (Get_Process (Debugger)).all);
-      end if;
+      return Convert
+        (Get_Kernel (Debugger), Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
    ------------------------

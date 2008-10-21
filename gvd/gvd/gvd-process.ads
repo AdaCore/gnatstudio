@@ -211,7 +211,7 @@ package GVD.Process is
       Descriptor : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
-   --  If no such page is found, an exception Debugger_Not_Found is raised.
+   --  If no such page is found, returns null
 
    function Convert
      (Debugger : access Debugger_Root'Class)

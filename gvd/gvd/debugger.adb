@@ -554,6 +554,7 @@ package body Debugger is
 
       if Index_Non_Blank (Cmd) /= 0
         and then Mode /= Internal
+        and then Process /= null
       then
          Data.Mode := Mode;
          Data.Command := new String'

@@ -2438,6 +2438,24 @@ package body GVD_Module is
       Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
    end Preferences_Changed;
 
+   -----------------------
+   -- Create_GVD_Module --
+   -----------------------
+
+   procedure Create_GVD_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      GVD_Module_ID := new GVD_Module_Record;
+      Debugger_Module_ID := Module_ID (GVD_Module_ID);
+      if Kernel /= null then
+         Register_Module
+           (Module          => Module_ID (GVD_Module_ID),
+            Kernel          => Kernel,
+            Module_Name     => GVD_Module_Name,
+            Priority        => Default_Priority + 20);
+      end if;
+   end Create_GVD_Module;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2458,18 +2476,11 @@ package body GVD_Module is
       Subprogram_Filter : Action_Filter;
 
    begin
-      GVD_Module_ID := new GVD_Module_Record;
-      Debugger_Module_ID := Module_ID (GVD_Module_ID);
+      Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
       GVD.Scripts.Create_Hooks (Kernel);
       GVD_Module_ID.Show_Lines_With_Code :=
         Editor_Show_Line_With_Code.Get_Pref;
-
-      Register_Module
-        (Module          => Module_ID (GVD_Module_ID),
-         Kernel          => Kernel,
-         Module_Name     => GVD_Module_Name,
-         Priority        => Default_Priority + 20);
 
       Debugger_Filter := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");

@@ -373,6 +373,12 @@ NF-43-G904-006 Importing predefined projects (2008-08-18)
   statement does not use absolute paths. This allows you to for instance
   update the version of your compiler without modifying your projects.
 
+NF-43-G903-012 Call stack window cleared while running (2008-10-02)
+
+  The debugger callstack is now cleared while the debugged program is
+  running or has terminated to avoid confusion arising from an outdated
+  callstack
+
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 
   GPS now recognizes gpr specific keywords (e.g. project, external) when

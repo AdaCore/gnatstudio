@@ -30,6 +30,10 @@ package GVD_Module is
 
    Debugger_Module_ID : GPS.Kernel.Modules.Module_ID;
 
+   procedure Create_GVD_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create the module, and register it in the module if Kernel is not null
+
    function Get_Module return GPS.Kernel.Modules.Module_ID;
    --  Return the debugger module
 
