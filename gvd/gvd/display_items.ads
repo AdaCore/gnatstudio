@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
-
+with Browsers.Canvas;
 with Glib;
 with Items;
 with GVD.Process;
@@ -30,14 +29,16 @@ with Debugger;
 package Display_Items is
 
    type Display_Item_Record is new
-     Gtkada.Canvas.Buffered_Item_Record with private;
+     Browsers.Canvas.Browser_Item_Record with private;
    type Display_Item is access all Display_Item_Record'Class;
 
-   type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
+   type GVD_Link_Record is new Browsers.Canvas.Browser_Link_Record
+      with private;
    type GVD_Link is access all GVD_Link_Record'Class;
 
    procedure Gtk_New
      (Item           : out Display_Item;
+      Browser        : access Browsers.Canvas.General_Browser_Record'Class;
       Graph_Cmd      : String;
       Variable_Name  : String;
       Num            : Integer;
@@ -126,6 +127,13 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas, unless
    --  Redisplay_Canvas is True
 
+   function Get_Component
+     (Item      : access Display_Item_Record;
+      X, Y      : Glib.Gint;
+      Component : access Items.Generic_Type_Access) return String;
+   --  Get the component selected when clicking in (X, Y) in the item. This
+   --  also returns the name of the component.
+
    procedure Update_Component
      (Item      : access Display_Item_Record'Class;
       Component : Items.Generic_Type_Access := null);
@@ -192,9 +200,13 @@ package Display_Items is
    --  If Hide_Big_Items, then components higher than a specific limit are
    --  forced to hidden state.
 
+   overriding function Output_SVG_Item_Content
+     (Item : access Display_Item_Record) return String;
+   --  See inherited documentation
+
 private
 
-   type Display_Item_Record is new Gtkada.Canvas.Buffered_Item_Record with
+   type Display_Item_Record is new Browsers.Canvas.Browser_Item_Record with
    record
       Num          : Integer;
       Graph_Cmd    : GNAT.Strings.String_Access := null;
@@ -235,7 +247,7 @@ private
         Standard.Debugger.Default_Format;
    end record;
 
-   type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
+   type GVD_Link_Record is new Browsers.Canvas.Browser_Link_Record with record
       Alias_Link : Boolean := False;
       --  True if this Link was created as a result of an aliasing operation.
       --  Such links are always deleted before each update, and recreated

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                      Copyright (C) 2000-2008, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +21,6 @@ with Display_Items;
 with Gdk.GC;
 with Gdk.Bitmap;
 with Gdk.Pixmap;
-with Gtk.Menu;
 with Gtkada.Canvas;
 with GPS.Kernel;
 with GVD.Process;
@@ -90,21 +88,6 @@ package GVD.Canvas is
       return Box_Drawing_Context;
    --  Return the drawing context associated with the box around each
    --  item on the canvas.
-
-   function Contextual_Background_Menu
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
-     return Gtk.Menu.Gtk_Menu;
-   --  Get the contextual background menu associated with canvas.
-
-   function Item_Contextual_Menu
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Item           : access Display_Items.Display_Item_Record'Class;
-      Component      : Items.Generic_Type_Access;
-      Component_Name : String) return Gtk.Menu.Gtk_Menu;
-   --  Create (if necessary) and reset the contextual menu used when a specific
-   --  component in an item is selected.
-   --  Note that Component can be null if the user has clicked for instance
-   --  on the title bar.
 
    function Get_Detect_Aliases
      (Process : access GVD.Process.Visual_Debugger_Record'Class)

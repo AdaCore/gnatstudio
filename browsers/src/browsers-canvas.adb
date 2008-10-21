@@ -42,6 +42,7 @@ with Glib.Xml_Int;                      use Glib.Xml_Int;
 with Gtk.Accel_Group;                   use Gtk.Accel_Group;
 with Gtk.Adjustment;                    use Gtk.Adjustment;
 with Gtk.Button;                        use Gtk.Button;
+with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Hbutton_Box;                   use Gtk.Hbutton_Box;
@@ -91,6 +92,9 @@ package body Browsers.Canvas is
    Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
+   package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Check_Menu_Item_Record, General_Browser);
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Active_Area_Tree_Array, Active_Area_Tree_Array_Access);
 
@@ -131,8 +135,16 @@ package body Browsers.Canvas is
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
 
+   procedure Change_Align_On_Grid
+     (Item    : access Gtk_Check_Menu_Item_Record'Class;
+      Browser : General_Browser);
+   --  Callback for the "align on grid" contextual menu item.
+
    procedure On_Select_All (Browser : access Gtk_Widget_Record'Class);
    --  Select all the items in the canvas.
+
+   procedure On_Data_Clear (Browser : access Gtk_Widget_Record'Class);
+   --  "Clear" contextual menu
 
    type Select_All_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -689,6 +701,7 @@ package body Browsers.Canvas is
       pragma Unreferenced (Event_Widget);
       B            : constant General_Browser := General_Browser (Object);
       Mitem        : Gtk_Menu_Item;
+      Check        : Gtk_Check_Menu_Item;
       Zooms_Menu   : Gtk_Menu;
       Item         : Canvas_Item;
       Xr, Yr       : Gint;
@@ -752,6 +765,14 @@ package body Browsers.Canvas is
             Gtk_New (Mitem, Label => -"Orthogonal links");
          end if;
 
+         Gtk_New (Check, Label => -"Align On Grid");
+         Set_Active (Check, Get_Align_On_Grid (Get_Canvas (B)));
+         Append (Menu, Check);
+         Check_Canvas_Handler.Connect
+           (Check, Gtk.Menu_Item.Signal_Activate,
+            Check_Canvas_Handler.To_Marshaller (Change_Align_On_Grid'Access),
+            B);
+
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Toggle_Orthogonal'Access, B);
@@ -804,6 +825,15 @@ package body Browsers.Canvas is
       Append (Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Select_All'Access, B);
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Clear");
+      Append (Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, Gtk.Menu_Item.Signal_Activate, On_Data_Clear'Access, B);
+
    end Default_Browser_Context_Factory;
 
    --------------
@@ -993,6 +1023,29 @@ package body Browsers.Canvas is
          Trace (Exception_Handle, E);
          Pop_State (Get_Kernel (B));
    end On_Refresh;
+
+   -------------------
+   -- On_Data_Clear --
+   -------------------
+
+   procedure On_Data_Clear (Browser : access Gtk_Widget_Record'Class) is
+   begin
+      Clear (Get_Canvas (General_Browser (Browser)));
+   end On_Data_Clear;
+
+   --------------------------
+   -- Change_Align_On_Grid --
+   --------------------------
+
+   procedure Change_Align_On_Grid
+     (Item    : access Gtk_Check_Menu_Item_Record'Class;
+      Browser : General_Browser) is
+   begin
+      Align_On_Grid (Get_Canvas (Browser), Get_Active (Item));
+
+   exception
+      when E : others => Traces.Trace (Exception_Handle, E);
+   end Change_Align_On_Grid;
 
    -------------------
    -- On_Select_All --
@@ -2828,8 +2881,30 @@ package body Browsers.Canvas is
      (Item : access Browser_Item_Record'Class) return String
    is
       use String_Utils;
-
       Coord : constant Gdk.Rectangle.Gdk_Rectangle := Get_Coord (Item);
+
+      function Title_To_SVG return String;
+      --  Return the SVG for the title, if the latter is defined
+
+      function Title_To_SVG return String is
+      begin
+         if Item.Title_Layout /= null then
+            return
+              "<rect style=""fill: silver"" "
+              & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
+              & "height=""1.3em"" "
+              & "class=""title""" & "/>"
+              & ASCII.LF
+              & "<text x=""" & Image (Integer (Item.Title_X))
+              & """ dx="".3em"" "
+              & "y=""" & Image (Integer (Item.Title_X)) & """ dy=""1em"">"
+              & Get_Text (Item.Title_Layout)
+              & "</text>"
+              & ASCII.LF;
+         else
+            return "";
+         end if;
+      end Title_To_SVG;
 
    begin
       return
@@ -2841,16 +2916,7 @@ package body Browsers.Canvas is
         & "height=""" & String_Utils.Image (Integer (Coord.Height)) & """ "
         & "class=""item""" & "/>"
         & ASCII.LF
-        & "<rect style=""fill: silver"" "
-        & "width=""" & String_Utils.Image (Integer (Coord.Width)) & """ "
-        & "height=""1.3em"" "
-        & "class=""title""" & "/>"
-        & ASCII.LF
-        & "<text x=""" & Image (Integer (Item.Title_X)) & """ dx="".3em"" "
-        & "y=""" & Image (Integer (Item.Title_X)) & """ dy=""1em"">"
-        & Get_Text (Item.Title_Layout)
-        & "</text>"
-        & ASCII.LF
+        & Title_To_SVG
         & Output_SVG_Item_Content (Item)
         & ASCII.LF
         & "</g>"

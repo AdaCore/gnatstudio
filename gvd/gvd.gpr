@@ -1,6 +1,7 @@
 with "gtkada";
 with "../shared";
 with "../kernel/kernel";
+with "../browsers/browsers";
 
 project GVD is
 

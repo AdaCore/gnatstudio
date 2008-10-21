@@ -24,7 +24,6 @@ with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Rectangle;     use Gdk.Rectangle;
 with Gdk.Event;         use Gdk.Event;
 with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Style;         use Gtk.Style;
 with Gtkada.Canvas;     use Gtkada.Canvas;
 with Pango.Layout;      use Pango.Layout;
@@ -129,7 +128,8 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
-      Context        : Drawing_Context);
+      Browser       : access Browsers.Canvas.General_Browser_Record'Class;
+      Context       : Drawing_Context);
    --  Item.Entity must have been parsed already.
 
    procedure Update_Display (Item : access Display_Item_Record'Class);
@@ -277,6 +277,7 @@ package body Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
+      Browser        : access Browsers.Canvas.General_Browser_Record'Class;
       Graph_Cmd      : String;
       Variable_Name  : String;
       Num            : Integer;
@@ -358,7 +359,7 @@ package body Display_Items is
          Parse_Value (Item);
       end if;
 
-      Display_Items.Initialize (Item, Context);
+      Display_Items.Initialize (Item, Browser, Context);
 
       if Link_From /= null then
          Item.Is_Dereference := True;
@@ -381,12 +382,15 @@ package body Display_Items is
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
+      Browser       : access Browsers.Canvas.General_Browser_Record'Class;
       Context       : Drawing_Context)
    is
       use type Gdk.GC.Gdk_GC;
       Lang          : constant Language.Language_Access :=
         Get_Language (Item.Debugger.Debugger);
    begin
+      Browsers.Canvas.Initialize (Item, Browser);
+
       if not Is_Visible (Item) then
          return;
       end if;
@@ -692,6 +696,18 @@ package body Display_Items is
          Y      => Get_Y (Component.all));
    end Update_Component;
 
+   -----------------------------
+   -- Output_SVG_Item_Content --
+   -----------------------------
+
+   overriding function Output_SVG_Item_Content
+     (Item : access Display_Item_Record) return String is
+   begin
+      return "<g><text>" & Item.Name.all & "</text>"
+        & "<text>value not available</text>"
+        & "</g>";
+   end Output_SVG_Item_Content;
+
    -----------------
    -- Search_Item --
    -----------------
@@ -948,6 +964,31 @@ package body Display_Items is
       end if;
    end Dereference_Item;
 
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component
+     (Item      : access Display_Item_Record;
+      X, Y      : Gint;
+      Component : access Generic_Type_Access) return String
+   is
+   begin
+      if Item.Entity = null then
+         Component.all := null;
+         return "";
+      end if;
+
+      Component.all := Get_Component
+        (Item.Entity, X, Y - Item.Title_Height - Border_Spacing);
+      return Get_Component_Name
+        (Item.Entity,
+         Get_Language (Item.Debugger.Debugger),
+         Item.Name.all,
+         X,
+         Y - Item.Title_Height - Border_Spacing);
+   end Get_Component;
+
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -1030,28 +1071,9 @@ package body Display_Items is
         (Item.Entity, Gint (Get_X (Event)),
          Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
 
-      --  Contextual menus ?
-
-      if Get_Button (Event) = 3
-        and then Get_Event_Type (Event) = Button_Press
-      then
-         Popup
-           (Item_Contextual_Menu
-             (Item.Debugger,
-              Item,
-              Component,
-              Get_Component_Name
-                (Item.Entity,
-                 Get_Language (Item.Debugger.Debugger),
-                 Item.Name.all,
-                 Gint (Get_X (Event)),
-                 Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing)),
-            Button            => Get_Button (Event),
-            Activate_Time     => Get_Time (Event));
-
       --  Dereferencing access types.
 
-      elsif Get_Button (Event) = 1
+      if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
         and then Component.all in Access_Type'Class

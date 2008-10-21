@@ -12,6 +12,14 @@ An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
 
+New features on HEAD
+--------------------
+
+NF-43-GB03-007 Export debugger data window to png (2008-10-01)
+
+  The debugger Data window can now be exported to png like all
+  other browsers. Export to SVG is not fully supported yet.
+
 New features in GPS 4.3.0
 -------------------------
 
