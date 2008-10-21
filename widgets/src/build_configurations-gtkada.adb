@@ -46,6 +46,7 @@ with Gtk.Widget;               use Gtk.Widget;
 
 with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
+with Traces;                   use Traces;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
@@ -56,6 +57,16 @@ package body Build_Configurations.Gtkada is
    use GNAT.OS_Lib;
 
    --  ??? Add facility to rename a target
+
+   Icons_List : constant array (Natural range <>) of Unbounded_String :=
+                  (To_Unbounded_String ("gps-build-all"),
+                   To_Unbounded_String ("gps-build-main"),
+                   To_Unbounded_String ("gps-clean"),
+                   To_Unbounded_String ("gps-compile"),
+                   To_Unbounded_String ("gps-compute-xref"),
+                   To_Unbounded_String ("gps-custom-build"),
+                   To_Unbounded_String ("gps-semantic-check"),
+                   To_Unbounded_String ("gps-syntax-check"));
 
    ---------------
    -- Constants --
@@ -94,6 +105,11 @@ package body Build_Configurations.Gtkada is
      (Target_UI : out Target_UI_Access;
       Registry  : Build_Config_Registry_Access);
    --  Create a new target_UI
+
+   procedure On_Icon_Selected
+     (Button : access Gtkada_Combo_Tool_Button_Record'Class;
+      UI     : Target_UI_Access);
+   --  Used to control whether the icon_entry should be editable.
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function
@@ -222,6 +238,10 @@ package body Build_Configurations.Gtkada is
    package Target_UI_Callback is new Callback (Target_UI_Record);
    use Target_UI_Callback;
 
+   package Icon_Callback is new User_Callback
+     (Gtkada_Combo_Tool_Button_Record, Target_UI_Access);
+   use Icon_Callback;
+
    ---------
    -- "-" --
    ---------
@@ -278,8 +298,14 @@ package body Build_Configurations.Gtkada is
          T.Target.Properties.Launch_Mode :=
            Launch_Mode_Type'Val (Get_Active (T.Launch_Combo));
 
-         T.Target.Properties.Icon :=
-           To_Unbounded_String (Get_Text (T.Icon_Entry));
+         if T.Icon_Entry /= null then
+            T.Target.Properties.Icon :=
+              To_Unbounded_String (Get_Text (T.Icon_Entry));
+         else
+            T.Target.Properties.Icon :=
+              To_Unbounded_String (Get_Selected_Item (T.Icon_Button));
+         end if;
+
          T.Target.Properties.In_Toolbar := Get_Active (T.Icon_Check);
          T.Target.Properties.In_Menu    := Get_Active (T.Menu_Check);
          T.Target.Properties.Represents_Mains := Get_Active (T.Main_Check);
@@ -448,6 +474,32 @@ package body Build_Configurations.Gtkada is
       Show_All (UI.Frame);
    end Set_Switches;
 
+   ----------------------
+   -- On_Icon_Selected --
+   ----------------------
+
+   procedure On_Icon_Selected
+     (Button : access Gtkada_Combo_Tool_Button_Record'Class;
+      UI     : Target_UI_Access)
+   is
+      Hbox : constant Gtk_Hbox := Gtk_Hbox (Button.Get_Parent);
+   begin
+      Set_Tooltip (Button, UI.Tooltips, Get_Selected_Item (Button));
+
+      if Get_Selected_Item (Button) = "custom" then
+         Gtk_New (UI.Icon_Entry);
+         Pack_Start (Hbox, UI.Icon_Entry, False, False, 0);
+         Show_All (UI.Icon_Entry);
+      elsif UI.Icon_Entry /= null then
+         Remove (Hbox, UI.Icon_Entry);
+         UI.Icon_Entry := null;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Icon_Selected;
+
    -------------------------
    -- Switches_For_Target --
    -------------------------
@@ -591,9 +643,21 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 2,
                  Xoptions      => Expand or Fill);
 
-         Gtk_New (Box.Icon_Entry);
          Gtk_New_Hbox (Hbox);
-         Pack_Start (Hbox, Box.Icon_Entry, False, False, 0);
+         Gtk_New
+           (Box.Icon_Button,
+            Stock_Id => To_String (Icons_List (Icons_List'First)));
+         Pack_Start (Hbox, Box.Icon_Button, False, False, 0);
+
+         Icon_Callback.Connect
+           (Box.Icon_Button, Signal_Selection_Changed,
+            On_Icon_Selected'Access, Box);
+         for J in Icons_List'Range loop
+            Add_Item
+              (Box.Icon_Button,
+               To_String (Icons_List (J)), To_String (Icons_List (J)));
+         end loop;
+         Add_Item (Box.Icon_Button, "custom", "gtk-new");
 
          Attach (Table,
                  Child         => Hbox,
@@ -610,11 +674,27 @@ package body Build_Configurations.Gtkada is
          Set_Active (Box.Launch_Combo,
                      Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
 
-         if Target.Properties.Icon = "" then
-            Set_Text (Box.Icon_Entry, To_String (Target.Model.Icon));
-         else
-            Set_Text (Box.Icon_Entry, To_String (Target.Properties.Icon));
-         end if;
+         declare
+            Icon : Unbounded_String;
+         begin
+            if Target.Properties.Icon = "" then
+               Icon := Target.Model.Icon;
+            else
+               Icon := Target.Properties.Icon;
+            end if;
+
+            --  Try to select the icon
+            Select_Item (Box.Icon_Button, To_String (Icon));
+
+            --  If unsuccessful, then select the custom icon, and set the
+            --  text in the entry.
+            if Get_Selected_Item (Box.Icon_Button) /= To_String (Icon) then
+               --  Selecting the "custom" item will create the Icon_Entry
+               --  widget.
+               Select_Item (Box.Icon_Button, "custom");
+               Box.Icon_Entry.Set_Text (To_String (Icon));
+            end if;
+         end;
 
          Set_Active (Box.Icon_Check, Target.Properties.In_Toolbar);
          Set_Active (Box.Menu_Check, Target.Properties.In_Menu);

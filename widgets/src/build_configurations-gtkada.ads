@@ -22,15 +22,16 @@
 --
 --  It is intended to depend on GtkAda but not on GPS.
 
-with Gtk.Box;          use Gtk.Box;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Combo_Box;    use Gtk.Combo_Box;
-with Gtk.Frame;        use Gtk.Frame;
-with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.Notebook;     use Gtk.Notebook;
-with Gtk.Text_View;    use Gtk.Text_View;
-with Gtk.Tooltips;     use Gtk.Tooltips;
-with Gtk.Window;       use Gtk.Window;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Tooltips;             use Gtk.Tooltips;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
@@ -99,6 +100,7 @@ private
       History        : Histories.History;
 
       Icon_Entry     : Gtk_Entry;
+      Icon_Button    : Gtkada_Combo_Tool_Button;
       Icon_Check     : Gtk_Check_Button;
       Menu_Check     : Gtk_Check_Button;
       Main_Check     : Gtk_Check_Button;

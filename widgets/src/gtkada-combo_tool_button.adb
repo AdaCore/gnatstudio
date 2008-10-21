@@ -23,7 +23,6 @@ with Glib.Object;              use Glib.Object;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Window;               use Gdk.Window;
 with Gtk.Box;                  use Gtk.Box;
-with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Image;                use Gtk.Image;
 with Gtk.Label;                use Gtk.Label;
@@ -129,6 +128,10 @@ package body Gtkada.Combo_Tool_Button is
       Y      : out Gint;
       Widget : access Gtkada_Combo_Tool_Button_Record);
 
+   procedure Set_Icon_Size
+     (Button : access Gtkada_Combo_Tool_Button_Record'Class;
+      Size   : Gtk_Icon_Size);
+
    procedure On_Toolbar_Reconfigured
      (Button : access Gtkada_Combo_Tool_Button_Record'Class);
 
@@ -165,6 +168,7 @@ package body Gtkada.Combo_Tool_Button is
       Hbox.Pack_Start (Icon, False, False, 0);
 
       Gtk_New (Item.Label, Label);
+      Item.Label.Set_Alignment (0.0, 0.5);
       Item.Label.Set_Use_Markup (True);
       Hbox.Pack_Start (Item.Label, True, True, 0);
       Show_All (Item);
@@ -358,12 +362,13 @@ package body Gtkada.Combo_Tool_Button is
       Tool_Button_Callback.Emit_By_Name (Widget, Signal_Clicked);
    end On_Menu_Item_Activated;
 
-   -----------------------------
-   -- On_Toolbar_Reconfigured --
-   -----------------------------
+   -------------------
+   -- Set_Icon_Size --
+   -------------------
 
-   procedure On_Toolbar_Reconfigured
-     (Button : access Gtkada_Combo_Tool_Button_Record'Class)
+   procedure Set_Icon_Size
+     (Button : access Gtkada_Combo_Tool_Button_Record'Class;
+      Size   : Gtk_Icon_Size)
    is
       Icon  : Gtk_Image;
       Req   : Gtk_Requisition;
@@ -372,9 +377,9 @@ package body Gtkada.Combo_Tool_Button is
 
    begin
       if Item /= null then
-         Gtk_New (Icon, To_String (Item.Stock_Id), Button.Get_Icon_Size);
+         Gtk_New (Icon, To_String (Item.Stock_Id), Size);
       else
-         Gtk_New (Icon, To_String (Button.Stock_Id), Button.Get_Icon_Size);
+         Gtk_New (Icon, To_String (Button.Stock_Id), Size);
       end if;
 
       Button.Arrow.Size_Request (A_Req);
@@ -391,6 +396,21 @@ package body Gtkada.Combo_Tool_Button is
    exception
       when E : others =>
          Traces.Trace (Traces.Exception_Handle, E);
+   end Set_Icon_Size;
+
+   -----------------------------
+   -- On_Toolbar_Reconfigured --
+   -----------------------------
+
+   procedure On_Toolbar_Reconfigured
+     (Button : access Gtkada_Combo_Tool_Button_Record'Class)
+   is
+   begin
+      Set_Icon_Size (Button, Button.Get_Icon_Size);
+
+   exception
+      when E : others =>
+         Traces.Trace (Traces.Exception_Handle, E);
    end On_Toolbar_Reconfigured;
 
    -------------
@@ -398,12 +418,13 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    procedure Gtk_New
-     (Button   : out Gtkada_Combo_Tool_Button;
-      Stock_Id : String)
+     (Button       : out Gtkada_Combo_Tool_Button;
+      Stock_Id     : String;
+      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar)
    is
    begin
       Button := new Gtkada_Combo_Tool_Button_Record;
-      Initialize (Button, Stock_Id);
+      Initialize (Button, Stock_Id, Default_Size);
    end Gtk_New;
 
    ----------------
@@ -411,8 +432,9 @@ package body Gtkada.Combo_Tool_Button is
    ----------------
 
    procedure Initialize
-     (Button   : access Gtkada_Combo_Tool_Button_Record'Class;
-      Stock_Id : String)
+     (Button       : access Gtkada_Combo_Tool_Button_Record'Class;
+      Stock_Id     : String;
+      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar)
    is
       Hbox   : Gtk_Hbox;
 
@@ -454,6 +476,10 @@ package body Gtkada.Combo_Tool_Button is
       --  Create a default menu widget.
       Clear_Items (Button);
 
+      --  Set the default icon size. Upon attachment to a toolbar, this size
+      --  might be overriden.
+      Set_Icon_Size (Button, Default_Size);
+
       --  Update icon size upon toolbar reconfigured
       Tool_Button_Callback.Connect
         (Button, Signal_Toolbar_Reconfigured,
@@ -465,7 +491,7 @@ package body Gtkada.Combo_Tool_Button is
          Gtkada_Combo_Tool_Button (Button));
       Toggle_Button_Return_Callback.Connect
         (Button.Menu_Button, Signal_Button_Press_Event,
-      Toggle_Button_Return_Callback.To_Marshaller (On_Button_Press'Access),
+         Toggle_Button_Return_Callback.To_Marshaller (On_Button_Press'Access),
          Gtkada_Combo_Tool_Button (Button));
       --  Keep appearance of toggle button synchronized with icon button
       Button_Callback.Connect

@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Glib;                     use Glib;
 with Gtk.Arrow;                use Gtk.Arrow;
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Fixed;                use Gtk.Fixed;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
@@ -36,12 +37,14 @@ package Gtkada.Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
    procedure Gtk_New
-     (Button   : out Gtkada_Combo_Tool_Button;
-      Stock_Id : String);
+     (Button       : out Gtkada_Combo_Tool_Button;
+      Stock_Id     : String;
+      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar);
 
    procedure Initialize
-     (Button   : access Gtkada_Combo_Tool_Button_Record'Class;
-      Stock_Id : String);
+     (Button       : access Gtkada_Combo_Tool_Button_Record'Class;
+      Stock_Id     : String;
+      Default_Size : Gtk_Icon_Size := Icon_Size_Large_Toolbar);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads)
 
    type User_Data_Record is abstract tagged null record;
