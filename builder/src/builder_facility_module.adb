@@ -1647,11 +1647,9 @@ package body Builder_Facility_Module is
                         On_Modes_Manager'Access);
       end if;
 
-      Register_Menu (Kernel, Main_Menu & (-"Se_ttings"),
-                     -"Shadow console", "",
-                     On_Shadow_Console'Access,
-                     Ref_Item => "_Toolchains",
-                     Add_Before => False);
+      Register_Menu (Kernel, -"/Tools/Consoles",
+                     -"_Auxiliary Builds", "",
+                     On_Shadow_Console'Access);
 
       Register_Contextual_Submenu
         (Kernel,

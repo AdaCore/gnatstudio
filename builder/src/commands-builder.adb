@@ -128,7 +128,7 @@ package body Commands.Builder is
       if Shadow then
          return Create_Interactive_Console
            (Kernel              => Kernel,
-            Title               => -"Auxiliary compilation",
+            Title               => -"Auxiliary Builds",
             History             => "interactive",
             Create_If_Not_Exist => Create_If_Not_Exist,
             Module              => null,
