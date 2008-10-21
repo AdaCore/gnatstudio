@@ -1923,8 +1923,8 @@ package body Src_Editor_Module.Shell is
 
          if Child = null then
             if Nth_Arg (Data, 3, Default => True) then
-               Box := Open_File (Get_Kernel (Data), File,
-                                 Line => 0, Column => 0, Column_End => 0);
+               Box := Open_File
+                 (Kernel, File, Line => 0, Column => 0, Column_End => 0);
             else
                Set_Return_Value (Data, No_Class_Instance);
                return;
@@ -1937,6 +1937,13 @@ package body Src_Editor_Module.Shell is
             end if;
          end if;
 
+         Set_Return_Value
+           (Data, Create_Editor_Buffer
+              (Get_Script (Data), Get_Buffer (Box)));
+
+      elsif Command = "get_new" then
+         Box := Open_File
+           (Kernel, No_File, Line => 1, Column => 1, Column_End => 1);
          Set_Return_Value
            (Data, Create_Editor_Buffer
               (Get_Script (Data), Get_Buffer (Box)));
@@ -3330,6 +3337,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, Constructor_Method, 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "get", 0, 3, Buffer_Cmds'Access, EditorBuffer, True);
+      Register_Command
+        (Kernel, "get_new", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
         (Kernel, "list", 0, 0, Buffer_Cmds'Access, EditorBuffer, True);
       Register_Command
