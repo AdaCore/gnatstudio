@@ -1294,6 +1294,8 @@ package body Build_Configurations is
       while Has_Element (C) loop
          M := Element (C);
          Free (M.Args);
+         Free (M.Subst_Src);
+         Free (M.Subst_Dest);
          Next (C);
       end loop;
 
