@@ -93,9 +93,6 @@ package body GPS.Location_View is
    --  Idle callback used to ensure that the proper path on the location view
    --  is visible.
 
-   procedure Show_Row (View : access Location_View_Record'Class);
-   --  Register the Idle callback above
-
    ---------------------
    -- Local constants --
    ---------------------
@@ -604,8 +601,8 @@ package body GPS.Location_View is
    -------------------
 
    function Idle_Show_Row (View : Location_View) return Boolean is
-      Path                 : constant Gtk_Tree_Path :=
-                               Get_Path (Get_Model (View.Tree), View.Row);
+      Path                 : constant Gtk_Tree_Path := View.Row;
+      Iter                 : Gtk_Tree_Iter;
       Start_Path, End_Path : Gtk_Tree_Path;
       Success              : Boolean := False;
       Res                  : Gint;
@@ -619,8 +616,9 @@ package body GPS.Location_View is
       --  Ensure that when a row is expanded some children are visible
 
       Down (Path);
+      Iter := Get_Iter (Get_Model (View.Tree), Path);
 
-      if N_Children (Get_Model (View.Tree), View.Row) > 1 then
+      if N_Children (Get_Model (View.Tree), Iter) > 1 then
          --  More than one child, try to display the first child and the
          --  following one. This is cleaner as a row returned as visible even
          --  if partially on the screen. So if the second child is at least
@@ -649,18 +647,6 @@ package body GPS.Location_View is
          View.Idle_Row_Handler := Glib.Main.No_Source_Id;
          return False;
    end Idle_Show_Row;
-
-   --------------
-   -- Show_Row --
-   --------------
-
-   procedure Show_Row (View : access Location_View_Record'Class) is
-   begin
-      if View.Idle_Row_Handler = Glib.Main.No_Source_Id then
-         View.Idle_Row_Handler := View_Idle.Idle_Add
-           (Idle_Show_Row'Access, Location_View (View));
-      end if;
-   end Show_Row;
 
    -----------------
    -- Create_Mark --
@@ -1972,10 +1958,16 @@ package body GPS.Location_View is
       Params : Glib.Values.GValues)
    is
       View : constant Location_View := Location_View (Object);
+      Iter : Gtk_Tree_Iter;
    begin
-      Get_Tree_Iter (Nth (Params, 1), View.Row);
-      if View.Row /= Null_Iter then
-         Show_Row (View);
+      Get_Tree_Iter (Nth (Params, 1), Iter);
+      if Iter /= Null_Iter then
+         View.Row := Get_Path (Get_Model (View.Tree), Iter);
+
+         if View.Idle_Row_Handler = Glib.Main.No_Source_Id then
+            View.Idle_Row_Handler := View_Idle.Idle_Add
+              (Idle_Show_Row'Access, View);
+         end if;
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);

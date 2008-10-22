@@ -239,7 +239,7 @@ private
       SFL : Natural;
       --  Index of the secondary line
 
-      Row : Gtk_Tree_Iter;
+      Row : Gtk_Tree_Path;
       --  Used to record the row to make visible, see Idle_Show_Row
    end record;
 
