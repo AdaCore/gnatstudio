@@ -321,7 +321,7 @@ package body Builder_Module is
             Xref_Iterate'Access);
 
          Launch_Synchronous (Command_Access (C), 0.01);
-         Unref (Command_Access (C));
+         Destroy (Command_Access (C));
          Build_Command_Manager.Launch_Target
            (Kernel,
             Builder_Facility_Module.Registry,
