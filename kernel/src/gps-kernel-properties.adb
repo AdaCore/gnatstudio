@@ -518,7 +518,7 @@ package body GPS.Kernel.Properties is
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
       Iter2    : Properties_Description_Hash.String_Hash_Table.Iterator;
       Hash     : Properties_Description_HTable;
-      Root, File, Prop, Src, Dest : Node_Ptr;
+      Root, File, Prop, Src, Dst : Node_Ptr;
       Descr    : Property_Description_Access;
       Val      : String_Ptr;
       Success  : Boolean;
