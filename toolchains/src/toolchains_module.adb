@@ -300,8 +300,8 @@ package body Toolchains_Module is
          Prop_Access := new Toolchains_Property'(Property);
          Set_Property
            (Kernel,
-            Index_Name  => "toolchains_properties",
-            Index_Value => "property",
+            Index_Name  => "toolchains_property",
+            Index_Value => "toolchains_property",
             Name        => "property",
             Property    => Prop_Access,
             Persistent  => True);
@@ -322,8 +322,8 @@ package body Toolchains_Module is
    begin
       Get_Property
         (Property,
-         Index_Name  => "toolchains_properties",
-         Index_Value => "property",
+         Index_Name  => "toolchains_property",
+         Index_Value => "toolchains_property",
          Name        => "property",
          Found       => Success);
 
