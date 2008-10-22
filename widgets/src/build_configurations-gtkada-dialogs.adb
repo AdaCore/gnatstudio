@@ -307,7 +307,6 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Hbox    : Gtk_Hbox;
       M       : Gtk_List_Store;
-      Iter    : Gtk_Tree_Iter;
 
       use Model_Map;
       C : Cursor;
@@ -452,7 +451,6 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Hbox    : Gtk_Hbox;
       M       : Gtk_List_Store;
-      Iter    : Gtk_Tree_Iter;
 
    begin
       Cancelled := False;
