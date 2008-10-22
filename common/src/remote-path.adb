@@ -258,7 +258,7 @@ package body Remote.Path is
    -- "=" --
    ---------
 
-   overriding function "=" (M1, M2 : Mirror_Path) return Boolean is
+   function "=" (M1, M2 : Mirror_Path) return Boolean is
       function Same (P1, P2 : String_Access) return Boolean;
 
       function Same (P1, P2 : String_Access) return Boolean is
