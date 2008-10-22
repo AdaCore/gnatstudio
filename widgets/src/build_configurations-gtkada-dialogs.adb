@@ -223,6 +223,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       return True;
    end New_Target_Name_Is_Valid;
 
+   ----------------
+   -- Fill_Combo --
+   ----------------
+
    procedure Fill_Combo
      (UI    : access Build_UI_Record'Class;
       Combo : Gtk_Combo_Box_Entry;
