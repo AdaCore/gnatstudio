@@ -904,7 +904,7 @@ package body Language.Tree is
    -- "=" --
    ---------
 
-   overriding function "="
+   function "="
      (Left, Right : Construct_Tree_Iterator) return Boolean is
    begin
       --  This function is supposed to be called a lot, so it has to be as
@@ -1309,7 +1309,7 @@ package body Language.Tree is
    -- "=" --
    ---------
 
-   overriding function "="
+   function "="
      (Left, Right : Referenced_Identifiers_List) return Boolean
    is
       Left_Node  : Referenced_Identifiers_List := Left;
