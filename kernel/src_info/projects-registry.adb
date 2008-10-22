@@ -29,7 +29,6 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with ALI;
-with Atree;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
 with Output;                    use Output;
@@ -41,7 +40,6 @@ with Stringt;
 with Glib.Convert;              use Glib.Convert;
 
 with Csets;
-with Errout;
 with File_Utils;                use File_Utils;
 with GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
@@ -869,7 +867,6 @@ package body Projects.Registry is
 
       Create_Environment_Variables (Registry);
 
-      Errout.Initialize;
       Prj.Proc.Process
         (In_Tree                => Registry.Data.View_Tree,
          Project                => View, Success => Success,
@@ -2029,7 +2026,6 @@ package body Projects.Registry is
       ALI.Linker_Options.Free;
       ALI.Sdep.Free;
       ALI.Xref.Free;
-      Atree.Atree_Private_Part.Nodes.Free;
    end Finalize;
 
    ------------

@@ -2,8 +2,6 @@ GNAT_SOURCES= \
   ali.ads \
   ali.adb \
   alloc.ads \
-  atree.ads \
-  atree.adb \
   butil.ads \
   butil.adb \
   casing.ads \
@@ -12,15 +10,9 @@ GNAT_SOURCES= \
   csets.adb \
   debug.ads \
   debug.adb \
-  einfo.ads \
-  einfo.adb \
-  elists.ads \
-  elists.adb \
   errutil.ads \
   errutil.adb \
   err_vars.ads \
-  errout.ads \
-  errout.adb \
   erroutc.ads \
   erroutc.adb \
   fmap.ads \
@@ -33,10 +25,6 @@ GNAT_SOURCES= \
   hostparm.ads \
   krunch.ads \
   krunch.adb \
-  lib.ads \
-  lib.adb \
-  lib-list.adb \
-  lib-sort.adb \
   makeutl.ads \
   makeutl.adb \
   mlib.ads \
@@ -51,8 +39,6 @@ GNAT_SOURCES= \
   mlib-fil.adb \
   namet.ads \
   namet.adb \
-  nlists.ads \
-  nlists.adb \
   opt.ads \
   opt.adb \
   osint.ads \
@@ -98,8 +84,6 @@ GNAT_SOURCES= \
   sdefault.ads \
   sinfo-cn.ads \
   sinfo-cn.adb \
-  sinfo.ads \
-  sinfo.adb \
   sinput-c.ads \
   sinput-c.adb \
   sinput-p.ads \
@@ -133,8 +117,6 @@ GNAT_SOURCES= \
   types.adb \
   uintp.ads \
   uintp.adb \
-  uname.ads \
-  uname.adb \
   urealp.ads \
   urealp.adb \
   widechar.ads \
