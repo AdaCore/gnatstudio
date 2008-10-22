@@ -19,7 +19,6 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -30,6 +29,7 @@ with Gdk.Event;                use Gdk.Event;
 with Gdk.Rectangle;            use Gdk.Rectangle;
 
 with Glib.Convert;
+with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
@@ -43,7 +43,6 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -82,13 +81,20 @@ package body GPS.Location_View is
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
 
-   package View_Idle is new Gtk.Main.Timeout (Location_View);
+   package View_Idle is new Glib.Main.Generic_Sources (Location_View);
 
    procedure Location_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called whenever the location in the current editor has changed, so that
    --  we can highlight the corresponding line in the locations window
+
+   function Idle_Show_Row (View : Location_View) return Boolean;
+   --  Idle callback used to ensure that the proper path on the location view
+   --  is visible.
+
+   procedure Show_Row (View : access Location_View_Record'Class);
+   --  Register the Idle callback above
 
    ---------------------
    -- Local constants --
@@ -387,7 +393,7 @@ package body GPS.Location_View is
    --  If Length = 0, highlight the whole line, otherwise use highlight_range.
 
    procedure On_Row_Expanded
-     (Widget : access Gtk_Widget_Record'Class;
+     (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal
 
@@ -572,13 +578,12 @@ package body GPS.Location_View is
          Next (View.Tree.Model, Category_Iter);
       end loop;
 
-      View.Idle_Redraw_Registered := False;
-
+      View.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
       return False;
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         View.Idle_Redraw_Registered := False;
+         View.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
          return False;
    end Idle_Redraw;
 
@@ -588,14 +593,74 @@ package body GPS.Location_View is
 
    procedure Redraw_Totals (View : access Location_View_Record'Class) is
    begin
-      if View.Idle_Redraw_Registered then
-         return;
+      if View.Idle_Redraw_Handler = Glib.Main.No_Source_Id then
+         View.Idle_Redraw_Handler := View_Idle.Idle_Add
+           (Idle_Redraw'Access, Location_View (View));
+      end if;
+   end Redraw_Totals;
+
+   -------------------
+   -- Idle_Show_Row --
+   -------------------
+
+   function Idle_Show_Row (View : Location_View) return Boolean is
+      Path                 : constant Gtk_Tree_Path :=
+                               Get_Path (Get_Model (View.Tree), View.Row);
+      Start_Path, End_Path : Gtk_Tree_Path;
+      Success              : Boolean := False;
+      Res                  : Gint;
+   begin
+      Get_Visible_Range (View.Tree, Start_Path, End_Path, Success);
+
+      if not Success then
+         return False;
       end if;
 
-      View.Idle_Redraw_Handler := View_Idle.Add
-        (500, Idle_Redraw'Access, Location_View (View));
-      View.Idle_Redraw_Registered := True;
-   end Redraw_Totals;
+      --  Ensure that when a row is expanded some children are visible
+
+      Down (Path);
+
+      if N_Children (Get_Model (View.Tree), View.Row) > 1 then
+         --  More than one child, try to display the first child and the
+         --  following one. This is cleaner as a row returned as visible even
+         --  if partially on the screen. So if the second child is at least
+         --  partly visible we know for sure that the first child is fully
+         --  visible.
+         Next (Path);
+      end if;
+
+      Res := Compare (Path, End_Path);
+
+      if Res >= 0 then
+         --  Path is the last path visible, scoll to see some entries under
+         --  this node.
+         Scroll_To_Cell (View.Tree, Path, null, True, 0.9, 0.1);
+      end if;
+
+      Path_Free (Path);
+      Path_Free (Start_Path);
+      Path_Free (End_Path);
+
+      View.Idle_Row_Handler := Glib.Main.No_Source_Id;
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         View.Idle_Row_Handler := Glib.Main.No_Source_Id;
+         return False;
+   end Idle_Show_Row;
+
+   --------------
+   -- Show_Row --
+   --------------
+
+   procedure Show_Row (View : access Location_View_Record'Class) is
+   begin
+      if View.Idle_Row_Handler = Glib.Main.No_Source_Id then
+         View.Idle_Row_Handler := View_Idle.Idle_Add
+           (Idle_Show_Row'Access, Location_View (View));
+      end if;
+   end Show_Row;
 
    -----------------
    -- Create_Mark --
@@ -1569,13 +1634,14 @@ package body GPS.Location_View is
 
       Unref (V.Category_Pixbuf);
       Unref (V.File_Pixbuf);
-      Unchecked_Free (V.Secondary_File_Pattern);
 
-      if V.Idle_Redraw_Registered then
-         Timeout_Remove (V.Idle_Redraw_Handler);
-         V.Idle_Redraw_Registered := False;
+      if V.Idle_Redraw_Handler /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (V.Idle_Redraw_Handler);
       end if;
 
+      if V.Idle_Row_Handler /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (V.Idle_Row_Handler);
+      end if;
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
@@ -1861,8 +1927,11 @@ package body GPS.Location_View is
          View,
          After => False);
 
-      Widget_Callback.Connect
-        (View.Tree, Signal_Row_Expanded, On_Row_Expanded'Access);
+      Widget_Callback.Object_Connect
+        (View.Tree,
+         Signal_Row_Expanded, On_Row_Expanded'Access,
+         Slot_Object => View,
+         After       => True);
 
       Register_Contextual_Menu
         (View.Kernel,
@@ -1899,21 +1968,15 @@ package body GPS.Location_View is
    ---------------------
 
    procedure On_Row_Expanded
-     (Widget : access Gtk_Widget_Record'Class;
+     (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Tree : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Iter : Gtk_Tree_Iter;
-      Path : Gtk_Tree_Path;
+      View : constant Location_View := Location_View (Object);
    begin
-      Get_Tree_Iter (Nth (Params, 1), Iter);
-      Path := Get_Path (Get_Model (Tree), Iter);
-
-      if Get_Depth (Path) < 3 then
-         Scroll_To_Cell (Tree, Path, null, True, 0.1, 0.1);
+      Get_Tree_Iter (Nth (Params, 1), View.Row);
+      if View.Row /= Null_Iter then
+         Show_Row (View);
       end if;
-
-      Path_Free (Path);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
@@ -2427,13 +2490,14 @@ package body GPS.Location_View is
       Locations : Location_View;
    begin
       if Get_MDI (Kernel) = null then
-         --  This might happen when destroying the code_analysis_module, which
-         --  in turns tries to remove data from the locations view
+         --  We are destroying everything. This function gets called likely
+         --  because a module (code_analysis for instance) tries to cleanup
+         --  the locations view after the latter has already been destroyed)
          return null;
       end if;
 
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Location_View_Record'Tag));
+         (Get_MDI (Kernel), Location_View_Record'Tag));
       if Child = null then
          if not Allow_Creation then
             return null;
@@ -2481,9 +2545,12 @@ package body GPS.Location_View is
      (View : access Location_View_Record'Class)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+        (Pattern_Matcher, Pattern_Matcher_Access);
    begin
-      Unchecked_Free (View.Secondary_File_Pattern);
+      if View.Secondary_File_Pattern /= null then
+         Unchecked_Free (View.Secondary_File_Pattern);
+      end if;
+
       View.Secondary_File_Pattern := new Pattern_Matcher'
         (Compile (Secondary_File_Pattern.Get_Pref));
       View.SFF := Secondary_File_Pattern_Index.Get_Pref;

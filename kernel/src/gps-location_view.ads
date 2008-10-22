@@ -20,6 +20,7 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.VFS;
@@ -28,14 +29,13 @@ with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Main;                  use Gtk.Main;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Glib;
+with Glib.Main;
 
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-
-with GNAT.Expect;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Basic_Types;               use Basic_Types;
 with Generic_List;
@@ -202,6 +202,8 @@ private
       Children           : List;
    end record;
 
+   type Pattern_Matcher_Access is access Pattern_Matcher;
+
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
@@ -217,8 +219,8 @@ private
 
       --  Idle handlers
 
-      Idle_Redraw_Handler    : Timeout_Handler_Id;
-      Idle_Redraw_Registered : Boolean := False;
+      Idle_Redraw_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      Idle_Row_Handler    : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
 
       Sort_By_Category : Boolean := False;
       --  Whether the view should be sorted by category
@@ -228,7 +230,7 @@ private
       Stored_Locations : List;
 
       --  The following are used for detection of secondary file locations
-      Secondary_File_Pattern : GNAT.Expect.Pattern_Matcher_Access;
+      Secondary_File_Pattern : Pattern_Matcher_Access;
       --  Regexp corresponding to a detection of the secondary file
       SFF : Natural;
       --  Index of the secondary file
@@ -236,6 +238,9 @@ private
       --  Index of the secondary column
       SFL : Natural;
       --  Index of the secondary line
+
+      Row : Gtk_Tree_Iter;
+      --  Used to record the row to make visible, see Idle_Show_Row
    end record;
 
 end GPS.Location_View;
