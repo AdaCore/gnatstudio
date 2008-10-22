@@ -518,7 +518,7 @@ package body GPS.Kernel.Properties is
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
       Iter2    : Properties_Description_Hash.String_Hash_Table.Iterator;
       Hash     : Properties_Description_HTable;
-      Root, File, Prop : Node_Ptr;
+      Root, File, Prop, Src, Dst : Node_Ptr;
       Descr    : Property_Description_Access;
       Val      : String_Ptr;
       Success  : Boolean;
@@ -575,9 +575,18 @@ package body GPS.Kernel.Properties is
                   --  If there are any children to Descr.Unparsed, we must
                   --  preserve them
 
-                  if Descr.Unparsed.Child /= null then
-                     Prop.Child := Deep_Copy (Descr.Unparsed.Child);
-                  end if;
+                  Src := Descr.Unparsed.Child;
+                  while Src /= null loop
+                     if Dst = null then
+                        Prop.Child := Deep_Copy (Src);
+                        Dst := Prop.Child;
+                     else
+                        Dst.Next := Deep_Copy (Src);
+                        Dst := Dst.Next;
+                     end if;
+
+                     Src := Src.Next;
+                  end loop;
 
                else
                   Prop := new Node'
