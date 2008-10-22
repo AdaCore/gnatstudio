@@ -10,6 +10,8 @@ GNAT_SOURCES= \
   csets.adb \
   debug.ads \
   debug.adb \
+  errout.ads \
+  errout.adb \
   errutil.ads \
   errutil.adb \
   err_vars.ads \
