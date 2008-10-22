@@ -29,6 +29,7 @@ with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -53,6 +54,12 @@ package body Build_Configurations.Gtkada.Dialogs is
      (Registry : Build_Config_Registry_Access;
       Name     : Unbounded_String) return Boolean;
    --  Return True is Name is a valid new target name for Registry
+
+   procedure Fill_Combo
+     (UI    : access Build_UI_Record'Class;
+      Combo : Gtk_Combo_Box_Entry;
+      Cat_E : Gtk_Entry);
+   --  Fill Combo and Cat_E from information stored in UI
 
    ---------
    -- "-" --
@@ -216,6 +223,65 @@ package body Build_Configurations.Gtkada.Dialogs is
       return True;
    end New_Target_Name_Is_Valid;
 
+   procedure Fill_Combo
+     (UI    : access Build_UI_Record'Class;
+      Combo : Gtk_Combo_Box_Entry;
+      Cat_E : Gtk_Entry)
+   is
+      function Strip (S : String) return String;
+      --  Strip S of pango markup
+
+      -----------
+      -- Strip --
+      -----------
+
+      function Strip (S : String) return String is
+      begin
+         return S (S'First + 3 .. S'Last - 4);
+      end Strip;
+
+      Model        : Gtk_Tree_Model;
+      Iter         : Gtk_Tree_Iter;
+      P            : Gtk_Tree_Iter;
+      Category_Set : Boolean := False;
+
+   begin
+      Get_Selected (Get_Selection (UI.View), Model, Iter);
+
+      if Iter /= Null_Iter then
+         P := Parent (Model, Iter);
+
+         if P /= Null_Iter then
+            Iter := P;
+         end if;
+
+         Set_Text (Cat_E, Strip (Get_String (Model, Iter, Name_Column)));
+         Category_Set := True;
+      end if;
+
+      Iter := Get_Iter_First (UI.View.Model);
+
+      while Iter /= Null_Iter loop
+         if Get_Int (UI.View.Model, Iter, 2) = 0 then
+            --  This is to test that the iter is a category iter
+
+            declare
+               Str : constant String :=
+                       Strip (Get_String (UI.View.Model, Iter, Name_Column));
+            begin
+               Append_Text (Combo, Str);
+
+               if not Category_Set then
+                  Set_Text (Cat_E, Str);
+                  Category_Set := True;
+               end if;
+            end;
+         end if;
+
+         Next (UI.View.Model, Iter);
+      end loop;
+   end Fill_Combo;
+
    -----------------------
    -- Add_Target_Dialog --
    -----------------------
@@ -316,38 +382,7 @@ package body Build_Configurations.Gtkada.Dialogs is
          Combo,
          -"Type a new category name, or select an existing one");
 
-      Iter := Get_Iter_First (UI.View.Model);
-
-      while Iter /= Null_Iter loop
-         if Get_Int (UI.View.Model, Iter, 2) = 0 then
-            --  This is to test that the iter is a category iter
-
-            declare
-               function Strip (S : String) return String;
-               --  Strip S of pango markup
-
-               -----------
-               -- Strip --
-               -----------
-
-               function Strip (S : String) return String is
-               begin
-                  return S (S'First + 3 .. S'Last - 4);
-               end Strip;
-
-               Str : constant String :=
-                       Strip (Get_String (UI.View.Model, Iter, Name_Column));
-            begin
-               Append_Text (Combo, Str);
-
-               if Get_Text (Cat_E) = "" then
-                  Set_Text (Cat_E, Str);
-               end if;
-            end;
-         end if;
-
-         Next (UI.View.Model, Iter);
-      end loop;
+      Fill_Combo (UI, Combo, Cat_E);
 
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
@@ -463,34 +498,7 @@ package body Build_Configurations.Gtkada.Dialogs is
          Combo,
          -"Type a new category name, or select an existing one");
 
-      Iter := Get_Iter_First (UI.View.Model);
-
-      while Iter /= Null_Iter loop
-         if Get_Int (UI.View.Model, Iter, 2) = 0 then
-            --  This is to test that the iter is a category iter
-
-            declare
-               function Strip (S : String) return String;
-               --  Strip S of pango markup
-
-               function Strip (S : String) return String is
-               begin
-                  return S (S'First + 3 .. S'Last - 4);
-               end Strip;
-
-               Str : constant String :=
-                 Strip (Get_String (UI.View.Model, Iter, Name_Column));
-            begin
-               Append_Text (Combo, Str);
-
-               if Get_Text (Cat_E) = "" then
-                  Set_Text (Cat_E, Str);
-               end if;
-            end;
-         end if;
-
-         Next (UI.View.Model, Iter);
-      end loop;
+      Fill_Combo (UI, Combo, Cat_E);
 
       Attach (Table, Combo, 1, 2, 2, 3, Expand or Fill, 0, 3, 3);
       --  ??? make this a combo-box-entry with the already existing categories
