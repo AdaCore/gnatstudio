@@ -5162,9 +5162,9 @@ to take full advantage of up-to-date associated tools for non-compilation
 actions, such as checking the code against a coding standard, getting better
 cross-reference browsing in GPS, computing metrics and so on.
 
-GPS now allow you to handle this case. To configure GPS to make it handle two
+GPS now allows you to handle this case. To configure GPS to make it handle two
 compiler toolchains, you need to use the @code{Build->Settings->Toolchains}
-menu. This will open a dialog allowing you to activate the multiple-toolchains
+menu. This will open a dialog where you can activate the multiple-toolchains
 mode.
 
 @iftex
