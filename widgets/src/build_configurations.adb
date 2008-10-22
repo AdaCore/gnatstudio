@@ -497,7 +497,12 @@ package body Build_Configurations is
       Name     : Unbounded_String;
       Mode     : Mode_Record) is
    begin
-      Registry.Modes.Insert (Name, Mode);
+      if Registry.Modes.Contains (Name) then
+         Log (Registry,
+              -("Mode with this name already exists: ") & To_String (Name));
+      else
+         Registry.Modes.Insert (Name, Mode);
+      end if;
    end Insert_Mode;
 
    ------------------
