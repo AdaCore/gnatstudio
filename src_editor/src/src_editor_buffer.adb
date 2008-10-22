@@ -1716,6 +1716,8 @@ package body Src_Editor_Buffer is
          Buffer.First_Removed_Line := 0;
       end if;
 
+      Character_Added (Source_Buffer (Buffer), 8);
+
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, E);

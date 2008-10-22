@@ -1,6 +1,9 @@
 """This file makes every other line read-only.
    This is an example of using overlays"""
 
+# ??? For a real production script, this script should be based
+# on gps_utils.highlighter.py, which provides on-the-fly highlighting
+
 from GPS import *
 
 parse_xml ("""

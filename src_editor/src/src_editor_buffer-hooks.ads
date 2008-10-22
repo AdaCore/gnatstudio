@@ -46,7 +46,8 @@ package Src_Editor_Buffer.Hooks is
    --  Emit the hook Word_Added_Hook
 
    procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar);
-   --  Emit the Character_Added_Hook
+   --  Emit the Character_Added_Hook. Character should be 8 (control-H) when a
+   --  character was removed from the buffer.
 
    procedure Register_Editor_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

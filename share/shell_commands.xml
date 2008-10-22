@@ -377,13 +377,15 @@ The file should be opened directly at line and column. If column_end is not 0, t
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
      <description>Hook called when a word has been added in the editor</description>
+     <see_also>@hook@ character_added</see_also>
   </shell_doc>
 
   <shell_doc name="@hook@ character_added">
      <param name="hook">A string, the name of the hook</param>
      <param name="file">An instance of GPS.File</param>
      <param name="character">A character</param>
-     <description>Hook called when a character has been added in the editor</description>
+     <description>Hook called when a character has been added in the editor. It is also called when a character has been removed, in which case the last parameter is 8 (control-h)</description>
+     <see_also>@hook@ word_added</see_also>
   </shell_doc>
 
   <shell_doc name="@hook@ gps_started">
