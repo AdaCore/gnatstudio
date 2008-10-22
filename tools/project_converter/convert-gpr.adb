@@ -25,7 +25,6 @@ with Prj.Part;                  use Prj.Part;
 with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
 with Prj.Util;                  use Prj.Util;
-with Errout;                    use Errout;
 with Namet;                     use Namet;
 with Snames;                    use Snames;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -218,7 +217,6 @@ package body Convert.Gpr is
       Parse (Tree, Project, Gpr_Filename, Always_Errout_Finalize => True);
       Process (View_Tree, Project_View, Success,
                Project, Tree, Report_Error => null);
-      Errout.Finalize (True);
 
       if Success then
          declare
