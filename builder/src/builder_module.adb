@@ -321,7 +321,17 @@ package body Builder_Module is
             Xref_Iterate'Access);
 
          Launch_Synchronous (Command_Access (C), 0.01);
-         Destroy (Command_Access (C));
+         Unref (Command_Access (C));
+         Build_Command_Manager.Launch_Target
+           (Kernel,
+            Builder_Facility_Module.Registry,
+            "Build All", "xref",
+            GNATCOLL.VFS.No_File,
+            Extra_Args  => null,
+            Quiet       => True,
+            Synchronous => True,
+            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Main        => "");
 
       elsif Command = "compute_xref_bg" then
          Xref_Commands.Create
@@ -331,6 +341,17 @@ package body Builder_Module is
 
          Launch_Background_Command
            (Kernel, Command_Access (C), True, True, "");
+
+         Build_Command_Manager.Launch_Target
+           (Kernel,
+            Builder_Facility_Module.Registry,
+            "Build All", "xref",
+            GNATCOLL.VFS.No_File,
+            Extra_Args  => null,
+            Quiet       => True,
+            Synchronous => False,
+            Dialog      => Build_Command_Manager.Force_No_Dialog,
+            Main        => "");
       end if;
    end Compile_Command;
 
