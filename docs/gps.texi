@@ -5201,6 +5201,28 @@ Note that the cross-reference files generation does not output anything in the
 process. If needed, you can see the output of the cross-ref generation command
 by selecting the @code{Tools->Consoles->Auxiliary Builds} menu.
 
+@subsection Interraction with the remote mode
+
+The ability to work with two compilers has impacts on the remote mode
+configuration: paths defined here are local paths, so they have no meaning
+on the server side.
+
+To handle the case of using a specific compiler version on the remote side
+while still wanting up-to-date tools, the following behavior is applied when
+both a remote compilation server is defined, and the multiple toolchains mode
+is activated:
+
+@itemize
+@item The compiler path is ignored when a remote build server is defined. All
+ compilation actions are then performed normally on the build server.
+@item The tools path is however taken into account, and all related actions
+ are performed on the local machine using this path.
+@item The cross-reference files are taken care of by the rsync mechanism
+ so that they don't get overrwritten during local and remote host
+ synchronisations, as build and cross-reference generation actions occur at
+ the same time, on the local machine and on the distant server.
+@end itemize
+
 @c --------------------------------------------------------------------
 @node Source Browsing
 @chapter Source Browsing
@@ -7844,6 +7866,11 @@ Open an OS (Windows or Unix) console, using the environment variables
 @code{SHELL} and @code{COMSPEC} to determine which shell to use. This is
 currently a relatively simple implementation, without support for e.g.
 completion or ANSI codes.
+
+@item Auxiliary Builds
+Open the console containing auxiliary builds output. For now, only
+cross-reference automated generation output is redirected to this console.
+@xref{Working with two compilers}.
 @end table
 
 @item Coverage
