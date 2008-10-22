@@ -5157,7 +5157,7 @@ the @file{Makefile.py} startup script (see the menu @code{/Tools/Plug-ins}).
 
 @noindent
 This functionality is intended for people whose projects need to be compiled
-with a specific (old) version of the GNAT Pro toolchain, while still desiring
+with a specific (old) version of the GNAT toolchain, while still desiring
 to take full advantage of up-to-date associated tools for non-compilation
 actions, such as checking the code against a coding standard, getting better
 cross-reference browsing in GPS, computing metrics and so on.
