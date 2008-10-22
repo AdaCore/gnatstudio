@@ -596,7 +596,7 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D     : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      type Context_Hooks_Args_Access is access all Context_Hooks_Args'Class;
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,
@@ -605,7 +605,8 @@ package body Project_Viewers is
       if Child = null
         or else Get_Widget (Child) /= Gtk_Widget (Hook.Viewer)
       then
-         Explorer_Selection_Changed (Hook.Viewer, D.Context);
+         Explorer_Selection_Changed
+           (Hook.Viewer, Context_Hooks_Args_Access (Data).Context);
       end if;
    end Execute;
 

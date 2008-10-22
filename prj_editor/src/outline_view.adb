@@ -1144,7 +1144,8 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D       : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
+      type Context_Args is access all Context_Hooks_Args'Class;
+      D       : constant Context_Args := Context_Args (Data);
       Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
       Outline : Outline_View_Access;
       File    : Virtual_File;
