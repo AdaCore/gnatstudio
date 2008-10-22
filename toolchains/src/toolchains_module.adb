@@ -127,8 +127,12 @@ package body Toolchains_Module is
       Child := Find_Tag (From.Child, "active");
       Property.Active := Child /= null;
 
+      --  Set Use_Xrefs_Subdir on by default when not active. This has no
+      --  impact on its actual activation state (Property.Active state is
+      --  always checked first), but this will check the corresponding button
+      --  in the dialog by default, which is a desirable thing.
       Child := Find_Tag (From.Child, "use_xrefs_subdir");
-      Property.Use_Xrefs_Subdir := Child /= null;
+      Property.Use_Xrefs_Subdir := Child /= null or else not Property.Active;
 
       Child := Find_Tag (From.Child, "tools_path");
       if Child /= null then
