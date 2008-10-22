@@ -43,7 +43,7 @@ package body String_Diff is
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Character) return Boolean is
+   function "=" (Left, Right : Character) return Boolean is
    begin
       return Standard."=" (Left, Right);
    end "=";

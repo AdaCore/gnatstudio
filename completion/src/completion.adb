@@ -133,7 +133,7 @@ package body Completion is
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Completion_Id) return Boolean is
+   function "=" (Left, Right : Completion_Id) return Boolean is
    begin
       return Left.Resolver_Id = Right.Resolver_Id
         and then Left.Id = Right.Id

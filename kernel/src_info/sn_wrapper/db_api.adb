@@ -212,7 +212,7 @@ package body DB_API is
    -- "=" --
    ---------
 
-   overriding function "=" (P1, P2 : Pair) return Boolean is
+   function "=" (P1, P2 : Pair) return Boolean is
    begin
       return P1.Key = P2.Key
         and then P1.Data = P2.Data
