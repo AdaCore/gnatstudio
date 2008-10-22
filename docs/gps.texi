@@ -5201,7 +5201,7 @@ Note that the cross-reference files generation does not output anything in the
 process. If needed, you can see the output of the cross-ref generation command
 by selecting the @code{Tools->Consoles->Auxiliary Builds} menu.
 
-@subsection Interraction with the remote mode
+@subsection Interaction with the remote mode
 
 The ability to work with two compilers has impacts on the remote mode
 configuration: paths defined here are local paths, so they have no meaning
