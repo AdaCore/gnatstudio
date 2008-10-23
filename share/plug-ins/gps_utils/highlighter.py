@@ -172,12 +172,10 @@ class Regexp_Highlighter (Highlighter):
 
   def do_highlight (self, buffer, overlay, start, end):
      """Do the highlighting in the range of text"""
-     Logger ("H").log ("check from " + `start.line()` + " to " + `end.line()`)
      while True:
         start = start.search (self.regexp, regexp=True, dialog_on_failure=False)
         if not start or start[0] > end:
            return
-        Logger ("H").log ("do from " + `start[0].line()` + " to " + `start[1].line()`)
         buffer.apply_overlay (overlay, start [0], start [1] - 1)
         start = start [1] + 1
 
