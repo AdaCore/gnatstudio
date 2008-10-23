@@ -58,6 +58,12 @@ When this command is executed after a repeat_next command, the whole line is del
       <shell lang="python">text_utils.delete_forward()</shell>
    </action>
 
+   <action name="select line" output="none" category="Editor">
+    <description>Select the whole current line</description>
+    <filter id="Source editor" />
+    <shell lang="python">text_utils.select_line()</shell>
+   </action>
+
    <action name="transpose chars" output="none" category="Editor">
       <description>Swap the two characters around the cursor</description>
       <filter id="Source editor" />
@@ -211,6 +217,15 @@ def add_subprogram_box():
       buffer.indent (loc, loc.forward_line (3))
       buffer.current_view().goto (initial.location())
       buffer.finish_undo_group()
+
+def select_line():
+   """Select the current line in the current editor.
+      This moves the cursor to the end of the line"""
+   buffer = EditorBuffer.get ()
+   loc    = buffer.current_view ().cursor ()
+   end    = loc.end_of_line ()
+   start  = loc.beginning_of_line ()
+   buffer.select (start, end)
 
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
