@@ -161,6 +161,12 @@ NF-43-H306-004 Switch editor pages can hide command line (2008-03-28)
   indicate that the command line of the tool should not be displayed in the
   project editor (only the buttons to edit the switches)
 
+NF-43-H229-002 Allow multiple toolchains in GPS (2008-10-23)
+
+  GPS can now handle two compiler toolchains to allow compilation with
+  a specific compiler version, while using an up-to-date compiler for all
+  other tools and thus taking full advantage of their new features.
+
 NF-43-H227-010 Improvements in the Smart Completion (2008-06-19)
 
   A new "Dynamic" Smart Completion mode has been introduced. In this mode, the
