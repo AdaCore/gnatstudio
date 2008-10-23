@@ -1493,12 +1493,17 @@ package body GVD.Process is
            and then (Continuation_Line (Debugger.Debugger)
                      or else Debugger.Registered_Dialog /= null)
          then
+            --  For interactive command, we always send them immediately to
+            --  the debugger, since this might be an answer to a gdb question
+            --  ("restart process (y/n) ?")
             Send
               (Debugger.Debugger,
-               Command, Wait_For_Prompt => False, Mode => Mode);
+               Command, Wait_For_Prompt => False, Mode => Mode,
+               Force_Send => Debugger.Interactive_Command);
          else
             if Output = null then
-               Send (Debugger.Debugger, Check (Command), Mode => Mode);
+               Send (Debugger.Debugger, Check (Command), Mode => Mode,
+                     Force_Send => Debugger.Interactive_Command);
             else
                Output.all :=
                  new String'(Send

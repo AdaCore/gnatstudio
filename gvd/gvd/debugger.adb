@@ -651,10 +651,24 @@ package body Debugger is
       First   : Positive;
 
    begin
-      loop
-         --  Each command is separated with a ASCII.LF and is handled
-         --  separately.
+      --  When there are multiple commands separated by ASCII.LF, Force_Send
+      --  applies to the command set as a whole. If the debugger is processing
+      --  a command, we send none of them, otherwise we send them all without
+      --  queuing any of them. Chaining of commands through ASCII.LF seems to
+      --  only occur in a few limited cases anyway (Set_Breakpoint_Command for
+      --  instance).
 
+      if not Force_Send
+        and then Command_In_Process (Get_Process (Debugger))
+      then
+         --  Will be processed by the same Send later on
+         Queue_Command (Debugger, Cmd, Empty_Buffer, Mode);
+         return;
+      end if;
+
+      --  Each command is separated with a ASCII.LF and is handled separately
+
+      loop
          First := Last;
          Skip_To_Char (Cmd, Last, ASCII.LF);
 
@@ -670,57 +684,52 @@ package body Debugger is
          --  we are waiting for a prompt, we should not be queuing the command
          --  still this would return to the caller before we saw the prompt.
 
-         if not Force_Send
-           and then Command_In_Process (Get_Process (Debugger))
-         then
-            Queue_Command
-              (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
-         else
-            Send_Internal_Pre
-              (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
+         Send_Internal_Pre
+           (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
 
-            case Mode is
-               when Invisible_Command =>
-                  if Last > Cmd'Last and then Wait_For_Prompt then
+         case Mode is
+            when Invisible_Command =>
+               if Last > Cmd'Last and then Wait_For_Prompt then
+                  --  Only wait for the prompt on the last command when
+                  --  there are multiple commands separated by ASCII.LF
+                  Wait_Prompt (Debugger_Access (Debugger));
+                  Debugger.Continuation_Line := False;
+                  Send_Internal_Post (Debugger, Mode);
+               end if;
+
+            when Visible_Command =>
+               if Wait_For_Prompt then
+                  if not Async_Commands then
+                     --  Synchronous handling of commands, simple case
+
                      Wait_Prompt (Debugger_Access (Debugger));
                      Debugger.Continuation_Line := False;
                      Send_Internal_Post (Debugger, Mode);
-                  end if;
-
-               when Visible_Command =>
-                  if Wait_For_Prompt then
-                     if not Async_Commands then
-                        --  Synchronous handling of commands, simple case
-
-                        Wait_Prompt (Debugger_Access (Debugger));
-                        Debugger.Continuation_Line := False;
-                        Send_Internal_Post (Debugger, Mode);
-
-                     else
-                        --  Asynchronous handling of commands, install a
-                        --  callback on the debugger's output file descriptor.
-
-                        Process := GVD.Process.Convert (Debugger);
-                        pragma Assert (Process.Timeout_Id = 0);
-
-                        Process.Timeout_Id := Debugger_Timeout.Add
-                          (Debug_Timeout, Output_Available'Access, Process);
-                     end if;
 
                   else
-                     if Mode >= Visible then
-                        --  Clear the current output received from the debugger
-                        --  to avoid confusing the prompt detection, since
-                        --  we're sending input in the middle of a command,
-                        --  which is delicate.
+                     --  Asynchronous handling of commands, install a
+                     --  callback on the debugger's output file descriptor.
 
-                        Process_Proxies.Empty_Buffer (Get_Process (Debugger));
-                        Process := GVD.Process.Convert (Debugger);
-                        Set_Busy (Process, False);
-                     end if;
+                     Process := GVD.Process.Convert (Debugger);
+                     pragma Assert (Process.Timeout_Id = 0);
+
+                     Process.Timeout_Id := Debugger_Timeout.Add
+                       (Debug_Timeout, Output_Available'Access, Process);
                   end if;
-            end case;
-         end if;
+
+               else
+                  if Mode >= Visible then
+                     --  Clear the current output received from the debugger
+                     --  to avoid confusing the prompt detection, since
+                     --  we're sending input in the middle of a command,
+                     --  which is delicate.
+
+                     Process_Proxies.Empty_Buffer (Get_Process (Debugger));
+                     Process := GVD.Process.Convert (Debugger);
+                     Set_Busy (Process, False);
+                  end if;
+               end if;
+         end case;
 
          exit when Last > Cmd'Last;
 
