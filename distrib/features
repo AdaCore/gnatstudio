@@ -345,6 +345,16 @@ NF-43-G904-006 Importing predefined projects (2008-08-18)
   statement does not use absolute paths. This allows you to for instance
   update the version of your compiler without modifying your projects.
 
+NF-43-G706-005 Redesigned Build facility (2008-10-20)
+
+  GPS 4.3.0 comes with a brand new builder facility. The improvements include:
+    - The possibility to configure the command line of every action
+    - The possibility to display icons in the toolbar for every action
+    - Improved support for the recent versions of GPRbuild
+    - A graphical interface to manage build commands
+    - Possibility to launch builds (or any other build-like command, 
+       like syntax check or semantic checks) every time a file is saved
+
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 
   GPS now recognizes gpr specific keywords (e.g. project, external) when
