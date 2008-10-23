@@ -3,6 +3,9 @@
    In particular, it is possible to select a rectangular area,
    cut it, and paste it elsewhere.
 
+   To perform a selection, use the standard selection mechanisms (e.g.
+   mouse+click selection, or keyboard shift+arrows).
+
    The highlighting of the selection itself is done on the whole
    lines, not on the rectangle itself, but the rectangle is the
    part between the column of the start of the selection, and the
