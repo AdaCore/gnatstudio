@@ -156,10 +156,29 @@ When this command is executed after a repeat_next command, the whole line is del
       <filter id="Source editor"/>
       <shell lang="python">text_utils.serialize()</shell>
    </action>
-
    <menu action="serialize">
       <title>/Edit/Selection/Serialize</title>
    </menu>
+
+   <action name="move block left" output="none" category="Editor">
+      <description>Move all lines in the current selection one character to the left</description>
+      <filter id="Source editor"/>
+      <shell lang="python">text_utils.move_block (-1)</shell>
+   </action>
+   <menu action="move block left">
+      <title>/Edit/Selection/Move left</title>
+   </menu>
+   <key action="move block left">control-less</key>
+
+   <action name="move block right" output="none" category="Editor">
+      <description>Move all lines in the current selection one character to the right</description>
+      <filter id="Source editor"/>
+      <shell lang="python">text_utils.move_block (1)</shell>
+   </action>
+   <menu action="move block right">
+      <title>/Edit/Selection/Move right</title>
+   </menu>
+   <key action="move block right">control-greater</key>
 
    <action name="Upper case word" output="none" category="Editor">
       <description>Upper case the current word (starting at the current character)</description>
@@ -247,9 +266,55 @@ def add_subprogram_box():
 def select_line():
    """Select the current line in the current editor.
       This moves the cursor to the end of the line"""
-   buffer = EditorBuffer.get ()
+   buffer = GPS.EditorBuffer.get ()
    loc    = buffer.current_view ().cursor ()
    buffer.select (log.beginning_of_line(), loc.end_of_line())
+
+def move_block (chars):
+   """Move the current selection chars characters to the right. If chars
+      is negative, moves to the left. If there is no selection, indent
+      the current line."""
+
+   buffer = GPS.EditorBuffer.get ()
+   curs = buffer.current_view ().cursor ()
+   start = buffer.selection_start ()
+   end   = buffer.selection_end ()
+
+   start_mark = start.create_mark ()
+   end_mark   = end.create_mark ()
+
+   loc = start.beginning_of_line ()
+
+   buffer.start_undo_group ()
+   while loc < end:
+      if chars > 0:
+         buffer.insert (loc, " " * chars)
+      else:
+         max = loc - chars
+         eol = loc.end_of_line ()
+         if max > eol:
+            max = eol
+
+         txt = buffer.get_chars (loc, max).replace ("\t", "        ")
+         repl = txt[-chars:]  # If we did tab expansion, preserve these
+         txt = txt[:-chars]   # txt always at most (-chars) in length
+         txt = txt.lstrip ()  # Remove all leading spaces. If the string had
+                              # only them (ie the text was indented far enough
+                              # to the right), we just want to remove them.
+                              # Otherwise that removes as many spaces as
+                              # possible and preserves the significant text
+         buffer.delete (loc, max)
+         buffer.insert (loc, txt + repl)
+      loc = loc.end_of_line () + 1 # beginning of next line
+
+   # Preserve current location and selection
+   buffer.current_view ().goto (curs)
+   if start != end:
+      buffer.select (start_mark.location(), end_mark.location ())
+
+   start_mark.delete ()
+   end_mark.delete ()
+   buffer.finish_undo_group ()
 
 def equal_lines_range (buffer, loc, max=None):
    """Return a EditorLocation pointing to the last line equal to the line
