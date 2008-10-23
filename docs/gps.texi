@@ -2388,6 +2388,30 @@ Open an input window at the bottom of the GPS window where you can specify any
 external command, which will take the current selection as input. The output of
 the command will replace the contents of the selection on success.
 
+@item Serialize
+This changes every lines following the current one and that are exactly the
+same, up to either the end of the current selection or to the end of the
+editor. The number just after the cursor is increased by one on each line.
+For instance, if you start with
+
+@smallexample
+file|1.ads
+file1.ads
+file1.ads
+file2.adb
+file1.ads
+@end smallexample
+
+where '|' marks the cursor position, you end up with
+
+@smallexample
+file|1.ads
+file2.ads
+file3.ads
+file2.adb
+file1.ads
+@end smallexample
+
 @end table
 
 @item Fold all blocks

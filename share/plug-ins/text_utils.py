@@ -135,6 +135,32 @@ When this command is executed after a repeat_next command, the whole line is del
       <shell lang="python">text_utils.join_line()</shell>
    </action>
 
+   <action name="serialize" output="none" category="Editor">
+      <description>In the current selection (or if there is none, for all following lines similar to the current one), replace the number after the cursor by a series. For instance, if you start with (where | is
+      the cursor)
+           file|1.ads
+           file1.ads
+           file1.ads
+           file1.ads
+           foo
+           file1.ads
+      you end up with
+           file1.ads
+           file2.ads
+           file3.ads
+           file4.ads
+           foo
+           file1.ads
+      The selection can be used to restrict the set of lines that are
+      impacted</description>
+      <filter id="Source editor"/>
+      <shell lang="python">text_utils.serialize()</shell>
+   </action>
+
+   <menu action="serialize">
+      <title>/Edit/Selection/Serialize</title>
+   </menu>
+
    <action name="Upper case word" output="none" category="Editor">
       <description>Upper case the current word (starting at the current character)</description>
       <filter id="Source editor" />
@@ -223,9 +249,95 @@ def select_line():
       This moves the cursor to the end of the line"""
    buffer = EditorBuffer.get ()
    loc    = buffer.current_view ().cursor ()
-   end    = loc.end_of_line ()
-   start  = loc.beginning_of_line ()
-   buffer.select (start, end)
+   buffer.select (log.beginning_of_line(), loc.end_of_line())
+
+def equal_lines_range (buffer, loc, max=None):
+   """Return a EditorLocation pointing to the last line equal to the line
+      containing Loc and that are adjacent. For instance, if you start
+      with (| is the cursor):
+          foo bar|
+          foo bar
+          foo bar
+          foo  bar
+          foo bar
+      then the final location is at the end of the third line.
+      The search stops either at max or at the end of the buffer"""
+
+   if max:
+      max = max.end_of_line ()
+   else:
+      max = buffer.end_of_buffer ()
+
+   end = loc.end_of_line ()
+   current = buffer.get_chars (loc.beginning_of_line(), end)
+   
+   loc2 = end + 1  # to beginning of next line
+   while loc2 < max:
+      end = loc2.end_of_line ()
+      line = buffer.get_chars (loc2, end)
+      if current != line:
+         return loc2 - 1
+
+      loc2 = end + 1 # to beginning of next line
+
+   return max
+
+def serialize():
+   """In the current selection (or if there is none, for all following
+      lines similar to the current one), replace the number after the
+      cursor by a series. For instance, if you start with (where | is
+      the cursor)
+           file|1.ads
+           file1.ads
+           file1.ads
+           file1.ads
+           foo
+           file1.ads
+      you end up with
+           file1.ads
+           file2.ads
+           file3.ads
+           file4.ads
+           foo
+           file1.ads
+      The selection can be used to restrict the set of lines that are
+      impacted"""
+
+   buffer = GPS.EditorBuffer.get ()
+   buffer.start_undo_group ()
+
+   start = buffer.selection_start ()
+   end   = buffer.selection_end ()
+   if start == end:
+      loc   = buffer.current_view ().cursor ()
+      start = loc
+      end   = equal_lines_range (buffer, loc, max=buffer.end_of_buffer ())
+   else:
+      loc   = start
+
+   # From start .. end, all lines are equal now
+   end = end.end_of_line ()
+
+   # Find the range of text to replace on each line
+   repl = loc
+   while buffer.get_chars (repl, repl).isdigit():
+      repl = repl + 1
+
+   frm_col = loc.column () - 1    # columns start at 0 on a line
+   end_col = (repl - 1).column () - 1
+
+   value = int (buffer.get_chars (loc, repl - 1)) + 1
+
+   # And now do the replacement
+   repl = loc.end_of_line () + 1  # to beginning of next line
+   while repl < end:
+       buffer.delete (repl + frm_col, repl + end_col)
+       buffer.insert (repl + frm_col, str (value))
+       repl = repl.end_of_line () + 1
+       value = value + 1
+
+   buffer.current_view().goto (loc)
+   buffer.finish_undo_group ()
 
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
