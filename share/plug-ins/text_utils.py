@@ -283,34 +283,29 @@ def move_block (chars):
    start_mark = start.create_mark ()
    end_mark   = end.create_mark ()
 
-   loc = start.beginning_of_line ()
+   start = start.beginning_of_line ()
+   end = end.end_of_line ()
 
    buffer.start_undo_group ()
-   while loc < end:
+   while start < end:
       if chars > 0:
-         buffer.insert (loc, " " * chars)
+         buffer.insert (start, " " * chars)
       else:
-         max = loc - chars
-         eol = loc.end_of_line ()
-         if max > eol:
-            max = eol
-
-         txt = buffer.get_chars (loc, max).replace ("\t", "        ")
-         repl = txt[-chars:]  # If we did tab expansion, preserve these
+         m = min (start - chars, start.end_of_line ())
+         txt = buffer.get_chars (start, m).replace ("\t", "        ")
+         repl = txt[-chars:]  # If we did tab expansion, preserve extra chars
          txt = txt[:-chars]   # txt always at most (-chars) in length
          txt = txt.lstrip ()  # Remove all leading spaces. If the string had
                               # only them (ie the text was indented far enough
                               # to the right), we just want to remove them.
                               # Otherwise that removes as many spaces as
                               # possible and preserves the significant text
-         buffer.delete (loc, max)
-         buffer.insert (loc, txt + repl)
-      loc = loc.end_of_line () + 1 # beginning of next line
+         buffer.delete (start, m)
+         buffer.insert (start, txt + repl)
+      start = start.end_of_line () + 1 # beginning of next line
 
    # Preserve current location and selection
-   buffer.current_view ().goto (curs)
-   if start != end:
-      buffer.select (start_mark.location(), end_mark.location ())
+   buffer.select (start_mark.location(), end_mark.location ())
 
    start_mark.delete ()
    end_mark.delete ()
