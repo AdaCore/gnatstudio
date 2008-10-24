@@ -20,6 +20,7 @@ See also emacs.xml
 import GPS
 import string, traceback
 import navigation_utils
+from gps_utils import save_excursion
 
 GPS.Preference ("Plugins/emacs/transient_mark").create (
    "Transient Mark", "boolean",
@@ -204,6 +205,16 @@ When this command is executed after a repeat_next command, the whole line is del
    </menu>
    <key action="/Edit/Selection/Move right">control-greater</key>
 
+   <action name="untabify" output="none" category="Editor">
+      <description>Replace tab characters in the selection (or in the whole buffer if nothing is selected) by the equivalent amount of spaces.
+Currently a tab is considered as a fixed number of spaces, which is controlled by a preference in the Preferences dialog</description>
+      <filter id="Source editor"/>
+      <shell lang="python">text_utils.untabify ()</shell>
+   </action>
+   <menu action="untabify">
+      <title>/Edit/Selection/Untabify</title>
+   </menu>
+
    <action name="Upper case word" output="none" category="Editor">
       <description>Upper case the current word (starting at the current character)</description>
       <filter id="Source editor" />
@@ -228,6 +239,11 @@ When this command is executed after a repeat_next command, the whole line is del
       <shell lang="python">text_utils.center_line()</shell>
    </action>
 """)
+
+def replace (frm, to, text):
+   """Replace a part of the buffer by the given text"""
+   frm.buffer ().delete (frm, to)
+   frm.buffer ().insert (frm, text)
 
 def goto_subprogram_start (cursor):
    """Return an EditorLocation corresponding to the subprogram in which
@@ -265,27 +281,21 @@ def get_local_vars (subprogram):
    return result
 
 def add_subprogram_box():
-   """ Insert in the current editor a box just before the current subprogram
-       starts """
+   """Insert in the current editor a box just before the current subprogram
+       starts"""
 
-   buffer  = GPS.EditorBuffer.get ()
-   loc = buffer.current_view().cursor()
-   initial = loc.create_mark()
+   def do_work ():
+      buffer  = GPS.EditorBuffer.get ()
+      loc = goto_subprogram_start (buffer.current_view().cursor())
+      if loc:
+         name = loc.block_name()
+         loc = loc.block_start().beginning_of_line();
+         dashes = '-' * (len (name) + 6)
+         box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
+         buffer.insert (loc, box)
+         buffer.indent (loc, loc.forward_line (3))
 
-   loc = goto_subprogram_start (buffer.current_view().cursor())
-   if loc:
-      name = loc.block_name()
-      loc = loc.block_start().beginning_of_line();
-      dashes = '-' * (len (name) + 6)
-      box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
-
-      # Start an undo group so that the whole process can be undone with a
-      # single click.
-      buffer.start_undo_group()
-      buffer.insert (loc, box)
-      buffer.indent (loc, loc.forward_line (3))
-      buffer.current_view().goto (initial.location())
-      buffer.finish_undo_group()
+   save_excursion (do_work)
 
 def select_line():
    """Select the current line in the current editor.
@@ -294,46 +304,64 @@ def select_line():
    loc    = buffer.current_view ().cursor ()
    buffer.select (log.beginning_of_line(), loc.end_of_line())
 
+def get_selection_or_buffer (buffer=None):
+   """If a selection exists, returns its beginning and end. Otherwise
+      return the beginning and end of buffer.
+      The buffer is returned as the first field of the tuple"""
+   if not buffer:
+      buffer = GPS.EditorBuffer.get ()
+   start = buffer.selection_start ()
+   end   = buffer.selection_end ()
+   if start == end:
+      return (buffer, buffer.beginning_of_buffer (), buffer.end_of_buffer ())
+   else:
+      return (buffer, start, end)
+
 def move_block (chars):
    """Move the current selection chars characters to the right. If chars
       is negative, moves to the left. If there is no selection, indent
       the current line."""
 
-   buffer = GPS.EditorBuffer.get ()
-   curs = buffer.current_view ().cursor ()
-   start = buffer.selection_start ()
-   end   = buffer.selection_end ()
+   def do_work ():
+      buffer = GPS.EditorBuffer.get ()
+      start = buffer.selection_start ().beginning_of_line ()
+      end   = buffer.selection_end ().end_of_line ()
+      tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
 
-   start_mark = start.create_mark ()
-   end_mark   = end.create_mark ()
+      while start < end:
+         if chars > 0:
+            buffer.insert (start, " " * chars)
+         else:
+            m = min (start - chars, start.end_of_line ())
+            txt = buffer.get_chars (start, m).replace ("\t", " " * tab_width)
+            repl = txt[-chars:] # If we did tab expansion, preserve extra chars
+            txt = txt[:-chars]  # txt always at most (-chars) in length
+            txt = txt.lstrip () # Remove all leading spaces. If the string had
+                                # only them (ie the text was indented far enough
+                                # to the right), we just want to remove them.
+                                # Otherwise that removes as many spaces as
+                                # possible and preserves the significant text
+            buffer.delete (start, m)
+            buffer.insert (start, txt + repl)
+         start = start.end_of_line () + 1 # beginning of next line
 
-   start = start.beginning_of_line ()
-   end = end.end_of_line ()
+   save_excursion (do_work)
 
-   buffer.start_undo_group ()
-   while start < end:
-      if chars > 0:
-         buffer.insert (start, " " * chars)
-      else:
-         m = min (start - chars, start.end_of_line ())
-         txt = buffer.get_chars (start, m).replace ("\t", "        ")
-         repl = txt[-chars:]  # If we did tab expansion, preserve extra chars
-         txt = txt[:-chars]   # txt always at most (-chars) in length
-         txt = txt.lstrip ()  # Remove all leading spaces. If the string had
-                              # only them (ie the text was indented far enough
-                              # to the right), we just want to remove them.
-                              # Otherwise that removes as many spaces as
-                              # possible and preserves the significant text
-         buffer.delete (start, m)
-         buffer.insert (start, txt + repl)
-      start = start.end_of_line () + 1 # beginning of next line
+def untabify ():
+   """Replace tab characters in the current selection (or the whole buffer)
+      with the correct amount of spaces"""
 
-   # Preserve current location and selection
-   buffer.select (start_mark.location(), end_mark.location ())
+   def do_work ():
+      tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
+      buffer, start, end = get_selection_or_buffer ()
+      while start < end:
+         start = start.search ("\t", dialog_on_failure=False)
+         if not start:
+            break
+         replace (start [0], start [1], " " * tab_width)
+         start = start [1] + 1
 
-   start_mark.delete ()
-   end_mark.delete ()
-   buffer.finish_undo_group ()
+   save_excursion (do_work)
 
 def lines_with_digit (buffer, loc, max=None):
    """Return an EditorLocation pointing to the last line adjacent to
@@ -399,59 +427,61 @@ def serialize (increment=1):
            AAA 1
            BBB 2
            CCC 3
-    """
+   """
 
-   buffer = GPS.EditorBuffer.get ()
-   buffer.start_undo_group ()
-
-   start = buffer.selection_start ()
-   end   = buffer.selection_end ()
-   if start == end:
-      has_sel = False
-      loc   = buffer.current_view ().cursor ()
-      start = loc
-      end   = lines_with_digit (buffer, loc)
-   else:
-      has_sel = True
+   def do_work ():
+      buffer = GPS.EditorBuffer.get ()
+      start = buffer.selection_start ()
+      end   = buffer.selection_end ()
+      if start == end:
+         has_sel = False
+         start = buffer.current_view ().cursor ()
+         end   = lines_with_digit (buffer, start)
+      else:
+         has_sel = True
       loc   = start
 
-   # From start .. end, all lines are equal now
-   end = end.end_of_line ()
+      # From start .. end, all lines are equal now
+      end = end.end_of_line ()
 
-   # Find the range of text to replace on each line
-   repl = loc
-   while buffer.get_chars (repl, repl).isdigit():
-      repl = repl + 1
+      # Find the range of text to replace on each line
+      repl = loc
+      while buffer.get_chars (repl, repl).isdigit():
+         repl = repl + 1
 
-   frm_col = loc.column () - 1    # columns start at 0 on a line
-   end_col = (repl - 1).column () - 1
+      frm_col = loc.column () - 1    # columns start at 0 on a line
+      end_col = (repl - 1).column () - 1
 
-   value = int (buffer.get_chars (loc, repl - 1)) + 1
+      try:
+         value = int (buffer.get_chars (loc, repl - 1)) + increment 
+      except:
+         GPS.Console().write ("Cursor must be before a number")
+         return
 
-   # And now do the replacement
-   repl = loc.end_of_line () + 1  # to beginning of next line
-   while repl < end:
-       if has_sel:
-          # We had a selection: make sure the column range exists on the
-          # line, and fill it with the value
-          eol = repl.end_of_line ()
-          if repl + frm_col > eol:
-             buffer.insert (eol, " " * ((eol - repl) - frm_col + 2))
+      # And now do the replacement
+      repl = loc.end_of_line () + 1  # to beginning of next line
+      while repl < end:
+          if has_sel:
+             # We had a selection: make sure the column range exists on the
+             # line, and fill it with the value
+             eol = repl.end_of_line ()
+             if repl + frm_col > eol:
+                buffer.insert (eol,
+                              " " * ((eol - repl) - frm_col + 2) + str (value))
+             else:
+                replace (repl + frm_col, min (repl + end_col, eol),
+                         str (value))
           else:
-             buffer.delete (repl + frm_col, min (repl + end_col, eol))
-       else:
-          # We had no selection: replace the digit, no matter how many cols
-          to = repl + frm_col
-          while buffer.get_chars (to, to).isdigit():
-             to = to + 1
-          buffer.delete (repl + frm_col, to - 1)
+             # We had no selection: replace the digit, no matter how many cols
+             to = repl + frm_col
+             while buffer.get_chars (to, to).isdigit():
+                to = to + 1
+             replace (repl + frm_col, to - 1, str (value))
 
-       buffer.insert (repl + frm_col, str (value))
-       repl = repl.end_of_line () + 1
-       value = value + increment 
+          repl = repl.end_of_line () + 1
+          value = value + increment 
 
-   buffer.current_view().goto (loc)
-   buffer.finish_undo_group ()
+   save_excursion (do_work)
 
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
@@ -606,8 +636,7 @@ def apply_func_to_word (func, location=None):
    buffer.start_undo_group ()
    end = location.forward_word()
    text = func (buffer.get_chars (location, end))
-   buffer.delete (location, end)
-   buffer.insert (location, text)
+   replace (location, end, text)
    buffer.finish_undo_group ()
 
 def upper_case_word (location=None):
