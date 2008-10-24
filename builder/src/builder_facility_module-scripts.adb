@@ -171,7 +171,7 @@ package body Builder_Facility_Module.Scripts is
 
             Remove_Target (Registry, Name);
 
-            --  ??? Need to update the IDE items: icon, menu, and build action.
+            Refresh_Graphical_Elements;
          end;
 
       elsif Command = "execute" then

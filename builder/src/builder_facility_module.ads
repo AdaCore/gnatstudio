@@ -166,4 +166,8 @@ package Builder_Facility_Module is
    function Registry return Build_Configurations.Build_Config_Registry_Access;
    --  Return the registry stored in the module
 
+   procedure Refresh_Graphical_Elements;
+   --  Recompute the menus and toolbar icons, based on the targets described
+   --  in the Registry.
+
 end Builder_Facility_Module;
