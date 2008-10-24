@@ -365,9 +365,20 @@ procedure GPS.Main is
          Free (Tmp);
 
          Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
-         Setenv ("LD_LIBRARY_PATH", Tmp.all);
+         if Tmp.all /= "" then
+            Setenv ("LD_LIBRARY_PATH", Tmp.all);
+         end if;
       end if;
 
+      Free (Tmp);
+
+      --  Under Darwin, GPS_STARTUP_DYLD_LIBRARY_PATH might be set when GPS
+      --  is launched through the startup script. In this case it contains the
+      --  value that should be set as DYLD_LIBRARY_PATH.
+      Tmp := Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
+      if Tmp.all /= "" then
+         Setenv ("DYLD_LIBRARY_PATH", Tmp.all);
+      end if;
       Free (Tmp);
 
       Charset := Getenv ("CHARSET");
