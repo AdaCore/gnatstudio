@@ -136,23 +136,47 @@ When this command is executed after a repeat_next command, the whole line is del
    </action>
 
    <action name="serialize" output="none" category="Editor">
-      <description>In the current selection (or if there is none, for all following lines similar to the current one), replace the number after the cursor by a series. For instance, if you start with (where | is
-      the cursor)
-           file|1.ads
-           file1.ads
-           file1.ads
-           file1.ads
-           foo
-           file1.ads
-      you end up with
-           file1.ads
-           file2.ads
-           file3.ads
-           file4.ads
-           foo
-           file1.ads
-      The selection can be used to restrict the set of lines that are
-      impacted</description>
+      <description>Increment a set of numbers found on adjacent lines.
+      The exact behavior depends on whether there is a current selection
+      or not.
+      If there is no selection, then the set of lines considered is from
+      the current line on and includes all adjacent lines that have at
+      least one digit in the original columns. In the following example,
+      | marks the place where the cursor is at the beginning:
+
+           AAA |10 AAA
+           CCC 34567 CCC
+           DDD DDD
+
+      then only the first two lines will be modified, and will become
+
+           AAA 10 AAA
+           CCC 11 CCC
+           DDD DDD
+
+      If there is a selection, all the lines in the selection are
+      modified. For each line, the columns that had digits in the first
+      line are modified, no matter what they actually contain. In the
+      example above, if you select all three lines, the replacement becomes
+
+           AAA 10 AAA
+           CCC 11567 CCC
+           DDD 12D
+
+      ie only the fifth and sixth columns are modified since only those
+      columns contained digits in the first line. This feature assumes that
+      you are selecting a relevant set of lines. But it allows you to
+      transform blank lines more easily. For instance, if you have
+
+           AAA 1
+           BBB
+           CCC
+
+      this is transformed into
+
+           AAA 1
+           BBB 2
+           CCC 3</description>
       <filter id="Source editor"/>
       <shell lang="python">text_utils.serialize()</shell>
    </action>
@@ -168,7 +192,7 @@ When this command is executed after a repeat_next command, the whole line is del
    <menu action="move block left">
       <title>/Edit/Selection/Move left</title>
    </menu>
-   <key action="move block left">control-less</key>
+   <key action="/Edit/Selection/Move left">control-less</key>
 
    <action name="move block right" output="none" category="Editor">
       <description>Move all lines in the current selection one character to the right</description>
@@ -178,7 +202,7 @@ When this command is executed after a repeat_next command, the whole line is del
    <menu action="move block right">
       <title>/Edit/Selection/Move right</title>
    </menu>
-   <key action="move block right">control-greater</key>
+   <key action="/Edit/Selection/Move right">control-greater</key>
 
    <action name="Upper case word" output="none" category="Editor">
       <description>Upper case the current word (starting at the current character)</description>
@@ -311,57 +335,71 @@ def move_block (chars):
    end_mark.delete ()
    buffer.finish_undo_group ()
 
-def equal_lines_range (buffer, loc, max=None):
-   """Return a EditorLocation pointing to the last line equal to the line
-      containing Loc and that are adjacent. For instance, if you start
-      with (| is the cursor):
-          foo bar|
-          foo bar
-          foo bar
-          foo  bar
-          foo bar
-      then the final location is at the end of the third line.
-      The search stops either at max or at the end of the buffer"""
+def lines_with_digit (buffer, loc, max=None):
+   """Return an EditorLocation pointing to the last line adjacent to
+      loc that contains a digit in the same column as loc. See description
+      of serialize () for an example. The search can be limited to a
+      specific max location"""
 
    if max:
       max = max.end_of_line ()
    else:
       max = buffer.end_of_buffer ()
 
-   end = loc.end_of_line ()
-   current = buffer.get_chars (loc.beginning_of_line(), end)
-   
-   loc2 = end + 1  # to beginning of next line
+   col  = loc.column () - 1
+   loc2 = loc.end_of_line () + 1  # to beginning of next line
    while loc2 < max:
-      end = loc2.end_of_line ()
-      line = buffer.get_chars (loc2, end)
-      if current != line:
+      eol = loc2.end_of_line ()
+      check = loc2 + col
+      if check > eol or not buffer.get_chars (check, check).isdigit():
          return loc2 - 1
-
-      loc2 = end + 1 # to beginning of next line
+      loc2 = eol + 1 # to beginning of next line
 
    return max
 
-def serialize():
-   """In the current selection (or if there is none, for all following
-      lines similar to the current one), replace the number after the
-      cursor by a series. For instance, if you start with (where | is
-      the cursor)
-           file|1.ads
-           file1.ads
-           file1.ads
-           file1.ads
-           foo
-           file1.ads
-      you end up with
-           file1.ads
-           file2.ads
-           file3.ads
-           file4.ads
-           foo
-           file1.ads
-      The selection can be used to restrict the set of lines that are
-      impacted"""
+def serialize (increment=1):
+   """Increment a set of numbers found on adjacent lines.
+      The exact behavior depends on whether there is a current selection
+      or not.
+      If there is no selection, then the set of lines considered is from
+      the current line on and includes all adjacent lines that have at
+      least one digit in the original columns. In the following example,
+      | marks the place where the cursor is at the beginning:
+
+           AAA |10 AAA
+           CCC 34567 CCC
+           DDD DDD
+ 
+      then only the first two lines will be modified, and will become
+
+           AAA 10 AAA
+           CCC 11 CCC
+           DDD DDD
+
+      If there is a selection, all the lines in the selection are
+      modified. For each line, the columns that had digits in the first
+      line are modified, no matter what they actually contain. In the
+      example above, if you select all three lines, the replacement becomes
+
+           AAA 10 AAA
+           CCC 11567 CCC
+           DDD 12D
+
+      ie only the fifth and sixth columns are modified since only those
+      columns contained digits in the first line. This feature assumes that
+      you are selecting a relevant set of lines. But it allows you to
+      transform blank lines more easily. For instance, if you have
+
+           AAA 1
+           BBB
+           CCC
+
+      this is transformed into
+
+           AAA 1
+           BBB 2
+           CCC 3
+    """
 
    buffer = GPS.EditorBuffer.get ()
    buffer.start_undo_group ()
@@ -369,10 +407,12 @@ def serialize():
    start = buffer.selection_start ()
    end   = buffer.selection_end ()
    if start == end:
+      has_sel = False
       loc   = buffer.current_view ().cursor ()
       start = loc
-      end   = equal_lines_range (buffer, loc, max=buffer.end_of_buffer ())
+      end   = lines_with_digit (buffer, loc)
    else:
+      has_sel = True
       loc   = start
 
    # From start .. end, all lines are equal now
@@ -391,10 +431,24 @@ def serialize():
    # And now do the replacement
    repl = loc.end_of_line () + 1  # to beginning of next line
    while repl < end:
-       buffer.delete (repl + frm_col, repl + end_col)
+       if has_sel:
+          # We had a selection: make sure the column range exists on the
+          # line, and fill it with the value
+          eol = repl.end_of_line ()
+          if repl + frm_col > eol:
+             buffer.insert (eol, " " * ((eol - repl) - frm_col + 2))
+          else:
+             buffer.delete (repl + frm_col, min (repl + end_col, eol))
+       else:
+          # We had no selection: replace the digit, no matter how many cols
+          to = repl + frm_col
+          while buffer.get_chars (to, to).isdigit():
+             to = to + 1
+          buffer.delete (repl + frm_col, to - 1)
+
        buffer.insert (repl + frm_col, str (value))
        repl = repl.end_of_line () + 1
-       value = value + 1
+       value = value + increment 
 
    buffer.current_view().goto (loc)
    buffer.finish_undo_group ()
