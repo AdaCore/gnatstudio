@@ -5701,4 +5701,41 @@ also saved so that they can be pasted later on</description>
      <description>An exception raised by GPS. It indicates an internal error in GPS, raised by the Ada code itself. This exception is unexpected and indicates a bug in GPS itself, not in the python script, although it might be possible to modify the latter to work around the issue</description>
   </shell_doc>
 
+  <!--#################################################################
+      ## BuildTarget class
+      #################################################################-->
+
+  <shell_doc name="GPS.BuildTarget">
+     <description>This class provides an interface to the GPS build targets. Build targets can be configured through XML or through the Target Configuration dialog.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.BuildTarget.__init__">
+      <param name="self">The instance being constructed</param>
+      <param name="name">Name of the target associated with this instance</param>
+      <description>Initializes a new instance of the class BuildTarget. Name must correspond to an existing target.</description>
+      <example lang="python">
+         compile_file_target=GPS.BuildTarget("Compile File")
+         compile_file_target.execute()
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.BuildTarget.execute">
+       <param name="self">An instance of BuildTarget</param>
+       <param name="main_name" default="">A String</param>
+       <param name="file" default="">A GPS.File</param>
+       <param name="force" default="False">A Boolean</param>
+       <param name="extra_args" default="">A String</param>
+       <description>Launch the build target:
+      - main_name indicates the base name of the main source to build, if this target acts on a main file.
+      - file indicates the file to build if this targets acts on a file.
+      - if force is True, this means that the target should be launched directly, even if its parameters indicate that it should be launched through an intermediary dialog.
+      - extra_args contains any extra parameters to pass to the command line. </description>
+  </shell_doc>
+
+  <shell_doc name="GPS.BuildTarget.remove">
+       <param name="self">An instance of BuildTarget</param>
+       <description>Remove target from the list of known targets.
+       Any graphical element corresponding to this target is also removed.</description>
+  </shell_doc>
+
 </docs>

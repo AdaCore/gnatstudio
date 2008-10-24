@@ -643,10 +643,7 @@ package body Builder_Facility_Module is
 
       Free (N);
 
-      Clear_Menus;
-      Install_Menus;
-      Clear_Toolbar_Buttons;
-      Install_Toolbar_Buttons;
+      Refresh_Graphical_Elements;
    end Load_Targets;
 
    ------------------------------
@@ -745,10 +742,7 @@ package body Builder_Facility_Module is
    begin
       --  Clear the items that might depend on the number of mains
 
-      Clear_Menus;
-      Install_Menus;
-      Clear_Toolbar_Buttons;
-      Install_Toolbar_Buttons;
+      Refresh_Graphical_Elements;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -768,6 +762,18 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
       end if;
    end On_Compilation_Finished;
+
+   --------------------------------
+   -- Refresh_Graphical_Elements --
+   --------------------------------
+
+   procedure Refresh_Graphical_Elements is
+   begin
+      Clear_Menus;
+      Install_Menus;
+      Clear_Toolbar_Buttons;
+      Install_Toolbar_Buttons;
+   end Refresh_Graphical_Elements;
 
    -------------------
    -- On_File_Saved --
@@ -1327,17 +1333,11 @@ package body Builder_Facility_Module is
          Changes_Made);
 
       if Changes_Made then
-         --  Handle the toolbar
-         Clear_Toolbar_Buttons;
-         Install_Toolbar_Buttons;
-
          --  Recreate the actions
          Remove_All_Actions;
          Add_Actions_For_All_Targets;
 
-         --  Recreate the menu
-         Clear_Menus;
-         Install_Menus;
+         Refresh_Graphical_Elements;
 
          --  Save the user-defined targets
          Save_Targets;
