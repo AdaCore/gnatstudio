@@ -55,7 +55,7 @@ class Highlighter ():
      return True
 
   def __init__ (self, name,
-                context_lines=3,
+                context_lines=0,
                 fg_color="grey", bg_color="",
                 weight="",   # or "bold", "normal", "light"
                 style="",    # or "normal", "oblique", "italic"
@@ -160,7 +160,7 @@ class Regexp_Highlighter (Highlighter):
   """
 
   def __init__ (self, name, regexp,
-                context_lines=3,
+                context_lines=0,
                 fg_color="grey", bg_color="",
                 weight="",   # or "bold", "normal", "light"
                 style="",    # or "normal", "oblique", "italic"
