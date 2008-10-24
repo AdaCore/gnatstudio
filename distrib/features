@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Oct 22, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Oct 24, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,14 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-HA23-007 New menus in /Edit/Selection (2008-10-23)
+
+  New menus are provided to shift the selection one character left or
+  right
+  New menu to automatically increment a number in a set of adjacent
+  lines
+  New menu to automatically replace tabs with spaces in the selection
 
 NF-44-HA03-020 File changed dialog checks for diffs (2008-10-03)
 

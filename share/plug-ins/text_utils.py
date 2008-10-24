@@ -207,7 +207,8 @@ When this command is executed after a repeat_next command, the whole line is del
 
    <action name="untabify" output="none" category="Editor">
       <description>Replace tab characters in the selection (or in the whole buffer if nothing is selected) by the equivalent amount of spaces.
-Currently a tab is considered as a fixed number of spaces, which is controlled by a preference in the Preferences dialog</description>
+Currently the size of tabs is controlled by a preference in the Preferences
+dialog</description>
       <filter id="Source editor"/>
       <shell lang="python">text_utils.untabify ()</shell>
    </action>
@@ -358,8 +359,9 @@ def untabify ():
          start = start.search ("\t", dialog_on_failure=False)
          if not start:
             break
-         replace (start [0], start [1], " " * tab_width)
-         start = start [1] + 1
+         size = tab_width - ((start [0].column() - 1) % tab_width)
+         replace (start [0], start [1] - 1, " " * size)
+         start = start [1]
 
    save_excursion (do_work)
 

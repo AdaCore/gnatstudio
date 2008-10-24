@@ -2389,28 +2389,66 @@ external command, which will take the current selection as input. The output of
 the command will replace the contents of the selection on success.
 
 @item Serialize
-This changes every lines following the current one and that are exactly the
-same, up to either the end of the current selection or to the end of the
-editor. The number just after the cursor is increased by one on each line.
-For instance, if you start with
+Increment a set of numbers found on adjacent lines.
+The exact behavior depends on whether there is a current selection or not.
+
+If there is no selection, then the set of lines considered is from
+the current line on and includes all adjacent lines that have at
+least one digit in the original columns. In the following example,
+'|' marks the place where the cursor is at the beginning:
 
 @smallexample
-file|1.ads
-file1.ads
-file1.ads
-file2.adb
-file1.ads
+  AAA |10 AAA
+  CCC 34567 CCC
+  DDD DDD
 @end smallexample
 
-where '|' marks the cursor position, you end up with
+then only the first two lines will be modified, and will become
 
 @smallexample
-file|1.ads
-file2.ads
-file3.ads
-file2.adb
-file1.ads
+  AAA 10 AAA
+  CCC 11 CCC
+  DDD DDD
 @end smallexample
+
+If there is a selection, all the lines in the selection are
+modified. For each line, the columns that had digits in the first
+line are modified, no matter what they actually contain. In the
+example above, if you select all three lines, the replacement becomes
+
+@smallexample
+  AAA 10 AAA
+  CCC 11567 CCC
+  DDD 12D
+@end smallexample
+
+ie only the fifth and sixth columns are modified since only those
+columns contained digits in the first line. This feature assumes that
+you are selecting a relevant set of lines. But it allows you to
+transform blank lines more easily. For instance, if you have
+
+@smallexample
+  AAA 1
+  BBB
+  CCC
+@end smallexample
+
+this is transformed into
+
+@smallexample
+  AAA 1
+  BBB 2
+  CCC 3
+@end smallexample
+
+@item Untabify
+Replace all tabs in the current selection (or in the whole buffer if
+there is no selection) by the appropriate number of spaces
+
+@item Move Right
+@itemx Move Left
+Shift the currently selected lines (or the current line if there is no
+selection) one character to the right or to the left
 
 @end table
 
