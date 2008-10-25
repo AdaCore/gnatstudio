@@ -33,6 +33,7 @@ with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
+with Glib.Convert;              use Glib.Convert;
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
@@ -49,13 +50,13 @@ with Gtk.Window;                use Gtk.Window;
 with Gtk_Utils;                 use Gtk_Utils;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Intl;
-with GPS.Intl;                  use GPS.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Config;                    use Config;
 with DDE;
 with File_Utils;
 with GPS.Callbacks;             use GPS.Callbacks;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -334,6 +335,33 @@ procedure GPS.Main is
    -------------------
 
    procedure Init_Settings is
+
+      function Get_Env (Name : String) return String_Access;
+      --  Returns the environment variable named Name. On Windows make sure
+      --  that the variable content is converted to Utf8. This is needed for
+      --  all variables used to build pathnames.
+
+      -------------
+      -- Get_Env --
+      -------------
+
+      function Get_Env (Name : String) return String_Access is
+         Tmp : String_Access := Getenv (Name);
+      begin
+         if Tmp.all /= "" then
+            declare
+               U_Tmp : constant String_Access :=
+                         new String'(Locale_To_UTF8 (Tmp.all));
+            begin
+               Free (Tmp);
+               return U_Tmp;
+            end;
+
+         else
+            return Tmp;
+         end if;
+      end Get_Env;
+
       Dir_Created : Boolean := False;
       File        : File_Type;
       Charset     : String_Access;
@@ -399,16 +427,16 @@ procedure GPS.Main is
 
       Setenv ("TERM", "dumb");
 
-      Home := Getenv ("GPS_HOME");
+      Home := Get_Env ("GPS_HOME");
 
       if Home.all = "" then
          Free (Home);
-         Home := Getenv ("HOME");
+         Home := Get_Env ("HOME");
       end if;
 
       if Home.all = "" then
          Free (Home);
-         Home := Getenv ("USERPROFILE");
+         Home := Get_Env ("USERPROFILE");
       end if;
 
       if Home'Length > 2
@@ -419,7 +447,7 @@ procedure GPS.Main is
          --  %USERPROFILE%
 
          Tmp := Home;
-         Home := Getenv (Tmp (Tmp'First + 1 .. Tmp'Last - 1));
+         Home := Get_Env (Tmp (Tmp'First + 1 .. Tmp'Last - 1));
          Free (Tmp);
       end if;
 
