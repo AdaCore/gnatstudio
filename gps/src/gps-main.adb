@@ -19,6 +19,7 @@
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
+
 with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 pragma Warnings (Off);
@@ -31,13 +32,14 @@ with GNAT.Strings;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Gtk;                       use Gtk;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -46,8 +48,8 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
-
 with Gtk_Utils;                 use Gtk_Utils;
+
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -560,8 +562,7 @@ procedure GPS.Main is
 
             Create
               (File,
-               Name => File_Utils.Name_As_Directory (Dir.all)
-                 & "traces.cfg");
+               Name => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
             Put_Line (File, ">log.$$");
             Put_Line (File, "+");
             Put_Line (File, "DEBUG.COLORS=no");

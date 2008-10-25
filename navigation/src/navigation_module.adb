@@ -318,6 +318,7 @@ package body Navigation_Module is
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
             Free (Err);
+
          else
             M.Markers := new Location_Marker_Array
               (1 .. Max_Locations_In_History);
@@ -699,6 +700,7 @@ package body Navigation_Module is
             if B_Start /= 0 then
                if B_Start /= Line then
                   Set_Current_Line (Kernel, File, B_Start);
+
                else
                   --  We are already at the start of the block, look for
                   --  enclosing block.
