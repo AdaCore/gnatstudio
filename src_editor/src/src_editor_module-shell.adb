@@ -1409,7 +1409,7 @@ package body Src_Editor_Module.Shell is
                      Get_Block_Level
                        (Source_Editor_Box (Get_Widget (Child)), Line));
                else
-                  --  subprogram_name
+                  --  Subprogram_name
                   Set_Return_Value
                     (Data,
                      Get_Subprogram_Name

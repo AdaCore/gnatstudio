@@ -85,7 +85,7 @@ package Src_Editor_Box is
 
    function Get_Kernel
      (Box : access Source_Editor_Box_Record) return GPS.Kernel.Kernel_Handle;
-   --  Accessor to the Kernel field.
+   --  Accessor to the Kernel field
 
    function Get_View (Editor : access Source_Editor_Box_Record)
       return Src_Editor_View.Source_View;
@@ -265,7 +265,7 @@ package Src_Editor_Box is
 
    function Get_Buffer
      (Editor : access Source_Editor_Box_Record) return String;
-   --  Return the contents of the entire buffer.
+   --  Return the contents of the entire buffer
 
    function Get_Subprogram_Name
      (Editor     : access Source_Editor_Box_Record;
@@ -412,22 +412,22 @@ package Src_Editor_Box is
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
       Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
-   --  See GPS.Kernel.Modules for more information.
+   --  See GPS.Kernel.Modules for more information
 
    procedure Create_Line_Information_Column
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
       Every_Line : Boolean);
-   --  See GPS.Kernel.Modules for more information.
+   --  See GPS.Kernel.Modules for more information
 
    procedure Remove_Line_Information_Column
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String);
-   --  See GPS.Kernel.Modules for more information.
+   --  See GPS.Kernel.Modules for more information
 
    procedure Undo (Editor : access Source_Editor_Box_Record);
    procedure Redo (Editor : access Source_Editor_Box_Record);
-   --  Undo/Redo last edit command.
+   --  Undo/Redo last edit command
 
    function Needs_To_Be_Saved
      (Box    : not null access Source_Editor_Box_Record;
