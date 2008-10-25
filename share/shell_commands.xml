@@ -5682,6 +5682,45 @@ also saved so that they can be pasted later on</description>
   </shell_doc>
 
   <!--#################################################################
+      ## Action
+      #################################################################-->
+
+  <shell_doc name="GPS.Action">
+     <description>This class gives access to the interactive commands in GPS. These are the commands to which the user can bind a key shortcut, or for which we can create a menu. Another way to manipulate those commands is through the XML tag &lt;action&gt;, but it might be more convenient to use python since you do not have to qualify the function name as a result</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Action.__init__">
+     <param name='self'>An instance of GPS.Action</param>
+     <param name='name'>A string</param>
+     <description>Creates a new instance of Action. This is bound with either an existing action, or with an action that will be created through GPS.Action.create(). The name of the action can either be a simple name, or a path name to reference a menu, as in /Edit/Copy for instance</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Action.create">
+     <param name="self">An instance of GPS.Action</param>
+     <param name="on_activate">A subprogram</param>
+     <param name="filter" default="">A string or subprogram</param>
+     <param name="category" default="General">A string</param>
+     <param name="description" default="">A string</param>
+     <description>Export the function on_activate and make it interactive so that users can bind keys and menus to it. The function should not require any argument, since it will be called with none.
+filter is either the name of a predefined filter (a string), or a subprogram that receives the context as a parameter, and should return True if the command can be executed within that context. This is used to disable menu items when they are not available.
+category is the category of the command in the /Edit/Key Shortcuts dialog.
+description is the description of the command that appears in that dialog. If you are using python, a convenient value is on_activate.__doc__, which avoids duplicating the comment.
+The package gps_utils.py provides a somewhat more convenient python interface to make function interactives (see gps_utils.interactive).</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Action.key">
+     <param name="self">An instance of GPS.Action</param>
+     <param name="key">A string</param>
+     <description>Associate a default key binding with the action. This will be ignored if the user has defined his own key binding. Possible values for key can be experimented with by using the /Edit/Key Shortcuts dialog</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Action.menu">
+     <param name="self">An instance of GPS.Action</param>
+     <param name="path">A string</param>
+     <description>Create a new menu associated with the command. This function is somewhat a duplicate of GPS.Menu.create, but with one major difference: the callback for the action is a python function that takes no argument, whereas the callback for GPS.Menu receives one argument</description>
+  </shell_doc> 
+
+  <!--#################################################################
       ## Exceptions
       #################################################################-->
 

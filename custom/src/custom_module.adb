@@ -85,6 +85,9 @@ package body Custom_Module is
    Factory_Cst       : aliased constant String := "factory";
    Group_Cst         : aliased constant String := "group";
    Visibility_Filter_Cst : aliased constant String := "visibility_filter";
+   Description_Cst   : aliased constant String := "description";
+   Category_Cst      : aliased constant String := "category";
+   Key_Cst           : aliased constant String := "key";
 
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
@@ -151,40 +154,43 @@ package body Custom_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for GPS.Contextual
 
-   type Contextual_Shell_Cmd is new Interactive_Command with record
-      Contextual  : Class_Instance;
-      On_Activate : Subprogram_Type;
+   procedure Action_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles all shell commands for GPS.Action
+
+   type Subprogram_Command_Record is new Interactive_Command with record
+      Pass_Context : Boolean := True;
+      --  Whether the context should be passed as Arg to On_Activate
+
+      On_Activate  : Subprogram_Type;
    end record;
-   type Contextual_Shell_Command is access all Contextual_Shell_Cmd'Class;
-   overriding procedure Free (Cmd : in out Contextual_Shell_Cmd);
+   type Subprogram_Command is access all Subprogram_Command_Record'Class;
+   overriding procedure Free (Cmd : in out Subprogram_Command_Record);
    overriding function Execute
-     (Command : access Contextual_Shell_Cmd;
+     (Command : access Subprogram_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Type used to define contextual menus from a scripting language
 
-   type Contextual_Shell_Filters is new Action_Filter_Record with record
-      Contextual : Class_Instance;
+   type Subprogram_Filter_Record is new Action_Filter_Record with record
       Filter     : Subprogram_Type;
    end record;
-   type Contextual_Shell_Filter is access all Contextual_Shell_Filters'Class;
+   type Subprogram_Filter is access all Subprogram_Filter_Record'Class;
    overriding function Filter_Matches_Primitive
-     (Filter  : access Contextual_Shell_Filters;
+     (Filter  : access Subprogram_Filter_Record;
       Context : Selection_Context) return Boolean;
    --  Type used to define contextual menus from a scripting language
 
-   type Contextual_Shell_Labels is new Contextual_Menu_Label_Creator_Record
+   type Subprogram_Label_Record is new Contextual_Menu_Label_Creator_Record
    with record
-      Contextual : Class_Instance;
       Label      : Subprogram_Type;
    end record;
-   type Contextual_Shell_Label is access all Contextual_Shell_Labels'Class;
+   type Subprogram_Label is access all Subprogram_Label_Record'Class;
    overriding function Get_Label
-     (Creator : access Contextual_Shell_Labels;
+     (Creator : access Subprogram_Label_Record;
       Context : Selection_Context) return String;
    --  Type used to define contextual menus from a scripting language
 
    type Create_Dynamic_Contextual is new Submenu_Factory_Record with record
-      Contextual  : Class_Instance;
       On_Activate : Subprogram_Type;
       Factory     : Subprogram_Type;
    end record;
@@ -225,11 +231,18 @@ package body Custom_Module is
       Node         : Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
 
+   function Filter_From_Argument
+     (Data   : Callback_Data'Class;
+      Nth    : Integer) return Action_Filter;
+   --  Convert one of the arguments of Data into a filter. This argument can be
+   --  specified either as a string referencing a predefined filter, or as a
+   --  subprogram callback
+
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Cmd : in out Contextual_Shell_Cmd) is
+   overriding procedure Free (Cmd : in out Subprogram_Command_Record) is
    begin
       Free (Cmd.On_Activate);
    end Free;
@@ -286,7 +299,7 @@ package body Custom_Module is
       Factory : Dynamic_Context)
    is
       Script : constant Scripting_Language :=
-        Get_Script (Factory.Contextual.Contextual);
+        Get_Script (Factory.Contextual.On_Activate.all);
       C : Callback_Data'Class := Create (Script, Arguments_Count => 3);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
@@ -312,17 +325,12 @@ package body Custom_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      Script : constant Scripting_Language := Get_Script (Factory.Contextual);
-      Contextual_Class : constant Class_Type := New_Class
-        (Get_Kernel (Script), "Contextual");
+      Script : constant Scripting_Language :=
+        Get_Script (Factory.On_Activate.all);
       C : Callback_Data'Class := Create (Script, Arguments_Count => 1);
       Item : Python_Menu_Item;
    begin
-      Trace (Me, "Append_To_Menu "
-             & String'(Get_Data (Factory.Contextual, Contextual_Class)));
-
-      Set_Nth_Arg
-        (C, 1, Create_Context (Get_Script (Factory.Contextual), Context));
+      Set_Nth_Arg (C, 1, Create_Context (Script, Context));
 
       declare
          List : String_List := Execute (Factory.Factory, C);
@@ -361,20 +369,32 @@ package body Custom_Module is
    -------------
 
    overriding function Execute
-     (Command : access Contextual_Shell_Cmd;
+     (Command : access Subprogram_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      C : Callback_Data'Class := Create
-        (Get_Script (Command.Contextual), Arguments_Count => 1);
-      Tmp : Boolean;
-      pragma Unreferenced (Tmp);
+      Count : Natural := 0;
    begin
-      Set_Nth_Arg
-        (C, 1, Create_Context
-           (Get_Script (Command.Contextual),
-            Selection_Context (Context.Context)));
-      Tmp := Execute (Command.On_Activate, C);
-      Free (C);
+      if Command.Pass_Context then
+         Count := Count + 1;
+      end if;
+
+      declare
+         C : Callback_Data'Class := Create
+           (Get_Script (Command.On_Activate.all), Arguments_Count => Count);
+         Tmp : Boolean;
+         pragma Unreferenced (Tmp);
+      begin
+         if Command.Pass_Context then
+            Set_Nth_Arg
+              (C, 1, Create_Context
+                 (Get_Script (Command.On_Activate.all),
+                  Selection_Context (Context.Context)));
+         end if;
+
+         Tmp := Execute (Command.On_Activate, C);
+         Free (C);
+      end;
+
       return Success;
    end Execute;
 
@@ -383,7 +403,7 @@ package body Custom_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Contextual_Shell_Filters;
+     (Filter  : access Subprogram_Filter_Record;
       Context : Selection_Context) return Boolean
    is
       C : Callback_Data'Class := Create
@@ -402,7 +422,7 @@ package body Custom_Module is
    ---------------
 
    overriding function Get_Label
-     (Creator : access Contextual_Shell_Labels;
+     (Creator : access Subprogram_Label_Record;
       Context : Selection_Context) return String
    is
       C : Callback_Data'Class := Create
@@ -1500,9 +1520,9 @@ package body Custom_Module is
       Contextual_Class : constant Class_Type :=
                            New_Class (Kernel, "Contextual");
       Inst             : Class_Instance;
-      Cmd              : Contextual_Shell_Command;
-      Filter           : Contextual_Shell_Filter;
-      Label            : Contextual_Shell_Label;
+      Cmd              : Subprogram_Command;
+      Filter           : Subprogram_Filter;
+      Label            : Subprogram_Label;
       Subp             : Subprogram_Type;
    begin
       if Command = Constructor_Method then
@@ -1536,8 +1556,7 @@ package body Custom_Module is
             Tmp : Subprogram_Type;
          begin
             Tmp := Nth_Arg (Data, 2); --  May raise No_Such_Parameter
-            Cmd := new Contextual_Shell_Cmd;
-            Cmd.Contextual := Inst;
+            Cmd := new Subprogram_Command_Record;
             Cmd.On_Activate := Tmp;
          exception
             when No_Such_Parameter =>
@@ -1546,14 +1565,13 @@ package body Custom_Module is
 
          Subp := Nth_Arg (Data, 4, null);
          if Subp /= null then
-            Filter := new Contextual_Shell_Filters'
-              (Action_Filter_Record with Contextual => Inst, Filter => Subp);
+            Filter := new Subprogram_Filter_Record'
+              (Action_Filter_Record with Filter => Subp);
          end if;
 
          Subp := Nth_Arg (Data, 3, null);
          if Subp /= null then
-            Label := new Contextual_Shell_Labels'
-              (Contextual => Inst, Label => Subp);
+            Label := new Subprogram_Label_Record'(Label => Subp);
             Register_Contextual_Menu
               (Kernel,
                Name              => Get_Data (Inst, Contextual_Class),
@@ -1584,8 +1602,8 @@ package body Custom_Module is
 
          Subp := Nth_Arg (Data, 5, null);
          if Subp /= null then
-            Filter  := new Contextual_Shell_Filters'
-              (Action_Filter_Record with Contextual => Inst, Filter => Subp);
+            Filter  := new Subprogram_Filter_Record'
+              (Action_Filter_Record with Filter => Subp);
          end if;
 
          Register_Contextual_Submenu
@@ -1595,8 +1613,7 @@ package body Custom_Module is
             Visibility_Filter => Nth_Arg (Data, 9, True),
             Label             => Nth_Arg (Data, 4, ""),
             Submenu           => new Create_Dynamic_Contextual'
-              (Contextual  => Inst,
-               Factory     => Nth_Arg (Data, 2),
+              (Factory     => Nth_Arg (Data, 2),
                On_Activate => Nth_Arg (Data, 3)),
             Ref_Item          => Nth_Arg (Data, 6, ""),
             Add_Before        => Nth_Arg (Data, 7, True),
@@ -1622,6 +1639,133 @@ package body Custom_Module is
       when E : others => Trace (Exception_Handle, E);
    end Contextual_Handler;
 
+   --------------------------
+   -- Filter_From_Argument --
+   --------------------------
+
+   function Filter_From_Argument
+     (Data   : Callback_Data'Class;
+      Nth    : Integer) return Action_Filter
+   is
+      Filter    : Action_Filter;
+      Filter_Cb : Subprogram_Type;
+   begin
+      --  First case: the filter is a string referencing a predefined
+      --  filter (it could be a string naming a subprogram in some of the
+      --  scripts, though, so we need to test whether such a predefined
+      --  filter exists)
+
+      begin
+         declare
+            Name : constant String := Nth_Arg (Data, Nth, "");
+         begin
+            if Name = "" then
+               --  Parameter was not specified, no filter to use
+               return null;
+            end if;
+
+            Filter := Lookup_Filter (Get_Kernel (Data), Name);
+            if Filter /= null then
+               return Filter;
+            end if;
+         end;
+
+      exception
+         when Invalid_Parameter =>
+            --  The parameter was not a string
+            null;
+      end;
+
+      --  Either the parameter was not a string, or did not match an existing
+      --  filter. It could be a subprogram_type in some scripting languages so
+      --  we try that as well. We let the Invalid_Parameter exception through
+      --  in case some other type of argument was specified.
+
+      Filter_Cb := Nth_Arg (Data, Nth);
+      return new Subprogram_Filter_Record'
+        (Action_Filter_Record with
+         Filter     => Filter_Cb);
+   end Filter_From_Argument;
+
+   --------------------
+   -- Action_Handler --
+   --------------------
+
+   procedure Action_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Action_Class : constant Class_Type := New_Class
+        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
+      Inst : Class_Instance;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, (1 => Name_Cst'Access));
+         Inst := Nth_Arg (Data, 1, Action_Class);
+         Set_Data (Inst, Action_Class, Value => String'(Nth_Arg (Data, 2)));
+
+      elsif Command = "create" then
+         Name_Parameters (Data, (1 => On_Activate_Cst'Access,
+                                 2 => Filter_Cst'Access,
+                                 3 => Category_Cst'Access,
+                                 4 => Description_Cst'Access));
+         Inst := Nth_Arg (Data, 1, Action_Class);
+
+         declare
+            Name : constant String := String'(Get_Data (Inst, Action_Class));
+            Filter  : constant Action_Filter := Filter_From_Argument (Data, 3);
+            Category    : constant String := Nth_Arg (Data, 4, "General");
+            Descr       : constant String := Nth_Arg (Data, 5, "");
+            Cmd         : Subprogram_Command;
+         begin
+            Cmd := new Subprogram_Command_Record;
+            Cmd.Pass_Context := False;
+            Cmd.On_Activate  := Nth_Arg (Data, 2);
+
+            Register_Action
+              (Kernel,
+               Name        => Name,
+               Command     => Cmd,
+               Description => Descr,
+               Category    => Category,
+               Filter      => Filter);
+         end;
+
+      elsif Command = "key" then
+         Name_Parameters (Data, (1 => Key_Cst'Access));
+         Inst := Nth_Arg (Data, 1, Action_Class);
+         Bind_Default_Key
+           (Kernel      => Kernel,
+            Action      => String'(Get_Data (Inst, Action_Class)),
+            Default_Key => Nth_Arg (Data, 2));
+
+      elsif Command = "menu" then
+         Name_Parameters (Data, (1 => Path_Cst'Access,
+                                 2 => Ref_Cst'Access,
+                                 3 => Add_Before_Cst'Access));
+         Inst := Nth_Arg (Data, 1, Action_Class);
+
+         declare
+            Path   : constant String  := Nth_Arg (Data, 2);
+            Ref    : constant String  := Nth_Arg (Data, 3, "");
+            Before : constant Boolean := Nth_Arg (Data, 4, True);
+            Action : constant Action_Record_Access :=
+              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
+         begin
+            if Action /= null then
+               Register_Menu
+                 (Kernel,
+                  Parent_Path => Dir_Name (Path),
+                  Text        => Base_Name (Path),
+                  Ref_Item    => Ref,
+                  Add_Before  => Before,
+                  Callback    => null,
+                  Action      => Action);
+            end if;
+         end;
+      end if;
+   end Action_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1631,7 +1775,8 @@ package body Custom_Module is
    is
       Menu_Class : constant Class_Type := New_Class
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
-
+      Action_Class : constant Class_Type := New_Class
+        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
       Contextual_Class : constant Class_Type := New_Class
         (Kernel, "Contextual");
    begin
@@ -1646,6 +1791,31 @@ package body Custom_Module is
       Custom_Combos.Register_Commands (Kernel);
       Custom_Timeout.Register_Commands (Kernel);
       XML_Viewer.Register_Commands (Kernel);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class         => Action_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Action_Handler'Access);
+      Register_Command
+        (Kernel, "create",
+         Class         => Action_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 4,
+         Handler       => Action_Handler'Access);
+      Register_Command
+        (Kernel, "key",
+         Class         => Action_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Action_Handler'Access);
+      Register_Command
+        (Kernel, "menu",
+         Class         => Action_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 3,
+         Handler       => Action_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,

@@ -18,6 +18,8 @@ def save_excursion (f, args=[], kwargs=dict(), undo_group=True):
             def do_work ():
                do actual work here
             save_excursion (do_work)
+      See also the with_save_excursion decorator below for cases when you
+      need to apply save_excursion to a whole function.
    """
 
    mdi    = MDI.current ()
@@ -45,6 +47,67 @@ def save_excursion (f, args=[], kwargs=dict(), undo_group=True):
 
      if start.location () != end.location ():
         buffer.select (start.location (), end.location ())
+     else:
+        buffer.current_view ().goto (start.location ())
      start.delete ()
      end.delete ()
 
+def with_save_excursion (fn):
+   """A decorator with the same behavior as save_excursion.
+      To use it, simply add @with_save_excursion before the definition of
+      the function. This ensures that the current context will be restored
+      when the function terminates
+      example:
+          @with_save_excursion
+          def my_function():
+            pass"""
+
+   def do_work (*args, **kwargs):
+      save_excursion (fn, args=args, kwargs=kwargs)
+   do_work.__name__ = fn.__name__   # Reset name for interactive ()
+   do_work.__doc__ = fn.__doc__
+   return do_work
+
+def make_interactive (callback, category="General", filter="", menu="", key="",
+                      name=""):
+   """Declare a new GPS action (an interactive function, in Emacs talk),
+      associated with an optional menu and default key. The description of
+      the action is automatically taken from the documentation of the
+      python function. Likewise the name of the action is taken from the
+      name of the python function.
+      callback is a python function that requires no argument, although it
+      can have optional arguments (none will be set when this is called from
+      the menu or the key shortcut)."""
+
+   a = Action (name or callback.__name__)
+   a. create (callback, filter=filter, category=category,
+              description=callback.__doc__)
+   if menu: a.menu (menu)
+   if key:
+      if menu:
+         # Bind the key to the menu so that it is visible to the user
+         Action (menu).key (key)
+      else:
+         a.key (key)
+
+class interactive ():
+   """A decorator with the same behavior as make_interactive().
+      This can be used to easily associate a function with an interactive
+      action, menu or key, so that a user can conveniently call it.
+      Example:
+         @interactive ("Editor", menu="/Edit/Foo")
+         def my_function ():
+           pass"""
+
+   def __init__ (self, category="General", filter="", menu="", key="",
+                 name=""):
+       self.filter = filter
+       self.category = category
+       self.menu = menu
+       self.key = key
+       self.name = name
+   def __call__ (self, fn):
+       make_interactive (fn, filter=self.filter, category=self.category,
+                         menu=self.menu, key=self.key, name=self.name)
+       return fn
+      

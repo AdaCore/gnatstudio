@@ -20,226 +20,11 @@ See also emacs.xml
 import GPS
 import string, traceback
 import navigation_utils
-from gps_utils import save_excursion
+from gps_utils import *
 
 GPS.Preference ("Plugins/emacs/transient_mark").create (
    "Transient Mark", "boolean",
    """If unset, the selected region is never unselected when the clipboard is modified by a Cut/Copy/Paste operation. This is broadly similar to the Emacs mode with the same name""", False)
-
-def on_gps_started (hook_name):
-  GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
-
-  GPS.parse_xml ("""
-   <action name="subprogram box" output="none" category="Editor">
-      <description>Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves</description>
-      <filter_and>
-         <filter id="Source editor" />
-         <filter language="ada" />
-      </filter_and>
-      <shell lang="python">text_utils.add_subprogram_box()</shell>
-   </action>
-
-   <action name="kill line" output="none" category="Editor">
-      <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
-The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back.
-When this command is executed after a repeat_next command, the whole line is deleted to provide a more intuitive behavior.</description>
-      <filter id="Source editor" />
-      <shell lang="python">if $repeat == 1: text_utils.kill_line (None, $remaining+1)</shell>
-   </action>
-
-   <action name="open line" output="none" category="Editor">
-      <description>Insert a new line, but leaves the cursor at its current place</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.open_line()</shell>
-   </action>
-
-   <action name="kill forward" output="none" category="Editor">
-      <description>Deletes the character just after the cursor</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.delete_forward()</shell>
-   </action>
-
-   <action name="select line" output="none" category="Editor">
-    <description>Select the whole current line</description>
-    <filter id="Source editor" />
-    <shell lang="python">text_utils.select_line()</shell>
-   </action>
-
-   <action name="transpose chars" output="none" category="Editor">
-      <description>Swap the two characters around the cursor</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.transpose_chars()</shell>
-   </action>
-
-   <action name="Transpose lines" output="none" category="Editor">
-      <description>Swap the current line and the following one</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.transpose_lines()</shell>
-   </action>
-
-   <action name="goto beginning of line" output="none" category="Editor">
-      <description>Move the cursor to the beginning of the current line</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.goto_beginning_of_line()</shell>
-   </action>
-
-   <action name="goto end of line" output="none" category="Editor">
-      <description>Move the cursor to the end of the current line</description>
-      <filter id="Source editor" />
-      <shell lang="python" >text_utils.goto_end_of_line()</shell>
-   </action>
-
-   <action name="goto beginning of buffer" output="none" category="Editor">
-      <description>Move the cursor to the beginning of the buffer</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.beginning_of_buffer()</shell>
-   </action>
-
-   <action name="goto end of buffer" output="none" category="Editor">
-      <description>Move the cursor to the end of the buffer</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.end_of_buffer()</shell>
-   </action>
-
-   <action name="set mark command" output="none" category="Editor">
-      <description>This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position. See also the action "Cancel mark command"</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.set_mark_command()</shell>
-   </action>
-
-   <action name="Cancel mark command" output="none" category="Editor">
-      <description>Remove the emacs-emulation mark in the current editor. See also the action "Set mark command"</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.cancel_mark_command ()</shell>
-   </action>
-
-   <action name="kill region" output="none" category="Editor">
-      <description>Delete the area of text between the mark set by "set mark command" and the current cursor position. This emulates Emacs' behavior.</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.kill_region()</shell>
-   </action>
-
-   <action name="kill ring save"  output="none" category="Editor">
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.kill_ring_save()</shell>
-   </action>
-
-   <action name="delete horizontal space" output="none" category="Editor">
-      <description>Delete all white spaces on the current line before and after the cursor</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.delete_horizontal_space()</shell>
-   </action>
-
-   <action name="Join line" output="none" category="Editor">
-      <description>Join the current line and the following one. They are separated by a single space, and the cursor is left on that space</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.join_line()</shell>
-   </action>
-
-   <action name="serialize" output="none" category="Editor">
-      <description>Increment a set of numbers found on adjacent lines.
-      The exact behavior depends on whether there is a current selection
-      or not.
-      If there is no selection, then the set of lines considered is from
-      the current line on and includes all adjacent lines that have at
-      least one digit in the original columns. In the following example,
-      | marks the place where the cursor is at the beginning:
-
-           AAA |10 AAA
-           CCC 34567 CCC
-           DDD DDD
-
-      then only the first two lines will be modified, and will become
-
-           AAA 10 AAA
-           CCC 11 CCC
-           DDD DDD
-
-      If there is a selection, all the lines in the selection are
-      modified. For each line, the columns that had digits in the first
-      line are modified, no matter what they actually contain. In the
-      example above, if you select all three lines, the replacement becomes
-
-           AAA 10 AAA
-           CCC 11567 CCC
-           DDD 12D
-
-      ie only the fifth and sixth columns are modified since only those
-      columns contained digits in the first line. This feature assumes that
-      you are selecting a relevant set of lines. But it allows you to
-      transform blank lines more easily. For instance, if you have
-
-           AAA 1
-           BBB
-           CCC
-
-      this is transformed into
-
-           AAA 1
-           BBB 2
-           CCC 3</description>
-      <filter id="Source editor"/>
-      <shell lang="python">text_utils.serialize()</shell>
-   </action>
-   <menu action="serialize">
-      <title>/Edit/Selection/Serialize</title>
-   </menu>
-
-   <action name="move block left" output="none" category="Editor">
-      <description>Move all lines in the current selection one character to the left</description>
-      <filter id="Source editor"/>
-      <shell lang="python">text_utils.move_block (-1)</shell>
-   </action>
-   <menu action="move block left">
-      <title>/Edit/Selection/Move left</title>
-   </menu>
-   <key action="/Edit/Selection/Move left">control-less</key>
-
-   <action name="move block right" output="none" category="Editor">
-      <description>Move all lines in the current selection one character to the right</description>
-      <filter id="Source editor"/>
-      <shell lang="python">text_utils.move_block (1)</shell>
-   </action>
-   <menu action="move block right">
-      <title>/Edit/Selection/Move right</title>
-   </menu>
-   <key action="/Edit/Selection/Move right">control-greater</key>
-
-   <action name="untabify" output="none" category="Editor">
-      <description>Replace tab characters in the selection (or in the whole buffer if nothing is selected) by the equivalent amount of spaces.
-Currently the size of tabs is controlled by a preference in the Preferences
-dialog</description>
-      <filter id="Source editor"/>
-      <shell lang="python">text_utils.untabify ()</shell>
-   </action>
-   <menu action="untabify">
-      <title>/Edit/Selection/Untabify</title>
-   </menu>
-
-   <action name="Upper case word" output="none" category="Editor">
-      <description>Upper case the current word (starting at the current character)</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.upper_case_word ()</shell>
-   </action>
-
-   <action name="Lower case word" output="none" category="Editor">
-      <description>Lower case the current word (starting at the current character)</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.lower_case_word ()</shell>
-   </action>
-
-   <action name="Capitalize word" output="none" category="Editor">
-      <description>Capitalize the current word (starting at the current character)</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.capitalize_case_word ()</shell>
-   </action>
-
-   <action name="Center line" output="none" category="Editor">
-      <description>Center the current line</description>
-      <filter id="Source editor" />
-      <shell lang="python">text_utils.center_line()</shell>
-   </action>
-""")
 
 def replace (frm, to, text):
    """Replace a part of the buffer by the given text"""
@@ -281,29 +66,28 @@ def get_local_vars (subprogram):
 
    return result
 
+@with_save_excursion
 def add_subprogram_box():
    """Insert in the current editor a box just before the current subprogram
        starts"""
 
-   def do_work ():
-      buffer  = GPS.EditorBuffer.get ()
-      loc = goto_subprogram_start (buffer.current_view().cursor())
-      if loc:
-         name = loc.block_name()
-         loc = loc.block_start().beginning_of_line();
-         dashes = '-' * (len (name) + 6)
-         box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
-         buffer.insert (loc, box)
-         buffer.indent (loc, loc.forward_line (3))
+   buffer  = GPS.EditorBuffer.get ()
+   loc = goto_subprogram_start (buffer.current_view().cursor())
+   if loc:
+      name = loc.block_name()
+      loc = loc.block_start().beginning_of_line();
+      dashes = '-' * (len (name) + 6)
+      box = dashes + "\n" + "-- " + name + " --\n" + dashes + "\n\n"
+      buffer.insert (loc, box)
+      buffer.indent (loc, loc.forward_line (3))
 
-   save_excursion (do_work)
-
+@interactive ("Editor", "Source editor", name="select line")
 def select_line():
-   """Select the current line in the current editor.
+   """Select the current line in the current editor, including trailing newline
       This moves the cursor to the end of the line"""
    buffer = GPS.EditorBuffer.get ()
    loc    = buffer.current_view ().cursor ()
-   buffer.select (log.beginning_of_line(), loc.end_of_line())
+   buffer.select (loc.beginning_of_line(), loc.end_of_line() + 1)
 
 def get_selection_or_buffer (buffer=None):
    """If a selection exists, returns its beginning and end. Otherwise
@@ -318,52 +102,57 @@ def get_selection_or_buffer (buffer=None):
    else:
       return (buffer, start, end)
 
-def move_block (chars):
+@interactive ("Editor", "Source editor", name="Move block right",
+              menu="/Edit/Selection/Move right", key="control-greater")
+@with_save_excursion
+def move_block (chars=1):
    """Move the current selection chars characters to the right. If chars
       is negative, moves to the left. If there is no selection, indent
       the current line."""
 
-   def do_work ():
-      buffer = GPS.EditorBuffer.get ()
-      start = buffer.selection_start ().beginning_of_line ()
-      end   = buffer.selection_end ().end_of_line ()
-      tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
+   buffer = GPS.EditorBuffer.get ()
+   start = buffer.selection_start ().beginning_of_line ()
+   end   = buffer.selection_end ().end_of_line ()
+   tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
 
-      while start < end:
-         if chars > 0:
-            buffer.insert (start, " " * chars)
-         else:
-            m = min (start - chars, start.end_of_line ())
-            txt = buffer.get_chars (start, m).replace ("\t", " " * tab_width)
-            repl = txt[-chars:] # If we did tab expansion, preserve extra chars
-            txt = txt[:-chars]  # txt always at most (-chars) in length
-            txt = txt.lstrip () # Remove all leading spaces. If the string had
-                                # only them (ie the text was indented far enough
-                                # to the right), we just want to remove them.
-                                # Otherwise that removes as many spaces as
-                                # possible and preserves the significant text
-            buffer.delete (start, m)
-            buffer.insert (start, txt + repl)
-         start = start.end_of_line () + 1 # beginning of next line
+   while start < end:
+      if chars > 0:
+         buffer.insert (start, " " * chars)
+      else:
+         m = min (start - chars, start.end_of_line ())
+         txt = buffer.get_chars (start, m).replace ("\t", " " * tab_width)
+         repl = txt[-chars:] # If we did tab expansion, preserve extra chars
+         txt = txt[:-chars]  # txt always at most (-chars) in length
+         txt = txt.lstrip () # Remove all leading spaces. If the string had
+                             # only them (ie the text was indented far enough
+                             # to the right), we just want to remove them.
+                             # Otherwise that removes as many spaces as
+                             # possible and preserves the significant text
+         buffer.delete (start, m)
+         buffer.insert (start, txt + repl)
+      start = start.end_of_line () + 1 # beginning of next line
 
-   save_excursion (do_work)
+make_interactive (lambda:move_block(-1),
+                  category="Editor", filter="Source editor",
+                  menu="/Edit/Selection/Move left", key="control-less",
+                  name="Move block left")
 
+@interactive("Editor", "Source editor", menu="/Edit/Selection/Untabify")
+@with_save_excursion
 def untabify ():
    """Replace tab characters in the current selection (or the whole buffer)
-      with the correct amount of spaces"""
+      with the correct amount of spaces. The tab stops are every n columns
+      where n is specified by a preference in the Preferences dialog"""
 
-   def do_work ():
-      tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
-      buffer, start, end = get_selection_or_buffer ()
-      while start < end:
-         start = start.search ("\t", dialog_on_failure=False)
-         if not start:
-            break
-         size = tab_width - ((start [0].column() - 1) % tab_width)
-         replace (start [0], start [1] - 1, " " * size)
-         start = start [1]
-
-   save_excursion (do_work)
+   tab_width = int (GPS.Preference ("Src-Editor-Tab-Width").get ())
+   buffer, start, end = get_selection_or_buffer ()
+   while start < end:
+      start = start.search ("\t", dialog_on_failure=False)
+      if not start:
+         break
+      size = tab_width - ((start [0].column() - 1) % tab_width)
+      replace (start [0], start [1] - 1, " " * size)
+      start = start [1]
 
 def lines_with_digit (buffer, loc, max=None):
    """Return an EditorLocation pointing to the last line adjacent to
@@ -387,6 +176,8 @@ def lines_with_digit (buffer, loc, max=None):
 
    return max
 
+@interactive ("Editor", "Source editor", "/Edit/Selection/Serialize")
+@with_save_excursion
 def serialize (increment=1):
    """Increment a set of numbers found on adjacent lines.
       The exact behavior depends on whether there is a current selection
@@ -431,60 +222,58 @@ def serialize (increment=1):
            CCC 3
    """
 
-   def do_work ():
-      buffer = GPS.EditorBuffer.get ()
-      start = buffer.selection_start ()
-      end   = buffer.selection_end ()
-      if start == end:
-         has_sel = False
-         start = buffer.current_view ().cursor ()
-         end   = lines_with_digit (buffer, start)
-      else:
-         has_sel = True
-      loc   = start
+   buffer = GPS.EditorBuffer.get ()
+   start = buffer.selection_start ()
+   end   = buffer.selection_end ()
+   if start == end:
+      has_sel = False
+      start = buffer.current_view ().cursor ()
+      end   = lines_with_digit (buffer, start)
+   else:
+      has_sel = True
+   loc   = start
 
-      # From start .. end, all lines are equal now
-      end = end.end_of_line ()
+   # From start .. end, all lines are equal now
+   end = end.end_of_line ()
 
-      # Find the range of text to replace on each line
-      repl = loc
-      while buffer.get_chars (repl, repl).isdigit():
-         repl = repl + 1
+   # Find the range of text to replace on each line
+   repl = loc
+   while buffer.get_chars (repl, repl).isdigit():
+      repl = repl + 1
 
-      frm_col = loc.column () - 1    # columns start at 0 on a line
-      end_col = (repl - 1).column () - 1
+   frm_col = loc.column () - 1    # columns start at 0 on a line
+   end_col = (repl - 1).column () - 1
 
-      try:
-         value = int (buffer.get_chars (loc, repl - 1)) + increment 
-      except:
-         GPS.Console().write ("Cursor must be before a number")
-         return
+   try:
+      value = int (buffer.get_chars (loc, repl - 1)) + increment 
+   except:
+      GPS.Console().write ("Cursor must be before a number")
+      return
 
-      # And now do the replacement
-      repl = loc.end_of_line () + 1  # to beginning of next line
-      while repl < end:
-          if has_sel:
-             # We had a selection: make sure the column range exists on the
-             # line, and fill it with the value
-             eol = repl.end_of_line ()
-             if repl + frm_col > eol:
-                buffer.insert (eol,
-                              " " * ((eol - repl) - frm_col + 2) + str (value))
-             else:
-                replace (repl + frm_col, min (repl + end_col, eol),
-                         str (value))
+   # And now do the replacement
+   repl = loc.end_of_line () + 1  # to beginning of next line
+   while repl < end:
+       if has_sel:
+          # We had a selection: make sure the column range exists on the
+          # line, and fill it with the value
+          eol = repl.end_of_line ()
+          if repl + frm_col > eol:
+             buffer.insert (eol,
+                           " " * ((eol - repl) - frm_col + 2) + str (value))
           else:
-             # We had no selection: replace the digit, no matter how many cols
-             to = repl + frm_col
-             while buffer.get_chars (to, to).isdigit():
-                to = to + 1
-             replace (repl + frm_col, to - 1, str (value))
+             replace (repl + frm_col, min (repl + end_col, eol),
+                      str (value))
+       else:
+          # We had no selection: replace the digit, no matter how many cols
+          to = repl + frm_col
+          while buffer.get_chars (to, to).isdigit():
+             to = to + 1
+          replace (repl + frm_col, to - 1, str (value))
 
-          repl = repl.end_of_line () + 1
-          value = value + increment 
+       repl = repl.end_of_line () + 1
+       value = value + increment 
 
-   save_excursion (do_work)
-
+@interactive ("Editor", "Source editor", name="kill forward")
 def delete_forward():
    """Delete the character just after the cursor in the current editor"""
    buffer = GPS.EditorBuffer.get()
@@ -532,21 +321,25 @@ def kill_line (location = None, count=1):
 ## Moving the cursor
 ################################################
 
+@interactive ("Editor", "Source editor", name="goto beginning of buffer")
 def beginning_of_buffer():
    """Move the cursor to the beginning of the buffer"""
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.beginning_of_buffer())
 
+@interactive ("Editor", "Source editor", name="goto end of buffer")
 def end_of_buffer():
    """Move the cursor to the end of the buffer"""
    buffer = GPS.EditorBuffer.get()
    buffer.current_view().goto (buffer.end_of_buffer())
 
+@interactive ("Editor", "Source editor", name="goto beginning of line")
 def goto_beginning_of_line():
    """Goto the beginning of line"""
    view = GPS.EditorBuffer.get().current_view()
    view.goto (view.cursor().beginning_of_line())
 
+@interactive ("Editor", "Source editor", name="goto end of line")
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
    buffer = GPS.EditorBuffer.get (GPS.File (file))
@@ -561,6 +354,7 @@ def goto_end_of_line():
 def is_space (char):
    return char == ' ' or char == '\t'
 
+@interactive ("Editor", "Source editor", name="delete horizontal space")
 def delete_horizontal_space(backward=1, forward=1):
    """Delete all spaces and tabs around the cursor in the current editor.
 The two parameters can be used to control in what directions white spaces are
@@ -582,6 +376,7 @@ searched for"""
    if start <= end:
       buffer.delete (start, end)
 
+@interactive ("Editor", "Source editor", name="transpose chars")
 def transpose_chars():
    """Transpose characters around cursor, moving forward one character."""
    buffer = GPS.EditorBuffer.get()
@@ -594,6 +389,7 @@ def transpose_chars():
       buffer.current_view().goto (cursor + 1)
       buffer.finish_undo_group ()
 
+@interactive ("Editor", "Source editor", name="Transpose lines")
 def transpose_lines (location = None):
    """Transpose the line at LOCATION (or current line) and the following one"""
    if not location:
@@ -608,13 +404,14 @@ def transpose_lines (location = None):
       buffer.insert (start.end_of_line () + 1, text)
       buffer.finish_undo_group ()
 
+@interactive ("Editor", "Source editor", name="open line")
+@with_save_excursion
 def open_line():
-   """Insert a newline and leave cursor before it."""
+   """Insert a newline and leave cursor at its current place."""
    buffer = GPS.EditorBuffer.get()
-   cursor = buffer.current_view().cursor()
    buffer.insert (cursor, "\n")
-   buffer.current_view().goto (cursor)
 
+@interactive ("Editor", "Source editor", name="Join line")
 def join_line ():
    """Join the current line and the following one, separated by a single
       space, and leaves the cursor on the space"""
@@ -641,18 +438,22 @@ def apply_func_to_word (func, location=None):
    replace (location, end, text)
    buffer.finish_undo_group ()
 
+@interactive ("Editor", "Source editor", name="Upper case word")
 def upper_case_word (location=None):
    """Upper case the current word (starting at the current character)"""
    apply_func_to_word (str.upper, location)
 
+@interactive ("Editor", "Source editor", name="Lower case word")
 def lower_case_word (location=None):
    """Lower case the current word (starting at the current character)"""
    apply_func_to_word (str.lower, location)
 
+@interactive ("Editor", "Source editor", name="Capitalize word")
 def capitalize_case_word (location=None):
    """Capitalize the current word (starting at the current character)"""
    apply_func_to_word (str.capitalize, location)
 
+@interactive ("Editor", "Source editor", name="Center line")
 def center_line ():
    """Center the current line on the screen. If a comment line then the
       text inside the comment is centered, the comment markers remain
@@ -901,8 +702,10 @@ except ImportError:
       except:
          pass  ## no such mark
 
+@interactive ("Editor", "Source editor", name="set mark command")
 def set_mark_command (location = None):
-    """Set mark at LOCATION (or current cursor if LOCATION is unspecified)"""
+    """Set mark at LOCATION (or current cursor if LOCATION is unspecified)
+      This is similar to Emacs's behavior: a mark is put at the current cursor position. You can then move the cursor elsewhere, and delete the text between this mark and the new cursor position. See also the action 'Cancel mark command'"""
     if not location:
        location = GPS.EditorBuffer.get ().current_view ().cursor ()
     if has_pygtk:
@@ -912,8 +715,10 @@ def set_mark_command (location = None):
         location.create_mark ("emacs_selection_bound")
         GPS.Hook ("location_changed").add (on_location_changed)
 
+@interactive ("Editor", "Source editor", name="Cancel mark command")
 def cancel_mark_command (buffer = None):
-    """Cancel the mark in BUFFER"""
+    """Cancel the mark in BUFFER
+      Remove the emacs-emulation mark in the current editor. See also the action 'Set mark command'"""
     if not buffer:
        buffer = GPS.EditorBuffer.get ()
     try:
@@ -931,4 +736,23 @@ def on_clipboard_changed (hook):
     if GPS.Preference ("Plugins/emacs/transient_mark").get():
        cancel_mark_command ()
 
-GPS.Hook ("gps_started").add (on_gps_started)
+GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
+GPS.parse_xml ("""
+   <action name="subprogram box" output="none" category="Editor">
+      <description>Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves</description>
+      <filter_and>
+         <filter id="Source editor" />
+         <filter language="ada" />
+      </filter_and>
+      <shell lang="python">text_utils.add_subprogram_box()</shell>
+   </action>
+
+   <action name="kill line" output="none" category="Editor">
+      <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
+The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back.
+When this command is executed after a repeat_next command, the whole line is deleted to provide a more intuitive behavior.</description>
+      <filter id="Source editor" />
+      <shell lang="python">if $repeat == 1: text_utils.kill_line (None, $remaining+1)</shell>
+   </action>
+""")
+
