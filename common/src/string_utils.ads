@@ -200,9 +200,8 @@ package String_Utils is
       Continuation : String := "...") return String;
    --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
    --  and replace multiple spaces with a single one. Return the resulting
-   --  string with at most Max_Length character. Continuation is added at the
-   --  end of the string if cut.
-   --  S should be encoded in UTF-8.
+   --  string with at most Max_Length character including the continuation
+   --  characters. S should be encoded in UTF-8.
 
    function Krunch
      (S                 : String;
