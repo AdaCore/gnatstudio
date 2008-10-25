@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- HA14-009: Wrong dialog settings in project properties
+  Problem:    On Vista the dialog checks for proper file permissions. As the
+              dialog on the project properties (to select a global pragma
+              file for example) was set in "save" mode it was not possible
+              to select a file which was read-only.
+  Workaround: Change file permissions to read-write.
+
 Known Problems fixed in GPS 4.3.0
 
 - H915-002: File view from project filter no working
