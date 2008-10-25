@@ -1763,6 +1763,29 @@ package body Custom_Module is
                   Action      => Action);
             end if;
          end;
+
+      elsif Command = "contextual" then
+         Name_Parameters (Data, (1 => Path_Cst'Access,
+                                 2 => Ref_Cst'Access,
+                                 3 => Add_Before_Cst'Access));
+         Inst := Nth_Arg (Data, 1, Action_Class);
+
+         declare
+            Path   : constant String  := Nth_Arg (Data, 2);
+            Ref    : constant String  := Nth_Arg (Data, 3, "");
+            Before : constant Boolean := Nth_Arg (Data, 4, True);
+            Action : constant Action_Record_Access :=
+              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
+         begin
+            if Action /= null then
+               Register_Contextual_Menu
+                 (Kernel,
+                  Name        => Path,
+                  Ref_Item    => Ref,
+                  Add_Before  => Before,
+                  Action      => Action);
+            end if;
+         end;
       end if;
    end Action_Handler;
 
@@ -1812,6 +1835,12 @@ package body Custom_Module is
          Handler       => Action_Handler'Access);
       Register_Command
         (Kernel, "menu",
+         Class         => Action_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 3,
+         Handler       => Action_Handler'Access);
+      Register_Command
+        (Kernel, "contextual",
          Class         => Action_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 3,

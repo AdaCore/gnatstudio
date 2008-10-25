@@ -66,10 +66,10 @@ def get_local_vars (subprogram):
 
    return result
 
+@interactive ("Editor", in_ada_file, name="subprogram box")
 @with_save_excursion
 def add_subprogram_box():
-   """Insert in the current editor a box just before the current subprogram
-       starts"""
+   """Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves"""
 
    buffer  = GPS.EditorBuffer.get ()
    loc = goto_subprogram_start (buffer.current_view().cursor())
@@ -103,7 +103,7 @@ def get_selection_or_buffer (buffer=None):
       return (buffer, start, end)
 
 @interactive ("Editor", "Source editor", name="Move block right",
-              menu="/Edit/Selection/Move right", key="control-greater")
+              menu="/Edit/Selection/Move right", key="control-alt-greater")
 @with_save_excursion
 def move_block (chars=1):
    """Move the current selection chars characters to the right. If chars
@@ -134,7 +134,7 @@ def move_block (chars=1):
 
 make_interactive (lambda:move_block(-1),
                   category="Editor", filter="Source editor",
-                  menu="/Edit/Selection/Move left", key="control-less",
+                  menu="/Edit/Selection/Move left", key="control-alt-less",
                   name="Move block left")
 
 @interactive("Editor", "Source editor", menu="/Edit/Selection/Untabify")
@@ -741,15 +741,6 @@ def on_clipboard_changed (hook):
 
 GPS.Hook ("clipboard_changed").add (on_clipboard_changed)
 GPS.parse_xml ("""
-   <action name="subprogram box" output="none" category="Editor">
-      <description>Search backward for the first subprogram or package declaration. Before the start of this declaration, insert a comment box containing the name of the subprogram. This provides helpful separations between subprograms, and is similar to the style used in the GNAT compiler or GPS themselves</description>
-      <filter_and>
-         <filter id="Source editor" />
-         <filter language="ada" />
-      </filter_and>
-      <shell lang="python">text_utils.add_subprogram_box()</shell>
-   </action>
-
    <action name="kill line" output="none" category="Editor">
       <description>This is similar to Emacs' kill-line function. It deletes the end of the line after the cursor's current column. If the cursor is at the end of the line, it deletes the newline character and therefore joins the current line and the next.
 The text that is deleted is copied to the clipboard. If you call this action multiple times from the same location, all deleted text is merged into a single clipboard, so that a single Paste will put it all back.

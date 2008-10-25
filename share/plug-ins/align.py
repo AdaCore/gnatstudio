@@ -89,6 +89,7 @@ when editing other languages
 
 import re
 import GPS
+from gps_utils import *
 
 def range_align_on (top, bottom, sep, replace_with=None):
    """Align each line from top to bottom, aligning, for each line, sep in
@@ -194,20 +195,28 @@ def buffer_align_on (sep, replace_with=None, buffer=None):
    finally:
       top.buffer().finish_undo_group ()
 
+@interactive ("Ada", in_ada_file, contextual="Align/Colons",
+              name="Align colons")
 def align_colons ():
-   """Aligns colons (eg in object and record type declarations"""
+   """Aligns colons (eg in object and record type declarations and trailing text in current selection"""
    buffer_align_on (sep=":(?!=)", replace_with=" : ")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Reserved word 'is'",
+              name="Align reserved is")
 def align_reserved_is ():
-   """Aligns reserved word 'is' (eg in type declarations)"""
+   """Aligns reserved word 'is' (eg in type declarations) in current selection"""
    buffer_align_on (sep=" is ")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Use clauses",
+              name="Align use clauses")
 def align_use_clauses ():
-   """Aligns use-clauses occuring in an Ada context clause"""
+   """Aligns Ada use-clauses in current selection"""
    buffer_align_on (sep=" use ")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Arrow symbols",
+              name="Align arrows")
 def align_arrows ():
-   """Aligns the '=>' symbols"""
+   """Aligns Ada arrow symbol '=>' in current selection"""
    # The algorithm is the following:
    #   - indent the selection
    #   - for N 1 .. 9:
@@ -250,10 +259,14 @@ def align_arrows ():
    finally:
       top.buffer().finish_undo_group()
 
+@interactive ("Ada", in_ada_file, contextual="Align/Assignment symbols",
+              name="Align assignments")
 def align_assignments ():
-   """Aligns the ':=' symbols in selected text"""
+   """Aligns Ada assignment symbol ':=' in current selection"""
    buffer_align_on (sep=":=", replace_with=" := ")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Formal parameters",
+              name="Align formal parameters")
 def align_formal_params():
    """Aligns the colons, modes, and formal types in parameter specifications"""
    ## The regexp needs the three nested groups, since we want \\1 to always
@@ -261,76 +274,8 @@ def align_formal_params():
    buffer_align_on (sep=":\s*(((in\s+out|out|in|access) )?)",
                     replace_with=" : \\1")
 
+@interactive ("Ada", in_ada_file, contextual="Align/Record representation clause", name="Align record representation clause")
 def align_record_rep_clause ():
    """Aligns the various parts of a record representation clause"""
    buffer_align_on (sep=" at ")
    buffer_align_on (sep=" range ")
-
-def on_gps_started (hook_name):
-   GPS.parse_xml ("""
-     <action name="Align formal parameters" output="none" category="Ada">
-        <description>Aligns colons, modes, and types of Ada formal parameters in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_formal_params()</shell>
-     </action>
-     <contextual action="Align formal parameters" >
-        <Title>Align/Formal parameters</Title>
-     </contextual>
-
-     <action name="Align colons" output="none" category="Ada">
-        <description>Aligns colons and trailing text in current selection</description>
-        <filter module="Source_Editor" />
-        <shell lang="python">align.align_colons()</shell>
-     </action>
-     <contextual action="Align colons" >
-        <Title>Align/Colons</Title>
-     </contextual>
-
-     <action name="Align use clauses" output="none" category="Ada">
-        <description>Aligns Ada use-clauses in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_use_clauses()</shell>
-     </action>
-     <contextual action="Align use clauses" >
-        <Title>Align/Use clauses</Title>
-     </contextual>
-
-     <action name="Align reserved is" output="none" category="Ada">
-        <description>Aligns reserved word 'is' in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_reserved_is()</shell>
-     </action>
-     <contextual action="Align reserved is" >
-        <Title>Align/Reserved word 'is'</Title>
-     </contextual>
-
-     <action name="Align arrows" output="none" category="Ada">
-        <description>Aligns Ada arrow symbol '=>' in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_arrows()</shell>
-     </action>
-     <contextual action="Align arrows" >
-        <Title>Align/Arrow symbols</Title>
-     </contextual>
-
-     <action name="Align assignments" output="none" category="Ada">
-        <description>Aligns Ada assignment symbol ':=' in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_assignments()</shell>
-     </action>
-     <contextual action="Align assignments" >
-        <Title>Align/Assignment symbols</Title>
-     </contextual>
-
-     <action name="Align record representation clause" output="none" category="Ada">
-        <description>Aligns content of record representation clause in current selection</description>
-        <filter module="Source_Editor" language="ada" />
-        <shell lang="python">align.align_record_rep_clause()</shell>
-     </action>
-     <contextual action="Align record representation clause" >
-        <Title>Align/Record representation clause</Title>
-     </contextual>
-
-""")
-
-GPS.Hook ("gps_started").add (on_gps_started)

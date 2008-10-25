@@ -69,7 +69,7 @@ def with_save_excursion (fn):
    return do_work
 
 def make_interactive (callback, category="General", filter="", menu="", key="",
-                      name=""):
+                      contextual="", name=""):
    """Declare a new GPS action (an interactive function, in Emacs talk),
       associated with an optional menu and default key. The description of
       the action is automatically taken from the documentation of the
@@ -82,7 +82,8 @@ def make_interactive (callback, category="General", filter="", menu="", key="",
    a = Action (name or callback.__name__)
    a. create (callback, filter=filter, category=category,
               description=callback.__doc__)
-   if menu: a.menu (menu)
+   if menu:       a.menu (menu)
+   if contextual: a.contextual (contextual)
    if key:
       if menu:
          # Bind the key to the menu so that it is visible to the user
@@ -100,14 +101,33 @@ class interactive ():
            pass"""
 
    def __init__ (self, category="General", filter="", menu="", key="",
-                 name=""):
+                 contextual="", name=""):
        self.filter = filter
        self.category = category
        self.menu = menu
        self.key = key
        self.name = name
+       self.contextual = contextual
    def __call__ (self, fn):
        make_interactive (fn, filter=self.filter, category=self.category,
-                         menu=self.menu, key=self.key, name=self.name)
+                         menu=self.menu, key=self.key,
+                         contextual=self.contextual, name=self.name)
        return fn
       
+
+############################################################
+## Some predefined filters
+## These are filters that can be used when creating new menus, contextual
+## menus or actions
+############################################################
+
+def in_ada_file (context):
+   """Returns True if the focus is currently inside an Ada editor"""
+   buffer = EditorBuffer.get ()
+   view   = buffer.current_view ()
+   # We need to compute the view first, otherwise get_child() will create
+   # a generic GUI widget for it, which is cached and never replaced by a
+   # proper EditorView aferward
+   return MDI.current ().get_child () == view \
+      and buffer.file ().language ().lower () == "ada"
+

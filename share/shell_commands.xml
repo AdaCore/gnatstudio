@@ -5717,7 +5717,17 @@ The package gps_utils.py provides a somewhat more convenient python interface to
   <shell_doc name="GPS.Action.menu">
      <param name="self">An instance of GPS.Action</param>
      <param name="path">A string</param>
+     <param name="ref" default="">A string</param>
+     <param name="add_before" default="True">A boolean</param>
      <description>Create a new menu associated with the command. This function is somewhat a duplicate of GPS.Menu.create, but with one major difference: the callback for the action is a python function that takes no argument, whereas the callback for GPS.Menu receives one argument</description>
+  </shell_doc> 
+
+  <shell_doc name="GPS.Action.contextual">
+     <param name="self">An instance of GPS.Action</param>
+     <param name="path">A string</param>
+     <param name="ref" default="">A string</param>
+     <param name="add_before" default="True">A boolean</param>
+     <description>Create a new contextual menu associated with the command. This function is somewhat a duplicate of GPS.Contextual.create, but with one major difference: the callback for the action is a python function that takes no argument, whereas the callback for GPS.Contextual receives one argument</description>
   </shell_doc> 
 
   <!--#################################################################
