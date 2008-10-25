@@ -250,6 +250,8 @@ def serialize (increment=1):
       GPS.Console().write ("Cursor must be before a number")
       return
 
+   format = "%0" + str (end_col - frm_col + 1) + "d"
+
    # And now do the replacement
    repl = loc.end_of_line () + 1  # to beginning of next line
    while repl < end:
@@ -259,16 +261,17 @@ def serialize (increment=1):
           eol = repl.end_of_line ()
           if repl + frm_col > eol:
              buffer.insert (eol,
-                           " " * ((eol - repl) - frm_col + 2) + str (value))
+                           " " * ((eol - repl) - frm_col + 2)
+                           + format % value)
           else:
              replace (repl + frm_col, min (repl + end_col, eol),
-                      str (value))
+                      format % value)
        else:
           # We had no selection: replace the digit, no matter how many cols
           to = repl + frm_col
           while buffer.get_chars (to, to).isdigit():
              to = to + 1
-          replace (repl + frm_col, to - 1, str (value))
+          replace (repl + frm_col, to - 1, format % value)
 
        repl = repl.end_of_line () + 1
        value = value + increment 
