@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2008, AdaCore             --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Values;              use Glib.Values;
 
@@ -43,7 +45,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
 with Projects;                 use Projects;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body GPS.Kernel.MDI is
 
@@ -174,7 +175,7 @@ package body GPS.Kernel.MDI is
       --  against that of the source editor module. The ID for that module
       --  needs to be moved to gps.kernel.ads.
 
-      --  First, try to find the editor using the normalized name of File.
+      --  First, try to find the editor using the normalized name of File
       Child := Find_MDI_Child_By_Name
         (MDI, Full_Name (File, Normalize => True).all);
 
@@ -327,6 +328,7 @@ package body GPS.Kernel.MDI is
          for C in Children'Range loop
             Add_Child_If_Needed (Children (C));
          end loop;
+
       else
          if Project_Modified (Get_Project (Handle), Recursive => True) then
             Num_Unsaved := Num_Unsaved + 1;
@@ -449,6 +451,7 @@ package body GPS.Kernel.MDI is
                               Parent  => Get_Current_Window (Handle));
                            return False;
                         end if;
+
                      else
                         Child := Find_MDI_Child_By_Name
                           (Get_MDI (Handle), Name);
@@ -473,6 +476,7 @@ package body GPS.Kernel.MDI is
          end if;
 
          Destroy (Dialog);
+
       else
          Unref (Model);
       end if;
