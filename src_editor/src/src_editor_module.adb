@@ -690,7 +690,8 @@ package body Src_Editor_Module is
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
+            Show_Subprogram_Name
+              (Box, Get_Subprogram_Name (Box, Max_Length => 35));
          end if;
       end if;
 

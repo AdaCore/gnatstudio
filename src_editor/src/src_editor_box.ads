@@ -268,9 +268,10 @@ package Src_Editor_Box is
    --  Return the contents of the entire buffer.
 
    function Get_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return String;
+     (Editor     : access Source_Editor_Box_Record;
+      Line       : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last;
+      Max_Length : Positive := Positive'Last) return String;
    --  Return the name for the subprogram enclosing Line.
    --  If Line is left to its default value, then the subprogram at the current
    --  line is computed.
