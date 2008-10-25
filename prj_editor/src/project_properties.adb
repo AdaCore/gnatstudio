@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2002-2008, AdaCore              --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2950,13 +2950,15 @@ package body Project_Properties is
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Project_Path),
                   Default_Name      => "",
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                  Kind              => Open_File);
             else
                File := Select_File
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Dir_Name (Default)),
                   Default_Name      => Base_Name (Default),
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                  Kind              => Open_File);
             end if;
 
             if File = GNATCOLL.VFS.No_File then
