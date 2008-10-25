@@ -39,6 +39,8 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with Gdk.Display; use Gdk.Display;
+with Gdk.Screen;  use Gdk.Screen;
 
 package body Entities.Tooltips is
 
@@ -222,6 +224,7 @@ package body Entities.Tooltips is
       Width, Height, W1, H1, W2, H2 : Gint := 0;
       GC     : Gdk.Gdk_GC;
       Pixbuf : Gdk_Pixbuf;
+      Max_Height, Max_Width : Gint;
 
       H_Pad : constant := 4;
       V_Pad : constant := 3;
@@ -259,6 +262,12 @@ package body Entities.Tooltips is
 
       Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Tooltip_Color.Get_Pref);
+
+      Max_Height := Get_Height (Get_Default_Screen (Gdk.Display.Get_Default));
+      Height := Gint'Min (Height, Max_Height);
+
+      Max_Width := Get_Width (Get_Default_Screen (Gdk.Display.Get_Default));
+      Width := Gint'Min (Width, Max_Width);
 
       Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
       Draw_Rectangle (Pixmap, GC, True, 0, 0, Width - 1, Height - 1);
