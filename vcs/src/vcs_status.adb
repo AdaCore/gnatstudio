@@ -25,16 +25,13 @@ with GNAT.Calendar.Time_IO; use GNAT.Calendar; use GNAT.Calendar.Time_IO;
 
 with Glib.Xml_Int;          use Glib.Xml_Int;
 
-with GNATCOLL.Filesystem;   use GNATCOLL.Filesystem;
-
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;
 with Projects.Registry;     use Projects.Registry;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
+with VCS_View;              use VCS_View;
 with XML_Parsers;
-
-with Ada.Characters.Handling;
 
 package body VCS_Status is
 
@@ -99,17 +96,8 @@ package body VCS_Status is
 
    function Hash (F : Virtual_File) return Header_Num is
       function Hash is new HTables.Hash (Header_Num);
-
-      FS : constant Filesystem_Access := Get_Filesystem (F);
    begin
-      if FS = null
-        or else Is_Case_Sensitive (FS.all)
-      then
-         return Hash (Full_Name (F, True).all);
-      else
-         return Hash
-           (Ada.Characters.Handling.To_Lower (Full_Name (F, True).all));
-      end if;
+      return Hash (File_Key (F));
    end Hash;
 
    ---------------
