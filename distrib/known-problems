@@ -446,3 +446,7 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Disable the synx higlighting by setting another language
               for the file.
 
+- E703-001: Empty revision log when multiple files selected
+  Problem:    It is possible to have an empty revision log when
+              committing multiple files selected on the VCS Explorer.
+  Workaround: Commit one file at a time or use an activity
