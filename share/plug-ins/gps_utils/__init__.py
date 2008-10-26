@@ -123,11 +123,9 @@ class interactive ():
 
 def in_ada_file (context):
    """Returns True if the focus is currently inside an Ada editor"""
-   buffer = EditorBuffer.get ()
-   view   = buffer.current_view ()
-   # We need to compute the view first, otherwise get_child() will create
-   # a generic GUI widget for it, which is cached and never replaced by a
-   # proper EditorView aferward
-   return MDI.current ().get_child () == view \
-      and buffer.file ().language ().lower () == "ada"
+   if not context.__dict__.has_key ("in_ada_file"):
+      buffer = EditorBuffer.get ()
+      context.in_ada_file =  MDI.current ().name () == buffer.file().name () \
+         and buffer.file ().language ().lower () == "ada"
+   return context.in_ada_file
 
