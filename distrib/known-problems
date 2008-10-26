@@ -1,6 +1,24 @@
 Known Problems fixed in GPS 4.4.0
 
+- HA05-007: Cannot create .gps directory for path with non ASCII characters
+  Problem:    If the HOME (or GPS_HOME) environment variable contains
+              non ASCII characters, GPS fails to create the .gps
+              directory.
+  Workaround: Use a GPS_HOME which contains only plain ASCII characters
+
+- D502-003: Procedure name too long and overlap with VCS status
+  Problem:    On the editor's status bar if a procedure name is
+              too long it will overlap with the VCS status.
+  Workaround: Use the VCS Explorer which displays the proper status
+
 Known Problems fixed in GPS 4.3.0
+
+- HA14-009: Wrong dialog settings in project properties
+  Problem:    On Vista the dialog checks for proper file permissions. As the
+              dialog on the project properties (to select a global pragma
+              file for example) was set in "save" mode it was not possible
+              to select a file which was read-only.
+  Workaround: Change file permissions to read-write.
 
 - H915-002: File view from project filter no working
   Problem:    On the file view when activating the
@@ -441,3 +459,7 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Disable the synx higlighting by setting another language
               for the file.
 
+- E703-001: Empty revision log when multiple files selected
+  Problem:    It is possible to have an empty revision log when
+              committing multiple files selected on the VCS Explorer.
+  Workaround: Commit one file at a time or use an activity
