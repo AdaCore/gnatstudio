@@ -142,7 +142,7 @@ package body VCS_Utils is
       File         : Virtual_File;
    begin
       for C in Children'Range loop
-         File := Create (Full_Filename => Head (Files));
+         File := Create (Full_Filename => Data (Files_Temp));
          Children (C) := Get_File_Editor (Kernel, File);
 
          if Save_Logs then
