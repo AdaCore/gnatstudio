@@ -280,8 +280,9 @@ def on_gps_started (hook_name):
 parse_xml (Make_Model_Template)
 parse_xml ("""
   <project_attribute
-    name="makefile"
+    name="Makefile"
     package="Make"
+    editor_page="Make"
     editor_section="Make"
     description="Makefile to use for this project">
     <string type="file"/>
@@ -289,6 +290,7 @@ parse_xml ("""
   <project_attribute
     name="Make"
     package="Make"
+    editor_page="Make"
     editor_section="Make"
     description="Make command to use when parsing Makefile">
     <string type="" default="make"/>
@@ -296,6 +298,7 @@ parse_xml ("""
   <project_attribute
     name="Switches"
     package="Make"
+    editor_page="Make"
     editor_section="Make"
     description="Switches for the make command">
     <string type="" default=""/>
@@ -308,8 +311,9 @@ if os_utils.locate_exec_on_path ("ant"):
       ant_support=True
       parse_xml ("""
   <project_attribute
-    name="antfile"
+    name="Antfile"
     package="Ant"
+    editor_page="Ant"
     editor_section="Ant"
     description="Ant build file to use for this project">
     <string type="file"/>
@@ -317,6 +321,7 @@ if os_utils.locate_exec_on_path ("ant"):
   <project_attribute
     name="Ant"
     package="Ant"
+    editor_page="Ant"
     editor_section="Ant"
     description="Ant command to use when parsing Makefile">
     <string type="" default="ant"/>
@@ -324,6 +329,7 @@ if os_utils.locate_exec_on_path ("ant"):
  <project_attribute
     name="Switches"
     package="Ant"
+    editor_page="Ant"
     editor_section="Ant"
     description="Switches for the ant command">
     <string type="" default="-e"/>
