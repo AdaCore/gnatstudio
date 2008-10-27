@@ -3159,7 +3159,10 @@ The subprogram on_interrupt is called when the user presses control-c in the con
   <shell_doc name="GPS.Console.write">
       <param name="self">The instance of GPS.Console</param>
       <param name="text">A utf8 string</param>
-      <description>Output some text on the console. This text is read-only. If the user had started typing some text, that text is temporarily remove, the next text is inserted (read-only), and the user text is put back afterward</description>
+      <param name="mode" default='"text"'>A string, one of "text", "log", "error"</param>
+      <description>Output some text on the console. This text is read-only. If the user had started typing some text, that text is temporarily remove, the next text is inserted (read-only), and the user text is put back afterward.
+
+The optional parameter mode specifies the kind of the output text: "text" for ordinary messages (this is default), "log" for log messages, and "error" for error messages.</description>
       <example lang="python">
           Console().write (u"\N{LATIN CAPITAL LETTER E WITH ACUTE}".encode("utf-8"))
       </example>
