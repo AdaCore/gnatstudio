@@ -40,6 +40,42 @@
    </switches>
 </target-model>
 
+<!-- This is an XML model for gprbuild -->
+<target-model name="gprbuild" category="">
+   <description>Build with gprbuild</description>
+   <command-line>
+      <arg>%gprbuild</arg>
+      <arg>-d</arg>
+      <arg>%eL</arg>
+      <arg>-P%PP</arg>
+      <arg>%X</arg>
+   </command-line>
+   <icon>gps-build-all</icon>
+   <switches command="%(tool_name)s" columns="2" lines="2">
+     <title column="1" line="1" >Dependencies</title>
+     <title column="2" line="1" >Compilation</title>
+     <title column="2" line="2" >Project</title>
+     <check label="Recompile if switches changed" switch="-s"
+            tip="Recompile if compiler switches have changed since last compilation" />
+     <check label="Keep going" switch="-k"
+            tip="Continue as much as possible after a compilation error" />
+     <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
+           column="2"
+           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+     <check label="Progress bar" switch="-d" column="2"
+            tip="Display a progress bar with information about how many files are left to be compiled" />
+     <check label="Compile only" switch="-c" column="2"
+            tip="Perform only compilation, no bind/link" />
+     <check label="Quiet mode" switch="-q" column="2"
+            tip="Be quiet/terse in output messages" />
+     <check label="Create object dirs" switch="-p" line="2" column="2"
+            tip="Create missing object and library directories" />
+     <spin label="Project verbosity" switch="-vP" min="0" max="2" default="1"
+           line="2" column="2"
+           tip="Specify verbosity when parsing project files" />
+   </switches>
+</target-model>
+
 <!-- This is an XML model for gnatmake -->
 <target-model name="gnatmake" category="">
    <description>Build with gnatmake</description>

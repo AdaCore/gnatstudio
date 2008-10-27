@@ -128,7 +128,6 @@ package GPS.Kernel.Preferences is
    Auto_Save              : Boolean_Preference;
    Save_Desktop_On_Exit   : Boolean_Preference;
    Save_Editor_Desktop    : Editor_Desktop_Policy_Prefs.Preference;
-   Multi_Language_Build   : Boolean_Preference;
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
    Auto_Jump_To_First     : Boolean_Preference;
    Tooltip_Color          : Color_Preference;

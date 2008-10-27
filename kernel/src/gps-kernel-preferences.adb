@@ -383,16 +383,6 @@ package body GPS.Kernel.Preferences is
          Page    => -"General",
          Default => From_Project);
 
-      Multi_Language_Build := Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Multi-Language-Build",
-         Label   => -"Multi language build",
-         Doc     =>
-         -("Whether GPS should build more than just Ada " &
-           "sources for projects containing Ada and other (e.g. C) languages"),
-         Default => False,
-         Page    => -"General");
-
       Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
          Name    => "General-Multi-Language-Builder",
