@@ -194,12 +194,13 @@ package body Build_Command_Manager is
             return (1 => new String'("-eL"));
          end if;
 
-      --  ??? Ditto for %builder and %gprclean
+      --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
+        or else Arg = "%gprbuild"
         or else Arg = "%gprclean"
       then
          declare
-            Builder  : constant Boolean := Arg = "%builder";
+            Builder  : constant Boolean := Arg /= "%gprclean";
             Prj      : constant Project_Type :=
                          Get_Project (Get_Kernel (Context));
             Gnatmake : constant String :=
@@ -208,9 +209,24 @@ package body Build_Command_Manager is
                             Default => "gnatmake",
                             Index   => "Ada");
             First    : Natural := Gnatmake'First;
+            Langs    : Argument_List := Get_Languages (Prj, Recursive => True);
+
+            Multi_Language_Build : Boolean := True;
 
          begin
-            if Multi_Language_Build.Get_Pref
+            if Arg /= "%gprbuild"
+              and then Langs'Length = 1
+              and then Langs (Langs'First).all = "ada"
+            then
+               --  Determine if the project has only Ada set, if so, set
+               --  Multi_Language_Build to False.
+
+               Multi_Language_Build := False;
+            end if;
+
+            Free (Langs);
+
+            if Multi_Language_Build
               and then Multi_Language_Builder.Get_Pref = Gprbuild
             then
                if Gnatmake'Length > 9
@@ -239,7 +255,7 @@ package body Build_Command_Manager is
                end if;
 
             elsif Builder then
-               if Multi_Language_Build.Get_Pref then
+               if Multi_Language_Build then
                   return (1 => new String'("gprmake"));
                else
                   return (1 => new String'(Gnatmake));

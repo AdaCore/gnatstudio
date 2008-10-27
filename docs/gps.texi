@@ -8951,20 +8951,13 @@ clipboard through @code{Edit->Copy} and @code{Edit->Cut} are saved. This list
 is navigated through the menu @code{Edit->Paste} and
 @code{Edit->Paste Previous}, as described earlier in this guide.
 
-@item Multi language build
-Whether GPS should build more than just Ada sources for projects containing Ada
-and other languages (e.g. C).
-
-By default, GPS will call gnatmake to build projects containing Ada sources,
-meaning that non Ada sources won't be built. By enabling this preference,
-a multi-language build tool (see below), will be called.
-
 @item Multi language builder
-The multi-language builder to be used in case multi-language build has been
-activated (see above).
+The multi-language builder to be used in case a multi-language or non Ada
+project has been loaded.
 
 By default, @code{gprbuild} will be used. Alternatively, its prototype
-@code{gprmake} can be selected although we do not recommend it at this stage.
+@code{gprmake} can be selected to help the transition, although we do not
+recommend it at this stage.
 
 @item Jump to first location
 @cindex location
@@ -10721,7 +10714,9 @@ category to which the current line belongs
 
 @item %builder
 Replaced by the default builder configured in GPS.
-This can be e.g. @code{gnatmake}, or @code{gprbuild}.
+This can be e.g. @code{gnatmake} if your project contains only Ada code,
+or @code{gprbuild} for non Ada or multi-language projects, or @code{gprmake}
+if you have set the multi language builder preference accordingly.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
@@ -10790,6 +10785,10 @@ Manager and the Build Launcher dialogs.
 
 @item %gnatmake
 Replaced by the gnatmake executable configured in your project file.
+
+@item %gprbuild
+Replaced by the gprbuild or gprmake command line configured in your project
+file.
 
 @item %gprclean
 Replaced by the default cleaner configured in GPS.

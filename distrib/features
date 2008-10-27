@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Oct 02, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Oct 27, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,16 @@ of the feature.
 
 New features in GPS 4.3.0
 -------------------------
+
+NF-43-HA23-020 Multi language preference computed automatically (2008-10-27)
+
+  The "multi language build" preference is now computed automatically based on
+  the project's contents: if languages other than Ada are set, then this
+  capability is enabled, otherwise it is disabled, and gnatmake will be used
+  to perform the build.
+  Note that with the new builder settings, it is easy to force the use
+  of e.g. gnatmake or gprbuild for all your builds, bypassing this automatic
+  configuration.
 
 NF-43-HA01-029 New menu Edit->Insert Shell Output... (2008-10-02)
 
