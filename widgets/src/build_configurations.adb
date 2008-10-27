@@ -399,19 +399,21 @@ package body Build_Configurations is
             New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
 
          begin
-            New_Cmd_Line (New_Cmd_Line'First) :=
-              new String'(The_Model.Default_Command_Line
-                          (The_Model.Default_Command_Line'First).all);
+            if New_Cmd_Line'Length > 0 then
+               New_Cmd_Line (New_Cmd_Line'First) :=
+                 new String'(The_Model.Default_Command_Line
+                             (The_Model.Default_Command_Line'First).all);
 
-            for J in New_Cmd_Line'First + 1 .. New_Cmd_Line'Last loop
-               New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
-            end loop;
+               for J in New_Cmd_Line'First + 1 .. New_Cmd_Line'Last loop
+                  New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
+               end loop;
 
-            Set_Command_Line (Registry, The_Target, New_Cmd_Line);
+               Set_Command_Line (Registry, The_Target, New_Cmd_Line);
 
-            for J in New_Cmd_Line'Range loop
-               Free (New_Cmd_Line (J));
-            end loop;
+               for J in New_Cmd_Line'Range loop
+                  Free (New_Cmd_Line (J));
+               end loop;
+            end if;
          end;
       end if;
    end Change_Model;
