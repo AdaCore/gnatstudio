@@ -158,7 +158,8 @@ color.
 
 @noindent
 
-Select the icon @code{Build Main: sdc.adb} on the toolbar: this will launch
+Select the icon @code{Build Main: sdc.adb} on the toolbar (third icon
+from the right): this will launch
 a complete build of the @i{sdc} application. Note also that you can use a
 key binding directly instead of this tool bar button (@key{F4}), or use the
 corresponding menu item @code{Build->Project->sdc.adb}. If you use the menu
@@ -184,7 +185,7 @@ line.
 Note that on some window managers or desktop environments,
 @key{Ctrl-Tab} is already defined. If this is the case, you can change this
 shortcut from the key shortcuts dialog (menu @code{Edit->Key shortcuts},
-@code{Source editor} section, @code{Format selection} item).
+@code{Menus} section, @code{/Edit/Format Selection} item).
 
 You can then fix all the remaining errors by selecting the whole block
 (from line 28 to line 40) and pressing @key{Ctrl-Tab}. To select a block,
@@ -302,14 +303,7 @@ the case of Stack.Overflow. We are going to add some code here, using the
 code assist capabilities.
 
 Type @key{enter} to create a new line, and then @code{Scr}, and hit
-@key{Ctrl+Space}. If you've never used
-auto-completion before, GPS will pop a window asking you if you want to enable
-the auto-completion engine. Answer "yes". You will see at the bottom right of
-GPS a progress bar, showing the status of the completion database load. Note
-that you can still work during this operation. The auto completion mechanism
-can be disabled from the preferences if needed.
-
-Wait until the progress bar disappears, and then hit @key{Ctrl+Space} again.
+@key{Ctrl+Space}.
 A completion popup will be displayed, showing all the entities of the project
 begining with @code{Scr}. Select @code{Screen_Output}. The code will be
 automatically completed in the editor. Then add a dot in your code. The
@@ -417,8 +411,8 @@ Fix the line to @code{Last := Last + 1;}
 Save the file (@key{Ctrl-S});
 End the debug session: menu @code{Debug->Terminate};
 Rebuild (press @key{F4} key);
-Rerun (menu @code{Build->Run->sdc}): the program now completes as expected.
-Close the execution window.
+Rerun (menu @code{Build->Run->sdc}, click on @code{OK}): the program now
+completes as expected. Close the execution window.
 
 @c --------------------------------------------------------------------
 @node Call Graph
@@ -453,7 +447,8 @@ Click on right arrow of @code{process} (@code{(Decl) instructions.ads:12}).
 The items can also be moved: move e.g @code{msg} item around.
 
 You can also recompute the layout of all the current items by using
-the contextual menu @code{Refresh layout}.
+the browser's contextual menu @code{Refresh layout} (move the mouse on the
+browser's background, with no box underneath, and right click).
 
 Click on left arrow of @code{msg}
 to display who is calling @code{msg}. Notice that @code{view} calls @code{msg}.
@@ -490,7 +485,7 @@ then save the file (@key{Ctrl-S}).
 Do the same for the spec, save the file.
 
 Close the @file{stack.ads} and @file{stack.adb} files (menu File->Close,
-or using the shortcut @key{Ctrl-W}), as well as the call graph window.
+or using the shortcut @key{Ctrl-W}).
 Rebuild by pressing the @key{F4} key.
 
 @c "Let's now have a look at all the changes we've done so far, by looking at
@@ -571,8 +566,8 @@ check box.
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
 for @i{Version Control System}.
 GPS provides a generic framework for @i{VCS} which allows it to support
-new systems easily. Systems supported by default are CVS, ClearCase and
-Subversion. Select @code{CVS}.
+new systems easily. Systems supported by default are CVS, ClearCase,
+Subversion and GIT. Select @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
 used to specify the project's sources. Click on the @code{Add} button,
@@ -708,10 +703,6 @@ On the @code{Sdc.gpr} project, select the contextual menu
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
-
-Close the project browser by clicking on the @code{[x]} sign at the top right
-area of the window, or by typing @key{Ctrl-W}, or by using the menu
-@code{File->Close}.
 
 @c --------------------------------------------------------------------
 @node Epilogue
