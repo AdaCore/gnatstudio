@@ -603,6 +603,19 @@ package body VCS_View.Explorer is
       Pop_State (Kernel);
    end Display_File_Status;
 
+   --------------------
+   -- No_VCS_Message --
+   --------------------
+
+   procedure No_VCS_Message (Explorer : VCS_Explorer_View_Access) is
+      R_Iter : Gtk_Tree_Iter := Null_Iter;
+   begin
+      Clear (Explorer.Model);
+      Append (Explorer.Model, R_Iter, Null_Iter);
+      Set (Explorer.Model, R_Iter,
+           Base_Name_Column, -"No VCS for this project");
+   end No_VCS_Message;
+
    ---------------
    -- Fill_Info --
    ---------------

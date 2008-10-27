@@ -2716,10 +2716,10 @@ package body VCS_View_API is
       Real_Query : Boolean;
       Recursive  : Boolean)
    is
-      pragma Unreferenced (Explorer);
-
       procedure Query_Status_For_Project (The_Project : Project_Type);
       --  Display the status for The_Project only
+
+      No_VCS_Defined : Boolean := True;
 
       ------------------------------
       -- Query_Status_For_Project --
@@ -2739,6 +2739,8 @@ package body VCS_View_API is
                & Project_Name (The_Project));
 
          else
+            No_VCS_Defined := False;
+
             if Real_Query then
                if Group_Query_Status_By_Dir (Ref) then
                   declare
@@ -2787,6 +2789,10 @@ package body VCS_View_API is
          Next (Iterator);
          Current_Project := Current (Iterator);
       end loop;
+
+      if No_VCS_Defined then
+         No_VCS_Message (Explorer);
+      end if;
    end Query_Project_Files;
 
    ------------------------

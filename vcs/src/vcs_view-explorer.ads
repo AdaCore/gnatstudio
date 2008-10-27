@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -65,6 +64,9 @@ package VCS_View.Explorer is
      (Explorer : access VCS_Explorer_View_Record;
       Project  : String);
    --  Remove Project from the explorer
+
+   procedure No_VCS_Message (Explorer : VCS_Explorer_View_Access);
+   --  Display a message stating that no VCS is defined for the project
 
 private
 

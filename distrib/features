@@ -53,6 +53,11 @@ NF-44-G903-012 Call stack window cleared while running (2008-10-02)
   running or has terminated to avoid confusion arising from an outdated
   callstack.
 
+NF-44-E817-003 Message on the VCS Explorer when no VCS defined (2008-10-27)
+
+  When no VCS is defined on the root project and all projects it
+  depends on a message is displayed into the VCS Explorer.
+
 NF-44-DB04-011 New auto VCS mode (2008-10-27)
 
   The new "auto" VCS_Kind mode can be used to let GPS automatically select
