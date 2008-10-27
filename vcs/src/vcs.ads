@@ -82,25 +82,13 @@ package VCS is
 
    type Action_Array is array (VCS_Action) of GNAT.Strings.String_Access;
 
-   function Get_VCS_From_Id (Id : String) return VCS_Access;
-   --  Browse through all VCS identifiers that are registered and return
-   --  a VCS reference to an appropriate system, if any.
-   --  If no satisfying system was found, Null is returned.
-   --  VCS identifiers are registered using Register_VCS_Identifier.
-
-   type VCS_Id_Identifier is access
-     function (Id : String) return VCS_Access;
-
-   procedure Register_VCS_Identifier (Identifier : VCS_Id_Identifier);
-   --  Add an identifier to the list of known identifiers.
-   --  See Get_VCS_From_Id above.
-
-   procedure Unregister_VCS_Identifier (Identifier : VCS_Id_Identifier);
-   --  Remove from the list of known identifiers the first one that matches
-   --  Identifier.
-
    function Name (Ref : access VCS_Record) return String is abstract;
    --  The name of the VCS system
+
+   function Administrative_Directory (Ref : access VCS_Record) return String;
+   --  Returns the name of the directory where the external VCS keeps
+   --  information about the repository. This is .svn for Subversion for
+   --  example.
 
    procedure Free (Ref : in out VCS_Record);
    --  Free memory associated with Ref

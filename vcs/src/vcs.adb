@@ -22,17 +22,20 @@ with Commands;                use Commands;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with String_Utils;            use String_Utils;
-with VCS.Unknown_VCS;         use VCS.Unknown_VCS;
 
 package body VCS is
 
-   procedure Free (Identifier : in out VCS_Id_Identifier);
-   --  Dummy function used to instanciate Identifiers list
+   use Ada;
 
-   package Identifiers is new Generic_List (VCS_Id_Identifier);
+   ------------------------------
+   -- Administrative_Directory --
+   ------------------------------
 
-   Identifiers_List : Identifiers.List;
-   --  Global variable to store all the registered handlers
+   function Administrative_Directory (Ref : access VCS_Record) return String is
+      pragma Unreferenced (Ref);
+   begin
+      return "";
+   end Administrative_Directory;
 
    ----------------------
    -- Commit_Directory --
@@ -60,69 +63,6 @@ package body VCS is
       Result.Status := F.Status;
       return Result;
    end Copy_File_Status;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Identifier : in out VCS_Id_Identifier) is
-      pragma Unreferenced (Identifier);
-   begin
-      null;
-   end Free;
-
-   -----------------------------
-   -- Register_VCS_Identifier --
-   -----------------------------
-
-   procedure Register_VCS_Identifier (Identifier : VCS_Id_Identifier) is
-   begin
-      Identifiers.Append (Identifiers_List, Identifier);
-   end Register_VCS_Identifier;
-
-   -------------------------------
-   -- Unregister_VCS_Identifier --
-   -------------------------------
-
-   procedure Unregister_VCS_Identifier (Identifier : VCS_Id_Identifier) is
-      use Identifiers;
-      Prev, Current : Identifiers.List_Node;
-   begin
-      Current := First (Identifiers_List);
-      while Current /= Null_Node loop
-         if Data (Current) = Identifier then
-            Remove_Nodes (Identifiers_List, Prev, Current);
-            return;
-         end if;
-
-         Prev := Current;
-         Current := Next (Current);
-      end loop;
-   end Unregister_VCS_Identifier;
-
-   ---------------------
-   -- Get_VCS_From_Id --
-   ---------------------
-
-   function Get_VCS_From_Id (Id : String) return VCS_Access is
-      use Identifiers;
-
-      Result : VCS_Access;
-      Temp   : List_Node  := First (Identifiers_List);
-
-   begin
-      while Temp /= Null_Node loop
-         Result := Data (Temp) (Id);
-
-         if Result /= null then
-            return Result;
-         end if;
-
-         Temp := Next (Temp);
-      end loop;
-
-      return Unknown_VCS_Reference;
-   end Get_VCS_From_Id;
 
    ---------------
    -- Set_Error --

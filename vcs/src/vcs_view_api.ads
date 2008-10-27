@@ -280,7 +280,9 @@ package VCS_View_API is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
    --  Return the current context relative to the VCS Explorer
 
-   function Get_Current_Ref (Project : Project_Type) return VCS_Access;
+   function Get_Current_Ref
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Type) return VCS_Access;
    --  Return the VCS reference registered in Project
 
    procedure VCS_Command_Handler

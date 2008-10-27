@@ -860,8 +860,7 @@ package body VCS_View.Explorer is
       end if;
 
       if Project /= No_Project then
-         Explorer.VCS := Get_VCS_From_Id
-           (Get_Attribute_Value (Project, VCS_Kind_Attribute));
+         Explorer.VCS := Get_Current_Ref (Kernel, Project);
       end if;
 
       Set_Context_Information

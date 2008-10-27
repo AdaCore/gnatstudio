@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Hashed_Maps;
 with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
@@ -78,6 +80,12 @@ package body VCS_View_API is
    use type GNAT.Strings.String_Access;
 
    VCS_Menu_Prefix : constant String := "<gps>/VCS/";
+
+   package VCS_Cache_Map is new Ada.Containers.Hashed_Maps
+     (Project_Type, VCS_Access, Projects.Project_Name_Hash, "=");
+   use VCS_Cache_Map;
+
+   VCS_Cache : VCS_Cache_Map.Map;
 
    -----------------------
    -- Local subprograms --
@@ -600,11 +608,120 @@ package body VCS_View_API is
    -- Get_Current_Ref --
    ---------------------
 
-   function Get_Current_Ref (Project : Project_Type) return VCS_Access is
+   function Get_Current_Ref
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Type) return VCS_Access
+   is
+      procedure Check (Project : Project_Type; VCS : out VCS_Access);
+      --  Check for the actual VCS for the given project. The project directory
+      --  is checked and all the sources directories.
+
+      -----------
+      -- Check --
+      -----------
+
+      procedure Check (Project : Project_Type; VCS : out VCS_Access) is
+
+         procedure Check (Dir : Virtual_File; VCS : out VCS_Access);
+         --  Check Dir for a specific VCS, set VCS if found
+
+         -----------
+         -- Check --
+         -----------
+
+         procedure Check (Dir : Virtual_File; VCS : out VCS_Access) is
+
+            procedure Check_VCS (Ref : VCS_Access);
+            --  Check for the given VCS
+
+            ---------------
+            -- Check_VCS --
+            ---------------
+
+            procedure Check_VCS (Ref : VCS_Access) is
+            begin
+               if VCS = null then
+                  declare
+                     Adir : constant String := Ref.Administrative_Directory;
+                  begin
+                     if Adir /= ""
+                       and then Is_Directory (Create_From_Dir (Dir, Adir))
+                     then
+                        VCS := Ref;
+                     end if;
+                  end;
+               end if;
+            end Check_VCS;
+
+         begin
+            For_Every_VCS (Check_VCS'Access);
+         end Check;
+
+      begin
+         if Project /= No_Project then
+            --  Check current project
+
+            Check (Project_Directory (Project), VCS);
+
+            if VCS = null then
+               --  Check all source directories
+
+               declare
+                  Srcs : GNAT.Strings.String_List_Access :=
+                           Source_Dirs (Project, Recursive => False);
+               begin
+                  for K in Srcs'Range loop
+                     Check (Create (Srcs (K).all), VCS);
+                     exit when VCS /= null;
+                  end loop;
+
+                  GNAT.Strings.Free (Srcs);
+               end;
+            end if;
+         end if;
+      end Check;
+
+      Pos : constant Cursor := VCS_Cache.Find (Project);
+      VCS : VCS_Access;
+
    begin
-      --  ??? maybe we could cache this information
-      return Get_VCS_From_Id
-        (Get_Attribute_Value (Project, VCS_Kind_Attribute));
+      if Has_Element (Pos) then
+         VCS := Element (Pos);
+
+      else
+         declare
+            VCS_Name : constant String :=
+                         Get_Attribute_Value (Project, VCS_Kind_Attribute);
+         begin
+            if To_Lower (VCS_Name) = "auto" then
+               Check (Project, VCS);
+
+               if VCS = null then
+                  Check (Get_Root_Project (Get_Registry (Kernel).all), VCS);
+               end if;
+
+               if VCS = null then
+                  Check (Extended_Project (Project), VCS);
+               end if;
+
+               if VCS = null then
+                  --  No VCS found for this name, default to unknown vcs
+                  VCS := Unknown_VCS.Unknown_VCS_Reference;
+               end if;
+
+               Console.Insert
+                 (Kernel,
+                  -("Auto-VCS: Project " & Project_Name (Project)
+                    & " is using " & Name (VCS)));
+            else
+               VCS := Get_VCS_From_Id (VCS_Name);
+            end if;
+
+            VCS_Cache.Include (Project, VCS);
+         end;
+      end if;
+
+      return VCS;
    end Get_Current_Ref;
 
    ---------------------
@@ -615,7 +732,7 @@ package body VCS_View_API is
       C : constant Selection_Context := Get_Current_Context (Kernel);
    begin
       if C = No_Context then
-         return Get_Current_Ref (Get_Project (Kernel));
+         return Get_Current_Ref (Kernel, Get_Project (Kernel));
       else
          return Get_Current_Ref (C);
       end if;
@@ -754,7 +871,7 @@ package body VCS_View_API is
 
    begin
       if Context = No_Context then
-         Ref := Get_Current_Ref (Get_Project (Kernel));
+         Ref := Get_Current_Ref (Kernel, Get_Project (Kernel));
       else
          Ref := Get_Current_Ref (Context);
       end if;
@@ -1785,7 +1902,8 @@ package body VCS_View_API is
    function Get_Current_Ref
      (Context : Selection_Context) return VCS_Access
    is
-      Prj : Project_Type;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Prj    : Project_Type;
    begin
       if Context = No_Context then
          return Get_VCS_From_Id ("");
@@ -1793,23 +1911,23 @@ package body VCS_View_API is
       elsif Has_Project_Information (Context) then
          --  If the context has project information, retrieve the VCS for that
          --  project
-         return Get_Current_Ref (Project_Information (Context));
+         return Get_Current_Ref (Kernel, Project_Information (Context));
 
       elsif Has_File_Information (Context) then
          --  If the context has a file information, try to find the project
          --  for this file.
 
          Prj := Get_Project_From_File
-           (Get_Registry (Get_Kernel (Context)).all,
+           (Get_Registry (Kernel).all,
             File_Information (Context), False);
 
          if Prj /= No_Project then
-            return Get_Current_Ref (Prj);
+            return Get_Current_Ref (Kernel, Prj);
          end if;
       end if;
 
       --  If all else fails, fallback on the VCS for the root project
-      return Get_Current_Ref (Get_Project (Get_Kernel (Context)));
+      return Get_Current_Ref (Kernel, Get_Project (Kernel));
    end Get_Current_Ref;
 
    ------------------------
@@ -2609,7 +2727,7 @@ package body VCS_View_API is
 
       procedure Query_Status_For_Project (The_Project : Project_Type) is
          use String_List;
-         Ref    : constant VCS_Access := Get_Current_Ref (The_Project);
+         Ref    : constant VCS_Access := Get_Current_Ref (Kernel, The_Project);
          Status : File_Status_List.List;
          Files  : String_List.List;
 
@@ -3546,7 +3664,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      Ref := Get_Current_Ref (Prj);
+      Ref := Get_Current_Ref (Kernel, Prj);
 
       if Ref = null then
          Insert

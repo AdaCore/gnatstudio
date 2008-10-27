@@ -18,10 +18,10 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;           use GNAT;
-with GNAT.Strings;
 
 with GNAT.Calendar.Time_IO; use GNAT.Calendar; use GNAT.Calendar.Time_IO;
+with GNAT.OS_Lib;           use GNAT;
+with GNAT.Strings;
 
 with Glib.Xml_Int;          use Glib.Xml_Int;
 
@@ -31,6 +31,7 @@ with Projects.Registry;     use Projects.Registry;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with VCS_View;              use VCS_View;
+with VCS_Module;            use VCS_Module;
 with XML_Parsers;
 
 package body VCS_Status is

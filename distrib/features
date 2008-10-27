@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Oct 25, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Oct 27, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -52,3 +52,10 @@ NF-44-G903-012 Call stack window cleared while running (2008-10-02)
   The debugger callstack is now cleared while the debugged program is
   running or has terminated to avoid confusion arising from an outdated
   callstack.
+
+NF-44-DB04-011 New auto VCS mode (2008-10-27)
+
+  The new "auto" VCS_Kind mode can be used to let GPS automatically select
+  the proper external VCS. This is useful in the context where different
+  people are not using the same VCS locally. For example developers
+  tracking a Subversion repository using Git (git-svn module).

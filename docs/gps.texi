@@ -16079,6 +16079,13 @@ The attribute @code{commit_directory} specifies if the VCS supports
 commit on directories and can take the values @code{TRUE} or @code{FALSE}.
 If it is set to @code{TRUE} it means that the VCS supports commit on
 directories this is the case for @code{Subversion} for example.
+
+@item administrative_directory
+The attribute @code{administrative_directory} specifies the name of
+the directory where the external VCS stores the local repository
+information. For example for Subversion this is @file{.svn}. This
+information is used for the automatic VCS selection (Project's
+@code{VCS_Kind} attribute set to @code{auto}).
 @end table
 
 Note that to support group commit with shared log on GPS both

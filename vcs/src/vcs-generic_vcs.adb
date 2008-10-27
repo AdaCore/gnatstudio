@@ -68,16 +68,8 @@ package body VCS.Generic_VCS is
    -- Local type definitions --
    ----------------------------
 
-   procedure Free (X : in out Generic_VCS_Access);
-   --  Free memory associated to X
+   type VCS_Generic_Module_ID_Record is new Module_ID_Record with null record;
 
-   package VCS_Info_List is new Generic_List (Generic_VCS_Access);
-
-   type VCS_Generic_Module_ID_Record is new Module_ID_Record with record
-      VCS_List : VCS_Info_List.List;
-   end record;
-
-   overriding procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
    overriding procedure Customize
      (Module : access VCS_Generic_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -92,12 +84,6 @@ package body VCS.Generic_VCS is
    VCS_Generic_Module_ID   : VCS_Generic_Module_ID_Access;
 
    use String_List_Utils.String_List;
-
-   function Identify_VCS (S : String) return VCS_Access;
-   --  Utility function to identify the Generic VCS from a given string
-
-   function Get_Info (Id : String) return Generic_VCS_Access;
-   --  Return the information corresponding to Id
 
    function Create_File_Context
      (Kernel : Kernel_Handle;
@@ -188,6 +174,20 @@ package body VCS.Generic_VCS is
    overriding function Execute
      (Command : access Run_Hook_Command_Type) return Command_Return_Type;
 
+   ------------------------------
+   -- Administrative_Directory --
+   ------------------------------
+
+   overriding function Administrative_Directory
+     (Ref : access Generic_VCS_Record) return String is
+   begin
+      if Ref.Administrative_Dir = null then
+         return "";
+      else
+         return Ref.Administrative_Dir.all;
+      end if;
+   end Administrative_Directory;
+
    -------------
    -- Execute --
    -------------
@@ -261,29 +261,6 @@ package body VCS.Generic_VCS is
       return Context;
    end Create_File_Context;
 
-   --------------
-   -- Get_Info --
-   --------------
-
-   function Get_Info (Id : String) return Generic_VCS_Access is
-      use VCS_Info_List;
-
-      Node : VCS_Info_List.List_Node := VCS_Info_List.First
-        (VCS_Generic_Module_ID.VCS_List);
-   begin
-      while Node /= VCS_Info_List.Null_Node loop
-         if Data (Node).Id /= null
-           and then To_Lower (Data (Node).Id.all) = To_Lower (Id)
-         then
-            return Data (Node);
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      return null;
-   end Get_Info;
-
    ----------
    -- Free --
    ----------
@@ -299,8 +276,15 @@ package body VCS.Generic_VCS is
    -- Free --
    ----------
 
-   procedure Free (X : in out Generic_VCS_Access) is
+   overriding procedure Free (Ref : in out Generic_VCS_Record) is
+
       procedure Free (A : in out Action_Array);
+      procedure Free (S : in out Status_Array_Access);
+
+      ----------
+      -- Free --
+      ----------
+
       procedure Free (A : in out Action_Array) is
       begin
          for J in A'Range loop
@@ -308,7 +292,6 @@ package body VCS.Generic_VCS is
          end loop;
       end Free;
 
-      procedure Free (S : in out Status_Array_Access);
       procedure Free (S : in out Status_Array_Access) is
       begin
          for J in S'Range loop
@@ -317,45 +300,22 @@ package body VCS.Generic_VCS is
          Unchecked_Free (S);
       end Free;
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Generic_VCS_Record'Class, Generic_VCS_Access);
    begin
-      if X /= null then
-         GNAT.Strings.Free (X.Id);
-         Basic_Types.Unchecked_Free (X.Parent_Revision_Regexp);
-         Basic_Types.Unchecked_Free (X.Branch_Root_Revision_Regexp);
-         Free (X.Status);
-         Free (X.Commands);
-         Free (X.Labels);
-         Free (X.Status_Parser);
-         Free (X.Local_Status_Parser);
-         Free (X.Annotations_Parser);
-         Free (X.Log_Parser);
-         Free (X.Revision_Parser);
+      GNAT.Strings.Free (Ref.Id);
+      GNAT.Strings.Free (Ref.Administrative_Dir);
+      Basic_Types.Unchecked_Free (Ref.Parent_Revision_Regexp);
+      Basic_Types.Unchecked_Free (Ref.Branch_Root_Revision_Regexp);
+      Free (Ref.Status);
+      Free (Ref.Commands);
+      Free (Ref.Labels);
+      Free (Ref.Status_Parser);
+      Free (Ref.Local_Status_Parser);
+      Free (Ref.Annotations_Parser);
+      Free (Ref.Log_Parser);
+      Free (Ref.Revision_Parser);
 
-         Free (VCS_Record (X.all));
-         Unchecked_Free (X);
-      end if;
+      Free (VCS_Record (Ref));
    end Free;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Id : in out VCS_Generic_Module_ID_Record) is
-      pragma Unreferenced (Id);
-   begin
-      VCS_Info_List.Free (VCS_Generic_Module_ID.VCS_List);
-   end Destroy;
-
-   ------------------
-   -- Identify_VCS --
-   ------------------
-
-   function Identify_VCS (S : String) return VCS_Access is
-   begin
-      return VCS_Access (Get_Info (S));
-   end Identify_VCS;
 
    ----------
    -- Name --
@@ -1466,6 +1426,8 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "atomic_commands", "FALSE"));
          Ref.Commit_Directory := Boolean'Value
            (Get_Attribute (M, "commit_directory", "FALSE"));
+         Ref.Administrative_Dir := new String'
+           (Get_Attribute (M, "administrative_directory", ""));
 
          --  dir_sep is an alias for path_style and is obsolescent, if both
          --  path_style and dir_sep are set, parth_style value is used.
@@ -1554,11 +1516,9 @@ package body VCS.Generic_VCS is
          Ref.Branch_Root_Revision_Regexp := Parse_Regexp
            (Find_Tag (Child, "branch_root_revision"));
 
-         Register_VCS (Module_ID (VCS_Module_ID), Name);
+         Register_VCS (Name, VCS_Access (Ref));
 
          Ref.Kernel := Kernel;
-
-         VCS_Info_List.Append (VCS_Generic_Module_ID.VCS_List, Ref);
 
          return True;
       end Parse_Node;
@@ -2254,7 +2214,6 @@ package body VCS.Generic_VCS is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       VCS_Generic_Module_ID := new VCS_Generic_Module_ID_Record;
-      Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
         (Module      => Module_ID (VCS_Generic_Module_ID),
          Kernel      => Kernel,

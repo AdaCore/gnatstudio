@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2001-2008, AdaCore               --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,20 +17,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with VCS_Module;         use VCS_Module;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 package body VCS.Unknown_VCS is
 
    Unknown_VCS_Name : constant String := "Unknown VCS";
 
    use String_List;
-
-   function Identify_VCS (S : String) return VCS_Access;
-   --  Utility function to identify the Unknown VCS from a given string
 
    procedure Error (File : String);
    --  Convenience function to display an error message in the console
@@ -45,21 +43,6 @@ package body VCS.Unknown_VCS is
         (Unknown_VCS_Reference.Kernel,
          -"Warning: no VCS set in project properties for " & File);
    end Error;
-
-   ------------------
-   -- Identify_VCS --
-   ------------------
-
-   function Identify_VCS (S : String) return VCS_Access is
-   begin
-      if S = ""
-        or else S = Unknown_VCS_Name
-      then
-         return Unknown_VCS_Reference;
-      else
-         return null;
-      end if;
-   end Identify_VCS;
 
    ----------
    -- Name --
@@ -407,13 +390,10 @@ package body VCS.Unknown_VCS is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      --  ??? Where should this be unregistered. Memory leak otherwise.
-      Register_VCS_Identifier (Identify_VCS'Access);
-      Register_VCS (Module_ID (VCS_Module_ID), "");
-
-      --  ??? Where is this freed. Memory leak
       Unknown_VCS_Reference := new Unknown_VCS_Record;
       Unknown_VCS_Reference.Kernel := Kernel_Handle (Kernel);
+
+      Register_VCS (Unknown_VCS_Name, Unknown_VCS_Reference);
    end Register_Module;
 
 end VCS.Unknown_VCS;

@@ -17,8 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -28,7 +33,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Basic_Types;               use Basic_Types;
 with Commands.VCS;              use Commands.VCS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -47,17 +51,13 @@ with String_List_Utils;
 with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
-with VCS;                       use VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View_API;              use VCS_View_API;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body VCS_Module is
-
-   Auto_Detect : constant String := "None";
 
    type Has_VCS_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -136,6 +136,52 @@ package body VCS_Module is
       Command : String);
    --  Handler for VCS Activities commands that take no parameter
 
+   ---------------
+   -- Equiv_VCS --
+   ---------------
+
+   function Equiv_VCS (Left, Right : String) return Boolean is
+   begin
+      return To_Lower (Left) = To_Lower (Right);
+   end Equiv_VCS;
+
+   -------------------
+   -- For_Every_VCS --
+   -------------------
+
+   procedure For_Every_VCS
+     (Process : not null access procedure (VCS : VCS_Access))
+   is
+      procedure Action (Position : VCS_Map.Cursor);
+      --  Called for every registered action in the map
+
+      ------------
+      -- Action --
+      ------------
+
+      procedure Action (Position : VCS_Map.Cursor) is
+      begin
+         Process (VCS_Map.Element (Position));
+      end Action;
+
+   begin
+      VCS_Module_ID.Registered_VCS.Iterate (Action'Access);
+   end For_Every_VCS;
+
+   ---------------------
+   -- Get_VCS_From_Id --
+   ---------------------
+
+   function Get_VCS_From_Id (Id : String) return VCS_Access is
+      Pos : constant VCS_Map.Cursor := VCS_Module_ID.Registered_VCS.Find (Id);
+   begin
+      if VCS_Map.Has_Element (Pos) then
+         return VCS_Map.Element (Pos);
+      else
+         return Unknown_VCS_Reference;
+      end if;
+   end Get_VCS_From_Id;
+
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -208,32 +254,12 @@ package body VCS_Module is
    end Append_To_Menu;
 
    ------------------
-   -- Get_VCS_List --
-   ------------------
-
-   function Get_VCS_List
-     (Module : Module_ID) return Argument_List is
-   begin
-      return VCS_Module_ID_Access (Module).VCS_List.all;
-   end Get_VCS_List;
-
-   ------------------
    -- Register_VCS --
    ------------------
 
-   procedure Register_VCS (Module : Module_ID; VCS_Identifier : String) is
-      M   : constant VCS_Module_ID_Access := VCS_Module_ID_Access (Module);
-      Old : Argument_List_Access;
+   procedure Register_VCS (Id : String; Handle : VCS_Access) is
    begin
-      if M.VCS_List = null then
-         M.VCS_List := new Argument_List'(1 => new String'(VCS_Identifier));
-      else
-         Old := M.VCS_List;
-         M.VCS_List := new Argument_List (1 .. M.VCS_List'Length + 1);
-         M.VCS_List (Old'Range) := Old.all;
-         M.VCS_List (M.VCS_List'Last) := new String'(VCS_Identifier);
-         Basic_Types.Unchecked_Free (Old);
-      end if;
+      VCS_Module_ID.Registered_VCS.Include (Id, Handle);
    end Register_VCS;
 
    ----------------------------------
@@ -242,22 +268,30 @@ package body VCS_Module is
 
    procedure VCS_Command_Handler_No_Param
      (Data    : in out Callback_Data'Class;
-      Command : String) is
+      Command : String)
+   is
+      Unknown_VCS_Name : constant String := Name (Unknown_VCS_Reference);
+
+      procedure Add_VCS (Position : VCS_Map.Cursor);
+      --  Add a VCS into the returned data
+
+      -------------
+      -- Add_VCS --
+      -------------
+
+      procedure Add_VCS (Position : VCS_Map.Cursor) is
+         Name : constant String := VCS_Map.Key (Position);
+      begin
+         --  Filter out the Unknown VCS
+         if Name /= Unknown_VCS_Name then
+            Set_Return_Value (Data, Name);
+         end if;
+      end Add_VCS;
+
    begin
       if Command = "supported_systems" then
-         declare
-            Systems : constant Argument_List :=
-                        Get_VCS_List (Module_ID (VCS_Module_ID));
-         begin
-            Set_Return_Value_As_List (Data);
-            for S in Systems'Range loop
-               if Systems (S).all = "" then
-                  Set_Return_Value (Data, -Auto_Detect);
-               else
-                  Set_Return_Value (Data, Systems (S).all);
-               end if;
-            end loop;
-         end;
+         Set_Return_Value_As_List (Data);
+         VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
       end if;
    end VCS_Command_Handler_No_Param;
 
@@ -266,8 +300,27 @@ package body VCS_Module is
    -------------
 
    overriding procedure Destroy (Module : in out VCS_Module_ID_Record) is
+
+      procedure Free (VCS : VCS_Map.Cursor);
+      --  Free VCS Access
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (VCS : VCS_Map.Cursor) is
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (VCS_Record'Class, VCS_Access);
+         V : VCS_Access := VCS_Map.Element (VCS);
+      begin
+         Free (V.all);
+         Unchecked_Free (V);
+         VCS_Module_ID.Registered_VCS.Replace_Element (VCS, null);
+      end Free;
+
    begin
-      Free (Module.VCS_List);
+      VCS_Module_ID.Registered_VCS.Iterate (Free'Access);
+      VCS_Module_ID.Registered_VCS.Clear;
       Clear_Cache (Module.Cached_Status, Free_Memory => True);
    end Destroy;
 
@@ -1174,7 +1227,8 @@ package body VCS_Module is
       D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Ref    : constant VCS_Access :=
                  Get_Current_Ref
-                   (Get_Project_From_File
+                   (Kernel,
+                    Get_Project_From_File
                       (Get_Registry (Kernel).all, D.File, True));
       Files  : List;
       Status : File_Status_Record;
@@ -1225,7 +1279,7 @@ package body VCS_Module is
       end if;
 
       if Project /= No_Project then
-         Ref := Get_Current_Ref (Project);
+         Ref := Get_Current_Ref (Kernel, Project);
       end if;
 
       if Ref = null then

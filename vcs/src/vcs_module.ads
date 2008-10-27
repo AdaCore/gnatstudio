@@ -19,13 +19,15 @@
 
 --  This package defines the GPS module for communication with VCS
 
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with Ada.Containers.Indefinite_Hashed_Maps;  use Ada;
+with Ada.Strings.Hash_Case_Insensitive;
 
 with Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with VCS;                 use VCS;
 with VCS_View.Explorer;   use VCS_View.Explorer;
 with VCS_View.Activities; use VCS_View.Activities;
 with VCS_Status;          use VCS_Status;
@@ -52,8 +54,15 @@ package VCS_Module is
    Annotation_Parsed_Hook : constant Hook_Name := "annotation_parsed_hook";
    --  Raised when the last annotation has been parsed
 
+   function Equiv_VCS (Left, Right : String) return Boolean;
+
+   package VCS_Map is new Containers.Indefinite_Hashed_Maps
+     (String, VCS_Access, Strings.Hash_Case_Insensitive, Equiv_VCS);
+
+   --  Global variable to store all the registered handlers
+
    type VCS_Module_ID_Record is new Module_ID_Record with record
-      VCS_List         : Argument_List_Access;
+      Registered_VCS : VCS_Map.Map;
       --  The list of all VCS systems recognized by the kernel
 
       Explorer         : VCS_Explorer_View_Access;
@@ -85,14 +94,20 @@ package VCS_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   function Get_VCS_List (Module : Module_ID) return GNAT.OS_Lib.Argument_List;
-   --  Return the list of recognized VCS systems.
-   --  You mustn't free the returned array.
+   procedure For_Every_VCS
+     (Process : not null access procedure (VCS : VCS_Access));
+   --  Iterate through all the registered VCS
 
-   procedure Register_VCS (Module : Module_ID; VCS_Identifier : String);
+   procedure Register_VCS (Id : String; Handle : VCS_Access);
    --  Add a VCS identifier to the list of recognized VCS systems.
    --  ??? This is temporary, until the VCS module can directly add a page in
    --  the wizard or the project properties editor.
+
+   function Get_VCS_From_Id (Id : String) return VCS_Access;
+   --  Browse through all VCS identifiers that are registered and return
+   --  a VCS reference to an appropriate system, if any.
+   --  If no satisfying system was found, Null is returned.
+   --  VCS identifiers are registered using Register_VCS_Identifier.
 
    function Get_Explorer
      (Kernel      : Kernel_Handle;

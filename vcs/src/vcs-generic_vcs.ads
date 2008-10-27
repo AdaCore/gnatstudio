@@ -31,7 +31,12 @@ package VCS.Generic_VCS is
 
    type Generic_VCS_Access is access all Generic_VCS_Record'Class;
 
+   overriding procedure Free (Ref : in out Generic_VCS_Record);
+
    overriding function Name (Ref : access Generic_VCS_Record) return String;
+
+   overriding function Administrative_Directory
+     (Ref : access Generic_VCS_Record) return String;
 
    overriding procedure Get_Status
      (Rep        : access Generic_VCS_Record;
@@ -208,9 +213,11 @@ private
    --  Free memory associated to X
 
    type Generic_VCS_Record is new VCS_Record with record
-      Id       : GNAT.Strings.String_Access;
-      Commands : Action_Array;
-      Labels   : Action_Array;
+      Id                  : GNAT.Strings.String_Access;
+      Administrative_Dir  : GNAT.Strings.String_Access;
+      --  Name of the directory where the external VCS keeps information
+      Commands            : Action_Array;
+      Labels              : Action_Array;
 
       Current_Query_Files         : String_List_Utils.String_List.List;
       --  The files transmitted to the current "query status" command.

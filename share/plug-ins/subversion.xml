@@ -387,7 +387,8 @@
         path_style="System_Default"
         group_queries_by_directory="TRUE"
         absolute_names="TRUE" atomic_commands="TRUE"
-        commit_directory="TRUE">
+        commit_directory="TRUE"
+	administrative_directory=".svn">
       <status_files       action="generic_svn_status"           label="Query status"/>
       <status_dir         action="generic_svn_status_dir"       label="Query status for directory"/>
       <status_dir_recursive

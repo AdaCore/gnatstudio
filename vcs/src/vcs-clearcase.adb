@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
@@ -63,12 +62,6 @@ package body VCS.ClearCase is
    -----------------------
    -- Local Subprograms --
    -----------------------
-
-   overriding procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record);
-   --  Free the memory occupied by this module
-
-   function Identify_VCS (S : String) return VCS_Access;
-   --  Return an access to VCS_Record if S describes a ClearCase system
 
    procedure Insert
      (L    : List;
@@ -372,24 +365,6 @@ package body VCS.ClearCase is
    begin
       return ClearCase_Identifier;
    end Name;
-
-   ------------------
-   -- Identify_VCS --
-   ------------------
-
-   function Identify_VCS (S : String) return VCS_Access is
-      Id         : String := S;
-      Identifier : String := ClearCase_Identifier;
-   begin
-      To_Lower (Id);
-      To_Lower (Identifier);
-
-      if Strip_Quotes (Id) = Identifier then
-         return VCS_ClearCase_Module_ID.ClearCase_Reference;
-      end if;
-
-      return null;
-   end Identify_VCS;
 
    ----------------
    -- Get_Status --
@@ -1796,16 +1771,6 @@ package body VCS.ClearCase is
       Free (Args);
    end Annotate;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Id : in out VCS_ClearCase_Module_ID_Record) is
-   begin
-      Free (Id.ClearCase_Reference);
-      Unregister_VCS_Identifier (Identify_VCS'Access);
-   end Destroy;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1815,7 +1780,6 @@ package body VCS.ClearCase is
    is
    begin
       VCS_ClearCase_Module_ID := new VCS_ClearCase_Module_ID_Record;
-      Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
         (Module      => Module_ID (VCS_ClearCase_Module_ID),
          Kernel      => Kernel,
@@ -1826,7 +1790,8 @@ package body VCS.ClearCase is
       VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel
         := Kernel_Handle (Kernel);
 
-      Register_VCS (Module_ID (VCS_Module_ID), ClearCase_Identifier);
+      Register_VCS
+        (ClearCase_Identifier, VCS_ClearCase_Module_ID.ClearCase_Reference);
 
       --  ??? Need to adapt this to the ClearCase terminology
       Actions :=

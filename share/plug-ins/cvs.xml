@@ -384,7 +384,8 @@
    <!-- CVS -->
 
    <vcs name="CVS" dir_sep="UNIX"
-        absolute_names="FALSE" ignore_file=".cvsignore">
+        absolute_names="FALSE" ignore_file=".cvsignore"
+	administrative_directory="CVS">
       <status_files       action="generic_cvs_status"           label="Query status"/>
       <status_dir         action="generic_cvs_status_dir"       label="Query status for directory"/>
       <local_status_files action="generic_cvs_local_status"     label="Local status"/>
