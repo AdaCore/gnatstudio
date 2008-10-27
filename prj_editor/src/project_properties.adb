@@ -23,8 +23,11 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with Gdk.Event;                 use Gdk.Event;
 
 with Glib;                      use Glib;
@@ -90,7 +93,6 @@ with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Namet;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
 
 package body Project_Properties is
@@ -240,7 +242,7 @@ package body Project_Properties is
    procedure Register_New_Attribute
      (Kernel    : access Kernel_Handle_Record'Class;
       Attr      : Attribute_Description_Access);
-   --  Register a new attribute in the project parser.
+   --  Register a new attribute in the project parser
 
    ------------------
    -- Wizard pages --
@@ -413,8 +415,8 @@ package body Project_Properties is
    --  Change the position of the current item in the list
 
    procedure Recursive_Directory_Changed
-     (Editor  : access Gtk_Widget_Record'Class;
-      Params  : Glib.Values.GValues);
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
    --  Called when a directory is made recursive
 
    procedure Project_Path_Changed (Editor : access Gtk_Widget_Record'Class);
@@ -525,13 +527,12 @@ package body Project_Properties is
      (Kernel      : access Kernel_Handle_Record'Class;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
-      Path_Widget : Gtk_Entry)
-      return Indexed_Attribute_Editor;
-   --  Create the widget used to edit an indexed attribute.
+      Path_Widget : Gtk_Entry) return Indexed_Attribute_Editor;
+   --  Create the widget used to edit an indexed attribute
 
    function Edit_Indexed_Attribute
-     (Editor       : access Gtk_Widget_Record'Class;
-      Event        : Gdk.Event.Gdk_Event) return Boolean;
+     (Editor : access Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Called when double-clicking on the value of an indexed attribute, and
    --  open a dialog to edit its value (that dialog contains one the standard
    --  widgets like combo boxes,... depending on the type of the attribute)
@@ -551,7 +552,7 @@ package body Project_Properties is
       Prj_Selector : Project_Selector;
 
       Pages              : Widget_Array_Access;
-      --  The pages that have been registered.
+      --  The pages that have been registered
 
       XML_Pages          : Wizard_Pages_Array_Access;
 
@@ -586,8 +587,8 @@ package body Project_Properties is
    --  Return the list of languages currently set in the editor
 
    procedure Toggle_Sensitive
-     (Check  : access Gtk_Widget_Record'Class;
-      Attr   : Attribute_Description_Access);
+     (Check : access Gtk_Widget_Record'Class;
+      Attr  : Attribute_Description_Access);
    --  Toggle the sensitivity state of an editor
 
    function Create_General_Page
@@ -620,13 +621,13 @@ package body Project_Properties is
    --  incomplete, and it might be dangereous to edit the properties.
 
    function Select_Files_Or_Directories
-     (Toplevel          : access Gtk_Window_Record'Class;
-      Project           : Project_Type;
-      Default           : String;
-      Project_Path      : String;
-      As_Directory      : Boolean;
-      Filter            : File_Filter;
-      Allow_Multiple    : Boolean := False) return GNATCOLL.VFS.File_Array;
+     (Toplevel       : access Gtk_Window_Record'Class;
+      Project        : Project_Type;
+      Default        : String;
+      Project_Path   : String;
+      As_Directory   : Boolean;
+      Filter         : File_Filter;
+      Allow_Multiple : Boolean := False) return GNATCOLL.VFS.File_Array;
    --  Open a dialog to select one or more file or directory names.
    --  Filter is used to select what kind of files should be shown to the user
 
@@ -642,8 +643,7 @@ package body Project_Properties is
       Attr          : Attribute_Description_Access;
       Index         : String := "";
       Default_Only  : Boolean := False;
-      Ignore_Editor : Boolean := False)
-      return GNAT.Strings.String_List;
+      Ignore_Editor : Boolean := False) return GNAT.Strings.String_List;
    --  Get the current value for the given attribute. This value is extracted
    --  from one of three sources, in that order:
    --    - Either the current editor for that attribute. This reflects the
@@ -660,10 +660,10 @@ package body Project_Properties is
    --  This implies Ignore_Editor
 
    function Attribute_Exists
-     (Attr               : Attribute_Description_Access;
-      Project            : Project_Type;
-      Attribute_Index    : String := "") return Boolean;
-   --  Return True if Attr was explicitly defined in Project.
+     (Attr            : Attribute_Description_Access;
+      Project         : Project_Type;
+      Attribute_Index : String := "") return Boolean;
+   --  Return True if Attr was explicitly defined in Project
 
    procedure Delete_Attribute_Value
      (Attr               : Attribute_Description_Access;
@@ -671,7 +671,7 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean;
       Attribute_Index    : String := "");
-   --  Remove the declaration for Attr in Project.
+   --  Remove the declaration for Attr in Project
 
    function Find_Editor_Page_By_Name (Name : String) return Natural;
    --  Find the index in Properties_Module_ID.Pages of the page Name.
@@ -3147,10 +3147,11 @@ package body Project_Properties is
      (Editor  : access Gtk_Widget_Record'Class;
       Params  : Glib.Values.GValues)
    is
-      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Path : constant String := Get_String (Nth (Params, 1));
-      Iter : constant Gtk_Tree_Iter :=
-        Get_Iter_From_String (Ed.Model, Path);
+      Ed       : constant File_Attribute_Editor :=
+                   File_Attribute_Editor (Editor);
+      Path     : constant String := Get_String (Nth (Params, 1));
+      Iter     : constant Gtk_Tree_Iter :=
+                   Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
       Set (Ed.Model, Iter, 1, Selected);
@@ -3163,8 +3164,9 @@ package body Project_Properties is
    procedure Project_Path_Changed
      (Editor : access Gtk_Widget_Record'Class)
    is
-      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
-      Iter : Gtk_Tree_Iter;
+      Ed        : constant File_Attribute_Editor :=
+                    File_Attribute_Editor (Editor);
+      Iter      : Gtk_Tree_Iter;
       Directory : constant String := Get_Text (Ed.Path_Widget);
    begin
       Iter := Get_Iter_First (Ed.Model);
@@ -3191,15 +3193,15 @@ package body Project_Properties is
       Path_Widget     : Gtk_Entry;
       Is_List         : Boolean) return File_Attribute_Editor
    is
-      Editor   : File_Attribute_Editor;
-      Button   : Gtk_Button;
-      Scrolled : Gtk_Scrolled_Window;
-      Box      : Gtk_Box;
-      Text     : Gtk_Cell_Renderer_Text;
-      Toggle   : Gtk_Cell_Renderer_Toggle;
-      Col      : Gtk_Tree_View_Column;
-      Iter     : Gtk_Tree_Iter;
-      Arrow    : Gtk_Arrow;
+      Editor     : File_Attribute_Editor;
+      Button     : Gtk_Button;
+      Scrolled   : Gtk_Scrolled_Window;
+      Box        : Gtk_Box;
+      Text       : Gtk_Cell_Renderer_Text;
+      Toggle     : Gtk_Cell_Renderer_Toggle;
+      Col        : Gtk_Tree_View_Column;
+      Iter       : Gtk_Tree_Iter;
+      Arrow      : Gtk_Arrow;
       Col_Number : Gint;
       pragma Unreferenced (Col_Number);
 
@@ -3383,12 +3385,12 @@ package body Project_Properties is
       Attribute_Index : String;
       Project_Path    : String) return GNAT.Strings.String_List
    is
+      Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
+        (Description, Attribute_Index);
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Ent    : Gtk_Entry;
       W      : List_Attribute_Editor;
-      Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Description, Attribute_Index);
    begin
       case Attr.Typ is
          when Attribute_As_String =>
@@ -3582,8 +3584,8 @@ package body Project_Properties is
      (Attr  : Attribute_Description_Access;
       Index : String) return Boolean
    is
-      Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Attr, Index);
+      Typ : constant Attribute_Type :=
+              Get_Attribute_Type_From_Description (Attr, Index);
    begin
       case Typ.Typ is
          when Attribute_As_String    => return True;
@@ -3667,7 +3669,7 @@ package body Project_Properties is
    -----------------------
 
    overriding function Get_Value_As_List
-     (Editor : access File_Attribute_Editor_Record;
+     (Editor          : access File_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.Strings.String_List
    is
       pragma Unreferenced (Attribute_Index);
@@ -3749,11 +3751,12 @@ package body Project_Properties is
       Default_Only  : Boolean := False;
       Ignore_Editor : Boolean := False) return String
    is
+      Typ                   : constant Attribute_Type :=
+                                Get_Attribute_Type_From_Description
+                                  (Attr, Index);
       Empty_String          : aliased String := "";
       Default_Value         : GNAT.Strings.String_Access :=
                                 Empty_String'Unchecked_Access;
-      Typ : constant Attribute_Type := Get_Attribute_Type_From_Description
-        (Attr, Index);
       Lower_Attribute_Index : String := Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -3794,6 +3797,7 @@ package body Project_Properties is
 
       if Default_Only then
          return Default_Value.all;
+
       else
          return Get_Attribute_Value
            (Project   => Project,
@@ -3809,14 +3813,13 @@ package body Project_Properties is
    -----------------------
 
    function Get_Current_Value
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Pkg     : String;
-      Name    : String;
-      Index   : String := "")
-      return GNAT.Strings.String_List
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pkg    : String;
+      Name   : String;
+      Index  : String := "") return GNAT.Strings.String_List
    is
       Attr : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name (Pkg, Name);
+               Get_Attribute_Type_From_Name (Pkg, Name);
    begin
       return Get_Current_Value
         (Kernel  => Kernel,
@@ -3835,8 +3838,7 @@ package body Project_Properties is
       Attr          : Attribute_Description_Access;
       Index         : String := "";
       Default_Only  : Boolean := False;
-      Ignore_Editor : Boolean := False)
-      return GNAT.Strings.String_List
+      Ignore_Editor : Boolean := False) return GNAT.Strings.String_List
    is
       Result : String_List_Access;
 
@@ -3857,15 +3859,18 @@ package body Project_Properties is
                Result := new GNAT.Strings.String_List (1 .. Tmp'Length + 1);
                Result (Tmp'Range) := Tmp.all;
                Unchecked_Free (Tmp);
+
             else
                Result := new GNAT.Strings.String_List (1 .. 1);
             end if;
+
             Result (Result'Last) := new String'(Value);
          end if;
       end Save_Value;
 
       Attr_Type             : Attribute_Type;
       Lower_Attribute_Index : String := Index;
+
    begin
       if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
@@ -3961,20 +3966,20 @@ package body Project_Properties is
    ----------------------------
 
    function Edit_Indexed_Attribute
-     (Editor       : access Gtk_Widget_Record'Class;
-      Event        : Gdk.Event.Gdk_Event) return Boolean
+     (Editor : access Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
    is
-      Ed        : constant Indexed_Attribute_Editor :=
-                    Indexed_Attribute_Editor (Editor);
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
+      Ed             : constant Indexed_Attribute_Editor :=
+                         Indexed_Attribute_Editor (Editor);
+      Path           : Gtk_Tree_Path;
+      Column         : Gtk_Tree_View_Column;
       Cell_X, Cell_Y : Gint;
-      Row_Found : Boolean;
-      Iter      : Gtk_Tree_Iter;
-      Value_Ed  : Attribute_Editor;
-      Dialog    : Gtk_Dialog;
-      Button    : Gtk_Widget;
-      Typ       : Attribute_Type;
+      Row_Found      : Boolean;
+      Iter           : Gtk_Tree_Iter;
+      Value_Ed       : Attribute_Editor;
+      Dialog         : Gtk_Dialog;
+      Button         : Gtk_Widget;
+      Typ            : Attribute_Type;
    begin
       Get_Path_At_Pos
         (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
@@ -4096,24 +4101,23 @@ package body Project_Properties is
      (Kernel      : access Kernel_Handle_Record'Class;
       Project     : Project_Type;
       Attr        : Attribute_Description_Access;
-      Path_Widget : Gtk_Entry)
-      return Indexed_Attribute_Editor
+      Path_Widget : Gtk_Entry) return Indexed_Attribute_Editor
    is
       Index_Col     : constant := 0;
       Attribute_Col : constant := 1;
       Editable_Col  : constant := 2;
 
       use Gtk.Enums.String_List;
-      Ed       : Indexed_Attribute_Editor;
-      Text     : Gtk_Cell_Renderer_Text;
-      Col      : Gtk_Tree_View_Column;
-      Scrolled : Gtk_Scrolled_Window;
-      Col_Number : Gint;
+      Ed            : Indexed_Attribute_Editor;
+      Text          : Gtk_Cell_Renderer_Text;
+      Col           : Gtk_Tree_View_Column;
+      Scrolled      : Gtk_Scrolled_Window;
+      Col_Number    : Gint;
       pragma Unreferenced (Col_Number);
-      Index    : constant Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name
-          (Pkg  => Attr.Index_Package.all,
-           Name => Attr.Index_Attribute.all);
+      Index         : constant Attribute_Description_Access :=
+                        Get_Attribute_Type_From_Name
+                          (Pkg  => Attr.Index_Package.all,
+                           Name => Attr.Index_Attribute.all);
       Current_Index : String_List_Access;
 
       procedure Value_Cb (Value : String; Selected : Boolean);
@@ -4237,17 +4241,20 @@ package body Project_Properties is
 
       Gtk_New (Col);
       Set_Resizable (Col, True);
+
       if Index.Label = null then
          Set_Title (Col, Index.Name.all);
       else
          Set_Title (Col, Index.Label.all);
       end if;
+
       Col_Number := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Index_Col);
 
       if Attr.Ordered_List then
          Set_Reorderable (Col, False);
+
       else
          Set_Sort_Column_Id (Col, Index_Col);
          Clicked (Col);
@@ -4256,16 +4263,17 @@ package body Project_Properties is
 
       Gtk_New (Col);
       Set_Resizable (Col, True);
+
       if Attr.Label /= null then
          Set_Title (Col, Attr.Label.all & (-" (Click to edit)"));
       else
          Set_Title (Col, -"(Click to edit)");
       end if;
+
       Col_Number := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
       Add_Attribute (Col, Text, "text", Attribute_Col);
       Add_Attribute (Col, Text, "editable", Editable_Col);
---      Set_Sort_Column_Id (Col, Attribute_Col);
 
       Set_Editable_And_Callback (Ed.Model, Text, Attribute_Col);
 
@@ -4287,14 +4295,14 @@ package body Project_Properties is
       Expandable  : out Boolean;
       Context     : String)
    is
-      Label  : Gtk_Label;
-      Box    : Gtk_Box;
-      Vbox   : Gtk_Box;
-      Align  : Gtk_Alignment;
-      Event  : Gtk_Event_Box;
-      Check  : Gtk_Check_Button;
+      Label       : Gtk_Label;
+      Box         : Gtk_Box;
+      Vbox        : Gtk_Box;
+      Align       : Gtk_Alignment;
+      Event       : Gtk_Event_Box;
+      Check       : Gtk_Check_Button;
       First, Last : Natural;
-      Exists : Boolean := True;
+      Exists      : Boolean := True;
    begin
       --  Should the page be displayed ?
       if Attr.Hide_In /= null then
@@ -4425,13 +4433,13 @@ package body Project_Properties is
    ----------------------
 
    procedure Toggle_Sensitive
-     (Check  : access Gtk_Widget_Record'Class;
-      Attr   : Attribute_Description_Access)
+     (Check : access Gtk_Widget_Record'Class;
+      Attr  : Attribute_Description_Access)
    is
       Active : constant Boolean := Get_Active (Gtk_Check_Button (Check));
-      Pkg_Start, Pkg_End, Name_Start, Index : Natural;
       Attr2  : Attribute_Description_Access;
       Page   : Attribute_Page;
+      Pkg_Start, Pkg_End, Name_Start, Index : Natural;
    begin
       if Attr.Editor /= null
         and then Active /= Is_Sensitive (Attr.Editor)
@@ -4499,17 +4507,17 @@ package body Project_Properties is
      (Editor  : access Properties_Editor_Record'Class;
       Project : Project_Type;
       Kernel  : access Kernel_Handle_Record'Class)
-  is
-      Label        : Gtk_Label;
-      Button       : Gtk_Widget;
-      Page         : Project_Editor_Page;
-      Box          : Gtk_Box;
-      XML_Page     : XML_Project_Wizard_Page_Access;
+   is
+      Label            : Gtk_Label;
+      Button           : Gtk_Widget;
+      Page             : Project_Editor_Page;
+      Box              : Gtk_Box;
+      XML_Page         : XML_Project_Wizard_Page_Access;
       General_Page_Box : Gtk_Box;
-      Main_Box     : Gtk_Paned;
-      Event        : Gtk_Event_Box;
-      General_Size : Gtk_Size_Group;
-      Tmp          : Wizard_Pages_Array_Access;
+      Main_Box         : Gtk_Paned;
+      Event            : Gtk_Event_Box;
+      General_Size     : Gtk_Size_Group;
+      Tmp              : Wizard_Pages_Array_Access;
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -4751,7 +4759,8 @@ package body Project_Properties is
       Nth_Page         : Integer;
       Context          : String) return Project_Wizard_Page
    is
-      Page : Attribute_Page renames Properties_Module_ID.Pages (Nth_Page);
+      Page         : Attribute_Page renames
+                       Properties_Module_ID.Pages (Nth_Page);
       Page_Box     : XML_Project_Wizard_Page_Access;
       Box          : Gtk_Box;
       Frame        : Gtk_Frame;
@@ -4888,13 +4897,14 @@ package body Project_Properties is
      (Notebook : access GObject_Record'Class;
       Editor   : GObject)
    is
-      Note  : constant Gtk_Notebook := Gtk_Notebook (Notebook);
-      Ed    : constant Properties_Editor := Properties_Editor (Editor);
-      Page  : constant Integer := Integer (Get_Current_Page (Note));
-      P     : Project_Editor_Page;
-      Flags : Selector_Flags;
+      Note                 : constant Gtk_Notebook := Gtk_Notebook (Notebook);
+      Ed                   : constant Properties_Editor :=
+                               Properties_Editor (Editor);
+      Page                 : constant Integer :=
+                               Integer (Get_Current_Page (Note));
       Pages_From_XML_Count : constant Integer := Ed.XML_Pages'Length;
-      --  Properties_Module_Id.Pages'Length
+      P                    : Project_Editor_Page;
+      Flags                : Selector_Flags;
    begin
       if Page >= Pages_From_XML_Count
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
@@ -4935,8 +4945,7 @@ package body Project_Properties is
 
    function Warning_On_View_Incomplete
      (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Type)
-      return Project_Edition_Type
+      Project : Project_Type) return Project_Edition_Type
    is
       D : Gtk_Dialog;
       B : Gtk_Widget;

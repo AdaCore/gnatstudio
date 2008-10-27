@@ -91,7 +91,7 @@ package Projects is
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
-   --  Create a new instance of the file.
+   --  Create a new instance of the file
 
    -------------------
    -- Project files --
@@ -138,7 +138,7 @@ package Projects is
    function Extended_Project
      (Project : Project_Type) return Project_Type;
    --  Return the project extended by project, or No_Project is there is none.
-   --  ??? What happens with "extends all" projects ?x
+   --  ??? What happens with "extends all" projects ?
 
    function Extending_Project
      (Project : Project_Type; Recurse : Boolean := False) return Project_Type;
@@ -479,7 +479,7 @@ package Projects is
    --  No_Project is returned if there are no more projects to process.
 
    procedure Next (Iterator : in out Imported_Project_Iterator);
-   --  Move to the next imported project.
+   --  Move to the next imported project
 
    function Is_Limited_With
      (Iterator : Imported_Project_Iterator) return Boolean;
@@ -683,16 +683,16 @@ private
      (Project   : Project_Type;
       Dir_Name  : String;
       Has_Files : Boolean);
-   --  Update the directories cache.
+   --  Update the directories cache
 
    procedure Destroy (Project : in out Project_Type);
-   --  Free the memory associated with the project.
+   --  Free the memory associated with the project
 
    procedure Set_Is_Normalized (Project : Project_Type; Normalized : Boolean);
    --  Indicate the normalization status of the project
 
    procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean);
-   --  Indicate whether the view for the project was correctly computed.
+   --  Indicate whether the view for the project was correctly computed
 
    function Is_External_Variable
      (Var  : Prj.Tree.Project_Node_Id;

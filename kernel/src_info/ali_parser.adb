@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -169,7 +169,7 @@ package body ALI_Parser is
      (Handler : access LI_Handler_Record'Class;
       LI      : LI_File;
       Id      : Unit_Id) return Source_File;
-   --  Return a handle to the file matching Id.
+   --  Return a handle to the file matching Id
 
    procedure Process_Sdep
      (Handler : access LI_Handler_Record'Class;
@@ -177,7 +177,7 @@ package body ALI_Parser is
       Dep_Id  : Sdep_Id;
       Sunits  : Unit_To_Sfile_Table;
       Sfile   : in out Source_Dependency);
-   --  Return a handle to a specific file dependency (Dep).
+   --  Return a handle to a specific file dependency (Dep)
 
    procedure Process_Sdeps
      (Handler : access LI_Handler_Record'Class;
@@ -192,7 +192,7 @@ package body ALI_Parser is
       File              : Source_File;
       Deps              : Sdep_To_Sfile_Table;
       Imported_Projects : Project_Type_Array);
-   --  Register the dependencies for all files in Deps into File.
+   --  Register the dependencies for all files in Deps into File
 
    procedure Process_Withs
      (Sunits            : Unit_To_Sfile_Table;
@@ -237,7 +237,7 @@ package body ALI_Parser is
       Xref_Ent              : Nat;
       Sfiles                : Sdep_To_Sfile_Table;
       First_Sect, Last_Sect : Nat);
-   --  Save the Xref Entity information in the New_LI_File structure.
+   --  Save the Xref Entity information in the New_LI_File structure
 
    procedure Process_Xref_Section
      (Handler               : access ALI_Handler_Record'Class;
@@ -245,14 +245,14 @@ package body ALI_Parser is
       Xref_Sect             : Nat;
       Sfiles                : Sdep_To_Sfile_Table;
       First_Sect, Last_Sect : Nat);
-   --  Save the Xref information associated to the given With_Record.
+   --  Save the Xref information associated to the given With_Record
 
    procedure Process_Xrefs
      (Handler               : access ALI_Handler_Record'Class;
       LI                    : LI_File;
       Sfiles                : Sdep_To_Sfile_Table;
       First_Sect, Last_Sect : Nat);
-   --  Save the Xref information in the New_LI_File structure.
+   --  Save the Xref information in the New_LI_File structure
 
    function Update_ALI
      (Handler   : access ALI_Handler_Record'Class; LI : LI_File;
@@ -277,7 +277,7 @@ package body ALI_Parser is
       Xref_Ent              : Nat;
       Sfiles                :  Sdep_To_Sfile_Table;
       First_Sect, Last_Sect : Nat);
-   --  Process the parent type of an entity declared in Xref_Ent.
+   --  Process the parent type of an entity declared in Xref_Ent
 
    procedure Process_Overriding_Ref
      (Handler               : access ALI_Handler_Record'Class;
@@ -365,7 +365,7 @@ package body ALI_Parser is
       if C in E_Kind_To_Char'Range then
          return E_Kind_To_Char (C);
       else
-         --  If we reach this point, the character is illegal.
+         --  If we reach this point, the character is illegal
          Trace (Me, "Char_To_E_Kind: Invalid character '" & C & ''');
          return Unresolved_Entity_Kind;
       end if;
@@ -381,7 +381,7 @@ package body ALI_Parser is
       if C in Char_To_Reference_Kind'Range then
          return Char_To_Reference_Kind (C);
       else
-         --  If we reach this point, the character is illegal.
+         --  If we reach this point, the character is illegal
          Trace (Me, "Char_To_R_Kind: Invalid character '" & C'Img & ''');
          return Reference;
       end if;
@@ -1635,7 +1635,7 @@ package body ALI_Parser is
       Source_Filename : Virtual_File;
       Project         : Project_Type) return Virtual_File
    is
-      LI : Virtual_File;
+      LI  : Virtual_File;
       Ext : Project_Type;
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is

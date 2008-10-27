@@ -1356,7 +1356,7 @@ package body VCS_Module is
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_Activities_View_Access
    is
-      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+      M     : constant VCS_Module_ID_Access := VCS_Module_ID;
       Child : GPS_MDI_Child;
    begin
       if M.Activities = null then

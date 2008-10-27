@@ -172,7 +172,7 @@ package body Browsers.Projects is
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser : access Project_Browser_Record'Class;
       Project : Project_Type);
-   --  Add to the browser all the projects that with Project.
+   --  Add to the browser all the projects that with Project
 
    procedure On_Examine_Prj_Hierarchy
      (Item : access Arrow_Item_Record'Class);

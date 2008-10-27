@@ -124,7 +124,7 @@ package body Builder_Module is
      (Run          : in out Run_Description;
       Ext_Terminal : Boolean;
       Command      : String);
-   --  Set the command to be run. Gets both exec name and args from Command.
+   --  Set the command to be run. Gets both exec name and args from Command
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record

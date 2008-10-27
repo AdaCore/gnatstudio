@@ -481,14 +481,14 @@ package body Projects is
       Recursive : Boolean;
       Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access
    is
-      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
-      Count   : Natural := 0;
-      P       : Project_Type;
-      Sources : GNAT.Strings.String_List_Access;
-      Result  : GNAT.Strings.String_List_Access;
-      Src     : String_List_Id;
-      Index   : Natural := 1;
       Current_Dir : constant String := Get_Current_Dir;
+      Iter        : Imported_Project_Iterator := Start (Project, Recursive);
+      Count       : Natural := 0;
+      P           : Project_Type;
+      Sources     : GNAT.Strings.String_List_Access;
+      Result      : GNAT.Strings.String_List_Access;
+      Src         : String_List_Id;
+      Index       : Natural := 1;
    begin
       loop
          P := Current (Iter);
@@ -610,8 +610,8 @@ package body Projects is
 
             while not At_End (Path, Iter) loop
                declare
-                  Dir : constant GNATCOLL.VFS.Virtual_File :=
-                          GNATCOLL.VFS.Create (Current (Path, Iter));
+                  Dir    : constant GNATCOLL.VFS.Virtual_File :=
+                             GNATCOLL.VFS.Create (Current (Path, Iter));
                   Subdir : constant GNATCOLL.VFS.Virtual_File :=
                              GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
                begin
@@ -688,6 +688,7 @@ package body Projects is
       --  precomputed when the project is loaded
       if Get_View (Project) = Prj.No_Project then
          return 0;
+
       else
          return Length (Project.View_Tree,
                         Projects_Table
