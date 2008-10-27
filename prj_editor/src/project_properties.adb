@@ -2873,7 +2873,7 @@ package body Project_Properties is
                when Filter_From_Project =>
                   Prj := Project;
                when Filter_From_Extended =>
-                  Prj := Parent_Project (Project);
+                  Prj := Extended_Project (Project);
                when others =>
                   Prj := Project;
             end case;
@@ -2893,7 +2893,7 @@ package body Project_Properties is
 
                --  If we had an extending project, look at the parent's sources
                --  as well
-               Prj := Parent_Project (Prj);
+               Prj := Extended_Project (Prj);
             end loop;
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
@@ -4331,7 +4331,7 @@ package body Project_Properties is
       if not Attr.Indexed
         and then Attr.Non_Index_Type.Typ = Attribute_As_Filename
         and then Attr.Non_Index_Type.Filter = Filter_From_Extended
-        and then Parent_Project (Project) = Projects.No_Project
+        and then Extended_Project (Project) = Projects.No_Project
       then
          Widget := null;
          Expandable := False;

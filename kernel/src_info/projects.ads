@@ -135,10 +135,6 @@ package Projects is
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 
-   function Parent_Project (Project : Project_Type) return Project_Type;
-   --  Return the project that Project is extending, or No_Project if there are
-   --  none.
-
    function Extended_Project
      (Project : Project_Type) return Project_Type;
    --  Return the project extended by project, or No_Project is there is none.

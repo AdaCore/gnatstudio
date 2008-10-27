@@ -1433,7 +1433,7 @@ package body ALI_Parser is
          end;
 
          if P /= Project then
-            P := Parent_Project (P);
+            P := Extended_Project (P);
          else
             P := No_Project;
          end if;
@@ -1617,7 +1617,7 @@ package body ALI_Parser is
 
          --  Check other projects earlier in the extending tree
          if P /= Project then
-            P := Parent_Project (P);
+            P := Extended_Project (P);
          else
             P := No_Project;
          end if;

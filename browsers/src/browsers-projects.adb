@@ -255,7 +255,7 @@ package body Browsers.Projects is
          P1 := Project_Of (Src);
          P2 := Project_Of (Dest);
 
-         if Parent_Project (P1) = P2 then
+         if Extended_Project (P1) = P2 then
             Add_Link
               (Get_Canvas (Browser), L, Src, Dest, Descr => -"extending");
          else

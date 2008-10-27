@@ -246,8 +246,8 @@ package body Creation_Wizard.Extending is
       --  is itself an expanding project, we prefer to expand the original
       --  project.
 
-      while Parent_Project (Parent) /= No_Project loop
-         Parent := Parent_Project (Parent);
+      while Extended_Project (Parent) /= No_Project loop
+         Parent := Extended_Project (Parent);
       end loop;
 
       Set_Extended_Project
@@ -336,7 +336,7 @@ package body Creation_Wizard.Extending is
    begin
       --  Search whether there is already a project extending File_Project
       while Current (Iter) /= No_Project
-        and then Parent_Project (Current (Iter)) /= File_Project
+        and then Extended_Project (Current (Iter)) /= File_Project
       loop
          Next (Iter);
       end loop;
@@ -444,7 +444,7 @@ package body Creation_Wizard.Extending is
    begin
       --  If the current root project is an extending all project
 
-      if Parent_Project (Get_Project (Kernel)) /= No_Project then
+      if Extended_Project (Get_Project (Kernel)) /= No_Project then
          File := File_Information (Context);
          if File /= GNATCOLL.VFS.No_File then
             Project := Get_Project_From_File
@@ -452,7 +452,7 @@ package body Creation_Wizard.Extending is
 
             --  If the file doesn't already belong to an extending project
             if Project /= No_Project
-              and then Parent_Project (Project) = No_Project
+              and then Extended_Project (Project) = No_Project
             then
                return True;
             end if;

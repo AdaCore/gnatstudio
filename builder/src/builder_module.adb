@@ -853,7 +853,7 @@ package body Builder_Module is
                                  Attribute => Main_Attribute);
          Loaded_Has_Mains : constant Boolean := Loaded_Mains'Length > 0;
          Extended_Project : constant Project_Type :=
-                              Parent_Project (Loaded_Project);
+                              Projects.Extended_Project (Loaded_Project);
          Iter             : Imported_Project_Iterator :=
                               Start (Loaded_Project);
          Current_Project  : Project_Type := Current (Iter);

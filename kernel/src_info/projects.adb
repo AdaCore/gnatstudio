@@ -1864,7 +1864,7 @@ package body Projects is
             Index := Index - 1;
          end loop;
 
-         Current := Parent_Project (Current);
+         Current := Extended_Project (Current);
          exit when Current = No_Project;
       end loop;
 
@@ -1896,7 +1896,7 @@ package body Projects is
             Start.Data.Importing_Projects := new Name_Id_Array'(Importing.all);
          end if;
 
-         Start := Parent_Project (Start);
+         Start := Extended_Project (Start);
          exit when Start = No_Project;
       end loop;
 
@@ -2823,24 +2823,6 @@ package body Projects is
    begin
       return Current (Iter) /= No_Project;
    end Has_Imported_Projects;
-
-   --------------------
-   -- Parent_Project --
-   --------------------
-
-   function Parent_Project (Project : Project_Type) return Project_Type is
-      Extend : constant Project_Node_Id := Extended_Project_Of
-        (Project_Declaration_Of (Project.Node, Project.Tree),
-         Project.Tree);
-   begin
-      if Extend = Empty_Node then
-         return No_Project;
-      else
-         return Get_Project_From_Name
-           (Project.Data.Registry.all,
-            Prj.Tree.Name_Of (Extend, Project.Tree));
-      end if;
-   end Parent_Project;
 
    ----------
    -- Prj1 --
