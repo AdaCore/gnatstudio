@@ -284,6 +284,7 @@ parse_xml ("""
     package="Make"
     editor_page="Make"
     editor_section="Make"
+    hide_in="wizard library_wizard"
     description="Makefile to use for this project">
     <string type="file"/>
   </project_attribute>
@@ -292,6 +293,7 @@ parse_xml ("""
     package="Make"
     editor_page="Make"
     editor_section="Make"
+    hide_in="wizard library_wizard"
     description="Make command to use when parsing Makefile">
     <string type="" default="make"/>
   </project_attribute>
@@ -300,6 +302,7 @@ parse_xml ("""
     package="Make"
     editor_page="Make"
     editor_section="Make"
+    hide_in="wizard library_wizard"
     description="Switches for the make command">
     <string type="" default=""/>
   </project_attribute>""")
@@ -315,6 +318,7 @@ if os_utils.locate_exec_on_path ("ant"):
     package="Ant"
     editor_page="Ant"
     editor_section="Ant"
+    hide_in="wizard library_wizard"
     description="Ant build file to use for this project">
     <string type="file"/>
   </project_attribute>
@@ -323,6 +327,7 @@ if os_utils.locate_exec_on_path ("ant"):
     package="Ant"
     editor_page="Ant"
     editor_section="Ant"
+    hide_in="wizard library_wizard"
     description="Ant command to use when parsing Makefile">
     <string type="" default="ant"/>
  </project_attribute>
@@ -331,6 +336,7 @@ if os_utils.locate_exec_on_path ("ant"):
     package="Ant"
     editor_page="Ant"
     editor_section="Ant"
+    hide_in="wizard library_wizard"
     description="Switches for the ant command">
     <string type="" default="-e"/>
  </project_attribute>""")
