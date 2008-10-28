@@ -914,6 +914,7 @@ package body Build_Configurations is
                --  In this case, it is OK to overwrite the data contained in
                --  the target.
                Target := Get_Target_From_Name (Registry, Target_Name);
+               Change_Model (Registry, Target_Name, Model);
             else
                Log (Registry, -"Error: target already registered: "
                     & Target_Name);
