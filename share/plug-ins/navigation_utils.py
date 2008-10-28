@@ -15,26 +15,7 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
 
 import GPS
 import string, re
-
-def on_gps_started (hook_name):
-   """Registers the GPS actions. This is done only after GPS has finished
-      its startup, so that the user can modify the variables above to edit
-      the name of menus"""
-
-   GPS.parse_xml ("""
-   <action name="goto declaration or body" output="none" category="Editor">
-     <description>Jump to the declaration of the current entity. If the cursor is already on the declaration, jump to the body/implementation of the entity instead</description>
-     <filter id="Source editor" />
-     <shell lang="python">navigation_utils.goto_declaration_body()</shell>
-   </action>
-
-   <action name="goto other file" output="none" category="Editor">
-     <description>If the editor is currently on a spec file (.ads or .h typically), jump to the implementation/body (.adb or .c). The exact extensions of the files are defined in the naming scheme in the project files</description>
-     <filter id="Source editor" />
-     <shell lang="python">navigation_utils.goto_other_file()</shell>
-   </action>
-""")
-
+from gps_utils import *
 
 ##  ??? At the moment, this is ada-specific, and ad-hoc. We should use
 ##  the GPS engine to get that sort of functionality with any language.
@@ -53,9 +34,9 @@ def __find_subprogram_decl():
       line = line - 1
    return (None, 0)
 
+@interactive ("Editor", "Source editor", name="goto declaration or body")
 def goto_declaration_body():
-   """ Go to the declaration of the reference, or to the body if we are
-       already on the declaration """
+   """Jump to the declaration of the current entity. If the cursor is already on the declaration, jump to the body/implementation of the entity instead"""
    current_file = GPS.current_context().file()
    current_line = GPS.current_context().location().line()
 
@@ -80,8 +61,9 @@ def goto_declaration_body():
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
          GPS.Editor.edit (current_file.other_file().name())
 
+@interactive ("Editor", "Source editor", name="goto other file")
 def goto_other_file():
-   """ Switch to the other file, if possible on the matching subprogram """
+   """If the editor is currently on a spec file (.ads or .h typically), jump to the implementation/body (.adb or .c). The exact extensions of the files are defined in the naming scheme in the project files"""
    match = __find_subprogram_decl()
    current_file = GPS.current_context().file()
 
@@ -112,5 +94,3 @@ def goto_other_file():
    else:
       GPS.Editor.edit (current_file.other_file().name())
 
-
-GPS.Hook ("gps_started").add (on_gps_started)

@@ -27,6 +27,7 @@
 
 from GPS import *
 import os_utils
+from gps_utils import *
 
 Preference ("Plugins/pipe/bgcolor").create (
   "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
@@ -60,8 +61,9 @@ def pipe (command, buffer=None):
    buffer.insert (start, output.rstrip())
    buffer.finish_undo_group()
 
+@interactive (name="Fmt selection")
 def fmt_selection ():
-  """Format the current selection through fmt"""
+  """Process the current selection through the "fmt" command to reformat paragraphs"""
   width  = Preference ("Src-Editor-Highlight-Column").get()
   buffer = EditorBuffer.get()
   prefix = None
@@ -89,6 +91,12 @@ class ShellProcess (CommandWindow):
    def on_activate (self, shell_command):
       pipe (shell_command)
 
+@interactive (filter="Source editor", menu="/Edit/Selection/Pipe in external program...")
+def pipe ():
+   """Process the current selection through a shell command,
+and replace it with the output of that command."""
+   ShellProcess ()
+
 def on_gps_started (hook):
    if os_utils.locate_exec_on_path ("fmt") != "":
       Menu.create ("/Edit/Selection/Refill with fmt",
@@ -96,21 +104,6 @@ def on_gps_started (hook):
                    on_activate=lambda menu: fmt_selection())
 
    parse_xml ("""
-     <action name="Pipe" output="none">
-        <description>Process the current selection through a shell command,
-           and replace it with the output of that command.</description>
-        <filter id="Source editor" />
-        <shell lang="python">pipe.ShellProcess()</shell>
-     </action>
-     <action name="Fmt selection" output="none">
-        <description>Process the current selection through the "fmt" command
-           to reformat paragraphs</description>
-        <filter id="Source editor" />
-        <shell lang="python">pipe.fmt_selection()</shell>
-     </action>
-     <menu action="Pipe">
-       <title>/Edit/Selection/Pipe in external program...</title>
-     </menu>
      <menu action="Pipe" after="Insert File...">
        <title>/Edit/Insert Shell Output...</title>
      </menu>

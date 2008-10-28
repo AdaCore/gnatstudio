@@ -16,15 +16,7 @@ must be used.
 
 from GPS import *
 import os, tempfile
-
-def on_gps_started (hook):
-  parse_xml ("""
-   <action name="Display standard.ads" output="none">
-      <shell lang="python">gnatpsta.display()</shell>
-   </action>
-   <menu action="Display standard.ads">
-      <title>/Help/GNAT Runtime/Standard</title>
-   </menu>""")
+from gps_utils import *
 
 def on_exit (process, exit_status, output):
    if exit_status == 0:
@@ -35,6 +27,7 @@ def on_exit (process, exit_status, output):
       buffer.current_view().set_read_only (True)
       os.unlink (process.standard)
 
+@interactive (name="Display standard.ads", menu="/Help/GNAT Runtime/Standard")
 def display():
    # Two possible ways here: older versions of GNAT still have the
    # gnatpsta utility, whereas for more recent versions we need to
@@ -58,5 +51,3 @@ def display():
    if path: os.unlink (path)
    os.rmdir  (dir)
 
-
-Hook ("gps_started").add (on_gps_started)

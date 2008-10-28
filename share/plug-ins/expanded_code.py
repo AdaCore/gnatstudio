@@ -5,6 +5,7 @@
 
 import os, os.path, re, string, distutils.dep_util
 import GPS
+from gps_utils import *
 
 def create_dg (f, str):
   res=file (f, 'wb')
@@ -28,6 +29,8 @@ def on_exit (process, status, full_output):
   create_dg (process.dg, full_output)
   edit_dg (process.dg, process.line)
 
+@interactive ("Ada", in_ada_file, contextual="Show expanded code",
+              name="show expanded code")
 def show_gnatdg():
   """Show the .dg file of the current file"""
   GPS.MDI.save_all (False)
@@ -48,14 +51,3 @@ def show_gnatdg():
     proc.line = line
   else:
     edit_dg (dg, line)
-
-def on_gps_started (hook):
-  GPS.parse_xml ("""<action name="show expanded code" category="Ada" output="none">
-    <filter language="Ada" />
-    <shell lang="python">expanded_code.show_gnatdg()</shell>
-  </action>
-  <contextual action="show expanded code" >
-    <Title>Show expanded code</Title>
-  </contextual>""")
-
-GPS.Hook ("gps_started").add (on_gps_started)

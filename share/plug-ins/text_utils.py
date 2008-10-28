@@ -342,13 +342,13 @@ def goto_beginning_of_line():
    view = GPS.EditorBuffer.get().current_view()
    view.goto (view.cursor().beginning_of_line())
 
-@interactive ("Editor", "Source editor", name="goto end of line")
 def end_of_line(file, line):
    """Goto to the end of the line in file"""
    buffer = GPS.EditorBuffer.get (GPS.File (file))
    loc  = GPS.EditorLocation (buffer, line, 1)
    buffer.current_view().goto (loc.end_of_line() - 1)
 
+@interactive ("Editor", "Source editor", name="goto end of line")
 def goto_end_of_line():
    """Goto the end of line"""
    view = GPS.EditorBuffer.get().current_view()

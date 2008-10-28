@@ -13,35 +13,21 @@ one of the two menus:
 ## No user customization below this line
 ############################################################################
 
-menu_name1 = "/Edit/Selection/Sort Reverse"
-menu_name2 = "/Edit/Selection/Sort"
-
 import GPS
 import string
+from gps_utils import *
 
-def on_gps_started (hook_name):
-  GPS.parse_xml ("""
-  <action name="sort selected lines descending" output="none" category="Editor">
-     <filter id="Source editor" />
-     <description>Sorts current selection</description>
-     <shell lang="python" >sort_selection.sort_selection(1)</shell>
-  </action>
-  <menu action="sort selected lines descending" after="Refill">
-     <title>""" + menu_name1 + """</title>
-  </menu>
-  <action name="sort selected lines ascending" output="none" category="Editor">
-     <filter id="Source editor" />
-     <description>Sorts current selection</description>
-     <shell lang="python" >sort_selection.sort_selection(0)</shell>
-  </action>
-  <menu action="sort selected lines ascending" after="Refill">
-     <title>""" + menu_name2 + """</title>
-  </menu>
-""")
+@interactive ("Editor", filter="Source editor",
+              name="sort selected lines descending",
+              menu="/Edit/Selection/Sort Reverse", after="Refill")
+def sort_selection_revert ():
+   sort_selection (revert=True)
 
-def sort_selection (revert):
-   """Sorts the current selection, either in ascending order if revert is 0
-      or in descending order otherwise"""
+@interactive ("Editor", filter="Source editor",
+              name="sort selected lines ascending",
+              menu="/Edit/Selection/Sort", after="Refill")
+def sort_selection (revert=False):
+   """Sorts the current selection, in ascending order by default"""
    context = GPS.current_context ();
    ed      = GPS.EditorBuffer.get (context.file())
    start   = ed.selection_start()
@@ -68,5 +54,3 @@ def sort_selection (revert):
    ed.delete (start, to)
    ed.insert (start, "\n".join (lines) + "\n")
    ed.finish_undo_group()
-
-GPS.Hook ("gps_started").add (on_gps_started)

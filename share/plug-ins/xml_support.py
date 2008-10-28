@@ -25,6 +25,7 @@ being edited:
 ############################################################################
 
 from GPS import *
+from gps_utils import *
 from os.path import *
 import xml.sax, xml.sax.handler, xml.sax.saxutils, traceback
 
@@ -94,7 +95,8 @@ def view_as_tree (menu):
    except:
      pass
 
-def next_open_tag (menu):
+@interactive ("XML", filter=in_xml_file, name="XML move to next open tag")
+def next_open_tag ():
    """Move to the next opening tag"""
    buffer = EditorBuffer.get()
    loc = buffer.current_view().cursor() + 1
@@ -108,7 +110,8 @@ def next_open_tag (menu):
       # End of file
       pass
 
-def next_close_tag (menu):
+@interactive ("XML", filter=in_xml_file, name="XML move to next close tag")
+def next_close_tag ():
    """Move to the next closing tag"""
    buffer = EditorBuffer.get()
    loc = buffer.current_view().cursor() + 1
@@ -121,7 +124,8 @@ def next_close_tag (menu):
       # End of file
       pass
 
-def goto_matching_tag (menu):
+@interactive ("XML", filter=in_xml_file, name="XML move to matching close tag")
+def goto_matching_tag ():
    """Go to the matching closing tag"""
    buffer = EditorBuffer.get()
    loc = buffer.current_view().cursor()
@@ -145,10 +149,10 @@ def create_xml_menu():
       Menu.create ("/XML/Check Well Formedness", on_activate=check_wf)
       Menu.create ("/XML/Escape Selection", on_activate=quote_selection)
       Menu.create ("/XML/View as Tree", on_activate=view_as_tree)
-      Menu.create ("/XML/Move To Next Open Tag", on_activate=next_open_tag)
-      Menu.create ("/XML/Move To Next Close Tag", on_activate=next_close_tag)
-      Menu.create ("/XML/Move To Matching Close Tag",
-                   on_activate=goto_matching_tag)
+      Action ("XML move to next open tag").menu ("/XML/Move To Next Open Tag")
+      Action ("XML move to next close tag").menu ("/XML/Move To Next Close Tag")
+      Action ("XML move to matching close tag") \
+         .menu ("/XML/Move To Matching Close Tag")
 
 def destroy_xml_menu():
    global xml_menu
@@ -159,8 +163,7 @@ def destroy_xml_menu():
 def context_changed (hook, context):
    """Called when the current context has changed"""
    try:
-      if context.file().language() == "xml" \
-        or context.file().language() == "html":
+      if context.file().language() in ["xml", "html"]:
          create_xml_menu ()
       else:
          destroy_xml_menu ()
@@ -188,24 +191,6 @@ parse_xml ("""
     <Spec_Suffix>.html</Spec_Suffix>
     <Parent>XML</Parent>
   </Language>
-
-  <filter_or name="xml_based">
-     <filter language="xml" />
-     <filter language="html" />
-  </filter_or>
-
-  <action name="XML move to next open tag" category="XML">
-     <filter id="xml_based" />
-     <shell lang="python">xml_support.next_open_tag (None)</shell>
-  </action>
-  <action name="XML move to next close tag" category="XML">
-     <filter id="xml_based" />
-     <shell lang="python">xml_support.next_close_tag (None)</shell>
-  </action>
-  <action name="XML move to matching close tag" category="XML">
-     <filter id="xml_based" />
-     <shell lang="python">xml_support.goto_matching_tag (None)</shell>
-  </action>
 """)
 
 Hook ("context_changed").add (context_changed)

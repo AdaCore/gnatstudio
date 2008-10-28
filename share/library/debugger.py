@@ -30,6 +30,7 @@
 ###########################################################################
 
 from GPS import *
+from gps_utils import *
 import text_utils, re, os.path
 
 Preference ("Plugins/debugger/save_autocont_br").create (
@@ -89,7 +90,11 @@ Contextual ("debug print as decimal").create (
 # Continuing till a specific line
 ####################################
 
+@interactive (name="continue till line", category="Debugger",
+              filter="Debugger active", key="control-b",
+              menu="/Debug/Continue to current line", after="Continue")
 def continue_till_line ():
+  """Continue executing the debuggee until it reaches the current editor line. If this line is never reached, the debugger will not stop"""
   context = current_context()
   try:
      debug = Debugger.get()
@@ -97,18 +102,6 @@ def continue_till_line ():
      debug.send ("cont")
   except:
      pass  # No debugger active
-
-parse_xml ("""
-  <action name="continue till line" category="Debugger">
-    <filter id="Debugger active"/>
-    <shell lang="python">debugger.continue_till_line()</shell>
-    <description>Continue executing the debuggee until it reaches the current editor line. If this line is never reached, the debugger will not stop</description>
-  </action>
-  <menu action="continue till line" after="Continue">
-    <title>/Debug/Continue to current line</title>
-  </menu>
-  <key name="continue till line">control-b</key>
-""")
 
 ####################################
 # Breakpoint exceptions            #

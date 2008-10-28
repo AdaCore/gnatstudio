@@ -42,27 +42,18 @@ words    = ["acute", "grave", "circumflex", "diaresis", "title",
 ############################################################################
 
 from GPS import *
+from gps_utils import *
 import unicodedata
-
-def on_gps_started (hook_name):
-   parse_xml ("""
-   <action name="Insert unicode" output="none" category="Editor">
-      <description>Insert any unicode character given its decimal or hexadecimal value, or its name</description>
-      <filter id="Source editor"/>
-      <shell lang="python">unicode.Unicode()</shell>
-   </action>
-   <action name="Describe unicode char" output="none" category="Editor">
-      <description>Describe the unicode character under the cursor (name, value,...)</description>
-      <filter id="Source editor" />
-      <shell lang="python">unicode.describe_char()</shell>
-   </action>
-   <menu action="Insert unicode" before="Insert File...">
-     <title>/Edit/Insert Unicode</title>
-   </menu>""")
 
 def findcommonstart(strlist):
   return strlist[0][:([min([x[0]==elem for elem in x]) \
                  for x in zip(*strlist)]+[0]).index(0)]
+
+@interactive (name="Insert unicode", category="Editor", filter="Source editor",
+              menu="/Edit/Insert Unicode", before="Insert File...")
+def insert ():
+  """Insert any unicode character given its decimal or hexadecimal value, or its name"""
+  Unicode ()
 
 class Unicode (CommandWindow):
    def __init__ (self):
@@ -98,8 +89,10 @@ class Unicode (CommandWindow):
             chr = unicodedata.lookup (input)
          buffer.insert (buffer.current_view().cursor(), chr.encode('utf-8'))
 
+@interactive (name="Describe unicode char", category="Editor",
+              filter="Source editor")
 def describe_char (char = None):
-   """Describe the unicode character under the cursor"""
+   """Describe the unicode character under the cursor (name, value,...)"""
    if not char:
       char = EditorBuffer.get().current_view().cursor().get_char()
    uni = char.decode ("utf-8")
@@ -108,5 +101,3 @@ def describe_char (char = None):
    Console().write ("   Unicode: " + `ord (uni)` \
                     + " (U+" + hex (ord (uni))[2:] + ")\n")
    Console().write ("  Category: " + unicodedata.category (uni) + "\n")
-
-Hook ("gps_started").add (on_gps_started)

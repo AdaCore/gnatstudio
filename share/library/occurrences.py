@@ -19,43 +19,26 @@ Locations window.
 
 
 ############################################################################
-## No user customization below this line
+## no user customization below this line
 ############################################################################
 
-menu_name = "/Navigate/Mark Occurrences in File"
-mark_action_name = "Mark occurrences"
-remove_action_name = "Remove marked occurrences"
-
 import GPS
+from gps_utils import *
 
-GPS.Preference ("Plugins/occurrences/color").create (
-  "Highlight color", "color",
-  """Color used to highlight matching occurrences.
-You must restart GPS to take changes into account""",
+GPS.Preference ("plugins/occurrences/color").create (
+  "highlight color", "color",
+  """color used to highlight matching occurrences.
+you must restart gps to take changes into account""",
   "lightblue")
 
 def on_gps_started (hook_name):
-  GPS.parse_xml ("""
-  <action name='""" + mark_action_name + """' category="Editor">
-     <filter id="Source editor" />
-     <description>Mark all the occurrences of the selected element in the current editor</description>
-     <shell lang="python" >occurrences.mark_selected()</shell>
-  </action>
-
-  <action name='""" + remove_action_name + """' category="Editor">
-     <filter id="Source editor" />
-     <description>Remove all highlightings done through Mark Occurrences</description>
-     <shell lang="python" >occurrences.unmark_selected()</shell>
-  </action>
-
-  <menu action='""" + mark_action_name + """'>
-     <title>""" + menu_name + """</title>
-  </menu>""")
-
   GPS.Editor.register_highlighting \
     ("dynamic occurrences", GPS.Preference ("Plugins/occurrences/color").get(), True)
 
+@interactive ("Editor", filter="Source editor", name="mark occurrences",
+              menu="/Navigate/Mark Occurrences In File")
 def mark_selected ():
+   """Mark all the occurrences of the selected element in the current editor"""
    buffer = GPS.EditorBuffer.get()
    selection = buffer.get_chars (buffer.selection_start(), buffer.selection_end() - 1)
    context=GPS.current_context()
@@ -68,8 +51,9 @@ def mark_selected ():
          GPS.Locations.add ("Local occurrences", m.file(), m.line(), m.column(),
               selection, highlight="dynamic occurrences", length=len(selection))
 
+@interactive ("Editor", filter="Source editor",
+              name="remove marked occurrences")
 def unmark_selected ():
    GPS.Locations.remove_category ("Local occurrences")
-
 
 GPS.Hook ("gps_started").add (on_gps_started)

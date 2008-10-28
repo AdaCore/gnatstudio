@@ -69,20 +69,27 @@ def with_save_excursion (fn):
    return do_work
 
 def make_interactive (callback, category="General", filter="", menu="", key="",
-                      contextual="", name=""):
+                      contextual="", name="", before="", after=""):
    """Declare a new GPS action (an interactive function, in Emacs talk),
       associated with an optional menu and default key. The description of
       the action is automatically taken from the documentation of the
       python function. Likewise the name of the action is taken from the
-      name of the python function.
-      callback is a python function that requires no argument, although it
+      name of the python function, unless specified with _name_.
+      _callback_ is a python function that requires no argument, although it
       can have optional arguments (none will be set when this is called from
-      the menu or the key shortcut)."""
+      the menu or the key shortcut).
+      _menu_ is the name of a menu to associate with the action. It will be
+      placed within its parent just before the item referenced as _before_,
+      or after the item referenced as _after_"""
 
    a = Action (name or callback.__name__)
    a. create (callback, filter=filter, category=category,
               description=callback.__doc__)
-   if menu:       a.menu (menu)
+   if menu:
+      if before:
+         a.menu (menu, add_before=True, ref=before)
+      else:
+         a.menu (menu, add_before=False, ref=after)
    if contextual: a.contextual (contextual)
    if key:
       if menu:
@@ -101,16 +108,19 @@ class interactive ():
            pass"""
 
    def __init__ (self, category="General", filter="", menu="", key="",
-                 contextual="", name=""):
+                 contextual="", name="", before="", after=""):
        self.filter = filter
        self.category = category
        self.menu = menu
        self.key = key
        self.name = name
        self.contextual = contextual
+       self.before = before
+       self.after = after
    def __call__ (self, fn):
        make_interactive (fn, filter=self.filter, category=self.category,
-                         menu=self.menu, key=self.key,
+                         menu=self.menu, key=self.key, after=self.after,
+                         before=self.before,
                          contextual=self.contextual, name=self.name)
        return fn
       
@@ -123,9 +133,17 @@ class interactive ():
 
 def in_ada_file (context):
    """Returns True if the focus is currently inside an Ada editor"""
-   if not context.__dict__.has_key ("in_ada_file"):
+   if not hasattr (context, "in_ada_file"):
       buffer = EditorBuffer.get ()
       context.in_ada_file =  MDI.current ().name () == buffer.file().name () \
          and buffer.file ().language ().lower () == "ada"
    return context.in_ada_file
+
+def in_xml_file (context):
+   """Returns True if the focus is in an XML editor"""
+   if not hasattr (context, "in_xml_file"):
+      buffer = EditorBuffer.get ()
+      context.in_xml_file =  MDI.current ().name () == buffer.file().name () \
+         and buffer.file ().language ().lower () in ["xml", "html"]
+   return context.in_xml_file
 
