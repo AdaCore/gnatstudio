@@ -4925,6 +4925,14 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
      <description>This function prevents the direct creation of instances of EditorBuffer. Use GPS.EditorBuffer.get instead</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.add_special_line">
+      <param name="start_line">An integer</param>
+      <param name="text">A string</param>
+      <param name="category" default="">A string</param>
+      <return>An instance of GPS.EditorMark</return>
+      <description>Adds one non-editable line to the buffer, starting at line start_line and contains string text. If category is specified, use it for highlighting. Create a mark at beginning of block and return it</description>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorBuffer.get">
       <param name="file" default="current editor">An instance of GPS.File</param>
       <param name="force" default="false">A boolean</param>
