@@ -30,7 +30,7 @@ def on_exit (process, status, full_output):
   edit_dg (process.dg, process.line)
 
 @interactive ("Ada", in_ada_file, contextual="Show expanded code",
-              name="show expanded code")
+              name="show expanded code", before="Align")
 def show_gnatdg():
   """Show the .dg file of the current file"""
   GPS.MDI.save_all (False)
