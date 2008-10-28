@@ -1157,6 +1157,9 @@ package body Src_Editor_Buffer.Line_Information is
       Real_Number : Buffer_Line_Type := 0;
       Result      : Boolean := True;
       Buffer_Line : Buffer_Line_Type;
+
+      Begin_Tag   : Gtk_Text_Iter;
+      Success     : Boolean;
    begin
       if Buffer.In_Destruction then
          return;
@@ -1180,6 +1183,18 @@ package body Src_Editor_Buffer.Line_Information is
 
          exit when Real_Number = Buffer_Line_Type (Number);
       end loop;
+
+      --  Remove the non-editable tag.
+      Copy (Iter, Begin_Tag);
+      Backward_Char (Begin_Tag, Success);
+
+      if not Success then
+         Copy (Iter, Begin_Tag);
+      end if;
+
+      Remove_Tag (Buffer, Buffer.Non_Editable_Tag, Begin_Tag, End_Iter);
+
+      --  Remove the lines.
 
       Buffer.Blank_Lines := Buffer.Blank_Lines - Natural (Real_Number);
 
