@@ -1,7 +1,7 @@
 #!/bin/sh
 # .gps_wrapper
 #
-# Copyright 2002-2006 by AdaCore
+# Copyright 2002-2008 AdaCore
 
 prog=`basename $0`
 root=`dirname $0`
@@ -27,6 +27,10 @@ export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
 LD_LIBRARY_PATH=$root/lib/gps:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 GTK_EXE_PREFIX=$root
+
+if [ -d $root/lib/gps ]; then
+  unset GTK2_RC_FILES
+fi
 
 if [ -f $root/etc/fonts/fonts.conf ]; then
   FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
