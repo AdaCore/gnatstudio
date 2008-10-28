@@ -1391,14 +1391,15 @@ package body Switches_Chooser is
       ----------------------
 
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Cmd_Line : GNAT.Strings.String_List)
+        (Editor         : access Root_Switches_Editor;
+         Cmd_Line       : GNAT.Strings.String_List;
+         Protect_Quotes : Boolean := True)
       is
       begin
          --  ??? Not very efficient to go through a string
          Set_Command_Line
            (Root_Switches_Editor'Class (Editor.all)'Access,
-            Argument_List_To_String (Cmd_Line));
+            Argument_List_To_String (Cmd_Line, Protect_Quotes));
       end Set_Command_Line;
 
       ----------------
