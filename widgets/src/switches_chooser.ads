@@ -273,10 +273,13 @@ package Switches_Chooser is
         (Editor   : access Root_Switches_Editor;
          Cmd_Line : String);
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Cmd_Line : GNAT.Strings.String_List);
+        (Editor         : access Root_Switches_Editor;
+         Cmd_Line       : GNAT.Strings.String_List;
+         Protect_Quotes : Boolean := True);
       --  Set the switches to display on the command line. This can be used to
-      --  initialize the widget
+      --  initialize the widget.
+      --  If Protect_Quotes is True, protect the quotes when converting the
+      --  command line to a string to be displayed in the entry.
 
       function "="
         (Editor : access Root_Switches_Editor;

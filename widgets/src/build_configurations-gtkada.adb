@@ -467,7 +467,7 @@ package body Build_Configurations.Gtkada is
       if UI.Target.Command_Line /= null
         and then UI.Target.Command_Line'Length > 0
       then
-         Set_Command_Line (UI.Editor, UI.Target.Command_Line.all);
+         Set_Command_Line (UI.Editor, UI.Target.Command_Line.all, False);
       end if;
 
       Add (UI.Frame, UI.Editor);
