@@ -162,10 +162,14 @@ package body Build_Configurations.Gtkada is
    procedure Save_Targets (UI : access Build_UI_Record'Class);
    --  Saves the command lines and options of all targets into the registry
 
-   procedure Refresh (UI : access Build_UI_Record'Class);
+   procedure Refresh
+     (UI            : access Build_UI_Record'Class;
+      Select_Target : String);
    procedure Refresh (UI : access Mode_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
    --  them with the information contained in the Registry.
+   --  Select_Target indicates which target should be selected after the
+   --  refresh. It can be empty, in which case no target is selected.
 
    procedure On_Entry_Changed (UI : access Build_UI_Record'Class);
    --  "changed" callback for target UI entry
@@ -375,14 +379,18 @@ package body Build_Configurations.Gtkada is
       T := Target_UI_Access
         (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
 
-      --  Revert to the original target
-      Revert_Target (UI.Registry, To_String (T.Target.Name));
+      declare
+         Target_Name : constant String := To_String (T.Target.Name);
+      begin
+         --  Revert to the original target
+         Revert_Target (UI.Registry, Target_Name);
 
-      --  Reset dangling pointer. Should be done in the following call to
-      --  Refresh, but do it for safety.
-      T.Target := null;
+         --  Reset dangling pointer. Should be done in the following call to
+         --  Refresh, but do it for safety.
+         T.Target := null;
 
-      Refresh (UI);
+         Refresh (UI, Target_Name);
+      end;
 
    exception
       when E : others =>
@@ -983,7 +991,7 @@ package body Build_Configurations.Gtkada is
       Pack_Start (Get_Vbox (Dialog), UI, True, True, 3);
       Set_Has_Separator (Dialog, False);
 
-      Refresh (UI);
+      Refresh (UI, "");
 
       Show_All (Dialog);
 
@@ -1225,7 +1233,7 @@ package body Build_Configurations.Gtkada is
             Name     => To_String (Name),
             Category => To_String (Cat),
             Model    => To_String (Model));
-         Refresh (UI);
+         Refresh (UI, To_String (Name));
       end if;
    exception
       when E : others =>
@@ -1250,7 +1258,7 @@ package body Build_Configurations.Gtkada is
 
       if not Cancelled then
          Remove_Target (UI.Registry, To_String (Target.Name));
-         Refresh (UI);
+         Refresh (UI, "");
       end if;
 
    exception
@@ -1311,7 +1319,7 @@ package body Build_Configurations.Gtkada is
             To_String (Target.Name),
             To_String (Name),
             To_String (Cat));
-         Refresh (UI);
+         Refresh (UI, To_String (Name));
       end if;
 
    exception
@@ -1484,9 +1492,14 @@ package body Build_Configurations.Gtkada is
    -- Refresh --
    -------------
 
-   procedure Refresh (UI : access Build_UI_Record'Class) is
+   procedure Refresh
+     (UI            : access Build_UI_Record'Class;
+      Select_Target : String)
+   is
       Count : Gint := 1;
       --  Indicates the number of the target that we are currently adding
+
+      Target_Iter : Gtk_Tree_Iter;
 
       procedure Add_Target
         (View   : Tree_View;
@@ -1590,6 +1603,10 @@ package body Build_Configurations.Gtkada is
          if Icon_Str /= "" then
             Set (View.Model, Iter, Icon_Column, To_String (Icon_Str));
          end if;
+
+         if Select_Target = To_String (Target.Name) then
+            Target_Iter := Iter;
+         end if;
       end Add_Target;
 
       use Target_List;
@@ -1628,6 +1645,12 @@ package body Build_Configurations.Gtkada is
       Show_All (UI.Notebook);
 
       Expand_All (UI.View);
+
+      --  Select the target
+
+      if Select_Target /= "" then
+         Select_Iter (Get_Selection (UI.View), Target_Iter);
+      end if;
    end Refresh;
 
    procedure Refresh (UI : access Mode_UI_Record'Class) is
