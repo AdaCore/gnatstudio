@@ -456,6 +456,10 @@ package body Build_Configurations is
       end if;
 
       Dest.Properties := Src.Properties;
+
+      --  If we have duplicated a target using this subprogram, this means the
+      --  target is user-created.
+      Dest.Properties.Read_Only := False;
    end Duplicate_Target;
 
    ------------------
