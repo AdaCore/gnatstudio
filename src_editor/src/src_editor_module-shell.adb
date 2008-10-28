@@ -2407,6 +2407,41 @@ package body Src_Editor_Module.Shell is
             Set_Return_Value (Data, not Get_Writable (Buffer));
          end if;
 
+      elsif Command = "add_special_line" then
+         Get_Buffer (Buffer, Data, 1);
+         if Buffer /= null then
+            declare
+               Line               : constant Integer := Nth_Arg (Data, 2);
+               Text               : constant String  := Nth_Arg (Data, 3);
+               Highlight_Category : Natural := 0;
+               Style              : Style_Access;
+            begin
+               if Number_Of_Arguments (Data) >= 4 then
+                  Style := Get_Or_Create_Style
+                    (Kernel, Nth_Arg (Data, 4), False);
+
+                  if Style = null then
+                     Set_Error_Msg
+                       (Data, -"No such style: " & Nth_Arg (Data, 4));
+                     return;
+                  else
+                     Highlight_Category :=
+                       Line_Highlighting.Lookup_Category (Style);
+                  end if;
+               end if;
+
+               Mark := Add_Blank_Lines
+                 (Buffer,
+                  Editable_Line_Type (Line),
+                  Highlight_Category,
+                  Text,
+                  1);
+
+               Set_Return_Value
+                 (Data, Create_Editor_Mark (Get_Script (Data), Mark));
+            end;
+         end if;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -3408,6 +3443,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "add_special_line", 2, 3, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 

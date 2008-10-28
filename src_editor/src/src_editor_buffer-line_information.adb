@@ -754,7 +754,6 @@ package body Src_Editor_Buffer.Line_Information is
       Text   : String;
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      pragma Unreferenced (Text);
       LFs         : String (1 .. Natural (Number));
       Buffer_Line : Buffer_Line_Type;
       Iter        : Gtk_Text_Iter;
@@ -813,7 +812,13 @@ package body Src_Editor_Buffer.Line_Information is
 
       Mark := Create_Mark (Buffer, "", Iter);
 
+      Buffer.Inserting := True;
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
+      Insert (Buffer, Iter, Text);
+      Buffer.Inserting := False;
+
       Buffer.Modifying_Real_Lines := False;
+
       return Mark;
    end Add_Blank_Lines;
 
