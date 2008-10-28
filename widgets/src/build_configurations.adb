@@ -428,7 +428,8 @@ package body Build_Configurations is
       New_Name     : String;
       New_Category : String)
    is
-      Src : Target_Access;
+      Src  : Target_Access;
+      Dest : Target_Access;
    begin
       Src := Get_Target_From_Name (Registry, Src_Name);
 
@@ -444,13 +445,22 @@ package body Build_Configurations is
          return;
       end if;
 
-      --  ??? need to also copy the target properties
       Create_Target (Registry     => Registry,
                      Name         => New_Name,
                      Category     => New_Category,
                      Model        => To_String (Src.Model.Name),
                      Command_Line =>
                        Get_Command_Line_Unexpanded (Registry, Src));
+
+      Dest := Get_Target_From_Name (Registry, New_Name);
+
+      if Dest = null then
+         --  This should never happen, but we test just in case.
+         Log (Registry, -("Could not create target ") & New_Name);
+         return;
+      end if;
+
+      Dest.Properties := Src.Properties;
    end Duplicate_Target;
 
    ------------------
