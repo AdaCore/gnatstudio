@@ -399,7 +399,7 @@ package VCS is
       Text       : String;
       Local      : Boolean;
       Clear_Logs : Boolean;
-      Dir        : String);
+      Dir        : String) is null;
    --  Parse Text and return the list of status obtained.
    --  Local indicates whether we are parsing local status.
    --  Dir is the directory which contains the status, if relevant.
@@ -415,19 +415,19 @@ package VCS is
    procedure Parse_Annotations
      (Rep  : access VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
-      Text : String);
+      Text : String) is null;
    --  Parse the annotations and fill the editor if needed
 
    procedure Parse_Log
      (Rep  : access VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
-      Text : String);
+      Text : String) is null;
    --  Parse the log and fill the Revision Browser if needed
 
    procedure Parse_Revision
      (Rep  : access VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
-      Text : String);
+      Text : String) is null;
    --  Parse the log to retreive the revision tag and branches information and
    --  fill the Revision Browser if needed.
 
