@@ -223,7 +223,7 @@ package body String_List_Utils is
    function Longest_Prefix
      (L : GNAT.Strings.String_List_Access) return String is
    begin
-      if L = null then
+      if L = null or else L'Length = 0 then
          return "";
       end if;
 
