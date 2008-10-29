@@ -98,7 +98,7 @@ def make_interactive (callback, category="General", filter="", menu="", key="",
       else:
          a.key (key)
 
-class interactive ():
+class interactive:
    """A decorator with the same behavior as make_interactive().
       This can be used to easily associate a function with an interactive
       action, menu or key, so that a user can conveniently call it.
