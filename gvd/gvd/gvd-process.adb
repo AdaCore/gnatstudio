@@ -1502,8 +1502,11 @@ package body GVD.Process is
                Force_Send => Debugger.Interactive_Command);
          else
             if Output = null then
+               --  Force_Send is always false so that commands are queue. We
+               --  are not in a secondary prompt anyway (which should be when
+               --  we have a Registered_Dialog).
                Send (Debugger.Debugger, Check (Command), Mode => Mode,
-                     Force_Send => Debugger.Interactive_Command);
+                     Force_Send => False);
             else
                Output.all :=
                  new String'(Send
