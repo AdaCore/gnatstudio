@@ -7116,6 +7116,10 @@ It is also possible to add your own support for other version control systems,
 or modify the existing CVS, Subversion and ClearCase interfaces,
 see @ref{Adding support for new Version Control Systems} for more information.
 
+Finally GPS can be setup to auto-detect the actual VCS to use for each
+project. This is done by selecting @code{auto} in the @code{VCS} tab
+of the Project proterties editor. @xref{The Project Properties Editor}.
+
 When using CVS or Subversion, GPS will also need a corresponding
 @command{patch} command that usually comes with it. If you are under
 Windows, be sure to install a set of CVS and patch executables that
@@ -16084,8 +16088,8 @@ directories this is the case for @code{Subversion} for example.
 The attribute @code{administrative_directory} specifies the name of
 the directory where the external VCS stores the local repository
 information. For example for Subversion this is @file{.svn}. This
-information is used for the automatic VCS selection (Project's
-@code{VCS_Kind} attribute set to @code{auto}).
+information is used when the project is setup to select automatically
+the external VCS. @xref{Version Control System}.
 @end table
 
 Note that to support group commit with shared log on GPS both

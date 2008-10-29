@@ -291,6 +291,7 @@ package body VCS_Module is
    begin
       if Command = "supported_systems" then
          Set_Return_Value_As_List (Data);
+         Set_Return_Value (Data, "Auto");
          VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
       end if;
    end VCS_Command_Handler_No_Param;
