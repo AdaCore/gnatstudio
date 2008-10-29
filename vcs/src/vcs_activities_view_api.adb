@@ -37,6 +37,7 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -504,7 +505,10 @@ package body VCS_Activities_View_API is
       end if;
 
       Update (Get_VCS_For_Activity (Kernel, Activity), Files);
-      Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
+      end if;
    end Update_Activity;
 
    -----------------------------

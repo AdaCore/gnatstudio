@@ -9824,6 +9824,20 @@ Otherwise, all dependencies, even implicit, are displayed.
 
 @end table
 
+@item @b{VCS}
+@cindex vcs
+
+@table @i
+
+@item No implicit status
+@cindex no implicit status
+Whether a status action can be launched as part of another action. For
+example to get the revision numbers of new files after an update
+command. If the network connection with the repository is slow
+enabling this command can speed-up the VCS actions.
+
+@end table
+
 @item @b{Visual diff}
 @cindex visual diff
 @cindex file comparison

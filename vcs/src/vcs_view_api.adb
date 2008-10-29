@@ -2242,7 +2242,10 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
 
       Add (Ref, Files, Log => "", Commit => False);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
 
       String_List.Free (Files);
 
@@ -2274,7 +2277,10 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
 
       Revert (Ref, Files);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
 
       String_List.Free (Files);
 
@@ -2307,7 +2313,10 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
 
       Resolved (Ref, Files);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
 
       String_List.Free (Files);
 
@@ -2384,7 +2393,10 @@ package body VCS_View_API is
       Ref := Get_Current_Ref (Context);
 
       Remove (Ref, Files, Log => "", Commit => False);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
 
       String_List.Free (Files);
 
@@ -2491,7 +2503,11 @@ package body VCS_View_API is
       end if;
 
       Update (Ref, Files);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
+
       String_List.Free (Files);
 
    exception
@@ -2701,7 +2717,10 @@ package body VCS_View_API is
       end if;
 
       Update (Ref, Files);
-      Get_Status (Ref, Files);
+
+      if not No_Implicit_Status.Get_Pref then
+         Get_Status (Ref, Files);
+      end if;
 
       String_List.Free (Files);
    end Update_Project;

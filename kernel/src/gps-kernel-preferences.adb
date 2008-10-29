@@ -789,6 +789,19 @@ package body GPS.Kernel.Preferences is
          Label   => -"Vertical layout",
          Page    => -"Browsers");
 
+      -- VCS --
+
+      No_Implicit_Status := Create
+        (Manager => Kernel.Preferences,
+         Name    => "VCS-No-Implicit-Status",
+         Default => False,
+         Doc     => -("If enabled, the status command will never be called"
+           & " implicitly as part of another VCS action. For example after"
+           & " an update the status is requested from the repository. This"
+           & " may take some time depending on the network connection speed."),
+         Label   => -"No implicit status",
+         Page    => -"VCS");
+
       -- Diff_Utils --
 
       Diff_Cmd := Create
