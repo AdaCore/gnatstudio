@@ -220,4 +220,33 @@ package body String_List_Utils is
       end;
    end Longest_Prefix;
 
+   function Longest_Prefix
+     (L : GNAT.Strings.String_List_Access) return String is
+   begin
+      if L = null then
+         return "";
+      end if;
+
+      declare
+         First_S : constant String := L (L'First).all;
+         Length  : Natural         := First_S'Length;
+      begin
+         for K in L'Range loop
+            Length := Natural'Min (Length, L (K)'Length);
+            while Length > 0
+              and then First_S
+                (First_S'First .. First_S'First + Length - 1) /=
+                L (K) (L (K)'First .. L (K)'First + Length - 1)
+            loop
+               Length := Length - 1;
+            end loop;
+
+            --  No need to continue further if there is no prefix
+            exit when Length = 0;
+         end loop;
+
+         return First_S (First_S'First .. First_S'First + Length - 1);
+      end;
+   end Longest_Prefix;
+
 end String_List_Utils;

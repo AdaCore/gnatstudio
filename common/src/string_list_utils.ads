@@ -17,9 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;
+with GNAT.Strings;
+
 with Generic_List;
 with List_Utils;
-with GNAT.OS_Lib;
 
 package String_List_Utils is
 
@@ -54,6 +56,10 @@ package String_List_Utils is
    function Longest_Prefix (L : String_List.List) return String;
    --  Return the longest prefix of all the strings in L. The empty string is
    --  returned if there is no common suffix.
+
+   function Longest_Prefix
+     (L : GNAT.Strings.String_List_Access) return String;
+   --  Likewise for the String_List_Access
 
    procedure Add_Unique_Sorted
      (L : in out String_List.List;
