@@ -1241,28 +1241,38 @@ package body Project_Explorers is
       ------------------
 
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type) is
-         It : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
-         It2 : Gtk_Tree_Iter;
+         It   : Gtk_Tree_Iter := Children (Exp.Tree.Model, Iter);
+         It2  : Gtk_Tree_Iter;
+         Path : Gtk_Tree_Path;
       begin
          while It /= Null_Iter loop
             Iter_Copy (Source => It, Dest => It2);
-            Next (Exp.Tree.Model, It);
-            case Get_Node_Type (Exp.Tree.Model, It2) is
+            Next (Exp.Tree.Model, It2);
+
+            --  Storing an iter (It2) here is not enough because
+            --  Update_Directory_Node_Text may invalidate it. This is why we
+            --  use a Gtk_Tree_Path instead.
+
+            Path := Get_Path (Exp.Tree.Model, It2);
+
+            case Get_Node_Type (Exp.Tree.Model, It) is
                when Project_Node
                   | Modified_Project_Node
                   | Extends_Project_Node =>
                   Process_Node
-                    (It2, Get_Project_From_Node
-                     (Exp.Tree.Model, Exp.Kernel, It2, False));
+                    (It, Get_Project_From_Node
+                     (Exp.Tree.Model, Exp.Kernel, It, False));
 
                when Directory_Node
                  | Obj_Directory_Node
                  | Exec_Directory_Node =>
-                  Update_Directory_Node_Text (Exp, Project, It2);
+                  Update_Directory_Node_Text (Exp, Project, It);
 
                when others =>
                   null;
             end case;
+
+            It := Get_Iter (Exp.Tree.Model, Path);
          end loop;
       end Process_Node;
 
