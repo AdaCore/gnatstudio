@@ -25,7 +25,7 @@ Locations window.
 import GPS
 from gps_utils import *
 
-GPS.Preference ("plugins/occurrences/color").create (
+GPS.Preference ("Plugins/occurrences/Color").create (
   "highlight color", "color",
   """color used to highlight matching occurrences.
 you must restart gps to take changes into account""",
