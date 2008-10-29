@@ -7096,35 +7096,71 @@ associated to a VCS, through the @code{VCS} tab in the Project properties
 editor. @xref{The Project Properties Editor}.
 
 GPS does not come with any version control system: it uses underlying
-command-line systems such as CVS, Subversion or ClearCase to perform
+command-line systems such as Subversion or ClearCase to perform
 the low level operations, and provides a high level user interface on
 top of them. Be sure to have a properly installed version control
 system before enabling it under GPS.
 
-The systems that are supported out of the box in GPS are CVS, Subversion and
-ClearCase. There are two interfaces to ClearCase: the standard
-ClearCase interface, which is built-in and uses a generic GPS
-terminology for VCS operations, and the Native ClearCase interface,
-which is fully customizable and uses by default the terminology
-specific to ClearCase. There are also two interfaces for Subversion on
-Windows, one for Cygwin/Subversion and one for native Subversion.
+The systems that are supported out of the box in GPS are:
+
+@table @b
+@item Auto
+GPS can be setup to auto-detect the actual VCS to use for each
+project. This is done by selecting @code{Auto} in the @code{VCS} tab
+of the Project properties editor. @xref{The Project Properties Editor}.
+
+@item ClearCase
+
+The standard ClearCase interface, which is built-in and uses a generic GPS
+terminology for VCS operations.
 
 Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
+@item ClearCase Native
+
+Which is fully customizable and uses by default the terminology
+specific to ClearCase.
+
+Note that, at the moment, only Snapshot Views are supported in the
+ClearCase integration; Dynamic Views are not supported.
+
+@item CVS
+
+The Concurrent Version System.
+
+GPS needs a corresponding @command{patch} command that usually comes with it.
+
+@item Git
+
+Distributed fast source code management. Support for Git on GPS is
+partial. Basic commands are supported but the full power of Git (like
+working with the index) is only available on the command line.
+
+GPS needs a corresponding @command{diff} command that usually comes with it.
+
+@item Subversion
+
+The Subversion version control system. Note that on Windows this
+version is intended to be used with Cygwin/Subversion and fully supports the
+Cygwin path names.
+
+GPS needs a corresponding @command{patch} and @command{diff} command
+that usually comes with it.
+
+@item Subversion Windows
+
+The Windows native Subversion version control system. The external
+Subversion commands are expected to be built for the Win32
+subsystem. This version does not support Cygwin path names.
+
+GPS needs a corresponding @command{patch} and @command{diff} command
+that usually comes with it.
+@end table
+
 It is also possible to add your own support for other version control systems,
-or modify the existing CVS, Subversion and ClearCase interfaces,
-see @ref{Adding support for new Version Control Systems} for more information.
-
-Finally GPS can be setup to auto-detect the actual VCS to use for each
-project. This is done by selecting @code{auto} in the @code{VCS} tab
-of the Project proterties editor. @xref{The Project Properties Editor}.
-
-When using CVS or Subversion, GPS will also need a corresponding
-@command{patch} command that usually comes with it. If you are under
-Windows, be sure to install a set of CVS and patch executables that
-are compatible. Additionally a GNU @command{diff} command is required to
-use Subversion.
+or modify one of the existing interfaces, see
+@ref{Adding support for new Version Control Systems} for more information.
 
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
@@ -7134,11 +7170,6 @@ Associating a VCS to a project enables the use of basic VCS features on the
 source files contained in the project. Those basic features typically include
 the checking in and out of files, the querying of file status, file revision
 history, comparison between various revisions, and so on.
-
-Administration of VCS systems is not handled by GPS at this
-stage. Therefore, before working on a project using version control
-system, make sure that the system is properly set-up before launching
-GPS.
 
 @cindex password
 Note: the set-up must make sure that the VCS commands can be launched without
