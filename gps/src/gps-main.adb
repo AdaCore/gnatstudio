@@ -1683,6 +1683,11 @@ procedure GPS.Main is
       Cleanup_Needed := False;
       Exiting := True;
 
+      --  We want to close the debuggers first, to avoid saving debugger
+      --  consoles in the desktop.
+
+      GVD_Module.Debug_Terminate (Kernel);
+
       if Started and then Save_Desktop_On_Exit.Get_Pref then
          Save_Desktop (Kernel);
       end if;
