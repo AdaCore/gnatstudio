@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -830,6 +830,7 @@ package body GPS.Kernel.Preferences is
                       & " Changing this parameter requires restarting GPS."),
          Default => False,
          Page    => -"Visual diff");
+
       -- Messages --
 
       Message_Highlight := Create
@@ -1423,7 +1424,7 @@ package body GPS.Kernel.Preferences is
 
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class) is
       procedure On_Changed (Manager : access Preferences_Manager_Record'Class);
-      --  Called when the preferences have been changed.
+      --  Called when the preferences have been changed
 
       ----------------
       -- On_Changed --
@@ -1443,10 +1444,10 @@ package body GPS.Kernel.Preferences is
       end if;
 
       Edit_Preferences
-        (Manager           => Kernel.Preferences,
-         Parent            => Get_Main_Window (Kernel),
-         On_Changed        => On_Changed'Unrestricted_Access,
-         Custom_Pages      => Preferences_Pages.all);
+        (Manager      => Kernel.Preferences,
+         Parent       => Get_Main_Window (Kernel),
+         On_Changed   => On_Changed'Unrestricted_Access,
+         Custom_Pages => Preferences_Pages.all);
 
       Save_Preferences (Kernel, Get_Home_Dir (Kernel) & "preferences");
    end Edit_Preferences;

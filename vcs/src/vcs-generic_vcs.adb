@@ -1263,7 +1263,7 @@ package body VCS.Generic_VCS is
                if M.Tag.all = "status_matcher" then
                   declare
                      Label  : constant String :=
-                        (Get_Attribute (M, "label", -"unnamed status"));
+                                Get_Attribute (M, "label", -"unnamed status");
                      Num    : Natural;
                      Regexp : Pattern_Matcher_Access;
                   begin

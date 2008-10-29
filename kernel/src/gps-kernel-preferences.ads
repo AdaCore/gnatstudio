@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -44,7 +44,7 @@ package GPS.Kernel.Preferences is
 
    procedure Save_Preferences
      (Kernel : access Kernel_Handle_Record'Class; File_Name : String);
-   --  See Default_Preferences.Save_Preferences.
+   --  See Default_Preferences.Save_Preferences
 
    procedure Set_Pref
      (Pref   : Boolean_Preference;
@@ -133,22 +133,22 @@ package GPS.Kernel.Preferences is
    Tooltip_Color          : Color_Preference;
 
    -- Messages --
-   Message_Highlight      : Color_Preference;
-   Error_Src_Highlight    : Color_Preference;
-   Warning_Src_Highlight  : Color_Preference;
-   Style_Src_Highlight    : Color_Preference;
-   Search_Src_Highlight   : Color_Preference;
-   File_Pattern           : String_Preference;
-   File_Pattern_Index     : Integer_Preference;
-   Line_Pattern_Index     : Integer_Preference;
-   Column_Pattern_Index   : Integer_Preference;
-   Secondary_File_Pattern           : String_Preference;
-   Secondary_File_Pattern_Index     : Integer_Preference;
-   Secondary_Line_Pattern_Index     : Integer_Preference;
-   Secondary_Column_Pattern_Index   : Integer_Preference;
-   Message_Pattern_Index  : Integer_Preference;
-   Style_Pattern_Index    : Integer_Preference;
-   Warning_Pattern_Index  : Integer_Preference;
+   Message_Highlight              : Color_Preference;
+   Error_Src_Highlight            : Color_Preference;
+   Warning_Src_Highlight          : Color_Preference;
+   Style_Src_Highlight            : Color_Preference;
+   Search_Src_Highlight           : Color_Preference;
+   File_Pattern                   : String_Preference;
+   File_Pattern_Index             : Integer_Preference;
+   Line_Pattern_Index             : Integer_Preference;
+   Column_Pattern_Index           : Integer_Preference;
+   Secondary_File_Pattern         : String_Preference;
+   Secondary_File_Pattern_Index   : Integer_Preference;
+   Secondary_Line_Pattern_Index   : Integer_Preference;
+   Secondary_Column_Pattern_Index : Integer_Preference;
+   Message_Pattern_Index          : Integer_Preference;
+   Style_Pattern_Index            : Integer_Preference;
+   Warning_Pattern_Index          : Integer_Preference;
 
    -- Diff_Utils --
    Diff_Cmd            : String_Preference;
@@ -186,11 +186,11 @@ package GPS.Kernel.Preferences is
    --  Of type Dispatching_Menu_Policy
 
    -- External Commands --
-   List_Processes                : String_Preference;
-   Html_Browser                  : String_Preference;
-   Execute_Command               : String_Preference;
-   Print_Command                 : String_Preference;
-   Max_Output_Length             : Integer_Preference;
+   List_Processes            : String_Preference;
+   Html_Browser              : String_Preference;
+   Execute_Command           : String_Preference;
+   Print_Command             : String_Preference;
+   Max_Output_Length         : Integer_Preference;
 
    -- MDI --
    MDI_Opaque            : Boolean_Preference;
