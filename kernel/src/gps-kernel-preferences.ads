@@ -229,7 +229,7 @@ package GPS.Kernel.Preferences is
    Title_Color               : Color_Preference;
 
    -- VCS --
-   No_Implicit_Status        : Boolean_Preference;
+   Implicit_Status           : Boolean_Preference;
    Hide_Up_To_Date           : Boolean_Preference;
    Hide_Not_Registered       : Boolean_Preference;
    CVS_Command               : String_Preference;

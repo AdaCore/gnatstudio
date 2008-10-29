@@ -2243,7 +2243,7 @@ package body VCS_View_API is
 
       Add (Ref, Files, Log => "", Commit => False);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 
@@ -2278,7 +2278,7 @@ package body VCS_View_API is
 
       Revert (Ref, Files);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 
@@ -2314,7 +2314,7 @@ package body VCS_View_API is
 
       Resolved (Ref, Files);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 
@@ -2394,7 +2394,7 @@ package body VCS_View_API is
 
       Remove (Ref, Files, Log => "", Commit => False);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 
@@ -2504,7 +2504,7 @@ package body VCS_View_API is
 
       Update (Ref, Files);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 
@@ -2718,7 +2718,7 @@ package body VCS_View_API is
 
       Update (Ref, Files);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Ref, Files);
       end if;
 

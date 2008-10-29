@@ -506,7 +506,7 @@ package body VCS_Activities_View_API is
 
       Update (Get_VCS_For_Activity (Kernel, Activity), Files);
 
-      if not No_Implicit_Status.Get_Pref then
+      if Implicit_Status.Get_Pref then
          Get_Status (Get_VCS_For_Activity (Kernel, Activity), Files);
       end if;
    end Update_Activity;
