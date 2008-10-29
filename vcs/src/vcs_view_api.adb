@@ -616,47 +616,47 @@ package body VCS_View_API is
       --  Check for the actual VCS for the given project. The project directory
       --  is checked and all the sources directories.
 
+      procedure Check (Dir : Virtual_File; VCS : out VCS_Access);
+      --  Check Dir for a specific VCS, set VCS if found
+
+      procedure Check_Root (Project : Project_Type; VCS : out VCS_Access);
+      --  Check root directory of all sources directories
+
       -----------
       -- Check --
       -----------
 
-      procedure Check (Project : Project_Type; VCS : out VCS_Access) is
+      procedure Check (Dir : Virtual_File; VCS : out VCS_Access) is
 
-         procedure Check (Dir : Virtual_File; VCS : out VCS_Access);
-         --  Check Dir for a specific VCS, set VCS if found
+         procedure Check_VCS (Ref : VCS_Access);
+         --  Check for the given VCS
 
-         -----------
-         -- Check --
-         -----------
+         ---------------
+         -- Check_VCS --
+         ---------------
 
-         procedure Check (Dir : Virtual_File; VCS : out VCS_Access) is
-
-            procedure Check_VCS (Ref : VCS_Access);
-            --  Check for the given VCS
-
-            ---------------
-            -- Check_VCS --
-            ---------------
-
-            procedure Check_VCS (Ref : VCS_Access) is
-            begin
-               if VCS = null then
-                  declare
-                     Adir : constant String := Ref.Administrative_Directory;
-                  begin
-                     if Adir /= ""
-                       and then Is_Directory (Create_From_Dir (Dir, Adir))
-                     then
-                        VCS := Ref;
-                     end if;
-                  end;
-               end if;
-            end Check_VCS;
-
+         procedure Check_VCS (Ref : VCS_Access) is
          begin
-            For_Every_VCS (Check_VCS'Access);
-         end Check;
+            if VCS = null then
+               declare
+                  Adir : constant String := Ref.Administrative_Directory;
+               begin
+                  if Adir /= ""
+                    and then Is_Directory (Create_From_Dir (Dir, Adir))
+                  then
+                     VCS := Ref;
+                  end if;
+               end;
+            end if;
+         end Check_VCS;
 
+      begin
+         if Dir /= No_File then
+            For_Every_VCS (Check_VCS'Access);
+         end if;
+      end Check;
+
+      procedure Check (Project : Project_Type; VCS : out VCS_Access) is
       begin
          if Project /= No_Project then
             --  Check current project
@@ -681,6 +681,26 @@ package body VCS_View_API is
          end if;
       end Check;
 
+      ----------------
+      -- Check_Root --
+      ----------------
+
+      procedure Check_Root (Project : Project_Type; VCS : out VCS_Access) is
+      begin
+         if Project /= No_Project then
+            declare
+               Srcs : GNAT.Strings.String_List_Access :=
+                        Source_Dirs (Project, Recursive => False);
+               Dir  : constant Virtual_File :=
+                        Create (Longest_Prefix (Srcs));
+               Pdir : constant Virtual_File := Get_Parent (Dir);
+            begin
+               Check (Get_Parent (Pdir), VCS);
+               GNAT.Strings.Free (Srcs);
+            end;
+         end if;
+      end Check_Root;
+
       Pos : constant Cursor := VCS_Cache.Find (Project);
       VCS : VCS_Access;
 
@@ -702,6 +722,17 @@ package body VCS_View_API is
 
                if VCS = null then
                   Check (Extended_Project (Project), VCS);
+               end if;
+
+               --  Finally let's check parent of all source directories
+
+               if VCS = null then
+                  Check_Root (Project, VCS);
+               end if;
+
+               if VCS = null then
+                  Check_Root
+                    (Get_Root_Project (Get_Registry (Kernel).all), VCS);
                end if;
 
                if VCS = null then
