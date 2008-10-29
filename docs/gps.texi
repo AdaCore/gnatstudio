@@ -7092,7 +7092,7 @@ debugger console, or automatically every time the debugger stops through the
 
 GPS offers the possibility for multiple developers to work on the same project,
 through the integration of version control systems (VCS). Each project can be
-associated to a VCS, through the @code{VCS} tab in the Project property
+associated to a VCS, through the @code{VCS} tab in the Project properties
 editor. @xref{The Project Properties Editor}.
 
 GPS does not come with any version control system: it uses underlying
