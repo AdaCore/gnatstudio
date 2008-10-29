@@ -9593,7 +9593,9 @@ they are automatically made visible again and reused. This also ensures you
 will not have to reopen and reposition them, but requires a bit of memory.
 If you move some windows around while these windows are hidden, they might
 reappear in unexpected location the next time, although you then just have
-to move them.
+to move them. If you exit GPS while the debugger is still running, though,
+the windows will be made visible again on startup to restore the exact same
+desktop you were seeing.
 
 @end itemize
 
