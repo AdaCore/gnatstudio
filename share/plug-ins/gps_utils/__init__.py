@@ -123,7 +123,6 @@ class interactive:
                          before=self.before,
                          contextual=self.contextual, name=self.name)
        return fn
-      
 
 ############################################################
 ## Some predefined filters
@@ -146,4 +145,3 @@ def in_xml_file (context):
       context.in_xml_file =  MDI.current ().name () == buffer.file().name () \
          and buffer.file ().language ().lower () in ["xml", "html"]
    return context.in_xml_file
-
