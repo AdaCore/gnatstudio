@@ -1499,6 +1499,9 @@ package body VCS.Generic_VCS is
          Ref.Local_Status_Parser := Parse_Status_Parser
            (Find_Tag (Child, "local_status_parser"));
 
+         Ref.Update_Parser := Parse_Status_Parser
+           (Find_Tag (Child, "update_parser"));
+
          --  Parse the annotations parser data
 
          Ref.Annotations_Parser := Parse_Status_Parser
@@ -1750,6 +1753,37 @@ package body VCS.Generic_VCS is
            (Rep, Rep.Status_Parser, Text, True, Clear_Logs, Dir);
       end if;
    end Parse_Status;
+
+   ------------------
+   -- Parse_Update --
+   ------------------
+
+   overriding procedure Parse_Update
+     (Rep  : access Generic_VCS_Record;
+      Text : String;
+      Dir  : String)
+   is
+      Command : Parser_Command_Access;
+   begin
+      if Rep.Update_Parser.Regexp = null then
+         Insert (Rep.Kernel,
+                 -"Error: no update parser defined for " & Rep.Id.all);
+         return;
+      end if;
+
+      Command := new Parser_Command_Type;
+      Command.Parser         := Rep.Update_Parser;
+      Command.Text           := new String'(Text);
+      Command.Start          := Text'First;
+      Command.Prev_Start     := Text'First - 1;
+      Command.Override_Cache := True;
+      Command.Clear_Logs     := False;
+      Command.Rep            := Generic_VCS_Access (Rep);
+      Command.Dir            := new String'(Dir);
+
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (Command), True, False, "");
+   end Parse_Update;
 
    -----------------------
    -- Parse_Annotations --

@@ -2489,6 +2489,14 @@ If the line and column are not specified, then the current selection is returned
  Parameter dir indicates the directory in which the files matched in string are located.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.VCS.update_parse">
+      <param name="vcs_identifier">A string</param>
+      <param name="string">A string</param>
+      <param name="dir" default="">A string</param>
+      <description>Parses a string for VCS status. This command uses the parsers defined in the XML description node for the VCS corresponding to vcs_identifier.
+ Parameter dir indicates the directory in which the files matched in string are located.</description>
+  </shell_doc>
+
   <shell_doc name="GPS.VCS.log_parse">
       <param name="vcs_identifier">A string</param>
       <param name="file">A string</param>

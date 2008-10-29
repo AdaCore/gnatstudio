@@ -109,7 +109,12 @@ package body VCS_Module is
    procedure Status_Parse_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Handler for the command "vcs_status_parse"
+   --  Handler for the command "VCS.status_parse"
+
+   procedure Update_Parse_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handler for the command "VCS.update_parse"
 
    procedure Annotations_Parse_Handler
      (Data    : in out Callback_Data'Class;
@@ -688,6 +693,13 @@ package body VCS_Module is
          Static_Method => True,
          Handler       => Status_Parse_Handler'Access);
       Register_Command
+        (Kernel, "update_parse",
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => Update_Parse_Handler'Access);
+      Register_Command
         (Kernel, "annotations_parse",
          Minimum_Args  => 3,
          Maximum_Args  => 3,
@@ -1113,6 +1125,39 @@ package body VCS_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Status_Parse_Handler;
+
+   --------------------------
+   -- Update_Parse_Handler --
+   --------------------------
+
+   procedure Update_Parse_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+
+      Ref    : VCS_Access;
+
+      VCS_Identifier : constant String := Nth_Arg (Data, 1);
+      S              : constant String := Nth_Arg (Data, 2);
+      Dir            : constant String := Nth_Arg (Data, 3, "");
+
+   begin
+      Ref := Get_VCS_From_Id (VCS_Identifier);
+
+      if Ref = null then
+         Insert (Kernel,
+                 -"Could not find registered VCS corresponding to identifier: "
+                 & VCS_Identifier);
+         return;
+      end if;
+
+      Parse_Update (Ref, S, Dir);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Update_Parse_Handler;
 
    -------------------------------
    -- Annotations_Parse_Handler --

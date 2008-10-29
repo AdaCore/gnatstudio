@@ -16257,7 +16257,7 @@ file.
 The following parsers can be implemented in the @code{vcs} node.
 
 @table @b
-   @item @code{<status_parser>} and @code{<local_status_parser>}
+   @item @code{<status_parser>}, @code{<local_status_parser>} and @code{<update_parser>}
 These parsers are used by the command VCS.status_parse, to parse a string for
 the status of files controlled by a VCS.
 

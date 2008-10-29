@@ -404,6 +404,14 @@ package VCS is
    --  Local indicates whether we are parsing local status.
    --  Dir is the directory which contains the status, if relevant.
 
+   procedure Parse_Update
+     (Rep  : access VCS_Record;
+      Text : String;
+      Dir  : String) is null;
+   --  Parse text (comming from a VCS update command) and update the statuses
+   --  accordingly. Dir is the directory which contains the status, if
+   --  relevant.
+
    procedure Parse_Annotations
      (Rep  : access VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;

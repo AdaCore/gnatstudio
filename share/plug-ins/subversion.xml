@@ -225,6 +225,7 @@
    <!-- SVN update -->
 
    <action name="generic_svn_update" show-command="false" output="none" category="">
+      <shell>pwd</shell>
       <external check-password="true" output="">svn --non-interactive update "$*"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
@@ -232,6 +233,7 @@
       </on-failure>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
+      <shell>VCS.update_parse "Subversion" "%3" "%4"</shell>
    </action>
 
    <!-- SVN merge -->
@@ -461,6 +463,19 @@
          <status_matcher label="Needs merge">(M......\*)</status_matcher>
          <status_matcher label="Contains merge conflicts">C.......</status_matcher>
       </local_status_parser>
+
+      <update_parser>
+         <regexp>(^|\n)([ADUCG])\s+([^\n]+)</regexp>
+
+         <file_index>3</file_index>
+         <status_index>2</status_index>
+
+         <status_matcher label="Up to date">U</status_matcher>
+         <status_matcher label="Locally modified">G</status_matcher>
+         <status_matcher label="Added">A</status_matcher>
+         <status_matcher label="Removed">D</status_matcher>
+         <status_matcher label="Contains merge conflicts">C</status_matcher>
+      </update_parser>
 
       <annotations_parser>
          <regexp>(\d[^\s]*)\s*([^ ]+)\s*([^ ]+)\s+([^ ]+)[^\(]+\(([^\)]+)\) (.*)(\n|$)</regexp>

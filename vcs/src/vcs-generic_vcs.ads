@@ -156,6 +156,11 @@ package VCS.Generic_VCS is
       Clear_Logs : Boolean;
       Dir        : String);
 
+   overriding procedure Parse_Update
+     (Rep  : access Generic_VCS_Record;
+      Text : String;
+      Dir  : String);
+
    overriding procedure Parse_Annotations
      (Rep  : access Generic_VCS_Record;
       File : GNATCOLL.VFS.Virtual_File;
@@ -228,6 +233,7 @@ private
 
       Status_Parser               : Status_Parser_Record;
       Local_Status_Parser         : Status_Parser_Record;
+      Update_Parser               : Status_Parser_Record;
       Annotations_Parser          : Status_Parser_Record;
       Log_Parser                  : Status_Parser_Record;
       Revision_Parser             : Status_Parser_Record;

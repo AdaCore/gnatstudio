@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Oct 27, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Oct 29, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -34,6 +34,14 @@ NF-44-HA03-015 Double-clicking in breakpoint window (2008-10-03)
 
   It is now possible to double-click in the list of breakpoints in
   the breakpoints editor window to jump to any of these locations.
+
+NF-44-H927-002 Speed up update VCS action (2008-10-29)
+
+  It is now possible to disable status operation after an update.
+  This speed-up the update action as status is an expensive
+  operation. On slow network it can make a big difference.
+  At the same time GPS has been enhanced to parse the update output
+  to update file status accordingly.
 
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 
