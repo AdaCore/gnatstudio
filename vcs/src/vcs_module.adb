@@ -46,7 +46,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Log_Utils;
 with Projects.Registry;         use Projects.Registry;
-with Projects;                  use Projects;
 with String_List_Utils;
 with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
@@ -140,6 +139,11 @@ package body VCS_Module is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Handler for VCS Activities commands that take no parameter
+
+   procedure On_Project_Changing
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when project is about to change
 
    ---------------
    -- Equiv_VCS --
@@ -598,6 +602,10 @@ package body VCS_Module is
       Add_Hook (Kernel, File_Status_Changed_Action_Hook,
                 Wrapper (File_Status_Changed_Cb'Access),
                 Name => "vcs.file_status_changed");
+
+      Add_Hook
+        (Kernel, Project_Changing_Hook,
+         Wrapper (On_Project_Changing'Access), "vcs.project_changin");
 
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
 
@@ -1522,5 +1530,18 @@ package body VCS_Module is
    begin
       return M.Cached_Status;
    end Get_Status_Cache;
+
+   -------------------------
+   -- On_Project_Changing --
+   -------------------------
+
+   procedure On_Project_Changing
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Data, Kernel);
+   begin
+      VCS_Module_ID.VCS_Project_Cache.Clear;
+   end On_Project_Changing;
 
 end VCS_Module;

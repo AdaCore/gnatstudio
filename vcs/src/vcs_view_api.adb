@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Containers.Hashed_Maps;
 with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
@@ -80,12 +79,6 @@ package body VCS_View_API is
    use type GNAT.Strings.String_Access;
 
    VCS_Menu_Prefix : constant String := "<gps>/VCS/";
-
-   package VCS_Cache_Map is new Ada.Containers.Hashed_Maps
-     (Project_Type, VCS_Access, Projects.Project_Name_Hash, "=");
-   use VCS_Cache_Map;
-
-   VCS_Cache : VCS_Cache_Map.Map;
 
    -----------------------
    -- Local subprograms --
@@ -612,6 +605,8 @@ package body VCS_View_API is
      (Kernel  : access Kernel_Handle_Record'Class;
       Project : Project_Type) return VCS_Access
    is
+      use VCS_Project_Cache_Map;
+
       procedure Check (Project : Project_Type; VCS : out VCS_Access);
       --  Check for the actual VCS for the given project. The project directory
       --  is checked and all the sources directories.
@@ -662,7 +657,8 @@ package body VCS_View_API is
             --  Check current project
 
             declare
-               Pos : constant Cursor := VCS_Cache.Find (Project);
+               Pos : constant Cursor :=
+                       VCS_Module_ID.VCS_Project_Cache.Find (Project);
             begin
                if Has_Element (Pos) then
                   VCS := Element (Pos);
@@ -687,7 +683,7 @@ package body VCS_View_API is
                   end if;
 
                   if VCS /= null then
-                     VCS_Cache.Include (Project, VCS);
+                     VCS_Module_ID.VCS_Project_Cache.Include (Project, VCS);
                   end if;
                end if;
             end;
@@ -714,7 +710,7 @@ package body VCS_View_API is
          end if;
       end Check_Root;
 
-      Pos : constant Cursor := VCS_Cache.Find (Project);
+      Pos : constant Cursor := VCS_Module_ID.VCS_Project_Cache.Find (Project);
       VCS : VCS_Access;
 
    begin
@@ -762,7 +758,7 @@ package body VCS_View_API is
                VCS := Get_VCS_From_Id (VCS_Name);
             end if;
 
-            VCS_Cache.Include (Project, VCS);
+            VCS_Module_ID.VCS_Project_Cache.Include (Project, VCS);
          end;
       end if;
 

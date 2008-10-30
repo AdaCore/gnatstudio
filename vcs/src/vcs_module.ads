@@ -20,6 +20,7 @@
 --  This package defines the GPS module for communication with VCS
 
 with Ada.Containers.Indefinite_Hashed_Maps;  use Ada;
+with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 
 with Gtk.Widget;
@@ -27,6 +28,7 @@ with Gtkada.MDI;          use Gtkada.MDI;
 
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with Projects;            use Projects;
 with VCS;                 use VCS;
 with VCS_View.Explorer;   use VCS_View.Explorer;
 with VCS_View.Activities; use VCS_View.Activities;
@@ -59,13 +61,19 @@ package VCS_Module is
    package VCS_Map is new Containers.Indefinite_Hashed_Maps
      (String, VCS_Access, Strings.Hash_Case_Insensitive, Equiv_VCS);
 
+   package VCS_Project_Cache_Map is new Containers.Hashed_Maps
+     (Project_Type, VCS_Access, Projects.Project_Name_Hash, "=");
+
    --  Global variable to store all the registered handlers
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
       Registered_VCS : VCS_Map.Map;
       --  The list of all VCS systems recognized by the kernel
 
-      Explorer         : VCS_Explorer_View_Access;
+      VCS_Project_Cache : VCS_Project_Cache_Map.Map;
+      --  Cache the actual VCS for all projects
+
+      Explorer          : VCS_Explorer_View_Access;
       --  The VCS Explorer
 
       Explorer_Child   : MDI_Child;
