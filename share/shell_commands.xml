@@ -241,6 +241,7 @@ GPS.Hook ("file_changed_detected").add (on_file_changed)
      <param name="hook">A string, the name of the hook</param>
      <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
      <param name="quiet">A boolean</param>
+     <param name="shadow">A boolean</param>
      <return>A boolean</return>
      <description>Hook called when a compile operation is about to start.
 Among the various tasks that GPS connects to this hook are: check whether unsaved editors should be saved (asking the user), and stop the background task that parses all xref info. If quiet is True, then no visible modification should be done in the MDI, like raising consoles, clearing their content,..., since the compilation should happen in background mode.
@@ -248,7 +249,7 @@ Funtions connected to this hook should return False if the compilation should no
      <example lang="python">
          # The following code adds a confirmation dialog to all
          # compilation commands.
-         def on_compilation_started (hook, category, quiet):
+         def on_compilation_started (hook, category, quiet, shadow):
             if not quiet:
                return MDI.yes_no_dialog ("Confirm compilation ?")
             else:
@@ -264,7 +265,7 @@ Funtions connected to this hook should return False if the compilation should no
          # fixable errors,...)
 
          if not Hook ("compilation_starting").run_until_failure \
-            ("Builder results", False):
+            ("Builder results", False, False):
             return
 
          # ... spawn your command
