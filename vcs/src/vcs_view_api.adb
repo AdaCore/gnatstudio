@@ -661,23 +661,36 @@ package body VCS_View_API is
          if Project /= No_Project then
             --  Check current project
 
-            Check (Project_Directory (Project), VCS);
+            declare
+               Pos : constant Cursor := VCS_Cache.Find (Project);
+            begin
+               if Has_Element (Pos) then
+                  VCS := Element (Pos);
 
-            if VCS = null then
-               --  Check all source directories
+               else
+                  Check (Project_Directory (Project), VCS);
 
-               declare
-                  Srcs : GNAT.Strings.String_List_Access :=
-                           Source_Dirs (Project, Recursive => False);
-               begin
-                  for K in Srcs'Range loop
-                     Check (Create (Srcs (K).all), VCS);
-                     exit when VCS /= null;
-                  end loop;
+                  if VCS = null then
+                     --  Check all source directories
 
-                  GNAT.Strings.Free (Srcs);
-               end;
-            end if;
+                     declare
+                        Srcs : GNAT.Strings.String_List_Access :=
+                                 Source_Dirs (Project, Recursive => False);
+                     begin
+                        for K in Srcs'Range loop
+                           Check (Create (Srcs (K).all), VCS);
+                           exit when VCS /= null;
+                        end loop;
+
+                        GNAT.Strings.Free (Srcs);
+                     end;
+                  end if;
+
+                  if VCS /= null then
+                     VCS_Cache.Include (Project, VCS);
+                  end if;
+               end if;
+            end;
          end if;
       end Check;
 
