@@ -83,7 +83,9 @@ package body VCS_Utils is
          Status_Label := new String'(" (" & Status.Status.Label.all & ")");
       end if;
 
-      if Status.Working_Revision = null then
+      if Status.Working_Revision = null
+        or else Status.Working_Revision.all = "n/a"
+      then
          Revision_Label := new String'(Name (Ref));
       else
          Revision_Label := new String'
