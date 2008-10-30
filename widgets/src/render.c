@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                         Copyright (C) 2007                        *
+ *                      Copyright (C) 2007-2008                      *
  *                              AdaCore                              *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -18,7 +18,15 @@
  * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
  *********************************************************************/
 
-#ifndef _WIN32
+#ifdef _WIN32
+#elif defined (__APPLE__)
+#include <gdk/gdk.h>
+int
+gps_have_render (GdkDrawable *drawable)
+{
+  return 1;
+}
+#else
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
