@@ -61,6 +61,8 @@ package body GPS.Kernel.Standard_Hooks is
 
    function From_Callback_Data_Open_File
      (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Compilation
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_String
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_String_Boolean
@@ -507,6 +509,23 @@ package body GPS.Kernel.Standard_Hooks is
          Every_Line        => Nth_Arg (Data, 4),
          Normalize         => Nth_Arg (Data, 5));
    end From_Callback_Data_Line_Info;
+
+   ------------------------------------
+   -- From_Callback_Data_Compilation --
+   ------------------------------------
+
+   function From_Callback_Data_Compilation
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Category : constant String := Nth_Arg (Data, 2);
+   begin
+      return Compilation_Hooks_Args'
+        (Hooks_Data with
+         Length   => Category'Length,
+         Value    => Category,
+         Quiet    => Nth_Arg (Data, 3),
+         Shadow   => Nth_Arg (Data, 4));
+   end From_Callback_Data_Compilation;
 
    ---------------------------------
    -- From_Callback_Data_Location --
@@ -1062,6 +1081,10 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, String_Boolean_Hook_Type,
          Args_Creator => From_Callback_Data_String_Boolean'Access);
+
+      Register_Hook_Data_Type
+        (Kernel, Compilation_Hook_Type,
+         Args_Creator => From_Callback_Data_Compilation'Access);
 
       Register_Hook_Data_Type
         (Kernel, Project_Hook_Type,
