@@ -586,8 +586,7 @@ package body Src_Editor_Buffer is
    -- Free_Column_Info --
    ----------------------
 
-   procedure Free_Column_Info
-     (Column_Info : Columns_Config_Access) is
+   procedure Free_Column_Info (Column_Info : Columns_Config_Access) is
    begin
       if Column_Info /= null then
          if Column_Info.all /= null then
@@ -945,7 +944,7 @@ package body Src_Editor_Buffer is
         and then Language /= Unknown_Lang
         and then Is_In_Comment (Source_Buffer (Buffer), Current)
       then
-         --  The current character is in a comment: set the corresponding flag.
+         --  The current character is in a comment: set the corresponding flag
          Highlight_Within_Comment := True;
       end if;
 
@@ -4066,6 +4065,10 @@ package body Src_Editor_Buffer is
       Register_Edit_Timeout (Buffer);
    end Replace_Slice_Real;
 
+   -------------------
+   -- Replace_Slice --
+   -------------------
+
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Editable_Line_Type;
@@ -4631,8 +4634,7 @@ package body Src_Editor_Buffer is
    ----------------
 
    function Get_Status
-     (Buffer : access Source_Buffer_Record)
-      return Status_Type is
+     (Buffer : access Source_Buffer_Record) return Status_Type is
    begin
       --  If the buffer has an empty queue (no modifications performed),
       --  and a saved position = 0 (loaded from a file) => unmodified

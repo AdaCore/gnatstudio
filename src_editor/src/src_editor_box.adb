@@ -651,8 +651,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer, Params);
 
-      Info : constant Extra_Information_Array_Access :=
-               Get_Extra_Information (Box.Source_Buffer);
+      Info  : constant Extra_Information_Array_Access :=
+                Get_Extra_Information (Box.Source_Buffer);
       Label : Gtk_Label;
 
    begin
@@ -2037,7 +2037,7 @@ package body Src_Editor_Box is
 
    function Get_Kernel
      (Box : access Source_Editor_Box_Record)
-     return GPS.Kernel.Kernel_Handle is
+      return GPS.Kernel.Kernel_Handle is
    begin
       return Box.Kernel;
    end Get_Kernel;
@@ -2570,7 +2570,7 @@ package body Src_Editor_Box is
    is
       B_Line : constant Buffer_Line_Type :=
                  Get_Buffer_Line (Editor.Source_Buffer, Line);
-      Block : constant Block_Record :=
+      Block  : constant Block_Record :=
                  Get_Block (Editor.Source_Buffer, B_Line);
    begin
       return Natural (Block.First_Line);

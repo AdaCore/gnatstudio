@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,10 +18,12 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Intl; use GPS.Intl;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Intl;               use GPS.Intl;
 
 package body Files_Extra_Info_Pkg.Callbacks is
 
@@ -33,12 +35,13 @@ package body Files_Extra_Info_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Extra : constant Files_Extra_Info_Access :=
-        Files_Extra_Info_Access (Object);
-      S     : constant GNATCOLL.VFS.Virtual_File := Select_Directory
-        (-"Select a directory",
-         Parent  => Gtk_Window (Get_Toplevel (Object)),
-         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-         History           => null);  --  ??? No history
+                Files_Extra_Info_Access (Object);
+      S     : constant GNATCOLL.VFS.Virtual_File :=
+                Select_Directory
+                  (-"Select a directory",
+                   Parent  => Gtk_Window (Get_Toplevel (Object)),
+                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                   History           => null);  --  ??? No history
 
    begin
       if S /= No_File then

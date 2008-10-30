@@ -83,7 +83,7 @@ package body Src_Editor_View is
    --  when the preference is auto-hide and there are no more lines.
 
    Margin : constant := 3;
-   --  The margin left of the text.
+   --  The margin left of the text
 
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -99,7 +99,7 @@ package body Src_Editor_View is
    --------------------------
 
    function Connect_Expose (View : Source_View) return Boolean;
-   --  Connect Expose_Event_Cb to the expose event. Emit an expose event.
+   --  Connect Expose_Event_Cb to the expose event. Emit an expose event
 
    function Idle_Column_Redraw (View : Source_View) return Boolean;
    --  Redraw the side columns in an idle loop
@@ -154,7 +154,7 @@ package body Src_Editor_View is
       Event  : Gdk_Event) return Boolean;
 
    function Line_Highlight_Redraw (User : Source_View) return Boolean;
-   --  Redraw the source view after a change in highlights.
+   --  Redraw the source view after a change in highlights
 
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
@@ -270,7 +270,7 @@ package body Src_Editor_View is
    --  Scroll to View.Scroll_To_Value
 
    function Hide_Speed_Column_Timeout (View : Source_View) return Boolean;
-   --  Hide the speed column.
+   --  Hide the speed column
 
    function Speed_Bar_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -389,7 +389,7 @@ package body Src_Editor_View is
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, View.Saved_Cursor_Mark);
 
-      --  If the cursor has not moved, do not do anything.
+      --  If the cursor has not moved, do not do anything
 
       Get_Iter_At_Mark (Buffer, Cursor_Iter, Get_Insert (Buffer));
 
@@ -618,7 +618,7 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      --  Clear the side columns cache.
+      --  Clear the side columns cache
 
       User.Buffer_Top_Line := 0;
 
@@ -843,6 +843,10 @@ package body Src_Editor_View is
       procedure Redraw_Side_Info;
       --  Redraw the side window information
 
+      procedure Highlight_Text;
+      --  Highlight the current text, in particular the current line and
+      --  current block, if needed.
+
       ----------------------
       -- Redraw_Side_Info --
       ----------------------
@@ -877,7 +881,7 @@ package body Src_Editor_View is
          View.Top_Line    := Top_Line;
          View.Bottom_Line := Bottom_Line;
 
-         --  Compute the smallest connected area that needs refresh.
+         --  Compute the smallest connected area that needs refresh
 
          if View.Side_Columns_Up_To_Date then
             Find_Top_Line :
@@ -907,9 +911,9 @@ package body Src_Editor_View is
          Redraw_Columns (View);
       end Redraw_Side_Info;
 
-      procedure Highlight_Text;
-      --  Highlight the current text, in particular the current line and
-      --  current block, if needed.
+      --------------------
+      -- Highlight_Text --
+      --------------------
 
       procedure Highlight_Text is
          Column           : constant Gint := Gint (Highlight_Column.Get_Pref);
@@ -1544,11 +1548,11 @@ package body Src_Editor_View is
       Height : Gint;
       Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
    begin
-      --  Set the font.
+      --  Set the font
 
       Set_Font (Source, Default_Style.Get_Pref_Font);
 
-      --  Recompute the width of one character.
+      --  Recompute the width of one character
 
       Layout := Create_Pango_Layout (Source);
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
@@ -1592,7 +1596,7 @@ package body Src_Editor_View is
          end if;
       end if;
 
-      --  Modify the text background and color.
+      --  Modify the text background and color
 
       Color := Default_Style.Get_Pref_Bg;
 
@@ -1652,7 +1656,7 @@ package body Src_Editor_View is
          Modify_Font (View, Font);
       end if;
 
-      --  ??? Should recompute the width of the column on the side.
+      --  ??? Should recompute the width of the column on the side
    end Set_Font;
 
    -------------------------------
@@ -1665,14 +1669,14 @@ package body Src_Editor_View is
    begin
       case Centering is
          when Minimal =>
-            --  Perform minimal scrolling.
+            --  Perform minimal scrolling
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => False,
                Within_Margin                           => 0.0,
                Xalign                                  => 0.5,
                Yalign                                  => 0.5);
          when Center =>
-            --  Place the cursor in the exact center of the screen.
+            --  Place the cursor in the exact center of the screen
             Scroll_To_Mark
               (View, View.Saved_Cursor_Mark, Use_Align => True,
                Within_Margin                           => 0.0,
@@ -2189,7 +2193,7 @@ package body Src_Editor_View is
         and then View.Top_Line = View.Buffer_Top_Line
         and then View.Bottom_Line = View.Buffer_Bottom_Line
       then
-         --  If the cache corresponds to the lines, redraw it.
+         --  If the cache corresponds to the lines, redraw it
 
          Draw_Pixmap
            (Drawable => Left_Window,
@@ -2201,7 +2205,7 @@ package body Src_Editor_View is
             Ydest    => 0);
 
       else
-         --  The lines have changed or the cache is not created: create it.
+         --  The lines have changed or the cache is not created: create it
 
          if View.Side_Column_Buffer /= null then
             Gdk.Pixmap.Unref (View.Side_Column_Buffer);
@@ -2289,7 +2293,7 @@ package body Src_Editor_View is
 
          Line_Height := Height / Total_Lines + 1;
 
-         --  Make the line height at least 2 pixels high.
+         --  Make the line height at least 2 pixels high
 
          if Line_Height <= 1 then
             Line_Height := 2;
