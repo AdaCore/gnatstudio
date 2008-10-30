@@ -2991,8 +2991,7 @@ package body Code_Analysis_Module is
       Add_Hook
         (Kernel  => Kernel,
          Hook    => Project_Changing_Hook,
-         Func    =>
-           Wrapper (On_Project_Changing_Hook'Access),
+         Func    => Wrapper (On_Project_Changing_Hook'Access),
          Name    => "destroy_all_code_analysis");
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);

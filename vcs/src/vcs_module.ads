@@ -67,7 +67,7 @@ package VCS_Module is
    --  Global variable to store all the registered handlers
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
-      Registered_VCS : VCS_Map.Map;
+      Registered_VCS    : VCS_Map.Map;
       --  The list of all VCS systems recognized by the kernel
 
       VCS_Project_Cache : VCS_Project_Cache_Map.Map;
@@ -76,15 +76,15 @@ package VCS_Module is
       Explorer          : VCS_Explorer_View_Access;
       --  The VCS Explorer
 
-      Explorer_Child   : MDI_Child;
+      Explorer_Child    : MDI_Child;
       --  The child containing the VCS Explorer
 
-      Activities       : VCS_Activities_View_Access;
+      Activities        : VCS_Activities_View_Access;
       --  The VCS Activities explorer
 
-      Activities_Child : MDI_Child;
+      Activities_Child  : MDI_Child;
 
-      Cached_Status    : Status_Cache;
+      Cached_Status     : Status_Cache;
    end record;
 
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
