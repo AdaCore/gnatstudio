@@ -365,6 +365,20 @@ NF-43-G706-005 Redesigned Build facility (2008-10-20)
     - Possibility to launch builds (or any other build-like command, 
        like syntax check or semantic checks) every time a file is saved
 
+  GPS 4.3.0 also introduces the notion of Build Modes.
+  An entry is displayed in the toolbar, allowing to select a Build Mode.
+  The selection of a Build Mode activates special compilation options, and
+  builds objects and executables in separate subdirectories in the object
+  directories defined by the project.
+  The following Modes are available by default:
+     - default: the switches defined in the project are used
+     - debug: objects are created with debug information and no optimization
+     - gprof: builds with support for the gprof profiler
+     - gcov: builds with support for the gcov coverage tool
+
+  Note: these modes are effective only when building with gnatmake or
+  gprbuild.
+
 NF-43-G417-014 Improved editing for gpr files (2008-02-21)
 
   GPS now recognizes gpr specific keywords (e.g. project, external) when
