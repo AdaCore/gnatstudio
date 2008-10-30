@@ -7,8 +7,14 @@
 -->
 
 <gnatr>
-   <action name="View types layout in file" output="gnatR" category="Builder" >
-      <external >gnatmake -f -gnatc -P%pp -gnatR -u %F</external>
+   <action name="View types layout in file" output="none" category="Builder" >
+      <external>gnatmake -f -gnatc -P%pp -gnatR -u %F</external>
+      <shell>base_name "%F"</shell>
+      <shell>dump_file "%2" "type_layout_%1"</shell>
+      <shell>Editor.edit "%1"</shell>
+      <shell>Editor.set_title "%2" "Type layout in %3"</shell>
+      <shell>Editor.set_writable "%3" FALSE</shell>
+      <shell>delete "%4"</shell>
       <filter id="Source editor" />
    </action>
 
@@ -18,5 +24,4 @@
          <Title>View types layout in file</Title>
       </menu>
    </Submenu>
-
 </gnatr>
