@@ -43,6 +43,10 @@ package Code_Analysis is
 
    type Coverage_Status is
      (Valid,
+      Undetermined);
+
+   type File_Coverage_Status is
+     (Valid,
       File_Not_Found,
       --  Error status obtained if no Gcov file was found associated to a
       --  source file when trying to load Gcov info.
@@ -53,38 +57,68 @@ package Code_Analysis is
       --  gcov file found but empty.
       File_Corrupted,
       --  The gcov file could not be parsed.
-      Undeterminated
-      --  The status is undeterminated.
-     );
+      Undetermined);
+      --  The status is undetermined.
 
-   type Coverage is tagged record
-      Coverage : Natural;
-      Status   : Coverage_Status := Undeterminated;
+   type Line_Coverage_Status is
+     (No_Code,
+      Not_Covered,
+      Partially_Covered,
+      Covered,
+      Covered_No_Branch,
+      Branch_Taken,
+      Branch_Fallthrough,
+      Branch_Covered,
+      Undetermined);
+
+   type Coverage is abstract tagged record
+      Coverage : Natural := 0;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts and the Subprogram, File and Project
    --  number of not covered lines
 
-   type Node_Coverage is new Coverage with record
+   not overriding function Is_Valid
+     (Self : Coverage) return Boolean is abstract;
+
+   type Line_Coverage is new Coverage with record
+      Status : Line_Coverage_Status := Undetermined;
+   end record;
+
+   overriding function Is_Valid (Self : Line_Coverage) return Boolean;
+
+   type Node_Coverage is abstract new Coverage with record
       Children : Natural;
    end record;
    --  Extra node coverage information
    --  Children is the Subprogram, File or Project children count
 
+   type File_Coverage is new Node_Coverage with record
+      Status : File_Coverage_Status := Undetermined;
+   end record;
+
+   overriding function Is_Valid (Self : File_Coverage) return Boolean;
+
    type Subprogram_Coverage is new Node_Coverage with record
       Called : Natural;
+      Status : Coverage_Status := Undetermined;
    end record;
    --  Specific Subprogram extra info
    --  The number of time the subprogram has been called
 
+   overriding function Is_Valid (Self : Subprogram_Coverage) return Boolean;
+
    type Project_Coverage is new Node_Coverage with record
-      Have_Runs : Boolean := False;
+      Status    : Coverage_Status := Undetermined;
+      Have_Runs : Boolean         := False;
       Runs      : Natural;
    end record;
    --  Store project number of call if this info is available
    --  Older gcov than gcov (GCC) 4.1.3 20070620 were fitted with a runs field
    --  in their header, reporting the number of executions of the produced
    --  executable file
+
+   overriding function Is_Valid (Self : Project_Coverage) return Boolean;
 
    type Coverage_Access is access all Coverage'Class;
 

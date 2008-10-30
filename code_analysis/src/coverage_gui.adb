@@ -123,11 +123,12 @@ package body Coverage_GUI is
          Add_File_Info (File_Node, File_Contents);
 
          --  Check for project runs info
-         if File_Node.Analysis_Data.Coverage_Data.Status = Valid and then
+         if File_Node.Analysis_Data.Coverage_Data.Is_Valid and then
            Project_Node.Analysis_Data.Coverage_Data = null
          then
             Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
-            Project_Node.Analysis_Data.Coverage_Data.Status := Valid;
+            Project_Coverage
+              (Project_Node.Analysis_Data.Coverage_Data.all).Status := Valid;
             Get_Runs_Info_From_File
               (File_Contents,
                Project_Coverage
@@ -136,7 +137,7 @@ package body Coverage_GUI is
                  (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
          end if;
 
-         if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             declare
                Lang : constant Language_Access :=
                         Get_Language_From_File (Handler, Src_File);
@@ -189,7 +190,7 @@ package body Coverage_GUI is
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access) is
    begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
               File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
@@ -215,7 +216,7 @@ package body Coverage_GUI is
    begin
       Code_Analysis_GUI.Initialize_Graphics (Kernel);
 
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
 
          for J in File_Node.Lines'Range loop
@@ -260,7 +261,7 @@ package body Coverage_GUI is
    is
       No_File_Added : Boolean := True;
    begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
                if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
@@ -369,7 +370,7 @@ package body Coverage_GUI is
       File_Node : Code_Analysis.File_Access;
       Subp_Node : Subprogram_Access) is
    begin
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
               File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
@@ -493,15 +494,17 @@ package body Coverage_GUI is
             File_Node := Get_Or_Create
               (Prj_Node, File_Information (Context));
 
-            if File_Node.Analysis_Data.Coverage_Data /= null and then
-              File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            if File_Node.Analysis_Data.Coverage_Data /= null
+              and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
+            then
                return True;
             end if;
          end;
 
       else
-         if Prj_Node.Analysis_Data.Coverage_Data /= null and then
-           Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         if Prj_Node.Analysis_Data.Coverage_Data /= null
+           and then Prj_Node.Analysis_Data.Coverage_Data.Is_Valid
+         then
             return True;
          end if;
       end if;

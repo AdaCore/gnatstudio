@@ -348,4 +348,28 @@ package body Code_Analysis is
       Unchecked_Free (Projects);
    end Free_Code_Analysis;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   overriding function Is_Valid (Self : File_Coverage) return Boolean is
+   begin
+      return Self.Status = Valid;
+   end Is_Valid;
+
+   overriding function Is_Valid (Self : Line_Coverage) return Boolean is
+   begin
+      return Self.Status /= Undetermined;
+   end Is_Valid;
+
+   overriding function Is_Valid (Self : Project_Coverage) return Boolean is
+   begin
+      return Self.Status = Valid;
+   end Is_Valid;
+
+   overriding function Is_Valid (Self : Subprogram_Coverage) return Boolean is
+   begin
+      return Self.Status = Valid;
+   end Is_Valid;
+
 end Code_Analysis;

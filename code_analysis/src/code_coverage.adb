@@ -42,13 +42,15 @@ package body Code_Coverage is
 
    procedure Set_Error
      (File_Node  : Code_Analysis.File_Access;
-      Error_Code : Coverage_Status) is
+      Error_Code : File_Coverage_Status)
+   is
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new Coverage;
+         File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
       end if;
 
-      File_Node.Analysis_Data.Coverage_Data.Status := Error_Code;
+      File_Coverage
+        (File_Node.Analysis_Data.Coverage_Data.all).Status := Error_Code;
 
       if File_Node.Lines = null then
          --  Set an empty line array in order to make File_Node a "finished"
@@ -78,7 +80,7 @@ package body Code_Coverage is
       Not_Cov_Count     : Natural := 0;
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+         File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
       end if;
 
       --------------------------------------
@@ -151,12 +153,17 @@ package body Code_Coverage is
            (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
          File_Node.Lines (Line_Num).Number := Line_Num;
          File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
-           new Coverage;
-         File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Status :=
-           Valid;
+           new Line_Coverage;
+         Line_Coverage
+           (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all).Status
+           := No_Code;
 
          case File_Contents (Line_Matches (1).First) is
             when '#' =>
+               Line_Coverage
+                 (File_Node.Lines
+                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
+                 := Not_Covered;
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := 0;
                File_Node.Lines (Line_Num).Contents := new String'
@@ -164,6 +171,10 @@ package body Code_Coverage is
                     (Line_Matches (3).First .. Line_Matches (3).Last));
                Not_Cov_Count := Not_Cov_Count + 1;
             when others =>
+               Line_Coverage
+                 (File_Node.Lines
+                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
+                 := Covered;
                File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
                  := Natural'Value
                  (File_Contents
@@ -176,7 +187,8 @@ package body Code_Coverage is
       Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
         Lines_Count;
       File_Node.Analysis_Data.Coverage_Data.Coverage := Not_Cov_Count;
-      File_Node.Analysis_Data.Coverage_Data.Status := Valid;
+      File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
+        Valid;
    end Add_File_Info;
 
    -----------------------------
@@ -316,8 +328,9 @@ package body Code_Coverage is
             File_Node := Element (Cur);
             Next (Cur);
 
-            if File_Node.Analysis_Data.Coverage_Data /= null and then
-              File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+            if File_Node.Analysis_Data.Coverage_Data /= null
+              and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
+            then
                Data.Children := Data.Children + Node_Coverage
                  (File_Node.Analysis_Data.Coverage_Data.all).Children;
                Data.Coverage := Data.Coverage +
@@ -388,18 +401,50 @@ package body Code_Coverage is
    procedure XML_Dump_Coverage (Coverage : Coverage_Access; Loc : Node_Ptr) is
    begin
       if Coverage /= null then
-         Set_Attribute (Loc, "status", Status_Message (Coverage.Status));
-
-         if Coverage.Status = Valid then
+         if Coverage.Is_Valid then
             Set_Attribute (Loc, "coverage", Natural'Image (Coverage.Coverage));
+         end if;
 
-            if Coverage.all in Node_Coverage'Class then
+         if Coverage.all in Line_Coverage'Class then
+            Set_Attribute
+              (Loc,
+               "status",
+               Line_Coverage_Status'Image
+                 (Line_Coverage (Coverage.all).Status));
+
+         elsif Coverage.all in Node_Coverage'Class then
+            if Coverage.Is_Valid then
                Set_Attribute (Loc, "children", Natural'Image
                               (Node_Coverage (Coverage.all).Children));
-               if Coverage.all in Subprogram_Coverage'Class then
+            end if;
+
+            if Coverage.all in Subprogram_Coverage'Class then
+               Set_Attribute
+                 (Loc,
+                  "status",
+                  Coverage_Status'Image
+                    (Subprogram_Coverage (Coverage.all).Status));
+
+               if Coverage.Is_Valid then
                   Set_Attribute (Loc, "called", Natural'Image
                                  (Subprogram_Coverage (Coverage.all).Called));
-               elsif Coverage.all in Project_Coverage'Class then
+               end if;
+
+            elsif Coverage.all in File_Coverage'Class then
+               Set_Attribute
+                 (Loc,
+                  "status",
+                  File_Coverage_Status'Image
+                    (File_Coverage (Coverage.all).Status));
+
+            elsif Coverage.all in Project_Coverage'Class then
+               Set_Attribute
+                 (Loc,
+                  "status",
+                  Coverage_Status'Image
+                    (Project_Coverage (Coverage.all).Status));
+
+               if Coverage.Is_Valid then
                   if Project_Coverage (Coverage.all).Have_Runs then
                      Set_Attribute (Loc, "runs", Natural'Image
                                     (Project_Coverage (Coverage.all).Runs));
@@ -418,55 +463,115 @@ package body Code_Coverage is
      (Coverage : in out Coverage_Access;
       Loc      : Node_Ptr)
    is
+      function Status_Value
+        (Status : String) return Coverage_Status;
+      --  Return the coverage status associated with an error message
+
+      function Status_Value
+        (Status : String) return File_Coverage_Status;
+      --  Return the coverage status associated with an error message
+
+      function Status_Value
+        (Status : String) return Line_Coverage_Status;
+      --  Return the coverage status associated with an error message
+
+      ------------------
+      -- Status_Value --
+      ------------------
+
+      function Status_Value
+        (Status : String) return Coverage_Status is
+      begin
+         return Coverage_Status'Value (Status);
+
+      exception
+         when Constraint_Error =>
+            return Undetermined;
+      end Status_Value;
+
+      function Status_Value
+        (Status : String) return File_Coverage_Status is
+      begin
+         return File_Coverage_Status'Value (Status);
+
+      exception
+         when Constraint_Error =>
+            return Undetermined;
+      end Status_Value;
+
+      function Status_Value
+        (Status : String) return Line_Coverage_Status is
+      begin
+         return Line_Coverage_Status'Value (Status);
+
+      exception
+         when Constraint_Error =>
+            return Undetermined;
+      end Status_Value;
+
       Txt_Status : constant String := Get_Attribute (Loc, "status");
-      Status     : Coverage_Status;
+
    begin
       if Txt_Status /= "" then
-         Status := Status_Value (Txt_Status);
+         if Loc.Tag.all = "Line" then
+            Coverage := new Line_Coverage;
+            Line_Coverage (Coverage.all).Status :=
+              Status_Value (Txt_Status);
 
-         if Status = Valid then
-            if Loc.Tag.all = "Line" then
-               Coverage := new Code_Analysis.Coverage;
-            else
-               if Loc.Tag.all = "Subprogram" then
-                  declare
-                     Txt_Called : constant String :=
-                                    Get_Attribute (Loc, "called");
-                  begin
-                     Coverage := new Subprogram_Coverage;
+         elsif Loc.Tag.all = "Subprogram" then
+            Coverage := new Subprogram_Coverage;
+            Subprogram_Coverage (Coverage.all).Status :=
+              Status_Value (Txt_Status);
 
-                     if Txt_Called /= "" then
-                        Subprogram_Coverage (Coverage.all).Called :=
-                          Natural'Value (Txt_Called);
-                     end if;
-                  end;
-               elsif Loc.Tag.all = "File" then
-                  Coverage := new Node_Coverage;
-               elsif Loc.Tag.all = "Project" then
-                  declare
-                     Txt_Runs : constant String := Get_Attribute (Loc, "runs");
-                  begin
-                     Coverage := new Project_Coverage;
+            if Coverage.Is_Valid then
+               Node_Coverage (Coverage.all).Children :=
+                 Natural'Value (Get_Attribute (Loc, "children"));
 
-                     if Txt_Runs /= "" then
-                        Project_Coverage (Coverage.all).Have_Runs := True;
-                        Project_Coverage (Coverage.all).Runs :=
-                          Natural'Value (Txt_Runs);
-                     end if;
-                  end;
-               end if;
+               declare
+                  Txt_Called : constant String :=
+                    Get_Attribute (Loc, "called");
+               begin
+                  if Txt_Called /= "" then
+                     Subprogram_Coverage (Coverage.all).Called :=
+                       Natural'Value (Txt_Called);
+                  end if;
+               end;
+            end if;
 
+         elsif Loc.Tag.all = "File" then
+            Coverage := new File_Coverage;
+            File_Coverage (Coverage.all).Status := Status_Value (Txt_Status);
+
+            if Coverage.Is_Valid then
                Node_Coverage (Coverage.all).Children :=
                  Natural'Value (Get_Attribute (Loc, "children"));
             end if;
 
-            Coverage.Coverage := Natural'Value
-              (Get_Attribute (Loc, "coverage"));
-         else
-            Coverage := new Code_Analysis.Coverage;
+         elsif Loc.Tag.all = "Project" then
+            Coverage := new Project_Coverage;
+            Project_Coverage (Coverage.all).Status :=
+              Status_Value (Txt_Status);
+
+            if Coverage.Is_Valid then
+               Node_Coverage (Coverage.all).Children :=
+                 Natural'Value (Get_Attribute (Loc, "children"));
+
+               declare
+                  Txt_Runs : constant String := Get_Attribute (Loc, "runs");
+               begin
+                  if Txt_Runs /= "" then
+                     Project_Coverage (Coverage.all).Have_Runs := True;
+                     Project_Coverage (Coverage.all).Runs :=
+                       Natural'Value (Txt_Runs);
+                  end if;
+               end;
+            end if;
          end if;
 
-         Coverage.Status := Status;
+         if Coverage.Is_Valid then
+            Coverage.Coverage :=
+              Natural'Value (Get_Attribute (Loc, "coverage"));
+         end if;
       end if;
    end XML_Parse_Coverage;
 
@@ -641,7 +746,7 @@ package body Code_Coverage is
       end Txt_Sub;
 
    begin
-      if Coverage.Status = Valid then
+      if Coverage.Is_Valid then
          declare
             Cov_Txt     : constant String :=
                             Natural'Image (Coverage.Coverage);
@@ -671,52 +776,11 @@ package body Code_Coverage is
 
       else
          Set (Tree_Store, Iter, Cov_Col,
-              " " & Status_Message (Coverage.Status));
+              " underermined"); -- & Status_Message (Coverage.Status));
          Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (0));
          Set (Tree_Store, Iter, Cov_Bar_Txt, -"n/a");
       end if;
    end Fill_Iter;
-
-   --------------------
-   -- Status_Message --
-   --------------------
-
-   function Status_Message
-     (Status : Coverage_Status) return String is
-   begin
-      case Status is
-         when File_Not_Found   => return -"Gcov file not found";
-         when File_Out_Of_Date => return -"Gcov file out-of-date";
-         when File_Corrupted   => return -"Gcov file corrupted";
-         when File_Empty       => return -"Gcov file empty";
-         when Valid            => return -"Gcov file valid";
-         when Undeterminated   => return -"Status undeterminated";
-      end case;
-   end Status_Message;
-
-   ------------------
-   -- Status_Value --
-   ------------------
-
-   function Status_Value
-     (Status : String) return Coverage_Status is
-   begin
-      if    Status = -"Gcov file not found"   then
-         return File_Not_Found;
-      elsif Status = -"Gcov file out-of-date" then
-         return File_Out_Of_Date;
-      elsif Status = -"Gcov file corrupted"   then
-         return File_Corrupted;
-      elsif Status = -"Gcov file empty"       then
-         return File_Empty;
-      elsif Status = -"Gcov file valid"       then
-         return Valid;
-      elsif Status = -"Status undeterminated" then
-         return Undeterminated;
-      end if;
-
-      return Undeterminated;
-   end Status_Value;
 
 end Code_Coverage;

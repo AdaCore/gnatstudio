@@ -140,14 +140,14 @@ procedure Code_Analysis_Test is
         (Projects, Load_Or_Find (Registry.all, Project_File));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
-      File_Node.Analysis_Data.Coverage_Data := new Node_Coverage;
+      File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
       Add_File_Info (File_Node, File_Contents);
 
       -------------------------
       -- Add_Subprogram_Info --
       -------------------------
 
-      if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
             Get_Runs_Info_From_File
               (File_Contents,
@@ -156,7 +156,7 @@ procedure Code_Analysis_Test is
                Project_Coverage
                  (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
 
-         if File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+         if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             Add_Subprogram_Info
               (File_Node, To_Construct_Tree
                  (Read_File (Src_File_Name).all, Ada_Lang));

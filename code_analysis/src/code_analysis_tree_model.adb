@@ -116,8 +116,9 @@ package body Code_Analysis_Tree_Model is
       Sort_Arr  : Subprogram_Array
         (1 .. Integer (File_Node.Subprograms.Length));
    begin
-      if File_Node.Analysis_Data.Coverage_Data /= null and then
-         File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data /= null
+        and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
+      then
          Insert_After (Model, Iter, Parent, Sibling);
          Sibling := Iter;
       else
@@ -159,8 +160,9 @@ package body Code_Analysis_Tree_Model is
       Bin_Mode  : Boolean := False;
       Icons     : Code_Analysis_Icons) is
    begin
-      if File_Node.Analysis_Data.Coverage_Data /= null and then
-         File_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if File_Node.Analysis_Data.Coverage_Data /= null
+        and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
+      then
          Insert_After (Model, Iter, Null_Iter, Sibling);
          Sibling := Iter;
       else
@@ -224,8 +226,9 @@ package body Code_Analysis_Tree_Model is
       Sort_Arr   : File_Array (1 .. Integer (Prj_Node.Files.Length));
       Child_Sibl : Gtk_Tree_Iter := Null_Iter;
    begin
-      if Prj_Node.Analysis_Data.Coverage_Data /= null and then
-         Prj_Node.Analysis_Data.Coverage_Data.Status = Valid then
+      if Prj_Node.Analysis_Data.Coverage_Data /= null
+        and then Prj_Node.Analysis_Data.Coverage_Data.Is_Valid
+      then
          Insert_After (Model, Iter, Null_Iter, Sibling);
          Sibling := Iter;
       else
