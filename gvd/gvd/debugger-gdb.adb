@@ -119,7 +119,8 @@ package body Debugger.Gdb is
    --  with no file information
 
    Breakpoint_Pattern        : constant Pattern_Matcher := Compile
-     ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
+     ("^(\d+)\s+(breakpoint|\w+? watchpoint|catchpoint)\s+"
+      & "(keep|dis|del)\s+([yn])"
       & "\s+(<MULTIPLE>\s+)*((0x0*)?(\S+))?\s+(.*)$",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
@@ -1677,6 +1678,7 @@ package body Debugger.Gdb is
         or else Looking_At (Command, Command'First + 1, "break")
         or else Looking_At (Command, Command'First, "b ")
         or else Looking_At (Command, Command'First, "watch")
+        or else Looking_At (Command, Command'First, "catch")
         or else Looking_At (Command, Command'First, "awatch")
         or else Looking_At (Command, Command'First, "rwatch")
         or else Looking_At (Command, Command'First, "delete")
