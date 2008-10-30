@@ -598,37 +598,39 @@ package body GVD.Process is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
    begin
-      if Is_Command then
-         Insert (Process.Debugger_Text, Str, False, True, True);
-      else
-         while Start <= Str'Last loop
-            Match (Highlighting_Pattern (Process.Debugger),
-                   Str (Start .. Str'Last),
-                   Matched);
+      if Process.Debugger_Text /= null then
+         if Is_Command then
+            Insert (Process.Debugger_Text, Str, False, True, True);
+         else
+            while Start <= Str'Last loop
+               Match (Highlighting_Pattern (Process.Debugger),
+                      Str (Start .. Str'Last),
+                      Matched);
 
-            if Matched (0) /= No_Match then
-               if Matched (0).First - 1 >= Start then
+               if Matched (0) /= No_Match then
+                  if Matched (0).First - 1 >= Start then
+                     Insert (Process.Debugger_Text,
+                             Str (Start .. Matched (0).First - 1),
+                             False, False);
+                  end if;
+
                   Insert (Process.Debugger_Text,
-                          Str (Start .. Matched (0).First - 1),
+                          Str (Matched (0).First .. Matched (0).Last),
+                          False, True);
+                  Start := Matched (0).Last + 1;
+
+               else
+                  Insert (Process.Debugger_Text,
+                          Str (Start .. Str'Last),
                           False, False);
+                  Start := Str'Last + 1;
                end if;
+            end loop;
+         end if;
 
-               Insert (Process.Debugger_Text,
-                       Str (Matched (0).First .. Matched (0).Last),
-                       False, True);
-               Start := Matched (0).Last + 1;
-
-            else
-               Insert (Process.Debugger_Text,
-                       Str (Start .. Str'Last),
-                       False, False);
-               Start := Str'Last + 1;
-            end if;
-         end loop;
+         Highlight_Child
+           (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
       end if;
-
-      Highlight_Child
-        (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
    end Output_Text;
 
    ------------------------
