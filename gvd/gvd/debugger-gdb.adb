@@ -1684,6 +1684,7 @@ package body Debugger.Gdb is
         or else Looking_At (Command, Command'First + 1, "break")
         or else Looking_At (Command, Command'First, "b ")
         or else Looking_At (Command, Command'First, "watch")
+        or else Looking_At (Command, Command'First, "catch")
         or else Looking_At (Command, Command'First, "awatch")
         or else Looking_At (Command, Command'First, "rwatch")
         or else Looking_At (Command, Command'First, "delete")
