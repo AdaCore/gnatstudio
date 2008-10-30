@@ -3008,7 +3008,7 @@ package body Src_Editor_Module is
         (Kernel, "Format selection",
          Command, -"Format the current line or selection",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Insert File...",
