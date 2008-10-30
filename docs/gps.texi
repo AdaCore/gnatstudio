@@ -155,6 +155,9 @@ Searching and Replacing
 
 Compilation/Build
 * The Build Menu::
+* The Target Configuration Dialog::
+* The Build Mode::
+* Working with two compilers::
 
 Source Browsing
 * General Issues::
@@ -231,6 +234,7 @@ Customizing through XML and Python files
 * Adding stock icons::
 @c * Defining a documentation format::
 * Remote programming customization::
+* Customizing build Targets and Models::
 
 Adding support for new tools
 * Defining supported languages::
@@ -5053,6 +5057,8 @@ errors or warnings (see @ref{Code Fixing}).
 
 @menu
 * The Build Menu::
+* The Target Configuration Dialog::
+* The Build Mode::
 * Working with two compilers::
 @end menu
 
@@ -5063,6 +5069,8 @@ The build menu gives access to capabilities related to checking, parsing and
 compiling files, as well as creating and running executables.
 note that this menu is fully configurable via the @code{Targets} dialog,
 so what is documented in this manual are the default menus.
+
+See @ref{The Target Configuration Dialog}.
 
 @table @b
 @item Check Syntax
@@ -5189,7 +5197,10 @@ not needed, @xref{Support for Cross-References}.
 @item Settings
    @table @i
    @item Targets
-   @c ??? TODO
+     @cindex Targets
+     This opens the Target Configuration Dialog.
+     @xref{The Target Configuration Dialog}.
+
    @item Toolchains
      @cindex Toolchains
      Open a dialog allowing the configuration of GPS for working with two
@@ -5212,6 +5223,131 @@ that process.
 
 If your application is build through a Makefile, you should probably load
 the @file{Makefile.py} startup script (see the menu @code{/Tools/Plug-ins}).
+
+@node The Target Configuration Dialog
+@section The Target Configuration Dialog
+@cindex Targets
+
+@noindent
+GPS provides an interface for launching operations like building projects,
+compiling individual files, performing syntax or semantic checks, and so on.
+All these operations have in common that they involve launching an external
+command, and parsing the output for error messages. In GPS, these operations
+are called "Targets", and can be configured either through the Target
+Configuration dialog, or through XML configuration.
+@xref{Customizing build Targets and Models}.
+
+@iftex
+@cindex screen shot
+@image{target-configuration-dialog, 18.2cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{target-configuration-dialog}
+@end ifhtml
+
+This dialog is divided in two areas: on the left, a tree listing Targets, and,
+in the main area, a panel for configuring the Target which is currently
+selected in the Tree.
+
+@subsection The Targets tree
+
+The Tree contains a list of targets, organized by categories.
+
+On top of the Tree are three buttons:
+
+@itemize @bullet
+@item The Add button creates a new target.
+@item The Remove button removes the currently selected target. Note that only
+ user-defined targets can be removed, the default targets created by GPS cannot
+ be removed.
+@item The Clone button creates a new user-defined target which is identical
+ to the currently selected target.
+@end itemize
+
+@subsection The configuration panel
+
+On top of the configuration panel, one can select the Target type, also known
+as Target Model. The Model determines the graphical options available in the
+"Command line" frame.
+
+The "Revert" button resets all target settings to their original value.
+
+The "Options" frame contains a number of options that are available for all
+Targets.
+
+@itemize @bullet
+@item The Launch mode indicates the way the target is launched:
+  @itemize @code
+  @item Manually
+    The target is launched when clicking on the corresponding icon
+    in the toolbar, or when activating the corresponding menu item.
+    In the latter case, a dialog is displayed, allowing last-minute
+    modifications of the command line.
+
+  @item Manually with dialog
+    Same as Manually, but the dialog is always displayed, even when
+    clicking on the toolbar icon.
+
+  @item Manually with no dialog
+    Same as Manually, but the dialog is never displayed, even when
+    activating the menu item.
+
+  @item On file save
+    The Target is launched automatically by GPS when a file is saved.
+    The dialog is never displayed.
+  @end itemize
+
+@item Display button in toolbar: when active, a button is displayed in
+  the main toolbar, allowing to quickly launch a Target.
+
+@item Display item in menu: whether to display a menu item corresponding
+  to the Target. By default, Targets in the "File" category are listed
+  directly in the Build menu, and Targets in other categories are listed
+  in a submenu corresponding to the name of the category.
+
+@item Multiple main target: whether the Target actually represents
+  multiple Targets, each one corresponding to a Main source in the currently
+  loaded project.
+
+@end itemize
+
+The "Command line" contains a graphical interface for some configurable
+ elements of the Target, which are specific to the Model of this Target.
+
+The full command line is displayed at the bottom. Note that it may contain
+Macro Arguments. For instance if the command line contains the string "%PP",
+GPS will expand this to the full path to the current project. For a full
+list of available Macros, see @ref{Macro arguments}.
+
+@node The Build Mode
+@section The Build Mode
+@cindex Mode
+
+@noindent
+GPS provides an easy way to build your project with different options, through
+the Mode selection, located in the main toolbar.
+
+When the Mode selection is set to @code{default}, the build is done using the
+switches defined in the project. When the Mode selection is set to another
+value, then specialized parameters are passed to the builder. For instance, the
+@code{gcov} Mode adds all the compilation parameters needed to instrument the
+produced objects and executables to work with the @code{gcov} tool.
+
+In addition to changing the build parameters, the Mode selection has the effect
+of changing the output directory for objects and executables. For instance,
+objects produced under the @code{debug} mode will be located in the
+@code{debug} subdirectories of the object directories defined by the project.
+This allows switching from one Mode to another without having to erase the
+objects pertaining to a different Mode.
+
+It is possible to define new Modes using XML customization, see
+@ref{Customizing build Targets and Models}.
+
+Note that the Build Mode affects only builds done using recent versions of
+gnatmake and gprbuild. The Mode selection has no effect on builds done through
+Targets that launch other builders.
 
 @node Working with two compilers
 @section Working with two compilers
@@ -10299,6 +10435,7 @@ now. This will properly save all your files.
 * Adding stock icons::
 @c * Defining a documentation format::
 * Remote programming customization::
+* Customizing build Targets and Models::
 @end menu
 
 @c -----------------------------------------------------------------------
@@ -13732,6 +13869,182 @@ Specify the synchronization mechanism used for the paths
 (see @ref{Paths settings}). Possible values are
 @code{NEVER}, @code{ONCE_TO_LOCAL}, @code{ONCE_TO_REMOTE} and @code{ALWAYS}.
 @end table
+
+@c --------------------------------------------------------------------------
+@node Customizing build Targets and Models
+@subsection Customizing build Targets and Models
+@c --------------------------------------------------------------------------
+
+@noindent
+The information displayed in @ref{The Target Configuration Dialog} and in
+the Mode selection can be customized through XML.
+
+@menu
+* Defining new Target Models::
+* Defining new Targets::
+* Defining new Modes::
+@end menu
+
+@node Defining new Target Models
+@subsubsection Defining new Target Models
+@cindex Model
+
+Models are defined in a @code{target-model} node which has one attributes,
+@code{name}, which contains the name of the model, and which supports the
+following sub-nodes:
+
+@table @code
+@item <icon>
+   The stock name of the icon to associate by default with targets of this
+   model.
+@item <description>
+   A one-line description of what the Model supports
+@item <server>
+   Optional, defaulting to @code{Build_Server}. Indicates the server used for
+   launching Targets of this model. @xref{Remote operations}.
+@item <uses-shell>
+   Optional, defaulting to @code{False}. A boolean indicating whether Targets
+   of this model should be launched via the shell pointed to by the SHELL
+   environment variable.
+@item <command-line>
+   Contains a number of @code{<arg>} nodes, each containing an argument of the
+   default command line for this model, starting with the executable.
+@item <switches command="executable_name">
+   The graphical description of the switches.
+   (@pxref{Defining tool switches})
+@end table
+
+@smallexample
+<?xml version="1.0" ?>
+   <my_model>
+   <target-model name="gprclean" category="">
+      <description>Clean compilation artefacts with gprclean</description>
+      <command-line>
+         <arg>gprclean</arg>
+         <arg>-P%PP</arg>
+         <arg>%X</arg>
+      </command-line>
+      <icon>gps-clean</icon>
+      <switches command="%(tool_name)s" columns="1">
+         <check label="Clean recursively" switch="-r"
+                tip="Clean all projects recursively" />
+      </switches>
+   </target-model>
+</my_model>
+@end smallexample
+
+@node Defining new Targets
+@subsubsection Defining new Targets
+@cindex Target
+
+Targets are defined in a @code{target} node which has three attributes:
+
+@table @code
+@item name
+   Contains the name of the Target. It must be a unique name.
+   Underscores are interpreted as menu mnemonics. To represent an actual
+   underscore, use a double underscore.
+@item category
+   The category which contains the Target, for purposes of ordering the
+   tree in the Target Configuration Dialog, and for ordering in the Build
+   menu.Underscores are interpreted as menu mnemonics. To represent an actual
+   underscore, use a double underscore.
+   If @code{category} begins and ends with an underscore, the menu for the
+   Target is placed in the toplevel Build menu.
+@item model
+   The name of the Model of which this Target inherits initially.
+@end table
+
+@table @code
+@item <icon>
+   The stock name of the icon to associate by default with the Target.
+@item <in-toolbar>
+   Optional, defaulting to @code{False}. A boolean indicating whether the
+   Target should have an associated icon in the Toolbar.
+@item <in-menu>
+   Optional, defaulting to @code{True}. A boolean indicating whether the
+   Target should have an associated entry in the Build menu.
+@item <read-only>
+   Optional, defaulting to @code{False}. A boolean indicating whether the
+   Target can be removed by the user.
+@item <represents-mains>
+   Optional, defaulting to @code{False}. A boolean indicating whether the
+   Target represents in fact a family of Targets acting on the Main sources in
+   the project.
+@item <launch-mode>
+   Optional, defaulting to @code{MANUALLY}. Indicates how the Target should be
+   launched. Possible values are @code{MANUALLY}, @code{MANUALLY_WITH_DIALOG},
+   @code{MANUALLY_WITH_NO_DIALOG}, and @code{ON_FILE_SAVE}.
+@item <server>
+   Optional, defaulting to @code{Build_Server}. Indicates the server used for
+   launching Target. @xref{Remote operations}.
+@item <command-line>
+   Contains a number of @code{<arg>} nodes, each containing an argument of the
+   default command line for this Target, starting with the executable.
+@end table
+
+@smallexample
+<?xml version="1.0" ?>
+<my_target>
+   <target model="gprclean" category="C_lean" name="Clean _All">
+       <in-toolbar>TRUE</in-toolbar>
+       <icon>gps-clean</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>%gprclean</arg>
+          <arg>-r</arg>
+          <arg>%eL</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+       </command-line>
+  </target>
+</my_target>
+@end smallexample
+
+@node Defining new Modes
+@subsubsection Defining new Modes
+@cindex Mode
+
+Modes are defined in a @code{builder-mode} node which has one attributes,
+@code{name}, which contains the name of the model, and which supports the
+following sub-nodes:
+
+@table @code
+@item <description>
+   A one-line description of what the Mode does
+@item <subdir>
+   Optional. The base name of the subdirectory to create for this Mode.
+   The macro argument @code{%subdir} in the @code{extra-args} nodes will be
+   substituted with this.
+@item <supported-model>
+   The name of a model supported by this Mode. There can be multiple
+   @code{supported-model} nodes, each corresponding to a supported Model. The
+   @code{extra-args} of the Mode will only be passed to commands of supported
+   Models.
+@item <extra-args>
+   Contains a list of @code{<arg>} nodes, each containing one extra argument
+   to append to the command line when launching Targets while this Mode is
+   active.
+   Macros are supported in the @code{<arg>} nodes.
+@end table
+
+@smallexample
+<?xml version="1.0" ?>
+<my_mode>
+ <builder-mode name="optimization">
+  <description>Build with code optimization activated</description>
+  <subdir>optimized_objects</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-O2</arg>
+  </extra-args>
+ </builder-mode>
+</my_mode>
+@end smallexample
 
 @c --------------------------------------------------------------------------
 @node Adding support for new tools
