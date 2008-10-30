@@ -114,6 +114,12 @@ package VCS is
    --  Returns the file containing a list of file to ignore. Returns the empty
    --  string if no such file is set for this VCS.
 
+   procedure Used (Ref : in out VCS_Record'Class);
+   --  Record that this VCS is actually using in a project
+
+   function Is_Used (Ref : VCS_Record'Class) return Boolean;
+   --  Returns the above status
+
    type File_Status is record
       Label    : GNAT.Strings.String_Access;
       --  The label corresponding to the status
@@ -507,6 +513,7 @@ private
       Commit_Directory    : Boolean    := False;
       Path_Style          : OS_Utils.Path_Style := System_Default;
       Ignore_Filename     : GNAT.Strings.String_Access;
+      Used                : Boolean    := False;
    end record;
 
 end VCS;

@@ -753,10 +753,11 @@ package body VCS_View_API is
                   VCS := Unknown_VCS.Unknown_VCS_Reference;
                end if;
 
-               Console.Insert
-                 (Kernel,
-                  -("Auto-VCS: Project " & Project_Name (Project)
-                    & " is using " & Name (VCS)));
+               if not VCS.Is_Used then
+                  VCS.Used;
+                  Console.Insert (Kernel, -("Auto-VCS: using " & Name (VCS)));
+               end if;
+
             else
                VCS := Get_VCS_From_Id (VCS_Name);
             end if;

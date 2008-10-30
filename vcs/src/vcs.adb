@@ -291,4 +291,22 @@ package body VCS is
       return Ref.Query_Status_By_Dir;
    end Group_Query_Status_By_Dir;
 
+   ----------
+   -- Used --
+   ----------
+
+   procedure Used (Ref : in out VCS_Record'Class) is
+   begin
+      Ref.Used := True;
+   end Used;
+
+   -------------
+   -- Is_Used --
+   -------------
+
+   function Is_Used (Ref : VCS_Record'Class) return Boolean is
+   begin
+      return Ref.Used;
+   end Is_Used;
+
 end VCS;
