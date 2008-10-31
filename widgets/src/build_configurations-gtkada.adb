@@ -312,7 +312,8 @@ package body Build_Configurations.Gtkada is
 
          T.Target.Properties.In_Toolbar := Get_Active (T.Icon_Check);
          T.Target.Properties.In_Menu    := Get_Active (T.Menu_Check);
-         T.Target.Properties.Represents_Mains := Get_Active (T.Main_Check);
+         T.Target.Properties.Target_Type :=
+           To_Unbounded_String (To_Lower (Get_Text (T.Multiple_Targets)));
       end loop;
    end Save_Targets;
 
@@ -557,7 +558,7 @@ package body Build_Configurations.Gtkada is
 
          Combo := Models_Combo (UI);
 
-         Gtk_New (Label, -"Target type");
+         Gtk_New (Label, -"Target model");
          Pack_Start (Top_Box, Label, False, False, 2);
          Pack_Start (Top_Box, Combo, True, True, 0);
 
@@ -633,6 +634,44 @@ package body Build_Configurations.Gtkada is
                  Bottom_Attach => 1,
                  Xoptions      => Expand or Fill);
 
+         declare
+            Descr : constant String :=
+              -("If set, GPS will create one menu/button per subtarget" &
+                " as defined by the given name. If the value is set to" &
+                " ""main"", one entry per main defined in your project" &
+                " hierarchy will be created. See also corresponding" &
+                " macro %T on command line, and compute_build_targets hook" &
+                " for advanced usage of this field");
+
+         begin
+            Gtk_New_Hbox (Hbox);
+            Set_Spacing (Hbox, 3);
+            Gtk_New (Label, "Target type");
+            Set_Tip (Box.Tooltips, Label, Descr);
+            Pack_Start (Hbox, Label, False, False, 0);
+            Attach (Table,
+                    Child         => Hbox,
+                    Left_Attach   => 0,
+                    Right_Attach  => 1,
+                    Top_Attach    => 2,
+                    Bottom_Attach => 3,
+                    Xoptions      => Expand or Fill);
+
+            Gtk_New (Box.Multiple_Targets);
+            Set_Tip (Box.Tooltips, Box.Multiple_Targets, Descr);
+
+            Gtk_New_Hbox (Hbox);
+            Pack_Start (Hbox, Box.Multiple_Targets, False, False, 0);
+
+            Attach (Table,
+                    Child         => Hbox,
+                    Left_Attach   => 1,
+                    Right_Attach  => 2,
+                    Top_Attach    => 2,
+                    Bottom_Attach => 3,
+                    Xoptions      => Expand or Fill);
+         end;
+
          Gtk_New (Box.Icon_Check, "Display button in toolbar");
          Attach (Table,
                  Child         => Box.Icon_Check,
@@ -648,20 +687,6 @@ package body Build_Configurations.Gtkada is
                  Right_Attach  => 3,
                  Top_Attach    => 1,
                  Bottom_Attach => 2);
-
-         Gtk_New (Box.Main_Check, "Multiple main target");
-         Attach (Table,
-                 Child         => Box.Main_Check,
-                 Left_Attach   => 2,
-                 Right_Attach  => 3,
-                 Top_Attach    => 2,
-                 Bottom_Attach => 3);
-         Set_Tip
-           (Box.Tooltips,
-            Box.Main_Check,
-            -("If enabled, GPS will create one menu/button per main" &
-              " defined in your project hierarchy. See also corresponding" &
-              " macro %M on command line."));
 
          Gtk_New_Hbox (Hbox);
          Set_Spacing (Hbox, 3);
@@ -731,7 +756,8 @@ package body Build_Configurations.Gtkada is
 
          Set_Active (Box.Icon_Check, Target.Properties.In_Toolbar);
          Set_Active (Box.Menu_Check, Target.Properties.In_Menu);
-         Set_Active (Box.Main_Check, Target.Properties.Represents_Mains);
+         Box.Multiple_Targets.Set_Text
+           (To_String (Target.Properties.Target_Type));
       end if;
 
       --  Add the switches frame

@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Switches_Parser;
 with String_Utils;    use String_Utils;
 
@@ -832,8 +833,9 @@ package body Build_Configurations is
 
       C.Next := new Node;
       C := C.Next;
-      C.Tag := new String'("represents-mains");
-      C.Value := new String'(Target.Properties.Represents_Mains'Img);
+      C.Tag := new String'("target-type");
+      C.Value := new String'(To_Lower
+                             (To_String (Target.Properties.Target_Type)));
 
       C.Next := new Node;
       C := C.Next;
@@ -962,9 +964,9 @@ package body Build_Configurations is
          elsif Child.Tag.all = "read-only" then
             Target.Properties.Read_Only := Boolean'Value (Child.Value.all);
 
-         elsif Child.Tag.all = "represents-mains" then
-            Target.Properties.Represents_Mains :=
-              Boolean'Value (Child.Value.all);
+         elsif Child.Tag.all = "target-type" then
+            Set_Unbounded_String
+              (Target.Properties.Target_Type, Child.Value.all);
 
          elsif Child.Tag.all = "server" then
             Target.Properties.Server := Server_Type'Value (Child.Value.all);

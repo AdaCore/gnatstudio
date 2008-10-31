@@ -247,8 +247,9 @@ package Build_Configurations is
       --  Server used to launch the target. If equal to GPS_Server, then its
       --  model's server is used.
 
-      Represents_Mains : Boolean := False;
-      --  Whether the target represents a series of mains
+      Target_Type : Unbounded_String;
+      --  If the target represents a series of mains/targets, hold the
+      --  parameter to the compute_build_targets hook.
 
       Key             : Unbounded_String;
       --  The key to which the target is bound

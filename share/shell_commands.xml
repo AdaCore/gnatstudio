@@ -505,6 +505,20 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
     <description>Hook called when the last file revision has been parsed after the corresponding VCS action.</description>
   </shell_doc>
 
+  <shell_doc name="@hook@ compute_build_targets">
+     <param name="hook">A string, the name of the hook</param>
+     <param name="name">A string, the target type</param>
+     <return>A string</return>
+     <description>Hook called whenever GPS needs to compute a list of subtargets for a given build target. The handler should check whether name is a known build target, and if so, return a list of space separated targets. If name is not known, it should return an empty list.</description>
+     <example lang="python">
+         def compute_targets (hook, name):
+            if name == "my_target":
+              return "target1 target2"
+            return ""
+         GPS.Hook ("compute_build_targets").add (compute_targets)
+     </example>
+  </shell_doc>
+
   <!--#################################################################
     ####   Top level functions
     ###################################################################-->

@@ -763,6 +763,12 @@ package GPS.Kernel is
    File_Status_Changed_Hook      : constant Hook_Name := "file_status_changed";
    --  Called when the status of a file is changed : Modified, Unmodified...
 
+   --  Hooks with String_Hooks_Args argument
+   Compute_Build_Targets_Hook : constant Hook_Name := "compute_build_targets";
+   --  Called when computing list of build targets, e.g. list of mains, or list
+   --  of Makefile targets. The string parameter gives the kind of target to
+   --  be computed (e.g. "main", "makefile").
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
