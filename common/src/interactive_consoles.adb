@@ -1696,8 +1696,18 @@ package body Interactive_Consoles is
       Last_Iter   : Gtk_Text_Iter;
 
    begin
+      --  In case the console gets killed when handling the command, for
+      --  instance "quit" in the debugger
+
+      Ref (Console);
+
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
+
+      if In_Destruction_Is_Set (Console) then
+         Unref (Console);
+         return;
+      end if;
 
       if Console.Handler /= Default_Command_Handler'Access then
          Get_End_Iter (Console.Buffer, Last_Iter);
@@ -1723,6 +1733,8 @@ package body Interactive_Consoles is
       end if;
 
       Free (Output);
+
+      Unref (Console);
    end Execute_Command;
 
    ----------------
