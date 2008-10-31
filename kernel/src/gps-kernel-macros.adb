@@ -193,7 +193,9 @@ package body GPS.Kernel.Macros is
          return Image (Integer (Column_Information (Context)));
 
       elsif Param = "a" then
-         return Category_Information (Context);
+         if Has_Category_Information (Context) then
+            return Category_Information (Context);
+         end if;
 
       elsif Param = "s" then
          if Has_Entity_Name_Information (Context) then
