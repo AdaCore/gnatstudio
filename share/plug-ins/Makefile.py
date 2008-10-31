@@ -148,20 +148,16 @@ class Builder:
       Logger ("MAKE").log ("Build file for " + self.pkg_name + " is " + `self.buildfile`)
 
    def read_targets (self):
-      """Read all targets from the build file, and return a list of tuples
-         (target, description)"""
-      return []
+      """Read all targets from the build file, and return a list targets"""
+      return ""
+
+   def compute_build_targets (self, name):
+      return ""
 
    def on_compute_build_targets (self, hook, name):
-      """Called when the project view has changed, and thus we should
-         reparse the build file"""
+      """Called when the a build target needs to be computed"""
       try:
-         Logger ("MAKE").log ("compute build targets. name =" + name)
-         if name == "make":
-           self.compute_buildfile ()
-           if self.buildfile:
-             return self.read_targets ().strip()
-         return ""
+         return self.compute_build_targets (name)
 
       except:
          Logger ("MAKE").log (traceback.format_exc())
@@ -194,6 +190,13 @@ class Makefile (Builder):
       f.close ()
       return targets
 
+   def compute_build_targets (self, name):
+      if name == "make":
+        self.compute_buildfile ()
+        if self.buildfile:
+          return self.read_targets ().strip()
+      return ""
+
 class Antfile (Builder):
    def __init__ (self):
       self.pkg_name = "ant"
@@ -221,6 +224,13 @@ class Antfile (Builder):
       parser.parse (inFile)
       inFile.close ()
       return targets
+
+   def compute_build_targets (self, name):
+      if name == "ant":
+        self.compute_buildfile ()
+        if self.buildfile:
+          return self.read_targets ().strip()
+      return ""
 
 ant_support=False
 
