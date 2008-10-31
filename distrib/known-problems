@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.4.0
 
-- HA05-007: Cannot create .gps directory for path with non ASCII characters
-  Problem:    If the HOME (or GPS_HOME) environment variable contains
-              non ASCII characters, GPS fails to create the .gps
-              directory.
-  Workaround: Use a GPS_HOME which contains only plain ASCII characters
-
 - D502-003: Procedure name too long and overlap with VCS status
   Problem:    On the editor's status bar if a procedure name is
               too long it will overlap with the VCS status.
