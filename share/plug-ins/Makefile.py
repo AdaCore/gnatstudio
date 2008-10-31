@@ -181,8 +181,9 @@ class Makefile (Builder):
       for line in f:
          matches=matcher.match (line)
          if matches:
-            if matches.group (3) and matches.group (3) != "IGNORE":
-               targets += " " + matches.group (1)
+            if matches.group (3):
+               if matches.group (3).strip() != "IGNORE":
+                  targets += " " + matches.group (1)
             else:
                ## Handle multiple targets on same line
                for target in matches.group (1).split():
