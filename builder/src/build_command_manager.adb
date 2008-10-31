@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -193,6 +194,45 @@ package body Build_Command_Manager is
          else
             return (1 => new String'("-eL"));
          end if;
+
+      --  ??? Ditto for %attr
+      elsif Arg'Length > 7
+        and then Arg (Arg'First .. Arg'First + 5) = "%attr("
+        and then Arg (Arg'Last) = ')'
+      then
+         declare
+            function Get_Index (A, B : Natural) return Natural;
+            --  Return A if A /= 0, B otherwise
+
+            function Get_Index (A, B : Natural) return Natural is
+            begin
+               if A = 0 then
+                  return B;
+               else
+                  return A;
+               end if;
+            end Get_Index;
+
+            J    : constant Natural :=
+              Get_Index (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + 5);
+            K    : constant Natural :=
+              Get_Index (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","),
+                         Arg'Last);
+            Pkg  : constant String := Arg (Arg'First + 6 .. J - 1);
+            Attr : constant String := Arg (J + 1 .. K - 1);
+            Prj  : constant Project_Type :=
+              Get_Project (Get_Kernel (Context));
+            Val  : Argument_List_Access :=
+              Argument_String_To_List
+                (Get_Attribute_Value
+                   (Prj, Build (Pkg, Attr),
+                    Default => Arg (K + 1 .. Arg'Last - 1)));
+            Res  : constant Argument_List := Val.all;
+
+         begin
+            Unchecked_Free (Val);
+            return Res;
+         end;
 
       --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"

@@ -4,37 +4,20 @@
    This script defines the following new project attributes in the "make"
    package of a .gpr file. They can be edited graphically through
    the project properties editor.
-       "make.make": Name of the make command to run. It defaults to "make",
-                    although on some systems it should be "gmake".
        "make.makefile": name of the Makefile to use. This can be an absolute
                     name, or a name relative to the directory containing the
                     root project file (ie the one loaded in GPS). This
                     attribute is optional. If unspecified, GPS will look for
                     either "Makefile" or "makefile" in the directory
                     containing the root project.
-                    Set this attribute to "<disabled>" to remove support for
-                    makefiles in this mode.
-       "make.switches": list of extra switches to pass the Makefile.
-                    If you want to have the progress bar
-                    working for a project containing Ada sources, it is a good
-                    idea to pass gnatmake the -d switch, which can be done
-                    through a make variable.
 
    This script defines the following new project attributes in the "ant"
    package of a .gpr file:
-       "ant.ant": Name of the make command to run. It defaults to "ant"
        "ant.antfile": name of the Antfile to use. This can be an absolute
                     name, or a name relative to the directory containing the
                     root project file (ie the one loaded in GPS). This
                     attribute is optional. If unspecified, GPS will look for
                     "build.xml" in the directory containing the root project.
-                    Set this attribute to "<disabled>" to remove support for
-                    ant in this mode.
-       "ant.switches": list of extra switches to pass the Makefile. By
-                    default, "-e" is used. If you want to have the progress bar
-                    working for a project containing Ada sources, it is a good
-                    idea to pass gnatmake the -d switch, which can be done
-                    through an ant variable.
 
    GPS will systematically compile the application by passing the scenario
    variables (see the menu /Tools/Views/Scenario). For instance, this
@@ -45,12 +28,6 @@
 
    These scenario variables are defined in the project file, and should have
    the same name as in the Makefile or the AntFile.
-
-   Any time a project is loaded or reloaded, GPS will update the /Build/Ant
-   and /Build/Makefile menus to add entries corresponding to the targets
-   available in the Makefile or AntFile.
-   You can conveniently set key shortcuts for these entries through the menu
-      /Edit/Key shortcuts
 
    By default, the name in the menu will be the name of the targets found in
    the build file.
@@ -74,12 +51,13 @@ from os.path import *
 from GPS import *
 
 # This is an XML model for make/gnumake
-Make_Model_Template = """
+Make_Model = """
 <target-model name="make" category="">
    <description>Build with make</description>
    <command-line>
       <arg>make</arg>
       <arg>%vars</arg>
+      <arg>%T</arg>
    </command-line>
    <icon>gps-build-all</icon>
    <switches command="%(tool_name)s" columns="2" lines="2">
@@ -92,6 +70,21 @@ Make_Model_Template = """
            tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
    </switches>
 </target-model>
+
+<target model="make" category="_Makefile" name="Make">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gps-build-all</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <target-type>make</target-type>
+    <command-line>
+       <arg>make</arg>
+       <arg>%vars</arg>
+       <arg>-f</arg>
+       <arg>%attr(make'makefile,Makefile)</arg>
+       <arg>%T</arg>
+    </command-line>
+</target>
 """
 
 # This is an XML model for ant
@@ -110,23 +103,28 @@ Ant_Model_Template = """
      <check label="Project variables" switch="%vars"
            tip="Pass project variables to make" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
-           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations. On a multiprocess
+or machine compilations will occur in parallel" />
    </switches>
 </target-model>
+
+<target model="ant" category="_Ant" name="Ant">
+    <in-toolbar>FALSE</in-toolbar>
+    <icon>gps-build-all</icon>
+    <launch-mode>MANUALLY</launch-mode>
+    <read-only>TRUE</read-only>
+    <target-type>ant</target-type>
+    <command-line>
+       <arg>ant</arg>
+       <arg>%vars(-D)</arg>
+       <arg>-buildfile</arg>
+       <arg>%attr(ant'antfile,build.xml)</arg>
+       <arg>%T</arg>
+    </command-line>
+</target>
 """
 
 class Builder:
-   def remove_targets (self):
-      for d in self.targets:
-         t = d[1].strip ()
-         if t != "IGNORE":
-            t = t.replace ("\\", '\\\\')
-            t = t.replace ("/", '\/')
-            try:
-               BuildTarget (self.target + t).remove()
-            except:
-               pass
-
    def compute_buildfile (self):
       """Compute the build file to use. By default, we look in the project
          itself. If none is specified there, we default on the build file
@@ -135,9 +133,6 @@ class Builder:
       root_dir = dirname (Project.root().file().name())
       self.buildfile = Project.root().get_attribute_as_string \
            (self.build_file_attr, self.pkg_name)
-      if self.buildfile == "<disabled>":
-         self.buildfile = None
-         return
 
       self.buildfile = join (root_dir, self.buildfile)
       if not isfile (self.buildfile):
@@ -152,102 +147,57 @@ class Builder:
          (target, description)"""
       return []
 
-   def add_target (self, target, name):
-      """Add a given build target to the builder targets"""
-      project  = Project.root()
-      switches = project.get_attribute_as_string\
-        ("switches", self.pkg_name)
-      make     = project.get_attribute_as_string\
-        (self.build_cmd_attr, self.pkg_name)
-
-      xml = "<target model=" + '"' + self.pkg_name + '"' + " category=" + \
-          '"' + self.category + '"' + " name=" + '"' + self.target + name + \
-          '"' + """>
-      <icon>gps-build-all</icon>
-      <launch-mode>MANUALLY</launch-mode>
-      <read-only>TRUE</read-only>
-      <command-line>
-         <arg>""" + make + """</arg>
-         <arg>""" + self.vars + """</arg>
-         <arg>""" + self.file_switch + """</arg>
-         <arg>""" + self.buildfile + "</arg>"
-
-      for s in switches.split():
-        xml += "<arg>" + s + "</arg>"
-
-      xml += "<arg>" + target + "</arg></command-line></target>"
-      parse_xml (xml)
-
-   def on_project_view_changed (self, hook):
+   def on_compute_build_targets (self, hook, name):
       """Called when the project view has changed, and thus we should
          reparse the build file"""
       try:
-         self.remove_targets ()
-         self.compute_buildfile ()
-         if self.buildfile:
-            self.read_targets ()
-            for d in self.targets:
-                t = d[1].strip ()
-                if t != "IGNORE":
-                   t = t.replace ("\\", '\\\\')
-                   t = t.replace ("/", '\/')
-                   try:
-                      BuildTarget (self.target + t).remove()
-                   except:
-                      pass
-                   t = t.replace ("_", "__")
-                   self.add_target (d[0], t)
+         Logger ("MAKE").log ("compute build targets. name =" + name)
+         if name == "make":
+           self.compute_buildfile ()
+           if self.buildfile:
+             return self.read_targets ().strip()
+         return ""
 
       except:
          Logger ("MAKE").log (traceback.format_exc())
-         pass
+         return ""
 
    def __init__ (self):
       self.targets = []
-      Hook ("project_view_changed").add (self.on_project_view_changed)
-      self.on_project_view_changed ("project_view_changed")
+      Hook ("compute_build_targets").add (self.on_compute_build_targets)
 
 class Makefile (Builder):
    def __init__ (self):
       self.pkg_name = "make"
-      self.category = "_Makefile"
-      self.target = "Make "
       self.build_file_attr = "makefile"
-      self.build_cmd_attr = "make"
-      self.vars = "%vars"
-      self.file_switch = "-f"
       self.default_build_files = ["Makefile", "makefile"]
       Builder.__init__ (self)
 
    def read_targets (self):
-      self.targets = []
+      targets = ""
       matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
       f = file (self.buildfile)
       for line in f:
          matches=matcher.match (line)
          if matches:
-            if matches.group (3):
-               self.targets.append ([matches.group (1), matches.group (3)])
+            if matches.group (3) and matches.group (3) != "IGNORE":
+               targets += " " + matches.group (1)
             else:
                ## Handle multiple targets on same line
                for target in matches.group (1).split():
-                 self.targets.append ([target, target])
+                 targets += " " + target
       f.close ()
+      return targets
 
 class Antfile (Builder):
    def __init__ (self):
       self.pkg_name = "ant"
-      self.category = "_Ant"
-      self.target = "Ant "
       self.build_file_attr = "antfile"
-      self.build_cmd_attr = "ant"
-      self.vars = "%vars(-D)"
-      self.file_switch = "-buildfile"
       self.default_build_files = ["build.xml"]
       Builder.__init__ (self)
 
    def read_targets (self):
-      data = []
+      targets = ""
       class MySaxDocumentHandler (handler.ContentHandler):
          def startElement (self, name, attrs):
             if name == "target":
@@ -258,17 +208,14 @@ class Antfile (Builder):
                       target=attrs.get(attrName)
                   if attrName=="description":
                       description=attrs.get(attrName)
-               if description:
-                  data.append ([str(target), str(description)])
-               else:
-                  data.append ([str(target), str(target)])
+               data += " " + str(target)
 
       parser = make_parser ()
       parser.setContentHandler (MySaxDocumentHandler ())
       inFile = open (self.buildfile, 'r')
       parser.parse (inFile)
       inFile.close ()
-      return data
+      return targets
 
 ant_support=False
 
@@ -277,7 +224,7 @@ def on_gps_started (hook_name):
    if ant_support:
       Antfile()
 
-parse_xml (Make_Model_Template)
+parse_xml (Make_Model)
 parse_xml ("""
   <project_attribute
     name="Makefile"
@@ -293,18 +240,17 @@ parse_xml ("""
     package="Make"
     editor_page="Make"
     editor_section="Make"
-    hide_in="wizard library_wizard"
-    description="Make command to use when parsing Makefile">
-    <string type="" default="make"/>
+    hide_in="wizard library_wizard properties"
+    description="Deprecated, will be ignored">
+    <string type=""/>
   </project_attribute>
   <project_attribute
     name="Switches"
     package="Make"
     editor_page="Make"
     editor_section="Make"
-    hide_in="wizard library_wizard"
-    description="Switches for the make command">
-    <string type="" default=""/>
+    hide_in="wizard library_wizard properties">
+    <string type=""/>
   </project_attribute>""")
 Hook ("gps_started").add (on_gps_started)
 
@@ -327,20 +273,17 @@ if os_utils.locate_exec_on_path ("ant"):
     package="Ant"
     editor_page="Ant"
     editor_section="Ant"
-    hide_in="wizard library_wizard"
-    description="Ant command to use when parsing Makefile">
-    <string type="" default="ant"/>
+    hide_in="wizard library_wizard properties">
+    <string type=""/>
  </project_attribute>
  <project_attribute
     name="Switches"
     package="Ant"
     editor_page="Ant"
     editor_section="Ant"
-    hide_in="wizard library_wizard"
-    description="Switches for the ant command">
-    <string type="" default="-e"/>
+    hide_in="wizard library_wizard properties">
+    <string type=""/>
  </project_attribute>""")
 
    except:
       pass
-
