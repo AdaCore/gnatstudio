@@ -57,6 +57,8 @@ Make_Model = """
    <command-line>
       <arg>make</arg>
       <arg>%vars</arg>
+      <arg>-f</arg>
+      <arg>%attr(make'makefile,Makefile)</arg>
       <arg>%T</arg>
    </command-line>
    <icon>gps-build-all</icon>
@@ -94,6 +96,9 @@ Ant_Model_Template = """
    <command-line>
       <arg>ant</arg>
       <arg>%vars(-D)</arg>
+       <arg>-buildfile</arg>
+       <arg>%attr(ant'antfile,build.xml)</arg>
+      <arg>%T</arg>
    </command-line>
    <icon>gps-build-all</icon>
    <switches command="%(tool_name)s" columns="2" lines="2">
