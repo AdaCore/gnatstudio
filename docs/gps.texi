@@ -11071,6 +11071,18 @@ Main source, or makefile targets.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
+@item %attr(Package'Name[,default])
+Replaced by the project attribute @code{Package'Name}, in other words, the
+attribute @code{Name} from the package @code{Package}. @code{Package'} is
+optional if @code{Name} is a top level attribute (e.g. @code{Object_Dir}).
+
+If the attribute is not defined in the project, an optional @code{default}
+value is returned, or an empty string if not.
+
+Note: This macro is only available in the commands defined in the Build
+Manager and Build Launcher dialogs, and only supports single string attributes,
+not lists.
+
 @item %%
 Replaced by the % sign.
 @end table
@@ -12660,9 +12672,9 @@ is the name of a file on Windows, the index is case-insensitive.
 @item @code{hide_in} (a string, default value: "")
 
 This XML attribute defines the various context in which this attribute
-should not be editable graphically. Currently, GPS provides two such
-contexts ("wizard" and "properties", corresponding to the project
-creation wizard and the project properties editor). If any of those
+should not be editable graphically. Currently, GPS provides three such
+contexts ("wizard", "library_wizard" and "properties", corresponding to the
+project creation wizards and the project properties editor). If any of those
 context is specified in hide_in, then the widget to edit this
 attribute will not be shown. The goal is to keep the graphical
 interface simple.
