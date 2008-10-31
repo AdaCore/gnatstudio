@@ -1619,6 +1619,9 @@ package body GPS.Kernel.Hooks is
       Register_Hook_Return_Boolean
         (Kernel, Compilation_Starting_Hook, Compilation_Hook_Type);
 
+      Register_Hook_Return_String
+        (Kernel, Compute_Build_Targets_Hook, String_Hook_Type);
+
       Register_Command
         (Kernel, Constructor_Method,
          Class        => Hook_Class,

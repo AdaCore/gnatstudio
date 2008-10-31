@@ -328,11 +328,11 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       --  Add the models combo
 
-      Gtk_New (Label, -"Target type");
+      Gtk_New (Label, -"Target model");
       Set_Tip
         (UI.Tooltips,
          Label,
-         -"Select the target type/model");
+         -"Select the target model");
       Gtk_New_Hbox (Hbox);
       Pack_Start (Hbox, Label, False, False, 0);
       Attach (Table, Hbox, 0, 1, 1, 2, Expand or Fill, 0, 3, 3);

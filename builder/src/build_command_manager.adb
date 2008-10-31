@@ -310,12 +310,12 @@ package body Build_Command_Manager is
             end if;
          end;
 
-      elsif Arg = "%M" then
+      elsif Arg = "%T" then
          if Main /= "" then
             return (1 => new String'(Main));
          else
             Console.Insert
-              (Kernel, -"Could not determine the main to build.",
+              (Kernel, -"Could not determine the target to build.",
                Mode => Console.Error);
             raise Invalid_Argument;
          end if;
@@ -456,13 +456,23 @@ package body Build_Command_Manager is
               Expand_Command_Line
                 (Kernel, Mode_Args.all & All_Extra_Args.all, Server,
                  Force_File, Main, Subdir, Simulate => True);
-            Res     : constant String := Argument_List_To_String (Args.all);
 
          begin
-            Free (CL_Args);
-            Free (Mode_Args);
-            Free (Args);
-            return Res;
+
+            if Args = null then
+               Free (CL_Args);
+               Free (Mode_Args);
+               return "";
+            else
+               declare
+                  Res : constant String := Argument_List_To_String (Args.all);
+               begin
+                  Free (CL_Args);
+                  Free (Mode_Args);
+                  Free (Args);
+                  return Res;
+               end;
+            end if;
          end Expand_Cmd_Line;
 
       begin

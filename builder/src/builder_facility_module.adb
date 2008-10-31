@@ -305,6 +305,11 @@ package body Builder_Facility_Module is
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
 
+   function On_Compute_Build_Targets
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return String;
+   --  Called when computing build targets
+
    procedure Add_Action_For_Target (T : Target_Access);
    --  Register a Kernel Action to build T
 
@@ -577,7 +582,7 @@ package body Builder_Facility_Module is
    begin
       --  We do not add actions for targets that represent mains, this is
       --  handled via the <item1>, <item2> (...) mechanism.
-      if Get_Properties (T).Represents_Mains then
+      if Length (Get_Properties (T).Target_Type) /= 0 then
          return;
       end if;
 
@@ -807,6 +812,29 @@ package body Builder_Facility_Module is
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
       end if;
    end On_Compilation_Finished;
+
+   ------------------------------
+   -- On_Compute_Build_Targets --
+   ------------------------------
+
+   function On_Compute_Build_Targets
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return String
+   is
+      Kind : constant String := String_Hooks_Args (Data.all).Value;
+   begin
+      if Kind = "main" then
+         declare
+            Mains  : Argument_List := Get_Mains (Kernel_Handle (Kernel));
+            Result : constant String := Argument_List_To_String (Mains);
+         begin
+            Free (Mains);
+            return Result;
+         end;
+      else
+         return "";
+      end if;
+   end On_Compute_Build_Targets;
 
    --------------------------------
    -- Refresh_Graphical_Elements --
@@ -1174,6 +1202,8 @@ package body Builder_Facility_Module is
 
       end Button_For_Target;
 
+      Targets : Unbounded_String;
+
    begin
       if Target = null
         or else not Get_Properties (Target).In_Toolbar
@@ -1181,13 +1211,24 @@ package body Builder_Facility_Module is
          return;
       end if;
 
-      if Get_Properties (Target).Represents_Mains then
+      Targets := Get_Properties (Target).Target_Type;
+
+      if Length (Targets) /= 0 then
          declare
-            Mains  : Argument_List := Get_Mains (Get_Kernel);
+            Data   : aliased String_Hooks_Args :=
+              (Hooks_Data with
+                 Length => Length (Targets),
+                 Value  => To_String (Targets));
+            Mains  : Argument_List_Access := Argument_String_To_List
+              (Run_Hook_Until_Not_Empty
+                 (Get_Kernel,
+                  Compute_Build_Targets_Hook,
+                  Data'Unchecked_Access));
+
          begin
             --  Do not display if no main is available.
             if Mains'Length > 0 then
-               Button_For_Target (Get_Name (Target), Mains);
+               Button_For_Target (Get_Name (Target), Mains.all);
             end if;
 
             Free (Mains);
@@ -1252,6 +1293,8 @@ package body Builder_Facility_Module is
          end if;
       end Menu_For_Action;
 
+      Targets : Unbounded_String;
+
    begin
       --  Do nothing is the target is not supposed to be shown in the menu
       if not Get_Properties (Target).In_Menu then
@@ -1272,9 +1315,20 @@ package body Builder_Facility_Module is
          end if;
       end if;
 
-      if Get_Properties (Target).Represents_Mains then
+      Targets := Get_Properties (Target).Target_Type;
+
+      if Length (Targets) /= 0 then
          declare
-            Mains  : Argument_List := Get_Mains (Get_Kernel);
+            Data   : aliased String_Hooks_Args :=
+              (Hooks_Data with
+                 Length => Length (Targets),
+                 Value  => To_String (Targets));
+            Mains  : Argument_List_Access := Argument_String_To_List
+              (Run_Hook_Until_Not_Empty
+                 (Get_Kernel,
+                  Compute_Build_Targets_Hook,
+                  Data'Unchecked_Access));
+
          begin
             for J in Mains'Range loop
                if Mains (J) /= null then
@@ -1785,6 +1839,10 @@ package body Builder_Facility_Module is
          Hook   => Project_View_Changed_Hook,
          Func   => Wrapper (On_View_Changed'Access),
          Name   => "builder_facility_module.on_view_changed");
+
+      Add_Hook (Kernel, Compute_Build_Targets_Hook,
+                Wrapper (On_Compute_Build_Targets'Access),
+                Name => "builder_facility_module.compute_build_targets");
 
       --  Register the shell commands
 

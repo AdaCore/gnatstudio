@@ -99,11 +99,11 @@ private
 
       History        : Histories.History;
 
-      Icon_Entry     : Gtk_Entry;
-      Icon_Button    : Gtkada_Combo_Tool_Button;
-      Icon_Check     : Gtk_Check_Button;
-      Menu_Check     : Gtk_Check_Button;
-      Main_Check     : Gtk_Check_Button;
+      Icon_Entry       : Gtk_Entry;
+      Icon_Button      : Gtkada_Combo_Tool_Button;
+      Icon_Check       : Gtk_Check_Button;
+      Menu_Check       : Gtk_Check_Button;
+      Multiple_Targets : Gtk_Entry;
 
       Launch_Combo   : Gtk_Combo_Box;
 

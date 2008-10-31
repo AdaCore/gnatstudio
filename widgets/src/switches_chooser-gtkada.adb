@@ -846,7 +846,7 @@ package body Switches_Chooser.Gtkada is
             ASCII.LF &
             "    %F: full name of the selected source file" &
             ASCII.LF &
-            "    %M: base name of main source being considered" &
+            "    %T: base name of main source being considered" &
             ASCII.LF &
             "    %PP: pathname of the root project" &
             ASCII.LF &

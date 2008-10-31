@@ -5268,8 +5268,8 @@ On top of the Tree are three buttons:
 
 @subsection The configuration panel
 
-On top of the configuration panel, one can select the Target type, also known
-as Target Model. The Model determines the graphical options available in the
+On top of the configuration panel, one can select the Target model.
+The Model determines the graphical options available in the
 "Command line" frame.
 
 The "Revert" button resets all target settings to their original value.
@@ -5299,6 +5299,14 @@ Targets.
     The dialog is never displayed.
   @end itemize
 
+@item Target type: type of target described. If empty, or set to
+  @code{Normal}, represents a simple target. If set to another value,
+  represents multiple subtargets.
+  For example, if set to @code{main}, each subtarget corresponds
+  to a Main source as defined in the currently loaded project.
+  Other custom values may be defined, and then handled via the
+  @code{compute_build_targets} hook.
+
 @item Display button in toolbar: when active, a button is displayed in
   the main toolbar, allowing to quickly launch a Target.
 
@@ -5306,10 +5314,6 @@ Targets.
   to the Target. By default, Targets in the "File" category are listed
   directly in the Build menu, and Targets in other categories are listed
   in a submenu corresponding to the name of the category.
-
-@item Multiple main target: whether the Target actually represents
-  multiple Targets, each one corresponding to a Main source in the currently
-  loaded project.
 
 @end itemize
 
@@ -11175,8 +11179,10 @@ switches of the form @code{-D<variable>=<value>}.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
-@item %M
-Replaced by the base filename of the Main source being considered for building.
+@item %T
+Replaced by the subtarget being considered for building.
+Depending on the context, this can correspond to e.g. the base filename of a
+Main source, or makefile targets.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
@@ -13967,10 +13973,12 @@ Targets are defined in a @code{target} node which has three attributes:
 @item <read-only>
    Optional, defaulting to @code{False}. A boolean indicating whether the
    Target can be removed by the user.
-@item <represents-mains>
-   Optional, defaulting to @code{False}. A boolean indicating whether the
-   Target represents in fact a family of Targets acting on the Main sources in
-   the project.
+@item <target-type>
+   Optional, defaulting to an empty string. A string indicating whether the
+   Target represents a simple target (if empty), or a
+   family of Targets. The name represents a parameter passed to the
+   @code{compute_build_targets} hook. If set to @code{main}, a new subtarget
+   will be create for each Main source defined in the project.
 @item <launch-mode>
    Optional, defaulting to @code{MANUALLY}. Indicates how the Target should be
    launched. Possible values are @code{MANUALLY}, @code{MANUALLY_WITH_DIALOG},

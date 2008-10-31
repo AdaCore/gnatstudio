@@ -217,14 +217,14 @@
     <icon>gps-build-main</icon>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
-    <represents-mains>TRUE</represents-mains>
+    <target-type>main</target-type>
     <command-line>
        <arg>%builder</arg>
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%M</arg>
+       <arg>%T</arg>
     </command-line>
 </target>
 
