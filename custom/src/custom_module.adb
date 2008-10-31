@@ -178,6 +178,7 @@ package body Custom_Module is
    overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Filter_Record;
       Context : Selection_Context) return Boolean;
+   overriding procedure Free (Filter : in out Subprogram_Filter_Record);
    --  Type used to define contextual menus from a scripting language
 
    type Subprogram_Label_Record is new Contextual_Menu_Label_Creator_Record
@@ -237,6 +238,15 @@ package body Custom_Module is
    --  Convert one of the arguments of Data into a filter. This argument can be
    --  specified either as a string referencing a predefined filter, or as a
    --  subprogram callback
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Filter : in out Subprogram_Filter_Record) is
+   begin
+      Free (Filter.Filter);
+   end Free;
 
    ----------
    -- Free --
