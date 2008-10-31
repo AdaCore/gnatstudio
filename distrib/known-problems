@@ -7,6 +7,12 @@ Known Problems fixed in GPS 4.3.0
               to select a file which was read-only.
   Workaround: Change file permissions to read-write
 
+- HA05-007: Cannot create .gps directory for path with non ASCII characters
+  Problem:    If the HOME (or GPS_HOME) environment variable contains
+              non ASCII characters, GPS fails to create the .gps
+              directory.
+  Workaround: Use a GPS_HOME which contains only plain ASCII characters
+
 - H915-002: File view from project filter no working
   Problem:    On the file view when activating the
               "Show files from project only" filter there is nothing
