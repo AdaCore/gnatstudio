@@ -78,6 +78,10 @@ with Commands.Builder;          use Commands.Builder;
 
 package body Builder_Facility_Module is
 
+   Max_Number_Of_Mains : constant := 128;
+   --  The maximum number of Mains that we accept to display in the Menus
+   --  and toolbar.
+
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
      Create ("Builder.Modes", GNATCOLL.Traces.Off);
@@ -451,10 +455,51 @@ package body Builder_Facility_Module is
       Base_Project     : Project_Type;
 
       Root_Project : constant Project_Type := Get_Project (Kernel);
-      Root_Mains   : Argument_List :=
-        Get_Attribute_Value
-          (Root_Project,
-           Attribute => Main_Attribute);
+
+      function Get_Root_Mains return Argument_List;
+      --  Return the mains contained in the root project and all its
+      --  dependencies.
+
+      --------------------
+      -- Get_Root_Mains --
+      --------------------
+
+      function Get_Root_Mains return Argument_List is
+         Result   : Argument_List (1 .. Max_Number_Of_Mains);
+         Index    : Natural := 1;
+         --  Index of the first free element in Result.
+         Iterator :  Imported_Project_Iterator;
+      begin
+         Iterator := Start (Root_Project);
+
+         while Current (Iterator) /= No_Project loop
+            declare
+               Mains : Argument_List :=
+                 Get_Attribute_Value
+                   (Current (Iterator), Attribute => Main_Attribute);
+            begin
+               for J in Mains'Range loop
+                  if Index > Result'Last then
+                     for K in J .. Mains'Last loop
+                        Free (Mains (K));
+                     end loop;
+                     exit;
+                  end if;
+
+                  Result (Index) := Mains (J);
+                  Index := Index + 1;
+               end loop;
+            end;
+
+            exit when Index > Result'Last;
+
+            Next (Iterator);
+         end loop;
+
+         return Result (1 .. Index - 1);
+      end Get_Root_Mains;
+
+      Root_Mains   : Argument_List := Get_Root_Mains;
    begin
       Base_Project := Extended_Project (Root_Project);
 
