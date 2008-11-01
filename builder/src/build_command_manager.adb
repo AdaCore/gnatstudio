@@ -726,6 +726,7 @@ package body Build_Command_Manager is
          Insert (Command.Kernel,
                  (-"This project does not contain") & Command.Main'Img
                  & " " & Target_Type & (-" targets"), Mode => Error);
+         Free (Mains);
          return Failure;
       end if;
 
@@ -740,7 +741,6 @@ package body Build_Command_Manager is
          Dialog       => Command.Dialog,
          Synchronous  => False,
          Main         => Mains (Mains'First - 1 + Command.Main).all);
-
       Free (Mains);
 
       return Success;
