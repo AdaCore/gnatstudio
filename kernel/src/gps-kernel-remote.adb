@@ -3756,12 +3756,12 @@ package body GPS.Kernel.Remote is
       if Console /= null and then Show_Command then
          if Is_Local (Server) then
             Insert (Console,
-                    Unprotect (Argument_List_To_String (Arguments)),
+                    Argument_List_To_String (Arguments),
                     Add_LF => True);
          else
             Insert (Console,
                     Get_Nickname (Server) & "> " &
-                    Unprotect (Argument_List_To_String (Arguments)),
+                    Argument_List_To_String (Arguments),
                     Add_LF => True);
          end if;
       end if;
