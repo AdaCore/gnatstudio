@@ -24,16 +24,13 @@ with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-
-with GPS.Intl;           use GPS.Intl;
-
-with Build_Command_Manager; use Build_Command_Manager;
-with Build_Configurations;  use Build_Configurations;
-
-with String_List_Utils;  use String_List_Utils;
+with Build_Command_Manager;      use Build_Command_Manager;
+with Build_Configurations;       use Build_Configurations;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Intl;                   use GPS.Intl;
+with String_List_Utils;          use String_List_Utils;
+with String_Utils;               use String_Utils;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -219,7 +216,7 @@ package body Builder_Facility_Module.Scripts is
          Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop
             Set_Return_Value
-              (Data, String_List_Utils.String_List.Data (Node));
+              (Data, Unprotect (String_List_Utils.String_List.Data (Node)));
 
             Node := Next (Node);
          end loop;
