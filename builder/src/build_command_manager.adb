@@ -22,14 +22,16 @@ with Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with GNATCOLL.Templates; use GNATCOLL.Templates;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Macros;      use GPS.Kernel.Macros;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Intl;               use GPS.Intl;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                  use GPS.Intl;
 
 with GPS.Location_View;      use GPS.Location_View;
 
@@ -708,13 +710,22 @@ package body Build_Command_Manager is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      Mains  : Argument_List := Get_Mains (Command.Kernel);
+      Target_Type : constant String := To_String (Command.Target_Type);
+      Data   : aliased String_Hooks_Args :=
+        (Hooks_Data with
+         Length => Target_Type'Length,
+         Value  => Target_Type);
+      Mains  : Argument_List_Access := Argument_String_To_List
+        (Run_Hook_Until_Not_Empty
+           (Command.Kernel,
+            Compute_Build_Targets_Hook,
+            Data'Unchecked_Access));
 
    begin
       if Command.Main not in 1 .. Mains'Length then
          Insert (Command.Kernel,
                  (-"This project does not contain") & Command.Main'Img
-                 & (-" main files"), Mode => Error);
+                 & " " & Target_Type & (-" targets"), Mode => Error);
          return Failure;
       end if;
 
@@ -744,6 +755,7 @@ package body Build_Command_Manager is
       Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Target_Type  : String;
       Main         : Natural;
       Quiet        : Boolean;
       Dialog       : Dialog_Mode)
@@ -752,7 +764,8 @@ package body Build_Command_Manager is
       Item := new Build_Main_Command;
       Item.Kernel := Kernel;
       Item.Registry := Registry;
-      Item.Target_Name := To_Unbounded_String (Target_Name);
+      Set_Unbounded_String (Item.Target_Name, Target_Name);
+      Set_Unbounded_String (Item.Target_Type, Target_Type);
       Item.Main := Main;
       Item.Dialog := Dialog;
       Item.Quiet := Quiet;
