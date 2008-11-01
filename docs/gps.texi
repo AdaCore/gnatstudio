@@ -4682,7 +4682,7 @@ switches defined at the project level.
 
 @iftex
 @cindex screen shot
-@image{switch-editor-revert, 11.7cm}
+@image{switch-editor-revert, 11.3cm}
 @end iftex
 
 @ifhtml
@@ -5177,7 +5177,7 @@ Configuration dialog, or through XML configuration.
 
 @iftex
 @cindex screen shot
-@image{target-configuration-dialog, 18.2cm}
+@image{target-configuration-dialog, 12.7cm}
 @end iftex
 
 @ifhtml
@@ -5187,13 +5187,13 @@ Configuration dialog, or through XML configuration.
 
 This dialog is divided in two areas: on the left, a tree listing Targets, and,
 in the main area, a panel for configuring the Target which is currently
-selected in the Tree.
+selected in the tree.
 
 @subsection The Targets tree
 
 The Tree contains a list of targets, organized by categories.
 
-On top of the Tree are three buttons:
+On top of the tree are three buttons:
 
 @itemize @bullet
 @item The Add button creates a new target.
@@ -5217,23 +5217,23 @@ Targets.
 
 @itemize @bullet
 @item The Launch mode indicates the way the target is launched:
-  @itemize @code
-  @item Manually
-    The target is launched when clicking on the corresponding icon
+  @itemize @bullet
+  @item Manually:
+    the target is launched when clicking on the corresponding icon
     in the toolbar, or when activating the corresponding menu item.
     In the latter case, a dialog is displayed, allowing last-minute
     modifications of the command line.
 
-  @item Manually with dialog
-    Same as Manually, but the dialog is always displayed, even when
+  @item Manually with dialog:
+    same as Manually, but the dialog is always displayed, even when
     clicking on the toolbar icon.
 
-  @item Manually with no dialog
-    Same as Manually, but the dialog is never displayed, even when
+  @item Manually with no dialog:
+    same as Manually, but the dialog is never displayed, even when
     activating the menu item.
 
-  @item On file save
-    The Target is launched automatically by GPS when a file is saved.
+  @item On file save:
+    the Target is launched automatically by GPS when a file is saved.
     The dialog is never displayed.
   @end itemize
 
@@ -5309,7 +5309,7 @@ mode.
 
 @iftex
 @cindex screen shot
-@image{toolchains-config, 12.7cm}
+@image{toolchains-config, 9.7cm}
 @end iftex
 
 @ifhtml
