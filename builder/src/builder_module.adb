@@ -471,9 +471,7 @@ package body Builder_Module is
    procedure Loads_Xrefs_From_File
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Update_Xref
-        (Get_Or_Create
-           (Get_Database (Kernel), File));
+      Update_Xref (Get_Or_Create (Get_Database (Kernel), File));
    end Loads_Xrefs_From_File;
 
    ----------------------------
@@ -571,7 +569,7 @@ package body Builder_Module is
 
    procedure Launch
      (Kernel : access Kernel_Handle_Record'Class;
-      Run : Run_Description)
+      Run    : Run_Description)
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
@@ -689,7 +687,7 @@ package body Builder_Module is
               and then Command (Command'First) /= ASCII.NUL
             then
                Set_Command (Run, Active, Command);
-               Run.Directory    := new String'("");
+               Run.Directory := new String'("");
 
                if Is_Local (Execution_Server) then
                   Run.Title := new String'(-"Run: " & Command);
@@ -860,8 +858,8 @@ package body Builder_Module is
          Set_Shortcut     : Boolean := True;
       begin
          if Builder_Module_ID.Run_Menu /= null then
-            Remove_All_Children (Builder_Module_ID.Run_Menu,
-                                 Is_Dynamic_Menu_Item'Access);
+            Remove_All_Children
+              (Builder_Module_ID.Run_Menu, Is_Dynamic_Menu_Item'Access);
          end if;
 
          --  ??? Few limitations on what is done here:
@@ -889,9 +887,10 @@ package body Builder_Module is
               or else Current_Project /= Extended_Project
             then
                declare
-                  Mains : Argument_List :=
-                            Get_Attribute_Value
-                              (Current_Project, Attribute => Main_Attribute);
+                  Mains           : Argument_List :=
+                                      Get_Attribute_Value
+                                        (Current_Project,
+                                         Attribute => Main_Attribute);
                   Context_Project : Project_Type;
                begin
                   --  We should compile main files from the extended project

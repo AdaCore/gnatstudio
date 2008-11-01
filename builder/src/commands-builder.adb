@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -17,30 +17,30 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings;           use Ada.Strings;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with Ada.Strings.Maps;      use Ada.Strings.Maps;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings;             use Ada.Strings;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Maps;        use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with GNAT.Expect;           use GNAT.Expect;
-with GNAT.Regpat;           use GNAT.Regpat;
-with GNAT.String_Split;     use GNAT.String_Split;
+with GNAT.Expect;             use GNAT.Expect;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.String_Split;       use GNAT.String_Split;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;       use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNATCOLL.Scripts.Utils;
 
-with GPS.Kernel;            use GPS.Kernel;
-with GPS.Kernel.Console;    use GPS.Kernel.Console;
-with GPS.Kernel.Styles;     use GPS.Kernel.Styles;
-with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
-with GPS.Location_View;     use GPS.Location_View;
-with GPS.Intl;              use GPS.Intl;
-with Traces;                use Traces;
-with Basic_Types;           use Basic_Types;
-with UTF8_Utils;            use UTF8_Utils;
-with String_Utils;          use String_Utils;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Console;      use GPS.Kernel.Console;
+with GPS.Kernel.Styles;       use GPS.Kernel.Styles;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
+with GPS.Location_View;       use GPS.Location_View;
+with GPS.Intl;                use GPS.Intl;
+with Traces;                  use Traces;
+with Basic_Types;             use Basic_Types;
+with UTF8_Utils;              use UTF8_Utils;
+with String_Utils;            use String_Utils;
 
 with Builder_Facility_Module; use Builder_Facility_Module;
 
@@ -59,7 +59,7 @@ package body Commands.Builder is
       --  a background mode.
 
       Shadow : Boolean := False;
-      --  Whether this is a Shadow build.
+      --  Whether this is a Shadow build
 
       Buffer : Unbounded_String;
       --  Stores the incomplete lines returned by the compilation process
@@ -161,8 +161,7 @@ package body Commands.Builder is
    -- End_Build_Callback --
    ------------------------
 
-   procedure End_Build_Callback
-     (Data : Process_Data; Status : Integer) is
+   procedure End_Build_Callback (Data : Process_Data; Status : Integer) is
    begin
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
@@ -188,7 +187,7 @@ package body Commands.Builder is
       Str      : GNAT.OS_Lib.String_Access;
 
       Build_Data : Build_Callback_Data
-        renames Build_Callback_Data (Data.Callback_Data.all);
+      renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if not Data.Process_Died then
          Last_EOL := Index (Output, (1 => ASCII.LF), Backward);
@@ -341,8 +340,7 @@ package body Commands.Builder is
    ----------------------------
 
    Completed_Matcher : constant Pattern_Matcher := Compile
-     ("completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n",
-      Single_Line);
+     ("completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\n", Single_Line);
    --  ??? This is configurable in some cases (from XML for instance), so
    --  we should not have a hard coded regexp here.
 
@@ -401,13 +399,13 @@ package body Commands.Builder is
       Synchronous    : Boolean;
       Use_Shell      : Boolean)
    is
+      Console  : constant Interactive_Console :=
+                   Get_Build_Console (Kernel, Shadow, False);
       Data     : Build_Callback_Data_Access;
       Success  : Boolean;
       Args     : Argument_List_Access;
       Cmd_Name : Unbounded_String;
 
-      Console : constant Interactive_Console :=
-        Get_Build_Console (Kernel, Shadow, False);
    begin
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
@@ -437,8 +435,9 @@ package body Commands.Builder is
            and then Shell_Env /= ""
            and then Is_Local (Server)
          then
-            Args := new Argument_List'(new String'("-c"), new String'
-                                         (Argument_List_To_String (CL.all)));
+            Args := new Argument_List'
+              (new String'("-c"),
+               new String'(Argument_List_To_String (CL.all)));
 
             Launch_Process
               (Kernel,

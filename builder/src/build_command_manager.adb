@@ -20,34 +20,29 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 
-with GNATCOLL.Templates;        use GNATCOLL.Templates;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                  use GPS.Intl;
+with GNATCOLL.Templates;          use GNATCOLL.Templates;
 
-with GPS.Location_View;      use GPS.Location_View;
-
-with Projects.Registry;      use Projects.Registry;
-
-with Commands.Builder; use Commands.Builder;
-
+with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
-
-with OS_Utils;           use OS_Utils;
-with Projects;           use Projects;
-with Remote;             use Remote;
-with String_Utils;       use String_Utils;
-with Traces;             use Traces;
-
-with Builder_Facility_Module; use Builder_Facility_Module;
+with Commands.Builder;            use Commands.Builder;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Console;          use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Intl;                    use GPS.Intl;
+with GPS.Location_View;           use GPS.Location_View;
+with OS_Utils;                    use OS_Utils;
+with Projects.Registry;           use Projects.Registry;
+with Projects;                    use Projects;
+with Remote;                      use Remote;
+with String_Utils;                use String_Utils;
+with Traces;                      use Traces;
 
 package body Build_Command_Manager is
 
@@ -57,7 +52,7 @@ package body Build_Command_Manager is
      (Argument_List, Argument_List_Access);
 
    Invalid_Argument : exception;
-   --  Raised by Expand_Arg below.
+   --  Raised by Expand_Arg below
 
    function Expand_Command_Line
      (Kernel     : GPS.Kernel.Kernel_Handle;
@@ -89,7 +84,7 @@ package body Build_Command_Manager is
    --  expansion will be done.
 
    procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar.
+   --  Free memory associated to Ar
 
    ----------
    -- Free --
@@ -127,10 +122,11 @@ package body Build_Command_Manager is
       function Substitution
         (Param : String; Quoted : Boolean) return String
       is
-         Done   : aliased Boolean := False;
+         Done : aliased Boolean := False;
       begin
          if Param = "subdir" then
             return Subdir;
+
          else
             declare
                Result : constant String := GPS.Kernel.Macros.Substitute
@@ -142,6 +138,7 @@ package body Build_Command_Manager is
                   else
                      raise Invalid_Argument;
                   end if;
+
                else
                   return Result;
                end if;
@@ -205,6 +202,10 @@ package body Build_Command_Manager is
          declare
             function Get_Index (A, B : Natural) return Natural;
             --  Return A if A /= 0, B otherwise
+
+            ---------------
+            -- Get_Index --
+            ---------------
 
             function Get_Index (A, B : Natural) return Natural is
             begin
@@ -325,16 +326,19 @@ package body Build_Command_Manager is
             if File = No_File then
                if Simulate then
                   return (1 => new String'("<current-file>"));
+
                else
                   Console.Insert
                     (Kernel, -"No file selected", Mode => Console.Error);
                   raise Invalid_Argument;
                end if;
+
             elsif Get_Project_From_File
               (Get_Registry (Kernel).all, File, False) = No_Project
             then
                if Simulate then
                   return (1 => new String'("<current-file>"));
+
                else
                   Console.Insert
                     (Kernel, -"Could not determine the project for file: "
@@ -342,6 +346,7 @@ package body Build_Command_Manager is
                      Mode => Console.Error);
                   raise Invalid_Argument;
                end if;
+
             else
                --  We are launching a compile command involving File:
                --  remove reference to File from the Locations View.
@@ -365,7 +370,7 @@ package body Build_Command_Manager is
       else
          return (1 => new String'
                    (GNATCOLL.Templates.Substitute
-                    (Str => Arg,
+                    (Str       => Arg,
                      Delimiter => GPS.Kernel.Macros.Special_Character,
                      Callback  => Substitution'Unrestricted_Access)));
       end if;
@@ -384,9 +389,9 @@ package body Build_Command_Manager is
       Subdir     : String;
       Simulate   : Boolean := False) return Argument_List_Access
    is
-      Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
-      Index  : Natural := 1;
-      --  Index of the next free element in Result.
+      Result  : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
+      Index   : Natural := 1;
+      --  Index of the next free element in Result
 
       Context : constant Selection_Context := Get_Current_Context (Kernel);
 
@@ -451,29 +456,29 @@ package body Build_Command_Manager is
    -------------------
 
    procedure Launch_Target
-     (Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Mode_Name    : String;
-      Force_File   : Virtual_File;
-      Extra_Args   : Argument_List_Access;
-      Quiet        : Boolean;
-      Synchronous  : Boolean;
-      Dialog       : Dialog_Mode;
-      Main         : String)
+     (Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Mode_Name   : String;
+      Force_File  : Virtual_File;
+      Extra_Args  : Argument_List_Access;
+      Quiet       : Boolean;
+      Synchronous : Boolean;
+      Dialog      : Dialog_Mode;
+      Main        : String)
    is
-      Prj          : constant Project_Type := Get_Project (Kernel);
-      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
-      T            : Target_Access;
-      Full         : Argument_List_Access;
-      Command_Line : Argument_List_Access;
+      Prj            : constant Project_Type := Get_Project (Kernel);
+      Old_Dir        : constant Dir_Name_Str := Get_Current_Dir;
+      T              : Target_Access;
+      Full           : Argument_List_Access;
+      Command_Line   : Argument_List_Access;
       All_Extra_Args : Argument_List_Access;
 
       procedure Launch_For_Mode
         (Mode   : String;
          Quiet  : Boolean;
          Shadow : Boolean);
-      --  Compute and launch the command, for the given mode.
+      --  Compute and launch the command, for the given mode
 
       ---------------------
       -- Launch_For_Mode --
@@ -482,7 +487,8 @@ package body Build_Command_Manager is
       procedure Launch_For_Mode
         (Mode   : String;
          Quiet  : Boolean;
-         Shadow : Boolean) is
+         Shadow : Boolean)
+      is
 
          Subdir : constant String := Get_Mode_Subdir (Mode);
          Server : Server_Type;
@@ -490,21 +496,26 @@ package body Build_Command_Manager is
          function Expand_Cmd_Line (CL : String) return String;
          --  Callback for Single_Target_Dialog
 
+         ---------------------
+         -- Expand_Cmd_Line --
+         ---------------------
+
          function Expand_Cmd_Line (CL : String) return String is
-            CL_Args : Argument_List_Access := Argument_String_To_List (CL);
+            CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
             Mode_Args : Argument_List_Access :=
                           Apply_Mode_Args (Get_Model (T), Mode, CL_Args.all);
-            Args    : Argument_List_Access :=
-              Expand_Command_Line
-                (Kernel, Mode_Args.all & All_Extra_Args.all, Server,
-                 Force_File, Main, Subdir, Simulate => True);
+            Args      : Argument_List_Access :=
+                          Expand_Command_Line
+                            (Kernel, Mode_Args.all & All_Extra_Args.all,
+                             Server,
+                             Force_File, Main, Subdir, Simulate => True);
 
          begin
-
             if Args = null then
                Free (CL_Args);
                Free (Mode_Args);
                return "";
+
             else
                declare
                   Res : constant String := Argument_List_To_String (Args.all);
@@ -568,8 +579,8 @@ package body Build_Command_Manager is
             --  Get the unexpanded command line from the target
 
             declare
-               CL : constant Argument_List :=
-                      Get_Command_Line_Unexpanded (Registry, T);
+               CL      : constant Argument_List :=
+                           Get_Command_Line_Unexpanded (Registry, T);
                CL_Mode : Argument_List_Access :=
                            Apply_Mode_Args (Get_Model (T), Mode, CL);
             begin
@@ -638,11 +649,8 @@ package body Build_Command_Manager is
             Modes : Argument_List := Get_List_Of_Modes (Get_Model (T));
          begin
             for J in Modes'Range loop
-               --  All modes after Modes'First are Ninja modes
-               Launch_For_Mode
-                 (Modes (J).all,
-                  Quiet,
-                  J > Modes'First);
+               --  All modes after Modes'First are Shadow modes
+               Launch_For_Mode (Modes (J).all, Quiet, J > Modes'First);
             end loop;
 
             Free (Modes);
@@ -659,22 +667,22 @@ package body Build_Command_Manager is
    overriding
    function Execute
      (Command : access Build_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       --  ??? We should use the command context
       pragma Unreferenced (Context);
    begin
-      Launch_Target (Kernel       => Command.Kernel,
-                     Registry     => Command.Registry,
-                     Target_Name  => To_String (Command.Target_Name),
-                     Mode_Name    => "",
-                     Force_File   => No_File,
-                     Extra_Args   => null,
-                     Quiet        => Command.Quiet,
-                     Dialog       => Command.Dialog,
-                     Synchronous  => False,
-                     Main         => To_String (Command.Main));
+      Launch_Target
+        (Kernel       => Command.Kernel,
+         Registry     => Command.Registry,
+         Target_Name  => To_String (Command.Target_Name),
+         Mode_Name    => "",
+         Force_File   => No_File,
+         Extra_Args   => null,
+         Quiet        => Command.Quiet,
+         Dialog       => Command.Dialog,
+         Synchronous  => False,
+         Main         => To_String (Command.Main));
       return Success;
    end Execute;
 
@@ -683,13 +691,13 @@ package body Build_Command_Manager is
    ------------
 
    procedure Create
-     (Item         : out Build_Command_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Main         : String;
-      Quiet        : Boolean;
-      Dialog       : Dialog_Mode) is
+     (Item        : out Build_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Main        : String;
+      Quiet       : Boolean;
+      Dialog      : Dialog_Mode) is
    begin
       Item := new Build_Command;
       Item.Kernel := Kernel;
@@ -710,16 +718,18 @@ package body Build_Command_Manager is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
+
       Target_Type : constant String := To_String (Command.Target_Type);
-      Data   : aliased String_Hooks_Args :=
-        (Hooks_Data with
-         Length => Target_Type'Length,
-         Value  => Target_Type);
-      Mains  : Argument_List_Access := Argument_String_To_List
-        (Run_Hook_Until_Not_Empty
-           (Command.Kernel,
-            Compute_Build_Targets_Hook,
-            Data'Unchecked_Access));
+      Data        : aliased String_Hooks_Args :=
+                      (Hooks_Data with
+                       Length => Target_Type'Length,
+                       Value  => Target_Type);
+      Mains       : Argument_List_Access :=
+                      Argument_String_To_List
+                        (Run_Hook_Until_Not_Empty
+                           (Command.Kernel,
+                            Compute_Build_Targets_Hook,
+                            Data'Unchecked_Access));
 
    begin
       if Command.Main not in 1 .. Mains'Length then
@@ -731,16 +741,16 @@ package body Build_Command_Manager is
       end if;
 
       Launch_Target
-        (Kernel       => Command.Kernel,
-         Registry     => Command.Registry,
-         Target_Name  => To_String (Command.Target_Name),
-         Mode_Name    => "",
-         Force_File   => No_File,
-         Extra_Args   => null,
-         Quiet        => Command.Quiet,
-         Dialog       => Command.Dialog,
-         Synchronous  => False,
-         Main         => Mains (Mains'First - 1 + Command.Main).all);
+        (Kernel      => Command.Kernel,
+         Registry    => Command.Registry,
+         Target_Name => To_String (Command.Target_Name),
+         Mode_Name   => "",
+         Force_File  => No_File,
+         Extra_Args  => null,
+         Quiet       => Command.Quiet,
+         Dialog      => Command.Dialog,
+         Synchronous => False,
+         Main        => Mains (Mains'First - 1 + Command.Main).all);
       Free (Mains);
 
       return Success;
@@ -751,14 +761,14 @@ package body Build_Command_Manager is
    ------------
 
    procedure Create
-     (Item         : out Build_Main_Command_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Target_Type  : String;
-      Main         : Natural;
-      Quiet        : Boolean;
-      Dialog       : Dialog_Mode)
+     (Item        : out Build_Main_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Target_Type : String;
+      Main        : Natural;
+      Quiet       : Boolean;
+      Dialog      : Dialog_Mode)
    is
    begin
       Item := new Build_Main_Command;

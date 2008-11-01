@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Exceptions;             use Ada, Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
@@ -145,12 +145,13 @@ package body GPS.Kernel.Remote is
 
    type Connection_Debug is new Connection_Debugger_Record with record
       Kernel  : Kernel_Handle;
-      Title   : String_Access;
+      Title   : GNAT.OS_Lib.String_Access;
       Console : Interactive_Console;
    end record;
 
-   function Create (Kernel : Kernel_Handle;
-                    Title  : String) return Connection_Debugger;
+   function Create
+     (Kernel : Kernel_Handle;
+      Title  : String) return Connection_Debugger;
    --  Create a Connection_Debug object
 
    overriding procedure Print
@@ -184,8 +185,7 @@ package body GPS.Kernel.Remote is
    is
       Console : Interactive_Console;
    begin
-      Console :=
-        Create_Interactive_Console (Dbg.Kernel, Dbg.Title.all);
+      Console := Create_Interactive_Console (Dbg.Kernel, Dbg.Title.all);
 
       case Mode is
          when Input =>
@@ -243,7 +243,7 @@ package body GPS.Kernel.Remote is
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
    Synchronisation_String : constant
-     array (Synchronisation_Type) of String_Access :=
+     array (Synchronisation_Type) of GNAT.OS_Lib.String_Access :=
                               (Never          => new String'("Never"),
                                Once_To_Local  => new String'("Once to local"),
                                Once_To_Remote => new String'("Once to remote"),
@@ -375,8 +375,9 @@ package body GPS.Kernel.Remote is
       Default_Server : String);
    --  Creates the server_list_editor dialog
 
-   procedure On_Changed (W                 : access Gtk_Widget_Record'Class;
-                         Connection_Params : Boolean);
+   procedure On_Changed
+     (W                 : access Gtk_Widget_Record'Class;
+      Connection_Params : Boolean);
    --  Called when one of the entries has changed
    --  Connection_Params tells if connection configuration changed. If set, the
    --   machine cannot be browsed until 'Apply' is called.
@@ -411,7 +412,7 @@ package body GPS.Kernel.Remote is
    type Server_Config is record
       Is_Local : Boolean := True;
       --  Is_Local Tells if the server is the local machine or not
-      Nickname : String_Access;
+      Nickname : GNAT.OS_Lib.String_Access;
       --  Identifier of the server
    end record;
    type Servers_Config is array (Distant_Server_Type) of Server_Config;
@@ -512,7 +513,7 @@ package body GPS.Kernel.Remote is
                              Get_Attribute (Node, "debug_console", "false");
       Field              : Glib.String_Ptr;
       Max_Nb_Connections : Natural;
-      User_Name          : String_Access;
+      User_Name          : GNAT.OS_Lib.String_Access;
       Timeout            : Natural;
       Extra_Init_Cmds    : GNAT.OS_Lib.Argument_List_Access;
       Nb_Init_Cmds       : Natural;
@@ -713,9 +714,9 @@ package body GPS.Kernel.Remote is
    ------------------------------
 
    procedure Load_Remote_Config (Kernel : Kernel_Handle) is
-      Filename : constant String := Get_Home_Dir (Kernel) & "remote.xml";
+      Filename    : constant String := Get_Home_Dir (Kernel) & "remote.xml";
       File, Child : Node_Ptr;
-      Err : String_Access;
+      Err         : GNAT.OS_Lib.String_Access;
 
    begin
       if Is_Regular_File (Filename) then
@@ -724,6 +725,7 @@ package body GPS.Kernel.Remote is
 
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
+
          else
             Child := File.Child;
 
@@ -748,11 +750,12 @@ package body GPS.Kernel.Remote is
    ------------------------
 
    procedure Save_Remote_Config (Kernel : Kernel_Handle) is
-      Filename   : constant String := Get_Home_Dir (Kernel) & "remote.xml";
+      Filename                    : constant String :=
+                                      Get_Home_Dir (Kernel) & "remote.xml";
       File, Item, Child, Cmd_Node : Node_Ptr;
-      Desc       : Machine_Descriptor;
-      Nb_Desc    : Natural;
-      Success    : Boolean;
+      Desc                        : Machine_Descriptor;
+      Nb_Desc                     : Natural;
+      Success                     : Boolean;
 
    begin
       Trace (Me, "Saving " & Filename);
@@ -775,6 +778,7 @@ package body GPS.Kernel.Remote is
             Set_Attribute (Item, "remote_access", Desc.Access_Name.all);
             Set_Attribute (Item, "network_name", Desc.Network_Name.all);
             Set_Attribute (Item, "nickname", Desc.Nickname.all);
+
             if Desc.Dbg = null then
                Set_Attribute (Item, "debug_console", "false");
             else
@@ -865,11 +869,11 @@ package body GPS.Kernel.Remote is
    -------------
 
    procedure Gtk_New
-     (Widget      : out Paths_Widget;
-      Dialog      : Gtk_Dialog)
+     (Widget : out Paths_Widget;
+      Dialog : Gtk_Dialog)
    is
-      Pix    : Gtk_Image;
-      Label  : Gtk_Label;
+      Pix   : Gtk_Image;
+      Label : Gtk_Label;
    begin
       Widget := new Paths_Widget_Record;
       Gtk.Frame.Initialize (Widget, -"Path Translations");
@@ -946,12 +950,16 @@ package body GPS.Kernel.Remote is
      (Widget : Paths_Widget;
       FS     : Filesystem_Record'Class)
    is
-      List   : Path_Row_List.Glist;
-      Row    : Path_Row;
+      List : Path_Row_List.Glist;
+      Row  : Path_Row;
       use type Path_Row_List.Glist;
 
       procedure Update (P : in out Mirror_Path);
       --  Update the Mirror path with values in the widget
+
+      ------------
+      -- Update --
+      ------------
 
       procedure Update (P : in out Mirror_Path) is
       begin
@@ -973,9 +981,9 @@ package body GPS.Kernel.Remote is
    ------------------
 
    procedure Add_Path_Row
-     (Widget      : Paths_Widget;
-      Row_Number  : Guint;
-      Cursor      : Mirror_List.Cursor)
+     (Widget     : Paths_Widget;
+      Row_Number : Guint;
+      Cursor     : Mirror_List.Cursor)
    is
       Path : constant Mirror_Path := Mirror_List.Element (Cursor);
       Pix  : Gtk_Image;
@@ -1159,7 +1167,7 @@ package body GPS.Kernel.Remote is
      (Widget : Paths_Widget;
       Row    : in out Path_Row)
    is
-      procedure Free is new Ada.Unchecked_Deallocation
+      procedure Free is new Unchecked_Deallocation
         (Path_Row_Record, Path_Row);
    begin
       Remove (Widget.Table, Row.Local_Frame);
@@ -1241,8 +1249,7 @@ package body GPS.Kernel.Remote is
    -- On_Add_Path_Clicked --
    -------------------------
 
-   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Add_Path_Clicked (W : access Gtk_Widget_Record'Class) is
       Widget : Paths_Widget_Record renames Paths_Widget_Record (W.all);
       Path   : constant Mirror_Path := Null_Path;
    begin
@@ -1311,12 +1318,12 @@ package body GPS.Kernel.Remote is
    ----------------------
 
    procedure On_Browse_Remote (Widget : access Path_Cb_Data'Class) is
-      Current_Dir  : constant String :=
-                       Get_Text (Widget.Row.Remote_Entry);
-      Start_Dir    : Virtual_File := No_File;
-      Dialog       : constant Server_List_Editor :=
-                       Server_List_Editor (Widget.Widget.Dialog);
-      Gtk_Resp     : Message_Dialog_Buttons;
+      Current_Dir : constant String :=
+                      Get_Text (Widget.Row.Remote_Entry);
+      Start_Dir   : Virtual_File := No_File;
+      Dialog      : constant Server_List_Editor :=
+                      Server_List_Editor (Widget.Widget.Dialog);
+      Gtk_Resp    : Message_Dialog_Buttons;
       pragma Unreferenced (Gtk_Resp);
    begin
       if Dialog.Selected_Machine = null then
@@ -1893,18 +1900,18 @@ package body GPS.Kernel.Remote is
       ------------------
 
       function Check_Fields
-        (Model          : Gtk.Tree_Store.Gtk_Tree_Store;
-         Iter           : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Dialog         : Server_List_Editor) return Boolean
+        (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
+         Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+         Dialog : Server_List_Editor) return Boolean
       is
-         Nickname  : constant String := Get_String (Model, Iter, Name_Col);
+         Nickname         : constant String :=
+                              Get_String (Model, Iter, Name_Col);
          Has_Network_Name : Boolean;
          Has_Access_Name  : Boolean;
          Has_Shell_Name   : Boolean;
-         Error_Str        : Ada.Strings.Unbounded.Unbounded_String;
+         Error_Str        : Unbounded_String;
          Ret              : Message_Dialog_Buttons;
          pragma Unreferenced (Ret);
-         use type Ada.Strings.Unbounded.Unbounded_String;
 
       begin
          Has_Network_Name := Get_Text (Dialog.Network_Name_Entry) /= "";
@@ -1917,7 +1924,7 @@ package body GPS.Kernel.Remote is
            or else not Has_Access_Name
            or else not Has_Shell_Name
          then
-            Error_Str := Ada.Strings.Unbounded.To_Unbounded_String
+            Error_Str := To_Unbounded_String
               (-"The following items are missing for server ") &
                Nickname & ":";
 
@@ -1934,7 +1941,7 @@ package body GPS.Kernel.Remote is
             end if;
 
             Ret := Message_Dialog
-              (Ada.Strings.Unbounded.To_String (Error_Str),
+              (To_String (Error_Str),
                Dialog_Type => Error,
                Buttons     => Button_OK,
                Parent      => Gtk_Window (Dialog));
@@ -3195,7 +3202,7 @@ package body GPS.Kernel.Remote is
 
          declare
             Use_Cr_Lf_String_Access : constant Glib.String_Ptr :=
-                                      Get_Field (Node, "use_cr_lf");
+                                        Get_Field (Node, "use_cr_lf");
          begin
             if Use_Cr_Lf_String_Access = null then
                Use_Cr_Lf := False;
@@ -3258,12 +3265,14 @@ package body GPS.Kernel.Remote is
                Start_Command             => Start_Command.all,
                Start_Command_Common_Args => Start_Command_Common_Args.all,
                Start_Command_User_Args   => Start_Command_User_Args.all,
-               Send_Interrupt            => String_Access (Interrupt),
-               User_Prompt_Ptrn          => String_Access (User_Prompt_Ptrn),
+               Send_Interrupt            =>
+                 GNAT.OS_Lib.String_Access (Interrupt),
+               User_Prompt_Ptrn          =>
+                 GNAT.OS_Lib.String_Access (User_Prompt_Ptrn),
                Password_Prompt_Ptrn      =>
-                 String_Access (Password_Prompt_Ptrn),
+                 GNAT.OS_Lib.String_Access (Password_Prompt_Ptrn),
                Passphrase_Prompt_Ptrn    =>
-                 String_Access (Passphrase_Prompt_Ptrn),
+                 GNAT.OS_Lib.String_Access (Passphrase_Prompt_Ptrn),
                Extra_Prompt_Array        => Extra_Ptrns,
                Use_Cr_Lf                 => Use_Cr_Lf,
                Use_Pipes                 => Use_Pipes);
@@ -3322,8 +3331,7 @@ package body GPS.Kernel.Remote is
          --  Check that all servers are local
          for J in Distant_Server_Type'Range loop
             if not Is_Local (J) then
-               Trace
-                 (Me, "server " & Server_Type'Image (J) & " not local");
+               Trace (Me, "server " & Server_Type'Image (J) & " not local");
                return False;
             end if;
          end loop;
@@ -3491,16 +3499,20 @@ package body GPS.Kernel.Remote is
       Sync_Once_Dirs : Boolean;
       Queue_Id       : String  := "")
    is
-      List           : Mirror_List_Access;
-      Cursor         : Mirror_List.Cursor;
-      Path           : Mirror_Path;
-      From_Path      : Ada.Strings.Unbounded.Unbounded_String;
-      To_Path        : Ada.Strings.Unbounded.Unbounded_String;
-      Machine        : Machine_Descriptor_Record;
-      Need_Sync      : Boolean;
+      List      : Mirror_List_Access;
+      Cursor    : Mirror_List.Cursor;
+      Path      : Mirror_Path;
+      From_Path : Unbounded_String;
+      To_Path   : Unbounded_String;
+      Machine   : Machine_Descriptor_Record;
+      Need_Sync : Boolean;
 
       function Get_Queue_Id return String;
       --  Get a new queue id if needed
+
+      ------------------
+      -- Get_Queue_Id --
+      ------------------
 
       function Get_Queue_Id return String is
       begin
@@ -3567,42 +3579,36 @@ package body GPS.Kernel.Remote is
 
          if Need_Sync then
             if From = "" then
-               From_Path := Ada.Strings.Unbounded.To_Unbounded_String
-                   (Path.Get_Local_Path);
-               To_Path   := Ada.Strings.Unbounded.To_Unbounded_String
-                   (Path.Get_Remote_Path);
+               From_Path := To_Unbounded_String (Path.Get_Local_Path);
+               To_Path   := To_Unbounded_String (Path.Get_Remote_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (To).all);
 
             else
-               From_Path := Ada.Strings.Unbounded.To_Unbounded_String
-                 (Path.Get_Remote_Path);
-               To_Path   := Ada.Strings.Unbounded.To_Unbounded_String
-                 (Path.Get_Local_Path);
+               From_Path := To_Unbounded_String (Path.Get_Remote_Path);
+               To_Path   := To_Unbounded_String (Path.Get_Local_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (From).all);
             end if;
 
             declare
                Data : aliased Rsync_Hooks_Args :=
-                 (Hooks_Data with
-                  Tool_Name_Length => Machine.Rsync_Func.all'Length,
-                  Src_Name_Length  => From'Length,
-                  Dest_Name_Length => To'Length,
-                  Queue_Id_Length  => The_Queue_Id'Length,
-                  Src_Path_Length  => Ada.Strings.Unbounded.Length (From_Path),
-                  Dest_Path_Length => Ada.Strings.Unbounded.Length (To_Path),
-                  Tool_Name        => Machine.Rsync_Func.all,
-                  Src_Name         => From,
-                  Dest_Name        => To,
-                  Queue_Id         => The_Queue_Id,
-                  Src_Path         =>
-                    Ada.Strings.Unbounded.To_String (From_Path),
-                  Dest_Path        =>
-                    Ada.Strings.Unbounded.To_String (To_Path),
-                  Synchronous      => Blocking,
-                  Print_Output     => Print_Output,
-                  Print_Command    => Print_Command);
+                        (Hooks_Data with
+                         Tool_Name_Length => Machine.Rsync_Func.all'Length,
+                         Src_Name_Length  => From'Length,
+                         Dest_Name_Length => To'Length,
+                         Queue_Id_Length  => The_Queue_Id'Length,
+                         Src_Path_Length  => Length (From_Path),
+                         Dest_Path_Length => Length (To_Path),
+                         Tool_Name        => Machine.Rsync_Func.all,
+                         Src_Name         => From,
+                         Dest_Name        => To,
+                         Queue_Id         => The_Queue_Id,
+                         Src_Path         => To_String (From_Path),
+                         Dest_Path        => To_String (To_Path),
+                         Synchronous      => Blocking,
+                         Print_Output     => Print_Output,
+                         Print_Command    => Print_Command);
 
             begin
                Trace (Me, "run sync hook for " & Data.Src_Path);
@@ -3613,10 +3619,8 @@ package body GPS.Kernel.Remote is
                   GPS.Kernel.Console.Insert
                     (Kernel,
                      Machine.Rsync_Func.all & (-" failure: ") &
-                     (-"Directories ") &
-                     Ada.Strings.Unbounded.To_String (From_Path) &
-                     (-" and ") &
-                     Ada.Strings.Unbounded.To_String (To_Path) &
+                     (-"Directories ") & To_String (From_Path) &
+                     (-" and ") & To_String (To_Path) &
                      (-" are not synchronized properly. ") &
                      (-"Please verify your network configuration"),
                      Mode => Error);
@@ -3665,22 +3669,22 @@ package body GPS.Kernel.Remote is
    -----------
 
    procedure Spawn
-     (Kernel            : Kernel_Handle;
-      Arguments         : GNAT.OS_Lib.Argument_List;
-      Server            : Server_Type;
-      Pd                : out GNAT.Expect.Process_Descriptor_Access;
-      Success           : out Boolean;
-      Use_Ext_Terminal  : Boolean := False;
-      Console           : Interactive_Consoles.Interactive_Console := null;
-      Show_Command      : Boolean := True;
-      Directory         : String := "";
-      Use_Pipes         : Boolean := True)
+     (Kernel           : Kernel_Handle;
+      Arguments        : GNAT.OS_Lib.Argument_List;
+      Server           : Server_Type;
+      Pd               : out GNAT.Expect.Process_Descriptor_Access;
+      Success          : out Boolean;
+      Use_Ext_Terminal : Boolean := False;
+      Console          : Interactive_Consoles.Interactive_Console := null;
+      Show_Command     : Boolean := True;
+      Directory        : String := "";
+      Use_Pipes        : Boolean := True)
    is
-      Exec                  : String_Access;
-      Old_Dir               : String_Access;
-      Args                  : Argument_List_Access;
+      Exec    : GNAT.OS_Lib.String_Access;
+      Old_Dir : GNAT.OS_Lib.String_Access;
+      Args    : Argument_List_Access;
 
-      function Check_Exec (Exec : String) return String_Access;
+      function Check_Exec (Exec : String) return GNAT.OS_Lib.String_Access;
       --  Check that executable is on the path, and return the full path if
       --  found, return null otherwise.
 
@@ -3691,9 +3695,9 @@ package body GPS.Kernel.Remote is
       -- Check_Exec --
       ----------------
 
-      function Check_Exec (Exec : String) return String_Access is
-         Full_Exec : String_Access;
-         Norm_Exec : String_Access;
+      function Check_Exec (Exec : String) return GNAT.OS_Lib.String_Access is
+         Full_Exec : GNAT.OS_Lib.String_Access;
+         Norm_Exec : GNAT.OS_Lib.String_Access;
       begin
          if Server = Build_Server then
             Full_Exec := Locate_Compiler_Executable (Exec);
@@ -3749,9 +3753,7 @@ package body GPS.Kernel.Remote is
          Args := new Argument_List'(Clone (Arguments));
       end if;
 
-      if Console /= null
-        and then Show_Command
-      then
+      if Console /= null and then Show_Command then
          if Is_Local (Server) then
             Insert (Console,
                     Unprotect (Argument_List_To_String (Arguments)),
@@ -3804,7 +3806,7 @@ package body GPS.Kernel.Remote is
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
          declare
-            Oldpath : String_Access;
+            Oldpath : GNAT.OS_Lib.String_Access;
          begin
             if Is_Toolchains_Active then
                Oldpath := Getenv ("PATH");
@@ -3879,14 +3881,13 @@ package body GPS.Kernel.Remote is
          Insert
            (Kernel,
             -"Error while trying to execute " & Args (Args'First).all & ": " &
-            Ada.Exceptions.Exception_Message (E),
+            Exception_Message (E),
             Mode => Error);
       when E : Invalid_Nickname =>
          Success := False;
          Insert
            (Kernel,
-            -"Remote configuration error: " &
-            Ada.Exceptions.Exception_Message (E),
+            -"Remote configuration error: " & Exception_Message (E),
             Mode => Error);
    end Spawn;
 

@@ -23,15 +23,16 @@
 --
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with GPS.Kernel;
-
-with Build_Configurations;  use Build_Configurations;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Commands;              use Commands;
-with Commands.Interactive;  use Commands.Interactive;
+
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
+
+with GPS.Kernel;
+with Build_Configurations;  use Build_Configurations;
+with Commands;              use Commands;
+with Commands.Interactive;  use Commands.Interactive;
 
 package Build_Command_Manager is
 
@@ -46,16 +47,16 @@ package Build_Command_Manager is
    --  Default means that the target default should be enforced
 
    procedure Launch_Target
-     (Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Mode_Name    : String;
-      Force_File   : Virtual_File;
-      Extra_Args   : Argument_List_Access;
-      Quiet        : Boolean;
-      Synchronous  : Boolean;
-      Dialog       : Dialog_Mode;
-      Main         : String);
+     (Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Mode_Name   : String;
+      Force_File  : Virtual_File;
+      Extra_Args  : Argument_List_Access;
+      Quiet       : Boolean;
+      Synchronous : Boolean;
+      Dialog      : Dialog_Mode;
+      Main        : String);
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the Mode Mode_Name will be
    --  used.
@@ -90,18 +91,17 @@ package Build_Command_Manager is
    overriding
    function Execute
      (Command : access Build_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  See inherited documentation
 
    procedure Create
-     (Item         : out Build_Command_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Main         : String;
-      Quiet        : Boolean;
-      Dialog       : Dialog_Mode);
+     (Item        : out Build_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Main        : String;
+      Quiet       : Boolean;
+      Dialog      : Dialog_Mode);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.
@@ -110,7 +110,7 @@ package Build_Command_Manager is
    -- Build_Main_Command --
    ------------------------
 
-   --  A command specialized in building a main, when knowing only its number.
+   --  A command specialized in building a main, when knowing only its number
 
    type Build_Main_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
@@ -126,19 +126,18 @@ package Build_Command_Manager is
    overriding
    function Execute
      (Command : access Build_Main_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  See inherited documentation
 
    procedure Create
-     (Item         : out Build_Main_Command_Access;
-      Kernel       : GPS.Kernel.Kernel_Handle;
-      Registry     : Build_Config_Registry_Access;
-      Target_Name  : String;
-      Target_Type  : String;
-      Main         : Natural;
-      Quiet        : Boolean;
-      Dialog       : Dialog_Mode);
+     (Item        : out Build_Main_Command_Access;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Registry    : Build_Config_Registry_Access;
+      Target_Name : String;
+      Target_Type : String;
+      Main        : Natural;
+      Quiet       : Boolean;
+      Dialog      : Dialog_Mode);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.

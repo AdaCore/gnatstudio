@@ -17,12 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;      use Ada, Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
 
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Build_Command_Manager;      use Build_Command_Manager;
 with Build_Configurations;       use Build_Configurations;
@@ -40,9 +41,9 @@ package body Builder_Facility_Module.Scripts is
 
    --  NOTE: these constants must match the names of the predefined targets
    --  registered in builder_support.py.
-   Compile_File_Target : constant String := "Compile File";
-   Build_File_Target : constant String := "Build <current file>";
-   Check_Syntax_Target : constant String := "Check Syntax";
+   Compile_File_Target   : constant String := "Compile File";
+   Build_File_Target     : constant String := "Build <current file>";
+   Check_Syntax_Target   : constant String := "Check Syntax";
    Check_Semantic_Target : constant String := "Check Semantic";
 
    --  BuildTarget class
@@ -76,14 +77,14 @@ package body Builder_Facility_Module.Scripts is
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Shell command handler.
+   --  Shell command handler
 
-   function Get_Target_Class (Kernel : access Kernel_Handle_Record'Class)
-                              return Class_Type;
+   function Get_Target_Class
+     (Kernel : access Kernel_Handle_Record'Class) return Class_Type;
    --  Convenience function to get the target class
 
    function Get_Target_Name (Inst : Class_Instance) return String;
-   --  Convenience function to get the target stored in Inst.
+   --  Convenience function to get the target stored in Inst
 
    procedure Free (Ar : in out GNAT.OS_Lib.String_List);
    procedure Free (Ar : in out GNAT.OS_Lib.String_List_Access);
@@ -122,13 +123,13 @@ package body Builder_Facility_Module.Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Target_Class : constant Class_Type :=
-        Get_Target_Class (Get_Kernel (Data));
       use String_List;
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Node       : List_Node;
-      Extra_Args : GNAT.OS_Lib.Argument_List_Access;
-      Info       : Virtual_File;
+      Target_Class : constant Class_Type :=
+                       Get_Target_Class (Get_Kernel (Data));
+      Kernel       : constant Kernel_Handle := Get_Kernel (Data);
+      Node         : List_Node;
+      Extra_Args   : GNAT.OS_Lib.Argument_List_Access;
+      Info         : Virtual_File;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
@@ -142,7 +143,7 @@ package body Builder_Facility_Module.Scripts is
                return;
             end if;
 
-            --  Verify that the target does exist.
+            --  Verify that the target does exist
 
             if Get_Target_From_Name (Registry, Name) = null then
                Set_Error_Msg
@@ -355,9 +356,8 @@ package body Builder_Facility_Module.Scripts is
 
    procedure Free (Ar : in out GNAT.OS_Lib.String_List_Access) is
       use GNAT.OS_Lib;
-      procedure Free is new
-        Ada.Unchecked_Deallocation (GNAT.OS_Lib.String_List,
-                                    GNAT.OS_Lib.String_List_Access);
+      procedure Free is new Unchecked_Deallocation
+          (GNAT.OS_Lib.String_List, GNAT.OS_Lib.String_List_Access);
 
    begin
       if Ar /= null then

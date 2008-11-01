@@ -214,8 +214,10 @@ package body GPS.Kernel.Timeout is
 
          if Command.Data.Console /= null then
             Trace (Me, "Connect the command_handler to the console");
-            Set_Command_Handler (Command.Data.Console, Data_Handler'Access,
-                                 Command.Data.all'Address);
+            Set_Command_Handler
+              (Command.Data.Console, Data_Handler'Access,
+               Command.Data.all'Address);
+
             Command.Data.Delete_Id := Object_Return_Callback.Object_Connect
               (Command.Data.Console, Gtk.Widget.Signal_Delete_Event,
                Delete_Handler'Access, GObject (Command.Data));
@@ -224,6 +226,7 @@ package body GPS.Kernel.Timeout is
          Command.Data.Start_Time := Ada.Calendar.Clock;
 
          Trace (Me, "Spawn the process");
+
          Spawn (Command.Data.D.Kernel,
                 Command.Data.Args.all,
                 Command.Data.Server,
@@ -259,6 +262,7 @@ package body GPS.Kernel.Timeout is
       then
          Trace (Me, "Process is finished");
          return Failure;
+
       else
          if Command.Data.Synchronous then
             Success := Process_Cb (Command.Data);
