@@ -24,6 +24,7 @@ DIFF_CMD="diff"
 DIFF3_CMD="diff3"
 PATCH_CMD="patch"
 EXECUTION_WINDOW=True
+CHARSET="ISO-8859-1"
 
 TARGET=$host
 EXEC_PREFIX="$prefix"
@@ -121,6 +122,7 @@ case "${host}" in
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
 	SSH_ESCAPE=\'~\'
+	CHARSET="UTF-8"
 	;;
 
       *-darwin* ) STRIP_CR=True ;;
@@ -155,6 +157,7 @@ AC_SUBST(OPAQUE_MDI)
 AC_SUBST(HOST_TYPE)
 AC_SUBST(EXECUTION_WINDOW)
 AC_SUBST(SSH_ESCAPE)
+AC_SUBST(CHARSET)
 
 AC_CONFIG_SUBDIRS(kernel/src_info/sn)
 AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)

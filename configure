@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG HAVE_GTKADA GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG HAVE_GTKADA GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD CHARSET OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS '
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1394,6 +1394,7 @@ DIFF_CMD="diff"
 DIFF3_CMD="diff3"
 PATCH_CMD="patch"
 EXECUTION_WINDOW=True
+CHARSET="ISO-8859-1"
 
 TARGET=$host
 EXEC_PREFIX="$prefix"
@@ -4091,6 +4092,7 @@ case "${host}" in
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
 	SSH_ESCAPE=\'~\'
+	CHARSET="UTF-8"
 	;;
 
       *-darwin* ) STRIP_CR=True ;;
@@ -4858,6 +4860,7 @@ s,@PRINT_CMD@,$PRINT_CMD,;t t
 s,@DIFF_CMD@,$DIFF_CMD,;t t
 s,@DIFF3_CMD@,$DIFF3_CMD,;t t
 s,@PATCH_CMD@,$PATCH_CMD,;t t
+s,@CHARSET@,$CHARSET,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t

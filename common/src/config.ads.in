@@ -105,6 +105,9 @@ package Config is
    --  Command used to apply a patch file
 
    Support_Execution_Window : constant Boolean := @EXECUTION_WINDOW@;
-   --  Whether separate debugger execution window is supported by the target.
+   --  Whether separate debugger execution window is supported by the target
+
+   Default_Charset : constant String := "@CHARSET@";
+   --  Default charset for the host
 
 end Config;
