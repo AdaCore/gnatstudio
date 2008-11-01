@@ -86,8 +86,10 @@ package Config is
    Default_Font : constant String := "@DEFAULT_FONT@";
    --  Default system font used in the preferences
 
-   Default_Ps : constant String := "@DEFAULT_PS@";
-   --  Command used to list processes on a native system
+   Default_Ps : constant String :=
+     "@DEFAULT_PS@";
+   --  Command used to list processes on a native system. The String is on
+   --  its own line to avoid exceeding line length.
 
    Default_Print_Cmd : constant String := "@PRINT_CMD@";
    --  Command used to print a file
