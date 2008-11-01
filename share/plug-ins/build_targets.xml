@@ -198,7 +198,7 @@
 <target model="builder" category="_File_" name="_Compile File">
     <in-toolbar>TRUE</in-toolbar>
     <icon>gps-compile</icon>
-    <launch-mode>MANUALLY</launch-mode>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
        <arg>%builder</arg>
