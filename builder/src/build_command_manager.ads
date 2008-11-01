@@ -114,6 +114,7 @@ package Build_Command_Manager is
 
    type Build_Main_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
+      Target_Type  : Unbounded_String;
       Main         : Natural;
       Registry     : Build_Config_Registry_Access;
       Kernel       : GPS.Kernel.Kernel_Handle;
@@ -134,6 +135,7 @@ package Build_Command_Manager is
       Kernel       : GPS.Kernel.Kernel_Handle;
       Registry     : Build_Config_Registry_Access;
       Target_Name  : String;
+      Target_Type  : String;
       Main         : Natural;
       Quiet        : Boolean;
       Dialog       : Dialog_Mode);

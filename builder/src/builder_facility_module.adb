@@ -576,28 +576,45 @@ package body Builder_Facility_Module is
    ---------------------------
 
    procedure Add_Action_For_Target (T : Target_Access) is
-      C    : Build_Command_Access;
-      N    : constant String := Get_Name (T);
-      Name : constant String := Action_Name (T);
+      C      : Build_Command_Access;
+      M      : Build_Main_Command_Access;
+      N      : constant String := Get_Name (T);
+      Name   : constant String := Action_Name (T);
+      Action : Unbounded_String;
+
    begin
-      --  We do not add actions for targets that represent mains, this is
-      --  handled via the <item1>, <item2> (...) mechanism.
       if Length (Get_Properties (T).Target_Type) /= 0 then
-         return;
+         --  Register the "build main number x"-like actions
+
+         for J in 1 .. 4 loop
+            Create (M, Get_Kernel, Builder_Module_ID.Registry, N,
+                    To_String (Get_Properties (T).Target_Type), J,
+                    False, Default);
+            Set_Unbounded_String (Action, N & (-" Number") & J'Img);
+            Register_Action
+              (Kernel      => Get_Kernel,
+               Name        => To_String (Action),
+               Command     => M,
+               Description => To_String (Action),
+               Filter      => null,
+               Category    => -"Build",
+               Defined_In  => GNATCOLL.VFS.No_File);
+            Builder_Module_ID.Actions.Append (Action);
+         end loop;
+      else
+         Create
+           (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, Default);
+
+         Register_Action (Kernel      => Get_Kernel,
+                          Name        => Name,
+                          Command     => C,
+                          Description => (-"Build target ") & N,
+                          Filter      => null,
+                          Category    => -"Build",
+                          Defined_In  => GNATCOLL.VFS.No_File);
+
+         Builder_Module_ID.Actions.Append (To_Unbounded_String (Name));
       end if;
-
-      Create
-        (C, Get_Kernel, Builder_Module_ID.Registry, N, "", False, Default);
-
-      Register_Action (Kernel      => Get_Kernel,
-                       Name        => Name,
-                       Command     => C,
-                       Description => (-"Build target ") & N,
-                       Filter      => null,
-                       Category    => -"Build",
-                       Defined_In  => GNATCOLL.VFS.No_File);
-
-      Builder_Module_ID.Actions.Append (To_Unbounded_String (Name));
    end Add_Action_For_Target;
 
    ---------------------------------
@@ -958,6 +975,9 @@ package body Builder_Facility_Module is
          if T /= null
            and then not Builder_Module_ID.Actions.Contains
              (To_Unbounded_String (Get_Name (T)))
+           and then (Length (Get_Properties (T).Target_Type) = 0
+                     or else not Builder_Module_ID.Actions.Contains
+                       (To_Unbounded_String (Get_Name (T) & (-" Number 1"))))
          then
             Add_Action_For_Target (T);
 
