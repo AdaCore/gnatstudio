@@ -300,7 +300,7 @@ complete compile/build/run cycle; intelligent source navigation;
 project management; general graph technology giving access to many different
 browsers such as source dependency, project dependency, call graphs,
 entity view, etc@dots{}; fully integrated visual debugger; generic
-version control system, providing access to CVS, Subversion, ClearCase,
+version control system, providing access to CVS, Subversion, ClearCase, GIT,
 and any other via xml plug-ins; many other tools such as a visual comparison,
 automatic generation of files, source reformatting.
 
@@ -309,11 +309,13 @@ GPS is fully customizable, providing several levels of customizations:
 a first level, available through the preferences and key manager dialogs;
 a second level, which allows you to customize your menu items, tool bar and key
 bindings; a third level, which allows you to automate processing through
-scripts (via xml and python scripting).
-See @ref{Customizing and Extending GPS} for more details.
+scripts (via xml and python scripting). See @ref{Customizing and Extending GPS}
+for more details.
 
 GPS also interacts with most versions of command-line tools such as
-gcc, gdb, gnatmake, etc@dots{}.
+gcc, gdb, gnatmake, gcov, etc@dots{}.
+
+@image{main-gps, 9.7cm}
 
 @c --------------------------------------------------------------------
 @node Description of the Main Windows
@@ -1247,12 +1249,19 @@ The Help menu item provides the following entries:
 @item Welcome
 Open the GPS Welcome page.
 
-@item Open HTML file...
-Open a file selection dialog to load an HTML file.
-
 @item Contents
 Open a special HTML file that contains links for all the
 documentation files currently registered in GPS, @xref{Adding New Help Files}.
+
+@item GPS
+Submenu containing GPS documentation items.
+
+@item GNAT Runtime
+Submenu referencing all GNAT run-time files available, and a direct access
+to the corresponding specs containing embedded documentation.
+
+@item Python extensions
+Gives access to the GPS API available via python.
 
 @item About
 Display a dialog giving information about the versions of GPS and GNAT used:
