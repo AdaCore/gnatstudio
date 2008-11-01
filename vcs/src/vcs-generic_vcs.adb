@@ -311,6 +311,7 @@ package body VCS.Generic_VCS is
       Free (Ref.Status_Parser);
       Free (Ref.Local_Status_Parser);
       Free (Ref.Annotations_Parser);
+      Free (Ref.Update_Parser);
       Free (Ref.Log_Parser);
       Free (Ref.Revision_Parser);
 
