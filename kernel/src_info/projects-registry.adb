@@ -181,10 +181,10 @@ package body Projects.Registry is
       --  The list of source files in Predefined_Source_Path
 
       Xrefs_Subdir : GNAT.Strings.String_Access;
-      --  Object dirs subdirectory containing the cross-refs.
+      --  Object dirs subdirectory containing the cross-refs
 
       Mode_Subdir             : GNAT.Strings.String_Access;
-      --  Object dirs subdirectory for current builder mode.
+      --  Object dirs subdirectory for current builder mode
 
       Extensions : Languages_Htable.String_Hash_Table.HTable;
       --  The extensions registered for each language

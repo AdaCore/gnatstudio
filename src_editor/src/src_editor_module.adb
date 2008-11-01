@@ -1166,6 +1166,7 @@ package body Src_Editor_Module is
 
          if File = GNATCOLL.VFS.No_File then
             Is_Writable := True;
+
          else
             Writable := Write_File (File);
             Is_Writable := Writable /= Invalid_File;
@@ -2176,13 +2177,13 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      D               : constant Source_File_Hooks_Args :=
-                          Source_File_Hooks_Args (Data.all);
-      Child           : MDI_Child;
-      Column          : Visible_Column_Type := D.Column;
-      Source          : Source_Editor_Box;
-      Edit            : Source_Editor_Box;
-      Tmp             : Boolean;
+      D      : constant Source_File_Hooks_Args :=
+                 Source_File_Hooks_Args (Data.all);
+      Child  : MDI_Child;
+      Column : Visible_Column_Type := D.Column;
+      Source : Source_Editor_Box;
+      Edit   : Source_Editor_Box;
+      Tmp    : Boolean;
       pragma Unreferenced (Tmp);
 
    begin

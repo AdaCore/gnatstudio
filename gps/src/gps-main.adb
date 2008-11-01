@@ -418,7 +418,7 @@ procedure GPS.Main is
       if Charset.all = "" then
          --  Gtk+ does not like if CHARSET is not defined.
          --  Need to set CHARSET *before* calling Gtk.Main.Init, so cannot
-         --  use Get_Pref here
+         --  use Get_Pref here.
 
          Setenv ("CHARSET", "ISO-8859-1");
       end if;
@@ -1199,6 +1199,7 @@ procedure GPS.Main is
                            Mode => Error);
                         Line := 1;
                   end;
+
                else
                   Open_File_Editor
                     (GPS_Main.Kernel,
