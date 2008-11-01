@@ -174,6 +174,8 @@ procedure GPS.Main is
                         Create ("MODULE.External_Editor", GNATCOLL.Traces.On);
    VCS_Trace              : constant Debug_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
+   ClearCase_Trace        : constant Debug_Handle :=
+                        Create ("MODULE.ClearCase", GNATCOLL.Traces.Off);
    Custom_Trace           : constant Debug_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Action_Editor_Trace    : constant Debug_Handle :=
@@ -1392,6 +1394,9 @@ procedure GPS.Main is
 
       if Active (VCS_Trace) then
          VCS_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (ClearCase_Trace) then
          VCS.ClearCase.Register_Module (GPS_Main.Kernel);
       end if;
 
