@@ -419,27 +419,13 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Object, Builder);
       --  The filter guarantees we are on a File_Selection_Context
 
---        Library_Name : constant String :=
---                         Get_Attribute_Value
---                           (Project_Information (Context),
---                            Attribute => Library_Name_Attribute);
-      M            : Gtk_Menu := Gtk_Menu (Menu);
+      M : Gtk_Menu := Gtk_Menu (Menu);
 
    begin
       Add_Build_Menu
         (Menu         => M,
          Project      => Project_Information (Context),
          Kernel       => Get_Kernel (Context));
-
-      --  Check for library
-
---        if Library_Name /= "" then
---           Add_Build_Menu
---             (Menu    => M,
---              Project => Project_Information (Context),
---              Kernel  => Get_Kernel (Context),
---              Library => Library_Name);
---        end if;
    end Append_To_Menu;
 
    -------------
@@ -456,8 +442,7 @@ package body Builder_Facility_Module is
    ---------------
 
    function Get_Mains (Kernel : Kernel_Handle) return Argument_List is
-
-      Base_Project     : Project_Type;
+      Base_Project : Project_Type;
 
       Root_Project : constant Project_Type := Get_Project (Kernel);
 
@@ -484,15 +469,17 @@ package body Builder_Facility_Module is
                    (Current (Iterator), Attribute => Main_Attribute);
             begin
                for J in Mains'Range loop
-                  if Index > Result'Last then
-                     for K in J .. Mains'Last loop
-                        Free (Mains (K));
-                     end loop;
-                     exit;
-                  end if;
+                  if Mains (J)'Length > 0 then
+                     if Index > Result'Last then
+                        for K in J .. Mains'Last loop
+                           Free (Mains (K));
+                        end loop;
+                        exit;
+                     end if;
 
-                  Result (Index) := Mains (J);
-                  Index := Index + 1;
+                     Result (Index) := Mains (J);
+                     Index := Index + 1;
+                  end if;
                end loop;
             end;
 
