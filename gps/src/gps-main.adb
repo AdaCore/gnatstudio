@@ -420,7 +420,7 @@ procedure GPS.Main is
          --  Need to set CHARSET *before* calling Gtk.Main.Init, so cannot
          --  use Get_Pref here.
 
-         Setenv ("CHARSET", "ISO-8859-1");
+         Setenv ("CHARSET", Config.Default_Charset);
       end if;
 
       Free (Charset);
