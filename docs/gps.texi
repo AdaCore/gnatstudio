@@ -500,6 +500,8 @@ undo/redo last editing;
 @cindex clipboard
 cut to clipboard, copy to clipboard, paste from clipboard;
 go to previous/next location;
+@cindex build
+select build mode, compile file, build project, clean project;
 @cindex debugger
 start/continue the debugging session, step/next execution, finish
 current procedure.
