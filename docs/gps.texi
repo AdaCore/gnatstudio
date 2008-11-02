@@ -1040,11 +1040,11 @@ These windows give access to the various scripting languages supported
 by GPS, and allow you to type commands such as editing a file or
 compiling without using the menu items or the mouse.
 
-Some of these windows, especially the python window, might not be
-visible in your version of GPS, if GPS wasn't compiled with the
-support for that specific scripting language.
+An OS shell window is now also available in GPS, providing a simple access
+to the underlying OS shell as defined by the @code{SHELL} or @code{COMSPEC}
+environment variables.
 
-To show the shell consoles, select the menu @code{Tools}.
+To show the shell consoles, select the menu @code{Tools->Consoles}.
 
 See @ref{Scripting GPS} for more information on using
 scripting languages within GPS.
@@ -8118,6 +8118,7 @@ Open an OS (Windows or Unix) console, using the environment variables
 @code{SHELL} and @code{COMSPEC} to determine which shell to use. This is
 currently a relatively simple implementation, without support for e.g.
 completion or ANSI codes.
+@xref{The Shell and Python Windows}.
 
 @item Auxiliary Builds
 Open the console containing auxiliary builds output. For now, only
