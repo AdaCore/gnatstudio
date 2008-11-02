@@ -424,7 +424,10 @@ package body Ada_Semantic_Tree.Units is
          while It /= Null_Construct_Tree_Iterator loop
             Construct := Get_Construct (It);
 
-            if Is_Compilation_Unit (It) then
+            if Is_Compilation_Unit (It)
+              and then Construct /= null
+              and then Construct.Name /= null
+            then
                Info := Get_Unit_Info
                  (Assistant.Unit_Key, To_Entity_Access (File, It));
 
@@ -531,6 +534,10 @@ package body Ada_Semantic_Tree.Units is
          Child_Unit   : Unit_Access;
          Parent_Found : Boolean := False;
       begin
+         if Unit = null then
+            return;
+         end if;
+
          Unit_Entity := To_Entity_Access (Unit.Entity);
          Unit_Construct := Get_Construct (Unit_Entity);
 
