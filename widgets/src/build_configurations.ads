@@ -159,13 +159,18 @@ package Build_Configurations is
    -- Build Modes --
    -----------------
 
-   package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
-     (Unbounded_String);
+   type Model_Record is record
+      Model  : Unbounded_String;
+      Filter : Unbounded_String;
+   end record;
+
+   package Model_List is new Ada.Containers.Doubly_Linked_Lists
+     (Model_Record);
 
    type Mode_Record is record
       Name        : Unbounded_String;
       Description : Unbounded_String;
-      Models      : Unbounded_String_List.List;
+      Models      : Model_List.List;
       Args        : GNAT.OS_Lib.Argument_List_Access;
       Subst_Src   : GNAT.OS_Lib.Argument_List_Access;
       Subst_Dest  : GNAT.OS_Lib.Argument_List_Access;

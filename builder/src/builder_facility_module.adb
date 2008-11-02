@@ -23,6 +23,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
 with Glib.Object;               use Glib.Object;
@@ -136,6 +137,9 @@ package body Builder_Facility_Module is
      (Unbounded_String, Target_XML_List.List);
    --  The key in this map is a model name, and the element is a set of XML
    --  describing targets associated with this model.
+
+   package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
+     (Unbounded_String);
 
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
@@ -1532,7 +1536,9 @@ package body Builder_Facility_Module is
          if N.Tag.all = "description" then
             Mode.Description := To_Unbounded_String (N.Value.all);
          elsif N.Tag.all = "supported-model" then
-            Mode.Models.Append (To_Unbounded_String (N.Value.all));
+            Mode.Models.Append
+              ((To_Unbounded_String (N.Value.all),
+                To_Unbounded_String (Get_Attribute (N, "filter"))));
          elsif N.Tag.all = "shadow" then
             Mode.Shadow := Boolean'Value (N.Value.all);
          elsif N.Tag.all = "server" then
@@ -1920,11 +1926,34 @@ package body Builder_Facility_Module is
      (Model : String; Mode : String; Cmd_Line : GNAT.OS_Lib.Argument_List)
       return GNAT.OS_Lib.Argument_List_Access
    is
-      use Unbounded_String_List;
+      use Model_List;
       M         : Mode_Record;
-      C         : Unbounded_String_List.Cursor;
+      Model_Rec : Model_Record;
+      C         : Model_List.Cursor;
       Res       : Argument_List_Access;
       Supported : Boolean;
+
+      function Compute_Num_Args
+        (Args : Argument_List; Filter : String) return Natural;
+      --  Compute number of relevant arguments in Args that match Filter
+
+      function Compute_Num_Args
+        (Args : Argument_List; Filter : String) return Natural
+      is
+         Result  : Natural := 0;
+      begin
+         if Filter = "" then
+            return Args'Length;
+         else
+            for J in Args'Range loop
+               if Match (Filter, Args (J).all) then
+                  Result := Result + 1;
+               end if;
+            end loop;
+
+            return Result;
+         end if;
+      end Compute_Num_Args;
 
    begin
       Supported := True;
@@ -1956,7 +1985,9 @@ package body Builder_Facility_Module is
 
          Supported := False;
          while Has_Element (C) loop
-            if Element (C) = Model then
+            Model_Rec := Element (C);
+
+            if Model_Rec.Model = Model then
                Supported := True;
                exit;
             end if;
@@ -1980,7 +2011,10 @@ package body Builder_Facility_Module is
       --  Now let's apply the Mode. First we create the result with enough
       --  room.
       if M.Args /= null then
-         Res := new Argument_List (1 .. Cmd_Line'Length + M.Args'Length);
+         Res := new Argument_List
+           (1 .. Cmd_Line'Length
+                  + Compute_Num_Args
+                      (M.Args.all, To_String (Model_Rec.Filter)));
       else
          Res := new Argument_List (1 .. Cmd_Line'Length);
       end if;
@@ -2016,11 +2050,25 @@ package body Builder_Facility_Module is
          end loop;
       end if;
 
-      --  Append the extra args
-      for J in 1 .. Res'Last - Cmd_Line'Length loop
-         Res (J + Cmd_Line'Length) :=
-           new String'(M.Args (M.Args'First + J - 1).all);
-      end loop;
+      if Length (Model_Rec.Filter) = 0 then
+         --  Append the extra args
+         for J in 1 .. Res'Last - Cmd_Line'Length loop
+            Res (J + Cmd_Line'Length) :=
+              new String'(M.Args (M.Args'First + J - 1).all);
+         end loop;
+      else
+         declare
+            Filter : constant String := To_String (Model_Rec.Filter);
+            Index  : Natural := Cmd_Line'Length + 1;
+         begin
+            for J in M.Args'Range loop
+               if Match (Filter, M.Args (J).all) then
+                  Res (Index) := new String'(M.Args (J).all);
+                  Index := Index + 1;
+               end if;
+            end loop;
+         end;
+      end if;
 
       return Res;
    end Apply_Mode_Args;
@@ -2075,13 +2123,13 @@ package body Builder_Facility_Module is
            and then Mode.Active
          then
             declare
-               use Unbounded_String_List;
-               C2 : Unbounded_String_List.Cursor;
+               use Model_List;
+               C2 : Model_List.Cursor;
             begin
                C2 := Mode.Models.First;
 
                while Has_Element (C2) loop
-                  if Element (C2) = Model then
+                  if Element (C2).Model = Model then
                      Result (Index) := new String'(To_String (Mode.Name));
                      Index := Index + 1;
                   end if;
