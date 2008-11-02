@@ -1717,7 +1717,7 @@ package body Build_Configurations.Gtkada is
          Label     : Gtk_Label;
          Check     : Gtk_Check_Button;
 
-         use Unbounded_String_List;
+         use Model_List;
          C : Cursor;
          S : Unbounded_String;
 
@@ -1761,7 +1761,7 @@ package body Build_Configurations.Gtkada is
 
          if Has_Element (C) then
             loop
-               Append (S, Element (C));
+               Append (S, Element (C).Model);
                Next (C);
 
                exit when not Has_Element (C);

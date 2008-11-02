@@ -14051,9 +14051,12 @@ following sub-nodes:
    substituted with this.
 @item <supported-model>
    The name of a model supported by this Mode. There can be multiple
-   @code{supported-model} nodes, each corresponding to a supported Model. The
-   @code{extra-args} of the Mode will only be passed to commands of supported
-   Models.
+   @code{supported-model} nodes, each corresponding to a supported Model.
+   Optionally, you can specify a @code{filter} attribute for this node,
+   corresponding to the switches that are relevant for this mode. By default,
+   all switches will be taken into account.
+   The @code{extra-args} of the Mode that match @code{filter} will be passed
+   to commands of the supported Models.
 @item <extra-args>
    Contains a list of @code{<arg>} nodes, each containing one extra argument
    to append to the command line when launching Targets while this Mode is
@@ -14069,6 +14072,7 @@ following sub-nodes:
   <subdir>optimized_objects</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
