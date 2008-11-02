@@ -249,7 +249,7 @@
     <command-line>
        <arg>%builder</arg>
        <arg>-c</arg>
-       <arg>-U</arg>
+       <arg>-u</arg>
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
