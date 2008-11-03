@@ -240,8 +240,9 @@ GPS.Hook ("file_changed_detected").add (on_file_changed)
   <shell_doc name="@hook@ compilation_starting">
      <param name="hook">A string, the name of the hook</param>
      <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
-     <param name="quiet">A boolean</param>
-     <param name="shadow">A boolean</param>
+     <param name="quiet">A boolean, if True then the GUI should advertise the compilation, otherwise nothing should be reported to the user, unless there is an error.</param>
+     <param name="shadow">A boolean, indicates whether the build launched was a Shadow builds, ie a "secondary" build launched automatically by GPS after a "real" build.
+ For instance, when the multiple toolchains mode is activated, the builds generating cross-references are Shadow builds.</param>
      <return>A boolean</return>
      <description>Hook called when a compile operation is about to start.
 Among the various tasks that GPS connects to this hook are: check whether unsaved editors should be saved (asking the user), and stop the background task that parses all xref info. If quiet is True, then no visible modification should be done in the MDI, like raising consoles, clearing their content,..., since the compilation should happen in background mode.
@@ -5754,7 +5755,7 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
      <description>Create a new menu associated with the command. This function is somewhat a duplicate of GPS.Menu.create, but with one major difference: the callback for the action is a python function that takes no argument, whereas the callback for GPS.Menu receives one argument</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Action.contextual">
      <param name="self">An instance of GPS.Action</param>
@@ -5762,7 +5763,7 @@ The package gps_utils.py provides a somewhat more convenient python interface to
      <param name="ref" default="">A string</param>
      <param name="add_before" default="True">A boolean</param>
      <description>Create a new contextual menu associated with the command. This function is somewhat a duplicate of GPS.Contextual.create, but with one major difference: the callback for the action is a python function that takes no argument, whereas the callback for GPS.Contextual receives one argument</description>
-  </shell_doc> 
+  </shell_doc>
 
   <!--#################################################################
       ## Exceptions
