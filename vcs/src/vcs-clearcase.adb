@@ -56,9 +56,6 @@ package body VCS.ClearCase is
    VCS_ClearCase_Module_ID   : VCS_ClearCase_Module_ID_Access;
    ClearCase_Identifier      : constant String := "ClearCase";
 
-   Actions : Action_Array;
-   --  The label for ClearCase actions
-
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -1794,7 +1791,7 @@ package body VCS.ClearCase is
         (ClearCase_Identifier, VCS_ClearCase_Module_ID.ClearCase_Reference);
 
       --  ??? Need to adapt this to the ClearCase terminology
-      Actions :=
+      VCS_ClearCase_Module_ID.ClearCase_Reference.Action_Labels :=
         (None                 => null,
          Status_Files         => new String'(-"Query status"),
          Status_Dir           => null,
@@ -1828,17 +1825,5 @@ package body VCS.ClearCase is
          Revert               =>
            new String'(-"Revert to repository revision"));
    end Register_Module;
-
-   ----------------------------
-   -- Get_Identified_Actions --
-   ----------------------------
-
-   overriding function Get_Identified_Actions
-     (Rep : access ClearCase_Record) return Action_Array
-   is
-      pragma Unreferenced (Rep);
-   begin
-      return Actions;
-   end Get_Identified_Actions;
 
 end VCS.ClearCase;

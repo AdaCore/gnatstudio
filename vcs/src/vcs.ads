@@ -438,7 +438,7 @@ package VCS is
    --  fill the Revision Browser if needed.
 
    function Get_Identified_Actions
-     (Rep : access VCS_Record) return Action_Array;
+     (Rep : access VCS_Record'Class) return Action_Array;
    --  Return the labels of the defined actions. User must not free the result
 
    function Get_Registered_Status
@@ -514,6 +514,7 @@ private
       Path_Style          : OS_Utils.Path_Style := System_Default;
       Ignore_Filename     : GNAT.Strings.String_Access;
       Used                : Boolean    := False;
+      Action_Labels       : Action_Array;
    end record;
 
 end VCS;

@@ -219,10 +219,10 @@ package body VCS.Generic_VCS is
       Action : VCS_Action) return String
    is
    begin
-      if Ref.Labels (Action) = null then
+      if Ref.Action_Labels (Action) = null then
          return -"VCS command";
       else
-         return Ref.Labels (Action).all;
+         return Ref.Action_Labels (Action).all;
       end if;
    end Describe_Action;
 
@@ -307,7 +307,6 @@ package body VCS.Generic_VCS is
       Basic_Types.Unchecked_Free (Ref.Branch_Root_Revision_Regexp);
       Free (Ref.Status);
       Free (Ref.Commands);
-      Free (Ref.Labels);
       Free (Ref.Status_Parser);
       Free (Ref.Local_Status_Parser);
       Free (Ref.Annotations_Parser);
@@ -1453,7 +1452,7 @@ package body VCS.Generic_VCS is
                Ref.Commands (A) := new String'
                  (Get_Attribute (Node, "action", ""));
 
-               Ref.Labels (A) := new String'
+               Ref.Action_Labels (A) := new String'
                  (Get_Attribute (Node, "label", To_Lower (A'Img)));
                --  ??? Should we use better than To_Lower here ?
             else
@@ -2214,16 +2213,6 @@ package body VCS.Generic_VCS is
          end if;
       end;
    end Parse_Revision;
-
-   ----------------------------
-   -- Get_Identified_Actions --
-   ----------------------------
-
-   overriding function Get_Identified_Actions
-     (Rep : access Generic_VCS_Record) return Action_Array is
-   begin
-      return Rep.Labels;
-   end Get_Identified_Actions;
 
    ---------------------------
    -- Get_Registered_Status --

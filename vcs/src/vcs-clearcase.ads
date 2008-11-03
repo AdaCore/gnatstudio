@@ -147,9 +147,6 @@ package VCS.ClearCase is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.ClearCase module
 
-   overriding function Get_Identified_Actions
-     (Rep : access ClearCase_Record) return Action_Array;
-
 private
    type ClearCase_Record is new VCS_Record with null record;
 

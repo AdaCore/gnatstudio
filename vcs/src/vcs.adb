@@ -85,8 +85,23 @@ package body VCS is
    ----------
 
    procedure Free (Ref : in out VCS_Record) is
+
+      procedure Free (A : in out Action_Array);
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (A : in out Action_Array) is
+      begin
+         for J in A'Range loop
+            GNAT.Strings.Free (A (J));
+         end loop;
+      end Free;
+
    begin
       GNAT.Strings.Free (Ref.Ignore_Filename);
+      Free (Ref.Action_Labels);
    end Free;
 
    ----------
@@ -169,12 +184,9 @@ package body VCS is
    ----------------------------
 
    function Get_Identified_Actions
-     (Rep : access VCS_Record) return Action_Array
-   is
-      pragma Unreferenced (Rep);
-      Result : Action_Array;
+     (Rep : access VCS_Record'Class) return Action_Array is
    begin
-      return Result;
+      return Rep.Action_Labels;
    end Get_Identified_Actions;
 
    ----------

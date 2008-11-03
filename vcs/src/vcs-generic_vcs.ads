@@ -180,9 +180,6 @@ package VCS.Generic_VCS is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.Generic_VCS module
 
-   overriding function Get_Identified_Actions
-     (Rep : access Generic_VCS_Record) return Action_Array;
-
    overriding function Get_Registered_Status
      (Rep : access Generic_VCS_Record) return Status_Array;
 
@@ -222,7 +219,6 @@ private
       Administrative_Dir  : GNAT.Strings.String_Access;
       --  Name of the directory where the external VCS keeps information
       Commands            : Action_Array;
-      Labels              : Action_Array;
 
       Current_Query_Files         : String_List_Utils.String_List.List;
       --  The files transmitted to the current "query status" command.
