@@ -585,11 +585,6 @@ package body Projects is
          elsif Projects_Table (Project) (View).Externally_Built then
             return Path;
          elsif Prj.Subdirs /= null then
-            Ada.Text_IO.Put_Line
-              ("(DBG): " &
-               Name_As_Directory
-                 (Path (Path'First .. Path'Last - Prj.Subdirs.all'Length - 1) &
-                  Get_Xrefs_Subdir (Registry => Reg)));
             return Name_As_Directory
               (Path (Path'First .. Path'Last - Prj.Subdirs.all'Length - 1) &
                Get_Xrefs_Subdir (Registry => Reg));
