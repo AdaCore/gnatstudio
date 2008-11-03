@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Oct 29, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Nov 03, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -72,3 +72,10 @@ NF-44-DB04-011 New auto VCS mode (2008-10-27)
   the proper external VCS. This is useful in the context where different
   people are not using the same VCS locally. For example developers
   tracking a Subversion repository using Git (git-svn module).
+
+NF-44-DA05-003 VCS menus are now filtered (2008-11-03)
+
+  The main VCS menu is filtered to contain only the VCS actions
+  which are at least defined in one generic VCS. The VCS
+  Activities menu is also filtered to propose actions that
+  are available on the project VCS.

@@ -922,6 +922,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      use type GNAT.Strings.String_Access;
+
       File_Section     : Boolean;
       Activity_Section : Boolean;
       Active           : Boolean;
@@ -929,6 +931,7 @@ package body VCS_Activities_View_API is
       Check            : Gtk_Check_Menu_Item;
       Activity         : Activity_Id;
       VCS              : VCS_Access;
+      Actions          : Action_Array;
 
    begin
       --  Determine which sections should be displayed
@@ -947,6 +950,7 @@ package body VCS_Activities_View_API is
 
       if Activity_Section then
          VCS := Get_VCS_For_Activity (Kernel, Activity);
+         Actions := Get_Identified_Actions (VCS);
 
          Gtk_New (Check, Label => -"Group commit");
          Set_Active (Check, Get_Group_Commit (Activity));
@@ -957,6 +961,7 @@ package body VCS_Activities_View_API is
          Set_Sensitive
            (Check,
             VCS /= null
+            and then Actions (Commit) /= null
             and then Atomic_Commands_Supported (VCS)
             and then not Is_Closed (Activity));
 
@@ -992,30 +997,38 @@ package body VCS_Activities_View_API is
          Gtk_New (Item);
          Append (Menu, Item);
 
-         Gtk_New (Item, Label => -"Commit activity");
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, Signal_Activate, On_Menu_Commit_Activity'Access, Context);
-         Set_Sensitive (Item, Active);
+         if Actions (Commit) /= null then
+            Gtk_New (Item, Label => -"Commit activity");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, Signal_Activate, On_Menu_Commit_Activity'Access, Context);
+            Set_Sensitive (Item, Active);
+         end if;
 
-         Gtk_New (Item, Label => -"Query status");
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, Signal_Activate,
-            On_Menu_Query_Status_Activity'Access, Context);
-         Set_Sensitive (Item, Active);
+         if Actions (Status_Files) /= null then
+            Gtk_New (Item, Label => -"Query status");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, Signal_Activate,
+               On_Menu_Query_Status_Activity'Access, Context);
+            Set_Sensitive (Item, Active);
+         end if;
 
-         Gtk_New (Item, Label => -"Update");
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, Signal_Activate, On_Menu_Update_Activity'Access, Context);
-         Set_Sensitive (Item, Active);
+         if Actions (Update) /= null then
+            Gtk_New (Item, Label => -"Update");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, Signal_Activate, On_Menu_Update_Activity'Access, Context);
+            Set_Sensitive (Item, Active);
+         end if;
 
-         Gtk_New (Item, Label => -"Compare against head revision");
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, Signal_Activate, On_Menu_Diff_Activity'Access, Context);
-         Set_Sensitive (Item, Active);
+         if Actions (Diff_Head) /= null then
+            Gtk_New (Item, Label => -"Compare against head revision");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, Signal_Activate, On_Menu_Diff_Activity'Access, Context);
+            Set_Sensitive (Item, Active);
+         end if;
 
          Gtk_New (Item, Label => -"Build patch file");
          Append (Menu, Item);
@@ -1024,7 +1037,9 @@ package body VCS_Activities_View_API is
          Set_Sensitive (Item, Active);
       end if;
 
-      if Activity_Section or else File_Section then
+      if File_Section
+        or else (Activity_Section and then Actions (Commit) /= null)
+      then
          Gtk_New (Item);
          Append (Menu, Item);
       end if;
@@ -1039,18 +1054,20 @@ package body VCS_Activities_View_API is
       end if;
 
       if Activity_Section then
-         Gtk_New (Item, Label => -"Edit revision log");
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
-         Set_Sensitive (Item, True);
-
-         if Has_Log (Kernel, Activity) then
-            Gtk_New (Item, Label => -"Remove revision log");
+         if Actions (Commit) /= null then
+            Gtk_New (Item, Label => -"Edit revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);
+              (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
             Set_Sensitive (Item, True);
+
+            if Has_Log (Kernel, Activity) then
+               Gtk_New (Item, Label => -"Remove revision log");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);
+               Set_Sensitive (Item, True);
+            end if;
          end if;
       end if;
    end VCS_Activities_Contextual_Menu;
