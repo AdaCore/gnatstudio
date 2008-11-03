@@ -37,6 +37,7 @@ with Traces;                     use Traces;
 with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
 with VCS_Module;                 use VCS_Module;
 with VCS_View;                   use VCS_View;
+with VCS_View_API;               use VCS_View_API;
 with XML_Parsers;
 
 package body VCS_Activities is
@@ -345,8 +346,7 @@ package body VCS_Activities is
                              (Get_Registry (Kernel).all, File);
             begin
                if Project /= No_Project then
-                  VCS := Get_VCS_From_Id
-                    (Get_Attribute_Value (Project, VCS_Kind_Attribute));
+                  VCS := Get_Current_Ref (Kernel, Project);
                   declare
                      Item : Activity_Record := Get (Activity);
                   begin
