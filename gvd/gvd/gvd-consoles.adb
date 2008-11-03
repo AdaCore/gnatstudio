@@ -485,6 +485,7 @@ package body GVD.Consoles is
    ---------------
 
    procedure Close_TTY (Console : access Debuggee_Console_Record'Class) is
+      Debugger : Debugger_Access;
    begin
       if Console.TTY_Initialized then
          if Console.Debuggee_Id /= 0 then
@@ -492,10 +493,14 @@ package body GVD.Consoles is
             Console.Debuggee_Id := 0;
          end if;
 
-         if Get_Process (Console) /= null
-           and then Get_Process (Console).Debugger /= null
-         then
-            Set_TTY (Get_Process (Console).Debugger,  "");
+         if Get_Process (Console) /= null then
+            Debugger := Get_Process (Console).Debugger;
+
+            if Debugger /= null
+              and then not Command_In_Process (Get_Process (Debugger))
+            then
+               Set_TTY (Get_Process (Console).Debugger,  "");
+            end if;
          end if;
 
          Close_TTY (Console.Debuggee_TTY);
