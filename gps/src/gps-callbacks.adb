@@ -26,14 +26,13 @@ with Gtk_Utils;                 use Gtk_Utils;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Traces;                    use Traces;
 
 package body GPS.Callbacks is
 
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
-
-   GPS_Started_Hook : constant Hook_Name := "gps_started";
 
    -------------
    -- Gtk_Log --

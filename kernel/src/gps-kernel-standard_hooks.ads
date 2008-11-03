@@ -34,6 +34,12 @@ with Projects;
 
 package GPS.Kernel.Standard_Hooks is
 
+   -----------------
+   -- GPS Started --
+   -----------------
+
+   GPS_Started_Hook : constant Hook_Name := "gps_started";
+
    -----------
    -- Hooks --
    -----------

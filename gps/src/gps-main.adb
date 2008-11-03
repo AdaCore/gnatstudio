@@ -215,8 +215,6 @@ procedure GPS.Main is
    Toolchains_Trace       : constant Debug_Handle :=
                       Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
 
-   GPS_Started_Hook       : constant Hook_Name := "gps_started";
-
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 

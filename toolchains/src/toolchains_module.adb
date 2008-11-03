@@ -29,7 +29,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains;                use Toolchains;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Projects;
@@ -349,7 +349,7 @@ package body Toolchains_Module is
    begin
       Register_Menu (Kernel, Tools, -"T_oolchains", "", On_Menu'Access);
       --  Load the property after all modules and plug-ins are loaded.
-      Add_Hook (Kernel, "gps_started",
+      Add_Hook (Kernel, GPS_Started_Hook,
                 Wrapper (On_GPS_Started'Access),
                 Name  => "toolchains_module.gps_started");
    end Register_Module;

@@ -1869,7 +1869,7 @@ package body Builder_Facility_Module is
       Insert (Get_Toolbar (Kernel), Space);
 
       --  Load the user-defined targets.
-      Add_Hook (Kernel, "gps_started",
+      Add_Hook (Kernel, GPS_Started_Hook,
                 Wrapper (On_GPS_Started'Access),
                 Name  => "builder_facility_module.gps_started");
    end Register_Module;
