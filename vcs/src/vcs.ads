@@ -124,6 +124,10 @@ package VCS is
    function Is_Used (Ref : VCS_Record'Class) return Boolean;
    --  Returns the above status
 
+   function Is_Action_Defined
+     (Ref : access VCS_Record'Class; Action : VCS_Action) return Boolean;
+   --  Returns true if the given action is supported by the VCS Ref
+
    type File_Status is record
       Label    : GNAT.Strings.String_Access;
       --  The label corresponding to the status

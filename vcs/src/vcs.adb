@@ -325,4 +325,16 @@ package body VCS is
       return Ref.Used;
    end Is_Used;
 
+   -----------------------
+   -- Is_Action_Defined --
+   -----------------------
+
+   function Is_Action_Defined
+     (Ref : access VCS_Record'Class; Action : VCS_Action) return Boolean
+   is
+      use type GNAT.Strings.String_Access;
+   begin
+      return Ref.Action_Labels (Action) /= null;
+   end Is_Action_Defined;
+
 end VCS;
