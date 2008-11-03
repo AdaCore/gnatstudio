@@ -80,7 +80,11 @@ package VCS is
       Remove_No_Commit,   --  Remove one file or dir from repository
       Revert);            --  Revert files or dirs to repository revision
 
+   type VCS_Actions is array (Positive range <>) of VCS_Action;
+
    type Action_Array is array (VCS_Action) of GNAT.Strings.String_Access;
+
+   No_Action : constant Action_Array;
 
    function Name (Ref : access VCS_Record) return String is abstract;
    --  The name of the VCS system
@@ -516,5 +520,7 @@ private
       Used                : Boolean    := False;
       Action_Labels       : Action_Array;
    end record;
+
+   No_Action : constant Action_Array := (others => null);
 
 end VCS;
