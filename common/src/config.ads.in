@@ -110,6 +110,8 @@ package Config is
    --  Whether separate debugger execution window is supported by the target
 
    Default_Charset : constant String := "@CHARSET@";
-   --  Default charset for the host
+   --  Default charset for the host, used throughout GPS to convert strings
+   --  from outside GPS (e.g. pathnames, compiler output, file contents, ...)
+   --  to UTF-8 internally.
 
 end Config;
