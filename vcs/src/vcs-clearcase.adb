@@ -1773,8 +1773,7 @@ package body VCS.ClearCase is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       VCS_ClearCase_Module_ID := new VCS_ClearCase_Module_ID_Record;
       Register_Module
