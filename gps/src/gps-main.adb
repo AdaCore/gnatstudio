@@ -175,7 +175,7 @@ procedure GPS.Main is
    VCS_Trace              : constant Debug_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
    ClearCase_Trace        : constant Debug_Handle :=
-                        Create ("MODULE.ClearCase", GNATCOLL.Traces.Off);
+                        Create ("MODULE.ClearCase", GNATCOLL.Traces.On);
    Custom_Trace           : constant Debug_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Action_Editor_Trace    : constant Debug_Handle :=
