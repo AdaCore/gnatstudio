@@ -8,12 +8,15 @@ project Shared is
 
    for Source_Dirs use ();
 
+   type VCS_Type is ("Subversion", "Git", "Auto");
+   VCS_Kind : VCS_Type := external ("PRJ_VCS", "Subversion");
+
    package IDE is
       case OS is
          when "unix" =>
-            for VCS_Kind use "auto";
+            for VCS_Kind use "Auto";
          when "Windows_NT" =>
-            for VCS_Kind use "Subversion";
+            for VCS_Kind use VCS_Kind;
       end case;
 
       for VCS_Log_Check use "log_check";
