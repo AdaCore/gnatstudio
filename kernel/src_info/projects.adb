@@ -20,7 +20,6 @@
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Text_IO;                use Ada, Ada.Text_IO;
@@ -50,7 +49,8 @@ with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
 with Snames;                     use Snames;
 with String_Hash;
 with Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with Types;                      use Types;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body Projects is
 
@@ -572,81 +572,42 @@ package body Projects is
       Including_Libraries : Boolean := True;
       Xrefs_Dirs          : Boolean := False) return String
    is
-      function Handle_Subdir (Path : String) return String;
+      View : constant Project_Id := Get_View (Project);
+
+      function Handle_Subdir (Id : Namet.Path_Name_Type) return String;
       --  for all directories defined in Path, detect if "From_Subdir" exists,
       --  and return it instead.
-
-      function Get_Subdir return String;
-      --  Return the object subdir that needs to be used, or empty string
-
-      function Get_Subdir return String is
-         Reg : Project_Registry renames
-                 Project_Registry (Get_Registry (Project));
-      begin
-         if Xrefs_Dirs and then Get_Xrefs_Subdir (Reg) /= "" then
-            return Get_Xrefs_Subdir (Reg);
-         else
-            return Get_Mode_Subdir (Reg);
-         end if;
-      end Get_Subdir;
 
       -------------------
       -- Handle_Subdir --
       -------------------
 
-      function Handle_Subdir (Path : String) return String is
-         From_Subdir : constant String := Get_Subdir;
+      function Handle_Subdir (Id : Namet.Path_Name_Type) return String is
+         Path : constant String := Name_As_Directory (Get_String (Id));
+         Reg  : constant Project_Registry :=
+                  Project_Registry (Get_Registry (Project));
       begin
-         if From_Subdir = "" then
+         if not Xrefs_Dirs or else Get_Xrefs_Subdir (Registry => Reg) = "" then
             return Path;
+         elsif Projects_Table (Project) (View).Externally_Built then
+            return Path;
+         elsif Prj.Subdirs /= null then
+            return Name_As_Directory
+              (Path (Path'First .. Path'Last - Prj.Subdirs.all'Length - 1) &
+               Get_Xrefs_Subdir (Registry => Reg));
+         else
+            return Name_As_Directory
+              (Path & Get_Xrefs_Subdir (Registry => Reg));
          end if;
-
-         declare
-            Iter        : File_Utils.Path_Iterator;
-            Ret         : Unbounded_String := Null_Unbounded_String;
-
-         begin
-            Iter := File_Utils.Start (Path);
-
-            while not At_End (Path, Iter) loop
-               declare
-                  Dir    : constant GNATCOLL.VFS.Virtual_File :=
-                             GNATCOLL.VFS.Create (Current (Path, Iter));
-                  Subdir : constant GNATCOLL.VFS.Virtual_File :=
-                             GNATCOLL.VFS.Create_From_Dir (Dir, From_Subdir);
-               begin
-                  if Ret /= Null_Unbounded_String then
-                     Append (Ret, Path_Separator);
-                  end if;
-
-                  if Subdir.Is_Directory then
-                     Append (Ret, Subdir.Full_Name.all);
-                  else
-                     if Active (Debug) then
-                        Trace (Debug, "Object_Path: no subdir " & From_Subdir &
-                               " in " & Subdir.Full_Name.all);
-                     end if;
-
-                     Append (Ret, Dir.Full_Name.all);
-                  end if;
-               end;
-
-               Iter := Next (Path, Iter);
-            end loop;
-
-            return To_String (Ret);
-         end;
       end Handle_Subdir;
 
-      View : constant Project_Id := Get_View (Project);
    begin
       if View = Prj.No_Project then
          return "";
 
       elsif Recursive then
-         return Handle_Subdir
-           (Prj.Env.Ada_Objects_Path
-              (View, Project.View_Tree, Including_Libraries).all);
+         return Prj.Env.Ada_Objects_Path
+           (View, Project.View_Tree, Including_Libraries).all;
 
       elsif Including_Libraries
         and then Projects_Table (Project)(View).Library
@@ -657,21 +618,19 @@ package body Projects is
                                              No_Path_Information
          then
             return Handle_Subdir
-              (Get_String
-                 (Projects_Table (Project) (View).Library_ALI_Dir.Name));
+              (Projects_Table (Project) (View).Library_ALI_Dir.Name);
          else
             return Handle_Subdir
-              (Get_String
                 (Projects_Table (Project) (View).Object_Directory.Display_Name)
-               & Path_Separator & Get_String
-                 (Projects_Table (Project) (View).Library_ALI_Dir.Name));
+              & Path_Separator
+              & Handle_Subdir
+                 (Projects_Table (Project) (View).Library_ALI_Dir.Name);
          end if;
       elsif Projects_Table (Project)(View).Object_Directory /=
                                              No_Path_Information
       then
          return Handle_Subdir
-           (Get_String
-              (Projects_Table (Project) (View).Object_Directory.Display_Name));
+              (Projects_Table (Project) (View).Object_Directory.Display_Name);
 
       else
          return "";
@@ -1631,26 +1590,9 @@ package body Projects is
              (Name_Id
               (Projects_Table
                 (Project)(Get_View (Project)).Exec_Directory.Display_Name));
-            Reg : Project_Registry renames
-                    Project_Registry (Get_Registry (Project));
          begin
             if Exec /= "" then
-               if Get_Mode_Subdir (Reg) = "" then
-                  return Name_As_Directory (Exec);
-               else
-                  declare
-                     Dir : constant GNATCOLL.VFS.Virtual_File :=
-                             GNATCOLL.VFS.Create
-                               (Name_As_Directory (Exec) &
-                                Get_Mode_Subdir (Reg));
-                  begin
-                     if Dir.Is_Directory then
-                        return Dir.Full_Name.all;
-                     else
-                        return Name_As_Directory (Exec);
-                     end if;
-                  end;
-               end if;
+               return Name_As_Directory (Exec);
             else
                return Name_As_Directory
                  (Object_Path (Project, Recursive => False));

@@ -192,7 +192,7 @@ package Projects is
    --  If an Xrefs Subdir is set in the project registry to a non-empty string,
    --  and Xrefs_Dir is set, then the corresponding subdirectory is returned if
    --  it exists. Else, the subdir corresponding to the current builder mode
-   --  is returned.
+   --  is returned. This mode only works when recursive is unset.
 
    function Directory_Contains_Files
      (Project   : Project_Type;
