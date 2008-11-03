@@ -186,7 +186,11 @@ package body VCS is
    function Get_Identified_Actions
      (Rep : access VCS_Record'Class) return Action_Array is
    begin
-      return Rep.Action_Labels;
+      if Rep = null then
+         return No_Action;
+      else
+         return Rep.Action_Labels;
+      end if;
    end Get_Identified_Actions;
 
    ----------
