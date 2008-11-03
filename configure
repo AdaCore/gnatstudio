@@ -4092,7 +4092,7 @@ case "${host}" in
 	HOST_TYPE=Windows
 	PATH_STYLE=CYGWIN
 	SSH_ESCAPE=\'~\'
-	CHARSET="UTF-8"
+	CHARSET="ISO-8859-1"
 	;;
 
       *-darwin* ) STRIP_CR=True ;;
