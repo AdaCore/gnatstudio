@@ -605,7 +605,7 @@ package body VCS_Module is
 
       Add_Hook
         (Kernel, Project_Changing_Hook,
-         Wrapper (On_Project_Changing'Access), "vcs.project_changin");
+         Wrapper (On_Project_Changing'Access), "vcs.project_changing");
 
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
 
