@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                 Copyright (C) 2007-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,11 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Error;                use Glib.Error;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Unicode;              use Glib.Unicode;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Glib.Error;           use Glib.Error;
+with Glib.Convert;         use Glib.Convert;
+with Glib.Unicode;         use Glib.Unicode;
 
 package body UTF8_Utils is
 
@@ -48,6 +48,7 @@ package body UTF8_Utils is
       if Valid then
          --  The string is UTF-8, nothing to do
          return;
+
       else
          --  The string is not valid UTF-8, assume it is encoded using the
          --  locale.
@@ -70,7 +71,7 @@ package body UTF8_Utils is
 
             else
                Error_Free (Error);
-               --  ??? We could make some use of the error message.
+               --  ??? We could make some use of the error message
 
                --  Locale_To_UTF8 does not clarify whether Tentative is
                --  allocated some memory or not in case of failure. In doubt,
@@ -104,6 +105,7 @@ package body UTF8_Utils is
             Free (Output);
             return S;
          end;
+
       else
          return "";
       end if;
