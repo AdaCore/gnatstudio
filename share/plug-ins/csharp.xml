@@ -27,17 +27,13 @@
         <Index>1</Index>
       </Category>
       <Category>
-        <Name>class</Name>
-        <Pattern>^\s*((abstract|public|private|static)\s+)*class\s+([\w][\w\d_]+)\s*(\:\s*\w*)?</Pattern>
+        <Name>function</Name>
+        <Pattern>^\s*((abstract|public|private|protected|static)\s+)*[\w\d_*]+\s+([\w\d_]+)\s*\([^\)]*\)</Pattern>
         <Index>3</Index>
       </Category>
       <Category>
-        <Name>simple_block</Name>
-        <Pattern>[{][^}\b]*[}]</Pattern>
-      </Category>
-      <Category>
-        <Name>method</Name>
-        <Pattern>^\s*((abstract|public|private|protected|static)\s+)*\w\s+([\w][\w\d_]+)\s*\([^\)]*\)</Pattern>
+        <Name>class</Name>
+        <Pattern>^\s*((abstract|public|private|static)\s+)*class\s+(\w[\w\d_]+)\s*(\:\s*\w*)?</Pattern>
         <Index>3</Index>
       </Category>
     </Categories>
