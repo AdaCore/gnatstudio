@@ -24,6 +24,7 @@ with Ada.Calendar;             use Ada.Calendar;
 with Code_Analysis;            use Code_Analysis;
 with Code_Analysis_Dump;       use Code_Analysis_Dump;
 with Code_Coverage;            use Code_Coverage;
+with Code_Coverage.Gcov;       use Code_Coverage.Gcov;
 
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
