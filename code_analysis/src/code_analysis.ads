@@ -33,7 +33,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                          use GNAT.Strings;
 
 with Projects;                              use Projects;
-with GNATCOLL.VFS;                                   use GNATCOLL.VFS;
+with GNATCOLL.VFS;                          use GNATCOLL.VFS;
+with GPS.Kernel.Standard_Hooks;
 
 package Code_Analysis is
 
@@ -60,17 +61,6 @@ package Code_Analysis is
       Undetermined);
       --  The status is undetermined.
 
-   type Line_Coverage_Status is
-     (No_Code,
-      Not_Covered,
-      Partially_Covered,
-      Covered,
-      Covered_No_Branch,
-      Branch_Taken,
-      Branch_Fallthrough,
-      Branch_Covered,
-      Undetermined);
-
    type Coverage is abstract tagged record
       Coverage : Natural := 0;
    end record;
@@ -81,11 +71,16 @@ package Code_Analysis is
    not overriding function Is_Valid
      (Self : Coverage) return Boolean is abstract;
 
-   type Line_Coverage is new Coverage with record
-      Status : Line_Coverage_Status := Undetermined;
-   end record;
+   type Line_Coverage is abstract new Coverage with null record;
 
-   overriding function Is_Valid (Self : Line_Coverage) return Boolean;
+   function Line_Coverage_Info
+     (Coverage : Line_Coverage;
+      Bin_Mode : Boolean := False)
+      return GPS.Kernel.Standard_Hooks.Line_Information_Record is abstract;
+   --  Return a String_Access pointing on a message describing the coverage
+   --  state of the line from which the Coverage record had been extracted
+   --  If Bin_Mode is True, then the returned messages can only be between
+   --  (covered | not covered)
 
    type Node_Coverage is abstract new Coverage with record
       Children : Natural;

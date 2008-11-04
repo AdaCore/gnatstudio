@@ -29,20 +29,12 @@ with Language.Tree;  use Language.Tree;
 with Projects;       use Projects;
 with Code_Analysis;  use Code_Analysis;
 
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
 package Code_Coverage is
 
    procedure Set_Error
      (File_Node  : Code_Analysis.File_Access;
       Error_Code : File_Coverage_Status);
    --  Sets a coverage data with Error_Code for Status to the given File_Node
-
-   procedure Add_File_Info
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access);
-   --  Parse the File_Contents and fill the File_Node with gcov info
-   --  And set Line_Count and Covered_Lines
 
    procedure Get_Runs_Info_From_File
      (File_Contents : String_Access;
@@ -94,14 +86,6 @@ package Code_Coverage is
    --  Return the 1st project that contains coverage data from the given
    --  analysis.
    --  Return No_Project if no project contains such data.
-
-   function Line_Coverage_Info
-     (Coverage : Coverage_Access;
-      Bin_Mode : Boolean := False) return Line_Information_Record;
-   --  Return a String_Access pointing on a message describing the coverage
-   --  state of the line from which the Coverage record had been extracted
-   --  If Bin_Mode is True, then the returned messages can only be between
-   --  (covered | not covered)
 
    procedure Fill_Iter
      (Tree_Store : Gtk_Tree_Store;

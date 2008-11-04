@@ -17,17 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;       use Ada.Text_IO;
-with Ada.Strings;       use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with GNAT.Regpat;       use GNAT.Regpat;
+with Ada.Text_IO;        use Ada.Text_IO;
+with Ada.Strings;        use Ada.Strings;
+with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
+with GNAT.Regpat;        use GNAT.Regpat;
 with Glib;
-with GPS.Intl;          use GPS.Intl;
-with String_Utils;      use String_Utils;
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with Language;          use Language;
-with Code_Analysis_GUI; use Code_Analysis_GUI;
+with GPS.Intl;           use GPS.Intl;
+with String_Utils;       use String_Utils;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with Language;           use Language;
+with Code_Analysis_GUI;  use Code_Analysis_GUI;
+with Code_Coverage.Gcov; use Code_Coverage.Gcov;
+with Code_Coverage.Xcov; use Code_Coverage.Xcov;
+with Coverage_GUI;
 
 package body Code_Coverage is
 
@@ -59,137 +62,6 @@ package body Code_Coverage is
          File_Node.Lines.all := (others => Null_Line);
       end if;
    end Set_Error;
-
-   -------------------
-   -- Add_File_Info --
-   -------------------
-
-   procedure Add_File_Info
-     (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access)
-   is
-      Current           : Natural;
-      Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####): *(\d+):(.*$)", Multiple_Lines);
-      Line_Matches      : Match_Array (0 .. 3);
-      Last_Line_Regexp  : constant Pattern_Matcher := Compile
-        ("^ +(\d+|#####|-): *(\d+):", Multiple_Lines);
-      Last_Line_Matches : Match_Array (0 .. 2);
-      Line_Num          : Natural;
-      Lines_Count       : Natural := 0;
-      Not_Cov_Count     : Natural := 0;
-   begin
-      if File_Node.Analysis_Data.Coverage_Data = null then
-         File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
-      end if;
-
-      --------------------------------------
-      -- Determination of the line number --
-      --------------------------------------
-
-      Current := File_Contents'Last;
-      Current := Index (File_Contents.all, (1 => ASCII.LF), Current, Backward);
-
-      if Current = File_Contents'Last then
-         if Current > 0 then
-            Current := Index
-              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
-
-            if Current = 0 then
-               Set_Error (File_Node, File_Corrupted);
-               --  The .gcov file is not a valid Gcov file.
-               --  No last source code line found.
-               return;
-            end if;
-         else
-            Set_Error (File_Node, File_Empty);
-            --  the .gcov file is not a valid Gcov file.
-            return;
-         end if;
-      end if;
-
-      loop
-         Match
-           (Last_Line_Regexp, File_Contents.all, Last_Line_Matches, Current);
-
-         exit when Last_Line_Matches (0) /= No_Match;
-
-         if Current > 0 then
-            Current := Index
-              (File_Contents.all, (1 => ASCII.LF), Current - 1, Backward);
-
-            if Current = 0 then
-               Set_Error (File_Node, File_Corrupted);
-               --  The .gcov file is not a valid Gcov file.
-               --  No last source code line found.
-               return;
-            end if;
-         else
-            Set_Error (File_Node, File_Corrupted);
-            --  the .gcov file is not a valid Gcov file.
-            return;
-         end if;
-      end loop;
-
-      -------------------------------
-      -- line coverage information --
-      -------------------------------
-
-      File_Node.Lines := new Line_Array (1 .. Natural'Value (File_Contents
-        (Last_Line_Matches (2).First .. Last_Line_Matches (2).Last)));
-      --  Create a Line_Array with exactly the number of elements corresponding
-      --  to the number of code lines in the original source code file.
-
-      File_Node.Lines.all := (others => Null_Line);
-      Current := File_Contents'First;
-
-      loop
-         Match (Line_Regexp, File_Contents.all, Line_Matches, Current);
-
-         exit when Line_Matches (0) = No_Match;
-
-         Lines_Count := Lines_Count + 1;
-         Line_Num := Natural'Value
-           (File_Contents (Line_Matches (2).First .. Line_Matches (2).Last));
-         File_Node.Lines (Line_Num).Number := Line_Num;
-         File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
-           new Line_Coverage;
-         Line_Coverage
-           (File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.all).Status
-           := No_Code;
-
-         case File_Contents (Line_Matches (1).First) is
-            when '#' =>
-               Line_Coverage
-                 (File_Node.Lines
-                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
-                 := Not_Covered;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
-                 := 0;
-               File_Node.Lines (Line_Num).Contents := new String'
-                 (File_Contents
-                    (Line_Matches (3).First .. Line_Matches (3).Last));
-               Not_Cov_Count := Not_Cov_Count + 1;
-            when others =>
-               Line_Coverage
-                 (File_Node.Lines
-                    (Line_Num).Analysis_Data.Coverage_Data.all).Status
-                 := Covered;
-               File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data.Coverage
-                 := Natural'Value
-                 (File_Contents
-                    (Line_Matches (1).First .. Line_Matches (1).Last));
-         end case;
-
-         Current := Line_Matches (0).Last + 1;
-      end loop;
-
-      Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Children :=
-        Lines_Count;
-      File_Node.Analysis_Data.Coverage_Data.Coverage := Not_Cov_Count;
-      File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
-        Valid;
-   end Add_File_Info;
 
    -----------------------------
    -- Get_Runs_Info_From_File --
@@ -405,12 +277,19 @@ package body Code_Coverage is
             Set_Attribute (Loc, "coverage", Natural'Image (Coverage.Coverage));
          end if;
 
-         if Coverage.all in Line_Coverage'Class then
+         if Coverage.all in Xcov_Line_Coverage'Class then
             Set_Attribute
               (Loc,
                "status",
-               Line_Coverage_Status'Image
-                 (Line_Coverage (Coverage.all).Status));
+               Xcov_Line_Coverage_Status'Image
+                 (Xcov_Line_Coverage (Coverage.all).Status));
+
+         elsif Coverage.all in Gcov_Line_Coverage'Class then
+            Set_Attribute
+              (Loc,
+               "status",
+               Gcov_Line_Coverage_Status'Image
+                 (Gcov_Line_Coverage (Coverage.all).Status));
 
          elsif Coverage.all in Node_Coverage'Class then
             if Coverage.Is_Valid then
@@ -472,7 +351,11 @@ package body Code_Coverage is
       --  Return the coverage status associated with an error message
 
       function Status_Value
-        (Status : String) return Line_Coverage_Status;
+        (Status : String) return Xcov_Line_Coverage_Status;
+      --  Return the coverage status associated with an error message
+
+      function Status_Value
+        (Status : String) return Gcov_Line_Coverage_Status;
       --  Return the coverage status associated with an error message
 
       ------------------
@@ -500,9 +383,19 @@ package body Code_Coverage is
       end Status_Value;
 
       function Status_Value
-        (Status : String) return Line_Coverage_Status is
+        (Status : String) return Xcov_Line_Coverage_Status is
       begin
-         return Line_Coverage_Status'Value (Status);
+         return Xcov_Line_Coverage_Status'Value (Status);
+
+      exception
+         when Constraint_Error =>
+            return Undetermined;
+      end Status_Value;
+
+      function Status_Value
+        (Status : String) return Gcov_Line_Coverage_Status is
+      begin
+         return Gcov_Line_Coverage_Status'Value (Status);
 
       exception
          when Constraint_Error =>
@@ -514,9 +407,17 @@ package body Code_Coverage is
    begin
       if Txt_Status /= "" then
          if Loc.Tag.all = "Line" then
-            Coverage := new Line_Coverage;
-            Line_Coverage (Coverage.all).Status :=
-              Status_Value (Txt_Status);
+            case Coverage_GUI.Current_Coverage_Tool is
+               when Coverage_GUI.Gcov =>
+                  Coverage := new Gcov_Line_Coverage;
+                  Gcov_Line_Coverage (Coverage.all).Status :=
+                    Status_Value (Txt_Status);
+
+               when Coverage_GUI.Xcov =>
+                  Coverage := new Xcov_Line_Coverage;
+                  Xcov_Line_Coverage (Coverage.all).Status :=
+                    Status_Value (Txt_Status);
+            end case;
 
          elsif Loc.Tag.all = "Subprogram" then
             Coverage := new Subprogram_Coverage;
@@ -605,63 +506,6 @@ package body Code_Coverage is
          return No_Project;
       end if;
    end First_Project_With_Coverage_Data;
-
-   ------------------------
-   -- Line_Coverage_Info --
-   ------------------------
-
-   function Line_Coverage_Info
-     (Coverage : Coverage_Access;
-      Bin_Mode : Boolean := False) return Line_Information_Record
-   is
-      Pango_Markup_To_Open_1 : constant String := "<span foreground=""";
-      Pango_Markup_To_Open_2 : constant String := """>";
-      Pango_Markup_To_Close  : constant String := "</span>";
-
-      Result : Line_Information_Record;
-
-   begin
-      if Bin_Mode then
-         case Coverage.Coverage is
-         when 0 =>
-            Result.Image := Uncovered_Line_Pixbuf;
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has not been executed.");
-         when others =>
-            Result.Image := Covered_Line_Pixbuf;
-            Result.Tooltip_Text := new String'
-              (-"The code for this line has been executed.");
-         end case;
-      else
-         case Coverage.Coverage is
-         when 0 =>
-            Result.Text := new
-              String'(Pango_Markup_To_Open_1
-                      & "red"
-                      & Pango_Markup_To_Open_2
-                      & "#"
-                      & Pango_Markup_To_Close);
-         when 1 =>
-            Result.Text := new
-              String'(Pango_Markup_To_Open_1
-                      & "black"
-                      & Pango_Markup_To_Open_2
-                      & (-" 1 time ")
-                      & Pango_Markup_To_Close);
-         when others =>
-            Result.Text := new
-              String'
-                (Pango_Markup_To_Open_1
-                 & "black"
-                 & Pango_Markup_To_Open_2
-                 & Image (Coverage.Coverage)
-                 & " times"
-                 & Pango_Markup_To_Close);
-         end case;
-      end if;
-
-      return Result;
-   end Line_Coverage_Info;
 
    ---------------
    -- Fill_Iter --

@@ -36,6 +36,8 @@ with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
 with Code_Analysis_GUI;
+with Code_Coverage.Gcov;
+with Code_Coverage.Xcov;
 
 package body Coverage_GUI is
 
@@ -120,7 +122,13 @@ package body Coverage_GUI is
             end if;
          end;
 
-         Add_File_Info (File_Node, File_Contents);
+         case Current_Coverage_Tool is
+            when Gcov =>
+               Code_Coverage.Gcov.Add_File_Info (File_Node, File_Contents);
+
+            when Xcov =>
+               Code_Coverage.Xcov.Add_File_Info (File_Node, File_Contents);
+         end case;
 
          --  Check for project runs info
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid and then
@@ -222,7 +230,8 @@ package body Coverage_GUI is
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
                Line_Info (J) := Line_Coverage_Info
-                 (File_Node.Lines (J).Analysis_Data.Coverage_Data,
+                 (Line_Coverage'Class
+                    (File_Node.Lines (J).Analysis_Data.Coverage_Data.all),
                   Binary_Coverage_Mode);
             else
                Line_Info (J).Text := new String'(" ");
@@ -448,31 +457,46 @@ package body Coverage_GUI is
       Gcov_Root : String_Access;
       Result    : GNATCOLL.VFS.Virtual_File;
    begin
-      Gcov_Root := Getenv ("GCOV_ROOT");
+      case Current_Coverage_Tool is
+         when Gcov =>
+            Gcov_Root := Getenv ("GCOV_ROOT");
 
-      if Gcov_Root /= null
-        and then Gcov_Root.all = ""
-      then
-         --  If GCOV_ROOT is set but empty, look for files in the object
-         --  directory of the root project.
-         Free (Gcov_Root);
-      end if;
+            if Gcov_Root /= null
+              and then Gcov_Root.all = ""
+            then
+               --  If GCOV_ROOT is set but empty, look for files in the object
+               --  directory of the root project.
+               Free (Gcov_Root);
+            end if;
 
-      if Gcov_Root = null then
-         --  Look for the gcov file in the object directory of the root
-         --  project.
-         return Create
-           (Object_Path
-              (Get_Root_Project (Get_Registry (Kernel).all), False, False)
-            & Directory_Separator & Base_Name (Source) & Gcov_Extension_Cst);
-      else
-         --  Look for the gcov file in the path pointed by GCOV_ROOT
-         Result := Create
-           (Gcov_Root.all & Directory_Separator &
-            Base_Name (Source) & Gcov_Extension_Cst);
-         Free (Gcov_Root);
-         return Result;
-      end if;
+            if Gcov_Root = null then
+               --  Look for the gcov file in the object directory of the root
+               --  project.
+               return Create
+                 (Object_Path
+                    (Get_Root_Project
+                       (Get_Registry (Kernel).all), False, False)
+                  & Directory_Separator & Base_Name (Source)
+                  & Gcov_Extension_Cst);
+
+            else
+               --  Look for the gcov file in the path pointed by GCOV_ROOT
+               Result := Create
+                 (Gcov_Root.all & Directory_Separator &
+                  Base_Name (Source) & Gcov_Extension_Cst);
+
+               Free (Gcov_Root);
+               return Result;
+            end if;
+
+         when Xcov =>
+            return Create
+              (Object_Path
+                 (Get_Root_Project
+                    (Get_Registry (Kernel).all), False, False)
+               & Directory_Separator & Base_Name (Source)
+               & Xcov_Extension_Cst);
+      end case;
    end Find_Gcov_File;
 
    --------------------

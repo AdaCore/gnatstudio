@@ -35,6 +35,13 @@ package Coverage_GUI is
    Gcov_Extension_Cst : constant String := ".gcov";
    --  Constant String that represents the extension of GCOV files
 
+   Xcov_Extension_Cst : constant String := ".xcov";
+   --  Constant String that represents the extension of XCOV files
+
+   type Coverage_Tools is (Gcov, Xcov);
+
+   Current_Coverage_Tool : Coverage_Tools := Gcov;
+
    CodeAnalysis_Cst   : constant String := "CodeAnalysis";
    Coverage_Category  : constant Glib.UTF8_String := -"Uncovered lines";
 

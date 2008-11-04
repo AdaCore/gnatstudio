@@ -357,11 +357,6 @@ package body Code_Analysis is
       return Self.Status = Valid;
    end Is_Valid;
 
-   overriding function Is_Valid (Self : Line_Coverage) return Boolean is
-   begin
-      return Self.Status /= Undetermined;
-   end Is_Valid;
-
    overriding function Is_Valid (Self : Project_Coverage) return Boolean is
    begin
       return Self.Status = Valid;
