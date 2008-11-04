@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -268,7 +267,7 @@ package body Memory_View_Pkg is
       Add (Memory_View.Pgdn, Arrow2);
 
       Gtk_New
-        (Adjustment, 16.0, 1.0, 30.0, 1.0, 0.0, 0.0);
+        (Adjustment, 16.0, 1.0, 30.0, 1.0, 0.0);
       Gtk_New
         (Memory_View.Lines_Spin, Adjustment, 0.0, 0);
       Entry_Return_Callback.Connect
