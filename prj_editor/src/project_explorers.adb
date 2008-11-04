@@ -1253,7 +1253,11 @@ package body Project_Explorers is
             --  Update_Directory_Node_Text may invalidate it. This is why we
             --  use a Gtk_Tree_Path instead.
 
-            Path := Get_Path (Exp.Tree.Model, It2);
+            if It2 = Null_Iter then
+               Path := null;
+            else
+               Path := Get_Path (Exp.Tree.Model, It2);
+            end if;
 
             case Get_Node_Type (Exp.Tree.Model, It) is
                when Project_Node
@@ -1272,7 +1276,10 @@ package body Project_Explorers is
                   null;
             end case;
 
+            exit when Path = null;
+
             It := Get_Iter (Exp.Tree.Model, Path);
+            Path_Free (Path);
          end loop;
       end Process_Node;
 
