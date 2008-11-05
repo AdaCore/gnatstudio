@@ -43,14 +43,15 @@ current_entity=None
 def highlight_entity_references (buffer, entity):
   """Highlight all dispatching calls to entity in buffer"""
   refs = entity.references (show_kind = True, in_file = buffer.file())
-  for r in refs:
-    if refs[r] == "dispatching call":
-       try:
-         loc = EditorLocation (buffer, r.line(), r.column())
-         buffer.apply_overlay (buffer.dispatch_overlay, loc, loc + len (entity.name()) - 1)
-       except:
-         # The xref location might no longer be valid, just ignore it
-         pass
+  if refs:
+    for r in refs:
+      if refs[r] == "dispatching call":
+         try:
+           loc = EditorLocation (buffer, r.line(), r.column())
+           buffer.apply_overlay (buffer.dispatch_overlay, loc, loc + len (entity.name()) - 1)
+         except:
+           # The xref location might no longer be valid, just ignore it
+           pass
 
 def highlight_file_idle ():
   """Process the next entity or file to highlight"""
