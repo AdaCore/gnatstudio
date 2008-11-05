@@ -1575,12 +1575,6 @@ package body GPS.Kernel is
 
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
-      Free (Handle.Gnatls_Cache);
-      Free (Handle.Gnatls_Server);
-      Free (Handle.GNAT_Version);
-      Free (Handle.Home_Dir);
-      Free (Handle.Prefix);
-      Free (Handle.Construct_Database);
       Remote_Descriptors.Finalize;
 
       Destroy (Handle.Registry.all);
@@ -1618,6 +1612,13 @@ package body GPS.Kernel is
       Commands.Command_Queues.Free (Handle.Perma_Commands);
 
       Destroy (Handle.Scripts);
+
+      Free (Handle.Gnatls_Cache);
+      Free (Handle.Gnatls_Server);
+      Free (Handle.GNAT_Version);
+      Free (Handle.Home_Dir);
+      Free (Handle.Prefix);
+      Free (Handle.Construct_Database);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
