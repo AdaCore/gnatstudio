@@ -17,20 +17,23 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Machine_Descriptors;                use Machine_Descriptors;
+with Glib.Convert;                       use Glib.Convert;
+
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;             use GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
+with GNAT.Strings;                       use GNAT.Strings;
+
+with GNATCOLL.Filesystem.Unix;           use GNATCOLL.Filesystem.Unix;
 with GNATCOLL.Filesystem.Unix.Remote;    use GNATCOLL.Filesystem.Unix.Remote;
 with GNATCOLL.Filesystem.Windows;        use GNATCOLL.Filesystem.Windows;
 with GNATCOLL.Filesystem.Windows.Remote;
 use  GNATCOLL.Filesystem.Windows.Remote;
 with GNATCOLL.Filesystem.Transport;      use GNATCOLL.Filesystem.Transport;
-with GNAT.Strings;                       use GNAT.Strings;
+
+with Config;                             use Config;
+with Machine_Descriptors;                use Machine_Descriptors;
 with Remote;
-
-pragma Warnings (Off);
-with GNAT.Expect.TTY.Remote;             use GNAT.Expect.TTY.Remote;
-pragma Warnings (On);
-
-with Glib.Convert;                       use Glib.Convert;
 
 package body Filesystems is
 
@@ -158,9 +161,12 @@ package body Filesystems is
          --  Local filesystem
          case Typ is
             when Unix =>
-               FS := new GNATCOLL.Filesystem.Unix.Unix_Filesystem_Record;
+               FS := new Unix_Filesystem_Record;
+               Set_Locale_To_Display_Encoder (FS.all, Encode_To_UTF8'Access);
 
             when Windows =>
+               --  On Windows we do not want to convert file name to UTF-8 as
+               --  they are already in UTF-8.
                FS := new Windows_Filesystem_Record;
          end case;
 
@@ -177,9 +183,10 @@ package body Filesystems is
                       Host      => Nickname,
                       Transport => Transport'Access);
          end case;
+
+         Set_Locale_To_Display_Encoder (FS.all, Encode_To_UTF8'Access);
       end if;
 
-      Set_Locale_To_Display_Encoder (FS.all, Encode_To_UTF8'Access);
       return FS;
    end Filesystem_Factory;
 
@@ -248,6 +255,11 @@ package body Filesystems is
    end Get_Host;
 
 begin
-   Set_Locale_To_Display_Encoder
-     (Get_Local_Filesystem.all, Encode_To_UTF8'Access);
+   --  On Windows we do not want to convert the filename in UTF-8 as all
+   --  filenames are returned from the OS as UTF-8 encoded.
+
+   if Config.Host /= Windows then
+      Set_Locale_To_Display_Encoder
+        (Get_Local_Filesystem.all, Encode_To_UTF8'Access);
+   end if;
 end Filesystems;
