@@ -116,7 +116,7 @@ package body GPS.Menu is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Dir    : Virtual_File;
+      Dir : Virtual_File;
 
    begin
       Dir := Select_Directory
@@ -323,12 +323,12 @@ package body GPS.Menu is
          Filename : constant Virtual_File :=
            Select_File
              (-"Open Project",
-              File_Pattern      => "*.gpr",
-              Pattern_Name      => -"Project files",
-              Parent            => Get_Current_Window (Kernel),
-              Remote_Browsing   => True,
-              Kind              => Open_File,
-              History           => Get_History (Kernel));
+              File_Pattern    => "*.gpr",
+              Pattern_Name    => -"Project files",
+              Parent          => Get_Current_Window (Kernel),
+              Remote_Browsing => True,
+              Kind            => Open_File,
+              History         => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             Load_Project (Kernel, Filename);

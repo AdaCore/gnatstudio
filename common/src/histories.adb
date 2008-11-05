@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                 Copyright (C) 2002-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -66,7 +66,7 @@ package body Histories is
    procedure Update_History_Item
      (Item : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access);
-   --  Called when the button is toggled.
+   --  Called when the button is toggled
 
    type Menu_Changed_Notifier_Record is new Changed_Notifier_Record with record
       Menu     : Gtk_Menu_Item;
@@ -178,8 +178,8 @@ package body Histories is
       Allow       : Boolean;
       Merge_First : Boolean := False)
    is
-      Current : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Strings);
+      Current : constant History_Key_Access :=
+                  Create_New_Key_If_Necessary (Hist, Key, Strings);
    begin
       Current.Allow_Duplicates := Allow;
       Current.Merge_First := Merge_First;
@@ -524,12 +524,12 @@ package body Histories is
    -----------------
 
    procedure Set_History
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Value     : Boolean)
+     (Hist  : in out History_Record;
+      Key   : History_Key;
+      Value : Boolean)
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Booleans);
+      Val : constant History_Key_Access :=
+              Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       Val.Value := Value;
 
@@ -543,11 +543,11 @@ package body Histories is
    -----------------
 
    function Get_History
-     (Hist      : History_Record;
-      Key       : History_Key) return Boolean
+     (Hist : History_Record;
+      Key  : History_Key) return Boolean
    is
-      Val : constant History_Key_Access := Create_New_Key_If_Necessary
-        (Hist, Key, Booleans);
+      Val : constant History_Key_Access :=
+              Create_New_Key_If_Necessary (Hist, Key, Booleans);
    begin
       return Val.Value;
    end Get_History;
