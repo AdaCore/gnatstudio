@@ -1726,7 +1726,7 @@ package body Project_Viewers is
          Add_Before => False);
 
       Gtk_New (Mitem);
-      Register_Menu (Kernel, Project, Mitem, Ref_Item => "Recent",
+      Register_Menu (Kernel, Project, Mitem, Ref_Item => -"Recent",
                      Add_Before => False);
 
       --  ??? Disabled for now, pending resolution of related problems
