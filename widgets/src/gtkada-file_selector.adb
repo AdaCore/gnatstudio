@@ -539,9 +539,11 @@ package body Gtkada.File_Selector is
             if Val = "" then
                return GNATCOLL.VFS.No_File;
             else
-               Last_Directory := Create (Locale_To_UTF8 (Dir_Name (Val)));
+               Last_Directory := Create
+                 (Filesystems.Filename_To_UTF8 (Dir_Name (Val)));
 
-               return Create (Full_Filename => Locale_To_UTF8 (Val));
+               return Create
+                 (Full_Filename => Filesystems.Filename_To_UTF8 (Val));
             end if;
          end;
       end if;
@@ -566,7 +568,8 @@ package body Gtkada.File_Selector is
 
       Set_Position (File_Selector, Win_Pos_Mouse);
       Set_Text
-        (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
+        (File_Selector.Selection_Entry,
+         Filesystems.Filename_To_UTF8 (Default_Name));
 
       if File_Pattern /= "" then
          declare
@@ -714,7 +717,7 @@ package body Gtkada.File_Selector is
             if Val = "" then
                return GNATCOLL.VFS.No_File;
             else
-               Last_Directory := Create (Locale_To_UTF8 (Val));
+               Last_Directory := Create (Filesystems.Filename_To_UTF8 (Val));
 
                return Last_Directory;
             end if;
@@ -1751,8 +1754,10 @@ package body Gtkada.File_Selector is
                   Scroll_To_Cell (Win.File_Tree, Path, null, True, 0.1, 0.1);
                   Path_Free (Path);
 
-                  Set_Text (Win.Selection_Entry,
-                            Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
+                  Set_Text
+                    (Win.Selection_Entry,
+                     Filesystems.Filename_To_UTF8
+                       (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
                end if;
 
@@ -1760,8 +1765,10 @@ package body Gtkada.File_Selector is
                --  The best match is a directory, or no match at all.
 
                if Suffix_Length > 0 then
-                  Set_Text (Win.Selection_Entry,
-                            Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
+                  Set_Text
+                    (Win.Selection_Entry,
+                     Filesystems.Filename_To_UTF8
+                       (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
                   Dir := GNATCOLL.VFS.Sub_Dir (Win.Current_Directory,

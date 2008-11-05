@@ -397,7 +397,7 @@ package body ALI_Parser is
       Id      : Unit_Id) return Source_File
    is
       Base_Name : constant String :=
-                    Locale_To_UTF8
+                    Filesystems.Filename_To_UTF8
                       (Get_String (Units.Table (Id).Sfile));
       File      : Source_File;
 
@@ -452,7 +452,7 @@ package body ALI_Parser is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
       Base_Name   : constant String :=
-                      Locale_To_UTF8 (Get_String (Dep.Sfile));
+                      Filesystems.Filename_To_UTF8 (Get_String (Dep.Sfile));
       L           : LI_File := LI;
    begin
       --  Do we have one of the files belonging to LI itself ?

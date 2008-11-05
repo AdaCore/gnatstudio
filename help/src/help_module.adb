@@ -29,7 +29,6 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
-with Glib.Convert;               use Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
@@ -53,6 +52,7 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
 with File_Utils;                 use File_Utils;
+with Filesystems;                use Filesystems;
 with Generic_List;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with String_Utils;               use String_Utils;
@@ -316,14 +316,14 @@ package body Help_Module is
       end if;
 
       Full := Locate_Regular_File
-        (Locale_From_UTF8 (Name), Help_Module_ID.Doc_Path.all);
+        (Filesystems.Filename_From_UTF8 (Name), Help_Module_ID.Doc_Path.all);
 
       if Full = null then
          return GNATCOLL.VFS.No_File;
 
       else
          declare
-            F : constant String := Locale_To_UTF8 (Full.all);
+            F : constant String := Filesystems.Filename_To_UTF8 (Full.all);
          begin
             Free (Full);
             return Create (F);

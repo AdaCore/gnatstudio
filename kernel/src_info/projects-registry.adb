@@ -26,7 +26,10 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
+
+with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with ALI;
 with Namet;                     use Namet;
@@ -41,7 +44,7 @@ with Glib.Convert;              use Glib.Convert;
 
 with Csets;
 with File_Utils;                use File_Utils;
-with GNATCOLL.Traces;
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
@@ -58,7 +61,6 @@ with Sinput.P;
 with String_Hash;
 with Traces;                    use Traces;
 with Types;                     use Types;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Projects.Registry is
 
@@ -990,7 +992,8 @@ package body Projects.Registry is
                Current_Source : constant Name_Id :=
                                   String_Elements (Registry) (Sources).Value;
                UTF8           : constant String :=
-                                  Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
+                                  Filesystems.Filename_To_UTF8
+                                    (Name_Buffer (1 .. Name_Len));
                Directory      : Name_Id := No_Name;
                Unit           : Unit_Project;
             begin
@@ -1030,8 +1033,9 @@ package body Projects.Registry is
                            --  non-utf8 file systems.
                            Get_Name_String (Directory);
                            declare
-                              Dir : constant String := Locale_To_UTF8
-                                (Name_Buffer (1 .. Name_Len));
+                              Dir : constant String :=
+                                      Filesystems.Filename_To_UTF8
+                                        (Name_Buffer (1 .. Name_Len));
                            begin
                               Name_Len := Dir'Length;
                               Name_Buffer (1 .. Name_Len) := Dir;
@@ -1436,7 +1440,8 @@ package body Projects.Registry is
 
          declare
             File : constant String :=
-                     Locale_To_UTF8 (Name_Buffer (1 .. Name_Len));
+                     Filesystems.Filename_To_UTF8
+                       (Name_Buffer (1 .. Name_Len));
          begin
             --  The project manager duplicates files that contain several
             --  units. Only add them once in the project sources.
@@ -1578,7 +1583,9 @@ package body Projects.Registry is
                --  Convert the file to UTF8
 
                declare
-                  UTF8      : String := Locale_To_UTF8 (Buffer (1 .. Length));
+                  UTF8      : String :=
+                                Filesystems.Filename_To_UTF8
+                                  (Buffer (1 .. Length));
                   Part      : Unit_Part;
                   Unit_Name : Name_Id;
                begin
@@ -2157,7 +2164,7 @@ package body Projects.Registry is
 
       if Is_Absolute_Path (Filename) then
          declare
-            S : constant String := Locale_To_UTF8
+            S : constant String := Filesystems.Filename_To_UTF8
               (Normalize_Pathname (Locale, Resolve_Links => False));
          begin
             Name_Len := S'Length;
@@ -2262,7 +2269,7 @@ package body Projects.Registry is
 
          if Path /= null then
             declare
-               Full : constant String := Locale_To_UTF8
+               Full : constant String := Filesystems.Filename_To_UTF8
                  (Normalize_Pathname
                     (Path.all, Resolve_Links => False));
             begin
@@ -2371,8 +2378,8 @@ package body Projects.Registry is
          --  Else just open the relative paths. This is mostly intended
          --  for files opened from the command line.
          return Create
-           (Full_Filename => Locale_To_UTF8
-              (Normalize_Pathname (Locale_From_UTF8 (Name),
+           (Full_Filename => Filesystems.Filename_To_UTF8
+              (Normalize_Pathname (Filesystems.Filename_From_UTF8 (Name),
                                    Resolve_Links => False)));
       end if;
    end Create;
