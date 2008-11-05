@@ -1467,6 +1467,12 @@ package body Projects.Registry is
 
       --  Nothing to do if the only language is Ada, since this has already
       --  been taken care of.
+      --  ??? This is actually wrong in the case of a project created through
+      --  the debugger: the runtime files, for instance, were not found yet in
+      --  the source dirs, and were not part of the list of source files
+      --  returned by the project manager. But when we process the sources
+      --  below (Process_Explicit_Source), they get added. Luckily it seems
+      --  that gdb never creates an Ada-only project in any case
 
       if Languages'Length = 0
         or else (Languages'Length = 1
