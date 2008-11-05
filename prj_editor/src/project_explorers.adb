@@ -1873,6 +1873,7 @@ package body Project_Explorers is
       end Is_Hidden;
 
       S_Dirs   : File_Node_Hash.Map;
+      Old_Dirs : File_Node_Hash.Map;
       S_Files  : File_Node_Hash.Map;
       S_Cursor : File_Node_Hash.Cursor;
    begin
@@ -1894,7 +1895,7 @@ package body Project_Explorers is
          case Get_Node_Type (Explorer.Tree.Model, N) is
             when Directory_Node =>
                Include
-                 (S_Dirs, Get_Absolute_Name (Explorer.Tree.Model,  N), N);
+                 (Old_Dirs, Get_Absolute_Name (Explorer.Tree.Model,  N), N);
 
                N3 := Children (Explorer.Tree.Model, N);
                while N3 /= Null_Iter loop
@@ -1944,7 +1945,12 @@ package body Project_Explorers is
          Iter_Copy (Source => N2, Dest => N);
       end loop;
 
-      --  Now add each file (and missing source dirs when needed)
+      --  Now add each file (and missing source dirs when needed). The
+      --  directories are created based on the needs of the files, not on the
+      --  source dirs attribute (this is done later for the directories that
+      --  contain no file) so that when a project is created through the
+      --  debugger for instance it doesn't have to include the runtime dirs
+      --  and other directories that might contain source files.
 
       for F in Files'Range loop
          declare
@@ -1952,25 +1958,42 @@ package body Project_Explorers is
          begin
             S_Cursor := Find (S_Dirs, Dir.all);
             if S_Cursor = No_Element then
-               if Get_History
-                 (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                 or else not Is_Hidden (Dir.all)
-               then
-                  Append
-                    (Explorer.Tree.Model,
-                     Iter    => N,
-                     Parent  => Node);
-                  Set_Directory_Node_Attributes
-                    (Explorer  => Explorer,
-                     Directory => Dir.all,
-                     Node      => N,
-                     Project   => Project,
-                     Node_Type => Directory_Node);
+               --  Was this directory already displayed in the tree ?
+
+               S_Cursor := Find (Old_Dirs, Dir.all);
+
+               if S_Cursor = No_Element then
+                  --  No, create it
+
+                  if Get_History
+                    (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                    or else not Is_Hidden (Dir.all)
+                  then
+                     Append
+                       (Explorer.Tree.Model,
+                        Iter    => N,
+                        Parent  => Node);
+                     Set_Directory_Node_Attributes
+                       (Explorer  => Explorer,
+                        Directory => Dir.all,
+                        Node      => N,
+                        Project   => Project,
+                        Node_Type => Directory_Node);
+                     Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+                     Include (S_Dirs, Dir.all, N);
+                  else
+                     N := Null_Iter;
+                  end if;
+
+               else
+                  --  Consider the directory as new, ie we need to keep it for
+                  --  the new representation of three
+                  N := Element (S_Cursor);
                   Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
                   Include (S_Dirs, Dir.all, N);
-               else
-                  N := Null_Iter;
+                  Delete (Old_Dirs, S_Cursor);
                end if;
+
             else
                N := Element (S_Cursor);
             end if;
@@ -2014,15 +2037,6 @@ package body Project_Explorers is
          Next (S_Cursor);
       end loop;
 
-      --  Store the list of valid source dirs, so that we can remove the old
-      --  ones
-
-      Clear (S_Dirs);
-      N := Children (Explorer.Tree.Model, Node);
-      for D in Dirs'Range loop
-         Include (S_Dirs, Name_As_Directory (Get_Name_String (Dirs (D))), N);
-      end loop;
-
       --  Remove directory nodes that no longer correspond to valid dirs.
       --  These are the empty directories, since we only create directories
       --  when we have files.
@@ -2033,42 +2047,40 @@ package body Project_Explorers is
          Next (Explorer.Tree.Model, N);
 
          if Get_Node_Type (Explorer.Tree.Model, N2) = Directory_Node then
-            if Find (S_Dirs, Get_Absolute_Name (Explorer.Tree.Model, N2)) =
+            if Find (Old_Dirs, Get_Absolute_Name (Explorer.Tree.Model, N2)) /=
               No_Element
             then
                Remove (Explorer.Tree.Model, N2);
-            else
-               Delete (S_Dirs, Get_Absolute_Name (Explorer.Tree.Model, N2));
             end if;
          end if;
       end loop;
 
       --  Add those source directories that contain no file
 
-      S_Cursor := First (S_Dirs);
-
-      while Has_Element (S_Cursor) loop
+      for D in Dirs'Range loop
          declare
-            Dir : constant String := Key (S_Cursor);
+            Dir : constant String :=
+              Name_As_Directory (Get_Name_String (Dirs (D)));
          begin
-            if Get_History
-              (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-              or else not Is_Hidden (Dir)
-            then
-               Append
-                 (Explorer.Tree.Model,
-                  Iter    => N,
-                  Parent  => Node);
-               Set_Directory_Node_Attributes
-                 (Explorer  => Explorer,
-                  Directory => Dir,
-                  Node      => N,
-                  Project   => Project,
-                  Node_Type => Directory_Node);
-               Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+            if Find (S_Dirs, Dir) = No_Element then
+               if Get_History
+                 (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                 or else not Is_Hidden (Dir)
+               then
+                  Append
+                    (Explorer.Tree.Model,
+                     Iter    => N,
+                     Parent  => Node);
+                  Set_Directory_Node_Attributes
+                    (Explorer  => Explorer,
+                     Directory => Dir,
+                     Node      => N,
+                     Project   => Project,
+                     Node_Type => Directory_Node);
+                  Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+               end if;
             end if;
          end;
-         Next (S_Cursor);
       end loop;
 
       Add_Object_Directories (Explorer, Node, Project);
