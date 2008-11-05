@@ -62,4 +62,11 @@ package Filesystems is
    function Is_Local (File : Virtual_File) return Boolean;
    --  Whether the file is on the local host or on a remote host
 
+   function Filename_To_UTF8 (Name : String) return String;
+   --  Used to convert a filename into the proper internal representation
+   --  expected by GPS with is UTF-8.
+
+   function Filename_From_UTF8 (Name : String) return String;
+   --  Convert a filename encoded in UTF-8 back into the local encoding
+
 end Filesystems;

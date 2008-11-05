@@ -254,6 +254,32 @@ package body Filesystems is
       return Get_Host (File.Get_Filesystem);
    end Get_Host;
 
+   ----------------------
+   -- Filename_To_UTF8 --
+   ----------------------
+
+   function Filename_To_UTF8 (Name : String) return String is
+   begin
+      if Config.Host = Windows then
+         return Name;
+      else
+         return Locale_To_UTF8 (Name);
+      end if;
+   end Filename_To_UTF8;
+
+   ------------------------
+   -- Filename_From_UTF8 --
+   ------------------------
+
+   function Filename_From_UTF8 (Name : String) return String is
+   begin
+      if Config.Host = Windows then
+         return Name;
+      else
+         return Locale_From_UTF8 (Name);
+      end if;
+   end Filename_From_UTF8;
+
 begin
    --  On Windows we do not want to convert the filename in UTF-8 as all
    --  filenames are returned from the OS as UTF-8 encoded.
