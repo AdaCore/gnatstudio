@@ -709,6 +709,10 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String);
       --  Handler called when the project parser finds an error.
 
+      procedure Reset_File_If_External (S : in out Entities.Source_File);
+      --  Reset the xref info for a source file that no longer belongs to the
+      --  project
+
       ------------------
       -- Report_Error --
       ------------------
@@ -720,10 +724,43 @@ package body GPS.Kernel.Project is
          Console.Insert (Handle, S, Mode => Console.Error);
       end Report_Error;
 
+      ----------------------------
+      -- Reset_File_If_External --
+      ----------------------------
+
+      procedure Reset_File_If_External (S : in out Entities.Source_File) is
+      begin
+         if Get_Project_From_File
+           (Handle.Registry.all,
+            Source_Filename   => Entities.Get_Filename (S),
+            Root_If_Not_Found => False) = No_Project
+         then
+            Entities.Reset (S);
+         end if;
+      end Reset_File_If_External;
+
    begin
       Push_State (Kernel_Handle (Handle), Busy);
       Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
+
+      --  The list of source or ALI files might have changed, so we need to
+      --  reset the cache containing LI information, otherwise this cache might
+      --  contain dangling references to projects that have been freed. We used
+      --  to do this only when loading a new project, but in fact that is not
+      --  sufficient: when we look up xref info for a source file, if we
+      --  haven't reset the cache we might get a reply pointing to a source
+      --  file in a directory that is no longer part of the project in the new
+      --  scenario.
+      --
+      --  In fact, we only reset the info for those source files that are no
+      --  longer part of the project. This might take longer than dropping the
+      --  whole database since in the former case we need to properly handle
+      --  refcounting whereas Reset takes a shortcut. It is still probably
+      --  cleaner to only reset what's needed.
+
+      Entities.Foreach_Source_File
+        (Get_Database (Handle), Reset_File_If_External'Access);
 
       Run_Hook (Handle, Project_View_Changed_Hook);
       Pop_State (Kernel_Handle (Handle));
