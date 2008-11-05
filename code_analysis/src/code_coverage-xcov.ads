@@ -17,20 +17,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS;
 with GPS.Kernel.Standard_Hooks;
 
 package Code_Coverage.Xcov is
 
    type Xcov_Line_Coverage_Status is
-     (No_Code,
+     (Undetermined,
+      No_Code,
       Not_Covered,
       Partially_Covered,
       Branch_Partially_Covered,
-      Covered_No_Branch,
       Branch_Taken,
       Branch_Fallthrough,
       Branch_Covered,
-      Undetermined);
+      Covered_No_Branch);
+
+   subtype Xcov_Partially_Covered is
+     Xcov_Line_Coverage_Status range Partially_Covered .. Branch_Fallthrough;
+
+   subtype Xcov_Fully_Covered is
+     Xcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
 
    type Xcov_Line_Coverage is new Code_Analysis.Line_Coverage with record
       Status : Xcov_Line_Coverage_Status := Undetermined;
@@ -44,6 +51,16 @@ package Code_Coverage.Xcov is
      (Coverage : Xcov_Line_Coverage;
       Bin_Mode : Boolean := False)
       return GPS.Kernel.Standard_Hooks.Line_Information_Record;
+
+   overriding procedure Add_Location_If_Uncovered
+     (Coverage    : Xcov_Line_Coverage;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+      Line_Text   : String_Access;
+      Added       : in out Boolean);
+   --  Adds location of the uncovered line to the location window. Set Added to
+   --  True if line has been added; otherwise preserve Added value.
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;

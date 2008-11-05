@@ -20,7 +20,6 @@
 with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -186,7 +185,9 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
-      Remove_Location_Category (Kernel, Coverage_Category, File_Node.Name);
+      Remove_Location_Category (Kernel, Uncovered_Category, File_Node.Name);
+      Remove_Location_Category
+        (Kernel, Partially_Covered_Category, File_Node.Name);
    end Clear_File_Locations;
 
    --------------------------------
@@ -204,7 +205,12 @@ package body Coverage_GUI is
               File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
                Remove_Location_Category
                  (Kernel,
-                  Coverage_Category,
+                  Uncovered_Category,
+                  File_Node.Name,
+                  File_Node.Lines (J).Number);
+               Remove_Location_Category
+                 (Kernel,
+                  Partially_Covered_Category,
                   File_Node.Name,
                   File_Node.Lines (J).Number);
             end if;
@@ -268,28 +274,24 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access)
    is
-      No_File_Added : Boolean := True;
+      File_Added : Boolean := False;
    begin
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
-               if File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage
-                 = 0 then
-                  No_File_Added := False;
-                  Insert_Location
-                    (Kernel             => Kernel,
-                     Category           => Coverage_Category,
-                     File               => File_Node.Name,
-                     Text               => File_Node.Lines (J).Contents.all,
-                     Line               => J,
-                     Column             => 1,
-                     Highlight          => True,
-                     Highlight_Category => Builder_Warnings_Style);
-               end if;
+               Line_Coverage'Class
+                 (File_Node.Lines
+                    (J).Analysis_Data.Coverage_Data.all).
+                 Add_Location_If_Uncovered
+                 (Kernel,
+                  File_Node.Name,
+                  J,
+                  File_Node.Lines (J).Contents,
+                  File_Added);
             end if;
          end loop;
 
-         if No_File_Added then
+         if not File_Added then
             GPS.Kernel.Console.Insert
               (Kernel, -"There is no uncovered line in " &
                Base_Name (File_Node.Name));
@@ -377,21 +379,21 @@ package body Coverage_GUI is
    procedure List_Subprogram_Uncovered_Lines
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access;
-      Subp_Node : Subprogram_Access) is
+      Subp_Node : Subprogram_Access)
+   is
+      Added : Boolean := False;
    begin
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
-            if File_Node.Lines (J) /= Null_Line and then
-              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
-               Insert_Location
-                 (Kernel             => Kernel,
-                  Category           => Coverage_Category,
-                  File               => File_Node.Name,
-                  Text               => File_Node.Lines (J).Contents.all,
-                  Line               => J,
-                  Column             => 1,
-                  Highlight          => True,
-                  Highlight_Category => Builder_Warnings_Style);
+            if File_Node.Lines (J) /= Null_Line then
+               Line_Coverage'Class
+                 (File_Node.Lines (J).Analysis_Data.Coverage_Data.all).
+                 Add_Location_If_Uncovered
+                   (Kernel,
+                    File_Node.Name,
+                    J,
+                    File_Node.Lines (J).Contents,
+                    Added);
             end if;
          end loop;
       else

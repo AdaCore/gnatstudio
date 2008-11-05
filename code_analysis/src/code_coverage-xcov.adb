@@ -22,7 +22,10 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Traces;
 with GPS.Intl;          use GPS.Intl;
+with GPS.Kernel.Styles;
+with GPS.Location_View;
 with Traces;
+with Coverage_GUI;
 
 package body Code_Coverage.Xcov is
 
@@ -129,39 +132,30 @@ package body Code_Coverage.Xcov is
          File_Node.Lines (Line_Num).Analysis_Data.Coverage_Data :=
            Coverage_Access (Line_Coverage);
          Line_Coverage.Status := No_Code;
+         Line_Coverage.Coverage := 0;
 
          case File_Contents (Line_Matches (2).First) is
             when '-' =>
                Line_Coverage.Status   := Not_Covered;
-               Line_Coverage.Coverage := 0;
-               File_Node.Lines (Line_Num).Contents := new String'
-                 (File_Contents
-                    (Line_Matches (3).First .. Line_Matches (3).Last));
                Not_Cov_Count := Not_Cov_Count + 1;
 
             when '!' =>
-               Line_Coverage.Status   := Partially_Covered;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Partially_Covered;
 
             when '?' =>
-               Line_Coverage.Status   := Branch_Partially_Covered;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Branch_Partially_Covered;
 
             when '+' =>
-               Line_Coverage.Status   := Covered_No_Branch;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Covered_No_Branch;
 
             when '>' =>
-               Line_Coverage.Status   := Branch_Taken;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Branch_Taken;
 
             when 'v' =>
-               Line_Coverage.Status   := Branch_Fallthrough;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Branch_Fallthrough;
 
             when '*' =>
-               Line_Coverage.Status   := Branch_Covered;
-               Line_Coverage.Coverage := 1;
+               Line_Coverage.Status := Branch_Covered;
 
             when others =>
                GNATCOLL.Traces.Trace
@@ -170,6 +164,25 @@ package body Code_Coverage.Xcov is
                   & File_Contents (Line_Matches (2).First));
                pragma Assert (False);
          end case;
+
+         --  Set Coverage to 1 for partially and fully covered lines
+
+         if Line_Coverage.Status in Xcov_Partially_Covered
+           or else Line_Coverage.Status in Xcov_Fully_Covered
+         then
+            Line_Coverage.Coverage := 1;
+         end if;
+
+         --  For uncovered and partially covered lines also store text
+         --  of the corresponding line.
+
+         if Line_Coverage.Status = Not_Covered
+           or else Line_Coverage.Status in Xcov_Partially_Covered
+         then
+            File_Node.Lines (Line_Num).Contents := new String'
+              (File_Contents
+                 (Line_Matches (3).First .. Line_Matches (3).Last));
+         end if;
 
          Current := Line_Matches (0).Last + 1;
       end loop;
@@ -180,6 +193,47 @@ package body Code_Coverage.Xcov is
       File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
         Valid;
    end Add_File_Info;
+
+   -------------------------------
+   -- Add_Location_If_Uncovered --
+   -------------------------------
+
+   overriding procedure Add_Location_If_Uncovered
+     (Coverage    : Xcov_Line_Coverage;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+      Line_Text   : String_Access;
+      Added       : in out Boolean)
+   is
+   begin
+      if Coverage.Status = Not_Covered then
+         Added := True;
+
+         GPS.Location_View.Insert_Location
+           (Kernel             => Kernel,
+            Category           => Coverage_GUI.Uncovered_Category,
+            File               => File,
+            Text               => Line_Text.all,
+            Line               => Line_Number,
+            Column             => 1,
+            Highlight          => True,
+            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style);
+
+      elsif Coverage.Status in Xcov_Partially_Covered then
+         Added := True;
+
+         GPS.Location_View.Insert_Location
+           (Kernel             => Kernel,
+            Category           => Coverage_GUI.Partially_Covered_Category,
+            File               => File,
+            Text               => Line_Text.all,
+            Line               => Line_Number,
+            Column             => 1,
+            Highlight          => True,
+            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style);
+      end if;
+   end Add_Location_If_Uncovered;
 
    ------------------------
    -- Line_Coverage_Info --

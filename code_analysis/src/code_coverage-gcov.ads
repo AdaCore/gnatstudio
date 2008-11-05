@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS;
 with GPS.Kernel.Standard_Hooks;
 
 package Code_Coverage.Gcov is
@@ -37,6 +38,16 @@ package Code_Coverage.Gcov is
      (Coverage : Gcov_Line_Coverage;
       Bin_Mode : Boolean := False)
       return GPS.Kernel.Standard_Hooks.Line_Information_Record;
+
+   overriding procedure Add_Location_If_Uncovered
+     (Coverage    : Gcov_Line_Coverage;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+      Line_Text   : String_Access;
+      Added       : in out Boolean);
+   --  Adds location of the uncovered line to the location window. Set Added to
+   --  True if line has been added; otherwise preserve Added value.
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;

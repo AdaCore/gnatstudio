@@ -42,8 +42,12 @@ package Coverage_GUI is
 
    Current_Coverage_Tool : Coverage_Tools := Gcov;
 
-   CodeAnalysis_Cst   : constant String := "CodeAnalysis";
-   Coverage_Category  : constant Glib.UTF8_String := -"Uncovered lines";
+   CodeAnalysis_Cst : constant String := "CodeAnalysis";
+
+   Uncovered_Category         : constant Glib.UTF8_String :=
+     -"Uncovered lines";
+   Partially_Covered_Category : constant Glib.UTF8_String :=
+     -"Partially covered lines";
 
    Binary_Coverage_Trace : constant Debug_Handle :=
                           Create ("BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);

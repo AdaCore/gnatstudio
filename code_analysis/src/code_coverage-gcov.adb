@@ -21,8 +21,11 @@ with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GPS.Intl;          use GPS.Intl;
+with GPS.Kernel.Styles;
+with GPS.Location_View;
 with Code_Analysis_GUI;
 --  ??? Why not replace by Code_Coverage_Gui?
+with Coverage_GUI;
 with String_Utils;       use String_Utils;
 
 package body Code_Coverage.Gcov is
@@ -152,6 +155,33 @@ package body Code_Coverage.Gcov is
       File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
         Valid;
    end Add_File_Info;
+
+   -------------------------------
+   -- Add_Location_If_Uncovered --
+   -------------------------------
+
+   overriding procedure Add_Location_If_Uncovered
+     (Coverage    : Gcov_Line_Coverage;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+      Line_Text   : String_Access;
+      Added       : in out Boolean)
+   is
+   begin
+      if Coverage.Coverage = 0 then
+         Added := True;
+         GPS.Location_View.Insert_Location
+           (Kernel             => Kernel,
+            Category           => Coverage_GUI.Uncovered_Category,
+            File               => File,
+            Text               => Line_Text.all,
+            Line               => Line_Number,
+            Column             => 1,
+            Highlight          => True,
+            Highlight_Category => GPS.Kernel.Styles.Builder_Warnings_Style);
+      end if;
+   end Add_Location_If_Uncovered;
 
    ------------------------
    -- Line_Coverage_Info --

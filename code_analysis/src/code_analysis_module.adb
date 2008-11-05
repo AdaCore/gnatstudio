@@ -1633,7 +1633,8 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      Remove_Location_Category (Kernel, Coverage_Category);
+      Remove_Location_Category (Kernel, Uncovered_Category);
+      Remove_Location_Category (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 
@@ -1669,7 +1670,8 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      Remove_Location_Category (Kernel, Coverage_Category);
+      Remove_Location_Category (Kernel, Uncovered_Category);
+      Remove_Location_Category (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
    end Clear_Analysis_Instance;

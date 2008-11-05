@@ -82,6 +82,16 @@ package Code_Analysis is
    --  If Bin_Mode is True, then the returned messages can only be between
    --  (covered | not covered)
 
+   procedure Add_Location_If_Uncovered
+     (Coverage    : Line_Coverage;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Line_Number : Positive;
+      Line_Text   : String_Access;
+      Added       : in out Boolean) is abstract;
+   --  Adds location of the uncovered line to the location window. Set Added to
+   --  True if line has been added; otherwise preserve Added value.
+
    type Node_Coverage is abstract new Coverage with record
       Children : Natural;
    end record;
