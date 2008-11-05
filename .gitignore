@@ -3,6 +3,7 @@
 *.exe
 *.o
 *.pyc
+b~*
 */config.log
 */config.status
 */obj/*
@@ -20,6 +21,8 @@ design/tests/FB02-017/b.adb
 design/tests/G119-006/a.adb
 design/tests/G713-003/align.adb
 design/tests/GC12-017/align.adb
+design/tests/HA30-020_2/sdc
+design/tests/HA30-020_2/sdc.adb
 design/tests/align.1/a.adb
 design/tests/context_menu/empty.adb
 design/tests/context_menu/empty.txt
