@@ -1380,9 +1380,6 @@ package body Builder_Facility_Module is
 
          if M /= null then
             Destroy (M);
-         else
-            Trace (Me, "Menu not found: "
-                   & Strip_Single_Underscores (To_String (Element (C))));
          end if;
 
          Next (C);
