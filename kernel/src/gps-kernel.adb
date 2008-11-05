@@ -2404,7 +2404,7 @@ package body GPS.Kernel is
          L := Next (L);
       end loop;
 
-      --  Command is not in list: we steal a reference to it.
+      --  Command is not in list: we steal a reference to it
 
       Commands.Command_Queues.Append
         (Kernel.Perma_Commands, Commands.Command_Access (Command));
