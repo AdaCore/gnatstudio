@@ -255,7 +255,7 @@ package body VFS_Module is
             File     : Virtual_File;
             Writable : Writable_File;
             Tmp_Dir  : constant String :=
-              Get_Local_Filesystem.Get_Tmp_Directory;
+                         Get_Local_Filesystem.Get_Tmp_Directory;
          begin
             File := Create (Filename);
 

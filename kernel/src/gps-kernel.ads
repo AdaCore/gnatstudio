@@ -24,9 +24,10 @@ with Ada.Finalization;
 with Ada.Unchecked_Deallocation;
 with System;
 
-with GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNAT.Regpat;
+with GNATCOLL.Scripts;
+with GNATCOLL.VFS;
 
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
@@ -56,7 +57,6 @@ with Histories;
 with Projects.Registry;
 with Switches_Chooser;
 with Task_Manager;
-with GNATCOLL.VFS;
 
 package GPS.Kernel is
 
@@ -964,7 +964,8 @@ private
    --  User_Level   : system and user custom files loaded
 
    type Kernel_Scripts_Repository is
-      new GNATCOLL.Scripts.Scripts_Repository_Record with record
+     new GNATCOLL.Scripts.Scripts_Repository_Record
+   with record
       Kernel : Kernel_Handle;
    end record;
 

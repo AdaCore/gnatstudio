@@ -215,10 +215,11 @@ package body Remote.Path.Translator is
            Get_Local_Filesystem.To_Unix (Path);
          --  The input path in unix style
          U_Frompath    : constant String :=
-           Get_Local_Filesystem.To_Unix (Path_From);
+                           Get_Local_Filesystem.To_Unix (Path_From);
          --  The local root dir, in unix style
          U_Subpath  : constant String :=
-           U_Path (U_Path'First + U_Frompath'Length .. U_Path'Last);
+                           U_Path
+                             (U_Path'First + U_Frompath'Length .. U_Path'Last);
       begin
 
          --  At this point, we have the from and to moint points. Let's
@@ -277,7 +278,7 @@ package body Remote.Path.Translator is
       end loop;
 
       if not Has_Element (Cursor) then
-         --  Not configured mirror path.
+         --  Not configured mirror path
          Mirror := Null_Path;
       end if;
 

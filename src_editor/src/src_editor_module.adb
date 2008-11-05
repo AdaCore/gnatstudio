@@ -1412,7 +1412,8 @@ package body Src_Editor_Module is
                else
                   declare
                      Identifier : constant String :=
-                       No_Name & " (" & Image (Nb_Untitled + 1) & ")";
+                                    No_Name & " ("
+                                      & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
                      Ident := Create (Full_Filename => '/' & Identifier);

@@ -271,7 +271,7 @@ package body Gtkada.File_Selector is
    --  Callback used to destroy the read idle loop
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
-   --  Called when a new file has been selected.
+   --  Called when a new file has been selected
 
    ------------------
    -- Set_Location --
@@ -811,7 +811,7 @@ package body Gtkada.File_Selector is
             Pixbuf,
             Text);
 
-         --  ??? The selectable state should be set here, if possible.
+         --  ??? The selectable state should be set here, if possible
 
          Iter := Null_Iter;
          Color := Null_Color;
@@ -830,7 +830,6 @@ package body Gtkada.File_Selector is
             when Insensitive =>
                Append (Win.File_Model, Iter, Null_Iter);
                Color := Win.Insensitive_Color;
-
          end case;
 
          if Iter /= Null_Iter then
@@ -912,7 +911,7 @@ package body Gtkada.File_Selector is
          Unchecked_Free (Files);
          Clear (Win.File_Model);
 
-         --  Register the function that will fill the list in the background.
+         --  Register the function that will fill the list in the background
 
          Win.Remaining_Files := First (Win.Files);
 
@@ -988,7 +987,7 @@ package body Gtkada.File_Selector is
       Free (Win.Files);
       Win.Remaining_Files := File_List.Null_Node;
 
-      --  Find out which filter to use.
+      --  Find out which filter to use
 
       declare
          S : constant String :=
@@ -1016,7 +1015,7 @@ package body Gtkada.File_Selector is
 
       Win.Current_Filter := Filter;
 
-      --  Fill the File_List.
+      --  Fill the File_List
       begin
          if Win.Read_Idle_Handler = 0 then
             Win.Read_Idle_Handler :=
@@ -1610,10 +1609,10 @@ package body Gtkada.File_Selector is
       Found           : Boolean := False;
 
       First_Match     : Gtk_Tree_Iter := Null_Iter;
-      --  The first column that completely matches S.
+      --  The first column that completely matches S
 
       Suffix_Length   : Integer := -1;
-      --  The length of the biggest common matching prefix.
+      --  The length of the biggest common matching prefix
 
       Best_Match      : String (1 .. 1024);
       Iter            : Gtk_Tree_Iter;
@@ -1709,7 +1708,7 @@ package body Gtkada.File_Selector is
                return True;
             end if;
 
-            --  Simple case: Base is a complete valid directory.
+            --  Simple case: Base is a complete valid directory
 
             if Is_Directory (File) then
                Ensure_Directory (File);
@@ -1746,7 +1745,7 @@ package body Gtkada.File_Selector is
             end;
 
             if First_Match /= Null_Iter then
-               --  The best match is a file.
+               --  The best match is a file
 
                if Suffix_Length > 0 then
                   Select_Iter (Get_Selection (Win.File_Tree), First_Match);
@@ -1762,7 +1761,7 @@ package body Gtkada.File_Selector is
                end if;
 
             else
-               --  The best match is a directory, or no match at all.
+               --  The best match is a directory, or no match at all
 
                if Suffix_Length > 0 then
                   Set_Text

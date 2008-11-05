@@ -24,6 +24,7 @@ with Ada.Strings.Hash;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -88,7 +89,6 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body Project_Explorers is
 
@@ -313,7 +313,7 @@ package body Project_Explorers is
    function Key_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  Calledback on a key press.
+   --  Calledback on a key press
 
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues);
@@ -783,9 +783,9 @@ package body Project_Explorers is
    ---------------
 
    function Sort_Func
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B         : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
    is
       A_Before_B : Gint := -1;
       B_Before_A : Gint := 1;
@@ -799,6 +799,10 @@ package body Project_Explorers is
       function Alphabetical return Gint;
       --  Compare the two nodes alphabetically
       --  ??? Should take into account the sorting order
+
+      ------------------
+      -- Alphabetical --
+      ------------------
 
       function Alphabetical return Gint is
          A_Name : constant String := Get_String (Model, A, Column);
@@ -912,8 +916,9 @@ package body Project_Explorers is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Child : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+      Child    : constant MDI_Child :=
+                   Find_MDI_Child_By_Tag
+                     (Get_MDI (Kernel), Project_Explorer_Record'Tag);
       Explorer : Project_Explorer_Access;
    begin
       if Child /= null then
@@ -2142,7 +2147,7 @@ package body Project_Explorers is
             case Node_Type is
                when Project_Node | Modified_Project_Node =>
                   Update_Project_Node (Explorer, Files, Node);
-               when others         => null;
+               when others => null;
             end case;
 
          else

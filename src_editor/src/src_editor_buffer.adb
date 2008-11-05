@@ -3205,8 +3205,7 @@ package body Src_Editor_Buffer is
             Set_Language
               (Buffer,
                Get_Language_From_File
-                 (Get_Language_Handler (Buffer.Kernel),
-                  Buffer.Filename));
+                 (Get_Language_Handler (Buffer.Kernel), Buffer.Filename));
 
             --  Emit the "filename_changed" signal
             Buffer.Filename_Changed;

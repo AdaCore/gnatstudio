@@ -1239,7 +1239,7 @@ package body GPS.Kernel.Remote is
       end if;
 
       Path.Set_Tentative_Local_Path
-        (Get_Local_Filesystem.Ensure_Directory  (Local));
+        (Get_Local_Filesystem.Ensure_Directory (Local));
       Path.Set_Tentative_Remote_Path
         (FS.Ensure_Directory (Remote));
       Path.Set_Tentative_Synchronisation (Sync);

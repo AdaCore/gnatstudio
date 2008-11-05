@@ -22,11 +22,13 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
-with GNATCOLL.Mmap;              use GNATCOLL.Mmap;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Strings;
+
+with GNATCOLL.Mmap;              use GNATCOLL.Mmap;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNAT.Strings;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -54,7 +56,6 @@ with Traces;                     use Traces;
 with File_Utils;                 use File_Utils;
 with Filesystems;                use Filesystems;
 with Generic_List;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with String_Utils;               use String_Utils;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
@@ -513,11 +514,9 @@ package body Help_Module is
       Tmp   : Glib.Xml_Int.Node_Ptr;
    begin
       Trace (Me, "Parsing XML file "
-             & Get_System_Dir (Kernel)
-             & "share/gps/shell_commands.xml");
+             & Get_System_Dir (Kernel) & "share/gps/shell_commands.xml");
       XML_Parsers.Parse
-        (File  =>
-           Get_System_Dir (Kernel) & "share/gps/shell_commands.xml",
+        (File  => Get_System_Dir (Kernel) & "share/gps/shell_commands.xml",
          Tree  => Tmp,
          Error => Error);
       if Error /= null then
@@ -924,7 +923,7 @@ package body Help_Module is
                      GPS_Window (Get_Main_Window (Kernel));
       About_File : constant String :=
                      GNAT.Directory_Operations.Format_Pathname
-          (Get_System_Dir (Kernel) & "/share/gps/about.txt");
+                       (Get_System_Dir (Kernel) & "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
 
    begin
@@ -969,7 +968,8 @@ package body Help_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
-      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
+      Kernel                 : constant Kernel_Handle :=
+                                 Get_Kernel (Module.all);
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang      : GNAT.Strings.String_Access;
       Field                  : Node_Ptr;

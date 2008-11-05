@@ -395,12 +395,15 @@ package body Project_Viewers is
          Col3  : Gint; Value3 : Gdk_Color);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
-      File_Name  : constant Virtual_File := Create
-        (Get_String (Viewer.Model, Iter, Absolute_File_Name_Column));
+      File_Name  : constant Virtual_File :=
+                     Create
+                       (Get_String
+                          (Viewer.Model, Iter, Absolute_File_Name_Column));
       Language   : constant String :=
-        Get_Language_From_File
-          (Language_Handler (Get_Language_Handler (Viewer.Kernel)),
-           File_Name);
+                     Get_Language_From_File
+                       (Language_Handler
+                          (Get_Language_Handler (Viewer.Kernel)),
+                        File_Name);
       Color      : Gdk_Color;
       Value      : Prj.Variable_Value;
       Is_Default : Boolean;
@@ -1694,10 +1697,10 @@ package body Project_Viewers is
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
-        (Module                  => Module_ID (Prj_Editor_Module_ID),
-         Kernel                  => Kernel,
-         Module_Name             => Project_Editor_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => Module_ID (Prj_Editor_Module_ID),
+         Kernel      => Kernel,
+         Module_Name => Project_Editor_Module_Name,
+         Priority    => Default_Priority);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);

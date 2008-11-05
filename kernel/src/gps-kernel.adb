@@ -64,7 +64,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
-
 with Default_Preferences;       use Default_Preferences;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;

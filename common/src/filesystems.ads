@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2006-2008, AdaCore             --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,7 @@ package Filesystems is
 
    function Get_Filesystem (Nickname : String) return Filesystem_Access;
    --  Retrieve the filesystem of the specified server
-   --  Raise Invalid_Nickname if Nickname does not correspond to a server
+   --  Raise Invalid_Nickname if Nickname does not correspond to a server.
 
    function Is_Local_Filesystem
      (FS : access Filesystem_Record'Class) return Boolean;

@@ -20,8 +20,12 @@
 with Ada.Containers;            use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Calendar;              use Ada.Calendar;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;              use GNAT.Strings;
+
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -44,8 +48,6 @@ with Projects.Registry;         use Projects, Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Namet;                     use Namet;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Project_Explorers_Common is
 
