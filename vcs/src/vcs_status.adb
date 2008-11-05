@@ -154,6 +154,10 @@ package body VCS_Status is
       Success  : Boolean;
 
    begin
+      if Cache.T = null then
+         return;
+      end if;
+
       File     := new Node;
       File.Tag := new String'("custom_section");
 
