@@ -10264,7 +10264,8 @@ the generated files. This browser is not spawned if disabled.
 
 @item Coverage toolchain
 
-Coverage toolchain (gcov or xcov) is used for coverage analysis.
+Select which coverage toolchain (@code{gcov} or @code{xcov}) to use from
+the @code{Tools->Coverage} menu.
 
 @end table
 
