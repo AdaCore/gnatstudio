@@ -26,6 +26,7 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
@@ -51,7 +52,6 @@ with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with String_Utils;              use String_Utils;
 
 package body VCS.Generic_VCS is
@@ -391,7 +391,7 @@ package body VCS.Generic_VCS is
                 Synchronous => False,
                 Dir         => Dir,
                 Args        => Args,
-                Label      => new String'(Describe_Action (Ref, Dir_Action)),
+                Label       => new String'(Describe_Action (Ref, Dir_Action)),
                 Repeat_Count     => 1,
                 Remaining_Repeat => 0));
 

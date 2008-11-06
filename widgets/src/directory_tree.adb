@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Unchecked_Deallocation;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -52,16 +59,10 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Filesystems;               use Filesystems;
-
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with Traces;                    use Traces;
-
-with Unchecked_Deallocation;
 
 package body Directory_Tree is
 
@@ -92,7 +93,7 @@ package body Directory_Tree is
 
    procedure Init_Graphics (Widget : Gtk_Widget) is
    begin
-      --  If initialization has already been done, exit.
+      --  If initialization has already been done, exit
       if Open_Pixbufs (Directory_Node) /= null then
          return;
       end if;
@@ -108,7 +109,7 @@ package body Directory_Tree is
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);
-   --  Used to register contextual menus with a user data.
+   --  Used to register contextual menus with a user data
 
    function Columns_Types return GType_Array;
    --  Returns the types for the columns in the Model.
@@ -135,7 +136,7 @@ package body Directory_Tree is
    procedure Free (Data : in out Append_Directory_Idle_Data_Access);
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    procedure File_Append_Directory
      (Explorer      : access Dir_Tree_Record'Class;
@@ -159,21 +160,21 @@ package body Directory_Tree is
    function Expose_Event_Cb
      (Explorer : access Glib.Object.GObject_Record'Class;
       Values   : GValues) return Boolean;
-   --  Scroll the explorer to the current directory.
+   --  Scroll the explorer to the current directory
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Values   : GValues);
-   --  Called every time a node is collapsed in the file view.
+   --  Called every time a node is collapsed in the file view
 
    procedure On_File_Destroy
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
-   --  Callback for the "destroy" event on the file view.
+   --  Callback for the "destroy" event on the file view
 
    procedure File_Remove_Idle_Calls
      (Explorer : access Dir_Tree_Record'Class);
-   --  Remove the idle calls for filling the file view.
+   --  Remove the idle calls for filling the file view
 
    function On_Button_Press
      (Tree      : access Gtk_Tree_View_Record'Class;
@@ -188,12 +189,12 @@ package body Directory_Tree is
    function File_Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
-   --  Callback for the "button_press" event on the file view.
+   --  Callback for the "button_press" event on the file view
 
    procedure Free_Children
      (T    : Dir_Tree;
       Iter : Gtk_Tree_Iter);
-   --  Free all the children of iter Iter in the file view.
+   --  Free all the children of iter Iter in the file view
 
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean;
@@ -209,11 +210,11 @@ package body Directory_Tree is
    procedure Append_Dummy_Iter
      (Model : Gtk_Tree_Store;
       Base  : Gtk_Tree_Iter);
-   --  Append an empty iter to Base.
+   --  Append an empty iter to Base
 
    procedure Create_Directory_Cb
      (W : access Gtk_Widget_Record'Class);
-   --  Create a new subdirectory of the selected directory.
+   --  Create a new subdirectory of the selected directory
 
    procedure Add_Directory
      (Selector  : access Directory_Selector_Record'Class;
@@ -225,7 +226,7 @@ package body Directory_Tree is
    --  This procedure assumes that Dir have a trailing directory separator.
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class);
-   --  Callback for the 'Add directory recursive' contextual menu.
+   --  Callback for the 'Add directory recursive' contextual menu
 
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
    --  Callback for the down button in the directory selector widget
@@ -239,7 +240,7 @@ package body Directory_Tree is
    --  If recursive is True, then all the subdirectories are also removed
 
    procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class);
-   --  Callback for 'Remove directory recursive' contextual menu.
+   --  Callback for 'Remove directory recursive' contextual menu
 
    procedure Remove_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
    --  Remove the currently selected directory in the selection list. This
@@ -267,7 +268,7 @@ package body Directory_Tree is
    function Single_List_Contextual_Menu
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
-   --  Return the contextual menu to use for a single directory selector.
+   --  Return the contextual menu to use for a single directory selector
 
    function Get_First_Selected
      (Selector : Directory_Selector) return Gtk_Tree_Iter;
@@ -283,12 +284,12 @@ package body Directory_Tree is
    procedure On_Tree_Select_Row
      (Object : access GObject_Record'Class;
       Params : GValues);
-   --  Callback for a change in the directory selection.
+   --  Callback for a change in the directory selection
 
    procedure On_Tree_Size_Allocate
      (Object : access GObject_Record'Class;
       Params : GValues);
-   --  Callback for a change in the directory tree size.
+   --  Callback for a change in the directory tree size
 
    ----------
    -- Free --
@@ -1280,7 +1281,7 @@ package body Directory_Tree is
 
    exception
       when VFS_Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
+         --  The directory couldn't be open, probably because of permissions
          return False;
 
       when E : others =>
@@ -1448,7 +1449,7 @@ package body Directory_Tree is
             Initial_Dir := Initial;
          end if;
 
-         --  ??? Root_Dir is not taken into account yet.
+         --  ??? Root_Dir is not taken into account yet
          Refresh (Tree, Initial_Dir);
 
          Tree.Current_Dir := Initial_Dir;

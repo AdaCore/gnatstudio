@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -47,39 +47,41 @@ with Traces;                  use Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 package body KeyManager_Module.Macros is
-   Me        : constant Debug_Handle := Create ("Keymanager.Macros");
+
+   Me                  : constant Debug_Handle := Create ("Keymanager.Macros");
 
    Mouse_Macro_Support : constant Debug_Handle :=
-     Create ("Keymanager.Mouse_Macro", GNATCOLL.Traces.Off);
+                           Create
+                             ("Keymanager.Mouse_Macro", GNATCOLL.Traces.Off);
    --  ??? For now disable by default since this is a work in progress
 
    File_Cst                  : aliased constant String := "file";
    Speed_Cst                 : aliased constant String := "speed";
    Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => File_Cst'Access);
+                                 (1 => File_Cst'Access);
    Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Speed_Cst'Access);
+                                 (1 => Speed_Cst'Access);
 
    type Events_Mask is array (Gdk_Event_Type) of Boolean;
    --  What type of events should be recorded
 
    type Event_Set is record
-      Events           : Macro_Item_Access;
-      --  Set of events recorded.
+      Events        : Macro_Item_Access;
+      --  Set of events recorded
 
-      Last_Event       : Macro_Item_Access;
-      --  Last event recorded.
+      Last_Event    : Macro_Item_Access;
+      --  Last event recorded
 
-      Prev_Time         : Guint32;
-      --  Time of previous event recorded.
+      Prev_Time     : Guint32;
+      --  Time of previous event recorded
 
-      Current_Event    : Macro_Item_Access;
-      --  Current event being replayed.
+      Current_Event : Macro_Item_Access;
+      --  Current event being replayed
 
-      Speed            : Duration := 1.0;
-      --  Speed at which replay is made. 1.0 means normal speed.
+      Speed         : Duration := 1.0;
+      --  Speed at which replay is made. 1.0 means normal speed
 
-      Child            : GPS_MDI_Child;
+      Child         : GPS_MDI_Child;
       --  Current MDI window when we started playing the macro. This is used
       --  to create undo groups. This will not work when multiple editors are
       --  impacted by the macro, but will enhance behavior when inside a
@@ -112,7 +114,7 @@ package body KeyManager_Module.Macros is
       --  Mask of events to record
 
       Start_Clock       : Ada.Calendar.Time;
-      --  Start time of event replay.
+      --  Start time of event replay
 
       Time_Spent        : Guint32;
       --  Virtual time spent so far in events (addition of Events.Time)
@@ -145,7 +147,7 @@ package body KeyManager_Module.Macros is
    procedure Macro_Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
-   --  Interactive command handler for the key manager module.
+   --  Interactive command handler for the key manager module
 
    function Record_Macro
      (Kernel : Kernel_Handle;
@@ -158,7 +160,7 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Speed  : Duration := 1.0;
       Macro  : Event_Set_Access);
-   --  Play current set of events.
+   --  Play current set of events
 
    procedure Stop_Macro
      (Kernel : Kernel_Handle;
@@ -169,17 +171,17 @@ package body KeyManager_Module.Macros is
    --  Stop running current macro as a result of the "stop_macro_action_hook'
 
    function Load_Macro
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : Virtual_File) return Event_Set_Access;
-   --  Load macro file.
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Event_Set_Access;
+   --  Load macro file
 
    procedure On_Load_Macro
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for loading set of events to replay.
+   --  Callback for loading set of events to replay
 
    procedure On_Save_Macro
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Save last set of events recorded.
+   --  Save last set of events recorded
 
    function Play_Macro_Timer (Events : Event_Set_Access) return Boolean;
    --  Move to next event, and play it
@@ -452,7 +454,7 @@ package body KeyManager_Module.Macros is
 
    function Play_Macro_Timer (Events : Event_Set_Access) return Boolean is
       Kernel        : constant Kernel_Handle :=
-        Get_Kernel (Keymanager_Macro_Module.all);
+                        Get_Kernel (Keymanager_Macro_Module.all);
       Current_Event : Macro_Item_Access renames Events.Current_Event;
       Success       : Boolean;
       Id            : G_Source_Id;
@@ -486,7 +488,7 @@ package body KeyManager_Module.Macros is
      (Kernel : Kernel_Handle;
       Events : Event_Set_Access)
    is
-      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
+      Macro : constant String := '/' & (-"Tools/Macro") & '/';
    begin
       Events.Current_Event := null;
 
@@ -503,8 +505,8 @@ package body KeyManager_Module.Macros is
    procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class) is
    begin
       if Keymanager_Macro_Module.Current_Macro /= null then
-         Stop_Macro (Kernel_Handle (Kernel),
-                     Keymanager_Macro_Module.Current_Macro);
+         Stop_Macro
+           (Kernel_Handle (Kernel), Keymanager_Macro_Module.Current_Macro);
       end if;
    end Stop_Macro_Hook_Cb;
 
@@ -517,10 +519,10 @@ package body KeyManager_Module.Macros is
       Speed  : Duration := 1.0;
       Macro  : Event_Set_Access)
    is
-      Macro_Menu    : constant String := '/' & (-"Tools/Macro") & '/';
-      Id            : G_Source_Id;
+      Macro_Menu : constant String := '/' & (-"Tools/Macro") & '/';
+      Id         : G_Source_Id;
       pragma Unreferenced (Id);
-      C             : MDI_Child;
+      C          : MDI_Child;
 
    begin
       if Macro /= null then
@@ -531,6 +533,7 @@ package body KeyManager_Module.Macros is
             Trace (Me, "Play_Macro: a macro is already playing, stopping it"
                    & " and cancelling new call to play");
             Stop_Macro (Kernel, Keymanager_Macro_Module.Current_Macro);
+
          else
             Macro.Current_Event := Macro.Events;
 
@@ -603,7 +606,7 @@ package body KeyManager_Module.Macros is
    is
       pragma Unreferenced (Widget);
       Events : constant Macro_Item_Access :=
-        Keymanager_Macro_Module.Current_Macro.Events;
+                 Keymanager_Macro_Module.Current_Macro.Events;
    begin
       if Events = null then
          return;
@@ -612,12 +615,12 @@ package body KeyManager_Module.Macros is
       declare
          Success : Boolean;
          Name    : constant Virtual_File :=
-           Select_File
-             (Title             => -"Save Macro As",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-              Kind              => Save_File,
-              History           => Get_History (Kernel));
+                     Select_File
+                       (Title             => -"Save Macro As",
+                        Parent            => Get_Current_Window (Kernel),
+                        Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                        Kind              => Save_File,
+                        History           => Get_History (Kernel));
 
       begin
          if Name = GNATCOLL.VFS.No_File then
@@ -641,8 +644,8 @@ package body KeyManager_Module.Macros is
    ----------------
 
    function Load_Macro
-     (Kernel  : access Kernel_Handle_Record'Class;
-      File    : Virtual_File) return Event_Set_Access
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return Event_Set_Access
    is
       pragma Unreferenced (Kernel);
       Buffer  : String_Access := Read_File (File);
@@ -670,7 +673,7 @@ package body KeyManager_Module.Macros is
    is
       pragma Unreferenced (Kernel);
       Macro       : constant Event_Set_Access :=
-        Keymanager_Macro_Module.Current_Macro;
+                      Keymanager_Macro_Module.Current_Macro;
       Event_Type  : constant Gdk_Event_Type := Get_Event_Type (Event);
       Key_Item    : Macro_Item_Key_Access;
       Button_Item : Macro_Item_Mouse_Access;
@@ -692,7 +695,7 @@ package body KeyManager_Module.Macros is
                Macro.Last_Event := Item;
 
             else
-               --  Store the relative time, to ease replay.
+               --  Store the relative time, to ease replay
 
                Item.Prev := Macro.Last_Event;
                Macro.Last_Event.Next := Item;

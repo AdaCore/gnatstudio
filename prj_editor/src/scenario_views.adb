@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,14 +42,14 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtkada.MDI;          use Gtkada.MDI;
 
-with Projects.Editor;    use Projects, Projects.Editor;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with Variable_Editors;   use Variable_Editors;
-with GPS.Intl;           use GPS.Intl;
+with Projects.Editor;     use Projects, Projects.Editor;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;  use GPS.Kernel.Project;
+with Variable_Editors;    use Variable_Editors;
+with GPS.Intl;            use GPS.Intl;
 with String_List_Utils;
 
 with Traces;   use Traces;
@@ -86,7 +86,7 @@ package body Scenario_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       List : access Gtk_List_Record'Class;
       Var  : Scenario_Variable);
-   --  Add all the possible values for type Typ into the List.
+   --  Add all the possible values for type Typ into the List
 
    type Variable_User_Data is record
       View : Scenario_View;
@@ -261,9 +261,9 @@ package body Scenario_Views is
       use String_List_Utils.String_List;
 
       Values : String_List_Utils.String_List.List :=
-        Enum_Values_Of (Var, Get_Registry (Kernel).all);
+                 Enum_Values_Of (Var, Get_Registry (Kernel).all);
       Iter   : String_List_Utils.String_List.List_Node :=
-        First (Values);
+                 First (Values);
       Item : Gtk_List_Item;
    begin
       while Iter /= String_List_Utils.String_List.Null_Node loop
@@ -328,7 +328,7 @@ package body Scenario_Views is
             Delete_Direct_References => False);
          Run_Hook (Data.View.Kernel, Variable_Changed_Hook);
 
-         --  Recompute the view so that the explorer is updated graphically.
+         --  Recompute the view so that the explorer is updated graphically
          Recompute_View (Data.View.Kernel);
 
          Trace (Me, "Delete_Variable: " & External_Reference_Of (Data.Var));
@@ -363,7 +363,7 @@ package body Scenario_Views is
          return;
       end if;
 
-      --  Remove all children, except the edit button.
+      --  Remove all children, except the edit button
 
       Child := Children (V.Table);
       Tmp := Widget_List.First (Child);
@@ -385,13 +385,14 @@ package body Scenario_Views is
       else
          declare
             Scenar_Var : constant Scenario_Variable_Array :=
-              Scenario_Variables (Kernel);
+                           Scenario_Variables (Kernel);
          begin
             if Scenar_Var'Length = 0 then
                Show_All (V.Empty_Label);
                Set_Child_Visible (V.Empty_Label, True);
                Set_USize (V.Empty_Event, -1, -1);
                Hide_All (V.Table);
+
             else
                Hide_All (V.Empty_Label);
                Set_Child_Visible (V.Empty_Label, False);
@@ -463,7 +464,8 @@ package body Scenario_Views is
       Child    : GPS_MDI_Child;
    begin
       Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Scenario_View_Record'Tag));
+                              (Get_MDI (Kernel), Scenario_View_Record'Tag));
+
       if Child = null then
          Gtk_New (Scenario, Kernel);
          Gtk_New (Child, Scenario,

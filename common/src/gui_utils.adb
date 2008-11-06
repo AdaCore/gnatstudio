@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                 Copyright (C) 2000-2008, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -121,7 +121,7 @@ package body GUI_Utils is
      (Render : access GObject_Record'Class;
       Params : Glib.Values.GValues;
       Data   : Model_Column);
-   --  Called when a toggle renderer is clicked on.
+   --  Called when a toggle renderer is clicked on
 
    function Button_Press_For_Contextual_Menu
      (Widget : access Gtk_Widget_Record'Class;
@@ -615,7 +615,7 @@ package body GUI_Utils is
                Grab_Focus (Widget);
                Show_All (Menu);
 
-               --  See comments in Button_Press_For_Contextual_Menu above.
+               --  See comments in Button_Press_For_Contextual_Menu above
 
                if Host = Windows then
                   Popup (Menu,
@@ -855,7 +855,7 @@ package body GUI_Utils is
 
       Line_Height := (Pango.Font.Get_Ascent (Font_Metrics) +
                         Pango.Font.Get_Descent (Font_Metrics)) / 1024;
-      --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro.
+      --  ??? 1024 is PANGO_SCALE. We should retrieve it from C macro
 
       Pango.Font.Unref (Font_Metrics);
       Unref (Font_Rec);
@@ -863,7 +863,7 @@ package body GUI_Utils is
       --  We retrieve the screen's height
       Max_Height := Gdk.Screen.Get_Height (Gdk.Screen.Get_Default);
 
-      --  And then we determine the maximum number of lines in the tooltip.
+      --  And then we determine the maximum number of lines in the tooltip
       Max_Lines := Max_Height / Line_Height - 1;
 
       Nb_Lines := 1;
@@ -1275,11 +1275,11 @@ package body GUI_Utils is
          if More_Than_One then
             Node := First (Completions);
 
-            --  Get the range copy the current line.
+            --  Get the range copy the current line
 
             Line := Get_Line (Last_Iter);
 
-            --  Get the offset of the prompt.
+            --  Get the offset of the prompt
 
             Offset := Get_Line_Offset (Prompt_Iter);
 
@@ -1315,7 +1315,7 @@ package body GUI_Utils is
             Scroll_Mark_Onscreen (View, Prompt_End_Mark);
          end if;
 
-         --  Insert the completion, if any.
+         --  Insert the completion, if any
 
          if Completions /= Null_List then
             Get_End_Iter (Buffer, Pos);
@@ -1417,7 +1417,7 @@ package body GUI_Utils is
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
-      --  Make sure the dialog is presented to the user.
+      --  Make sure the dialog is presented to the user
       Present (Dialog);
 
       if Urgent then

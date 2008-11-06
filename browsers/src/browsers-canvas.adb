@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,8 +19,10 @@
 
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
 with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
+
 with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 with Gdk.Color;                         use Gdk.Color;
 with Gdk.GC;                            use Gdk.GC;
@@ -78,19 +80,18 @@ with Layouts;                           use Layouts;
 with OS_Utils;                          use OS_Utils;
 with String_Utils;
 with Traces;                            use Traces;
-with GNATCOLL.VFS;                               use GNATCOLL.VFS;
 
 package body Browsers.Canvas is
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=
-     (25, 50, 75, 100, 150, 200, 300, 400);
+                   (25, 50, 75, 100, 150, 200, 300, 400);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
    Zoom_Steps : constant := 3;
-   --  Number of steps while zooming in or out.
+   --  Number of steps while zooming in or out
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, General_Browser);
@@ -119,7 +120,7 @@ package body Browsers.Canvas is
    --  Zoom directly to a specific level (Data.Zoom)
 
    procedure Realized (Browser : access Gtk_Widget_Record'Class);
-   --  Callback for the "realized" signal.
+   --  Callback for the "realized" signal
 
    function Key_Press
      (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
@@ -127,10 +128,10 @@ package body Browsers.Canvas is
    --  Callback for the key press event
 
    procedure On_Export (Browser : access Gtk_Widget_Record'Class);
-   --  Export the contents of the browser as an image.
+   --  Export the contents of the browser as an image
 
    procedure On_Export_To_SVG (Browser : access Gtk_Widget_Record'Class);
-   --  Export the contents of the browser to SVG.
+   --  Export the contents of the browser to SVG
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
@@ -138,10 +139,10 @@ package body Browsers.Canvas is
    procedure Change_Align_On_Grid
      (Item    : access Gtk_Check_Menu_Item_Record'Class;
       Browser : General_Browser);
-   --  Callback for the "align on grid" contextual menu item.
+   --  Callback for the "align on grid" contextual menu item
 
    procedure On_Select_All (Browser : access Gtk_Widget_Record'Class);
-   --  Select all the items in the canvas.
+   --  Select all the items in the canvas
 
    procedure On_Data_Clear (Browser : access Gtk_Widget_Record'Class);
    --  "Clear" contextual menu
@@ -156,19 +157,19 @@ package body Browsers.Canvas is
    --  Toggle the display of links for the item
 
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
-   --  Toggle the layout of links.
+   --  Toggle the layout of links
 
    procedure Set_Root
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
-   --  Remove all items except the one described in Data from the canvas.
+   --  Remove all items except the one described in Data from the canvas
 
    procedure Close_Item
      (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
-   --  Close an item when the user presses on the title bar button.
+   --  Close an item when the user presses on the title bar button
 
    procedure Dump
      (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
-   --  For debugging purposes, dump the tree to Me.
+   --  For debugging purposes, dump the tree to Me
 
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
@@ -213,7 +214,7 @@ package body Browsers.Canvas is
    procedure Browser_To_SVG
      (Browser     : access General_Browser_Record'Class;
       SVG_File_FD : GNAT.OS_Lib.File_Descriptor);
-   --  Output an SVG representation of a browser in a file.
+   --  Output an SVG representation of a browser in a file
 
    function Arrow_Head_To_SVG
      (Canvas : access Interactive_Canvas_Record'Class;
@@ -916,13 +917,13 @@ package body Browsers.Canvas is
    begin
       declare
          Name   : constant Virtual_File :=
-           Select_File
-             (Title             => -"Export Browser As PNG Image",
-              Parent            => Get_Main_Window (Kernel),
-              Default_Name      => "noname.png",
-              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-              Kind              => Save_File,
-              History           => Get_History (Kernel));
+                    Select_File
+                      (Title             => -"Export Browser As PNG Image",
+                       Parent            => Get_Main_Window (Kernel),
+                       Default_Name      => "noname.png",
+                       Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                       Kind              => Save_File,
+                       History           => Get_History (Kernel));
          Pixbuf : Gdk_Pixbuf;
          Error  : GError;
 
@@ -1234,7 +1235,7 @@ package body Browsers.Canvas is
       function Reset_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Reset the items linked to User.
+      --  Reset the items linked to User
 
       ----------------
       -- Reset_Item --
@@ -1677,7 +1678,7 @@ package body Browsers.Canvas is
       begin
          Inserted := False;
 
-         --  If Area is a child of the new Tmp area.
+         --  If Area is a child of the new Tmp area
          if Rectangle_In (Rectangle, Area.Rectangle) then
             Tmp.Children := new Active_Area_Tree_Array'(1 => Area);
             Area := Tmp;
@@ -2275,7 +2276,7 @@ package body Browsers.Canvas is
       Text        : String_Access;
 
       procedure Display (Text : String; Line : Xref_Line);
-      --  Display Text on Item.
+      --  Display Text on Item
 
       procedure Display (Text : String; Line : Xref_Line) is
       begin

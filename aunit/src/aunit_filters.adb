@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2008, AdaCore           --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,9 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with GNAT.OS_Lib;
 with GNATCOLL.Mmap;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with Glib.Convert;            use Glib.Convert;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
@@ -76,7 +78,7 @@ package body Aunit_Filters is
         (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
       Current_Construct := Constructs.First;
 
-      --  Find the name of the suite or test case.
+      --  Find the name of the suite or test case
 
       while not Found
         and then Current_Construct /= null
@@ -131,7 +133,7 @@ package body Aunit_Filters is
          Current_Construct := Current_Construct.Next;
       end loop;
 
-      --  Find the name of the main unit.
+      --  Find the name of the main unit
 
       if Found then
          Package_Name := new String'(Constructs.Last.Name.all);

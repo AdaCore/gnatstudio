@@ -190,8 +190,7 @@ package body GPS.Menu is
 
    overriding function Execute
      (Command : access Clipboard_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
       W : constant Gtk_Widget := Get_Current_Focus_Widget (Command.Kernel);
@@ -205,6 +204,7 @@ package body GPS.Menu is
             when Paste_Previous => Paste_Previous_Clipboard (Clipboard, W);
          end case;
          return Commands.Success;
+
       else
          return Commands.Failure;
       end if;
@@ -291,14 +291,14 @@ package body GPS.Menu is
    begin
       declare
          Filename : constant Virtual_File :=
-           Select_File
-             (-"Open Project",
-              File_Pattern      => "*.gpr",
-              Pattern_Name      => -"Project files",
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-              Kind              => Open_File,
-              History           => Get_History (Kernel));
+                      Select_File
+                        (-"Open Project",
+                         File_Pattern      => "*.gpr",
+                         Pattern_Name      => -"Project files",
+                         Parent            => Get_Current_Window (Kernel),
+                         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                         Kind              => Open_File,
+                         History           => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             Load_Project (Kernel, Filename);
@@ -321,14 +321,14 @@ package body GPS.Menu is
    begin
       declare
          Filename : constant Virtual_File :=
-           Select_File
-             (-"Open Project",
-              File_Pattern    => "*.gpr",
-              Pattern_Name    => -"Project files",
-              Parent          => Get_Current_Window (Kernel),
-              Remote_Browsing => True,
-              Kind            => Open_File,
-              History         => Get_History (Kernel));
+                      Select_File
+                        (-"Open Project",
+                         File_Pattern    => "*.gpr",
+                         Pattern_Name    => -"Project files",
+                         Parent          => Get_Current_Window (Kernel),
+                         Remote_Browsing => True,
+                         Kind            => Open_File,
+                         History         => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             Load_Project (Kernel, Filename);

@@ -84,7 +84,7 @@ package GUI_Utils is
       Stock_Id : String;
       Label    : String);
    --  Create a new button, that uses the image from a stock icon, but with
-   --  a specific text
+   --  a specific text.
 
    ----------------------
    -- Combos and lists --
@@ -231,7 +231,7 @@ package GUI_Utils is
       Name   : String;
       Column : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
-   --  return Gtk_Null_Iter if there is no such node
+   --  return Gtk_Null_Iter if there is no such node.
 
    procedure Expand_Row
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
@@ -322,7 +322,7 @@ package GUI_Utils is
    -- Full_Path_Menu_Item --
    -------------------------
 
-   --  This widget is used to associate strings to menu items.
+   --  This widget is used to associate strings to menu items
 
    type Full_Path_Menu_Item_Record (Length : Natural) is
      new Gtk.Menu_Item.Gtk_Menu_Item_Record with private;
@@ -332,17 +332,17 @@ package GUI_Utils is
      (Menu_Item : out Full_Path_Menu_Item;
       Label     : String := "";
       Path      : String := "");
-   --  Create a new menu item with the given Path as associated string.
+   --  Create a new menu item with the given Path as associated string
 
    procedure Initialize
      (Menu_Item : access Full_Path_Menu_Item_Record'Class;
       Label     : String;
       Path      : String);
-   --  Internal initialization function.
+   --  Internal initialization function
 
    function Get_Path
      (Menu_Item : access Full_Path_Menu_Item_Record) return String;
-   --  Return the string associated with Menu_Item.
+   --  Return the string associated with Menu_Item
 
    ------------
    -- Events --

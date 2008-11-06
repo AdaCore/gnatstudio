@@ -207,6 +207,7 @@ package body Histories is
       if File = null then
          Trace (Me, "Couldn't load history file: " & Err.all);
          Free (Err);
+
       else
          Key := File.Child;
 
@@ -241,50 +242,52 @@ package body Histories is
                N := Key.Child;
 
                case Value.Typ is
-               when Strings =>
-                  Num := 0;
+                  when Strings =>
+                     Num := 0;
 
-                  while N /= null loop
-                     if N.Tag.all /= "Length" then
-                        Num := Num + 1;
-                     end if;
-                     N := N.Next;
-                  end loop;
+                     while N /= null loop
+                        if N.Tag.all /= "Length" then
+                           Num := Num + 1;
+                        end if;
+                        N := N.Next;
+                     end loop;
 
-                  Value.Max_Length := -1;
-                  if Num /= 0 then
-                     Value.List := new String_List (1 .. Num);
-                  else
-                     Value.List := null;
-                  end if;
-                  N := Key.Child;
-                  Num := 1;
-
-                  while N /= null loop
-                     if N.Tag.all = "Length" then
-                        begin
-                           Value.Max_Length := Integer'Value (N.Value.all);
-                        exception
-                           when Constraint_Error => null;
-                        end;
-                     elsif N.Value /= null then
-                        Value.List (Num) := new String'(N.Value.all);
-                        Num := Num + 1;
+                     Value.Max_Length := -1;
+                     if Num /= 0 then
+                        Value.List := new String_List (1 .. Num);
                      else
-                        Value.List (Num) := new String'("");
-                        Num := Num + 1;
+                        Value.List := null;
                      end if;
-                     N := N.Next;
-                  end loop;
+                     N := Key.Child;
+                     Num := 1;
 
-               when Booleans =>
-                  if N /= null
-                    and then N.Tag.all = "value"
-                  then
-                     Value.Value := Boolean'Value (N.Value.all);
-                  else
-                     Value.Value := False;
-                  end if;
+                     while N /= null loop
+                        if N.Tag.all = "Length" then
+                           begin
+                              Value.Max_Length := Integer'Value (N.Value.all);
+                           exception
+                              when Constraint_Error => null;
+                           end;
+
+                        elsif N.Value /= null then
+                           Value.List (Num) := new String'(N.Value.all);
+                           Num := Num + 1;
+
+                        else
+                           Value.List (Num) := new String'("");
+                           Num := Num + 1;
+                        end if;
+                        N := N.Next;
+                     end loop;
+
+                  when Booleans =>
+                     if N /= null
+                       and then N.Tag.all = "value"
+                     then
+                        Value.Value := Boolean'Value (N.Value.all);
+                     else
+                        Value.Value := False;
+                     end if;
                end case;
             end if;
 
