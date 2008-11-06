@@ -581,6 +581,11 @@ package body GPS.Kernel.Project is
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
 
+         --  Reset the entities database, since it would still reference
+         --  old projects (deallocated) otherwise
+
+         Entities.Reset (Kernel.Database);
+
          Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Local_Project,
@@ -755,8 +760,6 @@ package body GPS.Kernel.Project is
 
       Entities.Foreach_Source_File
         (Get_Database (Handle), Reset_File_If_External'Access);
-
-      --  Entities.Reset (Get_Database (Handle));
 
       Run_Hook (Handle, Project_View_Changed_Hook);
       Pop_State (Kernel_Handle (Handle));
