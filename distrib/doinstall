@@ -119,13 +119,13 @@ install_binaries() {
   if [ -d lib/gps-xorg ]; then
     if [ "`type Xorg 2>/dev/null | cut -d' ' -f3`" != "" ]; then
       ln -s gps-xorg lib/gps
-      if [ -f /usr/lib/libexpat.so.1 ]; then
-        ln -s /usr/lib/libexpat.so.1 lib/gps/libexpat.so.0
+      if [ ! -f /usr/lib/libexpat.so.1 ]; then
+        ln -s /usr/lib/libexpat.so lib/gps/libexpat.so.1
       fi
     else
       ln -s gps-xfree lib/gps
-      if [ ! -f /usr/lib/libexpat.so.1 ]; then
-        ln -s /usr/lib/libexpat.so lib/gps/libexpat.so.1
+      if [ -f /usr/lib/libexpat.so.1 ]; then
+        ln -s /usr/lib/libexpat.so.1 lib/gps/libexpat.so.0
       fi
     fi
   fi
