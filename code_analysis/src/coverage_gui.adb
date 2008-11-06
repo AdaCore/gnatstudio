@@ -25,6 +25,7 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
+with Default_Preferences.Enums;
 
 with Language;                  use Language;
 with Projects;                  use Projects;
@@ -39,6 +40,11 @@ with Code_Coverage.Gcov;
 with Code_Coverage.Xcov;
 
 package body Coverage_GUI is
+
+   package Coverage_Toolchain_Preferences is
+      new Default_Preferences.Enums.Generics (Coverage_Toolchain_Kinds);
+
+   Coverage_Toolchain_Preference : Coverage_Toolchain_Preferences.Preference;
 
    ---------------------------
    -- Add_Gcov_Project_Info --
@@ -537,5 +543,32 @@ package body Coverage_GUI is
 
       return False;
    end Have_Gcov_Info;
+
+   ---------------------------
+   -- Current_Coverage_Tool --
+   ---------------------------
+
+   function Current_Coverage_Tool return Coverage_Toolchain_Kinds is
+   begin
+      return Coverage_Toolchain_Preference.Get_Pref;
+   end Current_Coverage_Tool;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+   begin
+      Coverage_Toolchain_Preference :=
+        Coverage_Toolchain_Preferences.Create
+          (Kernel.Get_Preferences,
+           "coverage-toolchain",
+           "Coverage toolchain",
+           "Coverage Analysis",
+           "",
+           Gcov);
+   end Register_Module;
 
 end Coverage_GUI;

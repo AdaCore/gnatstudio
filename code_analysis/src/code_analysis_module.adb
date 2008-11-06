@@ -3052,6 +3052,8 @@ package body Code_Analysis_Module is
         (Kernel, "clear",
          Class   => Code_Analysis_Class,
          Handler => Destroy_All_Analyzes_From_Shell'Access);
+
+      Coverage_GUI.Register_Module (Kernel);
    end Register_Module;
 
 end Code_Analysis_Module;

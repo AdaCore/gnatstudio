@@ -38,9 +38,10 @@ package Coverage_GUI is
    Xcov_Extension_Cst : constant String := ".xcov";
    --  Constant String that represents the extension of XCOV files
 
-   type Coverage_Tools is (Gcov, Xcov);
+   type Coverage_Toolchain_Kinds is (Gcov, Xcov);
 
-   Current_Coverage_Tool : Coverage_Tools := Gcov;
+   function Current_Coverage_Tool return Coverage_Toolchain_Kinds;
+   --  Returns currently selected coverage tool.
 
    CodeAnalysis_Cst : constant String := "CodeAnalysis";
 
@@ -148,5 +149,9 @@ package Coverage_GUI is
       Context  : Selection_Context) return Boolean;
    --  Verify that contextual Project and/or file if any, have associated
    --  coverage information in their corresponding node of the analysis tree.
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register module.
 
 end Coverage_GUI;
