@@ -10257,6 +10257,17 @@ the generated files. This browser is not spawned if disabled.
 
 @end table
 
+@item @b{Coverage Analysis}
+@anchor{Coverage Analysis Preferences}
+
+@table @i
+
+@item Coverage toolchain
+
+Coverage toolchain (gcov or xcov) is used for coverage analysis.
+
+@end table
+
 @end itemize
 
 @c -----------------------------------------------------------------
