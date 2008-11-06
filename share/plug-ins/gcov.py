@@ -186,15 +186,32 @@ def remove_gcov(menu):
          if f.find (".gcda") != -1 or f.find (".gcov") != -1:
             remove (object_dir + sep + f)
 
+def on_preferences_changed(name):
+   global compute_menu
+   global cleanup_menu
 
+   toolchain = GPS.Preference("coverage-toolchain").get()
+
+   if toolchain == "Gcov":
+      compute_menu.show()
+      cleanup_menu.show()
+
+   else:
+      compute_menu.hide()
+      cleanup_menu.hide()
 
 def on_gps_started (hook):
-   Menu.create ("/Tools/Covera_ge/Compute coverage files",
+   global compute_menu
+   global cleanup_menu
+
+   #  Create menu items
+
+   compute_menu = Menu.create ("/Tools/Covera_ge/Compute coverage files",
                 on_activate=run_gcov,
                 ref="Show report",
                 add_before=True)
 
-   Menu.create ("/Tools/Covera_ge/Remove coverage files",
+   cleanup_menu = Menu.create ("/Tools/Covera_ge/Remove coverage files",
                 on_activate=remove_gcov,
                 ref="Show report",
                 add_before=True)
@@ -203,5 +220,11 @@ def on_gps_started (hook):
                 ref="Remove coverage files",
                 add_before=False)
 
+   #  Register preference change hook and run it for setup menu items' names.
+
+   GPS.Hook ("preferences_changed").add (on_preferences_changed)
+   on_preferences_changed("preferences_changed")
+
+#  Register GPS startup hook.
 
 GPS.Hook ("gps_started").add (on_gps_started)
