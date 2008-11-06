@@ -40,8 +40,6 @@ with Scans;                     use Scans;
 with Snames;                    use Snames;
 with Stringt;
 
-with Glib.Convert;              use Glib.Convert;
-
 with Csets;
 with File_Utils;                use File_Utils;
 with Filesystems;               use Filesystems;
@@ -2150,7 +2148,8 @@ package body Projects.Registry is
       Use_Object_Path : Boolean;
       Project         : Project_Type := No_Project)
    is
-      Locale                 : constant String := Locale_From_UTF8 (Filename);
+      Locale                 : constant String :=
+                                 Filesystems.Filename_From_UTF8 (Filename);
       Project2, Real_Project : Project_Type;
       Path                   : GNAT.Strings.String_Access;
       Iterator               : Imported_Project_Iterator;

@@ -1418,9 +1418,10 @@ package body ALI_Parser is
                declare
                   Path : constant String := Object_Path (P, False, True, True);
                   File : constant String :=
-                    Locale_From_UTF8
-                      (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                       & Extension);
+                           Filesystems.Filename_From_UTF8
+                             (Short_ALI_Filename
+                                (Short_ALI_Filename'First .. Last)
+                              & Extension);
                begin
                   if Path /= "" then
                      Dir := Locate_Regular_File (File, Path);

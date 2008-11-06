@@ -23,6 +23,8 @@ with GNAT.OS_Lib;
 with GNATCOLL.Mmap;
 
 with Glib.Convert;            use Glib.Convert;
+
+with Filesystems;             use Filesystems;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
@@ -72,7 +74,7 @@ package body Aunit_Filters is
       end if;
 
       File_Buffer := GNATCOLL.Mmap.Read_Whole_File
-        (Locale_From_UTF8 (File_Name),
+        (Filesystems.Filename_From_UTF8 (File_Name),
          Empty_If_Not_Found => True);
       Parse_Constructs
         (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);

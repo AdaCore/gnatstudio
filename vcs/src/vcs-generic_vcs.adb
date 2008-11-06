@@ -29,13 +29,13 @@ with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Basic_Types;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
+with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -382,7 +382,7 @@ package body VCS.Generic_VCS is
                end loop;
             end if;
 
-            Dir := new String'(Locale_From_UTF8 (Data (Node)));
+            Dir := new String'(Filesystems.Filename_From_UTF8 (Data (Node)));
 
             Custom := Create_Proxy
               (The_Action.Command,
@@ -469,13 +469,15 @@ package body VCS.Generic_VCS is
             if Ref.Absolute_Names then
                Dir := null;
             else
-               Dir := new String'(Dir_Name (Locale_From_UTF8 (Data (Node))));
+               Dir := new String'
+                 (Dir_Name (Filesystems.Filename_From_UTF8 (Data (Node))));
             end if;
 
             while Node /= Null_Node loop
-               exit when (not Ref.Absolute_Names
-                          and then GNAT.Directory_Operations.Dir_Name
-                            (Locale_From_UTF8 (Data (Node))) /= Dir.all)
+               exit when
+                 (not Ref.Absolute_Names
+                  and then GNAT.Directory_Operations.Dir_Name
+                    (Filesystems.Filename_From_UTF8 (Data (Node))) /= Dir.all)
                  or else Index - First_Args_Length >= Command_Line_Limit;
 
                declare
@@ -557,7 +559,7 @@ package body VCS.Generic_VCS is
          return;
       end if;
 
-      Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
+      Dir := new String'(Filesystems.Filename_From_UTF8 (Dir_Name (File).all));
 
       if First_Args /= null then
          Args := new GNAT.Strings.String_List (1 .. First_Args'Length + 1);
@@ -574,15 +576,18 @@ package body VCS.Generic_VCS is
       if Ref.Absolute_Names then
          if Ref.Path_Style = System_Default then
             Args (Args'Last) :=
-              new String'(Locale_From_UTF8 (Full_Name (File).all));
+              new String'
+                (Filesystems.Filename_From_UTF8 (Full_Name (File).all));
          else
             Args (Args'Last) := new String'
               (Format_Pathname
-                 (Locale_From_UTF8 (Full_Name (File).all), Ref.Path_Style));
+                 (Filesystems.Filename_From_UTF8
+                    (Full_Name (File).all), Ref.Path_Style));
          end if;
 
       else
-         Args (Args'Last) := new String'(Locale_From_UTF8 (Base_Name (File)));
+         Args (Args'Last) :=
+           new String'(Filesystems.Filename_From_UTF8 (Base_Name (File)));
       end if;
 
       Custom := Create_Proxy

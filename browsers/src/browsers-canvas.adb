@@ -35,7 +35,6 @@ with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
 
 with Glib;                              use Glib;
-with Glib.Convert;                      use Glib.Convert;
 with Glib.Error;                        use Glib.Error;
 with Glib.Graphs;                       use Glib.Graphs;
 with Glib.Object;                       use Glib.Object;
@@ -69,6 +68,7 @@ with Gtkada.MDI;                        use Gtkada.MDI;
 
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
+with Filesystems;                       use Filesystems;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
@@ -936,7 +936,7 @@ package body Browsers.Canvas is
             if Pixbuf /= null then
                Save
                  (Pixbuf,
-                  Locale_From_UTF8 (Full_Name (Name).all),
+                  Filesystems.Filename_From_UTF8 (Full_Name (Name).all),
                   PNG,
                   Error);
                Unref (Pixbuf);

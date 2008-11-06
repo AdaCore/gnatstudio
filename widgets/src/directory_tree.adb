@@ -27,7 +27,6 @@ with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Glib;                      use Glib;
-with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
@@ -846,7 +845,8 @@ package body Directory_Tree is
 
             Path := Get_Path (Selector.Directory.File_Model, Iter);
 
-            Make_Dir_Recursive (Locale_From_UTF8 (Get_Text (Ent)));
+            Make_Dir_Recursive
+              (Filesystems.Filename_From_UTF8 (Get_Text (Ent)));
 
             Success := Collapse_Row (Selector.Directory.File_Tree, Path);
             Success := Expand_Row (Selector.Directory.File_Tree, Path, False);

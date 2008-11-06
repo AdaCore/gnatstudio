@@ -17,34 +17,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;            use Ada.Calendar;
-with Commands.Interactive;    use Commands, Commands.Interactive;
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types.Keysyms;       use Gdk.Types, Gdk.Types.Keysyms;
-with Glib.Convert;            use Glib, Glib.Convert;
-with Glib.Main;               use Glib.Main;
-with Glib.Object;             use Glib.Object;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
-with GNAT.Strings;            use GNAT.Strings;
+with Ada.Calendar;              use Ada.Calendar;
+
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Traces;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+
+with Glib.Main;                 use Glib, Glib.Main;
+with Glib.Object;               use Glib.Object;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Macro;              use Gtkada.Macro;
+with Gtkada.MDI;                use Gtkada.MDI;
+
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Filesystems;               use Filesystems;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                use GPS.Intl;
-with Gtkada.File_Selector;    use Gtkada.File_Selector;
-with Gtkada.Macro;            use Gtkada.Macro;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Window;              use Gtk.Window;
-with Traces;                  use Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GPS.Intl;                  use GPS.Intl;
+with Traces;                    use Traces;
 
 package body KeyManager_Module.Macros is
 
@@ -627,8 +630,8 @@ package body KeyManager_Module.Macros is
             return;
          end if;
 
-         Success :=
-           Save_List (Locale_From_UTF8 (Full_Name (Name).all), Events);
+         Success := Save_List
+           (Filesystems.Filename_From_UTF8 (Full_Name (Name).all), Events);
 
          if not Success then
             Insert (Kernel, -"Error while saving macro", Mode => Error);
