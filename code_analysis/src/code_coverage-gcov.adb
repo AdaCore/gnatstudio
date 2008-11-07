@@ -187,7 +187,7 @@ package body Code_Coverage.Gcov is
    -- Line_Coverage_Info --
    ------------------------
 
-   function Line_Coverage_Info
+   overriding function Line_Coverage_Info
      (Coverage : Gcov_Line_Coverage;
       Bin_Mode : Boolean := False)
       return GPS.Kernel.Standard_Hooks.Line_Information_Record

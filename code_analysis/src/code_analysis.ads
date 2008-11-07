@@ -68,7 +68,7 @@ package Code_Analysis is
    --  Record the Line's execution counts and the Subprogram, File and Project
    --  number of not covered lines
 
-   not overriding function Is_Valid
+   function Is_Valid
      (Self : Coverage) return Boolean is abstract;
 
    type Line_Coverage is abstract new Coverage with null record;
