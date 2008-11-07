@@ -334,6 +334,12 @@ package GUI_Utils is
       Path      : String := "");
    --  Create a new menu item with the given Path as associated string
 
+   procedure Initialize
+     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
+      Label     : String;
+      Path      : String);
+   --  Internal initialization function
+
    function Get_Path
      (Menu_Item : access Full_Path_Menu_Item_Record) return String;
    --  Return the string associated with Menu_Item

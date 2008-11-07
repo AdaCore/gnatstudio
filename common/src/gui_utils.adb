@@ -933,32 +933,25 @@ package body GUI_Utils is
    procedure Gtk_New
      (Menu_Item : out Full_Path_Menu_Item;
       Label     : String := "";
-      Path      : String := "")
-   is
-      procedure Initialize
-        (Menu_Item : access Full_Path_Menu_Item_Record'Class;
-         Label     : String;
-         Path      : String);
-      --  Internal initialization function
-
-      ----------------
-      -- Initialize --
-      ----------------
-
-      procedure Initialize
-        (Menu_Item : access Full_Path_Menu_Item_Record'Class;
-         Label     : String;
-         Path      : String) is
-      begin
-         Initialize (Gtk_Menu_Item (Menu_Item),
-                     Krunch (Filesystems.Filename_To_UTF8 (Label), 60));
-         Menu_Item.Full_Path := Path;
-      end Initialize;
-
+      Path      : String := "") is
    begin
       Menu_Item := new Full_Path_Menu_Item_Record (Path'Length);
       Initialize (Menu_Item, Label, Path);
    end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
+      Label     : String;
+      Path      : String) is
+   begin
+      Initialize (Gtk_Menu_Item (Menu_Item),
+                  Krunch (Filesystems.Filename_To_UTF8 (Label), 60));
+      Menu_Item.Full_Path := Path;
+   end Initialize;
 
    --------------
    -- Get_Path --
