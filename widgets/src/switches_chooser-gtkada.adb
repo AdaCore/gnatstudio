@@ -511,7 +511,7 @@ package body Switches_Chooser.Gtkada is
          when Switch_Spin =>
             Gtk_New (Adj, Gdouble (S.Default),
                      Gdouble (S.Min), Gdouble (S.Max),
-                     1.0, 10.0, 10.0);
+                     1.0, 10.0);
             Gtk_New (Spin, Adj, 1.0, 0);
             Set_Tooltip (Editor, Spin, Switch, S);
             Pack_Start (Hbox, Spin, True, True, 0);

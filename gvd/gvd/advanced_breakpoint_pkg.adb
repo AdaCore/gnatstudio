@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2007                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,7 +127,7 @@ package body Advanced_Breakpoint_Pkg is
       Pack_Start (Advanced_Breakpoint.Vbox33,
                   Advanced_Breakpoint.Label105, False, False, 0);
 
-      Gtk_New (Ignore_Count_Combo_Adj, 0.0, 0.0, 10000.0, 1.0, 10.0, 10.0);
+      Gtk_New (Ignore_Count_Combo_Adj, 0.0, 0.0, 10000.0, 1.0, 10.0);
       Gtk_New (Advanced_Breakpoint.Ignore_Count_Combo,
                Ignore_Count_Combo_Adj, 1.0, 0);
       Set_Numeric (Advanced_Breakpoint.Ignore_Count_Combo, False);
