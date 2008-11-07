@@ -561,13 +561,7 @@ package body GPS.Kernel.Project is
          --  the calls below will just speed up the processing in
          --  Recompute_View when a new project is loaded.
 
-         --  Note that gnatls_server is set when computing predefined paths
-         if Kernel.Gnatls_Server = null
-           or else Kernel.Gnatls_Server.all /= Get_Nickname (Build_Server)
-           or else not Same_Project
-         then
-            Entities.Reset (Get_Database (Kernel));
-         end if;
+         Entities.Reset (Get_Database (Kernel));
 
          --  Always call Compute_Predefined_Paths who detects if recomputation
          --  is really needed. This is also used to get the value of
@@ -581,11 +575,6 @@ package body GPS.Kernel.Project is
                 & Boolean'Image (Is_Local (Build_Server)));
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
-
-         --  Reset the entities database, since it would still reference
-         --  old projects (deallocated) otherwise
-
-         Entities.Reset (Kernel.Database);
 
          Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
