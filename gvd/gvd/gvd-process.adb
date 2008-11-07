@@ -52,6 +52,7 @@ with Debugger.Gdb;               use Debugger.Gdb;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
@@ -1076,7 +1077,8 @@ package body GVD.Process is
            and then Support_TTY (Process.Debugger)
            and then GNAT.TTY.TTY_Supported);
 
-      Grab_Focus (Process.Debugger_Text);
+      Raise_Child
+        (Find_MDI_Child (Get_MDI (Window.Kernel), Process.Debugger_Text));
 
       Set_Busy (Process, False);
       Success := True;
