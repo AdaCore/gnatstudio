@@ -285,6 +285,7 @@ package body GVD.Generic_View is
          Gtk_New (Child, View,
                   Flags          => MDI_Child_Flags,
                   Group          => Group,
+                  Focus_Widget   => Gtk_Widget (View),
                   Default_Width  => 150,
                   Default_Height => 150,
                   Module         => Get_Module);
