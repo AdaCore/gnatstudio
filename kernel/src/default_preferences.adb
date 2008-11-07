@@ -1333,8 +1333,7 @@ package body Default_Preferences is
                Lower => Gdouble (Pref.Int_Min_Value),
                Upper => Gdouble (Pref.Int_Max_Value),
                Step_Increment => 1.0,
-               Page_Increment => 10.0,
-               Page_Size      => 10.0);
+               Page_Increment => 10.0);
       Gtk_New (Spin, Adj, 1.0, The_Digits => 0);
       Set_Editable (Spin, True);
 
