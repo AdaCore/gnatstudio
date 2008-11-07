@@ -1401,7 +1401,11 @@ a cross-reference query, you can simply close that editor to go back
 to where you were before.
 
 Alternatively, you can also select the window by clicking anywhere in
-its title bar, and then select the menu @code{Window->Close}
+its title bar, and then select the menu @code{Window->Close}.
+
+Finally, a window can be closed by right-clicking in the associated
+notebook tab (if the tabs are visible), and select @code{Close} in the
+contextual menu.
 
 @c --------------------------------------------------------------------
 @node Splitting Windows
@@ -9277,7 +9281,13 @@ If set to "Automatic", then the tabs will be shown when two or more windows
 are stacked.
 
 @item Notebook tabs position
-Indicates where the notebook tabs should be displayed
+Indicates where the notebook tabs should be displayed by default. It is
+possible to select the position of tabs individually for each notebook
+by right-clicking in any of their tabs and chosing a new position in the
+contextual menu. This position will be saved as part of the desktop and
+restored the next time you restart GPS. However, if you change the value
+of this preference, all notebooks will reset the position of their tabs
+to match the new value of the preference.
 
 @end table
 
