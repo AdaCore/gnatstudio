@@ -166,8 +166,7 @@ end_message() {
    for csh and tcsh shells:
       setenv PATH $basedir/bin:\$PATH
    for sh, bash, ksh and zsh:
-      PATH=$basedir/bin:\$PATH
-      export PATH
+      PATH=$basedir/bin:\$PATH; export PATH
 
 EOF
 }
