@@ -1080,8 +1080,7 @@ package body Projects.Registry is
    begin
       while not At_End (Path, Iter) loop
          declare
-            Curr : constant String :=
-                     Name_As_Directory (Current (Path, Iter));
+            Curr : constant String := Name_As_Directory (Current (Path, Iter));
          begin
             if Curr /= "" then
                Open (Dir, Curr);

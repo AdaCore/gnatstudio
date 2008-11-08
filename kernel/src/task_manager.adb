@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003-2008, AdaCore               --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -209,9 +209,7 @@ package body Task_Manager is
                if Manager.Referenced_Command = Index then
                   Manager.Referenced_Command := -1;
 
-               elsif Manager.Referenced_Command >
-                 Index
-               then
+               elsif Manager.Referenced_Command > Index then
                   Manager.Referenced_Command :=
                     Manager.Referenced_Command - 1;
                end if;
@@ -306,6 +304,7 @@ package body Task_Manager is
 
                      Free_Alternate_Actions (Command, True, False);
                      Free_Consequence_Actions (Command, False, False);
+
                   else
                      declare
                         New_Queue : constant Command_Queues.List :=
@@ -371,9 +370,7 @@ package body Task_Manager is
             Priority => Glib.Main.Priority_Default_Idle);
       end if;
 
-      if Active
-        and then not Manager.Running_Active
-      then
+      if Active and then not Manager.Running_Active then
          Manager.Running_Active := True;
 
          if Active_Incremental (Manager) then
@@ -499,8 +496,8 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Command : Command_Access)
    is
-      Node : Command_Queues.List_Node;
       use Command_Queues;
+      Node : Command_Queues.List_Node;
    begin
       for J in Manager.Queues'Range loop
          Node := First (Manager.Queues (J).Queue);

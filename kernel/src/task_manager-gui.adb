@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2008, AdaCore                 --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -91,33 +91,33 @@ package body Task_Manager.GUI is
 
    procedure Set_Column_Types
      (View : access Task_Manager_Interface_Record'Class);
-   --  Sets the types of columns to be displayed in the tree_view.
+   --  Sets the types of columns to be displayed in the tree_view
 
    procedure On_View_Destroy
      (Object : access GObject_Record'Class;
       Params : GValues);
-   --  Callback for a "destroy" signal.
+   --  Callback for a "destroy" signal
 
    procedure On_View_Realize
      (Object : access GObject_Record'Class;
       Params : GValues);
-   --  Callback for a "realize" signal. Initializes the graphical components.
+   --  Callback for a "realize" signal. Initializes the graphical components
 
    function On_Button_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for a "button_press_event".
+   --  Callback for a "button_press_event"
 
    procedure On_Progress_Bar_Destroy
      (Object  : access GObject_Record'Class;
       Manager : Manager_Index_Record);
-   --  Called when a progress bar is destroyed.
+   --  Called when a progress bar is destroyed
 
    function On_Progress_Bar_Button_Pressed
      (Object  : access Gtk_Widget_Record'Class;
       Params  : GValues;
       Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean;
-   --  Callback for a "button_press_event" on a progress bar.
+   --  Callback for a "button_press_event" on a progress bar
 
    procedure Interrupt_Task
      (Object    : access GObject_Record'Class;
@@ -133,40 +133,40 @@ package body Task_Manager.GUI is
    procedure Pause_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
-   --  Pause command referenced by Index.
+   --  Pause command referenced by Index
 
    procedure Resume_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
-   --  Resume command referenced by Index.
+   --  Resume command referenced by Index
 
    function Menu_Create
      (View   : Manager_Index_Record;
       Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
-   --  Create the task manager contextual menu.
+   --  Create the task manager contextual menu
 
    procedure Menu_Destroy
      (Manager : Manager_Index_Record;
       Menu    : Gtk.Menu.Gtk_Menu);
-   --  Destroy the task manager contextual menu.
+   --  Destroy the task manager contextual menu
 
    procedure On_Pause_Command
      (Object  : access GObject_Record'Class;
       Params  : GValues;
       Manager : Manager_Index_Record);
-   --  Pause the referenced command in the task manager.
+   --  Pause the referenced command in the task manager
 
    procedure On_Resume_Command
      (Object  : access GObject_Record'Class;
       Params  : GValues;
       Manager : Manager_Index_Record);
-   --  Resume the referenced command in the task manager.
+   --  Resume the referenced command in the task manager
 
    procedure On_Interrupt_Command
      (Object  : access GObject_Record'Class;
       Params  : GValues;
       Manager : Manager_Index_Record);
-   --  Resume the referenced command in the task manager.
+   --  Resume the referenced command in the task manager
 
    -----------------------------
    -- On_Progress_Bar_Destroy --
@@ -777,7 +777,7 @@ package body Task_Manager.GUI is
               (View.Tree.Model, View.Lines (Index), Command_Name_Column,
                Name_String.all);
 
-            --  Create the pixbuf showing the progress.
+            --  Create the pixbuf showing the progress
 
             if View.Progress_Layout /= null then
                declare
@@ -923,7 +923,7 @@ package body Task_Manager.GUI is
       View.Manager := Manager;
       View.Dialog := Dialog;
 
-      --  Initialize the tree.
+      --  Initialize the tree
 
       Gtk_New (View.Tree, Columns_Types);
 
