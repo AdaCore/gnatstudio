@@ -979,7 +979,9 @@ package body Task_Manager.GUI is
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Dummy := Execute (Manager.Pop_Command);
+      if Manager.Pop_Command /= null then
+         Dummy := Execute (Manager.Pop_Command);
+      end if;
    end Pop_State;
 
    ----------------
@@ -990,7 +992,9 @@ package body Task_Manager.GUI is
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Dummy := Execute (Manager.Push_Command);
+      if Manager.Push_Command /= null then
+         Dummy := Execute (Manager.Push_Command);
+      end if;
    end Push_State;
 
 end Task_Manager.GUI;
