@@ -23,7 +23,6 @@ project Shared is
 
       for VCS_Log_Check use "log_check";
       for VCS_File_Check use "ci_check";
-      for VCS_Patch_Root use "..";
    end IDE;
 
    package Compiler is
