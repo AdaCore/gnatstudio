@@ -334,6 +334,12 @@ package body GPS.Kernel.Console is
          Destroy (Module.Console);
          Module.Console := null;
       end if;
+
+      --  Destroyed has been called as GPS is in the way to quit. We want to
+      --  invalidate the module access as it will be freed just after this
+      --  call. We want to do that to be sure that every call to Get_Console
+      --  will return null at this point.
+      Console_Module_Id := null;
    end Destroy;
 
    ----------------------------
