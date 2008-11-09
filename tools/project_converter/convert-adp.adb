@@ -36,5 +36,3 @@ package body Convert.Adp is
       Tmp := Save_Project (Project);
    end Convert_From_Adp_To_Gpr;
 end Convert.Adp;
-
-
