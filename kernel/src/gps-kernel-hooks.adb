@@ -1031,6 +1031,7 @@ package body GPS.Kernel.Hooks is
    begin
       if Info = null then
          Insert (Kernel, -"No such hook: " & String (Hook));
+
       else
          if Set_Busy then
             Push_State (Kernel_Handle (Kernel), Busy);

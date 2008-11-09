@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;               use Ada.Calendar;
+with Ada.Calendar;               use Ada, Ada.Calendar;
 with Ada.Calendar.Formatting;
 with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
@@ -309,13 +309,13 @@ package body GPS.Kernel.Timeout is
       end if;
 
       declare
-         End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Time_Stamp : constant String :=
-           "[" & Image (End_Time, ISO_Date & " %T") & "] ";
-         Elapsed    : constant String :=
-            Ada.Calendar.Formatting.Image
-              (End_Time - Data.Start_Time,
-               Include_Time_Fraction => True);
+         End_Time      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Time_Stamp    : constant String :=
+                           "[" & Image (End_Time, ISO_Date & " %T") & "] ";
+         Elapsed       : constant String :=
+                           Calendar.Formatting.Image
+                             (End_Time - Data.Start_Time,
+                              Include_Time_Fraction => True);
          Elapsed_Start : Natural := Elapsed'First;
 
       begin

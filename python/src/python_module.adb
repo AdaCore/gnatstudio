@@ -72,7 +72,7 @@ package body Python_Module is
    --  ~/.gps/startup.xml
 
    function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child;
-   --  Create the python console if it doesn't exist yet.
+   --  Create the python console if it doesn't exist yet
 
    procedure Open_Python_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -107,7 +107,8 @@ package body Python_Module is
    function Create_Python_Console (Kernel : Kernel_Handle) return MDI_Child is
       Console : Interactive_Console;
       Script  : constant Scripting_Language :=
-        Lookup_Scripting_Language (Get_Scripts (Kernel), Python_Name);
+                  Lookup_Scripting_Language
+                    (Get_Scripts (Kernel), Python_Name);
    begin
       Console := Create_Interactive_Console
         (Kernel              => Kernel,

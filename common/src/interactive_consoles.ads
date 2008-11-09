@@ -226,8 +226,8 @@ package Interactive_Consoles is
    --  Return the text view
 
    function From_View
-     (View    : access Gtk.Text_View.Gtk_Text_View_Record'Class)
-     return Interactive_Console;
+     (View : access Gtk.Text_View.Gtk_Text_View_Record'Class)
+      return Interactive_Console;
    --  Return the console associated with the text view
 
    -----------------
@@ -263,10 +263,10 @@ package Interactive_Consoles is
    --  regexp is highlighted.
 
    procedure Insert_With_Links
-     (Console        : access Interactive_Console_Record;
-      Text           : String;
-      Add_LF         : Boolean := True;
-      Highlight      : Boolean := False);
+     (Console   : access Interactive_Console_Record;
+      Text      : String;
+      Add_LF    : Boolean := True;
+      Highlight : Boolean := False);
    --  Insert text in the console, highlighting any text that matches one of
    --  hyper links registered with Create_Hyper_Link.
    --  Clicking on these links will call On_Click on the matching Callback.

@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;           use Ada.Calendar;
+with Ada.Calendar;           use Ada, Ada.Calendar;
 
 with GNAT.Calendar;          use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
@@ -49,6 +49,7 @@ with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
 
 package body GPS.Kernel.Console is
+
    type GPS_Message_Record is new Interactive_Console_Record with null record;
    type GPS_Message is access GPS_Message_Record'Class;
    --  Type for the messages window. This is mostly use to have a unique tag
@@ -69,8 +70,8 @@ package body GPS.Kernel.Console is
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
 
-   type GPS_Console_MDI_Child_Record is new GPS_MDI_Child_Record
-      with null record;
+   type GPS_Console_MDI_Child_Record is
+     new GPS_MDI_Child_Record with null record;
    overriding function Interrupt
      (Child : access GPS_Console_MDI_Child_Record) return Boolean;
 
@@ -162,7 +163,7 @@ package body GPS.Kernel.Console is
       Mode   : Message_Type := Info)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
-      T       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      T       : constant Calendar.Time := Calendar.Clock;
    begin
       if Console = null then
          Put_Line (Text);

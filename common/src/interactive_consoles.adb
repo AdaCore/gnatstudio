@@ -67,49 +67,63 @@ package body Interactive_Consoles is
    -- Interactive_Virtual_Console --
    ---------------------------------
 
-   type Interactive_Virtual_Console_Record is new Virtual_Console_Record with
-      record
-         Console   : Interactive_Console;
-         Script    : Scripting_Language;
-         Took_Grab : Boolean := False;
-         Child     : MDI_Child := null;
-         --  MDI_Child cached, used in Insert_Error
-      end record;
+   type Interactive_Virtual_Console_Record is
+     new Virtual_Console_Record
+   with record
+      Console   : Interactive_Console;
+      Script    : Scripting_Language;
+      Took_Grab : Boolean := False;
+      Child     : MDI_Child := null;
+      --  MDI_Child cached, used in Insert_Error
+   end record;
+
    type Interactive_Virtual_Console
      is access all Interactive_Virtual_Console_Record'Class;
 
    overriding procedure Ref
      (Console : access Interactive_Virtual_Console_Record);
+
    overriding procedure Unref
      (Console : access Interactive_Virtual_Console_Record);
+
    overriding procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
+
    overriding procedure Insert_Log
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
+
    overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
+
    overriding procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
+
    overriding procedure Grab_Events
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean);
+
    overriding procedure Set_As_Default_Console
-     (Console     : access Interactive_Virtual_Console_Record;
-      Script      : GNATCOLL.Scripts.Scripting_Language);
+     (Console : access Interactive_Virtual_Console_Record;
+      Script  : GNATCOLL.Scripts.Scripting_Language);
+
    overriding procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record);
+
    overriding function Get_Instance
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance;
+
    overriding procedure Process_Pending_Events_Primitive
      (Console : access Interactive_Virtual_Console_Record);
+
    overriding function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
       Whole_Line : Boolean) return String;
+
    overriding procedure Clear
-     (Console    : access Interactive_Virtual_Console_Record);
+     (Console : access Interactive_Virtual_Console_Record);
    --  See inherited subprograms
 
    -----------------------
@@ -240,8 +254,7 @@ package body Interactive_Consoles is
    -----------------
 
    overriding procedure Insert_Text
-     (Console : access Interactive_Virtual_Console_Record; Txt : String)
-   is
+     (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       if Console.Console /= null then
          Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
@@ -622,8 +635,8 @@ package body Interactive_Consoles is
    is
       Last_Iter, Prompt_Iter, Tmp_Iter : Gtk_Text_Iter;
       Internal : Boolean;
-      Success : Boolean;
-      Count     : Natural := 0;
+      Success  : Boolean;
+      Count    : Natural := 0;
 
    begin
       --  Special case: if the text starts with ^H characters, we delete that
@@ -647,6 +660,7 @@ package body Interactive_Consoles is
 
          Get_End_Iter (Console.Buffer, Last_Iter);
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+
          if Get_Offset (Last_Iter) /= Get_Offset (Prompt_Iter) then
             --  in user edition
             Copy (Last_Iter, Dest => Tmp_Iter);

@@ -99,11 +99,11 @@ with XML_Parsers;
 
 package body GPS.Kernel is
 
-   Me     : constant Debug_Handle := Create ("gps_kernel");
-   Ref_Me : constant Debug_Handle :=
-     Create ("Contexts.Ref", GNATCOLL.Traces.Off);
+   Me        : constant Debug_Handle := Create ("gps_kernel");
+   Ref_Me    : constant Debug_Handle :=
+                 Create ("Contexts.Ref", GNATCOLL.Traces.Off);
    Create_Me : constant Debug_Handle :=
-     Create ("Contexts.Mem", GNATCOLL.Traces.Off);
+                 Create ("Contexts.Mem", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
