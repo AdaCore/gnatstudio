@@ -5,6 +5,7 @@ with "../widgets/widgets";
 with "../shared";
 with "../gnatlib/src/gnatcoll";
 with "../gnatlib/src/gnatcoll_gtk";
+with "src_info/sn/sn";
 
 project Kernel is
 

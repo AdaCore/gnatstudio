@@ -1,0 +1,10 @@
+project SN is
+
+   for Source_Dirs use ();
+   for Externally_Built use "true";
+
+   package Linker is
+      for Linker_Options use ("lib/db_capi.o", "snsrc/db/PORT/libdb.a");
+   end Linker;
+
+end SN;
