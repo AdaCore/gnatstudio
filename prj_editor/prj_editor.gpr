@@ -15,12 +15,10 @@ project Prj_Editor is
    Build : Build_Type := External ("Build", "Debug");
 
    package Builder is
-      --  -a is required for g-exptty.adb
-      for Default_Switches ("Ada") use ("-g", "-a", "-m");
+      for Default_Switches ("Ada") use ("-g", "-m");
       case Build is
           when "Debug" =>
-             for Default_Switches ("Ada") use Builder'Default_Switches ("Ada")
-                 & ("-gnatVa");
+             for Default_Switches ("Ada") use Builder'Default_Switches ("Ada");
              for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
           when "Production" =>
              for Global_Configuration_Pragmas use "../gps/gnat.adc";

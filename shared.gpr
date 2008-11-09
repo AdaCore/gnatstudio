@@ -1,3 +1,5 @@
+with "gnatlib/gnatcoll_shared";
+
 project Shared is
 
    type OS_Type is ("unix", "Windows_NT");
@@ -21,17 +23,24 @@ project Shared is
 
       for VCS_Log_Check use "log_check";
       for VCS_File_Check use "ci_check";
+      for VCS_Patch_Root use "..";
    end IDE;
 
    package Compiler is
       case Build is
          when "Debug" =>
             for Default_Switches ("Ada") use
-              ("-g", "-O1", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
+              ("-g", "-O1", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
                "-gnatwaCJe", "-gnat05");
+
+            for Default_Switches ("C") use
+              ("-g", "-O1") & GnatColl_Shared.Gtk_Include;
+
          when "Production" =>
             for Default_Switches ("Ada") use
               ("-O2", "-gnatn", "-gnatws", "-gnat05");
+            for Default_Switches ("C") use
+              ("-g", "-O2") & GnatColl_Shared.Gtk_Include;
       end case;
    end Compiler;
 

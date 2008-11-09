@@ -7,7 +7,7 @@ GPS_VERSION=4.4.0w
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
-TARGET_LFLAGS=""
+TARGET_LFLAGS='()'
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 PATH_STYLE=UNIX
@@ -58,9 +58,9 @@ AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 AC_CHECK_HEADERS(sys/stropts.h)
 
 AC_CHECK_LIB(util,openpty,
- [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lutil"],
+ [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lutil")'],
  [AC_CHECK_LIB(bsd,openpty,
-  [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"],
+  [AC_DEFINE(HAVE_OPENPTY) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lbsd")'],
   [AC_CHECK_FUNCS(openpty)]
  ])
 )
@@ -71,7 +71,7 @@ case "${host}" in
   alpha*-dec-osf* ) EXECUTION_WINDOW=False ;;
 
   ## IBM, AIX machines
-  powerpc-ibm-aix5.*  ) TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc" ;;
+  powerpc-ibm-aix5.*  ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-Wl,-bbigtoc")' ;;
 
   ## PowerPC
   powerpc-*-linux-gnu ) PRINT_CMD="a2ps" ;;
@@ -82,7 +82,7 @@ case "${host}" in
   *-sun-solaris* \
     | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | sparc*-linux*-gnu )
     case "${host}" in
-      *-sunos5* | *-solaris* ) TARGET_LFLAGS="$TARGET_LFLAGS -lXrender" ;;
+      *-sunos5* | *-solaris* ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
       *-linux-gnu* ) PRINT_CMD="a2ps" ;;
     esac;;
 
@@ -108,7 +108,7 @@ case "${host}" in
       *win32* | *mingw32* | *cygwin* )
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x5000000"
+	TARGET_LFLAGS='("-luser32", "-lcomdlg32", "-mwindows", "-Wl,--stack=0x5000000")'
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start"
@@ -171,4 +171,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets)
+AC_OUTPUT(Makefile gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml)

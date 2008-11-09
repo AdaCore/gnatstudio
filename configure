@@ -311,7 +311,7 @@ ac_includes_default="\
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn"
 ac_subdirs_all="$ac_subdirs_all kernel/src_info/sn/snsrc"
 ac_subdirs_all="$ac_subdirs_all gnatlib"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG HAVE_GTKADA GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD CHARSET OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE subdirs LIBOBJS LTLIBOBJS '
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os target target_cpu target_vendor target_os XMLADA_GPR CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP GNATMAKE SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA RANLIB ac_ct_RANLIB DVIPS MAKEINFO TEXI2DVI PKG_CONFIG HAVE_GTKADA GTK_GCC_FLAGS WITH_GTK GTK_CONFIG GTK_PREFIX GLIB_PREFIX ATK_PREFIX PANGO_PREFIX CAIRO_PREFIX GTKADA_SRC GTKADA_OBJ GTK_CFLAGS GTK_LIBS GTK_STATIC_LIBS GTKADA_PREFIX GPS_VERSION TARGET EXEC_PREFIX STRIP_CR CAN_OUTPUT TARGET_CFLAGS TARGET_LFLAGS EXEC_COMMAND DEFAULT_PS DEFAULT_FONT PRINT_CMD DIFF_CMD DIFF3_CMD PATCH_CMD OPAQUE_MDI HOST_TYPE EXECUTION_WINDOW SSH_ESCAPE CHARSET subdirs LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1377,7 +1377,7 @@ GPS_VERSION=4.4.0w
 STRIP_CR=False
 CAN_OUTPUT=True
 TARGET_CFLAGS=""
-TARGET_LFLAGS=""
+TARGET_LFLAGS='()'
 EXEC_COMMAND="xterm -e"
 DEFAULT_FONT="sans 9"
 PATH_STYLE=UNIX
@@ -3882,7 +3882,7 @@ if test $ac_cv_lib_util_openpty = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENPTY 1
 _ACEOF
- TARGET_LFLAGS="$TARGET_LFLAGS -lutil"
+ TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lutil")'
 else
   echo "$as_me:$LINENO: checking for openpty in -lbsd" >&5
 echo $ECHO_N "checking for openpty in -lbsd... $ECHO_C" >&6
@@ -3942,7 +3942,7 @@ if test $ac_cv_lib_bsd_openpty = yes; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENPTY 1
 _ACEOF
- TARGET_LFLAGS="$TARGET_LFLAGS -lbsd"
+ TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lbsd")'
 else
 
 for ac_func in openpty
@@ -4041,7 +4041,7 @@ case "${host}" in
   alpha*-dec-osf* ) EXECUTION_WINDOW=False ;;
 
   ## IBM, AIX machines
-  powerpc-ibm-aix5.*  ) TARGET_LFLAGS="$TARGET_LFLAGS -Wl,-bbigtoc" ;;
+  powerpc-ibm-aix5.*  ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-Wl,-bbigtoc")' ;;
 
   ## PowerPC
   powerpc-*-linux-gnu ) PRINT_CMD="a2ps" ;;
@@ -4052,7 +4052,7 @@ case "${host}" in
   *-sun-solaris* \
     | i[3456]86-*-solaris2* | i345686-*-sunos5* | sparc*-linux*-gnu )
     case "${host}" in
-      *-sunos5* | *-solaris* ) TARGET_LFLAGS="$TARGET_LFLAGS -lXrender" ;;
+      *-sunos5* | *-solaris* ) TARGET_LFLAGS=$TARGET_LFLAGS' & ("-lXrender")' ;;
       *-linux-gnu* ) PRINT_CMD="a2ps" ;;
     esac;;
 
@@ -4078,7 +4078,7 @@ case "${host}" in
       *win32* | *mingw32* | *cygwin* )
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS="$TARGET_LFLAGS -luser32 -lcomdlg32 -mwindows -Wl,--stack=0x5000000"
+	TARGET_LFLAGS='("-luser32", "-lcomdlg32", "-mwindows", "-Wl,--stack=0x5000000")'
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start"
@@ -4130,6 +4130,7 @@ esac
 
 
 
+
 subdirs="$subdirs kernel/src_info/sn"
 
 
@@ -4153,7 +4154,7 @@ echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { echo "$as_me:$LINENO: --------------------------------------------------" >&5
 echo "$as_me: --------------------------------------------------" >&6;}
 
-                                                                                                              ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml widgets/Makefile.widgets"
+                                                                                ac_config_files="$ac_config_files Makefile gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/plug-ins/protocols.xml"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -4705,16 +4706,13 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-  "Makefile.common" ) CONFIG_FILES="$CONFIG_FILES Makefile.common" ;;
   "gnat/sdefault/sdefault.adb" ) CONFIG_FILES="$CONFIG_FILES gnat/sdefault/sdefault.adb" ;;
   "docs/Makefile" ) CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
-  "common/Makefile.common" ) CONFIG_FILES="$CONFIG_FILES common/Makefile.common" ;;
   "common/src/config.ads" ) CONFIG_FILES="$CONFIG_FILES common/src/config.ads" ;;
   "common/expect/Makefile" ) CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
   "share/plug-ins/protocols.xml" ) CONFIG_FILES="$CONFIG_FILES share/plug-ins/protocols.xml" ;;
-  "widgets/Makefile.widgets" ) CONFIG_FILES="$CONFIG_FILES widgets/Makefile.widgets" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -4860,11 +4858,11 @@ s,@PRINT_CMD@,$PRINT_CMD,;t t
 s,@DIFF_CMD@,$DIFF_CMD,;t t
 s,@DIFF3_CMD@,$DIFF3_CMD,;t t
 s,@PATCH_CMD@,$PATCH_CMD,;t t
-s,@CHARSET@,$CHARSET,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
 s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@EXECUTION_WINDOW@,$EXECUTION_WINDOW,;t t
 s,@SSH_ESCAPE@,$SSH_ESCAPE,;t t
+s,@CHARSET@,$CHARSET,;t t
 s,@subdirs@,$subdirs,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

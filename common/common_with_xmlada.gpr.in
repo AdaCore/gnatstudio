@@ -13,6 +13,7 @@ project Common is
    package Compiler is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
+      for Switches ("s-memory.adb") use ("-g", "-O2", "-gnatpg");
 
       case Shared.Build is
           when "Production" =>
@@ -31,5 +32,10 @@ project Common is
    package Naming is
       for Implementation ("xml_parsers") use "xml_parsers_xmlada.adb";
    end Naming;
+
+   package Linker is
+      for Linker_Options use
+        @TARGET_LFLAGS@;
+   end Linker;
 
 end Common;
