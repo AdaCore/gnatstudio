@@ -2,6 +2,7 @@ with "gtkada";
 with "../../kernel/kernel";
 with "../../ada_module/ada_module";
 with "../../cpp_module/cpp_module";
+with "../../gvd/gvd";
 with "../../gnat";
 with "../../shared";
 
