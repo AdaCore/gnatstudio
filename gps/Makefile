@@ -4,7 +4,7 @@ else
    LN = ln -s
 endif
 
-GPRBUILD=gprbuild -j2
+GPRBUILD=gprbuild
 
 .PHONY: default resources do_links all clean
 
