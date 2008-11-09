@@ -10,4 +10,8 @@ project Convert is
    for Exec_Dir use ".";
    
    package Compiler renames Shared.Compiler;
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-m");
+   end Builder;
 end Convert;
