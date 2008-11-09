@@ -1,7 +1,8 @@
 with "../kernel/kernel";
 with "../common/common";
 with "../shared";
-with "../ada_module/ada_module.gpr";
+with "../ada_module/ada_module";
+with "../gvd/gvd";
 
 project Completion is
 
