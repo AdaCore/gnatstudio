@@ -284,13 +284,9 @@ package body Debugger.VMS is
    --------------------
 
    overriding function Info_Registers
-     (Debugger : access VMS_Debugger)
-      return String
-   is
-      pragma Unreferenced (Debugger);
+     (Debugger : access VMS_Debugger) return String is
    begin
-      --  ???
-      return "";
+      return Send (Debugger, "dump/quadword r1:r39");
    end Info_Registers;
 
    --------------
