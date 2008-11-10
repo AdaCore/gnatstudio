@@ -66,9 +66,13 @@ def highlight_file_idle ():
      return False
 
   buffer = to_highlight[0]
+  if not buffer:
+     return True
+
   if current_entities == []:
      current_entities = buffer.file().entities (local = False)
      current_entity   = current_entities.__iter__()
+
   try:
      e = current_entity.next()
      highlight_entity_references (buffer, e)
@@ -82,7 +86,6 @@ def highlight_file_idle ():
      to_highlight.pop (0)
      current_entities=[]
      return True
-
 
 
 def highlight_dispatching_calls (buffer):
