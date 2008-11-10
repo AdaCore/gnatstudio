@@ -231,6 +231,7 @@ package GVD.Types is
 
    type Debugger_Type is
      (Gdb_Type,
+      VMS_Type,
       Dbx_Type,
       Xdb_Type,
       Jdb_Type,
@@ -259,7 +260,7 @@ private
       --  The string representing the address
 
       Length         : Natural := 0;
-      --  This is the lenght of the remaining string once the "0x" prefix as
+      --  This is the length of the remaining string once the "0x" prefix as
       --  well as all the following zeros have been stripped.
       --  The meaningful part of Address_String is therefore the one in
       --  the Last - Length + 1 .. Last range.

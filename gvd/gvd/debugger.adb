@@ -1158,4 +1158,171 @@ package body Debugger is
       return Debugger.Kernel;
    end Get_Kernel;
 
+   ------------------------------
+   -- Set_Breakpoint_Condition --
+   ------------------------------
+
+   procedure Set_Breakpoint_Condition
+     (Debugger  : access Debugger_Root;
+      Num       : GVD.Types.Breakpoint_Identifier;
+      Condition : String;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+   begin
+      null;
+   end Set_Breakpoint_Condition;
+
+   ----------------------
+   -- Set_Scope_Action --
+   ----------------------
+
+   procedure Set_Breakpoint_Command
+     (Debugger : access Debugger_Root;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Commands : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+   begin
+      null;
+   end Set_Breakpoint_Command;
+
+   ----------------------
+   -- Set_Scope_Action --
+   ----------------------
+
+   procedure Set_Breakpoint_Ignore_Count
+     (Debugger : access Debugger_Root;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Count    : Integer;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+   begin
+      null;
+   end Set_Breakpoint_Ignore_Count;
+
+   ----------------------
+   -- Set_Scope_Action --
+   ----------------------
+
+   procedure Set_Scope_Action
+     (Debugger : access Debugger_Root;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Scope, Action, Num, Mode);
+   begin
+      null;
+   end Set_Scope_Action;
+
+   -----------------
+   -- Task_Switch --
+   -----------------
+
+   procedure Task_Switch
+     (Debugger : access Debugger_Root;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Task_Num, Mode);
+   begin
+      null;
+   end Task_Switch;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   procedure Thread_Switch
+     (Debugger : access Debugger_Root;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Thread, Mode);
+   begin
+      null;
+   end Thread_Switch;
+
+   ---------------
+   -- PD_Switch --
+   ---------------
+
+   procedure PD_Switch
+     (Debugger : access Debugger_Root;
+      PD       : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (PD, Mode);
+   begin
+      null;
+   end PD_Switch;
+
+   ----------------
+   -- Info_Tasks --
+   ----------------
+
+   procedure Info_Tasks
+     (Debugger : access Debugger_Root;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural)
+   is
+      pragma Unreferenced (Info, Debugger);
+   begin
+      Len := 0;
+   end Info_Tasks;
+
+   ------------------
+   -- Info_Threads --
+   ------------------
+
+   procedure Info_Threads
+     (Debugger : access Debugger_Root;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural)
+   is
+      pragma Unreferenced (Info, Debugger);
+   begin
+      Len := 0;
+   end Info_Threads;
+
+   -------------
+   -- Info_PD --
+   -------------
+
+   procedure Info_PD
+     (Debugger : access Debugger_Root;
+      Info     : out PD_Information_Array;
+      Len      : out Natural)
+   is
+      pragma Unreferenced (Info, Debugger);
+   begin
+      Len := 0;
+   end Info_PD;
+
+   -------------------------
+   -- Set_VxWorks_Version --
+   -------------------------
+
+   procedure Set_VxWorks_Version
+     (Debugger : access Debugger_Root; Force : Boolean := False)
+   is
+      pragma Unreferenced (Force);
+   begin
+      null;
+   end Set_VxWorks_Version;
+
+   ---------------------
+   -- VxWorks_Version --
+   ---------------------
+
+   function VxWorks_Version
+     (Debugger : access Debugger_Root)
+      return GVD.Types.VxWorks_Version_Type
+   is
+      pragma Unreferenced (Debugger);
+   begin
+      return Vx_None;
+   end VxWorks_Version;
+
 end Debugger;

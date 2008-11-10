@@ -656,14 +656,14 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Set the condition on which a breakpoint should be activated.
 
    procedure Set_Breakpoint_Command
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Set the commands to execute upon stopping at the breakpoint.
    --  One command per line in commands.
 
@@ -671,7 +671,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Set the number of times the breakpoint should be ignored before being
    --  activated.
 
@@ -680,7 +680,7 @@ package Debugger is
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Num      : GVD.Types.Breakpoint_Identifier := 0;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Set the scope/action of the breakpoint identified by Num:
    --  GDB_COMMAND: change-breakpoint-scope/change-breakpoint-action
    --  Set the default scope/action of a debugging session if Num = 0:
@@ -739,53 +739,52 @@ package Debugger is
    procedure Task_Switch
      (Debugger : access Debugger_Root;
       Task_Num : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Switch to a specified task.
    --  GDB_COMMAND: "task"
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root;
       Thread   : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread"
 
    procedure PD_Switch
      (Debugger : access Debugger_Root;
       PD       : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Switch to a specified protection domain.
    --  GDB_COMMAND: "pd <pd_id>"
 
    procedure Info_Tasks
      (Debugger : access Debugger_Root;
       Info     : out Thread_Information_Array;
-      Len      : out Natural) is abstract;
+      Len      : out Natural);
    --  Return the current list of tasks.
    --  GDB_COMMAND: "info tasks"
 
    procedure Info_Threads
      (Debugger : access Debugger_Root;
       Info     : out Thread_Information_Array;
-      Len      : out Natural) is abstract;
+      Len      : out Natural);
    --  Return the current list of threads.
    --  GDB_COMMAND: "info threads"
 
    procedure Info_PD
      (Debugger : access Debugger_Root;
       Info     : out PD_Information_Array;
-      Len      : out Natural) is abstract;
+      Len      : out Natural);
    --  Return the current list of protection domains.
    --  GDB_COMMAND: "info pds"
 
    procedure Set_VxWorks_Version
-     (Debugger : access Debugger_Root; Force : Boolean := False)
-     is abstract;
+     (Debugger : access Debugger_Root; Force : Boolean := False);
    --  Determine the VxWorks version running on the target
 
    function VxWorks_Version
      (Debugger : access Debugger_Root)
-     return GVD.Types.VxWorks_Version_Type is abstract;
+     return GVD.Types.VxWorks_Version_Type;
    --  Retrieve the VxWorks version stored in the debugger record
 
    -----------------------------
