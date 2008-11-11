@@ -16,6 +16,7 @@ all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
+	$(GPRBUILD) -p -ws -P../gnatlib/src/gnatcoll
 	$(GPRBUILD) -p -ws -XTP_TASKING=No_Tasking -Pgps
 
 resources:
