@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                     Copyright (C) 2007-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -42,6 +42,7 @@ package body Codefix.Error_Lists is
         (Error_Message_List_Record, Error_Message_List);
    begin
       Clear_Messages (This);
+      Free (This.File_Regexp);
       Unchecked_Free (This);
    end Free;
 

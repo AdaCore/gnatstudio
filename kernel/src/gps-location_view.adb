@@ -19,6 +19,8 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with GNAT.Expect;              use GNAT.Expect;
+with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -636,6 +638,7 @@ package body GPS.Location_View is
       end if;
 
       Path_Free (Path);
+      View.Row := null;
       Path_Free (Start_Path);
       Path_Free (End_Path);
 
@@ -1620,9 +1623,14 @@ package body GPS.Location_View is
 
       Unref (V.Category_Pixbuf);
       Unref (V.File_Pixbuf);
+      Basic_Types.Unchecked_Free (V.Secondary_File_Pattern);
 
       if V.Idle_Redraw_Handler /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (V.Idle_Redraw_Handler);
+      end if;
+
+      if V.Row /= null then
+         Path_Free (V.Row);
       end if;
 
       if V.Idle_Row_Handler /= Glib.Main.No_Source_Id then
@@ -1962,6 +1970,10 @@ package body GPS.Location_View is
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
       if Iter /= Null_Iter then
+         if View.Row /= null then
+            Path_Free (View.Row);
+         end if;
+
          View.Row := Get_Path (Get_Model (View.Tree), Iter);
 
          if View.Idle_Row_Handler = Glib.Main.No_Source_Id then
@@ -2536,8 +2548,6 @@ package body GPS.Location_View is
    procedure Read_Secondary_Pattern_Preferences
      (View : access Location_View_Record'Class)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
    begin
       if View.Secondary_File_Pattern /= null then
          Unchecked_Free (View.Secondary_File_Pattern);

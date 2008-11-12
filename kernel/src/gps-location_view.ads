@@ -20,7 +20,7 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
-with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Expect;
 with GNAT.Strings;
 
 with GNATCOLL.VFS;
@@ -202,8 +202,6 @@ private
       Children           : List;
    end record;
 
-   type Pattern_Matcher_Access is access Pattern_Matcher;
-
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
@@ -230,7 +228,7 @@ private
       Stored_Locations : List;
 
       --  The following are used for detection of secondary file locations
-      Secondary_File_Pattern : Pattern_Matcher_Access;
+      Secondary_File_Pattern : GNAT.Expect.Pattern_Matcher_Access;
       --  Regexp corresponding to a detection of the secondary file
       SFF : Natural;
       --  Index of the secondary file

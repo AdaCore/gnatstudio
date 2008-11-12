@@ -152,12 +152,15 @@ package body GPS.Kernel.Timeout is
       C        : constant Monitor_Command_Access :=
                    Monitor_Command_Access (Command);
       Result   : Command_Return_Type;
-      Continue : Boolean;
-      pragma Unreferenced (Continue);
    begin
       Result := Execute (Command);
-      Continue := Process_Cb (C.Data);
-      return Result;
+      if not Process_Cb (C.Data) then
+         --  Process_Cb detected that the process has ended, so we should not
+         --  retry later on
+         return Success;
+      else
+         return Result;
+      end if;
    end Execute_Monitor;
 
    procedure Launch_Monitor_Command_Synchronous is new
@@ -197,6 +200,7 @@ package body GPS.Kernel.Timeout is
 
       Free (D.Name);
       Cleanup (D.Data);
+      D.Data := null;
    end Free;
 
    -------------
@@ -299,6 +303,7 @@ package body GPS.Kernel.Timeout is
       end if;
 
       if Data.D.Descriptor = null then
+         Unref (Data);
          return;
       end if;
 
@@ -351,6 +356,9 @@ package body GPS.Kernel.Timeout is
             end if;
          end if;
       end;
+
+      Free (Data.Args);
+      Free (Data.Directory);
 
       if Data.D.Exit_Cb /= null then
          Data.D.Exit_Cb (Data.D, Status);
@@ -479,13 +487,10 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.Died := True;
-         Cleanup (Data);
-
          return False;
 
       when E : others =>
          Trace (Exception_Handle, E);
-         Cleanup (Data);
          return False;
    end Process_Cb;
 
@@ -514,7 +519,6 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Cleanup (Process);
          return "";
    end Data_Handler;
 
@@ -635,7 +639,6 @@ package body GPS.Kernel.Timeout is
          Id                   => 0,
          Timeout              => Timeout);
       Initialize (C.Data);
-      Ref (C.Data);
 
       if Synchronous then
          Launch_Monitor_Command_Synchronous (Command_Access (C), 0.1);
@@ -810,7 +813,6 @@ package body GPS.Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
-         Cleanup (Console);
          return False;
       end if;
 
@@ -822,7 +824,6 @@ package body GPS.Kernel.Timeout is
          Button_Yes);
 
       if Button = Button_Yes then
-         Cleanup (Console);
          return False;
 
       else
@@ -832,7 +833,6 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-         Cleanup (Console);
          return False;
    end Delete_Handler;
 

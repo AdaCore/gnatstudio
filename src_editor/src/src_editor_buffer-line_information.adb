@@ -368,6 +368,23 @@ package body Src_Editor_Buffer.Line_Information is
       Side_Column_Configuration_Changed (Buffer);
    end Remove_Line_Information_Column;
 
+   ---------------------------
+   -- Free_File_Information --
+   ---------------------------
+
+   procedure Free_File_Information
+     (Buffer     : access Source_Buffer_Record'Class) is
+   begin
+      if Buffer.Extra_Information /= null then
+         for J in Buffer.Extra_Information'Range loop
+            Unchecked_Free (Buffer.Extra_Information (J).Info);
+            GNAT.Strings.Free (Buffer.Extra_Information (J).Identifier);
+            Unchecked_Free (Buffer.Extra_Information (J));
+         end loop;
+         Unchecked_Free (Buffer.Extra_Information);
+      end if;
+   end Free_File_Information;
+
    --------------------------
    -- Add_File_Information --
    --------------------------

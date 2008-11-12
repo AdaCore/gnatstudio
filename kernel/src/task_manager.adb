@@ -177,6 +177,7 @@ package body Task_Manager is
          Manager.Need_Global_Refresh := True;
 
          if Manager.Queues'Length = 1 then
+            Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
             Manager.Referenced_Command := -1;
             return False;

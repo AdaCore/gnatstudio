@@ -197,6 +197,9 @@ package body GPS.Kernel.Standard_Hooks is
       Infos (-1).Text := new String'(Label);
 
       Add_Line_Information (Kernel, File, Identifier, Infos);
+
+      Free (Infos (-1).Text);
+      Unchecked_Free (Infos);
    end Add_Editor_Label;
 
    ------------------------------------

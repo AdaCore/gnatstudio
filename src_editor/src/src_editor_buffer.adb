@@ -1385,6 +1385,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Free_Queue (Buffer.Queue);
+      Free_File_Information (Buffer);
 
       Free_Column_Info (Buffer.Editable_Line_Info_Columns);
       Unchecked_Free (Buffer.Editable_Line_Info_Columns);

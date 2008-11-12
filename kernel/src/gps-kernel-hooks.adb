@@ -1570,9 +1570,8 @@ package body GPS.Kernel.Hooks is
    -------------
 
    procedure Destroy (Data : in out Hooks_Data) is
-      pragma Unreferenced (Data);
    begin
-      null;
+      Free (Data.Data);
    end Destroy;
 
    -----------------------------

@@ -161,6 +161,10 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box);
    --  Reflect the change in buffer filename
 
+   procedure Destroy_Info_Frames
+     (Box : access Source_Editor_Box_Record'Class);
+   --  Destroy Box.Buffer_Info_Frames
+
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -656,15 +660,7 @@ package body Src_Editor_Box is
       Label : Gtk_Label;
 
    begin
-      if Box.Buffer_Info_Frames /= null then
-         for J in Box.Buffer_Info_Frames'Range loop
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Frame);
-            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Separator);
-         end loop;
-
-         Unchecked_Free (Box.Buffer_Info_Frames);
-      end if;
-
+      Destroy_Info_Frames (Box);
       if Info = null then
          return;
       end if;
@@ -753,6 +749,23 @@ package body Src_Editor_Box is
       when E : others => Trace (Exception_Handle, E);
    end Cursor_Position_Changed_Handler;
 
+   -------------------------
+   -- Destroy_Info_Frames --
+   -------------------------
+
+   procedure Destroy_Info_Frames
+     (Box : access Source_Editor_Box_Record'Class) is
+   begin
+      if Box.Buffer_Info_Frames /= null then
+         for J in Box.Buffer_Info_Frames'Range loop
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Frame);
+            Remove (Box.Label_Box, Box.Buffer_Info_Frames (J).Separator);
+         end loop;
+
+         Unchecked_Free (Box.Buffer_Info_Frames);
+      end if;
+   end Destroy_Info_Frames;
+
    --------------------
    -- On_Box_Destroy --
    --------------------
@@ -764,6 +777,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object, Params);
    begin
+      Destroy_Info_Frames (Box);
+
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
