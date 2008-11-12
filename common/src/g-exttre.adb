@@ -1181,7 +1181,13 @@ package body GNAT.Expect.TTY.Remote is
                   Desc.Buffer (1 .. Matched (0).Last), Output);
             end if;
 
-            if Desc.Buffer'Last - Matched (0).First + 1 > Str'First then
+            --  ??? Str may only contain the last part of the matching string,
+            --  so the below code will not always work. Make sure that we at
+            --  least never compute a negative index.
+
+            if Str'Last > Desc.Buffer'Last
+              and then Desc.Buffer'Last - Matched (0).First + 1 > Str'First
+            then
                Idx_Last :=
                  Str'Last - (Desc.Buffer'Last - Matched (0).First + 1);
             else
