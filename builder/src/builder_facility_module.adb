@@ -438,6 +438,8 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
+      String_List_Utils.String_List.Free (Module.Shadow_Output);
+      String_List_Utils.String_List.Free (Module.Output);
       Free (Module.Registry);
    end Destroy;
 
@@ -1243,6 +1245,7 @@ package body Builder_Facility_Module is
             end if;
 
             Free (Mains);
+            Destroy (Data);
          end;
       else
          Button_For_Target (Get_Name (Target), (1 .. 0 => <>));
@@ -1351,6 +1354,7 @@ package body Builder_Facility_Module is
             end loop;
 
             Free (Mains);
+            Destroy (Data);
          end;
       else
          Menu_For_Action (Parent_Path => To_String (Cat_Path),

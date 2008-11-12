@@ -628,6 +628,8 @@ package body Build_Command_Manager is
             Synchronous, Uses_Shell (T));
          Change_Dir (Old_Dir);
 
+         Free (Full);
+
          Unchecked_Free (All_Extra_Args);
       end Launch_For_Mode;
 

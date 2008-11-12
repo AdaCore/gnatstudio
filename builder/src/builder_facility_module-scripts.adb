@@ -209,6 +209,7 @@ package body Builder_Facility_Module.Scripts is
                            Synchronous  => True,
                            Dialog       => Mode,
                            Main         => Main);
+            Free (Extra_Args);
          end;
 
       elsif Command = "get_build_output" then
