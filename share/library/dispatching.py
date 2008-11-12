@@ -66,12 +66,14 @@ def highlight_file_idle ():
      return False
 
   buffer = to_highlight[0]
-  if not buffer:
-     return True
 
   if current_entities == []:
-     current_entities = buffer.file().entities (local = False)
-     current_entity   = current_entities.__iter__()
+     try:
+        current_entities = buffer.file().entities (local = False)
+        current_entity   = current_entities.__iter__()
+     except GPS.Exception:
+        ## The buffer might have been destroyed. Give up
+        return True
 
   try:
      e = current_entity.next()
