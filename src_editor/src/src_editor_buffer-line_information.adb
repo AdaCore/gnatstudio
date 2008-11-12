@@ -377,6 +377,8 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       if Buffer.Extra_Information /= null then
          for J in Buffer.Extra_Information'Range loop
+            GNAT.Strings.Free (Buffer.Extra_Information (J).Info.Text);
+            GNAT.Strings.Free (Buffer.Extra_Information (J).Info.Tooltip_Text);
             Unchecked_Free (Buffer.Extra_Information (J).Info);
             GNAT.Strings.Free (Buffer.Extra_Information (J).Identifier);
             Unchecked_Free (Buffer.Extra_Information (J));

@@ -82,8 +82,6 @@ GNAT_SOURCES= \
   scng.ads \
   scng.adb \
   sdefault.ads \
-  sinfo-cn.ads \
-  sinfo-cn.adb \
   sinput-c.ads \
   sinput-c.adb \
   sinput-p.ads \
