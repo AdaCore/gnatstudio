@@ -208,6 +208,7 @@ package body Filesystems is
    function Get_Host
      (FS : access Filesystem_Record'Class) return String is
    begin
+      --  ??? should use dispatching directly
       if FS.all in Remote_Unix_Filesystem_Record'Class then
          return Get_Host (Remote_Unix_Filesystem_Record (FS.all));
       elsif FS.all in Remote_Windows_Filesystem_Record'Class then
