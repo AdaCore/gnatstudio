@@ -455,7 +455,9 @@ package body VCS_View.Explorer is
             Log :=
               Get_Log_From_File (Kernel, File, False) /= GNATCOLL.VFS.No_File;
 
-            Line := (Copy_File_Status (File_Status), Log);
+            --  Set_Cache already does a copy of the File_Status, no need to
+            --  redo it here
+            Line := (File_Status, Log);
             Set_Cache (Get_Status_Cache, File, Line);
          end if;
 
