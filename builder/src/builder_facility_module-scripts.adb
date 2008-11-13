@@ -187,13 +187,13 @@ package body Builder_Facility_Module.Scripts is
                Info := No_File;
             end if;
 
-            Extra_Args := GNAT.OS_Lib.Argument_String_To_List
-              (Nth_Arg (Data, 5, ""));
-
             if Name = "" then
                Set_Error_Msg (Data, -"Invalid target");
                return;
             end if;
+
+            Extra_Args := GNAT.OS_Lib.Argument_String_To_List
+              (Nth_Arg (Data, 5, ""));
 
             if Force then
                Mode := Force_No_Dialog;
