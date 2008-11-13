@@ -51,7 +51,7 @@ package Src_Editor_Buffer.Line_Information is
    --  User must not free Info.
 
    procedure Free_File_Information
-     (Buffer     : access Source_Buffer_Record'Class);
+     (Buffer : access Source_Buffer_Record'Class);
    --  Free all file information stored in the buffer
 
    function Get_Side_Information

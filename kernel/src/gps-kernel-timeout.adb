@@ -110,7 +110,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Cleanup (Data : Console_Process);
    --  Close the process descriptor and mark the process as terminated in the
-   --  task manager
+   --  task manager.
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -458,7 +458,7 @@ package body GPS.Kernel.Timeout is
          if Fd /= null then
             declare
                Output : constant String :=
-                 Conditional_Strip_CR (Expect_Out (Fd.all));
+                          Conditional_Strip_CR (Expect_Out (Fd.all));
             begin
                if Data.D.Callback /= null then
                   Data.D.Process_Died := True;

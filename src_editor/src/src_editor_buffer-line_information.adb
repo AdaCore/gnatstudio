@@ -48,7 +48,7 @@ package body Src_Editor_Buffer.Line_Information is
    Me : constant Debug_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
    Block_Info_Column : constant String := "Block Information";
-   --  Identifier for the block information column.
+   --  Identifier for the block information column
 
    procedure Free (Info : in out Line_Information_Access);
    --  Free memory associated with Info
@@ -56,7 +56,7 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
       Column : Integer);
-   --  Remove the column from the side window information in Buffer.
+   --  Remove the column from the side window information in Buffer
 
    procedure Remove_Blank_Lines
      (Buffer                : access Source_Buffer_Record'Class;
@@ -197,7 +197,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       for J in Buffer.Editable_Lines'Range loop
          if Buffer.Editable_Lines (J).Side_Info_Data = null then
-            --  ??? Code duplication with Add_Lines.
+            --  ??? Code duplication with Add_Lines
             Buffer.Editable_Lines (J).Side_Info_Data := new
               Line_Info_Width_Array (Columns_Config.all'Range);
 
@@ -273,7 +273,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Width := Columns_Config.all (Column).Width;
 
-      --  Free the column for all data.
+      --  Free the column for all data
 
       for J in Editable_Lines'Range loop
          if Editable_Lines (J).Side_Info_Data /= null then
@@ -387,7 +387,7 @@ package body Src_Editor_Buffer.Line_Information is
    ---------------------------
 
    procedure Free_File_Information
-     (Buffer     : access Source_Buffer_Record'Class) is
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
       if Buffer.Extra_Information /= null then
          for J in Buffer.Extra_Information'Range loop
@@ -468,7 +468,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      --  If we reach this point, the info corresponds to line information.
+      --  If we reach this point, the info corresponds to line information
 
       Layout := Create_Pango_Layout (Box);
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
@@ -527,7 +527,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      --  The column has been found: update the stored data.
+      --  The column has been found: update the stored data
 
       for K in Info'Range loop
          Editable_Line := Editable_Line_Type (K);
@@ -611,10 +611,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Draw_Info (Starting_X : Gint);
       pragma Inline (Draw_Info);
-      --  Draw the info contained in Line_Info, at offset Starting_X.
+      --  Draw the info contained in Line_Info, at offset Starting_X
 
       procedure Draw_Line_Info;
-      --  Draw the line number for Editable_Line.
+      --  Draw the line number for Editable_Line
 
       procedure Draw_Blank_Line_Info;
       --  Draw information for an area where there is no editable line
@@ -817,7 +817,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Apply_Tag (Buffer, Buffer.Non_Editable_Tag, Iter, End_Iter);
 
-      --  Shift down editable lines.
+      --  Shift down editable lines
 
       for J in Line .. Buffer.Editable_Lines'Last loop
          if Buffer.Editable_Lines (J).Where = In_Buffer then
@@ -827,7 +827,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      --  Reset information for newly inserted buffer lines.
+      --  Reset information for newly inserted buffer lines
 
       for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
@@ -942,7 +942,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Expand_Lines
         (N : Buffer_Line_Type);
-      --  Expand the line-indexed arrays to contain N lines in size.
+      --  Expand the line-indexed arrays to contain N lines in size
 
       ------------------
       -- Expand_Lines --
@@ -1024,7 +1024,7 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Original_Text_Inserted := True;
 
       else
-         --  Figure out whether we need to expand the line arrays.
+         --  Figure out whether we need to expand the line arrays
 
          Bottom_Line := Buffer_Line_Type'Max
            (Buffer_Line_Type (Get_Line_Count (Buffer)),
@@ -1058,7 +1058,7 @@ package body Src_Editor_Buffer.Line_Information is
             end loop;
          end if;
 
-         --  Reset the newly inserted lines.
+         --  Reset the newly inserted lines
 
          for J in 0 .. Number - 1 loop
             Buffer_Lines (Start + J) := New_Line_Data;
@@ -1206,7 +1206,7 @@ package body Src_Editor_Buffer.Line_Information is
       Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line_At_Blanks) - 1);
       Copy (Iter, End_Iter);
 
-      --  Compute the real number of blank lines.
+      --  Compute the real number of blank lines
 
       Buffer_Line := Buffer_Line_At_Blanks;
 
@@ -1220,7 +1220,7 @@ package body Src_Editor_Buffer.Line_Information is
          exit when Real_Number = Buffer_Line_Type (Number);
       end loop;
 
-      --  Remove the non-editable tag.
+      --  Remove the non-editable tag
       Copy (Iter, Begin_Tag);
       Backward_Char (Begin_Tag, Success);
 
@@ -1230,7 +1230,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Remove_Tag (Buffer, Buffer.Non_Editable_Tag, Begin_Tag, End_Iter);
 
-      --  Remove the lines.
+      --  Remove the lines
 
       Buffer.Blank_Lines := Buffer.Blank_Lines - Natural (Real_Number);
 
@@ -1253,7 +1253,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      --  Redraw the side column.
+      --  Redraw the side column
 
       Side_Column_Configuration_Changed (Buffer);
       Buffer.Modifying_Real_Lines := False;
@@ -1318,11 +1318,11 @@ package body Src_Editor_Buffer.Line_Information is
          Insert (Buffer, Start_Iter, "" & ASCII.LF);
       end if;
 
-      --  Disable emitting new cursor positions while we hide lines.
+      --  Disable emitting new cursor positions while we hide lines
 
       Buffer.Do_Not_Move_Cursor := True;
 
-      --  Remove all blank lines in the block that is to be folded.
+      --  Remove all blank lines in the block that is to be folded
 
       if Buffer.Blank_Lines /= 0 then
          Result := Flatten_Area (Buffer, Line_Start, Line_End);
@@ -1338,7 +1338,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
 
          if Editable_Lines (L).Where = In_Buffer then
-            --  Get the line of text and store it in the pointer.
+            --  Get the line of text and store it in the pointer
 
             Get_Iter_At_Line
               (Buffer,
@@ -1363,7 +1363,7 @@ package body Src_Editor_Buffer.Line_Information is
                Editable_Lines (L) := Line_Data;
             end;
 
-            --  Remove the line from the screen.
+            --  Remove the line from the screen
 
             Forward_Char (End_Iter, Result);
 
@@ -1381,7 +1381,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Hidden_Lines := Buffer.Hidden_Lines + Number_Of_Lines_Folded;
 
-      --  Shift up editable lines.
+      --  Shift up editable lines
 
       for J in Line_End + 1 .. Buffer.Last_Editable_Line loop
          if Editable_Lines (J).Where = In_Buffer then
@@ -1390,7 +1390,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      --  Add an icon to unhide the lines.
+      --  Add an icon to unhide the lines
 
       Command := new Unhide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
@@ -1406,7 +1406,7 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
-      --  Re-enable moving the cursor, and reemit the cursor position.
+      --  Re-enable moving the cursor, and reemit the cursor position
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
       Emit_New_Cursor_Position (Buffer);
@@ -1443,15 +1443,15 @@ package body Src_Editor_Buffer.Line_Information is
       First_Line := Get_Editable_Line (Buffer, Buffer_Line);
       Last_Line  := Get_Editable_Line (Buffer, Buffer_Line + 1);
 
-      --  Disable emitting new cursor positions while we hide lines.
+      --  Disable emitting new cursor positions while we hide lines
 
       Buffer.Do_Not_Move_Cursor := True;
 
       for Line in reverse First_Line .. Last_Line loop
-         --  If the line is already in the buffer, skip.
+         --  If the line is already in the buffer, skip
 
          if Editable_Lines (Line).Where /= In_Buffer then
-            --  Insert the line.
+            --  Insert the line
 
             Get_Iter_At_Mark (Buffer, Iter, Mark);
 
@@ -1467,7 +1467,7 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Inserting := False;
             Buffer.Modifying_Editable_Lines := True;
 
-            --  Modify editable line structure.
+            --  Modify editable line structure
 
             declare
                Line_Data : constant Editable_Line_Data :=
@@ -1479,7 +1479,7 @@ package body Src_Editor_Buffer.Line_Information is
                Editable_Lines (Line) := Line_Data;
             end;
 
-            --  Set the editable line information.
+            --  Set the editable line information
             Buffer.Line_Data (Buffer_Line).Editable_Line := Line;
 
             Number_Of_Lines_Unfolded := Number_Of_Lines_Unfolded + 1;
@@ -1503,7 +1503,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      --  Highlight the inserted text.
+      --  Highlight the inserted text
 
       Get_Iter_At_Line
         (Buffer, Start_Iter, Gint (Get_Buffer_Line (Buffer, First_Line) - 1));
@@ -1512,11 +1512,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       Highlight_Slice (Buffer, Start_Iter, End_Iter);
 
-      --  Redraw the side column.
+      --  Redraw the side column
 
       Side_Column_Configuration_Changed (Buffer);
 
-      --  Add an icon to hide the lines.
+      --  Add an icon to hide the lines
 
       Command := new Hide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
@@ -1531,7 +1531,7 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Modifying_Real_Lines := False;
       Register_Edit_Timeout (Buffer);
 
-      --  Re-enable moving the cursor, and reemit the cursor position.
+      --  Re-enable moving the cursor, and reemit the cursor position
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
       Emit_New_Cursor_Position (Buffer);
@@ -1836,7 +1836,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      --  Get the text tag, create it if necessary.
+      --  Get the text tag, create it if necessary
 
       Tag := Lookup (Get_Tag_Table (Buffer), Get_Name (Style));
 
@@ -1900,7 +1900,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      --  Highlight/Unhighlight the text.
+      --  Highlight/Unhighlight the text
 
       if Remove then
          Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
@@ -1965,13 +1965,13 @@ package body Src_Editor_Buffer.Line_Information is
       Result         : Boolean := False;
       pragma Unreferenced (Returned);
    begin
-      --  There is nothing to do if the lines are real.
+      --  There is nothing to do if the lines are real
 
       if Lines_Are_Real (Buffer) then
          return False;
       end if;
 
-      --  Unfold all the lines.
+      --  Unfold all the lines
 
       for Line in Start_Line .. End_Line loop
          if Editable_Lines (Line).Where /= In_Buffer then
@@ -1980,7 +1980,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      --  Remove all blank lines.
+      --  Remove all blank lines
 
       if Buffer.Blank_Lines /= 0 then
          Buffer_Line := Get_Buffer_Line (Buffer, Start_Line);
