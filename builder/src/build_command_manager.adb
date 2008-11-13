@@ -559,10 +559,17 @@ package body Build_Command_Manager is
                return;
             end if;
 
-            Full := Expand_Command_Line
-              (Kernel, Command_Line.all & All_Extra_Args.all,
-               Server, Force_File, Main, Subdir);
-            Free (Command_Line);
+            declare
+               CL_Mode : Argument_List_Access :=
+                           Apply_Mode_Args
+                             (Get_Model (T), Mode, Command_Line.all);
+            begin
+               Full := Expand_Command_Line
+                 (Kernel, CL_Mode.all & All_Extra_Args.all,
+                  Server, Force_File, Main, Subdir);
+               Free (Command_Line);
+               Free (CL_Mode);
+            end;
 
          else
             --  Get the unexpanded command line from the target
