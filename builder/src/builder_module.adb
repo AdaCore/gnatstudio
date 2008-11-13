@@ -579,7 +579,8 @@ package body Builder_Module is
          return;
       end if;
 
-      Console := Create_Interactive_Console (Kernel, Run.Title.all);
+      Console := Create_Interactive_Console
+        (Kernel, Run.Title.all, ANSI_Support => True);
       Clear (Console);
       Child := Find_MDI_Child (Get_MDI (Kernel), Console);
 

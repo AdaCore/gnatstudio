@@ -527,6 +527,7 @@ package body GVD.Consoles is
          Font         => Default_Style.Get_Pref_Font,
          History_List => null,
          Key          => "gvd_tty_console",
+         ANSI_Support => True,
          Wrap_Mode    => Wrap_Char);
       Widget_Callback.Connect
         (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
