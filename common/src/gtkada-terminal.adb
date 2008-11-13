@@ -26,8 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Unicode;         use Glib.Unicode;
@@ -59,14 +59,17 @@ package body Gtkada.Terminal is
    type Capability is
      (Self_Insert,
       Do_Nothing,
+      Beginning_Of_Line,
       Insert_Lines,              --  "AL"
       Delete_Chars,              --  "DC"
       End_Alternative_Charset,   --  "ae"
       Start_Alternative_Charset, --  "as"
       Delete_Lines,              --  "DL"
       Cursor_Down,               --  "DO"
+      Cursor_Down_Multiple,
       Insert_Chars,              --  "IC"
       Keypad_Center_Key,         --  "K2"
+      Cursor_Left,
       Cursor_Left_Multiple,      --  "LE"
       Cursor_Right_Multiple,     --  "RI"
       Normal_Scroll,             --  "SF"
@@ -79,6 +82,7 @@ package body Gtkada.Terminal is
       Clear_To_End_Of_Line,      --  "ce"
       Clear_Screen_And_Home,     --  "cl"
       Move_Cursor,               --  "cm"
+      Newline,                   --  "sf"
       Scroll_Region,             --  "cs"
       Clear_Tabs,                --  "ct"
       Delete_One_Char,           --  "dc"
@@ -135,8 +139,6 @@ package body Gtkada.Terminal is
       Set_Char_Attribute,
       Display_In_Status_Line);
 
-   type FSM_Transition;
-   type FSM_Transition_Access is access FSM_Transition;
    type FSM_State is record
       Callback       : Capability;
 
@@ -165,11 +167,10 @@ package body Gtkada.Terminal is
    type GtkAda_Terminal_Class is record
       C_Class : GObject_Class := Uninitialized_Class;
       Default_Insert_Callback : Insert_Callback := null;
-      FSM     : FSM_Transition_Access;
    end record;
    Class : GtkAda_Terminal_Class;
 
-   Alternate_Charset : constant array (Character) of Gunichar :=
+   Alternate_Charset : array (Character) of Gunichar :=
      ('+'  => 16#2192#, --  arrow pointing right
       ','  => 16#2190#, --  arrow pointing left
       '-'  => 16#2191#, --  arrow pointing up
@@ -213,7 +214,7 @@ package body Gtkada.Terminal is
 
    procedure On_Insert_Text
      (Widget : System.Address;
-      Pos    : access Gtk.Text_Iter.Gtk_Text_Iter;
+      Iter   : access Gtk.Text_Iter.Gtk_Text_Iter;
       Text   : System.Address;
       Length : Gint);
    pragma Convention (C, On_Insert_Text);
@@ -226,8 +227,98 @@ package body Gtkada.Terminal is
       Func     : Capability);
    --  Add an extra sequence to a finite state machine
 
+   procedure Free (FSM : in out FSM_Transition_Access);
+   --  Free memory used by FSM (recursively)
+
    function Parse_Xterm_Termcap return FSM_Transition_Access;
    --  Create a state machine to analyze an xterm's escape sequences
+
+   procedure On_Destroy (Data : System.Address; Self : System.Address);
+   pragma Convention (C, On_Destroy);
+   --  The terminal is being destroyed, reclaim memory
+
+   procedure On_Move_Cursor_Left
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count : Positive);
+   procedure On_Move_Cursor_Right
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count : Natural);
+   procedure On_Move_Cursor_Up
+     (Term            : access GtkAda_Terminal_Record'Class;
+      Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count           : Natural;
+      Preserve_Column : Boolean);
+   procedure On_Move_Cursor_Down
+     (Term            : access GtkAda_Terminal_Record'Class;
+      Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count           : Natural;
+      Preserve_Column : Boolean);
+   procedure On_Set_Attribute
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Ansi  : Integer);
+   procedure On_Clear_Screen_And_Home
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter);
+   procedure On_Clear_To_End_Of_Screen
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter);
+   procedure On_Clear_To_End_Of_Line
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter);
+   procedure On_Newline
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter);
+   procedure On_Move_Cursor
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter   : in out Gtk_Text_Iter;
+      Line   : Integer;
+      Column : Integer);
+   --  Callbacks for various capabilities
+
+   procedure Set_Col_In_Line
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter   : in out Gtk_Text_Iter;
+      Col    : Gint);
+   --  Set the cursor onto a specific column in its current line
+
+   procedure Default_Insert
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S     : String;
+      Overwrite_Mode : Boolean := True);
+   procedure Default_Insert
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S      : System.Address;
+      Length : Gint;
+      Overwrite_Mode : Boolean := True);
+   --  Insert a string using the default insert method of GtkTextBuffer,
+   --  bypassing our own handler for terminals
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (FSM : in out FSM_Transition_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (FSM_Transition, FSM_Transition_Access);
+   begin
+      if FSM /= null then
+         for S in FSM'Range loop
+            if FSM (S).Any_Number /= null then
+               Free (FSM (S).Any_Number);
+            end if;
+
+            if FSM (S).Transitions /= null then
+               Free (FSM (S).Transitions);
+            end if;
+         end loop;
+
+         Unchecked_Free (FSM);
+      end if;
+   end Free;
 
    ------------------
    -- Add_Sequence --
@@ -284,27 +375,49 @@ package body Gtkada.Terminal is
    function Parse_Xterm_Termcap return FSM_Transition_Access is
       FSM : FSM_Transition_Access;
    begin
+      --  The following are ANSI sequences which seem to work fine
+      Add_Sequence (FSM, ASCII.ESC & "[u",       Restore_Saved_Position);
+      Add_Sequence (FSM, ASCII.ESC & "[s",       Save_Position);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dH",  Move_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%df",  Move_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[%dm",     Set_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dm",  Set_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[%dD",     Cursor_Left_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[D",       Cursor_Left);
+      Add_Sequence (FSM, ASCII.ESC & "[%dC",     Cursor_Right_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
+      Add_Sequence (FSM, ASCII.ESC & "[%dA",     Cursor_Up_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
+      Add_Sequence (FSM, ASCII.ESC & "[%dB",     Cursor_Down_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[B",       Cursor_Down);
+      Add_Sequence (FSM, ASCII.ESC & "[2J",      Clear_Screen_And_Home);
+      Add_Sequence (FSM, ASCII.ESC & "]0;%s" & ASCII.BEL,
+                    Display_In_Status_Line);
+      Add_Sequence (FSM, ASCII.LF & "",      Newline);
+      Add_Sequence (FSM, ASCII.CR & "",      Beginning_Of_Line);
+      Add_Sequence (FSM, ASCII.BS & "",      Cursor_Left);
+      Add_Sequence (FSM, ASCII.BEL & "",     Do_Nothing);
+      Add_Sequence (FSM, ASCII.ESC & "[J",   Clear_To_End_Of_Screen);
+      Add_Sequence (FSM, ASCII.ESC & "[K",   Clear_To_End_Of_Line);
+      Add_Sequence (FSM, ASCII.ESC & "[27m", End_Standout_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "[24m", End_Underlining);
+
+      --  These are sequences from termcap entries, but some of them seem
+      --  incorrect
+
+      Add_Sequence (FSM, ASCII.ESC & "(0",   Start_Alternative_Charset);
+      Add_Sequence (FSM, ASCII.ESC & "(B",   End_Alternative_Charset);
+
       Add_Sequence (FSM, ASCII.ESC & "[%dL", Insert_Lines);
       Add_Sequence (FSM, ASCII.ESC & "[%dP", Delete_Chars);
       Add_Sequence (FSM, ASCII.ESC & "[%dM", Delete_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%dB", Cursor_Down);
       Add_Sequence (FSM, ASCII.ESC & "[%d@", Insert_Chars);
       Add_Sequence (FSM, ASCII.ESC & "OE",   Keypad_Center_Key);
-      Add_Sequence (FSM, ASCII.ESC & "[%dD", Cursor_Left_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "[%dC", Cursor_Right_Multiple);
       Add_Sequence (FSM, ASCII.ESC & "[%dS", Normal_Scroll);
       Add_Sequence (FSM, ASCII.ESC & "[%dT", Scroll_Back);
-      Add_Sequence (FSM, ASCII.ESC & "[%dA", Cursor_Up_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "(B",   End_Alternative_Charset);
       Add_Sequence (FSM, ASCII.ESC & "[L",   Insert_One_Line);
-      Add_Sequence (FSM, ASCII.ESC & "(0",   Start_Alternative_Charset);
       Add_Sequence (FSM, ASCII.BEL & "",     Audio_Bell);
       Add_Sequence (FSM, ASCII.ESC & "[Z",   Move_To_Prev_Tab);
-      Add_Sequence (FSM, ASCII.ESC & "[J",   Clear_To_End_Of_Screen);
-      Add_Sequence (FSM, ASCII.ESC & "[K",   Clear_To_End_Of_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[H" & ASCII.ESC & "[2J",
-                    Clear_Screen_And_Home);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dH", Move_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%dr", Scroll_Region);
       Add_Sequence (FSM, ASCII.ESC & "[3g",     Clear_Tabs);
       Add_Sequence (FSM, ASCII.ESC & "[P",      Delete_One_Char);
@@ -346,15 +459,11 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
       Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Reverse_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "8",        Restore_Saved_Position);
-      Add_Sequence (FSM, ASCII.ESC & "7",        Save_Position);
-      Add_Sequence (FSM, ASCII.ESC & "[27m",     End_Standout_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Standout_Mode);
       Add_Sequence (FSM, ASCII.ESC & "M",        Reverse_Scroll);
       Add_Sequence (FSM, ASCII.ESC & "H",        Set_Tabulator_Stop);
       Add_Sequence (FSM, ASCII.ESC & "[?1049l",  End_Program_Using_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[?1049h",  Begin_Program_Using_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[24m",     End_Underlining);
       Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
       Add_Sequence (FSM, ASCII.ESC & "[4m",      Start_Underlining);
       Add_Sequence (FSM, ASCII.ESC & "[?5h"
@@ -368,18 +477,362 @@ package body Gtkada.Terminal is
 
       --  No meaning in GUI mode (?)
       --  do=^J            Cursor down one line
-      --  kb=^H                        Backspace key
-      --  le=^H                        Cursor left one character
       --  sf=^J                        Normal scroll one line
       --  ta=^I                        Move to next hardware tab
 
-      --  Not in termcap, only in terminfo apparently
-      Add_Sequence (FSM, ASCII.ESC & "]0;%s" & ASCII.BEL,
-                    Display_In_Status_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[%dm", Set_Char_Attribute);
-
       return FSM;
    end Parse_Xterm_Termcap;
+
+   ------------------
+   -- On_Set_Title --
+   ------------------
+
+   procedure On_Set_Title
+     (Term  : access GtkAda_Terminal_Record;
+      Title : String)
+   is
+      pragma Unreferenced (Term);
+   begin
+      Trace (Me, "Set_Title: " & Title);
+   end On_Set_Title;
+
+   -------------------------
+   -- On_Move_Cursor_Left --
+   -------------------------
+
+   procedure On_Move_Cursor_Left
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count : Positive)
+   is
+      Success : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      Backward_Chars (Iter, Count => Gint (Count), Result => Success);
+      Place_Cursor (Term, Iter);
+   end On_Move_Cursor_Left;
+
+   ---------------------
+   -- Set_Col_In_Line --
+   ---------------------
+
+   procedure Set_Col_In_Line
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter   : in out Gtk_Text_Iter;
+      Col    : Gint)
+   is
+   begin
+      if Get_Line_Offset (Iter) > Col then
+         On_Move_Cursor_Left
+           (Term, Iter, Integer (Get_Line_Offset (Iter) - Col));
+      elsif Get_Line_Offset (Iter) < Col then
+         On_Move_Cursor_Right
+           (Term, Iter, Integer (Col - Get_Line_Offset (Iter)));
+      else
+         Place_Cursor (Term, Iter);
+      end if;
+   end Set_Col_In_Line;
+
+   --------------------------
+   -- On_Move_Cursor_Right --
+   --------------------------
+
+   procedure On_Move_Cursor_Right
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count : Natural)
+   is
+      Success : Boolean;
+      pragma Unreferenced (Success);
+
+      Line_Chars : Gint := Get_Chars_In_Line (Iter);
+      --  Number of chars in current line, including trailing '\n' if any
+
+      Offset     : constant Gint := Get_Line_Offset (Iter);
+      --  Offset in current line, starting at 0
+
+      Final_Offset_In_Line : constant Gint := Offset + Gint (Count);
+
+   begin
+      --  One small difficulty here: if the line does not contain enough
+      --  characters, gtk+ will not move the cursor. But a terminal should
+      --  behave as if it always had a character at any of its position, so we
+      --  need to create them on the fly
+
+      if Count /= 0 then
+         if Final_Offset_In_Line > Line_Chars then
+
+            if Line_Chars /= Offset then
+               Line_Chars := Line_Chars - 1;
+            end if;
+
+            declare
+               S : aliased constant
+                 String (1 .. Integer (Final_Offset_In_Line - Line_Chars))
+                 := (others => ' ');
+            begin
+               --  We must test whether we are already on line ends, since
+               --  otherwise the call to Forward_To_Line_End would jump to next
+               --  line.
+               if not Ends_Line (Iter) then
+                  Forward_To_Line_End (Iter, Success);
+               end if;
+
+               Default_Insert (Term, Iter, S);
+            end;
+
+         else
+            Forward_Chars (Iter, Count => Gint (Count), Result => Success);
+         end if;
+      end if;
+
+      Place_Cursor (Term, Iter);
+   end On_Move_Cursor_Right;
+
+   -------------------------
+   -- On_Move_Cursor_Down --
+   -------------------------
+
+   procedure On_Move_Cursor_Down
+     (Term            : access GtkAda_Terminal_Record'Class;
+      Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count           : Natural;
+      Preserve_Column : Boolean)
+   is
+      Start     : constant Gint := Get_Line_Offset (Iter);
+      Success   : Boolean;
+      Missing   : Integer;
+      Eob       : Gtk_Text_Iter;
+   begin
+      Get_End_Iter   (Term, Eob);
+
+      if Count = 0 then
+         --  Already on the right line
+         null;
+
+      elsif Get_Line (Eob) + 1 < Get_Line (Iter) + Gint (Count) + 1 then
+         --  Lines missing in the buffer, add them
+         Missing := Integer (Get_Line (Iter)) + 1
+           + Count - Integer (Get_Line (Eob) + 1);
+         Default_Insert (Term, Eob, (1 .. Missing => ASCII.LF));
+         Copy (Source => Eob, Dest => Iter);
+
+      else
+         Forward_Lines (Iter, Gint (Count), Success);
+         if not Success then
+            Trace (Me,
+                   "Error: could not move" & Integer'Image (Count) & " down");
+         end if;
+      end if;
+
+      if Preserve_Column then
+         Set_Col_In_Line (Term, Iter, Start);
+      else
+         Place_Cursor (Term, Iter);
+      end if;
+   end On_Move_Cursor_Down;
+
+   -----------------------
+   -- On_Move_Cursor_Up --
+   -----------------------
+
+   procedure On_Move_Cursor_Up
+     (Term            : access GtkAda_Terminal_Record'Class;
+      Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Count           : Natural;
+      Preserve_Column : Boolean)
+   is
+      Start     : constant Gint := Get_Line_Offset (Iter);
+      Success   : Boolean;
+   begin
+      Backward_Lines (Iter, Gint (Count), Success);
+
+      if Preserve_Column then
+         Set_Col_In_Line (Term, Iter, Start);
+      else
+         Place_Cursor (Term, Iter);
+      end if;
+   end On_Move_Cursor_Up;
+
+   --------------------
+   -- On_Move_Cursor --
+   --------------------
+
+   procedure On_Move_Cursor
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Integer;
+      Column : Integer)
+   is
+      Success : Boolean;
+      Missing : Integer;
+      Eob     : Gtk_Text_Iter;
+      End_Col : constant Gint := Get_Line_Offset (Iter) + Gint (Column);
+   begin
+      --  ??? Tricky here: the first line should be the first visible line, but
+      --  we do not have access to the view, so we don't know exactly which it
+      --  is. For now we'll assume the user did a Clear_Screen first and the
+      --  buffer only contains the visible part anyway
+
+      --  Move down, creating lines as needed
+      Get_Start_Iter (Term, Iter);
+      Get_End_Iter   (Term, Eob);
+
+      if Get_Line (Iter) + 1 = Gint (Line) then
+         --  Already on the right line
+         null;
+
+      elsif Get_Line (Eob) + 1 < Gint (Line) then
+         --  Lines missing in the buffer, add them
+         Missing := Line - Integer (Get_Line (Eob) + 1);
+         Default_Insert (Term, Eob, (1 .. Missing => ASCII.LF));
+         Copy (Source => Eob, Dest => Iter);
+
+      else
+         Forward_Lines (Iter, Gint (Line - 1), Success);
+         if not Success then
+            Trace (Me,
+                   "Error: could not move"
+                   & Integer'Image (Line - 1) & " down");
+         end if;
+      end if;
+
+      Set_Col_In_Line (Term, Iter, End_Col);
+--      On_Move_Cursor_Right (Term, Iter, Column - 1);
+   end On_Move_Cursor;
+
+   ----------------
+   -- On_Newline --
+   ----------------
+
+   procedure On_Newline
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter)
+   is
+   begin
+      On_Move_Cursor_Down (Term, Iter, 1, Preserve_Column => False);
+      Set_Line_Index (Iter, 0);
+      Place_Cursor (Term, Iter);
+   end On_Newline;
+
+   ------------------------------
+   -- On_Clear_Screen_And_Home --
+   ------------------------------
+
+   procedure On_Clear_Screen_And_Home
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter)
+   is
+      Frm : Gtk_Text_Iter;
+   begin
+      --  ??? Should we preserve the rest of the window before the visible part
+      --  Ideally yes, but hard to do since we have to know what is the
+      --  visible area and we don't have access to the view
+
+      Get_Start_Iter (Term, Frm);
+      Get_End_Iter   (Term, Iter);
+      Delete (Term, Frm, Iter);
+   end On_Clear_Screen_And_Home;
+
+   -------------------------------
+   -- On_Clear_To_End_Of_Screen --
+   -------------------------------
+
+   procedure On_Clear_To_End_Of_Screen
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter)
+   is
+      To : Gtk_Text_Iter;
+   begin
+      Get_End_Iter (Term, To);
+      Delete (Term, Iter, To);
+   end On_Clear_To_End_Of_Screen;
+
+   -----------------------------
+   -- On_Clear_To_End_Of_Line --
+   -----------------------------
+
+   procedure On_Clear_To_End_Of_Line
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk_Text_Iter)
+   is
+      To      : Gtk_Text_Iter;
+      Success : Boolean;
+   begin
+      Copy (Source => Iter, Dest => To);
+      Forward_To_Line_End (To, Success);
+      Delete (Term, Iter, To);
+   end On_Clear_To_End_Of_Line;
+
+   ----------------------
+   -- On_Set_Attribute --
+   ----------------------
+
+   procedure On_Set_Attribute
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Ansi  : Integer)
+   is
+      pragma Unreferenced (Term);
+   begin
+      Trace (Me, "Set_Attribute:" & Ansi'Img);
+   end On_Set_Attribute;
+
+   --------------------
+   -- Default_Insert --
+   --------------------
+
+   procedure Default_Insert
+     (Term   : access GtkAda_Terminal_Record'Class;
+      Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S      : System.Address;
+      Length : Gint;
+      Overwrite_Mode : Boolean := True)
+   is
+      Off     : Gint := Get_Offset (Iter);
+      Iter2   : Gtk_Text_Iter;
+      Eol     : Gtk_Text_Iter;
+      Success : Boolean;
+   begin
+      --  Simulate overwrite mode. Rather than computing how many UTF8 chars we
+      --  have inserted we rely on Offset for that. However, we must make sure
+      --  not to erase beyond the end of line
+
+      Class.Default_Insert_Callback
+        (Get_Object (Term), Iter'Unrestricted_Access, S, Length);
+
+      if Overwrite_Mode then
+         Off := Get_Offset (Iter) - Off;
+         Copy (Source => Iter, Dest => Iter2);
+         Forward_Chars (Iter2, Count => Off, Result => Success);
+
+         Copy (Source => Iter, Dest => Eol);
+         if not Ends_Line (Eol) then
+            Forward_To_Line_End (Eol, Success);
+         end if;
+
+         if Get_Offset (Eol) <= Get_Offset (Iter2) then
+--  Backward_Chars (Eol, 1, Success); --  Do not remove the \n itself
+            Delete (Term, Iter, Eol);
+         else
+            Delete (Term, Iter, Iter2);
+         end if;
+      end if;
+
+      Place_Cursor (Term, Iter);
+   end Default_Insert;
+
+   --------------------
+   -- Default_Insert --
+   --------------------
+
+   procedure Default_Insert
+     (Term  : access GtkAda_Terminal_Record'Class;
+      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S     : String;
+      Overwrite_Mode : Boolean := True) is
+   begin
+      Default_Insert (Term, Iter, S'Address, S'Length, Overwrite_Mode);
+   end Default_Insert;
 
    --------------------
    -- On_Insert_Text --
@@ -387,7 +840,7 @@ package body Gtkada.Terminal is
 
    procedure On_Insert_Text
      (Widget : System.Address;
-      Pos    : access Gtk.Text_Iter.Gtk_Text_Iter;
+      Iter   : access Gtk.Text_Iter.Gtk_Text_Iter;
       Text   : System.Address;
       Length : Gint)
    is
@@ -396,6 +849,21 @@ package body Gtkada.Terminal is
         GtkAda_Terminal (Get_User_Data (Widget, Stub));
       Txt  : constant c_char_array_access := UC (Text);
 
+      Str_Arg_First, Str_Arg_Last : size_t;
+      Arg  : array (1 .. 9) of Integer;
+      Current_Arg : Integer := Arg'First;
+      --  Integer arguments
+
+      Current           : FSM_Transition_Access := Term.FSM;
+      Tmp               : FSM_Transition_Access;
+      C                 : size_t := 0;
+      Stopper           : char;
+
+      Start_Of_Sequence : size_t := 0;
+      --  The last char for which current was Class.FSM, ie the last
+      --  self-insert char. This is used to rollback when an escape sequence
+      --  could not be interpreted after all.
+
       procedure Insert_Substr (Frm, To : size_t);
       --  Write a specific substring to the buffer
 
@@ -403,7 +871,11 @@ package body Gtkada.Terminal is
       --  Return the specified substring of Text
 
       procedure Perform (Func : Capability);
-      --  Perform an action requested by the user
+      --  Perform an action requested by the user, and reset FSM
+
+      procedure Send_Current_Sequence;
+      --  Send the current sequence of characters to the screen, up to but not
+      --  including the character pointing by C. Reset the state machine
 
       ---------------
       -- To_String --
@@ -427,6 +899,9 @@ package body Gtkada.Terminal is
 
       procedure Insert_Substr (Frm, To : size_t) is
       begin
+         --  Insertion must be done in overwrite mode for a terminal, so we
+         --  need to delete chars before inserting some (or the opposite)
+
          if Term.Alternate_Charset then
             --  We need to translate the string into the alternate charset.
             --  These might be unicode chars encoded into multiple bytes. We
@@ -451,24 +926,24 @@ package body Gtkada.Terminal is
 
                   --  Is the block full ?
                   if Index >= S'Last - 4 then
-                     Class.Default_Insert_Callback
-                       (Widget, Pos, S'Address, Gint (Index - 1));
-                     Index := S'First;
                      Trace (Me, S (S'First .. Index - 1));
+                     Default_Insert (Term, Iter.all, S (S'First .. Index - 1));
+                     Index := S'First;
                   end if;
                end loop;
 
                if Index > S'First then
-                  Class.Default_Insert_Callback
-                    (Widget, Pos, S'Address, Gint (Index - 1));
                   Trace (Me, S (S'First .. Index - 1));
+                  Default_Insert (Term, Iter.all, S (S'First .. Index - 1));
                end if;
             end;
 
          else
-            Class.Default_Insert_Callback
-              (Widget, Pos, Txt (Frm .. To)'Address, Gint (To - Frm + 1));
-            Trace (Me, To_String (Frm, To));
+            if Active (Me) then
+               Trace (Me, To_String (Frm, To));
+            end if;
+            Default_Insert
+              (Term, Iter.all, Txt (Frm .. To)'Address, Gint (To - Frm + 1));
          end if;
       end Insert_Substr;
 
@@ -478,38 +953,122 @@ package body Gtkada.Terminal is
 
       procedure Perform (Func : Capability) is
       begin
+         if Current = Term.FSM then
+            Send_Current_Sequence;
+         end if;
+
+         if Active (Me) then
+            if Current_Arg = 1 then
+               Trace (Me, Func'Img);
+            elsif Current_Arg = 2 then
+               Trace (Me, Func'Img & Arg (Arg'First)'Img);
+            elsif Current_Arg = 3 then
+               Trace (Me, Func'Img & Arg (Arg'First)'Img
+                      & Arg (Arg'First + 1)'Img);
+            else
+               Trace (Me, Func'Img & " ...");
+            end if;
+         end if;
+
+         --  The previous sequence of characters has already been emitted, no
+         --  need to redo that (for instance when changing the charset to make
+         --  sure the previous chars are displayed with the right set)
+
          case Func is
+            when Do_Nothing =>
+               null;
+            when Display_In_Status_Line =>
+               On_Set_Title (Term, To_String (Str_Arg_First, Str_Arg_Last));
             when Start_Alternative_Charset =>
                Term.Alternate_Charset := True;
             when End_Alternative_Charset =>
                Term.Alternate_Charset := False;
+
+            when Beginning_Of_Line =>
+               Set_Line_Offset (Iter.all, 0);
+               Place_Cursor (Term, Iter.all);
+
+            when Cursor_Left_Multiple =>
+               On_Move_Cursor_Left (Term, Iter.all, Arg (1));
+            when Cursor_Left =>
+               On_Move_Cursor_Left (Term, Iter.all, 1);
+
+            when Cursor_Right_Multiple =>
+               On_Move_Cursor_Right (Term, Iter.all, Arg (1));
+            when Cursor_Right =>
+               On_Move_Cursor_Right (Term, Iter.all, 1);
+
+            when Cursor_Up_Multiple =>
+               On_Move_Cursor_Up
+                 (Term, Iter.all, Arg (1), Preserve_Column => True);
+            when Cursor_Up =>
+               On_Move_Cursor_Up
+                 (Term, Iter.all, 1, Preserve_Column => True);
+
+            when Cursor_Down_Multiple =>
+               On_Move_Cursor_Down
+                 (Term, Iter.all, Arg (1), Preserve_Column => True);
+            when Cursor_Down =>
+               On_Move_Cursor_Down
+                 (Term, Iter.all, 1, Preserve_Column => True);
+
+            when Clear_To_End_Of_Screen =>
+               On_Clear_To_End_Of_Screen (Term, Iter.all);
+
+            when Clear_To_End_Of_Line =>
+               On_Clear_To_End_Of_Line (Term, Iter.all);
+
+            when Newline =>
+               On_Newline (Term, Iter.all);
+            when Memory_Unlock | Memory_Lock =>
+               null;
+            when Clear_Screen_And_Home =>
+               On_Clear_Screen_And_Home (Term, Iter.all);
+            when Move_Cursor =>
+               On_Move_Cursor (Term, Iter.all, Arg (1), Arg (2));
+            when Set_Char_Attribute =>
+               for A in 1 .. Current_Arg - 1 loop
+                  On_Set_Attribute (Term, Arg (A));
+               end loop;
             when others =>
                Trace (Me, "Unhandled capability: " & Func'Img);
          end case;
+
+         Current := Term.FSM;
+         Start_Of_Sequence := C + 1;
       end Perform;
 
-      Current           : FSM_Transition_Access := Class.FSM;
-      C                 : size_t := 0;
-      Param_Start       : size_t;
-      Stopper           : char;
-      Arg1              : Integer;
+      ---------------------------
+      -- Send_Current_Sequence --
+      ---------------------------
 
-      Start_Of_Sequence : size_t := 0;
-      --  The last char for which current was Class.FSM, ie the last
-      --  self-insert char. This is used to rollback when an escape sequence
-      --  could not be interpreted after all.
+      procedure Send_Current_Sequence is
+      begin
+         if C > 0 and then Start_Of_Sequence <= C - 1 then
+            Insert_Substr (Start_Of_Sequence, C - 1);
+         end if;
 
---        Str : Unbounded_String;
+         Start_Of_Sequence := C;
+         Current_Arg       := Arg'First;
+         Str_Arg_First     := size_t (Length) - 1;
+      end Send_Current_Sequence;
+
+      Cursor : Gtk_Text_Iter;
 
    begin
---        for S in 0 .. size_t (Length - 1) loop
---           Append (Str, char'Image (Txt (S)));
---        end loop;
---        Trace (Me, To_String (Str));
-
       if Current = null then
          --  No special terminal setup ? Send the string as is
          Insert_Substr (Txt'First, Txt'First + size_t (Length) - 1);
+         return;
+      end if;
+
+      --  If we are not inserting at the cursor, all bets are off, and the
+      --  terminal might be corrupted. However, that's probably better than
+      --  forbidding a modification altogether
+
+      Get_Iter_At_Mark (Term, Cursor, Get_Insert (Term));
+      if Get_Offset (Cursor) /= Get_Offset (Iter.all) then
+         Default_Insert (Term, Iter.all, Text, Length);
          return;
       end if;
 
@@ -517,7 +1076,7 @@ package body Gtkada.Terminal is
          if Txt (C) in Escape_Chars then
             if Current (Txt (C)).String_Stopper /= char'Val (127) then
                --  Read a string parameter
-               Param_Start := C + 1;
+               Str_Arg_First := C + 1;
                Stopper := Current (Txt (C)).String_Stopper;
                while C < size_t (Length)
                  and then Txt (C) /= Stopper
@@ -526,52 +1085,135 @@ package body Gtkada.Terminal is
                end loop;
 
                --  A command with a string parameter
-               Trace (Me, Current (Txt (Param_Start - 1)).Callback'Img
-                      & " (" & To_String (Param_Start, C - 1) & ")");
-               Current := Class.FSM;
-               Start_Of_Sequence := C + 1;
+               Str_Arg_Last := C - 1;
+               Perform (Current (Txt (Str_Arg_First - 1)).Callback);
 
             elsif Current (Txt (C)).Callback /= Self_Insert then
                --  A special command was found
                Perform (Current (Txt (C)).Callback);
-               Current := Class.FSM;
-               Start_Of_Sequence := C + 1;
 
             elsif Current (Txt (C)).Any_Number /= null
               and then C < size_t (Length) - 1
               and then Txt (C + 1) in '0' .. '9'
             then
+               --  We have a command with one numerical parameter. The problem
+               --  is that this could also be part of a shorter command, as in:
+               --     ^[[%dm  => set attribute
+               --     ^[[2J   => Clear screen and home cursor
+               --  So after seeing "^[[" we need to test both the %d and the
+               --  standard transitions. So we use Tmp to follow the
+               --  potential states from here on.
+
+               Tmp     := Current (Txt (C)).Transitions;
+               Current := Current (Txt (C)).Any_Number;
+
                C := C + 1;
-               Param_Start := C;
+               Arg (Current_Arg) := 0;
                while C < size_t (Length)
                  and then Txt (C) in '0' .. '9'
                loop
+                  Arg (Current_Arg) := Arg (Current_Arg) * 10
+                    + char'Pos (Txt (C)) - char'Pos ('0');
+
+                  if Tmp /= null then
+                     if Tmp (Txt (C)) /= Null_State then
+                        --  The following test is only needed if we assume that
+                        --  the special command could end on a numeric
+                        --  character, which I don't believe is possible yet
+                        --  (and therefore we test again after the loop, ie
+                        --  when we have encountered the first non-numerical
+                        --  character
+                        if Tmp (Txt (C)).Callback /= Self_Insert then
+                           Perform (Tmp (Txt (C)).Callback);
+                           Current := Term.FSM;
+                           Start_Of_Sequence := C + 1;
+                           C := C + 1;
+                           exit;
+                        end if;
+
+                        Tmp := Tmp (Txt (C)).Transitions;
+
+                     else
+                        --  No need to check anymore, there are no transition
+                        Tmp := null;
+                     end if;
+                  end if;
+
                   C := C + 1;
                end loop;
 
-               Arg1 := Integer'Value (To_String (Param_Start, C - 1));
-               Trace (Me, "Read argument:" & Arg1'Img);
-               Current := Current (Txt (Param_Start - 1)).Any_Number;
+               --  We look at Tmp only if we have transitioned, otherwise we
+               --  would be ignoring the numbers altogether
+               if Tmp /= null
+                 and then Tmp (Txt (C)) /= Null_State
+               then
+                  if Tmp (Txt (C)).Callback /= Self_Insert then
+                     Perform (Tmp (Txt (C)).Callback);
 
-               C := C - 1;  --  So that we test the character after %d
+                  elsif Tmp (Txt (C)).Transitions /= null then
+                     --  Seems like the state machine is still trying to
+                     --  match, so this is the new current state and we forget
+                     --  about the %d argument. Seems an unlikely case though
+                     Current := Tmp (Txt (C)).Transitions;
+                  end if;
+               else
+                  Current_Arg := Current_Arg + 1;
+                  C := C - 1;  --  So that we test the character after %d
+               end if;
 
             elsif Current (Txt (C)).Transitions /= null then
-               --  In the middle of an escape sequence
+               --  Either starting a new special sequence (then emit current
+               --  chars) or in the middle of one
+
+               if Current = Term.FSM then
+                  Send_Current_Sequence;
+               end if;
+
                Current := Current (Txt (C)).Transitions;
 
             else
                --  A self-insert character
-               Insert_Substr (Start_Of_Sequence, C);
-               Start_Of_Sequence := C + 1;
-               Current := Class.FSM;
+               Current := Term.FSM;
             end if;
+
          else
-            Insert_Substr (Start_Of_Sequence, C);
+            --  Txt (C) not in Escape_Chars, ie > 127
+            --  We have some UTF8 encoding, and we need to send all the char
+            --  at once
+
+            if char'Pos (Txt (C)) < 16#800# then
+               C := C + 1;  --  utf8 char encoded on 2 bytes
+            elsif char'Pos (Txt (C)) < 16#10000# then
+               C := C + 2;  --  utf8 char encoded on 3 bytes
+            elsif char'Pos (Txt (C)) < 16#200000# then
+               C := C + 3;  --  utf8 char encoded on 4 bytes
+            elsif char'Pos (Txt (C)) < 16#4000000# then
+               C := C + 4;  --  utf8 char encoded on 5 bytes
+            else
+               C := C + 5;  --  utf8 char encoded on 6 bytes
+            end if;
          end if;
 
          C := C + 1;
       end loop;
+
+      Send_Current_Sequence;
    end On_Insert_Text;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Data : System.Address; Self : System.Address) is
+      pragma Unreferenced (Data);
+
+      Stub : GtkAda_Terminal_Record;
+      Term : constant GtkAda_Terminal :=
+        GtkAda_Terminal (Get_User_Data (Self, Stub));
+
+   begin
+      Free (Term.FSM);
+   end On_Destroy;
 
    -------------
    -- Gtk_New --
@@ -607,7 +1249,6 @@ package body Gtkada.Terminal is
       if Class.Default_Insert_Callback = null then
          Class.Default_Insert_Callback := Replace_Insert_Text
            (Class.C_Class, On_Insert_Text'Access);
-         Class.FSM := Parse_Xterm_Termcap;
 
          --  Initialize charset tables
          for C in Alternate_Charset'Range loop
@@ -616,130 +1257,13 @@ package body Gtkada.Terminal is
             end if;
          end loop;
       end if;
+
+      --  ??? We could cache the finite state machine for all terminals, but
+      --  we need to make this is properly freed on exit, and that also means
+      --  that all terminals have the same FSM (not true if we are emulating
+      --  various terminals)
+      Self.FSM := Parse_Xterm_Termcap;
+
+      Weak_Ref (Self, On_Destroy'Access);
    end Initialize;
-
 end Gtkada.Terminal;
-
---        function Parse_Escape_Sequence (Str : String) return Integer;
---        function Parse_Escape_Sequence (Str : String) return Integer is
---           Index : Integer := Str'First + 1;  --  Skip ASCII.ESC
---           Arg1  : Long_Integer;
---        begin
---           case Str (Index) is
---              when '['  =>
---                 Index := Index + 1;
---                 case Str (Index) is
---                    when 'H' =>
---                       if Str (Index + 1 .. Index + 5) =
---                         ASCII.ESC & "[2J"
---                       then
---                          Index := Index + 5;
---                          Trace (Me, "MANU clear screeen and cursor home");
---                       end if;
---
---                    when 'J' =>
---                       Trace (Me, "MANU Clear to end of screen");
---                    when 'K' =>
---                       Trace (Me, "MANU Clear to end of line");
---                    when 'L' =>
---                       Trace (Me, "MANU (Insert one line)");
---                    when 'Z' =>
---                       Trace (Me, "MANU move to previous tab stop");
---
---                    when '0' .. '9' =>
---                       Parse_Num (Str, Index, Arg1);
---                       case Str (Index) is
---                          when 'A' =>
---                             Trace
---                               (Me, "MANU (cursor up" & Arg1'Img & " lines");
---                          when 'B' =>
---                             Trace
---                             (Me, "MANU (cursor down" & Arg1'Img & " lines");
---                          when 'C' =>
---                             Trace
---                            (Me, "MANU (cursor right" & Arg1'Img & " chars");
---                          when 'D' =>
---                             Trace
---                             (Me, "MANU (cursor left" & Arg1'Img & " chars");
---                          when 'L' =>
---                           Trace (Me, "MANU (insert" & Arg1'Img & " lines)");
---                          when 'M' =>
---                           Trace (Me, "MANU (delete" & Arg1'Img & " lines");
---                          when 'P' =>
---                           Trace (Me, "MANU (delete" & Arg1'Img & " chars");
---                          when 'S' =>
---                             Trace
---                           (Me, "MANU (normal scroll" & Arg1'Img & " lines");
---                          when 'T' =>
---                             Trace
---                             (Me, "MANU (scroll back" & Arg1'Img & " lines");
---                          when '@' =>
---                           Trace (Me, "MANU (insert" & Arg1'Img & " chars");
---                          when others =>
---                             Trace
---                            (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---                       end case;
---
---                    when others =>
---                     Trace (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---                 end case;
---
---              when ']' =>
---                 Index := Index + 1;
---                 case Str (Index) is
---                    when '0' =>
---                       Index := Index + 1;
---                       if Str (Index) = ';' then
---                          null;
---                       end if;
---
---                    when others =>
---                     Trace (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---                 end case;
---
---
---              when '(' =>
---                 Index := Index + 1;
---                 case Str (Index) is
---                    when 'B' =>
---                       Trace (Me, "MANU (end alternative charset");
---
---                    when '0' =>
---                       Trace (Me, "MANU (start alternative charset");
---
---                    when others =>
---                     Trace (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---                 end case;
---
---              when 'O' =>
---                 Index := Index + 1;
---                 case Str (Index) is
---                    when 'E' =>
---                       Trace (Me, "MANU (center key on keypad)");
---                    when others =>
---                     Trace (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---                 end case;
---
---              when others =>
---                 Trace (Me, "MANU ??? " & Str (Str'First + 1 .. Index));
---
---           end case;
---
---           return Index + 1;
---        end Parse_Escape_Sequence;
---
-
---        for U in UTF8'Range loop
---           if UTF8 (U) = ASCII.ESC and then U > Skip then
---              if U > Skip then
---                 Trace (Me, "MANU >" & UTF8 (Skip .. U - 1));
---              end if;
---
---              Skip := Parse_Escape_Sequence (UTF8 (U .. UTF8'Last));
---           end if;
---        end loop;
---
---        if UTF8'Last /= Skip then
---           Trace (Me, "MANU >" & UTF8 (Skip .. UTF8'Last));
---        end if;
---

@@ -43,7 +43,19 @@ package Gtkada.Terminal is
      (Self : access GtkAda_Terminal_Record'Class);
    --  Creates or initializes a terminal.
 
+   procedure On_Set_Title
+     (Term  : access GtkAda_Terminal_Record;
+      Title : String);
+   --  Called when the title of the terminal should be changed. Since the
+   --  terminal is not a widget in itself, you must override this subprogram to
+   --  make something useful with it
+
 private
+
+   type FSM_Transition;
+   type FSM_Transition_Access is access FSM_Transition;
+   --  A finite state machine used to parse the text written on the terminal,
+   --  and efficiently detect special escape sequences.
 
    type GtkAda_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
@@ -51,6 +63,9 @@ private
       --  Whether we are in the alternate character set. This is a way for
       --  applications to display height bit chars by sending only 7bits
 
+      FSM : FSM_Transition_Access;
+      --  The finite state machine to find the special escape sequences. This
+      --  is null if the terminal should not try to find such sequences
    end record;
 
 end Gtkada.Terminal;
