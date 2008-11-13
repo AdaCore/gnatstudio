@@ -50,6 +50,9 @@ package body Src_Editor_Buffer.Line_Information is
    Block_Info_Column : constant String := "Block Information";
    --  Identifier for the block information column.
 
+   procedure Free (Info : in out Line_Information_Access);
+   --  Free memory associated with Info
+
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
       Column : Integer);
@@ -368,6 +371,17 @@ package body Src_Editor_Buffer.Line_Information is
       Side_Column_Configuration_Changed (Buffer);
    end Remove_Line_Information_Column;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Info : in out Line_Information_Access) is
+   begin
+      GNAT.Strings.Free (Info.Text);
+      GNAT.Strings.Free (Info.Tooltip_Text);
+      Unchecked_Free (Info);
+   end Free;
+
    ---------------------------
    -- Free_File_Information --
    ---------------------------
@@ -377,9 +391,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       if Buffer.Extra_Information /= null then
          for J in Buffer.Extra_Information'Range loop
-            GNAT.Strings.Free (Buffer.Extra_Information (J).Info.Text);
-            GNAT.Strings.Free (Buffer.Extra_Information (J).Info.Tooltip_Text);
-            Unchecked_Free (Buffer.Extra_Information (J).Info);
+            Free (Buffer.Extra_Information (J).Info);
             GNAT.Strings.Free (Buffer.Extra_Information (J).Identifier);
             Unchecked_Free (Buffer.Extra_Information (J));
          end loop;
@@ -428,7 +440,7 @@ package body Src_Editor_Buffer.Line_Information is
          else
             for J in Buffer.Extra_Information'Range loop
                if Buffer.Extra_Information (J).Identifier.all = Identifier then
-                  Unchecked_Free (Buffer.Extra_Information (J).Info);
+                  Free (Buffer.Extra_Information (J).Info);
                   Buffer.Extra_Information (J).Info :=
                     new Line_Information_Record'(Info (Info'First));
                   Found := True;
