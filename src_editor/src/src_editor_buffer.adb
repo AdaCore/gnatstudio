@@ -2761,6 +2761,7 @@ package body Src_Editor_Buffer is
       Length        : aliased Natural;
       Last          : Natural;
       CR_Found      : Boolean := False;
+      NUL_Found     : Boolean := False;
       F, L          : Gtk_Text_Iter;
       Valid         : Boolean;
       Recovering    : Boolean := False;
@@ -2822,9 +2823,15 @@ package body Src_Editor_Buffer is
               (Get_Language_Handler (Buffer.Kernel), Filename));
       end if;
 
-      Strip_CR (Contents.all, Last, CR_Found);
-
+      Strip_CR_And_NUL (Contents.all, Last, CR_Found, NUL_Found);
       Set_Charset (Buffer, Get_File_Charset (Filename));
+
+      if NUL_Found then
+         Console.Insert
+           (Buffer.Kernel,
+            (-"Warning: NUL characters stripped from ")
+            & Full_Name (Filename).all, Mode => Console.Error);
+      end if;
 
       UTF8 := Glib.Convert.Convert
         (Contents (Contents'First .. Last), "UTF-8",
@@ -2847,6 +2854,10 @@ package body Src_Editor_Buffer is
 
       if not Valid then
          Length := First_Invalid - 1;
+         Console.Insert
+           (Buffer.Kernel,
+            (-"Warning: invalid characters stripped from ")
+            & Full_Name (Filename).all, Mode => Console.Error);
       end if;
 
       Insert_At_Cursor (Buffer, UTF8, Gint (Length));
