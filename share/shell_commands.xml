@@ -3649,6 +3649,7 @@ My_Gdb()
       <param name="show_command" default="False">A boolean</param>
       <param name="single_line_regexp" default="False">A boolean</param>
       <param name="case_sensitive_regexp" default="True">A boolean</param>
+      <param name="strip_cr" default="True">A boolean</param>
       <description>Spawn specified command. Command can include triple-quoted strings, similar to python, which will always be preserved as one argument.
 
  If regexp is not-empty and on_match_action is specified, launch on_match_action when regexp is found in the process output. If on_exit_action is specified, execute it when the process terminates. Return the ID of the spawned process.
@@ -3675,6 +3676,8 @@ If progress_regexp is specified, then the output of the process will be scanned 
 remote_server represents the server used to spawn the process. By default, the GPS_Server is used, which is always the local machine. See the section "Using GPS for Remote Development" in the GPS documentation for more information on this field.
 
 If show_command is set, then the command line used to spawn the new Process is displayed in the "Messages" console.
+
+If strip_cr is true, the output of the process will have all its \r removed before the string is passed on to GPS and your script. This in general provides better portability to Windows systems, but might not be suitable for applications for which CR is relevant (for instance those that drive an ANSI terminal).
 
 An exception is raised if the process could not be spawned.</description>
       <see_also name="GPS.Process"/>

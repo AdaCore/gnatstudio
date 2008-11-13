@@ -68,6 +68,7 @@ package body Expect_Interface is
    Case_Sensitive_Cst   : aliased constant String := "case_sensitive_regexp";
    Rows_Cst             : aliased constant String := "rows";
    Columns_Cst          : aliased constant String := "columns";
+   Strip_CR_Cst         : aliased constant String := "strip_cr";
 
    Constructor_Args : constant Cst_Argument_List :=
                         (2  => Command_Cst'Access,
@@ -82,7 +83,8 @@ package body Expect_Interface is
                          11 => Remote_Server_Cst'Access,
                          12 => Show_Command_Cst'Access,
                          13 => Single_Line_Cst'Access,
-                         14 => Case_Sensitive_Cst'Access);
+                         14 => Case_Sensitive_Cst'Access,
+                         15 => Strip_CR_Cst'Access);
 
    Send_Args : constant Cst_Argument_List :=
                  (Command_Cst'Access, Add_Lf_Cst'Access);
@@ -105,6 +107,13 @@ package body Expect_Interface is
       Progress_Regexp  : Pattern_Matcher_Access;
       Progress_Current : Natural := 1;  --  Parenthesis within the regexp
       Progress_Final   : Natural := 2;  --  Parenthesis within the regexp
+
+      Strip_CR         : Boolean := True;
+      --  Whether ASCII.CR characters should be stripped from the output of
+      --  the process before passing the string on to GPS. This is in general
+      --  suitable especially on Windows, but should be set to False if the
+      --  program is carefully outputing escape sequences to manage the screen,
+      --  as unix shells do for instance
 
       In_Expect        : Boolean := False;
       --  True if we are processing the 'GPS.Process.expect' function. This
@@ -308,8 +317,13 @@ package body Expect_Interface is
          if not Command.In_Expect then
             Expect (Command.Pd.all, Result, All_Match, Timeout => 1);
             if Result /= Expect_Timeout then
-               Output_Cb (Custom_Action_Access (Command),
-                          Strip_CR (Expect_Out (Command.Pd.all)));
+               if Command.Strip_CR then
+                  Output_Cb (Custom_Action_Access (Command),
+                             Strip_CR (Expect_Out (Command.Pd.all)));
+               else
+                  Output_Cb (Custom_Action_Access (Command),
+                             Expect_Out (Command.Pd.all));
+               end if;
             end if;
          end if;
 
@@ -322,8 +336,13 @@ package body Expect_Interface is
       when Process_Died =>
 
          if not Command.In_Expect and then Command.Pd /= null then
-            Output_Cb (Custom_Action_Access (Command),
-                       Strip_CR (Expect_Out (Command.Pd.all)));
+            if Command.Strip_CR then
+               Output_Cb (Custom_Action_Access (Command),
+                          Strip_CR (Expect_Out (Command.Pd.all)));
+            else
+               Output_Cb (Custom_Action_Access (Command),
+                          Expect_Out (Command.Pd.all));
+            end if;
          end if;
 
          Close (Command.Pd.all, Command.Status);
@@ -676,12 +695,21 @@ package body Expect_Interface is
 
          --  Let the On_Match callback know about the output
 
-         declare
-            Str : constant String := Strip_CR (Expect_Out (Action.Pd.all));
-         begin
-            Output_Cb (Action, Str);
-            Concat (Output, Str);
-         end;
+         if Action.Strip_CR then
+            declare
+               Str : constant String := Strip_CR (Expect_Out (Action.Pd.all));
+            begin
+               Output_Cb (Action, Str);
+               Concat (Output, Str);
+            end;
+         else
+            declare
+               Str : constant String := Expect_Out (Action.Pd.all);
+            begin
+               Output_Cb (Action, Str);
+               Concat (Output, Str);
+            end;
+         end if;
 
          if Pattern /= "" and then Result = 1 then
             Trace (Me, "Interactive_Expect: Matched");
@@ -735,8 +763,21 @@ package body Expect_Interface is
       User_Data   : System.Address)
    is
       pragma Unreferenced (Description, User_Data);
+      Last : Integer := Str'First;
    begin
-      Trace (Me, "Receiving: " & Str);
+      for S in Str'Range loop
+         if Str (S) < ' ' then
+            if Last < S then
+               Trace (Me, "Receiving: " & Str (Last .. S - 1));
+            end if;
+            Trace (Me, "Receiving< ASCII." & Character'Image (Str (S)));
+            Last := S + 1;
+         end if;
+      end loop;
+
+      if Last <= Str'Last then
+         Trace (Me, "Receiving: " & Str (Last .. Str'Last));
+      end if;
    end Out_Trace_Filter;
 
    -----------------------
@@ -802,6 +843,7 @@ package body Expect_Interface is
             Remote_Server   : constant String := Nth_Arg (Data, 11, "");
             Single_Line     : constant Boolean := Nth_Arg (Data, 13, False);
             Case_Sensitive  : constant Boolean := Nth_Arg (Data, 14, True);
+            Strip_CR        : constant Boolean := Nth_Arg (Data, 15, True);
             Success         : Boolean;
             Flags           : Regexp_Flags := Multiple_Lines;
 
@@ -822,6 +864,7 @@ package body Expect_Interface is
             D.Before_Kill     := Nth_Arg (Data, 10, null);
             D.Show_Command    := Nth_Arg (Data, 12, False);
             D.Inst            := Inst;
+            D.Strip_CR        := Strip_CR;
 
             if Progress_Regexp /= "" then
                D.Progress_Regexp := new Pattern_Matcher'
@@ -1049,7 +1092,7 @@ package body Expect_Interface is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
-         Maximum_Args => 14,
+         Maximum_Args => 15,
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Register_Command
