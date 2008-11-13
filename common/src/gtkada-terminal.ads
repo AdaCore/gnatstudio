@@ -31,6 +31,7 @@
 --  Currently, it knows how to emulate xterm.
 
 with Gtk.Text_Buffer;
+with Gtk.Text_Tag;
 
 package Gtkada.Terminal is
 
@@ -57,15 +58,31 @@ private
    --  A finite state machine used to parse the text written on the terminal,
    --  and efficiently detect special escape sequences.
 
+   type Tag_Array is array (1 .. 8) of Gtk.Text_Tag.Gtk_Text_Tag;
+
    type GtkAda_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
+      FSM : FSM_Transition_Access;
+      --  The finite state machine to find the special escape sequences. This
+      --  is null if the terminal should not try to find such sequences
+
       Alternate_Charset : Boolean := False;
       --  Whether we are in the alternate character set. This is a way for
       --  applications to display height bit chars by sending only 7bits
 
-      FSM : FSM_Transition_Access;
-      --  The finite state machine to find the special escape sequences. This
-      --  is null if the terminal should not try to find such sequences
+      Bold_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      Bold : Boolean := False;
+      --  Whether text should be output in bold
+
+      Standout_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      Standout : Boolean := False;
+      --  Whether text should be printed in reverse video
+
+      Foreground_Tags    : Tag_Array;
+      Current_Foreground : Integer := -1;
+
+      Background_Tags    : Tag_Array;
+      Current_Background : Integer := -1;
    end record;
 
 end Gtkada.Terminal;

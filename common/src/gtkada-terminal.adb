@@ -30,10 +30,14 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
+with Glib.Properties;      use Glib.Properties;
 with Glib.Unicode;         use Glib.Unicode;
 with Gtk.Text_Buffer;      use Gtk.Text_Buffer;
 with Gtk.Text_Iter;        use Gtk.Text_Iter;
+with Gtk.Text_Tag;         use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;   use Gtk.Text_Tag_Table;
 with Gtk.Widget;           use Gtk.Widget;
+with Pango.Enums;          use Pango.Enums;
 with Interfaces.C.Strings; use Interfaces.C, Interfaces.C.Strings;
 with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
@@ -278,6 +282,9 @@ package body Gtkada.Terminal is
       Line   : Integer;
       Column : Integer);
    --  Callbacks for various capabilities
+
+   procedure End_All_Modes (Term : access GtkAda_Terminal_Record'Class);
+   --  Terminates all special highlighting modes and colors
 
    procedure Set_Col_In_Line
      (Term   : access GtkAda_Terminal_Record'Class;
@@ -549,16 +556,14 @@ package body Gtkada.Terminal is
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count : Natural)
    is
-      Success : Boolean;
-      pragma Unreferenced (Success);
-
       Line_Chars : Gint := Get_Chars_In_Line (Iter);
       --  Number of chars in current line, including trailing '\n' if any
 
       Offset     : constant Gint := Get_Line_Offset (Iter);
       --  Offset in current line, starting at 0
 
-      Final_Offset_In_Line : constant Gint := Offset + Gint (Count);
+      Iter2 : Gtk_Text_Iter;
+      Success : Boolean;
 
    begin
       --  One small difficulty here: if the line does not contain enough
@@ -567,15 +572,21 @@ package body Gtkada.Terminal is
       --  need to create them on the fly
 
       if Count /= 0 then
-         if Final_Offset_In_Line > Line_Chars then
+         Copy (Source => Iter, Dest => Iter2);
+         if not Ends_Line (Iter2) then
+            Forward_To_Line_End (Iter2, Success);
+         end if;
 
+         if Get_Offset (Iter) + Gint (Count) > Get_Offset (Iter2) then
             if Line_Chars /= Offset then
                Line_Chars := Line_Chars - 1;
             end if;
 
             declare
                S : aliased constant
-                 String (1 .. Integer (Final_Offset_In_Line - Line_Chars))
+                 String (1 .. Integer
+                   (Get_Offset (Iter) + Gint (Count)
+                      - Get_Offset (Iter2)))
                  := (others => ' ');
             begin
                --  We must test whether we are already on line ends, since
@@ -585,7 +596,9 @@ package body Gtkada.Terminal is
                   Forward_To_Line_End (Iter, Success);
                end if;
 
-               Default_Insert (Term, Iter, S);
+               Class.Default_Insert_Callback
+                 (Get_Object (Term),
+                  Iter'Unrestricted_Access, S'Address, S'Length);
             end;
 
          else
@@ -769,6 +782,18 @@ package body Gtkada.Terminal is
       Delete (Term, Iter, To);
    end On_Clear_To_End_Of_Line;
 
+   -------------------
+   -- End_All_Modes --
+   -------------------
+
+   procedure End_All_Modes (Term : access GtkAda_Terminal_Record'Class) is
+   begin
+      Term.Bold := False;
+      Term.Standout := False;
+      Term.Current_Foreground := -1;
+      Term.Current_Background := -1;
+   end End_All_Modes;
+
    ----------------------
    -- On_Set_Attribute --
    ----------------------
@@ -777,9 +802,32 @@ package body Gtkada.Terminal is
      (Term  : access GtkAda_Terminal_Record'Class;
       Ansi  : Integer)
    is
-      pragma Unreferenced (Term);
    begin
-      Trace (Me, "Set_Attribute:" & Ansi'Img);
+      case Ansi is
+         when 0 =>
+            End_All_Modes (Term);
+
+         when 30 => Term.Current_Foreground := Tag_Array'First;
+         when 31 => Term.Current_Foreground := Tag_Array'First + 1;
+         when 32 => Term.Current_Foreground := Tag_Array'First + 2;
+         when 33 => Term.Current_Foreground := Tag_Array'First + 3;
+         when 34 => Term.Current_Foreground := Tag_Array'First + 4;
+         when 35 => Term.Current_Foreground := Tag_Array'First + 5;
+         when 36 => Term.Current_Foreground := Tag_Array'First + 6;
+         when 37 => Term.Current_Foreground := Tag_Array'First + 7;
+
+         when 40 => Term.Current_Background := Tag_Array'First;
+         when 41 => Term.Current_Background := Tag_Array'First + 1;
+         when 42 => Term.Current_Background := Tag_Array'First + 2;
+         when 43 => Term.Current_Background := Tag_Array'First + 3;
+         when 44 => Term.Current_Background := Tag_Array'First + 4;
+         when 45 => Term.Current_Background := Tag_Array'First + 5;
+         when 46 => Term.Current_Background := Tag_Array'First + 6;
+         when 47 => Term.Current_Background := Tag_Array'First + 7;
+
+         when others =>
+            Trace (Me, "Set_Attribute:" & Ansi'Img);
+      end case;
    end On_Set_Attribute;
 
    --------------------
@@ -793,7 +841,8 @@ package body Gtkada.Terminal is
       Length : Gint;
       Overwrite_Mode : Boolean := True)
    is
-      Off     : Gint := Get_Offset (Iter);
+      Start_Offset : constant Gint := Get_Offset (Iter);
+      Off     : Gint;
       Iter2   : Gtk_Text_Iter;
       Eol     : Gtk_Text_Iter;
       Success : Boolean;
@@ -805,8 +854,30 @@ package body Gtkada.Terminal is
       Class.Default_Insert_Callback
         (Get_Object (Term), Iter'Unrestricted_Access, S, Length);
 
+      if Term.Bold then
+         Get_Iter_At_Offset (Term, Iter2, Start_Offset);
+         Apply_Tag (Term, Term.Bold_Tag, Iter2, Iter);
+      end if;
+
+      if Term.Standout then
+         Get_Iter_At_Offset (Term, Iter2, Start_Offset);
+         Apply_Tag (Term, Term.Standout_Tag, Iter2, Iter);
+      end if;
+
+      if Term.Current_Foreground in Tag_Array'Range then
+         Get_Iter_At_Offset (Term, Iter2, Start_Offset);
+         Apply_Tag
+           (Term, Term.Foreground_Tags (Term.Current_Foreground), Iter2, Iter);
+      end if;
+
+      if Term.Current_Background in Tag_Array'Range then
+         Get_Iter_At_Offset (Term, Iter2, Start_Offset);
+         Apply_Tag
+           (Term, Term.Background_Tags (Term.Current_Background), Iter2, Iter);
+      end if;
+
       if Overwrite_Mode then
-         Off := Get_Offset (Iter) - Off;
+         Off := Get_Offset (Iter) - Start_Offset;
          Copy (Source => Iter, Dest => Iter2);
          Forward_Chars (Iter2, Count => Off, Result => Success);
 
@@ -816,7 +887,6 @@ package body Gtkada.Terminal is
          end if;
 
          if Get_Offset (Eol) <= Get_Offset (Iter2) then
---  Backward_Chars (Eol, 1, Success); --  Do not remove the \n itself
             Delete (Term, Iter, Eol);
          else
             Delete (Term, Iter, Iter2);
@@ -1017,6 +1087,18 @@ package body Gtkada.Terminal is
                Term.Alternate_Charset := True;
             when End_Alternative_Charset =>
                Term.Alternate_Charset := False;
+               End_All_Modes (Term);  --  ??? Is this correct
+            when Start_Bold_Mode =>
+               End_All_Modes (Term);
+               Term.Bold := True;
+            when Start_Standout_Mode =>
+               End_All_Modes (Term);
+               Term.Standout := True;
+            when End_Standout_Mode =>
+               End_All_Modes (Term);
+               Term.Standout := False;
+            when End_All_Modes =>
+               End_All_Modes (Term);
 
             when Beginning_Of_Line =>
                Set_Line_Offset (Iter.all, 0);
@@ -1056,6 +1138,7 @@ package body Gtkada.Terminal is
                On_Newline (Term, Iter.all);
             when Memory_Unlock | Memory_Lock =>
                null;
+
             when Clear_Screen_And_Home =>
                On_Clear_Screen_And_Home (Term, Iter.all);
 
@@ -1303,5 +1386,96 @@ package body Gtkada.Terminal is
       Self.FSM := Parse_Xterm_Termcap;
 
       Weak_Ref (Self, On_Destroy'Access);
+
+      Gtk_New (Self.Bold_Tag);
+      Set_Property
+        (Self.Bold_Tag, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+      Add (Get_Tag_Table (Self), Self.Bold_Tag);
+      Unref (Self.Bold_Tag);
+
+      Gtk_New (Self.Standout_Tag);
+      Set_Property
+        (Self.Standout_Tag, Gtk.Text_Tag.Background_Property, "black");
+      Set_Property
+        (Self.Standout_Tag, Gtk.Text_Tag.Foreground_Property, "white");
+      Add (Get_Tag_Table (Self), Self.Standout_Tag);
+      Unref (Self.Standout_Tag);
+
+      for T in Tag_Array'Range loop
+         Gtk_New (Self.Foreground_Tags (T));
+         Gtk_New (Self.Background_Tags (T));
+
+         case T is
+            when 1 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "black");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "black");
+
+            when 2 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "red");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "red");
+
+            when 3 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "green");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "green");
+
+            when 4 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "yellow");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "yellow");
+
+            when 5 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "blue");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "blue");
+
+            when 6 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "magenta");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "magenta");
+
+            when 7 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "cyan");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "cyan");
+
+            when 8 =>
+               Set_Property
+                 (Self.Foreground_Tags (T),
+                  Gtk.Text_Tag.Foreground_Property, "white");
+               Set_Property
+                 (Self.Background_Tags (T),
+                  Gtk.Text_Tag.Background_Property, "white");
+         end case;
+
+         Add (Get_Tag_Table (Self), Self.Foreground_Tags (T));
+         Add (Get_Tag_Table (Self), Self.Background_Tags (T));
+
+         Unref (Self.Foreground_Tags (T));
+         Unref (Self.Background_Tags (T));
+      end loop;
    end Initialize;
 end Gtkada.Terminal;
