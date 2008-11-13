@@ -1430,7 +1430,8 @@ package body Interactive_Consoles is
       Manage_Prompt       : Boolean := True)
    is
       Iter : Gtk_Text_Iter;
-      Term : GtkAda_Terminal;
+      Term : Gtkada_Terminal;
+--        Term_View : Gtkada_Terminal_View;
    begin
       --  Initialize the text buffer and the text view
 
@@ -1450,8 +1451,11 @@ package body Interactive_Consoles is
          V_Scrollbar_Policy => Policy_Automatic);
 
       if ANSI_Support then
-         Gtk_New (Term);
+         Gtk_New (Term, Prevent_Cursor_Motion_With_Mouse => True);
+--           Gtk_New (Term_View, Term);
+
          Console.Buffer := Gtk_Text_Buffer (Term);
+--           Console.View := Gtk_Text_View (Term_View);
       else
          Gtk_New (Console.Buffer);
       end if;

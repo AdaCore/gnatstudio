@@ -31,29 +31,45 @@
 --  Currently, it knows how to emulate xterm.
 
 with Gtk.Text_Buffer;
+with Gtk.Text_Mark;
+with Gtk.Text_Iter;
 with Gtk.Text_Tag;
 with Interfaces.C;
 
 package Gtkada.Terminal is
 
-   type GtkAda_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+   type Gtkada_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
       with private;
-   type GtkAda_Terminal is access all GtkAda_Terminal_Record'Class;
+   type Gtkada_Terminal is access all Gtkada_Terminal_Record'Class;
 
-   procedure Gtk_New (Self : out GtkAda_Terminal);
+   procedure Gtk_New
+     (Self                             : out Gtkada_Terminal;
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False);
    procedure Initialize
-     (Self : access GtkAda_Terminal_Record'Class);
+     (Self                             : access Gtkada_Terminal_Record'Class;
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False);
    --  Creates or initializes a terminal.
+   --  Prevent_Cursor_Motion_With_Mouse should be true if the terminal should
+   --  manage its own insertion point, possibly different from the gtk+ cursor.
+   --  If it is true, the only way to move the cursor is through escape
+   --  sequences, not the mouse nor the arrow keys will work. This is only
+   --  suitable for those applications that use curses (like a Unix shell, vi
+   --  or other full-screen applications), not if you are using the terminal
+   --  just to be able to see colors for instance.
+
+   overriding procedure Place_Cursor
+     (Self   : access Gtkada_Terminal_Record;
+      Where  : Gtk.Text_Iter.Gtk_Text_Iter);
+   --  See inherited subprogram
 
    procedure On_Set_Title
-     (Term  : access GtkAda_Terminal_Record;
+     (Term  : access Gtkada_Terminal_Record;
       Title : String);
    --  Called when the title of the terminal should be changed. Since the
    --  terminal is not a widget in itself, you must override this subprogram to
    --  make something useful with it
 
 private
-
    type FSM_Transition;
    type FSM_Transition_Access is access FSM_Transition;
    --  A finite state machine used to parse the text written on the terminal,
@@ -83,11 +99,18 @@ private
    end record;
    --  Describes the current state of the finite state machine
 
-   type GtkAda_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+   type Gtkada_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
       FSM : FSM_Transition_Access;
       --  The finite state machine to find the special escape sequences. This
       --  is null if the terminal should not try to find such sequences
+
+      Prevent_Cursor_Motion : Boolean := False;
+      --  If True, the terminal memorizes where the external application left
+      --  the cursor, and always inserts at that position, even if the cursor
+      --  was moved with the mouse to another location
+
+      Cursor_Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
 
       Alternate_Charset : Boolean := False;
       --  Whether we are in the alternate character set. This is a way for

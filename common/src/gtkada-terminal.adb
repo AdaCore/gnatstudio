@@ -34,6 +34,7 @@ with Glib.Properties;      use Glib.Properties;
 with Glib.Unicode;         use Glib.Unicode;
 with Gtk.Text_Buffer;      use Gtk.Text_Buffer;
 with Gtk.Text_Iter;        use Gtk.Text_Iter;
+with Gtk.Text_Mark;        use Gtk.Text_Mark;
 with Gtk.Text_Tag;         use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;   use Gtk.Text_Tag_Table;
 with Gtk.Widget;           use Gtk.Widget;
@@ -244,61 +245,61 @@ package body Gtkada.Terminal is
    --  The terminal is being destroyed, reclaim memory
 
    procedure On_Move_Cursor_Left
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count : Positive);
    procedure On_Move_Cursor_Right
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count : Natural);
    procedure On_Move_Cursor_Up
-     (Term            : access GtkAda_Terminal_Record'Class;
+     (Term            : access Gtkada_Terminal_Record'Class;
       Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count           : Natural;
       Preserve_Column : Boolean);
    procedure On_Move_Cursor_Down
-     (Term            : access GtkAda_Terminal_Record'Class;
+     (Term            : access Gtkada_Terminal_Record'Class;
       Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count           : Natural;
       Preserve_Column : Boolean);
    procedure On_Set_Attribute
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Ansi  : Integer);
    procedure On_Clear_Screen_And_Home
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter);
    procedure On_Clear_To_End_Of_Screen
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter);
    procedure On_Clear_To_End_Of_Line
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter);
    procedure On_Newline
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter);
    procedure On_Move_Cursor
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk_Text_Iter;
       Line   : Integer;
       Column : Integer);
    --  Callbacks for various capabilities
 
-   procedure End_All_Modes (Term : access GtkAda_Terminal_Record'Class);
+   procedure End_All_Modes (Term : access Gtkada_Terminal_Record'Class);
    --  Terminates all special highlighting modes and colors
 
    procedure Set_Col_In_Line
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk_Text_Iter;
       Col    : Gint);
    --  Set the cursor onto a specific column in its current line
 
    procedure Default_Insert
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       S     : String;
       Overwrite_Mode : Boolean := True);
    procedure Default_Insert
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
       S      : System.Address;
       Length : Gint;
@@ -502,7 +503,7 @@ package body Gtkada.Terminal is
    ------------------
 
    procedure On_Set_Title
-     (Term  : access GtkAda_Terminal_Record;
+     (Term  : access Gtkada_Terminal_Record;
       Title : String)
    is
       pragma Unreferenced (Term);
@@ -510,12 +511,29 @@ package body Gtkada.Terminal is
       Trace (Me, "Set_Title: " & Title);
    end On_Set_Title;
 
+   ------------------
+   -- Place_Cursor --
+   ------------------
+
+   overriding procedure Place_Cursor
+     (Self   : access Gtkada_Terminal_Record;
+      Where  : Gtk.Text_Iter.Gtk_Text_Iter)
+   is
+   begin
+      if Self.Cursor_Mark /= null then
+         Move_Mark (Self, Self.Cursor_Mark, Where);
+      end if;
+
+      Gtk.Text_Buffer.Place_Cursor
+        (Gtk_Text_Buffer_Record (Self.all)'Access, Where);
+   end Place_Cursor;
+
    -------------------------
    -- On_Move_Cursor_Left --
    -------------------------
 
    procedure On_Move_Cursor_Left
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count : Positive)
    is
@@ -531,7 +549,7 @@ package body Gtkada.Terminal is
    ---------------------
 
    procedure Set_Col_In_Line
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk_Text_Iter;
       Col    : Gint)
    is
@@ -552,7 +570,7 @@ package body Gtkada.Terminal is
    --------------------------
 
    procedure On_Move_Cursor_Right
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count : Natural)
    is
@@ -614,7 +632,7 @@ package body Gtkada.Terminal is
    -------------------------
 
    procedure On_Move_Cursor_Down
-     (Term            : access GtkAda_Terminal_Record'Class;
+     (Term            : access Gtkada_Terminal_Record'Class;
       Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count           : Natural;
       Preserve_Column : Boolean)
@@ -657,7 +675,7 @@ package body Gtkada.Terminal is
    -----------------------
 
    procedure On_Move_Cursor_Up
-     (Term            : access GtkAda_Terminal_Record'Class;
+     (Term            : access Gtkada_Terminal_Record'Class;
       Iter            : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Count           : Natural;
       Preserve_Column : Boolean)
@@ -679,7 +697,7 @@ package body Gtkada.Terminal is
    --------------------
 
    procedure On_Move_Cursor
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : Integer;
       Column : Integer)
@@ -724,7 +742,7 @@ package body Gtkada.Terminal is
    ----------------
 
    procedure On_Newline
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter)
    is
    begin
@@ -738,7 +756,7 @@ package body Gtkada.Terminal is
    ------------------------------
 
    procedure On_Clear_Screen_And_Home
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter)
    is
       Frm : Gtk_Text_Iter;
@@ -757,7 +775,7 @@ package body Gtkada.Terminal is
    -------------------------------
 
    procedure On_Clear_To_End_Of_Screen
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter)
    is
       To : Gtk_Text_Iter;
@@ -771,7 +789,7 @@ package body Gtkada.Terminal is
    -----------------------------
 
    procedure On_Clear_To_End_Of_Line
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk_Text_Iter)
    is
       To      : Gtk_Text_Iter;
@@ -786,7 +804,7 @@ package body Gtkada.Terminal is
    -- End_All_Modes --
    -------------------
 
-   procedure End_All_Modes (Term : access GtkAda_Terminal_Record'Class) is
+   procedure End_All_Modes (Term : access Gtkada_Terminal_Record'Class) is
    begin
       Term.Bold := False;
       Term.Standout := False;
@@ -799,7 +817,7 @@ package body Gtkada.Terminal is
    ----------------------
 
    procedure On_Set_Attribute
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Ansi  : Integer)
    is
    begin
@@ -835,7 +853,7 @@ package body Gtkada.Terminal is
    --------------------
 
    procedure Default_Insert
-     (Term   : access GtkAda_Terminal_Record'Class;
+     (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
       S      : System.Address;
       Length : Gint;
@@ -901,7 +919,7 @@ package body Gtkada.Terminal is
    --------------------
 
    procedure Default_Insert
-     (Term  : access GtkAda_Terminal_Record'Class;
+     (Term  : access Gtkada_Terminal_Record'Class;
       Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
       S     : String;
       Overwrite_Mode : Boolean := True) is
@@ -919,10 +937,10 @@ package body Gtkada.Terminal is
       Text   : System.Address;
       Length : Gint)
    is
-      Stub : GtkAda_Terminal_Record;
+      Stub : Gtkada_Terminal_Record;
       pragma Warnings (Off, Stub);
-      Term : constant GtkAda_Terminal :=
-        GtkAda_Terminal (Get_User_Data (Widget, Stub));
+      Term : constant Gtkada_Terminal :=
+        Gtkada_Terminal (Get_User_Data (Widget, Stub));
       Txt  : constant c_char_array_access := UC (Text);
 
       Str_Arg_First, Str_Arg_Last : size_t;
@@ -1190,6 +1208,16 @@ package body Gtkada.Terminal is
       if Get_Offset (Cursor) /= Get_Offset (Iter.all) then
          Default_Insert (Term, Iter.all, Text, Length);
          return;
+
+      else
+         --  Make sure we move the cursor to its old position, if appropriate
+         if Term.Cursor_Mark /= null  then
+            Get_Iter_At_Mark (Term, Cursor, Term.Cursor_Mark);
+            if Get_Offset (Cursor) /= Get_Offset (Iter.all) then
+               Place_Cursor (Term, Cursor);
+               Copy (Source => Cursor, Dest => Iter.all);
+            end if;
+         end if;
       end if;
 
       while C < size_t (Length) loop
@@ -1347,23 +1375,29 @@ package body Gtkada.Terminal is
 
    procedure On_Destroy (Data : System.Address; Self : System.Address) is
       pragma Unreferenced (Data);
-      Stub : GtkAda_Terminal_Record;
+      Stub : Gtkada_Terminal_Record;
       pragma Warnings (Off, Stub);
-      Term : constant GtkAda_Terminal :=
-        GtkAda_Terminal (Get_User_Data (Self, Stub));
+      Term : constant Gtkada_Terminal :=
+        Gtkada_Terminal (Get_User_Data (Self, Stub));
 
    begin
       Free (Term.FSM);
+      if Term.Cursor_Mark /= null then
+         Delete_Mark (Term, Term.Cursor_Mark);
+      end if;
    end On_Destroy;
 
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Self : out GtkAda_Terminal) is
+   procedure Gtk_New
+     (Self                             : out Gtkada_Terminal;
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False)
+   is
    begin
-      Self := new GtkAda_Terminal_Record;
-      Gtkada.Terminal.Initialize (Self);
+      Self := new Gtkada_Terminal_Record;
+      Gtkada.Terminal.Initialize (Self, Prevent_Cursor_Motion_With_Mouse);
    end Gtk_New;
 
    ----------------
@@ -1371,13 +1405,15 @@ package body Gtkada.Terminal is
    ----------------
 
    procedure Initialize
-     (Self : access GtkAda_Terminal_Record'Class)
+     (Self                             : access Gtkada_Terminal_Record'Class;
+      Prevent_Cursor_Motion_With_Mouse : Boolean := False)
    is
       function Replace_Insert_Text
         (Class : GObject_Class; Func : Insert_Callback)
          return Insert_Callback;
       pragma Import (C, Replace_Insert_Text, "replace_insert_text");
 
+      Iter : Gtk_Text_Iter;
    begin
       Gtk.Text_Buffer.Initialize (Self);
       Initialize_Class_Record
@@ -1386,6 +1422,12 @@ package body Gtkada.Terminal is
          Class_Record => Class.C_Class,
          Type_Name    => "GtkAdaTerminal",
          Parameters   => Null_Parameter_Types);
+
+      Self.Prevent_Cursor_Motion := Prevent_Cursor_Motion_With_Mouse;
+      if Self.Prevent_Cursor_Motion then
+         Get_Start_Iter (Self, Iter);
+         Self.Cursor_Mark := Create_Mark (Self, Where => Iter);
+      end if;
 
       if Class.Default_Insert_Callback = null then
          Class.Default_Insert_Callback := Replace_Insert_Text
