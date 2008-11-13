@@ -744,59 +744,66 @@ package body String_Utils is
    function Reduce
      (S            : String;
       Max_Length   : Positive := Positive'Last;
-      Continuation : String := "...") return String
-   is
-      Result : String (S'Range);
-      Len    : Positive := Result'First;
-      Blank  : Boolean  := False;
-
-      Max    : Natural;
-      --  Max if the position of the last character to be returned
-      Cut    : Boolean := False;
-      --  Cut set to true if string was cut before the end at Max characters
-      Char   : Natural := S'First;
-      Next   : Natural := Char;
+      Continuation : String := "...") return String is
    begin
-      if Max_Length = Positive'Last then
-         Max := Positive'Last;
-      else
-         Max := S'First + Max_Length - Continuation'Length - 1;
+      if S'Length <= Max_Length then
+         return S;
       end if;
 
-      while Next <= S'Last loop
-         Char := Next;
-         Next := UTF8_Next_Char (S, Char);
-         if Next > S'Last then
-            Next := S'Last + 1;
+      declare
+         Result : String (S'Range);
+         Len    : Positive := Result'First;
+         Blank  : Boolean  := False;
+
+         Max    : Natural;
+         --  Max if the position of the last character to be returned
+         Cut    : Boolean := False;
+         --  Cut set to true if string was cut before the end at Max characters
+         Char   : Natural := S'First;
+         Next   : Natural := Char;
+      begin
+
+         if Max_Length = Positive'Last then
+            Max := Positive'Last;
+         else
+            Max := S'First + Max_Length - Continuation'Length - 1;
          end if;
 
-         if S (Char) = ASCII.LF or else S (Char) = ASCII.CR
-           or else S (Char) = ASCII.HT or else S (Char) = ' '
-         then
-            if not Blank then
-               Result (Len) := ' ';
-               Len := Len + 1;
-               Blank := True;
+         while Next <= S'Last loop
+            Char := Next;
+            Next := UTF8_Next_Char (S, Char);
+            if Next > S'Last then
+               Next := S'Last + 1;
             end if;
 
+            if S (Char) = ASCII.LF or else S (Char) = ASCII.CR
+              or else S (Char) = ASCII.HT or else S (Char) = ' '
+            then
+               if not Blank then
+                  Result (Len) := ' ';
+                  Len := Len + 1;
+                  Blank := True;
+               end if;
+
+            else
+               Blank := False;
+
+               Result (Len .. Len + Next - Char - 1) := S (Char .. Next - 1);
+               Len := Len + Next - Char;
+            end if;
+
+            if Len >= Max then
+               Cut := True;
+               exit;
+            end if;
+         end loop;
+
+         if Cut then
+            return Result (Result'First .. Len - 1) & Continuation;
          else
-            Blank := False;
-
-            Result (Len .. Len + Next - Char - 1) := S (Char .. Next - 1);
-            Len := Len + Next - Char;
+            return Result (Result'First .. Len - 1);
          end if;
-
-         if Len >= Max then
-            Cut := True;
-            exit;
-         end if;
-      end loop;
-
-      if Cut then
-         return Result (Result'First .. Len - 1) & Continuation;
-      else
-         return Result (Result'First .. Len - 1);
-      end if;
+      end;
    end Reduce;
 
    ------------
