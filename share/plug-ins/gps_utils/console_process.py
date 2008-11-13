@@ -1,5 +1,20 @@
 import GPS, sys
 
+Shift_Mask   = 1
+Lock_Mask    = 2
+Control_Mask = 4
+Mod1_Mask    = 8
+Mod2_Mask    = 16
+
+Key_Return    = 65293
+Key_Backspace = 65288
+Key_Tab       = 65289
+Key_Left      = 65361
+Key_Up        = 65362
+Key_Right     = 65363
+Key_Down      = 65364
+Key_Escape    = 65307
+
 class Console_Process (GPS.Console, GPS.Process):
   """This class provides a way to spawn an interactive process and
      do its input/output in a dedicated console in GPS.
@@ -23,6 +38,9 @@ class Console_Process (GPS.Console, GPS.Process):
      However, because of that the __init__ method that would be called
      when calling My_Process (...) is also that of ANSI_Console.
      Therefore you must define your own __init__ method locally.
+
+     See also the class ANSI_Console_Process if you need your process
+     to execute within a terminal that understands ANSI escape sequences.
   """
 
   def on_output (self, matched, unmatched):
@@ -73,20 +91,6 @@ class Console_Process (GPS.Console, GPS.Process):
        a different implementation. input is the full input till, but not
        including, the tab character"""
     self.write ("\t")
-
-  Shift_Mask   = 1
-  Lock_Mask    = 2
-  Control_Mask = 4
-  Mod1_Mask    = 8
-
-  Key_Return    = 65293
-  Key_Backspace = 65288
-  Key_Tab       = 65289
-  Key_Left      = 65361
-  Key_Up        = 65362
-  Key_Right     = 65363
-  Key_Down      = 65364
-  Key_Escape    = 65307
 
   def on_key (self, keycode, key, modifier):
     """The user has pressed a key in the console (any key). This is called
@@ -154,4 +158,73 @@ class Console_Process (GPS.Console, GPS.Process):
       except:
          pass
       GPS.Console().write ("Could not spawn: " + process + " " + args + "\n")
+
+class ANSI_Console_Process (Console_Process):
+  """This class has a purpose similar to Console_Process.
+      However, this class does not attempt to do any of the high-level
+      processing of prompt and input that Console_Process does, and instead
+      forward immediately any of the key strokes within the console directly
+      to the external process.
+      It also provides an ANSI terminal to the external process. The latter
+      can thus send escape sequences to change colors, cursor position,...
+  """
+
+  def on_input (self, input):
+    # Do nothing, this was already handled when each key was pressed
+    pass
+
+  def on_completion (self, input):
+    # Do nothing, this was already handled when each key was pressed
+    pass
+
+  def __get_key_str (self, keycode, key):
+    """Convert a key/keycode into a string that can be sent to an external
+       process"""
+    if keycode == Key_Return:
+       return "\r"
+    elif keycode == Key_Tab:
+       return "\t"
+    elif keycode == Key_Backspace:
+       return chr (8)
+    elif key != 0:
+       return unichr (key).encode ("utf8")
+    elif keycode == Key_Escape:
+       return "\033"
+    elif keycode == Key_Left:
+       return "\033[D"
+    elif keycode == Key_Right:
+       return "\033[C"
+    elif keycode == Key_Up:
+       return "\033[A"
+    elif keycode == Key_Down:
+       return "\033[B"
+    else:
+       GPS.Logger ("CONSOLE").log ("keycode=" + `keycode` + " key=" + `key`)
+       return ""
+ 
+  def on_key (self, keycode, key, modifier):
+    if modifier == 0 or modifier == Shift_Mask:
+      self.send (self.__get_key_str (keycode, key), add_lf=False)
+   
+    elif modifier == Control_Mask:
+      if key in range (ord ('A'), ord ('_') + 1):
+         self.send (chr (key - ord ('A') + 1), add_lf=False)
+      elif key in range (ord ('a'), ord ('z') + 1):
+         # Same as pressing the upper-case equivalent
+         self.send (chr (key - ord ('a') + 1), add_lf=False)
+      elif keycode == Key_Return or keycode == Key_Escape:
+         # Same as key without return
+         self.send ("\n", add_lf=False)
+      else:
+         # Seems like most terminals just send ESC in such a case
+         self.send ("\033", add_lf=False)
+
+    else:
+       GPS.Logger ("CONSOLE").log ("keycode=" + `keycode` + " key=" + `key` + " modifier=" + `modifier`)
+
+    return True
+
+  def __init__ (self, process, args=""):
+    Console_Process.__init__ (self, process, args, force = True,
+                              ansi = True, manage_prompt = False)
 

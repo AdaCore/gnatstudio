@@ -16,45 +16,12 @@
 import GPS, re, traceback, os
 from gps_utils.console_process import *
 
-class Unix_Shell (Console_Process):
-  def on_input (self, input):
-    # Do nothing, this was already handled when each key was pressed
-    pass
-
-  def on_completion (self, input):
-    # Do nothing, this was already handled when each key was pressed
-    pass
-
-  def on_key (self, keycode, key, modifier):
-    if keycode == Console_Process.Key_Return:
-       self.send ("\r", add_lf=False)
-    elif keycode == Console_Process.Key_Tab:
-       self.send ("\t", add_lf=False)
-    elif keycode == Console_Process.Key_Backspace:
-       self.send (chr(8), add_lf=False)
-    elif key != 0:
-       self.send (unichr (key).encode ("utf8"), add_lf=False)
-    elif keycode == Console_Process.Key_Escape:
-       self.send ("\033", add_lf=False)
-    elif keycode == Console_Process.Key_Left:
-       self.send ("\033[D", add_lf=False)
-    elif keycode == Console_Process.Key_Right:
-       self.send ("\033[C", add_lf=False)
-    elif keycode == Console_Process.Key_Up:
-       self.send ("\033[A", add_lf=False)
-    elif keycode == Console_Process.Key_Down:
-       self.send ("\033[B", add_lf=False)
-    else:
-       GPS.Logger ("UNIX").log (`keycode` + " " + `modifier` + " " + `key`)
-       return False
-    return True
-
+class Unix_Shell (ANSI_Console_Process):
   def __init__ (self, process, args=""):
-    os.putenv ("EMACS", "t") # Emulate whas emacs does, since some shells
-                             # rely on this (zsh)
+    oldterm = os.environ["TERM"]
     os.environ["TERM"] = "xterm"
-    Console_Process.__init__ (self, process, args, force = True,
-                              ansi = True, manage_prompt = False)
+    ANSI_Console_Process.__init__ (self, process, args)
+    os.environ["TERM"] = oldterm
 
 def create_default_shell (menu):
   """Spawns the user's shell as read from the environment variable SHELL"""
