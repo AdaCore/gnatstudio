@@ -357,59 +357,6 @@ package body Build_Command_Manager is
             end if;
          end;
 
-      elsif Arg = "%fb" then
-         if Force_File /= No_File then
-            --  We are launching a compile command involving Force_File:
-            --  remove reference to File from the Locations View.
-            --  See F830-003.
-            Remove_Location_Category (Kernel, Error_Category, Force_File);
-            return (1 => new String'(Base_Name (Force_File)));
-         end if;
-
-         declare
-            File : constant Virtual_File := File_Information (Context);
-            Project : Project_Type;
-            Part : Unit_Part;
-         begin
-            if File = No_File then
-               if Simulate then
-                  return (1 => new String'("<current-file-body>"));
-               else
-                  Console.Insert
-                    (Kernel, -"No file selected", Mode => Console.Error);
-                  raise Invalid_Argument;
-               end if;
-            end if;
-
-            Project := Get_Project_From_File
-              (Get_Registry (Kernel).all, File, False);
-
-            if Project = No_Project then
-               if Simulate then
-                  return (1 => new String'("<current-file-body>"));
-               else
-                  Console.Insert
-                    (Kernel, -"Could not determine the project for file: "
-                     & Full_Name (File).all,
-                     Mode => Console.Error);
-                  raise Invalid_Argument;
-               end if;
-            end if;
-
-            --  We are launching a compile command involving File:
-            --  remove reference to File from the Locations View.
-            --  See F830-003.
-            Remove_Location_Category (Kernel, Error_Category, File);
-
-            Part := Get_Unit_Part_From_Filename (Project, File);
-
-            if Part = Unit_Spec then
-               return (1 => new String'(Other_File_Base_Name (Project, File)));
-            else
-               return (1 => new String'(Base_Name (File)));
-            end if;
-         end;
-
       elsif Arg = "%T" then
          if Main /= "" then
             return (1 => new String'(Main));
