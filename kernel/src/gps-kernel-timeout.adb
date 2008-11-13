@@ -109,8 +109,8 @@ package body GPS.Kernel.Timeout is
    --  Callback for the "delete_event" event
 
    procedure Cleanup (Data : Console_Process);
-   --  Close the process descriptor and free its associated memory.
-   --  Free memory used by Data itself.
+   --  Close the process descriptor and mark the process as terminated in the
+   --  task manager
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -152,15 +152,12 @@ package body GPS.Kernel.Timeout is
       C        : constant Monitor_Command_Access :=
                    Monitor_Command_Access (Command);
       Result   : Command_Return_Type;
+      Dummy    : Boolean;
+      pragma Unreferenced (Dummy);
    begin
       Result := Execute (Command);
-      if not Process_Cb (C.Data) then
-         --  Process_Cb detected that the process has ended, so we should not
-         --  retry later on
-         return Success;
-      else
-         return Result;
-      end if;
+      Dummy := Process_Cb (C.Data);
+      return Result;
    end Execute_Monitor;
 
    procedure Launch_Monitor_Command_Synchronous is new
@@ -192,15 +189,30 @@ package body GPS.Kernel.Timeout is
          if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
             Interrupt (D.Data.D.Descriptor.all);
             Close (D.Data.D.Descriptor.all);
+            D.Data.Interrupted := True;
          end if;
       end if;
 
       D.Data.D.Command := null;
-      D.Data.Interrupted := True;
 
       Free (D.Name);
       Cleanup (D.Data);
-      D.Data := null;
+
+      --  Free memory
+
+      Free (D.Data.Args);
+      Free (D.Data.Directory);
+      Free (D.Data.D.Descriptor);
+      Pop_State (D.Data.D.Kernel);
+
+      Unchecked_Free (D.Data.Expect_Regexp);
+
+      if D.Data.D.Callback_Data /= null then
+         Destroy (D.Data.D.Callback_Data.all);
+         Unchecked_Free (D.Data.D.Callback_Data);
+      end if;
+
+      Unref (D.Data);
    end Free;
 
    -------------
@@ -303,7 +315,6 @@ package body GPS.Kernel.Timeout is
       end if;
 
       if Data.D.Descriptor = null then
-         Unref (Data);
          return;
       end if;
 
@@ -357,24 +368,9 @@ package body GPS.Kernel.Timeout is
          end if;
       end;
 
-      Free (Data.Args);
-      Free (Data.Directory);
-
       if Data.D.Exit_Cb /= null then
          Data.D.Exit_Cb (Data.D, Status);
       end if;
-
-      Free (Data.D.Descriptor);
-      Pop_State (Data.D.Kernel);
-
-      Unchecked_Free (Data.Expect_Regexp);
-
-      if Data.D.Callback_Data /= null then
-         Destroy (Data.D.Callback_Data.all);
-         Unchecked_Free (Data.D.Callback_Data);
-      end if;
-
-      Unref (Data);
    end Cleanup;
 
    ----------------
@@ -487,10 +483,12 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.Died := True;
+         Cleanup (Data);
          return False;
 
       when E : others =>
          Trace (Exception_Handle, E);
+         Cleanup (Data);
          return False;
    end Process_Cb;
 
@@ -519,6 +517,7 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Exception_Handle, E);
+         Cleanup (Process);
          return "";
    end Data_Handler;
 
@@ -813,6 +812,7 @@ package body GPS.Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
+         Cleanup (Console);
          return False;
       end if;
 
