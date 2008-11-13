@@ -920,24 +920,16 @@ package body Gtkada.Terminal is
       Length : Gint)
    is
       Stub : GtkAda_Terminal_Record;
+      pragma Warnings (Off, Stub);
       Term : constant GtkAda_Terminal :=
         GtkAda_Terminal (Get_User_Data (Widget, Stub));
       Txt  : constant c_char_array_access := UC (Text);
 
       Str_Arg_First, Str_Arg_Last : size_t;
-      Arg  : array (1 .. 9) of Integer;
-      Current_Arg : Integer := Arg'First;
       --  Integer arguments
 
-      Current           : FSM_Transition_Access := Term.FSM;
-      Tmp               : FSM_Transition_Access;
       C                 : size_t := 0;
       Stopper           : char;
-
-      Start_Of_Sequence : size_t := 0;
-      --  The last char for which current was Class.FSM, ie the last
-      --  self-insert char. This is used to rollback when an escape sequence
-      --  could not be interpreted after all.
 
       procedure Insert_Substr (Frm, To : size_t);
       --  Write a specific substring to the buffer
@@ -1057,18 +1049,20 @@ package body Gtkada.Terminal is
 
       procedure Perform (Func : Capability) is
       begin
-         if Current = Term.FSM then
+         if Term.State.Current = Term.FSM then
             Send_Current_Sequence;
          end if;
 
          if Active (Me) then
-            if Current_Arg = 1 then
+            if Term.State.Current_Arg = 1 then
                Trace (Me, Func'Img);
-            elsif Current_Arg = 2 then
-               Trace (Me, Func'Img & Arg (Arg'First)'Img);
-            elsif Current_Arg = 3 then
-               Trace (Me, Func'Img & Arg (Arg'First)'Img
-                      & Arg (Arg'First + 1)'Img);
+            elsif Term.State.Current_Arg = 2 then
+               Trace (Me, Func'Img
+                      & Term.State.Arg (Numerical_Arguments'First)'Img);
+            elsif Term.State.Current_Arg = 3 then
+               Trace (Me, Func'Img
+                      & Term.State.Arg (Term.State.Arg'First)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 1)'Img);
             else
                Trace (Me, Func'Img & " ...");
             end if;
@@ -1105,25 +1099,25 @@ package body Gtkada.Terminal is
                Place_Cursor (Term, Iter.all);
 
             when Cursor_Left_Multiple =>
-               On_Move_Cursor_Left (Term, Iter.all, Arg (1));
+               On_Move_Cursor_Left (Term, Iter.all, Term.State.Arg (1));
             when Cursor_Left =>
                On_Move_Cursor_Left (Term, Iter.all, 1);
 
             when Cursor_Right_Multiple =>
-               On_Move_Cursor_Right (Term, Iter.all, Arg (1));
+               On_Move_Cursor_Right (Term, Iter.all, Term.State.Arg (1));
             when Cursor_Right =>
                On_Move_Cursor_Right (Term, Iter.all, 1);
 
             when Cursor_Up_Multiple =>
                On_Move_Cursor_Up
-                 (Term, Iter.all, Arg (1), Preserve_Column => True);
+                 (Term, Iter.all, Term.State.Arg (1), Preserve_Column => True);
             when Cursor_Up =>
                On_Move_Cursor_Up
                  (Term, Iter.all, 1, Preserve_Column => True);
 
             when Cursor_Down_Multiple =>
                On_Move_Cursor_Down
-                 (Term, Iter.all, Arg (1), Preserve_Column => True);
+                 (Term, Iter.all, Term.State.Arg (1), Preserve_Column => True);
             when Cursor_Down =>
                On_Move_Cursor_Down
                  (Term, Iter.all, 1, Preserve_Column => True);
@@ -1143,20 +1137,21 @@ package body Gtkada.Terminal is
                On_Clear_Screen_And_Home (Term, Iter.all);
 
             when Move_Cursor =>
-               On_Move_Cursor (Term, Iter.all, Arg (1), Arg (2));
+               On_Move_Cursor
+                 (Term, Iter.all, Term.State.Arg (1), Term.State.Arg (2));
             when Cursor_Home =>
                On_Move_Cursor (Term, Iter.all, 1, 1);
 
             when Set_Char_Attribute =>
-               for A in 1 .. Current_Arg - 1 loop
-                  On_Set_Attribute (Term, Arg (A));
+               for A in 1 .. Term.State.Current_Arg - 1 loop
+                  On_Set_Attribute (Term, Term.State.Arg (A));
                end loop;
             when others =>
                Trace (Me, "Unhandled capability: " & Func'Img);
          end case;
 
-         Current := Term.FSM;
-         Start_Of_Sequence := C + 1;
+         Term.State.Current := Term.FSM;
+         Term.State.Start_Of_Sequence := C + 1;
       end Perform;
 
       ---------------------------
@@ -1165,22 +1160,26 @@ package body Gtkada.Terminal is
 
       procedure Send_Current_Sequence is
       begin
-         if C > 0 and then Start_Of_Sequence <= C - 1 then
-            Insert_Substr (Start_Of_Sequence, C - 1);
+         if C > 0 and then Term.State.Start_Of_Sequence <= C - 1 then
+            Insert_Substr (Term.State.Start_Of_Sequence, C - 1);
          end if;
 
-         Start_Of_Sequence := C;
-         Current_Arg       := Arg'First;
-         Str_Arg_First     := size_t (Length) - 1;
+         Term.State.Start_Of_Sequence := C;
+         Term.State.Current_Arg       := Numerical_Arguments'First;
+         Str_Arg_First                := size_t (Length) - 1;
       end Send_Current_Sequence;
 
       Cursor : Gtk_Text_Iter;
 
    begin
-      if Current = null then
+      if Term.FSM = null then
          --  No special terminal setup ? Send the string as is
          Insert_Substr (Txt'First, Txt'First + size_t (Length) - 1);
          return;
+      end if;
+
+      if Term.State.Current = null then
+         Term.State.Current := Term.FSM;
       end if;
 
       --  If we are not inserting at the cursor, all bets are off, and the
@@ -1195,10 +1194,73 @@ package body Gtkada.Terminal is
 
       while C < size_t (Length) loop
          if Txt (C) in Escape_Chars then
-            if Current (Txt (C)).String_Stopper /= char'Val (127) then
-               --  Read a string parameter
+            if Term.State.Parsing_Number then
+               if Txt (C) in '0' .. '9' then
+                  Term.State.Arg (Term.State.Current_Arg) :=
+                    Term.State.Arg (Term.State.Current_Arg) * 10
+                    + char'Pos (Txt (C)) - char'Pos ('0');
+
+                  if Term.State.Tmp /= null then
+                     if Term.State.Tmp (Txt (C)) /= Null_State then
+                        --  The following test is only needed if we assume that
+                        --  the special command could end on a numeric
+                        --  character, which I don't believe is possible yet
+                        --  (and therefore we test again after the loop, ie
+                        --  when we have encountered the first non-numerical
+                        --  character
+                        if Term.State.Tmp (Txt (C)).Callback /=
+                          Self_Insert
+                        then
+                           Perform (Term.State.Tmp (Txt (C)).Callback);
+                           Term.State.Current := Term.FSM;
+                           Term.State.Start_Of_Sequence := C + 1;
+
+                        else
+                           Term.State.Tmp :=
+                             Term.State.Tmp (Txt (C)).Transitions;
+                        end if;
+
+                     else
+                        --  No need to check anymore, there are no transition
+                        Term.State.Tmp := null;
+                     end if;
+                  end if;
+
+               else
+                  --  No more digits to complete the argument
+                  Term.State.Parsing_Number := False;
+
+                  --  We look at Tmp only if we have transitioned, otherwise we
+                  --  would be ignoring the numbers altogether
+                  if Term.State.Tmp /= null
+                    and then Term.State.Tmp (Txt (C)) /= Null_State
+                  then
+                     if Term.State.Tmp (Txt (C)).Callback /= Self_Insert then
+                        Perform (Term.State.Tmp (Txt (C)).Callback);
+
+                     elsif Term.State.Tmp (Txt (C)).Transitions /= null then
+                        --  Seems like the state machine is still trying to
+                        --  match, so this is the new current state and we
+                        --  forget about the %d argument. Seems an unlikely
+                        --  case though
+                        Term.State.Current :=
+                          Term.State.Tmp (Txt (C)).Transitions;
+                     end if;
+                  else
+                     Term.State.Current_Arg := Term.State.Current_Arg + 1;
+                     C := C - 1;  --  So that we test the character after %d
+                  end if;
+               end if;
+
+            elsif Term.State.Current (Txt (C)).String_Stopper /=
+              char'Val (127)
+            then
+               --  Read a string parameter. This is a relatively rare case, for
+               --  now we assume the string and the terminator come in the same
+               --  batch.
+
                Str_Arg_First := C + 1;
-               Stopper := Current (Txt (C)).String_Stopper;
+               Stopper := Term.State.Current (Txt (C)).String_Stopper;
                while C < size_t (Length)
                  and then Txt (C) /= Stopper
                loop
@@ -1207,16 +1269,18 @@ package body Gtkada.Terminal is
 
                --  A command with a string parameter
                Str_Arg_Last := C - 1;
-               Perform (Current (Txt (Str_Arg_First - 1)).Callback);
+               Perform (Term.State.Current (Txt (Str_Arg_First - 1)).Callback);
 
-            elsif Current (Txt (C)).Callback /= Self_Insert then
+            elsif Term.State.Current (Txt (C)).Callback /= Self_Insert then
                --  A special command was found
-               Perform (Current (Txt (C)).Callback);
+               Perform (Term.State.Current (Txt (C)).Callback);
 
-            elsif Current (Txt (C)).Any_Number /= null
+            elsif Term.State.Current (Txt (C)).Any_Number /= null
               and then C < size_t (Length) - 1
               and then Txt (C + 1) in '0' .. '9'
             then
+               Term.State.Parsing_Number := True;
+
                --  We have a command with one numerical parameter. The problem
                --  is that this could also be part of a shorter command, as in:
                --     ^[[%dm  => set attribute
@@ -1225,76 +1289,23 @@ package body Gtkada.Terminal is
                --  standard transitions. So we use Tmp to follow the
                --  potential states from here on.
 
-               Tmp     := Current (Txt (C)).Transitions;
-               Current := Current (Txt (C)).Any_Number;
+               Term.State.Tmp     := Term.State.Current (Txt (C)).Transitions;
+               Term.State.Current := Term.State.Current (Txt (C)).Any_Number;
+               Term.State.Arg (Term.State.Current_Arg) := 0;
 
-               C := C + 1;
-               Arg (Current_Arg) := 0;
-               while C < size_t (Length)
-                 and then Txt (C) in '0' .. '9'
-               loop
-                  Arg (Current_Arg) := Arg (Current_Arg) * 10
-                    + char'Pos (Txt (C)) - char'Pos ('0');
-
-                  if Tmp /= null then
-                     if Tmp (Txt (C)) /= Null_State then
-                        --  The following test is only needed if we assume that
-                        --  the special command could end on a numeric
-                        --  character, which I don't believe is possible yet
-                        --  (and therefore we test again after the loop, ie
-                        --  when we have encountered the first non-numerical
-                        --  character
-                        if Tmp (Txt (C)).Callback /= Self_Insert then
-                           Perform (Tmp (Txt (C)).Callback);
-                           Current := Term.FSM;
-                           Start_Of_Sequence := C + 1;
-                           C := C + 1;
-                           exit;
-                        end if;
-
-                        Tmp := Tmp (Txt (C)).Transitions;
-
-                     else
-                        --  No need to check anymore, there are no transition
-                        Tmp := null;
-                     end if;
-                  end if;
-
-                  C := C + 1;
-               end loop;
-
-               --  We look at Tmp only if we have transitioned, otherwise we
-               --  would be ignoring the numbers altogether
-               if Tmp /= null
-                 and then Tmp (Txt (C)) /= Null_State
-               then
-                  if Tmp (Txt (C)).Callback /= Self_Insert then
-                     Perform (Tmp (Txt (C)).Callback);
-
-                  elsif Tmp (Txt (C)).Transitions /= null then
-                     --  Seems like the state machine is still trying to
-                     --  match, so this is the new current state and we forget
-                     --  about the %d argument. Seems an unlikely case though
-                     Current := Tmp (Txt (C)).Transitions;
-                  end if;
-               else
-                  Current_Arg := Current_Arg + 1;
-                  C := C - 1;  --  So that we test the character after %d
-               end if;
-
-            elsif Current (Txt (C)).Transitions /= null then
+            elsif Term.State.Current (Txt (C)).Transitions /= null then
                --  Either starting a new special sequence (then emit current
                --  chars) or in the middle of one
 
-               if Current = Term.FSM then
+               if Term.State.Current = Term.FSM then
                   Send_Current_Sequence;
                end if;
 
-               Current := Current (Txt (C)).Transitions;
+               Term.State.Current := Term.State.Current (Txt (C)).Transitions;
 
             else
                --  A self-insert character
-               Current := Term.FSM;
+               Term.State.Current := Term.FSM;
             end if;
 
          else
@@ -1318,7 +1329,16 @@ package body Gtkada.Terminal is
          C := C + 1;
       end loop;
 
-      Send_Current_Sequence;
+      if Term.State.Current = Term.FSM then
+         Send_Current_Sequence;
+      end if;
+
+      --  On exit, we might be in the middle of parsing an escape sequence,
+      --  in which case the start_of_sequence does not matter, or we have just
+      --  send a sequence, in which case Start_Of_Sequence is already null. But
+      --  we need to reset it since the next string will use a different
+      --  sequence anyway
+      Term.State.Start_Of_Sequence := 0;
    end On_Insert_Text;
 
    ----------------
@@ -1327,8 +1347,8 @@ package body Gtkada.Terminal is
 
    procedure On_Destroy (Data : System.Address; Self : System.Address) is
       pragma Unreferenced (Data);
-
       Stub : GtkAda_Terminal_Record;
+      pragma Warnings (Off, Stub);
       Term : constant GtkAda_Terminal :=
         GtkAda_Terminal (Get_User_Data (Self, Stub));
 

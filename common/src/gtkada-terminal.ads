@@ -32,6 +32,7 @@
 
 with Gtk.Text_Buffer;
 with Gtk.Text_Tag;
+with Interfaces.C;
 
 package Gtkada.Terminal is
 
@@ -59,6 +60,28 @@ private
    --  and efficiently detect special escape sequences.
 
    type Tag_Array is array (1 .. 8) of Gtk.Text_Tag.Gtk_Text_Tag;
+   type Numerical_Arguments is array (1 .. 9) of Integer;
+
+   type FSM_Current_State is record
+      Arg         : Numerical_Arguments;
+      Current_Arg : Integer := Numerical_Arguments'First;
+      --  Numerical arguments to some of the commands
+
+      Current           : FSM_Transition_Access;
+      Tmp               : FSM_Transition_Access;
+      --  Current state of the finite-state machine. Tmp is used when we need
+      --  to follow two possible branches at once (eg when parsing numerical
+      --  arguments)
+
+      Start_Of_Sequence : Interfaces.C.size_t := 0;
+      --  The last char for which current was Class.FSM, ie the last
+      --  self-insert char. This is used to rollback when an escape sequence
+      --  could not be interpreted after all.
+
+      Parsing_Number    : Boolean := False;
+      --  Whether we are parsing a digit argument
+   end record;
+   --  Describes the current state of the finite state machine
 
    type GtkAda_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
@@ -70,12 +93,12 @@ private
       --  Whether we are in the alternate character set. This is a way for
       --  applications to display height bit chars by sending only 7bits
 
-      Bold_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      Bold : Boolean := False;
+      Bold_Tag       : Gtk.Text_Tag.Gtk_Text_Tag;
+      Bold           : Boolean := False;
       --  Whether text should be output in bold
 
-      Standout_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
-      Standout : Boolean := False;
+      Standout_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
+      Standout       : Boolean := False;
       --  Whether text should be printed in reverse video
 
       Foreground_Tags    : Tag_Array;
@@ -83,6 +106,8 @@ private
 
       Background_Tags    : Tag_Array;
       Current_Background : Integer := -1;
+
+      State              : FSM_Current_State;
    end record;
 
 end Gtkada.Terminal;
