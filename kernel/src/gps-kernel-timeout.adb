@@ -193,16 +193,15 @@ package body GPS.Kernel.Timeout is
          end if;
       end if;
 
-      D.Data.D.Command := null;
-
-      Free (D.Name);
       Cleanup (D.Data);
 
       --  Free memory
 
+      Free (D.Name);
+      D.Data.D.Command := null;
+
       Free (D.Data.Args);
       Free (D.Data.Directory);
-      Free (D.Data.D.Descriptor);
       Pop_State (D.Data.D.Kernel);
 
       Unchecked_Free (D.Data.Expect_Regexp);
@@ -371,6 +370,9 @@ package body GPS.Kernel.Timeout is
       if Data.D.Exit_Cb /= null then
          Data.D.Exit_Cb (Data.D, Status);
       end if;
+
+      --  So that next call to Cleanup does nothing
+      Free (Data.D.Descriptor);
    end Cleanup;
 
    ----------------
