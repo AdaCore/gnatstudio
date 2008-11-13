@@ -457,7 +457,8 @@ package body GPS.Kernel.Timeout is
       when Process_Died =>
          if Fd /= null then
             declare
-               Output : constant String := Strip_CR (Expect_Out (Fd.all));
+               Output : constant String :=
+                 Conditional_Strip_CR (Expect_Out (Fd.all));
             begin
                if Data.D.Callback /= null then
                   Data.D.Process_Died := True;
