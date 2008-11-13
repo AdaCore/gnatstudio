@@ -39,7 +39,7 @@ with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Gtkada.Terminal is
-   Me : constant Trace_Handle := Create ("TERM");
+   Me : constant Trace_Handle := Create ("TERM", Off);
 
    type c_char_array is array (size_t) of char;
    for c_char_array'Component_Size use CHAR_BIT;
@@ -136,6 +136,8 @@ package body Gtkada.Terminal is
       Standout_Cursor,            -- "vs"
       Memory_Unlock,
       Memory_Lock,
+      Enable_Line_Wrap,
+      Disable_Line_Wrap,
       Set_Char_Attribute,
       Display_In_Status_Line);
 
@@ -379,6 +381,7 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[u",       Restore_Saved_Position);
       Add_Sequence (FSM, ASCII.ESC & "[s",       Save_Position);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%dH",  Move_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[H",       Cursor_Home);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%df",  Move_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[%dm",     Set_Char_Attribute);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%dm",  Set_Char_Attribute);
@@ -401,12 +404,31 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[K",   Clear_To_End_Of_Line);
       Add_Sequence (FSM, ASCII.ESC & "[27m", End_Standout_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[24m", End_Underlining);
+      Add_Sequence (FSM, ASCII.ESC & "[7h",  Enable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.ESC & "[7l",  Disable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr", Scroll_Region);
+
+      Add_Sequence (FSM, ASCII.ESC & "[?1h"
+                    & ASCII.ESC & "=",           Turn_Keypad_On);
 
       --  These are sequences from termcap entries, but some of them seem
       --  incorrect
 
       Add_Sequence (FSM, ASCII.ESC & "(0",   Start_Alternative_Charset);
       Add_Sequence (FSM, ASCII.ESC & "(B",   End_Alternative_Charset);
+
+      --  Sequences used by vi
+
+      Add_Sequence (FSM, ASCII.ESC & "[>c", Do_Nothing); --  ??? What is this
+      Add_Sequence (FSM, ASCII.ESC & "[?12l", Do_Nothing); --  ??? What is this
+      Add_Sequence (FSM, ASCII.ESC & "[?1h" & ASCII.ESC & "=", Turn_Keypad_On);
+      Add_Sequence (FSM, ASCII.ESC & "[?1049l",  End_Program_Using_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[?1049h",  Begin_Program_Using_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[?25h",    Normal_Cursor_Visible);
+      Add_Sequence (FSM, ASCII.ESC & "[?25l",    Cursor_Invisible);
+      Add_Sequence (FSM, ASCII.ESC & "[?12;25h", Standout_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[?1034h",  Meta_Mode_On);
+      Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
 
       Add_Sequence (FSM, ASCII.ESC & "[%dL", Insert_Lines);
       Add_Sequence (FSM, ASCII.ESC & "[%dP", Delete_Chars);
@@ -418,18 +440,12 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[L",   Insert_One_Line);
       Add_Sequence (FSM, ASCII.BEL & "",     Audio_Bell);
       Add_Sequence (FSM, ASCII.ESC & "[Z",   Move_To_Prev_Tab);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr", Scroll_Region);
       Add_Sequence (FSM, ASCII.ESC & "[3g",     Clear_Tabs);
       Add_Sequence (FSM, ASCII.ESC & "[P",      Delete_One_Char);
       Add_Sequence (FSM, ASCII.ESC & "[M",      Delete_One_Line);
       Add_Sequence (FSM, ASCII.ESC & "[%dX",    Erase_Chars_At_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[4l",     End_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[H",      Cursor_Home);
       Add_Sequence (FSM, ASCII.ESC & "[4h",     Begin_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[!p"
-                    & ASCII.ESC & "[?3;4l"
-                    & ASCII.ESC & "[41"
-                    & ASCII.ESC & ">",           Initialize_String);
       Add_Sequence (FSM, ASCII.ESC & "OP",       Function_1);
       Add_Sequence (FSM, ASCII.ESC & "OQ",       Function_2);
       Add_Sequence (FSM, ASCII.ESC & "OR",       Function_3);
@@ -449,29 +465,20 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "OH",       Key_Cursor_Home);
       Add_Sequence (FSM, ASCII.ESC & "OD",       Key_Cursor_Left);
       Add_Sequence (FSM, ASCII.ESC & "OC",       Key_Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "[?1h"
-                    & ASCII.ESC & "=",           Turn_Keypad_On);
       Add_Sequence (FSM, ASCII.ESC & "OA",       Key_Cursor_Up);
       Add_Sequence (FSM, ASCII.ESC & "[5m",      Start_Blinking);
       Add_Sequence (FSM, ASCII.ESC & "[1m",      Start_Bold_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[0m",      End_All_Modes);
-      Add_Sequence (FSM, ASCII.ESC & "[?1034h",  Meta_Mode_On);
-      Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
       Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Reverse_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
       Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Standout_Mode);
       Add_Sequence (FSM, ASCII.ESC & "M",        Reverse_Scroll);
       Add_Sequence (FSM, ASCII.ESC & "H",        Set_Tabulator_Stop);
-      Add_Sequence (FSM, ASCII.ESC & "[?1049l",  End_Program_Using_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[?1049h",  Begin_Program_Using_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
       Add_Sequence (FSM, ASCII.ESC & "[4m",      Start_Underlining);
       Add_Sequence (FSM, ASCII.ESC & "[?5h"
                     & ASCII.ESC & "[?51",        Visible_Bell);
-      Add_Sequence (FSM, ASCII.ESC & "[?12l"
-                    & ASCII.ESC & "[?25h",       Normal_Cursor_Visible);
-      Add_Sequence (FSM, ASCII.ESC & "[?25l",    Cursor_Invisible);
-      Add_Sequence (FSM, ASCII.ESC & "[?12;25h", Standout_Cursor);
+
       Add_Sequence (FSM, ASCII.ESC & "[l",       Memory_Lock);
       Add_Sequence (FSM, ASCII.ESC & "[m",       Memory_Unlock);
 
@@ -667,7 +674,6 @@ package body Gtkada.Terminal is
       Success : Boolean;
       Missing : Integer;
       Eob     : Gtk_Text_Iter;
-      End_Col : constant Gint := Get_Line_Offset (Iter) + Gint (Column);
    begin
       --  ??? Tricky here: the first line should be the first visible line, but
       --  we do not have access to the view, so we don't know exactly which it
@@ -697,8 +703,7 @@ package body Gtkada.Terminal is
          end if;
       end if;
 
-      Set_Col_In_Line (Term, Iter, End_Col);
---      On_Move_Cursor_Right (Term, Iter, Column - 1);
+      Set_Col_In_Line (Term, Iter, Gint (Column - 1));
    end On_Move_Cursor;
 
    ----------------
@@ -877,6 +882,9 @@ package body Gtkada.Terminal is
       --  Send the current sequence of characters to the screen, up to but not
       --  including the character pointing by C. Reset the state machine
 
+      procedure Debug_Trace (Str : String);
+      --  Print Str on the debug log, quoting special characters
+
       ---------------
       -- To_String --
       ---------------
@@ -892,6 +900,28 @@ package body Gtkada.Terminal is
          end loop;
          return S;
       end To_String;
+
+      -----------------
+      -- Debug_Trace --
+      -----------------
+
+      procedure Debug_Trace (Str : String) is
+         Last : Integer := Str'First;
+      begin
+         for S in Str'Range loop
+            if Str (S) < ' ' then
+               if Last < S then
+                  Trace (Me, Str (Last .. S - 1));
+               end if;
+               Trace (Me, "ASCII." & Character'Image (Str (S)));
+               Last := S + 1;
+            end if;
+         end loop;
+
+         if Last <= Str'Last then
+            Trace (Me, Str (Last .. Str'Last));
+         end if;
+      end Debug_Trace;
 
       -------------------
       -- Insert_Substr --
@@ -926,21 +956,25 @@ package body Gtkada.Terminal is
 
                   --  Is the block full ?
                   if Index >= S'Last - 4 then
-                     Trace (Me, S (S'First .. Index - 1));
+                     if Active (Me) then
+                        Debug_Trace (S (S'First .. Index - 1));
+                     end if;
                      Default_Insert (Term, Iter.all, S (S'First .. Index - 1));
                      Index := S'First;
                   end if;
                end loop;
 
                if Index > S'First then
-                  Trace (Me, S (S'First .. Index - 1));
+                  if Active (Me) then
+                     Debug_Trace (S (S'First .. Index - 1));
+                  end if;
                   Default_Insert (Term, Iter.all, S (S'First .. Index - 1));
                end if;
             end;
 
          else
             if Active (Me) then
-               Trace (Me, To_String (Frm, To));
+               Debug_Trace (To_String (Frm, To));
             end if;
             Default_Insert
               (Term, Iter.all, Txt (Frm .. To)'Address, Gint (To - Frm + 1));
@@ -1024,8 +1058,12 @@ package body Gtkada.Terminal is
                null;
             when Clear_Screen_And_Home =>
                On_Clear_Screen_And_Home (Term, Iter.all);
+
             when Move_Cursor =>
                On_Move_Cursor (Term, Iter.all, Arg (1), Arg (2));
+            when Cursor_Home =>
+               On_Move_Cursor (Term, Iter.all, 1, 1);
+
             when Set_Char_Attribute =>
                for A in 1 .. Current_Arg - 1 loop
                   On_Set_Attribute (Term, Arg (A));

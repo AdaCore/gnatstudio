@@ -34,6 +34,8 @@ class Unix_Shell (Console_Process):
        self.send (chr(8), add_lf=False)
     elif key != 0:
        self.send (unichr (key).encode ("utf8"), add_lf=False)
+    elif keycode == Console_Process.Key_Escape:
+       self.send ("\033", add_lf=False)
     elif keycode == Console_Process.Key_Left:
        self.send ("\033[D", add_lf=False)
     elif keycode == Console_Process.Key_Right:

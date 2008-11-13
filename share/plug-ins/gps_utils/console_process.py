@@ -86,6 +86,7 @@ class Console_Process (GPS.Console, GPS.Process):
   Key_Up        = 65362
   Key_Right     = 65363
   Key_Down      = 65364
+  Key_Escape    = 65307
 
   def on_key (self, keycode, key, modifier):
     """The user has pressed a key in the console (any key). This is called
