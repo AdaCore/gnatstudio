@@ -27,6 +27,7 @@ with GNATCOLL.Scripts;
 with GNAT.Strings;
 
 with Gdk.Color;   use Gdk.Color;
+with Gdk.Types;
 with Glib;
 with Gtk.Enums;
 with Gtk.Main;
@@ -95,13 +96,26 @@ package Interactive_Consoles is
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
-      Empty_Equals_Repeat : Boolean := False);
+      Empty_Equals_Repeat : Boolean := False;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True);
    --  Create a new console.
    --  History_List and Key are used to handle the history of commands entered
    --  by the user in the interactive window. No history is provided if
    --  History_List is null
    --  If Empty_Equals_Repeat is True, an empty command will execute the last
    --  command.
+   --  If _manage_prompt_ is True, then GPS will do some higher level handling
+   --  of prompts: when some output is done by the process, GPS will
+   --  temporarily hide what the user was typing, insert the output, and append
+   --  what the user was typing. This is in general suitable but might interfer
+   --  with external programs that do their own screen management through ANSI
+   --  commands (like a Unix shell for instance). This is not the same as
+   --  having an empty Prompt! If _manage_prompt_ is set to False, the text
+   --  passed to Handler will be incorrect
+   --  If _ANSI_Support_ is True, the console will recognize, and either handle
+   --  or hide the escape sequences generates by application to move cursor,
+   --  change colors or text attributes,...
 
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
@@ -113,7 +127,9 @@ package Interactive_Consoles is
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
-      Empty_Equals_Repeat : Boolean := False);
+      Empty_Equals_Repeat : Boolean := False;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True);
    --  Internal initialization function
 
    procedure Insert
@@ -135,7 +151,8 @@ package Interactive_Consoles is
    --  Suspend the user insertion and insert Text as an information message.
    --  If Add_To_History is True, the inserted text will be inserted in the
    --  user command history.
-   --  If Show_Prompt is true, then a prompt is printed after the text.
+   --  If Show_Prompt is true (and the console is setup to manage the prompt on
+   --  its own), then a prompt is printed after the text.
    --  If Text_Is_Input is true, the text is added as if the user was typing it
    --  in the console. This text will thus remaing editable later one. On the
    --  other hand is Text_Is_Input is false, the text is marked as read ony,
@@ -199,6 +216,24 @@ package Interactive_Consoles is
    --  Set Handler to be called when ctrl-c is pressed in the interactive
    --  console. A default interrupt handler is provided that asks the scripting
    --  language to do the necessary work.
+
+   type Key_Handler is access
+     function
+       (Console   : access Interactive_Console_Record'Class;
+        Modifier  : Gdk.Types.Gdk_Modifier_Type;
+        Key       : Gdk.Types.Gdk_Key_Type := 0;
+        Uni       : Glib.Gunichar := 0;
+        User_Data : System.Address) return Boolean;
+   procedure Set_Key_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Key_Handler;
+      User_Data : System.Address := System.Null_Address);
+   --  A handler to be called every time the user presses a key in the console.
+   --  If the handler returns True, GPS will do no further processing on the
+   --  key and simply ignore it. The default is to just return False, ie let
+   --  the console do its own high-level management of user input.
+   --  _Key_ might be unspecified in some cases (if for instance the key is
+   --  simulated after the user copied some text into the console.
 
    function Interrupt
      (Console : access Interactive_Console_Record'Class) return Boolean;
@@ -311,13 +346,18 @@ private
       Interrupt           : Interrupt_Handler;
       Interrupt_User_Data : System.Address;
 
+      On_Key              : Key_Handler;
+      Key_User_Data       : System.Address;
+
       User_Data  : System.Address;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
       View   : Gtk.Text_View.Gtk_Text_View;
 
       Prompt : GNAT.Strings.String_Access;
-      --  The prompt to be displayed
+      --  The prompt to be displayed. This is set to null if the console should
+      --  not manage the prompt on its own, but let the user insert it on its
+      --  own.
 
       Prompt_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       --  The position after which the user can insert text

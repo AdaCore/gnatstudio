@@ -1,4 +1,4 @@
-import GPS
+import GPS, sys
 
 class Console_Process (GPS.Console, GPS.Process):
   """This class provides a way to spawn an interactive process and
@@ -72,32 +72,85 @@ class Console_Process (GPS.Console, GPS.Process):
        about completion, such as an OS shell for instance, you could have
        a different implementation. input is the full input till, but not
        including, the tab character"""
-    self.write ("\n")
+    self.write ("\t")
 
-  def __init__ (self, process, args="", close_on_exit=True, force = False):
+  Shift_Mask   = 1
+  Lock_Mask    = 2
+  Control_Mask = 4
+  Mod1_Mask    = 8
+
+  Key_Return    = 65293
+  Key_Backspace = 65288
+  Key_Tab       = 65289
+  Key_Left      = 65361
+  Key_Up        = 65362
+  Key_Right     = 65363
+  Key_Down      = 65364
+
+  def on_key (self, keycode, key, modifier):
+    """The user has pressed a key in the console (any key). This is called
+       before any of the higher level on_completion or on_input callbacks.
+       If this subprogram returns True, GPS will consider that the key has
+       already been handled and will not do its standard processing with it.
+       By default, we simply let the key through and let GPS handle it.
+
+       _key_ is the unicode character (numeric value) that was entered by
+       the user. _modifier_ is a mask of the control and shift keys that
+       were pressed at the same time. See the *_Mask constants above.
+       keycode is the code of the key, which is useful for non-printable
+       characters. It is set to 0 in some cases if the input is simulated
+       after the user has copied some text into the console
+
+       This function is also called for each character pasted by the user
+       in the console. If it returns True, then the selection will not be
+       inserted in the console.
+    """
+    return False
+
+  def __init__ (self, process, args="", close_on_exit=True, force = False,
+                ansi = False, manage_prompt = True):
     """Spawn a new interactive process and show its input/output in a
        new GPS console. The process is created so that it does not
        appear in the task manager, and therefore the user can exit GPS
-       without being asked whether or not to kill the process."""
+       without being asked whether or not to kill the process.
+
+       If _force_ is set to True, a new console is opened, otherwise an
+       existing one will be reused (although you should take care in this
+       case if you have multiple processes attached to the same console).
+
+       If _manage_prompt_ is True, then GPS will do some higher level
+       handling of prompts: when some output is done by the process, GPS
+       will temporarily hide what the user was typing, insert the output,
+       and append what the user was typing. This is in general suitable but
+       might interfer with external programs that do their own screen
+       management through ANSI commands (like a Unix shell for instance)."""
     self.close_on_exit = close_on_exit
     try:
       GPS.Console.__init__ (
         self, process.split()[0],
-        on_input = self.on_input,
-        on_destroy = self.on_destroy,
-        on_resize = self.on_resize,
-        on_interrupt = self.on_interrupt,
+        manage_prompt = manage_prompt,
+        on_input      = self.on_input,
+        on_destroy    = self.on_destroy,
+        on_resize     = self.on_resize,
+        on_interrupt  = self.on_interrupt,
         on_completion = self.on_completion,
-        force = force)
+        on_key        = self.on_key,
+        ansi          = ansi,
+        force         = force)
       GPS.Process.__init__ (
         self, process + " " + args, ".+",
         single_line_regexp=True,  # For efficiency
+        strip_cr = not ansi,  # If ANSI terminal, CR is relevant
         task_manager=False,
         on_exit = self.on_exit,
         on_match = self.on_output)
       GPS.MDI.get_by_child (self).raise_window ()
     except:
-      self.destroy()
-      self.kill()
+      GPS.Console().write (str (sys.exc_info()[1]) + "\n")
+      try:
+         self.destroy()
+         self.kill()
+      except:
+         pass
       GPS.Console().write ("Could not spawn: " + process + " " + args + "\n")
 

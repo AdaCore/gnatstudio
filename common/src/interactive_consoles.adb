@@ -31,10 +31,13 @@ with Glib.Convert;
 with Glib.Values;         use Glib.Values;
 with Glib.Object;         use Glib.Object;
 with Glib.Properties;     use Glib.Properties;
+with Glib.Unicode;        use Glib.Unicode;
+with Gdk.Keyval;          use Gdk.Keyval;
 with Gdk.Types;           use Gdk, Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
 with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Handlers;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
@@ -48,6 +51,7 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Selection;       use Gtk.Selection;
 with Gtk.Arguments;       use Gtk.Arguments;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Font;          use Pango.Font;
 with Pango.Enums;         use Pango.Enums;
@@ -280,7 +284,9 @@ package body Interactive_Consoles is
    overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      if not Get_Editable (Console.Console.View) then
+      if not Get_Editable (Console.Console.View)
+        or else Console.Console.Prompt = null
+      then
          --  If the console does not support input, no need to display a
          --  prompt.
          return;
@@ -546,9 +552,12 @@ package body Interactive_Consoles is
    procedure Clear_Input (Console : access Interactive_Console_Record) is
       Prompt_Iter, Last_Iter : Gtk_Text_Iter;
    begin
-      Get_End_Iter (Console.Buffer, Last_Iter);
-      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-      Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+      --  If the console is managing the prompt on its own
+      if Console.Prompt /= null then
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+         Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+      end if;
    end Clear_Input;
 
    ------------------------
@@ -564,16 +573,27 @@ package body Interactive_Consoles is
       Prompt_Iter : Gtk_Text_Iter;
    begin
       Internal := Console.Internal_Insert;
-      Get_End_Iter (Console.Buffer, Last_Iter);
 
       --  Read current user input (there might be none!). Then remove it from
       --  the console temporarily, so that output is not intermixed with user
       --  input. It will be put back after the output in Terminate_Output.
-      if not Text_Is_Input and then Console.User_Input = null then
-         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-         Console.User_Input := new String'
-           (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
-         Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+      --  However we do nothing when the console is not managing the prompt on
+      --  its own but letting the user do it.
+
+      if Console.Prompt /= null then
+         Get_End_Iter (Console.Buffer, Last_Iter);
+
+         if not Text_Is_Input and then Console.User_Input = null then
+            Get_Iter_At_Mark
+              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+            Console.User_Input := new String'
+              (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
+            Delete (Console.Buffer, Prompt_Iter, Last_Iter);
+         end if;
+
+      else
+         Get_Iter_At_Mark
+           (Console.Buffer, Last_Iter, Get_Insert (Console.Buffer));
       end if;
    end Prepare_For_Output;
 
@@ -589,31 +609,34 @@ package body Interactive_Consoles is
       Last_Iter   : Gtk_Text_Iter;
       Prompt_Iter : Gtk_Text_Iter;
    begin
-      --  Protect the text we just output so that it is not editable by users
+      if Console.Prompt /= null then
+         --  Protect the text we just output so that it is not editable by
+         --  users
 
-      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-      Get_End_Iter (Console.Buffer, Last_Iter);
-      Apply_Tag
-        (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
-      Apply_Tag
-        (Console.Buffer,
-         Console.External_Messages_Tag, Prompt_Iter, Last_Iter);
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Apply_Tag
+           (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+         Apply_Tag
+           (Console.Buffer,
+            Console.External_Messages_Tag, Prompt_Iter, Last_Iter);
 
-      --  Move the prompt mark at the end of the output, so that user input is
-      --  only read from that point on.
+         --  Move the prompt mark at the end of the output, so that user input
+         --  is only read from that point on.
 
-      if Show_Prompt then
-         Display_Prompt (Console);
-      else
-         Display_Text_As_Prompt (Console, "");
+         if Show_Prompt then
+            Display_Prompt (Console);
+         else
+            Display_Text_As_Prompt (Console, "");
+         end if;
+
+         --  Put back the partial input the user had started typing (was saved
+         --  in Prepare_For_Ouptut).
+
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Insert (Console.Buffer, Last_Iter, Console.User_Input.all);
+         Free (Console.User_Input);
       end if;
-
-      --  Put back the partial input the user had started typing (was saved in
-      --  Prepare_For_Ouptut).
-
-      Get_End_Iter (Console.Buffer, Last_Iter);
-      Insert (Console.Buffer, Last_Iter, Console.User_Input.all);
-      Free (Console.User_Input);
 
       Console.Message_Was_Displayed := True;
       Console.Internal_Insert := Internal;
@@ -633,56 +656,10 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      Last_Iter, Prompt_Iter, Tmp_Iter : Gtk_Text_Iter;
-      Internal : Boolean;
-      Success  : Boolean;
-      Count    : Natural := 0;
+      Last_Iter : Gtk_Text_Iter;
+      Internal  : Boolean;
 
    begin
-      --  Special case: if the text starts with ^H characters, we delete that
-      --  many characters from the input. If we are editing after the prompt,
-      --  we delete up to the prompt character only (since the rest is not
-      --  editable anyway there is nothing specific to do). The rest of the
-      --  text is then added, but is marked as user input if we were in the
-      --  middle of user input.
-      --  In particular, this is useful when doing completion in a shell
-      --  window, since the shell emits these characters while the user
-      --  circulates through all possible completions
-
-      if UTF8 /= "" and then UTF8 (UTF8'First) = ASCII.BS then
-         for U in UTF8'Range loop
-            if UTF8 (U) = ASCII.BS then
-               Count := Count + 1;
-            else
-               exit;
-            end if;
-         end loop;
-
-         Get_End_Iter (Console.Buffer, Last_Iter);
-         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-
-         if Get_Offset (Last_Iter) /= Get_Offset (Prompt_Iter) then
-            --  in user edition
-            Copy (Last_Iter, Dest => Tmp_Iter);
-            Backward_Chars (Tmp_Iter, Gint (Count), Success);
-            if Get_Offset (Tmp_Iter) < Get_Offset (Prompt_Iter) then
-               Copy (Prompt_Iter, Dest => Tmp_Iter);
-            end if;
-
-            Delete (Console.Buffer, Tmp_Iter, Last_Iter);
-
-            --  We could use Insert recursively with Text_Is_Input set to True
-            Insert (Console.Buffer, Tmp_Iter,
-                    UTF8 (UTF8'First + Count .. UTF8'Last));
-            return;
-
-         else
-            --  Do nothing, we'll display the BS as special characters in the
-            --  console
-            null;
-         end if;
-      end if;
-
       Prepare_For_Output (Console, Text_Is_Input, Internal, Last_Iter);
 
       if Add_LF then
@@ -844,11 +821,45 @@ package body Interactive_Consoles is
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
+      Console : constant Interactive_Console := Interactive_Console (Widget);
       Args : constant Gtk_Args := Gtk_Args (Params);
       Data : constant Selection_Data := Selection_Data (To_C_Proxy (Args, 1));
+      Tmp  : Boolean := False;
    begin
       if Get_Length (Data) > 0 then
-         Insert_And_Execute (Widget, Strip_CR (Get_Data_As_String (Data)));
+         declare
+            Str   : constant String := Strip_CR (Get_Data_As_String (Data));
+            Index : Natural;
+            Next  : Natural;
+         begin
+            if Console.On_Key /= null then
+               --  We execute the callback for each input character. If at
+               --  least one of them returns True, we will not process Str
+               --  through the standard console mechanism.
+               --  The string is UTF8, since it comes from gtk+
+
+               Index := Str'First;
+               while Index <= Str'Last loop
+                  Next  := UTF8_Next_Char (Str, Index);
+
+                  Tmp := Tmp
+                    or Console.On_Key
+                      (Console,
+                       Modifier  => 0,
+                       Uni       => UTF8_Get_Char (Str (Index .. Next - 1)),
+                       User_Data => Console.Key_User_Data);
+
+                  Index := Next;
+               end loop;
+            end if;
+
+            if Tmp then
+               Gtk.Handlers.Emit_Stop_By_Name
+                 (Console.View, Signal_Selection_Received);
+            else
+               Insert_And_Execute (Console, Str);
+            end if;
+         end;
       end if;
 
    exception
@@ -1016,6 +1027,17 @@ package body Interactive_Consoles is
       Success     : Boolean;
 
    begin
+      if Console.On_Key /= null then
+         if Console.On_Key (Console   => Console,
+                            Modifier  => Get_State (Event),
+                            Key       => Key,
+                            Uni       => To_Unicode (Key),
+                            User_Data => Console.Key_User_Data)
+         then
+            return True;
+         end if;
+      end if;
+
       case Key is
          when GDK_Up | GDK_Down =>
             if Console.Input_Blocked or else Console.Waiting_For_Input then
@@ -1204,7 +1226,9 @@ package body Interactive_Consoles is
    procedure Display_Prompt
      (Console : access Interactive_Console_Record'Class) is
    begin
-      Display_Text_As_Prompt (Console, Console.Prompt.all);
+      if Console.Prompt /= null then
+         Display_Text_As_Prompt (Console, Console.Prompt.all);
+      end if;
    end Display_Prompt;
 
    ----------------------------
@@ -1218,16 +1242,18 @@ package body Interactive_Consoles is
       Cursor_Iter : Gtk_Text_Iter;
 
    begin
-      if Selection_Exists (Console.Buffer) then
-         return False;
-      end if;
+      if Console.Prompt /= null then
+         if Selection_Exists (Console.Buffer) then
+            return False;
+         end if;
 
-      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-      Get_Iter_At_Mark (Console.Buffer, Cursor_Iter, Console.Insert_Mark);
+         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+         Get_Iter_At_Mark (Console.Buffer, Cursor_Iter, Console.Insert_Mark);
 
-      if Compare (Cursor_Iter, Prompt_Iter) < 0 then
-         Place_Cursor (Console.Buffer, Prompt_Iter);
-         Console.Insert_Mark := Get_Insert (Console.Buffer);
+         if Compare (Cursor_Iter, Prompt_Iter) < 0 then
+            Place_Cursor (Console.Buffer, Prompt_Iter);
+            Console.Insert_Mark := Get_Insert (Console.Buffer);
+         end if;
       end if;
 
       return False;
@@ -1373,12 +1399,14 @@ package body Interactive_Consoles is
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
-      Empty_Equals_Repeat : Boolean := False) is
+      Empty_Equals_Repeat : Boolean := False;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True) is
    begin
       Console := new Interactive_Console_Record;
       Initialize (Console, Prompt, Handler, User_Data, Font,
                   History_List, Key, Highlight, Wrap_Mode,
-                  Empty_Equals_Repeat);
+                  Empty_Equals_Repeat, ANSI_Support, Manage_Prompt);
    end Gtk_New;
 
    ----------------
@@ -1395,13 +1423,19 @@ package body Interactive_Consoles is
       Key                 : Histories.History_Key;
       Highlight           : Gdk_Color := Null_Color;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
-      Empty_Equals_Repeat : Boolean := False)
+      Empty_Equals_Repeat : Boolean := False;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True)
    is
       Iter : Gtk_Text_Iter;
+      Term : GtkAda_Terminal;
    begin
       --  Initialize the text buffer and the text view
 
-      Console.Prompt := new String'(Prompt);
+      if Manage_Prompt then
+         Console.Prompt := new String'(Prompt);
+      end if;
+
       Set_Command_Handler (Console, Handler, User_Data);
       Console.Key := new String'(String (Key));
       Console.History := History_List;
@@ -1413,7 +1447,13 @@ package body Interactive_Consoles is
          H_Scrollbar_Policy => Policy_Automatic,
          V_Scrollbar_Policy => Policy_Automatic);
 
-      Gtk_New (Console.Buffer);
+      if ANSI_Support then
+         Gtk_New (Term);
+         Console.Buffer := Gtk_Text_Buffer (Term);
+      else
+         Gtk_New (Console.Buffer);
+      end if;
+
       Gtk_New (Console.View, Console.Buffer);
       Set_Wrap_Mode (Console.View, Wrap_Mode);
 
@@ -1557,6 +1597,19 @@ package body Interactive_Consoles is
       Console.Completion           := Handler;
       Console.Completion_User_Data := User_Data;
    end Set_Completion_Handler;
+
+   ---------------------
+   -- Set_Key_Handler --
+   ---------------------
+
+   procedure Set_Key_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Key_Handler;
+      User_Data : System.Address := System.Null_Address) is
+   begin
+      Console.On_Key        := Handler;
+      Console.Key_User_Data := User_Data;
+   end Set_Key_Handler;
 
    ---------------------------
    -- Set_Interrupt_Handler --
@@ -1758,8 +1811,12 @@ package body Interactive_Consoles is
    procedure Set_Prompt
      (Console : access Interactive_Console_Record; Prompt : String) is
    begin
-      Free (Console.Prompt);
-      Console.Prompt := new String'(Prompt);
+      --  If the console is not managing the prompt itself, this subprogram
+      --  should have no effect
+      if Console.Prompt /= null then
+         Free (Console.Prompt);
+         Console.Prompt := new String'(Prompt);
+      end if;
    end Set_Prompt;
 
    --------------

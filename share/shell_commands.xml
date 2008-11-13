@@ -3164,6 +3164,9 @@ Note that this class is in fact available directly through "from gps_utils.conso
       <param name="on_resize" default="">A subprogram</param>
       <param name="on_interrupt" default="">A subprogram</param>
       <param name="on_completion" default="">A subprogram</param>
+      <param name="on_key" default="">A subprogram</param>
+      <param name="manage_prompt" default="True">A boolean</param>
+      <param name="ansi" default="False">A boolean</param>
       <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console.
 
 You cannot create the Python and Shell consoles through this call. If you do, an exception is raised. Instead, use GPS.execute_action ("/Tools/Consoles/Python"), and then get a handle on the console through GPS.Console. This is because these two consoles are tightly associated with each of the scripting languages.
@@ -3189,6 +3192,28 @@ The default implementation is to insert a tab character, but you could choose to
 The subprogram on_resize is called whenever the console is resized by the user. It is passed three parameters: $1 is the instance of GPS.Console, $2 is the number of visible rows in the console, and $3 is the number of visible columns. This is mostly useful when a process is running in the console, in which case you can use GPS.Process.set_size to let the process know about the size. Note that the size passed to this callback is conservative: since all characters might not have the same size, GPS tries to compute the maximal number of visible characters and pass this to the callback, but the exact number of characters might depend on the font.
 
 The subprogram on_interrupt is called when the user presses control-c in the console. It receives a single parameter, which is the instance of GPS.Console. By default a control-c is handled by GPS itself and will kill the last process that was started.
+
+As described above, GPS provides a high-level handling of consoles, where it manages histories, completion, command line editing and execution on its own through the callbacks described above. This is in general a good thing and provides advanced functionalities to some programs that lack them. However, there are cases where this gets in the way. For instance, if you want to run a Unix shell or a program that manipulates the console by moving the cursor around on its own, the high-level handling of GPS gets in the way. In such a case, the following parameters can be used: on_key, manage_prompt and ansi.
+
+ansi should be set to true if GPS should emulate an ANSI terminal. These are terminals that understand certain escape sequences that applications sent to move the cursor to specific positions on screen or to change the color and attributes of text.
+
+manage_prompt should be set to False to disable GPS's handling of prompt. In general, this is incompatible with using the on_input callback, since GPS no longer distinguishes what was typed by the user and what was written by the external application. This also means that the application is free to write anywhere on the screen. This should in general be set to True if you expect your application to send ANSI sequences.
+
+on_key is a subprogram that is called every time the user presses a key in the console. This is much lower-level than the other callbacks above, but if you are driving external applications you might have a need to send the keys as they happen, and not wait for a newline. on_key receives four parameters:
+    - $1: the instance of GPS.Console
+    - $2: "keycode": this is the internal keycode for the key that the user
+          pressed. All keys can be represented this way, but this will
+          occasionaly be left to 0 when the user input was simulated and no
+          real key was pressed.
+    - $3: "key": this is the unicode character that the user entered. This will
+          be 0 when the character is not printable (for instance return, tab,
+          key up,...). In python, you can manipulate it with code like
+                  unichr (key).encode ("utf8")
+          to get a string representation that can be sent to an external
+          process
+    - $4: "modifier": these are the state of the control, shift, mod1 and lock
+          keys. This is a bitmask, where shift is 1, lock is 2, control is 4
+          and mod1 is 8.
 </description>
   </shell_doc>
 

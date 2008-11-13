@@ -421,7 +421,9 @@ package body GPS.Kernel.Console is
       Create_If_Not_Exist : Boolean := True;
       Module              : GPS.Kernel.Abstract_Module_ID := null;
       Force_Create        : Boolean := False;
-      Accept_Input        : Boolean := True) return Interactive_Console
+      Accept_Input        : Boolean := True;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True) return Interactive_Console
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
@@ -445,6 +447,8 @@ package body GPS.Kernel.Console is
                History_List => Get_History (Kernel),
                Key          => History,
                Wrap_Mode    => Wrap_Char,
+               Manage_Prompt => Manage_Prompt,
+               ANSI_Support => ANSI_Support,
                Highlight    => Message_Highlight.Get_Pref);
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);

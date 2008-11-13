@@ -27,8 +27,10 @@ with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
+with Gdk.Types;               use Gdk.Types;
 with Glib.Object;             use Glib.Object;
 with Glib.Values;             use Glib.Values;
+with Gtk.Accel_Group;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
@@ -185,6 +187,14 @@ package body GPS.Kernel.Scripts is
       Input   : String; User_Data : System.Address) return String;
    --  Called when input is available on a console
 
+   function On_Console_Key
+     (Console   : access Interactive_Console_Record'Class;
+      Modifier  : Gdk.Types.Gdk_Modifier_Type;
+      Key       : Gdk.Types.Gdk_Key_Type := 0;
+      Uni       : Glib.Gunichar := 0;
+      User_Data : System.Address) return Boolean;
+   --  Called when a key was pressed by the user in the console
+
    function On_Console_Interrupt
      (Console : access Interactive_Console_Record'Class;
       Data    : System.Address) return Boolean;
@@ -291,12 +301,16 @@ package body GPS.Kernel.Scripts is
    On_Resize_Cst     : aliased constant String := "on_resize";
    On_Interrupt_Cst  : aliased constant String := "on_interrupt";
    On_Completion_Cst : aliased constant String := "on_completion";
+   On_Key_Cst        : aliased constant String := "on_key";
+   Manage_Prompt_Cst : aliased constant String := "manage_prompt";
+   ANSI_Cst          : aliased constant String := "ansi";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
       On_Resize_Cst'Access, On_Interrupt_Cst'Access,
-      On_Completion_Cst'Access);
+      On_Completion_Cst'Access, On_Key_Cst'Access,
+      Manage_Prompt_Cst'Access, ANSI_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -1412,6 +1426,37 @@ package body GPS.Kernel.Scripts is
       return "";   --  ??? Should this be the output of the command
    end On_Console_Input;
 
+   --------------------
+   -- On_Console_Key --
+   --------------------
+
+   function On_Console_Key
+     (Console   : access Interactive_Console_Record'Class;
+      Modifier  : Gdk.Types.Gdk_Modifier_Type;
+      Key       : Gdk.Types.Gdk_Key_Type := 0;
+      Uni       : Glib.Gunichar := 0;
+      User_Data : System.Address) return Boolean
+   is
+      On_Key   : constant Subprogram_Type := Convert (User_Data);
+      Instance : constant Class_Instance :=
+                   Get_Instance (Get_Script (On_Key.all), Console);
+      C        : Callback_Data'Class := Create (Get_Script (On_Key.all), 4);
+      Tmp      : Boolean;
+
+      --  Remove any num-lock and caps-lock modifiers
+      M        : constant Gdk_Modifier_Type :=
+        Modifier and Gtk.Accel_Group.Get_Default_Mod_Mask;
+
+   begin
+      Set_Nth_Arg (C, 1, Instance);
+      Set_Nth_Arg (C, 2, Integer (Key));
+      Set_Nth_Arg (C, 3, Integer (Uni));
+      Set_Nth_Arg (C, 4, Gdk_Modifier_Type'Pos (M));
+      Tmp := Execute (On_Key, C);
+      Free (C);
+      return Tmp;
+   end On_Console_Key;
+
    ------------------------
    -- On_Console_Destroy --
    ------------------------
@@ -1525,6 +1570,9 @@ package body GPS.Kernel.Scripts is
             On_Interrupt : constant Subprogram_Type := Nth_Arg (Data, 8, null);
             On_Completion : constant Subprogram_Type :=
               Nth_Arg (Data, 9, null);
+            On_Key      : constant Subprogram_Type := Nth_Arg (Data, 10, null);
+            Manage_Prompt : constant Boolean := Nth_Arg (Data, 11, True);
+            ANSI_Support  : constant Boolean := Nth_Arg (Data, 12, False);
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -1533,6 +1581,8 @@ package body GPS.Kernel.Scripts is
                Create_If_Not_Exist => Title /= "Python"
                  and then Title /= "Shell",
                Force_Create        => Force,
+               Manage_Prompt       => Manage_Prompt,
+               ANSI_Support        => ANSI_Support,
                Accept_Input        => Accept_Input);
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
@@ -1585,6 +1635,12 @@ package body GPS.Kernel.Scripts is
                Set_Completion_Handler
                  (Console, On_Console_Completion'Access,
                   User_Data => On_Completion.all'Address);
+            end if;
+
+            if Console /= null and then On_Key /= null then
+               Set_Key_Handler
+                 (Console, On_Console_Key'Access,
+                  User_Data => On_Key.all'Address);
             end if;
          end;
 
@@ -1796,7 +1852,7 @@ package body GPS.Kernel.Scripts is
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 0,
-         Maximum_Args => 8,
+         Maximum_Args => 11,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
       Register_Command

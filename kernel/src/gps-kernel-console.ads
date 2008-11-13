@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2001-2008, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -60,7 +59,9 @@ package GPS.Kernel.Console is
       Create_If_Not_Exist : Boolean := True;
       Module              : GPS.Kernel.Abstract_Module_ID := null;
       Force_Create        : Boolean := False;
-      Accept_Input        : Boolean := True) return Interactive_Console;
+      Accept_Input        : Boolean := True;
+      ANSI_Support        : Boolean := False;
+      Manage_Prompt       : Boolean := True) return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.
    --  If the title is the empty stirng, the GPS console is returned.
@@ -69,6 +70,7 @@ package GPS.Kernel.Console is
    --  Module is used to associate the console with a specific module.
    --  If Accept_Input is True, the console will be editable. This is ignored
    --  if the console already exists.
+   --  See Interactive_Consoles.Gtk_New for more info on the parameters
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class) return Interactive_Console;
