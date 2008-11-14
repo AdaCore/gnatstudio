@@ -29,9 +29,6 @@ package body Ada_Analyzer is
 
    use Indent_Stack.Stack;
 
-   pragma Suppress (All_Checks);
-   --  For efficiency
-
    -----------------
    -- Local types --
    -----------------

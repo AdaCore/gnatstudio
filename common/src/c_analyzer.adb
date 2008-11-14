@@ -252,9 +252,6 @@ package body C_Analyzer is
    ---------------
 
    function Get_Token (S : String) return Token_Type is
-      pragma Suppress (All_Checks);
-      --  For efficiency
-
       Second : Integer;
    begin
       if S'Length = 1 then
@@ -504,9 +501,6 @@ package body C_Analyzer is
       Indent_Offset    : Natural               := 0;
       Enable_Cpp       : Boolean               := False)
    is
-      pragma Suppress (All_Checks);
-      --  For efficiency
-
       None              : constant := -1;
 
       Default_Extended  : Extended_Token;
