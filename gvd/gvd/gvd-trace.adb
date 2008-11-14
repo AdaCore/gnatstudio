@@ -28,8 +28,8 @@ with Traces;               use Traces;
 package body GVD.Trace is
 
    --  Internally, we only handle two different handles, since it makes things
-   --  much simpler to activate, and anyway we either want the minimal or all
-   --  of it anyway
+   --  much simpler to activate, and we either want the minimal or all
+   --  of it anyway.
    Me : constant array (Command_Type) of Trace_Handle :=
      (Internal => GNATCOLL.Traces.Create ("GVD.Out", Off),
       Hidden   => GNATCOLL.Traces.Create ("GVD.Out", Off),
