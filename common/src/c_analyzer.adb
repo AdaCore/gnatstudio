@@ -713,7 +713,9 @@ package body C_Analyzer is
                when Tok_Void =>
                   --  Tok_Void is used for blocks: {}
 
-                  if Value.Curly_Level = 0 then
+                  if Value.Curly_Level = 0
+                    and then Value.Name_Start /= 0
+                  then
                      --  ??? Would be nice to be able to find the parameters
                      --  of this function
 
