@@ -18,10 +18,10 @@ project Common is
 
       case Shared.Build is
           when "Production" =>
-             for Switches ("htables.adb") use ("-O2", "-gnatpn");
-             for Switches ("dynamic_arrays.adb") use ("-O2", "-gnatpn");
-             for Switches ("c_analyzer.adb") use ("-O2", "-gnatpn");
-             for Switches ("ada_analyzer.adb") use ("-O2", "-gnatpn");
+             for Switches ("htables.adb") use ("-g", "-O2", "-gnatpn");
+             for Switches ("dynamic_arrays.adb") use ("-g", "-O2", "-gnatpn");
+             for Switches ("c_analyzer.adb") use ("-g", "-O2", "-gnatpn");
+             for Switches ("ada_analyzer.adb") use ("-g", "-O2", "-gnatpn");
           when "Debug" =>
       end case;
    end Compiler;
