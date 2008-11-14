@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -559,7 +559,8 @@ package body C_Analyzer is
       function Preprocessor_Directive return Boolean;
       --  Handle preprocessor directive.
       --  Assume that Buffer (Index) = '#'
-      --  For now, only handle #if 0 as a multiple-line comment
+      --  For now, handle #if 0 as a multiple-line comment, and recognize
+      --  #include directives.
       --  Return whether processing should be stopped.
 
       procedure Replace_Text
@@ -1042,10 +1043,12 @@ package body C_Analyzer is
                end if;
             end if;
 
-            --  Skip line
+            --  Skip line and possible continuation lines (when using
+            --  backslash before and end-of-line char)
 
             while Index < Buffer'Last
-              and then Buffer (Index) /= ASCII.LF
+              and then (Buffer (Index) /= ASCII.LF
+                        or else Buffer (Index - 1) = '\')
             loop
                Index := Index + 1;
             end loop;
