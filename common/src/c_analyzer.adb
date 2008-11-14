@@ -1042,10 +1042,15 @@ package body C_Analyzer is
             --  Skip line and possible continuation lines (when using
             --  backslash before and end-of-line char)
 
-            while Index < Buffer'Last
-              and then (Buffer (Index) /= ASCII.LF
-                        or else Buffer (Index - 1) = '\')
-            loop
+            while Index < Buffer'Last loop
+               if Buffer (Index) = ASCII.LF then
+                  if Buffer (Index - 1) = '\' then
+                     New_Line;
+                  else
+                     exit;
+                  end if;
+               end if;
+
                Index := Index + 1;
             end loop;
 
