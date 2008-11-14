@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Nov 03, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Nov 14, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -42,6 +42,12 @@ NF-44-H927-002 Speed up update VCS action (2008-10-29)
   operation. On slow network it can make a big difference.
   At the same time GPS has been enhanced to parse the update output
   to update file status accordingly.
+
+NF-44-H908-010 shell.py supports colors and completion (2008-11-14)
+
+  The shell.py plugin allows you to open a window with a system shell.
+  It now supports completion (if your shell does) and colors, as well
+  as being able to run more complex applications like vi
 
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 
