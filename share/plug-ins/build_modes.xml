@@ -20,6 +20,37 @@
   </extra-args>
  </builder-mode>
 
+ <builder-mode name="checks">
+  <description>Build with full checking enabled</description>
+  <subdir>check</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-g</arg>
+     <arg>-O0</arg>
+     <arg>-gnato</arg>
+     <arg>-fstack-check</arg>
+     <arg>-gnatVa</arg>
+  </extra-args>
+ </builder-mode>
+
+ <builder-mode name="optimize">
+  <description>Build for production with full optimization</description>
+  <subdir>opt</subdir>
+  <supported-model>builder</supported-model>
+  <supported-model>gnatmake</supported-model>
+  <supported-model filter="--subdirs=">gprclean</supported-model>
+  <extra-args>
+     <arg>--subdirs=%subdir</arg>
+     <arg>-cargs</arg>
+     <arg>-O2</arg>
+     <arg>-gnatn</arg>
+  </extra-args>
+ </builder-mode>
+
  <builder-mode name="gcov">
   <description>Build with gcov support</description>
   <subdir>gcov</subdir>
