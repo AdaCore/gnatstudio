@@ -5,7 +5,7 @@ project Default is
    end Compiler;
 
    package IDE is
-      for VCS_Kind use "auto";
+      for VCS_Kind use "CVS";
    end IDE;
 
 end Default;
