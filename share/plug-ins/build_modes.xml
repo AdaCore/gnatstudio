@@ -29,7 +29,8 @@
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
-     <arg>--coverage</arg>
+     <arg>-fprofile-arcs</arg>
+     <arg>-ftest-coverage</arg>
      <arg>-largs</arg>
      <arg>--coverage</arg>
   </extra-args>
