@@ -15,12 +15,14 @@ project Common is
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
       for Switches ("s-memory.adb") use ("-g", "-O2", "-gnatpg");
 
+      No_Checks := ("-g", "-O2", "-gnat05", "-gnatpn");
+
       case Shared.Build is
           when "Production" =>
-             for Switches ("htables.adb") use ("-g", "-O2", "-gnatpn");
-             for Switches ("dynamic_arrays.adb") use ("-g", "-O2", "-gnatpn");
-             for Switches ("c_analyzer.adb") use ("-g", "-O2", "-gnatpn");
-             for Switches ("ada_analyzer.adb") use ("-g", "-O2", "-gnatpn");
+             for Switches ("htables.adb") use No_Checks;
+             for Switches ("dynamic_arrays.adb") use No_Checks;
+             for Switches ("c_analyzer.adb") use No_Checks;
+             for Switches ("ada_analyzer.adb") use No_Checks;
           when "Debug" =>
       end case;
    end Compiler;
