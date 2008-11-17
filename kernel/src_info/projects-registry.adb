@@ -34,8 +34,9 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with ALI;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
-with Output;                    use Output;
+with Output;
 with Osint;                     use Osint;
+with Prj_Output;                use Prj_Output;
 with Scans;                     use Scans;
 with Snames;                    use Snames;
 with Stringt;
@@ -614,7 +615,7 @@ package body Projects.Registry is
          --  view.
 
          Opt.Full_Path_Name_For_Brief_Errors := True;
-         Output.Set_Special_Output (Output.Output_Proc (Errors));
+         Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
          Reset (Registry, View_Only => False);
 
          Prj.Com.Fail := Fail'Unrestricted_Access;
@@ -643,7 +644,7 @@ package body Projects.Registry is
          Unchecked_Free (Registry.Data.Scenario_Variables);
 
          Set_Status (Registry.Data.Root, From_File);
-         Output.Set_Special_Output (null);
+         Prj_Output.Cancel_Special_Output;
 
          --  We cannot simply use Clock here, since this returns local time,
          --  and the file timestamps will be returned in GMT, therefore we
@@ -672,7 +673,7 @@ package body Projects.Registry is
       exception
          when E : others =>
             Trace (Exception_Handle, E);
-            Output.Set_Special_Output (null);
+            Prj_Output.Cancel_Special_Output;
             raise;
       end Internal_Load;
 

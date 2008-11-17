@@ -30,6 +30,7 @@ with Prj.Com;                   use Prj.Com;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.Part;                  use Prj.Part;
 with Prj.Util;                  use Prj.Util;
+with Prj_Output;
 with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Projects.Graphs;           use Projects.Graphs;
 with Projects.Registry;         use Projects.Registry;
@@ -3188,7 +3189,7 @@ package body Projects.Editor is
       Tmp_Prj     : Project_Type;
 
    begin
-      Output.Set_Special_Output (Report_Errors);
+      Prj_Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       --  Make sure we are not trying to import ourselves, since otherwise it
@@ -3219,7 +3220,7 @@ package body Projects.Editor is
                  (-"There is already a dependency on "
                   & Get_String (Prj.Tree.Name_Of (Imported_Project, Tree)));
             end if;
-            Output.Set_Special_Output (null);
+            Prj_Output.Cancel_Special_Output;
             Prj.Com.Fail := null;
             return Dependency_Already_Exists;
          end if;
@@ -3250,12 +3251,12 @@ package body Projects.Editor is
               (-"Circular dependency detected in the project hierarchy");
          end if;
          Trace (Me, "Circular dependency detected in the project hierarchy");
-         Output.Set_Special_Output (null);
+         Prj_Output.Cancel_Special_Output;
          Prj.Com.Fail := null;
          return Circular_Dependency;
       end if;
 
-      Output.Set_Special_Output (null);
+      Prj_Output.Cancel_Special_Output;
       Prj.Com.Fail := null;
 
       Set_Project_Modified (Project, True);
@@ -3350,7 +3351,7 @@ package body Projects.Editor is
       Dep_Name         : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
 
    begin
-      Output.Set_Special_Output (Report_Errors);
+      Prj_Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       Dep_ID := Get_String (Basename);
@@ -3370,7 +3371,7 @@ package body Projects.Editor is
                  (-"A different project with the same name"
                   & " already exists in the project tree.");
             end if;
-            Output.Set_Special_Output (null);
+            Prj_Output.Cancel_Special_Output;
             Prj.Com.Fail := null;
             return Project_Already_Exists;
          else
@@ -3388,7 +3389,7 @@ package body Projects.Editor is
       if Imported_Project = Empty_Node then
          Trace (Me, "Add_Imported_Project: imported project not found ("
                 & Full_Name (Imported_Project_Location).all & ")");
-         Output.Set_Special_Output (null);
+         Prj_Output.Cancel_Special_Output;
          Prj.Com.Fail := null;
          return Imported_Project_Not_Found;
       end if;

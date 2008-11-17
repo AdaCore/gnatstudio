@@ -77,6 +77,7 @@ with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Main_Window;
 with GPS.Menu;
 with OS_Utils;                  use OS_Utils;
+with Prj_Output;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
 with Remote;                    use Remote;
@@ -280,6 +281,9 @@ procedure GPS.Main is
    procedure Execute_Batch (Batch : String; As_File : Boolean);
    --  Execute a batch command (either loading the file Batch if As_File is
    --  true, or as a standard command otherwise).
+
+   procedure Display_Prj_Messages (S : String);
+   --  Display messages coming from the Prj packages.
 
    ---------------------
    -- Clean_Parameter --
@@ -971,6 +975,17 @@ procedure GPS.Main is
          Trace (Exception_Handle, E);
    end Execute_Batch;
 
+   --------------------------
+   -- Display_Prj_Messages --
+   --------------------------
+
+   procedure Display_Prj_Messages (S : String) is
+   begin
+      GPS.Kernel.Console.Insert
+        (GPS_Main.Kernel, S, Mode => GPS.Kernel.Console.Error);
+      GPS.Location_View.Parse_File_Locations (GPS_Main.Kernel, S, -"Project");
+   end Display_Prj_Messages;
+
    ------------------
    -- Finish_Setup --
    ------------------
@@ -1234,6 +1249,8 @@ procedure GPS.Main is
       --  in the console right away
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
+      Prj_Output.Set_Default_Output_Handler
+        (Display_Prj_Messages'Unrestricted_Access);
 
       --  Register this very early so that other modules can access remote
       --  files
@@ -1695,6 +1712,8 @@ procedure GPS.Main is
       if Started and then Save_Desktop_On_Exit.Get_Pref then
          Save_Desktop (Kernel);
       end if;
+
+      Prj_Output.Set_Default_Output_Handler (null);
 
       if Status (Project) = Default then
          Trace (Me, "Remove default project on disk, no longer used");
