@@ -6,6 +6,15 @@ Known Problems fixed in GPS 4.3.1
               you need to click inside it before typing
   Workaround: Click in the middle of the console to give it focus
 
+- HB04-006: Messages window not cleared after failed build
+  Problem:    If a build fails because the specified executable cannot
+              be executed (for instance if the executable does not exist,
+              or if the permissions forbid execution of the executable),
+              then the Messages window does not get cleared up at the
+              beginning of subsequent compilations.
+  Workaround: Fix the build configuration to specify a valid executable,
+              and restart GPS.
+
 Known Problems fixed in GPS 4.3.0
 
 - HA14-009: Wrong dialog settings in project properties

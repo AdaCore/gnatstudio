@@ -246,6 +246,12 @@ package body GPS.Kernel.Timeout is
 
          else
             Trace (Me, "Failure when spawning the process");
+
+            --  We could not launch the process: call the Exit_Cb nonetheless,
+            --  as it may be used to keep count of executions, or to free
+            --  memory, for instance.
+            Command.Data.D.Exit_Cb (Command.Data.D, -1);
+
             Free (Command.Data.D.Descriptor);
             Command.Data.Died := True;
             return Failure;

@@ -41,6 +41,8 @@ package GPS.Kernel.Timeout is
      access procedure (Data : Process_Data; Status : Integer);
    --  Callback called when an underlying process launched by Launch_Process
    --  terminates.
+   --  Status is the exit status of the process. If the process could not
+   --  be launched, status is set to -1.
 
    type Callback_Data_Record is abstract tagged null record;
    type Callback_Data_Access is access all Callback_Data_Record'Class;
