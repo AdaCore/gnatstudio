@@ -982,7 +982,9 @@ procedure GPS.Main is
    procedure Display_Prj_Messages (S : String) is
    begin
       GPS.Kernel.Console.Insert
-        (GPS_Main.Kernel, S, Mode => GPS.Kernel.Console.Error);
+        (GPS_Main.Kernel, S,
+         Mode   => GPS.Kernel.Console.Error,
+         Add_LF => False);
       GPS.Location_View.Parse_File_Locations (GPS_Main.Kernel, S, -"Project");
    end Display_Prj_Messages;
 
