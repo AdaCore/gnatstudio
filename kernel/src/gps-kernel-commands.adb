@@ -158,8 +158,6 @@ package body GPS.Kernel.Commands is
          Set_Data (File_Iterate_Commands.Generic_Asynchronous_Command_Access
                    (Get_Command (Old_Command)), Old_Data);
 
-         Interrupt_Queue (Kernel, Command_Access (Old_Command));
-
          return True;
       end if;
 
