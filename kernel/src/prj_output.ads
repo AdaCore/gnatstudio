@@ -17,16 +17,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package controls the Output procedures handling, used by Prj.*
+--  packages when displaying errors or information while loading/updating a
+--  project.
+
 with Output;
 
 package Prj_Output is
 
    procedure Set_Default_Output_Handler
      (P : Output.Output_Proc);
+   --  Set P as the default output handler. If P is null, this removes the
+   --  default handler.
 
    procedure Set_Special_Output
      (P : Output.Output_Proc);
+   --  Set P as a temporary output handler. Setting P to null is equivalent to
+   --  calling Cancel_Special_Output.
 
    procedure Cancel_Special_Output;
+   --  Removes the temporary output handler, and restores the default one, as
+   --  previously set by Set_Default_Output_Handler.
 
 end Prj_Output;
