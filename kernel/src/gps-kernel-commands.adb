@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2007, AdaCore                  --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -157,6 +157,8 @@ package body GPS.Kernel.Commands is
          Old_Data.Stop := True;
          Set_Data (File_Iterate_Commands.Generic_Asynchronous_Command_Access
                    (Get_Command (Old_Command)), Old_Data);
+
+         Interrupt_Queue (Kernel, Command_Access (Old_Command));
 
          return True;
       end if;
