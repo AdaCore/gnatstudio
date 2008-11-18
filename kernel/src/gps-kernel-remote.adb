@@ -1540,14 +1540,14 @@ package body GPS.Kernel.Remote is
             pragma Unreferenced (Button);
          begin
             Button := Gtkada.Dialogs.Message_Dialog
-              (-("No remote access tool could be found on your system." &
-                 ASCII.LF &
+              (-("No suitable remote access tool could be found on your " &
+                 "system." & ASCII.LF &
                  "A remote access tool is required to be able to use the " &
-               "GPS remote features. Please install one of the following " &
-               "tools:" & ASCII.LF &
-                 " - rlogin" & ASCII.LF &
-                 " - ssh" & ASCII.LF &
-                 " - telnet"),
+                 "GPS remote features. Please install one of the following " &
+                 "tools (see the documentation for more details):" & ASCII.LF &
+                   " - rlogin" & ASCII.LF &
+                   " - ssh" & ASCII.LF &
+                   " - telnet"),
                Dialog_Type   => Gtkada.Dialogs.Error,
                Buttons       => Gtkada.Dialogs.Button_OK,
                Justification => Gtk.Enums.Justify_Left);
