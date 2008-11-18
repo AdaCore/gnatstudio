@@ -1,13 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
 - HB17-006: Wrong coverage highlighting
-  Problem:    GPS doesn't update list of uncovered lines in the locations
+  Problem:    GPS doesn't update the list of uncovered lines in the locations
 	      window after reloading coverage information for a single file.
 	      As a side effect covered lines may be highlighted as uncovered
               lines.
-  Workaround: Hide and show coverage information for the file using source
-	      editor's context menu each time after coverage information
-              reloading.
+  Workaround: Hide and show coverage information for the file using the source
+	      editor's contextual menu after reloading coverage information.
 
 - HB13-014: Cannot load files with NUL characters
   Problem:    GPS ignores characters beyond a NUL character when loading
