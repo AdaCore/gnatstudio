@@ -17,13 +17,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;
 
 package Docgen2.Scripts is
 
+   package Custom_CSS_File_Vectors is new Ada.Containers.Vectors
+     (Natural, GNATCOLL.VFS.Virtual_File);
+
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register script commands and hooks
+
+   function Get_Custom_CSS_Files return Custom_CSS_File_Vectors.Vector;
 
    function Is_Custom_Tag (Tag : String) return Boolean;
    --  Tell if Tag is a user-defined custom tag

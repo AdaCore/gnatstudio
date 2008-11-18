@@ -3513,6 +3513,10 @@ The action takes a single argument, which is the instance of GPS.Timeout that ca
      <description>Interface for handling customized documentation generation. This class is used in conjunction with GPS.DocgenTagHandler. You cannot create directly this class, but use the ones furnished in GPS.DocgenTagHandler callbacks.</description>
      <see_also name="GPS.DocgenTagHandler" />
   </shell_doc>
+  <shell_doc name="GPS.Docgen.register_css">
+     <param name="filename">A file name</param>
+     <description>Registers a new CSS file to use when generating the documentation. This allows either to override a default style, or add new ones for custom tags handling</description>
+  </shell_doc>
   <shell_doc name="GPS.Docgen.register_tag_handler">
      <param name="handler">The handler to register</param>
      <description>Registers a new tag handler. This handler will be used each time a new documentation is generated and the corresponding tag is found</description>
@@ -3573,6 +3577,7 @@ class ScreenshotTagHandler (GPS.DocgenTagHandler):
          docgen.generate_index_file ("Screenshots", "screenshots.html", content);
 
 def on_gps_start (hook):
+   GPS.Docgen.register_css (GPS.get_system_dir() + "share/mycustomfiles/custom.css")
    GPS.Docgen.register_tag_handler (ScreenshotTagHandler ())
 
 GPS.Hook ("gps_started").add (on_gps_start)
