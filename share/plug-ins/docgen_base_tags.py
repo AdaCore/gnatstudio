@@ -43,6 +43,7 @@ class GroupTagHandler (GPS.DocgenTagHandler):
          on_match=self.on_match,
          on_start=self.on_start,
          on_exit=self.on_exit)
+      self.groups = {}
 
    def on_start (self, docgen):
       self.groups = {}
