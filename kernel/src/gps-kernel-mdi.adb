@@ -170,10 +170,10 @@ package body GPS.Kernel.MDI is
    begin
       --  ??? the following implementation assumes that the file editors
       --  are MDI children that have corresponding file names for title, and
-      --  that they are the only MDI childs that do so.
+      --  that they are the only MDI children that do so.
       --  ??? We might improve a little by checking the Tag of the child
       --  against that of the source editor module. The ID for that module
-      --  needs to be moved to gps.kernel.ads.
+      --  needs to be moved to gps-kernel.ads.
 
       --  First, try to find the editor using the normalized name of File
       Child := Find_MDI_Child_By_Name

@@ -24,7 +24,7 @@ with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with Task_Manager;      use Task_Manager;
 with Traces;            use Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Commands.Generic_Asynchronous;
 
