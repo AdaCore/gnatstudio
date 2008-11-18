@@ -1534,6 +1534,26 @@ package body GPS.Kernel.Remote is
          Add (Get_List (Dialog.Remote_Access_Combo), Item);
       end loop;
 
+      if Get_Nb_Remote_Access_Descriptor = 0 then
+         declare
+            Button : Gtkada.Dialogs.Message_Dialog_Buttons;
+            pragma Unreferenced (Button);
+         begin
+            Button := Gtkada.Dialogs.Message_Dialog
+              (-("No remote access tool could be found on your system." &
+                 ASCII.LF &
+                 "A remote access tool is required to be able to use the " &
+               "GPS remote features. Please install one of the following " &
+               "tools:" & ASCII.LF &
+                 " - rlogin" & ASCII.LF &
+                 " - ssh" & ASCII.LF &
+                 " - telnet"),
+               Dialog_Type   => Gtkada.Dialogs.Error,
+               Buttons       => Gtkada.Dialogs.Button_OK,
+               Justification => Gtk.Enums.Justify_Left);
+         end;
+      end if;
+
       Show_All (Get_List (Dialog.Remote_Access_Combo));
 
       Line_Nb := Line_Nb + 1;
