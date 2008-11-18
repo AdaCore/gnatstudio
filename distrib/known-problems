@@ -9,12 +9,6 @@ Known Problems fixed in GPS 4.4.0
 	      editor's context menu each time after coverage information
               reloading.
 
-  Problem:    GPS doesn't update uncovered lines in the locations window
-              and source editor annotations after reloading of file single
-              file coverage information.
-  Workaround: Hide and show coverage information for the file using context
-              menu.
-
 - HB13-014: Cannot load files with NUL characters
   Problem:    GPS ignores characters beyond a NUL character when loading
               a source file in an editor. It will now strip the NUL character
