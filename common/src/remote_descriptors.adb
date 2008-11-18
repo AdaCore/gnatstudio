@@ -17,11 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Password_Manager;     use Password_Manager;
+with Password_Manager;           use Password_Manager;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Basic_Types;          use Basic_Types;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Basic_Types;                use Basic_Types;
 with Toolchains;
-with GNAT.Regpat;          use GNAT.Regpat;
+with GNAT.Regpat;                use GNAT.Regpat;
 
 package body Remote_Descriptors is
 
@@ -183,7 +185,9 @@ package body Remote_Descriptors is
       --  free the memory. Otherwise we would have to duplicate the code for
       --  Free here to be sure we free all the fields.
 
-      if Full_Exec = null then
+      if Full_Exec = null
+        or else Index (To_Lower (Full_Exec.all), "system32") >= Full_Exec'First
+      then
          Free (Remote);
          return;
       end if;
