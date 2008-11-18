@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
+--                 Copyright (C) 2006-2008, AdaCore                  --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,12 +27,11 @@ package GPS.Kernel.Commands is
       File   : GNATCOLL.VFS.Virtual_File);
 
    procedure Do_On_Each_File
-     (Handle              : access Kernel_Handle_Record'Class;
-      Callback            : File_Callback;
-      Chunk_Size          : Positive := 1;
-      Queue_Base_Name     : String := "";
-      Kill_Existing_Queue : Boolean := False;
-      Operation_Name      : String := "");
+     (Handle         : access Kernel_Handle_Record'Class;
+      Callback       : File_Callback;
+      Chunk_Size     : Positive := 1;
+      Queue_Name     : String := "";
+      Operation_Name : String := "");
    --  This procedure will launch a GPS command wich will call the given
    --  callback sequentially on each file of the project, including the files
    --  found from the ada library. It's possible to change the number of files
@@ -42,7 +41,7 @@ package GPS.Kernel.Commands is
    --  of a previous queue if Kill_Existing_Queue is true.
 
    procedure Kill_File_Iteration
-     (Kernel : access Kernel_Handle_Record'Class; Queue_Base_Name : String);
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String);
    --  Kills the queue deduced from the base name given in parameter, assuming
    --  that these queues have been made for a file iteration from
    --  Do_On_Each_File.

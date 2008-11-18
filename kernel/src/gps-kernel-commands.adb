@@ -169,12 +169,11 @@ package body GPS.Kernel.Commands is
    ---------------------
 
    procedure Do_On_Each_File
-     (Handle              : access Kernel_Handle_Record'Class;
-      Callback            : File_Callback;
-      Chunk_Size          : Positive := 1;
-      Queue_Base_Name     : String := "";
-      Kill_Existing_Queue : Boolean := False;
-      Operation_Name      : String := "")
+     (Handle         : access Kernel_Handle_Record'Class;
+      Callback       : File_Callback;
+      Chunk_Size     : Positive := 1;
+      Queue_Name     : String := "";
+      Operation_Name : String := "")
    is
       use File_Iterate_Commands;
 
@@ -183,29 +182,13 @@ package body GPS.Kernel.Commands is
       Iter           : Imported_Project_Iterator :=
         Start (Get_Project (Handle));
 
-      Queue_Name : String := Queue_Base_Name & "_0";
-
       Std_Files      : File_Array_Access;
       Project_Files  : File_Array_Access;
       Total_Progress : Natural;
-   begin
-      if Kill_Existing_Queue then
-         if Kill_File_Queue (Handle, Queue_Name) then
-            --  If there is already something on queue 0, then kill it and load
-            --  queue 1.
-            Queue_Name := Queue_Base_Name & "_1";
-         else
-            declare
-               Dummy : constant Boolean :=
-                 Kill_File_Queue (Handle, Queue_Base_Name & "_1");
-               pragma Unreferenced (Dummy);
-               --  Just in case there is something on queue 1
-            begin
-               null;
-            end;
-         end if;
-      end if;
 
+      Old_Command  : Scheduled_Command_Access;
+      Command_Data : File_Iterate_Data_Access;
+   begin
       while Current (Iter) /= No_Project loop
          Projects_Count := Projects_Count + 1;
          Next (Iter);
@@ -226,36 +209,38 @@ package body GPS.Kernel.Commands is
          Total_Progress := Total_Progress + 1;
       end if;
 
-      File_Iterate_Commands.Create
-        (C, Operation_Name,
-         new File_Iterate_Data'
-           (Kernel_Handle (Handle),
-            Current_Progress => 0,
-            Total_Progress   => Total_Progress,
-            Std_Files        => Std_Files,
-            Project_Files    => Project_Files,
-            Index_In_Std     => 1,
-            Index_In_Project => 1,
-            Stop             => False,
-            Chunk_Size       => Chunk_Size,
-            Callback         => Callback),
-         File_Iterate'Access);
+      Old_Command := Scheduled_Command_Access
+        (Head (Get_Task_Manager (Handle), Queue_Name));
 
-      if Queue_Base_Name /= "" then
+      Command_Data := new File_Iterate_Data'
+        (Kernel_Handle (Handle),
+         Current_Progress => 0,
+         Total_Progress   => Total_Progress,
+         Std_Files        => Std_Files,
+         Project_Files    => Project_Files,
+         Index_In_Std     => 1,
+         Index_In_Project => 1,
+         Stop             => False,
+         Chunk_Size       => Chunk_Size,
+         Callback         => Callback);
+
+      if Old_Command /= null then
+         Set_Data
+           (File_Iterate_Commands.Generic_Asynchronous_Command_Access
+              (Get_Command (Old_Command)),
+            Command_Data);
+      else
+         File_Iterate_Commands.Create
+           (C, Operation_Name,
+            Command_Data,
+            File_Iterate'Access);
+
          Launch_Background_Command
            (Handle,
             Command_Access (C),
             True,
             True,
             Queue_Name,
-            Block_Exit => False);
-      else
-         Launch_Background_Command
-           (Handle,
-            Command_Access (C),
-            True,
-            True,
-            "",
             Block_Exit => False);
       end if;
 
@@ -281,13 +266,12 @@ package body GPS.Kernel.Commands is
    -------------------------
 
    procedure Kill_File_Iteration
-     (Kernel : access Kernel_Handle_Record'Class; Queue_Base_Name : String)
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Name : String)
    is
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      Dummy := Kill_File_Queue (Kernel, Queue_Base_Name & "_0");
-      Dummy := Kill_File_Queue (Kernel, Queue_Base_Name & "_1");
+      Dummy := Kill_File_Queue (Kernel, Queue_Name);
    end Kill_File_Iteration;
 
 end GPS.Kernel.Commands;
