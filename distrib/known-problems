@@ -1,11 +1,26 @@
 Known Problems fixed in GPS 4.3.1
 
-- HB17-002: Changing the build mode might make GPS crash
-  Problem:    Under certain circumstances, changing the build mode of GPS
-              when the object subdirectories do not exist make GPS crash.
+- HB17-002: Changing the build mode may crash GPS under Windows
+  Problem:    Under certain circumstances and under Windows only, changing the
+              build mode of GPS when the object subdirectories do not exist
+              make GPS crash.
   Workaround: Relaunching GPS and changing the mode is working as the
               subdirectories are then created. You can also create those
               subdirectories manually before changing the mode.
+
+- HB13-012: Invalid desktop saved
+  Problem:    In some cases when generating code coverage information for
+              C files containing multiple line macros, the desktop will
+              contain invalid characters that cannot be loaded afterwards.
+  Workaround: Remove the invalid (NUL) characters from .gps/desktop.xml
+              manually.
+
+- HB13-008: Build mode not taken into account in interactive dialog
+  Problem:    When running a build action (e.g. from the Build menu) which
+              pops up an extra interactive dialog to confirm the command line,
+              the build mode (gcov, debug, ...) will not be taken into account
+  Workaround: either use the default build mode, or specify an extra
+              --subdirs=xxx switch in the interactive dialog.
 
 - HB04-009: Debugger console has no keyboard focus on title click
   Problem:    If you click in the title bar or the tab of the debugger
