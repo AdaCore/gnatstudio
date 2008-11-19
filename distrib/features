@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Oct 27, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Nov 19, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -11,6 +11,15 @@ documentation.
 An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
+
+New features in GPS 4.3.1
+-------------------------
+
+NF-43-HB07-009 Default tags handling in documentation generator (2008-11-19)
+
+  Some structured comment tags are now handled by default in GPS. To allow a
+  better customisation, the generator now also allows the definition of custom
+  CSS files.
 
 New features in GPS 4.3.0
 -------------------------
@@ -362,7 +371,7 @@ NF-43-G706-005 Redesigned Build facility (2008-10-20)
     - The possibility to display icons in the toolbar for every action
     - Improved support for the recent versions of GPRbuild
     - A graphical interface to manage build commands
-    - Possibility to launch builds (or any other build-like command, 
+    - Possibility to launch builds (or any other build-like command,
        like syntax check or semantic checks) every time a file is saved
 
   GPS 4.3.0 also introduces the notion of Build Modes.
