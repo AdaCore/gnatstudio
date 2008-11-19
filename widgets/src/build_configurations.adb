@@ -805,11 +805,12 @@ package body Build_Configurations is
       --  Main node
       N.Attributes := new String'
         ("model="""
-         & XML_Protect (To_String (Target.Model.Name)) & """ " &
-         "category="""
-         & XML_Protect (To_String (Target.Properties.Category)) & """ " &
-         "name="""
-         & XML_Protect (To_String (Target.Properties.Menu_Name)) & """");
+         & Glib.Xml_Int.Protect (To_String (Target.Model.Name))
+         & """ category="""
+         & Glib.Xml_Int.Protect (To_String (Target.Properties.Category))
+         & """ name="""
+         & Glib.Xml_Int.Protect  (To_String (Target.Properties.Menu_Name))
+         & """");
       --  Insert a <icon> node if needed
 
       N.Child := new Node;

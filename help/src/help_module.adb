@@ -56,7 +56,6 @@ with Traces;                     use Traces;
 with File_Utils;                 use File_Utils;
 with Filesystems;                use Filesystems;
 with Generic_List;
-with String_Utils;               use String_Utils;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
 with Config;
@@ -370,7 +369,7 @@ package body Help_Module is
                if Child.Tag.all = "description" then
                   if HTML_Format then
                      Descr := Descr & "<tr><td colspan='3'>"
-                       & XML_Protect (Child.Value.all) & "</td></tr>";
+                       & Glib.Xml_Int.Protect (Child.Value.all) & "</td></tr>";
                   else
                      Descr := Descr & Child.Value.all;
                   end if;
@@ -386,7 +385,8 @@ package body Help_Module is
                   if HTML_Format then
                      Params := Params
                        & "<tr><td class=""name"">"
-                       & XML_Protect (Get_Attribute (Child, "name")) & "</td>";
+                       & Glib.Xml_Int.Protect
+                          (Get_Attribute (Child, "name")) & "</td>";
                   else
                      if Params /= Null_Unbounded_String then
                         Params := Params & ASCII.LF;
@@ -403,7 +403,7 @@ package body Help_Module is
                         if HTML_Format then
                            Params := Params
                              & "<td class='default'>(default="""
-                             & XML_Protect (Default) & """)</td>";
+                             & Glib.Xml_Int.Protect (Default) & """)</td>";
                         else
                            Params := Params & Default & ASCII.HT;
                         end if;
@@ -415,7 +415,7 @@ package body Help_Module is
 
                   if HTML_Format then
                      Params :=
-                       Params & "<td>" & XML_Protect (Child.Value.all)
+                       Params & "<td>" & Glib.Xml_Int.Protect (Child.Value.all)
                        & "</td></tr>";
                   else
                      Params := Params & Child.Value.all;
@@ -426,7 +426,7 @@ package body Help_Module is
                      Returns := To_Unbounded_String
                        ("</tr><td class=""return"">Returns</td>"
                         & "<td colspan='2' class=""descr"">"
-                        & XML_Protect (Child.Value.all)
+                        & Glib.Xml_Int.Protect (Child.Value.all)
                         & "</td></tr>");
                   else
                      Returns :=
@@ -438,7 +438,8 @@ package body Help_Module is
                      See_Also := See_Also
                        & "<tr><td class='header'>See also</td>"
                        & "<td class='seeAlso' colspan='2'>"
-                       & XML_Protect (Get_Attribute (Child, "name", ""))
+                       & Glib.Xml_Int.Protect
+                          (Get_Attribute (Child, "name", ""))
                        & "</td></tr>";
                   end if;
 
@@ -450,7 +451,8 @@ package body Help_Module is
                      if HTML_Format then
                         Descr := Descr
                           & "<tr><td colspan='3' class='example'>"
-                          & XML_Protect (Child.Value.all) & "</td></tr>";
+                          & Glib.Xml_Int.Protect (Child.Value.all)
+                          & "</td></tr>";
                      else
                         Example := Example & ASCII.LF & Child.Value.all;
                      end if;

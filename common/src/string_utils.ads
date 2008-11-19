@@ -374,9 +374,6 @@ package String_Utils is
    --  the character's ASCII hexadecimal code. For example a space is encoded
    --  as %20.
 
-   function XML_Protect (S : String) return String;
-   --  Protect <, > and & to convert as &lt; &gt; and &amp;
-
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
