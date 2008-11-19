@@ -2,9 +2,9 @@ Known Problems fixed in GPS 4.3.1
 
 - HB17-012: Multiple entity databases loading at the same time
   Problem:    While loading the entity database, if the project is updated 
-              manually, or when the build mode is changed, there may be a 
-              parrallel entities database load launched in parallel of the
-              current one - instead of having the current one shut down first.
+              manually, or when the build mode is changed, there may be a n
+              extra recomputing of the entity database launched in parallel of
+              the current one, instead of having the current one removed first.
   Workaround: Wait until the end of the load.
 
 - HB17-002: Changing the build mode may crash GPS under Windows
