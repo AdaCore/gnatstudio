@@ -8325,6 +8325,22 @@ improve the generated documentation. To define your own structured comments,
 you should refer to the GPS python extension documentation (from GPS Help menu,
 choose 'Python extensions').
 
+Some default tags have been already defined by GPS in
+@file{<install_dir>/share/gps/plug-ins/docgen_base_tags.py}. The tags handled
+are :
+
+@table @code
+@item description
+@item summary
+@item parameter
+(attribute "name" is expected)
+@item exception
+@item seealso
+@item c_version
+@item group
+(this builds a custom index from all <group>A Group</group> tags)
+@end table
+
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
