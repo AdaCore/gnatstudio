@@ -1354,9 +1354,8 @@ package body GPS.Location_View is
       if Enable_Counter then
          Set (Model, File_Iter, Number_Of_Items_Column,
               Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
-         Set
-           (Model, Category_Iter, Number_Of_Items_Column,
-            Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
+         Set (Model, Category_Iter, Number_Of_Items_Column,
+              Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
 
          Redraw_Totals (View);
       end if;
