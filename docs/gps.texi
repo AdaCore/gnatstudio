@@ -8327,7 +8327,7 @@ choose 'Python extensions').
 
 Some default tags have been already defined by GPS in
 @file{<install_dir>/share/gps/plug-ins/docgen_base_tags.py}. The tags handled
-are :
+are:
 
 @table @code
 @item description
