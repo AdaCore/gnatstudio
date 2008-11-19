@@ -3130,7 +3130,7 @@ Note that this class is in fact available directly through "from gps_utils.conso
             class Console_Process (GPS.Console, GPS.Process):
               def on_output (self, matched, unmatched):
                 self.write (unmatched + matched)
-              def on_exit (self, status, full_output):
+              def on_exit (self, status, unmatched_output):
                 try: self.destroy ()
                 except: pass  # Might already have been destroyed
               def on_input (self, input):
