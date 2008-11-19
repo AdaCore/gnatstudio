@@ -85,7 +85,7 @@ class GroupTagHandler (GPS.DocgenTagHandler):
 
 def on_gps_start (hook):
    # use default tag handling for description, summary, exception and seealso
-   GPS.Docgen.register_css (GPS.get_system_dir() + "share/gps/docgen2/support/tags.css");
+   GPS.Docgen.register_css (GPS.get_system_dir() + "share/gps/docgen2/custom/tags.css");
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("description"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("summary"))
    GPS.Docgen.register_tag_handler (GPS.DocgenTagHandler ("exception"))

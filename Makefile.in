@@ -62,7 +62,7 @@ endif
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
-	(cd docgen2/resources; tar cf - *.tmpl support/*.css support/*.js support/images/*.png) \
+	(cd docgen2/resources; tar cf - *.tmpl custom/*.css support/*.css support/*.js support/images/*.png) \
 		| (cd $(sharedir)/gps/docgen2; tar xf -)
 	(cd aunit/templates; tar cf - *.tmpl) \
 		| (cd $(sharedir)/gps/aunit; tar xf -)
