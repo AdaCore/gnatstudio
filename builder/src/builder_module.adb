@@ -549,7 +549,6 @@ package body Builder_Module is
          Loads_Xrefs_From_File'Access,
          Sources_Load_Chunk,
          Xrefs_Loading_Queue,
-         True,
          "load xrefs info");
    end Load_Xref_In_Memory;
 

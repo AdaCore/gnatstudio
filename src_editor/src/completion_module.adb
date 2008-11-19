@@ -1069,8 +1069,7 @@ package body Completion_Module is
         (Handle              => Kernel,
          Callback            => Load_One_File_Constructs'Access,
          Chunk_Size          => 1,
-         Queue_Base_Name     => Db_Loading_Queue,
-         Kill_Existing_Queue => True,
+         Queue_Name          => Db_Loading_Queue,
          Operation_Name      => "load entity db");
    end Load_Construct_Database;
 
