@@ -1961,13 +1961,13 @@ package body GPS.Location_View is
       Iter : Gtk_Tree_Iter;
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
-      if Iter /= Null_Iter then
+      if Iter /= Null_Iter
+        and then View.Idle_Row_Handler = Glib.Main.No_Source_Id
+      then
          View.Row := Get_Path (Get_Model (View.Tree), Iter);
 
-         if View.Idle_Row_Handler = Glib.Main.No_Source_Id then
-            View.Idle_Row_Handler := View_Idle.Idle_Add
-              (Idle_Show_Row'Access, View);
-         end if;
+         View.Idle_Row_Handler := View_Idle.Idle_Add
+           (Idle_Show_Row'Access, View);
       end if;
    exception
       when E : others => Trace (Exception_Handle, E);

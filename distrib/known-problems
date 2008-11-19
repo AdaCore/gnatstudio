@@ -37,6 +37,11 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Fix the build configuration to specify a valid executable,
               and restart GPS.
 
+- HB01-005: Fix scroll to end of location window
+  Problem:    The location window was scrolled to show the last item
+              in some cases instead of showing the selected item.
+  Workaround: Scroll back to the selected item.
+
 Known Problems fixed in GPS 4.3.0
 
 - HA14-009: Wrong dialog settings in project properties
