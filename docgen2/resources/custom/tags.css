@@ -19,16 +19,25 @@ div.description
    border-bottom: 1px dotted #e0e0e0;
 }
 
-div.parameter:before
-{
-   content: attr(name)': ';
-   font-style: italic;
-   color: #f44;
-   display: inline;
-}
 div.parameter *
 {
    font-style: italic;
    color: #444;
    display: inline;
+}
+
+div.exception:before
+{
+   content: "Exception: ";
+   font-weight: bold;
+}
+
+div.seealso:before
+{
+   content: "See also: ";
+   font-weight: bold;
+}
+div.seealso
+{
+   font-style: italic;
 }

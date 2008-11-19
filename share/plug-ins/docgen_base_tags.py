@@ -23,7 +23,7 @@ class ParameterTagHandler (GPS.DocgenTagHandler):
    def on_match (self, docgen, attrs, value, entity_name, entity_href):
       res = re.split ('name=\"([^"]*)\"', attrs)
       if len (res) > 1:
-         return """<div class="parameter"><span class="name">%s :</span>%s</div>""" % (res[1], value)
+         return """<div class="parameter"><span class="name">%s:</span> %s</div>""" % (res[1], value)
       else:
          return """<div class="parameter" %s>%s</div>""" % (attrs, value)
 
@@ -71,7 +71,7 @@ class GroupTagHandler (GPS.DocgenTagHandler):
          n += 1
       content += """</ul></div></div></div>"""
 
-      content += """<div class="title">Widget Groups</div>"""
+      content += """<div class="title">Package Groups</div>"""
       n = 0
       for group in sorted(self.groups.keys()):
          content += """<p><a name="%d"></a><h1>%s</h1>\n""" % (n, group)
@@ -81,7 +81,7 @@ class GroupTagHandler (GPS.DocgenTagHandler):
          content += "</p>\n"
 
       if content != "":
-         docgen.generate_index_file ("Widget groups", "groups.html", content);
+         docgen.generate_index_file ("Package groups", "groups.html", content);
 
 def on_gps_start (hook):
    # use default tag handling for description, summary, exception and seealso

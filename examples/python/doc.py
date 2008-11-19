@@ -7,14 +7,17 @@
 from GPS import *
 from pygps import delayed_exit
 
-# Set the preferences. You can adjust them at your convenience.
-Preference ("Doc-Process-Body").set (True)
-Preference ("Doc-Show-Private").set (True)
-Preference ("Doc-References").set (True)
-Preference ("Doc-Up-To-Date-Only").set (False)
+def on_gps_started (hook):
+  # Set the preferences. You can adjust them at your convenience.
+  Preference ("Doc-Process-Body").set (True)
+  Preference ("Doc-Show-Private").set (True)
+  Preference ("Doc-References").set (True)
+  Preference ("Doc-Up-To-Date-Only").set (False)
 
-# Generate documentation for the root projects and all subprojects.
-Project.root().generate_doc (recursive=True)
+  # Generate documentation for the root projects and all subprojects.
+  Project.root().generate_doc (recursive=True)
 
-# Try to exit every 10 seconds.
-delayed_exit (10000)
+  # Try to exit every 10 seconds.
+  delayed_exit (10000)
+
+GPS.Hook ("gps_started").add (on_gps_started)
