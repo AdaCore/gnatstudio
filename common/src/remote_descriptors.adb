@@ -185,8 +185,12 @@ package body Remote_Descriptors is
       --  free the memory. Otherwise we would have to duplicate the code for
       --  Free here to be sure we free all the fields.
 
+      --  We do not authorize Microsoft telnet here, as it is badly handled
+      --  by the GNAT.Expect.TTY.Remote package.
+
       if Full_Exec = null
-        or else Index (To_Lower (Full_Exec.all), "system32") >= Full_Exec'First
+        or else Index (To_Lower (Full_Exec.all), "system32\telnet") >=
+          Full_Exec'First
       then
          Free (Remote);
          return;
