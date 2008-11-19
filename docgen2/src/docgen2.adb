@@ -2803,11 +2803,29 @@ package body Docgen2 is
    is
       Names_Tag : Tag;
       Files_Tag : Tag;
+      CSS_Tag   : Tag;
+      Cursor  : Docgen2.Scripts.Custom_CSS_File_Vectors.Cursor;
+      List    : constant Docgen2.Scripts.Custom_CSS_File_Vectors.Vector :=
+                  Docgen2.Scripts.Get_Custom_CSS_Files;
+      File    : GNATCOLL.VFS.Virtual_File;
+
    begin
+      --  First set the base docgen2 css file.
+      Append (CSS_Tag, "docgen.css");
+      --  Now add custom ones
+      Cursor := List.First;
+      while Docgen2.Scripts.Custom_CSS_File_Vectors.Has_Element (Cursor) loop
+         File := Docgen2.Scripts.Custom_CSS_File_Vectors.Element (Cursor);
+         Append (CSS_Tag, File.Base_Name);
+         Docgen2.Scripts.Custom_CSS_File_Vectors.Next (Cursor);
+      end loop;
+
+      --  And generate tags for custom indexes
       for J in Cmd.Custom_Files.First_Index .. Cmd.Custom_Files.Last_Index loop
          Append (Names_Tag, To_String (Cmd.Custom_Files.Element (J).Name));
          Append (Files_Tag, To_String (Cmd.Custom_Files.Element (J).Filename));
       end loop;
+      Insert (Trans, Assoc ("CSSFILES", CSS_Tag));
       Insert (Trans, Assoc ("USER_DEFINED_NAMES", Names_Tag));
       Insert (Trans, Assoc ("USER_DEFINED_FILES", Files_Tag));
    end Add_Custom_Index;
@@ -3379,7 +3397,18 @@ package body Docgen2 is
       Dst_Dir : constant String :=
                   Get_Doc_Directory (Cmd);
       Success : Boolean;
+      Cursor  : Docgen2.Scripts.Custom_CSS_File_Vectors.Cursor;
+      List    : constant Docgen2.Scripts.Custom_CSS_File_Vectors.Vector :=
+                  Docgen2.Scripts.Get_Custom_CSS_Files;
+      File    : GNATCOLL.VFS.Virtual_File;
    begin
+      Cursor := List.First;
+      while Docgen2.Scripts.Custom_CSS_File_Vectors.Has_Element (Cursor) loop
+         File := Docgen2.Scripts.Custom_CSS_File_Vectors.Element (Cursor);
+         File.Copy (Dst_Dir & Base_Name (File), Success);
+         Docgen2.Scripts.Custom_CSS_File_Vectors.Next (Cursor);
+      end loop;
+
       Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Success);
       pragma Assert (Success);
    end Generate_Support_Files;

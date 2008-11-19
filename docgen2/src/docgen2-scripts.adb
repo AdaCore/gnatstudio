@@ -17,13 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Containers.Vectors;
 with System.OS_Lib;              use System.OS_Lib;
 with GPS.Kernel;                 use GPS.Kernel;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
---  with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 
 package body Docgen2.Scripts is
@@ -50,6 +48,8 @@ package body Docgen2.Scripts is
    package Custom_Tag_Vectors is new Ada.Containers.Vectors
      (Natural, Custom_Tag_Property);
    Custom_Tags  : Custom_Tag_Vectors.Vector;
+
+   Custom_CSS_Files : Custom_CSS_File_Vectors.Vector;
 
    Tag_Cst      : aliased constant String := "tag";
    On_Start_Cst : aliased constant String := "on_start";
@@ -183,7 +183,22 @@ package body Docgen2.Scripts is
    is
       Prop   : Custom_Tag_Property_Access;
    begin
-      if Command = "register_tag_handler" then
+      if Command = "register_css" then
+         declare
+            Filename : constant String := Nth_Arg (Data, 1);
+            File     : constant GNATCOLL.VFS.Virtual_File :=
+                         GNATCOLL.VFS.Create (Filename);
+         begin
+            if not Is_Regular_File (File) then
+               Set_Error_Msg
+                 (Data, -"Could not find file " & File.Full_Name.all);
+               return;
+            end if;
+
+            Custom_CSS_Files.Append (File);
+         end;
+
+      elsif Command = "register_tag_handler" then
          Name_Parameters (Data, Register_Args);
          declare
             Inst : constant Class_Instance :=
@@ -266,6 +281,13 @@ package body Docgen2.Scripts is
                               (Get_Scripts (Kernel));
    begin
       Register_Command
+        (Kernel, "register_css",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Docgen_Class,
+         Handler       => Docgen_Handler'Access,
+         Static_Method => True);
+      Register_Command
         (Kernel, "register_tag_handler",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
@@ -291,6 +313,15 @@ package body Docgen2.Scripts is
          Class        => Tag_Handler_Class,
          Handler      => Custom_Tag_Handler'Access);
    end Register_Commands;
+
+   --------------------------
+   -- Get_Custom_CSS_Files --
+   --------------------------
+
+   function Get_Custom_CSS_Files return Custom_CSS_File_Vectors.Vector is
+   begin
+      return Custom_CSS_Files;
+   end Get_Custom_CSS_Files;
 
    -------------------
    -- Is_Custom_Tag --

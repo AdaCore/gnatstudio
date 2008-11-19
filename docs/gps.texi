@@ -8220,6 +8220,66 @@ improve the generated documentation. To define your own structured comments,
 you should refer to the GPS python extension documentation (from GPS Help menu,
 choose 'Python extensions').
 
+Some default tags have been already defined by GPS in
+@file{<install_dir>/share/gps/plug-ins/docgen_base_tags.py}. The tags handled
+are:
+
+@table @code
+@item summary
+Short summary of what a package or method is doing.
+@item description
+Full description of what a package or method is doing.
+@item parameter (attribute "name" is expected)
+Description of the parameter named "name".
+@item exception
+Description of possible exceptions raised by the method.
+@item seealso
+Reference to another package, method, type, etc.
+@item c_version
+For bindings, the version of the C file.
+@item group
+For packages, this builds an index of all packages in the project grouped by
+categories.
+@end table
+
+The following sample shows how those tags are translated:
+@smallexample
+--  <description>
+--    This is the main description for this package. It can contain a complete
+--    desciription with some xml characters as < or >.
+--  </description>
+--  <group>Group1</group>
+--  <c_version>1.0.0</c_version>
+package Pkg is
+
+   procedure Test (Param : Integer);
+   --  <summary>Test procedure with a single parameter</summary>
+   --  <parameter name="Param">An Integer</parameter>
+   --  <exception>No exception</exception>
+   --  <seealso>Test2</seealso>
+
+   procedure Test2 (Param1 : Integer; Param2 : Natural);
+   --  <summary>Test procedure with two parameters</summary>
+   --  <parameter name="Param1">An Integer</parameter>
+   --  <parameter name="Param2">A Natural</parameter>
+   --  <exception>System.Assertions.Assert_Failure if Param1 < 0</exception>
+   --  <seealso>Test</seealso>
+
+end Pkg;
+@end smallexample
+
+Its documentation will be:
+
+@iftex
+@cindex screen shot
+@image{docgen, 17cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{docgen}
+@end ifhtml
+
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
