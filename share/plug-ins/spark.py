@@ -63,12 +63,18 @@ if os.name != 'nt':
   spark_separator='-'
 
 def on_match (process, match, since_last):
+  try:
+     process.output += since_last + match
+  except:
+     process.output = since_last + match
   GPS.Console (spark_console).write (since_last + match)
 
-def on_exit (process, status, full_output):
-  # Protect "Flow Error:123:" from being detected as a file reference
+def on_exit (process, status, remaining_output):
+  # Protect e.g. "Flow Error:123:" from being detected as a file reference
   GPS.Locations.parse (
-     full_output.replace (" Error:"," Error "), category=spark_category)
+     process.output.replace (" Error:"," Error,").replace \
+       (" Warning:"," Warning,"),
+     category=spark_category)
 
 def examine_file (file):
   """Examine current file through the SPARK examiner. file is an instance
@@ -77,7 +83,7 @@ def examine_file (file):
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
-  GPS.Console (spark_console).clear ()
+  GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
@@ -116,7 +122,7 @@ def show_pogs_file():
   GPS.cd (dir)
   sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
   cmd = "pogs " + sw
-  GPS.Console (pogs_console).clear ()
+  GPS.Console (pogs_console, accept_input=False).clear ()
   GPS.Console (pogs_console).write (cmd + "\n")
   GPS.Console (pogs_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
   GPS.MDI.get (pogs_console).raise_window ()
@@ -173,7 +179,7 @@ def sparkmake ():
   GPS.MDI.save_all (False)
   sw = GPS.current_context().project().get_tool_switches_as_string ("SPARKmake")
   cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
-  GPS.Console (spark_console).clear ()
+  GPS.Console (spark_console, accept_input=False).clear ()
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
   GPS.MDI.get (spark_console).raise_window ()

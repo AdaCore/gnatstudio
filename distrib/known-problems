@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB19-014: SPARK examiner messages no longer recognized
+  Problem:    Error messages from the SPARK Examiner are no longer recognized
+              in GPS 4.3.0 and not displayed in the locations window
+  Workaround: Use the spark.py plug-in from previous GPS versions.
+
 - HB17-012: Multiple entity databases loading at the same time
   Problem:    While loading the entity database, if the project is updated 
               manually, or when the build mode is changed, there may be a n
