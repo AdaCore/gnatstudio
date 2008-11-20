@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB20-007: Default value in <preference> node incorrect
+  Problem:    GPS 4.3.0 contained an unexpected change of behavior for the
+              "default" attribute of <preference> node in customization files,
+              for preferences with a value in a specific set of choices. 0
+              used to be for the first possible value, but GPS 4.3.0 is using
+              1 here. This change has been reverted, and 0 once again mean the
+              first possible value, for backward compatibility reasons
+  Workaround: change 0 to 1 temporarily to make your customization file work
+              with 4.3.0
+
 - HB19-014: SPARK examiner messages no longer recognized
   Problem:    Error messages from the SPARK Examiner are no longer recognized
               in GPS 4.3.0 and not displayed in the locations window
