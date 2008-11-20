@@ -223,8 +223,6 @@ static void		RefreshScreen();
 
 static void		OnBeep(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
-static void		OnFillConsoleOutputCharacter(ExpProcess *,
-			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnGetStdHandle(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnIsWindowVisible(ExpProcess *,
@@ -274,10 +272,6 @@ static void		OnXSingleStep(ExpProcess *, LPDEBUG_EVENT);
  */
 
 ExpBreakInfo BreakArrayKernel32[] = {
-  {"FillConsoleOutputCharacterA", 5,
-   OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
-  {"FillConsoleOutputCharacterW", 5,
-   OnFillConsoleOutputCharacter, EXP_BREAK_OUT},
   {"SetConsoleMode", 2, OnSetConsoleMode, EXP_BREAK_OUT},
   {"WriteConsoleA", 5, OnWriteConsoleA, EXP_BREAK_OUT},
   {"WriteConsoleW", 5, OnWriteConsoleW, EXP_BREAK_OUT},
@@ -986,9 +980,6 @@ OnXFirstBreakpoint(ExpProcess *proc, LPDEBUG_EVENT pDebEvent)
     DWORD base;
     ExpThreadInfo *tinfo;
 
-#if 0
-    fprintf(stderr, "OnXFirstBreakpoint: proc=0x%08x\n", proc);
-#endif
     for (tinfo = proc->threadList; tinfo != NULL; tinfo = tinfo->nextPtr) {
 	if (pDebEvent->dwThreadId == tinfo->dwThreadId) {
 	    break;
@@ -1886,162 +1877,7 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
     }
 }
 
-/*
- *----------------------------------------------------------------------
- *
- * OnFillConsoleOutputCharacter --
- *
- *	This function gets called when an FillConsoleOutputCharacterA
- *	or FillConsoleOutputCharacterW breakpoint is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Prints some output.
- *
- *----------------------------------------------------------------------
- */
 
-static void
-OnFillConsoleOutputCharacter(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    CHAR buf[4096];
-    int bufpos;
-    UCHAR c;
-    PVOID ptr;
-    DWORD i;
-    DWORD len;
-    BOOL bRet;
-    COORD coord;
-    DWORD lines, preCols, postCols;
-    BOOL eol, bol;		/* Needs clearing to end, beginning of line */
-    CONSOLE_SCREEN_BUFFER_INFO info;
-
-    LOG_ENTRY("FillConsoleOutputCharacter");
-
-    if (*returnValue == 0) {
-	return;
-    }
-
-    c = (UCHAR) threadInfo->args[1];
-    len = threadInfo->args[2];
-    coord = *((PCOORD) &(threadInfo->args[3]));
-    ptr = (PVOID) threadInfo->args[4];
-    if (ptr) {
-	ReadSubprocessMemory(proc, ptr, &len, sizeof(DWORD));
-    }
-
-    preCols = 0;
-    bufpos = 0;
-    eol = bol = FALSE;
-    if (coord.X) {
-	preCols = ConsoleSize.X - coord.X;
-	if (len <= preCols) {
-	    preCols = len;
-	    len = 0;
-	    if (len == preCols) {
-		eol = TRUE;
-	    }
-	} else {
-	    eol = TRUE;
-	    len -= preCols;
-	}
-    } else if (len < (DWORD) ConsoleSize.X) {
-	bol = TRUE;
-	preCols = len;
-	len = 0;
-    }
-
-    lines = len / ConsoleSize.X;
-    postCols = len % ConsoleSize.X;
-
-    if (preCols) {
-	if (bol) {
-	    /* Beginning of line to before end of line */
-	    if (c == ' ') {
-		wsprintfA(&buf[bufpos], "\033[%d;%dH\033[1K",
-			  coord.Y+1, preCols+coord.X);
-		bufpos += strlen(&buf[bufpos]);
-	    } else {
-		wsprintfA(&buf[bufpos], "\033[%d;%dH",
-			  coord.Y+1, coord.X+1);
-		bufpos += strlen(&buf[bufpos]);
-		memset(&buf[bufpos], c, preCols);
-		bufpos += preCols;
-	    }
-	} else {
-	    /* After beginning of line to end of line */
-	    wsprintfA(&buf[bufpos], "\033[%d;%dH", coord.Y+1, coord.X+1);
-	    bufpos += strlen(&buf[bufpos]);
-	    if (eol && c == ' ') {
-		wsprintfA(&buf[bufpos], "\033[K");
-		bufpos += strlen(&buf[bufpos]);
-	    } else {
-		memset(&buf[bufpos], c, preCols);
-		bufpos += preCols;
-	    }
-	}
-	coord.X = 0;
-	coord.Y++;
-    }
-    if (lines) {
-	if ((c == ' ') && ((lines + coord.Y) >= (DWORD) ConsoleSize.Y)) {
-	    /* Clear to end of screen */
-	    wsprintfA(&buf[bufpos], "\033[%d;%dH\033[J",
-		      coord.Y+1, coord.X+1);
-	    bufpos += strlen(&buf[bufpos]);
-	} else if ((c == ' ') && (coord.Y == 0) && (lines > 0)) {
-	    /* Clear to top of screen */
-	    wsprintfA(&buf[bufpos], "\033[%d;%dH\033[1J", lines, 1);
-	    bufpos += strlen(&buf[bufpos]);
-	} else {
-	    for (i = 0; i < lines; i++) {
-		wsprintfA(&buf[bufpos], "\033[%d;%dH",
-			  coord.Y+i+1, coord.X+1);
-		bufpos += strlen(&buf[bufpos]);
-		if (c == ' ') {
-		    wsprintfA(&buf[bufpos], "\033[2K");
-		    bufpos += strlen(&buf[bufpos]);
-		} else {
-		    memset(&buf[bufpos], c, ConsoleSize.X);
-		    bufpos += ConsoleSize.X;
-		}
-	    }
-	}
-	coord.Y += (SHORT) lines;
-    }
-
-    if (postCols) {
-	if (c == ' ') {
-	    /* Clear to beginning of line */
-	    wsprintfA(&buf[bufpos], "\033[%d;%dH\033[1K",
-		      coord.Y+1, postCols+coord.X);
-	    bufpos += strlen(&buf[bufpos]);
-	} else {
-	    wsprintfA(&buf[bufpos], "\033[%d;%dH", coord.X+1, coord.Y+1);
-	    bufpos += strlen(&buf[bufpos]);
-	    memset(&buf[bufpos], c, postCols);
-	    bufpos += postCols;
-	}
-    }
-    if (GetConsoleScreenBufferInfo(HConsole, &info) == FALSE) {
-      char errbuf[200];
-      wsprintfA
-        (errbuf,
-        "Call to GetConsoleScreenBufferInfo failed: handle=0x%08x, err=0x%08x",
-         HConsole, GetLastError());
-      EXP_LOG("%s\n", errbuf);
-    } else {
-	CursorPosition = info.dwCursorPosition;
-	wsprintfA(&buf[bufpos], "\033[%d;%dH",
-		  CursorPosition.Y+1, CursorPosition.X+1);
-	bufpos += strlen(&buf[bufpos]);
-	CursorKnown = TRUE;
-    }
-
-    bRet = ExpWriteMaster(HMaster, buf, bufpos);
 }
 
 /*

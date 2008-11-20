@@ -865,7 +865,7 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
   targ = argv;
   while (*targ)
     {
-      char * p = *targ;
+      char *p = *targ;
       int need_quotes = 0;
       int escape_char_run = 0;
 
@@ -905,7 +905,8 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
 	  if (escape_char_run > 0)
 	    arglen += escape_char_run;
 	}
-      arglen += strlen (*targ++) + 1;
+      arglen += strlen (*targ) + 1;
+      targ++;
     }
 
   is_gui = is_gui_app (argv[0]);
@@ -1095,6 +1096,8 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
   char **nargv;
   int argc;
   int i;
+  char pipeNameIn[100];
+  char pipeNameOut[100];
   HANDLE hSlaveOutDrv = NULL;	/* Handle to communicate with slave driver */
   HANDLE hSlaveInDrv = NULL;
 
@@ -1121,16 +1124,14 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
     process->usePipe = TRUE;
 
   } else {
-    char pipeNameIn[100];
-    char pipeNameOut[100];
     static int pipeNameId = 0;
 
     process->w_infd = NULL;
     process->w_outfd = NULL;
 
-    sprintf(pipeNameIn, "%sIn%08x%08x", EXP_PIPE_BASENAME,
+    sprintf(pipeNameIn, "%sIn%08x_%08x", EXP_PIPE_BASENAME,
 	    GetCurrentProcessId(), pipeNameId);
-    sprintf(pipeNameOut, "%sOut%08x%08x", EXP_PIPE_BASENAME,
+    sprintf(pipeNameOut, "%sOut%08x_%08x", EXP_PIPE_BASENAME,
 	    GetCurrentProcessId(), pipeNameId);
     pipeNameId++;
 
@@ -1155,13 +1156,12 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
       goto end;
     }
     for (argc=0; argv[argc] != NULL; argc++) ;
-    argc += 1;
     nargv = (char **) malloc (sizeof (char*) * (argc + 4));
     nargv[0] = slavePath;
     nargv[1] = pipeNameIn;
     nargv[2] = pipeNameOut;
 
-    for (i = 0; i < argc; i++) nargv[i + 3] = argv[i];
+    for (i = 0; i <= argc; i++) nargv[i + 3] = argv[i];
     process->usePipe = FALSE;
   }
 
