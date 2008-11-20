@@ -70,9 +70,11 @@ def on_match (process, match, since_last):
   GPS.Console (spark_console).write (since_last + match)
 
 def on_exit (process, status, remaining_output):
-  # Protect "Flow Error:123:" from being detected as a file reference
+  # Protect e.g. "Flow Error:123:" from being detected as a file reference
   GPS.Locations.parse (
-     process.output.replace (" Error:"," Error,"), category=spark_category)
+     process.output.replace (" Error:"," Error,").replace \
+       (" Warning:"," Warning,"),
+     category=spark_category)
 
 def examine_file (file):
   """Examine current file through the SPARK examiner. file is an instance
