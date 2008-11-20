@@ -78,7 +78,7 @@ package body Default_Preferences.Enums is
       Result : constant Choice_Preference := new Choice_Preference_Record;
    begin
       Result.Choices := Choices;
-      Result.Enum_Value := Default - Choices'First;
+      Result.Enum_Value := Default;
       Register (Manager, Name, Label, Page, Doc, Result);
       return Result;
    end Create;
@@ -148,6 +148,9 @@ package body Default_Preferences.Enums is
      (Pref : access Choice_Preference_Record) return String is
    begin
       return Pref.Choices (Pref.Enum_Value + Pref.Choices'First).all;
+   exception
+      when Constraint_Error =>
+         return Pref.Choices (Pref.Choices'First).all;
    end Get_Pref;
 
    --------------
