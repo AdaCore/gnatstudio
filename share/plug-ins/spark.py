@@ -1,5 +1,5 @@
 """This file provides utilities used by the SPARK plug-in for GPS.
-Copyright (c) 2004-2007 Praxis High Integrity Systems Limited
+Copyright (c) 2004-2008 Praxis High Integrity Systems Limited
 Copyright (c) 2005-2008 AdaCore
 
 SPARK Toolset Customization for GPS
@@ -276,6 +276,7 @@ a = """<?xml version="1.0"?>
       <field line="1" label="Warning File " as-file="true" switch="~warning_file=" />
       <field line="1" label="Configuration File " as-file="true" switch="~config=" />
       <field line="1" label="Output directory" as-dir="true" switch="~output_directory" separator="="/>
+      <check column="1" line="1" label="Ignore spark.sw" switch="~noswitch" />
       <title line="1" column="2" column-span="0" />
       <title column="1" line="2">Language</title>
       <radio column="1" line="2" >
@@ -356,7 +357,7 @@ a = """<?xml version="1.0"?>
   <tool name="SPARKFormat">
     <language>SPARK</language>
     <language>Ada</language>
-    <switches lines="3" columns="3" switch_char="~">
+    <switches lines="4" columns="4" switch_char="~">
       <title line="1" column="1">Global variables modes</title>
       <radio line="1" column="1">
         <radio-entry label="Unchanged" switch="~noadd_modes" />
@@ -382,17 +383,19 @@ a = """<?xml version="1.0"?>
       <title line="2" column="2">Annotations</title>
       <field line="2" column="2" label="Annotation Character" switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
 
-      <title line="3" column="1" column-span="2">Indentation</title>
-      <field line="3" column="1" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Imports indentation" switch="~import_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the import variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand), or state 'inline' (default 'inline')" />
-      <field line="3" label="Inherits indentation" switch="~inherit_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the package names, or state 'inline' (default 'inline')" />
-      <field line="3" label="Own indentation" switch="~own_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Refinement indentation" switch="~refinement_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Constituent indentation" switch="~constituent_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for constituents, or state 'inline' (default 'inline')" />
-      <field line="3" label="Initialization indentation" switch="~initialization_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
-      <field line="3" label="Properties indentation" switch="~properties_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+      <title line="3" column="1">Default Switch File</title>
+      <check line="3" column="1" label="Ignore spark.sw" switch="~noswitch" />
+      <title line="4" column="1" column-span="2">Indentation</title>
+      <field line="4" column="1" label="Globals indentation" switch="~global_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the global variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Exports indentation" switch="~export_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the export variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Imports indentation" switch="~import_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the import variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Seperators indentation" switch="~separator_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the separators ('from' and ampersand), or state 'inline' (default 'inline')" />
+      <field line="4" label="Inherits indentation" switch="~inherit_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for the package names, or state 'inline' (default 'inline')" />
+      <field line="4" label="Own indentation" switch="~own_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Refinement indentation" switch="~refinement_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Constituent indentation" switch="~constituent_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for constituents, or state 'inline' (default 'inline')" />
+      <field line="4" label="Initialization indentation" switch="~initialization_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
+      <field line="4" label="Properties indentation" switch="~properties_indent=" tip="Enter a number ( >0 )for the amount of indentation from '--#' for own variables, or state 'inline' (default 'inline')" />
     </switches>
   </tool>
 
