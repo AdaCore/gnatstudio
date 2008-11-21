@@ -3007,7 +3007,7 @@ package body GPS.Kernel.Remote is
                                       := Get_Attribute (Node, "name", "");
             Shell_Cmd              : Glib.String_Ptr;
             Default_Generic_Prompt : aliased String
-                                      := "^[^\n]*[#$%>\]})] *$";
+                                      := "^[^\n]*[#$%>\]})\\] *$";
             Generic_Prompt         : Glib.String_Ptr;
             GPS_Prompt             : Glib.String_Ptr;
             FS_Str                 : Glib.String_Ptr;
