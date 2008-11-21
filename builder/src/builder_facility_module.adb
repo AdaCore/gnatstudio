@@ -2200,4 +2200,43 @@ package body Builder_Facility_Module is
       return Element_Mode (Builder_Module_ID.Registry, U).Server;
    end Get_Mode_Server;
 
+   --------------
+   -- Get_Mode --
+   --------------
+
+   function Get_Mode return String is
+   begin
+      if Builder_Module_ID.Modes_Combo = null then
+         return "";
+      end if;
+
+      return (Get_Active_Text (Builder_Module_ID.Modes_Combo));
+   end Get_Mode;
+
+   --------------
+   -- Set_Mode --
+   --------------
+
+   procedure Set_Mode (Mode : String) is
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      if Builder_Module_ID.Modes_Combo = null then
+         return;
+      end if;
+
+      Model := Builder_Module_ID.Modes_Combo.Get_Model;
+
+      Iter := Model.Get_Iter_First;
+
+      while Iter /= Null_Iter loop
+         if Get_String (Model, Iter, 0) = Mode then
+            Builder_Module_ID.Modes_Combo.Set_Active_Iter (Iter);
+            return;
+         end if;
+
+         Next (Model, Iter);
+      end loop;
+   end Set_Mode;
+
 end Builder_Facility_Module;

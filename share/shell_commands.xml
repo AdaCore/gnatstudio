@@ -971,6 +971,15 @@ GPS.parse_xml ("""
      <description>Reset the internal cross-reference database that GPS is using for most of its navigation facilities. You shouldn't have to call that yourself, since in general GPS should know by itself when it is necessary to refresh its database. However, this might be used as a workaround if you think you have troubles with the cross-reference information which isn't accurate.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.set_build_mode">
+     <param name="mode" default="">Name of the mode to set</param>
+     <description>Set the current build mode. If specified mode is not a registered mode, do nothing.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.get_build_mode">
+     <description>Return the name of the current build mode. Return an empty string if no mode is registered.</description>
+  </shell_doc>
+
   <!--#################################################################
     ####   GPS shell commands
     ###################################################################-->
