@@ -170,4 +170,12 @@ package Builder_Facility_Module is
    --  Recompute the menus and toolbar icons, based on the targets described
    --  in the Registry.
 
+   function Get_Mode return String;
+   --  Return the current mode.
+   --  Return the empty string if no modes are registered.
+
+   procedure Set_Mode (Mode : String);
+   --  Set the mode to Mode. If Mode does not correspond to a registered mode,
+   --  do nothing.
+
 end Builder_Facility_Module;

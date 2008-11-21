@@ -286,6 +286,12 @@ package body Builder_Facility_Module.Scripts is
                         Dialog       => Default,
                         Main         => "");
 
+      elsif Command = "get_build_mode" then
+         Set_Return_Value (Data, Get_Mode);
+
+      elsif Command = "set_build_mode" then
+         Set_Mode (Nth_Arg (Data, 1, ""));
+
       end if;
    end Shell_Handler;
 
@@ -342,6 +348,20 @@ package body Builder_Facility_Module.Scripts is
       Bind_Default_Key (Kernel      => Kernel,
                         Action      => -"Compile File",
                         Default_Key => "shift-F4");
+
+      --  Global commands
+
+      Register_Command (Kernel        => Kernel,
+                        Command       => "set_build_mode",
+                        Minimum_Args  => 1,
+                        Maximum_Args  => 1,
+                        Handler       => Shell_Handler'Access);
+
+      Register_Command (Kernel        => Kernel,
+                        Command       => "get_build_mode",
+                        Minimum_Args  => 0,
+                        Maximum_Args  => 0,
+                        Handler       => Shell_Handler'Access);
    end Register_Commands;
 
    ----------
