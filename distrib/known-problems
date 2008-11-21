@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB20-009: Wrong fonts used in the Editor on some Linux distributions
+  Problem:    Under some Linux distributions, GPS may use default fonts
+              for the source editor which are not fixed width fonts.
+  Workaround: Edit the prefix/bin/gps wrapper script and replace all
+              occurrences of $root/etc/fonts by /etc/fonts.
+
 - HB20-007: Default value in <preference> node incorrect
   Problem:    GPS 4.3.0 contained an unexpected change of behavior for the
               "default" attribute of <preference> node in customization files,
