@@ -1,10 +1,11 @@
 /*
  * expWinSlaveKey.c --
  *
- *	This has tables to do conversions from ASCII characters to 
+ *	This has tables to do conversions from ASCII characters to
  *	console keyboard input records.  Using them, a slave process
  *	can be driven as if someone was typing at the keyboard.
  *
+ * Copyright (c) 2006-2008 AdaCore
  * Copyright (c) 1997 by Mitel Corporation
  *
  * See the file "license.terms" for information on usage and redistribution
@@ -34,7 +35,7 @@ EXP_KEY ExpAsciiToKeyArray[256] = {
 /*   7 */ { 71,  34, RIGHT_CTRL_PRESSED},
 /*   8 */ { 72,  35, RIGHT_CTRL_PRESSED},
 /*   9 */ {  9,  15, RIGHT_CTRL_PRESSED},
-/*  10 */ { 74,  36, RIGHT_CTRL_PRESSED},
+/*  10 */ { 13,  28, 0},
 /*  11 */ { 75,  37, RIGHT_CTRL_PRESSED},
 /*  12 */ { 76,  38, RIGHT_CTRL_PRESSED},
 /*  13 */ { 13,  28, 0},

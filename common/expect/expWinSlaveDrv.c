@@ -7,7 +7,7 @@
  *	to a single console, we need to have a separate executable
  *	driving the slave process.  Hence, a slave driver.
  *
- * Copyright (c) 2006 AdaCore
+ * Copyright (c) 2006-2008 AdaCore
  * Copyright (c) 1997 by Mitel Corporation
  * Copyright (c) 1997-1998 by Gordon Chaffee
  *
@@ -604,7 +604,7 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
     if (!bRet) EXP_LOG ("Error writing to master %8x\n", GetLastError());
     return bRet;
   }
-   return 0;
+  return 0;
 }
 
 /*
@@ -731,33 +731,6 @@ ConvertAsciiToKeyEvents(UCHAR c, KEY_EVENT_RECORD *keyRecord)
     lc = c < 128 ? c : c - 128;
     mods = ExpAsciiToKeyArray[lc].dwControlKeyState;
 
-#if 0
-    if (mods & RIGHT_CTRL_PRESSED) {
-	/* First, generate a control key press */
-	keyRecord->bKeyDown = TRUE;
-	keyRecord->wRepeatCount = 1;
-	keyRecord->wVirtualKeyCode =
-	    ExpModifierKeyArray[EXP_KEY_CONTROL].wVirtualKeyCode;
-	keyRecord->wVirtualScanCode =
-	    ExpModifierKeyArray[EXP_KEY_CONTROL].wVirtualScanCode;
-	keyRecord->uChar.AsciiChar = 0;
-	keyRecord->dwControlKeyState = RIGHT_CTRL_PRESSED;
-	keyRecord++; n++;
-    }
-    if (mods & SHIFT_PRESSED) {
-	/* First, generate a control key press */
-	keyRecord->bKeyDown = TRUE;
-	keyRecord->wRepeatCount = 1;
-	keyRecord->wVirtualKeyCode =
-	    ExpModifierKeyArray[EXP_KEY_SHIFT].wVirtualKeyCode;
-	keyRecord->wVirtualScanCode =
-	    ExpModifierKeyArray[EXP_KEY_SHIFT].wVirtualScanCode;
-	keyRecord->uChar.AsciiChar = 0;
-	keyRecord->dwControlKeyState = mods;
-	keyRecord++; n++;
-    }
-#endif
-
     keyRecord->bKeyDown = TRUE;
     keyRecord->wRepeatCount = 1;
     keyRecord->wVirtualKeyCode = ExpAsciiToKeyArray[lc].wVirtualKeyCode;
@@ -774,32 +747,6 @@ ConvertAsciiToKeyEvents(UCHAR c, KEY_EVENT_RECORD *keyRecord)
     keyRecord->uChar.AsciiChar = c;
     keyRecord++; n++;
 
-#if 0
-    if (mods & SHIFT_PRESSED) {
-	/* First, generate a control key press */
-	keyRecord->bKeyDown = FALSE;
-	keyRecord->wRepeatCount = 1;
-	keyRecord->wVirtualKeyCode =
-	    ExpModifierKeyArray[EXP_KEY_SHIFT].wVirtualKeyCode;
-	keyRecord->wVirtualScanCode =
-	    ExpModifierKeyArray[EXP_KEY_SHIFT].wVirtualScanCode;
-	keyRecord->uChar.AsciiChar = 0;
-	keyRecord->dwControlKeyState = mods & ~SHIFT_PRESSED;
-	keyRecord++; n++;
-    }
-    if (mods & RIGHT_CTRL_PRESSED) {
-	/* First, generate a control key press */
-	keyRecord->bKeyDown = FALSE;
-	keyRecord->wRepeatCount = 1;
-	keyRecord->wVirtualKeyCode =
-	    ExpModifierKeyArray[EXP_KEY_CONTROL].wVirtualKeyCode;
-	keyRecord->wVirtualScanCode =
-	    ExpModifierKeyArray[EXP_KEY_CONTROL].wVirtualScanCode;
-	keyRecord->uChar.AsciiChar = 0;
-	keyRecord->dwControlKeyState = 0;
-	keyRecord++; n++;
-    }
-#endif
     return n;
 }
 
