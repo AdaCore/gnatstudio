@@ -9,6 +9,10 @@ project Docs is
       for Specification_Suffix ("texinfo") use ".texi";
    end Naming;
 
+   package Compiler is
+      for Driver ("Texinfo") use "";
+   end Compiler;
+
    package IDE renames Shared.IDE;
 
 end Docs;
