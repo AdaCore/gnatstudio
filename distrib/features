@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 19, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Nov 21, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.1
 -------------------------
+
+NF-43-HB21-004 Support for -noswitch Examiner switch (2008-11-21)
+
+  The new SPARK Examiner switch -noswitch is now supported by GPS graphically
+  in the project properties.
 
 NF-43-HB07-009 Default tags handling in documentation generator (2008-11-19)
 
