@@ -1877,9 +1877,6 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
     }
 }
 
-
-}
-
 /*
  *----------------------------------------------------------------------
  *
