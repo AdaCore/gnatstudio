@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 21, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Nov 22, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features in GPS 4.3.1
 -------------------------
+
+NF-43-HB21-034 Improved support for Help->GNAT Runtime->Standard
+
+  This menu now supports properly cross compilers as set in the project
+  properties instead of always displaying the standard package of the
+  native compiler.
 
 NF-43-HB21-004 Support for -noswitch Examiner switch (2008-11-21)
 
