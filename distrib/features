@@ -29,7 +29,7 @@ NF-43-HB21-004 Support for -noswitch Examiner switch (2008-11-21)
 NF-43-HB07-009 Default tags handling in documentation generator (2008-11-19)
 
   Some structured comment tags are now handled by default in GPS. To allow a
-  better customisation, the generator now also allows the definition of custom
+  better customization, the generator now also allows the definition of custom
   CSS files.
 
 New features in GPS 4.3.0
