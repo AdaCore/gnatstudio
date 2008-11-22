@@ -15,7 +15,7 @@ must be used.
 ############################################################################
 
 from GPS import *
-import os, tempfile
+import os, tempfile, os_utils
 
 def on_gps_started (hook):
   parse_xml ("""
@@ -43,14 +43,16 @@ def display():
    dir  = tempfile.mkdtemp ()
    path = None
 
-   try:
+   if os_utils.locate_exec_on_path ("gnatpsta") != "":
       proc = Process ("gnatpsta", on_exit=on_exit)
-   except:
+   else:
       path = dir + "/p.ads"
       f = open (path, "w")
       f.write ("package p is end p;")
       f.close ()
-      proc = Process ("gcc -c -xada -gnatc -gnatS " + path, on_exit=on_exit)
+      proc = Process \
+        (Project.root().get_attribute_as_string("gnat", "ide") +
+         " compile -q -gnatc -gnatS " + path, on_exit=on_exit)
 
    proc.standard = dir + "/standard.ads"
    proc.wait()
