@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB23-002: Wrong order of Main files in Build and Run menus
+  Problem:    The Main files defined in the Root project are listed last.
+              As a result, by default the "F4" and "F2" key shortcuts
+              do not respectively compile and run the first Main file
+              in the root project, if there are Main files defined in
+              subprojects.
+  Workaround: The key shortcuts can be changed via the Key Shortcuts Manager.
+
 - HB20-009: Wrong fonts used in the Editor on some Linux distributions
   Problem:    Under some Linux distributions, GPS may use default fonts
               for the source editor which are not fixed width fonts.
