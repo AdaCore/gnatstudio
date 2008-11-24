@@ -83,6 +83,9 @@ package body Builder_Facility_Module is
    --  The maximum number of Mains that we accept to display in the Menus
    --  and toolbar.
 
+   Max_Number_Of_Projects : constant := 128;
+   --  The maximum number of projects that we process when filling the Mains.
+
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
      Create ("Builder.Modes", GNATCOLL.Traces.Off);
@@ -463,14 +466,30 @@ package body Builder_Facility_Module is
          Index    : Natural := 1;
          --  Index of the first free element in Result.
          Iterator :  Imported_Project_Iterator;
+
+         Projects : Project_Type_Array (1 .. Max_Number_Of_Projects);
+         Index_P  : Natural := 1;
+         --  Index of the first free element in Projects.
       begin
          Iterator := Start (Root_Project);
 
          while Current (Iterator) /= No_Project loop
+            Projects (Index_P) := Current (Iterator);
+            Index_P := Index_P + 1;
+            exit when Index_P > Projects'Last;
+            Next (Iterator);
+         end loop;
+
+         --  The project Iterator starts with the leaf projects and ends with
+         --  the root project. Reverse the order to be more user-friendly: in
+         --  the majority of cases, users will want to see the mains defined
+         --  in the root project first.
+
+         for J in reverse 1 .. Index_P - 1 loop
             declare
                Mains : Argument_List :=
                  Get_Attribute_Value
-                   (Current (Iterator), Attribute => Main_Attribute);
+                   (Projects (J), Attribute => Main_Attribute);
             begin
                for J in Mains'Range loop
                   if Mains (J)'Length > 0 then
@@ -488,8 +507,6 @@ package body Builder_Facility_Module is
             end;
 
             exit when Index > Result'Last;
-
-            Next (Iterator);
          end loop;
 
          return Result (1 .. Index - 1);
