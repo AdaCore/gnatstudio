@@ -6,7 +6,16 @@ project Distrib is
 
    for Languages use ("text");
 
-   for Source_Files use ("features", "known-problems", "COPYING", "README", "doinstall");
+   package Naming is
+      for Implementation_Suffix ("text") use ".txt";
+
+      for Implementation_Exceptions ("text") use
+         ("features", "known-problems", "COPYING", "README", "doinstall");
+   end Naming;
+
+   package Compiler is
+      for Driver ("text") use "";
+   end Compiler;
 
    package IDE renames Shared.IDE;
 
