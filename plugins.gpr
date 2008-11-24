@@ -3,7 +3,7 @@ with "shared";
 project Plugins is
 
    for Languages use ("XML", "Python");
-   for Source_Dirs use ("share", "share/plug-ins", "share/library");
+   for Source_Dirs use ("share", "share/plug-ins", "share/library", "share/library/pygps");
 
    package Naming is
       for Implementation_Suffix ("Python") use ".py";
