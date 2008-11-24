@@ -341,9 +341,9 @@ package body GPS.Main_Window is
       GPS.Main_Window.Initialize (Main_Window, Home_Dir, Prefix_Directory);
    end Gtk_New;
 
-   ----------------------
-   -- Confirm_And_Quit --
-   ----------------------
+   ----------
+   -- Quit --
+   ----------
 
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
