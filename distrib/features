@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Nov 14, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Nov 24, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,13 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-HB21-028 GPS.execute_action now works for /Window menu (2008-11-24)
+
+  The python command GPS.execute_action can now be used for the items in
+  the /Window menu. Previously, you could not access these items and had
+  to use the (still recommended) approach of using GPS.MDI.get to raise
+  a window.
 
 NF-44-HA23-007 New menus in Edit->Selection (2008-10-23)
 
