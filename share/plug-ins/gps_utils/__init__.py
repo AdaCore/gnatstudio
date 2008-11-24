@@ -133,8 +133,9 @@ class interactive:
 def in_ada_file (context):
    """Returns True if the focus is currently inside an Ada editor"""
    if not hasattr (context, "in_ada_file"):
-      buffer = EditorBuffer.get ()
-      context.in_ada_file =  MDI.current ().name () == buffer.file().name () \
+      buffer = EditorBuffer.get (open=False)
+      context.in_ada_file =  buffer \
+         and MDI.current ().name () == buffer.file().name () \
          and buffer.file ().language ().lower () == "ada"
    return context.in_ada_file
 
