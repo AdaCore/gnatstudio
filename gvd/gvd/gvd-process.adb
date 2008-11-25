@@ -1239,7 +1239,7 @@ package body GVD.Process is
             --  through the console, when the breakpoints window is not shown.
 
             Update_Breakpoints (Process, Force => True);
-            Property             := new Breakpoint_Property_Record;
+            Property := new Breakpoint_Property_Record;
             Save_Breakpoints_In_Properties (Process, Property);
          else
             Remove_Property
