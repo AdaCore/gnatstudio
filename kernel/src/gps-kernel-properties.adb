@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Unchecked_Deallocation;
 
 with File_Utils;                 use File_Utils;
@@ -30,7 +32,7 @@ with Projects;                   use Projects;
 with Remote;                     use Remote;
 with String_Hash;
 with Traces;                     use Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Kernel.Properties is
 
@@ -61,17 +63,17 @@ package body GPS.Kernel.Properties is
 
    type Properties_Description_HTable is
      access all Properties_Description_Hash.String_Hash_Table.HTable;
+   --  ??? Do we really need this extra level of indirection?
 
-   procedure Free (Hash : in out Properties_Description_HTable);
+   function Property_Key_Less_Than (Left, Right : String) return Boolean;
 
-   package Properties_Hash is new String_Hash
-     (Data_Type      => Properties_Description_HTable,
-      Free_Data      => Free,
-      Null_Ptr       => null,
-      Case_Sensitive => Is_Case_Sensitive (Build_Server));
-   use Properties_Hash.String_Hash_Table;
+   package Properties_Hash is new Ada.Containers.Indefinite_Ordered_Maps
+     (Key_Type     => String,
+      Element_Type => Properties_Description_HTable,
+      "<"          => Property_Key_Less_Than);
+   use Properties_Hash;
 
-   All_Properties : Properties_Hash.String_Hash_Table.HTable;
+   All_Properties : Properties_Hash.Map;
    --  Global variable storing all the current properties for the current
    --  project.
    --  ??? It would be nicer to store this in the kernel but:
@@ -123,6 +125,20 @@ package body GPS.Kernel.Properties is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles script commands for properties
 
+   ----------------------------
+   -- Property_Key_Less_Than --
+   ----------------------------
+
+   function Property_Key_Less_Than (Left, Right : String) return Boolean is
+   begin
+      if Is_Case_Sensitive (Build_Server) then
+         return Left < Right;
+      else
+         return Ada.Characters.Handling.To_Lower (Left)
+           < Ada.Characters.Handling.To_Lower (Right);
+      end if;
+   end Property_Key_Less_Than;
+
    ----------
    -- Free --
    ----------
@@ -137,25 +153,12 @@ package body GPS.Kernel.Properties is
          Destroy (Description.Value.all);
          Unchecked_Free (Description.Value);
       end if;
+
       if Description.Unparsed /= null then
          Free (Description.Unparsed);
       end if;
+
       Unchecked_Free (Description);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Hash : in out Properties_Description_HTable) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Properties_Description_Hash.String_Hash_Table.HTable,
-         Properties_Description_HTable);
-   begin
-      if Hash /= null then
-         Reset (Hash.all);
-         Unchecked_Free (Hash);
-      end if;
    end Free;
 
    -------------
@@ -268,12 +271,16 @@ package body GPS.Kernel.Properties is
       --  Not used yet, the idea is to have various attributes in the XML file
       --  depending on the resource type
 
-      Hash : Properties_Description_HTable;
+      Hash   : Properties_Description_HTable;
+      Cursor : Properties_Hash.Cursor;
    begin
-      Hash := Get (All_Properties, Resource_Key);
-      if Hash = null then
+      Cursor := All_Properties.Find (Resource_Key);
+
+      if Has_Element (Cursor) then
+         Hash := Element (Cursor);
+      else
          Hash := new Properties_Description_Hash.String_Hash_Table.HTable;
-         Set (All_Properties, Resource_Key, Hash);
+         All_Properties.Include (Resource_Key, Hash);
       end if;
 
       Set (Hash.all, Name, new Property_Description'(Property));
@@ -295,13 +302,19 @@ package body GPS.Kernel.Properties is
       Found         : out Boolean)
    is
       pragma Unreferenced (Resource_Kind);
-      Hash : Properties_Description_HTable;
-      Descr : Property_Description_Access;
+
+      Hash   : Properties_Description_HTable;
+      Descr  : Property_Description_Access;
+      Cursor : Properties_Hash.Cursor;
    begin
       Found := False;
-      Hash := Get (All_Properties, Resource_Key);
-      if Hash /= null then
+
+      Cursor := All_Properties.Find (Resource_Key);
+
+      if Has_Element (Cursor) then
+         Hash := Element (Cursor);
          Descr := Get (Hash.all, Name);
+
          if Descr /= null then
             if Descr.Value = null then
                Load (Property, Descr.Unparsed);
@@ -330,10 +343,14 @@ package body GPS.Kernel.Properties is
       Name          : String)
    is
       pragma Unreferenced (Resource_Kind);
-      Hash : Properties_Description_HTable;
+
+      Hash   : Properties_Description_HTable;
+      Cursor : Properties_Hash.Cursor;
    begin
-      Hash := Get (All_Properties, Resource_Key);
-      if Hash /= null then
+      Cursor := All_Properties.Find (Resource_Key);
+
+      if Has_Element (Cursor) then
+         Hash := Element (Cursor);
          Remove (Hash.all, Name);
          Save_Persistent_Properties (Kernel);
       end if;
@@ -370,8 +387,7 @@ package body GPS.Kernel.Properties is
       Name        : String;
       Found       : out Boolean) is
    begin
-      Get_Resource_Property (Property, Index_Value, Index_Name,
-                             Name, Found);
+      Get_Resource_Property (Property, Index_Value, Index_Name, Name, Found);
    end Get_Property;
 
    ---------------------
@@ -401,6 +417,7 @@ package body GPS.Kernel.Properties is
       Filename : String := Full_Name (File, True).all;
    begin
       Canonical_Case_File_Name (Filename);
+
       return Filename;
    end To_String;
 
@@ -439,8 +456,8 @@ package body GPS.Kernel.Properties is
       Property   : access Property_Record'Class;
       Persistent : Boolean := False) is
    begin
-      Set_Property (Kernel, "project", To_String (Project), Name,
-                    Property, Persistent);
+      Set_Property
+        (Kernel, "project", To_String (Project), Name, Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -515,7 +532,7 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Filename : constant String := Get_Properties_Filename (Kernel);
-      Iter     : Properties_Hash.String_Hash_Table.Iterator;
+      Cursor   : Properties_Hash.Cursor;
       Iter2    : Properties_Description_Hash.String_Hash_Table.Iterator;
       Hash     : Properties_Description_HTable;
       Root, File, Prop, Src, Dst : Node_Ptr;
@@ -534,14 +551,14 @@ package body GPS.Kernel.Properties is
          Next       => null,
          Specific_Data => 1);
 
-      Get_First (All_Properties, Iter);
-      loop
-         Hash := Get_Element (Iter);
-         exit when Hash = null;
+      Cursor := All_Properties.First;
+
+      while Has_Element (Cursor) loop
+         Hash := Element (Cursor);
 
          File := new Node'
            (Tag        => new String'("properties"),
-            Attributes => new String'("file='" & Get_Key (Iter) & "'"),
+            Attributes => new String'("file='" & Key (Cursor) & "'"),
             Value      => null,
             Parent     => null,
             Child      => null,
@@ -614,7 +631,7 @@ package body GPS.Kernel.Properties is
             Free (File);
          end if;
 
-         Get_Next (All_Properties, Iter);
+         Next (Cursor);
       end loop;
 
       Print (Root, Filename, Success);
@@ -633,8 +650,24 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
+
+      Cursor : Properties_Hash.Cursor;
+      Hash   : Properties_Description_HTable;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Properties_Description_Hash.String_Hash_Table.HTable,
+         Properties_Description_HTable);
    begin
-      Reset (All_Properties);
+      Cursor := First (All_Properties);
+
+      while Has_Element (Cursor) loop
+         Hash := Element (Cursor);
+         Reset (Hash.all);
+         Unchecked_Free (Hash);
+         Next (Cursor);
+      end loop;
+
+      All_Properties.Clear;
    end Reset_Properties;
 
    -----------------------------------
@@ -744,10 +777,13 @@ package body GPS.Kernel.Properties is
             File     => File,
             Name     => Nth_Arg (Data, 2),
             Found    => Found);
+
          if not Found then
             Set_Error_Msg (Data, -"Property not found");
+
          elsif Prop2.Value = null then
             Set_Return_Value (Data, "");
+
          else
             Set_Return_Value (Data, Prop2.Value.all);
          end if;
@@ -796,10 +832,13 @@ package body GPS.Kernel.Properties is
             Project     => Project,
             Name     => Nth_Arg (Data, 2),
             Found    => Found);
+
          if not Found then
             Set_Error_Msg (Data, -"Property not found");
+
          elsif Prop2.Value = null then
             Set_Return_Value (Data, "");
+
          else
             Set_Return_Value (Data, Prop2.Value.all);
          end if;
