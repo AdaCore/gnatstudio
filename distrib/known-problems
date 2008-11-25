@@ -1,8 +1,9 @@
 Known Problems fixed in GPS 4.4.0
 
-- HB21-038: Impossible to use native Win32 aspell program.
-  Problem:    GPS seems to hand when using native Win32 aspell program and
-              will never report any spelling errors.
+- HB21-038: Cannot use native Win32 aspell program with ispell plug-in
+  Problem:    If you enable the ispell.py plug-in, GPS appears to hang when
+              using the native Win32 aspell program and will never report any
+              spelling errors.
   Workaround: Use a Cygwin version of aspell.
 
 - HB17-006: Wrong coverage highlighting
