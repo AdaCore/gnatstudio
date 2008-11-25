@@ -32,12 +32,16 @@ if [ -d $root/lib/gps ]; then
   unset GTK2_RC_FILES
 fi
 
-if [ -f /etc/fonts/fonts.conf ]; then
-  FONTCONFIG_FILE=/etc/fonts/fonts.conf
-  export FONTCONFIG_FILE
-elif [ -f $root/etc/fonts/fonts.conf ]; then
+if [ -f $root/etc/fonts/fonts.conf ]; then
   FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
   export FONTCONFIG_FILE
+fi
+
+if [ -f /etc/fonts/fonts.conf ]; then
+  if grep -q '<cachedir>' /etc/fonts/fonts.conf; then
+    FONTCONFIG_FILE=/etc/fonts/fonts.conf
+    export FONTCONFIG_FILE
+  fi
 fi
 
 if [ -f $root/etc/pango/pangorc ]; then
