@@ -192,12 +192,12 @@ def apply_on_rectangle (func, start, end, *args):
         while line <= maxline:
            ## Some lines might not include enough characters for the rectangle
            eol = EditorLocation (buf, line, 1).end_of_line ()
-           if eol.column () >= maxcol:
+           if eol.column () > maxcol:
               endcolumn = EditorLocation (buf, line, maxcol)
               current   = EditorLocation (buf, line, mincol)
            else:
               endcolumn = eol - 1
-              if eol.column () >= mincol:
+              if eol.column () > mincol:
                  current   = EditorLocation (buf, line, mincol)
               else:
                  current   = eol - 1
