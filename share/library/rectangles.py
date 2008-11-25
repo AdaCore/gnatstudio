@@ -181,21 +181,30 @@ def apply_on_rectangle (func, start, end, *args):
 
    try:
      if start.buffer() == end.buffer():
-        if start > end:
-           current = start
-           start   = end
-           end     = current
-        else:
-           current = start
+        line    = min (start.line (), end.line ())
+        maxline = max (start.line (), end.line ())
+        mincol  = min (start.column (), end.column ())
+        maxcol  = max (start.column (), end.column ())
+        buf     = start.buffer ()
 
-        start.buffer().start_undo_group()
-        while current < end:
-           endcolumn = EditorLocation (current.buffer(), current.line(), end.column())
-           func (start, end, current, endcolumn, *args)
-           if current.line() == start.buffer().lines_count():
-              current = end
+        buf.start_undo_group()
+
+        while line <= maxline:
+           ## Some lines might not include enough characters for the rectangle
+           eol = EditorLocation (buf, line, 1).end_of_line ()
+           if eol.column () >= maxcol:
+              endcolumn = EditorLocation (buf, line, maxcol)
+              current   = EditorLocation (buf, line, mincol)
            else:
-              current = EditorLocation (start.buffer(), current.line() + 1, start.column())
+              endcolumn = eol - 1
+              if eol.column () >= mincol:
+                 current   = EditorLocation (buf, line, mincol)
+              else:
+                 current   = eol - 1
+
+           func (start, end, current, endcolumn, *args)
+           line = line + 1
+
         start.buffer().finish_undo_group()
    except:
       Logger ("RECTANGLE").log ("Unexpected exception: " + traceback.format_exc())
