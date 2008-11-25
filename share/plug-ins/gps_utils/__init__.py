@@ -142,7 +142,7 @@ def in_ada_file (context):
 def in_xml_file (context):
    """Returns True if the focus is in an XML editor"""
    if not hasattr (context, "in_xml_file"):
-      buffer = EditorBuffer.get ()
+      buffer = EditorBuffer.get (open=False)
       context.in_xml_file =  MDI.current ().name () == buffer.file().name () \
          and buffer.file ().language ().lower () in ["xml", "html"]
    return context.in_xml_file
