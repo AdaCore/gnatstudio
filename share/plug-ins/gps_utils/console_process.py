@@ -39,7 +39,7 @@ class Console_Process (GPS.Console, GPS.Process):
           self.destroy ()  # Close console
        else:
           self.write (remaining_output)
-          self.write ("exit status: " + `status`)
+          self.write ("\nexit status: " + `status`)
     except: pass  # Might have already been destroyed if that's what
                   # resulted in the call to on_exit
 
