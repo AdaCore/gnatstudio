@@ -204,14 +204,14 @@ class Ispell:
 
          # output of aspell ends with an empty line, but includes
          # multiple blank lines
-         result = self.proc.expect ("^\\n", timeout=2000)
+         result = self.proc.expect ("^[\\r\\n]+", timeout=2000)
          if result != None: break
          attempt = attempt + 1
          self.proc.kill()
          self.proc = None
 
       try:
-         return result.strip(" \n")
+         return result.strip(" \r\n")
       except:
          GPS.Console ("Messages").write ("Error while parsing ispell=" + result + "\n")
 
