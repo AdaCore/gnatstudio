@@ -47,6 +47,7 @@ with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
+with Prj.Env;                   use Prj.Env;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
 with Prj.Util;                  use Prj.Util;
@@ -264,6 +265,10 @@ package body Projects.Registry is
    --  Return access to the various tables that contain information about the
    --  project
 
+   procedure Do_Subdirs_Cleanup (Registry : Project_Registry);
+   --  Cleanup empty subdirs created when opening a project with prj.subdirs
+   --  set.
+
    --------------------
    -- Array_Elements --
    --------------------
@@ -429,6 +434,8 @@ package body Projects.Registry is
    is
       Naming : Naming_Scheme_Access;
    begin
+      Do_Subdirs_Cleanup (Registry);
+
       if Registry.Data /= null then
          Unload_Project (Registry, View_Only);
       else
@@ -2419,9 +2426,9 @@ package body Projects.Registry is
    procedure Set_Mode_Subdir
      (Registry : in out Project_Registry; Subdir : String)
    is
-      pragma Unreferenced (Registry);
    begin
       if Prj.Subdirs /= null then
+         Do_Subdirs_Cleanup (Registry);
          Types.Free (Prj.Subdirs);
       end if;
 
@@ -2458,6 +2465,69 @@ package body Projects.Registry is
 
       return Prj.Subdirs.all;
    end Get_Mode_Subdir;
+
+   ------------------------
+   -- Do_Subdirs_Cleanup --
+   ------------------------
+
+   procedure Do_Subdirs_Cleanup (Registry : Project_Registry) is
+      function Get_Paths return String;
+      --  Get the list of directories that potentially need cleanup
+
+      function Get_Paths return String is
+      begin
+         if Registry.Data = null then
+            return Prj.Subdirs.all;
+         else
+            declare
+               Objs : constant String :=
+                        Prj.Env.Ada_Objects_Path
+                          (Get_View (Registry.Data.Root),
+                           Registry.Data.Root.View_Tree).all;
+            begin
+               if Objs = "" then
+                  return Prj.Subdirs.all;
+               else
+                  return Objs;
+               end if;
+            end;
+         end if;
+      end Get_Paths;
+
+      Dir_Iter : Path_Iterator;
+
+   begin
+      --  Nothing to do if Prj.Subdirs is not set.
+      if Prj.Subdirs = null then
+         return;
+      end if;
+
+      declare
+         Objs : constant String := Get_Paths;
+      begin
+         Dir_Iter := Start (Objs);
+
+         while not At_End (Objs, Dir_Iter) loop
+            declare
+               Dir   : constant String := Current (Objs, Dir_Iter);
+               Files : GNATCOLL.VFS.File_Array_Access;
+            begin
+               if Dir /= "" and then Is_Directory (Dir) then
+                  Files := Read_Files_From_Dirs (Dir);
+
+                  --  Remove emtpy directories
+                  if Files'Length = 0 then
+                     GNAT.Directory_Operations.Remove_Dir (Dir);
+                  end if;
+
+                  Unchecked_Free (Files);
+               end if;
+            end;
+
+            Dir_Iter := Next (Objs, Dir_Iter);
+         end loop;
+      end;
+   end Do_Subdirs_Cleanup;
 
    --------------
    -- Get_Tree --
