@@ -34,6 +34,9 @@ package File_Utils is
    --  Return all the files found in Dirs. Each directory in Dirs should be
    --  separated with Path_Separator
 
+   function Is_Empty (Directory : String) return Boolean;
+   --  Return whether the directory is empty or not.
+
    function Is_Case_Sensitive
      (Server : Server_Type := GPS_Server) return Boolean;
    --  Return true if filenames are case sensitive on the server

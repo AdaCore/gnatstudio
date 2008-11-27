@@ -2509,18 +2509,14 @@ package body Projects.Registry is
 
          while not At_End (Objs, Dir_Iter) loop
             declare
-               Dir   : constant String := Current (Objs, Dir_Iter);
-               Files : GNATCOLL.VFS.File_Array_Access;
+               Dir : constant String := Current (Objs, Dir_Iter);
             begin
-               if Dir /= "" and then Is_Directory (Dir) then
-                  Files := Read_Files_From_Dirs (Dir);
-
+               if Dir /= ""
+                 and then Is_Directory (Dir)
+                 and then Is_Empty (Dir)
+               then
                   --  Remove emtpy directories
-                  if Files'Length = 0 then
-                     GNAT.Directory_Operations.Remove_Dir (Dir);
-                  end if;
-
-                  Unchecked_Free (Files);
+                  GNAT.Directory_Operations.Remove_Dir (Dir);
                end if;
             end;
 

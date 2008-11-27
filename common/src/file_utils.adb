@@ -109,6 +109,45 @@ package body File_Utils is
       return Result;
    end Read_Files_From_Dirs;
 
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Directory : String) return Boolean is
+      Dir          : Dir_Type;
+      File         : String (1 .. 1024);
+      File_Last    : Natural;
+
+   begin
+      declare
+         Normalized_Dir : constant String := Name_As_Directory (Directory);
+      begin
+         if Normalized_Dir /= "" then
+            Open (Dir, Normalized_Dir);
+
+            loop
+               Read (Dir, File, File_Last);
+               exit when File_Last = 0;
+
+               if File (File'First .. File_Last) /= "."
+                 and then File (File'First .. File_Last) /= ".."
+               then
+                  Close (Dir);
+                  return False;
+               end if;
+            end loop;
+
+            Close (Dir);
+         end if;
+
+      exception
+         when Directory_Error =>
+            null;
+      end;
+
+      return True;
+   end Is_Empty;
+
    -----------------------
    -- Is_Case_Sensitive --
    -----------------------
