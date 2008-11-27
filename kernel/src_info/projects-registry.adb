@@ -1772,7 +1772,7 @@ package body Projects.Registry is
       --  Make sure the file we found has the same full name, since it might
       --  match a file from the project that has the same base name, but not
       --  belong to the project (FB03-003)
-      if Get_String (S.Full_Name) /= Full_Name (Source_Filename).all then
+      if Create (Get_String (S.Full_Name)) /= Source_Filename then
          P := No_Project;
       end if;
 
