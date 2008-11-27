@@ -1451,8 +1451,9 @@ package body GUI_Utils is
       Use_Mnemonics : Boolean := True)
    is
       use type Widget_List.Glist;
-      Children, Tmp : Widget_List.Glist;
+      Children, Tmp   : Widget_List.Glist;
       Label         : Gtk_Label;
+      Box           : Gtk_Box;
       New_Name      : String (Name'Range);
       Last          : Integer := New_Name'First;
 
@@ -1497,6 +1498,28 @@ package body GUI_Utils is
             exit when Equal
               (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
                Case_Sensitive => False);
+
+         elsif Get_Child (Menu_Item) /= null
+           and then Get_Child (Menu_Item).all in Gtk_Box_Record'Class
+         then
+            --  Support for radio menu items created by Gtkada.MDI
+            Box := Gtk_Box (Get_Child (Menu_Item));
+            if Get_Child (Box, 0) /= null
+              and then Get_Child (Box, 0).all in Gtk_Label_Record'Class
+            then
+               Label := Gtk_Label (Get_Child (Box, 0));
+               exit when Equal
+                 (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
+                  Case_Sensitive => False);
+
+            elsif Get_Child (Box, 1) /= null
+              and then Get_Child (Box, 1).all in Gtk_Label_Record'Class
+            then
+               Label := Gtk_Label (Get_Child (Box, 1));
+               exit when Equal
+                 (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
+                  Case_Sensitive => False);
+            end if;
          end if;
 
          Index := Index + 1;
