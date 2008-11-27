@@ -833,6 +833,8 @@ package body Gtkada.Terminal is
          when 35 => Term.Current_Foreground := Tag_Array'First + 5;
          when 36 => Term.Current_Foreground := Tag_Array'First + 6;
          when 37 => Term.Current_Foreground := Tag_Array'First + 7;
+         when 38 => Term.Current_Foreground := Tag_Array'First; --  Default
+         when 39 => Term.Current_Foreground := -1;
 
          when 40 => Term.Current_Background := Tag_Array'First;
          when 41 => Term.Current_Background := Tag_Array'First + 1;
@@ -842,6 +844,8 @@ package body Gtkada.Terminal is
          when 45 => Term.Current_Background := Tag_Array'First + 5;
          when 46 => Term.Current_Background := Tag_Array'First + 6;
          when 47 => Term.Current_Background := Tag_Array'First + 7;
+         when 48 => Term.Current_Background := Tag_Array'First; --  Default
+         when 49 => Term.Current_Background := -1;
 
          when others =>
             Trace (Me, "Set_Attribute:" & Ansi'Img);
