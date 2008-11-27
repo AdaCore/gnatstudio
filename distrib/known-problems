@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB25-026: Opening GPS with the build mode set creates a dummy subdirectory.
+  Problem:    When opening GPS with the build mode set to a mode different from
+              "default" will create a subdirectory in the current directory,
+              according to the selected mode, and whatever the opened project's
+              object directories.
+  Workaround: Open GPS with the build mode set to "default", or delete the
+              subdirectory afterwards.
+
 - HB23-003: "Compile file" failure on Windows caused by casing
   Problem:    Under windows, if the source directories declared in a project
               file do not have the same casing as the actual directories, then
