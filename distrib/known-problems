@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.1
 
+- HB23-003: "Compile file" failure on Windows caused by casing
+  Problem:    Under windows, if the source directories declared in a project
+              file do not have the same casing as the actual directories, then
+              the action /Build/Compile File may fail.
+  Workaround: Change your project file to define paths matching exactly the
+              actual path.
+
 - HB23-002: Wrong order of Main files in Build and Run menus
   Problem:    The Main files defined in the Root project are listed last.
               As a result, by default the "F4" and "F2" key shortcuts
