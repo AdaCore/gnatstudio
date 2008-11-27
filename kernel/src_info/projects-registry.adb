@@ -434,9 +434,8 @@ package body Projects.Registry is
    is
       Naming : Naming_Scheme_Access;
    begin
-      Do_Subdirs_Cleanup (Registry);
-
       if Registry.Data /= null then
+         Do_Subdirs_Cleanup (Registry);
          Unload_Project (Registry, View_Only);
       else
          Registry.Data           := new Project_Registry_Data;
@@ -2476,7 +2475,9 @@ package body Projects.Registry is
 
       function Get_Paths return String is
       begin
-         if Registry.Data = null then
+         if Registry.Data = null
+           or else Get_View (Registry.Data.Root) = Prj.No_Project
+         then
             return Prj.Subdirs.all;
          else
             declare
