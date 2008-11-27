@@ -2462,7 +2462,9 @@ package body Projects.Registry is
 
       function Get_Paths return String is
       begin
-         if Registry.Data = null then
+         if Registry.Data = null
+           or else Get_View (Registry.Data.Root) = Prj.No_Project
+         then
             return Prj.Subdirs.all;
          else
             declare
