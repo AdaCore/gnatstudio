@@ -169,6 +169,7 @@ package body Browsers.Canvas is
 
    procedure Dump
      (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
+   pragma Warnings (Off, Dump);
    --  For debugging purposes, dump the tree to Me
 
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
