@@ -63,6 +63,7 @@ with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
+with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Filesystems;                       use Filesystems;
@@ -3267,6 +3268,9 @@ package body Src_Editor_Module is
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
 
+      Runtime_Use_ACL : C.int;
+      pragma Import (C, Runtime_Use_ACL, "__gnat_use_acl");
+
       Iter  : Child_Iterator;
       Child : MDI_Child;
    begin
@@ -3345,6 +3349,15 @@ package body Src_Editor_Module is
 
             Next (Iter);
          end loop;
+      end if;
+
+      --  Set ACL usage
+      if Config.Host = Config.Windows then
+         if Use_ACL.Get_Pref then
+            Runtime_Use_ACL := 1;
+         else
+            Runtime_Use_ACL := 0;
+         end if;
       end if;
    end Preferences_Changed;
 

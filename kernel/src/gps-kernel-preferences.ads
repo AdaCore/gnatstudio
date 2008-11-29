@@ -181,6 +181,7 @@ package GPS.Kernel.Preferences is
    Tab_Width                 : Integer_Preference;
    Highlight_Column          : Integer_Preference;
    Speed_Column_Policy       : Speed_Column_Policy_Prefs.Preference;
+   Use_ACL                   : Boolean_Preference;
 
    Submenu_For_Dispatching_Calls : Dispatching_Menu_Policy_Prefs.Preference;
    --  Of type Dispatching_Menu_Policy
