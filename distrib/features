@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Nov 25, 2008
+GPS 4.3 NEW FEATURES LIST Current as of Nov 29, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,11 @@ of the feature.
 
 New features in GPS 4.3.1
 -------------------------
+
+NF-43-HB26-008 Add preference to control use of ACL (2008-11-29)
+
+  A new preference has been added to control the use of ACL on Windows.
+  By default GPS do not use ACL.
 
 NF-43-HB21-034 Improved support for Help->GNAT Runtime->Standard (2008-11-22)
 
