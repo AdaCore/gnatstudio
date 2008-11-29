@@ -608,6 +608,18 @@ package body GPS.Kernel.Preferences is
          Default => Automatic,
          Page    => -"Editor");
 
+      if Config.Host = Config.Windows then
+         Use_ACL := Create
+           (Manager => Kernel.Preferences,
+            Name    => "Src-Editor-Use-ACL",
+            Label   => -"Use Windows ACL",
+            Doc     =>
+            -"Whether GPS should use ACL when changing the "
+            & "read/write permissions",
+            Default => True,
+            Page    => -"Editor");
+      end if;
+
       Default_Style := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Default-Style",
