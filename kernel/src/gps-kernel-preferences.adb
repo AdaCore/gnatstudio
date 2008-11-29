@@ -621,50 +621,50 @@ package body GPS.Kernel.Preferences is
       end if;
 
       Default_Style := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Default-Style",
-         Label   => -"Default",
-         Doc     => -"Default style used in the source editors",
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Default-Style",
+         Label        => -"Default",
+         Doc          => -"Default style used in the source editors",
          Default_Font => "Courier 10",
          Default_Fg   => "black",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Keywords_Style := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Keywords-Style",
-         Label   => -"Keywords",
-         Doc     => -"Style to use when displaying keywords",
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Keywords-Style",
+         Label        => -"Keywords",
+         Doc          => -"Style to use when displaying keywords",
          Default_Font => "Courier Bold 10",
          Default_Fg   => "black",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Comments_Style := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Comments-Style",
-         Label   => -"Comments",
-         Doc     => -"Style to use when displaying comments",
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Comments-Style",
+         Label        => -"Comments",
+         Doc          => -"Style to use when displaying comments",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "blue",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Annotated_Comments_Style := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Annotated-Comments-Style",
-         Label   => -"Annotated Comments",
-         Doc     => -"Style to use when displaying annotated comments",
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Annotated-Comments-Style",
+         Label        => -"Annotated Comments",
+         Doc          => -"Style to use when displaying annotated comments",
          Default_Font => "Courier Medium Oblique 10",
          Default_Fg   => "#21A9DE",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
       Strings_Style := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Strings-Style",
-         Label   => -"Strings",
-         Doc     => -"Style to use when displaying strings",
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Strings-Style",
+         Label        => -"Strings",
+         Doc          => -"Style to use when displaying strings",
          Default_Font => "Courier 10",
          Default_Fg   => "brown",
          Default_Bg   => "white",
@@ -818,10 +818,10 @@ package body GPS.Kernel.Preferences is
 
       Diff_Cmd := Create
         (Manager => Kernel.Preferences,
-         Name  => "Diff-Utils-Diff",
-         Label => -"Diff command",
-         Doc   => -("Command used to compute differences between two files."
-                    & " Arguments can also be specified"),
+         Name    => "Diff-Utils-Diff",
+         Label   => -"Diff command",
+         Doc     => -("Command used to compute differences between two files."
+                      & " Arguments can also be specified"),
          Default => Config.Default_Diff_Cmd,
          Page    => -"Visual diff");
 
@@ -889,13 +889,13 @@ package body GPS.Kernel.Preferences is
 
       File_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name  => "Messages-File-Regpat",
-         Label => -"File pattern",
-         Doc   =>
-         -"Pattern used to detect file locations (e.g error messages)",
+         Name    => "Messages-File-Regpat",
+         Label   => -"File pattern",
+         Doc     =>
+           -"Pattern used to detect file locations (e.g error messages)",
          Default =>
            "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)",
-         Page    => -"Messages");
+         Page => -"Messages");
 
       File_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -959,10 +959,10 @@ package body GPS.Kernel.Preferences is
 
       Secondary_File_Pattern := Create
         (Manager => Kernel.Preferences,
-         Name  => "Messages-Secondary-File-Regpat",
-         Label => -"Secondary File pattern",
-         Doc   =>
-         -"Pattern used to detect secondary file locations in messages",
+         Name    => "Messages-Secondary-File-Regpat",
+         Label   => -"Secondary File pattern",
+         Doc     =>
+           -"Pattern used to detect secondary file locations in messages",
          Default => "([^: ]+):(\d+)(:(\d+):)?",
          Page    => -"Messages");
 
@@ -1157,9 +1157,9 @@ package body GPS.Kernel.Preferences is
 
          Html_Browser := Create
            (Manager => Kernel.Preferences,
-            Name  => "Helpers-HTML-Browser",
-            Label => -"HTML browser",
-            Doc   =>
+            Name    => "Helpers-HTML-Browser",
+            Label   => -"HTML browser",
+            Doc     =>
             -("Program used to browse HTML pages. " &
               "No value means automatically try to find a suitable browser."
               & ASCII.LF
@@ -1178,8 +1178,8 @@ package body GPS.Kernel.Preferences is
       Print_Command := Create
         (Manager => Kernel.Preferences,
          Name    => "Helpers-Print-Command",
-          Label   => -"Print command",
-          Doc     => -("Program used to print files. No value means use " &
+          Label  => -"Print command",
+          Doc    => -("Program used to print files. No value means use " &
                        "the built-in printing capability (available under " &
                        "Windows only)"),
          Default => Config.Default_Print_Cmd,
