@@ -616,7 +616,7 @@ package body GPS.Kernel.Preferences is
             Doc     =>
             -"Whether GPS should use ACL when changing the "
             & "read/write permissions",
-            Default => True,
+            Default => False,
             Page    => -"Editor");
       end if;
 
