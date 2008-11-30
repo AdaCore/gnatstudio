@@ -1037,9 +1037,7 @@ package body VCS_Activities_View_API is
          Set_Sensitive (Item, Active);
       end if;
 
-      if File_Section
-        or else (Activity_Section and then Actions (Commit) /= null)
-      then
+      if File_Section or else Activity_Section then
          Gtk_New (Item);
          Append (Menu, Item);
       end if;
@@ -1054,20 +1052,18 @@ package body VCS_Activities_View_API is
       end if;
 
       if Activity_Section then
-         if Actions (Commit) /= null then
-            Gtk_New (Item, Label => -"Edit revision log");
+         Gtk_New (Item, Label => -"Edit revision log");
+         Append (Menu, Item);
+         Context_Callback.Connect
+           (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
+         Set_Sensitive (Item, True);
+
+         if Has_Log (Kernel, Activity) then
+            Gtk_New (Item, Label => -"Remove revision log");
             Append (Menu, Item);
             Context_Callback.Connect
-              (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
+              (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);
             Set_Sensitive (Item, True);
-
-            if Has_Log (Kernel, Activity) then
-               Gtk_New (Item, Label => -"Remove revision log");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);
-               Set_Sensitive (Item, True);
-            end if;
          end if;
       end if;
    end VCS_Activities_Contextual_Menu;
