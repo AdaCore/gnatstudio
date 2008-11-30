@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 4.4.0
 
-- HB29-006: Cannot edit log of an empty activity
-  Problem:    If the activity is empty it is not possible to edit the
-              log (missing "Edit revision log" in contextual menu).
-  Workaround: Add a file to the activity first.
-
 - HB21-038: Cannot use native Win32 aspell program with ispell plug-in
   Problem:    If you enable the ispell.py plug-in, GPS appears to hang when
               using the native Win32 aspell program and will never report any
