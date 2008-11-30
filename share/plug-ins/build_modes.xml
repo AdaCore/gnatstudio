@@ -60,6 +60,7 @@
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
+     <arg>-g</arg>
      <arg>-fprofile-arcs</arg>
      <arg>-ftest-coverage</arg>
      <arg>-largs</arg>
@@ -76,6 +77,7 @@
   <extra-args>
      <arg>--subdirs=%subdir</arg>
      <arg>-cargs</arg>
+     <arg>-g</arg>
      <arg>-pg</arg>
      <arg>-largs</arg>
      <arg>-pg</arg>
