@@ -11,7 +11,7 @@ And finally a number of predefined text aliases are defined.
 ## No user customization below this line
 ###########################################################################
 
-import GPS, os, os.path, re, string, traceback
+import GPS, os, os.path, re, string, sys, traceback
 import os_utils, gnat_switches
 
 gnatmakeproc = None
@@ -127,10 +127,19 @@ class gnatMakeProc:
       </popup>
       <popup label="Style checks" line="2" column="1" >
 """
+      style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", tip ("-gnaty", [ "y", "-gnaty" ]));
+      if len (style_alias_res) > 1:
+         default_style_alias = "-"+style_alias_res[1]
+      else:
+         default_style_alias = "-gnaty3abcefhiklmnprst"
+
       for switch in self.style_checks_list:
          if switch[0]=="y":
             xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
+         elif switch[0]=="g":
+            xml += '<expansion switch="-gnatyg" alias="%s" />' % (default_style_alias + "dISux")
          elif switch[3]=="0":
+            GPS.Console("Messages").write ("add check switch -gnaty%s\n" % (switch[0]))
             xml += """<check %s switch="-gnaty%s">%s</check>""" % (label ("-gnaty", switch), switch[0], tip("-gnaty",switch))
          else:
             # place gnaty1-9 to the begining of the command_line: prevents
@@ -141,13 +150,7 @@ class gnatMakeProc:
               before=""
             xml += """<spin %s switch="-gnaty%s" min="%s" max="%s" default="%s" separator="" %s>%s</spin>""" % (label ("-gnaty", switch), switch[0], switch[2], switch[3], switch[4], before, tip("-gnaty",switch))
       xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
-
-      style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", tip ("-gnaty", sw));
-      if len (style_alias_res) > 1:
-         style_alias = "-"+style_alias_res[1]
-      else:
-         style_alias = "-gnaty3abcefhiklmnprst"
-      xml += """<expansion switch="-gnaty" alias="%s" />""" % (style_alias)
+      xml += """<expansion switch="-gnaty" alias="%s" />""" % (default_style_alias)
       xml += """
          <expansion switch="-gnaty"/>
       </popup>
@@ -173,7 +176,7 @@ class gnatMakeProc:
          try:
             xmlCompiler = self.getXmlForCompiler()
          except:
-            print "Exception thrown in ada_support.py"
+            print "Exception thrown in ada_support.py", sys.exc_info()[1]
             xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
          GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
 
@@ -239,8 +242,9 @@ class gnatMakeProc:
             if res[1] == "1-9":
                self.style_checks_list.append(["", res[3], "0", "9", "0"])
 
-            # no parameters. Do not include -gnatyN (remove all checks), -gnatyg (GNAT checks) and -gnatym (alias of -gnatyM79)
-            elif res[1] != "N" and res[1] != "g" and res[1] != "m":
+            # no parameters. Do not include -gnatyN (remove all checks) and -gnatym (alias of -gnatyM79)
+            elif res[1] != "N" and res[1] != "m":
+               GPS.Console ("Messages").write ("new switch -gnaty%s\n" % (res[1]))
                if res[2] == "":
                   self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
                else:
