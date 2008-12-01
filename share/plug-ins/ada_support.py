@@ -38,7 +38,6 @@ class gnatMakeProc:
       self.validity_checks_list = []
       self.style_checks_list = []
       self.gnatCmd = ""
-      self.style_alias = "-gnaty3abcefhiklmnprst"
 
    def getXmlForCompiler(self):
       global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity, xmlCompilerPopupStyles, xmlCompilerTrailer
@@ -129,7 +128,9 @@ class gnatMakeProc:
       <popup label="Style checks" line="2" column="1" >
 """
       for switch in self.style_checks_list:
-         if switch[3]=="0":
+         if switch[0]=="y":
+            xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
+         elif switch[3]=="0":
             xml += """<check %s switch="-gnaty%s">%s</check>""" % (label ("-gnaty", switch), switch[0], tip("-gnaty",switch))
          else:
             # place gnaty1-9 to the begining of the command_line: prevents
@@ -139,11 +140,16 @@ class gnatMakeProc:
             else:
               before=""
             xml += """<spin %s switch="-gnaty%s" min="%s" max="%s" default="%s" separator="" %s>%s</spin>""" % (label ("-gnaty", switch), switch[0], switch[2], switch[3], switch[4], before, tip("-gnaty",switch))
-      xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
       xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
-      xml += '<expansion switch="-gnaty" alias="'+self.style_alias+'" />'
+
+      style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", tip ("-gnaty", sw));
+      if len (style_alias_res) > 1:
+         style_alias = "-"+style_alias_res[1]
+      else:
+         style_alias = "-gnaty3abcefhiklmnprst"
+      xml += """<expansion switch="-gnaty" alias="%s" />""" % (style_alias)
       xml += """
-         <expansion switch="-gnaty" />
+         <expansion switch="-gnaty"/>
       </popup>
 """
       xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
@@ -232,14 +238,6 @@ class gnatMakeProc:
           if len (res) > 2:
             if res[1] == "1-9":
                self.style_checks_list.append(["", res[3], "0", "9", "0"])
-
-            elif res[1] == "y":
-               sw = ["y", ""]
-               style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", tip ("-gnaty", sw));
-               if len (style_alias_res) > 1:
-                 self.style_alias = "-"+style_alias_res[1]
-               else:
-                 self.style_alias = "-gnaty3abcefhiklmnprst"
 
             # no parameters. Do not include -gnatyN (remove all checks), -gnatyg (GNAT checks) and -gnatym (alias of -gnatyM79)
             elif res[1] != "N" and res[1] != "g" and res[1] != "m":
