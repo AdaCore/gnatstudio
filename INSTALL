@@ -62,5 +62,5 @@ above, with a few additional steps:
 - You need to use the SVN version of GtkAda matching GPS sources (same date/tag)
 
 - Depending on your GNAT version, you may also need to apply
-  distrib/gps-4.3-gpl-2008.diff
+  distrib/gps-4.3-gnat-6.1.2.diff
 
