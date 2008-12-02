@@ -11,6 +11,7 @@
   <subdir>debug</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -25,6 +26,7 @@
   <subdir>check</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -42,6 +44,7 @@
   <subdir>opt</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -56,6 +59,7 @@
   <subdir>gcov</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -73,6 +77,7 @@
   <subdir>gprof</subdir>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -90,6 +95,7 @@
   <shadow>TRUE</shadow>
   <supported-model>builder</supported-model>
   <supported-model>gnatmake</supported-model>
+  <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <server>Tools_Server</server>
   <substitutions>
