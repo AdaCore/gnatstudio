@@ -428,6 +428,10 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
             EXP_LOG("Unable to write to slave: 0x%x", GetLastError());
           }
 #if 0
+        //  The following is part of an attempt at removing the 'echo' from
+        //  the console. Mainly aimed to making MS Telnet working, this is
+        //  incorrect as this may remove part of the actual output
+        //  (sending 'gnatmake' will remove the first g of 'gcc -c ...')
         ExpReading = (char*) malloc (dwNeeded + 1);
         memcpy (ExpReading, buffer, dwNeeded);
         ExpReading [dwNeeded] = '\0';
@@ -538,6 +542,10 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
   start2 = 0;
   EXP_LOG ("ExpWriteMaster Received %d bytes", n);
 #if 0
+  //  The following is part of an attempt at removing the 'echo' from
+  //  the console. Mainly aimed to making MS Telnet working, this is
+  //  incorrect as this may remove part of the actual output
+  //  (sending 'gnatmake' will remove the first g of 'gcc -c ...')
   if (ExpReading != NULL) {
     EXP_LOG ("Need to skip: '%s'", ExpReading);
     while ((start < n) &&
