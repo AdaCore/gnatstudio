@@ -427,9 +427,11 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
           {
             EXP_LOG("Unable to write to slave: 0x%x", GetLastError());
           }
+#if 0
         ExpReading = (char*) malloc (dwNeeded + 1);
         memcpy (ExpReading, buffer, dwNeeded);
         ExpReading [dwNeeded] = '\0';
+#endif
         EXP_LOG_FLUSH;
         dwTotalNeeded -= dwNeeded;
         if (dwTotalNeeded) {
@@ -535,6 +537,7 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
   start = 0;
   start2 = 0;
   EXP_LOG ("ExpWriteMaster Received %d bytes", n);
+#if 0
   if (ExpReading != NULL) {
     EXP_LOG ("Need to skip: '%s'", ExpReading);
     while ((start < n) &&
@@ -587,11 +590,12 @@ ExpWriteMaster(HANDLE hFile, LPCVOID buf, DWORD n)
       ExpReading = tmp;
     } else {
       // We received something that has nothing to do with what we sent.
-      // or all ExpReading mathed.
+      // or all ExpReading matched.
       free (ExpReading);
       ExpReading = NULL;
     }
   }
+#endif
 
   EXP_LOG ("n-start2 is %d", n-start2);
   if (start2 < n) {
