@@ -491,31 +491,35 @@ package body GNAT.Expect.TTY.Remote is
                            end if;
                         end loop;
 
-                        declare
-                           Ref_Prompt : constant String :=
-                                          Str (Ref .. Str'Last);
-                        begin
-                           for J in reverse Str'First .. Ref - 1 loop
-                              if Str (J) = ASCII.LF
-                                and then J >= Str'First + Ref_Prompt'Length
-                                and then Str (J - Ref_Prompt'Length .. J - 1) =
-                                  Ref_Prompt
-                                and then
-                                  (J - Ref_Prompt'Length = Str'First
-                                   or else
-                                     Str
-                                       (J - Ref_Prompt'Length - 1) = ASCII.LF)
-                              then
-                                 --  Found a duplicated prompt
-                                 Trace
-                                   (Me,
-                                    "Deactivating CR/LF as this leads to" &
-                                    " duplicated prompts");
-                                 Descriptor.Use_Cr_Lf := LF;
-                                 exit;
-                              end if;
-                           end loop;
-                        end;
+                        if Ref in Str'Range then
+                           declare
+                              Ref_Prompt : constant String :=
+                                             Str (Ref .. Str'Last);
+                           begin
+                              for J in reverse Str'First .. Ref - 1 loop
+                                 if Str (J) = ASCII.LF
+                                   and then J >= Str'First + Ref_Prompt'Length
+                                   and then
+                                     Str (J - Ref_Prompt'Length .. J - 1) =
+                                      Ref_Prompt
+                                   and then
+                                     (J - Ref_Prompt'Length = Str'First
+                                      or else
+                                        Str
+                                          (J - Ref_Prompt'Length - 1) =
+                                          ASCII.LF)
+                                 then
+                                    --  Found a duplicated prompt
+                                    Trace
+                                      (Me,
+                                       "Deactivating CR/LF as this leads to" &
+                                       " duplicated prompts");
+                                    Descriptor.Use_Cr_Lf := LF;
+                                    exit;
+                                 end if;
+                              end loop;
+                           end;
+                        end if;
                      end;
                   end if;
                end if;
