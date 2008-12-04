@@ -484,6 +484,7 @@ package body GPS.Kernel.Console is
          elsif Child /= null then
             Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
+            Enable_Prompt_Display (Console, Accept_Input);
          end if;
 
          return Console;
