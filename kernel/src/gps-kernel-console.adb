@@ -426,7 +426,7 @@ package body GPS.Kernel.Console is
       NChild  : GPS_MDI_Child;
       Create  : Boolean;
    begin
-      if Title /= "" then
+      if Title /= "" and then Title /= "Messages" then
          Create := Force_Create;
          if not Create then
             Child := Find_MDI_Child_By_Name (Get_MDI (Kernel), Title);
