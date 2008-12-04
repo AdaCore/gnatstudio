@@ -4,7 +4,7 @@
  *	Useful definitions used by the slave driver but not useful
  *	for anybody else.
  *
- * Copyright (c) 2006 AdaCore
+ * Copyright (c) 2006-2008 AdaCore
  * Copyright (c) 1997 by Mitel, Inc.
  * Copyright (c) 1997 by Gordon Chaffee (chaffee@home.com)
  *
@@ -95,7 +95,6 @@ extern BOOL			ExpWriteMaster(HANDLE hFile,
 extern BOOL			ExpReadMaster(HANDLE hFile,
 				    void *buf, DWORD n, PDWORD pCount,
 				    PDWORD pError);
-extern void			ExpNewConsoleSequences(HANDLE hMaster);
 extern void			ExpProcessFreeByHandle(HANDLE hProcess);
 extern void			ExpSetConsoleSize(HANDLE hConsoleInW,
 						  HANDLE hConsoleOut,

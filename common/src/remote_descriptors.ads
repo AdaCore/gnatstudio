@@ -64,7 +64,6 @@ package Remote_Descriptors is
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False;
       Use_Pipes                 : Boolean := False);
    --  Adds a new Remote Access Descriptor
    --  Name : identifier of this descriptor
@@ -82,8 +81,6 @@ package Remote_Descriptors is
    --                              expression shall isolate the key_id with
    --                              parenthesis
    --  Extra_Prompt_Array        : extra specific prompts.
-   --  Use_Cr_Lf                 : tell if CR character needs to be added when
-   --                               sending commands to the tool.
    --  Use_Pipes                 : tell if the tool is launched in pipe or tty
    --                               mode. Only applicable on Windows (no effect
    --                               on other machines)
@@ -106,7 +103,6 @@ package Remote_Descriptors is
       Password_Prompt_Ptrn   : Pattern_Matcher_Access   := null;
       Passphrase_Prompt_Ptrn : Pattern_Matcher_Access   := null;
       Extra_Prompt_Array     : Extra_Prompts_Access     := null;
-      Use_Cr_Lf              : Boolean                  := False;
       Use_Pipes              : Boolean                  := False;
       Max_Password_Prompt    : Natural                  := 3;
       Next                   : Remote_Descriptor_Access := null;

@@ -35,7 +35,7 @@ EXP_KEY ExpAsciiToKeyArray[256] = {
 /*   7 */ { 71,  34, RIGHT_CTRL_PRESSED},
 /*   8 */ { 72,  35, RIGHT_CTRL_PRESSED},
 /*   9 */ {  9,  15, RIGHT_CTRL_PRESSED},
-/*  10 */ { 13,  28, 0},
+/*  10 */ { 74,  36, RIGHT_CTRL_PRESSED},
 /*  11 */ { 75,  37, RIGHT_CTRL_PRESSED},
 /*  12 */ { 76,  38, RIGHT_CTRL_PRESSED},
 /*  13 */ { 13,  28, 0},
