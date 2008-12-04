@@ -27,6 +27,8 @@ with Connection_Debuggers; use Connection_Debuggers;
 
 package Machine_Descriptors is
 
+   type Cr_Lf_Handling is (CRLF, LF, Auto);
+
    type Machine_Descriptor_Record is tagged record
       Nickname            : String_Access;
       --  Identifier of the machine
@@ -44,6 +46,8 @@ package Machine_Descriptors is
       --  Timeout value used when connecting to the machine (in ms)
       Max_Nb_Connections  : Natural := 3;
       --  Maximum number of simultaneous connections on the machine
+      Cr_Lf               : Cr_Lf_Handling := Auto;
+      --  Whether we should send LF, CR/LF or determine it automatically
       Ref                 : Natural := 0;
       --  Ref counter
       Dbg                 : Connection_Debugger := null;

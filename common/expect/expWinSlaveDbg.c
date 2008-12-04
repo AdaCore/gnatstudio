@@ -70,6 +70,8 @@
 #define EXP_FLAG_PI			0x80
 
 #ifndef UNICODE
+SHORT curY = 0;
+SHORT curX = 0;
 #  define ExpCreateProcessInfo	ExpCreateProcessInfoA
 #  define OnWriteConsoleOutput	OnWriteConsoleOutputA
 #  define ReadSubprocessString	ReadSubprocessStringA
@@ -281,6 +283,7 @@ ExpBreakInfo BreakArrayKernel32[] = {
    OnWriteConsoleOutputCharacterA, EXP_BREAK_OUT},
   {"WriteConsoleOutputCharacterW", 5,
    OnWriteConsoleOutputCharacterW, EXP_BREAK_OUT|EXP_BREAK_IN},
+  {"SetConsoleCursorPosition", 5, OnSetConsoleCursorPosition, EXP_BREAK_OUT},
   {NULL, 0, NULL}
 };
 
@@ -616,7 +619,7 @@ ExpCommonDebugger()
 	}
 
 	/* Process the debugging event code. */
-
+	EXP_LOG ("Debug event %d",debEvent.dwDebugEventCode);
 	switch (debEvent.dwDebugEventCode) {
 	case EXCEPTION_DEBUG_EVENT:
 	    /*
@@ -1795,17 +1798,32 @@ OnWriteConsoleA(ExpProcess *proc, ExpThreadInfo *threadInfo,
   } else {
     p = buf;
   }
+  EXP_LOG ("Reading %d byte(s)", n);
 
   ptr = (PVOID) threadInfo->args[1];
   ReadSubprocessMemory(proc, ptr, p, n * sizeof(CHAR));
 
+  for (i = 0; i < n; i++)
+    if (p[i] == '\n') {
+      curY++;
+      curX = 0;
+    } else {
+      curX++;
+    }
+
+#ifdef EXPLAUNCH_DEBUG
   { // DEBUG
     p2 = malloc ((n + 1) * sizeof(CHAR));
     memcpy (p2, p, n);
     p2[n] = '\0';
-    EXP_LOG ("Read from WriteConsoleA: '%s'", p2);
+    if (n == 1) {
+      EXP_LOG ("Read from WriteConsoleA: '0x%08x'", p[0]);
+    } else {
+      EXP_LOG ("Read from WriteConsoleA: '%s'", p2);
+    }
     free (p2);
   }
+#endif
 
   bRet = ExpWriteMaster(HMaster, p, n);
 
@@ -1871,10 +1889,10 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
 
   w = WideCharToMultiByte(CP_ACP, 0, p, n, a, asize, NULL, NULL);
   bRet = ExpWriteMaster(HMaster, a, w);
-    if (p != buf) {
-	free(p);
-	free(a);
-    }
+  if (p != buf) {
+    free(p);
+    free(a);
+  }
 }
 
 /*
@@ -1897,68 +1915,19 @@ OnWriteConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
 void
 CreateVtSequence(ExpProcess *proc, COORD newPos, DWORD n)
 {
-  COORD oldPos;
-  CHAR buf[2048];
-  DWORD count;
-  BOOL b;
+  LOG_ENTRY ("CreateVtSequence (nothing to do)");
+  EXP_LOG ("newPos is x= %d, ", newPos.X);
+  EXP_LOG ("y= %d, ", newPos.Y);
 
-  LOG_ENTRY ("CreateVtSequence");
+  if (curX > 0 && newPos.X == 0) {
+    EXP_LOG ("\\R !!!", NULL);
+    ExpWriteMaster(HMaster, "\r", 1);
+  }
 
-/*   oldPos = CursorPosition; */
-
-/*   EXP_LOG ("Old X: %d", oldPos.X); */
-/*   EXP_LOG ("Old Y: %d", oldPos.Y); */
-/*   EXP_LOG ("CursorKnown: %d", CursorKnown); */
-
-/*   if (CursorKnown && (newPos.X == 0) && (oldPos.X != 0)) { */
-/*     buf[0]='\n'; */
-/*     count = 1; */
-/*   } else { */
-/*     count = 0; */
-/*   } */
-
-/*   newPos.X += (SHORT) (n % ConsoleSize.X); */
-/*   newPos.Y += (SHORT) (n / ConsoleSize.X); */
-/*   CursorPosition = newPos; */
-/*   CursorKnown = TRUE; */
-
-/*   EXP_LOG ("New X: %d", newPos.X); */
-/*   EXP_LOG ("New Y: %d", newPos.Y); */
-
-/*   if (count > 0) { */
-/*     b = ExpWriteMaster(HMaster, buf, count); */
-/*   } */
-/*   LOG_EXIT ("CreateVtSequence"); */
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ExpNewConsoleSequences
- *
- *	Sets up a new console.  Sets the scrollable region of
- *	the window, clears the screen, etc.
- *
- * Results:
- *	None
- *
- *----------------------------------------------------------------------
- */
-void
-ExpNewConsoleSequences(HANDLE hMaster)
-{
-    UCHAR buf[100];
-    DWORD bufpos = 0;
-
-    /* Clear to end of screen */
-    wsprintfA(&buf[bufpos], "\033[%d;%dH\033[J", 1, 1);
-    bufpos += strlen(&buf[bufpos]);
-
-    /* Reset cursor */
-    wsprintfA(&buf[bufpos], "\033[%d;%dH", CursorPosition.Y, CursorPosition.X);
-    bufpos += strlen(&buf[bufpos]);
-
-    ExpWriteMaster(hMaster, buf, bufpos);
+  if (newPos.X == 0) {
+    // set as 1, so that two consecutive calls will output \r
+    curX = 1;
+  }
 }
 
 /*
@@ -1976,6 +1945,7 @@ ExpNewConsoleSequences(HANDLE hMaster)
 void
 ExpSetConsoleSize(HANDLE hConsoleInW, HANDLE hConsoleOut, int w, int h)
 {
+  LOG_ENTRY ("ExpSetConsoleSize");
     COORD largest;
     SMALL_RECT winrect;
     INPUT_RECORD resizeRecord;
@@ -2406,6 +2376,7 @@ OnGetStdHandle(ExpProcess *proc, ExpThreadInfo *threadInfo,
 {
     DWORD i;
     BOOL found;
+  LOG_ENTRY ("GetStdHandle");
 
     if (*returnValue == (DWORD) INVALID_HANDLE_VALUE) {
 	return;
@@ -2492,7 +2463,7 @@ RefreshScreen()
     BOOL b;
     int x, y, prespaces, postspaces, offset;
 
-    LOG_ENTRY("SetConsoleActiveScreenBuffer");
+    LOG_ENTRY("RefreshScreen");
 
     /* Clear the screen */
     wsprintfA(&buf[bufpos], "\033[2J");

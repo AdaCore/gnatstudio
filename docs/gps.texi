@@ -8940,6 +8940,13 @@ connections GPS is allowed to perform to this server. In fact, if you want to
 compile, debug and execute at the same time on the machine, GPS will need
 more that one connection to do this. The default value is 3.
 @item
+(In Advanced configuration pane) The handling of line terminations. Depending
+on the kind of server you are connecting to and the remote access tool used,
+commands sent to the server need sometimes to end with the LF character, or
+CR/LF characters. GPS can most of the time detect automatically what is needed
+(the 'auto' mode), but this behavior can be forced to use CR/LF (cr/lf handling
+set to 'on') or LF (cr/lf handling set to 'off').
+@item
 (In Advanced configuration pane) The Debug console allow you to easily
 debug a remote connection. If checked, it will open a console
 reporting all exchanges between GPS and the selected server.
@@ -13790,11 +13797,6 @@ connection tool. If undefined, a default regular expression is used.
 @item passphrase_prompt_ptrn (optional)
 A regular expression, used to catch passphrase prompts from the
 connection tool. If undefined, a default regular expression is used.
-
-@item use_cr_lf (optional)
-Boolean value, used to tell GPS if the connection tool requires CR+LF
-characters to determine an end of line, or if LF is sufficient. Set to
-false by default.
 
 @item extra_ptrn (optional)
 Complex child. Used to catch extra prompts from the connection tool,

@@ -31,8 +31,9 @@ package body Remote_Descriptors is
    --  ??? Should get rid of this global variable
 
    Login_Regexp : constant Pattern_Matcher :=
-                    Compile ("^[^\n]*([Ll]ogin|[Nn]ame)[^\n]*: *$",
-                             Multiple_Lines or Single_Line);
+                    Compile
+                      ("^[^\n]*([Ll]ogin|[Nn]ame|[Cc]onnexion)[^\n]*: *$",
+                       Multiple_Lines or Single_Line);
    --  Default regexp for login prompt
 
    procedure Free (Descr : in out Remote_Descriptor_Access);
@@ -119,7 +120,6 @@ package body Remote_Descriptors is
       Password_Prompt_Ptrn      : String_Access;
       Passphrase_Prompt_Ptrn    : String_Access;
       Extra_Prompt_Array        : Extra_Prompts := Null_Extra_Prompts;
-      Use_Cr_Lf                 : Boolean := False;
       Use_Pipes                 : Boolean := False)
    is
       --  ??? Add max_password_prompt in parameters
@@ -146,7 +146,7 @@ package body Remote_Descriptors is
       else
          Login_Ptrn := new Pattern_Matcher'(Compile (
            User_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
+           Single_Line or Multiple_Lines));
       end if;
 
       if Password_Prompt_Ptrn = null then
@@ -154,7 +154,7 @@ package body Remote_Descriptors is
       else
          Password_Ptrn := new Pattern_Matcher'(Compile (
            Password_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
+           Single_Line or Multiple_Lines));
       end if;
 
       if Passphrase_Prompt_Ptrn = null then
@@ -163,7 +163,7 @@ package body Remote_Descriptors is
       else
          Passphrase_Ptrn := new Pattern_Matcher'(Compile (
            Passphrase_Prompt_Ptrn.all,
-           Single_Line + Multiple_Lines));
+           Single_Line or Multiple_Lines));
       end if;
 
       Remote.all :=
@@ -176,7 +176,6 @@ package body Remote_Descriptors is
          Password_Prompt_Ptrn   => Password_Ptrn,
          Passphrase_Prompt_Ptrn => Passphrase_Ptrn,
          Extra_Prompt_Array     => new Extra_Prompts'(Extra_Prompt_Array),
-         Use_Cr_Lf              => Use_Cr_Lf,
          Use_Pipes              => Use_Pipes,
          Max_Password_Prompt    => 3,
          Next                   => Remote_Descriptor_List);

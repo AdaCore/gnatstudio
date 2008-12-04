@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada, Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -354,6 +355,7 @@ package body GPS.Kernel.Remote is
       Advanced_Table        : Gtk_Table;
       User_Name_Entry       : Gtk_Entry;
       Max_Nb_Connected_Spin : Gtk_Spin_Button;
+      Cr_Lf_Combo           : Gtkada_Combo;
       Timeout_Spin          : Gtk_Spin_Button;
       Init_Cmds_View        : Gtk_Text_View;
       Debug_Button          : Gtk_Check_Button;
@@ -515,6 +517,7 @@ package body GPS.Kernel.Remote is
       Max_Nb_Connections : Natural;
       User_Name          : GNAT.OS_Lib.String_Access;
       Timeout            : Natural;
+      Cr_Lf              : Cr_Lf_Handling;
       Extra_Init_Cmds    : GNAT.OS_Lib.Argument_List_Access;
       Nb_Init_Cmds       : Natural;
       Child              : Node_Ptr;
@@ -584,6 +587,14 @@ package body GPS.Kernel.Remote is
          User_Name := new String'("");
       end if;
 
+      Field := Get_Field (Node, "cr_lf");
+
+      if Field /= null then
+         Cr_Lf := Cr_Lf_Handling'Value (Field.all);
+      else
+         Cr_Lf := Auto;
+      end if;
+
       Field := Get_Field (Node, "timeout");
 
       if Field /= null then
@@ -639,6 +650,7 @@ package body GPS.Kernel.Remote is
          Max_Nb_Connections  => Max_Nb_Connections,
          User_Name           => User_Name,
          Timeout             => Timeout,
+         Cr_Lf               => Cr_Lf,
          Extra_Init_Commands => Extra_Init_Cmds,
          Attribute           => Attribute,
          Applied             => True,
@@ -792,6 +804,10 @@ package body GPS.Kernel.Remote is
             Child := new Node;
             Child.Tag := new String'("timeout");
             Child.Value := new String'(Natural'Image (Desc.Timeout));
+            Add_Child (Item, Child);
+            Child := new Node;
+            Child.Tag := new String'("cr_lf");
+            Child.Value := new String'(Desc.Cr_Lf'Img);
             Add_Child (Item, Child);
             Child := new Node;
             Child.Tag := new String'("max_nb_connections");
@@ -1637,8 +1653,9 @@ package body GPS.Kernel.Remote is
               Fill or Expand, 0, 10, 10);
 
       Gtk_New (Dialog.Advanced_Table,
-               Rows => 4, Columns => 2, Homogeneous => False);
+               Rows => 5, Columns => 2, Homogeneous => False);
       Set_Expanded_Widget (Dialog.Advanced_Pane, Dialog.Advanced_Table);
+
       --  ??? The following uses Gtk_Expander instead of Collapsing_Pane
 --        Gtk_New (Frame);
 --        Attach (Dialog.Right_Table, Frame,
@@ -1700,12 +1717,33 @@ package body GPS.Kernel.Remote is
            "the same time on the machine, GPS will need more that one " &
            "connection to do this. The default value is 3."));
 
-      Gtk_New (Label, -"Debug console:");
+      Gtk_New (Label, -"CR/LF Handling:");
       Set_Alignment (Label, 0.0, 0.5);
       Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
               Fill or Expand, 0, 10);
+      Gtk_New (Dialog.Cr_Lf_Combo);
+      Set_Name (Dialog.Cr_Lf_Combo, "crlf handling combo");
+      Set_Editable (Get_Entry (Dialog.Cr_Lf_Combo), False);
+      Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
+              1, 2, 3, 4,
+              Fill or Expand, 0);
+      Set_Tip
+        (Tips, Get_Entry (Dialog.Cr_Lf_Combo),
+         -("Indicates what characters the remote host understands as line" &
+           " ending: LF, CR/LF, or automatically determine it."));
+
+      for J in Cr_Lf_Handling'Range loop
+         Gtk_New (Item, Ada.Characters.Handling.To_Lower (J'Img));
+         Add (Get_List (Dialog.Cr_Lf_Combo), Item);
+      end loop;
+      Show_All (Get_List (Dialog.Cr_Lf_Combo));
+
+      Gtk_New (Label, -"Debug console:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 4, 5,
+              Fill or Expand, 0, 10);
       Gtk_New (Dialog.Debug_Button);
-      Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 3, 4, 0, 0);
+      Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 4, 5, 0, 0);
       Set_Tip
         (Tips, Dialog.Debug_Button,
          -("The Debug console allow you to easily debug a remote connection." &
@@ -1757,6 +1795,9 @@ package body GPS.Kernel.Remote is
       Widget_Boolean_Callback.Object_Connect
         (Get_Buffer (Dialog.Init_Cmds_View), Gtk.Text_Buffer.Signal_Changed,
          On_Changed'Access, Dialog, False);
+      Widget_Boolean_Callback.Object_Connect
+        (Get_Entry (Dialog.Cr_Lf_Combo),
+         Gtk.Editable.Signal_Changed, On_Changed'Access, Dialog, True);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Debug_Button, Signal_Clicked,
          On_Changed'Access, Dialog, False);
@@ -2072,6 +2113,8 @@ package body GPS.Kernel.Remote is
                  (Get_Text (Dialog.User_Name_Entry)),
                Timeout             =>
                  Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000,
+               Cr_Lf               => Cr_Lf_Handling'Value
+                 (Get_Text (Get_Entry (Dialog.Cr_Lf_Combo))),
                Max_Nb_Connections  => Integer
                  (Get_Value_As_Int (Dialog.Max_Nb_Connected_Spin)),
                Extra_Init_Commands => new Argument_List'
@@ -2174,21 +2217,30 @@ package body GPS.Kernel.Remote is
             end if;
 
             Dialog.Restoring := True;
-            Set_Text (Dialog.Network_Name_Entry,
-                      Item.Desc.Network_Name.all);
-            Set_Text (Dialog.User_Name_Entry,
-                      Item.Desc.User_Name.all);
-            Set_Text (Get_Entry (Dialog.Remote_Access_Combo),
-                      Item.Desc.Access_Name.all);
-            Set_Text (Get_Entry (Dialog.Remote_Shell_Combo),
-                      Item.Desc.Shell_Name.all);
+            Set_Text
+              (Dialog.Network_Name_Entry,
+               Item.Desc.Network_Name.all);
+            Set_Text
+              (Dialog.User_Name_Entry,
+               Item.Desc.User_Name.all);
+            Set_Text
+              (Get_Entry (Dialog.Remote_Access_Combo),
+               Item.Desc.Access_Name.all);
+            Set_Text
+              (Get_Entry (Dialog.Remote_Shell_Combo),
+               Item.Desc.Shell_Name.all);
             Set_Text
               (Get_Entry (Dialog.Remote_Sync_Combo),
                Machine_Descriptor_Record (Item.Desc.all).Rsync_Func.all);
-            Set_Value (Dialog.Timeout_Spin,
-                       Gdouble (Item.Desc.Timeout) / 1000.0);
-            Set_Value (Dialog.Max_Nb_Connected_Spin,
-                       Gdouble (Item.Desc.Max_Nb_Connections));
+            Set_Value
+              (Dialog.Timeout_Spin,
+               Gdouble (Item.Desc.Timeout) / 1000.0);
+            Set_Value
+              (Dialog.Max_Nb_Connected_Spin,
+               Gdouble (Item.Desc.Max_Nb_Connections));
+            Set_Text
+              (Get_Entry (Dialog.Cr_Lf_Combo),
+               Ada.Characters.Handling.To_Lower (Item.Desc.Cr_Lf'Img));
             Set_Text (Get_Buffer (Dialog.Init_Cmds_View), "");
             Set_Active (Dialog.Debug_Button, Item.Desc.Dbg /= null);
 
@@ -2278,6 +2330,7 @@ package body GPS.Kernel.Remote is
                   Extra_Init_Commands => null,
                   Timeout             => 10000,
                   Max_Nb_Connections  => 3,
+                  Cr_Lf               => Auto,
                   Attribute           => User_Defined,
                   Applied             => False,
                   Ref                 => 1,
@@ -2353,18 +2406,27 @@ package body GPS.Kernel.Remote is
                Set (Gtk_Tree_Store (Model), Iter, User_Def_Col, False);
 
                --  Set dialog values
-               Set_Text (Dialog.Network_Name_Entry,
-                         Item.Desc.Network_Name.all);
-               Set_Text (Dialog.User_Name_Entry,
-                         Item.Desc.User_Name.all);
-               Set_Text (Get_Entry (Dialog.Remote_Access_Combo),
-                         Item.Desc.Access_Name.all);
-               Set_Text (Get_Entry (Dialog.Remote_Shell_Combo),
-                         Item.Desc.Shell_Name.all);
-               Set_Value (Dialog.Timeout_Spin,
-                          Gdouble (Item.Desc.Timeout) / 1000.0);
-               Set_Value (Dialog.Max_Nb_Connected_Spin,
-                          Gdouble (Item.Desc.Max_Nb_Connections));
+               Set_Text
+                 (Dialog.Network_Name_Entry,
+                  Item.Desc.Network_Name.all);
+               Set_Text
+                 (Dialog.User_Name_Entry,
+                  Item.Desc.User_Name.all);
+               Set_Text
+                 (Get_Entry (Dialog.Remote_Access_Combo),
+                  Item.Desc.Access_Name.all);
+               Set_Text
+                 (Get_Entry (Dialog.Remote_Shell_Combo),
+                  Item.Desc.Shell_Name.all);
+               Set_Value
+                 (Dialog.Timeout_Spin,
+                  Gdouble (Item.Desc.Timeout) / 1000.0);
+               Set_Value
+                 (Dialog.Max_Nb_Connected_Spin,
+                  Gdouble (Item.Desc.Max_Nb_Connections));
+               Set_Text
+                 (Get_Entry (Dialog.Cr_Lf_Combo),
+                  Ada.Characters.Handling.To_Lower (Item.Desc.Cr_Lf'Img));
                Set_Active (Dialog.Debug_Button, Item.Desc.Dbg /= null);
                Dialog.Restoring := False;
             end if;
@@ -2985,7 +3047,6 @@ package body GPS.Kernel.Remote is
       Password_Prompt_Ptrn      : Glib.String_Ptr;
       Passphrase_Prompt_Ptrn    : Glib.String_Ptr;
       Extra_Ptrn_Length         : Natural;
-      Use_Cr_Lf                 : Boolean;
       Use_Pipes                 : Boolean;
 
    begin
@@ -3007,7 +3068,7 @@ package body GPS.Kernel.Remote is
                                       := Get_Attribute (Node, "name", "");
             Shell_Cmd              : Glib.String_Ptr;
             Default_Generic_Prompt : aliased String
-                                      := "^[^\n]*[#$%>\]})\\] *$";
+                                      := "^[^\n]*[#$%>\]}\\] *$";
             Generic_Prompt         : Glib.String_Ptr;
             GPS_Prompt             : Glib.String_Ptr;
             FS_Str                 : Glib.String_Ptr;
@@ -3220,21 +3281,6 @@ package body GPS.Kernel.Remote is
          Password_Prompt_Ptrn   := Get_Field (Node, "password_prompt_ptrn");
          Passphrase_Prompt_Ptrn := Get_Field (Node, "passphrase_prompt_ptrn");
 
-         declare
-            Use_Cr_Lf_String_Access : constant Glib.String_Ptr :=
-                                        Get_Field (Node, "use_cr_lf");
-         begin
-            if Use_Cr_Lf_String_Access = null then
-               Use_Cr_Lf := False;
-            else
-               Use_Cr_Lf := Boolean'Value (Use_Cr_Lf_String_Access.all);
-            end if;
-
-         exception
-            when others =>
-               Use_Cr_Lf := False;
-         end;
-
          Child := Node.Child;
          Extra_Ptrn_Length := 0;
 
@@ -3294,7 +3340,6 @@ package body GPS.Kernel.Remote is
                Passphrase_Prompt_Ptrn    =>
                  GNAT.OS_Lib.String_Access (Passphrase_Prompt_Ptrn),
                Extra_Prompt_Array        => Extra_Ptrns,
-               Use_Cr_Lf                 => Use_Cr_Lf,
                Use_Pipes                 => Use_Pipes);
 
             --  The contents of those string_list is freed when the descriptor

@@ -242,6 +242,7 @@ private
 
    type Session is record
       Pd    : TTY_Process_Descriptor;
+      Cr_Lf : Cr_Lf_Handling;
       State : Shell_State_Type := OFF;
    end record;
    --  This record represents a machine's session. A session is an opened
@@ -272,7 +273,7 @@ private
       --  What shell is on the remote server
       Machine              : Remote_Machine_Descriptor_Access := null;
       --  What machine this descriptor is connected to
-      Use_Cr_Lf            : Boolean := False;
+      Use_Cr_Lf            : Cr_Lf_Handling := Auto;
       --  Tell if CR shall be sent along with LF
       Session_Nb           : Natural := 0;
       --  Session number on this machine

@@ -50,7 +50,6 @@
     <start_command_common_args>-t -C -ssh %U %h %C</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
     <extra_ptrn auto_answer="true" answer="y">^Store key in cache\? \(y/n\) *</extra_ptrn>
-    <use_cr_lf>True</use_cr_lf>
   </remote_connection_config>
 
   <!-- PLINK RSH -->
@@ -59,7 +58,6 @@
     <start_command use_pipes="false">plink</start_command>
     <start_command_common_args>-rsh %U %h %C</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
-    <use_cr_lf>True</use_cr_lf>
   </remote_connection_config>
 
   <!-- PLINK TELNET -->
@@ -68,7 +66,6 @@
     <start_command use_pipes="false">plink</start_command>
     <start_command_common_args>-telnet %U %h %C</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
-    <use_cr_lf>True</use_cr_lf>
   </remote_connection_config>
 
   <!-- SH shell -->
