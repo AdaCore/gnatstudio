@@ -13,6 +13,13 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Open GPS with the build mode set to "default", or delete the
               subdirectory afterwards.
 
+- HB25-024: Reset output window when running executables
+  Problem:    If you run an executable (/Buid/Run menu) several times in a row
+              without closing the output window between each run, then the
+              window is not longer executable after the first run (no blinking
+              cursor among other symptoms)
+  Workaround: Close the window between runs
+
 - HB23-003: "Compile file" failure on Windows caused by casing
   Problem:    Under windows, if the source directories declared in a project
               file do not have the same casing as the actual directories, then
