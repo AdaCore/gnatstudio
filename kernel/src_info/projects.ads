@@ -466,8 +466,7 @@ package Projects is
    --  If Recursive is False, then the only project ever returned is
    --  Root_Project. This is provided only to simplify the caller's code
    --
-   --  In all cases, Root_Project itself is returned first by the iterator. The
-   --  project extended by Root_Project, if any, is also returned if
+   --  The project extended by Root_Project, if any, is also returned if
    --  Include_Extended is true or if Direct_Only is False.
    --
    --  If Direct_Only is True and Recursive is True, then only the projects
