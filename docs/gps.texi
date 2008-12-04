@@ -9334,6 +9334,11 @@ The Speed Column is always displayed.
 
 @end table
 
+@item Use Windows ACL
+This is a Windows specific preference which is disabled by default. When
+enabled GPS will use the ACL to change the file's write permission. Note
+that ACL can't be used on network drives.
+
 @item External editor
 @cindex external editor
 The default external editor to use.
