@@ -8385,7 +8385,6 @@ Its documentation will be:
 @image{docgen}
 @end ifhtml
 
-
 @c For a description of the
 @c documentation generator renderer @pxref{Defining a documentation format}.
 
