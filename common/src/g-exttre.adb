@@ -1224,13 +1224,19 @@ package body GNAT.Expect.TTY.Remote is
       if Desc.Machine.Echoing and then not Desc.Current_Echo_Skipped then
          --  PuTTY used in telnet mode with Windows server echoes all commands
          --  with a trailing '\r' (no \n). We take this into account here.
+         --  Another case is Windows specific: in case the command line is
+         --  too long for the console, a \r is issued in the echo, followed
+         --  by '<' and a truncated version of the beginning of the echo.
+         --  In the last case, we'll wait for \n
          for J in Str'Range loop
             if Str (J) = ASCII.LF
               or else
                 (Str (J) = ASCII.CR
                  and then
                    (J = Str'Last
-                    or else Str (J + 1) /= ASCII.LF))
+                    or else
+                      (Str (J + 1) /= ASCII.LF
+                       and then Str (J + 1) /= '<')))
             then
                Log ("Remove", Str (Str'First .. J));
                Size := Str'Last - J;
