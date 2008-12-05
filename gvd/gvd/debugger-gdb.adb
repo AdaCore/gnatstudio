@@ -171,7 +171,7 @@ package body Debugger.Gdb is
    --  How to get the range of addresses for a given line
 
    GNAT_Binder_File_Pattern  : constant Pattern_Matcher := Compile
-     ("(b~.+\.adb)|(b_.+\.c)");
+     ("(b(~|_).+\.(adb|c))");
 
    No_Definition_Of          : constant String := "No definition of";
    --  String used to detect undefined commands
@@ -1230,10 +1230,16 @@ package body Debugger.Gdb is
                --  the corresponding main file.
 
                if Matched (0) /= No_Match then
+                  First := Matched (0).First + 2;
+
+                  if Str (First) = '_' then
+                     First := First + 1;
+                  end if;
+
                   Send
                     (Debugger,
                      "info line " &
-                     Str (Matched (0).First + 2 .. Matched (0).Last) & ":1",
+                     Str (First .. Matched (0).Last) & ":1",
                      Mode => Internal);
                   return;
                end if;
