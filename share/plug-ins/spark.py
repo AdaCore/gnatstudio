@@ -459,8 +459,8 @@ a = """<?xml version="1.0"?>
      <shell>MDI.save_all false</shell>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
-     <external output="SPARK Output" server="build_server">sparkformat %1 %f</external>
-     <shell>Editor.edit %f 0 0 0 true</shell>
+     <external output="SPARK Output" server="build_server">sparkformat %1 %F</external>
+     <shell>Editor.edit %F 0 0 0 true</shell>
   </action>
 
   <action name="Examine metafile" category="Spark" output="none">
@@ -469,7 +469,7 @@ a = """<?xml version="1.0"?>
      <shell>Locations.remove_category Examiner</shell>
      <shell>Project %p</shell>
      <shell>Project.get_tool_switches_as_string %1 "Examiner" </shell>
-     <external output="SPARK Output" server="build_server">spark %1 ~brief @%f</external>
+     <external output="SPARK Output" server="build_server">spark %1 ~brief @%F</external>
      <on-failure>
           <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
      </on-failure>
@@ -484,7 +484,7 @@ a = """<?xml version="1.0"?>
     <filter language="VCG" />
     <shell>Project %p</shell>
     <shell>Project.get_tool_switches_as_string %1 "Simplifier" </shell>
-    <external server="build_server" output="Simplifier Output">spadesimp %f %1</external>
+    <external server="build_server" output="Simplifier Output">spadesimp %F %1</external>
   </action>
 
   <action name="Simplify all" category="Spark" output="none">
