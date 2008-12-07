@@ -31,7 +31,6 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with String_List_Utils;          use String_List_Utils;
-with String_Utils;               use String_Utils;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -217,9 +216,7 @@ package body Builder_Facility_Module.Scripts is
 
          Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop
-            Set_Return_Value
-              (Data, Unprotect (String_List_Utils.String_List.Data (Node)));
-
+            Set_Return_Value (Data, String_List_Utils.String_List.Data (Node));
             Node := Next (Node);
          end loop;
 

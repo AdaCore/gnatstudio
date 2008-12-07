@@ -420,8 +420,9 @@ package body Commands.Builder is
       then
          Append_To_Build_Output
            (Kernel,
-            GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
-              (CL.all, Quote_Backslash => False),
+            Unprotect
+              (GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
+                 (CL.all, Quote_Backslash => False)),
             Shadow);
 
          if Mode_Name /= "default" then
