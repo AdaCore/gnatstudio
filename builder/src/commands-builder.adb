@@ -389,15 +389,15 @@ package body Commands.Builder is
    --------------------------
 
    procedure Launch_Build_Command
-     (Kernel         : Kernel_Handle;
-      CL             : GNAT.OS_Lib.String_List_Access;
-      Target_Name    : String;
-      Mode_Name      : String;
-      Server         : Server_Type;
-      Quiet          : Boolean;
-      Shadow         : Boolean;
-      Synchronous    : Boolean;
-      Use_Shell      : Boolean)
+     (Kernel      : Kernel_Handle;
+      CL          : GNAT.OS_Lib.String_List_Access;
+      Target_Name : String;
+      Mode_Name   : String;
+      Server      : Server_Type;
+      Quiet       : Boolean;
+      Shadow      : Boolean;
+      Synchronous : Boolean;
+      Use_Shell   : Boolean)
    is
       Console  : constant Interactive_Console :=
                    Get_Build_Console (Kernel, Shadow, False);

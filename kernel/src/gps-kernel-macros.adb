@@ -113,9 +113,9 @@ package body GPS.Kernel.Macros is
       declare
          Tmp : constant String := Substitute
            (Command,
-            Delimiter         => Special_Character,
-            Callback          => Substitution'Unrestricted_Access,
-            Recursive         => False);
+            Delimiter => Special_Character,
+            Callback  => Substitution'Unrestricted_Access,
+            Recursive => False);
          pragma Unreferenced (Tmp);
       begin
          null;
@@ -136,10 +136,10 @@ package body GPS.Kernel.Macros is
       Server  : Server_Type := GPS_Server)
       return String
    is
-      Project : Project_Type := No_Project;
-      Index   : Integer;
+      Project                          : Project_Type := No_Project;
+      Index                            : Integer;
       Recurse, List_Dirs, List_Sources : Boolean;
-      Entity  : Entity_Information;
+      Entity                           : Entity_Information;
 
    begin
       Done.all := True;
@@ -273,7 +273,7 @@ package body GPS.Kernel.Macros is
                List_Sources := Param (Index) = 's';
 
                if Index < Param'Last and then Param (Index + 1) = 'f' then
-                  --  Append the list to a file.
+                  --  Append the list to a file
                   declare
                      use GNAT.Strings;
 
@@ -321,8 +321,8 @@ package body GPS.Kernel.Macros is
                   declare
                      use GNAT.Strings;
 
-                     Result : Unbounded_String;
-                     List   : String_List_Access;
+                     Result     : Unbounded_String;
+                     List       : String_List_Access;
                      Files_List : File_Array_Access;
                   begin
                      if List_Dirs then

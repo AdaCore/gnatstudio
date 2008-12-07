@@ -396,7 +396,8 @@ package body Build_Configurations is
       else
          declare
             Old_Cmd_Line : constant Argument_List :=
-              Get_Command_Line_Unexpanded (Registry, The_Target);
+                             Get_Command_Line_Unexpanded
+                               (Registry, The_Target);
             New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
 
          begin
@@ -456,7 +457,7 @@ package body Build_Configurations is
       Dest := Get_Target_From_Name (Registry, New_Name);
 
       if Dest = null then
-         --  This should never happen, but we test just in case.
+         --  This should never happen, but we test just in case
          Log (Registry, -("Could not create target ") & New_Name);
          return;
       end if;
@@ -796,8 +797,8 @@ package body Build_Configurations is
       Target   : Target_Access) return Node_Ptr
    is
       pragma Unreferenced (Registry);
-      N   : Node_Ptr;
-      C   : Node_Ptr;
+      N : Node_Ptr;
+      C : Node_Ptr;
    begin
       N := new Node;
       N.Tag := new String'("target");
@@ -1004,11 +1005,11 @@ package body Build_Configurations is
    function Save_All_Targets_To_XML
      (Registry : Build_Config_Registry_Access) return Node_Ptr
    is
-      N     : Node_Ptr;
-      Child : Node_Ptr;
-      C     : Cursor;
-      C2    : Cursor;
-      Name  : Unbounded_String;
+      N                  : Node_Ptr;
+      Child              : Node_Ptr;
+      C                  : Cursor;
+      C2                 : Cursor;
+      Name               : Unbounded_String;
       Equals_To_Original : Boolean;
 
    begin

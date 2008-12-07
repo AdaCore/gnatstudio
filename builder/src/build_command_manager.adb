@@ -389,8 +389,8 @@ package body Build_Command_Manager is
       Subdir     : String;
       Simulate   : Boolean := False) return Argument_List_Access
    is
-      Result  : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
-      Index   : Natural := 1;
+      Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
+      Index  : Natural := 1;
       --  Index of the next free element in Result
 
       Context : constant Selection_Context := Get_Current_Context (Kernel);
@@ -399,25 +399,24 @@ package body Build_Command_Manager is
       for J in CL'Range loop
          if CL (J) = null then
             --  This should not happen
-            Insert
-              (Kernel, (-"Invalid command line"),
-               Mode => Error);
+            Insert (Kernel, (-"Invalid command line"), Mode => Error);
             Free (Result);
             return null;
          end if;
 
          declare
             Expanded : constant Argument_List :=
-              Expand_Arg
-                (Kernel, Context, CL (J).all, Server,
-                 Force_File, Main, Subdir, Simulate);
+                         Expand_Arg
+                           (Kernel, Context, CL (J).all, Server,
+                            Force_File, Main, Subdir, Simulate);
          begin
             --  Expand the result if needed
             if Result'Last - Index < Expanded'Length then
                declare
                   New_Result : constant Argument_List_Access :=
-                    new Argument_List
-                      (1 .. (Result'Length + Expanded'Length) * 2);
+                                 new Argument_List
+                                   (1 ..
+                                      (Result'Length + Expanded'Length) * 2);
                begin
                   for K in 1 .. Index - 1 loop
                      New_Result (K) := Result (K);
