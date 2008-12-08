@@ -56,7 +56,7 @@
 
   <remote_connection_config name="plink rsh">
     <start_command use_pipes="false">plink</start_command>
-    <start_command_common_args>-rsh %U %h %C</start_command_common_args>
+    <start_command_common_args>-rlogin %U %h %C</start_command_common_args>
     <start_command_user_args>-l %u</start_command_user_args>
   </remote_connection_config>
 
@@ -73,7 +73,7 @@
   <remote_shell_config name="sh">
     <start_command>sh -i</start_command>
     <!-- use default generic_prompt -->
-    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <gps_prompt>^---GPSPROMPT--#$</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
       <cmd>PS1=---GPSPROMPT--#</cmd>
@@ -94,9 +94,9 @@
   <!-- BASH shell -->
 
   <remote_shell_config name="bash">
-    <start_command>bash -i</start_command>
+    <start_command>bash --login -i</start_command>
     <!-- use default generic_prompt -->
-    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <gps_prompt>^---GPSPROMPT--#$</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
       <cmd>export PS1=---GPSPROMPT--#</cmd>
@@ -119,7 +119,7 @@
   <remote_shell_config name="csh">
     <start_command>csh -i</start_command>
     <!-- use default generic_prompt -->
-    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <gps_prompt>^---GPSPROMPT--#$</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
       <cmd>set prompt=---GPSPROMPT--#</cmd>
@@ -141,7 +141,7 @@
   <remote_shell_config name="tcsh">
     <start_command>tcsh -i</start_command>
     <!-- use default generic_prompt -->
-    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <gps_prompt>^---GPSPROMPT--#$</gps_prompt>
     <filesystem>unix</filesystem>
     <init_commands>
       <cmd>set prompt=---GPSPROMPT--#</cmd>
@@ -163,7 +163,7 @@
   <remote_shell_config name="cmd.exe">
     <start_command>cmd.exe</start_command>
     <!-- use default generic_prompt -->
-    <gps_prompt>---GPSPROMPT--#</gps_prompt>
+    <gps_prompt>^---GPSPROMPT--#$</gps_prompt>
     <filesystem>windows</filesystem>
     <init_commands>
       <cmd>PROMPT ---GPSPROMPT--#</cmd>

@@ -294,7 +294,7 @@ package body GNAT.Expect.TTY.Remote is
       Old_Args     : String_List_Access;
       Regexp_Array : Compiled_Regexp_Array (1 .. 3);
       Verify_Cr_Lf : Boolean := False;
-      First_Call   : Boolean := True;
+      First_Call   : Boolean := False;
 
       function Process_Arg_List (L : String_List) return String_List;
       --  process the list of arguments, replacing tags with actual values
@@ -392,6 +392,11 @@ package body GNAT.Expect.TTY.Remote is
             Descriptor.Machine.Desc.Timeout,
             False);
 
+         --  First pass for CR/LF usage detection: if we receive the first
+         --  characters with CR/LF line ending, we suppose that we need to
+         --  do the same to answer. The second pass will take place as soon
+         --  as we get a prompt, by sending a single LF and see if the remote
+         --  shell understands it as a line return.
          if Descriptor.Use_Cr_Lf = Auto then
             declare
                Out_Str : constant String :=
@@ -431,6 +436,17 @@ package body GNAT.Expect.TTY.Remote is
                Trace (Me, "got timeout in Wait_For_Prompt (intermediate=" &
                       Boolean'Image (Intermediate) & ")");
 
+               --  We just tested if LF alone was working as line terminator.
+               --  If we receive a timeout at this point, then this means we
+               --  need to use CR/LF
+               if Verify_Cr_Lf and then First_Call then
+                  Verify_Cr_Lf := False;
+                  Descriptor.Use_Cr_Lf := CRLF;
+                  Trace (Me, "Using CR/LF");
+
+                  return;
+               end if;
+
                if Descriptor.Machine.Desc.Dbg /= null
                  and then Descriptor.Machine.Sessions (Session_Nb).Pd.Buffer /=
                  null
@@ -457,71 +473,13 @@ package body GNAT.Expect.TTY.Remote is
                Trace
                  (Me, "got prompt in Wait_For_Prompt");
 
-               --  We need to verify if the remote host really needs CR/LF
-               --  being sent:
-               --  in some cases this makes the remote machine receive
-               --  the equivalent of two LFs (thus two prompts) which
-               --  unsynchronizes the expect interface.
-
-               --  This happens whith telnet on AIX, where the AIX server
-               --  returns CR/LF, but expects LF as input
-
-               --  We verify this by looking for duplicated prompt after the
-               --  first command is sent (so upon the second call to
-               --  Wait_For_Prompt)
+               --  If Verify_Cr_Lf is set, then this was a test to determine
+               --  if LF alone works. This succeeds here so we set Use_Cr_Lf to
+               --  LF
                if Verify_Cr_Lf and then First_Call then
-                  First_Call := False;
-               elsif Verify_Cr_Lf then
                   Verify_Cr_Lf := False;
-
-                  if Descriptor.Use_Cr_Lf = CRLF then
-                     declare
-                        Str : constant String :=
-                                Strip_CR
-                                  (Expect_Out
-                                     (Descriptor.Machine.Sessions
-                                        (Session_Nb).Pd));
-                        Ref : Integer := -1;
-
-                     begin
-                        for J in reverse Str'Range loop
-                           if Str (J) = ASCII.LF then
-                              Ref := J + 1;
-                              exit;
-                           end if;
-                        end loop;
-
-                        if Ref in Str'Range then
-                           declare
-                              Ref_Prompt : constant String :=
-                                             Str (Ref .. Str'Last);
-                           begin
-                              for J in reverse Str'First .. Ref - 1 loop
-                                 if Str (J) = ASCII.LF
-                                   and then J >= Str'First + Ref_Prompt'Length
-                                   and then
-                                     Str (J - Ref_Prompt'Length .. J - 1) =
-                                      Ref_Prompt
-                                   and then
-                                     (J - Ref_Prompt'Length = Str'First
-                                      or else
-                                        Str
-                                          (J - Ref_Prompt'Length - 1) =
-                                          ASCII.LF)
-                                 then
-                                    --  Found a duplicated prompt
-                                    Trace
-                                      (Me,
-                                       "Deactivating CR/LF as this leads to" &
-                                       " duplicated prompts");
-                                    Descriptor.Use_Cr_Lf := LF;
-                                    exit;
-                                 end if;
-                              end loop;
-                           end;
-                        end if;
-                     end;
-                  end if;
+                  Descriptor.Use_Cr_Lf := LF;
+                  Trace (Me, "Using LF alone, as the test succeeded");
                end if;
 
             when 2 =>
@@ -853,8 +811,9 @@ package body GNAT.Expect.TTY.Remote is
          Log ("spawn",
               Argument_List_To_String (New_Args.all, False));
          --  Do not use pipes, as they prevent password retrieval on windows
-         Set_Use_Pipes (Descriptor.Machine.Sessions (Session_Nb).Pd,
-                        Remote_Desc.Use_Pipes);
+         Set_Use_Pipes
+           (Descriptor.Machine.Sessions (Session_Nb).Pd,
+            Remote_Desc.Use_Pipes);
          Non_Blocking_Spawn
            (Descriptor  => Descriptor.Machine.Sessions (Session_Nb).Pd,
             Command     => New_Args (New_Args'First).all,
@@ -868,6 +827,17 @@ package body GNAT.Expect.TTY.Remote is
          --  First call of Wait_For_Prompt will resolve the case where
          --  Use_Cr_Lf is "Auto"
          Wait_For_Prompt (True);
+
+         --  if Use_Cr_Lf is Auto, just send a LF and see if it works
+         if Verify_Cr_Lf then
+            Descriptor.Machine.Sessions (Session_Nb).Pd.Flush;
+            My_Send
+              (Descriptor.Machine.Sessions (Session_Nb).Pd,
+               Descriptor.Machine.Desc.Dbg,
+               "", Use_Cr_Lf => False, Add_LF => True);
+            First_Call := True;
+            Wait_For_Prompt (True);
+         end if;
 
          --  Determine if the machine echoes commands
          if Descriptor.Shell.No_Echo_Cmd.all /= "" then

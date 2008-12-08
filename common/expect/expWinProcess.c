@@ -4,7 +4,7 @@
  *	This file contains utility procedures.  It primarily handled
  *	processes for Expect.
  *
- * Copyright (c) 2006 AdaCore
+ * Copyright (c) 2006-2008, AdaCore
  * Copyright (c) 1997 Mitel Corporation
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  * Copyright (c) 1987-1993 The Regents of the University of California.
@@ -66,237 +66,6 @@ HasConsole()
     } else {
         return FALSE;
     }
-}
-
-/*
- *--------------------------------------------------------------------
- *
- * ExpApplicationType --
- *
- *	Search for the specified program and identify if it refers to a DOS,
- *	Windows 3.X, or Win32 program.  Used to determine how to invoke
- *	a program, or if it can even be invoked.
- *
- *	It is possible to almost positively identify DOS and Windows
- *	applications that contain the appropriate magic numbers.  However,
- *	DOS .com files do not seem to contain a magic number; if the program
- *	name ends with .com and could not be identified as a Windows .com
- *	file, it will be assumed to be a DOS application, even if it was
- *	just random data.  If the program name does not end with .com, no
- *	such assumption is made.
- *
- *	The Win32 procedure GetBinaryType incorrectly identifies any
- *	junk file that ends with .exe as a dos executable and some
- *	executables that don't end with .exe as not executable.  Plus it
- *	doesn't exist under win95, so I won't feel bad about reimplementing
- *	functionality.
- *
- * Results:
- *	The return value is one of EXP_APPL_DOS, EXP_APPL_WIN3X, or EXP_APPL_WIN32
- *	if the filename referred to the corresponding application type.
- *	If the file name could not be found or did not refer to any known
- *	application type, EXP_APPL_NONE is returned and the caller can use
- *	GetLastError() to find out what went wrong.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-DWORD
-ExpApplicationType(originalName, fullPath, imagePath)
-    const char *originalName;	/* Name of the application to find. */
-    char fullPath[MAX_PATH];	/* Filled with complete path to
-				 * application. */
-    char *imagePath;
-{
-    DWORD applType;
-    int i;
-    HANDLE hFile;
-    char *ext;
-    char buf[2];
-    DWORD read;
-    IMAGE_DOS_HEADER header;
-    static char extensions[][5] = {"", ".com", ".exe", ".bat", ".cmd"};
-
-    /* Look for the program as an external program.  First try the name
-     * as it is, then try adding .com, .exe, and .bat, in that order, to
-     * the name, looking for an executable.
-     *
-     * Using the raw SearchPath() procedure doesn't do quite what is
-     * necessary.  If the name of the executable already contains a '.'
-     * character, it will not try appending the specified extension when
-     * searching (in other words, SearchPath will not find the program
-     * "a.b.exe" if the arguments specified "a.b" and ".exe").
-     * So, first look for the file as it is named.  Then manually append
-     * the extensions, looking for a match.
-     */
-
-    if (imagePath) {
-	imagePath[0] = 0;
-    }
-    applType = EXP_APPL_NONE;
-    for (i = 0; i < (int) (sizeof(extensions) / sizeof(extensions[0])); i++) {
-	lstrcpyn(fullPath, originalName, MAX_PATH - 5);
-        lstrcat(fullPath, extensions[i]);
-
-	if (SearchPath(NULL, fullPath, NULL, MAX_PATH, fullPath, NULL) == 0) {
-	    continue;
-	}
-
-	/*
-	 * Ignore matches on directories or data files, return if identified
-	 * a known type.
-	 */
-
-	if (GetFileAttributes(fullPath) & FILE_ATTRIBUTE_DIRECTORY) {
-	    continue;
-	}
-
-	ext = strrchr(fullPath, '.');
-	if ((ext != NULL) && (strcmpi(ext, ".bat") == 0)) {
-	    applType = EXP_APPL_DOS;
-	    break;
-	}
-
-	hFile = CreateFile(fullPath, GENERIC_READ, FILE_SHARE_READ, NULL,
-		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) {
-	    continue;
-	}
-
-	header.e_magic = 0;
-	ReadFile(hFile, (void *) &header, sizeof(header), &read, NULL);
-
-	/*
-	 * A bit of a hack.  Look for a '#!' at the start of the file.  If we
-	 * see it, it indicates the presence of a shell script or something
-	 * along those lines (i.e. perl, tcl, etc).  We extract the name of the
-	 * image that it is looking for, and we try and turn it into the name
-	 * of the Win32 image that needs to be run.
-	 */
-	if (header.e_magic == 0x2123) { /* #! */
-	    char *cpnt;
-	    char *dpnt;
-	    char scriptName[MAX_PATH];
-	    char shellPath[MAX_PATH];
-	    char tmpBuf[MAX_PATH];
-
-	    buf[0] = '\0';
-	    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-	    ReadFile(hFile, (void *) tmpBuf, MAX_PATH, &read, NULL);
-	    /*
-	     * Extract the name of the script interpreter.
-	     */
-	    cpnt = tmpBuf + 2;
-	    while (isspace(*cpnt) && *cpnt != '\n') {
-		cpnt++;
-	    }
-	    dpnt = scriptName;
-
-	    while (*cpnt && !isspace(*cpnt)) {
-		*dpnt++ = *cpnt++;
-	    }
-	    *dpnt = '\0';
-
-	    /*
-	     * First try and normalize the name to a Win32 name.
-	     */
-	    for (cpnt = scriptName; *cpnt != 0; cpnt++) {
-		if (*cpnt == '/') {
-		    *cpnt = '\\';
-		}
-	    }
-	    applType = ExpApplicationType(scriptName, shellPath, NULL);
-
-	    if (applType == EXP_APPL_NONE) {
-		if (strcmp(scriptName, "/bin/sh") == 0) {
-		    cpnt = getenv("SHELL");
-		    if (cpnt == NULL) {
-			continue;
-		    }
-		    strcpy(scriptName, cpnt);
-		    for (cpnt = scriptName; *cpnt != 0; cpnt++) {
-			if (*cpnt == '/') {
-			    *cpnt = '\\';
-			}
-		    }
-		    applType = ExpApplicationType(scriptName, shellPath, NULL);
-		}
-	    }
-	    if (applType != EXP_APPL_NONE && imagePath != NULL) {
-		strcpy(imagePath, shellPath);
-	    }
-
-	    CloseHandle(hFile);
-	    return applType;
-	}
-
-	if (header.e_magic != IMAGE_DOS_SIGNATURE) {
-	    /*
-	     * Doesn't have the magic number for relocatable executables.  If
-	     * filename ends with .com, assume it's a DOS application anyhow.
-	     * Note that we didn't make this assumption at first, because some
-	     * supposed .com files are really 32-bit executables with all the
-	     * magic numbers and everything.
-	     */
-
-	    CloseHandle(hFile);
-	    if ((ext != NULL) && (strcmpi(ext, ".com") == 0)) {
-		applType = EXP_APPL_DOS;
-		break;
-	    }
-	    continue;
-	}
-	if (header.e_lfarlc != sizeof(header)) {
-	    /*
-	     * All Windows 3.X and Win32 and some DOS programs have this value
-	     * set here.  If it doesn't, assume that since it already had the
-	     * other magic number it was a DOS application.
-	     */
-
-	    CloseHandle(hFile);
-	    applType = EXP_APPL_DOS;
-	    break;
-	}
-
-	/*
-	 * The DWORD at header.e_lfanew points to yet another magic number.
-	 */
-
-	buf[0] = '\0';
-	SetFilePointer(hFile, header.e_lfanew, NULL, FILE_BEGIN);
-	ReadFile(hFile, (void *) buf, 2, &read, NULL);
-	CloseHandle(hFile);
-
-	if ((buf[0] == 'L') && (buf[1] == 'E')) {
-	    applType = EXP_APPL_DOS;
-	} else if ((buf[0] == 'N') && (buf[1] == 'E')) {
-	    applType = EXP_APPL_WIN3X;
-	} else if ((buf[0] == 'P') && (buf[1] == 'E')) {
-	    applType = EXP_APPL_WIN32;
-	} else {
-	    continue;
-	}
-	break;
-    }
-
-    if (applType == EXP_APPL_NONE) {
-	return EXP_APPL_NONE;
-    }
-
-    if ((applType == EXP_APPL_DOS) || (applType == EXP_APPL_WIN3X)) {
-	/*
-	 * Replace long path name of executable with short path name for
-	 * 16-bit applications.  Otherwise the application may not be able
-	 * to correctly parse its own command line to separate off the
-	 * application name from the arguments.
-	 */
-
-	GetShortPathName(fullPath, fullPath, MAX_PATH);
-    }
-    return applType;
 }
 
 /*
@@ -546,14 +315,10 @@ ExpCreateProcess(argc, argv, allocConsole, hideConsole, debug, newProcessGroup,
 				 * process. */
     LPPROCESS_INFORMATION globalProcInfo;	/* Globally unique pid */
 {
-    DWORD applType;
     int createFlags;
     Tcl_DString cmdLine;
     STARTUPINFO startInfo;
     HANDLE hProcess;
-    char execPath[MAX_PATH];
-    char imagePath[MAX_PATH];
-    char *originalName;
     char pwd[MAX_PATH];
     int pwdLength;
     LONG result;
@@ -565,13 +330,6 @@ ExpCreateProcess(argc, argv, allocConsole, hideConsole, debug, newProcessGroup,
     EXP_LOG ("Create process launched from '%s'", pwd);
 
     result = 0;
-    /* XXX: This isn't quite right */
-    applType = ExpApplicationType(argv[0], execPath, imagePath);
-    if (applType == EXP_APPL_NONE) {
-      return GetLastError();
-    }
-    originalName = argv[0];
-    argv[0] = execPath;
 
     Tcl_DStringInit(&cmdLine);
 
@@ -603,7 +361,7 @@ ExpCreateProcess(argc, argv, allocConsole, hideConsole, debug, newProcessGroup,
 
     if (!allocConsole && HasConsole()) {
 	createFlags = 0;
-    } else if (applType == EXP_APPL_DOS || allocConsole) {
+    } else if (allocConsole) {
 	/*
 	 * Under NT, 16-bit DOS applications will not run unless they
 	 * can be attached to a console.  If we are running without a
@@ -620,9 +378,6 @@ ExpCreateProcess(argc, argv, allocConsole, hideConsole, debug, newProcessGroup,
 	}
 	startInfo.dwFlags |= STARTF_USESHOWWINDOW;
         createFlags = CREATE_NEW_CONSOLE;
-	if (applType == EXP_APPL_DOS) {
-	    Tcl_DStringAppend(&cmdLine, "cmd.exe /c ", -1);
-	}
     } else {
 	createFlags = DETACHED_PROCESS;
     }
