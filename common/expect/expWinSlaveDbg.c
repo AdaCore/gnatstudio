@@ -17,33 +17,6 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * TODO:
- *  * Maintain cursor information for each console screen buffer.
- *  * Intercept additional console input and output characters to better
- *    keep track of current console state.
- *  * Keep all keyboard strokes within the slave until we see a call
- *    made ReadConsoleInput, ReadConsole, or some call like that.
- *    Maybe a better idea is to not echo characters until we see how
- *    they are read.  So never write more than a line at a time to
- *    the console input, but as soon as wee see a call to ReadConsole, we
- *    echo characters (if necessary) on the way into the call.
- *    If the call is made instead to ReadConsoleInput, then we remove
- *    a character from our echo list (assuming of course the input
- *    event was a key stroke).  This would give the most accurate
- *    accounting of characters.
- *  * I've been having trouble with cmd.exe.  If there is a file such asa
- *    x.in that you try to run, and there is no application tied to .in,
- *    a graphical message pops up telling you there is no program associated
- *    with this file.  For some reason, if I run cmd.exe under apispy32
- *    from Matt Pietrek, the graphical message doesn't pop up.  I tried
- *    starting the program with the same sort of flags as he uses, but it
- *    doesn't seem to work to make the messages go away.  I suspect that
- *    the messages are coming from the shell somehow.
- */
-
-/*
- * Even though we won't have access to most of the commands, use the
- * same headers
  */
 
 #include <windows.h>
@@ -70,8 +43,6 @@
 #define EXP_FLAG_PI			0x80
 
 #ifndef UNICODE
-SHORT curY = 0;
-SHORT curX = 0;
 #  define ExpCreateProcessInfo	ExpCreateProcessInfoA
 #  define OnWriteConsoleOutput	OnWriteConsoleOutputA
 #  define ReadSubprocessString	ReadSubprocessStringA
@@ -170,8 +141,6 @@ struct _ExpProcess {
     ExpBreakpoint *lastBrkpt;/* Last Breakpoint Hit */
     DWORD offset;		/* Breakpoint offset in allocated mem */
     DWORD nBreakCount;		/* Number of breakpoints hit */
-    DWORD consoleHandles[100];	/* A list of input console handles */
-    DWORD consoleHandlesMax;
     BOOL  isConsoleApp;		/* Is this a console app? */
     BOOL  isShell;		/* Is this some sort of console shell? */
     HANDLE hProcess;		/* handle to subprocess */
@@ -191,7 +160,6 @@ struct _ExpProcess {
  * List of processes that are being debugged
  */
 static ExpProcess *ProcessList = NULL;
-static HANDLE HConsole;		/* Shared console */
 static HANDLE HMaster;		/* Handle to master output pipe */
 static int UseSocket;
 static COORD CursorPosition;
@@ -221,23 +189,14 @@ extern ExpBreakpoint *	SetBreakpointAtAddr(ExpProcess *, ExpBreakInfo *,
 			    PVOID funcPtr);
 static void		StartSubprocessA(ExpProcess *, ExpThreadInfo *);
 static void		StartSubprocessW(ExpProcess *, ExpThreadInfo *);
-static void		RefreshScreen();
 
-static void		OnBeep(ExpProcess *,
-			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
-static void		OnGetStdHandle(ExpProcess *,
-			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnIsWindowVisible(ExpProcess *,
-			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
-static void		OnOpenConsoleW(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnReadConsoleInput(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnSetConsoleActiveScreenBuffer(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnSetConsoleCursorPosition(ExpProcess *,
-			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
-static void		OnSetConsoleMode(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
 static void		OnSetConsoleWindowInfo(ExpProcess *,
 			    ExpThreadInfo *, ExpBreakpoint *, PDWORD, DWORD);
@@ -269,12 +228,16 @@ static void		OnXSingleStep(ExpProcess *, LPDEBUG_EVENT);
 
 #ifndef UNICODE
 
+/* Current cursor position to keep track of line returns */
+
+SHORT curY = 0;
+SHORT curX = 0;
+
 /*
  * Functions where we set breakpoints
  */
 
 ExpBreakInfo BreakArrayKernel32[] = {
-  {"SetConsoleMode", 2, OnSetConsoleMode, EXP_BREAK_OUT},
   {"WriteConsoleA", 5, OnWriteConsoleA, EXP_BREAK_OUT},
   {"WriteConsoleW", 5, OnWriteConsoleW, EXP_BREAK_OUT},
   {"WriteConsoleOutputA", 5, OnWriteConsoleOutputA, EXP_BREAK_OUT},
@@ -302,10 +265,6 @@ ExpDllBreakpoints BreakPoints[] = {
 #endif
     {NULL, NULL}
 };
-
-#endif /* !UNICODE */
-
-#ifndef UNICODE
 
 
 /*
@@ -336,7 +295,6 @@ ExpProcessNew(void)
     proc->lastBrkpt = NULL;
     proc->offset = 0;
     proc->nBreakCount = 0;
-    proc->consoleHandlesMax = 0;
     proc->isConsoleApp = FALSE;
     proc->isShell = FALSE;
     proc->hProcess = NULL;
@@ -488,10 +446,7 @@ ExpSlaveDebugThread(LPVOID *lparg)
 
     arg->result = 0;
 
-    HConsole = arg->hConsole;
-
-    HMaster = CreateFile(arg->hMasterPipe, GENERIC_WRITE,
-			 FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    HMaster = GetStdHandle (STD_OUTPUT_HANDLE);
     if (HMaster == NULL) {
       arg->result = TRUE;
       arg->lastError = GetLastError();
@@ -605,10 +560,12 @@ ExpCommonDebugger()
 	}
 
 	if (!proc && debEvent.dwDebugEventCode != CREATE_PROCESS_DEBUG_EVENT) {
+#ifdef EXPLAUNCH_DEBUG
 	  char buf[50];
 	  sprintf(buf, "%d/%d (%d)",
 		  debEvent.dwProcessId, debEvent.dwThreadId,
 		  debEvent.dwDebugEventCode);
+#endif
 	  EXP_LOG("Unexpected debug event for %s\n", buf);
 	  if (debEvent.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
 	    EXP_LOG("ExceptionCode: 0x%08x\n",
@@ -1357,9 +1314,11 @@ OnXSecondChanceException(ExpProcess *proc,  LPDEBUG_EVENT pDebEvent)
 	    } else {
 		s = "";
 	    }
+#ifdef EXPLAUNCH_DEBUG
 	    sprintf(buf, "%.20s %08x\t%s+%X", s, frame.AddrPC.Offset,
 		pSymbol->Name, displacement);
 	    EXP_LOG("%s\n", buf);
+#endif
 	} else {
 	    EXP_LOG("%08x\t\n", frame.AddrPC.Offset);
 	}
@@ -1693,67 +1652,6 @@ SetBreakpointAtAddr(ExpProcess *proc, ExpBreakInfo *info, PVOID funcPtr)
 /*
  *----------------------------------------------------------------------
  *
- * OnOpenConsoleW --
- *
- *	This function gets called when an OpenConsoleW breakpoint
- *	is hit.  There is one big problem with this function--it
- *	isn't documented.  However, we only really care about the
- *	return value which is a console handle.  I think this is
- *	what this function declaration should be:
- *
- *	HANDLE OpenConsoleW(LPWSTR lpFileName,
- *			    DWORD dwDesiredAccess,
- *			    DWORD dwShareMode,
- *			    LPSECURITY_ATTRIBUTES lpSecurityAttributes);
- *
- *	So why do we intercept an undocumented function while we
- *	could just intercept CreateFileW and CreateFileA?  Well,
- *	those functions are going to get called alot more than this
- *	one, so limiting the number of intercepted functions
- *	improves performance since fewer breakpoints will be hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Save the return value in an array of known console handles
- *	with their statuses.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnOpenConsoleW(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    WCHAR name[256];
-    PVOID ptr;
-
-    LOG_ENTRY("OpenConsoleW");
-    if (*returnValue == (DWORD) INVALID_HANDLE_VALUE) {
-	return;
-    }
-
-    /*
-     * Save any console input handle.  No SetConsoleMode() calls will
-     * succeed unless they are really attached to a console input buffer.
-     */
-
-    ptr = (PVOID) threadInfo->args[0];
-    ReadSubprocessStringW(proc, ptr, name, 256);
-
-    if (wcsicmp(name, L"CONIN$") == 0) {
-	if (proc->consoleHandlesMax > 100) {
-	    proc->consoleHandlesMax = 100;
-	}
-	proc->consoleHandles[proc->consoleHandlesMax++] = *returnValue;
-    }
-    return;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * OnWriteConsoleA --
  *
  *	This function gets called when an WriteConsoleA breakpoint
@@ -1916,63 +1814,16 @@ void
 CreateVtSequence(ExpProcess *proc, COORD newPos, DWORD n)
 {
   LOG_ENTRY ("CreateVtSequence (nothing to do)");
-  EXP_LOG ("newPos is x= %d, ", newPos.X);
-  EXP_LOG ("y= %d, ", newPos.Y);
+  /* With Stdout now redirected to the master, this handling should not be
+     needed anymore. We however keep it in case, but with a simplified handling
+     to just detect basic line return */
 
   if (curX > 0 && newPos.X == 0) {
-    EXP_LOG ("\\R !!!", NULL);
-    ExpWriteMaster(HMaster, "\r", 1);
+    ExpWriteMaster(HMaster, "\r\n", 2);
   }
 
-  if (newPos.X == 0) {
-    // set as 1, so that two consecutive calls will output \r
-    curX = 1;
-  }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ExpSetConsoleSize --
- *
- *	Sets the console to the appropriate size
- *
- * Results
- *	None
- *
- *----------------------------------------------------------------------
- */
-void
-ExpSetConsoleSize(HANDLE hConsoleInW, HANDLE hConsoleOut, int w, int h)
-{
-  LOG_ENTRY ("ExpSetConsoleSize");
-    COORD largest;
-    SMALL_RECT winrect;
-    INPUT_RECORD resizeRecord;
-    DWORD n;
-
-    largest = GetLargestConsoleWindowSize(hConsoleOut);
-
-    if (w > largest.X) w = largest.X;
-    if (h > largest.Y) h = largest.Y;
-
-    ConsoleSize.X = w;
-    ConsoleSize.Y = h;
-
-    winrect.Left = 0;
-    winrect.Right = w-1;
-    winrect.Top = 0;
-    winrect.Bottom = h-1;
-
-    /* Just in case one depends on the other, do the sequence twice */
-    SetConsoleScreenBufferSize(hConsoleOut, ConsoleSize);
-    SetConsoleWindowInfo(hConsoleOut, TRUE, &winrect);
-    SetConsoleScreenBufferSize(hConsoleOut, ConsoleSize);
-    SetConsoleWindowInfo(hConsoleOut, TRUE, &winrect);
-
-    resizeRecord.EventType = WINDOW_BUFFER_SIZE_EVENT;
-    resizeRecord.Event.WindowBufferSizeEvent.dwSize = ConsoleSize;
-    WriteConsoleInput(hConsoleInW, &resizeRecord, 1, &n);
+  curX = newPos.X;
+  curY = newPos.Y;
 }
 
 /*
@@ -2124,107 +1975,6 @@ OnWriteConsoleOutputCharacterW(ExpProcess *proc, ExpThreadInfo *threadInfo,
 /*
  *----------------------------------------------------------------------
  *
- * OnReadConsoleInput --
- *
- *	This function gets called when a ReadConsoleInput breakpoint
- *	is hit.
- *
- * Results:
- *	None
- *
- * Notes:
- *	If this is ever used for real, there need to be ASCII
- *	and UNICODE versions.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnReadConsoleInput(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    LOG_ENTRY("ReadConsoleInput");
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * OnSetConsoleMode --
- *
- *	This function gets called when a SetConsoleMode breakpoint
- *	is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Sets some flags that are used in determining echoing
- *	characteristics of the slave driver.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnSetConsoleMode(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-  DWORD i;
-  BOOL found;
-
-  LOG_ENTRY("SetConsoleMode");
-
-  /* The console mode seems to get set even if the return value is FALSE */
-  if (*returnValue == FALSE) {
-    return;
-  }
-  for (found = FALSE, i = 0; i < proc->consoleHandlesMax; i++) {
-    if (threadInfo->args[0] == proc->consoleHandles[i]) {
-      found = TRUE;
-      break;
-    }
-  }
-  if (found) {
-    ExpConsoleInputMode = threadInfo->args[1];
-    EXP_LOG("New console mode 0x%x", ExpConsoleInputMode);
-  } else {
-    EXP_LOG("New console (unknown) mode 0x%x", ExpConsoleInputMode);
-  }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * OnSetConsoleActiveScreenBuffer --
- *
- *	This function gets called when a SetConsoleActiveScreenBuffer
- *	breakpoint is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	We reread the entire console and send it to the master.
- *	Updates the current console cursor position
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnSetConsoleActiveScreenBuffer(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    LOG_ENTRY("SetConsoleActiveScreenBuffer");
-
-    if (*returnValue == FALSE) {
-	return;
-    }
-
-    RefreshScreen();
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * OnSetConsoleCursorPosition --
  *
  *	This function gets called when a SetConsoleCursorPosition breakpoint
@@ -2250,275 +2000,6 @@ OnSetConsoleCursorPosition(ExpProcess *proc, ExpThreadInfo *threadInfo,
   }
 
     CreateVtSequence(proc, *((PCOORD) &threadInfo->args[1]), 0);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * OnSetConsoleWindowInfo --
- *
- *	This function gets called when a SetConsoleWindowInfo breakpoint
- *	is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Updates the current console cursor position
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnSetConsoleWindowInfo(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    LOG_ENTRY("SetConsoleWindowInfo");
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * OnScrollConsoleScreenBuffer --
- *
- *	This funtions gets called when a ScrollConsoleScreenBuffer
- *	breakpoint is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Generate some VT100 sequences to insert lines
- *
- * Notes:
- *	XXX: Ideally, we should check if the screen buffer is the one that
- *	is currently being displayed.  However, that means we have to
- *	track CONOUT$ handles, so we don't do it for now.
- *
- *----------------------------------------------------------------------
- */
-
-void
-OnScrollConsoleScreenBuffer(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    BOOL b;
-    CHAR buf[100];
-    DWORD count = 0;
-    SMALL_RECT scroll, clip, *pClip;
-    COORD dest;
-    CHAR_INFO fill;
-    CHAR c;
-    PVOID ptr;
-    LOG_ENTRY("ScrollConsoleScreenBuffer");
-
-    if (*returnValue == FALSE) {
-	return;
-    }
-    ptr = (PVOID) threadInfo->args[1];
-    ReadSubprocessMemory(proc, ptr, &scroll, sizeof(SMALL_RECT));
-    ptr = (PVOID) threadInfo->args[2];
-    pClip = NULL;
-    if (ptr) {
-	pClip = &clip;
-	ReadSubprocessMemory(proc, ptr, &clip, sizeof(SMALL_RECT));
-    }
-    dest = *((PCOORD) &threadInfo->args[3]);
-    ptr = (PVOID) threadInfo->args[4];
-    ReadSubprocessMemory(proc, ptr, &fill, sizeof(CHAR_INFO));
-    c = fill.Char.AsciiChar;
-
-    /* Check for a full line scroll */
-    if (c == ' ' && scroll.Left == dest.X &&
-	scroll.Left == 0 && scroll.Right >= ConsoleSize.X-1)
-    {
-	if (dest.Y < scroll.Top) {
-	    wsprintfA(&buf[count], "\033[%d;%dr\033[%d;%dH\033[%dM",
-		      dest.Y+1,scroll.Bottom+1,dest.Y+1,1,
-		      scroll.Top - dest.Y);
-	} else {
-	    wsprintfA(&buf[count], "\033[%d;%dr\033[%d;%dH\033[%dL",
-		      scroll.Top+1,dest.Y+1+(scroll.Bottom - scroll.Top),
-		      scroll.Top+1,1,
-		      dest.Y - scroll.Top);
-	}
-	count = strlen(&buf[count]);
-	wsprintf(&buf[count], "\033[%d;%dr", 1, ConsoleSize.Y);
-	count += strlen(&buf[count]);
-	b = ExpWriteMaster(HMaster, buf, count);
-    } else {
-	RefreshScreen();
-    }
-}
-
-
-/*
- *----------------------------------------------------------------------
- *
- * OnGetStdHandle --
- *
- *	This function gets called when a GetStdHandle breakpoint
- *	is hit.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Sets some flags that are used in determining echoing
- *	characteristics of the slave driver.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnGetStdHandle(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    DWORD i;
-    BOOL found;
-  LOG_ENTRY ("GetStdHandle");
-
-    if (*returnValue == (DWORD) INVALID_HANDLE_VALUE) {
-	return;
-    }
-    if (threadInfo->args[0] != STD_INPUT_HANDLE) {
-	return;
-    }
-    for (found = FALSE, i = 0; i < proc->consoleHandlesMax; i++) {
-	if (proc->consoleHandles[i] == *returnValue) {
-	    found = TRUE;
-	    break;
-	}
-    }
-    if (! found) {
-	if (proc->consoleHandlesMax > 100) {
-	    proc->consoleHandlesMax = 100;
-	}
-	proc->consoleHandles[proc->consoleHandlesMax++] = *returnValue;
-    }
-    return;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * OnBeep --
- *
- *	This routine gets called when Beep is called.  At least in sshd,
- *	we don't want a beep to show up on the local console.  Instead,
- *	direct it back to the master with a ASCII 7.
- *
- * Results:
- *	None
- *
- * Notes:
- *	XXX: Setting the duration to 0 doesn't seem to make the local
- *	beep go away.  It seems we need to stop the call at this point
- *	(or point it to some other call with the same number of arguments)
- *
- *----------------------------------------------------------------------
- */
-
-static void
-OnBeep(ExpProcess *proc, ExpThreadInfo *threadInfo,
-    ExpBreakpoint *brkpt, PDWORD returnValue, DWORD direction)
-{
-    CHAR buf[50];
-
-    LOG_ENTRY("Beep");
-
-    if (direction == EXP_BREAK_IN) {
-	/* Modify the arguments so a beep doesn't sound on the server */
-	threadInfo->args[1] = 0;
-    } else if (direction == EXP_BREAK_OUT) {
-	if (*returnValue == 0) {
-	    buf[0] = 7; /* ASCII beep */
-	    ExpWriteMaster(HMaster, buf, 1);
-	}
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * RefreshScreen --
- *
- *	Redraw the entire screen
- *
- * Results:
- *	None
- *
- *----------------------------------------------------------------------
- */
-static void
-RefreshScreen()
-{
-    CONSOLE_SCREEN_BUFFER_INFO info;
-    UCHAR buf[4096];
-    DWORD bufpos = 0;
-    CHAR_INFO consoleBuf[4096];
-    COORD size = {ConsoleSize.X, ConsoleSize.Y};
-    COORD begin = {0, 0};
-    SMALL_RECT rect = {0, 0, ConsoleSize.X-1, ConsoleSize.Y-1};
-    BOOL b;
-    int x, y, prespaces, postspaces, offset;
-
-    LOG_ENTRY("RefreshScreen");
-
-    /* Clear the screen */
-    wsprintfA(&buf[bufpos], "\033[2J");
-    bufpos += strlen(&buf[bufpos]);
-
-    wsprintfA(&buf[bufpos], "\033[%d;%dH",
-	      CursorPosition.Y+1, CursorPosition.X+1);
-    bufpos += strlen(&buf[bufpos]);
-    CursorKnown = TRUE;
-
-    b = ExpWriteMaster(HMaster, buf, bufpos);
-    bufpos = 0;
-
-    if (GetConsoleScreenBufferInfo(HConsole, &info) != FALSE) {
-	return;
-    }
-
-    CursorPosition = info.dwCursorPosition;
-
-    if (! ReadConsoleOutput(HConsole, consoleBuf, size, begin, &rect)) {
-	return;
-    }
-
-    offset = 0;
-    for (y = 0; y < ConsoleSize.Y; y++) {
-	offset += ConsoleSize.X;
-	for (x = 0; x < ConsoleSize.X; x++) {
-	    if (consoleBuf[offset+x].Char.AsciiChar != ' ') {
-		break;
-	    }
-	}
-	prespaces = x;
-	if (prespaces == ConsoleSize.X) {
-	    continue;
-	}
-
-	for (x = ConsoleSize.X-1; x >= 0; x--) {
-	    if (consoleBuf[offset+x].Char.AsciiChar != ' ') {
-		break;
-	    }
-	}
-	postspaces = x;
-	wsprintfA(&buf[bufpos], "\033[%d;%dH", y+1, prespaces+1);
-
-	for (x = prespaces; x < postspaces; x++) {
-	    buf[bufpos] = consoleBuf[offset+x].Char.AsciiChar;
-	    bufpos++;
-	}
-    }
-
-    wsprintfA(&buf[bufpos], "\033[%d;%dH",
-	      CursorPosition.Y+1, CursorPosition.X+1);
-    bufpos += strlen(&buf[bufpos]);
-    CursorKnown = TRUE;
-    b = ExpWriteMaster(HMaster, buf, bufpos);
 }
 
 /*

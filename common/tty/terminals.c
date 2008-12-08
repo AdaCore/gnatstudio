@@ -1000,7 +1000,12 @@ nt_spawnve (char *exe, char **argv, char *env, struct GVD_Process *process)
     /* child's stderr is always redirected to outfd */
     start.hStdError = process->w_forkout;
   } else {
-    start.dwFlags = 0;
+    start.dwFlags = STARTF_USESTDHANDLES;
+    /* We only need to redirect stderr/stdout here. Stdin will be forced to
+       the spawned process console by explaunch */
+    start.hStdInput = NULL;
+    start.hStdOutput = process->w_forkout;
+    start.hStdError = process->w_forkout;
   }
 
   /* Explicitly specify no security */
@@ -1097,9 +1102,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
   int argc;
   int i;
   char pipeNameIn[100];
-  char pipeNameOut[100];
-  HANDLE hSlaveOutDrv = NULL;	/* Handle to communicate with slave driver */
-  HANDLE hSlaveInDrv = NULL;
+  HANDLE hSlaveInDrv = NULL; /* Handle to communicate with slave driver */
 
   parent = GetCurrentProcess ();
 
@@ -1127,11 +1130,11 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
     static int pipeNameId = 0;
 
     process->w_infd = NULL;
-    process->w_outfd = NULL;
 
+    /* We create a named pipe for Input, as we handle input by sending special
+       commands to the explaunch process, that uses it to feed the actual input
+       of the process */
     sprintf(pipeNameIn, "%sIn%08x_%08x", EXP_PIPE_BASENAME,
-	    GetCurrentProcessId(), pipeNameId);
-    sprintf(pipeNameOut, "%sOut%08x_%08x", EXP_PIPE_BASENAME,
 	    GetCurrentProcessId(), pipeNameId);
     pipeNameId++;
 
@@ -1139,39 +1142,31 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
 				  PIPE_ACCESS_OUTBOUND,
 				  PIPE_TYPE_BYTE | PIPE_WAIT, 1, 8192, 8192,
 				  20000, NULL);
-    if (hSlaveInDrv == NULL) {
-      goto end;
-    }
+    if (hSlaveInDrv == NULL)  goto end;
 
-    hSlaveOutDrv = CreateNamedPipe(pipeNameOut,
-				   PIPE_ACCESS_INBOUND,
-				   PIPE_TYPE_BYTE | PIPE_WAIT, 1, 8192, 8192,
-				   20000, NULL);
-    if (hSlaveOutDrv == NULL) {
-      goto end;
-    }
+    if (!CreatePipe (&process->w_outfd, &process->w_forkout, &sec_attrs, 0))
+      report_file_error ("Creation of child's OUT handle", Qnil);
 
     if (SearchPath (NULL, "explaunch.exe", NULL,
-                    MAX_PATH, slavePath, NULL) == 0) {
-      goto end;
-    }
+                    MAX_PATH, slavePath, NULL) == 0) goto end;
+
     for (argc=0; argv[argc] != NULL; argc++) ;
-    nargv = (char **) malloc (sizeof (char*) * (argc + 4));
+    nargv = (char **) malloc (sizeof (char*) * (argc + 3));
     nargv[0] = slavePath;
     nargv[1] = pipeNameIn;
-    nargv[2] = pipeNameOut;
 
-    for (i = 0; i <= argc; i++) nargv[i + 3] = argv[i];
+    for (i = 0; i <= argc; i++) nargv[i + 2] = argv[i];
     process->usePipe = FALSE;
   }
 
   /* Spawn the child. */
   cpid = nt_spawnve (nargv[0], nargv, NULL, process);
 
+  /* close the duplicated handles passed to the child */
+  CloseHandle (process->w_forkout);
+
   if (process->usePipe == TRUE) {
-    /* close the duplicated handles passed to the child */
     CloseHandle (process->w_forkin);
-    CloseHandle (process->w_forkout);
 
   } else {
     UCHAR buf[8];		/* enough space for child status info */
@@ -1182,16 +1177,6 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
     /*
      * Wait for connection with the slave driver
      */
-    bRet = ConnectNamedPipe(hSlaveOutDrv, NULL);
-    if (bRet == FALSE) {
-      dwRet = GetLastError();
-      if (dwRet == ERROR_PIPE_CONNECTED) {
-	;
-      } else {
-	goto end;
-      }
-    }
-
     bRet = ConnectNamedPipe(hSlaveInDrv, NULL);
     if (bRet == FALSE) {
       dwRet = GetLastError();
@@ -1203,7 +1188,6 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
     }
 
     process->w_infd = hSlaveInDrv;
-    process->w_outfd = hSlaveOutDrv;
 
     /*
      * wait for slave driver to initialize before allowing user to send to it
@@ -1230,8 +1214,6 @@ gvd_setup_child_communication (struct GVD_Process* process, char** argv,
  end:
   if (hSlaveInDrv != NULL)
     CloseHandle (hSlaveInDrv);
-  if (hSlaveOutDrv != NULL)
-    CloseHandle (hSlaveOutDrv);
   return -1;
 }
 

@@ -116,7 +116,6 @@ ExpFunctionKey VtFunctionKeys[] =
     {"[32~", EXP_KEY_F18},
     {"[33~", EXP_KEY_F19},
     {"[34~", EXP_KEY_F20},
-    {"[39~", EXP_WIN_RESIZE},
     {NULL, 0}
 };
 
@@ -131,11 +130,9 @@ DWORD exitVal;
 
 static void		InitializeWaitQueue(void);
 static void		ExpProcessInput(HANDLE hMaster,
-			    HANDLE hConsole, HANDLE hConsoleOut,
-			    ExpSlaveDebugArg *debugInfo);
+			    HANDLE hConsole, ExpSlaveDebugArg *debugInfo);
 static BOOL		WriteBufferToSlave(int noEscapes,
-			    HANDLE hConsoleInW, HANDLE hConsoleOut,
-			    PUCHAR buf, DWORD n);
+			    HANDLE hConsoleIn, PUCHAR buf, DWORD n);
 static DWORD WINAPI	WaitQueueThread(LPVOID *arg);
 static void		SetArgv(char *cmdLine, int *argcPtr, char ***argvPtr);
 
@@ -183,10 +180,8 @@ main(argc, argv)
     int argc;
     char **argv;
 {
-  HANDLE hConsoleInW;	/* Console, writeable input handle */
-  HANDLE hConsoleOut;	/* Console, readable output handle */
+  HANDLE hConsoleIn;	/* Console, writeable input handle */
   HANDLE hMasterInput;	/* Pipe between master and us */
-  HANDLE hMasterOutput;
   HANDLE hProcess;	/* Current process handle */
   HANDLE hChild;        /* Child process handle */
   HANDLE hInPipeRd;     /* Read side of the process's Input pipe */
@@ -224,8 +219,8 @@ main(argc, argv)
 
   InitializeWaitQueue();
 
-  debugInfo.argc = argc-3;
-  debugInfo.argv = &argv[3];
+  debugInfo.argc = argc-2;
+  debugInfo.argv = &argv[2];
 
   /* Set inheritance for the handles */
   sec_attrs.nLength = sizeof (SECURITY_ATTRIBUTES);
@@ -244,44 +239,25 @@ main(argc, argv)
     exit (1);
   }
 
-  hConsoleInW = CreateFile("CONIN$", GENERIC_WRITE,
-			   FILE_SHARE_READ | FILE_SHARE_WRITE,
-			   &sec_attrs, OPEN_EXISTING, 0, NULL);
-  if (hConsoleInW == NULL) {
+  hConsoleIn = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+		          FILE_SHARE_READ | FILE_SHARE_WRITE,
+			  &sec_attrs, OPEN_EXISTING, 0, NULL);
+  if (hConsoleIn == NULL) {
     EXP_LOG("Unexpected error 0x%x", GetLastError());
     EXP_END;
     ExitProcess(1);
   }
 
-  hConsoleOut = CreateFile("CONOUT$", GENERIC_READ|GENERIC_WRITE,
-			   FILE_SHARE_READ|FILE_SHARE_WRITE,
-			   &sec_attrs, OPEN_EXISTING, 0, NULL);
-  if (hConsoleOut == NULL) {
-    EXP_LOG("Unexpected error 0x%x", GetLastError());
-    ExitProcess(1);
-  }
-
-  ExpConsoleInputMode = ENABLE_PROCESSED_INPUT;
-  SetConsoleMode (hConsoleInW, ExpConsoleInputMode);
-  /*
-   * Reduce the size of the console window so that LF are correctly transmitted
-   * with the LF character instead of a cursor position change
-   */
-  GetConsoleScreenBufferInfo (hConsoleOut, &consoleSBInfo);
-  consoleWindow.Top = 0;
-  consoleWindow.Left = 0;
-  consoleWindow.Bottom = 1;
-  consoleWindow.Right = CONSOLE_WINDOW_WIDTH;
-  EXP_LOG ("right edge of console window : %d", consoleWindow.Right);
-  SetConsoleWindowInfo (hConsoleOut, TRUE, &consoleWindow);
+  /* Make sure the input handle is the console */
+  SetStdHandle (STD_INPUT_HANDLE, hConsoleIn);
 
   /*
    * The subprocess needs to be created in the debugging thread.
    * Set all the args in debugInfo and start it up.
    */
 
-  debugInfo.hConsole = hConsoleOut;
-  debugInfo.hMasterPipe = argv[2];
+  debugInfo.hConsole = NULL;
+  debugInfo.hMasterPipe = NULL;
   debugInfo.slaveStdin = NULL;
   debugInfo.slaveStdout = NULL;
   debugInfo.slaveStderr = NULL;
@@ -307,8 +283,7 @@ main(argc, argv)
      (LPVOID) &debugInfo.process, 0, &threadId);
   CloseHandle(hThread);
 
-  ExpProcessInput(hMasterInput, hConsoleInW, hConsoleOut,
-		  &debugInfo);
+  ExpProcessInput(hMasterInput, hConsoleIn, &debugInfo);
 
   EXP_LOG ("exiting with ret value = %d", exitVal);
   EXP_LOG ("CURRENT PROCESS is %d", GetCurrentProcessId());
@@ -335,8 +310,7 @@ main(argc, argv)
  */
 
 static void
-ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
-		ExpSlaveDebugArg *debugInfo)
+ExpProcessInput(HANDLE hMaster, HANDLE hConsoleIn, ExpSlaveDebugArg *debugInfo)
 {
   UCHAR buffer[BUFSIZE];
   DWORD dwState;
@@ -423,8 +397,7 @@ ExpProcessInput(HANDLE hMaster, HANDLE hConsoleInW, HANDLE hConsoleOut,
         buffer[dwNeeded] = '\0';
         EXP_LOG ("STATE_WRITE_DATA: '%s'", buffer);
 #endif
-        if (WriteBufferToSlave(FALSE, hConsoleInW, hConsoleOut,
-                               buffer, dwNeeded) == FALSE)
+        if (WriteBufferToSlave(FALSE, hConsoleIn, buffer, dwNeeded) == FALSE)
           {
             EXP_LOG("Unable to write to slave: 0x%x", GetLastError());
           }
@@ -801,8 +774,7 @@ FlushInputRecords(HANDLE hConsole, INPUT_RECORD *records, DWORD pos)
  *----------------------------------------------------------------------
  */
 static BOOL
-WriteBufferToSlave(int noEscapes, HANDLE hConsoleInW, HANDLE hConsoleOut,
-		   PUCHAR buf, DWORD n)
+WriteBufferToSlave(int noEscapes, HANDLE hConsoleIn, PUCHAR buf, DWORD n)
 {
   INPUT_RECORD ibuf[1024];
   DWORD i;
@@ -816,13 +788,12 @@ WriteBufferToSlave(int noEscapes, HANDLE hConsoleInW, HANDLE hConsoleOut,
   for (pos = 0, i = 0; i < n; i++) {
 
     if (!noEscapes && buf[i] == '\033') {
-      if (FlushInputRecords(hConsoleInW, ibuf, pos) == FALSE) {
+      if (FlushInputRecords(hConsoleIn, ibuf, pos) == FALSE) {
 	return FALSE;
       }
       pos = 0;
       if (savePos) {
-	WriteBufferToSlave(TRUE, hConsoleInW, hConsoleOut,
-			   saveBuf, savePos);
+	WriteBufferToSlave(TRUE, hConsoleIn, saveBuf, savePos);
 	savePos = 0;
       }
       saveBuf[savePos++] = buf[i];
@@ -835,23 +806,12 @@ WriteBufferToSlave(int noEscapes, HANDLE hConsoleInW, HANDLE hConsoleOut,
       /* Check for partial match */
       if (key == -2) {
 	continue;
-      } else if (key == EXP_WIN_RESIZE) {
-	p = &buf[i+1];
-	cols = strtoul((char *)p, (char **)&p, 10);
-	if (! p) goto flush;
-	if (*p++ != ';') goto flush;
-	rows = strtoul((char *)p, (char **)&p, 10);
-	if (! p) goto flush;
-	if (*p++ != 'G') goto flush;
-	ExpSetConsoleSize(hConsoleInW, hConsoleOut, cols, rows);
-	i += p - &buf[i+1];
       } else if (key >= 0) {
 	ibuf[pos].EventType = KEY_EVENT;
 	pos += ConvertFKeyToKeyEvents(key, &ibuf[pos].Event.KeyEvent);
       } else {
       flush:
-	WriteBufferToSlave(TRUE, hConsoleInW, hConsoleOut,
-			   saveBuf, savePos);
+	WriteBufferToSlave(TRUE, hConsoleIn, saveBuf, savePos);
       }
       savePos = 0;
       continue;
@@ -860,13 +820,13 @@ WriteBufferToSlave(int noEscapes, HANDLE hConsoleInW, HANDLE hConsoleOut,
     ibuf[pos].EventType = KEY_EVENT;
     pos += ConvertAsciiToKeyEvents(buf[i], &ibuf[pos].Event.KeyEvent);
     if (pos >= MAX_RECORDS - 6) {
-      if (FlushInputRecords(hConsoleInW, ibuf, pos) == FALSE) {
+      if (FlushInputRecords(hConsoleIn, ibuf, pos) == FALSE) {
         return FALSE;
       }
       pos = 0;
     }
   }
-  if (FlushInputRecords(hConsoleInW, ibuf, pos) == FALSE) {
+  if (FlushInputRecords(hConsoleIn, ibuf, pos) == FALSE) {
     return FALSE;
   }
   return TRUE;
@@ -913,11 +873,11 @@ WaitQueueThread(LPVOID *arg)
       EXP_LOG ("WaitForMultipleObjects returned", NULL);
       if (val == WAIT_FAILED) {
 	err = GetLastError();
-	printf("WAIT_FAILED: 0x%x\n", err);
+	EXP_LOG("WAIT_FAILED: 0x%x\n", err);
       } else if (val >= WAIT_ABANDONED_0 && val < WAIT_ABANDONED_0 + n) {
 	val -= WAIT_ABANDONED_0;
 	err = GetLastError();
-	printf("WAIT_ABANDONED %d: 0x%x\n", val, err);
+	EXP_LOG("WAIT_ABANDONED: 0x%x\n", err);
       } else {
 	val -= WAIT_OBJECT_0;
 	if (val > 0) {

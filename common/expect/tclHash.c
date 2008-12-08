@@ -1,9 +1,10 @@
-/* 
+/*
  * tclHash.c --
  *
  *	Implementation of in-memory hash tables for Tcl and Tcl-based
  *	applications.
  *
+ * Copyright (c) 2006-2008, AdaCore
  * Copyright (c) 1991-1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *
@@ -275,78 +276,6 @@ Tcl_NextHashEntry(searchPtr)
     hPtr = searchPtr->nextEntryPtr;
     searchPtr->nextEntryPtr = hPtr->nextPtr;
     return hPtr;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_HashStats --
- *
- *	Return statistics describing the layout of the hash table
- *	in its hash buckets.
- *
- * Results:
- *	The return value is a malloc-ed string containing information
- *	about tablePtr.  It is the caller's responsibility to free
- *	this string.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-char *
-Tcl_HashStats(tablePtr)
-    Tcl_HashTable *tablePtr;		/* Table for which to produce stats. */
-{
-#define NUM_COUNTERS 10
-    int count[NUM_COUNTERS], overflow, i, j;
-    double average, tmp;
-    register Tcl_HashEntry *hPtr;
-    char *result, *p;
-
-    /*
-     * Compute a histogram of bucket usage.
-     */
-
-    for (i = 0; i < NUM_COUNTERS; i++) {
-	count[i] = 0;
-    }
-    overflow = 0;
-    average = 0.0;
-    for (i = 0; i < tablePtr->numBuckets; i++) {
-	j = 0;
-	for (hPtr = tablePtr->buckets[i]; hPtr != NULL; hPtr = hPtr->nextPtr) {
-	    j++;
-	}
-	if (j < NUM_COUNTERS) {
-	    count[j]++;
-	} else {
-	    overflow++;
-	}
-	tmp = j;
-	average += (tmp+1.0)*(tmp/tablePtr->numEntries)/2.0;
-    }
-
-    /*
-     * Print out the histogram and a few other pieces of information.
-     */
-
-    result = (char *) ckalloc((unsigned) ((NUM_COUNTERS*60) + 300));
-    sprintf(result, "%d entries in table, %d buckets\n",
-	    tablePtr->numEntries, tablePtr->numBuckets);
-    p = result + strlen(result);
-    for (i = 0; i < NUM_COUNTERS; i++) {
-	sprintf(p, "number of buckets with %d entries: %d\n",
-		i, count[i]);
-	p += strlen(p);
-    }
-    sprintf(p, "number of buckets with %d or more entries: %d\n",
-	    NUM_COUNTERS, overflow);
-    p += strlen(p);
-    sprintf(p, "average search distance for entry: %.1f", average);
-    return result;
 }
 
 /*

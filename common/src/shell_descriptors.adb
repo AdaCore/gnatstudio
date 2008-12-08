@@ -78,11 +78,11 @@ package body Shell_Descriptors is
          Cd_Cmd           => new String'(Cd_Command),
          Get_Status_Cmd   => new String'(Get_Status_Command),
          Get_Status_Ptrn  => new Pattern_Matcher'
-           (Compile (Get_Status_Ptrn, Single_Line + Multiple_Lines)),
+           (Compile (Get_Status_Ptrn, Multiple_Lines)),
          Generic_Prompt   => new Pattern_Matcher'
-           (Compile (Generic_Prompt, Single_Line + Multiple_Lines)),
+           (Compile (Generic_Prompt, Multiple_Lines)),
          Prompt           => new Pattern_Matcher'
-           (Compile (Configured_Prompt, Single_Line + Multiple_Lines)),
+           (Compile (Configured_Prompt, Multiple_Lines)),
          Next             => null);
 
       Item := Shell_Descriptor_List;
