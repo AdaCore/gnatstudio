@@ -106,7 +106,7 @@
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>VCS.status_parse "Subversion" "%1" FALSE FALSE "%2"</shell>
+      <shell>VCS.status_parse "Subversion" "%1" FALSE TRUE "%2"</shell>
    </action>
 
    <!-- SVN commit -->

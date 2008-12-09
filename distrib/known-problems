@@ -52,6 +52,12 @@ Known Problems fixed in GPS 4.3.1
               will never report any spelling errors.
   Workaround: Use a Cygwin version of aspell.
 
+- H904-015: Files status disappearing from VCS Explorer
+  Problem:    When committing a file or editing a revision log file
+              statuses (Needs update and Needs merge) are disappearing
+              from the VCS Explorer.
+  Workaround: Launch a Query Status action to get back the statuses.
+
 - HB21-028: GPS.execute_action does not work for /Window menu
   Problem:    The python command GPS.execute_action can not be used for the
               items in the /Window menu.
