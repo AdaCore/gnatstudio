@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Nov 27, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Dec 09, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -48,6 +48,13 @@ NF-44-H908-010 shell.py supports colors and completion (2008-11-14)
   The shell.py plugin allows you to open a window with a system shell.
   It now supports completion (if your shell does) and colors, as well
   as being able to run more complex applications like vi
+
+NF-44-H904-015 Minor optimization for handling VCS status (2008-12-09)
+
+  The local file statuses where not used to override current statuses
+  on the VCS explorer. It is now updating the VCS explorer as long
+  as the local status won't override a remote status (Needs update or
+  Needs merge).
 
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 

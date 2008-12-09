@@ -124,12 +124,12 @@ package body VCS.Generic_VCS is
    --  Wrapper for Lookup_Action
 
    procedure Generic_Parse_Status
-     (Rep            : access Generic_VCS_Record;
-      Parser         : Status_Parser_Record;
-      Text           : String;
-      Override_Cache : Boolean;
-      Clear_Logs     : Boolean;
-      Dir            : String);
+     (Rep        : access Generic_VCS_Record;
+      Parser     : Status_Parser_Record;
+      Text       : String;
+      Clear_Logs : Boolean;
+      Dir        : String;
+      Local      : Boolean);
    --  Parse the status for Text using Parser.
    --  See Parse_Status for description of the parameters.
 
@@ -141,15 +141,15 @@ package body VCS.Generic_VCS is
    -- Parser command --
 
    type Parser_Command_Type is new Root_Command with record
-      Override_Cache : Boolean;
-      Clear_Logs     : Boolean;
-      Text           : GNAT.Strings.String_Access;
-      Start          : Integer;
-      Prev_Start     : Integer;
-      Parser         : Status_Parser_Record;
-      Status         : File_Status_List.List;
-      Rep            : Generic_VCS_Access;
-      Dir            : GNAT.Strings.String_Access;
+      Clear_Logs : Boolean;
+      Text       : GNAT.Strings.String_Access;
+      Start      : Integer;
+      Prev_Start : Integer;
+      Parser     : Status_Parser_Record;
+      Status     : File_Status_List.List;
+      Rep        : Generic_VCS_Access;
+      Dir        : GNAT.Strings.String_Access;
+      Is_Local   : Boolean;
    end record;
 
    --  ??? Need to implement destroy
@@ -1548,10 +1548,10 @@ package body VCS.Generic_VCS is
    overriding function Execute
      (Command : access Parser_Command_Type) return Command_Return_Type
    is
-      S           : String renames Command.Text.all;
-      Matches     : Match_Array (0 .. Command.Parser.Matches_Num);
-      Num_Matches : Natural := 0;
-
+      S             : String renames Command.Text.all;
+      Matches       : Match_Array (0 .. Command.Parser.Matches_Num);
+      Num_Matches   : Natural := 0;
+      Status_Update : Boolean;
    begin
       Command.Prev_Start := Command.Start;
 
@@ -1565,10 +1565,10 @@ package body VCS.Generic_VCS is
               (Command.Rep.Kernel,
                Command.Status,
                VCS_Access (Command.Rep),
-               Override_Cache => Command.Override_Cache,
+               Override_Cache => True,
                Force_Display  => True,
                Clear_Logs     => Command.Clear_Logs,
-               Display        => Command.Override_Cache);
+               Display        => True);
 
             --  Update also the status in the VCS Activities explorer
 
@@ -1577,10 +1577,10 @@ package body VCS.Generic_VCS is
                No_Activity,
                Command.Status,
                VCS_Access (Command.Rep),
-               Override_Cache => Command.Override_Cache,
+               Override_Cache => True,
                Force_Display  => True,
                Clear_Logs     => Command.Clear_Logs,
-               Display        => Command.Override_Cache);
+               Display        => True);
 
             Run_Hook (Command.Rep.Kernel, Status_Parsed_Hook);
 
@@ -1632,24 +1632,6 @@ package body VCS.Generic_VCS is
                return Failure;
             end if;
 
-            if Command.Parser.Local_Rev_Index /= 0 then
-               Replace
-                 (St.Working_Revision,
-                  S (Matches (Command.Parser.Local_Rev_Index).First
-                       .. Matches (Command.Parser.Local_Rev_Index).Last));
-            else
-               Replace (St.Working_Revision, "n/a");
-            end if;
-
-            if Command.Parser.Repository_Rev_Index /= 0 then
-               Replace
-                 (St.Repository_Revision,
-                  S (Matches (Command.Parser.Repository_Rev_Index).First
-                      .. Matches (Command.Parser.Repository_Rev_Index).Last));
-            else
-               Replace (St.Repository_Revision, "n/a");
-            end if;
-
             if Command.Parser.Status_Index /= 0 then
                declare
                   Status_String : constant String := S
@@ -1666,7 +1648,25 @@ package body VCS.Generic_VCS is
                      Match (Data (Node).Regexp.all, Status_String, Matches);
 
                      if Matches (0) /= No_Match then
-                        St.Status := Command.Rep.Status (Data (Node).Index);
+                        declare
+                           New_Status : constant File_Status :=
+                                          Command.Rep.Status
+                                            (Data (Node).Index);
+                        begin
+                           --  Do not update the status if current command is
+                           --  local and we have recorded that a modification
+                           --  is present on repository.
+                           if Command.Is_Local
+                             and then not Is_Local_Status (St.Status)
+                             and then Is_Local_Status (New_Status)
+                           then
+                              Status_Update := False;
+                           else
+                              St.Status := New_Status;
+                              Status_Update := True;
+                           end if;
+                        end;
+
                         exit;
                      end if;
 
@@ -1675,7 +1675,27 @@ package body VCS.Generic_VCS is
                end;
             end if;
 
-            File_Status_List.Append (Command.Status, St);
+            if Status_Update then
+               if Command.Parser.Local_Rev_Index /= 0 then
+                  Replace
+                    (St.Working_Revision,
+                     S (Matches (Command.Parser.Local_Rev_Index).First
+                       .. Matches (Command.Parser.Local_Rev_Index).Last));
+               else
+                  Replace (St.Working_Revision, "n/a");
+               end if;
+
+               if Command.Parser.Repository_Rev_Index /= 0 then
+                  Replace
+                    (St.Repository_Revision,
+                     S (Matches (Command.Parser.Repository_Rev_Index).First
+                       .. Matches (Command.Parser.Repository_Rev_Index).Last));
+               else
+                  Replace (St.Repository_Revision, "n/a");
+               end if;
+
+               File_Status_List.Append (Command.Status, St);
+            end if;
          end;
 
          Command.Start := Matches (0).Last + 1;
@@ -1710,12 +1730,12 @@ package body VCS.Generic_VCS is
    --------------------------
 
    procedure Generic_Parse_Status
-     (Rep            : access Generic_VCS_Record;
-      Parser         : Status_Parser_Record;
-      Text           : String;
-      Override_Cache : Boolean;
-      Clear_Logs     : Boolean;
-      Dir            : String)
+     (Rep        : access Generic_VCS_Record;
+      Parser     : Status_Parser_Record;
+      Text       : String;
+      Clear_Logs : Boolean;
+      Dir        : String;
+      Local      : Boolean)
    is
       Command : Parser_Command_Access;
    begin
@@ -1726,14 +1746,14 @@ package body VCS.Generic_VCS is
       end if;
 
       Command := new Parser_Command_Type;
-      Command.Parser         := Parser;
-      Command.Text           := new String'(Text);
-      Command.Start          := Text'First;
-      Command.Prev_Start     := Text'First - 1;
-      Command.Override_Cache := Override_Cache;
-      Command.Clear_Logs     := Clear_Logs;
-      Command.Rep            := Generic_VCS_Access (Rep);
-      Command.Dir            := new String'(Dir);
+      Command.Parser     := Parser;
+      Command.Text       := new String'(Text);
+      Command.Start      := Text'First;
+      Command.Prev_Start := Text'First - 1;
+      Command.Clear_Logs := Clear_Logs;
+      Command.Rep        := Generic_VCS_Access (Rep);
+      Command.Dir        := new String'(Dir);
+      Command.Is_Local   := Local;
 
       Launch_Background_Command
         (Rep.Kernel, Command_Access (Command), True, False, "");
@@ -1752,10 +1772,10 @@ package body VCS.Generic_VCS is
    begin
       if Local then
          Generic_Parse_Status
-           (Rep, Rep.Local_Status_Parser, Text, False, Clear_Logs, Dir);
+           (Rep, Rep.Local_Status_Parser, Text, Clear_Logs, Dir, Local);
       else
          Generic_Parse_Status
-           (Rep, Rep.Status_Parser, Text, True, Clear_Logs, Dir);
+           (Rep, Rep.Status_Parser, Text, Clear_Logs, Dir, Local);
       end if;
    end Parse_Status;
 
@@ -1777,14 +1797,14 @@ package body VCS.Generic_VCS is
       end if;
 
       Command := new Parser_Command_Type;
-      Command.Parser         := Rep.Update_Parser;
-      Command.Text           := new String'(Text);
-      Command.Start          := Text'First;
-      Command.Prev_Start     := Text'First - 1;
-      Command.Override_Cache := True;
-      Command.Clear_Logs     := False;
-      Command.Rep            := Generic_VCS_Access (Rep);
-      Command.Dir            := new String'(Dir);
+      Command.Parser     := Rep.Update_Parser;
+      Command.Text       := new String'(Text);
+      Command.Start      := Text'First;
+      Command.Prev_Start := Text'First - 1;
+      Command.Clear_Logs := False;
+      Command.Rep        := Generic_VCS_Access (Rep);
+      Command.Dir        := new String'(Dir);
+      Command.Is_Local   := False;
 
       Launch_Background_Command
         (Rep.Kernel, Command_Access (Command), True, False, "");
