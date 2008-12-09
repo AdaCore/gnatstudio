@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.3.1
 
+- HC09-013: Problem when switching from one project to another
+  Problem:    On some occasions, switching from one project to another make the
+              new project not being correctly loaded.
+  Workaround: Exit GPS, then start with the new project.
+
 - HC01-017: Handling of maximized window under Windows
   Problem:    Under Windows, if you minimize a maximized window, and then
               restore it, it will not be restored to a maximized state.
