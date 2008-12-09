@@ -1192,6 +1192,7 @@ package body Entities is
                   end if;
 
                   Unchecked_Free (EL.Table (E));
+                  EL.Table (E) := null;
                end if;
             end loop;
          end loop;
