@@ -819,31 +819,38 @@ package body Code_Analysis_Module is
    procedure Add_Gcov_File_Info_In_Callback
      (Cont_N_Anal : Context_And_Analysis)
    is
-      Prj_Name : constant Project_Type :=
-                   Project_Information (Cont_N_Anal.Context);
-      Prj_Node : Project_Access;
-      Src_File : constant GNATCOLL.VFS.Virtual_File :=
-                   File_Information (Cont_N_Anal.Context);
-      Cov_File : GNATCOLL.VFS.Virtual_File;
+      Kernel    : constant Kernel_Handle :=
+        Get_Kernel (Cont_N_Anal.Context);
+      Prj_Name  : constant Project_Type :=
+        Project_Information (Cont_N_Anal.Context);
+      Prj_Node  : constant Code_Analysis.Project_Access :=
+        Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
+      Src_File  : constant GNATCOLL.VFS.Virtual_File :=
+        File_Information (Cont_N_Anal.Context);
+      File_Node : constant Code_Analysis.File_Access :=
+        Get_Or_Create (Prj_Node, Src_File);
+      Cov_File  : GNATCOLL.VFS.Virtual_File;
    begin
-      Prj_Node := Get_Or_Create (Cont_N_Anal.Analysis.Projects, Prj_Name);
       Cov_File := Find_Gcov_File (Get_Kernel (Cont_N_Anal.Context), Src_File);
 
       if not Is_Regular_File (Cov_File) then
          GPS.Kernel.Console.Insert
-           (Get_Kernel (Cont_N_Anal.Context),
+           (Kernel,
             -"Could not find coverage file " & Full_Name (Cov_File).all);
 
-         declare
-            File_Node : constant Code_Analysis.File_Access
-              := Get_Or_Create (Prj_Node, Src_File);
-         begin
-            Set_Error (File_Node, File_Not_Found);
-         end;
+         Set_Error (File_Node, File_Not_Found);
+
       else
-         Add_Gcov_File_Info
-           (Get_Kernel (Cont_N_Anal.Context), Src_File, Cov_File, Prj_Node);
+         Add_Gcov_File_Info (Kernel, Src_File, Cov_File, Prj_Node);
          Compute_Project_Coverage (Prj_Node);
+
+         --  Refresh source editor annotations and locations information.
+         Coverage_GUI.Clear_File_Locations (Kernel, File_Node);
+         Coverage_GUI.Remove_File_Coverage_Annotations (Kernel, File_Node);
+
+         Coverage_GUI.List_File_Uncovered_Lines (Kernel, File_Node);
+         Coverage_GUI.Add_File_Coverage_Annotations (Kernel, File_Node);
+
          Refresh_Analysis_Report (Cont_N_Anal);
       end if;
    end Add_Gcov_File_Info_In_Callback;

@@ -102,6 +102,14 @@ Known Problems fixed in GPS 4.3.1
               the current one, instead of having the current one removed first.
   Workaround: Wait until the end of the load.
 
+- HB17-006: Wrong coverage highlighting
+  Problem:    GPS doesn't update the list of uncovered lines in the locations
+              window after reloading coverage information for a single file.
+              As a side effect covered lines may be highlighted as uncovered
+              lines.
+  Workaround: Hide and show coverage information for the file using the source
+              editor's contextual menu after reloading coverage information.
+
 - HB17-002: Changing the build mode may crash GPS under Windows
   Problem:    Under certain circumstances and under Windows only, changing the
               build mode of GPS when the object subdirectories do not exist
@@ -109,6 +117,12 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Relaunching GPS and changing the mode is working as the
               subdirectories are then created. You can also create those
               subdirectories manually before changing the mode.
+
+- HB13-014: Cannot load files with NUL characters
+  Problem:    GPS ignores characters beyond a NUL character when loading
+              a source file in an editor. It will now strip the NUL character
+              and take into account the reamining file contents.
+  Workaround:  Remove the NUL characters before loading the file in GPS.
 
 - HB13-012: Invalid desktop saved
   Problem:    In some cases when generating code coverage information for
