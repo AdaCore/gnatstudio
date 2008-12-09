@@ -903,6 +903,68 @@ package body String_Utils is
       end loop;
    end Strip_CR;
 
+   ----------------------
+   -- Strip_CR_And_NUL --
+   ----------------------
+
+   procedure Strip_CR_And_NUL
+     (Text      : in out String;
+      Last      : out Integer;
+      CR_Found  : out Boolean;
+      NUL_Found : out Boolean)
+   is
+      pragma Suppress (All_Checks);
+
+      J : Natural := Text'First;
+   begin
+      CR_Found := False;
+      NUL_Found := False;
+
+      if Text'Length = 0 then
+         Last := 0;
+         return;
+      end if;
+
+      loop
+         --  Manual unrolling for efficiency
+
+         exit when Text (J) = ASCII.CR
+           or else Text (J) = ASCII.NUL
+           or else J = Text'Last;
+         J := J + 1;
+
+         exit when Text (J) = ASCII.CR
+           or else Text (J) = ASCII.NUL
+           or else J = Text'Last;
+         J := J + 1;
+
+         exit when Text (J) = ASCII.CR
+           or else Text (J) = ASCII.NUL
+           or else J = Text'Last;
+         J := J + 1;
+      end loop;
+
+      case Text (J) is
+         when ASCII.NUL | ASCII.CR =>
+            Last := J - 1;
+         when others =>
+            Last := J;
+            return;
+      end case;
+
+      for Index in J + 1 .. Text'Last loop
+         case Text (Index) is
+            when ASCII.NUL =>
+               NUL_Found := True;
+            when ASCII.CR  =>
+               CR_Found := True;
+            when others =>
+               Last := Last + 1;
+               Text (Last) := Text (Index);
+         end case;
+      end loop;
+   end Strip_CR_And_NUL;
+
    -----------------------------
    -- Strip_Ending_Linebreaks --
    -----------------------------
