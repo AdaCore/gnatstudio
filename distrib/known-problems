@@ -36,4 +36,3 @@ Known Problems fixed in GPS 4.4.0
   Problem:    On the editor's status bar if a procedure name is
               too long it will overlap with the VCS status.
   Workaround: Use the VCS Explorer which displays the proper status
-

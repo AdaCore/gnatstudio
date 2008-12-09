@@ -339,9 +339,7 @@ package body Log_Utils is
       --  an entry. This is a bit inefficient, we should save the mapping
       --  on disk only on exit.
 
-      if Return_Name = ""
-        and then Create
-      then
+      if Return_Name = "" and then Create then
          declare
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
@@ -466,7 +464,7 @@ package body Log_Utils is
             CL_File      : constant Virtual_File := Create (ChangeLog);
             Date_Tag     : constant String := Image (Clock, ISO_Date);
             Base_Name    : constant String :=
-              GNATCOLL.VFS.Base_Name (File_Name);
+                             GNATCOLL.VFS.Base_Name (File_Name);
             CL           : String_Access := Read_File (CL_File);
             W_File       : Writable_File := Write_File (Log_File);
             First, Last  : Natural;

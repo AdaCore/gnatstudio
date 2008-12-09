@@ -144,13 +144,13 @@ package body GPS.Kernel.Standard_Hooks is
       Normalize  : Boolean := True)
    is
       Data : aliased File_Line_Hooks_Args :=
-        (Hooks_Data with
-         Identifier_Length => Identifier'Length,
-         Identifier        => Identifier,
-         File              => File,
-         Info              => Info,
-         Every_Line        => Every_Line,
-         Normalize         => Normalize);
+               (Hooks_Data with
+                Identifier_Length => Identifier'Length,
+                Identifier        => Identifier,
+                File              => File,
+                Info              => Info,
+                Every_Line        => Every_Line,
+                Normalize         => Normalize);
    begin
       if File /= GNATCOLL.VFS.No_File then
          if not Run_Hook_Until_Success
@@ -271,17 +271,17 @@ package body GPS.Kernel.Standard_Hooks is
       Action     : Action_Item)
    is
       Data : aliased Location_Hooks_Args :=
-        (Hooks_Data with
-         Ident_Length => Identifier'Length,
-         Identifier   => Identifier,
-         Cat_Length   => Category'Length,
-         Category     => Category,
-         File         => File,
-         Line         => Line,
-         Column       => Column,
-         Mes_Length   => Message'Length,
-         Message      => Message,
-         Action       => Action);
+               (Hooks_Data with
+                Ident_Length => Identifier'Length,
+                Identifier   => Identifier,
+                Cat_Length   => Category'Length,
+                Category     => Category,
+                File         => File,
+                Line         => Line,
+                Column       => Column,
+                Mes_Length   => Message'Length,
+                Message      => Message,
+                Action       => Action);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Location_Action_Hook, Data'Unchecked_Access,
@@ -345,17 +345,17 @@ package body GPS.Kernel.Standard_Hooks is
         Gtkada.MDI.Position_Automatic)
    is
       Data : aliased Source_File_Hooks_Args :=
-        (Hooks_Data with
-         File              => Filename,
-         Line              => Line,
-         Column            => Column,
-         Column_End        => Column_End,
-         Enable_Navigation => Enable_Navigation,
-         New_File          => New_File,
-         Force_Reload      => Force_Reload,
-         Focus             => Focus,
-         Group             => Group,
-         Initial_Position  => Initial_Position);
+               (Hooks_Data with
+                File              => Filename,
+                Line              => Line,
+                Column            => Column,
+                Column_End        => Column_End,
+                Enable_Navigation => Enable_Navigation,
+                New_File          => New_File,
+                Force_Reload      => Force_Reload,
+                Focus             => Focus,
+                Group             => Group,
+                Initial_Position  => Initial_Position);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -373,17 +373,17 @@ package body GPS.Kernel.Standard_Hooks is
       Filename : Virtual_File)
    is
       Data : aliased Source_File_Hooks_Args :=
-        (Hooks_Data with
-         File              => Filename,
-         Line              => -1,
-         Column            => 0,
-         Column_End        => 0,
-         Enable_Navigation => False,
-         New_File          => False,
-         Force_Reload      => False,
-         Focus             => False,
-         Group             => Gtkada.MDI.Group_Default,
-         Initial_Position  => Gtkada.MDI.Position_Automatic);
+               (Hooks_Data with
+                File              => Filename,
+                Line              => -1,
+                Column            => 0,
+                Column_End        => 0,
+                Enable_Navigation => False,
+                New_File          => False,
+                Force_Reload      => False,
+                Focus             => False,
+                Group             => Gtkada.MDI.Group_Default,
+                Initial_Position  => Gtkada.MDI.Position_Automatic);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -523,10 +523,10 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Compilation_Hooks_Args'
         (Hooks_Data with
-         Length   => Category'Length,
-         Value    => Category,
-         Quiet    => Nth_Arg (Data, 3),
-         Shadow   => Nth_Arg (Data, 4));
+         Length => Category'Length,
+         Value  => Category,
+         Quiet  => Nth_Arg (Data, 3),
+         Shadow => Nth_Arg (Data, 4));
    end From_Callback_Data_Compilation;
 
    ---------------------------------
@@ -543,16 +543,16 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Location_Hooks_Args'
         (Hooks_Data with
-         Ident_Length      => Identifier'Length,
-         Identifier        => Identifier,
-         Cat_Length        => Category'Length,
-         Category          => Category,
+         Ident_Length => Identifier'Length,
+         Identifier   => Identifier,
+         Cat_Length   => Category'Length,
+         Category     => Category,
          File         => Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel))),
-         Line              => Nth_Arg (Data, 5),
-         Column            => Nth_Arg (Data, 6),
-         Mes_Length        => Message'Length,
-         Message           => Message,
-         Action            => null);
+         Line         => Nth_Arg (Data, 5),
+         Column       => Nth_Arg (Data, 6),
+         Mes_Length   => Message'Length,
+         Message      => Message,
+         Action       => null);
    end From_Callback_Data_Location;
 
    -----------------------------
@@ -769,7 +769,7 @@ package body GPS.Kernel.Standard_Hooks is
       return GNATCOLL.Scripts.Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 4));
+            new Callback_Data'Class'(Create (Script, 4));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
