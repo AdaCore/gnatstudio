@@ -5,6 +5,13 @@ Known Problems fixed in GPS 4.3.1
               new project not being correctly loaded.
   Workaround: Exit GPS, then start with the new project.
 
+- HC04-030: GPS incorrectly handles remote gdb through telnet on Windows server
+  Problem:    When connecting to a Windows server using telnet, the remote mode
+              of GPS does not handle the echoed commands sent to gdb, so views
+              them as answers.
+  Workaround: Set 'set editing off' in the debug window to improve things,
+              or use a local GPS.
+
 - HC01-017: Handling of maximized window under Windows
   Problem:    Under Windows, if you minimize a maximized window, and then
               restore it, it will not be restored to a maximized state.
