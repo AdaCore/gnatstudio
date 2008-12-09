@@ -260,12 +260,10 @@ package body GNAT.Expect.TTY.Remote is
                    Input);
          end if;
 
-         --  Do not skip next line if a remote process is running. In fact,
-         --  this process will receive the commands, not the shell, and will
-         --  not echo them.
-         if Descriptor.Terminated then
-            Descriptor.Current_Echo_Skipped := False;
-         end if;
+         --  Set this to false in all cases: if we need to remove echo, we
+         --  remove it in all cases (whether the underlying process is running
+         --  or not).
+         Descriptor.Current_Echo_Skipped := False;
       end if;
 
       if Descriptor.Use_Cr_Lf = CRLF and then Add_LF then
@@ -1470,8 +1468,15 @@ package body GNAT.Expect.TTY.Remote is
    overriding procedure Interrupt
      (Descriptor : in out Remote_Process_Descriptor)
    is
-      Remote_Desc : Remote_Descriptor_Access;
+      Res         : Expect_Match;
+      Matched     : GNAT.Regpat.Match_Array (0 .. 0);
    begin
+      --  First verify that we haven't already exited the program, but not
+      --  received the prompt
+      if not Descriptor.Terminated then
+         Expect (Descriptor, Res, ".+", Matched, 500);
+      end if;
+
       if not Descriptor.Terminated then
          Remote_Desc := Get_Descriptor_From_Name
            (Descriptor.Machine.Desc.Access_Name.all);

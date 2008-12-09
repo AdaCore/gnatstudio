@@ -885,6 +885,15 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
+      if not Is_Local (Debug_Server) then
+         --  Workaround the following problem: when telneting to Windows,
+         --  using the windows telnet service, then the TERM env variable is
+         --  set to vt100, which produces undesirable results (input is
+         --  duplicated, see HC08-007). A workaround is to send
+         --  'set editing off' to gdb, as this removes this undesired result.
+         Send (Debugger, "set editing off", Mode => Internal);
+      end if;
+
       if Get_Pref (Execution_Window) and then Is_Local (Debug_Server) then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
