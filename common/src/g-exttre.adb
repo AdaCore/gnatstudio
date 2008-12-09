@@ -1468,6 +1468,7 @@ package body GNAT.Expect.TTY.Remote is
    overriding procedure Interrupt
      (Descriptor : in out Remote_Process_Descriptor)
    is
+      Remote_Desc : Remote_Descriptor_Access;
       Res         : Expect_Match;
       Matched     : GNAT.Regpat.Match_Array (0 .. 0);
    begin
