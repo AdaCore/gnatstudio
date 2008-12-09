@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- H904-015: Files status disappearing from VCS Explorer
+  Problem:    When committing a file or editing a revision log file
+              statuses (Needs update and Needs merge) are disappearing
+              from the VCS Explorer.
+  Workaround: Launch a Query Status action to get back the statuses.
+
 - HB21-038: Cannot use native Win32 aspell program with ispell plug-in
   Problem:    If you enable the ispell.py plug-in, GPS appears to hang when
               using the native Win32 aspell program and will never report any
