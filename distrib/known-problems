@@ -1,13 +1,5 @@
 Known Problems fixed in GPS 4.4.0
 
-- HB17-006: Wrong coverage highlighting
-  Problem:    GPS doesn't update the list of uncovered lines in the locations
-	      window after reloading coverage information for a single file.
-	      As a side effect covered lines may be highlighted as uncovered
-              lines.
-  Workaround: Hide and show coverage information for the file using the source
-	      editor's contextual menu after reloading coverage information.
-
 - HB04-009: Debugger console has no keyboard focus on title click
   Problem:    If you click in the title bar or the tab of the debugger
               console, the cursor is not activated in the console, and
