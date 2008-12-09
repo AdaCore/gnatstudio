@@ -141,6 +141,13 @@ package VCS is
    --  Note that file status are intended to be static objects, they should not
    --  be freed until the end of the program.
 
+   function "=" (S1, S2 : File_Status) return Boolean;
+   --  Returns true if status S1 is equal/equivalent to status S2
+
+   function Is_Local_Status (Status : File_Status) return Boolean;
+   --  Return True if Status is a status that can be returned by the local
+   --  status actions.
+
    ---------------------
    -- Standard status --
    ---------------------

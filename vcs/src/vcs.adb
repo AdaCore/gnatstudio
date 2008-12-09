@@ -116,6 +116,33 @@ package body VCS is
       Unchecked_Free (Ref);
    end Free;
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (S1, S2 : File_Status) return Boolean is
+      use type GNAT.Strings.String_Access;
+   begin
+      return (S1.Label = null and then S2.Label = null
+              and then S2.Stock_Id = null and then S2.Stock_Id = null)
+        or else
+          (S1.Label /= null
+           and then S2.Label /= null
+           and then S1.Label.all = S2.Label.all
+           and then S1.Stock_Id /= null
+           and then S2.Stock_Id /= null
+           and then S1.Stock_Id.all = S2.Stock_Id.all);
+   end "=";
+
+   ---------------------
+   -- Is_Local_Status --
+   ---------------------
+
+   function Is_Local_Status (Status : File_Status) return Boolean is
+   begin
+      return Status /= Needs_Update and then Status /= Needs_Merge;
+   end Is_Local_Status;
+
    ----------
    -- Free --
    ----------
