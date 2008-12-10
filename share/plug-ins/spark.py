@@ -10,10 +10,10 @@ Introduction
 
 This plug-in provides support for the SPARK language and toolset.
 
-It is intended for use with Release 7.4 or later of the
+It is intended for use with Release 7.6.2 or later of the
 SPARK Toolset.  The customization depends on the presence of the
 "brief output" Examiner switch, which is not available
-in earlier releases.  If you don't have release 7.4 or better,
+in earlier releases.  If you don't have release 7.6.2 or better,
 please contact Praxis High Integrity Systems: sparkinfo@praxis-his.com
 
 This plug-in remains a work-in-progress, and there is lots of
@@ -23,14 +23,14 @@ Use
 ---
 
 This plug-in will be enabled only if you have spark tools available in
-your PATH variable (e.g. Spark Examiner, POGs, etc).
+your PATH variable (e.g. SPARK Examiner, POGs, etc).
 
 Edit the project preferences (from the Project menu) and tick the necessary
-languages on the Languages tab: Spark, Index, Listing, Metafile, Siv, Vcg.
+languages on the Languages tab: Index, Listing, Metafile, Siv, Vcg.
 
 Switches for the tools can be set on the same menu under the Switches tab.
 
-The Examiner output produced is always /brief so that GPS is able to parse
+The Examiner output produced is always -brief so that GPS is able to parse
 the resulting files.
 
 The tools can be run from the SPARK menu, or right-clicking on files will
@@ -188,50 +188,6 @@ a = """<?xml version="1.0"?>
 <SPARK>
 
   <Language>
-    <!-- Base SPARK on Ada -->
-    <Name>SPARK</Name>
-    <Parent>Ada</Parent>
-    <Spec_Suffix>.ads</Spec_Suffix>
-    <Body_Suffix>.adb</Body_Suffix>
-    <Extension>.ada</Extension>
-
-    <!-- Declarations overwrite parent fields, so to add SPARK     -->
-    <!-- keywords we need to repeat the Ada ones (copied from      -->
-    <!-- gvd/common/language-ada.adb).                             -->
-    <!-- The SPARK keywords are listed first, for maintainability. -->
-    <Keywords>^(assert|check|derives|global|from|h(ide|old)|</Keywords>
-    <Keywords>in(herit|itializes|variant)|main_program|own|p(re|ost)|</Keywords>
-    <Keywords>some|</Keywords>
-    <Keywords>a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|</Keywords>
-    <Keywords>b(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|</Keywords>
-    <Keywords>e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|</Keywords>
-    <Keywords>g(eneric|oto)|i[fns]|l(imited|oop)|mod|n(ew|ot|ull)|</Keywords>
-    <Keywords>o(thers|ut|[fr])|p(ackage|r(agma|ivate|o(cedure|tected)))|</Keywords>
-    <Keywords>r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|</Keywords>
-    <Keywords>s(e(lect|parate)|ubtype)|t(a(gged|sk)|erminate|hen|ype)|</Keywords>
-    <Keywords>u(ntil|se)|w(h(en|ile)|ith)|xor)</Keywords>
-
-    <Context>
-      <!-- This hard-codes # and $ as annotation characters.       -->
-      <!-- In a perfect world we would default the annotation      -->
-      <!-- character to #, and overwrite it if there is a value    -->
-      <!-- set up in the tool switches.                            -->
-      <New_Line_Comment_Start>--[^#$]</New_Line_Comment_Start>
-      <String_Delimiter>&quot;</String_Delimiter>
-      <Constant_Character>&apos;</Constant_Character>
-      <Can_Indent>True</Can_Indent>
-      <Syntax_Highlighting>True</Syntax_Highlighting>
-      <Case_Sensitive>False</Case_Sensitive>
-    </Context>
-  </Language>
-
-  <!-- Although defined as a child language of Ada, GPS tries to   -->
-  <!-- build SPARK programs as if SPARK is a different compiler    -->
-  <!-- language. It is easy to set up a makefile that does the     -->
-  <!-- job of building the program, but the (g!)natty navigation   -->
-  <!-- doesn't work.                                               -->
-
-  <Language>
     <Name>Metafile</Name>
     <Spec_Suffix>.smf</Spec_Suffix>
   </Language>
@@ -266,7 +222,6 @@ a = """<?xml version="1.0"?>
   <!-- This allows you to select all the options for different tools -->
 
   <tool name="Examiner">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches columns ="2" lines="5" switch_char="~">
       <title line="1" column-span="2">Examiner Files</title>
@@ -287,7 +242,8 @@ a = """<?xml version="1.0"?>
         <radio-entry label="Information and Data Flow" switch="~flow_analysis=information" />
         <radio-entry label="Data Flow only" switch="~flow_analysis=data" />
       </radio>
-      <check column="2" line="2" label="Generate Run Time Checks" switch="~exp_checks" />
+      <check column="2" line="2" label="Generate VCs" switch="~vcg" />
+      <check column="2" line="2" label="Syntax check only" switch="~syntax_check" />
       <title line="3" line-span="2">Replacement rules for composite constants</title>
       <radio line="3">
         <radio-entry label="None" switch="~rules=none" />
@@ -314,7 +270,6 @@ a = """<?xml version="1.0"?>
   </tool>
 
   <tool name="SPARKSimp">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches lines="3" switch_char="~">
       <title line="1">Simplification order</title>
@@ -333,7 +288,6 @@ a = """<?xml version="1.0"?>
   </tool>
 
   <tool name="Simplifier">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches lines="3" switch_char="~">
       <title line="1">Output</title>
@@ -353,7 +307,6 @@ a = """<?xml version="1.0"?>
   </tool>
 
   <tool name="SPARKFormat">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches lines="4" columns="4" switch_char="~">
       <title line="1" column="1">Global variables modes</title>
@@ -398,7 +351,6 @@ a = """<?xml version="1.0"?>
   </tool>
 
   <tool name="POGS">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches lines="2" switch_char="~">
       <title line="1">Options</title>
@@ -422,7 +374,6 @@ a = """<?xml version="1.0"?>
   </tool>
 
   <tool name="SPARKmake">
-    <language>SPARK</language>
     <language>Ada</language>
     <switches lines="2" switch_char="~">
       <title line="1">Input File Options</title>
