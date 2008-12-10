@@ -44,6 +44,7 @@ endif
 	$(RM) $(sharedir)/gps/library/*.py
 	$(RM) $(sharedir)/gps/library/*.xml
 	$(RM) $(sharedir)/gps/plug-ins/*.py
+	$(RM) $(sharedir)/gps/plug-ins/*.xml
 # update runtime.xml before copying the plug-ins files.
 	(cd distrib; $(PERL) from_impunit.pl)
 	(cd share; tar cf - plug-ins/*.xml) | (cd $(sharedir)/gps; tar xf -)
