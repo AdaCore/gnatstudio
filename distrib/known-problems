@@ -12,6 +12,12 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Set 'set editing off' in the debug window to improve things,
               or use a local GPS.
 
+- HC02-018: Debug->Display does not work correctly
+  Problem:    In some cases, for example in a code like "A => B", doing a
+              Debug->Display on B will query the value of "A=B" instead of
+              B.
+  Workaround: Do the command directly from the gdb console, "print B".
+
 - HC01-017: Handling of maximized window under Windows
   Problem:    Under Windows, if you minimize a maximized window, and then
               restore it, it will not be restored to a maximized state.

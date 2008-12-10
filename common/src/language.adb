@@ -1192,13 +1192,14 @@ package body Language is
    -------------------------------
 
    function Parse_Expression_Backward
-     (Lang         : access Language_Root;
-      Buffer       : access Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0)
+     (Lang              : access Language_Root;
+      Buffer            : access Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False)
       return Parsed_Expression
    is
-      pragma Unreferenced (Lang);
+      pragma Unreferenced (Lang, Simple_Expression);
       Lowest : constant Natural := Integer'Max (End_Offset, Buffer'First);
       Index  : Natural := Start_Offset;
    begin
@@ -1226,9 +1227,11 @@ package body Language is
 
    function Parse_Expression_Backward
      (Lang   : access Language_Root'Class;
-      Buffer : access Glib.UTF8_String) return Parsed_Expression is
+      Buffer : access Glib.UTF8_String;
+      Simple_Expression : Boolean := False) return Parsed_Expression is
    begin
-      return Parse_Expression_Backward (Lang, Buffer, Buffer'Last);
+      return Parse_Expression_Backward
+        (Lang, Buffer, Buffer'Last, 0, Simple_Expression);
    end Parse_Expression_Backward;
 
    --------------
@@ -1251,10 +1254,11 @@ package body Language is
    -----------------------------------------
 
    function Parse_Expression_Backward_To_String
-     (Lang         : access Language_Root'Class;
-      Buffer       : Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0) return String
+     (Lang              : access Language_Root'Class;
+      Buffer            : Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False) return String
    is
       use Token_List;
 
@@ -1262,7 +1266,11 @@ package body Language is
       --  a Unchecked_Access on it
       Expr : Parsed_Expression :=
         Parse_Expression_Backward
-          (Lang, Buffer'Unrestricted_Access, Start_Offset, End_Offset);
+          (Lang,
+           Buffer'Unrestricted_Access,
+           Start_Offset,
+           End_Offset,
+           Simple_Expression);
       Length : Natural := 0;
       Iter   : Token_List.List_Node := First (Expr.Tokens);
    begin

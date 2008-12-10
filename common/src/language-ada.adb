@@ -783,10 +783,11 @@ package body Language.Ada is
    -------------------------------
 
    overriding function Parse_Expression_Backward
-     (Lang         : access Ada_Language;
-      Buffer       : access Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0)
+     (Lang              : access Ada_Language;
+      Buffer            : access Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False)
       return Parsed_Expression
    is
       pragma Unreferenced (Lang);
@@ -806,7 +807,7 @@ package body Language.Ada is
         (Offset : Positive; Word : String)
          return Boolean;
 
-      procedure Push (Token : in out Token_Record);
+      procedure Push (Token : in out Token_Record; Offset : Natural);
       procedure Pop;
 
       ---------------------
@@ -828,7 +829,7 @@ package body Language.Ada is
                   if not Skip then
                      Local_Token.Tok_Type := Tok_Expression;
                      Local_Token.Token_First := Offset + 1;
-                     Push (Local_Token);
+                     Push (Local_Token, Offset);
                      Local_Token.Token_Last := Offset - 1;
                   end if;
 
@@ -844,10 +845,10 @@ package body Language.Ada is
                   if not Skip then
                      Local_Token.Tok_Type := Tok_Expression;
                      Local_Token.Token_First := Offset + 1;
-                     Push (Local_Token);
+                     Push (Local_Token, Offset);
 
                      Local_Token.Tok_Type := Tok_Open_Parenthesis;
-                     Push (Local_Token);
+                     Push (Local_Token, Offset);
                   end if;
 
                   exit;
@@ -956,13 +957,13 @@ package body Language.Ada is
             Token.Token_Last := Offset;
             Offset := Offset - 3;
             Token.Token_First := Offset;
-            Push (Token);
+            Push (Token, Offset);
          elsif Check_Prev_Word (Offset, "use") then
             Token.Tok_Type := Tok_Use;
             Token.Token_Last := Offset;
             Offset := Offset - 2;
             Token.Token_First := Offset;
-            Push (Token);
+            Push (Token, Offset);
          end if;
       end Push_Pckg;
 
@@ -970,7 +971,7 @@ package body Language.Ada is
       -- Push --
       ----------
 
-      procedure Push (Token : in out Token_Record) is
+      procedure Push (Token : in out Token_Record; Offset : Natural) is
          Name : constant String := Get_Name (Result, Token);
       begin
          --  Check if we're on a special keyword
@@ -1060,7 +1061,7 @@ package body Language.Ada is
 
          case Buffer (Offset) is
             when ',' =>
-               Push (Token);
+               Push (Token, Offset);
 
                if Length (Result.Tokens) = 0 then
                   Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
@@ -1070,26 +1071,24 @@ package body Language.Ada is
                end if;
 
             when ')' =>
-               Push (Token);
+               Push (Token, Offset);
 
                Token.Tok_Type := Tok_Close_Parenthesis;
-               Push (Token);
+               Push (Token, Offset);
 
                Offset := UTF8_Find_Prev_Char (Buffer.all, Offset);
                Handle_Expression (Offset, False);
 
             when '(' =>
-               Push (Token);
+               Push (Token, Offset);
 
                if Length (Result.Tokens) = 0 then
                   Token.Tok_Type := Tok_Open_Parenthesis;
-                  Token.Token_First := Offset;
-                  Token.Token_Last := Offset;
-                  Push (Token);
+                  Push (Token, Offset);
                end if;
 
             when '.' =>
-               Push (Token);
+               Push (Token, Offset);
 
                if Length (Result.Tokens) > 0
                  and then Head (Result.Tokens).Tok_Type = Tok_Dot
@@ -1103,10 +1102,10 @@ package body Language.Ada is
                end if;
 
                Token.Tok_Type := Tok_Dot;
-               Push (Token);
+               Push (Token, Offset);
 
             when ' ' | ASCII.HT | ASCII.CR =>
-               Push (Token);
+               Push (Token, Offset);
                Blank_Here := True;
 
             when '"' =>
@@ -1128,19 +1127,23 @@ package body Language.Ada is
 
                   Token.Token_First := Offset;
 
-                  Push (Token);
+                  Push (Token, Offset);
                else
                   exit;
                end if;
 
             when '>' =>
+               if Simple_Expression then
+                  exit;
+               end if;
+
                Possible_Arrow := True;
 
             when '=' =>
                if Possible_Arrow then
                   Token.Tok_Type := Tok_Arrow;
 
-                  Push (Token);
+                  Push (Token, Offset);
 
                   Possible_Arrow := False;
                else
@@ -1148,7 +1151,7 @@ package body Language.Ada is
                end if;
 
             when ASCII.LF =>
-               Push (Token);
+               Push (Token, Offset);
                Blank_Here := True;
                Skip_Comment_Line (Offset);
 
@@ -1185,7 +1188,7 @@ package body Language.Ada is
                      end if;
                   end if;
                else
-                  Push (Token);
+                  Push (Token, Offset);
                   exit;
                end if;
 
@@ -1195,7 +1198,7 @@ package body Language.Ada is
          Blank_Before := Blank_Here;
       end loop;
 
-      Push (Token);
+      Push (Token, Offset);
 
       return Result;
    end Parse_Expression_Backward;

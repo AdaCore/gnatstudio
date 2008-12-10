@@ -176,10 +176,11 @@ package Language.Ada is
    -------------------------
 
    overriding function Parse_Expression_Backward
-     (Lang         : access Ada_Language;
-      Buffer       : access Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0)
+     (Lang              : access Ada_Language;
+      Buffer            : access Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False)
       return Parsed_Expression;
 
 private

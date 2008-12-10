@@ -812,10 +812,11 @@ package Language is
    --  Free memory associated with Expression
 
    function Parse_Expression_Backward
-     (Lang         : access Language_Root;
-      Buffer       : access Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0)
+     (Lang              : access Language_Root;
+      Buffer            : access Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False)
       return Parsed_Expression;
    --  This function looks backwards from the offset given in parameter and
    --  parses the relevant completion expression.
@@ -832,22 +833,29 @@ package Language is
    --  Note that Start_Offset must point on the d, or the last identifier
    --  returned will only contain a part of the name
    --
+   --  This parser may be able to retreive complex expression, e.g. A + B,
+   --  or A => B in ada. If the flat Simple_Expression is true, then it will
+   --  avoid returning this kind of complex result involving more that on
+   --  top-level object.
+   --
    --  The default implementation for any language is to return the current
    --  identifier, ie stop at the first non-alphanumeric character.
    --
    --  The return value must be freed by the user
 
    function Parse_Expression_Backward
-     (Lang   : access Language_Root'Class;
-      Buffer : access Glib.UTF8_String) return Parsed_Expression;
+     (Lang              : access Language_Root'Class;
+      Buffer            : access Glib.UTF8_String;
+      Simple_Expression : Boolean := False) return Parsed_Expression;
    --  Same as before, but analyzes the whole buffer as an expression (ie
    --  Start_Offset = Buffer'Last.
 
    function Parse_Expression_Backward_To_String
-     (Lang         : access Language_Root'Class;
-      Buffer       : Glib.UTF8_String;
-      Start_Offset : Natural;
-      End_Offset   : Natural := 0) return String;
+     (Lang              : access Language_Root'Class;
+      Buffer            : Glib.UTF8_String;
+      Start_Offset      : Natural;
+      End_Offset        : Natural := 0;
+      Simple_Expression : Boolean := False) return String;
    --  Same as above, but doesn't return semantic information for each node.
    --  Instead, the expression is returned as a sanitized string, ie with
    --  which spaces, comments and newline characters removed.
