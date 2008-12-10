@@ -49,7 +49,7 @@ def show_gnatdg():
                  package="ide", index="ada")
     cmd = gnatmake + " -q -P" + GPS.Project.root().file().name() + \
           " -f -c -u -gnatcdx -gnatws -gnatGL " + file
-    GPS.Console ("Messages").write ("Generating " + dg + "...")
+    GPS.Console ("Messages").write ("Generating " + dg + "...\n")
     proc = GPS.Process (cmd, on_exit=on_exit)
     proc.dg = dg
     proc.line = line
