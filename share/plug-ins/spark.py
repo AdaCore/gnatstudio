@@ -58,9 +58,7 @@ spark_console="SPARK Output"
 spark_category="Examiner"
 pogs_console="POGS Output"
 
-spark_separator='/'
-if os.name != 'nt':
-  spark_separator='-'
+spark_separator='-'
 
 def on_match (process, match, since_last):
   try:
@@ -339,17 +337,17 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches lines="3" switch_char="~">
       <title line="1">Output</title>
-      <check line="1" label="No Echo" switch="/noecho" />
-      <check line="1" label="Plain Output" switch="/plain" />
+      <check line="1" label="No Echo" switch="~noecho" />
+      <check line="1" label="Plain Output" switch="~plain" />
       <title line="2">Tactics</title>
-      <check line="2" label="No Simplification" switch="/nosimplification" />
-      <check line="2" label="No Standardisation" switch="/nostand" />
-      <check line="2" label="No Contradiction Hunt" switch="/nocontra" />
-      <check line="2" label="No Substitution Elimination" switch="/nosubstitution" />
-      <check line="2" label="No Rule Substitution" switch="/norule_substitution" />
-      <check line="2" label="No Expression Reduction" switch="/noexp" />
+      <check line="2" label="No Simplification" switch="~nosimplification" />
+      <check line="2" label="No Standardisation" switch="~nostand" />
+      <check line="2" label="No Contradiction Hunt" switch="~nocontra" />
+      <check line="2" label="No Substitution Elimination" switch="~nosubstitution" />
+      <check line="2" label="No Rule Substitution" switch="~norule_substitution" />
+      <check line="2" label="No Expression Reduction" switch="~noexp" />
       <title line="3">Limits</title>
-      <spin line="3" label="Memory Limit" switch="/memory_limit=" min="250000" max="30000000" default="9000000"
+      <spin line="3" label="Memory Limit" switch="~memory_limit=" min="250000" max="30000000" default="9000000"
             tip="Max PROLOG Heap.  Default 9000000." />
     </switches>
   </tool>
