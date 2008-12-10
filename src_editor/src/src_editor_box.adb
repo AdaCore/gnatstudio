@@ -1408,9 +1408,23 @@ package body Src_Editor_Box is
                Str : String_Access :=
                  Get_String (Get_Buffer (Editor));
                --  ??? Not very efficient though
+
+               Offset : Natural;
+               Lines  : GNAT.Strings.String_Access;
             begin
                Get_Iter_Position
                  (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
+
+               Lines := Get_Buffer_Lines
+                 (Get_Buffer (Editor), 1,
+                  Get_Editable_Line
+                    (Get_Buffer (Editor),
+                     Buffer_Line_Type (Get_Line (Entity_End) + 1)) - 1);
+
+               Offset := Lines'Length
+                 + Natural (Get_Line_Index (Entity_End));
+
+               Free (Lines);
 
                Set_Entity_Information
                  (Context,
@@ -1421,7 +1435,7 @@ package body Src_Editor_Box is
                     Parse_Expression_Backward_To_String
                       (Get_Language (Get_Buffer (Editor)),
                        Buffer            => Str.all,
-                       Start_Offset      => Integer (Get_Offset (Entity_End)),
+                       Start_Offset      => Offset,
                        Simple_Expression => True));
                --  No additional offset needed here: Str'First is always 1 in
                --  this context, Entity_End points to the character _after_
