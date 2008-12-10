@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Dec 09, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Dec 10, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -14,6 +14,10 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-HC08-012 Support for SPARK Toolset 7.6.2 (2008-12-10)
+
+  GPS is now compatible with version 7.6.2 of the SPARK Toolset.
 
 NF-44-HA23-007 New menus in Edit->Selection (2008-10-23)
 
