@@ -2193,8 +2193,6 @@ package body Aliases_Module is
                Old := Get (Aliases_Module_Id.Aliases, Name);
 
                if Old = No_Alias or else Old.Read_Only then
-                  Free (Old);
-
                   if Expand /= null then
                      Set (Aliases_Module_Id.Aliases,
                           Name,
