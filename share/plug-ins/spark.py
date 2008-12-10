@@ -56,7 +56,6 @@ import GPS
 
 spark_console="SPARK Output"
 spark_category="Examiner"
-pogs_console="POGS Output"
 
 spark_separator='-'
 
@@ -120,10 +119,10 @@ def show_pogs_file():
   GPS.cd (dir)
   sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
   cmd = "pogs " + sw
-  GPS.Console (pogs_console, accept_input=False).clear ()
-  GPS.Console (pogs_console).write (cmd + "\n")
-  GPS.Console (pogs_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
-  GPS.MDI.get (pogs_console).raise_window ()
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
+  GPS.MDI.get (spark_console).raise_window ()
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
   GPS.MDI.get_by_child (buf.current_view()).raise_window()
@@ -225,9 +224,9 @@ a = """<?xml version="1.0"?>
     <language>Ada</language>
     <switches columns ="2" lines="5" switch_char="~">
       <title line="1" column-span="2">Examiner Files</title>
-      <field line="1" label="Index File " as-file="true" switch="~index_file=" />
-      <field line="1" label="Warning File " as-file="true" switch="~warning_file=" />
-      <field line="1" label="Configuration File " as-file="true" switch="~config=" />
+      <field line="1" label="Index File " as-file="true" switch="~index_file" separator="="/>
+      <field line="1" label="Warning File " as-file="true" switch="~warning_file" separator="="/>
+      <field line="1" label="Configuration File " as-file="true" switch="~config" separator="="/>
       <field line="1" label="Output directory" as-dir="true" switch="~output_directory" separator="="/>
       <check column="1" line="1" label="Ignore spark.sw" switch="~noswitch" />
       <title line="1" column="2" column-span="0" />
@@ -259,12 +258,12 @@ a = """<?xml version="1.0"?>
       </radio>
       <title line="4" column="1" line-span="0" />
       <title column="2" line="4">General</title>
-      <field column="2" line="4" label=" Annotation Character " switch="~annotation_character=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
+      <field column="2" line="4" label=" Annotation Character " switch="~annotation_character" separator="=" tip="Enter a single character to follow '--' as the mark for SPARK annotations (default '#')" />
       <title line="5" column-span="2">Output</title>
       <check line="5" label=" Plain Output " switch="~plain" />
       <check line="5" label=" HTML Output " switch="~html" />
-      <field line="5" label=" Listing File Extension " switch="~listing=" />
-      <field line="5" label=" Report File Name " switch="~report=" />
+      <field line="5" label=" Listing File Extension " as-file="true" switch="~listing" separator="="/>
+      <field line="5" label=" Report File Name " as-file="true" switch="~report" separator="="/>
       <title line="5" column="2" column-span="0" />
     </switches>
   </tool>
