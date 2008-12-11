@@ -139,7 +139,6 @@ class gnatMakeProc:
          elif switch[0]=="g":
             xml += '<expansion switch="-gnatyg" alias="%s" />' % (default_style_alias + "dISux")
          elif switch[3]=="0":
-            GPS.Console("Messages").write ("add check switch -gnaty%s\n" % (switch[0]))
             xml += """<check %s switch="-gnaty%s">%s</check>""" % (label ("-gnaty", switch), switch[0], tip("-gnaty",switch))
          else:
             # place gnaty1-9 to the begining of the command_line: prevents
@@ -244,7 +243,6 @@ class gnatMakeProc:
 
             # no parameters. Do not include -gnatyN (remove all checks) and -gnatym (alias of -gnatyM79)
             elif res[1] != "N" and res[1] != "m":
-               GPS.Console ("Messages").write ("new switch -gnaty%s\n" % (res[1]))
                if res[2] == "":
                   self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
                else:
