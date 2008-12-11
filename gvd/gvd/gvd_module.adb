@@ -2532,14 +2532,14 @@ package body GVD_Module is
       Command := new Set_Value_Command;
       Register_Contextual_Menu
         (Kernel, "Debug set value",
-         Label  => -"Debug/Set value of %e",
+         Label  => -"Debug/Set value of %S",
          Action => Command,
          Filter => Action_Filter (Debugger_Filter and Printable_Filter));
 
       Command := new View_Memory_Command;
       Register_Contextual_Menu
         (Kernel, "Debug view memory",
-         Label  => -"Debug/View memory at address of %e",
+         Label  => -"Debug/View memory at address of %S",
          Action => Command,
          Filter => Action_Filter (Debugger_Filter and Printable_Filter));
 
