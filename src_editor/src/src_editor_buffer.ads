@@ -750,7 +750,7 @@ package Src_Editor_Buffer is
 
    type Src_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
       with null record;
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the current widget is a source editor
@@ -832,6 +832,12 @@ package Src_Editor_Buffer is
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type) return GNAT.Strings.String_Access;
    --  Return the text from Start_Line to End_Line, included
+
+   function Get_Byte_Index
+     (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Natural;
+   --  Return the byte index of the iterator given in parameter - as opposed
+   --  to the character index (e.g. some UTF8 character are coded on more than
+   --  one byte).
 
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record;

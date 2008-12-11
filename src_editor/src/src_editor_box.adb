@@ -1421,7 +1421,7 @@ package body Src_Editor_Box is
                     Parse_Expression_Backward_To_String
                       (Get_Language (Get_Buffer (Editor)),
                        Buffer            => Str.all,
-                       Start_Offset      => Integer (Get_Offset (Entity_End)),
+                       Start_Offset      => Get_Byte_Index (Entity_End),
                        Simple_Expression => True));
                --  No additional offset needed here: Str'First is always 1 in
                --  this context, Entity_End points to the character _after_

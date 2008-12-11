@@ -830,36 +830,18 @@ package body Completion_Module is
             --  inexact if there is block folding involved.
             --  Therefore, in order to get the cursor position, we use the
             --  mechanism below.
-            --  ??? This should be optimized somehow.
 
-            declare
-               Offset : Natural;
-               Lines  : GNAT.Strings.String_Access;
-            begin
-               Lines := Get_Buffer_Lines
-                 (Buffer, 1,
-                  Get_Editable_Line
-                    (Buffer,
-                     Buffer_Line_Type (Get_Line (It) + 1)) - 1);
-
-               Offset := Lines'Length
-                 + Natural (Get_Line_Index (It))
-                 + Data.The_Text.all'First - 1;
-
-               Free (Lines);
-
-               Trace (Me_Adv, "Getting completions ...");
-               Data.Result := Get_Initial_Completion_List
-                 (Manager => Data.Manager,
-                  Context =>
-                    Create_Context
-                      (Data.Manager,
-                       Get_Filename (Buffer),
-                       GNAT.Strings.String_Access (Data.The_Text),
-                       Get_Language (Buffer),
-                       Offset));
-               Trace (Me_Adv, "Getting completions done");
-            end;
+            Trace (Me_Adv, "Getting completions ...");
+            Data.Result := Get_Initial_Completion_List
+              (Manager => Data.Manager,
+               Context =>
+                 Create_Context
+                   (Data.Manager,
+                    Get_Filename (Buffer),
+                    GNAT.Strings.String_Access (Data.The_Text),
+                    Get_Language (Buffer),
+                    Get_Byte_Index (It)));
+            Trace (Me_Adv, "Getting completions done");
 
             --  If the completion list is empty, return without showing
             --  the completions window.

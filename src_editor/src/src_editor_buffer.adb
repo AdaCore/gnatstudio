@@ -777,6 +777,37 @@ package body Src_Editor_Buffer is
       return Output;
    end Get_Buffer_Lines;
 
+   ---------------------
+   --  Get_Byte_Index --
+   ---------------------
+
+   function Get_Byte_Index (Iter : Gtk_Text_Iter) return Natural is
+      Index : Natural := 0;
+   begin
+      for J in 0 ..
+        Get_Editable_Line
+          (Source_Buffer (Get_Buffer (Iter)),
+           Buffer_Line_Type (Get_Line (Iter))) - 1
+      loop
+         --  Increment the index by the size of the string + 1 (for EOL).
+         --  Gtk lines are 0-based, Editable_Lines 1-based, hence the J + 1
+
+         declare
+            Str : Src_String := Get_String
+              (Source_Buffer (Get_Buffer (Iter)), J + 1);
+         begin
+            Index := Index + Str.Length;
+            Index := Index + 1;
+
+            Free (Str);
+         end;
+      end loop;
+
+      Index := Index + Natural (Get_Line_Index (Iter));
+
+      return Index;
+   end Get_Byte_Index;
+
    ------------------
    -- Check_Blocks --
    ------------------
