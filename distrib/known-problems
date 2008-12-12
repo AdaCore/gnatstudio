@@ -1,11 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
 - HC09-008: Bad handling of --display
-  Problem:    The command line switch --display is not handled correctly
-              by GPS
+  Problem:    The command line switch --display is not handled correctly by GPS
   Workaround: Set the environment variable DISPLAY instead. If you need to
-              spawn applications to display somewhere else afterward, you
-              could write a small python plugins that does
+              spawn applications from GPS to another display, you can write
+              a small python plug-in that does:
                   import os; os.environ["DISPLAY"]="..."
 
 - HB04-009: Debugger console has no keyboard focus on title click
