@@ -109,6 +109,27 @@ def pogs_directory():
 
   return dir
 
+def _spawn_cmd (cmd):
+  """
+  Prepare the spark console and spawn a command that sends its output to it
+  """
+
+  GPS.Console (spark_console, accept_input=False).clear ()
+  GPS.Console (spark_console).write (cmd + "\n")
+  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
+  GPS.MDI.get (spark_console).raise_window ()
+
+def _spawn_spark_tool (cmd_name, prj_attr):
+  """
+  Spawn a spark tool on the current file, after gettins its switches from
+  the project
+  """
+
+  GPS.MDI.save_all (False)
+  sw = GPS.current_context().project().get_tool_switches_as_string (prj_attr)
+  cmd = cmd_name + " " + sw + " " + GPS.current_context().file().name()
+  _spawn_cmd (cmd)
+
 def show_pogs_file():
   """Show the pogs file of the current project"""
   # Pogs looks for .vcg files in current dir and all subdirs. For now,
@@ -118,11 +139,7 @@ def show_pogs_file():
   dir = pogs_directory()
   GPS.cd (dir)
   sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
-  cmd = "pogs " + sw
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
-  GPS.MDI.get (spark_console).raise_window ()
+  _spawn_cmd ("pogs " + sw)
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
   GPS.MDI.get_by_child (buf.current_view()).raise_window()
@@ -173,13 +190,12 @@ def has_vc (context):
      return context.has_vc
 
 def sparkmake ():
-  GPS.MDI.save_all (False)
-  sw = GPS.current_context().project().get_tool_switches_as_string ("SPARKmake")
-  cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
-  GPS.MDI.get (spark_console).raise_window ()
+  _spawn_spark_tool (cmd_name="sparkmake", prj_attr="SPARKmake")
+
+def format_file ():
+  buffer = GPS.EditorBuffer.get ()
+  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat")
+  GPS.EditorBuffer.get (file=buffer.file(), force=True)
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -404,11 +420,7 @@ a = """<?xml version="1.0"?>
   <action name="SPARKFormat file" category="Spark" output="none">
      <filter language="SPARK" />
      <filter language="Ada" />
-     <shell>MDI.save_all false</shell>
-     <shell>Project %p</shell>
-     <shell>Project.get_tool_switches_as_string %1 "SPARKFormat" </shell>
-     <external output="SPARK Output" server="build_server">sparkformat %1 %F</external>
-     <shell>Editor.edit %F 0 0 0 true</shell>
+     <shell lang="python">spark.format_file ()</shell>
   </action>
 
   <action name="Examine metafile" category="Spark" output="none">
