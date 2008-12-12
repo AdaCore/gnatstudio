@@ -251,6 +251,12 @@ procedure GPS.Main is
    Timeout_Id             : Timeout_Handler_Id;
    pragma Unreferenced (Button, Result, Timeout_Id);
 
+   --  We cannot use the default command line parser because gtk+ modifies
+   --  argc and argv, and therefore the argument_count at the time we
+   --  initialized the default parser might no longer be valid
+
+   Parser : Opt_Parser;
+
    procedure Init_Settings;
    --  Set up environment for GPS
 
@@ -273,7 +279,7 @@ procedure GPS.Main is
    procedure Help;
    --  Display help on the standard output
 
-   function Clean_Parameter return String;
+   function Clean_Parameter  return String;
    --  Return a clean version of the parameter for command line switches, ie
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
@@ -290,7 +296,7 @@ procedure GPS.Main is
    ---------------------
 
    function Clean_Parameter return String is
-      P : constant String := Parameter;
+      P : constant String := Parameter (Parser);
    begin
       if P'Length > 0 and then P (P'First) = '=' then
          return P (P'First + 1 .. P'Last);
@@ -671,15 +677,22 @@ procedure GPS.Main is
 
    procedure Parse_Switches is
    begin
-      Initialize_Option_Scan;
+      Initialize_Option_Scan
+        (Parser       => Parser,
+         Command_Line => null);
+
       loop
          case Getopt ("-version -help P: -server= -hide " &
                       "-debug? -debugger= -host= -target= -load= -eval= " &
-                      "-readonly -traceoff= -traceon= -tracefile= -tracelist")
+                      "-readonly -traceoff= -traceon= -tracefile= -tracelist",
+                      Parser => Parser)
          is
             -- long option names --
             when '-' =>
-               case Full_Switch (Full_Switch'First + 1) is
+               declare
+                  Full : constant String := Full_Switch (Parser => Parser);
+               begin
+                  case Full (Full'First + 1) is
                   --  --version
                   when 'v' =>
                      if Config.Can_Output then
@@ -700,15 +713,15 @@ procedure GPS.Main is
                      OS_Exit (0);
 
                   when 'h' =>
-                     if Full_Switch = "-help" then
+                     if Full = "-help" then
                         --  --help
                         Help;
                         OS_Exit (0);
 
-                     elsif Full_Switch = "-host" then
+                     elsif Full = "-host" then
                         --  --host
                         Free (Tools_Host);
-                        Tools_Host := new String'(Parameter);
+                        Tools_Host := new String'(Parameter (Parser));
 
                      else
                         --  --hide
@@ -720,7 +733,7 @@ procedure GPS.Main is
 
                   when 'l' =>
                      Free (Batch_File);
-                     Batch_File := new String'(Parameter);
+                     Batch_File := new String'(Parameter (Parser));
 
                   when 'd' =>
                      --  --debug
@@ -731,7 +744,7 @@ procedure GPS.Main is
                      else
                         --  --debugger
                         Free (Debugger_Name);
-                        Debugger_Name := new String'(Parameter);
+                        Debugger_Name := new String'(Parameter (Parser));
 
                         if Program_Args = null then
                            --  --debugger implies --debug
@@ -743,7 +756,7 @@ procedure GPS.Main is
 
                   when 'e' =>
                      Free (Batch_Script);
-                     Batch_Script := new String'(Parameter);
+                     Batch_Script := new String'(Parameter (Parser));
 
                   --  --readonly
 
@@ -754,7 +767,7 @@ procedure GPS.Main is
 
                   when 's' =>
                      begin
-                        Port_Number := Natural'Value (Parameter);
+                        Port_Number := Natural'Value (Parameter (Parser));
                         Server_Mode := True;
                      exception
                         when Constraint_Error =>
@@ -762,9 +775,9 @@ procedure GPS.Main is
                      end;
 
                   when 't' =>
-                     if Full_Switch = "-target" then
+                     if Full = "-target" then
                         declare
-                           Param  : constant String := Parameter;
+                           Param  : constant String := Parameter (Parser);
                            Column : constant Natural :=
                              Ada.Strings.Fixed.Index
                                (Param, ":", Ada.Strings.Backward);
@@ -784,17 +797,19 @@ procedure GPS.Main is
                              new String '(Param (Column + 1 .. Param'Last));
                         end;
 
-                     elsif Full_Switch = "-traceon" then
-                        GNATCOLL.Traces.Set_Active (Create (Parameter), True);
+                     elsif Full = "-traceon" then
+                        GNATCOLL.Traces.Set_Active
+                          (Create (Parameter (Parser)), True);
 
-                     elsif Full_Switch = "-traceoff" then
-                        GNATCOLL.Traces.Set_Active (Create (Parameter), False);
+                     elsif Full = "-traceoff" then
+                        GNATCOLL.Traces.Set_Active
+                          (Create (Parameter (Parser)), False);
 
-                     elsif Full_Switch = "-tracefile" then
+                     elsif Full = "-tracefile" then
                         GNATCOLL.Traces.Parse_Config_File
-                           (Filename => Parameter);
+                           (Filename => Parameter (Parser));
 
-                     elsif Full_Switch = "-tracelist" then
+                     elsif Full = "-tracelist" then
                         GNATCOLL.Traces.Show_Configuration
                           (Ada.Text_IO.Put_Line'Access);
                         OS_Exit (0);
@@ -802,10 +817,12 @@ procedure GPS.Main is
 
                   when others =>
                      null;
-               end case;
+                  end case;
+               end;
 
             when 'P' =>
-               Project_Name := Create (Normalize_Pathname (Parameter));
+               Project_Name :=
+                 Create (Normalize_Pathname (Parameter (Parser)));
 
                if not Is_Regular_File (Project_Name) then
                   if Is_Regular_File
@@ -819,15 +836,16 @@ procedure GPS.Main is
                      --  Keep Project_Name even if it is invalid, we will look
                      --  for it later on the project path, but the latter is
                      --  not known yet at this point
-                     if File_Extension (Parameter) =
+                     if File_Extension (Parameter (Parser)) =
                        Project_File_Extension
                      then
                         Project_Name :=
-                          Create_From_Base (Base_Name => Parameter);
+                          Create_From_Base (Base_Name => Parameter (Parser));
                      else
                         Project_Name :=
                           Create_From_Base
-                            (Base_Name => Parameter & Project_File_Extension);
+                            (Base_Name =>
+                               Parameter (Parser) & Project_File_Extension);
                      end if;
 
                      Trace
@@ -1177,7 +1195,8 @@ procedure GPS.Main is
 
          loop
             declare
-               S : constant String := Get_Argument (Do_Expansion => True);
+               S : constant String := Get_Argument
+                 (Do_Expansion => True, Parser => Parser);
             begin
                exit when S = "";
 
