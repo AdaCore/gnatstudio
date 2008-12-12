@@ -1604,7 +1604,8 @@ package body GVD_Module is
       Process  : constant Visual_Debugger :=
                    Get_Current_Process
                      (Get_Main_Window (Get_Kernel (Context.Context)));
-      Variable : constant String := Entity_Name_Information (Context.Context);
+      Variable : constant String :=
+                   Get_Variable_Name (Context.Context, False);
       S        : constant String :=
                    Simple_Entry_Dialog
                      (Parent   => Process.Window,
@@ -1635,7 +1636,7 @@ package body GVD_Module is
         (Memory_View,
          Gtk_Widget (Get_Main_Window (Get_Kernel (Context.Context))));
       Show_All (Memory_View);
-      Display_Memory (Memory_View, Entity_Name_Information (Context.Context));
+      Display_Memory (Memory_View, Get_Variable_Name (Context.Context, False));
       return Commands.Success;
    end Execute;
 
