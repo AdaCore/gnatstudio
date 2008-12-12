@@ -737,7 +737,7 @@ procedure GPS.Main is
 
                   when 'd' =>
                      --  --debug
-                     if Full_Switch = "-debug" then
+                     if Full = "-debug" then
                         Free (Program_Args);
                         Program_Args := new String'(Clean_Parameter);
 
