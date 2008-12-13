@@ -165,6 +165,10 @@ package body Task_Manager is
       --  Free queue referenced by Queue.
       --  Return True if the callback should be called again, False otherwise.
 
+      ----------------
+      -- Free_Queue --
+      ----------------
+
       function Free_Queue return Boolean is
       begin
          GNAT.Strings.Free (Queue.Id);
@@ -256,8 +260,7 @@ package body Task_Manager is
               Manager.Queues (Q).Current_Priority - Previous_Prio;
          end loop;
 
-         Queue.Current_Priority := Queue.Current_Priority
-           + Queue.Priority;
+         Queue.Current_Priority := Queue.Current_Priority + Queue.Priority;
 
          if Active then
             Manager.Minimal_Active_Priority := Lowest;
@@ -292,6 +295,7 @@ package body Task_Manager is
 
                if Queue.Status = Interrupted then
                   Command_Queues.Free (Queue.Queue);
+
                else
                   declare
                      use Command_Queues;
@@ -324,7 +328,7 @@ package body Task_Manager is
                   if Result = Success then
                      declare
                         New_Queue : constant Command_Queues.List :=
-                          Get_Consequence_Actions (Command);
+                                      Get_Consequence_Actions (Command);
                      begin
                         Queue.Total :=
                           Queue.Total + Command_Queues.Length (New_Queue);
@@ -337,7 +341,7 @@ package body Task_Manager is
                   else
                      declare
                         New_Queue : constant Command_Queues.List :=
-                          Get_Alternate_Actions (Command);
+                                      Get_Alternate_Actions (Command);
                      begin
                         Queue.Total :=
                           Queue.Total

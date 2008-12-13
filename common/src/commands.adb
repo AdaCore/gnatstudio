@@ -29,7 +29,7 @@ package body Commands is
    -----------------------
 
    procedure Execute_Next_Action (Queue : Command_Queue);
-   --  Execute the next action in the queue, or do nothing if there is none.
+   --  Execute the next action in the queue, or do nothing if there is none
 
    function Default_Execute_Command
      (Command : Command_Access) return Command_Return_Type;
@@ -69,13 +69,13 @@ package body Commands is
    -----------------
 
    procedure Empty_Queue (Q : Command_Queue) is
-      Node  : List_Node;
+      Node : List_Node;
    begin
       Free (Q.Undo_Queue);
       Free (Q.Redo_Queue);
       Free (Q.The_Queue);
 
-      --  Execute the queue change hooks.
+      --  Execute the queue change hooks
 
       Node := First (Q.Queue_Change_Hook);
 
@@ -170,9 +170,9 @@ package body Commands is
    -------------
 
    procedure Enqueue
-     (Queue               : Command_Queue;
-      Action              : access Root_Command;
-      High_Priority       : Boolean := False) is
+     (Queue         : Command_Queue;
+      Action        : access Root_Command;
+      High_Priority : Boolean := False) is
    begin
       if Queue = Null_Command_Queue then
          return;
@@ -296,8 +296,7 @@ package body Commands is
          when Normal =>
             Action.Mode := Done;
             Prepend (Queue.Undo_Queue, Command_Access (Action));
-            --  When a normal command is finished, purge the redo
-            --  queue.
+            --  When a normal command is finished, purge the redo queue
             Free (Queue.Redo_Queue);
             Queue.Position := Queue.Position + 1;
 
@@ -459,8 +458,7 @@ package body Commands is
       while not Is_Empty (Queue.Undo_Queue) loop
          Action := Head (Queue.Undo_Queue);
 
-         exit when Group /= 0
-           and then Group /= Action.Group;
+         exit when Group /= 0 and then Group /= Action.Group;
 
          Group := Action.Group;
 
@@ -482,8 +480,7 @@ package body Commands is
       while not Is_Empty (Queue.Redo_Queue) loop
          Action := Head (Queue.Redo_Queue);
 
-         exit when Group /= 0
-           and then Group /= Action.Group;
+         exit when Group /= 0 and then Group /= Action.Group;
 
          Group := Action.Group;
 

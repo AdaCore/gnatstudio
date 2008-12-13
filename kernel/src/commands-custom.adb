@@ -22,14 +22,16 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with System;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-with GNATCOLL.Templates;            use GNATCOLL.Templates;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with System;
+
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib;                      use Glib;

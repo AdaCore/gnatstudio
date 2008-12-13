@@ -116,7 +116,7 @@ package GPS.Kernel.Task_Manager is
 
    function Get_Command (Command : access Scheduled_Command'Class)
       return Command_Access;
-   --  Return the command associated to this scheduled command.
+   --  Return the command associated to this scheduled command
 
    function Is_Continuation_Action
      (Command : access Scheduled_Command) return Boolean;
@@ -149,13 +149,13 @@ package GPS.Kernel.Task_Manager is
    procedure Remove_Instance
      (Command  : access Scheduled_Command'Class;
       Language : access Scripting_Language_Record'Class);
-   --  Removes the instance corresponding to the given language from the list.
+   --  Removes the instance corresponding to the given language from the list
 
    function Get_Data
      (Instance : GNATCOLL.Scripts.Class_Instance)
       return Scheduled_Command_Access;
    --  Return the command stored in Instance. Instance must be of the class
-   --  GPS.Command
+   --  GPS.Command.
 
 private
 

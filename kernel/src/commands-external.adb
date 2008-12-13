@@ -36,24 +36,24 @@ package body Commands.External is
    -- Local subprograms --
    -----------------------
 
-   function Atomic_Command (D : External_Command_Access) return Boolean;
+   function Atomic_Command (Command : External_Command_Access) return Boolean;
    --  ???
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (D : in out External_Command) is
+   overriding procedure Free (Command : in out External_Command) is
       use String_List;
 
-      Fd      : TTY_Process_Descriptor renames D.Fd;
-      PID     : GNAT.Expect.Process_Id;
+      Fd  : TTY_Process_Descriptor renames Command.Fd;
+      PID : GNAT.Expect.Process_Id;
    begin
-      Free (D.Args);
-      Free (D.Head);
-      GNAT.Strings.Free (D.Command);
-      GNAT.Strings.Free (D.Dir);
-      Free (D.Output);
+      Free (Command.Args);
+      Free (Command.Head);
+      GNAT.Strings.Free (Command.Command);
+      GNAT.Strings.Free (Command.Dir);
+      Free (Command.Output);
 
       PID := Get_Pid (Fd);
 
@@ -100,19 +100,21 @@ package body Commands.External is
    -- Atomic_Command --
    --------------------
 
-   function Atomic_Command (D : External_Command_Access) return Boolean
+   function Atomic_Command
+     (Command : External_Command_Access) return Boolean
    is
       Match : Expect_Match := 1;
    begin
       loop
-         if not D.Check_Password then
-            Expect (D.Fd, Match, "\n", 1);
+         if not Command.Check_Password then
+            Expect (Command.Fd, Match, "\n", 1);
 
             case Match is
                when Expect_Timeout =>
                   return True;
                when others =>
-                  String_List.Append (D.Output, Strip_CR (Expect_Out (D.Fd)));
+                  String_List.Append
+                    (Command.Output, Strip_CR (Expect_Out (Command.Fd)));
             end case;
 
          else
@@ -126,7 +128,7 @@ package body Commands.External is
                  new Pattern_Matcher'(Get_Default_Passphrase_Regexp);
                Regexp_Array (3) :=
                  new Pattern_Matcher'(Compile ("\n"));
-               Expect (D.Fd, Match, Regexp_Array, Matched, 1, False);
+               Expect (Command.Fd, Match, Regexp_Array, Matched, 1, False);
 
                case Match is
                   when Expect_Timeout =>
@@ -136,16 +138,17 @@ package body Commands.External is
                      --  Password/passphrase prompt
                      declare
                         Password : constant String :=
-                          Get_Tool_Password (D.Command.all,
-                                             D.Nb_Pwd > 0);
+                                     Get_Tool_Password
+                                       (Command.Command.all,
+                                        Command.Nb_Pwd > 0);
                      begin
-                        D.Nb_Pwd := D.Nb_Pwd + 1;
-                        Send (D.Fd, Password);
+                        Command.Nb_Pwd := Command.Nb_Pwd + 1;
+                        Send (Command.Fd, Password);
                      end;
 
                   when others =>
                      String_List.Append
-                       (D.Output, Strip_CR (Expect_Out (D.Fd)));
+                       (Command.Output, Strip_CR (Expect_Out (Command.Fd)));
                end case;
             end;
          end if;
@@ -154,19 +157,20 @@ package body Commands.External is
    exception
       when Process_Died =>
          declare
-            S : constant String := Strip_CR (Expect_Out (D.Fd));
+            S : constant String := Strip_CR (Expect_Out (Command.Fd));
          begin
             if S /= "" then
-               String_List.Append (D.Output, S);
+               String_List.Append (Command.Output, S);
             end if;
 
-            Close (D.Fd);
+            Close (Command.Fd);
 
-            if D.Handler /= null then
-               D.Handler_Success := D.Handler (D.Kernel, D.Head, D.Output);
+            if Command.Handler /= null then
+               Command.Handler_Success := Command.Handler
+                 (Command.Kernel, Command.Head, Command.Output);
             end if;
 
-            Command_Finished (D, D.Handler_Success);
+            Command_Finished (Command, Command.Handler_Success);
 
          exception
             when E : others => Trace (Exception_Handle, E);
@@ -214,7 +218,7 @@ package body Commands.External is
             Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
 
          begin
-            --  ??? Must add many checks for empty lists, etc.
+            --  ??? Must add many checks for empty lists, etc
 
             if Command.Dir'Length > 0 then
                Change_Dir (Command.Dir.all);
@@ -243,7 +247,7 @@ package body Commands.External is
               (Command.Fd,
                Command.Command.all,
                Args,
-               Err_To_Out => True,
+               Err_To_Out  => True,
                Buffer_Size => 0);
 
             for J in Args'Range loop

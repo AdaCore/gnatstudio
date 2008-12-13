@@ -149,10 +149,10 @@ package body GPS.Kernel.Timeout is
    function Execute_Monitor
      (Command : Command_Access) return Command_Return_Type
    is
-      C        : constant Monitor_Command_Access :=
-                   Monitor_Command_Access (Command);
-      Result   : Command_Return_Type;
-      Dummy    : Boolean;
+      C      : constant Monitor_Command_Access :=
+                 Monitor_Command_Access (Command);
+      Result : Command_Return_Type;
+      Dummy  : Boolean;
       pragma Unreferenced (Dummy);
    begin
       Result := Execute (Command);

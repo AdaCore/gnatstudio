@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+
 with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package VCS_Utils is
 

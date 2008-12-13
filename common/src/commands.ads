@@ -70,7 +70,7 @@ package Commands is
    --  Set the progress of Command
 
    procedure Interrupt (Command : in out Root_Command);
-   --  Called when the Command is explicitely interupted.
+   --  Called when the Command is explicitely interupted
 
    type Command_Return_Type is
      (Success,
@@ -268,9 +268,9 @@ package Commands is
    --  Ends grouping of commands
 
    procedure Enqueue
-     (Queue               : Command_Queue;
-      Action              : access Root_Command;
-      High_Priority       : Boolean := False);
+     (Queue         : Command_Queue;
+      Action        : access Root_Command;
+      High_Priority : Boolean := False);
    --  Adds Action to the Queue, and start executing the command immediately
    --  if the queue is empty, or after all commands already in the queue.
    --  The execution is by default synchronous, ie this call will only return
@@ -400,7 +400,7 @@ private
       Group_Fail         : Boolean := False;
 
       Progress           : Progress_Record;
-      --  The current progress of the command.
+      --  The current progress of the command
 
       --  The following booleans are used to avoid cases when execution of
       --  a command might cause this command to be destroyed in the process.

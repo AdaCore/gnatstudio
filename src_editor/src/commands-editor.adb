@@ -32,7 +32,7 @@ package body Commands.Editor is
    function g_utf8_strlen
      (P : String; Max : Interfaces.C.size_t) return Long_Integer;
    pragma Import (C, g_utf8_strlen);
-   --  Return the text size of an UTF8 string.
+   --  Return the text size of an UTF8 string
 
    ------------
    -- Create --
@@ -279,6 +279,7 @@ package body Commands.Editor is
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
+
       else
          Editor := Get_Source_Box_From_MDI
            (Find_Current_Editor (Get_Kernel (Command.Buffer)));
@@ -390,7 +391,7 @@ package body Commands.Editor is
          Command.Text_After.all,
          False);
 
-      --  If needed, compute Command.End_Line_After, Command.End_Column_After.
+      --  If needed, compute Command.End_Line_After, Command.End_Column_After
 
       if Command.End_Line_After = 0 then
          Forward_Position

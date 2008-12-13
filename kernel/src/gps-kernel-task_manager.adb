@@ -25,6 +25,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtkada.MDI;                use Gtkada.MDI;
+
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -46,8 +47,7 @@ package body GPS.Kernel.Task_Manager is
    Task_Manager_Module_Name : constant String := "GPS.Kernel.Task_Manager";
    Command_Class_Name       : constant String := "Command";
 
-   type Command_Property is new Instance_Property_Record
-   with record
+   type Command_Property is new Instance_Property_Record with record
       Command : Scheduled_Command_Access;
    end record;
    type Command_Property_Access is access all Command_Property'Class;
@@ -56,17 +56,16 @@ package body GPS.Kernel.Task_Manager is
      (MDI  : MDI_Window;
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Restore the status of the explorer from a saved XML tree
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
    overriding procedure Destroy
      (Module : in out Task_Manager_Module_Id_Record);
-   --  Called when the module is destroyed.
+   --  Called when the module is destroyed
 
    function Get_Or_Create_Task_Manager_Interface_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -85,7 +84,7 @@ package body GPS.Kernel.Task_Manager is
    function On_Exit_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean;
-   --  Called before GPS exits.
+   --  Called before GPS exits
 
    ------------------
    -- On_Exit_Hook --
@@ -352,7 +351,7 @@ package body GPS.Kernel.Task_Manager is
       else
          declare
             Dead_Command : Scheduled_Command_Access :=
-              new Scheduled_Command;
+                             new Scheduled_Command;
             Found        : Boolean := False;
          begin
             Dead_Command.Command := Command.Command;
@@ -507,7 +506,7 @@ package body GPS.Kernel.Task_Manager is
    is
       Wrapper : Scheduled_Command_Access :=
                   Create_Wrapper (Command, Destroy_On_Exit);
-      Result : Command_Return_Type;
+      Result  : Command_Return_Type;
    begin
       Push_State (Kernel, Busy);
       loop
@@ -627,7 +626,9 @@ package body GPS.Kernel.Task_Manager is
          if Command_Class = No_Class then
             declare
                Root_Command_Class : constant Class_Type :=
-                 New_Class (Get_Kernel (Language), Command_Class_Name);
+                                      New_Class
+                                        (Get_Kernel (Language),
+                                         Command_Class_Name);
             begin
                Inst := New_Instance (Language, Root_Command_Class);
             end;
@@ -648,8 +649,7 @@ package body GPS.Kernel.Task_Manager is
    procedure Set_Instance
      (Command  : access Scheduled_Command'Class;
       Language : access Scripting_Language_Record'Class;
-      Instance : Class_Instance)
-   is
+      Instance : Class_Instance) is
    begin
       Set_Data
         (Instance, Command_Class_Name, Command_Property'
@@ -663,8 +663,7 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Remove_Instance
      (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class)
-   is
+      Language : access Scripting_Language_Record'Class) is
    begin
       Set (Command.Instances, Language, No_Class_Instance);
    end Remove_Instance;
@@ -674,8 +673,7 @@ package body GPS.Kernel.Task_Manager is
    --------------
 
    function Get_Data
-     (Instance : Class_Instance)
-      return Scheduled_Command_Access
+     (Instance : Class_Instance) return Scheduled_Command_Access
    is
       Cmd : Command_Property_Access;
    begin

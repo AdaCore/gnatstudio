@@ -62,7 +62,7 @@ package Task_Manager is
 
    function Head
      (Manager : Task_Manager_Access; Id : String) return Command_Access;
-   --  Return the Head command from the Queue of the given id, null if none.
+   --  Return the Head command from the Queue of the given id, null if none
 
    procedure Interrupt_Latest_Task (Manager : Task_Manager_Access);
    --  Interrupt the task that was started last
@@ -103,7 +103,7 @@ package Task_Manager is
 
    function Get_Scheduled_Commands
      (Manager : Task_Manager_Access) return Command_Array;
-   --  Return all the commands currently stored in the task manager.
+   --  Return all the commands currently stored in the task manager
 
 private
 

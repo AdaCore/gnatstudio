@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                 Copyright (C) 2001-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,10 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
-with Gtk.Main;             use Gtk.Main;
+with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
+
+with Gtk.Main;           use Gtk.Main;
 with GPS.Kernel;         use GPS.Kernel;
-with String_List_Utils;    use String_List_Utils;
+with String_List_Utils;  use String_List_Utils;
 with GNAT.Strings;
 
 package Commands.External is
@@ -28,8 +29,8 @@ package Commands.External is
    type External_Command is new Root_Command with private;
    type External_Command_Access is access all External_Command;
 
-   overriding procedure Free (D : in out External_Command);
-   --  Free memory associated to D.
+   overriding procedure Free (Command : in out External_Command);
+   --  Free memory associated to D
 
    type String_List_Handler is access
      function (Kernel : Kernel_Handle;
@@ -67,7 +68,7 @@ package Commands.External is
    --  See comments for Create.
 
    overriding function Name (Command : access External_Command) return String;
-   --  Return a description of the command.
+   --  Return a description of the command
 
 private
 
