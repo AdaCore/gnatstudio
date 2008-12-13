@@ -376,6 +376,29 @@ package body Commands is
    end Execute;
 
    ----------------------------
+   -- Is_Continuation_Action --
+   ----------------------------
+
+   function Is_Continuation_Action
+     (Action : access Root_Command) return Boolean is
+   begin
+      return Action.Group_Fail;
+   end Is_Continuation_Action;
+
+   -----------------------------
+   -- Add_Continuation_Action --
+   -----------------------------
+
+   procedure Add_Continuation_Action
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class) is
+   begin
+      Item.Group_Fail := True;
+      Action.Group_Fail := True;
+      Prepend (Item.Next_Commands, Command_Access (Action));
+   end Add_Continuation_Action;
+
+   ----------------------------
    -- Add_Consequence_Action --
    ----------------------------
 

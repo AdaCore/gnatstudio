@@ -147,6 +147,22 @@ package Commands is
    --  unsuccessfull.
    --  See comment for Add_Consequence_Action
 
+   procedure Add_Continuation_Action
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class);
+   --  As for Add_Consequence_Action except that only the last action of a set
+   --  of continuation action will report the failure. This means that all
+   --  actions before the last one will report the status Success. This is to
+   --  be used when we want a group of action to be executed and stop only when
+   --  the last action of the group is reached. For example this can be used to
+   --  pass a style checker on sources. Each command run on a file could report
+   --  errors, but we want to continue to have errors on all files to be
+   --  reported.
+
+   function Is_Continuation_Action
+     (Action : access Root_Command) return Boolean;
+   --  Return true is Action is a continuation action, see above
+
    function Get_Consequence_Actions
      (Item : access Root_Command'Class) return Command_Queues.List;
    --  Get the consequence actions for Item.
@@ -381,6 +397,7 @@ private
       Next_Commands      : Command_Queues.List;
       Alternate_Commands : Command_Queues.List;
       Mode               : Command_Mode := Normal;
+      Group_Fail         : Boolean := False;
 
       Progress           : Progress_Record;
       --  The current progress of the command.

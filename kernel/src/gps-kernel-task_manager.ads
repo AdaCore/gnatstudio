@@ -118,6 +118,10 @@ package GPS.Kernel.Task_Manager is
       return Command_Access;
    --  Return the command associated to this scheduled command.
 
+   function Is_Continuation_Action
+     (Command : access Scheduled_Command) return Boolean;
+   --  Return true is Action is a continuation action, see above
+
    -------------------------------------
    -- Support for scripting languages --
    -------------------------------------

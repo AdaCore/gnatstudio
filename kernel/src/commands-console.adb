@@ -36,6 +36,7 @@ package body Commands.Console is
       Result.Highlight_Sloc := Item.Highlight_Sloc;
       Result.Add_LF         := Item.Add_LF;
       Result.Mode           := Item.Mode;
+      Result.Group_Fail     := Item.Group_Fail;
       return Result;
    end Copy;
 

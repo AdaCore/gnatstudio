@@ -261,6 +261,16 @@ package body GPS.Kernel.Task_Manager is
       return Kernel.Tasks;
    end Get_Task_Manager;
 
+   ----------------------------
+   -- Is_Continuation_Action --
+   ----------------------------
+
+   overriding function Is_Continuation_Action
+     (Command : access Scheduled_Command) return Boolean is
+   begin
+      return Command.Command.Is_Continuation_Action;
+   end Is_Continuation_Action;
+
    -----------------
    -- Get_Command --
    -----------------
