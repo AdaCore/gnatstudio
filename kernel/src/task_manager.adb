@@ -293,6 +293,34 @@ package body Task_Manager is
                if Queue.Status = Interrupted then
                   Command_Queues.Free (Queue.Queue);
                else
+                  declare
+                     use Command_Queues;
+                     Cons_Actions : constant Command_Queues.List :=
+                                      Get_Consequence_Actions (Command);
+                  begin
+                     if Command.Is_Continuation_Action then
+                        if Cons_Actions /= Command_Queues.Null_List
+                          and then Head (Cons_Actions).Is_Continuation_Action
+                        then
+                           --  Next action still part of the group fail, record
+                           --  status and keep going.
+                           if Result = Failure then
+                              Queue.Stored_Status := Result;
+                           end if;
+                           Result := Success;
+
+                        else
+                           --  We reach the end of a group fail section, the
+                           --  status of the last action is set to false if one
+                           --  of the grouped action failed.
+                           if Queue.Stored_Status = Failure then
+                              Result := Failure;
+                           end if;
+                           Queue.Stored_Status := Success;
+                        end if;
+                     end if;
+                  end;
+
                   if Result = Success then
                      declare
                         New_Queue : constant Command_Queues.List :=

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -120,7 +119,8 @@ private
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;
 
-      Queue    : Command_Queues.List;
+      Queue         : Command_Queues.List;
+      Stored_Status : Command_Return_Type := Success;
 
       Total    : Integer := 0;
       --  The total number of items inserted so far in Queue
