@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Dec 10, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Dec 11, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -77,6 +77,12 @@ NF-44-G903-012 Call stack window cleared while running (2008-10-02)
   The debugger callstack is now cleared while the debugged program is
   running or has terminated to avoid confusion arising from an outdated
   callstack.
+
+NF-44-G903-006 Report all style errors at once (2008-12-11)
+
+  When running the style checkers (on files and logs) GPS will
+  now report errors from all files and will not stop checking
+  on the first file violating some styles.
 
 NF-44-E817-003 Message on the VCS Explorer when no VCS defined (2008-10-27)
 

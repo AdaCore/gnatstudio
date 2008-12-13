@@ -905,7 +905,7 @@ package body Log_Utils is
                      if First_Check = null then
                         First_Check := Command_Access (File_Checks);
                      else
-                        Add_Consequence_Action (Last_Check, File_Checks);
+                        Add_Continuation_Action (Last_Check, File_Checks);
                      end if;
 
                      Last_Check := Command_Access (File_Checks);
@@ -985,7 +985,7 @@ package body Log_Utils is
                   if First_Check = null then
                      First_Check := Command_Access (Log_Checks);
                   else
-                     Add_Consequence_Action (Last_Check, Log_Checks);
+                     Add_Continuation_Action (Last_Check, Log_Checks);
                   end if;
 
                   Last_Check := Command_Access (Log_Checks);
