@@ -330,6 +330,9 @@ private
    --  Convenience subprogram: same as function Execute, but does not
    --  return any value.
 
+   procedure Command_Finished_Status
+     (Action  : access Root_Command'Class;
+      Success : in out Boolean);
    procedure Command_Finished
      (Action  : access Root_Command'Class;
       Success : Boolean);
@@ -344,6 +347,9 @@ private
 
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;
+      Stored_Status       : Boolean := True;
+      --  Status stored for a group fail set of actions
+
       The_Queue           : Command_Queues.List;
 
       Undo_Queue          : Command_Queues.List;

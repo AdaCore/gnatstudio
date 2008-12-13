@@ -1579,7 +1579,7 @@ package body Commands.Custom is
       begin
          Free (Command.Execution);
 
-         Command_Finished (Command, Success);
+         Command_Finished_Status (Command, Success);
 
          if Success then
             return Commands.Success;

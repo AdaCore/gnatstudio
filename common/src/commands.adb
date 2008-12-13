@@ -244,13 +244,13 @@ package body Commands is
       end;
    end Execute_Next_Action;
 
-   ----------------------
-   -- Command_Finished --
-   ----------------------
+   -----------------------------
+   -- Command_Finished_Status --
+   -----------------------------
 
-   procedure Command_Finished
+   procedure Command_Finished_Status
      (Action  : access Root_Command'Class;
-      Success : Boolean)
+      Success : in out Boolean)
    is
       Queue : Command_Queue renames Action.Queue;
       Node  : List_Node;
@@ -262,9 +262,26 @@ package body Commands is
          return;
       end if;
 
-      if Success then
-         Node := First (Action.Next_Commands);
-      else
+      Node := First (Action.Next_Commands);
+
+      if Action.Group_Fail then
+         if Node /= Null_Node and then Data (Node).Group_Fail then
+            --  Next action still part of the group fail, record status and
+            --  keep going.
+            Action.Queue.Stored_Status :=
+              Action.Queue.Stored_Status and then Success;
+            Success := True;
+
+         else
+            --  We reach the end of a group fail section, the status of the
+            --  last action is set to false if one of the grouped action
+            --  failed.
+            Success := Success and then Action.Queue.Stored_Status;
+            Action.Queue.Stored_Status := True;
+         end if;
+      end if;
+
+      if not Success then
          Node := First (Action.Alternate_Commands);
       end if;
 
@@ -321,6 +338,19 @@ package body Commands is
       end loop;
 
       Execute_Next_Action (Action.Queue);
+   end Command_Finished_Status;
+
+   ----------------------
+   -- Command_Finished --
+   ----------------------
+
+   procedure Command_Finished
+     (Action  : access Root_Command'Class;
+      Success : Boolean)
+   is
+      S : Boolean := Success;
+   begin
+      Command_Finished_Status (Action, S);
    end Command_Finished;
 
    ---------------------------
