@@ -1200,6 +1200,26 @@ package body Language.Ada is
 
       Push (Token, Offset);
 
+      --  On the simple mode, if the returned identifier starts with something
+      --  different thank Tok_Identifier, then we return only the last item
+      --  as something is likely to be wrong. This is specifically useful in
+      --  the display menu of the debugger - we may move this out to some
+      --  specific filter at some point.
+
+      if Simple_Expression and then not Is_Empty (Result.Tokens) then
+         if Data (First (Result.Tokens)).Tok_Type /= Tok_Identifier then
+            declare
+               Garbage : Token_List.List := Result.Tokens;
+            begin
+               Result.Tokens := Null_List;
+
+               Append (Result.Tokens, Data (Last (Garbage)));
+
+               Free (Garbage);
+            end;
+         end if;
+      end if;
+
       return Result;
    end Parse_Expression_Backward;
 

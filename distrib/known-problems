@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.1
 
+- HC09-027: Debug->Display does not work with UTF-8 characters
+  Problem:    When there are UTF-8 characters in a file, the menu Debug->
+              Display does not parse correctly the variable and uses a truncated
+              name.
+  Workaround: Do the command directly from the gdb console with 
+              "graph display ".
+
 - HC09-013: Problem when switching from one project to another
   Problem:    On some occasions, switching from one project to another make the
               new project not being correctly loaded.
