@@ -5001,6 +5001,12 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
       <see_also name="GPS.EditorBuffer.get_mark"/>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.remove_special_lines">
+      <param name="mark">An instance of GPS.EditorMark</para>
+      <param name="lines">An integer</param>
+      <description>Removes specified number of special lines at the specified mark. It doesn't delete the mark</decription>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorBuffer.get">
       <param name="file" default="current editor">An instance of GPS.File</param>
       <param name="force" default="false">A boolean</param>

@@ -2463,6 +2463,24 @@ package body Src_Editor_Module.Shell is
             end;
          end if;
 
+      elsif Command = "remove_special_lines" then
+         Get_Buffer (Buffer, Data, 1);
+         Get_Mark (Mark, Data, 2);
+
+         if Buffer /= null and then Mark /= null then
+            declare
+               Number : Natural := 0;
+
+            begin
+               if Number_Of_Arguments (Data) >= 3 then
+                  Number := Nth_Arg (Data, 3);
+               end if;
+
+               Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
+                 (Buffer, Mark, Number);
+            end;
+         end if;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -3468,6 +3486,13 @@ package body Src_Editor_Module.Shell is
         (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "add_special_line", 2, 4, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel,
+         "remove_special_lines",
+         2,
+         3,
+         Buffer_Cmds'Access,
+         EditorBuffer);
 
       --  EditorView
 
