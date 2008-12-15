@@ -902,6 +902,33 @@ package Src_Editor_Buffer is
    --  Return the iter at position (Line, Column), tab expansion included.
    --  If Line is not in the text, return the Iter at beginning of text.
 
+   ----------------
+   -- Src_String --
+   ----------------
+
+   type Src_String is record
+      Contents  : Unchecked_String_Access;
+      Length    : Natural := 0;
+      Read_Only : Boolean := False;
+   end record;
+   --  Special purpose string type to avoid extra copies and string allocation
+   --  as much as possible.
+   --  The actual contents of a Src_String is represented by
+   --  Contents (1 .. Length) (as utf8-encoded string)
+   --  Never use Free (Contents) directly, use the Free procedure below.
+
+   procedure Free (S : in out Src_String);
+   --  Free the memory associated with S
+
+   function Get_String
+     (Buffer : Source_Buffer;
+      Line   : Editable_Line_Type) return Src_String;
+   --  Return the string at line Line, without the line terminator.
+   --  Return null if the Line is not a valid line or there is no contents
+   --  associated with the line.
+   --  The caller is responsible for freeing the returned value..
+   --  The returned string is UTF8-encoded
+
 private
 
    procedure Set_Cursor_Position

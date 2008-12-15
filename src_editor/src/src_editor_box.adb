@@ -1405,27 +1405,30 @@ package body Src_Editor_Box is
             declare
                The_Line   : Editable_Line_Type;
                The_Column : Character_Offset_Type;
-               Str : String_Access :=
-                 Get_String (Get_Buffer (Editor));
-               --  ??? Not very efficient though
+               Str        : Src_String :=
+                Get_String
+                   (Get_Buffer (Editor),
+                    Get_Editable_Line
+                      (Editor.Source_Buffer,
+                       Buffer_Line_Type (Get_Line (Entity_End)) + 1));
             begin
-               Get_Iter_Position
-                 (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
+               if Str.Contents /= null then
+                  Get_Iter_Position
+                    (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
 
-               Set_Entity_Information
-                 (Context,
-                  Entity_Name   => Get_Text (Entity_Start, Entity_End),
-                  Entity_Column => Expand_Tabs
-                    (Editor.Source_Buffer, The_Line, The_Column),
-                  From_Expression =>
-                    Parse_Expression_Backward_To_String
-                      (Get_Language (Get_Buffer (Editor)),
-                       Buffer            => Str.all,
-                       Start_Offset      => Get_Byte_Index (Entity_End),
-                       Simple_Expression => True));
-               --  No additional offset needed here: Str'First is always 1 in
-               --  this context, Entity_End points to the character _after_
-               --  the last character in entity, but Get_Offset is zero-based.
+                  Set_Entity_Information
+                    (Context,
+                     Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                     Entity_Column => Expand_Tabs
+                       (Editor.Source_Buffer, The_Line, The_Column),
+                     From_Expression =>
+                       Parse_Expression_Backward_To_String
+                         (Get_Language (Get_Buffer (Editor)),
+                          Buffer            => Str.Contents (1 .. Str.Length),
+                          Start_Offset      =>
+                            Integer (Get_Line_Index (Entity_End)),
+                          Simple_Expression => True));
+               end if;
 
                Free (Str);
             end;

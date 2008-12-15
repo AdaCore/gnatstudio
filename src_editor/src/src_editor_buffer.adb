@@ -344,29 +344,6 @@ package body Src_Editor_Buffer is
    function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean;
    --  Hook called after the cursor has stopped moving
 
-   type Src_String is record
-      Contents  : Unchecked_String_Access;
-      Length    : Natural := 0;
-      Read_Only : Boolean := False;
-   end record;
-   --  Special purpose string type to avoid extra copies and string allocation
-   --  as much as possible.
-   --  The actual contents of a Src_String is represented by
-   --  Contents (1 .. Length) (as utf8-encoded string)
-   --  Never use Free (Contents) directly, use the Free procedure below.
-
-   procedure Free (S : in out Src_String);
-   --  Free the memory associated with S
-
-   function Get_String
-     (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return Src_String;
-   --  Return the string at line Line, without the line terminator.
-   --  Return null if the Line is not a valid line or there is no contents
-   --  associated with the line.
-   --  The caller is responsible for freeing the returned value..
-   --  The returned string is UTF8-encoded
-
    procedure Free_Column_Info
      (Column_Info : Columns_Config_Access);
    --  Free the info contained in Column_Info
