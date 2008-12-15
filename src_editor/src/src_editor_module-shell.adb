@@ -3009,8 +3009,18 @@ package body Src_Editor_Module.Shell is
          if Mark /= null then
             Trace (Me, "Deleting mark");
             Delete_Mark (Get_Buffer (Mark), Mark);
-
          end if;
+
+      elsif Command = "is_present" then
+         Get_Mark (Mark, Data, 1);
+
+         if Mark /= null then
+            Set_Return_Value (Data, not Get_Deleted (Mark));
+
+         else
+            Set_Return_Value (Data, False);
+         end if;
+
       elsif Command = "location" then
          Get_Mark (Mark, Data, 1);
          if Mark /= null then
@@ -3394,6 +3404,8 @@ package body Src_Editor_Module.Shell is
         (Kernel, Destructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, "delete", 0, 0, Mark_Cmds'Access, EditorMark);
+      Register_Command
+        (Kernel, "is_present", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, "location", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command (Kernel, "move", 1, 1, Mark_Cmds'Access, EditorMark);

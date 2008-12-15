@@ -4960,6 +4960,11 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
       <description>Delets the physical mark from the buffer. All instances referencing the same mark will no longer be valid. If you haven't given a name to the mark in the call to GPS.EditorLocation.create_mark(), it will automatically be destroyed when the last instance referencing it goes out of scope. Therefore, calling delete() is not mandatory in the case of unnamed marks, although it is still recommanded</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorMark.is_present">
+      <param name="self">An instance of GPS.EditorMark</param>
+      <description>Returns True if mark's location is still present in the buffer</description>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorMark.location">
       <param name="self">An instance of GPS.EditorMark</param>
       <return>An instance of GPS.EditorLocation</return>
