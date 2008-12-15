@@ -867,27 +867,30 @@ package body Codefix.Text_Manager is
          Line        : constant String :=
            Get_Line (Text_Interface'Class (This), C, 1);
          Next_Cursor : Text_Cursor;
+         Char_Start, Char_End : Char_Index;
       begin
+         if C.Line = Start.Line then
+            Char_Start := To_Char_Index (Start.Col, Line);
+         else
+            Char_Start := Char_Index (Line'First);
+         end if;
+
          if C.Line = Stop.Line then
-            declare
-               Char_Start, Char_End : Char_Index := 1;
-            begin
-               Char_End := To_Char_Index (Stop.Col, Line);
+            Char_End := To_Char_Index (Stop.Col, Line);
+         else
+            Char_End := Char_Index (Line'Last);
+         end if;
 
-               if C.Line = Start.Line then
-                  Char_Start := To_Char_Index (Start.Col, Line);
-               end if;
-
-               return Before & Line
-                 (Integer (Char_Start) .. Integer (Char_End));
-            end;
+         if C.Line = Stop.Line then
+            return Before & Line (Integer (Char_Start) .. Integer (Char_End));
          else
             Next_Cursor := C;
             Next_Cursor.Line := Next_Cursor.Line + 1;
             Next_Cursor.Col := 1;
 
             return Before
-              & Line & Recursive_Get (Next_Cursor, (1 => ASCII.LF));
+              & Line (Integer (Char_Start) .. Integer (Char_End))
+              & Recursive_Get (Next_Cursor, (1 => ASCII.LF));
          end if;
       end Recursive_Get;
 

@@ -1086,12 +1086,12 @@ package body Codefix.Formal_Errors is
         (Current_Text,
          Body_Cursor,
          Enclosing,
-         (Cat_Procedure, Cat_Function, Cat_Entry));
+         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
       Spec_Info := Get_Iterator_At
         (Current_Text,
          Spec_Cursor,
          After,
-         (Cat_Procedure, Cat_Function, Cat_Entry));
+         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
 
       Initialize
         (Command1,
