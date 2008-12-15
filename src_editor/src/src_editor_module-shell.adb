@@ -1657,7 +1657,7 @@ package body Src_Editor_Module.Shell is
                      Add_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
-                        Highlight_Category, "", Number));
+                        Highlight_Category, "", Number, ""));
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
             else
@@ -2422,8 +2422,12 @@ package body Src_Editor_Module.Shell is
                Text               : constant String  := Nth_Arg (Data, 3);
                Highlight_Category : Natural := 0;
                Style              : Style_Access;
+               Name               : GNAT.OS_Lib.String_Access;
+
             begin
-               if Number_Of_Arguments (Data) >= 4 then
+               if Number_Of_Arguments (Data) >= 4
+                 and then Nth_Arg (Data, 4) /= ""
+               then
                   Style := Get_Or_Create_Style
                     (Kernel, Nth_Arg (Data, 4), False);
 
@@ -2437,12 +2441,22 @@ package body Src_Editor_Module.Shell is
                   end if;
                end if;
 
+               if Number_Of_Arguments (Data) >= 5 then
+                  Name := new String'(Nth_Arg (Data, 5));
+
+               else
+                  Name := new String'("");
+               end if;
+
                Mark := Add_Blank_Lines
                  (Buffer,
                   Editable_Line_Type (Line),
                   Highlight_Category,
                   Text,
-                  1);
+                  1,
+                  Name.all);
+
+               Free (Name);
 
                Set_Return_Value
                  (Data, Create_Editor_Mark (Get_Script (Data), Mark));
@@ -3453,7 +3467,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "add_special_line", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "add_special_line", 2, 4, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 

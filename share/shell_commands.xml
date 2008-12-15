@@ -4995,8 +4995,10 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
       <param name="start_line">An integer</param>
       <param name="text">A string</param>
       <param name="category" default="">A string</param>
+      <param name="name" default="">A string</param>
       <return>An instance of GPS.EditorMark</return>
-      <description>Adds one non-editable line to the buffer, starting at line start_line and contains string text. If category is specified, use it for highlighting. Create a mark at beginning of block and return it</description>
+      <description>Adds one non-editable line to the buffer, starting at line start_line and contains string text. If category is specified, use it for highlighting. Create a mark at beginning of block and return it. If name is specified, retuned mark will have this name</description>
+      <see_also name="GPS.EditorBuffer.get_mark"/>
   </shell_doc>
 
   <shell_doc name="GPS.EditorBuffer.get">

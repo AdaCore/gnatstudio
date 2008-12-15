@@ -77,11 +77,12 @@ package Src_Editor_Buffer.Line_Information is
    --  Perform a click in the side column for line Line, offset Offset
 
    function Add_Blank_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type;
+     (Buffer             : access Source_Buffer_Record'Class;
+      Line               : Editable_Line_Type;
       Highlight_Category : Integer;
-      Text   : String;
-      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+      Text               : String;
+      Number             : Positive;
+      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank lines at line Line.
    --  Blank lines cannot be edited, and are not saved on disk.
 

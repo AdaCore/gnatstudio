@@ -779,11 +779,12 @@ package body Src_Editor_Buffer.Line_Information is
    ---------------------
 
    function Add_Blank_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type;
+     (Buffer             : access Source_Buffer_Record'Class;
+      Line               : Editable_Line_Type;
       Highlight_Category : Integer;
-      Text   : String;
-      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
+      Text               : String;
+      Number             : Positive;
+      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark
    is
       LFs         : String (1 .. Natural (Number));
       Buffer_Line : Buffer_Line_Type;
@@ -841,7 +842,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Blank_Lines := Buffer.Blank_Lines + Number;
 
-      Mark := Create_Mark (Buffer, "", Iter);
+      Mark := Create_Mark (Buffer, Name, Iter);
 
       Buffer.Inserting := True;
       Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
