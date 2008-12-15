@@ -35,7 +35,6 @@ with Projects.Registry;          use Projects.Registry;
 with String_Hash;
 with Traces;                     use Traces;
 with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
-with VCS_Module;                 use VCS_Module;
 with VCS_View;                   use VCS_View;
 with VCS_View_API;               use VCS_View_API;
 with XML_Parsers;
@@ -594,9 +593,7 @@ package body VCS_Activities is
       F_Activity : constant Activity_Id := Get_File_Activity (File);
       Project    : constant Project_Type :=
                      Get_Project_From_File (Get_Registry (Kernel).all, File);
-      VCS        : constant VCS_Access :=
-                     Get_VCS_From_Id
-                       (Get_Attribute_Value (Project, VCS_Kind_Attribute));
+      VCS        : constant VCS_Access := Get_Current_Ref (Kernel, Project);
       Item       : Activity_Record := Get (Activity);
 
       procedure Add (File : Virtual_File);
