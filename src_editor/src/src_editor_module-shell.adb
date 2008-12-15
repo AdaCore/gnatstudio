@@ -1672,7 +1672,7 @@ package body Src_Editor_Module.Shell is
             Number      : Integer := 0;
             Box         : Source_Editor_Box;
          begin
-            if Number_Of_Arguments (Data) >= 3 then
+            if Number_Of_Arguments (Data) >= 2 then
                Number := Nth_Arg (Data, 2);
             end if;
 
