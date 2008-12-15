@@ -21,6 +21,24 @@ with GNAT.Heap_Sort_G;
 
 package body Code_Analysis is
 
+   -------------------------
+   -- Clear_Code_Analysis --
+   -------------------------
+
+   procedure Clear_Code_Analysis (Projects : Code_Analysis_Tree) is
+      use Project_Maps;
+      Cur          : Cursor := Projects.First;
+      Project_Node : Project_Access;
+
+   begin
+      loop
+         exit when Cur = No_Element;
+         Project_Node := Element (Cur);
+         Project_Maps.Delete (Projects.all, Cur);
+         Free_Project (Project_Node);
+      end loop;
+   end Clear_Code_Analysis;
+
    ----------------------
    -- Sort_Subprograms --
    ----------------------
@@ -243,6 +261,11 @@ package body Code_Analysis is
       if Analysis_Id.Coverage_Data /= null then
          Unchecked_Free (Analysis_Id.Coverage_Data);
       end if;
+
+      if Analysis_Id.Code_Peer_Data /= null then
+         Analysis_Id.Code_Peer_Data.Finalize;
+         Unchecked_Free (Analysis_Id.Code_Peer_Data);
+      end if;
    end Free_Analysis;
 
    ---------------
@@ -333,18 +356,10 @@ package body Code_Analysis is
    ------------------------
 
    procedure Free_Code_Analysis (Projects : in out Code_Analysis_Tree) is
-      use Project_Maps;
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Maps.Map, Code_Analysis_Tree);
-      Cur          : Cursor := Projects.First;
-      Project_Node : Project_Access;
    begin
-      loop
-         exit when Cur = No_Element;
-         Project_Node := Element (Cur);
-         Project_Maps.Delete (Projects.all, Cur);
-         Free_Project (Project_Node);
-      end loop;
+      Clear_Code_Analysis (Projects);
       Unchecked_Free (Projects);
    end Free_Code_Analysis;
 

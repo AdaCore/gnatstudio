@@ -127,11 +127,18 @@ package Code_Analysis is
 
    type Coverage_Access is access all Coverage'Class;
 
+   type Code_Peer_Data_Root is abstract tagged null record;
+   type Code_Peer_Data_Access is access all Code_Peer_Data_Root'Class;
+
+   procedure Finalize (Self : access Code_Peer_Data_Root) is null;
+
    type Analysis is record
-      Coverage_Data : Coverage_Access;
+      Coverage_Data  : Coverage_Access;
       --  Future other specific analysis records might be added here, such as
       --  Metrics_Data : Metrics_Record_Access;
       --  SSAT_Data    : SSAT_Record_Access;
+      Code_Peer_Data : Code_Peer_Data_Access;
+      --  Additional information for the CodePeer plugin.
    end record;
    --  Store the various code analysis information
    --  ??? In the future, we want a more flexible data structure where each
@@ -278,8 +285,14 @@ package Code_Analysis is
    procedure Free_Code_Analysis (Projects : in out Code_Analysis_Tree);
    --  Free a whole code analysis structure
 
-   procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
+   procedure Clear_Code_Analysis (Projects : Code_Analysis_Tree);
+   --  Clear all information in the code analysis structure
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Coverage'Class, Coverage_Access);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Code_Peer_Data_Root'Class, Code_Peer_Data_Access);
 
    -------------
    -- Free-er --
