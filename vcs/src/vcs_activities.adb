@@ -29,6 +29,7 @@ with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with Glib.Xml_Int;               use Glib.Xml_Int;
 
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with Log_Utils;                  use Log_Utils;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
@@ -632,16 +633,18 @@ package body VCS_Activities is
       --  Check that the new file is using the same VCS. Also check that the
       --  file is not yet part of an open activity.
 
-      if (Item.VCS /= null and then VCS /= Item.VCS)
-        or else (F_Activity /= No_Activity
-                 and then not Is_Closed (F_Activity))
-      then
-         --  ??? dialog saying that it is not possible (2 diff VCS)
-         --  ??? or activity is already committed.
-         return;
-      end if;
+      if Item.VCS /= null and then VCS /= Item.VCS then
+         Console.Insert
+           (Kernel,
+            "Cannot add " & Full_Name (File).all
+            & " to activity, VCS not matching.");
 
-      Add (File);
+      elsif F_Activity /= No_Activity and then not Is_Closed (F_Activity) then
+         Console.Insert (Kernel, "Cannot add a file to a closed activity.");
+
+      else
+         Add (File);
+      end if;
    end Add_File;
 
    -----------------
