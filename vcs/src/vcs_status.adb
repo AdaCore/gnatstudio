@@ -31,7 +31,7 @@ with Projects.Registry;     use Projects.Registry;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with VCS_View;              use VCS_View;
-with VCS_Module;            use VCS_Module;
+with VCS_View_API;          use VCS_View_API;
 with XML_Parsers;
 
 package body VCS_Status is
@@ -320,9 +320,7 @@ package body VCS_Status is
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);
                VCS     : constant VCS_Access :=
-                           Get_VCS_From_Id
-                             (Get_Attribute_Value
-                                (Project, VCS_Kind_Attribute));
+                           Get_Current_Ref (Kernel, Project);
                Status  : constant Status_Id :=
                            Status_Id'Value
                              (Get_Attribute (Node, "status", "unknown_id"));
