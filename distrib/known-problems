@@ -177,6 +177,11 @@ Known Problems fixed in GPS 4.3.1
               in some cases instead of showing the selected item.
   Workaround: Scroll back to the selected item.
 
+- H123-027: Wrong fixes for "not fully conformant" with accept statements
+  Problem:    The auto-fix proposed for "not fully conformant" error messages
+              does not work when the error appears on a accept statement.
+  Workaround: Manually fix the code.
+
 Known Problems fixed in GPS 4.3.0
 
 - HA14-009: Wrong dialog settings in project properties

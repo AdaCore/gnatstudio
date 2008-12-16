@@ -867,7 +867,9 @@ package body Codefix.Text_Manager.Ada_Commands is
          begin
             if Paren_Depth = 0 then
                if Entity = Keyword_Text then
-                  if Equal (Name, "is", False) then
+                  if Equal (Name, "is", False)
+                    or else Equal (Name, "do", False)
+                  then
                      End_Of_Profile;
                      Is_Spec := False;
                      return True;
