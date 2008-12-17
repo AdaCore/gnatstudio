@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2007, AdaCore                 --
+--                  Copyright (C) 2002-2008, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -340,10 +340,7 @@ package body Codefix.Ada_Tools is
                     (Get_Construct (Last_Info).Sloc_End.Column) + 1, Line));
          end;
       else
-         Set_Location
-           (Current_Cursor,
-            Get_Construct (Current_Info).Sloc_Start.Line - 1,
-            1);
+         Set_Location (Current_Cursor, 0, 1);
       end if;
 
       return Current_Cursor;

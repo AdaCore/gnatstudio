@@ -69,6 +69,7 @@ with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -406,6 +407,29 @@ package body GPS.Kernel is
    begin
       Add_Watch (Id, Data);
    end Setup;
+
+   ------------------------
+   -- Get_Buffer_Factory --
+   ------------------------
+
+   function Get_Buffer_Factory
+     (Kernel : access Kernel_Handle_Record)
+      return Editor_Buffer_Factory_Access
+   is
+   begin
+      return Kernel.Editor_Factory;
+   end Get_Buffer_Factory;
+
+   ------------------------
+   -- Set_Buffer_Factory --
+   ------------------------
+
+   procedure Set_Buffer_Factory
+     (Kernel  : access Kernel_Handle_Record;
+      Factory : Editor_Buffer_Factory_Access) is
+   begin
+      Kernel.Editor_Factory := Factory;
+   end Set_Buffer_Factory;
 
    ---------------------------
    -- Source_Lines_Revealed --

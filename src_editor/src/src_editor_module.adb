@@ -69,6 +69,7 @@ with File_Utils;                        use File_Utils;
 with Filesystems;                       use Filesystems;
 with Find_Utils;                        use Find_Utils;
 with GPS.Intl;                          use GPS.Intl;
+with GPS.Editors;                       use GPS.Editors;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Charsets;               use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
@@ -92,6 +93,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module.Line_Highlighting;
+with Src_Editor_Module.Editors;         use Src_Editor_Module.Editors;
 with Src_Editor_Module.Markers;         use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;           use Src_Editor_Module.Shell;
 with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
@@ -3119,6 +3121,11 @@ package body Src_Editor_Module is
                 Name => "src_editor.file_changed_on_disk");
 
       Register_Commands (Kernel);
+
+      Set_Buffer_Factory
+        (Kernel,
+         new Src_Editor_Buffer_Factory'
+           (Editor_Buffer_Factory with Kernel => Kernel_Handle (Kernel)));
 
       --  Register the search functions
 

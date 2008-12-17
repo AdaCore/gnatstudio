@@ -915,7 +915,7 @@ package body Codefix.Formal_Errors is
          "(pragma\s+[\w\d_]+\s*(\([^\)]*\))?\s*;)", Regular_Expression);
 
       Set_File (Begin_Cursor, Get_File (Cursor));
-      Set_Location (Begin_Cursor, 1, 1);
+      Set_Location (Begin_Cursor, 0, 0);
 
       Initialize
         (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor, True);

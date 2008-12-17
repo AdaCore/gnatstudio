@@ -58,6 +58,8 @@ with Projects.Registry;
 with Switches_Chooser;
 with Task_Manager;
 
+with GPS.Editors;
+
 package GPS.Kernel is
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
@@ -647,6 +649,21 @@ package GPS.Kernel is
    package Entity_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Entities.Entity_Information);
 
+   ---------------------
+   --  Editor_Factory --
+   ---------------------
+
+   type Editor_Buffer_Factory_Access is access all
+     GPS.Editors.Editor_Buffer_Factory'Class;
+
+   function Get_Buffer_Factory
+     (Kernel : access Kernel_Handle_Record)
+      return Editor_Buffer_Factory_Access;
+
+   procedure Set_Buffer_Factory
+     (Kernel  : access Kernel_Handle_Record;
+      Factory : Editor_Buffer_Factory_Access);
+
    -----------
    -- Hooks --
    -----------
@@ -1091,6 +1108,8 @@ private
       --  Determies wether the kernel is being destroyed
 
       Hidden_File_Matcher : Pattern_Matcher_Access;
+
+      Editor_Factory : Editor_Buffer_Factory_Access;
    end record;
 
 end GPS.Kernel;

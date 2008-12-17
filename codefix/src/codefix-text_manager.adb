@@ -2086,25 +2086,16 @@ package body Codefix.Text_Manager is
          end if;
 
          if This.Insert_New_Line then
-            declare
-               Line : constant String := Modified_Text.Get_Line (New_Pos, 1);
-               Pos_Char_Index : Char_Index;
-            begin
-               Pos_Char_Index := To_Char_Index (Get_Column (New_Pos), Line);
-
-               Modified_Text.Replace
-                 (New_Pos,
-                  Line (Natural (Pos_Char_Index) .. Line'Last)'Length, "");
-
-               Modified_Text.Add_Line
-                 (New_Pos, Line (Natural (Pos_Char_Index) .. Line'Last), True);
-            end;
+            Modified_Text.Add_Line
+              (New_Pos,
+               New_Str.all,
+               True);
+         else
+            Modified_Text.Replace
+              (New_Pos,
+               0,
+               New_Str.all);
          end if;
-
-         Modified_Text.Replace
-           (New_Pos,
-            0,
-            New_Str.all);
       elsif This.Position = After then
          Modified_Text.Add_Line
            (New_Pos, New_Str.all, True);
