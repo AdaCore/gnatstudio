@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- HC10-015: Wrong text replacement with auto-casing
+  Problem:    When auto-casing is enabled in the preferences, the wrong
+              text replacement can occur if there are single quotes in the text
+              being considered.
+  Workaround: Edit the wrong replacement manually.
+
 - HC09-008: Bad handling of --display
   Problem:    The command line switch --display is not handled correctly by GPS
   Workaround: Set the environment variable DISPLAY instead. If you need to

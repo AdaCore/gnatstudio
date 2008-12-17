@@ -318,7 +318,7 @@ package body Src_Editor_Buffer.Text_Handling is
             --  The parser sometimes callback with a null replacement.
             --  Ignore those cases as we do not want to indent the code here.
             Replace_Slice
-              (Buffer, Replace, Line, First,
+              (Buffer, Replace, Line, First + Character_Offset_Type (F) - 1,
                Before => 0, After => Length);
 
             --  Compute position of the next insert point. This can happen only
