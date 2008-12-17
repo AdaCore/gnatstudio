@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Hashed_Sets;
+with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with GNAT.Strings;
 
@@ -53,6 +55,17 @@ package Code_Peer is
    package Message_Vectors is
      new Ada.Containers.Vectors (Positive, Message_Access);
 
+   type Annotation_Category is record
+      Order : Positive;
+      Text  : GNAT.Strings.String_Access;
+   end record;
+
+   type Annotation_Category_Access is access all Annotation_Category;
+
+   function Less
+     (Left  : Annotation_Category_Access;
+      Right : Annotation_Category_Access) return Boolean;
+
    type Annotation is record
       Text : GNAT.Strings.String_Access;
    end record;
@@ -62,22 +75,33 @@ package Code_Peer is
    package Annotation_Vectors is new Ada.Containers.Vectors
      (Positive, Annotation_Access);
 
+   type Annotation_Vector_Access is access all Annotation_Vectors.Vector;
+
+   package Annotation_Maps is new Ada.Containers.Ordered_Maps
+     (Annotation_Category_Access, Annotation_Vector_Access, Less);
+
+   package Annotation_Category_Sets is new Ada.Containers.Ordered_Sets
+     (Annotation_Category_Access, Less);
+
    type Project_Data is new Code_Analysis.Code_Peer_Data_Root with record
-      Categories : Message_Category_Sets.Set;
+      Message_Categories    : Message_Category_Sets.Set;
+      Annotation_Categories : Annotation_Category_Sets.Set;
    end record;
    --  This record has only one instance and associated with the node
-   --  of the root project. It is an owner of the message categories stored in
-   --  the Categories member.
+   --  of the root project. It is an owner of the message categories and
+   --  annotation categories stored in the Message_Categories and
+   --  Annotation_Categories members.
 
    overriding procedure Finalize (Self : access Project_Data);
 
    type Subprogram_Data is
      new Code_Analysis.Code_Peer_Data_Root with record
-      Messages       : Message_Vectors.Vector;
-      Preconditions  : Annotation_Vectors.Vector;
-      Postconditions : Annotation_Vectors.Vector;
-      Special_Lines  : Natural := 0;
+      Messages      : Message_Vectors.Vector;
+      Annotations   : Annotation_Maps.Map;
+      Special_Lines : Natural := 0;
    end record;
+
+   type Subprogram_Data_Access is access all Subprogram_Data'Class;
 
    overriding procedure Finalize (Self : access Subprogram_Data);
 

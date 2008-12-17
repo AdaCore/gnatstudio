@@ -123,7 +123,6 @@ package body Code_Peer.Module is
             Buffer          : constant String :=
                                 Code_Peer.Shell_Commands.Editor_Buffer_Get
                                  (Kernel, Shell_File);
---              Is_Open         : constant Boolean := Buffer /= "null";
 
          begin
             if not File_Node.Subprograms.Is_Empty then
@@ -498,6 +497,9 @@ package body Code_Peer.Module is
          procedure Process_Annotation
            (Position : Code_Peer.Annotation_Vectors.Cursor);
 
+         procedure Process_Annotations
+           (Position : Code_Peer.Annotation_Maps.Cursor);
+
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
                              Code_Analysis.Subprogram_Maps.Element (Position);
          Data            : Code_Peer.Subprogram_Data'Class
@@ -526,6 +528,36 @@ package body Code_Peer.Module is
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotation;
 
+         -------------------------
+         -- Process_Annotations --
+         -------------------------
+
+         procedure Process_Annotations
+           (Position : Code_Peer.Annotation_Maps.Cursor)
+         is
+            Key     : constant Code_Peer.Annotation_Category_Access :=
+                        Code_Peer.Annotation_Maps.Key (Position);
+            Element : constant Code_Peer.Annotation_Vector_Access :=
+                        Code_Peer.Annotation_Maps.Element (Position);
+
+         begin
+            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
+              (Self.Get_Kernel,
+               Buffer,
+               Subprogram_Node.Line,
+               Indent & "--  " & Key.Text.all & ":");
+            Data.Special_Lines := Data.Special_Lines + 1;
+
+            Element.Iterate (Process_Annotation'Access);
+
+            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
+              (Self.Get_Kernel,
+               Buffer,
+               Subprogram_Node.Line,
+               Indent & "--");
+            Data.Special_Lines := Data.Special_Lines + 1;
+         end Process_Annotations;
+
       begin
          Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
            (Self.Get_Kernel,
@@ -549,41 +581,7 @@ package body Code_Peer.Module is
             Indent & "--");
          Data.Special_Lines := Data.Special_Lines + 1;
 
-         if not Data.Preconditions.Is_Empty then
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--  Preconditions:");
-            Data.Special_Lines := Data.Special_Lines + 1;
-
-            Data.Preconditions.Iterate (Process_Annotation'Access);
-
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--");
-            Data.Special_Lines := Data.Special_Lines + 1;
-         end if;
-
-         if not Data.Postconditions.Is_Empty then
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--  Postconditions:");
-            Data.Special_Lines := Data.Special_Lines + 1;
-
-            Data.Postconditions.Iterate (Process_Annotation'Access);
-
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--");
-            Data.Special_Lines := Data.Special_Lines + 1;
-         end if;
+         Data.Annotations.Iterate (Process_Annotations'Access);
       end Process_Subprogram;
 
    begin

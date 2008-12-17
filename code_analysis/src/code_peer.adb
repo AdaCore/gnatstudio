@@ -28,13 +28,37 @@ package body Code_Peer is
 
    overriding procedure Finalize (Self : access Project_Data) is
 
-      procedure Process_Category (Position : Message_Category_Sets.Cursor);
+      procedure Process_Message_Category
+        (Position : Message_Category_Sets.Cursor);
 
-      ----------------------
-      -- Process_Category --
-      ----------------------
+      procedure Process_Annotation_Category
+        (Position : Annotation_Category_Sets.Cursor);
 
-      procedure Process_Category (Position : Message_Category_Sets.Cursor) is
+      ---------------------------------
+      -- Process_Annotation_Category --
+      ---------------------------------
+
+      procedure Process_Annotation_Category
+        (Position : Annotation_Category_Sets.Cursor)
+      is
+         Element : Annotation_Category_Access :=
+                     Annotation_Category_Sets.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Annotation_Category, Annotation_Category_Access);
+
+      begin
+         GNAT.Strings.Free (Element.Text);
+         Free (Element);
+      end Process_Annotation_Category;
+
+      ------------------------------
+      -- Process_Message_Category --
+      ------------------------------
+
+      procedure Process_Message_Category
+        (Position : Message_Category_Sets.Cursor)
+      is
          Element : Message_Category_Access :=
                      Message_Category_Sets.Element (Position);
 
@@ -44,10 +68,11 @@ package body Code_Peer is
       begin
          GNAT.Strings.Free (Element.Name);
          Free (Element);
-      end Process_Category;
+      end Process_Message_Category;
 
    begin
-      Self.Categories.Iterate (Process_Category'Access);
+      Self.Message_Categories.Iterate (Process_Message_Category'Access);
+      Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
    end Finalize;
 
    --------------
@@ -57,6 +82,8 @@ package body Code_Peer is
    overriding procedure Finalize (Self : access Subprogram_Data) is
 
       procedure Process_Message (Position : Message_Vectors.Cursor);
+
+      procedure Process_Annotations (Position : Annotation_Maps.Cursor);
 
       procedure Process_Annotation (Position : Annotation_Vectors.Cursor);
 
@@ -75,6 +102,23 @@ package body Code_Peer is
          Free (Element);
       end Process_Annotation;
 
+      -------------------------
+      -- Process_Annotations --
+      -------------------------
+
+      procedure Process_Annotations (Position : Annotation_Maps.Cursor) is
+         Element : Annotation_Vector_Access :=
+                     Annotation_Maps.Element (Position);
+
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Annotation_Vectors.Vector, Annotation_Vector_Access);
+
+      begin
+         Element.Iterate (Process_Annotation'Access);
+         Element.Clear;
+         Free (Element);
+      end Process_Annotations;
+
       ---------------------
       -- Process_Message --
       ---------------------
@@ -92,8 +136,9 @@ package body Code_Peer is
 
    begin
       Self.Messages.Iterate (Process_Message'Access);
-      Self.Preconditions.Iterate (Process_Annotation'Access);
-      Self.Postconditions.Iterate (Process_Annotation'Access);
+      Self.Messages.Clear;
+      Self.Annotations.Iterate (Process_Annotations'Access);
+      Self.Annotations.Clear;
    end Finalize;
 
    ----------
@@ -105,5 +150,17 @@ package body Code_Peer is
    begin
       return Ada.Strings.Hash (Item.Name.all);
    end Hash;
+
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left  : Annotation_Category_Access;
+      Right : Annotation_Category_Access) return Boolean
+   is
+   begin
+      return Left.Order < Right.Order;
+   end Less;
 
 end Code_Peer;

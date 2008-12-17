@@ -288,7 +288,8 @@ package body Code_Peer.Summary_Reports is
            (Code_Analysis.Get_Or_Create
               (Tree,
                GPS.Kernel.Project.Get_Project
-                 (Kernel)).Analysis_Data.Code_Peer_Data.all).Categories);
+                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
+                    Message_Categories);
       Gtk.Tree_View.Gtk_New (Self.Messages_View, Self.Messages_Model);
       Scrolled.Add (Self.Messages_View);
 

@@ -23,13 +23,13 @@ with Projects.Registry;
 
 package body Code_Peer.Bridge_Database_Readers is
 
-   Database_Tag         : constant String := "database";
-   Message_Category_Tag : constant String := "message_category";
-   File_Tag             : constant String := "file";
-   Subprogram_Tag       : constant String := "subprogram";
-   Message_Tag          : constant String := "message";
-   Precondition_Tag     : constant String := "precondition";
-   Postcondition_Tag    : constant String := "postcondition";
+   Database_Tag            : constant String := "database";
+   Message_Category_Tag    : constant String := "message_category";
+   Annotation_Category_Tag : constant String := "annotation_category";
+   File_Tag                : constant String := "file";
+   Subprogram_Tag          : constant String := "subprogram";
+   Message_Tag             : constant String := "message";
+   Annotation_Tag          : constant String := "annotation";
 
    ----------
    -- Hash --
@@ -56,7 +56,7 @@ package body Code_Peer.Bridge_Database_Readers is
       Self.Kernel          := Kernel;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new Code_Peer.Project_Data;
-      Self.Categories.Clear;
+      Self.Message_Categories.Clear;
       Root_Project :=
         Code_Analysis.Get_Or_Create
           (Self.Projects,
@@ -81,22 +81,36 @@ package body Code_Peer.Bridge_Database_Readers is
    is
       pragma Unreferenced (Namespace_URI, Local_Name);
 
-      Category     : Code_Peer.Message_Category_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File;
-      Project_Node : Code_Analysis.Project_Access;
+      Message_Category    : Code_Peer.Message_Category_Access;
+      Annotation_Category : Code_Peer.Annotation_Category_Access;
+      File_Name           : GNATCOLL.VFS.Virtual_File;
+      Project_Node        : Code_Analysis.Project_Access;
 
    begin
       if Qname = Database_Tag then
          null;
 
       elsif Qname = Message_Category_Tag then
-         Category :=
+         Message_Category :=
            new Code_Peer.Message_Category'
              (Name => new String'(Attrs.Get_Value ("name")));
          Code_Peer.Project_Data'Class
-           (Self.Root_Inspection.all).Categories.Insert (Category);
-         Self.Categories.Insert
-           (Natural'Value (Attrs.Get_Value ("identifier")), Category);
+           (Self.Root_Inspection.all).Message_Categories.Insert
+           (Message_Category);
+         Self.Message_Categories.Insert
+           (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
+
+      elsif Qname = Annotation_Category_Tag then
+         Annotation_Category :=
+           new Code_Peer.Annotation_Category'
+             (Order => Natural'Value (Attrs.Get_Value ("identifier")),
+              Text  => new String'(Attrs.Get_Value ("name")));
+         Code_Peer.Project_Data'Class
+           (Self.Root_Inspection.all).Annotation_Categories.Insert
+           (Annotation_Category);
+         Self.Annotation_Categories.Insert
+           (Natural'Value (Attrs.Get_Value ("identifier")),
+            Annotation_Category);
 
       elsif Qname = File_Tag then
          File_Name :=
@@ -119,33 +133,37 @@ package body Code_Peer.Bridge_Database_Readers is
            Positive'Value (Attrs.Get_Value ("column"));
          Self.Subprogram_Node.Analysis_Data.Code_Peer_Data :=
            new Code_Peer.Subprogram_Data;
+         Self.Subprogram_Data :=
+           Code_Peer.Subprogram_Data_Access
+             (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data);
 
       elsif Qname = Message_Tag then
-         Code_Peer.Subprogram_Data'Class
-           (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data.all).
-           Messages.Append
-             (new Code_Peer.Message'
-                  (Positive'Value (Attrs.Get_Value ("line")),
-                   Positive'Value (Attrs.Get_Value ("column")),
-                   Self.Categories.Element
-                     (Positive'Value (Attrs.Get_Value ("category"))),
-                   Code_Peer.Message_Probability_Level'Value
-                     (Attrs.Get_Value ("probability")),
-                   new String'(Attrs.Get_Value ("text"))));
+         Self.Subprogram_Data.Messages.Append
+           (new Code_Peer.Message'
+              (Positive'Value (Attrs.Get_Value ("line")),
+               Positive'Value (Attrs.Get_Value ("column")),
+               Self.Message_Categories.Element
+                 (Positive'Value (Attrs.Get_Value ("category"))),
+               Code_Peer.Message_Probability_Level'Value
+                 (Attrs.Get_Value ("probability")),
+               new String'(Attrs.Get_Value ("text"))));
 
-      elsif Qname = Precondition_Tag then
-         Code_Peer.Subprogram_Data'Class
-           (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data.all).
-           Preconditions.Append
-             (new Code_Peer.Annotation'
-                  (Text => new String'(Attrs.Get_Value ("text"))));
+      elsif Qname = Annotation_Tag then
+         Annotation_Category :=
+           Self.Annotation_Categories.Element
+             (Natural'Value (Attrs.Get_Value ("category")));
 
-      elsif Qname = Postcondition_Tag then
-         Code_Peer.Subprogram_Data'Class
-           (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data.all).
-           Postconditions.Append
-             (new Code_Peer.Annotation'
-                  (Text => new String'(Attrs.Get_Value ("text"))));
+         if not Self.Subprogram_Data.Annotations.Contains
+                  (Annotation_Category)
+         then
+            Self.Subprogram_Data.Annotations.Insert
+              (Annotation_Category,
+               new Code_Peer.Annotation_Vectors.Vector);
+         end if;
+
+         Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
+           (new Code_Peer.Annotation'
+              (Text => new String'(Attrs.Get_Value ("text"))));
 
       else
          raise Program_Error with "Unexpected tag '" & Qname & "'";
