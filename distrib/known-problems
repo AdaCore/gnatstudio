@@ -223,7 +223,7 @@ Known Problems fixed in GPS 4.3.0
               messages with lines greater than 100.
   Workaround: Ignore those extra lines, they have no impact on the result
 
-- H805-023: Some references refered to as "read references"
+- H805-023: Some references referred to as "read references"
   Problem:    When you search for references to an entity, GPS will report
               some of these as "read reference" when they really are just an
               occurrence of the name. The GNAT compiler does not make a
