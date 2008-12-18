@@ -111,8 +111,6 @@ package body Code_Coverage is
       Subp_Node  : Subprogram_Access;
       Subp_Name  : String_Access;
       Subp_Cov   : access Subprogram_Coverage := null;
-      File_Cov   : constant access Node_Coverage := Node_Coverage
-        (File_Node.Analysis_Data.Coverage_Data.all)'Access;
       Line_Count : Natural := 0;
    begin
       loop
@@ -162,14 +160,6 @@ package body Code_Coverage is
 
          exit when Node = Null_Construct_Tree_Iterator;
       end loop;
-
-      if Line_Count > File_Cov.Children then
-         --  If we were processing an Ada body file with nested subprograms,
-         --  take for file line count the sum of the line counts of each
-         --  subprogram, in order to keep the proportions of the correct
-         --  coverage percentage
-         File_Cov.Children := Line_Count;
-      end if;
    end Add_Subprogram_Info;
 
    ------------------------------
