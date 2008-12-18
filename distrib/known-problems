@@ -28,6 +28,12 @@ Known Problems fixed in GPS 4.3.1
               restore it, it will not be restored to a maximized state.
   Workaround: Restore the window size manually.
 
+- HC01-014: Color selection under Windows
+  Problem:    Under Windows, the color selection widget in the preferences
+              dialog cannot be manipulated easily with the mouse.
+  Workaround: Enter the color value in the text entry instead of using the
+              mouse.
+
 - HB25-026: Opening GPS with the build mode set creates a dummy subdirectory.
   Problem:    When opening GPS with the build mode set to a mode different from
               "default" will create a subdirectory in the current directory,
