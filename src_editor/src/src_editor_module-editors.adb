@@ -32,7 +32,10 @@ use Src_Editor_Buffer.Line_Information;
 
 with Src_Editor_Box; use Src_Editor_Box;
 
+with Traces; use Traces;
+
 package body Src_Editor_Module.Editors is
+   Me : constant Debug_Handle := Create ("Editor.Buffer");
 
    Editor_Exception : exception;
 
@@ -419,12 +422,24 @@ package body Src_Editor_Module.Editors is
       This.Mark.Refs := This.Mark.Refs + 1;
    end Adjust;
 
+   --------------
+   -- Finalize --
+   --------------
+
    overriding procedure Finalize (This : in out Src_Editor_Mark) is
    begin
       This.Mark.Refs := This.Mark.Refs - 1;
 
       if This.Mark.Refs = 0 then
-         Delete_Mark (This.Buffer.Buffer, This.Mark.Mark);
+         if This.Mark.Mark /= null
+           and then Get_Name (This.Mark.Mark) = ""
+         then
+            --  Do not delete named marks, since we can still access them
+            --  through get_mark() anyway
+            Trace (Me, "Deleting unnamed mark");
+            Delete_Mark (This.Buffer.Buffer, This.Mark.Mark);
+         end if;
+
          Free (This.Mark);
       end if;
    end Finalize;
