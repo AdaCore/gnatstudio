@@ -646,3 +646,8 @@ Known Problems fixed in GPS 4.3.0
   Problem:    It is possible to have an empty revision log when
               committing multiple files selected on the VCS Explorer.
   Workaround: Commit one file at a time or use an activity
+
+- D502-003: Procedure name too long and overlap with VCS status
+  Problem:    On the editor's status bar if a procedure name is
+              too long it will overlap with the VCS status.
+  Workaround: Use the VCS Explorer which displays the proper status

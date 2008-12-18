@@ -2697,9 +2697,10 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type :=
-        Src_Editor_Buffer.Editable_Line_Type'Last) return String
+     (Editor     : access Source_Editor_Box_Record;
+      Line       : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last;
+      Max_Length : Positive := Positive'Last) return String
    is
       Normalized_Line : Editable_Line_Type := Line;
       Block           : Block_Record;
@@ -2711,7 +2712,7 @@ package body Src_Editor_Box is
       Block := Get_Subprogram_Block (Editor.Source_Buffer, Normalized_Line);
 
       if Block.Name /= null then
-         return Block.Name.all;
+         return Reduce (Block.Name.all, Max_Length);
       else
          return "";
       end if;
