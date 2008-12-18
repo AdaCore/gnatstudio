@@ -141,10 +141,10 @@ holding the mouse over a label, a tool tip pops up displaying on-line help
 about the selected item.
 
 Change the background color of the @code{Keywords} by clicking on the last
-down arrow, at the right of the @code{Keywords} line.
+button, at the right of the @code{Keywords} line.
 
 Choose a color, e.g a light green. When you're done with the color
-selection, simply click again on the arrow.
+selection, click on @code{OK} in the color selection dialog.
 
 Click on the @code{Apply} button and look at the effects in the source
 editor. If you like the new display, click on @code{OK} to confirm the

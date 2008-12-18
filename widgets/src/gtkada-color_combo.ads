@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2006                       --
---                             AdaCore                               --
+--                     Copyright (C) 2000-2008, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +17,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Extra.Combo_Button;  use Gtk.Extra.Combo_Button;
 with Gdk.Color;
-with Gtk.Color_Selection;
+with Gtk.Button; use Gtk.Button;
+with Gtk.Color_Selection_Dialog;
 
 package Gtkada.Color_Combo is
 
-   type Gtk_Color_Combo_Record is new Gtk_Combo_Button_Record with private;
+   type Gtk_Color_Combo_Record is new Gtk_Button_Record with private;
    type Gtk_Color_Combo is access all Gtk_Color_Combo_Record'Class;
 
    procedure Gtk_New (Combo : out Gtk_Color_Combo);
@@ -59,8 +58,8 @@ package Gtkada.Color_Combo is
    --  Emit the "color_changed" signal.
 
 private
-   type Gtk_Color_Combo_Record is new Gtk_Combo_Button_Record with record
+   type Gtk_Color_Combo_Record is new Gtk_Button_Record with record
       Color     : Gdk.Color.Gdk_Color;
-      Selection : Gtk.Color_Selection.Gtk_Color_Selection;
+      Selection : Gtk.Color_Selection_Dialog.Gtk_Color_Selection_Dialog;
    end record;
 end Gtkada.Color_Combo;

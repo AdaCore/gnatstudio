@@ -30,14 +30,12 @@ with Gdk.Window;           use Gdk.Window;
 
 with Glib;                 use Glib;
 
-with Gtk.Button;           use Gtk.Button;
 with Gtk.Color_Selection;  use Gtk.Color_Selection;
-with Gtk.Frame;            use Gtk.Frame;
+with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.Handlers;         use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Object;           use Gtk.Object;
 with Gtk.Pixmap;           use Gtk.Pixmap;
-with Gtk.Toggle_Button;    use Gtk.Toggle_Button;
 with Gtk.Widget;           use Gtk.Widget;
 
 with Gtkada.Handlers;      use Gtkada.Handlers;
@@ -46,11 +44,11 @@ with Pixmaps_IDE;          use Pixmaps_IDE;
 
 package body Gtkada.Color_Combo is
 
+   use Gtk.Color_Selection_Dialog;
+
    Combo_Class_Record : GObject_Class := Uninitialized_Class;
    Combo_Signals : constant chars_ptr_array :=
                      (1 => New_String (String (Signal_Color_Changed)));
-
-   --  ??? Should implement a destroy callback
 
    package Color_Cb is new Gtk.Handlers.Callback (Gtk_Color_Combo_Record);
 
@@ -62,8 +60,11 @@ package body Gtkada.Color_Combo is
      (Combo : access Gtk_Color_Combo_Record'Class);
    --  Redisplay the contents of the button
 
-   procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class);
+   procedure Button_Clicked (Combo : access Gtk_Color_Combo_Record'Class);
    --  Called when the button is clicked
+
+   procedure On_Destroy (Combo : access Gtk_Color_Combo_Record'Class);
+   --  Called when the combo is destroyed
 
    -------------
    -- Gtk_New --
@@ -83,7 +84,7 @@ package body Gtkada.Color_Combo is
       Signal_Parameters : constant Signal_Parameter_Types :=
                             (1 => (1 => GType_None));
    begin
-      Gtk.Extra.Combo_Button.Initialize (Combo);
+      Gtk.Button.Initialize (Combo, "");
 
       Initialize_Class_Record
         (Combo,
@@ -92,27 +93,49 @@ package body Gtkada.Color_Combo is
          Type_Name    => "GtkColorCombo",
          Parameters   => Signal_Parameters);
 
-      Widget_Callback.Object_Connect
-        (Get_Button (Combo), Signal_Clicked,
-         Widget_Callback.To_Marshaller (Button_Clicked'Access), Combo);
+      Color_Cb.Connect
+        (Combo, Signal_Clicked,
+         Color_Cb.To_Marshaller (Button_Clicked'Access));
+      Color_Cb.Connect
+        (Combo, Signal_Destroy,
+         Color_Cb.To_Marshaller (On_Destroy'Access));
 
-      Gtk_New (Combo.Selection);
-      Add (Get_Frame (Combo), Combo.Selection);
+      Gtk_New (Combo.Selection, "Select a color");
       Color_Cb.Object_Connect
-        (Combo.Selection, Signal_Color_Changed, Color_Selected'Access, Combo);
+        (Get_Colorsel (Combo.Selection),
+         Signal_Color_Changed, Color_Selected'Access, Combo);
       Color_Cb.Connect
         (Combo, Signal_Map, Display_Button'Access, After => True);
-      Show (Combo.Selection);
    end Initialize;
 
    --------------------
    -- Button_Clicked --
    --------------------
 
-   procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class) is
+   procedure Button_Clicked (Combo : access Gtk_Color_Combo_Record'Class) is
+      Result : Gtk_Response_Type;
+      pragma Unreferenced (Result);
+      Color_Combo : constant Gtk_Color_Combo := Gtk_Color_Combo (Combo);
+      Color       : constant Gdk_Color := Color_Combo.Color;
+
    begin
-      Set_Active (Get_Toggle_Button (Gtk_Color_Combo (Combo)), True);
+      if Run (Color_Combo.Selection) /= Gtk_Response_OK then
+         Color_Combo.Color := Color;
+         Display_Button (Color_Combo);
+         Color_Changed (Color_Combo);
+      end if;
+
+      Hide (Color_Combo.Selection);
    end Button_Clicked;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Combo : access Gtk_Color_Combo_Record'Class) is
+   begin
+      Destroy (Combo.Selection);
+   end On_Destroy;
 
    -------------------
    -- Color_Changed --
@@ -139,7 +162,7 @@ package body Gtkada.Color_Combo is
          Green   => Gdouble (Green (Combo.Color)) / Gdouble (Gushort'Last),
          Blue    => Gdouble (Blue (Combo.Color)) / Gdouble (Gushort'Last),
          Opacity => 1.0);
-      Set_Color (Combo.Selection, Components);
+      Set_Color (Get_Colorsel (Combo.Selection), Components);
       Display_Button (Combo);
    end Set_Color;
 
@@ -207,7 +230,7 @@ package body Gtkada.Color_Combo is
       Color      : Gdk_Color;
       Components : Color_Array;
    begin
-      Get_Color (Combo.Selection, Components);
+      Get_Color (Get_Colorsel (Combo.Selection), Components);
       Set_Rgb
         (Color,
          Gcolor_Int (Components (Red) * Gdouble (Guint16'Last)),
@@ -235,7 +258,7 @@ package body Gtkada.Color_Combo is
          return;
       end if;
 
-      Pixmap := Gtk_Pixmap (Get_Child (Get_Button (Combo)));
+      Pixmap := Gtk_Pixmap (Get_Child (Combo));
 
       if Pixmap = null then
          Create_From_Xpm_D
@@ -247,7 +270,7 @@ package body Gtkada.Color_Combo is
          Gtk_New (Pixmap, Val, Mask);
          Gdk.Pixmap.Unref (Val);
          Gdk.Bitmap.Unref (Mask);
-         Add (Get_Button (Combo), Pixmap);
+         Add (Combo, Pixmap);
          Show (Pixmap);
       end if;
 
