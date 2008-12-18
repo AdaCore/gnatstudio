@@ -21,11 +21,10 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Basic_Types;
-
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
@@ -397,20 +396,16 @@ package body Casing_Exceptions is
             W_Seps    : constant Character_Set :=
                           To_Set (" ;.:=(),/'#*+-""><&" &
                                   ASCII.HT & ASCII.CR & ASCII.LF);
-            Before    : aliased String := "1";
-            After     : aliased String := Integer'Image (Area'Length + 1);
-            Line      : aliased String :=
-              Integer'Image (Line_Information (Context));
-            Col       : aliased String :=
-              Basic_Types.Visible_Column_Type'Image
-                (Column_Information (Context));
-            Text      : constant String := Execute_GPS_Shell_Command
-              (Kernel, "Editor.get_chars",
-               (1 => Full_Name (File).all'Unrestricted_Access,
-                2 => Line'Unchecked_Access,
-                3 => Col'Unchecked_Access,
-                4 => Before'Unchecked_Access,
-                5 => After'Unchecked_Access));
+            Editor : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get (File);
+            Loc_Start : constant Editor_Location'Class := Editor.New_Location
+              (Line_Information (Context),
+               Integer (Column_Information (Context))).Forward_Char (-1);
+            Loc_End   : constant Editor_Location'Class := Editor.New_Location
+              (Line_Information (Context),
+               Integer (Column_Information (Context)))
+              .Forward_Char (Area'Length);
+            Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
          begin
             return Text'Length <= 1
               or else not Is_In (Text (Text'First), W_Seps)
