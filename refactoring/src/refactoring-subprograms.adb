@@ -22,8 +22,8 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with Dynamic_Arrays;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -129,7 +129,7 @@ package body Refactoring.Subprograms is
       In_Params_Count     : Natural := 0;
       Result, Decl     : Unbounded_String;
       Typ              : Entity_Information;
-      Args             : Argument_List_Access;
+      --  Args             : Argument_List_Access;
       First_Out_Param  : Entity_Information;
    begin
       for P in Parameter_Arrays.First .. Last (Params) loop
@@ -237,13 +237,16 @@ package body Refactoring.Subprograms is
       Result := Result & "begin" & ASCII.LF & "   ";
 
       for L in Line_Start .. Line_End loop
-         Args := new Argument_List'
-           (new String'(Full_Name (File).all),
-            new String'(Integer'Image (L)),
-            new String'(Integer'Image (1)));
-         Result := Result
-           & Execute_GPS_Shell_Command (Kernel, "Editor.get_chars", Args.all);
-         Free (Args);
+         declare
+            Editor : constant Editor_Buffer'Class :=
+              Kernel.Get_Buffer_Factory.Get (File);
+            Loc_Start : constant Editor_Location'Class := Editor.New_Location
+              (L, 1);
+            Loc_End   : constant Editor_Location'Class :=
+              Loc_Start.Forward_Char (1);
+         begin
+            Result := Result & String'(Editor.Get_Chars (Loc_Start, Loc_End));
+         end;
       end loop;
 
       if Out_Params_Count = 1
