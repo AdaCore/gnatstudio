@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.1
 
+- HC18-007: File totals for gcov-based file coverage are wrong
+  Problem:    When using GPS coverage tools (in menu Tools->Coverage), the
+              totals of lines reported in the coverage tree for file nodes
+              are wrong.
+  Workaround: Ignore this total, use the totals for subprograms or the
+              coverage annotations instead.
+
 - HC09-027: Debug->Display does not work with non-ASCII characters
   Problem:    When there are non ASCII characters in a file, the Debug->Display
               menu does not parse correctly the variable and uses a truncated
