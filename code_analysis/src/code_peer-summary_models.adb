@@ -204,6 +204,8 @@ package body Code_Peer.Summary_Models is
       Code_Analysis.Tree_Models.Initialize (Model, Tree);
 
       Model.Tree := Tree;
+
+      Model.Reconstruct;
    end Initialize;
 
    ----------------
