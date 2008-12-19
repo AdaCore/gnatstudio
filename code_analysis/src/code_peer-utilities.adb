@@ -19,9 +19,9 @@
 
 package body Code_Peer.Utilities is
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
@@ -53,9 +53,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (File  : Code_Analysis.File_Access;
@@ -83,9 +83,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Project : Code_Analysis.Project_Access;
@@ -113,9 +113,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Tree  : Code_Analysis.Code_Analysis_Tree;
@@ -143,9 +143,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
@@ -180,9 +180,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (File     : Code_Analysis.File_Access;
@@ -212,9 +212,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Project  : Code_Analysis.Project_Access;
@@ -244,9 +244,9 @@ package body Code_Peer.Utilities is
       return Result;
    end Compute_Messages_Count;
 
-   ------------------------------
-   -- Calculate_Messages_Count --
-   ------------------------------
+   ----------------------------
+   -- Compute_Messages_Count --
+   ----------------------------
 
    function Compute_Messages_Count
      (Tree     : Code_Analysis.Code_Analysis_Tree;
