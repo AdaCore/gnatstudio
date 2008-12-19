@@ -25,6 +25,7 @@ with Commands.Generic_Asynchronous;
 with Commands;                use Commands;
 with Entities.Queries;        use Entities.Queries;
 with Entities;                use Entities;
+with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
@@ -330,16 +331,14 @@ package body Refactoring.Performers is
       Column    : Visible_Column_Type;
       Length    : Integer) return String
    is
-      Args : Argument_List_Access := new Argument_List'
-        (new String'(Full_Name (From_File).all),
-         new String'(Integer'Image (Line)),
-         new String'(Visible_Column_Type'Image (Column)),
-         new String'("0"),
-         new String'(Integer'Image (Length)));
-      Text : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.get_chars", Args.all);
+      Editor : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (From_File);
+      Loc_Start : constant Editor_Location'Class := Editor.New_Location
+        (Line, Integer (Column));
+      Loc_End   : constant Editor_Location'Class :=
+        Loc_Start.Forward_Char (Length - 1);
+      Text : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
    begin
-      Free (Args);
       return Text;
    end Get_Text;
 
@@ -379,11 +378,10 @@ package body Refactoring.Performers is
                new String'("0"),
                new String'(Integer'Image (Replaced_Length)));
             Str           : constant String :=
-                              To_Lower (Execute_GPS_Shell_Command
-                                        (Kernel,
-                                         "Editor.get_chars",
-                                         Args_Get.all));
-
+              To_Lower (Execute_GPS_Shell_Command
+                (Kernel,
+                   "Editor.get_chars",
+                   Args_Get.all));
          begin
             Free (Args_Get);
 
