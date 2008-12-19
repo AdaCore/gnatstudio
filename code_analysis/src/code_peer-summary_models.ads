@@ -45,11 +45,18 @@ package Code_Peer.Summary_Models is
      (Model : access Summary_Model_Record'Class;
       Tree  : Code_Analysis.Code_Analysis_Tree);
 
+   procedure Set_Show_All_Subprograms
+     (Self : access Summary_Model_Record'Class;
+      Show : Boolean);
+   --  Toggle filering of the subprograms which don't have messages. Filtering
+   --  is enabled by default.
+
 private
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
-      Tree : Code_Analysis.Code_Analysis_Tree;
+      Tree                 : Code_Analysis.Code_Analysis_Tree;
+      Show_All_Subprograms : Boolean := False;
    end record;
 
    --  Override FilterableTreeModel subprograms

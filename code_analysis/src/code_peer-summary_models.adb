@@ -294,10 +294,28 @@ package body Code_Peer.Summary_Models is
       Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
       return Boolean
    is
-      pragma Unreferenced (Self, Project, File, Subprogram);
+      pragma Unreferenced (Project, File);
 
    begin
-      return True;
+      return Self.Show_All_Subprograms
+        or else Code_Peer.Utilities.Compute_Messages_Count
+                  (Subprogram.Node, Low) /= 0
+        or else Code_Peer.Utilities.Compute_Messages_Count
+                  (Subprogram.Node, Medium) /= 0
+        or else Code_Peer.Utilities.Compute_Messages_Count
+                  (Subprogram.Node, High) /= 0;
    end Is_Visible;
+
+   ------------------------------
+   -- Set_Show_All_Subprograms --
+   ------------------------------
+
+   procedure Set_Show_All_Subprograms
+     (Self : access Summary_Model_Record'Class;
+      Show : Boolean) is
+   begin
+      Self.Show_All_Subprograms := Show;
+      Self.Reconstruct;
+   end Set_Show_All_Subprograms;
 
 end Code_Peer.Summary_Models;

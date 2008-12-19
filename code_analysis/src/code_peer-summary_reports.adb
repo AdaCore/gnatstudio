@@ -22,11 +22,14 @@ with System;
 
 with Glib.Object;
 with Gdk.Event;
+with Gtk.Box;
 with Gtk.Cell_Renderer_Text;
+with Gtk.Check_Button;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Object;
 with Gtk.Scrolled_Window;
+with Gtk.Toggle_Button;
 with Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;
@@ -46,7 +49,14 @@ package body Code_Peer.Summary_Reports is
    package Summary_Report_Handler is new Gtk.Handlers.Callback
      (Summary_Report_Record);
 
+   package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
+     (Gtk.Check_Button.Gtk_Check_Button_Record, Summary_Report);
+
    procedure On_Destroy (Self : access Summary_Report_Record'Class);
+
+   procedure On_Show_All_Subprograms_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
 
    procedure Context_Func
      (Context      : in out GPS.Kernel.Selection_Context;
@@ -220,6 +230,8 @@ package body Code_Peer.Summary_Reports is
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Report_Pane   : Gtk.Paned.Gtk_Vpaned;
+      Filter_Box    : Gtk.Box.Gtk_Vbox;
+      Check         : Gtk.Check_Button.Gtk_Check_Button;
       Dummy         : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
@@ -344,6 +356,19 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self),
          False);
 
+      Gtk.Box.Gtk_New_Vbox (Filter_Box);
+      Self.Pack2 (Filter_Box);
+
+      Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
+--      Filter_Box.Pack_Start (Check, False);
+--  This check button are not displayed by default, see H519-028 discussion
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_All_Subprograms_Toggled'Access),
+         Summary_Report (Self));
+
       --
 
       GPS.Kernel.Modules.Register_Contextual_Menu
@@ -441,5 +466,17 @@ package body Code_Peer.Summary_Reports is
       --  analysis date is cleaned, because entity messages model catch
       --  direct references to the code analysis data.
    end On_Destroy;
+
+   -------------------------------------
+   -- On_Show_All_Subprograms_Toggled --
+   -------------------------------------
+
+   procedure On_Show_All_Subprograms_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report)
+   is
+   begin
+      Self.Analysis_Model.Set_Show_All_Subprograms (Object.Get_Active);
+   end On_Show_All_Subprograms_Toggled;
 
 end Code_Peer.Summary_Reports;
