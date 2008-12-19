@@ -206,4 +206,96 @@ package body Code_Peer.Summary_Models is
       Model.Tree := Tree;
    end Initialize;
 
+   ----------------
+   -- Is_Changed --
+   ----------------
+
+   overriding function Is_Changed
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
+   is
+      pragma Unreferenced (Self, Project);
+
+   begin
+      return True;
+   end Is_Changed;
+
+   ----------------
+   -- Is_Changed --
+   ----------------
+
+   overriding function Is_Changed
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
+   is
+      pragma Unreferenced (Self, Project, File);
+
+   begin
+      return True;
+   end Is_Changed;
+
+   ----------------
+   -- Is_Changed --
+   ----------------
+
+   overriding function Is_Changed
+     (Self       : access Summary_Model_Record;
+      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+      return Boolean
+   is
+      pragma Unreferenced (Self, Project, File, Subprogram);
+
+   begin
+      return True;
+   end Is_Changed;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
+   is
+      pragma Unreferenced (Self, Project);
+
+   begin
+      return True;
+   end Is_Visible;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
+   is
+      pragma Unreferenced (Self, Project, File);
+
+   begin
+      return True;
+   end Is_Visible;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self       : access Summary_Model_Record;
+      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+      return Boolean
+   is
+      pragma Unreferenced (Self, Project, File, Subprogram);
+
+   begin
+      return True;
+   end Is_Visible;
+
 end Code_Peer.Summary_Models;

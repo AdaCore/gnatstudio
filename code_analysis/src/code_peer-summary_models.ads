@@ -33,7 +33,7 @@ package Code_Peer.Summary_Models is
    Number_Of_Columns          : constant := 6;
 
    type Summary_Model_Record is
-     new Code_Analysis.Tree_Models.Simple_Tree_Model_Record with private;
+     new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
 
    type Summary_Model is access all Summary_Model_Record'Class;
 
@@ -48,9 +48,49 @@ package Code_Peer.Summary_Models is
 private
 
    type Summary_Model_Record is
-     new Code_Analysis.Tree_Models.Simple_Tree_Model_Record with record
+     new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree : Code_Analysis.Code_Analysis_Tree;
    end record;
+
+   --  Override FilterableTreeModel subprograms
+
+   overriding function Is_Visible
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
+   --  Returns True if specified project must be visible in the tree
+
+   overriding function Is_Visible
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
+   --  Returns True if specified file must be visible in the tree
+
+   overriding function Is_Visible
+     (Self       : access Summary_Model_Record;
+      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+      return Boolean;
+   --  Returns True if specified subprogram must be visible in the tree
+
+   overriding function Is_Changed
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
+   --  Returns True if specified project data has been changed
+
+   overriding function Is_Changed
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Tree_Models.Project_Item_Access;
+      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
+   --  Returns True if specified file data has been changed
+
+   overriding function Is_Changed
+     (Self       : access Summary_Model_Record;
+      Project    : Code_Analysis.Tree_Models.Project_Item_Access;
+      File       : Code_Analysis.Tree_Models.File_Item_Access;
+      Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
+      return Boolean;
+   --  Returns True if specified subprogram data has been changed
 
    --  Override standard GtkTreeModel subprograms.
 
