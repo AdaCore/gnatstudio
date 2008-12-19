@@ -1,0 +1,92 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2008, AdaCore                   --
+--                                                                   --
+-- GPS is Free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This file contains an abstract implementation of the Gtk+ tree model for
+--  the message categories. Derived model must override Get_N_Columns,
+--  Get_Column_Type and Get_Value subprograms.
+
+with Glib;
+with Gtk.Tree_Model;
+with Gtkada.Abstract_List_Model;
+
+package Code_Peer.Message_Categories_Models is
+
+   type Message_Categories_Model_Record is abstract
+     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with
+       private;
+
+   procedure Initialize
+     (Self       : access Message_Categories_Model_Record'Class;
+      Categories : Code_Peer.Message_Category_Sets.Set);
+
+   function Category_At
+     (Self : access Message_Categories_Model_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Code_Peer.Message_Category_Access;
+
+   procedure Clear (Self : access Message_Categories_Model_Record);
+
+   procedure Row_Changed
+     (Self     : access Message_Categories_Model_Record'Class;
+      Category : Code_Peer.Message_Category_Access);
+   --  Emit "row_changed" signal.
+
+   --  GtkTreeModel operations
+
+   overriding function Get_Iter
+     (Self : access Message_Categories_Model_Record;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter;
+
+   overriding function Get_Path
+     (Self : access Message_Categories_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path;
+
+   overriding procedure Next
+     (Self : access Message_Categories_Model_Record;
+      Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
+
+   overriding function N_Children
+     (Self : access Message_Categories_Model_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
+      return Glib.Gint;
+
+   overriding function Nth_Child
+     (Self   : access Message_Categories_Model_Record;
+      Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
+      N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
+
+private
+
+   function Less
+     (Left, Right : Code_Peer.Message_Category_Access) return Boolean;
+
+   package Message_Category_Ordered_Sets is new Ada.Containers.Ordered_Sets
+     (Code_Peer.Message_Category_Access, Less, Code_Peer."=");
+
+   type Message_Categories_Model_Record is abstract
+     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with record
+      Categories : Message_Category_Ordered_Sets.Set;
+   end record;
+
+   function Create_Tree_Iter
+     (Self     : access Message_Categories_Model_Record'Class;
+      Category : Code_Peer.Message_Category_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
+
+end Code_Peer.Message_Categories_Models;
