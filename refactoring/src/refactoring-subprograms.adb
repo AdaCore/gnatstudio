@@ -129,7 +129,6 @@ package body Refactoring.Subprograms is
       In_Params_Count     : Natural := 0;
       Result, Decl     : Unbounded_String;
       Typ              : Entity_Information;
-      --  Args             : Argument_List_Access;
       First_Out_Param  : Entity_Information;
    begin
       for P in Parameter_Arrays.First .. Last (Params) loop
