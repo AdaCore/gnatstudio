@@ -216,10 +216,10 @@ package body Code_Peer.Summary_Reports is
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree)
    is
-      Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Column   : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
-      Dummy    : Glib.Gint;
+      Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      Dummy         : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
    begin
@@ -250,33 +250,33 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Entity");
       Column.Set_Resizable (True);
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_Start (Renderer, True);
-      Column.Add_Attribute (Renderer, "text", 0);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, True);
+      Column.Add_Attribute (Text_Renderer, "text", 0);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"High");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_End (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer, "text", Code_Peer.Summary_Models.High_Count_Column);
+        (Text_Renderer, "text", Code_Peer.Summary_Models.High_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Medium");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_End (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer, "text", Code_Peer.Summary_Models.Medium_Count_Column);
+        (Text_Renderer, "text", Code_Peer.Summary_Models.Medium_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Low");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_End (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer, "text", Code_Peer.Summary_Models.Low_Count_Column);
+        (Text_Renderer, "text", Code_Peer.Summary_Models.Low_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
@@ -295,40 +295,40 @@ package body Code_Peer.Summary_Reports is
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Message category");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_Start (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer,
+        (Text_Renderer,
          "text",
          Code_Peer.Entity_Messages_Models.Category_Name_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"High");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_Start (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer,
+        (Text_Renderer,
          "text",
          Code_Peer.Entity_Messages_Models.High_Count_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Medium");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_Start (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer,
+        (Text_Renderer,
          "text",
          Code_Peer.Entity_Messages_Models.Medium_Count_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Low");
-      Gtk.Cell_Renderer_Text.Gtk_New (Renderer);
-      Column.Pack_Start (Renderer, False);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
-        (Renderer,
+        (Text_Renderer,
          "text",
          Code_Peer.Entity_Messages_Models.Low_Count_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
