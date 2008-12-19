@@ -219,11 +219,12 @@ package body Code_Peer.Summary_Reports is
       Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      Report_Pane   : Gtk.Paned.Gtk_Vpaned;
       Dummy         : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
    begin
-      Gtk.Box.Initialize_Vbox (Self);
+      Gtk.Paned.Initialize_Hpaned (Self);
       Glib.Object.Initialize_Class_Record
         (Self,
          Signals,
@@ -238,8 +239,11 @@ package body Code_Peer.Summary_Reports is
       Self.Kernel := Kernel;
       Self.Tree   := Tree;
 
+      Gtk.Paned.Gtk_New_Vpaned (Report_Pane);
+      Self.Pack1 (Report_Pane, Resize => True);
+
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Self.Pack_Start (Scrolled);
+      Report_Pane.Pack1 (Scrolled, Resize => True);
 
       Code_Peer.Summary_Models.Gtk_New (Self.Analysis_Model, Tree);
       Gtk.Tree_View.Gtk_New
@@ -280,7 +284,7 @@ package body Code_Peer.Summary_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Self.Pack_Start (Scrolled);
+      Report_Pane.Pack2 (Scrolled);
 
       Code_Peer.Entity_Messages_Models.Gtk_New
         (Self.Messages_Model,

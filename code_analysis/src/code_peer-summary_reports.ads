@@ -18,18 +18,18 @@
 -----------------------------------------------------------------------
 
 with Glib;
-with Gtk.Box;
-with Gtk.Tree_View;
+with Gtk.Paned;
+private with Gtk.Tree_View;
 
 with GPS.Kernel.Modules;
 
 with Code_Analysis;
-with Code_Peer.Entity_Messages_Models;
-with Code_Peer.Summary_Models;
+private with Code_Peer.Entity_Messages_Models;
+private with Code_Peer.Summary_Models;
 
 package Code_Peer.Summary_Reports is
 
-   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with private;
+   type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with private;
 
    type Summary_Report is access all Summary_Report_Record'Class;
 
@@ -61,7 +61,7 @@ package Code_Peer.Summary_Reports is
 
 private
 
-   type Summary_Report_Record is new Gtk.Box.Gtk_Vbox_Record with record
+   type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with record
       Kernel         : GPS.Kernel.Kernel_Handle;
       Tree           : Code_Analysis.Code_Analysis_Tree;
       Analysis_Model : Code_Peer.Summary_Models.Summary_Model;
