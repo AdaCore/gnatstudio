@@ -163,4 +163,14 @@ package body Code_Peer is
       return Left.Order < Right.Order;
    end Less;
 
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left, Right : Code_Peer.Message_Category_Access) return Boolean is
+   begin
+      return Left.Name.all < Right.Name.all;
+   end Less;
+
 end Code_Peer;

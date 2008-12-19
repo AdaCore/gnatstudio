@@ -107,4 +107,12 @@ package Code_Peer is
 
    Code_Peer_Editor_Mark_Name_Prefix : constant String := "CodePeer-";
 
+private
+
+   function Less
+     (Left, Right : Code_Peer.Message_Category_Access) return Boolean;
+
+   package Message_Category_Ordered_Sets is new Ada.Containers.Ordered_Sets
+     (Code_Peer.Message_Category_Access, Less, Code_Peer."=");
+
 end Code_Peer;

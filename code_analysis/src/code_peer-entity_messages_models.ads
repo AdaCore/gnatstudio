@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-private with Ada.Containers.Ordered_Sets;
-
 private with Glib.Values;
 private with Gtk.Tree_Model;
 
@@ -70,12 +68,6 @@ package Code_Peer.Entity_Messages_Models is
       Entity : Code_Analysis.Subprogram_Access);
 
 private
-
-   function Less
-     (Left, Right : Code_Peer.Message_Category_Access) return Boolean;
-
-   package Message_Category_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (Code_Peer.Message_Category_Access, Less, Code_Peer."=");
 
    type Entity_Messages_Model_Record is
      new Code_Peer.Message_Categories_Models.Message_Categories_Model_Record

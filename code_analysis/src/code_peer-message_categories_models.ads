@@ -73,12 +73,6 @@ package Code_Peer.Message_Categories_Models is
 
 private
 
-   function Less
-     (Left, Right : Code_Peer.Message_Category_Access) return Boolean;
-
-   package Message_Category_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (Code_Peer.Message_Category_Access, Less, Code_Peer."=");
-
    type Message_Categories_Model_Record is abstract
      new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with record
       Categories : Message_Category_Ordered_Sets.Set;

@@ -214,16 +214,6 @@ package body Code_Peer.Entity_Messages_Models is
       Categories.Iterate (Process'Access);
    end Initialize;
 
-   ----------
-   -- Less --
-   ----------
-
-   function Less
-     (Left, Right : Code_Peer.Message_Category_Access) return Boolean is
-   begin
-      return Left.Name.all < Right.Name.all;
-   end Less;
-
    ---------
    -- Set --
    ---------
