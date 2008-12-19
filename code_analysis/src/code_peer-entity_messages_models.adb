@@ -25,7 +25,7 @@ package body Code_Peer.Entity_Messages_Models is
    -- Clear --
    -----------
 
-   procedure Clear (Self : access Entity_Messages_Model_Record'Class) is
+   overriding procedure Clear (Self : access Entity_Messages_Model_Record) is
    begin
       Code_Peer.Message_Categories_Models.Message_Categories_Model_Record
         (Self.all).Clear;

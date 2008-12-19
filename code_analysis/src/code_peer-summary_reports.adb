@@ -21,9 +21,11 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
+with Glib.Values;
 with Gdk.Event;
 with Gtk.Box;
 with Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;
 with Gtk.Handlers;
 with Gtk.Menu;
@@ -43,16 +45,32 @@ package body Code_Peer.Summary_Reports is
 
    use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-   package Report_Return_Cb is new Gtk.Handlers.User_Return_Callback
-     (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Summary_Report);
+   package Tree_View_Report_Return_Boolean_Callbacks is
+     new Gtk.Handlers.User_Return_Callback
+           (Gtk.Tree_View.Gtk_Tree_View_Record, Boolean, Summary_Report);
 
-   package Summary_Report_Handler is new Gtk.Handlers.Callback
+   package Summary_Report_Callbacks is new Gtk.Handlers.Callback
      (Summary_Report_Record);
+
+   package Cell_Renderer_Toggle_Report_Callbacks is
+     new Gtk.Handlers.User_Callback
+           (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
+            Summary_Report);
+
+   package Cell_Renderer_Toggle_Report_Callbacks_Marshallers is
+     new Cell_Renderer_Toggle_Report_Callbacks.Marshallers.Generic_Marshaller
+           (Interfaces.C.Strings.chars_ptr, Glib.Values.Get_Chars);
 
    package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
      (Gtk.Check_Button.Gtk_Check_Button_Record, Summary_Report);
 
    procedure On_Destroy (Self : access Summary_Report_Record'Class);
+
+   procedure On_Toggle_Category_Visibility
+     (Object : access
+        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+      Path   : Interfaces.C.Strings.chars_ptr;
+      Self   : Summary_Report);
 
    procedure On_Show_All_Subprograms_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
@@ -226,13 +244,14 @@ package body Code_Peer.Summary_Reports is
       Module : GPS.Kernel.Modules.Module_ID;
       Tree   : Code_Analysis.Code_Analysis_Tree)
    is
-      Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
-      Report_Pane   : Gtk.Paned.Gtk_Vpaned;
-      Filter_Box    : Gtk.Box.Gtk_Vbox;
-      Check         : Gtk.Check_Button.Gtk_Check_Button;
-      Dummy         : Glib.Gint;
+      Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      Toggle_Renderer : Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle;
+      Report_Pane     : Gtk.Paned.Gtk_Vpaned;
+      Filter_Box      : Gtk.Box.Gtk_Vbox;
+      Check           : Gtk.Check_Button.Gtk_Check_Button;
+      Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
    begin
@@ -243,10 +262,10 @@ package body Code_Peer.Summary_Reports is
          Class_Record,
          "CodePeerSummaryReport",
          Signal_Parameters);
-      Summary_Report_Handler.Connect
+      Summary_Report_Callbacks.Connect
         (Self,
          Gtk.Object.Signal_Destroy,
-         Summary_Report_Handler.To_Marshaller (On_Destroy'Access));
+         Summary_Report_Callbacks.To_Marshaller (On_Destroy'Access));
 
       Self.Kernel := Kernel;
       Self.Tree   := Tree;
@@ -257,7 +276,15 @@ package body Code_Peer.Summary_Reports is
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Report_Pane.Pack1 (Scrolled, Resize => True);
 
-      Code_Peer.Summary_Models.Gtk_New (Self.Analysis_Model, Tree);
+      Code_Peer.Summary_Models.Gtk_New
+        (Self.Analysis_Model,
+         Tree,
+         Code_Peer.Project_Data'Class
+           (Code_Analysis.Get_Or_Create
+              (Tree,
+               GPS.Kernel.Project.Get_Project
+                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
+                    Message_Categories);
       Gtk.Tree_View.Gtk_New
         (Self.Analysis_View,
          Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Model));
@@ -349,10 +376,11 @@ package body Code_Peer.Summary_Reports is
          Code_Peer.Entity_Messages_Models.Low_Count_Column);
       Dummy := Self.Messages_View.Append_Column (Column);
 
-      Report_Return_Cb.Connect
+      Tree_View_Report_Return_Boolean_Callbacks.Connect
         (Self.Analysis_View,
          Gtk.Widget.Signal_Button_Press_Event,
-         Report_Return_Cb.To_Marshaller (On_Analysis_Click'Access),
+         Tree_View_Report_Return_Boolean_Callbacks.To_Marshaller
+           (On_Analysis_Click'Access),
          Summary_Report (Self),
          False);
 
@@ -368,6 +396,47 @@ package body Code_Peer.Summary_Reports is
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_All_Subprograms_Toggled'Access),
          Summary_Report (Self));
+
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Filter_Box.Pack_Start (Scrolled);
+
+      Code_Peer.Messages_Filter_Models.Gtk_New
+        (Self.Hide_Model,
+         Code_Peer.Project_Data'Class
+           (Code_Analysis.Get_Or_Create
+              (Tree,
+               GPS.Kernel.Project.Get_Project
+                 (Kernel)).Analysis_Data.Code_Peer_Data.all).
+                    Message_Categories);
+
+      Gtk.Tree_View.Gtk_New (Self.Hide_View, Self.Hide_Model);
+      Scrolled.Add (Self.Hide_View);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Gtk.Cell_Renderer_Toggle.Gtk_New (Toggle_Renderer);
+      Column.Pack_End (Toggle_Renderer, False);
+      Column.Add_Attribute
+        (Toggle_Renderer,
+         "active",
+         Code_Peer.Messages_Filter_Models.Active_Column);
+      Dummy := Self.Hide_View.Append_Column (Column);
+      Cell_Renderer_Toggle_Report_Callbacks.Connect
+        (Toggle_Renderer,
+         Gtk.Cell_Renderer_Toggle.Signal_Toggled,
+         Cell_Renderer_Toggle_Report_Callbacks_Marshallers.To_Marshaller
+           (On_Toggle_Category_Visibility'Access),
+         Summary_Report (Self),
+         True);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Message categories");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Messages_Filter_Models.Name_Column);
+      Dummy := Self.Hide_View.Append_Column (Column);
 
       --
 
@@ -461,10 +530,13 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Destroy (Self : access Summary_Report_Record'Class) is
    begin
+      --  Models' internal data must be cleaned before the code analysis data
+      --  is cleaned, because models catch direct references to the code
+      --  analysis data.
+
+      Self.Analysis_Model.Clear;
       Self.Messages_Model.Clear;
-      --  Entity messages model internal data must be cleaned before the code
-      --  analysis date is cleaned, because entity messages model catch
-      --  direct references to the code analysis data.
+      Self.Hide_Model.Clear;
    end On_Destroy;
 
    -------------------------------------
@@ -478,5 +550,31 @@ package body Code_Peer.Summary_Reports is
    begin
       Self.Analysis_Model.Set_Show_All_Subprograms (Object.Get_Active);
    end On_Show_All_Subprograms_Toggled;
+
+   -----------------------------------
+   -- On_Toggle_Category_Visibility --
+   -----------------------------------
+
+   procedure On_Toggle_Category_Visibility
+     (Object : access
+        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+      Path   : Interfaces.C.Strings.chars_ptr;
+      Self   : Summary_Report)
+   is
+      Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                         Self.Hide_Model.Get_Iter_From_String
+                           (Interfaces.C.Strings.Value (Path));
+
+   begin
+      if Object.Get_Active then
+         Self.Hide_Model.Hide (Self.Hide_Model.Category_At (Iter));
+
+      else
+         Self.Hide_Model.Show (Self.Hide_Model.Category_At (Iter));
+      end if;
+
+      Self.Analysis_Model.Set_Visible_Message_Categories
+        (Self.Hide_Model.Get_Visible_Categories);
+   end On_Toggle_Category_Visibility;
 
 end Code_Peer.Summary_Reports;

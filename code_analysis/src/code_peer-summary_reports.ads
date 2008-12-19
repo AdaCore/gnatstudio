@@ -26,6 +26,7 @@ with GPS.Kernel.Modules;
 with Code_Analysis;
 private with Code_Peer.Entity_Messages_Models;
 private with Code_Peer.Summary_Models;
+private with Code_Peer.Messages_Filter_Models;
 
 package Code_Peer.Summary_Reports is
 
@@ -68,6 +69,8 @@ private
       Analysis_View  : Gtk.Tree_View.Gtk_Tree_View;
       Messages_Model : Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
       Messages_View  : Gtk.Tree_View.Gtk_Tree_View;
+      Hide_Model     : Code_Peer.Messages_Filter_Models.Messages_Filter_Model;
+      Hide_View      : Gtk.Tree_View.Gtk_Tree_View;
    end record;
 
    Signal_Activated : constant Glib.Signal_Name := "activated";

@@ -25,7 +25,8 @@ package body Code_Peer.Utilities is
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
-      Level      : Code_Peer.Message_Probability_Level) return Natural
+      Level      : Code_Peer.Message_Probability_Level;
+      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
    is
       Result : Natural := 0;
 
@@ -40,7 +41,9 @@ package body Code_Peer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
-         if Message.Probability = Level then
+         if Message.Probability = Level
+           and then Categories.Contains (Message.Category)
+         then
             Result := Result + 1;
          end if;
       end Process;
@@ -58,8 +61,9 @@ package body Code_Peer.Utilities is
    ----------------------------
 
    function Compute_Messages_Count
-     (File  : Code_Analysis.File_Access;
-      Level : Code_Peer.Message_Probability_Level) return Natural
+     (File       : Code_Analysis.File_Access;
+      Level      : Code_Peer.Message_Probability_Level;
+      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
    is
       Result : Natural := 0;
 
@@ -74,7 +78,8 @@ package body Code_Peer.Utilities is
                         Code_Analysis.Subprogram_Maps.Element (Position);
 
       begin
-         Result := Result + Compute_Messages_Count (Subprogram, Level);
+         Result :=
+           Result + Compute_Messages_Count (Subprogram, Level, Categories);
       end Process;
 
    begin
@@ -88,8 +93,9 @@ package body Code_Peer.Utilities is
    ----------------------------
 
    function Compute_Messages_Count
-     (Project : Code_Analysis.Project_Access;
-      Level   : Code_Peer.Message_Probability_Level) return Natural
+     (Project    : Code_Analysis.Project_Access;
+      Level      : Code_Peer.Message_Probability_Level;
+      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
    is
       Result : Natural := 0;
 
@@ -104,7 +110,7 @@ package body Code_Peer.Utilities is
                            Code_Analysis.File_Maps.Element (Position);
 
       begin
-         Result := Result + Compute_Messages_Count (File, Level);
+         Result := Result + Compute_Messages_Count (File, Level, Categories);
       end Process;
 
    begin
@@ -118,8 +124,9 @@ package body Code_Peer.Utilities is
    ----------------------------
 
    function Compute_Messages_Count
-     (Tree  : Code_Analysis.Code_Analysis_Tree;
-      Level : Code_Peer.Message_Probability_Level) return Natural
+     (Tree       : Code_Analysis.Code_Analysis_Tree;
+      Level      : Code_Peer.Message_Probability_Level;
+      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
    is
       Result : Natural := 0;
 
@@ -134,7 +141,8 @@ package body Code_Peer.Utilities is
                      Code_Analysis.Project_Maps.Element (Position);
 
       begin
-         Result := Result + Compute_Messages_Count (Project, Level);
+         Result :=
+           Result + Compute_Messages_Count (Project, Level, Categories);
       end Process;
 
    begin

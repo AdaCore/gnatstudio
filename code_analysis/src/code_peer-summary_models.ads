@@ -38,12 +38,14 @@ package Code_Peer.Summary_Models is
    type Summary_Model is access all Summary_Model_Record'Class;
 
    procedure Gtk_New
-     (Model : out Summary_Model;
-      Tree  : Code_Analysis.Code_Analysis_Tree);
+     (Model      : out Summary_Model;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : Code_Peer.Message_Category_Sets.Set);
 
    procedure Initialize
-     (Model : access Summary_Model_Record'Class;
-      Tree  : Code_Analysis.Code_Analysis_Tree);
+     (Model      : access Summary_Model_Record'Class;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : Code_Peer.Message_Category_Sets.Set);
 
    procedure Set_Show_All_Subprograms
      (Self : access Summary_Model_Record'Class;
@@ -51,12 +53,20 @@ package Code_Peer.Summary_Models is
    --  Toggle filering of the subprograms which don't have messages. Filtering
    --  is enabled by default.
 
+   procedure Set_Visible_Message_Categories
+     (Self : access Summary_Model_Record'Class;
+      To   : Code_Peer.Message_Category_Sets.Set);
+
+   procedure Clear (Self : access Summary_Model_Record);
+
 private
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree                 : Code_Analysis.Code_Analysis_Tree;
       Show_All_Subprograms : Boolean := False;
+      Message_Categories   : Code_Peer.Message_Category_Sets.Set;
+      --  Set of the message categories, which is showed in the report
    end record;
 
    --  Override FilterableTreeModel subprograms
@@ -99,7 +109,7 @@ private
       return Boolean;
    --  Returns True if specified subprogram data has been changed
 
-   --  Override standard GtkTreeModel subprograms.
+   --  Override standard GtkTreeModel subprograms
 
    overriding function Get_N_Columns
      (Self : access Summary_Model_Record) return Glib.Gint;

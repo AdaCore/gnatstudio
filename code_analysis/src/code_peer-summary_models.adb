@@ -28,6 +28,15 @@ package body Code_Peer.Summary_Models is
    use type Code_Analysis.Project_Access;
    use type Code_Analysis.Subprogram_Access;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : access Summary_Model_Record) is
+   begin
+      Self.Message_Categories.Clear;
+   end Clear;
+
    ---------------------
    -- Get_Column_Type --
    ---------------------
@@ -98,24 +107,24 @@ package body Code_Peer.Summary_Models is
          if Subprogram_Node /= null then
             Set_Integer_Image
               (Code_Peer.Utilities.Compute_Messages_Count
-                 (Subprogram_Node, Level));
+                 (Subprogram_Node, Level, Self.Message_Categories));
 
          elsif File_Node /= null then
             Set_Integer_Image
               (Code_Peer.Utilities.Compute_Messages_Count
-                 (File_Node, Level));
+                 (File_Node, Level, Self.Message_Categories));
 
          elsif Project_Node /= null then
             Set_Integer_Image
               (Code_Peer.Utilities.Compute_Messages_Count
-                 (Project_Node, Level));
+                 (Project_Node, Level, Self.Message_Categories));
 
          else
             --  "Total" line
 
             Set_Integer_Image
               (Code_Peer.Utilities.Compute_Messages_Count
-                 (Self.Tree, Level));
+                 (Self.Tree, Level, Self.Message_Categories));
          end if;
       end Set_Count_Image;
 
@@ -186,11 +195,12 @@ package body Code_Peer.Summary_Models is
    -------------
 
    procedure Gtk_New
-     (Model : out Summary_Model;
-      Tree  : Code_Analysis.Code_Analysis_Tree) is
+     (Model      : out Summary_Model;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : Code_Peer.Message_Category_Sets.Set) is
    begin
       Model := new Summary_Model_Record;
-      Initialize (Model, Tree);
+      Initialize (Model, Tree, Categories);
    end Gtk_New;
 
    ----------------
@@ -198,12 +208,14 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    procedure Initialize
-     (Model : access Summary_Model_Record'Class;
-      Tree  : Code_Analysis.Code_Analysis_Tree) is
+     (Model      : access Summary_Model_Record'Class;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : Code_Peer.Message_Category_Sets.Set) is
    begin
       Code_Analysis.Tree_Models.Initialize (Model, Tree);
 
       Model.Tree := Tree;
+      Model.Message_Categories := Categories;
 
       Model.Reconstruct;
    end Initialize;
@@ -277,9 +289,13 @@ package body Code_Peer.Summary_Models is
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
    is
-      pragma Unreferenced (Self, Project, File);
+      pragma Unreferenced (Self, Project);
 
    begin
+      if File.Node.Name.Base_Name = "Standard" then
+         return False;
+      end if;
+
       return True;
    end Is_Visible;
 
@@ -299,11 +315,11 @@ package body Code_Peer.Summary_Models is
    begin
       return Self.Show_All_Subprograms
         or else Code_Peer.Utilities.Compute_Messages_Count
-                  (Subprogram.Node, Low) /= 0
+                  (Subprogram.Node, Low, Self.Message_Categories) /= 0
         or else Code_Peer.Utilities.Compute_Messages_Count
-                  (Subprogram.Node, Medium) /= 0
+                  (Subprogram.Node, Medium, Self.Message_Categories) /= 0
         or else Code_Peer.Utilities.Compute_Messages_Count
-                  (Subprogram.Node, High) /= 0;
+                  (Subprogram.Node, High, Self.Message_Categories) /= 0;
    end Is_Visible;
 
    ------------------------------
@@ -317,5 +333,18 @@ package body Code_Peer.Summary_Models is
       Self.Show_All_Subprograms := Show;
       Self.Reconstruct;
    end Set_Show_All_Subprograms;
+
+   ------------------------------------
+   -- Set_Visible_Message_Categories --
+   ------------------------------------
+
+   procedure Set_Visible_Message_Categories
+     (Self : access Summary_Model_Record'Class;
+      To   : Code_Peer.Message_Category_Sets.Set)
+   is
+   begin
+      Self.Message_Categories := To;
+      Self.Reconstruct;
+   end Set_Visible_Message_Categories;
 
 end Code_Peer.Summary_Models;
