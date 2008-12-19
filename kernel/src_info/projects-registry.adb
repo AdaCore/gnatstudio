@@ -2498,7 +2498,7 @@ package body Projects.Registry is
       Dir_Iter : Path_Iterator;
 
    begin
-      --  Nothing to do if Prj.Subdirs is not set.
+      --  Nothing to do if Prj.Subdirs is not set
       if Prj.Subdirs = null then
          return;
       end if;

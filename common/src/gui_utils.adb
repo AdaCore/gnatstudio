@@ -17,9 +17,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;             use Ada.Calendar;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
@@ -94,8 +96,6 @@ with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with System;                   use System;
 with Traces;                   use Traces;
-
-with Ada.Calendar;             use Ada.Calendar;
 
 package body GUI_Utils is
 
