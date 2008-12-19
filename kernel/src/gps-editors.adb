@@ -37,6 +37,42 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end End_Of_Line;
 
+   overriding function Block_Start
+     (This : Dummy_Editor_Location) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Block_Start;
+
+   overriding function Block_End
+     (This : Dummy_Editor_Location) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Block_End;
+
+   overriding function Block_Type
+     (This : Dummy_Editor_Location) return Language_Category
+   is
+      pragma Unreferenced (This);
+   begin
+      return Cat_Unknown;
+   end Block_Type;
+
+   overriding function Line (This : Dummy_Editor_Location) return Integer is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Line;
+
+   overriding function Column (This : Dummy_Editor_Location) return Integer is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Column;
+
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class

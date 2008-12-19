@@ -36,6 +36,7 @@ with Gtk.Toolbar;                use Gtk.Toolbar;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Projects;                   use Projects;
+with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -425,6 +426,7 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
+      --  COVERED
       S_Line : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel, "Editor.cursor_get_line",
@@ -490,15 +492,11 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Natural
    is
-      Line_Img : aliased String := Image (Line);
-      S_Line   : constant String :=
-                   Execute_GPS_Shell_Command
-                     (Kernel,
-                      "Editor.block_get_end",
-                      (Full_Name (File).all'Unrestricted_Access,
-                       Line_Img'Unchecked_Access));
+      Editor : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
    begin
-      return Natural'Value (S_Line);
+      return Loc.Block_End.Line;
    exception
       when Constraint_Error =>
          return 0;
@@ -513,15 +511,11 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Natural
    is
-      Line_Img : aliased String := Image (Line);
-      S_Line   : constant String :=
-                   Execute_GPS_Shell_Command
-                     (Kernel,
-                      "Editor.block_get_start",
-                      (Full_Name (File).all'Unrestricted_Access,
-                       Line_Img'Unchecked_Access));
+      Editor : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
    begin
-      return Natural'Value (S_Line);
+      return Loc.Block_Start.Line;
    exception
       when Constraint_Error =>
          return 0;
@@ -536,15 +530,11 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Language_Category
    is
-      Line_Img : aliased String := Image (Line);
-      B_Type   : constant String :=
-                   Execute_GPS_Shell_Command
-                     (Kernel,
-                      "Editor.block_get_type",
-                      (Full_Name (File).all'Unrestricted_Access,
-                       Line_Img'Unchecked_Access));
+      Editor : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
    begin
-      return Language_Category'Value (B_Type);
+      return Loc.Block_Type;
    exception
       when Constraint_Error =>
          return Cat_Unknown;

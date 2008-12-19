@@ -19,6 +19,7 @@
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Ada.Finalization; use Ada.Finalization;
+with Language;         use Language;
 
 package GPS.Editors is
 
@@ -78,6 +79,25 @@ package GPS.Editors is
    function End_Of_Line
      (This : Editor_Location) return Editor_Location'Class is abstract;
    --  Return a location located at the end of the line on which self is.
+
+   function Block_Start
+     (This : Editor_Location) return Editor_Location'Class is abstract;
+   --  Return the location of the beginning of the current block
+
+   function Block_End
+     (This : Editor_Location) return Editor_Location'Class is abstract;
+   --  Return the location of the end of the current block
+
+   function Block_Type
+     (This : Editor_Location) return Language_Category is abstract;
+   --  Return the type of the block surrounding the location. This type
+   --  indicates whether the block is a subprogram, an if statement,...
+
+   function Line (This : Editor_Location) return Integer is abstract;
+   --  Return the line of the location
+
+   function Column (This : Editor_Location) return Integer is abstract;
+   --  Return the column of the location
 
    function Forward_Char
      (This : Editor_Location;
@@ -172,6 +192,19 @@ private
 
    overriding function End_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_Start
+     (This : Dummy_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_End
+     (This : Dummy_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_Type
+     (This : Dummy_Editor_Location) return Language_Category;
+
+   overriding function Line (This : Dummy_Editor_Location) return Integer;
+
+   overriding function Column (This : Dummy_Editor_Location) return Integer;
 
    overriding function Forward_Char
      (This : Dummy_Editor_Location;

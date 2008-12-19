@@ -32,6 +32,8 @@ use Src_Editor_Buffer.Line_Information;
 
 with Src_Editor_Box; use Src_Editor_Box;
 
+with Language; use Language;
+
 with Traces; use Traces;
 
 package body Src_Editor_Module.Editors is
@@ -107,6 +109,19 @@ package body Src_Editor_Module.Editors is
 
    overriding function End_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_Start
+     (This : Src_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_End
+     (This : Src_Editor_Location) return Editor_Location'Class;
+
+   overriding function Block_Type
+     (This : Src_Editor_Location) return Language_Category;
+
+   overriding function Line (This : Src_Editor_Location) return Integer;
+
+   overriding function Column (This : Src_Editor_Location) return Integer;
 
    overriding function Forward_Char
      (This  : Src_Editor_Location;
@@ -382,6 +397,119 @@ package body Src_Editor_Module.Editors is
          raise Editor_Exception with -"Invalid location";
       end if;
    end End_Of_Line;
+
+   -----------------
+   -- Block_Start --
+   -----------------
+
+   overriding function Block_Start
+     (This : Src_Editor_Location) return Editor_Location'Class
+   is
+      Success : Boolean;
+      Line    : Buffer_Line_Type;
+      Block   : Block_Record;
+      Iter    : Gtk_Text_Iter;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+
+      if Success then
+         Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+
+         return Src_Editor_Location'
+           (Editor_Location with
+            Buffer => This.Buffer,
+            Line   => Block.First_Line,
+            Column => 1);
+      else
+         return Nil_Editor_Location;
+      end if;
+   end Block_Start;
+
+   ---------------
+   -- Block_End --
+   ---------------
+
+   overriding function Block_End
+     (This : Src_Editor_Location) return Editor_Location'Class
+   is
+      Success     : Boolean;
+      Line        : Buffer_Line_Type;
+      Block       : Block_Record;
+      Iter, Iter2 : Gtk_Text_Iter;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+
+      if Success then
+         Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+
+         Get_Iter_At_Line_Offset
+           (Source_Buffer (Get_Buffer (Iter)), Iter2,
+            Line_Number => Gint (Block.Last_Line),
+            Char_Offset => 1);
+         Forward_Lines
+           (Iter2,
+            Count  => -1,
+            Result => Success);
+
+         if not Success then
+            return Nil_Editor_Location;
+         end if;
+
+         Forward_To_Line_End (Iter2, Success);
+
+         if not Success then
+            return Nil_Editor_Location;
+         end if;
+
+         return Create_Editor_Location (This.Buffer, Iter2);
+      else
+         return Nil_Editor_Location;
+      end if;
+   end Block_End;
+
+   ---------------
+   -- Bloc_Type --
+   ---------------
+
+   overriding function Block_Type
+     (This : Src_Editor_Location) return Language_Category
+   is
+      Success : Boolean;
+      Line    : Buffer_Line_Type;
+      Block   : Block_Record;
+      Iter    : Gtk_Text_Iter;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+
+      if Success then
+         Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+
+         return Block.Block_Type;
+      else
+         return Cat_Unknown;
+      end if;
+   end Block_Type;
+
+   ----------
+   -- Line --
+   ----------
+
+   overriding function Line (This : Src_Editor_Location) return Integer is
+   begin
+      return Integer (This.Line);
+   end Line;
+
+   ------------
+   -- Column --
+   ------------
+
+   overriding function Column (This : Src_Editor_Location) return Integer is
+   begin
+      return Integer (This.Column);
+   end Column;
 
    ------------------
    -- Forward_Char --
