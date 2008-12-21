@@ -348,16 +348,6 @@ package body VCS_View.Explorer is
       end if;
    end On_Remove_Project;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Natural) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
    -------------------------
    -- Display_File_Status --
    -------------------------

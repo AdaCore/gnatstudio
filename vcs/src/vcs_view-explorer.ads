@@ -86,7 +86,7 @@ private
    --  Store for each file the current status. This is a cache to avoid sending
    --  requests to the VCS.
 
-   procedure Free (X : in out Natural);
+   procedure Free (X : in out Natural) is null;
 
    package File_Hash is new String_Hash (Natural, Free, 1);
    use File_Hash.String_Hash_Table;
