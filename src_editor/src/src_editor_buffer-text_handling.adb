@@ -292,16 +292,16 @@ package body Src_Editor_Buffer.Text_Handling is
       --  instead the Line, First and Last variable below which represent the
       --  real word position on the line.
 
-      Lang          : Language_Access;
-      Line          : Editable_Line_Type;
-      Column        : Character_Offset_Type;
-      First         : Character_Offset_Type;
-      W_End         : Gtk_Text_Iter;
-      W_Start       : Gtk_Text_Iter;
-      Indent_Params : Indent_Parameters;
-      Indent_Kind   : Indentation_Kind;
-      Result        : Boolean;
-      Char, Prev    : Character;
+      Lang              : Language_Access;
+      Line              : Editable_Line_Type;
+      Column            : Character_Offset_Type;
+      First             : Character_Offset_Type;
+      W_End             : Gtk_Text_Iter;
+      W_Start           : Gtk_Text_Iter;
+      Indent_Params     : Indent_Parameters;
+      Indent_Kind       : Indentation_Kind;
+      Result            : Boolean;
+      Char, Prev, PPrev : Character;
 
       ------------------
       -- Replace_Text --
@@ -318,7 +318,7 @@ package body Src_Editor_Buffer.Text_Handling is
             --  The parser sometimes callback with a null replacement.
             --  Ignore those cases as we do not want to indent the code here.
             Replace_Slice
-              (Buffer, Replace, Line, First + Character_Offset_Type (F) - 1,
+              (Buffer, Replace, Line, First,
                Before => 0, After => Length);
 
             --  Compute position of the next insert point. This can happen only
@@ -337,7 +337,13 @@ package body Src_Editor_Buffer.Text_Handling is
 
       else
          Get_Cursor_Position (Buffer, W_End);
-         Backward_Char (W_End, Result);
+
+         Result := False;
+
+         if not Is_Start (W_End) then
+            Backward_Char (W_End, Result);
+         end if;
+
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy /= On_The_Fly
@@ -350,7 +356,9 @@ package body Src_Editor_Buffer.Text_Handling is
             return;
          end if;
 
-         Forward_Char (W_End, Result);
+         if Result then
+            Forward_Char (W_End, Result);
+         end if;
       end if;
 
       Get_Iter_Position (Source_Buffer (Buffer), W_End, Line, Column);
@@ -365,9 +373,12 @@ package body Src_Editor_Buffer.Text_Handling is
 
       First := Column;
       Char  := ' ';
+      Prev  := ' ';
+      PPrev := ' ';
 
       loop
          Backward_Char (W_Start, Result);
+         PPrev := Prev;
          Prev := Char;
          Char := Get_Char (W_Start);
 
@@ -378,10 +389,11 @@ package body Src_Editor_Buffer.Text_Handling is
             return;
          end if;
 
-         if Char = ''' and Prev = ''' then
-            --  We don't want to parse past the second quote
+         if Char = ''' and then PPrev = ''' then
+            --  This is a character, we do not want to parse it
             Forward_Char (W_Start, Result);
-            First := First + 1;
+            Forward_Char (W_Start, Result);
+            First := First + 2;
             exit;
          end if;
 
