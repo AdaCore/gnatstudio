@@ -7,6 +7,14 @@ Known Problems fixed in GPS 4.3.1
   Workaround: Ignore this total, use the totals for subprograms or the
               coverage annotations instead.
 
+- HC12-017: Cannot force specific word in debugger contextual menu
+  Problem:    If you right-click inside the selection, the debugger contextual
+              menu uses that selection as the name of the entity. But this
+              does not work when selecting the last component of an expression
+              ("C" in "A.B.C"), where the full expression is always sent to
+              the debugger
+  Workaround: Type "graph display C" in the debugger console
+
 - HC09-027: Debug->Display does not work with non-ASCII characters
   Problem:    When there are non ASCII characters in a file, the Debug->Display
               menu does not parse correctly the variable and uses a truncated

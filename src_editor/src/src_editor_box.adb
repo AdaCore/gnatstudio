@@ -1401,19 +1401,33 @@ package body Src_Editor_Box is
                   Get_Iter_Position
                     (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
 
-                  Set_Entity_Information
-                    (Context,
-                     Entity_Name   => Get_Text (Entity_Start, Entity_End),
-                     Entity_Column => Expand_Tabs
-                       (Editor.Source_Buffer, The_Line, The_Column),
-                     From_Expression =>
-                       Parse_Expression_Backward_To_String
-                         (Get_Language (Get_Buffer (Editor)),
-                          Buffer            => Str.Contents (1 .. Str.Length),
-                          Start_Offset      =>
-                            Integer (Get_Line_Index (Entity_End)),
-                          Simple_Expression => True));
-               end if;
+                  if Click_In_Selection then
+                     --  If there was a selection and we clicked in it, we only
+                     --  should take the selection into account. For instance,
+                     --  this is a way for the user to force a specific name to
+                     --  be sent to the debugger instead of the whole
+                     --  expression
+
+                     Set_Entity_Information
+                       (Context,
+                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Column => Expand_Tabs
+                          (Editor.Source_Buffer, The_Line, The_Column));
+
+                  else
+                     Set_Entity_Information
+                       (Context,
+                        Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                        Entity_Column => Expand_Tabs
+                          (Editor.Source_Buffer, The_Line, The_Column),
+                        From_Expression =>
+                          Parse_Expression_Backward_To_String
+                            (Get_Language (Get_Buffer (Editor)),
+                             Buffer          => Str.Contents (1 .. Str.Length),
+                             Start_Offset      =>
+                               Integer (Get_Line_Index (Entity_End)),
+                             Simple_Expression => True));
+                  end if;
 
                Free (Str);
             end;
