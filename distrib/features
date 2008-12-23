@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Dec 11, 2008
+GPS 4.4 NEW FEATURES LIST Current as of Dec 23, 2008
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -95,6 +95,13 @@ NF-44-DB04-011 New auto VCS mode (2008-10-27)
   the proper external VCS. This is useful in the context where different
   people are not using the same VCS locally. For example developers
   tracking a Subversion repository using Git (git-svn module).
+
+NF-44-DA05-006 Support for VCS without log (2008-12-23)
+
+  It is now possible to create a VCS that do not require a log
+  (logs are handled by external commands like ClearCase GUI for
+  example). In this case GPS won't ask for a log file while
+  doing the commit/add/remove VCS actions.
 
 NF-44-DA05-003 VCS menus are now filtered (2008-11-03)
 

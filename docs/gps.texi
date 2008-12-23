@@ -16578,6 +16578,13 @@ the directory where the external VCS stores the local repository
 information. For example for Subversion this is @file{.svn}. This
 information is used when the project is setup to select automatically
 the external VCS. @xref{Version Control System}.
+
+@item require_log
+The attribute @code{require_log} specifies if the VCS require a log
+for the commit/add/delete actions. It can take the values @code{TRUE}
+or @code{FALSE}. If it is set to @code{TRUE} GPS will ensure that
+a log is created for each file. If it is set to @code{FALSE} GPS will
+not ask for log, it is expected to be handled by the external VCS.
 @end table
 
 Note that to support group commit with shared log on GPS both

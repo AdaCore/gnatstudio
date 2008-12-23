@@ -219,6 +219,9 @@ package body VCS_Module is
       function One_Action_Defined (Actions : VCS_Actions) return Boolean;
       --  Returns true if at least one action in Actions is defined
 
+      function Log_Required_In_VCS return Boolean;
+      --  Returns true if at least one VCS requires log content
+
       VCS_Menu    : constant String := "/_" & (-"VCS");
       Dir_Filter  : constant Action_Filter :=
                       Lookup_Filter (Kernel, "Directory");
@@ -272,6 +275,31 @@ package body VCS_Module is
          end loop;
          return False;
       end One_Action_Defined;
+
+      -------------------------
+      -- Log_Required_In_VCS --
+      -------------------------
+
+      function Log_Required_In_VCS return Boolean is
+
+         procedure Check_Log (VCS : VCS_Access);
+         --  Check that log requires VCS
+
+         Result : Boolean := False;
+
+         ---------------
+         -- Check_Log --
+         ---------------
+
+         procedure Check_Log (VCS : VCS_Access) is
+         begin
+            Result := Result or VCS.Require_Log;
+         end Check_Log;
+
+      begin
+         For_Every_VCS (Check_Log'Access);
+         return Result;
+      end Log_Required_In_VCS;
 
       ----------------------
       -- Create_Separator --
@@ -432,26 +460,30 @@ package body VCS_Module is
          File_Filter,
          On_Menu_Remove_Annotate'Access, (1 => Annotate));
 
-      Register_Action_Menu
-        ("Edit revision log",
-         -"Edit the revision log for the current file",
-         -"Edit revision log",
-         File_Filter,
-         On_Menu_Edit_Log'Access, (Add, Commit));
+      --  Add the log handling actions only if at least one VCS supports log
 
-      Register_Action_Menu
-        ("Edit global ChangeLog",
-         -"Edit the global ChangeLog for the current selection",
-         -"Edit global ChangeLog",
-         File_Filter,
-         On_Menu_Edit_ChangeLog'Access, (Add, Remove, Commit));
+      if Log_Required_In_VCS then
+         Register_Action_Menu
+           ("Edit revision log",
+            -"Edit the revision log for the current file",
+            -"Edit revision log",
+            File_Filter,
+            On_Menu_Edit_Log'Access, (Add, Commit));
 
-      Register_Action_Menu
-        ("Remove revision log",
-         -"Remove the revision log corresponding to the current file",
-         -"Remove revision log",
-         File_Filter,
-         On_Menu_Remove_Log'Access, (Add, Remove, Commit));
+         Register_Action_Menu
+           ("Edit global ChangeLog",
+            -"Edit the global ChangeLog for the current selection",
+            -"Edit global ChangeLog",
+            File_Filter,
+            On_Menu_Edit_ChangeLog'Access, (Add, Remove, Commit));
+
+         Register_Action_Menu
+           ("Remove revision log",
+            -"Remove the revision log corresponding to the current file",
+            -"Remove revision log",
+            File_Filter,
+            On_Menu_Remove_Log'Access, (Add, Remove, Commit));
+      end if;
 
       Create_Separator;
 

@@ -826,7 +826,7 @@ package body VCS_View_API is
          Via_Log  : Boolean := False) is
       begin
          if Actions (Action) /= null then
-            if Via_Log then
+            if Via_Log and Ref.Require_Log then
                Gtk_New (Item, Actions (Action).all & (-" (via revision log)"));
             else
                Gtk_New (Item, Actions (Action).all);
@@ -1132,26 +1132,30 @@ package body VCS_View_API is
                Items_Inserted := True;
             end if;
 
-            Gtk_New (Item, Label => -"Edit revision log");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Edit_Log'Access, Context);
-            Set_Sensitive (Item, Section_Active);
+            if Ref.Require_Log then
+               Gtk_New (Item, Label => -"Edit revision log");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Edit_Log'Access, Context);
+               Set_Sensitive (Item, Section_Active);
 
-            Gtk_New (Item, Label => -"Edit global ChangeLog");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Edit_ChangeLog'Access, Context);
-            Set_Sensitive (Item, Section_Active);
+               Gtk_New (Item, Label => -"Edit global ChangeLog");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Edit_ChangeLog'Access, Context);
+               Set_Sensitive (Item, Section_Active);
 
-            Gtk_New (Item, Label => -"Remove revision log");
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               On_Menu_Remove_Log'Access, Context);
-            Set_Sensitive (Item, Section_Active);
+               Gtk_New (Item, Label => -"Remove revision log");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, Gtk.Menu_Item.Signal_Activate,
+                  On_Menu_Remove_Log'Access, Context);
+               Set_Sensitive (Item, Section_Active);
+
+               Items_Inserted := True;
+            end if;
 
             Add_Separator;
 
@@ -2075,6 +2079,7 @@ package body VCS_View_API is
    is
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
       Suffix         : constant String := Action_To_Log_Suffix (Action);
+      VCS            : constant VCS_Access := Get_Current_Ref (Context);
       Real_Files     : String_List.List;
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
@@ -2120,33 +2125,35 @@ package body VCS_View_API is
          Files_Temp := Next (Files_Temp);
       end loop;
 
-      Files_Temp := String_List.First (Real_Files);
-
       --  Open log editors for files that don't have a log
 
-      while Files_Temp /= String_List.Null_Node loop
-         File := Create (Full_Filename => String_List.Data (Files_Temp));
+      if VCS.Require_Log then
+         Files_Temp := String_List.First (Real_Files);
 
-         if Get_Log_From_File (Kernel, File, False) = GNATCOLL.VFS.No_File then
-            Get_Log_From_ChangeLog (Kernel, File, Suffix);
-            All_Logs_Exist := False;
+         while Files_Temp /= String_List.Null_Node loop
+            File := Create (Full_Filename => String_List.Data (Files_Temp));
 
-            Open_File_Editor
-              (Kernel,
-               Get_Log_From_File (Kernel, File, True, Suffix),
-               Group            => Group_Consoles,
-               Initial_Position => Position_Bottom);
-         end if;
+            if Get_Log_From_File (Kernel, File, False)
+              = GNATCOLL.VFS.No_File
+            then
+               Get_Log_From_ChangeLog (Kernel, File, Suffix);
+               All_Logs_Exist := False;
 
-         Files_Temp := String_List.Next (Files_Temp);
-      end loop;
+               Open_File_Editor
+                 (Kernel,
+                  Get_Log_From_File (Kernel, File, True, Suffix),
+                  Group            => Group_Consoles,
+                  Initial_Position => Position_Bottom);
+            end if;
+
+            Files_Temp := String_List.Next (Files_Temp);
+         end loop;
+      end if;
 
       --  If All files have a log, commit the whole lot
 
       if All_Logs_Exist then
-         Log_Action_Files
-           (Kernel, Get_Current_Ref (Context),
-            Action, Real_Files, No_Activity);
+         Log_Action_Files (Kernel, VCS, Action, Real_Files, No_Activity);
       end if;
 
       String_List.Free (Real_Files);

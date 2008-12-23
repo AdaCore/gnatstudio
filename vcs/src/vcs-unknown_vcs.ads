@@ -33,6 +33,9 @@ package VCS.Unknown_VCS is
 
    overriding function Name (Ref : access Unknown_VCS_Record) return String;
 
+   overriding function Require_Log
+     (Ref : access Unknown_VCS_Record) return Boolean;
+
    procedure Free (Ref : access Unknown_VCS_Record);
 
    overriding procedure Get_Status

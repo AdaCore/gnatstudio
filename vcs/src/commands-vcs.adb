@@ -138,7 +138,24 @@ package body Commands.VCS is
 
       Log := First (Command.Logs);
 
-      if Length (Command.Logs) = 1 then
+      if Length (Command.Logs) = 0 then
+         --  No log, this is the case when no log is required by the external
+         --  VCS.
+         case Command.Action is
+            when Commit =>
+               Commit (Command.Rep, Command.Filenames, "");
+
+            when Add =>
+               Add (Command.Rep, Command.Filenames, "");
+
+            when Remove =>
+               Remove (Command.Rep, Command.Filenames, "");
+
+            when others =>
+               raise Program_Error;
+         end case;
+
+      elsif Length (Command.Logs) = 1 then
          case Command.Action is
             when Commit =>
                Commit (Command.Rep, Command.Filenames, Data (Log));

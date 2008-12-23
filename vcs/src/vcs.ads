@@ -114,6 +114,10 @@ package VCS is
    function Commit_Directory (Ref : access VCS_Record) return Boolean;
    --  Returns True if an added/removed directories needs to be committed
 
+   function Require_Log (Ref : access VCS_Record) return Boolean;
+   --  Returns Trus if GPS must check for log presence and open if necessary
+   --  log editor.
+
    function Ignore_Filename (Ref : access VCS_Record) return String;
    --  Returns the file containing a list of file to ignore. Returns the empty
    --  string if no such file is set for this VCS.
@@ -526,6 +530,7 @@ private
       Query_Status_By_Dir : Boolean    := False;
       Atomic_Commands     : Boolean    := False;
       Commit_Directory    : Boolean    := False;
+      Require_Log         : Boolean    := True;
       Path_Style          : OS_Utils.Path_Style := System_Default;
       Ignore_Filename     : GNAT.Strings.String_Access;
       Used                : Boolean    := False;

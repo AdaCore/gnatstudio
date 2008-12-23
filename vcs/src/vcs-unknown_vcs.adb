@@ -54,6 +54,18 @@ package body VCS.Unknown_VCS is
       return Unknown_VCS_Name;
    end Name;
 
+   -----------------
+   -- Require_Log --
+   -----------------
+
+   overriding function Require_Log
+     (Ref : access Unknown_VCS_Record) return Boolean
+   is
+      pragma Unreferenced (Ref);
+   begin
+      return False;
+   end Require_Log;
+
    ----------
    -- Free --
    ----------

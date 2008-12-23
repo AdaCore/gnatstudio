@@ -1433,6 +1433,8 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "commit_directory", "FALSE"));
          Ref.Administrative_Dir := new String'
            (Get_Attribute (M, "administrative_directory", ""));
+         Ref.Require_Log := Boolean'Value
+           (Get_Attribute (M, "require_log", "TRUE"));
 
          --  dir_sep is an alias for path_style and is obsolescent, if both
          --  path_style and dir_sep are set, parth_style value is used.

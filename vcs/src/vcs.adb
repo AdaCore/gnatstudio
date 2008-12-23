@@ -364,4 +364,13 @@ package body VCS is
       return Ref.Action_Labels (Action) /= null;
    end Is_Action_Defined;
 
+   -----------------
+   -- Require_Log --
+   -----------------
+
+   function Require_Log (Ref : access VCS_Record) return Boolean is
+   begin
+      return Ref.Require_Log;
+   end Require_Log;
+
 end VCS;

@@ -733,58 +733,63 @@ package body Log_Utils is
       First_Check, Last_Check : Command_Access := null;
 
    begin
-      if not Save_Files (Kernel, Files, Activity, Save_Logs => True) then
+      if not Save_Files
+        (Kernel, Files, Activity, Save_Logs => Ref.Require_Log)
+      then
          return;
       end if;
 
       --  Build the log for the commit
 
-      if Activity = No_Activity then
-         while Files_Temp /= Null_Node loop
-            --  Save any open log editors, and then get the corresponding logs
-
-            File := Create (Full_Filename => Data (Files_Temp));
-            Append (Logs, Get_Log (Kernel, File));
-            Files_Temp := Next (Files_Temp);
-         end loop;
-
-      else
-         --  Create the Check_Activity command
-
-         if Action = Commit then
-            Create (Check_Activity_Command, Kernel, Activity);
-         end if;
-
-         if Get_Group_Commit (Activity) then
-            declare
-               T_Set : Translate_Set :=
-                         Get_Activity_Template_Tags (Kernel, Activity);
-            begin
-               Insert (T_Set, Assoc ("IS_PATCH", False));
-               Append
-                 (Logs, Parse (Get_Activity_Log_Template (Kernel), T_Set));
-            end;
-
-         else
+      if Ref.Require_Log then
+         if Activity = No_Activity then
             while Files_Temp /= Null_Node loop
                --  Save any open log editors, and then get the corresponding
                --  logs.
 
                File := Create (Full_Filename => Data (Files_Temp));
-
-               if Get_Log_From_File (Kernel, File, False) = No_File then
-                  --  No individual logs
-                  Append (Logs, Get_Log (Kernel, Activity));
-
-               else
-                  Append
-                    (Logs,
-                     Add_LF_To_Log (Get_Log (Kernel, File))
-                     & Get_Log (Kernel, Activity));
-               end if;
-
+               Append (Logs, Get_Log (Kernel, File));
                Files_Temp := Next (Files_Temp);
             end loop;
+
+         else
+            --  Create the Check_Activity command
+
+            if Action = Commit then
+               Create (Check_Activity_Command, Kernel, Activity);
+            end if;
+
+            if Get_Group_Commit (Activity) then
+               declare
+                  T_Set : Translate_Set :=
+                            Get_Activity_Template_Tags (Kernel, Activity);
+               begin
+                  Insert (T_Set, Assoc ("IS_PATCH", False));
+                  Append
+                    (Logs, Parse (Get_Activity_Log_Template (Kernel), T_Set));
+               end;
+
+            else
+               while Files_Temp /= Null_Node loop
+                  --  Save any open log editors, and then get the corresponding
+                  --  logs.
+
+                  File := Create (Full_Filename => Data (Files_Temp));
+
+                  if Get_Log_From_File (Kernel, File, False) = No_File then
+                     --  No individual logs
+                     Append (Logs, Get_Log (Kernel, Activity));
+
+                  else
+                     Append
+                       (Logs,
+                        Add_LF_To_Log (Get_Log (Kernel, File))
+                        & Get_Log (Kernel, Activity));
+                  end if;
+
+                  Files_Temp := Next (Files_Temp);
+               end loop;
+            end if;
          end if;
       end if;
 
@@ -812,7 +817,10 @@ package body Log_Utils is
 
       --  Check if the activity log is not empty
 
-      if Activity /= No_Activity and then Get_Log (Kernel, Activity) = "" then
+      if Activity /= No_Activity
+        and then Ref.Require_Log
+        and then Get_Log (Kernel, Activity) = ""
+      then
          if Message_Dialog
            ((-"The activity log file is empty,")
             & ASCII.LF &
@@ -852,10 +860,7 @@ package body Log_Utils is
                  (Project, VCS_File_Check);
                Log_Check_Command  : constant String := Get_Attribute_Value
                  (Project, VCS_Log_Check);
-               Log_File           : constant Virtual_File :=
-                                      Get_Log_From_File
-                                        (Kernel, File, False,
-                                         Action_To_Log_Suffix (Action));
+               Log_File           : Virtual_File;
                File_Args          : String_List.List;
                Log_Args           : String_List.List;
                Head_List          : String_List.List;
@@ -911,6 +916,11 @@ package body Log_Utils is
                      Last_Check := Command_Access (File_Checks);
                      OS_Lib.Free (C_Args);
                   end if;
+               end if;
+
+               if Ref.Require_Log then
+                  Log_File := Get_Log_From_File
+                    (Kernel, File, False, Action_To_Log_Suffix (Action));
                end if;
 
                if Log_Check_Command /= ""
