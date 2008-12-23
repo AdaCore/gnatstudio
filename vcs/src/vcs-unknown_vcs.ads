@@ -24,7 +24,7 @@
 package VCS.Unknown_VCS is
 
    type Unknown_VCS_Record is new VCS_Record with private;
-   --  A value used to reference a Unknown_VCS repository.
+   --  A value used to reference a Unknown_VCS repository
 
    type Unknown_VCS_Access is access all Unknown_VCS_Record'Class;
 

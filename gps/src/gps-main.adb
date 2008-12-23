@@ -292,7 +292,7 @@ procedure GPS.Main is
    --  true, or as a standard command otherwise).
 
    procedure Display_Prj_Messages (S : String);
-   --  Display messages coming from the Prj packages.
+   --  Display messages coming from the Prj packages
 
    ---------------------
    -- Clean_Parameter --
