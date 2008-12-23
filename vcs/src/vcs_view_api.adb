@@ -1128,6 +1128,8 @@ package body VCS_View_API is
                   On_Menu_Remove_Annotate'Access, Context);
 
                Set_Sensitive (Item, Section_Active);
+
+               Items_Inserted := True;
             end if;
 
             Gtk_New (Item, Label => -"Edit revision log");
