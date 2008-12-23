@@ -1436,10 +1436,6 @@ procedure GPS.Main is
          VCS_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
-      if Active (ClearCase_Trace) then
-         VCS.ClearCase.Register_Module (GPS_Main.Kernel);
-      end if;
-
       if Active (VFS_Trace) then
          VFS_Module.Register_Module (GPS_Main.Kernel);
       end if;
@@ -1449,6 +1445,12 @@ procedure GPS.Main is
       end if;
 
       GPS.Kernel.Preferences.Register_Module (GPS_Main.Kernel);
+
+      if Active (ClearCase_Trace)
+        and then Clearcase_Active.Get_Pref
+      then
+         VCS.ClearCase.Register_Module (GPS_Main.Kernel);
+      end if;
 
       if Active (Custom_Trace) then
          Custom_Module.Register_Module (GPS_Main.Kernel);

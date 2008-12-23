@@ -231,6 +231,7 @@ package GPS.Kernel.Preferences is
 
    -- VCS --
    Implicit_Status           : Boolean_Preference;
+   Clearcase_Active          : Boolean_Preference;
    Hide_Up_To_Date           : Boolean_Preference;
    Hide_Not_Registered       : Boolean_Preference;
    CVS_Command               : String_Preference;

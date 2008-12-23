@@ -814,6 +814,14 @@ package body GPS.Kernel.Preferences is
          Label   => -"Implicit status",
          Page    => -"VCS");
 
+      Clearcase_Active := Create
+        (Manager => Kernel.Preferences,
+         Name    => "VCS-Activate-Clearcase",
+         Default => False,
+         Doc     => -("Whether the internal ClearCase module is activated."),
+         Label   => -"ClearCase module",
+         Page    => -"VCS");
+
       -- Diff_Utils --
 
       Diff_Cmd := Create

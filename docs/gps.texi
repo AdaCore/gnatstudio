@@ -10071,6 +10071,10 @@ example to get the revision numbers of new files after an update
 command. If the network connection with the repository is slow
 disabling this command can speed-up the VCS actions.
 
+@item ClearCase module
+@cindex ClearCase module
+Whether the ClearCase module is activated or disabled
+
 @end table
 
 @item @b{Visual diff}
