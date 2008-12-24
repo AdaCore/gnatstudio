@@ -1064,8 +1064,8 @@ package body VCS_View_API is
             end;
 
          else
-            Log_Exists := Has_File_Information (Context) and then
-              Get_Log_From_File
+            Log_Exists := Has_File_Information (Context)
+              and then Get_Log_From_File
                 (Kernel, File_Information (Context), False) /= No_File;
 
             Add_Action (Status_Files, On_Menu_Get_Status'Access);
