@@ -17,7 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Directories;
 with Ada.Strings.Fixed;
+with GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -28,10 +30,14 @@ with Gtk.Text_Mark;
 with Gtkada.MDI;
 
 with Basic_Types;
+with GNATCOLL.Utils;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Timeout;
 with GPS.Location_View;
+with Projects;
 
 with Code_Peer.Bridge_Database_Readers;
 with Code_Peer.Shell_Commands;
@@ -44,6 +50,11 @@ package body Code_Peer.Module is
       Module  : Code_Peer_Module_Id;
       Project : Code_Analysis.Project_Access;
       File    : Code_Analysis.File_Access;
+   end record;
+
+   type Bridge_Context is
+     new GPS.Kernel.Timeout.Callback_Data_Record with record
+      Module : Code_Peer_Module_Id;
    end record;
 
    package Context_CB is new Gtk.Handlers.User_Callback
@@ -76,6 +87,11 @@ package body Code_Peer.Module is
    procedure On_Load
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
+
+   procedure On_Bridge_Exit
+     (Process : GPS.Kernel.Timeout.Process_Data;
+      Status  : Integer);
+   --  Called when gps_inspector_bridge program execution is done
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -265,9 +281,9 @@ package body Code_Peer.Module is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
 
-      Input  : Input_Sources.File.File_Input;
-      Reader : Code_Peer.Bridge_Database_Readers.Reader;
-      Child  : GPS.Kernel.MDI.GPS_MDI_Child;
+      Input   : Input_Sources.File.File_Input;
+      Reader  : Code_Peer.Bridge_Database_Readers.Reader;
+      Child   : GPS.Kernel.MDI.GPS_MDI_Child;
 
    begin
       if Self.Report = null then
@@ -348,6 +364,19 @@ package body Code_Peer.Module is
       end if;
    end On_Activate;
 
+   --------------------
+   -- On_Bridge_Exit --
+   --------------------
+
+   procedure On_Bridge_Exit
+     (Process : GPS.Kernel.Timeout.Process_Data;
+      Status  : Integer) is
+   begin
+      if Status = 0 then
+         Bridge_Context'Class (Process.Callback_Data.all).Module.Load;
+      end if;
+   end On_Bridge_Exit;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -399,10 +428,34 @@ package body Code_Peer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
+      pragma Unreferenced (Widget);
+
+      Project      : constant Projects.Project_Type :=
+                       GPS.Kernel.Project.Get_Project (Kernel);
+      Project_Name : constant String := Projects.Project_Name (Project);
+      Dir          : constant String :=
+                       Ada.Directories.Compose
+                         (Projects.Object_Path (Project, False),
+                          "SI_" & Project_Name);
+      Args         : GNAT.OS_Lib.Argument_List :=
+                       (1 => new String'
+                                   (Ada.Directories.Compose
+                                      (Dir, Project_Name, "output")));
+      Success      : Boolean;
+      pragma Warnings (Off, Success);
 
    begin
-      Module.Load;
+         --  Run gps_inspector_bridge
+
+      GPS.Kernel.Timeout.Launch_Process
+        (Kernel        => Kernel,
+         Command       => "gps_inspector_bridge",
+         Arguments     => Args,
+         Directory     => Dir,
+         Callback_Data => new Bridge_Context'(Module => Module),
+         Success       => Success,
+         Exit_Cb       => On_Bridge_Exit'Access);
+      GNATCOLL.Utils.Free (Args);
    end On_Load;
 
    -------------------------
@@ -460,7 +513,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
-         Text        => "Load",
+         Text        => "Load inspection information",
          Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
