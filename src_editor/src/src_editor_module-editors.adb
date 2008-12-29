@@ -874,12 +874,10 @@ package body Src_Editor_Module.Editors is
 
          if Mark /= null then
             return Create_Editor_Mark (This, Mark);
-         else
-            raise Editor_Exception with "No such mark";
          end if;
-      else
-         return Nil_Editor_Mark;
       end if;
+
+      return Nil_Editor_Mark;
    end Get_Mark;
 
 end Src_Editor_Module.Editors;
