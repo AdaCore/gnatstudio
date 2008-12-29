@@ -177,7 +177,7 @@ package GPS.Editors is
      (This : Editor_Buffer;
       Name : String) return Editor_Mark'Class is abstract;
    --  Check whether there is a mark with that name in the buffer, and return
-   --  it. An exception is raised if there is no such mark
+   --  it. A Nil_Editor_Mark is returned if there is no such mark
 
 private
 
