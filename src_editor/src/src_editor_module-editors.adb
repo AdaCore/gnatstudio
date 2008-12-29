@@ -98,7 +98,8 @@ package body Src_Editor_Module.Editors is
    function Create_Editor_Mark
      (Buffer : Src_Editor_Buffer'Class;
       Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class;
-   --  Return an instance of Editor_Mark encapsulating Mark
+   --  Returns an instance of Editor_Mark encapsulating Mark. Mark must not be
+   --  null.
 
    ---------------------
    -- Editor_Location --
@@ -310,6 +311,10 @@ package body Src_Editor_Module.Editors is
       Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class
    is
    begin
+      pragma Assert (Mark /= null);
+
+      Mark.Ref;
+
       return Src_Editor_Mark'
         (Editor_Mark with
          Buffer => Src_Editor_Buffer (Buffer),
@@ -559,15 +564,14 @@ package body Src_Editor_Module.Editors is
       This.Mark.Refs := This.Mark.Refs - 1;
 
       if This.Mark.Refs = 0 then
-         if This.Mark.Mark /= null
-           and then Get_Name (This.Mark.Mark) = ""
-         then
+         if Get_Name (This.Mark.Mark) = "" then
             --  Do not delete named marks, since we can still access them
             --  through get_mark() anyway
             Trace (Me, "Deleting unnamed mark");
             Delete_Mark (This.Buffer.Buffer, This.Mark.Mark);
          end if;
 
+         This.Mark.Mark.Unref;
          Free (This.Mark);
       end if;
    end Finalize;
