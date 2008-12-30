@@ -110,6 +110,12 @@ package GPS.Editors is
    -- Editor_Mark --
    -----------------
 
+   function Is_Present (This : Editor_Mark) return Boolean is abstract;
+   --  Returns True if mark's location is still present in the buffer
+
+   procedure Delete (This : Editor_Mark) is abstract;
+   --  Deletes the physical mark from the buffer
+
    -------------------
    -- Editor_Buffer --
    -------------------
@@ -226,6 +232,10 @@ private
    ---------------------
 
    type Dummy_Editor_Mark is new Editor_Mark with null record;
+
+   overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean;
+
+   overriding procedure Delete (This : Dummy_Editor_Mark) is null;
 
    Nil_Editor_Mark : constant Editor_Mark'Class :=
      Dummy_Editor_Mark'(Controlled with others => <>);

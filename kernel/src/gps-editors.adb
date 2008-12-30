@@ -158,4 +158,15 @@ package body GPS.Editors is
       return Nil_Editor_Mark;
    end Get_Mark;
 
+   ----------------
+   -- Is_Present --
+   ----------------
+
+   overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean is
+      pragma Unreferenced (This);
+
+   begin
+      return False;
+   end Is_Present;
+
 end GPS.Editors;

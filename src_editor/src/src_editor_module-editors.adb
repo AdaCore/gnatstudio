@@ -67,6 +67,10 @@ package body Src_Editor_Module.Editors is
       Mark   : Mark_Reference_Access;
    end record;
 
+   overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
+
+   overriding procedure Delete (This : Src_Editor_Mark);
+
    function Create_Editor_Location
      (Buffer   : Src_Editor_Buffer'Class;
       Location : Gtk_Text_Iter) return Src_Editor_Location'Class;
@@ -879,5 +883,32 @@ package body Src_Editor_Module.Editors is
 
       return Nil_Editor_Mark;
    end Get_Mark;
+
+   ----------------
+   -- Is_Present --
+   ----------------
+
+   overriding function Is_Present (This : Src_Editor_Mark) return Boolean is
+   begin
+      if This.Mark /= null then
+         return not This.Mark.Mark.Get_Deleted;
+
+      else
+         return False;
+      end if;
+   end Is_Present;
+
+   ------------
+   -- Delete --
+   ------------
+
+   overriding procedure Delete (This : Src_Editor_Mark) is
+   begin
+      if This.Mark /= null then
+         Gtk.Text_Buffer.Delete_Mark
+           (Gtk.Text_Buffer.Gtk_Text_Buffer (This.Buffer.Buffer),
+            This.Mark.Mark);
+      end if;
+   end Delete;
 
 end Src_Editor_Module.Editors;
