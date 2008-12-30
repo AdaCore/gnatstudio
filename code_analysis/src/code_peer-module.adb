@@ -31,6 +31,7 @@ with Gtk.Text_Mark;
 with Basic_Types;
 with GNATCOLL.Utils;
 with GPS.Editors;
+with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Project;
