@@ -19,6 +19,25 @@
 
 package body GPS.Editors is
 
+   ----------------------
+   -- Add_Special_Line --
+   ----------------------
+
+   procedure Add_Special_Line
+     (This       : Editor_Buffer'Class;
+      Start_Line : Integer;
+      Text       : String;
+      Category   : String := "";
+      Name       : String := "")
+   is
+      Mark : constant Editor_Mark'Class :=
+               This.Add_Special_Line (Start_Line, Text, Category, Name);
+      pragma Unreferenced (Mark);
+
+   begin
+      null;
+   end Add_Special_Line;
+
    --  Dummy bodies for implementation of Nil values.
 
    overriding function Beginning_Of_Line

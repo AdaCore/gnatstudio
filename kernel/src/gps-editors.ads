@@ -131,6 +131,14 @@ package GPS.Editors is
    --  highlighting. Create a mark at beginning of block and return it. If name
    --  is specified, retuned mark will have this name
 
+   procedure Add_Special_Line
+     (This       : Editor_Buffer'Class;
+      Start_Line : Integer;
+      Text       : String;
+      Category   : String := "";
+      Name       : String := "");
+   --  Same as above, but doesn't return mark
+
    procedure Remove_Special_Lines
      (This  : Editor_Buffer;
       Mark  : Editor_Mark'Class;
