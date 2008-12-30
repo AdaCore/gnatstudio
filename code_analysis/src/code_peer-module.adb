@@ -27,10 +27,10 @@ with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
 with Gtk.Text_Mark;
-with Gtkada.MDI;
 
 with Basic_Types;
 with GNATCOLL.Utils;
+with GPS.Editors;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Project;
@@ -40,11 +40,12 @@ with GPS.Location_View;
 with Projects;
 
 with Code_Peer.Bridge_Database_Readers;
-with Code_Peer.Shell_Commands;
 
 package body Code_Peer.Module is
 
    use type Gtk.Text_Mark.Gtk_Text_Mark;
+   use type GPS.Editors.Editor_Mark'Class;
+   use type GPS.Editors.Editor_Buffer'Class;
 
    type Module_Context is record
       Module  : Code_Peer_Module_Id;
@@ -133,12 +134,9 @@ package body Code_Peer.Module is
             Subprogram_Node : Code_Analysis.Subprogram_Access;
             Kernel          : constant GPS.Kernel.Kernel_Handle :=
                                 GPS.Kernel.Get_Kernel (Context);
-            Shell_File      : constant String :=
-                                Code_Peer.Shell_Commands.File
-                                 (Kernel, File_Node.Name);
-            Buffer          : constant String :=
-                                Code_Peer.Shell_Commands.Editor_Buffer_Get
-                                 (Kernel, Shell_File);
+            Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
+                                Kernel.Get_Buffer_Factory.Get
+                                  (File_Node.Name, False, False);
 
          begin
             if not File_Node.Subprograms.Is_Empty then
@@ -146,28 +144,15 @@ package body Code_Peer.Module is
                  Code_Analysis.Subprogram_Maps.Element
                    (File_Node.Subprograms.First);
 
-               if Buffer /= "null" then
+               if Buffer /= GPS.Editors.Nil_Editor_Buffer then
                   declare
-                     Mark : constant String :=
-                       Code_Peer.Shell_Commands.Editor_Buffer_Get_Mark
-                         (Kernel, Buffer, Code_Peer_Editor_Mark_Name_Prefix
-                          & Subprogram_Node.Name.all);
+                     Mark : constant GPS.Editors.Editor_Mark'Class :=
+                              Buffer.Get_Mark
+                                (Code_Peer_Editor_Mark_Name_Prefix
+                                 & Subprogram_Node.Name.all);
 
                   begin
-                     if Mark = "No such mark" then
-                        Gtk.Menu_Item.Gtk_New (Item, "Show annotations");
-                        Menu.Append (Item);
-                        Context_CB.Connect
-                          (Item,
-                           Gtk.Menu_Item.Signal_Activate,
-                           Context_CB.To_Marshaller
-                             (On_Show_Annotations'Access),
-                           Module_Context'
-                             (Code_Peer_Module_Id (Factory.Module),
-                              Project_Node,
-                              File_Node));
-
-                     else
+                     if Mark /= GPS.Editors.Nil_Editor_Mark then
                         Gtk.Menu_Item.Gtk_New (Item, "Hide annotations");
                         Menu.Append (Item);
                         Context_CB.Connect
@@ -175,6 +160,19 @@ package body Code_Peer.Module is
                            Gtk.Menu_Item.Signal_Activate,
                            Context_CB.To_Marshaller
                              (On_Hide_Annotations'Access),
+                           Module_Context'
+                             (Code_Peer_Module_Id (Factory.Module),
+                              Project_Node,
+                              File_Node));
+
+                     else
+                        Gtk.Menu_Item.Gtk_New (Item, "Show annotations");
+                        Menu.Append (Item);
+                        Context_CB.Connect
+                          (Item,
+                           Gtk.Menu_Item.Signal_Activate,
+                           Context_CB.To_Marshaller
+                             (On_Show_Annotations'Access),
                            Module_Context'
                              (Code_Peer_Module_Id (Factory.Module),
                               Project_Node,
@@ -219,12 +217,10 @@ package body Code_Peer.Module is
    is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
-      Kernel          : constant GPS.Kernel.Kernel_Handle := Self.Get_Kernel;
-      Shell_File      : constant String :=
-                          Code_Peer.Shell_Commands.File (Kernel, File.Name);
-      Buffer          : constant String :=
-                          Code_Peer.Shell_Commands.Editor_Buffer_Get
-                            (Kernel, Shell_File);
+      Kernel : constant GPS.Kernel.Kernel_Handle := Self.Get_Kernel;
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                 Kernel.Get_Buffer_Factory.Get (File.Name, False, False);
+
       -------------
       -- Process --
       -------------
@@ -235,27 +231,23 @@ package body Code_Peer.Module is
          Data            : Code_Peer.Subprogram_Data'Class
          renames Code_Peer.Subprogram_Data'Class
            (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
-         Mark            : constant String :=
-                             Code_Peer.Shell_Commands.Editor_Buffer_Get_Mark
-                               (Kernel,
-                                Buffer,
-                                Code_Peer_Editor_Mark_Name_Prefix
+         Mark            : constant GPS.Editors.Editor_Mark'Class :=
+                             Buffer.Get_Mark
+                               (Code_Peer_Editor_Mark_Name_Prefix
                                 & Subprogram_Node.Name.all);
 
       begin
-         if Mark /= "No such mark"
-           and then Code_Peer.Shell_Commands.Editor_Mark_Is_Present
-                      (Kernel, Mark)
+         if Mark /= GPS.Editors.Nil_Editor_Mark
+           and then Mark.Is_Present
          then
-            Code_Peer.Shell_Commands.Editor_Buffer_Remove_Special_Lines
-              (Kernel, Buffer, Mark, Data.Special_Lines);
-            Code_Peer.Shell_Commands.Editor_Mark_Delete (Kernel, Mark);
+            Buffer.Remove_Special_Lines (Mark, Data.Special_Lines);
+            Mark.Delete;
             Data.Special_Lines := 0;
          end if;
       end Process;
 
    begin
-      if Buffer /= "null" then
+      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
          File.Subprograms.Iterate (Process'Access);
       end if;
    end Hide_Annotations;
@@ -527,17 +519,12 @@ package body Code_Peer.Module is
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access)
    is
-      use type Gtkada.MDI.MDI_Child;
 
       procedure Process_Subprogram
         (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
-      Shell_File : constant String :=
-                     Code_Peer.Shell_Commands.File
-                       (Self.Get_Kernel, File.Name);
-      Buffer     : constant String :=
-                     Code_Peer.Shell_Commands.Editor_Buffer_Get
-                       (Self.Get_Kernel, Shell_File);
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+                 Self.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
 
       ------------------------
       -- Process_Subprogram --
@@ -573,11 +560,8 @@ package body Code_Peer.Module is
                            Code_Peer.Annotation_Vectors.Element (Position);
 
          begin
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--    " & Annotation.Text.all);
+            Buffer.Add_Special_Line
+              (Subprogram_Node.Line, Indent & "--    " & Annotation.Text.all);
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotation;
 
@@ -594,51 +578,37 @@ package body Code_Peer.Module is
                         Code_Peer.Annotation_Maps.Element (Position);
 
          begin
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--  " & Key.Text.all & ":");
+            Buffer.Add_Special_Line
+              (Subprogram_Node.Line, Indent & "--  " & Key.Text.all & ":");
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Element.Iterate (Process_Annotation'Access);
 
-            Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-              (Self.Get_Kernel,
-               Buffer,
-               Subprogram_Node.Line,
-               Indent & "--");
+            Buffer.Add_Special_Line (Subprogram_Node.Line, Indent & "--");
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotations;
 
       begin
-         Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-           (Self.Get_Kernel,
-            Buffer,
-            Subprogram_Node.Line,
-            Indent & "--",
-            Code_Peer_Editor_Mark_Name_Prefix & Subprogram_Node.Name.all);
+         Buffer.Add_Special_Line
+           (Start_Line => Subprogram_Node.Line,
+            Text       => Indent & "--",
+            Name       =>
+              Code_Peer_Editor_Mark_Name_Prefix & Subprogram_Node.Name.all);
          Data.Special_Lines := Data.Special_Lines + 1;
 
-         Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-           (Self.Get_Kernel,
-            Buffer,
-            Subprogram_Node.Line,
+         Buffer.Add_Special_Line
+           (Subprogram_Node.Line,
             Indent & "--  Subprogram: " & Subprogram_Node.Name.all);
          Data.Special_Lines := Data.Special_Lines + 1;
 
-         Code_Peer.Shell_Commands.Editor_Buffer_Add_Special_Line
-           (Self.Get_Kernel,
-            Buffer,
-            Subprogram_Node.Line,
-            Indent & "--");
+         Buffer.Add_Special_Line (Subprogram_Node.Line, Indent & "--");
          Data.Special_Lines := Data.Special_Lines + 1;
 
          Data.Annotations.Iterate (Process_Annotations'Access);
       end Process_Subprogram;
 
    begin
-      if Buffer /= "null" then
+      if Buffer /= GPS.Editors.Nil_Editor_Buffer then
          File.Subprograms.Iterate (Process_Subprogram'Access);
       end if;
    end Show_Annotations;
