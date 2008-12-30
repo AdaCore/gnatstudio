@@ -153,7 +153,7 @@ package body Code_Peer.Module is
 
                   begin
                      if Mark /= GPS.Editors.Nil_Editor_Mark then
-                        Gtk.Menu_Item.Gtk_New (Item, "Hide annotations");
+                        Gtk.Menu_Item.Gtk_New (Item, -"Hide annotations");
                         Menu.Append (Item);
                         Context_CB.Connect
                           (Item,
@@ -166,7 +166,7 @@ package body Code_Peer.Module is
                               File_Node));
 
                      else
-                        Gtk.Menu_Item.Gtk_New (Item, "Show annotations");
+                        Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
                         Menu.Append (Item);
                         Context_CB.Connect
                           (Item,
@@ -181,7 +181,7 @@ package body Code_Peer.Module is
                   end;
                end if;
 
-               Gtk.Menu_Item.Gtk_New (Item, "Show messages");
+               Gtk.Menu_Item.Gtk_New (Item, -"Show messages");
                Menu.Append (Item);
                Context_CB.Connect
                  (Item,
@@ -192,7 +192,7 @@ package body Code_Peer.Module is
                      Project_Node,
                      File_Node));
 
-               Gtk.Menu_Item.Gtk_New (Item, "Hide messages");
+               Gtk.Menu_Item.Gtk_New (Item, -"Hide messages");
                Menu.Append (Item);
                Context_CB.Connect
                  (Item,
@@ -311,7 +311,7 @@ package body Code_Peer.Module is
             Module_Context'(Code_Peer_Module_Id (Self), null, null));
 
          GPS.Kernel.MDI.Gtk_New (Child, Self.Report, Module => Self);
-         Child.Set_Title ("CodePeer report");
+         Child.Set_Title (-"CodePeer report");
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Child);
          Child.Raise_Child;
       end if;
@@ -497,7 +497,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Contextual_Submenu
         (Kernel  => Kernel,
          Name    => "CodePeer",
-         Label   => "CodePeer",
+         Label   => -"CodePeer",
          Filter  => GPS.Kernel.Lookup_Filter (Kernel, "Project only")
            or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
@@ -505,7 +505,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
-         Text        => "Load inspection information",
+         Text        => -"Load inspection information",
          Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
