@@ -7260,11 +7260,13 @@ The systems that are supported out of the box in GPS are:
 
 @table @b
 @item Auto
+@cindex VCS, auto
 GPS can be setup to auto-detect the actual VCS to use for each
 project. This is done by selecting @code{Auto} in the @code{VCS} tab
 of the Project properties editor. @xref{The Project Properties Editor}.
 
 @item ClearCase
+@cindex VCS, ClearCase
 
 The standard ClearCase interface, which is built-in and uses a generic GPS
 terminology for VCS operations.
@@ -7273,6 +7275,7 @@ Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
 @item ClearCase Native
+@cindex VCS, ClearCase Native
 
 Which is fully customizable and uses by default the terminology
 specific to ClearCase.
@@ -7281,12 +7284,14 @@ Note that, at the moment, only Snapshot Views are supported in the
 ClearCase integration; Dynamic Views are not supported.
 
 @item CVS
+@cindex VCS, CVS
 
 The Concurrent Version System.
 
 GPS needs a corresponding @command{patch} command that usually comes with it.
 
 @item Git
+@cindex VCS, Git
 
 Distributed fast source code management. Support for Git on GPS is
 partial. Basic commands are supported but the full power of Git (like
@@ -7295,6 +7300,7 @@ working with the index) is only available on the command line.
 GPS needs a corresponding @command{diff} command that usually comes with it.
 
 @item Subversion
+@cindex VCS, Subversion
 
 The Subversion version control system. Note that on Windows this
 version is intended to be used with Cygwin/Subversion and fully supports the
@@ -7304,6 +7310,7 @@ GPS needs a corresponding @command{patch} and @command{diff} command
 that usually comes with it.
 
 @item Subversion Windows
+@cindex VCS, Subversion Windows
 
 The Windows native Subversion version control system. The external
 Subversion commands are expected to be built for the Win32
