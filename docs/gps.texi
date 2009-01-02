@@ -10073,7 +10073,8 @@ disabling this command can speed-up the VCS actions.
 
 @item ClearCase module
 @cindex ClearCase module
-Whether the ClearCase module is activated or disabled
+Whether the built-in ClearCase (see @ref{Version Control System})
+module is activated or disabled.
 
 @end table
 
