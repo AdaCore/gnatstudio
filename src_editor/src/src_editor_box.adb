@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1266,7 +1266,13 @@ package body Src_Editor_Box is
          Loc := Location_Cursor;
       end if;
 
-      Stop_Selection_Drag (V);
+      --  If there is indeed a menu, cancel the selection drag.
+      --  Otherwise, we are calling this function only to create a context (for
+      --  instance when displaying a tooltip) and we should not cancel the
+      --  selection drag.
+      if Menu /= null then
+         Stop_Selection_Drag (V);
+      end if;
 
       Set_Context_Information
         (Context => Context,

@@ -38,6 +38,13 @@ Known Problems fixed in GPS 4.3.1
               Debug->Display on B will query the value of "A=B" instead of B.
   Workaround: Do the command directly from the gdb console: "graph display B".
 
+- HC01-020: Tooltips cancel "dragging" of selection in editors
+  Problem:    On source editors, while dragging with the mouse to expand the
+              selection, if the cursor stays on an entity and a tooltip is
+              displayed, the selection is no longer expanded.
+  Workaround: Disable the tooltips, or use shift + click to resume the
+              expansion of the selection.
+
 - HC01-017: Handling of maximized window under Windows
   Problem:    Under Windows, if you minimize a maximized window, and then
               restore it, it will not be restored to a maximized state.
