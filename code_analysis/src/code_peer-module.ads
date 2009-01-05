@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@ with Glib.Object;
 with Gtk.Menu;
 
 with GPS.Kernel.Modules;
+with GPS.Kernel.Styles;
 with Code_Analysis;
 
 private with Code_Peer.Summary_Reports;
@@ -67,11 +68,17 @@ package Code_Peer.Module is
 
 private
 
+   type Message_Probability_Style_Array is
+     array (Code_Peer.Message_Probability_Level)
+       of GPS.Kernel.Styles.Style_Access;
+
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Tree   : Code_Analysis.Code_Analysis_Tree;
-      Report : Code_Peer.Summary_Reports.Summary_Report;
+      Tree             : Code_Analysis.Code_Analysis_Tree;
+      Report           : Code_Peer.Summary_Reports.Summary_Report;
+      Annotation_Style : GPS.Kernel.Styles.Style_Access;
+      Message_Styles   : Message_Probability_Style_Array;
    end record;
 
 end Code_Peer.Module;

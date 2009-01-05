@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,6 +58,17 @@ package body Code_Peer.Module is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
       Module : Code_Peer_Module_Id;
    end record;
+
+   Annotation_Style_Name                : constant String
+     := "CodePeer editor annotations";
+   High_Probability_Style_Name          : constant String
+     := "CodePeer high probability messages";
+   Medium_Probability_Style_Name        : constant String
+     := "CodePeer medium probability messages";
+   Low_Probability_Style_Name           : constant String
+     := "CodePeer low probability messages";
+   Informational_Probability_Style_Name : constant String
+     := "CodePeer informational probability messages";
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
@@ -510,6 +521,36 @@ package body Code_Peer.Module is
          Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
+
+      Module.Annotation_Style :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Annotation_Style_Name);
+      GPS.Kernel.Styles.Set_Background (Module.Annotation_Style, "#E9E9E9");
+
+      Module.Message_Styles (Code_Peer.High) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), High_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.High), "#FFCCCC");
+
+      Module.Message_Styles (Code_Peer.Medium) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Medium_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Medium), "#FFFFCC");
+
+      Module.Message_Styles (Code_Peer.Low) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel), Low_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Low), "#CCFFFF");
+
+      Module.Message_Styles (Code_Peer.Informational) :=
+        GPS.Kernel.Styles.Get_Or_Create_Style
+          (GPS.Kernel.Kernel_Handle (Kernel),
+           Informational_Probability_Style_Name);
+      GPS.Kernel.Styles.Set_Background
+        (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
    end Register_Module;
 
    ----------------------
@@ -562,7 +603,9 @@ package body Code_Peer.Module is
 
          begin
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line, Indent & "--    " & Annotation.Text.all);
+              (Subprogram_Node.Line,
+               Indent & "--    " & Annotation.Text.all,
+               Annotation_Style_Name);
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotation;
 
@@ -580,29 +623,34 @@ package body Code_Peer.Module is
 
          begin
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line, Indent & "--  " & Key.Text.all & ":");
+              (Subprogram_Node.Line,
+               Indent & "--  " & Key.Text.all & ":",
+               Annotation_Style_Name);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Element.Iterate (Process_Annotation'Access);
 
-            Buffer.Add_Special_Line (Subprogram_Node.Line, Indent & "--");
+            Buffer.Add_Special_Line
+              (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotations;
 
       begin
          Buffer.Add_Special_Line
-           (Start_Line => Subprogram_Node.Line,
-            Text       => Indent & "--",
-            Name       =>
-              Code_Peer_Editor_Mark_Name_Prefix & Subprogram_Node.Name.all);
+           (Subprogram_Node.Line,
+            Indent & "--",
+            Annotation_Style_Name,
+            Code_Peer_Editor_Mark_Name_Prefix & Subprogram_Node.Name.all);
          Data.Special_Lines := Data.Special_Lines + 1;
 
          Buffer.Add_Special_Line
            (Subprogram_Node.Line,
-            Indent & "--  Subprogram: " & Subprogram_Node.Name.all);
+            Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
+            Annotation_Style_Name);
          Data.Special_Lines := Data.Special_Lines + 1;
 
-         Buffer.Add_Special_Line (Subprogram_Node.Line, Indent & "--");
+         Buffer.Add_Special_Line
+           (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
          Data.Special_Lines := Data.Special_Lines + 1;
 
          Data.Annotations.Iterate (Process_Annotations'Access);
@@ -668,13 +716,16 @@ package body Code_Peer.Module is
       begin
          if Message.Probability /= Code_Peer.Suppressed then
             GPS.Location_View.Insert_Location
-              (Kernel   => Self.Kernel,
-               Category => Code_Peer_Category_Name,
-               File     => File.Name,
-               Text     => Image (Message.Probability) & Message.Text.all,
-               Line     => Message.Line,
-               Column   =>
-                 Basic_Types.Visible_Column_Type (Message.Column));
+              (Kernel    => Self.Kernel,
+               Category  => Code_Peer_Category_Name,
+               File      => File.Name,
+               Text      => Image (Message.Probability) & Message.Text.all,
+               Line      => Message.Line,
+               Column    =>
+                 Basic_Types.Visible_Column_Type (Message.Column),
+               Highlight => True,
+               Highlight_Category =>
+                 Module.Message_Styles (Message.Probability));
          end if;
       end Process_Message;
 
