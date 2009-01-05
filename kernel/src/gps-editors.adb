@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -92,6 +92,15 @@ package body GPS.Editors is
       return 0;
    end Column;
 
+   overriding function Create_Mark
+     (This : Dummy_Editor_Location; Name : String := "")
+      return Editor_Mark'Class
+   is
+      pragma Unreferenced (This, Name);
+   begin
+      return Nil_Editor_Mark;
+   end Create_Mark;
+
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class
@@ -100,6 +109,14 @@ package body GPS.Editors is
    begin
       return Nil_Editor_Location;
    end Forward_Char;
+
+   overriding function Location
+     (This : Dummy_Editor_Mark) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Location;
 
    overriding function New_Location
      (This   : Dummy_Editor_Buffer;

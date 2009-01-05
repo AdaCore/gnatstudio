@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -99,6 +99,15 @@ package GPS.Editors is
    function Column (This : Editor_Location) return Integer is abstract;
    --  Return the column of the location
 
+   function Create_Mark
+     (This : Editor_Location; Name : String := "")
+      return Editor_Mark'Class is abstract;
+   --  Create a mark at that location in the buffer. The mark will stay
+   --  permanently at that location, and follows if the buffer is modified. If
+   --  the name is specified, this creates a named mark, which can be retrieved
+   --  through a call to GPS.EditorBuffer.get_mark. If a mark with the same
+   --  name already exists, it is moved to the new location, and then returned
+
    function Forward_Char
      (This : Editor_Location;
       Count : Integer) return Editor_Location'Class is abstract;
@@ -109,6 +118,11 @@ package GPS.Editors is
    -----------------
    -- Editor_Mark --
    -----------------
+
+   function Location
+     (This : Editor_Mark) return Editor_Location'Class is abstract;
+   --  Returns the current location of the mark. This location will vary
+   --  depending on the changes that take place in the buffer
 
    function Is_Present (This : Editor_Mark) return Boolean is abstract;
    --  Returns True if mark's location is still present in the buffer
@@ -220,6 +234,10 @@ private
 
    overriding function Column (This : Dummy_Editor_Location) return Integer;
 
+   overriding function Create_Mark
+     (This : Dummy_Editor_Location; Name : String := "")
+      return Editor_Mark'Class;
+
    overriding function Forward_Char
      (This : Dummy_Editor_Location;
       Count : Integer) return Editor_Location'Class;
@@ -232,6 +250,9 @@ private
    ---------------------
 
    type Dummy_Editor_Mark is new Editor_Mark with null record;
+
+   overriding function Location
+     (This : Dummy_Editor_Mark) return Editor_Location'Class;
 
    overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean;
 

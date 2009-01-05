@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,21 +21,11 @@ with GNATCOLL.Utils;     use GNATCOLL.Utils;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with String_Utils;       use String_Utils;
 with Traces;             use Traces;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GPS.Editors; use GPS.Editors;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 package body Codefix.GPS_Io is
 
    Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
-
-   ------------
-   -- Get_Id --
-   ------------
-
-   function Get_Id (This : GPS_Mark) return String is
-   begin
-      return This.Id.all;
-   end Get_Id;
 
    ------------------
    -- Get_New_Mark --
@@ -45,18 +35,14 @@ package body Codefix.GPS_Io is
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
-      Result : GPS_Mark;
-      Args   : GNAT.Strings.String_List :=
-        (1 => new String'(Full_Name (Get_File (Cursor)).all),
-         2 => new String'(Image (Get_Line (Cursor))),
-         3 => new String'(Image (Natural (Get_Column (Cursor)))),
-         4 => new String'("0"));
+      Editor : constant Editor_Buffer'Class :=
+        Current_Text.Kernel.Get_Buffer_Factory.Get (Cursor.Get_File);
 
+      Result : GPS_Mark;
    begin
-      Result.Id := new String'
-        (Execute_GPS_Shell_Command
-           (Current_Text.Kernel, "Editor.create_mark", Args));
-      Free (Args);
+      Result.Mark := new Editor_Mark'Class'
+        (Editor.New_Location
+           (Get_Line (Cursor), Natural (Get_Column (Cursor))).Create_Mark);
       return Result;
    end Get_New_Mark;
 
@@ -69,29 +55,23 @@ package body Codefix.GPS_Io is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
-      Args       : GNAT.Strings.String_List (1 .. 1);
+      Loc        : constant Editor_Location'Class :=
+        GPS_Mark'Class (Mark).Mark.Location;
    begin
       Set_File (New_Cursor, Get_File_Name (Current_Text));
-      Args (1) := new String'(GPS_Mark (Mark).Id.all);
 
-      declare
-         Column : constant String := Execute_GPS_Shell_Command
-           (Current_Text.Kernel, "Editor.get_column", Args);
-         Line : constant String := Execute_GPS_Shell_Command
-           (Current_Text.Kernel, "Editor.get_line", Args);
       begin
          Set_Location
            (New_Cursor,
-            Natural'Value (Line),
-            Column_Index'Value (Column));
+            Loc.Line,
+            Column_Index (Loc.Column));
 
       exception
          when Constraint_Error =>
             Trace (Me, "unexpected result from get_column/line: " &
-                   Column & ":" & Line);
+                   Loc.Column'Img & ":" & Loc.Line'Img);
       end;
 
-      Free (Args);
       return New_Cursor;
    end Get_Current_Cursor;
 
@@ -101,7 +81,7 @@ package body Codefix.GPS_Io is
 
    overriding procedure Free (This : in out GPS_Mark) is
    begin
-      Free (This.Id);
+      Free (This.Mark);
       Free (Mark_Abstr (This));
    end Free;
 
@@ -294,7 +274,6 @@ package body Codefix.GPS_Io is
       New_Line : String;
       Indent   : Boolean := False)
    is
-      Line_Str        : GNAT.Strings.String_Access;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
       This.File_Modified.all := True;
@@ -305,13 +284,15 @@ package body Codefix.GPS_Io is
       if Get_Line (Cursor) = 0 then
          Replace (This, Insert_Position, 0, New_Line & EOL_Str);
       else
-         Line_Str := new String'(Get_Line (This, Insert_Position));
-         Set_Location
-           (Insert_Position,
-            Get_Line (Insert_Position),
-            To_Column_Index (Char_Index (Line_Str'Last), Line_Str.all) + 1);
-         Replace (This, Insert_Position, 0, EOL_Str & New_Line);
-         Free (Line_Str);
+         declare
+            Line_Str : constant String := Get_Line (This, Insert_Position);
+         begin
+            Set_Location
+              (Insert_Position,
+               Get_Line (Insert_Position),
+               To_Column_Index (Char_Index (Line_Str'Last), Line_Str) + 1);
+            Replace (This, Insert_Position, 0, EOL_Str & New_Line);
+         end;
       end if;
 
       if Indent then

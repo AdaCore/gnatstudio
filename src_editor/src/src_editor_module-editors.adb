@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,6 +128,10 @@ package body Src_Editor_Module.Editors is
 
    overriding function Column (This : Src_Editor_Location) return Integer;
 
+   overriding function Create_Mark
+     (This : Src_Editor_Location; Name : String := "")
+      return Editor_Mark'Class;
+
    overriding function Forward_Char
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class;
@@ -139,6 +143,9 @@ package body Src_Editor_Module.Editors is
    overriding procedure Adjust (This : in out Src_Editor_Mark);
 
    overriding procedure Finalize (This : in out Src_Editor_Mark);
+
+   overriding function Location
+     (This : Src_Editor_Mark) return Editor_Location'Class;
 
    -------------------
    -- Editor_Buffer --
@@ -314,6 +321,8 @@ package body Src_Editor_Module.Editors is
      (Buffer : Src_Editor_Buffer'Class;
       Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class
    is
+      New_Ref : constant Mark_Reference_Access :=
+        new Mark_Reference'(Mark => Mark, Refs => 1);
    begin
       pragma Assert (Mark /= null);
 
@@ -322,7 +331,7 @@ package body Src_Editor_Module.Editors is
       return Src_Editor_Mark'
         (Editor_Mark with
          Buffer => Src_Editor_Buffer (Buffer),
-         Mark   => new Mark_Reference'(Mark => Mark, Refs => 1));
+         Mark   => New_Ref);
    end Create_Editor_Mark;
 
    ---------
@@ -520,6 +529,40 @@ package body Src_Editor_Module.Editors is
       return Integer (This.Column);
    end Column;
 
+   -----------------
+   -- Create_Mark --
+   -----------------
+
+   overriding function Create_Mark
+     (This : Src_Editor_Location; Name : String := "")
+      return Editor_Mark'Class
+   is
+      Success : Boolean;
+      Iter    : Gtk_Text_Iter;
+      Mark    : Gtk_Text_Mark;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+
+      if Success then
+         if Name /= "" then
+            Mark := Get_Mark (Get_Buffer (Iter), Name);
+         end if;
+
+         if Mark = null then
+            Mark := Create_Mark
+              (Get_Buffer (Iter),
+               Mark_Name => Name,
+               Where     => Iter);
+         else
+            Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
+         end if;
+
+         return Create_Editor_Mark (This.Buffer, Mark);
+      else
+         raise Editor_Exception with -"Invalid location";
+      end if;
+   end Create_Mark;
+
    ------------------
    -- Forward_Char --
    ------------------
@@ -568,7 +611,10 @@ package body Src_Editor_Module.Editors is
       This.Mark.Refs := This.Mark.Refs - 1;
 
       if This.Mark.Refs = 0 then
-         if Get_Name (This.Mark.Mark) = "" then
+         if This.Mark.Mark /= null
+           and then not Get_Deleted (This.Mark.Mark)
+           and then Get_Name (This.Mark.Mark) = ""
+         then
             --  Do not delete named marks, since we can still access them
             --  through get_mark() anyway
             Trace (Me, "Deleting unnamed mark");
@@ -579,6 +625,24 @@ package body Src_Editor_Module.Editors is
          Free (This.Mark);
       end if;
    end Finalize;
+
+   --------------
+   -- Location --
+   --------------
+
+   overriding function Location
+     (This : Src_Editor_Mark) return Editor_Location'Class
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if This.Mark /= null then
+         Get_Iter_At_Mark (This.Buffer.Buffer, Iter, This.Mark.Mark);
+
+         return Create_Editor_Location (This.Buffer, Iter);
+      else
+         return Nil_Editor_Location;
+      end if;
+   end Location;
 
    ------------------
    -- New_Location --

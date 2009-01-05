@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003-2008, AdaCore               --
+--                    Copyright (C) 2003-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@ with GNAT.Strings;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
 
+with GPS.Editors;            use GPS.Editors;
+
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
@@ -33,9 +35,6 @@ package Codefix.GPS_Io is
    type Console_Interface is new Text_Interface with private;
 
    type GPS_Mark is new Mark_Abstr with private;
-
-   function Get_Id (This : GPS_Mark) return String;
-   --  Returns the identificator of a mark.
 
    overriding
    function Get_New_Mark
@@ -177,8 +176,13 @@ private
    --  Return a line that has been previously recorded into the
    --  Console_Interface.
 
+   type Editor_Mark_Access is access all Editor_Mark'Class;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Editor_Mark'Class, Editor_Mark_Access);
+
    type GPS_Mark is new Mark_Abstr with record
-      Id : GNAT.Strings.String_Access;
+      Mark : Editor_Mark_Access;
    end record;
 
 end Codefix.GPS_Io;
