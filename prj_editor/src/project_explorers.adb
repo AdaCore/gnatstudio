@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -68,7 +68,6 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;
 with Find_Utils;                use Find_Utils;
 with File_Utils;                use File_Utils;
-with Filesystems;               use Filesystems;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -1186,11 +1185,11 @@ package body Project_Explorers is
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
          Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Filesystems.Filename_To_UTF8
-                (Node_Text) & " (extended)" & Name_Suffix);
+              Display_Full_Name (Create (Node_Text))
+              & " (extended)" & Name_Suffix);
       else
          Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Filesystems.Filename_To_UTF8 (Node_Text & Name_Suffix));
+              Display_Full_Name (Create (Node_Text & Name_Suffix)));
       end if;
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
@@ -1323,7 +1322,7 @@ package body Project_Explorers is
       Node_Type : Directory_Node_Types) is
    begin
       Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
-           Filesystems.Filename_To_UTF8 (Name_As_Directory (Directory)));
+           Display_Full_Name (Create (Name_As_Directory (Directory))));
 
       Update_Directory_Node_Text (Explorer, Project, Node);
 

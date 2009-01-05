@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -397,8 +397,8 @@ package body ALI_Parser is
       Id      : Unit_Id) return Source_File
    is
       Base_Name : constant String :=
-                    Filesystems.Filename_To_UTF8
-                      (Get_String (Units.Table (Id).Sfile));
+                    Display_Full_Name
+                      (Create (Get_String (Units.Table (Id).Sfile)));
       File      : Source_File;
 
    begin
@@ -452,7 +452,7 @@ package body ALI_Parser is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
       Base_Name   : constant String :=
-                      Filesystems.Filename_To_UTF8 (Get_String (Dep.Sfile));
+                      Display_Full_Name (Create (Get_String (Dep.Sfile)));
       L           : LI_File := LI;
    begin
       --  Do we have one of the files belonging to LI itself ?

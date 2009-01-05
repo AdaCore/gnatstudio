@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -997,8 +997,8 @@ package body Projects.Registry is
                Current_Source : constant Name_Id :=
                                   String_Elements (Registry) (Sources).Value;
                UTF8           : constant String :=
-                                  Filesystems.Filename_To_UTF8
-                                    (Name_Buffer (1 .. Name_Len));
+                                  Display_Full_Name
+                                    (Create (Name_Buffer (1 .. Name_Len)));
                Directory      : Name_Id := No_Name;
                Unit           : Unit_Project;
             begin
@@ -1039,8 +1039,8 @@ package body Projects.Registry is
                            Get_Name_String (Directory);
                            declare
                               Dir : constant String :=
-                                      Filesystems.Filename_To_UTF8
-                                        (Name_Buffer (1 .. Name_Len));
+                                      Display_Full_Name
+                                        (Create (Name_Buffer (1 .. Name_Len)));
                            begin
                               Name_Len := Dir'Length;
                               Name_Buffer (1 .. Name_Len) := Dir;
@@ -1444,8 +1444,7 @@ package body Projects.Registry is
 
          declare
             File : constant String :=
-                     Filesystems.Filename_To_UTF8
-                       (Name_Buffer (1 .. Name_Len));
+                     Display_Full_Name (Create (Name_Buffer (1 .. Name_Len)));
          begin
             --  The project manager duplicates files that contain several
             --  units. Only add them once in the project sources.
@@ -1588,8 +1587,8 @@ package body Projects.Registry is
 
                declare
                   UTF8      : String :=
-                                Filesystems.Filename_To_UTF8
-                                  (Buffer (1 .. Length));
+                                Display_Full_Name
+                                  (Create (Buffer (1 .. Length)));
                   Part      : Unit_Part;
                   Unit_Name : Name_Id;
                begin
@@ -2169,8 +2168,8 @@ package body Projects.Registry is
 
       if Is_Absolute_Path (Filename) then
          declare
-            S : constant String := Filesystems.Filename_To_UTF8
-              (Normalize_Pathname (Locale, Resolve_Links => False));
+            S : constant String := Display_Full_Name
+              (Create (Normalize_Pathname (Locale, Resolve_Links => False)));
          begin
             Name_Len := S'Length;
             Name_Buffer (1 .. Name_Len) := S;
@@ -2274,9 +2273,9 @@ package body Projects.Registry is
 
          if Path /= null then
             declare
-               Full : constant String := Filesystems.Filename_To_UTF8
-                 (Normalize_Pathname
-                    (Path.all, Resolve_Links => False));
+               Full : constant String := Display_Full_Name
+                 (Create
+                    (Normalize_Pathname (Path.all, Resolve_Links => False)));
             begin
                Free (Path);
                Name_Len := Full'Length;

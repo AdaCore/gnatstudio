@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,7 +51,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
-with Filesystems;                use Filesystems;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -309,10 +308,14 @@ package body Project_Explorers_Files is
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
 
-         Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-              Filesystems.Filename_To_UTF8 (D.Norm_Dir.all));
-         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-              Filesystems.Filename_To_UTF8 (D.Norm_Dir.all));
+         declare
+            Dir : constant String :=
+                    Display_Full_Name (Create (D.Norm_Dir.all));
+         begin
+            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column, Dir);
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column, Dir);
+         end;
+
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
               Gint (Node_Types'Pos (Directory_Node)));
 
@@ -355,7 +358,7 @@ package body Project_Explorers_Files is
                         D.Norm_Dir.all & Name,
                         Direct_Only => False)
                      then
-                        Append (D.Dirs, Filesystems.Filename_To_UTF8 (Name));
+                        Append (D.Dirs, Display_Full_Name (Create (Name)));
                      end if;
 
                   --  If the file belongs to the project hierarchy, we also
@@ -382,9 +385,10 @@ package body Project_Explorers_Files is
                   end if;
 
                elsif Is_Directory (D.Norm_Dir.all & Name) then
-                  Append (D.Dirs, Filesystems.Filename_To_UTF8 (Name));
+                  Append (D.Dirs, Display_Full_Name (Create (Name)));
+
                else
-                  Append (D.Files, Filesystems.Filename_To_UTF8 (Name));
+                  Append (D.Files, Display_Full_Name (Create (Name)));
                end if;
             end;
 
@@ -422,10 +426,10 @@ package body Project_Explorers_Files is
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
             Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-                 Filesystems.Filename_To_UTF8
-                 (D.Norm_Dir.all & Dir & Directory_Separator));
+                 Display_Full_Name
+                   (Create (D.Norm_Dir.all & Dir & Directory_Separator)));
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Filesystems.Filename_To_UTF8 (Dir));
+                 Display_Full_Name (Create (Dir)));
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
                  Gint (Node_Types'Pos (Directory_Node)));
 

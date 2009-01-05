@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
@@ -91,7 +92,6 @@ with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
 
 with Config;                   use Config;
-with Filesystems;              use Filesystems;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with System;                   use System;
@@ -948,8 +948,9 @@ package body GUI_Utils is
       Label     : String;
       Path      : String) is
    begin
-      Initialize (Gtk_Menu_Item (Menu_Item),
-                  Krunch (Filesystems.Filename_To_UTF8 (Label), 60));
+      Initialize
+        (Gtk_Menu_Item (Menu_Item),
+         Krunch (Display_Full_Name (Create (Label)), 60));
       Menu_Item.Full_Path := Path;
    end Initialize;
 

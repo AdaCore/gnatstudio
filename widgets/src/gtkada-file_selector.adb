@@ -569,7 +569,7 @@ package body Gtkada.File_Selector is
       Set_Position (File_Selector, Win_Pos_Mouse);
       Set_Text
         (File_Selector.Selection_Entry,
-         Filesystems.Filename_To_UTF8 (Default_Name));
+         Display_Full_Name (Create (Default_Name)));
 
       if File_Pattern /= "" then
          declare
@@ -1755,8 +1755,8 @@ package body Gtkada.File_Selector is
 
                   Set_Text
                     (Win.Selection_Entry,
-                     Filesystems.Filename_To_UTF8
-                       (Best_Match (1 .. Suffix_Length)));
+                     Display_Full_Name
+                       (Create (Best_Match (1 .. Suffix_Length))));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
                end if;
 
@@ -1766,8 +1766,8 @@ package body Gtkada.File_Selector is
                if Suffix_Length > 0 then
                   Set_Text
                     (Win.Selection_Entry,
-                     Filesystems.Filename_To_UTF8
-                       (Best_Match (1 .. Suffix_Length)));
+                     Display_Full_Name
+                       (Create (Best_Match (1 .. Suffix_Length))));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
                   Dir := GNATCOLL.VFS.Sub_Dir
