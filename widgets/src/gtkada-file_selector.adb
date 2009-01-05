@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -1770,8 +1770,9 @@ package body Gtkada.File_Selector is
                        (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
-                  Dir := GNATCOLL.VFS.Sub_Dir (Win.Current_Directory,
-                                      Best_Match (1 .. Suffix_Length));
+                  Dir := GNATCOLL.VFS.Sub_Dir
+                    (Win.Current_Directory, Best_Match (1 .. Suffix_Length));
+
                   if Is_Directory (Dir)
                     and then Win.Current_Directory /= Dir
                   then
