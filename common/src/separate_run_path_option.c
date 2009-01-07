@@ -20,4 +20,4 @@
 
 /* Dummy version of __gnat_separate_run_path_options, needed by mlib.adb */
 
-const char __gnat_separate_run_path_options = 0
+const char __gnat_separate_run_path_options = 0;
