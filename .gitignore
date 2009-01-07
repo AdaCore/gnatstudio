@@ -44,11 +44,13 @@ gnat/*
 gnat_src
 gnatlib/Makefile.conf
 gnatlib/distrib/gnatcoll_python.gpr
+gnatlib/distrib/gnatcoll_gmp.gpr
 gnatlib/distrib/relocatable/gnatcoll.gpr
 gnatlib/distrib/static/gnatcoll.gpr
 gnatlib/docs/Makefile
 gnatlib/gnatcoll_shared.gpr
 gnatlib/src/gnatcoll_python.gpr
+gnatlib/src/gnatcoll_gmp.gpr
 gnatlib/src/lib
 gnatlib/src/obj
 gnatlib/distrib/gnatcoll.gpr
