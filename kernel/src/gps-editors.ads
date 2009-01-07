@@ -166,6 +166,9 @@ package GPS.Editors is
    --  Removes specified number of special lines at the specified mark. It
    --  doesn't delete the mark
 
+   function Lines_Count (This : Editor_Buffer) return Integer is abstract;
+   --  Returns the total number of lines in the buffer
+
    function Get_Chars
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -206,6 +209,9 @@ package GPS.Editors is
       Name : String) return Editor_Mark'Class is abstract;
    --  Check whether there is a mark with that name in the buffer, and return
    --  it. A Nil_Editor_Mark is returned if there is no such mark
+
+   procedure Undo (This : Editor_Buffer) is abstract;
+   --  Undo the last command on the editor
 
 private
 
@@ -284,6 +290,8 @@ private
       Mark  : Editor_Mark'Class;
       Lines : Integer) is null;
 
+   overriding function Lines_Count (This : Dummy_Editor_Buffer) return Integer;
+
    overriding function Get_Chars
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -313,6 +321,8 @@ private
    overriding function Get_Mark
      (This : Dummy_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
+
+   overriding procedure Undo (This : Dummy_Editor_Buffer) is null;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with others => <>);

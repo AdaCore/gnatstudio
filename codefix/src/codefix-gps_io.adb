@@ -17,9 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with String_Utils;       use String_Utils;
 with Traces;             use Traces;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
@@ -92,14 +89,6 @@ package body Codefix.GPS_Io is
    overriding procedure Free (This : in out Console_Interface) is
    begin
       Free (Text_Interface (This));
-
-      if This.Lines /= null then
-         Free (This.Lines.all);
-      end if;
-
-      Free (This.Lines);
-      Free (This.Lines_Number);
-      Free (This.File_Modified);
    end Free;
 
    ----------
@@ -107,13 +96,10 @@ package body Codefix.GPS_Io is
    ----------
 
    overriding procedure Undo (This : in out Console_Interface) is
-      Args : GNAT.Strings.String_List :=
-        (1 => new String'(Full_Name (Get_File_Name (This)).all));
-      Ignore : constant String := Execute_GPS_Shell_Command
-        (This.Kernel, "Editor.undo", Args);
-      pragma Unreferenced (Ignore);
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (This.Get_File_Name);
    begin
-      Free (Args);
+      Editor.Undo;
    end Undo;
 
    ---------
@@ -125,7 +111,7 @@ package body Codefix.GPS_Io is
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String
    is
-      Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Line : constant String := Get_Line (This, Cursor, 1);
       Char_Ind : constant Char_Index :=
         To_Char_Index (Get_Column (Cursor), Line);
    begin
@@ -141,7 +127,7 @@ package body Codefix.GPS_Io is
      (This   : Console_Interface;
       Cursor : Text_Cursor'Class) return Character
    is
-      Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Line : constant String := Get_Line (This, Cursor, 1);
       Char_Ind : constant Char_Index :=
         To_Char_Index (Get_Column (Cursor), Line);
    begin
@@ -157,8 +143,16 @@ package body Codefix.GPS_Io is
       Cursor    : Text_Cursor'Class;
       Start_Col : Column_Index := 0) return String
    is
-      Line : constant String := Get_Recorded_Line (This, Get_Line (Cursor));
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (This.Get_File_Name);
+      Loc_Start : constant Editor_Location'CLass :=
+        Editor.New_Location (Cursor.Get_Line, 1);
+      Loc_End   : constant Editor_Location'CLass := Loc_Start.End_Of_Line;
+
+      Line : constant String := Editor.Get_Chars (Loc_Start, Loc_End);
       Char_Ind : Char_Index;
+
+      Last_Ind : Integer := Line'Last;
    begin
       if Start_Col = 0 then
          Char_Ind := To_Char_Index (Get_Column (Cursor), Line);
@@ -166,33 +160,12 @@ package body Codefix.GPS_Io is
          Char_Ind := To_Char_Index (Start_Col, Line);
       end if;
 
-      return Line (Natural (Char_Ind) .. Line'Last);
-   end Get_Line;
-
-   -----------------------
-   -- Get_Recorded_Line --
-   -----------------------
-
-   function Get_Recorded_Line
-     (This   : Console_Interface;
-      Number : Natural) return String
-   is
-      Node : String_List.List_Node;
-   begin
-      Update (This);
-
-      Node := First (This.Lines.all);
-
-      for J in 1 .. Number - 1 loop
-         if Node = String_List.Null_Node then
-            return "";
-         end if;
-
-         Node := Next (Node);
+      while Last_Ind >= Line'First and then Line (Last_Ind) = ASCII.LF loop
+         Last_Ind := Last_Ind - 1;
       end loop;
 
-      return Data (Node).all;
-   end Get_Recorded_Line;
+      return Line (Natural (Char_Ind) .. Last_Ind);
+   end Get_Line;
 
    -------------
    -- Replace --
@@ -210,7 +183,6 @@ package body Codefix.GPS_Io is
       Actual_Start_Line : Integer;
       Actual_Start_Column : Integer;
    begin
-      This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       if Get_Line (Cursor) /= 0 then
@@ -260,7 +232,6 @@ package body Codefix.GPS_Io is
    begin
       Editor.Delete (Loc_Start, Loc_End);
       Editor.Insert (Loc_Start, New_Value);
-      This.File_Modified.all := True;
       Text_Has_Changed (This);
    end Replace;
 
@@ -276,7 +247,6 @@ package body Codefix.GPS_Io is
    is
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
-      This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       Set_Location (Insert_Position, Get_Line (Insert_Position), 1);
@@ -322,7 +292,6 @@ package body Codefix.GPS_Io is
       Loc_End : constant Editor_Location'Class := Loc_Start.End_Of_Line;
    begin
       Editor.Delete (Loc_Start, Loc_End);
-      This.File_Modified.all := True;
       Text_Has_Changed (This);
    end Delete_Line;
 
@@ -340,7 +309,6 @@ package body Codefix.GPS_Io is
         Editor.New_Location (Cursor.Get_Line, 0);
    begin
       Editor.Indent (Loc, Loc);
-      This.File_Modified.all := True;
       Text_Has_Changed (This);
    end Indent_Line;
 
@@ -376,72 +344,11 @@ package body Codefix.GPS_Io is
    --------------
 
    overriding function Line_Max (This : Console_Interface) return Natural is
+      Editor : constant Editor_Buffer'Class :=
+        This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
    begin
-      Update (This);
-
-      return This.Lines_Number.all;
+      return Editor.Lines_Count;
    end Line_Max;
-
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update (This : Console_Interface) is
-      File          : GNAT.Strings.String_Access;
-      Current_Index : Natural := 0;
-      Old_Index     : Natural := 0;
-      Last_Line     : GNAT.Strings.String_Access;
-
-   begin
-      if not This.File_Modified.all then
-         return;
-      end if;
-
-      Free (This.Lines.all);
-
-      File := Read_File (This);
-
-      Current_Index := File'First;
-      Old_Index := Current_Index;
-
-      while Current_Index <= File'Last loop
-         Skip_To_Char (File.all, Current_Index, ASCII.LF);
-
-         if Current_Index > File'Last then
-            Current_Index := File'Last;
-         end if;
-
-         if File (Current_Index) = ASCII.LF then
-            Last_Line := new String (1 .. Current_Index - Old_Index);
-            Last_Line.all := File (Old_Index .. Current_Index - 1);
-         else
-            Last_Line := new String (1 .. Current_Index - Old_Index + 1);
-            Last_Line.all := File (Old_Index .. Current_Index);
-         end if;
-
-         Append (This.Lines.all, Last_Line);
-         Current_Index := Current_Index + 1;
-         Old_Index     := Current_Index;
-      end loop;
-
-      declare
-         Args : GNAT.Strings.String_List :=
-           (1 => new String'(Full_Name (Get_File_Name (This)).all));
-         Result : constant String := Execute_GPS_Shell_Command
-           (This.Kernel, "Editor.get_last_line", Args);
-
-      begin
-         This.Lines_Number.all := Natural'Value (Result);
-         Free (Args);
-
-      exception
-         when Constraint_Error =>
-            Trace (Me, "unexpected result from get_last_line: " & Result);
-      end;
-
-      This.File_Modified.all := False;
-      Free (File);
-   end Update;
 
    ----------------
    -- Set_Kernel --
@@ -459,7 +366,7 @@ package body Codefix.GPS_Io is
 
    overriding procedure Constrain_Update (This : in out Console_Interface) is
    begin
-      This.File_Modified.all := True;
+      null;
    end Constrain_Update;
 
 end Codefix.GPS_Io;

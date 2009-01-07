@@ -20,7 +20,6 @@
 with GPS.Kernel;           use GPS.Kernel;
 with GNAT.Strings;
 
-with Generic_List;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Editors;            use GPS.Editors;
@@ -146,35 +145,9 @@ package Codefix.GPS_Io is
 
 private
 
-   package String_List is new Generic_List (GNAT.Strings.String_Access);
-   use String_List;
-   --  ??? Should use standard string list
-
-   type Ptr_Boolean is access all Boolean;
-   type Ptr_String_List is access all String_List.List;
-   type Ptr_Natural is access all Natural;
-
-   procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
-   procedure Free is new Ada.Unchecked_Deallocation
-     (String_List.List, Ptr_String_List);
-   procedure Free is new Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
-
    type Console_Interface is new Text_Interface with record
-      Lines         : Ptr_String_List := new String_List.List;
-      Lines_Number  : Ptr_Natural := new Natural'(0);
-      File_Modified : Ptr_Boolean := new Boolean'(True);
       Kernel        : Kernel_Handle;
    end record;
-
-   procedure Update (This : Console_Interface);
-   --  Update the values of lines contained into the console_interface if
-   --  changes appened.
-
-   function Get_Recorded_Line
-     (This   : Console_Interface;
-      Number : Natural) return String;
-   --  Return a line that has been previously recorded into the
-   --  Console_Interface.
 
    type Editor_Mark_Access is access all Editor_Mark'Class;
 

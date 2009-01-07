@@ -140,6 +140,14 @@ package body GPS.Editors is
       return Nil_Editor_Mark;
    end Add_Special_Line;
 
+   overriding function Lines_Count
+     (This : Dummy_Editor_Buffer) return Integer
+   is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Lines_Count;
+
    overriding function Get_Chars
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;

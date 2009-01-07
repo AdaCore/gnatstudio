@@ -168,6 +168,8 @@ package body Src_Editor_Module.Editors is
       Mark  : Editor_Mark'Class;
       Lines : Integer);
 
+   overriding function Lines_Count (This : Src_Editor_Buffer) return Integer;
+
    overriding function Get_Chars
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -197,6 +199,8 @@ package body Src_Editor_Module.Editors is
    overriding function Get_Mark
      (This : Src_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
+
+   overriding procedure Undo (This : Src_Editor_Buffer);
 
    ----------------------------
    -- Create_Editor_Location --
@@ -728,6 +732,29 @@ package body Src_Editor_Module.Editors is
       end if;
    end Remove_Special_Lines;
 
+   -----------------
+   -- Lines_Count --
+   -----------------
+
+   overriding function Lines_Count (This : Src_Editor_Buffer) return Integer is
+      Iter : Gtk_Text_Iter;
+   begin
+      if This.Buffer /= null then
+         Get_End_Iter (This.Buffer, Iter);
+
+         declare
+            Line   : Editable_Line_Type;
+            Column : Visible_Column_Type;
+         begin
+            Get_Iter_Position (This.Buffer, Iter, Line, Column);
+
+            return Integer (Line);
+         end;
+      else
+         return 0;
+      end if;
+   end Lines_Count;
+
    ---------------
    -- Get_Chars --
    ---------------
@@ -947,6 +974,19 @@ package body Src_Editor_Module.Editors is
 
       return Nil_Editor_Mark;
    end Get_Mark;
+
+   ----------
+   -- Undo --
+   ----------
+
+   overriding procedure Undo (This : Src_Editor_Buffer) is
+   begin
+      if Get_Writable (This.Buffer) then
+         Undo (This.Buffer);
+      else
+         raise Editor_Exception with -"Buffer is not writable";
+      end if;
+   end Undo;
 
    ----------------
    -- Is_Present --
