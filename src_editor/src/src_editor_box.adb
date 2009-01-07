@@ -1436,7 +1436,7 @@ package body Src_Editor_Box is
                   end if;
 
                Free (Str);
-            end;
+            end if;
 
             if Menu /= null
               and then not Click_In_Selection
