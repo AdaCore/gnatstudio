@@ -2,40 +2,7 @@
 Copyright (c) 2004-2008 Praxis High Integrity Systems Limited
 Copyright (c) 2005-2008 AdaCore
 
-SPARK Toolset Customization for GPS
------------------------------------
-
-Introduction
-------------
-
-This plug-in provides support for the SPARK language and toolset.
-
-It is intended for use with Release 7.6.2 or later of the
-SPARK Toolset.  The customization depends on the presence of the
-"brief output" Examiner switch, which is not available
-in earlier releases.  If you don't have release 7.6.2 or better,
-please contact Praxis High Integrity Systems: sparkinfo@praxis-his.com
-
-This plug-in remains a work-in-progress, and there is lots of
-room for improvement.  We welcome contributions.
-
-Use
----
-
-This plug-in will be enabled only if you have spark tools available in
-your PATH variable (e.g. SPARK Examiner, POGs, etc).
-
-Edit the project preferences (from the Project menu) and tick the necessary
-languages on the Languages tab: Index, Listing, Metafile, Siv, Vcg.
-
-Switches for the tools can be set on the same menu under the Switches tab.
-
-The Examiner output produced is always -brief so that GPS is able to parse
-the resulting files.
-
-The tools can be run from the SPARK menu, or right-clicking on files will
-produce a contextual menu.  Not all tools can be run on all files and GPS
-will produce a warning if the incorrect context is selected.
+See the GPS documentation for more details.
 """
 
 
@@ -52,7 +19,6 @@ import GPS
 
 # Nice-to-haves include:
 #   - Context sensitive navigation in annotations
-#   - Hot keys displayed on the SPARK Menu
 
 spark_console="SPARK Output"
 spark_category="Examiner"
