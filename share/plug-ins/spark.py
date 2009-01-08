@@ -364,13 +364,11 @@ a = """<?xml version="1.0"?>
   <!-- to select metafile and VCG as project languages.           -->
 
   <action name="Examine file" category="Spark" output="none">
-     <filter language="SPARK"/>
      <filter language="Ada"/>
      <shell lang="python">spark.examine_file (GPS.File ("%F"))</shell>
   </action>
 
   <action name="SPARKFormat file" category="Spark" output="none">
-     <filter language="SPARK" />
      <filter language="Ada" />
      <shell>MDI.save_all false</shell>
      <shell>Project %p</shell>
@@ -416,7 +414,6 @@ a = """<?xml version="1.0"?>
   </action>
 
   <action name="SPARKmake" category="Spark" output="none">
-    <filter language="SPARK" />
     <filter language="Ada" />
     <shell lang="python">spark.sparkmake ()</shell>
   </action>
@@ -436,7 +433,7 @@ a = """<?xml version="1.0"?>
         <Title>_Help</Title>
       </menu>
       <menu action="SPARKFormat file">
-        <Title>SPARK _Format File</Title>
+        <Title>SPARK_Format File</Title>
       </menu>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
