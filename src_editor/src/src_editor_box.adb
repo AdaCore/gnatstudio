@@ -1434,6 +1434,7 @@ package body Src_Editor_Box is
                                Integer (Get_Line_Index (Entity_End)),
                              Simple_Expression => True));
                   end if;
+               end if;
 
                Free (Str);
             end;
