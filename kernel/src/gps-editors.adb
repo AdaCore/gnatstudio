@@ -19,9 +19,7 @@
 
 package body GPS.Editors is
 
-   ----------------------
-   -- Add_Special_Line --
-   ----------------------
+   --  Dummy bodies for implementation of Nil values.
 
    procedure Add_Special_Line
      (This       : Editor_Buffer'Class;
@@ -37,8 +35,6 @@ package body GPS.Editors is
    begin
       null;
    end Add_Special_Line;
-
-   --  Dummy bodies for implementation of Nil values.
 
    overriding function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class
@@ -128,6 +124,14 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end New_Location;
 
+   overriding function New_View
+     (This : Dummy_Editor_Buffer) return Editor_View'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_View;
+   end New_View;
+
    overriding function Add_Special_Line
      (This       : Dummy_Editor_Buffer;
       Start_Line : Integer;
@@ -139,6 +143,14 @@ package body GPS.Editors is
    begin
       return Nil_Editor_Mark;
    end Add_Special_Line;
+
+   overriding function Current_View
+     (This : Dummy_Editor_Buffer) return Editor_View'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_View;
+   end Current_View;
 
    overriding function Lines_Count
      (This : Dummy_Editor_Buffer) return Integer
@@ -183,15 +195,19 @@ package body GPS.Editors is
       return Nil_Editor_Mark;
    end Get_Mark;
 
-   ----------------
-   -- Is_Present --
-   ----------------
-
    overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean is
       pragma Unreferenced (This);
 
    begin
       return False;
    end Is_Present;
+
+   overriding function Cursor
+     (This : Dummy_Editor_View) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Cursor;
 
 end GPS.Editors;

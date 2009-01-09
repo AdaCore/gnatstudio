@@ -41,6 +41,9 @@ package GPS.Editors is
    type Editor_Buffer is abstract new Controlled with null record;
    Nil_Editor_Buffer : constant Editor_Buffer'Class;
 
+   type Editor_View is abstract new Controlled with null record;
+   Nil_Editor_View : constant Editor_View'Class;
+
    ---------------------------
    -- Editor_Buffer_Factory --
    ---------------------------
@@ -140,6 +143,10 @@ package GPS.Editors is
       Column : Integer) return Editor_Location'Class is abstract;
    --  Return a new location.
 
+   function New_View
+     (This : Editor_Buffer) return Editor_View'Class is abstract;
+   --  Creates a new view for the given buffer, and insert it in the MDI
+
    function Add_Special_Line
      (This       : Editor_Buffer;
       Start_Line : Integer;
@@ -165,6 +172,12 @@ package GPS.Editors is
       Lines : Integer) is abstract;
    --  Removes specified number of special lines at the specified mark. It
    --  doesn't delete the mark
+
+   function Current_View
+     (This : Editor_Buffer) return Editor_View'Class is abstract;
+   --  Returns the last view used for this buffer, ie the last view that had
+   --  the focus and through which the user might have edited the buffer's
+   --  contents
 
    function Lines_Count (This : Editor_Buffer) return Integer is abstract;
    --  Returns the total number of lines in the buffer
@@ -212,6 +225,20 @@ package GPS.Editors is
 
    procedure Undo (This : Editor_Buffer) is abstract;
    --  Undo the last command on the editor
+
+   -----------------
+   -- Editor_View --
+   -----------------
+
+   procedure Center
+     (This     : Editor_View;
+      Location : Editor_Location'Class := Nil_Editor_Location) is abstract;
+   --  Scrolls the view so that the location is centered. By default, the
+   --  editor is centered around the location of the cursor.
+
+   function Cursor
+     (This : Editor_View) return Editor_Location'Class is abstract;
+   --  Return the current location of the cursor in this view
 
 private
 
@@ -278,6 +305,9 @@ private
       Line   : Integer;
       Column : Integer) return Editor_Location'Class;
 
+   overriding function New_View
+     (This : Dummy_Editor_Buffer) return Editor_View'Class;
+
    overriding function Add_Special_Line
      (This       : Dummy_Editor_Buffer;
       Start_Line : Integer;
@@ -289,6 +319,9 @@ private
      (This  : Dummy_Editor_Buffer;
       Mark  : Editor_Mark'Class;
       Lines : Integer) is null;
+
+   function Current_View
+     (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
    overriding function Lines_Count (This : Dummy_Editor_Buffer) return Integer;
 
@@ -326,5 +359,21 @@ private
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with others => <>);
+
+   ---------------------
+   -- Nil_Editor_View --
+   ---------------------
+
+   type Dummy_Editor_View is new Editor_View with null record;
+
+   overriding procedure Center
+     (This     : Dummy_Editor_View;
+      Location : Editor_Location'Class := Nil_Editor_Location) is null;
+
+   overriding function Cursor
+     (This : Dummy_Editor_View) return Editor_Location'Class;
+
+   Nil_Editor_View : constant Editor_View'Class :=
+     Dummy_Editor_View'(Controlled with others => <>);
 
 end GPS.Editors;

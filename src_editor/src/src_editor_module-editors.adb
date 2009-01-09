@@ -30,7 +30,8 @@ use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
-with Src_Editor_Box; use Src_Editor_Box;
+with Src_Editor_Box;  use Src_Editor_Box;
+with Src_Editor_View; use Src_Editor_View;
 
 with Language; use Language;
 
@@ -67,9 +68,10 @@ package body Src_Editor_Module.Editors is
       Mark   : Mark_Reference_Access;
    end record;
 
-   overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
-
-   overriding procedure Delete (This : Src_Editor_Mark);
+   type Src_Editor_View is new GPS.Editors.Editor_View with record
+      Buffer : Src_Editor_Buffer;
+      Box    : Source_Editor_Box;
+   end record;
 
    function Create_Editor_Location
      (Buffer   : Src_Editor_Buffer'Class;
@@ -105,9 +107,9 @@ package body Src_Editor_Module.Editors is
    --  Returns an instance of Editor_Mark encapsulating Mark. Mark must not be
    --  null.
 
-   ---------------------
-   -- Editor_Location --
-   ---------------------
+   -------------------------
+   -- Src_Editor_Location --
+   -------------------------
 
    overriding function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
@@ -136,9 +138,13 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Location;
       Count : Integer) return Editor_Location'Class;
 
-   -----------------
-   -- Editor_Mark --
-   -----------------
+   ---------------------
+   -- Src_Editor_Mark --
+   ---------------------
+
+   overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
+
+   overriding procedure Delete (This : Src_Editor_Mark);
 
    overriding procedure Adjust (This : in out Src_Editor_Mark);
 
@@ -147,14 +153,17 @@ package body Src_Editor_Module.Editors is
    overriding function Location
      (This : Src_Editor_Mark) return Editor_Location'Class;
 
-   -------------------
-   -- Editor_Buffer --
-   -------------------
+   -----------------------
+   -- Src_Editor_Buffer --
+   -----------------------
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Line   : Integer;
       Column : Integer) return Editor_Location'Class;
+
+   overriding function New_View
+     (This : Src_Editor_Buffer) return Editor_View'Class;
 
    overriding function Add_Special_Line
      (This       : Src_Editor_Buffer;
@@ -167,6 +176,9 @@ package body Src_Editor_Module.Editors is
      (This  : Src_Editor_Buffer;
       Mark  : Editor_Mark'Class;
       Lines : Integer);
+
+   overriding function Current_View
+     (This : Src_Editor_Buffer) return Editor_View'Class;
 
    overriding function Lines_Count (This : Src_Editor_Buffer) return Integer;
 
@@ -201,6 +213,17 @@ package body Src_Editor_Module.Editors is
       Name : String) return Editor_Mark'Class;
 
    overriding procedure Undo (This : Src_Editor_Buffer);
+
+   ---------------------
+   -- Src_Editor_View --
+   ---------------------
+
+   overriding procedure Center
+     (This     : Src_Editor_View;
+      Location : Editor_Location'Class := Nil_Editor_Location);
+
+   overriding function Cursor
+     (This : Src_Editor_View) return Editor_Location'Class;
 
    ----------------------------
    -- Create_Editor_Location --
@@ -667,6 +690,29 @@ package body Src_Editor_Module.Editors is
       return Result;
    end New_Location;
 
+   --------------
+   -- New_View --
+   --------------
+
+   overriding function New_View
+     (This : Src_Editor_Buffer) return Editor_View'Class
+   is
+      Result : Src_Editor_View;
+   begin
+      if This.Buffer /= null then
+         declare
+            Views : constant Views_Array := Get_Views (This.Buffer);
+         begin
+            Result.Box := New_View (This.Kernel, Views (Views'First));
+            Result.Buffer := This;
+
+            return Result;
+         end;
+      end if;
+
+      return Nil_Editor_View;
+   end New_View;
+
    ----------------------
    -- Add_Special_Line --
    ----------------------
@@ -731,6 +777,39 @@ package body Src_Editor_Module.Editors is
          end;
       end if;
    end Remove_Special_Lines;
+
+   ------------------
+   -- Current_View --
+   ------------------
+
+   overriding function Current_View
+     (This : Src_Editor_Buffer) return Editor_View'Class
+   is
+      Child : MDI_Child;
+   begin
+      if This.Buffer /= null then
+         declare
+            File : GNATCOLL.VFS.Virtual_File := Get_Filename (This.Buffer);
+         begin
+            if File = GNATCOLL.VFS.No_File then
+               File := Get_File_Identifier (This.Buffer);
+            end if;
+
+            Child := Find_Editor (This.Kernel, File);
+         end;
+
+         if Child = null then
+            raise Editor_Exception with -"Editor not found";
+         else
+            return Src_Editor_View'
+              (Editor_View with
+               Box    => Source_Editor_Box (Get_Widget (Child)),
+               Buffer => This);
+         end if;
+      else
+         return Nil_Editor_View;
+      end if;
+   end Current_View;
 
    -----------------
    -- Lines_Count --
@@ -1014,5 +1093,64 @@ package body Src_Editor_Module.Editors is
             This.Mark.Mark);
       end if;
    end Delete;
+
+   ------------
+   -- Center --
+   ------------
+
+   overriding procedure Center
+     (This     : Src_Editor_View;
+      Location : Editor_Location'Class := Nil_Editor_Location)
+   is
+      Iter       : Gtk_Text_Iter;
+      Success    : Boolean;
+      Actual_Loc : Src_Editor_Location;
+   begin
+      if This.Box /= null then
+         if Location = Nil_Editor_Location then
+            Actual_Loc := Src_Editor_Location (This.Cursor);
+         else
+            Actual_Loc := Src_Editor_Location (Location);
+         end if;
+
+         Get_Cursor_Position (Get_View (This.Box), Iter);
+         Get_Location (Iter, Actual_Loc, Iter, Success);
+
+         if Success then
+            declare
+               M : constant Gtk_Text_Mark :=
+                 Create_Mark (Get_Buffer (This.Box), "", Iter);
+            begin
+               Scroll_To_Mark
+                 (Get_View (This.Box),
+                  Mark          => M,
+                  Within_Margin => 0.2,
+                  Use_Align     => False,
+                  Xalign        => 0.5,
+                  Yalign        => 0.5);
+               Delete_Mark (Get_Buffer (This.Box), M);
+            end;
+         else
+            raise Editor_Exception with -"Invalid location";
+         end if;
+      end if;
+   end Center;
+
+   ------------
+   -- Cursor --
+   ------------
+
+   overriding function Cursor
+     (This : Src_Editor_View) return Editor_Location'Class
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if This.Box /= null then
+         Get_Cursor_Position (Get_View (This.Box), Iter);
+         return Create_Editor_Location (This.Buffer, Iter);
+      else
+         return Nil_Editor_Location;
+      end if;
+   end Cursor;
 
 end Src_Editor_Module.Editors;

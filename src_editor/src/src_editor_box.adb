@@ -73,7 +73,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
@@ -405,7 +404,6 @@ package body Src_Editor_Box is
       File_Up_To_Date   : Boolean;
       L                 : Natural;
       Is_Case_Sensitive : Boolean;
-      Arg               : GNAT.Strings.String_Access;
 
       Char_Column       : Character_Offset_Type;
    begin
@@ -493,9 +491,7 @@ package body Src_Editor_Box is
          end if;
       end if;
 
-      Arg := new String'(Full_Name (Filename).all);
-      Execute_GPS_Shell_Command (Kernel, "Editor.cursor_center", (1 => Arg));
-      Free (Arg);
+      Get_Buffer_Factory (Kernel).Get (Filename).Current_View.Center;
    end Go_To_Closest_Match;
 
    ----------------
@@ -1418,10 +1414,10 @@ package body Src_Editor_Box is
                       (Editor.Source_Buffer,
                        Buffer_Line_Type (Get_Line (Entity_End)) + 1));
             begin
-               if Str.Contents /= null then
-                  Get_Iter_Position
-                    (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
+               Get_Iter_Position
+                 (Editor.Source_Buffer, Entity_Start, The_Line, The_Column);
 
+               if Str.Contents /= null then
                   if Click_In_Selection then
                      --  If there was a selection and we clicked in it, we only
                      --  should take the selection into account. For instance,
@@ -1449,6 +1445,12 @@ package body Src_Editor_Box is
                                Integer (Get_Line_Index (Entity_End)),
                              Simple_Expression => True));
                   end if;
+               else
+                  Set_Entity_Information
+                    (Context,
+                     Entity_Name   => Get_Text (Entity_Start, Entity_End),
+                     Entity_Column => Expand_Tabs
+                       (Editor.Source_Buffer, The_Line, The_Column));
                end if;
 
                Free (Str);
