@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
@@ -25,13 +26,12 @@ with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Commands.Interactive;  use Commands, Commands.Interactive;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
-with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
 with Traces;                use Traces;
 with GPS.Intl;              use GPS.Intl;
 with Refactoring.Performers; use Refactoring.Performers;
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Refactoring.Parameters is
@@ -90,14 +90,9 @@ package body Refactoring.Parameters is
       Column : Visible_Column_Type) return Command_Return_Type
    is
       --  File needs to be open for get_chars to work, unfortunately
-      Args2  : Argument_List_Access :=
-        new Argument_List'
-          (new String'(Full_Name (File).all),
-           new String'("0"),
-           new String'("0"));
-      Found  : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.edit", Args2.all);
-      pragma Unreferenced (Found);
+      View  : constant Editor_View'Class :=
+        Get_Buffer_Factory (Kernel).Get (File).Open;
+      pragma Unreferenced (View);
 
       Chars : constant String := Get_Text
         (Kernel, File, Line, Column, 1_000);
@@ -144,8 +139,6 @@ package body Refactoring.Parameters is
       end Add_Parameter_Name;
 
    begin
-      Free (Args2);
-
       Skip_Word   (Chars, First);
       Skip_Blanks (Chars, First);
       if First > Chars'Last

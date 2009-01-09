@@ -19,7 +19,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with Commands.Generic_Asynchronous;
 with Commands;                use Commands;
@@ -27,7 +26,6 @@ with Entities.Queries;        use Entities.Queries;
 with Entities;                use Entities;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel;              use GPS.Kernel;
 with String_Utils;            use String_Utils;
@@ -39,8 +37,6 @@ package body Refactoring.Performers is
 
    use Location_Arrays;
    use File_Arrays;
-
-   True_Cst : aliased String := "true";
 
    type Renaming_Error_Record is new File_Error_Reporter_Record with
       record
@@ -85,30 +81,6 @@ package body Refactoring.Performers is
    procedure On_End_Of_Search (Data : Get_Locations_Data);
    --  Called when all the related files have been searched and the refactoring
    --  should be performed.
-
-   function Escape_Backslash (Pathname : String) return String;
-   --  Return Pathname with all backslashes escaped
-
-   ----------------------
-   -- Escape_Backslash --
-   ----------------------
-
-   function Escape_Backslash (Pathname : String) return String is
-      Escaped_Pathname : String (1 .. Pathname'Length * 2);
-      J                : Natural := 0;
-   begin
-      for K in Pathname'Range loop
-         J := J + 1;
-         if Pathname (K) = '\' then
-            Escaped_Pathname (J .. J + 1) := "\\";
-            J := J + 1;
-         else
-            Escaped_Pathname (J) := Pathname (K);
-         end if;
-      end loop;
-
-      return Escaped_Pathname (1 .. J);
-   end Escape_Backslash;
 
    ----------
    -- Free --
@@ -214,7 +186,6 @@ package body Refactoring.Performers is
 
    procedure On_End_Of_Search (Data : Get_Locations_Data) is
       Confirmed : Boolean;
-      Args3 : Argument_List (1 .. 2);
    begin
       Pop_State (Data.Kernel);
 
@@ -236,17 +207,11 @@ package body Refactoring.Performers is
          Push_State (Data.Kernel, Busy);
 
          if Data.Make_Writable then
-            Args3 (2) := True_Cst'Access;
-
             for F in File_Arrays.First .. Last (Data.Read_Only_Files) loop
-               Args3 (1) := new String'
-                 (Full_Name
-                    (Get_Filename (Data.Read_Only_Files.Table (F))).all);
-               Execute_GPS_Shell_Command
-                 (Data.Kernel, "Editor.edit", Args3 (1 .. 1));
-               Execute_GPS_Shell_Command
-                 (Data.Kernel, "Editor.set_writable", Args3);
-               Free (Args3 (1));
+               Get_Buffer_Factory (Data.Kernel).Get
+                 (Get_Filename
+                    (Data.Read_Only_Files.Table (F))).
+                 Open.Set_Read_Only (False);
             end loop;
          end if;
 
@@ -356,52 +321,38 @@ package body Refactoring.Performers is
       Replaced_Length   : Integer := 0;
       Only_If_Replacing : String := "") return Boolean
    is
-      Args : Argument_List_Access := new Argument_List'
-        (new String'(Full_Name (In_File).all),
-         new String'(Integer'Image (Line)),
-         new String'(Visible_Column_Type'Image (Column)),
-         new String'(Text),
-         new String'("0"),
-         new String'(Integer'Image (Replaced_Length)));
-      Args2 : Argument_List_Access := new Argument_List'
-        (new String'(Integer'Image (Line)),
-         new String'(Integer'Image (Line + Lines_Count (Text) - 1)));
-
+      Editor : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (In_File);
+      Loc_Start : constant Editor_Location'Class := Editor.New_Location
+        (Line, Integer (Column));
+      Loc_End   : constant Editor_Location'Class :=
+        Loc_Start.Forward_Char (Replaced_Length - 1);
    begin
       if Replaced_Length /= 0 and then Only_If_Replacing /= "" then
          declare
             Replacing_Str : constant String := To_Lower (Only_If_Replacing);
-            Args_Get      : Argument_List_Access := new Argument_List'
-              (new String'(Full_Name (In_File).all),
-               new String'(Integer'Image (Line)),
-               new String'(Visible_Column_Type'Image (Column)),
-               new String'("0"),
-               new String'(Integer'Image (Replaced_Length)));
-            Str           : constant String :=
-                              To_Lower (Execute_GPS_Shell_Command
-                                        (Kernel,
-                                         "Editor.get_chars",
-                                         Args_Get.all));
-
+            Str : constant String :=
+              To_Lower (Editor.Get_Chars (Loc_Start, Loc_End));
          begin
-            Free (Args_Get);
-
             if Str /= Replacing_Str then
                return False;
             end if;
          end;
       end if;
 
-      Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
-
-      if Indent then
-         Execute_GPS_Shell_Command (Kernel, "Editor.select_text", Args2.all);
-         Execute_GPS_Shell_Command
-           (Kernel, "Editor.indent", Argument_List'(1 .. 0 => null));
+      if Replaced_Length > 0 then
+         Editor.Delete (Loc_Start, Loc_End);
       end if;
 
-      Free (Args2);
-      Free (Args);
+      Editor.Insert (Loc_Start, Text);
+
+      if Indent then
+         Editor.Indent
+           (Loc_Start,
+            Editor.New_Location
+              (Line + Lines_Count (Text) - 1, 0).End_Of_Line);
+      end if;
+
       return True;
    end Insert_Text;
 
@@ -415,17 +366,14 @@ package body Refactoring.Performers is
       Line_Start : Integer;
       Line_End   : Integer)
    is
-      Args : Argument_List_Access;
+      Editor : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (In_File);
+      Loc_Start : constant Editor_Location'Class := Editor.New_Location
+        (Line_Start, 1);
+      Loc_End   : constant Editor_Location'Class :=
+        Editor.New_Location (Line_End, 1).End_Of_Line;
    begin
-      for L in reverse Line_Start .. Line_End loop
-         Args := new Argument_List'
-           (new String'(Full_Name (In_File).all),
-            new String'(Integer'Image (L)),
-            new String'(Integer'Image (1)),
-            new String'(""));
-         Execute_GPS_Shell_Command (Kernel, "Editor.replace_text", Args.all);
-         Free (Args);
-      end loop;
+      Editor.Delete (Loc_Start, Loc_End);
    end Delete_Text;
 
    ----------------------
@@ -436,10 +384,7 @@ package body Refactoring.Performers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) is
    begin
-      Execute_GPS_Shell_Command
-        (Kernel,
-         "File """ & Escape_Backslash (Full_Name (File).all) & """; "
-         & "EditorBuffer.get ""%1""; EditorBuffer.start_undo_group ""%1""");
+      Get_Buffer_Factory (Kernel).Get (File).Start_Undo_Group;
    end Start_Undo_Group;
 
    -----------------------
@@ -450,10 +395,7 @@ package body Refactoring.Performers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) is
    begin
-      Execute_GPS_Shell_Command
-        (Kernel,
-         "File """ & Escape_Backslash (Full_Name (File).all) & """; "
-         & "EditorBuffer.get ""%1""; EditorBuffer.finish_undo_group ""%1""");
+      Get_Buffer_Factory (Kernel).Get (File).Finish_Undo_Group;
    end Finish_Undo_Group;
 
    -----------------------

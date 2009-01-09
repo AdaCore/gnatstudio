@@ -23,19 +23,18 @@ with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
 
 with GPS.Intl; use GPS.Intl;
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
-
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-
 with Src_Editor_Box;  use Src_Editor_Box;
 with Src_Editor_View; use Src_Editor_View;
 
+with Commands; use Commands;
 with Language; use Language;
-
-with Traces; use Traces;
+with Traces;   use Traces;
 
 package body Src_Editor_Module.Editors is
    Me : constant Debug_Handle := Create ("Editor.Buffer");
@@ -165,6 +164,9 @@ package body Src_Editor_Module.Editors is
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
 
+   overriding function Open
+     (This : Src_Editor_Buffer) return Editor_View'Class;
+
    overriding function Add_Special_Line
      (This       : Src_Editor_Buffer;
       Start_Line : Integer;
@@ -181,6 +183,11 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer) return Editor_View'Class;
 
    overriding function Lines_Count (This : Src_Editor_Buffer) return Integer;
+
+   overriding procedure Select_Text
+     (This : Src_Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location);
 
    overriding function Get_Chars
      (This : Src_Editor_Buffer;
@@ -208,15 +215,30 @@ package body Src_Editor_Module.Editors is
    overriding function End_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class;
 
+   overriding procedure Save
+     (This        : Src_Editor_Buffer;
+      Interactive : Boolean := True;
+      File        : Virtual_File := No_File);
+
    overriding function Get_Mark
      (This : Src_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
 
+   overriding procedure Start_Undo_Group (This : Src_Editor_Buffer);
+
+   overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer);
+
    overriding procedure Undo (This : Src_Editor_Buffer);
+
+   overriding procedure Set_Read_Only
+     (This : Src_Editor_Buffer; Read_Only : Boolean);
 
    ---------------------
    -- Src_Editor_View --
    ---------------------
+
+   overriding procedure Set_Read_Only
+     (This : Src_Editor_View; Read_Only : Boolean);
 
    overriding procedure Center
      (This     : Src_Editor_View;
@@ -713,6 +735,22 @@ package body Src_Editor_Module.Editors is
       return Nil_Editor_View;
    end New_View;
 
+   ----------
+   -- Open --
+   ----------
+
+   overriding function Open
+     (This : Src_Editor_Buffer) return Editor_View'Class
+   is
+      Current_View : constant Editor_View'Class := This.Current_View;
+   begin
+      if Current_View = Nil_Editor_View then
+         return This.New_View;
+      else
+         return This.Current_View;
+      end if;
+   end Open;
+
    ----------------------
    -- Add_Special_Line --
    ----------------------
@@ -799,7 +837,9 @@ package body Src_Editor_Module.Editors is
          end;
 
          if Child = null then
-            raise Editor_Exception with -"Editor not found";
+            Trace (Me, -"Editor not found");
+
+            return Nil_Editor_View;
          else
             return Src_Editor_View'
               (Editor_View with
@@ -833,6 +873,40 @@ package body Src_Editor_Module.Editors is
          return 0;
       end if;
    end Lines_Count;
+
+   -----------------
+   -- Select_Text --
+   -----------------
+
+   overriding procedure Select_Text
+     (This : Src_Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location)
+   is
+      Src_From    : Src_Editor_Location;
+      Src_To      : Src_Editor_Location;
+      Iter, Iter2 : Gtk_Text_Iter;
+   begin
+      if This.Buffer /= null then
+         if From = Nil_Editor_Location then
+            Src_From := Src_Editor_Location (Beginning_Of_Buffer (This));
+         else
+            Src_From := Src_Editor_Location (From);
+         end if;
+
+         if To = Nil_Editor_Location then
+            Src_To := Src_Editor_Location (End_Of_Buffer (This));
+         else
+            Src_To := Src_Editor_Location (To);
+         end if;
+
+         Get_Locations (Iter, Iter2, This.Buffer, Src_From, Src_To, False);
+         Select_Region
+           (This.Buffer,
+            Cursor_Iter  => Iter2,
+            Bound_Iter   => Iter);
+      end if;
+   end Select_Text;
 
    ---------------
    -- Get_Chars --
@@ -1033,6 +1107,35 @@ package body Src_Editor_Module.Editors is
       end if;
    end End_Of_Buffer;
 
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (This        : Src_Editor_Buffer;
+      Interactive : Boolean := True;
+      File        : Virtual_File := No_File)
+   is
+      Success : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      if This.Buffer /= null then
+         if File = No_File then
+            Success := Save_MDI_Children
+              (This.Kernel,
+               Children =>
+                 (1 => Find_Editor
+                    (This.Kernel, Get_Filename (This.Buffer))),
+               Force    => not Interactive);
+         else
+            Save_To_File
+              (This.Buffer,
+               Filename => File,
+               Success  => Success);
+         end if;
+      end if;
+   end Save;
+
    --------------
    -- Get_Mark --
    --------------
@@ -1054,6 +1157,26 @@ package body Src_Editor_Module.Editors is
       return Nil_Editor_Mark;
    end Get_Mark;
 
+   ----------------------
+   -- Start_Undo_Group --
+   ----------------------
+
+   overriding procedure Start_Undo_Group (This : Src_Editor_Buffer) is
+   begin
+      End_Action (This.Buffer);
+      Start_Group (Get_Command_Queue (This.Buffer));
+   end Start_Undo_Group;
+
+   -----------------------
+   -- Finish_Undo_Group --
+   -----------------------
+
+   overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer) is
+   begin
+      End_Action (This.Buffer);
+      End_Group (Get_Command_Queue (This.Buffer));
+   end Finish_Undo_Group;
+
    ----------
    -- Undo --
    ----------
@@ -1066,6 +1189,20 @@ package body Src_Editor_Module.Editors is
          raise Editor_Exception with -"Buffer is not writable";
       end if;
    end Undo;
+
+   -------------------
+   -- Set_Read_Only --
+   -------------------
+
+   overriding procedure Set_Read_Only
+     (This : Src_Editor_Buffer; Read_Only : Boolean)
+   is
+   begin
+      if This.Buffer /= null then
+         Set_Writable
+           (This.Buffer, not Read_Only, Explicit => True);
+      end if;
+   end Set_Read_Only;
 
    ----------------
    -- Is_Present --
@@ -1093,6 +1230,19 @@ package body Src_Editor_Module.Editors is
             This.Mark.Mark);
       end if;
    end Delete;
+
+   -------------------
+   -- Set_Read_Only --
+   -------------------
+
+   overriding procedure Set_Read_Only
+     (This : Src_Editor_View; Read_Only : Boolean)
+   is
+   begin
+      if This.Box /= null then
+         Set_Writable (This.Box, not Read_Only, Explicit => True);
+      end if;
+   end Set_Read_Only;
 
    ------------
    -- Center --

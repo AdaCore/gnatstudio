@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,8 +22,8 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 with Dynamic_Arrays;
 with Entities.Queries;       use Entities, Entities.Queries;
 with Glib;                   use Glib;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
@@ -129,8 +129,9 @@ package body Refactoring.Subprograms is
       In_Params_Count     : Natural := 0;
       Result, Decl     : Unbounded_String;
       Typ              : Entity_Information;
-      Args             : Argument_List_Access;
       First_Out_Param  : Entity_Information;
+      Editor           : constant Editor_Buffer'Class :=
+        Get_Buffer_Factory (Kernel).Get (File);
    begin
       for P in Parameter_Arrays.First .. Last (Params) loop
          if Params.Table (P).PType = Out_Parameter then
@@ -236,15 +237,11 @@ package body Refactoring.Subprograms is
 
       Result := Result & "begin" & ASCII.LF & "   ";
 
-      for L in Line_Start .. Line_End loop
-         Args := new Argument_List'
-           (new String'(Full_Name (File).all),
-            new String'(Integer'Image (L)),
-            new String'(Integer'Image (1)));
-         Result := Result
-           & Execute_GPS_Shell_Command (Kernel, "Editor.get_chars", Args.all);
-         Free (Args);
-      end loop;
+      Result := Result
+        & String'
+        (Editor.Get_Chars
+           (Editor.New_Location (Line_Start, 1),
+            Editor.New_Location (Line_End, 1).End_Of_Line));
 
       if Out_Params_Count = 1
         and then In_Out_Params_Count = 0

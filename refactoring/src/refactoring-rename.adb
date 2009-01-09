@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -216,8 +216,7 @@ package body Refactoring.Rename is
       begin
          Finish_Undo_Group (Kernel, File);
          if Factory.Auto_Save then
-            Execute_GPS_Shell_Command
-              (Kernel, "Editor.save_buffer """ & Full_Name (File).all & '"');
+            Get_Buffer_Factory (Kernel).Get (File).Save (True);
          end if;
       end Terminate_File;
 
@@ -273,10 +272,8 @@ package body Refactoring.Rename is
                if L = Location_Arrays.First
                  or else Refs.Table (L).File /= Refs.Table (L - 1).File
                then
-                  Execute_GPS_Shell_Command
-                    (Kernel, "Editor.undo """
-                     & Full_Name (Get_Filename (Refs.Table (L).File)).all
-                     & '"');
+                  Get_Buffer_Factory (Kernel).Get
+                    (Get_Filename (Refs.Table (L).File)).Undo;
                end if;
             end loop;
          end if;

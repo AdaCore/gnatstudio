@@ -147,6 +147,10 @@ package GPS.Editors is
      (This : Editor_Buffer) return Editor_View'Class is abstract;
    --  Creates a new view for the given buffer, and insert it in the MDI
 
+   function Open (This : Editor_Buffer) return Editor_View'Class is abstract;
+   --  Opens a view for the given buffer. If the view is already exists, it
+   --  will get the focus, otherwise a new view will be opened.
+
    function Add_Special_Line
      (This       : Editor_Buffer;
       Start_Line : Integer;
@@ -182,6 +186,15 @@ package GPS.Editors is
    function Lines_Count (This : Editor_Buffer) return Integer is abstract;
    --  Returns the total number of lines in the buffer
 
+   procedure Select_Text
+     (This : Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
+   --  Selects an area in the buffer. The boundaries are included in the
+   --  selection. The order of the boundaries is irrelevant, but the cursor
+   --  will be left on to. By default, From is set to the beginning of the
+   --  buffer, and to to the end.
+
    function Get_Chars
      (This : Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -207,7 +220,8 @@ package GPS.Editors is
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location) is abstract;
    --  Recompute the indentation of the given range of text. This feature is
-   --  language-dependent
+   --  language-dependent. By default, from points to the beginning of the
+   --  buffer and to to the end of the buffer.
 
    function Beginning_Of_Buffer
      (This : Editor_Buffer) return Editor_Location'Class is abstract;
@@ -217,18 +231,48 @@ package GPS.Editors is
      (This : Editor_Buffer) return Editor_Location'Class is abstract;
    --  Returns a location pointing to the last character in the buffer
 
+   procedure Save
+     (This        : Editor_Buffer;
+      Interactive : Boolean := True;
+      File        : Virtual_File := No_File) is abstract;
+   --  Saves the buffer to the given file. If interactive is true, a dialog is
+   --  open to ask for confirmation from the user first, which gives him a
+   --  chance to cancel the saving. "interactive" is ignored if file is
+   --  specified. When no file is specified, then the buffer will be saved
+   --  in the same file as it's currently edited.
+
    function Get_Mark
      (This : Editor_Buffer;
       Name : String) return Editor_Mark'Class is abstract;
    --  Check whether there is a mark with that name in the buffer, and return
    --  it. A Nil_Editor_Mark is returned if there is no such mark
 
+   procedure Start_Undo_Group (This : Editor_Buffer) is abstract;
+   --  Starts grouping commands on the editor. All future editions will be
+   --  considered as belonging to the same group. finish_undo_group should be
+   --  called once for every call to start_undo_group.
+
+   procedure Finish_Undo_Group (This : Editor_Buffer) is abstract;
+   --  ancels the grouping of commands on the editor. See
+   --  GPS.EditorBuffer.start_undo_group
+
    procedure Undo (This : Editor_Buffer) is abstract;
    --  Undo the last command on the editor
+
+   procedure Set_Read_Only
+     (This : Editor_Buffer; Read_Only : Boolean) is abstract;
+   --  Indicates whether the user should be able to edit the buffer
+   --  interactively (through any view).
 
    -----------------
    -- Editor_View --
    -----------------
+
+   procedure Set_Read_Only
+     (This : Editor_View; Read_Only : Boolean) is abstract;
+   --  Indicates whether the user should be able to edit interactively through
+   --  this view. Setting a view Writable/Read Only will also modify the status
+   --  of the other views of the same buffer.xx
 
    procedure Center
      (This     : Editor_View;
@@ -308,6 +352,9 @@ private
    overriding function New_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
+   overriding function Open
+     (This : Dummy_Editor_Buffer) return Editor_View'Class;
+
    overriding function Add_Special_Line
      (This       : Dummy_Editor_Buffer;
       Start_Line : Integer;
@@ -320,10 +367,15 @@ private
       Mark  : Editor_Mark'Class;
       Lines : Integer) is null;
 
-   function Current_View
+   overriding function Current_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;
 
    overriding function Lines_Count (This : Dummy_Editor_Buffer) return Integer;
+
+   overriding procedure Select_Text
+     (This : Dummy_Editor_Buffer;
+      From : Editor_Location'Class := Nil_Editor_Location;
+      To   : Editor_Location'Class := Nil_Editor_Location) is null;
 
    overriding function Get_Chars
      (This : Dummy_Editor_Buffer;
@@ -351,11 +403,23 @@ private
    overriding function End_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class;
 
+   overriding procedure Save
+     (This        : Dummy_Editor_Buffer;
+      Interactive : Boolean := True;
+      File        : Virtual_File := No_File) is null;
+
    overriding function Get_Mark
      (This : Dummy_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
 
+   overriding procedure Start_Undo_Group (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Finish_Undo_Group (This : Dummy_Editor_Buffer) is null;
+
    overriding procedure Undo (This : Dummy_Editor_Buffer) is null;
+
+   overriding procedure Set_Read_Only
+     (This : Dummy_Editor_Buffer; Read_Only : Boolean) is null;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with others => <>);
@@ -365,6 +429,9 @@ private
    ---------------------
 
    type Dummy_Editor_View is new Editor_View with null record;
+
+   overriding procedure Set_Read_Only
+     (This : Dummy_Editor_View; Read_Only : Boolean) is null;
 
    overriding procedure Center
      (This     : Dummy_Editor_View;

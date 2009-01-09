@@ -132,6 +132,14 @@ package body GPS.Editors is
       return Nil_Editor_View;
    end New_View;
 
+   overriding function Open
+     (This : Dummy_Editor_Buffer) return Editor_View'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_View;
+   end Open;
+
    overriding function Add_Special_Line
      (This       : Dummy_Editor_Buffer;
       Start_Line : Integer;
