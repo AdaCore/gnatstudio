@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@ with Projects.Registry;
 
 package body Code_Peer.Bridge_Database_Readers is
 
-   Database_Tag            : constant String := "database";
+   Inspection_Tag          : constant String := "inspection";
    Message_Category_Tag    : constant String := "message_category";
    Annotation_Category_Tag : constant String := "annotation_category";
    File_Tag                : constant String := "file";
@@ -87,7 +87,7 @@ package body Code_Peer.Bridge_Database_Readers is
       Project_Node        : Code_Analysis.Project_Access;
 
    begin
-      if Qname = Database_Tag then
+      if Qname = Inspection_Tag then
          null;
 
       elsif Qname = Message_Category_Tag then

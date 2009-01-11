@@ -104,7 +104,7 @@ package body Code_Peer.Module is
    procedure On_Bridge_Exit
      (Process : GPS.Kernel.Timeout.Process_Data;
       Status  : Integer);
-   --  Called when gps_inspector_bridge program execution is done
+   --  Called when gps_codepeer_bridge program execution is done
 
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
@@ -449,11 +449,11 @@ package body Code_Peer.Module is
       pragma Warnings (Off, Success);
 
    begin
-         --  Run gps_inspector_bridge
+      --  Run gps_codepeer_bridge
 
       GPS.Kernel.Timeout.Launch_Process
         (Kernel        => Kernel,
-         Command       => "gps_inspector_bridge",
+         Command       => "gps_codepeer_bridge",
          Arguments     => Args,
          Directory     => Dir,
          Callback_Data => new Bridge_Context'(Module => Module),
