@@ -43,18 +43,10 @@ def fileExists(f):
 
 def check_toolchain():
     global si_gnat_toolchain_found
-    global si_root_dir
     global si_gnat_rtl_dir
 
     si_gnat_toolchain_found = False
-    si_root_dir = ""
     si_gnat_rtl_dir = ""
-
-    # Check SOFCHECK_INSPECTOR environment variable
-
-    si_root_dir = os.environ['SOFCHECK_INSPECTOR']
-    if si_root_dir == "":
-        return
 
     # Check for GNAT toolchain: codepeer, gps_codepeer_bridge, gnat2scil
 
@@ -102,41 +94,34 @@ def regenerate_exit(self, status, remaining_output):
 
 def create_library_file():
   try:
-      global si_root_dir
-
       projectname = GPS.Project.root().name()
       if not os.path.exists(si_project_path()):
          os.mkdir(si_project_path())
       
       database_dir = os.path.join(si_project_path(), projectname + ".db")
-      message_patterns_file = \
-        os.path.join(si_root_dir, "doc", "MessagePatterns.xml")
       class_dir = os.path.join(si_project_path(), "ada_classes")
 
       f = open(si_library_file(), 'w') 
 
-      f.write("--  Specify name of directory where Inspector output will be" \
+      f.write("--  Specify name of directory where codepeer output will be" \
                 + " created.\n")
       f.write("Output_Dir := \"" + si_output_dir() + "\";\n\n")
 
-      f.write("--  Specify name of database directory where Inspector" \
+      f.write("--  Specify name of database directory where codepeer" \
                 + " messages will be archived.\n")
       f.write("Database_Dir := \"" + database_dir + "\";\n\n")
 
-      f.write("--  Specify name of message pattern file.\n")
-      f.write("Message_Patterns := \"" + message_patterns_file + "\";\n\n")
-
       #  Generate GNAT toolchain specific information
 
-      project_object_dirs = GPS.Project.root().object_dirs()
-      for dir in project_object_dirs:
-        f.write('Source (Directory => "SCIL",\n')
+#--      project_object_dirs = GPS.Project.root().object_dirs()
+#--      for dir in project_object_dirs:
+      f.write('Source (Directory => "SCIL",\n')
 #--            f.write('Source (Directory => "' \
 #--                    + os.path.join(dir, "SCIL") \
 #--                   + '",\n')
-        f.write('  Include_Subdirectories => True,\n')
-        f.write('        Files     => ("*.scil"),\n')
-        f.write('        Language  => SCIL);\n')
+      f.write('  Include_Subdirectories => True,\n')
+      f.write('        Files     => ("*.scil"),\n')
+      f.write('        Language  => SCIL);\n')
 
       f.close()
 
