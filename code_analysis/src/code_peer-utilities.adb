@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,17 +19,35 @@
 
 package body Code_Peer.Utilities is
 
+   ---------
+   -- "+" --
+   ---------
+
+   function "+"
+     (Left : Messages_Counts; Right : Messages_Counts) return Messages_Counts
+   is
+      Result : Messages_Counts;
+
+   begin
+      for J in Code_Peer.Message_Probability_Level'Range loop
+         Result (J).Base := Left (J).Base + Right (J).Base;
+         Result (J).Added := Left (J).Added + Right (J).Added;
+         Result (J).Removed := Left (J).Removed + Right (J).Removed;
+         Result (J).Current := Left (J).Current + Right (J).Current;
+      end loop;
+
+      return Result;
+   end "+";
+
    ----------------------------
    -- Compute_Messages_Count --
    ----------------------------
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts)
    is
-      Result : Natural := 0;
-
       procedure Process (Position : Message_Vectors.Cursor);
 
       -------------
@@ -41,32 +59,46 @@ package body Code_Peer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
-         if Message.Probability = Level
-           and then Categories.Contains (Message.Category)
-         then
-            Result := Result + 1;
+         if Categories.Contains (Message.Category) then
+            case Message.Lifeage is
+               when Added =>
+                  Counts (Message.Probability).Added :=
+                    Counts (Message.Probability).Added + 1;
+                  Counts (Message.Probability).Current :=
+                    Counts (Message.Probability).Current + 1;
+
+               when Unchanged =>
+                  Counts (Message.Probability).Base :=
+                    Counts (Message.Probability).Base + 1;
+                  Counts (Message.Probability).Current :=
+                    Counts (Message.Probability).Current + 1;
+
+               when Removed =>
+                  Counts (Message.Probability).Base :=
+                    Counts (Message.Probability).Base + 1;
+                  Counts (Message.Probability).Removed :=
+                    Counts (Message.Probability).Removed + 1;
+            end case;
          end if;
       end Process;
 
    begin
+      Counts := (others => (others => 0));
+
       Subprogram_Data'Class
         (Subprogram.Analysis_Data.Code_Peer_Data.all).Messages.Iterate
         (Process'Access);
-
-      return Result;
    end Compute_Messages_Count;
 
    ----------------------------
    -- Compute_Messages_Count --
    ----------------------------
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts)
    is
-      Result : Natural := 0;
-
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
       -------------
@@ -76,29 +108,29 @@ package body Code_Peer.Utilities is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
          Subprogram : constant Code_Analysis.Subprogram_Access :=
                         Code_Analysis.Subprogram_Maps.Element (Position);
+         Aux        : Messages_Counts;
 
       begin
-         Result :=
-           Result + Compute_Messages_Count (Subprogram, Level, Categories);
+         Compute_Messages_Count (Subprogram, Categories, Aux);
+
+         Counts := Counts + Aux;
       end Process;
 
    begin
-      File.Subprograms.Iterate (Process'Access);
+      Counts := (others => (others => 0));
 
-      return Result;
+      File.Subprograms.Iterate (Process'Access);
    end Compute_Messages_Count;
 
    ----------------------------
    -- Compute_Messages_Count --
    ----------------------------
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (Project    : Code_Analysis.Project_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts)
    is
-      Result : Natural := 0;
-
       procedure Process (Position : Code_Analysis.File_Maps.Cursor);
 
       -------------
@@ -108,28 +140,29 @@ package body Code_Peer.Utilities is
       procedure Process (Position : Code_Analysis.File_Maps.Cursor) is
          File : constant Code_Analysis.File_Access :=
                            Code_Analysis.File_Maps.Element (Position);
+         Aux  : Messages_Counts;
 
       begin
-         Result := Result + Compute_Messages_Count (File, Level, Categories);
+         Compute_Messages_Count (File, Categories, Aux);
+
+         Counts := Counts + Aux;
       end Process;
 
    begin
-      Project.Files.Iterate (Process'Access);
+      Counts := (others => (others => 0));
 
-      return Result;
+      Project.Files.Iterate (Process'Access);
    end Compute_Messages_Count;
 
    ----------------------------
    -- Compute_Messages_Count --
    ----------------------------
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (Tree       : Code_Analysis.Code_Analysis_Tree;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts)
    is
-      Result : Natural := 0;
-
       procedure Process (Position : Code_Analysis.Project_Maps.Cursor);
 
       -------------
@@ -139,16 +172,18 @@ package body Code_Peer.Utilities is
       procedure Process (Position : Code_Analysis.Project_Maps.Cursor) is
          Project : constant Code_Analysis.Project_Access :=
                      Code_Analysis.Project_Maps.Element (Position);
+         Aux     : Messages_Counts;
 
       begin
-         Result :=
-           Result + Compute_Messages_Count (Project, Level, Categories);
+         Compute_Messages_Count (Project, Categories, Aux);
+
+         Counts := Counts + Aux;
       end Process;
 
    begin
-      Tree.Iterate (Process'Access);
+      Counts := (others => (others => 0));
 
-      return Result;
+      Tree.Iterate (Process'Access);
    end Compute_Messages_Count;
 
    ----------------------------

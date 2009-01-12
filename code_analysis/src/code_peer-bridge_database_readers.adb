@@ -86,6 +86,24 @@ package body Code_Peer.Bridge_Database_Readers is
       File_Name           : GNATCOLL.VFS.Virtual_File;
       Project_Node        : Code_Analysis.Project_Access;
 
+      function Lifeage return Lifeage_Kinds;
+
+      -------------
+      -- Lifeage --
+      -------------
+
+      function Lifeage return Lifeage_Kinds is
+         Index : constant Integer := Attrs.Get_Index ("lifeage");
+
+      begin
+         if Index = -1 then
+            return Unchanged;
+
+         else
+            return Lifeage_Kinds'Value (Attrs.Get_Value (Index));
+         end if;
+      end Lifeage;
+
    begin
       if Qname = Inspection_Tag then
          null;
@@ -122,6 +140,7 @@ package body Code_Peer.Bridge_Database_Readers is
                    File_Name));
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
+         --  ??? lifeage attribute must be processed here
 
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=
@@ -132,7 +151,11 @@ package body Code_Peer.Bridge_Database_Readers is
          Self.Subprogram_Node.Column :=
            Positive'Value (Attrs.Get_Value ("column"));
          Self.Subprogram_Node.Analysis_Data.Code_Peer_Data :=
-           new Code_Peer.Subprogram_Data;
+           new Code_Peer.Subprogram_Data'
+             (Lifeage,
+              Message_Vectors.Empty_Vector,
+              Annotation_Maps.Empty_Map,
+              0);
          Self.Subprogram_Data :=
            Code_Peer.Subprogram_Data_Access
              (Self.Subprogram_Node.Analysis_Data.Code_Peer_Data);
@@ -140,7 +163,8 @@ package body Code_Peer.Bridge_Database_Readers is
       elsif Qname = Message_Tag then
          Self.Subprogram_Data.Messages.Append
            (new Code_Peer.Message'
-              (Positive'Value (Attrs.Get_Value ("line")),
+              (Lifeage,
+               Positive'Value (Attrs.Get_Value ("line")),
                Positive'Value (Attrs.Get_Value ("column")),
                Self.Message_Categories.Element
                  (Positive'Value (Attrs.Get_Value ("category"))),
@@ -163,7 +187,8 @@ package body Code_Peer.Bridge_Database_Readers is
 
          Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
            (new Code_Peer.Annotation'
-              (Text => new String'(Attrs.Get_Value ("text"))));
+              (Lifeage,
+               new String'(Attrs.Get_Value ("text"))));
 
       else
          raise Program_Error with "Unexpected tag '" & Qname & "'";

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,33 +19,42 @@
 
 package Code_Peer.Utilities is
 
-   function Compute_Messages_Count
+   type Counts is record
+      Base    : Natural := 0;
+      Added   : Natural := 0;
+      Removed : Natural := 0;
+      Current : Natural := 0;
+   end record;
+
+   type Messages_Counts is
+     array (Code_Peer.Message_Probability_Level) of Counts;
+
+   function "+"
+     (Left : Messages_Counts; Right : Messages_Counts) return Messages_Counts;
+
+   procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural;
-   --  Computes number of the subprogram's messages with specified
-   --  probability level.
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts);
+   --  Computes number of the subprogram's messages with specified categories
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural;
-   --  Computes number of the file's messages with specified probability
-   --  level.
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts);
+   --  Computes number of the file's messages with specified categories
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (Project    : Code_Analysis.Project_Access;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural;
-   --  Computes number of the project's messages with specified probability
-   --  level.
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts);
+   --  Computes number of the project's messages with specified categories
 
-   function Compute_Messages_Count
+   procedure Compute_Messages_Count
      (Tree       : Code_Analysis.Code_Analysis_Tree;
-      Level      : Code_Peer.Message_Probability_Level;
-      Categories : Code_Peer.Message_Category_Sets.Set) return Natural;
-   --  Computes number of the whole tree messages with specified probability
-   --  level.
+      Categories : Code_Peer.Message_Category_Sets.Set;
+      Counts     : out Messages_Counts);
+   --  Computes number of the whole tree messages with specified categories
 
    function Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;

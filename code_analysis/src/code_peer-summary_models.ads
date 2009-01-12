@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,16 +21,27 @@ with Glib.Values;
 with Gtk.Tree_Model;
 
 with Code_Analysis.Tree_Models;
+with Code_Peer.Utilities;
 
 package Code_Peer.Summary_Models is
 
-   Entity_Name_Column         : constant := 0;
-   Informational_Count_Column : constant := 1;
-   Low_Count_Column           : constant := 2;
-   Medium_Count_Column        : constant := 3;
-   High_Count_Column          : constant := 4;
-   Suppressed_Count_Column    : constant := 5;
-   Number_Of_Columns          : constant := 6;
+   Entity_Name_Column                 : constant :=  0;
+   Informational_Base_Count_Column    : constant :=  1;
+   Informational_Deltas_Count_Column  : constant :=  2;
+   Informational_Current_Count_Column : constant :=  3;
+   Low_Base_Count_Column              : constant :=  4;
+   Low_Deltas_Count_Column            : constant :=  5;
+   Low_Current_Count_Column           : constant :=  6;
+   Medium_Base_Count_Column           : constant :=  7;
+   Medium_Deltas_Count_Column         : constant :=  8;
+   Medium_Current_Count_Column        : constant :=  9;
+   High_Base_Count_Column             : constant := 10;
+   High_Deltas_Count_Column           : constant := 11;
+   High_Current_Count_Column          : constant := 12;
+   Suppressed_Base_Count_Column       : constant := 13;
+   Suppressed_Deltas_Count_Column     : constant := 14;
+   Suppressed_Current_Count_Column    : constant := 15;
+   Number_Of_Columns                  : constant := 16;
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
@@ -65,11 +76,50 @@ private
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
       Tree                 : Code_Analysis.Code_Analysis_Tree;
       Show_All_Subprograms : Boolean := False;
+      Show_All_Files       : Boolean := True;
+      Show_All_Projects    : Boolean := True;
       Message_Categories   : Code_Peer.Message_Category_Sets.Set;
       --  Set of the message categories, which is showed in the report
    end record;
 
+   type Subprogram_Item is
+     new Code_Analysis.Tree_Models.Subprogram_Item with record
+      Computed        : Boolean := False;
+      Messages_Counts : Code_Peer.Utilities.Messages_Counts;
+   end record;
+
+   type Subprogram_Item_Access is access all Subprogram_Item'Class;
+
+   type File_Item is new Code_Analysis.Tree_Models.File_Item with record
+      Computed        : Boolean := False;
+      Messages_Counts : Code_Peer.Utilities.Messages_Counts;
+   end record;
+
+   type File_Item_Access is access all File_Item'Class;
+
+   type Project_Item is new Code_Analysis.Tree_Models.Project_Item with record
+      Computed        : Boolean := False;
+      Messages_Counts : Code_Peer.Utilities.Messages_Counts;
+   end record;
+
+   type Project_Item_Access is access all Project_Item'Class;
+
    --  Override FilterableTreeModel subprograms
+
+   overriding function Create
+     (Self    : access Summary_Model_Record;
+      Project : Code_Analysis.Project_Access)
+      return Code_Analysis.Tree_Models.Project_Item_Access;
+
+   overriding function Create
+     (Self : access Summary_Model_Record;
+      File : Code_Analysis.File_Access)
+      return Code_Analysis.Tree_Models.File_Item_Access;
+
+   overriding function Create
+     (Self       : access Summary_Model_Record;
+      Subprogram : Code_Analysis.Subprogram_Access)
+      return Code_Analysis.Tree_Models.Subprogram_Item_Access;
 
    overriding function Is_Visible
      (Self    : access Summary_Model_Record;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
 
@@ -299,27 +300,93 @@ package body Code_Peer.Summary_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"High");
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Text_Renderer, "text", Code_Peer.Summary_Models.High_Count_Column);
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.High_Base_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Medium");
+      Column.Set_Title (-("High" & Ada.Characters.Latin_1.LF & "deltas"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Text_Renderer, "text", Code_Peer.Summary_Models.Medium_Count_Column);
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.High_Deltas_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Low");
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_End (Text_Renderer, False);
       Column.Add_Attribute
-        (Text_Renderer, "text", Code_Peer.Summary_Models.Low_Count_Column);
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.High_Current_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Medium_Base_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-("Medium" & Ada.Characters.Latin_1.LF & "deltas"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Medium_Deltas_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Medium_Current_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Low_Base_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-("Low" & Ada.Characters.Latin_1.LF & "deltas"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Low_Deltas_Count_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_End (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Low_Current_Count_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);

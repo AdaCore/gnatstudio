@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,8 @@ with Code_Analysis;
 
 package Code_Peer is
 
+   type Lifeage_Kinds is (Added, Unchanged, Removed);
+
    type Message_Probability_Level is
      (Informational, Low, Medium, High, Suppressed);
 
@@ -43,6 +45,7 @@ package Code_Peer is
      (Message_Category_Access, Hash, "=");
 
    type Message is record
+      Lifeage     : Lifeage_Kinds;
       Line        : Positive;
       Column      : Positive;
       Category    : Message_Category_Access;
@@ -67,7 +70,8 @@ package Code_Peer is
       Right : Annotation_Category_Access) return Boolean;
 
    type Annotation is record
-      Text : GNAT.Strings.String_Access;
+      Lifeage : Lifeage_Kinds;
+      Text    : GNAT.Strings.String_Access;
    end record;
 
    type Annotation_Access is access all Annotation;
@@ -96,6 +100,7 @@ package Code_Peer is
 
    type Subprogram_Data is
      new Code_Analysis.Code_Peer_Data_Root with record
+      Lifeage       : Lifeage_Kinds;
       Messages      : Message_Vectors.Vector;
       Annotations   : Annotation_Maps.Map;
       Special_Lines : Natural := 0;
