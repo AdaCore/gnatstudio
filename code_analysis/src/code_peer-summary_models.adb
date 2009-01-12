@@ -100,12 +100,15 @@ package body Code_Peer.Summary_Models is
             | Low_Base_Count_Column
             | Low_Deltas_Count_Column
             | Low_Current_Count_Column
+            | Low_Current_Color_Column
             | Medium_Base_Count_Column
             | Medium_Deltas_Count_Column
             | Medium_Current_Count_Column
+            | Medium_Current_Color_Column
             | High_Base_Count_Column
             | High_Deltas_Count_Column
             | High_Current_Count_Column
+            | High_Current_Color_Column
             | Suppressed_Base_Count_Column
             | Suppressed_Deltas_Count_Column
             | Suppressed_Current_Count_Column
@@ -340,6 +343,10 @@ package body Code_Peer.Summary_Models is
          when Low_Current_Count_Column =>
             Set_Count_Image (Code_Peer.Low, True);
 
+         when Low_Current_Color_Column =>
+            Glib.Values.Init (Value, Glib.GType_String);
+            Glib.Values.Set_String (Value, "#CCFFFF");
+
          when Medium_Base_Count_Column =>
             Set_Count_Image (Code_Peer.Medium, False);
 
@@ -349,6 +356,10 @@ package body Code_Peer.Summary_Models is
          when Medium_Current_Count_Column =>
             Set_Count_Image (Code_Peer.Medium, True);
 
+         when Medium_Current_Color_Column =>
+            Glib.Values.Init (Value, Glib.GType_String);
+            Glib.Values.Set_String (Value, "#FFFFCC");
+
          when High_Base_Count_Column =>
             Set_Count_Image (Code_Peer.High, False);
 
@@ -357,6 +368,10 @@ package body Code_Peer.Summary_Models is
 
          when High_Current_Count_Column =>
             Set_Count_Image (Code_Peer.High, True);
+
+         when High_Current_Color_Column =>
+            Glib.Values.Init (Value, Glib.GType_String);
+            Glib.Values.Set_String (Value, "#FFCCCC");
 
          when Suppressed_Base_Count_Column =>
             Set_Count_Image (Code_Peer.Suppressed, False);

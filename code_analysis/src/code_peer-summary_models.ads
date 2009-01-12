@@ -32,16 +32,19 @@ package Code_Peer.Summary_Models is
    Low_Base_Count_Column              : constant :=  4;
    Low_Deltas_Count_Column            : constant :=  5;
    Low_Current_Count_Column           : constant :=  6;
-   Medium_Base_Count_Column           : constant :=  7;
-   Medium_Deltas_Count_Column         : constant :=  8;
-   Medium_Current_Count_Column        : constant :=  9;
-   High_Base_Count_Column             : constant := 10;
-   High_Deltas_Count_Column           : constant := 11;
-   High_Current_Count_Column          : constant := 12;
-   Suppressed_Base_Count_Column       : constant := 13;
-   Suppressed_Deltas_Count_Column     : constant := 14;
-   Suppressed_Current_Count_Column    : constant := 15;
-   Number_Of_Columns                  : constant := 16;
+   Low_Current_Color_Column           : constant :=  7;
+   Medium_Base_Count_Column           : constant :=  8;
+   Medium_Deltas_Count_Column         : constant :=  9;
+   Medium_Current_Count_Column        : constant := 10;
+   Medium_Current_Color_Column        : constant := 11;
+   High_Base_Count_Column             : constant := 12;
+   High_Deltas_Count_Column           : constant := 13;
+   High_Current_Count_Column          : constant := 14;
+   High_Current_Color_Column          : constant := 15;
+   Suppressed_Base_Count_Column       : constant := 16;
+   Suppressed_Deltas_Count_Column     : constant := 17;
+   Suppressed_Current_Count_Column    : constant := 18;
+   Number_Of_Columns                  : constant := 19;
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;

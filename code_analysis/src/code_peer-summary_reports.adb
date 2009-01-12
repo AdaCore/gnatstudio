@@ -302,7 +302,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -312,7 +312,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-("High" & Ada.Characters.Latin_1.LF & "deltas"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -322,17 +322,21 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
          Code_Peer.Summary_Models.High_Current_Count_Column);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "cell_background",
+         Code_Peer.Summary_Models.High_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -342,7 +346,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-("Medium" & Ada.Characters.Latin_1.LF & "deltas"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -352,17 +356,21 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
          Code_Peer.Summary_Models.Medium_Current_Count_Column);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "cell_background",
+         Code_Peer.Summary_Models.Medium_Current_Color_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -372,7 +380,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-("Low" & Ada.Characters.Latin_1.LF & "deltas"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
@@ -382,11 +390,18 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "now"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
+      Column.Pack_Start (Text_Renderer, False);
       Column.Add_Attribute
         (Text_Renderer,
          "text",
          Code_Peer.Summary_Models.Low_Current_Count_Column);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "cell_background",
+         Code_Peer.Summary_Models.Low_Current_Color_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
