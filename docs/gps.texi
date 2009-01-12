@@ -38,10 +38,15 @@
 
 Copyright @copyright{} 2001-2008, AdaCore.
 
-This document may be copied, in whole or in part, in any form or by any
-means, as is or with alterations, provided that (1) alterations are clearly
-marked as alterations and (2) this copyright notice is included
-unmodified in any copy.
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1
+or any later version published by the Free Software Foundation;
+with the Invariant Sections being ``GNU Free Documentation License'', with the
+Front-Cover Texts being
+``Using the GNAT Programming Studio'',
+and with no Back-Cover Texts.
+A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
 
 @end titlepage
 
@@ -60,10 +65,16 @@ Version @value{GPSVersion}
 Date: $Date$
 
 Copyright @copyright{} 2001-2008, AdaCore
-This document may be copied, in whole or in part, in any form or by any
-means, as is or with alterations, provided that (1) alterations are clearly
-marked as alterations and (2) this copyright notice is included
-unmodified in any copy.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1
+or any later version published by the Free Software Foundation;
+with the Invariant Sections being ``GNU Free Documentation License'', with the
+Front-Cover Texts being
+``Using the GNAT Programming Studio'',
+and with no Back-Cover Texts.
+A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
 
 @menu
 * Introduction::
@@ -83,6 +94,7 @@ unmodified in any copy.
 * Using GPS for Remote Development::
 * Customizing and Extending GPS::
 * Environment::
+* GNU Free Documentation License::
 * Index table::
 
 @detailmenu
@@ -17744,6 +17756,12 @@ systems to perform at a reasonable speed, so you need to make sure you X
 server properly supports this extension.
 
 @end table
+
+@c **********************************
+@c * GNU Free Documentation License *
+@c **********************************
+@include gfdl.texi
+@c GNU Free Documentation License
 
 @c --------------------------------------------------------------------
 @node Index table

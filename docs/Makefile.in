@@ -31,23 +31,23 @@ gps_pg:   gps_pg.pdf gps_pg.html
 
 .PHONY: gps.html
 
-gps-tutorial.html: tutorial.texi
+gps-tutorial.html: tutorial.texi gfdl.texi
 	${MAKEINFO} --html --no-validate --no-split --number-sections $< -o $@
 
-gps_pg.html:  gps_pg.texi
+gps_pg.html:  gps_pg.texi gfdl.texi
 	${MAKEINFO} --html --no-split --number-sections --no-headers $< -o $@
 
-gps_pg.pdf: gps_pg.texi
+gps_pg.pdf: gps_pg.texi gfdl.texi
 
 ## We generate the documentation twice, in case the version of makeinfo is
 ## recent enough to support --css-include
-gps.html: ${TEXI}
+gps.html: ${TEXI} gfdl.texi
 	makeinfo --html --number-sections ${TEXI}
 	@-makeinfo --html --css-include=gps.css --number-sections ${TEXI}  >/dev/null 2>/dev/null
 	@sed -e 's,</head>,<base target="page"/></head>,' gps/index.html > gps/index.html.tmp
 	@mv gps/index.html.tmp gps/index.html
 
-gps.pdf gps.txt: ${TEXI} stamp-pdf
+gps.pdf gps.txt: ${TEXI} stamp-pdf gfdl.texi
 
 %.pdf::
 ifneq (${TEXI2DVI},)
