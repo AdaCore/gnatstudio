@@ -149,7 +149,7 @@ package body Code_Peer.Summary_Models is
       Subprogram_Node : constant Subprogram_Item_Access :=
                           Subprogram_Item_Access (Self.Subprogram (Iter));
 
-      procedure Set_Integer_Image (Item : Natural);
+      procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
 
       procedure Set_Count_Image
         (Level   : Code_Peer.Message_Probability_Level;
@@ -172,28 +172,31 @@ package body Code_Peer.Summary_Models is
          if Subprogram_Node /= null then
             if Current then
                Set_Integer_Image
-                 (Subprogram_Node.Messages_Counts (Level).Current);
+                 (Subprogram_Node.Messages_Counts (Level).Current, True);
 
             else
                Set_Integer_Image
-                 (Subprogram_Node.Messages_Counts (Level).Base);
+                 (Subprogram_Node.Messages_Counts (Level).Base, True);
             end if;
 
          elsif File_Node /= null then
             if Current then
-               Set_Integer_Image (File_Node.Messages_Counts (Level).Current);
+               Set_Integer_Image
+                 (File_Node.Messages_Counts (Level).Current, True);
 
             else
-               Set_Integer_Image (File_Node.Messages_Counts (Level).Base);
+               Set_Integer_Image
+                 (File_Node.Messages_Counts (Level).Base, True);
             end if;
 
          elsif Project_Node /= null then
             if Current then
                Set_Integer_Image
-                 (Project_Node.Messages_Counts (Level).Current);
+                 (Project_Node.Messages_Counts (Level).Current, True);
 
             else
-               Set_Integer_Image (Project_Node.Messages_Counts (Level).Base);
+               Set_Integer_Image
+                 (Project_Node.Messages_Counts (Level).Base, True);
             end if;
 
          else
@@ -207,10 +210,10 @@ package body Code_Peer.Summary_Models is
                  (Self.Tree, Self.Message_Categories, Counts);
 
                if Current then
-                  Set_Integer_Image (Counts (Level).Current);
+                  Set_Integer_Image (Counts (Level).Current, False);
 
                else
-                  Set_Integer_Image (Counts (Level).Base);
+                  Set_Integer_Image (Counts (Level).Base, True);
                end if;
             end;
          end if;
@@ -281,13 +284,13 @@ package body Code_Peer.Summary_Models is
       -- Set_Integer_Image --
       -----------------------
 
-      procedure Set_Integer_Image (Item : Natural) is
+      procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean) is
          Image : constant String := Natural'Image (Item);
 
       begin
          Glib.Values.Init (Value, Glib.GType_String);
 
-         if Item = 0 then
+         if Item = 0 and then Suppress_Zero then
             Glib.Values.Set_String (Value, "");
 
          else
