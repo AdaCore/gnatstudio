@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -389,7 +389,8 @@ package body GPS.Kernel.Preferences is
          Label   => -"Multi language builder",
          Doc     =>
          -("Whether GPS should build multi-language projects using " &
-           "gprbuild (the new option) or gprmake (the old option)"),
+           "gprbuild (default), gprmake (the old multi-language builder)" &
+          " or gnatmake (to disable multi-language builds)"),
          Page    => -"General",
          Default => Gprbuild);
 

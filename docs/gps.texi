@@ -9444,6 +9444,10 @@ By default, @code{gprbuild} will be used. Alternatively, its prototype
 @code{gprmake} can be selected to help the transition, although we do not
 recommend it at this stage.
 
+Finally, if you want to force the use of gnatmake, even for projects
+that contain other sources, you can use the @code{gnatmake} setting. Note
+that Gnatmake will only consider Ada files.
+
 @item Jump to first location
 @cindex location
 Whether the first entry of the location window should be selected
