@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I113-033: Unexpected scrolling when switching between views of same file
+  Problem:    If you have two views of the same file side by side, and scroll
+              one of them so that its cursor is no longer visible, then click
+              inside the other one, the latter gets scrolled randomly and the
+              cursor is not moved to the line you clicked on
+  Workaround: scroll back to that line
+
 - HC10-015: Wrong text replacement with auto-casing
   Problem:    When auto-casing is enabled in the preferences, the wrong
               text replacement can occur if there are single quotes in the text

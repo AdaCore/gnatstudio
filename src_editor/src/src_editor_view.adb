@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -363,6 +363,7 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      Trace (Me, "MANU Save_Cursor_Position " & Get_Line (Insert_Iter)'Img);
       Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
    end Save_Cursor_Position;
 
@@ -1160,7 +1161,9 @@ package body Src_Editor_View is
    is
       View : constant Source_View   := Source_View (Widget);
    begin
-      if not Selection_Exists (Get_Buffer (View)) then
+      if not View.Button_Pressed
+        and then not Selection_Exists (Get_Buffer (View))
+      then
          Set_Disable_Scroll_On_Focus (View, True);
          Restore_Cursor_Position (View);
       end if;
