@@ -363,7 +363,6 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      Trace (Me, "MANU Save_Cursor_Position " & Get_Line (Insert_Iter)'Img);
       Move_Mark (Buffer, View.Saved_Cursor_Mark, Insert_Iter);
    end Save_Cursor_Position;
 
