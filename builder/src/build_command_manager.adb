@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -257,8 +257,10 @@ package body Build_Command_Manager is
 
          begin
             if Arg /= "%gprbuild"
-              and then Langs'Length = 1
-              and then Langs (Langs'First).all = "ada"
+              and then ((Langs'Length = 1
+                         and then Langs (Langs'First).all = "ada")
+                        or else Multi_Language_Builder.Get_Pref
+                                 = GPS.Kernel.Preferences.Gnatmake)
             then
                --  Determine if the project has only Ada set, if so, set
                --  Multi_Language_Build to False.

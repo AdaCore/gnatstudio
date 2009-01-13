@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -100,7 +100,7 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Editor_Desktop_Policy);
    --  The list of possible behaviours when saving editors in the desktop
 
-   type Multi_Language_Builder_Policy is (Gprbuild, Gprmake);
+   type Multi_Language_Builder_Policy is (Gprbuild, Gprmake, Gnatmake);
    package Multi_Language_Builder_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Multi_Language_Builder_Policy);
    --  The List of possible multi-language builders
