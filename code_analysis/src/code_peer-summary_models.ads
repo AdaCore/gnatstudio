@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Values;
+with Gdk.Pixbuf;
 with Gtk.Tree_Model;
 
 with Code_Analysis.Tree_Models;
@@ -25,26 +26,27 @@ with Code_Peer.Utilities;
 
 package Code_Peer.Summary_Models is
 
-   Entity_Name_Column                 : constant :=  0;
-   Informational_Base_Count_Column    : constant :=  1;
-   Informational_Deltas_Count_Column  : constant :=  2;
-   Informational_Current_Count_Column : constant :=  3;
-   Low_Base_Count_Column              : constant :=  4;
-   Low_Deltas_Count_Column            : constant :=  5;
-   Low_Current_Count_Column           : constant :=  6;
-   Low_Current_Color_Column           : constant :=  7;
-   Medium_Base_Count_Column           : constant :=  8;
-   Medium_Deltas_Count_Column         : constant :=  9;
-   Medium_Current_Count_Column        : constant := 10;
-   Medium_Current_Color_Column        : constant := 11;
-   High_Base_Count_Column             : constant := 12;
-   High_Deltas_Count_Column           : constant := 13;
-   High_Current_Count_Column          : constant := 14;
-   High_Current_Color_Column          : constant := 15;
-   Suppressed_Base_Count_Column       : constant := 16;
-   Suppressed_Deltas_Count_Column     : constant := 17;
-   Suppressed_Current_Count_Column    : constant := 18;
-   Number_Of_Columns                  : constant := 19;
+   Entity_Icon_Column                 : constant :=  0;
+   Entity_Name_Column                 : constant :=  1;
+   Informational_Base_Count_Column    : constant :=  2;
+   Informational_Deltas_Count_Column  : constant :=  3;
+   Informational_Current_Count_Column : constant :=  4;
+   Low_Base_Count_Column              : constant :=  5;
+   Low_Deltas_Count_Column            : constant :=  6;
+   Low_Current_Count_Column           : constant :=  7;
+   Low_Current_Color_Column           : constant :=  8;
+   Medium_Base_Count_Column           : constant :=  9;
+   Medium_Deltas_Count_Column         : constant := 10;
+   Medium_Current_Count_Column        : constant := 11;
+   Medium_Current_Color_Column        : constant := 12;
+   High_Base_Count_Column             : constant := 13;
+   High_Deltas_Count_Column           : constant := 14;
+   High_Current_Count_Column          : constant := 15;
+   High_Current_Color_Column          : constant := 16;
+   Suppressed_Base_Count_Column       : constant := 17;
+   Suppressed_Deltas_Count_Column     : constant := 18;
+   Suppressed_Current_Count_Column    : constant := 19;
+   Number_Of_Columns                  : constant := 20;
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
@@ -52,14 +54,20 @@ package Code_Peer.Summary_Models is
    type Summary_Model is access all Summary_Model_Record'Class;
 
    procedure Gtk_New
-     (Model      : out Summary_Model;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+     (Model           : out Summary_Model;
+      Tree            : Code_Analysis.Code_Analysis_Tree;
+      Categories      : Code_Peer.Message_Category_Sets.Set;
+      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
 
    procedure Initialize
-     (Model      : access Summary_Model_Record'Class;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set);
+     (Model           : access Summary_Model_Record'Class;
+      Tree            : Code_Analysis.Code_Analysis_Tree;
+      Categories      : Code_Peer.Message_Category_Sets.Set;
+      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
 
    procedure Set_Show_All_Subprograms
      (Self : access Summary_Model_Record'Class;
@@ -83,6 +91,9 @@ private
       Show_All_Projects    : Boolean := True;
       Message_Categories   : Code_Peer.Message_Category_Sets.Set;
       --  Set of the message categories, which is showed in the report
+      Project_Icon         : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon            : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon      : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
    type Subprogram_Item is

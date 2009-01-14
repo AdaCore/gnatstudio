@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;
+
 with GPS.Intl; use GPS.Intl;
 with Projects;
 
@@ -93,6 +95,9 @@ package body Code_Peer.Summary_Models is
 
    begin
       case Index is
+         when Entity_Icon_Column =>
+            return Gdk.Pixbuf.Get_Type;
+
          when Entity_Name_Column
             | Informational_Base_Count_Column
             | Informational_Deltas_Count_Column
@@ -304,6 +309,27 @@ package body Code_Peer.Summary_Models is
 
    begin
       case Column is
+         when Entity_Icon_Column =>
+            if Subprogram_Node /= null then
+               Glib.Values.Init (Value, Glib.GType_Object);
+               Glib.Values.Set_Object
+                 (Value, Glib.Object.GObject (Self.Subprogram_Icon));
+
+            elsif File_Node /= null then
+               Glib.Values.Init (Value, Glib.GType_Object);
+               Glib.Values.Set_Object
+                 (Value, Glib.Object.GObject (Self.File_Icon));
+
+            elsif Project_Node /= null then
+               Glib.Values.Init (Value, Glib.GType_Object);
+               Glib.Values.Set_Object
+                 (Value, Glib.Object.GObject (Self.Project_Icon));
+
+            else
+               Glib.Values.Init (Value, Glib.GType_Object);
+               Glib.Values.Set_Object (Value, null);
+            end if;
+
          when Entity_Name_Column =>
             if Subprogram_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
@@ -392,12 +418,16 @@ package body Code_Peer.Summary_Models is
    -------------
 
    procedure Gtk_New
-     (Model      : out Summary_Model;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set) is
+     (Model           : out Summary_Model;
+      Tree            : Code_Analysis.Code_Analysis_Tree;
+      Categories      : Code_Peer.Message_Category_Sets.Set;
+      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf) is
    begin
       Model := new Summary_Model_Record;
-      Initialize (Model, Tree, Categories);
+      Initialize
+        (Model, Tree, Categories, Project_Icon, File_Icon, Subprogram_Icon);
    end Gtk_New;
 
    ----------------
@@ -405,14 +435,21 @@ package body Code_Peer.Summary_Models is
    ----------------
 
    procedure Initialize
-     (Model      : access Summary_Model_Record'Class;
-      Tree       : Code_Analysis.Code_Analysis_Tree;
-      Categories : Code_Peer.Message_Category_Sets.Set) is
+     (Model           : access Summary_Model_Record'Class;
+      Tree            : Code_Analysis.Code_Analysis_Tree;
+      Categories      : Code_Peer.Message_Category_Sets.Set;
+      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf) is
    begin
       Code_Analysis.Tree_Models.Initialize (Model, Tree);
 
       Model.Tree := Tree;
       Model.Message_Categories := Categories;
+
+      Model.Project_Icon    := Project_Icon;
+      Model.File_Icon       := File_Icon;
+      Model.Subprogram_Icon := Subprogram_Icon;
 
       Model.Reconstruct;
    end Initialize;

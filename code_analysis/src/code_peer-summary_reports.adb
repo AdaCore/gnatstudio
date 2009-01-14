@@ -24,10 +24,13 @@ with System;
 with Glib.Object;
 with Glib.Values;
 with Gdk.Event;
+with Gdk.Pixbuf;
 with Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;
+with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Object;
@@ -41,6 +44,7 @@ with Gtk.Widget;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
+with Code_Analysis_GUI;
 
 package body Code_Peer.Summary_Reports is
 
@@ -247,11 +251,15 @@ package body Code_Peer.Summary_Reports is
    is
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Toggle_Renderer : Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle;
       Report_Pane     : Gtk.Paned.Gtk_Vpaned;
       Filter_Box      : Gtk.Box.Gtk_Vbox;
       Check           : Gtk.Check_Button.Gtk_Check_Button;
+      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
+      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf;
       Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
@@ -271,6 +279,19 @@ package body Code_Peer.Summary_Reports is
       Self.Kernel := Kernel;
       Self.Tree   := Tree;
 
+      Project_Icon :=
+        Gtk.Widget.Gtk_Widget
+          (Kernel.Get_Main_Window).Render_Icon
+          (Code_Analysis_GUI.Prj_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
+      File_Icon :=
+        Gtk.Widget.Gtk_Widget
+          (Kernel.Get_Main_Window).Render_Icon
+          (Code_Analysis_GUI.File_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
+      Subprogram_Icon :=
+        Gtk.Widget.Gtk_Widget
+          (Kernel.Get_Main_Window).Render_Icon
+          (Code_Analysis_GUI.Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
+
       Gtk.Paned.Gtk_New_Vpaned (Report_Pane);
       Self.Pack1 (Report_Pane, Resize => True);
 
@@ -285,7 +306,10 @@ package body Code_Peer.Summary_Reports is
               (Tree,
                GPS.Kernel.Project.Get_Project
                  (Kernel)).Analysis_Data.Code_Peer_Data.all).
-                    Message_Categories);
+                    Message_Categories,
+         Project_Icon,
+         File_Icon,
+         Subprogram_Icon);
       Gtk.Tree_View.Gtk_New
         (Self.Analysis_View,
          Gtk.Tree_Model.Gtk_Tree_Model (Self.Analysis_Model));
@@ -294,9 +318,16 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-"Entity");
       Column.Set_Resizable (True);
+      Gtk.Cell_Renderer_Pixbuf.Gtk_New (Pixbuf_Renderer);
+      Column.Pack_Start (Pixbuf_Renderer, False);
+      Column.Add_Attribute
+        (Pixbuf_Renderer,
+         "pixbuf",
+         Code_Peer.Summary_Models.Entity_Icon_Column);
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, True);
-      Column.Add_Attribute (Text_Renderer, "text", 0);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Code_Peer.Summary_Models.Entity_Name_Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
