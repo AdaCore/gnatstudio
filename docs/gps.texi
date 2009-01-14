@@ -17382,6 +17382,13 @@ set for its own purpose.
 Same as @code{GPS_STARTUP_LD_LIBRARY_PATH} but for the @code{LD_LIBRARY_PATH}
 variable.
 
+   @item GPS_MEMORY_MONITOR
+@cindex GPS_MEMORY_MONITOR
+If set, GPS will add special code on every allocation and deallocation,
+thus slowing things done a bit, that makes it possible to check where the
+biggest amount of memory is allocated, through the
+@code{GPS.debug_memory_usage} python command.
+
 @end table
 
 @c --------------------------------------------------------------------

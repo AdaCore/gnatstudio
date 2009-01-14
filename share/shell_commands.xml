@@ -701,6 +701,11 @@ The returned list is sorted alphabetically, and the name of the language has bee
      </example>
   </shell_doc>
 
+  <shell_doc name="GPS.debug_memory_usage">
+     <param name="size">An integer</param>
+     <description>Dumps on stdout the size biggest memory allocators in GPS. This is really meant as a debug function for GPS developers</description>
+  </shell_doc>
+
   <shell_doc name="GPS.execute_action">
      <param name="action">Name of the action to execute</param>
      <param name="...">Any number of string parameters</param>

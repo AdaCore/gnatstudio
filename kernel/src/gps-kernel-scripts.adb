@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -79,6 +79,9 @@ package body GPS.Kernel.Scripts is
               Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
    Ref_Me : constant Trace_Handle :=
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
+
+   Memory_Monitor : constant Boolean :=
+     Getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL) /= null;
 
    Entity_Class_Name        : constant String := "Entity";
    File_Class_Name          : constant String := "File";
@@ -487,6 +490,9 @@ package body GPS.Kernel.Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
+      procedure Memory_Dump (Size : Positive);
+      pragma Import (Ada, Memory_Dump, "__system__memory__dump");
+
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "get_system_dir" then
@@ -497,6 +503,9 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, Get_Home_Dir (Kernel));
+
+      elsif Command = "debug_memory_usage" then
+         Memory_Dump (Size => Nth_Arg (Data, 1));
 
       elsif Command = "insmod" then
          Name_Parameters (Data, Insmod_Cmd_Parameters);
@@ -1917,6 +1926,13 @@ package body GPS.Kernel.Scripts is
          Minimum_Args => 1,
          Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
+      if Memory_Monitor then
+         Register_Command
+           (Kernel, "debug_memory_usage",
+            Minimum_Args => 1,
+            Maximum_Args => 1,
+            Handler      => Default_Command_Handler'Access);
+      end if;
       Register_Command
         (Kernel, "execute_asynchronous_action",
          Minimum_Args => 1,
