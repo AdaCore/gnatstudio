@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.4.0
 
+- I114-032: Big memory footprint at startup
+  Problem:    When GPS starts, it already uses a lot of memory. Some analysis
+              Showed that a good chunk of it was from loading the
+              $HOME/.gps/properties.xml file in memory in an inefficient
+              datastructure
+  Workaround: remove or cleanup this file once in a whiile. It will not get
+              very big unless you are using the filepos.py plugin
+
 - I113-033: Unexpected scrolling when switching between views of same file
   Problem:    If you have two views of the same file side by side, and scroll
               one of them so that its cursor is no longer visible, then click
