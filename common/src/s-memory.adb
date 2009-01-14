@@ -54,7 +54,7 @@ package body System.Memory is
      getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL) /= Null_Address;
    pragma Export (Ada, Memory_Monitor, "__memory_monitor");
 
-   Stack_Trace_Depth : constant := 10;
+   Stack_Trace_Depth : constant := 30;
 
    procedure Dump (Size : Positive);
    pragma Export (Ada, Dump, "__system__memory__dump");
@@ -419,8 +419,15 @@ package body System.Memory is
 
       for M in Max'Range loop
          exit when Max (M) = null;
-         Put (Max (M).Total'Img & " bytes in"
+         declare
+            type Percent is delta 0.1 range 0.0 .. 100.0;
+            P : constant Percent := Percent
+              (100.0 * Float (Max (M).Total)
+               / Float (Total_Allocs - Total_Free));
+         begin
+            Put (P'Img & "%:" & Max (M).Total'Img & " bytes in"
               & Max (M).Count'Img & " chunks at");
+         end;
 
          for J in Max (M).Traceback'Range loop
             Put (" 0x" & Address_Image (PC_For (Max (M).Traceback (J))));
