@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1132,14 +1132,14 @@ package body Directory_Tree is
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                 GObject (Open_Pixbufs (Directory_Node)));
             D.Base := Iter;
             return Read_Directory (D);
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+                 GObject (Close_Pixbufs (Directory_Node)));
             return False;
          end if;
 
@@ -1182,7 +1182,7 @@ package body Directory_Tree is
 
       if Is_Empty (D.Dirs) then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+              GObject (Close_Pixbufs (Directory_Node)));
       end if;
 
       while not Is_Empty (D.Dirs) loop
@@ -1226,7 +1226,7 @@ package body Directory_Tree is
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                       GObject (Open_Pixbufs (Directory_Node)));
 
                   Path_Free (Path);
                end;
@@ -1252,7 +1252,7 @@ package body Directory_Tree is
                      D.Explorer.Expanding := Expanding;
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                          GObject (Open_Pixbufs (Directory_Node)));
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
@@ -1270,7 +1270,7 @@ package body Directory_Tree is
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+                    GObject (Close_Pixbufs (Directory_Node)));
             end if;
 
             Next (D.Dirs);
@@ -1519,7 +1519,7 @@ package body Directory_Tree is
 
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
-                    Glib.C_Proxy (Close_Pixbufs (Directory_Node)));
+                    GObject (Close_Pixbufs (Directory_Node)));
             end if;
          end;
       end if;
@@ -1607,7 +1607,7 @@ package body Directory_Tree is
 
             Free_Children (T, Iter);
             Set (T.File_Model, Iter, Icon_Column,
-                       Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
+                 GObject (Open_Pixbufs (Directory_Node)));
             File_Append_Directory (T, Iter_Name, Iter, 1);
          end;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@
 --  </description>
 
 with Glib;                     use Glib;
+with Glib.Object;
+
 with GPS.Intl;                 use GPS.Intl;
 with Projects;                 use Projects;
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
@@ -66,7 +68,7 @@ package body Code_Analysis_Tree_Model is
       Icons     : Code_Analysis_Icons) is
    begin
       Append (Model, Iter, Parent);
-      Set (Model, Iter, Pix_Col, C_Proxy (Icons.Subp_Pixbuf));
+      Set (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
@@ -88,7 +90,7 @@ package body Code_Analysis_Tree_Model is
       Icons     : Code_Analysis_Icons) is
    begin
       Append (Model, Iter, Null_Iter);
-      Set (Model, Iter, Pix_Col, C_Proxy (Icons.Subp_Pixbuf));
+      Set (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Subp_Pixbuf));
       Set (Model, Iter, Name_Col, String (Subp_Node.Name.all));
       Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
@@ -126,7 +128,8 @@ package body Code_Analysis_Tree_Model is
       end if;
 
       Self_Iter := Iter;
-      Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
+      Gtk.Tree_Store.Set
+        (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
@@ -169,7 +172,8 @@ package body Code_Analysis_Tree_Model is
          Append (Model, Iter, Null_Iter);
       end if;
 
-      Gtk.Tree_Store.Set (Model, Iter, Pix_Col, C_Proxy (Icons.File_Pixbuf));
+      Gtk.Tree_Store.Set
+        (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
         (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
@@ -237,7 +241,7 @@ package body Code_Analysis_Tree_Model is
 
       Self_Iter := Iter;
       Gtk.Tree_Store.Set
-        (Model, Iter, Pix_Col, C_Proxy (Icons.Prj_Pixbuf));
+        (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.Prj_Pixbuf));
       Gtk.Tree_Store.Set (Model, Iter, Name_Col,
                           UTF8_String (String'(Project_Name (Prj_Node.Name))));
       Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);

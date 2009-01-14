@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---               Copyright (C) 2005-2008, AdaCore                    --
+--               Copyright (C) 2005-2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -596,7 +596,7 @@ package body Bookmark_Views is
 
       while List /= Null_Node loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Icon_Column, C_Proxy (View.Goto_Icon));
+         Set (Model, Iter, Icon_Column, GObject (View.Goto_Icon));
          Set (Model, Iter, Name_Column, Data (List).Name.all);
          Set (Model, Iter, Data_Column, Address => Convert (Data (List)));
          Set (Model, Iter, Editable_Column, True);

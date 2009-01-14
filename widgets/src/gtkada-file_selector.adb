@@ -850,7 +850,7 @@ package body Gtkada.File_Selector is
 
             if Pixbuf /= Null_Pixbuf then
                Set (Win.File_Model, Iter, Icon_Column,
-                    Gdk.C_Proxy (Pixbuf));
+                    GObject (Pixbuf));
             end if;
          end if;
 

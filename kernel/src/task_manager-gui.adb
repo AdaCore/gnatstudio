@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -820,7 +820,7 @@ package body Task_Manager.GUI is
                   Set
                     (View.Tree.Model, View.Lines (Index),
                      Command_Progress_Column,
-                     C_Proxy (Pix));
+                     GObject (Pix));
                   Unref (Pix);
                end;
             end if;

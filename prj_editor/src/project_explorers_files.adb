@@ -321,7 +321,7 @@ package body Project_Explorers_Files is
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 C_Proxy (Open_Pixbufs (Directory_Node)));
+                 GObject (Open_Pixbufs (Directory_Node)));
             D.Base := Iter;
 
             return Read_Directory (D);
@@ -329,7 +329,7 @@ package body Project_Explorers_Files is
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 C_Proxy (Close_Pixbufs (Directory_Node)));
+                 GObject (Close_Pixbufs (Directory_Node)));
             Pop_State (D.Explorer.Kernel);
             New_D := D;
             Free (New_D);
@@ -417,7 +417,7 @@ package body Project_Explorers_Files is
 
       if Is_Empty (D.Dirs) and then Is_Empty (D.Files) then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              C_Proxy (Close_Pixbufs (Directory_Node)));
+              GObject (Close_Pixbufs (Directory_Node)));
       end if;
 
       while not Is_Empty (D.Dirs) loop
@@ -463,7 +463,7 @@ package body Project_Explorers_Files is
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       C_Proxy (Open_Pixbufs (Directory_Node)));
+                       GObject (Open_Pixbufs (Directory_Node)));
 
                   Path_Free (Path);
                end;
@@ -497,7 +497,7 @@ package body Project_Explorers_Files is
                         D.Explorer.Path);
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          C_Proxy (Open_Pixbufs (Directory_Node)));
+                          GObject (Open_Pixbufs (Directory_Node)));
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -515,7 +515,7 @@ package body Project_Explorers_Files is
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    C_Proxy (Close_Pixbufs (Directory_Node)));
+                    GObject (Close_Pixbufs (Directory_Node)));
             end if;
 
             Next (D.Dirs);
@@ -882,7 +882,7 @@ package body Project_Explorers_Files is
          begin
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
-                    C_Proxy (Close_Pixbufs (Directory_Node)));
+                    GObject (Close_Pixbufs (Directory_Node)));
             end if;
          end;
       end if;
@@ -956,7 +956,7 @@ package body Project_Explorers_Files is
                when Directory_Node =>
                   Free_Children (T, Iter);
                   Set (T.File_Model, Iter, Icon_Column,
-                       C_Proxy (Open_Pixbufs (Directory_Node)));
+                       GObject (Open_Pixbufs (Directory_Node)));
                   File_Append_Directory (T, Iter_Name, Iter, 1);
 
                when File_Node =>

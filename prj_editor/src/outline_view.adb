@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -917,7 +917,7 @@ package body Outline_View is
 
       if Handler = null or else Lang = null then
          Append (Model, Iter, Root);
-         Set (Model, Iter, Pixbuf_Column, C_Proxy (Outline.Icon));
+         Set (Model, Iter, Pixbuf_Column, GObject (Outline.Icon));
          Set (Model, Iter, Display_Name_Column, "<i>No outline available</i>");
 
       else
@@ -936,7 +936,7 @@ package body Outline_View is
                   Append (Model, Iter, Root);
 
                   Set (Model, Iter, Pixbuf_Column,
-                       C_Proxy (Entity_Icon_Of (Constructs.Current.all)));
+                       GObject (Entity_Icon_Of (Constructs.Current.all)));
 
                   Display_Profile : declare
                      Profile : constant String :=

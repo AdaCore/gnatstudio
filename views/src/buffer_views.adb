@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -398,7 +398,7 @@ package body Buffer_Views is
                Set (Model, Iter, Data_Column, Untitled);
             else
                Set (Model, Iter, Icon_Column,
-                    C_Proxy (Get_Icon (Child)));
+                    GObject (Get_Icon (Child)));
                Set (Model, Iter, Name_Column, Name);
                Set (Model, Iter, Data_Column, Get_Title (Child));
             end if;

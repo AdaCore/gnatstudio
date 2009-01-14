@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -365,14 +365,14 @@ package body VCS_View is
       end if;
 
       if Pixbuf /= null then
-         Set (Explorer.Model, Iter, Status_Pixbuf_Column, C_Proxy (Pixbuf));
+         Set (Explorer.Model, Iter, Status_Pixbuf_Column, GObject (Pixbuf));
       else
          Pixbuf := Render_Icon
            (Explorer,
             VCS.Unknown.Stock_Id.all,
             Gtk.Enums.Icon_Size_Menu);
 
-         Set (Explorer.Model, Iter, Status_Pixbuf_Column, C_Proxy (Pixbuf));
+         Set (Explorer.Model, Iter, Status_Pixbuf_Column, GObject (Pixbuf));
       end if;
 
       if Line_Info.Status.Status.Label /= null then

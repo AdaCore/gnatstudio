@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1016,7 +1016,7 @@ package body GPS.Location_View is
       Set (Model, Iter, Line_Column, Gint (Line));
       Set (Model, Iter, Column_Column, Gint (Column));
       Set (Model, Iter, Length_Column, Gint (Length));
-      Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
+      Set (Model, Iter, Icon_Column, GObject (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
 
       Init (Value, GType_Pointer);
@@ -2406,7 +2406,7 @@ package body GPS.Location_View is
             then
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
-                       Button_Column, C_Proxy (Null_Pixbuf));
+                       Button_Column, GObject (Null_Pixbuf));
 
                   Get_Value
                     (View.Tree.Model, Line_Iter, Action_Column, Value);
@@ -2423,7 +2423,7 @@ package body GPS.Location_View is
 
                else
                   Set (View.Tree.Model, Line_Iter,
-                       Button_Column, C_Proxy (Action.Image));
+                       Button_Column, GObject (Action.Image));
                   Init (Value, GType_Pointer);
                   Set_Address (Value, To_Address (Action));
 

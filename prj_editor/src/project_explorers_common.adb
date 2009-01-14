@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,7 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Glib.Convert;              use Glib.Convert;
+with Glib.Object;
 
 with Basic_Types;               use Basic_Types;
 with Entities;                  use Entities;
@@ -175,7 +176,8 @@ package body Project_Explorers_Common is
 
       Set (Model, Iter, Absolute_Name_Column, Full_Name (File).all);
       Set (Model, Iter, Base_Name_Column, Base_Name (File));
-      Set (Model, Iter, Icon_Column, C_Proxy (Close_Pixbufs (File_Node)));
+      Set (Model, Iter, Icon_Column,
+           Glib.Object.GObject (Close_Pixbufs (File_Node)));
       Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
       Set (Model, Iter, Up_To_Date_Column, False);
 
@@ -238,7 +240,8 @@ package body Project_Explorers_Common is
       Set (Model, N, Absolute_Name_Column, Display_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
-           C_Proxy (Entity_Icons (False, Visibility_Public) (Category)));
+           Glib.Object.GObject
+             (Entity_Icons (False, Visibility_Public) (Category)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
       Set (Model, N, Up_To_Date_Column, True);
       Set (Model, N, Category_Column, Language_Category'Pos (Category));
@@ -344,7 +347,8 @@ package body Project_Explorers_Common is
       Set (Model, N, Absolute_Name_Column, Display_Full_Name (File));
       Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column, Reduce (Construct.Name.all));
-      Set (Model, N, Icon_Column, C_Proxy (Entity_Icon_Of (Construct)));
+      Set (Model, N, Icon_Column,
+           Glib.Object.GObject (Entity_Icon_Of (Construct)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
       Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
       Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
@@ -749,9 +753,11 @@ package body Project_Explorers_Common is
 
       if N_Type not in Category_Node .. Entity_Node then
          if Expanded then
-            Set (Model, Node, Icon_Column, C_Proxy (Open_Pixbufs (N_Type)));
+            Set (Model, Node, Icon_Column,
+                 Glib.Object.GObject (Open_Pixbufs (N_Type)));
          else
-            Set (Model, Node, Icon_Column, C_Proxy (Close_Pixbufs (N_Type)));
+            Set (Model, Node, Icon_Column,
+                 Glib.Object.GObject (Close_Pixbufs (N_Type)));
          end if;
       end if;
    end Set_Node_Type;

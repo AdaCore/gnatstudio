@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2008, AdaCore                --
+--                   Copyright (C) 2005-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -341,7 +341,7 @@ package body Clipboard_Views is
             Append (Model, Iter, Null_Iter);
 
             if Last_Paste = S then
-               Set (Model, Iter, 0, C_Proxy (View.Current));
+               Set (Model, Iter, 0, GObject (View.Current));
             else
                Set (Model, Iter, 0, C_Proxy'(null));
             end if;
