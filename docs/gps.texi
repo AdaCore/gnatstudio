@@ -17385,7 +17385,7 @@ variable.
    @item GPS_MEMORY_MONITOR
 @cindex GPS_MEMORY_MONITOR
 If set, GPS will add special code on every allocation and deallocation,
-thus slowing things done a bit, that makes it possible to check where the
+thus slowing things down a bit, that makes it possible to check where the
 biggest amount of memory is allocated, through the
 @code{GPS.debug_memory_usage} python command.
 
