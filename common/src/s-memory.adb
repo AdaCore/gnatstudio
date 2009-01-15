@@ -390,14 +390,16 @@ package body System.Memory is
          return;
       end if;
 
-      Put_Line ("Allocs:" & Total_Allocs'Img
+      Put_Line ("Ada Allocs:" & Total_Allocs'Img
                 & " bytes in" & Alloc_Count'Img & " chunks");
-      Put_Line ("Free:" & Total_Free'Img & " bytes in" & Free_Count'Img
+      Put_Line ("Ada Free:" & Total_Free'Img & " bytes in" & Free_Count'Img
                 & " chunks");
-      Put_Line ("Realloc: " & Realloc_Count'Img & " calls");
-      Put_Line ("Current watermark: "
-                & Byte_Count'Image (Total_Allocs - Total_Free));
-      Put_Line ("High watermark: " & High_Watermark'Img);
+      Put_Line ("Ada Realloc: " & Realloc_Count'Img & " calls");
+      Put_Line ("Ada Current watermark: "
+                & Byte_Count'Image (Total_Allocs - Total_Free)
+                & " in" & Long_Integer'Image (Alloc_Count - Free_Count)
+                & " chunks");
+      Put_Line ("Ada High watermark: " & High_Watermark'Img);
 
       Put_Line (Size'Img & " biggest memory users at this time:");
 
