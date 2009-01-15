@@ -98,6 +98,10 @@ package Code_Peer is
 
    overriding procedure Finalize (Self : access Project_Data);
 
+   type File_Data is new Code_Analysis.Code_Peer_Data_Root with record
+      Lifeage : Lifeage_Kinds;
+   end record;
+
    type Subprogram_Data is
      new Code_Analysis.Code_Peer_Data_Root with record
       Lifeage       : Lifeage_Kinds;

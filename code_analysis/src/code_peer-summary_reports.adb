@@ -331,6 +331,17 @@ package body Code_Peer.Summary_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Lifeage");
+      Column.Set_Resizable (True);
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, True);
+      Column.Add_Attribute
+        (Text_Renderer,
+         "text",
+         Code_Peer.Summary_Models.Entity_Lifeage_Column);
+      Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Title (-(Ada.Characters.Latin_1.LF & "base"));
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, False);

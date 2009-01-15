@@ -28,25 +28,26 @@ package Code_Peer.Summary_Models is
 
    Entity_Icon_Column                 : constant :=  0;
    Entity_Name_Column                 : constant :=  1;
-   Informational_Base_Count_Column    : constant :=  2;
-   Informational_Deltas_Count_Column  : constant :=  3;
-   Informational_Current_Count_Column : constant :=  4;
-   Low_Base_Count_Column              : constant :=  5;
-   Low_Deltas_Count_Column            : constant :=  6;
-   Low_Current_Count_Column           : constant :=  7;
-   Low_Current_Color_Column           : constant :=  8;
-   Medium_Base_Count_Column           : constant :=  9;
-   Medium_Deltas_Count_Column         : constant := 10;
-   Medium_Current_Count_Column        : constant := 11;
-   Medium_Current_Color_Column        : constant := 12;
-   High_Base_Count_Column             : constant := 13;
-   High_Deltas_Count_Column           : constant := 14;
-   High_Current_Count_Column          : constant := 15;
-   High_Current_Color_Column          : constant := 16;
-   Suppressed_Base_Count_Column       : constant := 17;
-   Suppressed_Deltas_Count_Column     : constant := 18;
-   Suppressed_Current_Count_Column    : constant := 19;
-   Number_Of_Columns                  : constant := 20;
+   Entity_Lifeage_Column              : constant :=  2;
+   Informational_Base_Count_Column    : constant :=  3;
+   Informational_Deltas_Count_Column  : constant :=  4;
+   Informational_Current_Count_Column : constant :=  5;
+   Low_Base_Count_Column              : constant :=  6;
+   Low_Deltas_Count_Column            : constant :=  7;
+   Low_Current_Count_Column           : constant :=  8;
+   Low_Current_Color_Column           : constant :=  9;
+   Medium_Base_Count_Column           : constant := 10;
+   Medium_Deltas_Count_Column         : constant := 11;
+   Medium_Current_Count_Column        : constant := 12;
+   Medium_Current_Color_Column        : constant := 13;
+   High_Base_Count_Column             : constant := 14;
+   High_Deltas_Count_Column           : constant := 15;
+   High_Current_Count_Column          : constant := 16;
+   High_Current_Color_Column          : constant := 17;
+   Suppressed_Base_Count_Column       : constant := 18;
+   Suppressed_Deltas_Count_Column     : constant := 19;
+   Suppressed_Current_Count_Column    : constant := 20;
+   Number_Of_Columns                  : constant := 21;
 
    type Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;

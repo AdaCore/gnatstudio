@@ -137,10 +137,12 @@ package body Code_Peer.Bridge_Database_Readers is
            Code_Analysis.Get_Or_Create
              (Self.Projects, Projects.Registry.Get_Project_From_File
                   (GPS.Kernel.Project.Get_Registry (Self.Kernel).all,
-                   File_Name));
+                   File_Name,
+                   False));
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
-         --  ??? lifeage attribute must be processed here
+         Self.File_Node.Analysis_Data.Code_Peer_Data :=
+           new Code_Peer.File_Data'(Lifeage => Lifeage);
 
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=

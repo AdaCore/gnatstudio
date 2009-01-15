@@ -99,6 +99,7 @@ package body Code_Peer.Summary_Models is
             return Gdk.Pixbuf.Get_Type;
 
          when Entity_Name_Column
+            | Entity_Lifeage_Column
             | Informational_Base_Count_Column
             | Informational_Deltas_Count_Column
             | Informational_Current_Count_Column
@@ -149,6 +150,7 @@ package body Code_Peer.Summary_Models is
       Value  : out Glib.Values.GValue)
    is
       use type Code_Analysis.Tree_Models.Subprogram_Item_Access;
+      use type Projects.Project_Type;
 
       Project_Node    : constant Project_Item_Access :=
                           Project_Item_Access (Self.Project (Iter));
@@ -156,6 +158,8 @@ package body Code_Peer.Summary_Models is
                           File_Item_Access (Self.File (Iter));
       Subprogram_Node : constant Subprogram_Item_Access :=
                           Subprogram_Item_Access (Self.Subprogram (Iter));
+
+      procedure Set_Lifeage_Sign (Lifeage : Lifeage_Kinds);
 
       procedure Set_Integer_Image (Item : Natural; Suppress_Zero : Boolean);
 
@@ -307,6 +311,26 @@ package body Code_Peer.Summary_Models is
          end if;
       end Set_Integer_Image;
 
+      ----------------------
+      -- Set_Lifeage_Sign --
+      ----------------------
+
+      procedure Set_Lifeage_Sign (Lifeage : Lifeage_Kinds) is
+      begin
+         Glib.Values.Init (Value, Glib.GType_String);
+
+         case Lifeage is
+            when Added =>
+               Glib.Values.Set_String (Value, "+");
+
+            when Unchanged =>
+               Glib.Values.Set_String (Value, "");
+
+            when Removed =>
+               Glib.Values.Set_String (Value, "-");
+         end case;
+      end Set_Lifeage_Sign;
+
    begin
       case Column is
          when Entity_Icon_Column =>
@@ -341,14 +365,39 @@ package body Code_Peer.Summary_Models is
 
             elsif Project_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
-               Glib.Values.Set_String
-                 (Value, Projects.Project_Name (Project_Node.Node.Name));
+
+               if Project_Node.Node.Name = Projects.No_Project then
+                  Glib.Values.Set_String (Value, -"RTL and removed");
+
+               else
+                  Glib.Values.Set_String
+                    (Value, Projects.Project_Name (Project_Node.Node.Name));
+               end if;
 
             else
                --  "Total" line
 
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String (Value, -"Total:");
+            end if;
+
+         when Entity_Lifeage_Column =>
+            if Subprogram_Node /= null then
+               Set_Lifeage_Sign
+                 (Code_Peer.Subprogram_Data
+                    (Subprogram_Node.Node.Analysis_Data.Code_Peer_Data.all).
+                    Lifeage);
+
+            elsif File_Node /= null then
+               Set_Lifeage_Sign
+                 (Code_Peer.File_Data
+                    (File_Node.Node.Analysis_Data.Code_Peer_Data.all).Lifeage);
+
+            else
+               --  Projects and totals don't have lifeage
+
+               Glib.Values.Init (Value, Glib.GType_String);
+               Glib.Values.Set_String (Value, "");
             end if;
 
          when Informational_Base_Count_Column =>
