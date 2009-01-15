@@ -50,7 +50,7 @@ package Code_Peer.Module is
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
 
-   procedure Load (Self : access Module_Id_Record'Class);
+   procedure Load (Self : access Module_Id_Record'Class; File : String);
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is

@@ -20,9 +20,11 @@
 with Ada.Directories;
 with Ada.Strings.Fixed;
 with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Input_Sources.File;
 
+with Glib.Xml_Int;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
@@ -56,8 +58,11 @@ package body Code_Peer.Module is
 
    type Bridge_Context is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
-      Module : Code_Peer_Module_Id;
+      Module    : Code_Peer_Module_Id;
+      File_Name : GNAT.Strings.String_Access;
    end record;
+
+   overriding procedure Destroy (Data : in out Bridge_Context);
 
    Annotation_Style_Name                : constant String
      := "CodePeer editor annotations";
@@ -219,6 +224,15 @@ package body Code_Peer.Module is
       end if;
    end Append_To_Menu;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Data : in out Bridge_Context) is
+   begin
+      GNAT.Strings.Free (Data.File_Name);
+   end Destroy;
+
    ----------------------
    -- Hide_Annotations --
    ----------------------
@@ -281,7 +295,7 @@ package body Code_Peer.Module is
    -- Load --
    ----------
 
-   procedure Load (Self : access Module_Id_Record'Class) is
+   procedure Load (Self : access Module_Id_Record'Class; File : String) is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
 
@@ -299,7 +313,7 @@ package body Code_Peer.Module is
 
          --  Load inspection information
 
-         Input_Sources.File.Open ("out.xml", Input);
+         Input_Sources.File.Open (File, Input);
          Reader.Parse
            (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
          Input_Sources.File.Close (Input);
@@ -374,10 +388,14 @@ package body Code_Peer.Module is
 
    procedure On_Bridge_Exit
      (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer) is
+      Status  : Integer)
+   is
+      Context : Bridge_Context'Class
+        renames Bridge_Context'Class (Process.Callback_Data.all);
+
    begin
       if Status = 0 then
-         Bridge_Context'Class (Process.Callback_Data.all).Module.Load;
+         Context.Module.Load (Context.File_Name.all);
       end if;
    end On_Bridge_Exit;
 
@@ -434,29 +452,56 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget);
 
-      Project      : constant Projects.Project_Type :=
-                       GPS.Kernel.Project.Get_Project (Kernel);
-      Project_Name : constant String := Projects.Project_Name (Project);
-      Dir          : constant String :=
-                       Ada.Directories.Compose
-                         (Projects.Object_Path (Project, False),
-                          "SI_" & Project_Name);
-      Args         : GNAT.OS_Lib.Argument_List :=
-                       (1 => new String'
-                                   (Ada.Directories.Compose
-                                      (Dir, Project_Name, "output")));
-      Success      : Boolean;
+      Project            : constant Projects.Project_Type :=
+                             GPS.Kernel.Project.Get_Project (Kernel);
+      Project_Name       : constant String := Projects.Project_Name (Project);
+      Object_Path        : constant String :=
+                             Projects.Object_Path (Project, False);
+      CodePeer_Directory : constant String :=
+                             Ada.Directories.Compose
+                               (Object_Path, "SI_" & Project_Name);
+      Output_Directory   : constant String :=
+                             Ada.Directories.Compose
+                               (CodePeer_Directory, Project_Name, "output");
+      Command_File_Name  : constant String :=
+                             Ada.Directories.Compose
+                               (CodePeer_Directory, "bridge_in", "xml");
+      Reply_File_Name    : constant String :=
+                             Ada.Directories.Compose
+                               (CodePeer_Directory, "bridge_out", "xml");
+      Args               : GNAT.OS_Lib.Argument_List :=
+                            (1 => new String'(Command_File_Name));
+      Database_Node      : Glib.Xml_Int.Node_Ptr :=
+                             new Glib.Xml_Int.Node'
+                                   (Tag    => new String'("database"),
+                                    others => <>);
+      Inspection_Node    : constant Glib.Xml_Int.Node_Ptr :=
+                             new Glib.Xml_Int.Node'
+                                   (Tag    => new String'("inspection"),
+                                    others => <>);
+      Success            : Boolean;
       pragma Warnings (Off, Success);
 
    begin
+      --  Generate command file
+
+      Glib.Xml_Int.Set_Attribute
+        (Database_Node, "output_directory", Output_Directory);
+      Glib.Xml_Int.Set_Attribute
+        (Inspection_Node, "output_file", Reply_File_Name);
+      Glib.Xml_Int.Add_Child (Database_Node, Inspection_Node);
+      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Free (Database_Node);
+
       --  Run gps_codepeer_bridge
 
       GPS.Kernel.Timeout.Launch_Process
         (Kernel        => Kernel,
          Command       => "gps_codepeer_bridge",
          Arguments     => Args,
-         Directory     => Dir,
-         Callback_Data => new Bridge_Context'(Module => Module),
+         Directory     => CodePeer_Directory,
+         Callback_Data =>
+           new Bridge_Context'(Module, new String'(Reply_File_Name)),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
