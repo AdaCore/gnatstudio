@@ -2521,7 +2521,7 @@ package body GPS.Location_View is
                   Desktop_Independent => True);
          Set_Title (Child, -"Locations");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
---           Set_Focus_Child (Child);
+         Set_Focus_Child (Child);
       end if;
 
       return MDI_Child (Child);
