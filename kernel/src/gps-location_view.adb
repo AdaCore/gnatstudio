@@ -1304,6 +1304,22 @@ package body GPS.Location_View is
       Loc                    : Location;
       Node                   : Locations_List.List_Node;
       Has_Secondary_Location : Boolean := False;
+
+      function Matches_Location (Iter : Gtk_Tree_Iter) return Boolean;
+      --  Return True if Iter matches the file, line and column of the location
+      --  being considered for addition.
+
+      ----------------------
+      -- Matches_Location --
+      ----------------------
+
+      function Matches_Location (Iter : Gtk_Tree_Iter) return Boolean is
+      begin
+         return  Get_Int (Model, Iter, Line_Column) = Gint (Line)
+           and then Get_Int (Model, Iter, Column_Column) = Gint (Column)
+           and then Get_File (View, Iter) = File;
+      end Matches_Location;
+
    begin
       if not Is_Absolute_Path (File) then
          return;
@@ -1388,12 +1404,7 @@ package body GPS.Location_View is
                Iter := Children (Model, File_Iter);
 
                while Iter /= Null_Iter loop
-                  if Get_Int (Model, Iter, Line_Column) = Gint (Line)
-                    and then Get_Int (Model, Iter, Column_Column) =
-                    Gint (Column)
-                  then
-                     exit;
-                  end if;
+                  exit when Matches_Location (Iter);
 
                   Next (Model, Iter);
                end loop;
@@ -1403,10 +1414,7 @@ package body GPS.Location_View is
             else
                --  We have a parent, check that the line and column are the
                --  same.
-               if Get_Int (Model, Parent_Iter, Line_Column) = Gint (Line)
-                 and then
-                   Get_Int (Model, Parent_Iter, Column_Column) = Gint (Column)
-               then
+               if Matches_Location (Parent_Iter) then
                   --  We have an acceptable potential parent
                   Potential_Parent := Parent_Iter;
                end if;
@@ -1439,10 +1447,7 @@ package body GPS.Location_View is
                Iter := Potential_Parent;
 
                while Iter /= Null_Iter loop
-                  if Get_Int (Model, Iter, Line_Column) = Gint (Line)
-                    and then
-                      Get_Int (Model, Iter, Column_Column) = Gint (Column)
-                  then
+                  if Matches_Location (Iter) then
                      Potential_Parent := Iter;
                   else
                      exit;
@@ -2516,7 +2521,7 @@ package body GPS.Location_View is
                   Desktop_Independent => True);
          Set_Title (Child, -"Locations");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Bottom);
-         Set_Focus_Child (Child);
+--           Set_Focus_Child (Child);
       end if;
 
       return MDI_Child (Child);

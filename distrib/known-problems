@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.4.0
 
+- I115-004: Location View: "secondary" locations attached to wrong node
+  Problem:    When the compiler emits information concerning the same line
+              and same column in two different files, GPS might place the
+              "secondary" locations (ie, the locations line containing the
+              hyperlink to the referenced file) on the node corresponding to
+              the wrong file.
+  Workaround: Read the compiler messages from the Messages window.
+
 - I114-032: Big memory footprint at startup
   Problem:    When GPS starts, it already uses a lot of memory. Some analysis
               Showed that a good chunk of it was from loading the
