@@ -455,20 +455,17 @@ package body Code_Peer.Module is
       Project            : constant Projects.Project_Type :=
                              GPS.Kernel.Project.Get_Project (Kernel);
       Project_Name       : constant String := Projects.Project_Name (Project);
-      Object_Path        : constant String :=
+      Object_Directory   : constant String :=
                              Projects.Object_Path (Project, False);
-      CodePeer_Directory : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Path, "SI_" & Project_Name);
       Output_Directory   : constant String :=
                              Ada.Directories.Compose
-                               (CodePeer_Directory, Project_Name, "output");
+                               (Object_Directory, Project_Name, "output");
       Command_File_Name  : constant String :=
                              Ada.Directories.Compose
-                               (CodePeer_Directory, "bridge_in", "xml");
+                               (Object_Directory, "bridge_in", "xml");
       Reply_File_Name    : constant String :=
                              Ada.Directories.Compose
-                               (CodePeer_Directory, "bridge_out", "xml");
+                               (Object_Directory, "bridge_out", "xml");
       Args               : GNAT.OS_Lib.Argument_List :=
                             (1 => new String'(Command_File_Name));
       Database_Node      : Glib.Xml_Int.Node_Ptr :=
@@ -499,7 +496,7 @@ package body Code_Peer.Module is
         (Kernel        => Kernel,
          Command       => "gps_codepeer_bridge",
          Arguments     => Args,
-         Directory     => CodePeer_Directory,
+         Directory     => Object_Directory,
          Callback_Data =>
            new Bridge_Context'(Module, new String'(Reply_File_Name)),
          Success       => Success,
