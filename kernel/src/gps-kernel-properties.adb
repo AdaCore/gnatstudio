@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
@@ -492,16 +493,16 @@ package body GPS.Kernel.Properties is
       Val      : String_Ptr;
       Success  : Boolean;
 
-      procedure Do_Nothing (N : in out Node_Ptr) is null;
-      package Resource_Hash is new String_Hash
-        (Data_Type => Node_Ptr,
-         Free_Data => Do_Nothing,
-         Null_Ptr  => null);
+      package Resource_Hash is new Ada.Containers.Indefinite_Ordered_Maps
+        (Key_Type     => String,
+         Element_Type => Node_Ptr);
       --  For each resource, stores the XML node that represents it. The goal
       --  is that each resource has a single node
 
-      use Resource_Hash.String_Hash_Table;
-      Nodes : Resource_Hash.String_Hash_Table.HTable;
+      use Resource_Hash;
+      Nodes : Resource_Hash.Map;
+      C     : Resource_Hash.Cursor;
+      File  : Node_Ptr;
 
    begin
       Trace (Me, "Saving " & Filename);
@@ -521,26 +522,10 @@ package body GPS.Kernel.Properties is
 
          if Descr.Persistent then
             declare
-               File, Prop : Node_Ptr;
+               Prop : Node_Ptr;
                Key  : constant String := Get_Key (Iter);
                Pos  : constant Integer := Ada.Strings.Fixed.Index (Key, Sep);
             begin
-               File := Get (Nodes, Key (Key'First .. Pos - 1));
-               if File = null then
-                  File := new Node'
-                    (Tag        => new String'("properties"),
-                     Attributes =>
-                     new String'("file='" & Key (Key'First .. Pos - 1) & "'"),
-                     Value      => null,
-                     Parent     => null,
-                     Child      => null,
-                     Next       => null,
-                     Specific_Data => 1);
-                  Add_Child (Root, File);
-
-                  Set (Nodes, Key (Key'First .. Pos - 1), File);
-               end if;
-
                if Descr.Value = null then
                   --  Descr.Unparsed.Value might be null if the properties is
                   --  represented by XML children instead
@@ -552,7 +537,8 @@ package body GPS.Kernel.Properties is
 
                   Prop := new Node'
                     (Tag        => new String'("property"),
-                     Attributes => new String'(Descr.Unparsed.Attributes.all),
+                     Attributes => new String'
+                       (Descr.Unparsed.Attributes.all),
                      Value      => Val,
                      Parent     => null,
                      Child      => null,
@@ -588,16 +574,46 @@ package body GPS.Kernel.Properties is
                   Save (Descr.Value, Prop);
                end if;
 
-               Add_Child (File, Prop);
+               if Prop /= null then
+                  C := Find (Nodes, Key (Key'First .. Pos - 1));
+                  if Has_Element (C) then
+                     File := Element (C);
+                  else
+                     File := new Node'
+                       (Tag        => new String'("properties"),
+                        Attributes => new String'
+                          ("file='" & Key (Key'First .. Pos - 1) & "'"),
+                        Value      => null,
+                        Parent     => null,
+                        Child      => null,
+                        Next       => null,
+                        Specific_Data => 1);
+
+                     Include (Nodes, Key (Key'First .. Pos - 1), File);
+                  end if;
+
+                  Add_Child (File, Prop);
+               end if;
             end;
          end if;
 
          Get_Next (All_Properties, Iter);
       end loop;
 
+      --  Save the file in sorted order. This is really for the sake of the
+      --  testsuite.
+
+      C := First (Nodes);
+      while Has_Element (C) loop
+         File := Element (C);
+         Add_Child (Root, File);
+         Next (C);
+      end loop;
+
       Print (Root, Filename, Success);
       Free (Root);
-      Reset (Nodes);
+
+      Clear (Nodes);
 
       if not Success then
          Report_Preference_File_Error (Kernel, Filename);
