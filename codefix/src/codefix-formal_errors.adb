@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +28,7 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Language.Ada;                      use Language.Ada;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
-with GNATCOLL.VFS;                               use GNATCOLL.VFS;
+with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body Codefix.Formal_Errors is
 
@@ -1080,34 +1080,22 @@ package body Codefix.Formal_Errors is
    is
       Result               : Solution_List;
       Command1, Command2   : Paste_Profile_Cmd;
-      Body_Info, Spec_Info : Construct_Tree_Iterator;
    begin
-      Body_Info := Get_Iterator_At
-        (Current_Text,
-         Body_Cursor,
-         Enclosing,
-         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
-      Spec_Info := Get_Iterator_At
-        (Current_Text,
-         Spec_Cursor,
-         After,
-         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
-
       Initialize
         (Command1,
          Current_Text,
-         Body_Info,
-         Spec_Info,
-         Get_File (Body_Cursor),
-         Get_File (Spec_Cursor));
+         Spec_Cursor,
+         Body_Cursor,
+         After,
+         Enclosing);
 
       Initialize
         (Command2,
          Current_Text,
-         Spec_Info,
-         Body_Info,
-         Get_File (Spec_Cursor),
-         Get_File (Body_Cursor));
+         Body_Cursor,
+         Spec_Cursor,
+         Enclosing,
+         After);
 
       Set_Caption (Command1, "Modify the implementation profile");
       Set_Caption (Command2, "Modify the spec profile");

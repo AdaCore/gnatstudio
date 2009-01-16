@@ -31,6 +31,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Box;  use Src_Editor_Box;
 with Src_Editor_View; use Src_Editor_View;
+with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 
 with Commands; use Commands;
 with Language; use Language;
@@ -44,6 +45,7 @@ package body Src_Editor_Module.Editors is
    type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
       Kernel : Kernel_Handle;
       Buffer : Source_Buffer;
+      File   : Virtual_File;
    end record;
 
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
@@ -53,7 +55,7 @@ package body Src_Editor_Module.Editors is
    end record;
 
    type Mark_Reference is record
-      Mark : Gtk_Text_Mark;
+      Mark : File_Marker;
       Refs : Integer := 1;
    end record;
 
@@ -63,7 +65,7 @@ package body Src_Editor_Module.Editors is
      (Mark_Reference, Mark_Reference_Access);
 
    type Src_Editor_Mark is new GPS.Editors.Editor_Mark with record
-      Buffer : Src_Editor_Buffer;
+      Kernel : Kernel_Handle;
       Mark   : Mark_Reference_Access;
    end record;
 
@@ -375,16 +377,14 @@ package body Src_Editor_Module.Editors is
       Mark   : Gtk_Text_Mark) return Src_Editor_Mark'Class
    is
       New_Ref : constant Mark_Reference_Access :=
-        new Mark_Reference'(Mark => Mark, Refs => 1);
+        new Mark_Reference'
+          (Mark => Create_File_Marker (Buffer.Kernel, Buffer.File, Mark),
+           Refs => 1);
    begin
       pragma Assert (Mark /= null);
 
-      Mark.Ref;
-
       return Src_Editor_Mark'
-        (Editor_Mark with
-         Buffer => Src_Editor_Buffer (Buffer),
-         Mark   => New_Ref);
+        (Editor_Mark with Kernel => Buffer.Kernel, Mark => New_Ref);
    end Create_Editor_Mark;
 
    ---------
@@ -422,8 +422,34 @@ package body Src_Editor_Module.Editors is
       end if;
 
       return Src_Editor_Buffer'
-        (Editor_Buffer with Kernel => This.Kernel, Buffer => Get_Buffer (Box));
+        (Editor_Buffer with
+         File   => File,
+         Kernel => This.Kernel,
+         Buffer => Get_Buffer (Box));
    end Get;
+
+   --------------
+   -- New_Mark --
+   --------------
+
+   overriding function New_Mark
+     (This   : Src_Editor_Buffer_Factory;
+      File   : Virtual_File := No_File;
+      Line   : Integer;
+      Column : Integer) return Editor_Mark'Class
+   is
+      New_Ref : constant Mark_Reference_Access :=
+        new Mark_Reference'
+          (Mark => Create_File_Marker
+               (This.Kernel,
+                File,
+                Editable_Line_Type (Line),
+                Visible_Column_Type (Column)),
+           Refs => 1);
+   begin
+      return Src_Editor_Mark'
+        (Editor_Mark with Kernel => This.Kernel, Mark => New_Ref);
+   end New_Mark;
 
    -----------------------
    -- Beginning_Of_Line --
@@ -660,21 +686,27 @@ package body Src_Editor_Module.Editors is
    --------------
 
    overriding procedure Finalize (This : in out Src_Editor_Mark) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_Marker_Record'Class, File_Marker);
    begin
       This.Mark.Refs := This.Mark.Refs - 1;
 
       if This.Mark.Refs = 0 then
-         if This.Mark.Mark /= null
-           and then not Get_Deleted (This.Mark.Mark)
-           and then Get_Name (This.Mark.Mark) = ""
-         then
-            --  Do not delete named marks, since we can still access them
-            --  through get_mark() anyway
-            Trace (Me, "Deleting unnamed mark");
-            Delete_Mark (This.Buffer.Buffer, This.Mark.Mark);
+         if This.Mark.Mark /= null then
+            if (Get_Mark (This.Mark.Mark) /= null
+                and then not Get_Deleted (Get_Mark (This.Mark.Mark))
+                and then Get_Name (Get_Mark (This.Mark.Mark)) = "")
+              or else Get_Mark (This.Mark.Mark) = null
+            then
+               --  Do not delete named marks, since we can still access them
+               --  through get_mark() anyway
+
+               Trace (Me, "Deleting unnamed mark");
+               Destroy (This.Mark.Mark.all);
+               Unchecked_Free (This.Mark.Mark);
+            end if;
          end if;
 
-         This.Mark.Mark.Unref;
          Free (This.Mark);
       end if;
    end Finalize;
@@ -686,15 +718,22 @@ package body Src_Editor_Module.Editors is
    overriding function Location
      (This : Src_Editor_Mark) return Editor_Location'Class
    is
-      Iter : Gtk_Text_Iter;
    begin
-      if This.Mark /= null then
-         Get_Iter_At_Mark (This.Buffer.Buffer, Iter, This.Mark.Mark);
+      declare
+         Iter   : Gtk_Text_Iter;
+         Buffer : constant Src_Editor_Buffer := Src_Editor_Buffer
+           (Get_Buffer_Factory (This.Kernel).Get
+            (Get_File (This.Mark.Mark)));
+      begin
+         if This.Mark /= null then
+            Get_Iter_At_Mark
+              (Buffer.Buffer, Iter, Get_Mark (This.Mark.Mark));
 
-         return Create_Editor_Location (This.Buffer, Iter);
-      else
-         return Nil_Editor_Location;
-      end if;
+            return Create_Editor_Location (Buffer, Iter);
+         else
+            return Nil_Editor_Location;
+         end if;
+      end;
    end Location;
 
    ------------------
@@ -813,8 +852,11 @@ package body Src_Editor_Module.Editors is
          declare
             Src_Mark : Src_Editor_Mark renames Src_Editor_Mark (Mark);
          begin
-            if Src_Mark.Mark /= null then
-               Remove_Blank_Lines (This.Buffer, Src_Mark.Mark.Mark, Lines);
+            if Src_Mark.Mark /= null
+              and then Get_Mark (Src_Mark.Mark.Mark) /= null
+            then
+               Remove_Blank_Lines
+                 (This.Buffer, Get_Mark (Src_Mark.Mark.Mark), Lines);
             end if;
          end;
       end if;
@@ -1214,8 +1256,8 @@ package body Src_Editor_Module.Editors is
 
    overriding function Is_Present (This : Src_Editor_Mark) return Boolean is
    begin
-      if This.Mark /= null then
-         return not This.Mark.Mark.Get_Deleted;
+      if This.Mark /= null and then Get_Mark (This.Mark.Mark) /= null then
+         return not Get_Mark (This.Mark.Mark).Get_Deleted;
 
       else
          return False;
@@ -1227,11 +1269,12 @@ package body Src_Editor_Module.Editors is
    ------------
 
    overriding procedure Delete (This : Src_Editor_Mark) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_Marker_Record'Class, File_Marker);
    begin
       if This.Mark /= null then
-         Gtk.Text_Buffer.Delete_Mark
-           (Gtk.Text_Buffer.Gtk_Text_Buffer (This.Buffer.Buffer),
-            This.Mark.Mark);
+         Destroy (This.Mark.Mark.all);
+         Unchecked_Free (This.Mark.Mark);
       end if;
    end Delete;
 

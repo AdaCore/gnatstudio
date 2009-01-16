@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -773,12 +773,27 @@ package body Codefix.Text_Manager.Ada_Commands is
    ----------------
 
    procedure Initialize
-     (This             : in out Paste_Profile_Cmd;
-      Current_Text     : Text_Navigator_Abstr'Class;
-      Destination_It   : Construct_Tree_Iterator;
-      Source_It        : Construct_Tree_Iterator;
-      Destination_File : GNATCOLL.VFS.Virtual_File;
-      Source_File      : GNATCOLL.VFS.Virtual_File)
+     (This                              : in out Paste_Profile_Cmd;
+      Current_Text                      : Text_Navigator_Abstr'Class;
+      Source_Cursor, Destination_Cursor : File_Cursor'Class;
+      Source_Loc, Destination_Loc       : Relative_Position)
+   is
+   begin
+      This.Source_Mark := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Source_Cursor));
+      This.Destination_Mark := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Destination_Cursor));
+      This.Look_For_Source := Source_Loc;
+      This.Look_For_Destination := Destination_Loc;
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (This         : Paste_Profile_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       procedure Initialize_Profile
         (Position_It              : Construct_Tree_Iterator;
@@ -939,24 +954,43 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Is_Empty, Is_Spec : Boolean;
 
+      Destination_It   : Construct_Tree_Iterator;
+      Source_It        : Construct_Tree_Iterator;
+
+      Source_Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Source_Mark.all);
+      Destination_Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Destination_Mark.all);
+      Blank_Before, Blank_After         : Replace_Blanks_Policy := Keep;
    begin
+      Source_It := Get_Iterator_At
+        (Current_Text,
+         Source_Cursor,
+         This.Look_For_Source,
+         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+      Destination_It := Get_Iterator_At
+        (Current_Text,
+         Destination_Cursor,
+         This.Look_For_Destination,
+         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+
       Initialize_Profile
         (Source_It,
-         Source_File,
+         Get_File (Source_Cursor),
          Source_Begin,
          Source_End,
          Is_Empty,
          Is_Spec);
 
       if Is_Empty then
-         This.Blank_Before := None;
+         Blank_Before := None;
       else
-         This.Blank_Before := One;
+         Blank_Before := One;
       end if;
 
       Initialize_Profile
         (Destination_It,
-         Destination_File,
+         Get_File (Destination_Cursor),
          Destination_Begin,
          Destination_End,
          Is_Empty,
@@ -964,53 +998,18 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       if Is_Spec then
          --  We don't add any space before ";"
-         This.Blank_After := None;
+         Blank_After := None;
       else
          --  We add a space before "is"
-         This.Blank_After := One;
+         Blank_After := One;
       end if;
-
-      This.Destination_Begin := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Destination_Begin));
-      This.Destination_End := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Destination_End));
-      This.Source_Begin := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Source_Begin));
-      This.Source_End := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Source_End));
-
-      Free (Destination_Begin);
-      Free (Destination_End);
-      Free (Source_Begin);
-      Free (Source_End);
-   end Initialize;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (This         : Paste_Profile_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class)
-   is
-      Destination_Begin, Destination_End : File_Cursor;
-      Source_Begin, Source_End           : File_Cursor;
-   begin
-      Destination_Begin := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Destination_Begin.all));
-      Destination_End := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Destination_End.all));
-      Source_Begin := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Source_Begin.all));
-      Source_End := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Source_End.all));
 
       Current_Text.Replace
         (Destination_Begin,
          Destination_End,
          Current_Text.Get (Source_Begin, Source_End),
-         This.Blank_Before,
-         This.Blank_After);
+         Blank_Before,
+         Blank_After);
 
       Free (Destination_Begin);
       Free (Destination_End);
@@ -1024,11 +1023,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Paste_Profile_Cmd) is
    begin
-      Free (This.Destination_Begin);
-      Free (This.Destination_End);
-      Free (This.Source_Begin);
-      Free (This.Source_End);
-      Free (Text_Command (This));
+      Free (This.Source_Mark);
+      Free (This.Destination_Mark);
    end Free;
 
    ------------------------------

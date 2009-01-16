@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,5 +31,11 @@ package Src_Editor_Module.Editors is
       File  : Virtual_File := No_File;
       Force : Boolean := False;
       Open  : Boolean := True) return Editor_Buffer'Class;
+
+   overriding function New_Mark
+     (This   : Src_Editor_Buffer_Factory;
+      File   : Virtual_File := No_File;
+      Line   : Integer;
+      Column : Integer) return Editor_Mark'Class;
 
 end Src_Editor_Module.Editors;

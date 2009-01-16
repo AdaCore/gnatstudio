@@ -32,14 +32,14 @@ package body Codefix.GPS_Io is
      (Current_Text : Console_Interface;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class
    is
-      Editor : constant Editor_Buffer'Class :=
-        Current_Text.Kernel.Get_Buffer_Factory.Get (Cursor.Get_File);
-
       Result : GPS_Mark;
    begin
       Result.Mark := new Editor_Mark'Class'
-        (Editor.New_Location
-           (Get_Line (Cursor), Natural (Get_Column (Cursor))).Create_Mark);
+        (Current_Text.Kernel.Get_Buffer_Factory.New_Mark
+           (Cursor.Get_File,
+            Get_Line (Cursor),
+            Natural (Get_Column (Cursor))));
+
       return Result;
    end Get_New_Mark;
 

@@ -67,6 +67,13 @@ package GPS.Editors is
    --  If force is set to true, a reload is forced in case the file is already
    --  open.
 
+   function New_Mark
+     (This   : Editor_Buffer_Factory;
+      File   : Virtual_File := No_File;
+      Line   : Integer;
+      Column : Integer) return Editor_Mark'Class is abstract;
+   --  Return a new mark without having to create an editor buffer.
+
    --------------------
    -- Editor_Overlay --
    --------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -225,13 +225,13 @@ package Codefix.Text_Manager.Ada_Commands is
    type Paste_Profile_Cmd is new Text_Command with private;
 
    procedure Initialize
-     (This             : in out Paste_Profile_Cmd;
-      Current_Text     : Text_Navigator_Abstr'Class;
-      Destination_It   : Construct_Tree_Iterator;
-      Source_It        : Construct_Tree_Iterator;
-      Destination_File : GNATCOLL.VFS.Virtual_File;
-      Source_File      : GNATCOLL.VFS.Virtual_File);
-   --  Set all the marks that will be needed to paste the profile later.
+     (This                              : in out Paste_Profile_Cmd;
+      Current_Text                      : Text_Navigator_Abstr'Class;
+      Source_Cursor, Destination_Cursor : File_Cursor'Class;
+      Source_Loc, Destination_Loc       : Relative_Position);
+   --  Set all the marks that will be needed to paste the profile later. The
+   --  actual entity is looked relatively to the mark according to Source_Loc
+   --  and Destination_Loc.
 
    overriding
    procedure Execute
@@ -359,9 +359,8 @@ private
    end record;
 
    type Paste_Profile_Cmd is new Text_Command with record
-      Destination_Begin, Destination_End : Ptr_Mark;
-      Source_Begin, Source_End           : Ptr_Mark;
-      Blank_Before, Blank_After          : Replace_Blanks_Policy := Keep;
+      Look_For_Source, Look_For_Destination : Relative_Position;
+      Source_Mark, Destination_Mark         : Ptr_Mark;
    end record;
 
    type Get_Visible_Declaration_Cmd is new Text_Command with record

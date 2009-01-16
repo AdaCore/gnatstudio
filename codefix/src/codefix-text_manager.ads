@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -944,6 +944,9 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
+      --  ??? We should not need that field anymore - the Construct_File
+      --  should provide everything needed.
+
       Construct_File       : Structured_File_Access := null;
       Buffer               : GNAT.Strings.String_Access := null;
       File_Name            : GNATCOLL.VFS.Virtual_File;
