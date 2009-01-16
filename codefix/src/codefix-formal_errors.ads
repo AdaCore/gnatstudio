@@ -119,6 +119,7 @@ package Codefix.Formal_Errors is
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
 
+   --  ??? I114-034
    function Wrong_Order
      (Current_Text                : Text_Navigator_Abstr'Class;
       Message                     : Error_Message;
@@ -147,6 +148,7 @@ package Codefix.Formal_Errors is
       Column_Expected : Column_Index := 0) return Solution_List;
    --  Try re-indent the line
 
+   --  ??? I114-034
    function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
@@ -162,6 +164,7 @@ package Codefix.Formal_Errors is
       Word_Case    : Case_Type := Mixed) return Solution_List;
    --  Re-case the word
 
+   --  ??? I114-034
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -184,6 +187,7 @@ package Codefix.Formal_Errors is
    --  Add 'constant' to the declaration of the variable Name. Create a new
    --  declaration if needed.
 
+   --  ??? I114-034
    function Resolve_Ambiguity
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
@@ -199,6 +203,7 @@ package Codefix.Formal_Errors is
       Object_Name  : String) return Solution_List;
    --  Remove the conversion at made at Cursor position.
 
+   --  ??? I114-034
    function Move_With_To_Body
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Solution_List;
@@ -212,6 +217,7 @@ package Codefix.Formal_Errors is
    --  Propose to make the body profile conformant with the spec one, or
    --  the spec profile conformant with the body one.
 
+   --  ??? I114-034
    function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -221,6 +227,7 @@ package Codefix.Formal_Errors is
    --  position parameter specify where the actual begin of the unit is
    --  relatively to the cursor position.
 
+   --  ??? I114-034
    function Resolve_Unvisible_Declaration
      (Current_Text  : Text_Navigator_Abstr'Class;
       Object_Cursor : File_Cursor'Class;
@@ -236,12 +243,14 @@ package Codefix.Formal_Errors is
    --  Propose to replace the Replaced_Exp from Current_Text starting at
    --  Start_Cursor by New_String
 
+   --  ??? I114-034
    function Remove_Extra_Underlines
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;
    --  Propose to remove the extra underlines of the identifier pointed by the
    --  cursor.
 
+   --  ??? I114-034
    function Change_To_Tick_Valid
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;

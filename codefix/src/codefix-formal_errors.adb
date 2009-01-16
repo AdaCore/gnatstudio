@@ -341,6 +341,8 @@ package body Codefix.Formal_Errors is
          Set_Location (Second_Cursor, Line, 1);
       end loop;
 
+      --  I114-034: NOT COVERED
+
       Set_Location (Second_Cursor, Line, Column_Index (Matches (1).First));
 
       Set_File     (Word1, Get_File (Message));
@@ -433,42 +435,14 @@ package body Codefix.Formal_Errors is
       Message         : File_Cursor'Class;
       Column_Expected : Column_Index := 0) return Solution_List
    is
-      New_Command : Replace_Word_Cmd;
+      New_Command : Indent_Code_Cmd;
       Result      : Solution_List;
-      Word        : Word_Cursor;
-
-      Indent_Size : Integer := -1;
-      Char_Ind : Char_Index;
    begin
-      Set_File (Word, Get_File (Message));
-      Set_Location (Word, Get_Line (Message), 1);
-      Set_Word (Word, "(^[\s]*)", Regular_Expression);
-
-      if Column_Expected = 0 then
-         --  Here, we force the creation of at least one space character, which
-         --  will do a modification on the line and activate the requested
-         --  auto-indentation.
-
-         Char_Ind := To_Char_Index
-           (Get_Column (Message), Get_Line (Current_Text, Word));
-
-         Indent_Size := Integer (Char_Ind) + 1;
-      else
-         Char_Ind := To_Char_Index
-           (Column_Expected, Get_Line (Current_Text, Word));
-         Indent_Size := Natural (Char_Ind) - 1;
-      end if;
-
-      declare
-         White_String : constant String (1 .. Indent_Size) := (others => ' ');
-      begin
-         Initialize
-           (New_Command,
-            Current_Text,
-            Word,
-            White_String,
-            Column_Expected = 0);
-      end;
+      Initialize
+        (New_Command,
+         Current_Text,
+         Message,
+         Column_Expected);
 
       if Column_Expected = 0 then
          Set_Caption (New_Command, "Indent line");
@@ -480,7 +454,6 @@ package body Codefix.Formal_Errors is
       end if;
 
       Append (Result, New_Command);
-      Free (Word);
 
       return Result;
    end Wrong_Column;
@@ -793,6 +766,7 @@ package body Codefix.Formal_Errors is
                end if;
 
                if Is_Set (Operations, Comment_Entity) then
+                  --  I114-034: NOT COVERED
                   Initialize (Comment_Command, Current_Text, Cursor, Comment);
                   Set_Caption
                     (Comment_Command,
@@ -871,6 +845,7 @@ package body Codefix.Formal_Errors is
                end if;
 
                if Is_Set (Operations, Comment_Entity) then
+                  --  I114-034: NOT COVERED
                   Initialize (Comment_Command, Current_Text, Cursor, Comment);
                   Set_Caption
                     (Comment_Command,

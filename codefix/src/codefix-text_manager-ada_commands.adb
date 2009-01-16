@@ -1023,6 +1023,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Paste_Profile_Cmd) is
    begin
+      Free (Text_Command (This));
       Free (This.Source_Mark);
       Free (This.Destination_Mark);
    end Free;
@@ -1176,6 +1177,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Get_Visible_Declaration_Cmd) is
    begin
+      Free (Text_Command (This));
       Free (This.Insert_With);
       Free (This.Prefix_Obj);
    end Free;
@@ -1244,9 +1246,77 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Replace_Code_By_Cmd) is
    begin
+      Free (Text_Command (This));
       Free (This.Replaced_Exp);
       Free (This.New_String);
       Free (This.Start_Cursor);
+   end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This         : in out Indent_Code_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Line_Cursor  : File_Cursor'Class;
+      Force_Column : Column_Index)
+   is
+   begin
+      This.Line := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Line_Cursor));
+      This.Force_Column := Force_Column;
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (This         : Indent_Code_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Char_Ind : Char_Index;
+      Indent_Size : Integer := -1;
+      Line_Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Line.all);
+   begin
+      if This.Force_Column = 0 then
+         Current_Text.Get_File
+           (Get_File (Line_Cursor)).Indent_Line (Line_Cursor);
+      else
+         Char_Ind := To_Char_Index
+           (This.Force_Column, Get_Line (Current_Text, Line_Cursor, 1));
+         Indent_Size := Natural (Char_Ind) - 1;
+
+         declare
+            Word : Word_Cursor;
+            White_String : constant String (1 .. Indent_Size) :=
+              (others => ' ');
+         begin
+            Set_File (Word, Get_File (Line_Cursor));
+            Set_Location (Word, Get_Line (Line_Cursor), 1);
+            Set_Word (Word, "(^[\s]*)", Regular_Expression);
+
+            Current_Text.Replace
+              (Word,
+               Word.Get_Matching_Word (Current_Text)'Length,
+               White_String);
+
+            Free (Word);
+         end;
+      end if;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (This : in out Indent_Code_Cmd)
+   is
+   begin
+      Free (Text_Command (This));
+      Free (This.Line);
    end Free;
 
 end Codefix.Text_Manager.Ada_Commands;

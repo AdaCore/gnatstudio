@@ -303,6 +303,28 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Replace_Code_By_Cmd);
 
+   ---------------------
+   -- Indent_Code_Cmd --
+   ---------------------
+
+   type Indent_Code_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Indent_Code_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Line_Cursor  : File_Cursor'Class;
+      Force_Column : Column_Index);
+   --  Creates a indentation query - if Force_Column is 0, then the GPS
+   --  indentation engine will get used.
+
+   overriding
+   procedure Execute
+     (This         : Indent_Code_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Indent_Code_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -374,6 +396,11 @@ private
       Start_Cursor : Ptr_Mark;
       Replaced_Exp : GNAT.Strings.String_Access;
       New_String   : GNAT.Strings.String_Access;
+   end record;
+
+   type Indent_Code_Cmd is new Text_Command with record
+      Line         : Ptr_Mark;
+      Force_Column : Column_Index;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
