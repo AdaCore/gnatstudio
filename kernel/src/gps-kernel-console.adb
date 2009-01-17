@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -237,12 +237,12 @@ package body GPS.Kernel.Console is
    begin
       declare
          File : constant Virtual_File :=
-           Select_File
-             (Title             => -"Save messages window as",
-              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-              Kind              => Save_File,
-              Parent            => Get_Current_Window (Kernel),
-              History           => Get_History (Kernel));
+                  Select_File
+                    (Title             => -"Save messages window as",
+                     Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                     Kind              => Save_File,
+                     Parent            => Get_Current_Window (Kernel),
+                     History           => Get_History (Kernel));
       begin
          if File = GNATCOLL.VFS.No_File then
             return;

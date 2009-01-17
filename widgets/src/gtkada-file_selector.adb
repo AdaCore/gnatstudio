@@ -1956,12 +1956,9 @@ package body Gtkada.File_Selector is
       Set_Modal (File_Selector_Window, False);
 
       Gtk_New_Hbox (Hbox1, False, 0);
-      Pack_Start (Get_Vbox (File_Selector_Window),
-                  Hbox1, False, False, 3);
+      Pack_Start (Get_Vbox (File_Selector_Window), Hbox1, False, False, 3);
 
-      Gtk_New
-        (Toolbar1,
-         Orientation_Horizontal, Toolbar_Both);
+      Gtk_New (Toolbar1, Orientation_Horizontal, Toolbar_Both);
 
       Set_Icon_Size (Toolbar1, Icon_Size_Button);
       Set_Style (Toolbar1,  Toolbar_Icons);
@@ -1999,10 +1996,10 @@ package body Gtkada.File_Selector is
       Gtk_New
         (File_Selector_Window.Refresh_Icon, Stock_Refresh, Icon_Size_Button);
       File_Selector_Window.Refresh_Button := Append_Element
-        (Toolbar => Toolbar1,
-         The_Type => Toolbar_Child_Button,
+        (Toolbar      => Toolbar1,
+         The_Type     => Toolbar_Child_Button,
          Tooltip_Text => -"Refresh",
-         Icon => Gtk_Widget (File_Selector_Window.Refresh_Icon));
+         Icon         => Gtk_Widget (File_Selector_Window.Refresh_Icon));
       Widget_Callback.Connect
         (File_Selector_Window.Refresh_Button, Gtk.Button.Signal_Clicked,
          On_Refresh_Button_Clicked'Access);

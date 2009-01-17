@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -100,9 +100,9 @@ package body Browsers.Canvas is
      (Active_Area_Tree_Array, Active_Area_Tree_Array_Access);
 
    type Cb_Data is record
-      Browser : General_Browser;
-      Item    : Canvas_Item;
-      Zoom    : Guint;
+      Browser       : General_Browser;
+      Item          : Canvas_Item;
+      Zoom          : Guint;
       Keep_Selected : Boolean;
    end record;
 

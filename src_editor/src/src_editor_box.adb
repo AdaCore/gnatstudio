@@ -2259,16 +2259,15 @@ package body Src_Editor_Box is
             Free (Constructs);
 
             declare
-               Name : constant Virtual_File :=
-                 Select_File
-                   (Title             => -"Save File As",
-                    Parent            => Get_Current_Window (Editor.Kernel),
-                    Default_Name      => New_Base_Name.all,
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                    Kind              => Save_File,
-                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                    Pattern_Name      => -"All files;Ada files;C/C++ files",
-                    History           => Get_History (Editor.Kernel));
+               Name : constant Virtual_File := Select_File
+                 (Title             => -"Save File As",
+                  Parent            => Get_Current_Window (Editor.Kernel),
+                  Default_Name      => New_Base_Name.all,
+                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                  Kind              => Save_File,
+                  File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                  Pattern_Name      => -"All files;Ada files;C/C++ files",
+                  History           => Get_History (Editor.Kernel));
 
             begin
                GNAT.OS_Lib.Free (New_Base_Name);

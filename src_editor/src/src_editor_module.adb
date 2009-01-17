@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1483,16 +1483,15 @@ package body Src_Editor_Module is
       end if;
 
       declare
-         Filename : constant Virtual_File :=
-           Select_File
-             (Title             => -"Open File",
-              Base_Directory    => Dir,
-              Parent            => Get_Current_Window (Kernel),
-              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+         Filename : constant Virtual_File := Select_File
+           (Title             => -"Open File",
+            Base_Directory    => Dir,
+            Parent            => Get_Current_Window (Kernel),
+            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+            Kind              => Open_File,
+            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+            Pattern_Name      => -"All files;Ada files;C/C++ files",
+            History           => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             Open_File_Editor (Kernel, Filename);
@@ -1513,16 +1512,15 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       declare
-         Filename : constant Virtual_File :=
-           Select_File
-             (Title             => -"Open Remote File",
-              Parent            => Get_Current_Window (Kernel),
-              Remote_Browsing   => True,
-              Use_Native_Dialog => False,
-              Kind              => Open_File,
-              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-              Pattern_Name      => -"All files;Ada files;C/C++ files",
-              History           => Get_History (Kernel));
+         Filename : constant Virtual_File := Select_File
+           (Title             => -"Open Remote File",
+            Parent            => Get_Current_Window (Kernel),
+            Remote_Browsing   => True,
+            Use_Native_Dialog => False,
+            Kind              => Open_File,
+            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+            Pattern_Name      => -"All files;Ada files;C/C++ files",
+            History           => Get_History (Kernel));
 
       begin
          if Filename /= GNATCOLL.VFS.No_File then
@@ -1777,18 +1775,17 @@ package body Src_Editor_Module is
       if Source /= null then
          declare
             Old_Name : constant Virtual_File := Get_Filename (Source);
-            New_Name : constant Virtual_File :=
-              Select_File
-                (Title             => -"Save File As",
-                 Parent            => Get_Current_Window (Kernel),
-                 Base_Directory    => Dir (Old_Name),
-                 Default_Name      => Display_Base_Name (Old_Name),
-                 Remote_Browsing   => not Is_Local (Old_Name),
-                 Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                 Kind              => Save_File,
-                 File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                 Pattern_Name      => -"All files;Ada files;C/C++ files",
-                 History           => Get_History (Kernel));
+            New_Name : constant Virtual_File := Select_File
+              (Title             => -"Save File As",
+               Parent            => Get_Current_Window (Kernel),
+               Base_Directory    => Dir (Old_Name),
+               Default_Name      => Display_Base_Name (Old_Name),
+               Remote_Browsing   => not Is_Local (Old_Name),
+               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+               Kind              => Save_File,
+               File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+               Pattern_Name      => -"All files;Ada files;C/C++ files",
+               History           => Get_History (Kernel));
 
          begin
             if New_Name /= GNATCOLL.VFS.No_File then

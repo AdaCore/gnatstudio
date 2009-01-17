@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007-2008, AdaCore                --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,7 +119,7 @@ package body Switches_Chooser.Gtkada is
       Switch   : Switch_Description_Vectors.Cursor;
       Size     : Gtk_Size_Group;
       Box      : Gtk_Box);
-   --  Create and register the widget matching S.
+   --  Create and register the widget matching S
 
    procedure Set_Tooltip
      (Editor   : access Switches_Editor_Record'Class;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -117,7 +117,7 @@ package body GVD_Module is
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" hook.
+   --  Callback for the "file_edited" hook
 
    type Lines_Revealed_Hook_Record is new Function_With_Args with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
@@ -632,7 +632,7 @@ package body GVD_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File) is
    begin
-      --  Create the information column for the current line.
+      --  Create the information column for the current line
       Create_Line_Information_Column
         (Kernel,
          File,
@@ -1519,8 +1519,9 @@ package body GVD_Module is
          if Process.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
-            Load_Core_File (Process.Debugger, Full_Name (S).all,
-                            Mode => GVD.Types.Visible);
+            Load_Core_File
+              (Process.Debugger, Full_Name (S).all, Mode => GVD.Types.Visible);
+
          else
             Console.Insert
               (Kernel, (-"Could not find core file: ") & Full_Name (S).all,
@@ -2162,7 +2163,7 @@ package body GVD_Module is
 
       Detect_Language (Process.Debugger);
 
-      --  Re-create all debugger columns.
+      --  Re-create all debugger columns
 
       Remove_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
       Create_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);

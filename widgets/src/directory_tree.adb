@@ -1435,10 +1435,7 @@ package body Directory_Tree is
         (Tree.File_Tree, Signal_Destroy,
          On_File_Destroy'Access, Tree, False);
 
-      Set_Size_Request
-        (Tree,
-         400,
-         400);
+      Set_Size_Request (Tree, 400, 400);
 
       declare
          Initial_Dir : Virtual_File;
@@ -1721,18 +1718,18 @@ package body Directory_Tree is
 
       if Len = 0 then
          File_Append_Directory
-           (Explorer, Get_Root (Dir),
-            Null_Iter, 1, Dir, True);
+           (Explorer, Get_Root (Dir), Null_Iter, 1, Dir, True);
          Dir_Inserted := True;
+
       else
          Last := 1;
 
          for J in 1 .. Len loop
             if Buffer (J) = ASCII.NUL then
                declare
-                  Drive : constant Virtual_File :=
-                    Create (FS            => Get_Filesystem (Get_Host (Dir)),
-                            Full_Filename => Buffer (Last .. J - 1));
+                  Drive : constant Virtual_File := Create
+                    (FS            => Get_Filesystem (Get_Host (Dir)),
+                     Full_Filename => Buffer (Last .. J - 1));
                begin
                   if Is_Parent (Drive, Dir) then
                      File_Append_Directory

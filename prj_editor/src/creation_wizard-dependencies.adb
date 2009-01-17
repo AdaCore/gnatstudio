@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2008, AdaCore                 --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -163,7 +163,7 @@ package body Creation_Wizard.Dependencies is
       Use_Base_Name         : Boolean)
    is
       procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the console.
+      --  Output error messages from the project parser to the console
 
       ------------------
       -- Report_Error --

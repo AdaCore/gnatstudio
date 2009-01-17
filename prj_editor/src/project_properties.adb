@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2815,23 +2815,23 @@ package body Project_Properties is
    ---------------------------------
 
    function Select_Files_Or_Directories
-     (Toplevel          : access Gtk_Window_Record'Class;
-      Project           : Project_Type;
-      Default           : String;
-      Project_Path      : String;
-      As_Directory      : Boolean;
-      Filter            : File_Filter;
-      Allow_Multiple    : Boolean := False) return GNATCOLL.VFS.File_Array
+     (Toplevel       : access Gtk_Window_Record'Class;
+      Project        : Project_Type;
+      Default        : String;
+      Project_Path   : String;
+      As_Directory   : Boolean;
+      Filter         : File_Filter;
+      Allow_Multiple : Boolean := False) return GNATCOLL.VFS.File_Array
    is
       pragma Unreferenced (Allow_Multiple);
-      Dialog : Gtk_Dialog;
-      Tree   : Gtk_Tree_View;
-      Model  : Gtk_Tree_Store;
-      Iter   : Gtk_Tree_Iter;
-      Source : Natural;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Button : Gtk_Widget;
-      Prj    : Project_Type;
+      Dialog   : Gtk_Dialog;
+      Tree     : Gtk_Tree_View;
+      Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Source   : Natural;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Button   : Gtk_Widget;
+      Prj      : Project_Type;
       Scrolled : Gtk_Scrolled_Window;
    begin
       if As_Directory then
@@ -2916,6 +2916,7 @@ package body Project_Properties is
                if Source = 0 then
                   Destroy (Dialog);
                   return (1 .. 0 => GNATCOLL.VFS.No_File);
+
                else
                   declare
                      Result : File_Array (1 .. Source);

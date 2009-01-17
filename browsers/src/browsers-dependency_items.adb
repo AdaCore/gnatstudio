@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -914,16 +914,14 @@ package body Browsers.Dependency_Items is
      (Browser : access GObject_Record'Class;
       Context : Selection_Context)
    is
-      File : constant Virtual_File :=
-        Select_File
-          (Title             => -"Select File",
-           Parent            =>
-             Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
-           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-           Kind              => Open_File,
-           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-           Pattern_Name      => -"All files;Ada files;C/C++ files",
-           History           => Get_History (Get_Kernel (Context)));
+      File : constant Virtual_File := Select_File
+        (Title             => -"Select File",
+         Parent            => Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
+         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+         Kind              => Open_File,
+         File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+         Pattern_Name      => -"All files;Ada files;C/C++ files",
+         History           => Get_History (Get_Kernel (Context)));
       --  ??? Should set up filters to only open file from the current project
 
    begin

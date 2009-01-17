@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,7 +58,7 @@ package body Creation_Wizard.Adp is
    procedure On_Browse
      (Widget : access Gtk_Widget_Record'Class;
       Page   : Project_Wizard_Page);
-   --  Called when the browse button is pressed.
+   --  Called when the browse button is pressed
 
    --------------------------
    -- Add_Adp_Wizard_Pages --
@@ -164,7 +164,7 @@ package body Creation_Wizard.Adp is
       Page   : Project_Wizard_Page)
    is
       P    : constant Adp_Selection_Page_Access :=
-        Adp_Selection_Page_Access (Page);
+               Adp_Selection_Page_Access (Page);
       Name : constant GNATCOLL.VFS.Virtual_File := Select_File
         (Use_Native_Dialog  => Use_Native_Dialogs.Get_Pref,
          File_Pattern       => "*.adp",
