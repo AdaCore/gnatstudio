@@ -388,7 +388,7 @@ package body Switches_Chooser.Gtkada is
          Use_Native_Dialog => Data.Editor.Native_Dialogs);
    begin
       if File /= GNATCOLL.VFS.No_File then
-         Set_Text (F, Full_Name (File).all);
+         Set_Text (F, Display_Full_Name (File));
       end if;
    end Browse_File;
 

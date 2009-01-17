@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,6 @@ with Gtkada.Macro;              use Gtkada.Macro;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Filesystems;               use Filesystems;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -630,8 +629,7 @@ package body KeyManager_Module.Macros is
             return;
          end if;
 
-         Success := Save_List
-           (Filesystems.Filename_From_UTF8 (Full_Name (Name).all), Events);
+         Success := Save_List (Full_Name (Name).all, Events);
 
          if not Success then
             Insert (Kernel, -"Error while saving macro", Mode => Error);

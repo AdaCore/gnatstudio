@@ -173,7 +173,7 @@ package body Creation_Wizard.Adp is
          Kind               => Open_File);
    begin
       if Name /= GNATCOLL.VFS.No_File then
-         Set_Text (P.Adp_File_Name, Full_Name (Name).all);
+         Set_Text (P.Adp_File_Name, Display_Full_Name (Name));
       end if;
    end On_Browse;
 

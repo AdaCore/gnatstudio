@@ -539,11 +539,9 @@ package body Gtkada.File_Selector is
             if Val = "" then
                return GNATCOLL.VFS.No_File;
             else
-               Last_Directory := Create
-                 (Filesystems.Filename_To_UTF8 (Dir_Name (Val)));
+               Last_Directory := Create (Dir_Name (Val));
 
-               return Create
-                 (Full_Filename => Filesystems.Filename_To_UTF8 (Val));
+               return Create (Full_Filename => Val);
             end if;
          end;
       end if;
@@ -716,8 +714,9 @@ package body Gtkada.File_Selector is
 
             if Val = "" then
                return GNATCOLL.VFS.No_File;
+
             else
-               Last_Directory := Create (Filesystems.Filename_To_UTF8 (Val));
+               Last_Directory := Create (Val);
 
                return Last_Directory;
             end if;

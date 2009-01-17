@@ -68,7 +68,6 @@ with Gtkada.MDI;                        use Gtkada.MDI;
 
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
-with Filesystems;                       use Filesystems;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
@@ -935,11 +934,7 @@ package body Browsers.Canvas is
             Pixbuf := Get_Pixbuf (B);
 
             if Pixbuf /= null then
-               Save
-                 (Pixbuf,
-                  Filesystems.Filename_From_UTF8 (Full_Name (Name).all),
-                  PNG,
-                  Error);
+               Save (Pixbuf, Full_Name (Name).all, PNG, Error);
                Unref (Pixbuf);
             end if;
 

@@ -408,7 +408,7 @@ package body Welcome is
 
       begin
          if File /= GNATCOLL.VFS.No_File then
-            Set_Text (Get_Entry (S.Open_Project), Full_Name (File).all);
+            Set_Text (Get_Entry (S.Open_Project), Display_Full_Name (File));
          end if;
       end;
 
