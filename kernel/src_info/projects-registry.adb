@@ -2381,6 +2381,8 @@ package body Projects.Registry is
 
          --  Else just open the relative paths. This is mostly intended
          --  for files opened from the command line.
+         --  ??? To remove convertion to/from UTF8 we need a Normalize_Pathname
+         --  which supports UTF-8.
          return Create
            (Full_Filename => Filesystems.Filename_To_UTF8
               (Normalize_Pathname (Filesystems.Filename_From_UTF8 (Name),
