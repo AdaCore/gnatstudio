@@ -2,9 +2,9 @@
    Note that this is a work in progress.
 
    CodePeer is a static analysis tool for Ada code.
-   This package allows the user to inspect a project and integrates
-   its output into GPS:
-     - menu Tools/CodePeer/(Re)Inspect Project
+   This package allows the user to perform an automatic code review of
+   a project and integrates its output into GPS:
+     - menu Tools/CodePeer/Run Code Review
      - menu Tools/CodePeer/Regenerate Reports
 
 """
@@ -198,7 +198,7 @@ def create_codepeer_menu():
     # separation
 
     global inspect_menu
-    inspect_menu = GPS.Menu.create ("Tools/CodePeer/(_Re)Inspect Project",
+    inspect_menu = GPS.Menu.create ("Tools/CodePeer/Run Code Review",
             on_activate=run_inspection)
 
     global regenerate_menu
