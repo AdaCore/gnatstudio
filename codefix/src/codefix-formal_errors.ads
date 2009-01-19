@@ -119,7 +119,6 @@ package Codefix.Formal_Errors is
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
 
-   --  ??? I114-034
    function Wrong_Order
      (Current_Text                : Text_Navigator_Abstr'Class;
       Message                     : Error_Message;

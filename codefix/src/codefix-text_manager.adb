@@ -2221,18 +2221,22 @@ package body Codefix.Text_Manager is
    procedure Initialize
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word1, Word2 : Word_Cursor'Class) is
+      Message_Loc  : File_Cursor'Class;
+      First_Word   : String;
+      Second_Word  : String)
+   is
    begin
-      Initialize
-        (This.Step_Word1, Current_Text, Word1, Word2.String_Match.all);
-      Initialize
-        (This.Step_Word2, Current_Text, Word2, Word1.String_Match.all);
+      This.Location :=
+        new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Message_Loc));
+      This.First_Word := new String'(First_Word);
+      This.Second_Word := new String'(Second_Word);
    end Initialize;
 
    overriding procedure Free (This : in out Invert_Words_Cmd) is
    begin
-      Free (This.Step_Word1);
-      Free (This.Step_Word2);
+      Free (This.First_Word);
+      Free (This.Second_Word);
+      Free (This.Location);
       Free (Text_Command (This));
    end Free;
 
@@ -2240,9 +2244,36 @@ package body Codefix.Text_Manager is
      (This         : Invert_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
+      Matches       : Match_Array (1 .. 1);
+      Matcher       : constant Pattern_Matcher :=
+        Compile ("(" & This.Second_Word.all & ") ", Case_Insensitive);
+      First_Cursor  : constant File_Cursor := File_Cursor
+        (Current_Text.Get_Current_Cursor (This.Location.all));
+      Second_Cursor : File_Cursor := First_Cursor;
+      Line          : Integer := Get_Line (Second_Cursor);
+
+      Text : constant Ptr_Text := Current_Text.Get_File (Second_Cursor.File);
    begin
-      Execute (This.Step_Word1, Current_Text);
-      Execute (This.Step_Word2, Current_Text);
+      loop
+         Match (Matcher, Text.Get_Line (Second_Cursor, 1), Matches);
+
+         exit when Matches (1) /= No_Match;
+         Line := Line - 1;
+
+         if Line = 0 then
+            return;
+         end if;
+
+         Set_Location (Second_Cursor, Line, 1);
+      end loop;
+
+      Set_Location (Second_Cursor, Line, Column_Index (Matches (1).First));
+
+      Text.Replace
+        (First_Cursor, This.First_Word'Length, This.Second_Word.all);
+
+      Text.Replace
+        (Second_Cursor, This.Second_Word'Length, This.First_Word.all);
    end Execute;
 
    -------------------

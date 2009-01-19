@@ -316,53 +316,20 @@ package body Codefix.Formal_Errors is
       First_String  : String;
       Second_String : String) return Solution_List
    is
-      New_Command   : Invert_Words_Cmd;
-      Word1, Word2  : Word_Cursor;
-      Matches       : Match_Array (1 .. 1);
-      Matcher       : constant Pattern_Matcher :=
-        Compile ("(" & Second_String & ") ", Case_Insensitive);
-      Second_Cursor : File_Cursor := File_Cursor (Message);
-      Result        : Solution_List;
-      Line          : Integer := Get_Line (Second_Cursor);
-
+      New_Command : Invert_Words_Cmd;
+      Result      : Solution_List;
    begin
-      --  ??? This code is incomplete and does not work properly for
-      --  e.g. "test.ads:2:18: "abstract" must come before "new", not after"
-
-      loop
-         Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
-         exit when Matches (1) /= No_Match;
-         Line := Line - 1;
-
-         if Line = 0 then
-            return Result;
-         end if;
-
-         Set_Location (Second_Cursor, Line, 1);
-      end loop;
-
-      --  I114-034: NOT COVERED
-
-      Set_Location (Second_Cursor, Line, Column_Index (Matches (1).First));
-
-      Set_File     (Word1, Get_File (Message));
-      Set_Location (Word1, Get_Line (Message), Get_Column (Message));
-      Set_Word     (Word1, First_String, Text_Ascii);
-
-      Set_File     (Word2, Get_File (Message));
-      Set_Location (Word2, Get_Line (Message), Get_Column (Message));
-      Set_Word     (Word2, Second_String, Text_Ascii);
-
-      Initialize (New_Command, Current_Text, Word1, Word2);
+      New_Command.Initialize
+        (Current_Text => Current_Text,
+         Message_Loc  => Message,
+         First_Word   => First_String,
+         Second_Word  => Second_String);
 
       Set_Caption
         (New_Command,
          "Invert """ & First_String & """ and """ & Second_String & """");
 
       Append (Result, New_Command);
-
-      Free (Word1);
-      Free (Word2);
 
       return Result;
    end Wrong_Order;

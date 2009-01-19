@@ -808,7 +808,9 @@ package Codefix.Text_Manager is
    procedure Initialize
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word1, Word2 : Word_Cursor'Class);
+      Message_Loc  : File_Cursor'Class;
+      First_Word   : String;
+      Second_Word  : String);
    --  Set all the marks that will be needed to invert the two words later
 
    overriding
@@ -1001,8 +1003,8 @@ private
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
-      Step_Word1 : Replace_Word_Cmd;
-      Step_Word2 : Replace_Word_Cmd;
+      Location                : Ptr_Mark;
+      First_Word, Second_Word : String_Access;
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
