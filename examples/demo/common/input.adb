@@ -139,6 +139,8 @@ package body Input is
 
    begin
       K := No_Number;
+      I := 0;
+      R := 0.0;
 
       Try_Integer : declare
       begin
