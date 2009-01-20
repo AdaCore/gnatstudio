@@ -76,6 +76,9 @@ private
       Messages_View  : Gtk.Tree_View.Gtk_Tree_View;
       Hide_Model     : Code_Peer.Messages_Filter_Models.Messages_Filter_Model;
       Hide_View      : Gtk.Tree_View.Gtk_Tree_View;
+
+      Show_Lifeage   : Lifeage_Kinds_Flags :=
+                         (Added => True, Unchanged => True, Removed => False);
    end record;
 
    Signal_Activated        : constant Glib.Signal_Name := "activated";

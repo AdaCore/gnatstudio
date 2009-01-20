@@ -874,6 +874,7 @@ package body Code_Peer.Module is
 
          begin
             if Message.Probability /= Code_Peer.Suppressed
+              and then Self.Filter_Criteria.Lineages (Message.Lifeage)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then

@@ -32,6 +32,7 @@ with Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Object;
 with Gtk.Scrolled_Window;
@@ -84,6 +85,18 @@ package body Code_Peer.Summary_Reports is
       Self   : Summary_Report);
 
    procedure On_Show_All_Subprograms_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Added_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Unchanged_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Removed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report);
 
@@ -261,6 +274,7 @@ package body Code_Peer.Summary_Reports is
       Report_Pane     : Gtk.Paned.Gtk_Vpaned;
       Filter_Box      : Gtk.Box.Gtk_Vbox;
       Check           : Gtk.Check_Button.Gtk_Check_Button;
+      Label           : Gtk.Label.Gtk_Label;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -535,6 +549,43 @@ package body Code_Peer.Summary_Reports is
            (On_Show_All_Subprograms_Toggled'Access),
          Summary_Report (Self));
 
+      --  Messages lifeage
+
+      Gtk.Label.Gtk_New (Label, -"Messages lifeage");
+      Filter_Box.Pack_Start (Label, False);
+
+      Gtk.Check_Button.Gtk_New (Check, -"added");
+      Check.Set_Active (Self.Show_Lifeage (Added));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Added_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"unchanged");
+      Check.Set_Active (Self.Show_Lifeage (Unchanged));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Unchanged_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"removed");
+      Check.Set_Active (Self.Show_Lifeage (Removed));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Removed_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      --  Messages categories
+
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
@@ -680,11 +731,47 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_All_Subprograms_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Summary_Report)
-   is
+      Self   : Summary_Report) is
    begin
       Self.Analysis_Model.Set_Show_All_Subprograms (Object.Get_Active);
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_All_Subprograms_Toggled;
+
+   -----------------------------------
+   -- On_Show_Added_Messages_Toggled --
+   ------------------------------------
+
+   procedure On_Show_Added_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Lifeage (Added) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Added_Messages_Toggled;
+
+   --------------------------------------
+   -- On_Show_Removed_Messages_Toggled --
+   --------------------------------------
+
+   procedure On_Show_Removed_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Lifeage (Removed) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Removed_Messages_Toggled;
+
+   ----------------------------------------
+   -- On_Show_Unchanged_Messages_Toggled --
+   ----------------------------------------
+
+   procedure On_Show_Unchanged_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Lifeage (Unchanged) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Unchanged_Messages_Toggled;
 
    -----------------------------------
    -- On_Toggle_Category_Visibility --
@@ -725,6 +812,7 @@ package body Code_Peer.Summary_Reports is
    begin
       Criteria.Categories    := Self.Hide_Model.Get_Visible_Categories;
       Criteria.Probabilities := (others => True);
+      Criteria.Lineages      := Self.Show_Lifeage;
    end Update_Criteria;
 
 end Code_Peer.Summary_Reports;

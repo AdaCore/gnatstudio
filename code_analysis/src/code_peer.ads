@@ -131,10 +131,13 @@ package Code_Peer is
    type Message_Probability_Level_Flags is
      array (Message_Probability_Level) of Boolean;
 
+   type Lifeage_Kinds_Flags is array (Lifeage_Kinds) of Boolean;
+
    type Message_Filter_Criteria is record
       Files         : File_Sets.Set;
       Categories    : Message_Category_Sets.Set;
       Probabilities : Message_Probability_Level_Flags;
+      Lineages      : Lifeage_Kinds_Flags;
    end record;
 
 private
