@@ -508,26 +508,26 @@ procedure GPS.Main is
 
       Python_Home := Getenv ("PYTHONHOME");
 
---        if Python_Home.all = "" then
---           Setenv ("PYTHONHOME", Prefix.all);
---        end if;
+      if Python_Home.all = "" then
+         Setenv ("PYTHONHOME", Prefix.all);
+      end if;
 
       Free (Python_Home);
 
       --  Python startup path
 
---        Tmp := Getenv ("PYTHONPATH");
---        if Tmp.all = "" then
---           Setenv ("PYTHONPATH",
---                   Directory_Operations.Format_Pathname
---                     (Prefix.all & "/share/gps/python"));
---        else
---           Setenv ("PYTHONPATH", Tmp.all & Path_Separator &
---                   Directory_Operations.Format_Pathname
---                     (Prefix.all & "/share/gps/python"));
---        end if;
---
---        Free (Tmp);
+      Tmp := Getenv ("PYTHONPATH");
+      if Tmp.all = "" then
+         Setenv ("PYTHONPATH",
+                 Directory_Operations.Format_Pathname
+                   (Prefix.all & "/share/gps/python"));
+      else
+         Setenv ("PYTHONPATH", Tmp.all & Path_Separator &
+                 Directory_Operations.Format_Pathname
+                   (Prefix.all & "/share/gps/python"));
+      end if;
+
+      Free (Tmp);
 
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
