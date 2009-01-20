@@ -36,6 +36,7 @@ with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Object;
 with Gtk.Scrolled_Window;
+with Gtk.Separator;
 with Gtk.Toggle_Button;
 with Gtk.Tree_Model.Utils;
 with Gtk.Tree_Selection;
@@ -97,6 +98,26 @@ package body Code_Peer.Summary_Reports is
       Self   : Summary_Report);
 
    procedure On_Show_Removed_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Informational_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Low_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Medium_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_High_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Show_Suppressed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Summary_Report);
 
@@ -275,6 +296,7 @@ package body Code_Peer.Summary_Reports is
       Filter_Box      : Gtk.Box.Gtk_Vbox;
       Check           : Gtk.Check_Button.Gtk_Check_Button;
       Label           : Gtk.Label.Gtk_Label;
+      Separator       : Gtk.Separator.Gtk_Separator;
       Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
       Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -551,7 +573,7 @@ package body Code_Peer.Summary_Reports is
 
       --  Messages lifeage
 
-      Gtk.Label.Gtk_New (Label, -"Messages lifeage");
+      Gtk.Label.Gtk_New (Label, -"Message lifeage");
       Filter_Box.Pack_Start (Label, False);
 
       Gtk.Check_Button.Gtk_New (Check, -"added");
@@ -584,7 +606,68 @@ package body Code_Peer.Summary_Reports is
            (On_Show_Removed_Messages_Toggled'Access),
          Summary_Report (Self));
 
+      --  Messages probabilities
+
+      Gtk.Separator.Gtk_New_Hseparator (Separator);
+      Filter_Box.Pack_Start (Separator, False);
+
+      Gtk.Label.Gtk_New (Label, -"Message probability");
+      Filter_Box.Pack_Start (Label, False);
+
+      Gtk.Check_Button.Gtk_New (Check, -"informational");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Informational));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Informational_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"low");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Low));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Low_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"medium");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Medium));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Medium_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"high");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.High));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_High_Messages_Toggled'Access),
+         Summary_Report (Self));
+
+      Gtk.Check_Button.Gtk_New (Check, -"suppressed");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Suppressed));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Suppressed_Messages_Toggled'Access),
+         Summary_Report (Self));
+
       --  Messages categories
+
+      Gtk.Separator.Gtk_New_Hseparator (Separator);
+      Filter_Box.Pack_Start (Separator, False);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Policy
@@ -749,6 +832,54 @@ package body Code_Peer.Summary_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Added_Messages_Toggled;
 
+   -----------------------------------
+   -- On_Show_High_Messages_Toggled --
+   -----------------------------------
+
+   procedure On_Show_High_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Probabilities (High) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_High_Messages_Toggled;
+
+   --------------------------------------------
+   -- On_Show_Informational_Messages_Toggled --
+   --------------------------------------------
+
+   procedure On_Show_Informational_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Probabilities (Informational) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Informational_Messages_Toggled;
+
+   ----------------------------------
+   -- On_Show_Low_Messages_Toggled --
+   ----------------------------------
+
+   procedure On_Show_Low_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Probabilities (Low) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Low_Messages_Toggled;
+
+   -------------------------------------
+   -- On_Show_Medium_Messages_Toggled --
+   -------------------------------------
+
+   procedure On_Show_Medium_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Probabilities (Medium) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Medium_Messages_Toggled;
+
    --------------------------------------
    -- On_Show_Removed_Messages_Toggled --
    --------------------------------------
@@ -760,6 +891,18 @@ package body Code_Peer.Summary_Reports is
       Self.Show_Lifeage (Removed) := Object.Get_Active;
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Removed_Messages_Toggled;
+
+   -----------------------------------------
+   -- On_Show_Suppressed_Messages_Toggled --
+   -----------------------------------------
+
+   procedure On_Show_Suppressed_Messages_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report) is
+   begin
+      Self.Show_Probabilities (Suppressed) := Object.Get_Active;
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Show_Suppressed_Messages_Toggled;
 
    ----------------------------------------
    -- On_Show_Unchanged_Messages_Toggled --
@@ -811,7 +954,7 @@ package body Code_Peer.Summary_Reports is
    is
    begin
       Criteria.Categories    := Self.Hide_Model.Get_Visible_Categories;
-      Criteria.Probabilities := (others => True);
+      Criteria.Probabilities := Self.Show_Probabilities;
       Criteria.Lineages      := Self.Show_Lifeage;
    end Update_Criteria;
 

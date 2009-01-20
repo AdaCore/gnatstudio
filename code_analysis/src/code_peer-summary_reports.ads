@@ -79,6 +79,8 @@ private
 
       Show_Lifeage   : Lifeage_Kinds_Flags :=
                          (Added => True, Unchanged => True, Removed => False);
+      Show_Probabilities : Message_Probability_Level_Flags :=
+                             (Suppressed => False, others => True);
    end record;
 
    Signal_Activated        : constant Glib.Signal_Name := "activated";
