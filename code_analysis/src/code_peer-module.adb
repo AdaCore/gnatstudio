@@ -758,16 +758,17 @@ package body Code_Peer.Module is
       begin
          if Message.Probability /= Code_Peer.Suppressed then
             GPS.Location_View.Insert_Location
-              (Kernel    => Self.Kernel,
-               Category  => Code_Peer_Category_Name,
-               File      => File.Name,
-               Text      => Image (Message.Probability) & Message.Text.all,
-               Line      => Message.Line,
-               Column    =>
+              (Kernel       => Self.Kernel,
+               Category     => Code_Peer_Category_Name,
+               File         => File.Name,
+               Text         => Image (Message.Probability) & Message.Text.all,
+               Line         => Message.Line,
+               Column       =>
                  Basic_Types.Visible_Column_Type (Message.Column),
-               Highlight => True,
+               Highlight    => True,
                Highlight_Category =>
-                 Module.Message_Styles (Message.Probability));
+                 Module.Message_Styles (Message.Probability),
+               Sort_In_File => True);
          end if;
       end Process_Message;
 
