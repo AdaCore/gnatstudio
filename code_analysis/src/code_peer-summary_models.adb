@@ -24,7 +24,8 @@ with Projects;
 
 package body Code_Peer.Summary_Models is
 
-   use type Code_Analysis.File_Access;
+   --  use type Code_Analysis.File_Access;
+   --  ??? Uncomment this line after I120-013 will be fixed
    use type Code_Analysis.Project_Access;
    use type Code_Analysis.Subprogram_Access;
    use type Code_Peer.Utilities.Counts;

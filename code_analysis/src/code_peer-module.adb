@@ -111,6 +111,10 @@ package body Code_Peer.Module is
       Status  : Integer);
    --  Called when gps_codepeer_bridge program execution is done
 
+   procedure On_Criteria_Changed
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context);
+
    Code_Peer_Category_Name : constant String := "CodePeer messages";
 
    Module : Code_Peer_Module_Id;
@@ -278,19 +282,6 @@ package body Code_Peer.Module is
       end if;
    end Hide_Annotations;
 
-   -------------------
-   -- Hide_Messages --
-   -------------------
-
-   procedure Hide_Messages
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
-   is
-   begin
-      GPS.Location_View.Remove_Location_Category
-        (Self.Kernel, Code_Peer_Category_Name, File.Name);
-   end Hide_Messages;
-
    ----------
    -- Load --
    ----------
@@ -335,11 +326,24 @@ package body Code_Peer.Module is
             Gtk.Object.Signal_Destroy,
             Context_CB.To_Marshaller (On_Destroy'Access),
             Module_Context'(Code_Peer_Module_Id (Self), null, null));
+         Context_CB.Connect
+           (Self.Report,
+            Code_Peer.Summary_Reports.Signal_Criteria_Changed,
+            Context_CB.To_Marshaller (On_Criteria_Changed'Access),
+            Module_Context'(Code_Peer_Module_Id (Self), null, null));
 
          GPS.Kernel.MDI.Gtk_New (Child, Self.Report, Module => Self);
          Child.Set_Title (-"CodePeer report");
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Child);
          Child.Raise_Child;
+
+         --  Setup filter criteria
+
+         Self.Report.Update_Criteria (Self.Filter_Criteria);
+
+         --  Update location view
+
+         Self.Update_Location_View;
       end if;
    end Load;
 
@@ -353,7 +357,8 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Item);
 
-      use type Code_Analysis.File_Access;
+      --  use type Code_Analysis.File_Access;
+      --  ??? Uncomment this line after I120-013 will be fixed
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
@@ -365,7 +370,6 @@ package body Code_Peer.Module is
       if Subprogram /= null then
          Context.Module.Hide_Annotations (File);
          Context.Module.Show_Annotations (File);
-         Context.Module.Show_Messages (File);
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
             File.Name,
@@ -375,11 +379,13 @@ package body Code_Peer.Module is
       elsif File /= null then
          Context.Module.Hide_Annotations (File);
          Context.Module.Show_Annotations (File);
-         Context.Module.Show_Messages (File);
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
             File.Name);
       end if;
+
+      Context.Module.Filter_Criteria.Files.Include (File);
+      Context.Module.Update_Location_View;
    end On_Activate;
 
    --------------------
@@ -399,6 +405,21 @@ package body Code_Peer.Module is
       end if;
    end On_Bridge_Exit;
 
+   -------------------------
+   -- On_Criteria_Changed --
+   -------------------------
+
+   procedure On_Criteria_Changed
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context)
+   is
+      pragma Unreferenced (Item);
+
+   begin
+      Context.Module.Report.Update_Criteria (Context.Module.Filter_Criteria);
+      Context.Module.Update_Location_View;
+   end On_Criteria_Changed;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -409,8 +430,52 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Item);
 
+      procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
+
+      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
+
+      ------------------
+      -- Process_File --
+      ------------------
+
+      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor) is
+         File : constant Code_Analysis.File_Access :=
+                  Code_Analysis.File_Maps.Element (Position);
+
+      begin
+         Context.Module.Hide_Annotations (File);
+      end Process_File;
+
+      ---------------------
+      -- Process_Project --
+      ---------------------
+
+      procedure Process_Project
+        (Position : Code_Analysis.Project_Maps.Cursor)
+      is
+         Project : constant Code_Analysis.Project_Access :=
+                     Code_Analysis.Project_Maps.Element (Position);
+
+      begin
+         Project.Files.Iterate (Process_File'Access);
+      end Process_Project;
+
    begin
+      --  Hide all annotations
+
+      Context.Module.Tree.Iterate (Process_Project'Access);
+
+      --  Cleanup location view
+
+      GPS.Location_View.Remove_Location_Category
+        (Context.Module.Kernel, Code_Peer_Category_Name);
+
+      --  Mark report as destroyed
+
       Context.Module.Report := null;
+
+      --  Cleanup project tree
+
       Code_Analysis.Free_Code_Analysis (Context.Module.Tree);
    end On_Destroy;
 
@@ -439,7 +504,8 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Hide_Messages (Context.File);
+      Context.Module.Filter_Criteria.Files.Delete (Context.File);
+      Context.Module.Update_Location_View;
    end On_Hide_Messages;
 
    -------------
@@ -529,7 +595,8 @@ package body Code_Peer.Module is
       pragma Unreferenced (Item);
 
    begin
-      Context.Module.Show_Messages (Context.File);
+      Context.Module.Filter_Criteria.Files.Insert (Context.File);
+      Context.Module.Update_Location_View;
    end On_Show_Messages;
 
    ---------------------
@@ -704,40 +771,50 @@ package body Code_Peer.Module is
       end if;
    end Show_Annotations;
 
-   -------------------
-   -- Show_Messages --
-   -------------------
+   --------------------------
+   -- Update_Location_View --
+   --------------------------
 
-   procedure Show_Messages
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
-   is
-      procedure Process_Subprogram
-        (Position : Code_Analysis.Subprogram_Maps.Cursor);
+   procedure Update_Location_View (Self : access Module_Id_Record'Class) is
 
-      procedure Process_Message (Position : Code_Peer.Message_Vectors.Cursor);
+      procedure Process_File (Position : Code_Peer.File_Sets.Cursor);
 
-      ---------------------
-      -- Process_Message --
-      ---------------------
+      ------------------
+      -- Process_File --
+      ------------------
 
-      procedure Process_Message
-        (Position : Code_Peer.Message_Vectors.Cursor)
-      is
-         Message : constant Code_Peer.Message_Access :=
-                     Code_Peer.Message_Vectors.Element (Position);
+      procedure Process_File (Position : Code_Peer.File_Sets.Cursor) is
 
-         function Image
-           (Item : Code_Peer.Message_Probability_Level) return String;
+         procedure Process_Subprogram
+           (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
-         -----------
-         -- Image --
-         -----------
+         procedure Process_Message
+           (Position : Code_Peer.Message_Vectors.Cursor);
 
-         function Image
-           (Item : Code_Peer.Message_Probability_Level) return String is
-         begin
-            case Item is
+         File : constant Code_Analysis.File_Access :=
+                  Code_Peer.File_Sets.Element (Position);
+
+         ---------------------
+         -- Process_Message --
+         ---------------------
+
+         procedure Process_Message
+           (Position : Code_Peer.Message_Vectors.Cursor)
+         is
+            Message : constant Code_Peer.Message_Access :=
+              Code_Peer.Message_Vectors.Element (Position);
+
+            function Image
+              (Item : Code_Peer.Message_Probability_Level) return String;
+
+            -----------
+            -- Image --
+            -----------
+
+            function Image
+              (Item : Code_Peer.Message_Probability_Level) return String is
+            begin
+               case Item is
                when Code_Peer.High =>
                   return "high: ";
 
@@ -752,45 +829,56 @@ package body Code_Peer.Module is
 
                when Code_Peer.Suppressed =>
                   return "SUPPRESSED: ";
-            end case;
-         end Image;
+               end case;
+            end Image;
+
+         begin
+            if Message.Probability /= Code_Peer.Suppressed
+              and then Self.Filter_Criteria.Categories.Contains
+                (Message.Category)
+            then
+               GPS.Location_View.Insert_Location
+                 (Kernel       => Self.Kernel,
+                  Category     => Code_Peer_Category_Name,
+                  File         => File.Name,
+                  Text         =>
+                    Image (Message.Probability) & Message.Text.all,
+                  Line         => Message.Line,
+                  Column       =>
+                    Basic_Types.Visible_Column_Type (Message.Column),
+                  Highlight    => True,
+                  Highlight_Category =>
+                    Module.Message_Styles (Message.Probability),
+                  Sort_In_File => True);
+            end if;
+         end Process_Message;
+
+         ------------------------
+         -- Process_Subprogram --
+         ------------------------
+
+         procedure Process_Subprogram
+           (Position : Code_Analysis.Subprogram_Maps.Cursor)
+         is
+            Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
+              Code_Analysis.Subprogram_Maps.Element (Position);
+            Data            : Code_Peer.Subprogram_Data'Class
+            renames Code_Peer.Subprogram_Data'Class
+              (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
+
+         begin
+            Data.Messages.Iterate (Process_Message'Access);
+         end Process_Subprogram;
 
       begin
-         if Message.Probability /= Code_Peer.Suppressed then
-            GPS.Location_View.Insert_Location
-              (Kernel       => Self.Kernel,
-               Category     => Code_Peer_Category_Name,
-               File         => File.Name,
-               Text         => Image (Message.Probability) & Message.Text.all,
-               Line         => Message.Line,
-               Column       =>
-                 Basic_Types.Visible_Column_Type (Message.Column),
-               Highlight    => True,
-               Highlight_Category =>
-                 Module.Message_Styles (Message.Probability),
-               Sort_In_File => True);
-         end if;
-      end Process_Message;
-
-      ------------------------
-      -- Process_Subprogram --
-      ------------------------
-
-      procedure Process_Subprogram
-        (Position : Code_Analysis.Subprogram_Maps.Cursor)
-      is
-         Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
-         Data            : Code_Peer.Subprogram_Data'Class
-           renames Code_Peer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.Code_Peer_Data.all);
-
-      begin
-         Data.Messages.Iterate (Process_Message'Access);
-      end Process_Subprogram;
+         File.Subprograms.Iterate (Process_Subprogram'Access);
+      end Process_File;
 
    begin
-      File.Subprograms.Iterate (Process_Subprogram'Access);
-   end Show_Messages;
+      GPS.Location_View.Remove_Location_Category
+        (Self.Kernel, Code_Peer_Category_Name);
+
+      Self.Filter_Criteria.Files.Iterate (Process_File'Access);
+   end Update_Location_View;
 
 end Code_Peer.Module;

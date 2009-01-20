@@ -58,7 +58,12 @@ package Code_Peer.Summary_Reports is
      (Self : access Summary_Report_Record'Class)
       return Code_Analysis.Subprogram_Access;
 
-   Signal_Activated : constant Glib.Signal_Name;
+   procedure Update_Criteria
+     (Self     : access Summary_Report_Record'Class;
+      Criteria : in out Code_Peer.Message_Filter_Criteria);
+
+   Signal_Activated        : constant Glib.Signal_Name;
+   Signal_Criteria_Changed : constant Glib.Signal_Name;
 
 private
 
@@ -73,6 +78,7 @@ private
       Hide_View      : Gtk.Tree_View.Gtk_Tree_View;
    end record;
 
-   Signal_Activated : constant Glib.Signal_Name := "activated";
+   Signal_Activated        : constant Glib.Signal_Name := "activated";
+   Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria_changed";
 
 end Code_Peer.Summary_Reports;

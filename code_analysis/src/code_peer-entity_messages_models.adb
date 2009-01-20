@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,7 +88,8 @@ package body Code_Peer.Entity_Messages_Models is
    is
       use type Code_Analysis.Code_Analysis_Tree;
       use type Code_Analysis.Project_Access;
-      use type Code_Analysis.File_Access;
+      --  use type Code_Analysis.File_Access;
+      --  ??? Uncomment this line after I120-013 will be fixed
       use type Code_Analysis.Subprogram_Access;
 
       procedure Set_Integer_Image (Item : Natural);

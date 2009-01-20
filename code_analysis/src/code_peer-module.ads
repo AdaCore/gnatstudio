@@ -42,14 +42,6 @@ package Code_Peer.Module is
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
 
-   procedure Show_Messages
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access);
-
-   procedure Hide_Messages
-     (Self : access Module_Id_Record'Class;
-      File : Code_Analysis.File_Access);
-
    procedure Load (Self : access Module_Id_Record'Class; File : String);
 
    type Submenu_Factory_Record
@@ -79,6 +71,12 @@ private
       Report           : Code_Peer.Summary_Reports.Summary_Report;
       Annotation_Style : GPS.Kernel.Styles.Style_Access;
       Message_Styles   : Message_Probability_Style_Array;
+
+      --  Global messages filter
+
+      Filter_Criteria  : Code_Peer.Message_Filter_Criteria;
    end record;
+
+   procedure Update_Location_View (Self : access Module_Id_Record'Class);
 
 end Code_Peer.Module;

@@ -48,7 +48,13 @@ with Code_Analysis_GUI;
 
 package body Code_Peer.Summary_Reports is
 
+   use type Glib.Signal_Name;
    use type Gtk.Tree_Model.Gtk_Tree_Path;
+
+   --  use type Code_Analysis.File_Access;
+   --  ??? Uncomment this line after I120-013 will be fixed
+   use type Code_Analysis.Project_Access;
+   use type Code_Analysis.Subprogram_Access;
 
    package Tree_View_Report_Return_Boolean_Callbacks is
      new Gtk.Handlers.User_Return_Callback
@@ -102,10 +108,12 @@ package body Code_Peer.Summary_Reports is
    Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => Interfaces.C.Strings.New_String (String (Signal_Activated)));
+     (1 => Interfaces.C.Strings.New_String (String (Signal_Activated)),
+      2 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-     (1 => (1 => Glib.GType_None));
+     (1 => (1 => Glib.GType_None),
+      2 => (1 => Glib.GType_None));
 
    ------------------
    -- Context_Func --
@@ -120,10 +128,6 @@ package body Code_Peer.Summary_Reports is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Menu, Kernel, Event_Widget);
-
-      use type Code_Analysis.File_Access;
-      use type Code_Analysis.Project_Access;
-      use type Code_Analysis.Subprogram_Access;
 
       Self       : constant Summary_Report := Summary_Report (Object);
       X          : constant Glib.Gint := Glib.Gint (Gdk.Event.Get_X (Event));
@@ -596,12 +600,7 @@ package body Code_Peer.Summary_Reports is
       pragma Unreferenced (View);
 
       use type Glib.Guint;
-      use type Glib.Signal_Name;
       use type Gdk.Event.Gdk_Event_Type;
-
-      use type Code_Analysis.Project_Access;
-      use type Code_Analysis.File_Access;
-      use type Code_Analysis.Subprogram_Access;
 
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -711,6 +710,21 @@ package body Code_Peer.Summary_Reports is
 
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Hide_Model.Get_Visible_Categories);
+
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Toggle_Category_Visibility;
+
+   ---------------------
+   -- Update_Criteria --
+   ---------------------
+
+   procedure Update_Criteria
+     (Self     : access Summary_Report_Record'Class;
+      Criteria : in out Code_Peer.Message_Filter_Criteria)
+   is
+   begin
+      Criteria.Categories    := Self.Hide_Model.Get_Visible_Categories;
+      Criteria.Probabilities := (others => True);
+   end Update_Criteria;
 
 end Code_Peer.Summary_Reports;

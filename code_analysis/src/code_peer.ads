@@ -116,6 +116,27 @@ package Code_Peer is
 
    Code_Peer_Editor_Mark_Name_Prefix : constant String := "CodePeer-";
 
+   --  Message filter criteria
+
+   use type Code_Analysis.File_Access;
+   --  ??? Remove this clase after I120-013 will be fixed
+
+   function Hash
+     (Item : Code_Analysis.File_Access) return Ada.Containers.Hash_Type;
+
+   package File_Sets is
+     new Ada.Containers.Hashed_Sets
+          (Code_Analysis.File_Access, Hash, Code_Analysis."=");
+
+   type Message_Probability_Level_Flags is
+     array (Message_Probability_Level) of Boolean;
+
+   type Message_Filter_Criteria is record
+      Files         : File_Sets.Set;
+      Categories    : Message_Category_Sets.Set;
+      Probabilities : Message_Probability_Level_Flags;
+   end record;
+
 private
 
    function Less

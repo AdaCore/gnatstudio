@@ -152,6 +152,16 @@ package body Code_Peer is
    end Hash;
 
    ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Item : Code_Analysis.File_Access) return Ada.Containers.Hash_Type is
+   begin
+      return Item.Name.Full_Name_Hash;
+   end Hash;
+
+   ----------
    -- Less --
    ----------
 
