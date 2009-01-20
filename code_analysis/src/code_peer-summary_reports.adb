@@ -521,7 +521,7 @@ package body Code_Peer.Summary_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
 --      Filter_Box.Pack_Start (Check, False);
---  This check button are not displayed by default, see H519-028 discussion
+--  This check button is not displayed by default, see H519-028 discussion
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
