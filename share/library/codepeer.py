@@ -138,13 +138,12 @@ def run_inspection(menu):
       create_library_file()
 
       projectname = GPS.Project.root().name()
-      partition_dir = os.path.join(project_path(), projectname + ".partitions")
 
       savedir = os.getcwd()     
       os.chdir(project_path());
 
-      ins_cmd = "codepeer -all -background -lib \"" + library_file() \
-        + "\" -dbg-partition-library-location \"" + partition_dir + '"'
+      ins_cmd = 'codepeer -all -global -background -lib "' + library_file() + \
+        '"'
       proc = GPS.Process(ins_cmd, regexp=".+", on_match=inspection_output,
         on_exit=inspection_exit, show_command = True)
       proc.get_result()
@@ -165,10 +164,8 @@ def regenerate_report(menu):
       check_params_for_reports()
 
       projectname = GPS.Project.root().name()
-      partition_dir = os.path.join(project_path(), projectname + ".partitions")
-      ins_cmd = "codepeer -all -background -output-only -lib " + '"' + \
-        library_file() + '"' + " -dbg-partition-library-location " + '"' + \
-        partition_dir + '"'
+      ins_cmd = 'codepeer -all -global -background -output-only -lib "' + \
+        library_file() + '"'
       proc = GPS.Process(ins_cmd, regexp=".+", on_match=regenerate_output,
         on_exit=regenerate_exit, show_command = True)
       proc.get_result()
