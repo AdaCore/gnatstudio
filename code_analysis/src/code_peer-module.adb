@@ -294,6 +294,36 @@ package body Code_Peer.Module is
       Reader  : Code_Peer.Bridge_Database_Readers.Reader;
       Child   : GPS.Kernel.MDI.GPS_MDI_Child;
 
+      procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
+
+      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
+
+      ------------------
+      -- Process_File --
+      ------------------
+
+      procedure Process_File (Position : Code_Analysis.File_Maps.Cursor) is
+         File : constant Code_Analysis.File_Access :=
+                  Code_Analysis.File_Maps.Element (Position);
+
+      begin
+         Self.Filter_Criteria.Files.Insert (File);
+      end Process_File;
+
+      ---------------------
+      -- Process_Project --
+      ---------------------
+
+      procedure Process_Project
+        (Position : Code_Analysis.Project_Maps.Cursor)
+      is
+         Project : constant Code_Analysis.Project_Access :=
+                     Code_Analysis.Project_Maps.Element (Position);
+
+      begin
+         Project.Files.Iterate (Process_File'Access);
+      end Process_Project;
+
    begin
       if Self.Report = null then
          --  Clean up existent data
@@ -335,15 +365,20 @@ package body Code_Peer.Module is
          GPS.Kernel.MDI.Gtk_New (Child, Self.Report, Module => Self);
          Child.Set_Title (-"CodePeer report");
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Child);
-         Child.Raise_Child;
 
          --  Setup filter criteria
 
+         Self.Filter_Criteria.Files.Clear;
+         Self.Tree.Iterate (Process_Project'Access);
          Self.Report.Update_Criteria (Self.Filter_Criteria);
 
          --  Update location view
 
          Self.Update_Location_View;
+
+         --  Raise report window
+
+         Child.Raise_Child;
       end if;
    end Load;
 
@@ -469,6 +504,11 @@ package body Code_Peer.Module is
 
       GPS.Location_View.Remove_Location_Category
         (Context.Module.Kernel, Code_Peer_Category_Name);
+
+      --  Cleanup filter criteria
+
+      Context.Module.Filter_Criteria.Files.Clear;
+      Context.Module.Filter_Criteria.Categories.Clear;
 
       --  Mark report as destroyed
 
