@@ -132,6 +132,17 @@ class rulesEditor(gtk.Dialog):
       scrolled.show()
       self.vbox.pack_start (scrolled, True, True, 0);
 
+      # Check box for optional rules file edition after exit
+      hbox = gtk.HBox()
+      hbox.show()
+      label = gtk.Label("")
+      label.hide()
+      hbox.pack_start (label, True, True, 0)
+      self.vbox.pack_start (hbox, False, False, 0)
+      self.open_file_after_exit_check = gtk.CheckButton("Open rules file after exit")
+      self.open_file_after_exit_check.show()
+      hbox.pack_end (self.open_file_after_exit_check, False, False, 0)
+
       self.switchvbox = gtk.VBox()
       self.switchvbox.show()
       scrolled.add_with_viewport (self.switchvbox)
@@ -423,7 +434,8 @@ class rulesEditor(gtk.Dialog):
          f.write (sw)
 
       f.close ()
-      GPS.EditorBuffer.get(file)
+      if self.open_file_after_exit_check.get_active():
+        GPS.EditorBuffer.get(file)
       self.response(gtk.RESPONSE_NONE)
 
 def deactivate (widg):
@@ -798,7 +810,7 @@ def on_gps_started (hook_name):
     <submenu after="Browsers">
       <title>Coding _Standard</title>
       <menu action="edit gnatcheck rules">
-        <title>_Edit coding standard file</title>
+        <title>_Edit Rules file</title>
       </menu>
       <menu action="gnatcheck root project recursive">
         <title>Check root project and _subprojects</title>
