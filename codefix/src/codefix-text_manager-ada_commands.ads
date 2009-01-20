@@ -376,11 +376,11 @@ private
    --  ??? Should use standard string list
 
    type Remove_Pkg_Clauses_Cmd is new Text_Command with record
-      Instantiation_Pkg : Remove_Instruction_Cmd;
-      Clauses_Pkg       : Remove_Elements_Cmd;
-      Is_Instantiation  : Boolean;
-      Obj_List          : String_List.List;
-      Last_With         : Ptr_Mark;
+      Word         : Ptr_Mark;
+      Word_Str     : String_Access;
+      Position     : Relative_Position;
+      Destination  : GNATCOLL.VFS.Virtual_File;
+      Category     : Dependency_Category;
    end record;
 
    type Remove_Entity_Cmd is new Text_Command with record

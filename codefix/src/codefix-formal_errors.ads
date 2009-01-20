@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -162,7 +162,6 @@ package Codefix.Formal_Errors is
       Word_Case    : Case_Type := Mixed) return Solution_List;
    --  Re-case the word
 
-   --  ??? I114-034
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;

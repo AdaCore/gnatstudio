@@ -249,100 +249,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Category     : Dependency_Category := Cat_With)
    is
-      use Codefix.Ada_Tools.Words_Lists;
-
-      Pkg_Info     : Simple_Construct_Information;
-      Word_Used    : Word_Cursor := Clone (Word);
-      Clauses_List : Words_Lists.List;
-      Clause_Node  : Words_Lists.List_Node;
-      Last_With    : File_Cursor;
    begin
-      if Word.String_Match /= null then
-         Pkg_Info := Search_Unit
-           (Current_Text, Get_File (Word), Cat_With, Word.String_Match.all);
-      else
-         declare
-            It : constant Construct_Tree_Iterator := Get_Iterator_At
-              (Current_Text,
-               Word,
-               Position => Position,
-               Categories_Seeked => (1 => Category));
-         begin
-            Pkg_Info := Get_Construct (It).all;
-         end;
-      end if;
-
-      if Pkg_Info.Category /= Cat_Unknown then
-         Assign (Word_Used.String_Match, Pkg_Info.Name.all);
-      end if;
-
-      if Pkg_Info.Category = Cat_Unknown then
-         Pkg_Info := Search_Unit
-           (Current_Text, Get_File (Word),
-            Cat_Package,
-            Word.String_Match.all);
-
-         Initialize
-           (This.Instantiation_Pkg,
-            Current_Text,
-            Word_Used);
-         This.Is_Instantiation := True;
-      else
-         Add_To_Remove
-           (This.Clauses_Pkg,
-            Current_Text,
-            Word_Used);
-
-         if Destination /= GNATCOLL.VFS.No_File then
-            Append
-              (This.Obj_List,
-               new String'("with " & Pkg_Info.Name.all & ";"));
-         end if;
-
-         This.Is_Instantiation := False;
-      end if;
-
-      if Category /= Cat_Use then
-         Clauses_List := Get_Use_Clauses
-           (Word_Used.String_Match.all,
-            Get_File (Word_Used),
-            Current_Text,
-            True);
-
-         Clause_Node := First (Clauses_List);
-
-         if Destination /= GNATCOLL.VFS.No_File then
-            while Clause_Node /= Words_Lists.Null_Node loop
-               Add_To_Remove
-                 (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
-               Append
-                 (This.Obj_List,
-                  new String'
-                    ("use " & Data (Clause_Node).String_Match.all & ";"));
-               Clause_Node := Next (Clause_Node);
-            end loop;
-         else
-            while Clause_Node /= Words_Lists.Null_Node loop
-               Add_To_Remove
-                 (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
-               Clause_Node := Next (Clause_Node);
-            end loop;
-         end if;
-
-         Free (Clauses_List);
-      end if;
-
-      if Destination /= GNATCOLL.VFS.No_File then
-         Last_With := File_Cursor
-           (Get_Next_With_Position (Current_Text, Destination));
-
-         This.Last_With := new Mark_Abstr'Class'
-           (Get_New_Mark (Current_Text, Last_With));
-
-         Free (Last_With);
-      end if;
-
-      Free (Word_Used);
+      This.Word := new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Word));
+      This.Word_Str := new String'(Word.Get_Word);
+      This.Position := Position;
+      This.Destination := Destination;
+      This.Category := Category;
    end Initialize;
 
    -------------
@@ -353,22 +265,122 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
+      use Codefix.Ada_Tools.Words_Lists;
+
+      Word         : Word_Cursor;
+      Pkg_Info     : Simple_Construct_Information;
+      Clauses_List : Words_Lists.List;
+      Clause_Node  : Words_Lists.List_Node;
+      Last_With    : File_Cursor := Null_File_Cursor;
+
+      Is_Instantiation : Boolean;
       Node      : String_List.List_Node;
-      Last_With : File_Cursor;
+
+      Instantiation_Pkg : Remove_Instruction_Cmd;
+      Clauses_Pkg       : Remove_Elements_Cmd;
+      --  ??? It would be good to be able to use this without commands, e.g.
+      --  without having to place mark since this is probably not needed here.
+
+      Obj_List          : String_List.List;
    begin
-      if This.Is_Instantiation then
-         Execute (This.Instantiation_Pkg, Current_Text);
-         Execute (This.Clauses_Pkg, Current_Text);
+      File_Cursor (Word) :=
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Word.all));
+      Word.String_Match := new String'(This.Word_Str.all);
+
+      if Get_Word (Word) /= "" then
+         Pkg_Info := Search_Unit
+           (Current_Text, Get_File (Word), Cat_With, Word.String_Match.all);
       else
-         Execute (This.Clauses_Pkg, Current_Text);
+         declare
+            It : constant Construct_Tree_Iterator := Get_Iterator_At
+              (Current_Text,
+               Word,
+               Position => This.Position,
+               Categories_Seeked => (1 => This.Category));
+         begin
+            Pkg_Info := Get_Construct (It).all;
+         end;
       end if;
 
-      if This.Last_With /= null then
+      if Pkg_Info.Category /= Cat_Unknown then
+         Assign (Word.String_Match, Pkg_Info.Name.all);
+      end if;
 
-         Node := First (This.Obj_List);
+      if Pkg_Info.Category = Cat_Unknown then
+         Pkg_Info := Search_Unit
+           (Current_Text, Get_File (Word),
+            Cat_Package,
+            Word.String_Match.all);
 
+         Initialize
+           (Instantiation_Pkg,
+            Current_Text,
+            Word);
+         Is_Instantiation := True;
+      else
+         Add_To_Remove
+           (Clauses_Pkg,
+            Current_Text,
+            Word);
+
+         if This.Destination /= GNATCOLL.VFS.No_File then
+            Append
+              (Obj_List,
+               new String'("with " & Pkg_Info.Name.all & ";"));
+         end if;
+
+         Is_Instantiation := False;
+      end if;
+
+      if This.Category /= Cat_Use then
+         Clauses_List := Get_Use_Clauses
+           (Word.String_Match.all,
+            Get_File (Word),
+            Current_Text,
+            True);
+
+         Clause_Node := First (Clauses_List);
+
+         if This.Destination /= GNATCOLL.VFS.No_File then
+            while Clause_Node /= Words_Lists.Null_Node loop
+               Add_To_Remove
+                 (Clauses_Pkg, Current_Text, Data (Clause_Node));
+               Append
+                 (Obj_List,
+                  new String'
+                    ("use " & Data (Clause_Node).String_Match.all & ";"));
+               Clause_Node := Next (Clause_Node);
+            end loop;
+         else
+            while Clause_Node /= Words_Lists.Null_Node loop
+               Add_To_Remove
+                 (Clauses_Pkg, Current_Text, Data (Clause_Node));
+               Clause_Node := Next (Clause_Node);
+            end loop;
+         end if;
+
+         Free (Clauses_List);
+      end if;
+
+      if This.Destination /= GNATCOLL.VFS.No_File then
          Last_With := File_Cursor
-           (Get_Current_Cursor (Current_Text, This.Last_With.all));
+           (Get_Next_With_Position (Current_Text, This.Destination));
+
+         Free (Last_With);
+      end if;
+
+      Free (Word);
+
+      if Is_Instantiation then
+         Execute (Instantiation_Pkg, Current_Text);
+         Execute (Clauses_Pkg, Current_Text);
+      else
+         Execute (Clauses_Pkg, Current_Text);
+      end if;
+
+      if Last_With /= Null_File_Cursor then
+
+         Node := First (Obj_List);
 
          while Node /= String_List.Null_Node loop
             Current_Text.Add_Line (Last_With, Data (Node).all);
@@ -377,6 +389,10 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Free (Last_With);
       end if;
+
+      Free (Instantiation_Pkg);
+      Free (Clauses_Pkg);
+      Free (Obj_List);
    end Execute;
 
    ----------
@@ -385,10 +401,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
-      Free (This.Instantiation_Pkg);
-      Free (This.Clauses_Pkg);
-      Free (This.Last_With);
-      Free (This.Obj_List);
+      Free (This.Word_Str);
       Free (Text_Command (This));
    end Free;
 
