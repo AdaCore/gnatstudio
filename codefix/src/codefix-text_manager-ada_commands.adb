@@ -24,7 +24,6 @@ with Case_Handling;                     use Case_Handling;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with String_Utils;                      use String_Utils;
 with Language.Ada;                      use Language.Ada;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
@@ -264,7 +263,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       else
          declare
             It : constant Construct_Tree_Iterator := Get_Iterator_At
-              (Current_Text, Word, Position, (1 => Category));
+              (Current_Text,
+               Word,
+               Position => Position,
+               Categories_Seeked => (1 => Category));
          begin
             Pkg_Info := Get_Construct (It).all;
          end;
@@ -402,34 +404,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Start_Entity : File_Cursor'Class;
       Mode         : Remove_Code_Mode := Erase)
    is
-      Spec_Begin, Spec_End : File_Cursor;
-      Body_Begin, Body_End : File_Cursor;
-
    begin
-      Get_Entity
-        (Current_Text,
-         Start_Entity,
-         Spec_Begin, Spec_End,
-         Body_Begin, Body_End);
-
-      if Spec_Begin /= Null_File_Cursor then
-         This.Spec_Begin := new Mark_Abstr'Class'
-           (Get_New_Mark (Current_Text, Spec_Begin));
-         This.Spec_End := new Mark_Abstr'Class'
-           (Get_New_Mark (Current_Text, Spec_End));
-      end if;
-
-      This.Body_Begin := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Body_Begin));
-      This.Body_End := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Body_End));
-
+      This.Start_Entity := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Start_Entity));
       This.Mode := Mode;
-
-      Free (Spec_Begin);
-      Free (Spec_End);
-      Free (Body_Begin);
-      Free (Body_End);
    end Initialize;
 
    -------------
@@ -440,15 +418,29 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Remove_Entity_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Text : Ptr_Text;
-      Spec_Begin, Spec_End       : File_Cursor;
-      Body_Begin, Body_End       : File_Cursor;
-      Line_Cursor                : File_Cursor;
+      Start_Entity          : constant File_Cursor := File_Cursor
+        (Current_Text.Get_Current_Cursor (This.Start_Entity.all));
+      Text                  : Ptr_Text;
+      Spec_Begin, Spec_End  : File_Cursor;
+      Body_Begin, Body_End  : File_Cursor;
+      Line_Cursor           : File_Cursor;
    begin
-      Body_Begin := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Body_Begin.all));
-      Body_End := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Body_End.all));
+      Get_Entity
+        (Current_Text,
+         Start_Entity,
+         Spec_Begin, Spec_End,
+         Body_Begin, Body_End);
+
+      if Spec_Begin = Null_File_Cursor
+        and then Body_Begin = Null_File_Cursor
+      then
+         --  In this case, we didn't manage to retrieve the entity. It may be
+         --  due to previous fixes, or to manual edit of the file. There's
+         --  nothing we can do. No need to raise an exception, since this
+         --  kind of situation is completely expected in the fix process.
+
+         return;
+      end if;
 
       Text := Current_Text.Get_File (Body_Begin.File);
 
@@ -466,14 +458,11 @@ package body Codefix.Text_Manager.Ada_Commands is
             Text.Comment (Body_Begin, Body_End);
       end case;
 
-      if This.Spec_Begin /= null then
-         Spec_Begin := File_Cursor
-           (Get_Current_Cursor (Current_Text, This.Spec_Begin.all));
-         Spec_End := File_Cursor
-           (Get_Current_Cursor (Current_Text, This.Spec_End.all));
-
+      if Spec_Begin /= Null_File_Cursor then
          Line_Cursor := Spec_Begin;
          Line_Cursor.Col := 1;
+
+         Text := Current_Text.Get_File (Spec_Begin.File);
 
          while Line_Cursor.Line <= Spec_End.Line loop
             Line_Cursor.Line := Line_Cursor.Line + 1;
@@ -499,10 +488,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Entity_Cmd) is
    begin
-      Free (This.Spec_Begin);
-      Free (This.Spec_End);
-      Free (This.Body_Begin);
-      Free (This.Body_End);
+      Free (This.Start_Entity.all);
       Free (Text_Command (This));
    end Free;
 
@@ -516,12 +502,14 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This           : in out Add_Pragma_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
       Position       : File_Cursor'Class;
+      Category       : Language_Category;
       Name, Argument : String) is
    begin
       Assign (This.Name, Name);
       Assign (This.Argument, Argument);
       This.Position := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Position));
+      This.Category := Category;
    end Initialize;
 
    -------------
@@ -532,44 +520,183 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Add_Pragma_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Position      : File_Cursor;
-      Pragma_Cursor : File_Cursor;
-      Line_Cursor   : File_Cursor;
-      Next_Str      : GNAT.Strings.String_Access;
-   begin
-      Position := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Position.all));
 
-      Pragma_Cursor := Position;
-      Pragma_Cursor.Line := Pragma_Cursor.Line + 1;
-      Pragma_Cursor.Col := 1;
+      Cursor : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Position.all);
+      Position : File_Cursor;
 
-      Next_Word (Current_Text, Pragma_Cursor, Next_Str);
+      procedure Add_Pragma;
+      procedure Add_Literal_Pragma;
+      procedure Add_Parameter_Pragma;
 
-      if To_Lower (Next_Str.all) = "pragma" then
-         Free (Next_Str);
-         Next_Word (Current_Text, Pragma_Cursor, Next_Str);
+      ----------------
+      -- Add_Pragma --
+      ----------------
 
-         if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
-            Pragma_Cursor := File_Cursor
-              (Search_Token
-                 (Current_Text, Pragma_Cursor, Close_Paren_Tok));
-            Line_Cursor := Pragma_Cursor;
-            Line_Cursor.Col := 1;
-            Current_Text.Replace
-              (Pragma_Cursor, 1, ", " & This.Argument.all & ")");
-            Free (Line_Cursor);
+      procedure Add_Pragma is
+         Declaration  : Construct_Tree_Iterator;
+         Char_Ind     : Char_Index;
+      begin
+         Declaration := Get_Iterator_At (Current_Text, Cursor);
+
+         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
+
+         --  ??? This test is only here because the parser returns sometimes
+         --  a Sloc_End.Col equal to 0.
+
+         if Char_Ind = 0 then
+            Char_Ind := 1;
          end if;
 
+         Set_File (Position, Get_File (Cursor));
+         Set_Location
+           (Position, Get_Construct (Declaration).Sloc_End.Line, 1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Position);
+         begin
+            Set_Location
+              (Position,
+               Get_Construct (Declaration).Sloc_End.Line,
+               To_Column_Index (Char_Ind, Line));
+         end;
+      end Add_Pragma;
+
+      ------------------------
+      -- Add_Literal_Pragma --
+      ------------------------
+
+      procedure Add_Literal_Pragma is
+         Declaration : Construct_Tree_Iterator;
+         Char_Ind    : Char_Index;
+      begin
+         Declaration := Get_Iterator_At
+           (Current_Text,
+            Cursor,
+            Position => Before,
+            Categories_Seeked => (1 => Cat_Type));
+         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
+
+         if Char_Ind = 0 then
+            Char_Ind := 1;
+         end if;
+
+         Set_File (Position, Get_File (Cursor));
+         Set_Location
+           (Position, Get_Construct (Declaration).Sloc_End.Line, 1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Position);
+         begin
+            Set_Location
+              (Position,
+               Get_Construct (Declaration).Sloc_End.Line,
+               To_Column_Index (Char_Ind, Line));
+         end;
+      end Add_Literal_Pragma;
+
+      --------------------------
+      -- Add_Parameter_Pragma --
+      --------------------------
+
+      procedure Add_Parameter_Pragma is
+         Garbage : File_Cursor;
+         Declaration : Construct_Tree_Iterator;
+      begin
+         Declaration := Get_Iterator_At
+           (Current_Text,
+            Cursor,
+            Position => Before,
+            Categories_Seeked => (Cat_Procedure, Cat_Function));
+         Set_File (Position, Get_File (Cursor));
+         Set_Location
+           (Position, Get_Construct (Declaration).Sloc_Entity.Line, 1);
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Position);
+         begin
+            Set_Location
+              (Position, Get_Construct (Declaration).Sloc_Entity.Line,
+               To_Column_Index
+                 (Char_Index
+                    (Get_Construct (Declaration).Sloc_Entity.Column), Line));
+         end;
+
+         Garbage := Position;
+         Position := File_Cursor
+           (Search_Token
+              (Current_Text, Position, Close_Paren_Tok));
+         Free (Garbage);
+
+         Garbage := Position;
+         Position := File_Cursor
+           (Search_Token
+              (Current_Text, Position, Is_Tok));
+         Free (Garbage);
+      end Add_Parameter_Pragma;
+
+      Actual_Category : Language_Category;
+
+   begin
+      if This.Category = Cat_Unknown then
+         declare
+            It : constant Construct_Tree_Iterator :=
+              Get_Iterator_At (Current_Text, Cursor);
+         begin
+            Actual_Category := Get_Construct (It).Category;
+         end;
       else
-         Current_Text.Add_Line
-           (Position,
-            "pragma " & This.Name.all & " (" & This.Argument.all & ");",
-            True);
+         Actual_Category := This.Category;
       end if;
 
-      Free (Next_Str);
-      Free (Position);
+      case Actual_Category is
+         when Cat_Literal =>
+            Add_Literal_Pragma;
+
+         when Cat_Parameter =>
+            Add_Parameter_Pragma;
+
+         when others =>
+            Add_Pragma;
+
+      end case;
+
+      declare
+         Pragma_Cursor : File_Cursor;
+         Line_Cursor   : File_Cursor;
+         Next_Str      : GNAT.Strings.String_Access;
+      begin
+         Pragma_Cursor := Position;
+         Pragma_Cursor.Line := Pragma_Cursor.Line + 1;
+         Pragma_Cursor.Col := 1;
+
+         Next_Word (Current_Text, Pragma_Cursor, Next_Str);
+
+         if To_Lower (Next_Str.all) = "pragma" then
+            Free (Next_Str);
+            Next_Word (Current_Text, Pragma_Cursor, Next_Str);
+
+            if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
+               Pragma_Cursor := File_Cursor
+                 (Search_Token
+                    (Current_Text, Pragma_Cursor, Close_Paren_Tok));
+               Line_Cursor := Pragma_Cursor;
+               Line_Cursor.Col := 1;
+               Current_Text.Replace
+                 (Pragma_Cursor, 1, ", " & This.Argument.all & ")");
+               Free (Line_Cursor);
+            end if;
+
+         else
+            Current_Text.Add_Line
+              (Position,
+               "pragma " & This.Name.all & " (" & This.Argument.all & ");",
+               True);
+         end if;
+
+         Free (Next_Str);
+         Free (Position);
+      end;
    end Execute;
 
    ----------
@@ -966,13 +1093,15 @@ package body Codefix.Text_Manager.Ada_Commands is
       Source_It := Get_Iterator_At
         (Current_Text,
          Source_Cursor,
-         This.Look_For_Source,
-         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+         Position => This.Look_For_Source,
+         Categories_Seeked =>
+           (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
       Destination_It := Get_Iterator_At
         (Current_Text,
          Destination_Cursor,
-         This.Look_For_Destination,
-         (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
+         Position => This.Look_For_Destination,
+         Categories_Seeked =>
+           (Cat_Procedure, Cat_Function, Cat_Entry, Cat_Accept_Statement));
 
       Initialize_Profile
         (Source_It,
@@ -1037,9 +1166,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Source_Position : File_Cursor'Class) return String
    is
       Tree : constant Construct_Tree :=
-               Get_Tree (Get_Structured_File (Current_Text, Source_Position));
+        Get_Tree
+          (Get_Structured_File (Current_Text, Get_File (Source_Position)));
       It   : Construct_Tree_Iterator :=
-               Get_Iterator_At (Current_Text, Source_Position, After);
+        Get_Iterator_At
+          (Current_Text, Source_Position, Position => After);
    begin
       while Get_Parent_Scope (Tree, It)
         /= Null_Construct_Tree_Iterator
@@ -1317,6 +1448,63 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (Text_Command (This));
       Free (This.Line);
+   end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This           : in out Add_Clauses_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Missing_Clause : String;
+      Add_With       : Boolean;
+      Add_Use        : Boolean)
+   is
+      pragma Unreferenced (Current_Text);
+   begin
+      This.File := Cursor.File;
+      This.Missing_Clause := new String'(Missing_Clause);
+      This.Add_With := Add_With;
+      This.Add_Use := Add_Use;
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   procedure Execute
+     (This         : Add_Clauses_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+   begin
+      if This.Add_With and then This.Add_Use then
+         Current_Text.Add_Line
+           (Get_Next_With_Position (Current_Text, This.File),
+            "with " & This.Missing_Clause.all & ";"
+            & " use " & This.Missing_Clause.all & ";");
+      elsif This.Add_Use then
+         Current_Text.Add_Line
+           (Get_Next_With_Position (Current_Text, This.File),
+            "use " & This.Missing_Clause.all & ";");
+      else
+         Current_Text.Add_Line
+           (Get_Next_With_Position (Current_Text, This.File),
+            "with " & This.Missing_Clause.all & ";");
+      end if;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out Add_Clauses_Cmd) is
+   begin
+      Free (This.Missing_Clause);
+      Free (Text_Command (This));
    end Free;
 
 end Codefix.Text_Manager.Ada_Commands;

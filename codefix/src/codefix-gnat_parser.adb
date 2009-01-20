@@ -1584,6 +1584,7 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
          1);
 
+      --  ??? I114-034
       Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
@@ -1732,6 +1733,7 @@ package body Codefix.GNAT_Parser is
          raise Codefix_Panic;
       end if;
 
+      --  ??? I114-034
       Match (This.Matcher_Aux (Match_Number).all,
              Get_Line (Current_Text, Line_Cursor),
              Col_Matches);
@@ -2264,7 +2266,7 @@ package body Codefix.GNAT_Parser is
       This.Matcher :=
         (new Pattern_Matcher'
            (Compile ("(procedure|variable|constant|parameter|type|literal|" &
-                     "named number|) ""([\w]+)"" is not referenced")),
+                     "named number|unit|) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
            (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
@@ -2309,6 +2311,9 @@ package body Codefix.GNAT_Parser is
       elsif First_Word = "type" then
          Category := Cat_Type;
          Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
+      elsif First_Word = "unit" then
+         Category := Cat_With;
+         Operation_Mask := Options.Remove_Policy;
       elsif First_Word = "" then
          Category := Cat_Unknown;
          Operation_Mask := Options.Remove_Policy or Add_Pragma_Unreferenced;
@@ -2361,7 +2366,7 @@ package body Codefix.GNAT_Parser is
       Solutions := Not_Referenced
         (Current_Text,
          Message,
-         Cat_With,
+         Cat_Unknown, -- could be Cat_Package or Cat_With
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
          Options.Remove_Policy);
    end Fix;
@@ -2405,7 +2410,8 @@ package body Codefix.GNAT_Parser is
    begin
       This.Matcher :=
         (1 => new Pattern_Matcher'
-           (Compile ("""([^""]+)"" is never read and never assigned")));
+           (Compile
+              ("variable ""([^""]+)"" is never read and never assigned")));
    end Initialize;
 
    overriding procedure Fix
@@ -2419,14 +2425,11 @@ package body Codefix.GNAT_Parser is
       pragma Unreferenced (This);
 
       Message : constant Error_Message := Get_Message (Message_It);
-      Construct_Info : Construct_Tree_Iterator;
    begin
-      Construct_Info := Get_Iterator_At (Current_Text, Message);
-
       Solutions := Not_Referenced
         (Current_Text,
          Message,
-         Get_Construct (Construct_Info).Category,
+         Cat_Variable,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last),
          Options.Remove_Policy);
    end Fix;
@@ -2750,6 +2753,7 @@ package body Codefix.GNAT_Parser is
 
       Set_Column (Decl_Cur, 1);
 
+      --  ??? I114-034
       Solutions :=
          Clause_Missing
            (Current_Text   => Current_Text,

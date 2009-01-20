@@ -23,7 +23,7 @@ with GNAT.Strings;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;
-with GNATCOLL.VFS;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Projects.Registry;
 
 with Generic_List;
@@ -261,10 +261,6 @@ package Codefix.Text_Manager is
      (This : Text_Interface) return GNAT.Strings.String_Access is abstract;
    --  Get the entire file in a String_Access
 
-   function Get_Buffer
-     (This : access Text_Interface'Class) return GNAT.Strings.String_Access;
-   --  Return the buffer stored in this text
-
    function Get_File_Name
      (This : Text_Interface) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the file
@@ -338,10 +334,6 @@ package Codefix.Text_Manager is
       Word   : out GNAT.Strings.String_Access);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
-
-   function Get_Structure
-     (This : access Text_Interface'Class) return Construct_List_Access;
-   --  Return the parsed strucutre of the text_interface.
 
    function Get_Structured_File
      (This : access Text_Interface'Class) return Structured_File_Access;
@@ -444,6 +436,7 @@ package Codefix.Text_Manager is
    function Get_Iterator_At
      (Current_Text      : Text_Navigator_Abstr;
       Cursor            : File_Cursor'Class;
+      From_Type         : Position_Type := Start_Name;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator;
@@ -570,11 +563,6 @@ package Codefix.Text_Manager is
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
-   function Get_Structure
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Construct_List_Access;
-   --  Return the parsed strucutre of the text_interface
-
    procedure Update_All
      (This : Text_Navigator_Abstr'Class);
    --  This function update all the text contained in This
@@ -591,7 +579,7 @@ package Codefix.Text_Manager is
    --  Undo the last action from the File_Name
 
    function Get_Structured_File
-     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+     (This : Text_Navigator_Abstr'Class; File : Virtual_File)
       return Structured_File_Access;
    --  Return the construct tree corresponding to the file pointed by the given
    --  cursor.
@@ -945,12 +933,7 @@ private
    procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
 
    type Text_Interface is abstract tagged record
-      Structure            : Construct_List_Access := new Construct_List;
-      --  ??? We should not need that field anymore - the Construct_File
-      --  should provide everything needed.
-
       Construct_File       : Structured_File_Access := null;
-      Buffer               : GNAT.Strings.String_Access := null;
       File_Name            : GNATCOLL.VFS.Virtual_File;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
       Construct_Db         : Construct_Database_Access;
@@ -959,6 +942,7 @@ private
    function Get_Iterator_At
      (Current_Text      : access Text_Interface;
       Cursor            : Text_Cursor'Class;
+      From_Type         : Position_Type := Start_Name;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator;

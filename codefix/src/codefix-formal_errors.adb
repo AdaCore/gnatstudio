@@ -26,6 +26,7 @@ with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 with Language.Ada;                      use Language.Ada;
+with Language.Tree.Database;            use Language.Tree.Database;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
@@ -436,31 +437,11 @@ package body Codefix.Formal_Errors is
       Add_With       : Boolean;
       Add_Use        : Boolean) return Solution_List
    is
-      New_Command : Add_Line_Cmd;
+      New_Command : Add_Clauses_Cmd;
       Result      : Solution_List;
-
-      With_Text : constant String := "with " & Missing_Clause & ";";
-      Use_Text  : constant String := "use " & Missing_Clause & ";";
-      Full_Text : constant String := With_Text & " " & Use_Text;
-
-      Text_Start, Text_Stop : Integer;
    begin
-      if Add_With and Add_Use then
-         Text_Start := Full_Text'First;
-         Text_Stop := Full_Text'Last;
-      elsif Add_Use then
-         Text_Start := Full_Text'First + With_Text'Length + 1;
-         Text_Stop := Full_Text'Last;
-      else
-         Text_Start := Full_Text'First;
-         Text_Stop := Full_Text'Last - Use_Text'Length - 1;
-      end if;
-
-      Initialize
-        (New_Command,
-         Current_Text,
-         Get_Next_With_Position (Current_Text, Get_File (Cursor)),
-         Full_Text (Text_Start .. Text_Stop));
+      New_Command.Initialize
+        (Current_Text, Cursor, Missing_Clause, Add_With, Add_Use);
 
       Set_Caption
         (New_Command,
@@ -503,157 +484,139 @@ package body Codefix.Formal_Errors is
       Name         : String;
       Operations   : Useless_Entity_Operations) return Solution_List
    is
-      function Add_Pragma return Add_Pragma_Cmd;
-      --  Add a pragma after the declaration or, if there is no declaration,
-      --  after the body.
-
-      function Add_Literal_Pragma return Add_Pragma_Cmd;
-      --  Add a pragma after the declaration of the current type.
-
-      function Add_Parameter_Pragma return Add_Pragma_Cmd;
-      --  Add a pragma after the 'is' of the subprogram
-
-      ----------------
-      -- Add_Pragma --
-      ----------------
-
-      function Add_Pragma return Add_Pragma_Cmd is
-         New_Command  : Add_Pragma_Cmd;
-         New_Position : File_Cursor;
-         Declaration  : Construct_Tree_Iterator;
-         Char_Ind     : Char_Index;
-      begin
-         Declaration := Get_Iterator_At (Current_Text, Cursor);
-
-         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
-
-         --  ??? This test is only here because the parser returns sometimes
-         --  a Sloc_End.Col equal to 0.
-
-         if Char_Ind = 0 then
-            Char_Ind := 1;
-         end if;
-
-         Set_File (New_Position, Get_File (Cursor));
-         Set_Location
-           (New_Position, Get_Construct (Declaration).Sloc_End.Line, 1);
-
-         declare
-            Line : constant String := Get_Line (Current_Text, New_Position);
-         begin
-            Set_Location
-              (New_Position,
-               Get_Construct (Declaration).Sloc_End.Line,
-               To_Column_Index (Char_Ind, Line));
-         end;
-
-         Initialize
-           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
-         Free (New_Position);
-         return New_Command;
-      end Add_Pragma;
-
-      ------------------------
-      -- Add_Literal_Pragma --
-      ------------------------
-
-      function Add_Literal_Pragma return Add_Pragma_Cmd is
-         New_Command  : Add_Pragma_Cmd;
-         New_Position : File_Cursor;
-         Declaration : Construct_Tree_Iterator;
-         Char_Ind    : Char_Index;
-      begin
-         Declaration := Get_Iterator_At
-           (Current_Text, Cursor, Before, (1 => Cat_Type));
-         Char_Ind := Char_Index (Get_Construct (Declaration).Sloc_End.Column);
-
-         if Char_Ind = 0 then
-            Char_Ind := 1;
-         end if;
-
-         Set_File (New_Position, Get_File (Cursor));
-         Set_Location
-           (New_Position, Get_Construct (Declaration).Sloc_End.Line, 1);
-
-         declare
-            Line : constant String := Get_Line (Current_Text, New_Position);
-         begin
-            Set_Location
-              (New_Position,
-               Get_Construct (Declaration).Sloc_End.Line,
-               To_Column_Index (Char_Ind, Line));
-         end;
-
-         Initialize
-           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
-         Free (New_Position);
-         return New_Command;
-      end Add_Literal_Pragma;
-
-      --------------------------
-      -- Add_Parameter_Pragma --
-      --------------------------
-
-      function Add_Parameter_Pragma return Add_Pragma_Cmd is
-         New_Command           : Add_Pragma_Cmd;
-         New_Position, Garbage : File_Cursor;
-         Declaration : Construct_Tree_Iterator;
-      begin
-         Declaration := Get_Iterator_At
-           (Current_Text, Cursor, Before, (Cat_Procedure, Cat_Function));
-         Set_File (New_Position, Get_File (Cursor));
-         Set_Location
-           (New_Position, Get_Construct (Declaration).Sloc_Entity.Line, 1);
-
-         declare
-            Line : constant String := Get_Line (Current_Text, New_Position);
-         begin
-            Set_Location
-              (New_Position, Get_Construct (Declaration).Sloc_Entity.Line,
-               To_Column_Index
-                 (Char_Index
-                    (Get_Construct (Declaration).Sloc_Entity.Column), Line));
-         end;
-
-         Garbage := New_Position;
-         New_Position := File_Cursor
-           (Search_Token
-              (Current_Text, New_Position, Close_Paren_Tok));
-         Free (Garbage);
-
-         Garbage := New_Position;
-         New_Position := File_Cursor
-           (Search_Token
-              (Current_Text, New_Position, Is_Tok));
-         Free (Garbage);
-
-         Initialize
-           (New_Command, Current_Text, New_Position, "Unreferenced", Name);
-
-         Free (New_Position);
-
-         return New_Command;
-      end Add_Parameter_Pragma;
-
-      --  begin of Not_Referenced
-
+      It : Construct_Tree_Iterator;
+      Tree : Construct_Tree;
       Result : Solution_List;
+
+      Id : constant Composite_Identifier := To_Composite_Identifier
+        (To_Lower (Name));
+
+      function Remove_Quotes (Name : String) return String;
+      --  Removes the quotes around a string
+
+      function Matches (Name : String) return Boolean;
+      --  Return true if the last elements of the name given in parameter
+      --  corresponds to the Id looked for (stored in the global variable Id).
+
+      function Remove_Quotes (Name : String) return String is
+         First, Last : Integer;
+      begin
+         First := Name'First;
+         Last := Name'Last;
+
+         for J in Name'Range loop
+            if Name (J) = '"' then
+               First := J + 1;
+
+               exit;
+            end if;
+         end loop;
+
+         for J in reverse Name'Range loop
+            if Name (J) = '"' then
+               Last := J - 1;
+
+               exit;
+            end if;
+         end loop;
+
+         return Name (First .. Last);
+      end Remove_Quotes;
+
+      function Matches (Name : String) return Boolean is
+         Name_Id : constant Composite_Identifier :=
+           To_Composite_Identifier (To_Lower (Name));
+      begin
+         if Length (Name_Id) < Length (Id) then
+            return False;
+         end if;
+
+         for J in 0 .. Length (Id) - 1 loop
+            if Get_Item (Id, Length (Id) - J)
+              /= Get_Item (Name_Id, Length (Name_Id) - J)
+            then
+               return False;
+            end if;
+         end loop;
+
+         return True;
+      end Matches;
+
+      Entity_Found : Boolean := True;
+
       Actual_Category : Language_Category;
 
+      It_Location : constant Text_Location :=
+        (Absolute_Offset => False,
+         Line            => Get_Line (Cursor),
+         Line_Offset     => 0);
    begin
+      --  We don't want to open the buffer here, so we can't have access to
+      --  the function that would convert a char index into a column (which
+      --  relies on the line). But we still need to analyse the text around
+      --  the message to see if that's an entity that we can parse and analyse.
+      --  Therefore, we retreive all entities on the line of the message, since
+      --  the construct tree do not need the buffer to be in, and we get the
+      --  one which seems to be of the proper name, if any.
+      --  ??? This heuristic could be improved if we stored both the column
+      --  and the char offset in the construct tree.
+
+      Tree := Get_Tree
+        (Get_Structured_File (Current_Text, Get_File (Cursor)));
+
       if Category = Cat_Unknown then
-         declare
-            It : constant Construct_Tree_Iterator :=
-              Get_Iterator_At (Current_Text, Cursor);
-         begin
-            Actual_Category := Get_Construct (It).Category;
-         end;
+         It := Get_Iterator_At
+           (Tree, It_Location, Start_Name, After);
+      elsif Category = Cat_Variable or else Category = Cat_Local_Variable then
+         It := Get_Iterator_At
+           (Tree,
+            It_Location,
+            Start_Name,
+            After,
+            (Cat_Variable, Cat_Local_Variable));
+      elsif Category = Cat_Type or else Category = Cat_Subtype then
+         It := Get_Iterator_At
+           (Tree,
+            It_Location,
+            Start_Name,
+            After,
+            (Cat_Type, Cat_Subtype));
+      else
+         It := Get_Iterator_At
+           (Tree, It_Location, Start_Name, After, (1 => Category));
+      end if;
+
+      while Get_Construct (It).Sloc_Entity.Line = Cursor.Get_Line loop
+         exit when Matches (Remove_Quotes (Get_Construct (It).Name.all));
+
+         It := Next (Tree, It);
+      end loop;
+
+      if It = Null_Construct_Tree_Iterator
+        or else Get_Construct (It).Sloc_Entity.Line /= Cursor.Get_Line
+        or else not Matches (Remove_Quotes (Get_Construct (It).Name.all))
+      then
+         --  There's no construct that we can analyse at that location, so we
+         --  won't do operations relying on entity data.
+
+         Entity_Found := False;
+      end if;
+
+      if Category = Cat_Unknown then
+         Actual_Category := Get_Construct (It).Category;
       else
          Actual_Category := Category;
       end if;
 
       case Actual_Category is
          when Cat_Variable | Cat_Local_Variable =>
+            --  In this case, we test Entity_Found only when adding the pragma,
+            --  as we want to support "Except : others =>" exception handlers
+            --  that are not currently retreived by the parser, at least for
+            --  suggesting removal.
+            --  ??? The ada parser should clearly be improved in order to
+            --  retreived these.
+
             declare
                Delete_Command  : Remove_Elements_Cmd;
                Pragma_Command  : Add_Pragma_Cmd;
@@ -681,8 +644,16 @@ package body Codefix.Formal_Errors is
                   Append (Result, Comment_Command);
                end if;
 
-               if Is_Set (Operations, Add_Pragma_Unreferenced) then
-                  Pragma_Command := Add_Pragma;
+               if Is_Set (Operations, Add_Pragma_Unreferenced)
+                 and then Entity_Found
+               then
+                  Pragma_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
+
                   Set_Caption (Pragma_Command, "Add pragma for " & Name);
                   Append (Result, Pragma_Command);
                end if;
@@ -695,137 +666,183 @@ package body Codefix.Formal_Errors is
                Comment_Command : Remove_Entity_Cmd;
                Pragma_Command  : Add_Pragma_Cmd;
             begin
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
-                  Set_Caption
-                    (Delete_Command,
-                     "Delete subprogram """ & Name & """");
-                  Append (Result, Delete_Command);
-               end if;
+               if Entity_Found then
+                  if Is_Set (Operations, Remove_Entity) then
+                     Initialize
+                       (Delete_Command, Current_Text, Cursor, Erase);
+                     Set_Caption
+                       (Delete_Command,
+                        "Delete subprogram """ & Name & """");
+                     Append (Result, Delete_Command);
+                  end if;
 
-               if Is_Set (Operations, Comment_Entity) then
-                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment subprogram """ & Name & """");
-                  Append (Result, Comment_Command);
-               end if;
+                  if Is_Set (Operations, Comment_Entity) then
+                     Initialize
+                       (Comment_Command, Current_Text, Cursor, Comment);
+                     Set_Caption
+                       (Comment_Command,
+                        "Comment subprogram """ & Name & """");
+                     Append (Result, Comment_Command);
+                  end if;
 
-               Pragma_Command := Add_Pragma;
-               Set_Caption
-                 (Pragma_Command,
-                  "Add pragma Unreferenced to subprogram """ & Name & """");
-               Append (Result, Pragma_Command);
+                  Pragma_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
+
+                  Set_Caption
+                    (Pragma_Command,
+                     "Add pragma Unreferenced to subprogram """ & Name & """");
+                  Append (Result, Pragma_Command);
+               end if;
             end;
 
-         when Cat_Type =>
-            declare
-               Delete_Command  : Remove_Entity_Cmd;
-               Comment_Command : Remove_Entity_Cmd;
-               Pragma_Command  : Add_Pragma_Cmd;
-            begin
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (Delete_Command, Current_Text, Cursor, Erase);
-                  Set_Caption
-                    (Delete_Command,
-                     "Delete type """ & Name & """");
-                  Append (Result, Delete_Command);
-               end if;
+         when Cat_Type | Cat_Subtype =>
+            if Entity_Found then
+               declare
+                  Delete_Command  : Remove_Entity_Cmd;
+                  Comment_Command : Remove_Entity_Cmd;
+                  Pragma_Command  : Add_Pragma_Cmd;
+               begin
+                  if Is_Set (Operations, Remove_Entity) then
+                     Initialize (Delete_Command, Current_Text, Cursor, Erase);
+                     Set_Caption
+                       (Delete_Command,
+                        "Delete type """ & Name & """");
+                     Append (Result, Delete_Command);
+                  end if;
 
-               if Is_Set (Operations, Comment_Entity) then
-                  --  I114-034: NOT COVERED
-                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment type """ & Name & """");
-                  Append (Result, Comment_Command);
-               end if;
+                  if Is_Set (Operations, Comment_Entity) then
+                     Initialize
+                       (Comment_Command, Current_Text, Cursor, Comment);
+                     Set_Caption
+                       (Comment_Command,
+                        "Comment type """ & Name & """");
+                     Append (Result, Comment_Command);
+                  end if;
 
-               Pragma_Command := Add_Pragma;
-               Set_Caption
-                 (Pragma_Command,
-                  "Add pragma Unreferenced to type """ & Name & """");
-               Append (Result, Pragma_Command);
-            end;
+                  Pragma_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
+
+                  Set_Caption
+                    (Pragma_Command,
+                     "Add pragma Unreferenced to type """ & Name & """");
+                  Append (Result, Pragma_Command);
+               end;
+            end if;
 
          when Cat_Literal =>
-            declare
-               Pragma_Command : Add_Pragma_Cmd;
-            begin
-               Pragma_Command := Add_Literal_Pragma;
-               Set_Caption
-                 (Pragma_Command,
-                  "Add pragma Unreferenced to literal """ & Name & """");
-               Append (Result, Pragma_Command);
-            end;
+            if Entity_Found then
+               declare
+                  Pragma_Command : Add_Pragma_Cmd;
+               begin
+                  Pragma_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
+
+                  Set_Caption
+                    (Pragma_Command,
+                     "Add pragma Unreferenced to literal """ & Name & """");
+                  Append (Result, Pragma_Command);
+               end;
+            end if;
 
          when Cat_Parameter =>
-            declare
-               New_Command : Add_Pragma_Cmd;
-            begin
-               New_Command := Add_Parameter_Pragma;
-               Set_Caption
-                 (New_Command,
-                  "Add pragma Unreferenced to parameter """ & Name & """");
-               Append (Result, New_Command);
-            end;
+            if Entity_Found then
+               declare
+                  New_Command : Add_Pragma_Cmd;
+               begin
+                  New_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
 
-         when Cat_With =>
-            declare
-               New_Command : Remove_Pkg_Clauses_Cmd;
-               With_Cursor : Word_Cursor;
-            begin
-               Set_File (With_Cursor, Get_File (Cursor));
-               Set_Location
-                 (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
-               Set_Word (With_Cursor, Name, Text_Ascii);
-
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (New_Command, Current_Text, With_Cursor, Before);
                   Set_Caption
                     (New_Command,
-                     "Remove all clauses for package " & Name);
+                     "Add pragma Unreferenced to parameter """ & Name & """");
                   Append (Result, New_Command);
-               end if;
+               end;
+            end if;
 
-               if Is_Set (Operations, Comment_Entity) then
-                  null;
+         when Cat_With =>
+            if Entity_Found then
+               declare
+                  --  I114-034: This command does some buffer operations
+                  New_Command : Remove_Pkg_Clauses_Cmd;
+                  With_Cursor : Word_Cursor;
+               begin
+                  Set_File (With_Cursor, Get_File (Cursor));
+                  Set_Location
+                    (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
+                  Set_Word (With_Cursor, Name, Text_Ascii);
 
-                  --  ??? Take this into account
-               end if;
+                  if Is_Set (Operations, Remove_Entity) then
+                     Initialize
+                       (New_Command, Current_Text, With_Cursor, Before);
+                     Set_Caption
+                       (New_Command,
+                        "Remove all clauses for package " & Name);
+                     Append (Result, New_Command);
+                  end if;
 
-               Free (With_Cursor);
-            end;
+                  if Is_Set (Operations, Comment_Entity) then
+                     null;
+
+                     --  ??? Take this into account
+                  end if;
+
+                  Free (With_Cursor);
+               end;
+            end if;
 
          when Cat_Package =>
-            declare
-               Remove_Command  : Remove_Entity_Cmd;
-               Comment_Command : Remove_Entity_Cmd;
-               Pragma_Command  : Add_Pragma_Cmd;
-            begin
-               if Is_Set (Operations, Remove_Entity) then
-                  Initialize (Remove_Command, Current_Text, Cursor, Erase);
-                  Set_Caption
-                    (Remove_Command,
-                     "Delete package """ & Name & """");
-                  Append (Result, Remove_Command);
-               end if;
+            if Entity_Found then
+               declare
+                  Remove_Command  : Remove_Entity_Cmd;
+                  Comment_Command : Remove_Entity_Cmd;
+                  Pragma_Command  : Add_Pragma_Cmd;
+               begin
+                  if Is_Set (Operations, Remove_Entity) then
+                     Initialize (Remove_Command, Current_Text, Cursor, Erase);
+                     Set_Caption
+                       (Remove_Command,
+                        "Delete package """ & Name & """");
+                     Append (Result, Remove_Command);
+                  end if;
 
-               if Is_Set (Operations, Comment_Entity) then
-                  --  I114-034: NOT COVERED
-                  Initialize (Comment_Command, Current_Text, Cursor, Comment);
-                  Set_Caption
-                    (Comment_Command,
-                     "Comment package """ & Name & """");
-                  Append (Result, Comment_Command);
-               end if;
+                  if Is_Set (Operations, Comment_Entity) then
+                     Initialize
+                       (Comment_Command, Current_Text, Cursor, Comment);
+                     Set_Caption
+                       (Comment_Command,
+                        "Comment package """ & Name & """");
+                     Append (Result, Comment_Command);
+                  end if;
 
-               Pragma_Command := Add_Pragma;
-               Set_Caption
-                 (Pragma_Command,
-                  "Add pragma Unreferenced to package """ & Name & """");
-               Append (Result, Pragma_Command);
-            end;
+                  Pragma_Command.Initialize
+                    (Current_Text => Current_Text,
+                     Position     => Cursor,
+                     Category     => Actual_Category,
+                     Name         => "Unreferenced",
+                     Argument     => Name);
+
+                  Set_Caption
+                    (Pragma_Command,
+                     "Add pragma Unreferenced to package """ & Name & """");
+                  Append (Result, Pragma_Command);
+               end;
+            end if;
 
          when others =>
             Raise_Exception

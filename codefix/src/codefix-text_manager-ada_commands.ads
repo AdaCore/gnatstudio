@@ -19,7 +19,6 @@
 
 with GNAT.Strings;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-with GNATCOLL.VFS;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -160,6 +159,7 @@ package Codefix.Text_Manager.Ada_Commands is
      (This           : in out Add_Pragma_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
       Position       : File_Cursor'Class;
+      Category       : Language_Category;
       Name, Argument : String);
    --  Set all the marks that will be neede to add the pragma later.
 
@@ -325,6 +325,29 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Indent_Code_Cmd);
 
+   ---------------------
+   -- Add_Clauses_Cmd --
+   ---------------------
+
+   type Add_Clauses_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This           : in out Add_Clauses_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Missing_Clause : String;
+      Add_With       : Boolean;
+      Add_Use        : Boolean);
+   --  Add the missing clause in the text
+
+   overriding
+   procedure Execute
+     (This         : Add_Clauses_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Add_Clauses_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -361,14 +384,14 @@ private
    end record;
 
    type Remove_Entity_Cmd is new Text_Command with record
-      Spec_Begin, Spec_End : Ptr_Mark;
-      Body_Begin, Body_End : Ptr_Mark;
-      Mode                 : Remove_Code_Mode := Erase;
+      Start_Entity : Ptr_Mark;
+      Mode         : Remove_Code_Mode := Erase;
    end record;
 
    type Add_Pragma_Cmd is new Text_Command with record
       Position       : Ptr_Mark;
       Name, Argument : GNAT.Strings.String_Access;
+      Category       : Language_Category;
    end record;
 
    type Make_Constant_Cmd is new Text_Command with record
@@ -401,6 +424,13 @@ private
    type Indent_Code_Cmd is new Text_Command with record
       Line         : Ptr_Mark;
       Force_Column : Column_Index;
+   end record;
+
+   type Add_Clauses_Cmd is new Text_Command with record
+      File           : Virtual_File;
+      Missing_Clause : String_Access;
+      Add_With       : Boolean;
+      Add_Use        : Boolean;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

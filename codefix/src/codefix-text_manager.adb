@@ -24,12 +24,10 @@ with GNAT.Case_Util;    use GNAT.Case_Util;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
-with Ada_Analyzer;      use Ada_Analyzer;
 with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with String_Utils;      use String_Utils;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with Language.Tree.Ada;       use Language.Tree.Ada;
@@ -336,6 +334,7 @@ package body Codefix.Text_Manager is
    function Get_Iterator_At
      (Current_Text      : Text_Navigator_Abstr;
       Cursor            : File_Cursor'Class;
+      From_Type         : Position_Type := Start_Name;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator is
@@ -343,6 +342,7 @@ package body Codefix.Text_Manager is
       return Get_Iterator_At
         (Get_File (Current_Text, Get_File (Cursor)),
          Text_Cursor (Cursor),
+         From_Type,
          Position,
          Categories_Seeked);
    end Get_Iterator_At;
@@ -615,12 +615,34 @@ package body Codefix.Text_Manager is
    is
       Unit_Info, Body_Info : Construct_Tree_Iterator;
    begin
-      Unit_Info := Get_Iterator_At (Current_Text, Cursor);
+      Unit_Info := Get_Iterator_At
+        (Current_Text, Cursor, From_Type => Start_Name);
+
+      if Unit_Info = Null_Construct_Tree_Iterator then
+         --  If the location was not the location of an entity name, see if we
+         --  can find the beginning of a construct
+
+         Unit_Info := Get_Iterator_At
+        (Current_Text, Cursor, From_Type => Start_Construct);
+      end if;
+
+      if Unit_Info = Null_Construct_Tree_Iterator then
+         File_Cursor (Spec_Begin) := Null_File_Cursor;
+         File_Cursor (Body_Begin) := Null_File_Cursor;
+         File_Cursor (Spec_End) := Null_File_Cursor;
+         File_Cursor (Body_End) := Null_File_Cursor;
+
+         return;
+      end if;
+
+      --  ??? We may want to check if the entity retreived has still the
+      --  expected name to catch certain changes.
 
       if Get_Construct (Unit_Info).Is_Declaration then
          Body_Info := To_Construct_Tree_Iterator (Get_Second_Occurence
            (To_Entity_Access
-              (Get_Structured_File (Current_Text, Cursor), Unit_Info)));
+              (Get_Structured_File
+                 (Current_Text, Get_File (Cursor)), Unit_Info)));
       else
          Body_Info := Null_Construct_Tree_Iterator;
       end if;
@@ -691,17 +713,6 @@ package body Codefix.Text_Manager is
          Word);
    end Next_Word;
 
-   -------------------
-   -- Get_Structure --
-   -------------------
-
-   function Get_Structure
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Construct_List_Access is
-   begin
-      return Get_Structure (Get_File (This, File_Name));
-   end Get_Structure;
-
    ----------------
    -- Update_All --
    ----------------
@@ -749,10 +760,10 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_Structured_File
-     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+     (This : Text_Navigator_Abstr'Class; File : Virtual_File)
       return Structured_File_Access is
    begin
-      return Get_Structured_File (Get_File (This, Get_File (Cursor)));
+      return Get_Structured_File (Get_File (This, File));
    end Get_Structured_File;
 
    --------------------
@@ -779,8 +790,6 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Interface) is
    begin
-      Free (This.Structure.all);
-      Free (This.Structure);
       Free (This.Structure_Up_To_Date);
    end Free;
 
@@ -815,6 +824,7 @@ package body Codefix.Text_Manager is
    function Get_Iterator_At
      (Current_Text      : access Text_Interface;
       Cursor            : Text_Cursor'Class;
+      From_Type         : Position_Type := Start_Name;
       Position          : Relative_Position := Specified;
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator
@@ -829,17 +839,11 @@ package body Codefix.Text_Manager is
           Line            => Get_Line (Cursor),
           Line_Offset     =>
             Integer (To_Char_Index (Get_Column (Cursor), Line_Cursor))),
-         Start_Name,
+         From_Type,
          Position,
          Categories_Seeked);
 
-      if It = Null_Construct_Tree_Iterator then
-         Raise_Exception
-           (Codefix_Panic'Identity,
-            "Cannot retreive an entity with the given cursor");
-      else
-         return It;
-      end if;
+      return It;
    end Get_Iterator_At;
 
    -------------------
@@ -930,20 +934,6 @@ package body Codefix.Text_Manager is
    begin
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
-
-   ----------------
-   -- Get_Buffer --
-   ----------------
-
-   function Get_Buffer
-     (This : access Text_Interface'Class) return GNAT.Strings.String_Access is
-   begin
-      if This.Buffer = null then
-         This.Buffer := Read_File (This.all);
-      end if;
-
-      return This.Buffer;
-   end Get_Buffer;
 
    -------------------
    -- Search_String --
@@ -1129,22 +1119,23 @@ package body Codefix.Text_Manager is
       Category : Language_Category;
       Name     : String := "") return Simple_Construct_Information
    is
-      Current_Info : Construct_Access;
-      Result       : Simple_Construct_Information;
+      Current_Info : Construct_Tree_Iterator;
+      Tree         : constant Construct_Tree :=
+        Get_Tree (This.Get_Structured_File);
    begin
-      Current_Info := Get_Structure (This).First;
+      Current_Info := First (Tree);
 
-      while Current_Info /= null loop
-         if Current_Info.Category = Category
+      while Current_Info /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (Current_Info).Category = Category
            and then
-             (Name = "" or else Compare_Last (Current_Info.Name.all, Name))
+             (Name = ""
+              or else Compare_Last
+                (Get_Construct (Current_Info).Name.all, Name))
          then
-            To_Simple_Construct_Information (Current_Info.all, Result, False);
-
-            return Result;
+            return Get_Construct (Current_Info).all;
          end if;
 
-         Current_Info := Current_Info.Next;
+         Current_Info := Next (Tree, Current_Info);
       end loop;
 
       return Null_Simple_Construct_Info;
@@ -1163,9 +1154,13 @@ package body Codefix.Text_Manager is
       It : Construct_Tree_Iterator;
    begin
       if Category = Cat_Unknown then
-         It := Get_Iterator_At (This, Cursor, After);
+         It := Get_Iterator_At (This, Cursor, Position => After);
       else
-         It := Get_Iterator_At (This, Cursor, After, (1 => Category));
+         It := Get_Iterator_At
+           (This,
+            Cursor,
+            Position => After,
+            Categories_Seeked => (1 => Category));
       end if;
 
       declare
@@ -1314,55 +1309,6 @@ package body Codefix.Text_Manager is
       Free (Current_Line);
    end Next_Word;
 
-   -------------------
-   -- Get_Structure --
-   -------------------
-
-   function Get_Structure
-     (This : access Text_Interface'Class) return Construct_List_Access
-   is
-      procedure Display_Constructs;
-      pragma Unreferenced (Display_Constructs);
-      --  Debug procedure used to display the contents of New_Text
-
-      -----------------------
-      -- Display_Contructs --
-      -----------------------
-
-      procedure Display_Constructs is
-         Current : Construct_Access := This.Structure.First;
-      begin
-         while Current /= null loop
-            if Current.Name /= null then
-               Put (Current.Name.all & ": ");
-            end if;
-
-            Put (Current.Category'Img);
-            Put (", [" & Current.Sloc_Start.Line'Img & ", ");
-            Put (Current.Sloc_Start.Column'Img);
-            Put ("]-[");
-            Put (Current.Sloc_End.Line'Img & ", ");
-            Put (Current.Sloc_End.Column'Img);
-            Put ("] (");
-
-            if Current.Is_Declaration then
-               Put ("spec");
-            else
-               Put ("body");
-            end if;
-
-            Put (")");
-            New_Line;
-            Current := Current.Next;
-         end loop;
-      end Display_Constructs;
-
-   begin
-      Update_Structure_If_Needed (This);
-
-      return This.Structure;
-   end Get_Structure;
-
    --------------
    -- Get_Tree --
    --------------
@@ -1382,19 +1328,6 @@ package body Codefix.Text_Manager is
    procedure Update_Structure_If_Needed (This : access Text_Interface'Class) is
    begin
       if not This.Structure_Up_To_Date.all then
-         Free (This.Structure);
-         Free (This.Buffer);
-
-         This.Structure := new Construct_List;
-         This.Buffer := Read_File (This.all);
-
-         --  ??? Should be language independent
-         Analyze_Ada_Source
-           (Buffer           => This.Buffer.all,
-            Indent_Params    => Default_Indent_Parameters,
-            Format           => False,
-            Constructs       => This.Structure);
-
          Update_Contents (This.Construct_Db, This.File_Name);
 
          --  ??? Should be language independent

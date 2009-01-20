@@ -147,7 +147,6 @@ package Codefix.Formal_Errors is
       Column_Expected : Column_Index := 0) return Solution_List;
    --  Try re-indent the line
 
-   --  ??? I114-034
    function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;

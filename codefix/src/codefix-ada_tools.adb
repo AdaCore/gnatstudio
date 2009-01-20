@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,24 +207,24 @@ package body Codefix.Ada_Tools is
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List
    is
-      Structure  : constant Construct_List_Access :=
-        Get_Structure (Current_Text, File_Name);
-      Iterator   : Construct_Access := Structure.First;
+      Tree  : constant Construct_Tree :=
+        Get_Tree (Current_Text.Get_Structured_File (File_Name));
+      Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_With;
       Result     : With_Lists.List;
 
    begin
-      while Iterator /= null loop
-         if Iterator.Category = Cat_With then
+      while Iterator /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (Iterator).Category = Cat_With then
             New_Clause := new With_Type
-              (Get_Parts_Number (Iterator.Name.all));
+              (Get_Parts_Number (Get_Construct (Iterator).Name.all));
             New_Clause.Name := Get_Arr_Str
-              (Iterator.Name.all);
-            Assign (New_Clause.Name_Str, Iterator.Name.all);
+              (Get_Construct (Iterator).Name.all);
+            Assign (New_Clause.Name_Str, Get_Construct (Iterator).Name.all);
             Append (Result, New_Clause);
          end if;
 
-         Iterator := Iterator.Next;
+         Iterator := Next (Tree, Iterator, Jump_Over);
       end loop;
 
       return Result;
@@ -238,21 +238,21 @@ package body Codefix.Ada_Tools is
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List
    is
-      Structure  : constant Construct_List_Access :=
-        Get_Structure (Current_Text, File_Name);
-      Iterator   : Construct_Access := Structure.First;
+      Tree  : constant Construct_Tree :=
+        Get_Tree (Current_Text.Get_Structured_File (File_Name));
+      Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_Use;
       Result     : Use_Lists.List;
 
    begin
-      while Iterator /= null loop
-         if Iterator.Category = Cat_Use then
+      while Iterator /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (Iterator).Category = Cat_Use then
             New_Clause := new Use_Type;
-            New_Clause.Name := new String'(Iterator.Name.all);
+            New_Clause.Name := new String'(Get_Construct (Iterator).Name.all);
             Set_File (New_Clause.Position, File_Name);
             Set_Location
               (New_Clause.Position,
-               Line      => Iterator.Sloc_Start.Line,
+               Line      => Get_Construct (Iterator).Sloc_Start.Line,
                Column    => 1);
 
             declare
@@ -261,15 +261,16 @@ package body Codefix.Ada_Tools is
             begin
                Set_Location
                  (New_Clause.Position,
-                  Line      => Iterator.Sloc_Start.Line,
+                  Line      => Get_Construct (Iterator).Sloc_Start.Line,
                   Column    => To_Column_Index
-                    (Char_Index (Iterator.Sloc_Start.Column), Line));
+                    (Char_Index
+                       (Get_Construct (Iterator).Sloc_Start.Column), Line));
             end;
 
             Append (Result, New_Clause);
          end if;
 
-         Iterator := Iterator.Next;
+         Iterator := Next (Tree, Iterator, Jump_Into);
       end loop;
 
       return Result;
@@ -316,9 +317,10 @@ package body Codefix.Ada_Tools is
       Set_File (Current_Cursor, File_Name);
       Set_Location (Current_Cursor, 1, 1);
       Tree := Get_Tree
-        (Current_Text.Get_Structured_File (Current_Cursor));
+        (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
 
-      Current_Info := Get_Iterator_At (Current_Text, Current_Cursor, After);
+      Current_Info := Get_Iterator_At
+        (Current_Text, Current_Cursor, Position => After);
 
       while Get_Construct (Current_Info).Category = Cat_With
          or else Get_Construct (Current_Info).Category = Cat_Use
@@ -355,33 +357,35 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class
    is
-      Iterator   : Construct_Access :=
-        Get_Structure (Current_Text, File_Name).First;
+      Tree  : constant Construct_Tree :=
+        Get_Tree (Current_Text.Get_Structured_File (File_Name));
+      Iterator   : Construct_Tree_Iterator := First (Tree);
       Result     : File_Cursor;
    begin
-      while Iterator /= null loop
-         if Iterator.Category = Cat_With
-           and then Iterator.Name.all = Pkg_Name
+      while Iterator /= Null_Construct_Tree_Iterator loop
+         if Get_Construct (Iterator).Category = Cat_With
+           and then Get_Construct (Iterator).Name.all = Pkg_Name
          then
             Set_File (Result, File_Name);
 
             Set_Location
-              (Result, Iterator.Sloc_Start.Line,
+              (Result, Get_Construct (Iterator).Sloc_Start.Line,
                1);
 
             declare
                Line : constant String := Get_Line (Current_Text, Result);
             begin
                Set_Location
-                 (Result, Iterator.Sloc_Start.Line,
+                 (Result, Get_Construct (Iterator).Sloc_Start.Line,
                   To_Column_Index
-                    (Char_Index (Iterator.Sloc_Start.Column), Line));
+                    (Char_Index
+                       (Get_Construct (Iterator).Sloc_Start.Column), Line));
             end;
 
             return Result;
          end if;
 
-         Iterator := Iterator.Next;
+         Iterator := Next (Tree, Iterator, Jump_Over);
       end loop;
 
       return Null_File_Cursor;
