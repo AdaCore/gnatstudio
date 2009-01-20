@@ -810,7 +810,7 @@ def on_gps_started (hook_name):
     <submenu after="Browsers">
       <title>Coding _Standard</title>
       <menu action="edit gnatcheck rules">
-        <title>_Edit Rules file</title>
+        <title>_Edit rules file</title>
       </menu>
       <menu action="gnatcheck root project recursive">
         <title>Check root project and _subprojects</title>
