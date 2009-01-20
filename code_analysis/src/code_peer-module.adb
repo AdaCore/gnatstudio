@@ -890,6 +890,7 @@ package body Code_Peer.Module is
                   Highlight    => True,
                   Highlight_Category =>
                     Module.Message_Styles (Message.Probability),
+                  Quiet        => True,
                   Sort_In_File => True);
             end if;
          end Process_Message;
