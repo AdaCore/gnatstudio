@@ -296,6 +296,8 @@ package body Code_Peer.Summary_Reports is
       Self.Pack1 (Report_Pane, Resize => True);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Report_Pane.Pack1 (Scrolled, Resize => True);
 
       Code_Peer.Summary_Models.Gtk_New
@@ -446,7 +448,11 @@ package body Code_Peer.Summary_Reports is
       Gtk.Tree_View_Column.Gtk_New (Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
 
+      --  Message category view
+
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Report_Pane.Pack2 (Scrolled);
 
       Code_Peer.Entity_Messages_Models.Gtk_New
@@ -508,6 +514,8 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self),
          False);
 
+      --  Filter view
+
       Gtk.Box.Gtk_New_Vbox (Filter_Box);
       Self.Pack2 (Filter_Box);
 
@@ -522,6 +530,8 @@ package body Code_Peer.Summary_Reports is
          Summary_Report (Self));
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Filter_Box.Pack_Start (Scrolled);
 
       Code_Peer.Messages_Filter_Models.Gtk_New
