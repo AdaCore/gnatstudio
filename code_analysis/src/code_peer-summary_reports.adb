@@ -451,6 +451,7 @@ package body Code_Peer.Summary_Reports is
       --  Message category view
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Size_Request (Height => 200);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Report_Pane.Pack2 (Scrolled);
@@ -517,6 +518,7 @@ package body Code_Peer.Summary_Reports is
       --  Filter view
 
       Gtk.Box.Gtk_New_Vbox (Filter_Box);
+      Filter_Box.Set_Size_Request (Width => 250);
       Self.Pack2 (Filter_Box);
 
       Gtk.Check_Button.Gtk_New (Check, -"Show all subprograms");
