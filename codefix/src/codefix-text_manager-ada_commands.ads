@@ -408,11 +408,15 @@ private
       Source_Mark, Destination_Mark         : Ptr_Mark;
    end record;
 
+   type Get_Visible_Declaration_Cmd_Mode is (Prefix, Add_Use);
+
    type Get_Visible_Declaration_Cmd is new Text_Command with record
-      Insert_With         : Add_Line_Cmd;
-      Prefix_Obj          : Insert_Word_Cmd;
-      Insert_With_Enabled : Boolean := False;
-      Prefix_Obj_Enabled  : Boolean := False;
+      Mode : Get_Visible_Declaration_Cmd_Mode;
+      Source_Position  : Ptr_Mark;
+      File_Destination : GNATCOLL.VFS.Virtual_File;
+      Object_Position : Ptr_Mark;
+      With_Could_Miss : Boolean := False;
+      Pkg_Name            : String_Access;
    end record;
 
    type Replace_Code_By_Cmd is new Text_Command with record

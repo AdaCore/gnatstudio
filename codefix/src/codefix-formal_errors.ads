@@ -184,7 +184,6 @@ package Codefix.Formal_Errors is
    --  Add 'constant' to the declaration of the variable Name. Create a new
    --  declaration if needed.
 
-   --  ??? I114-034
    function Resolve_Ambiguity
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;

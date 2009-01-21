@@ -1154,11 +1154,18 @@ package body Codefix.Text_Manager is
       It : Construct_Tree_Iterator;
    begin
       if Category = Cat_Unknown then
-         It := Get_Iterator_At (This, Cursor, Position => After);
+         It := Get_Iterator_At
+           (Get_Tree (This.Get_Structured_File),
+            (Absolute_Offset => False,
+             Line            => Get_Line (Cursor),
+             Line_Offset     => 0),
+            Position => After);
       else
          It := Get_Iterator_At
-           (This,
-            Cursor,
+           (Get_Tree (This.Get_Structured_File),
+            (Absolute_Offset => False,
+             Line            => Get_Line (Cursor),
+             Line_Offset     => 0),
             Position => After,
             Categories_Seeked => (1 => Category));
       end if;
@@ -2002,21 +2009,24 @@ package body Codefix.Text_Manager is
       if This.Position = Specified then
          if This.Add_Spaces then
             Space_Cursor := Clone (File_Cursor (New_Pos));
-            Space_Cursor.Col := Space_Cursor.Col - 1;
 
-            if Word_Char_Index > 1
-              and then not Is_Separator (Get (Current_Text, Space_Cursor))
-            then
-               Assign (New_Str, " " & New_Str.all);
-            end if;
+            if Space_Cursor.Col /= 0 then
+               Space_Cursor.Col := Space_Cursor.Col - 1;
 
-            Space_Cursor.Col := Space_Cursor.Col + 1;
+               if Word_Char_Index > 1
+                 and then not Is_Separator (Get (Current_Text, Space_Cursor))
+               then
+                  Assign (New_Str, " " & New_Str.all);
+               end if;
 
-            if Natural (Word_Char_Index) <
-              Line_Length (Current_Text, Line_Cursor)
-              and then not Is_Separator (Get (Current_Text, Space_Cursor))
-            then
-               Assign (New_Str, New_Str.all & " ");
+               Space_Cursor.Col := Space_Cursor.Col + 1;
+
+               if Natural (Word_Char_Index) <
+                 Line_Length (Current_Text, Line_Cursor)
+                 and then not Is_Separator (Get (Current_Text, Space_Cursor))
+               then
+                  Assign (New_Str, New_Str.all & " ");
+               end if;
             end if;
          end if;
 

@@ -52,21 +52,20 @@ package body Codefix.GPS_Io is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
-      Loc        : constant Editor_Location'Class :=
-        GPS_Mark'Class (Mark).Mark.Location;
    begin
       Set_File (New_Cursor, Get_File_Name (Current_Text));
 
       begin
          Set_Location
            (New_Cursor,
-            Loc.Line,
-            Column_Index (Loc.Column));
+            GPS_Mark'Class (Mark).Mark.Line,
+            Column_Index (GPS_Mark'Class (Mark).Mark.Column));
 
       exception
          when Constraint_Error =>
-            Trace (Me, "unexpected result from get_column/line: " &
-                   Loc.Column'Img & ":" & Loc.Line'Img);
+            Trace (Me, "unexpected result from get_column/line: "
+                   & GPS_Mark'Class (Mark).Mark.Line'Img & ":"
+                   & GPS_Mark'Class (Mark).Mark.Column'Img);
       end;
 
       return New_Cursor;

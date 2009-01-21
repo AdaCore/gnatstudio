@@ -1183,7 +1183,7 @@ package body Codefix.Text_Manager.Ada_Commands is
           (Get_Structured_File (Current_Text, Get_File (Source_Position)));
       It   : Construct_Tree_Iterator :=
         Get_Iterator_At
-          (Current_Text, Source_Position, Position => After);
+          (Tree, (False, Get_Line (Source_Position), 1), Position => After);
    begin
       while Get_Parent_Scope (Tree, It)
         /= Null_Construct_Tree_Iterator
@@ -1205,34 +1205,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       File_Destination : GNATCOLL.VFS.Virtual_File;
       With_Could_Miss  : Boolean)
    is
-      Pkg_Name    : constant String := Get_Package_To_Be_Withed
-        (Current_Text, Source_Position);
-      Result      : Get_Visible_Declaration_Cmd;
-      With_Cursor : File_Cursor;
-      Clauses_Str : GNAT.Strings.String_Access := new String'("");
-
    begin
-      if With_Could_Miss then
-         With_Cursor := File_Cursor
-           (Search_With
-              (Current_Text, File_Destination, Pkg_Name));
-
-         if With_Cursor = Null_File_Cursor then
-            Assign (Clauses_Str, "with " & Pkg_Name & "; ");
-         end if;
-      end if;
-
-      Initialize
-        (Result.Insert_With,
-         Current_Text,
-         Get_Next_With_Position (Current_Text, File_Destination),
-         Clauses_Str.all & "use " & Pkg_Name & ";");
-
-      Result.Insert_With_Enabled := True;
-
-      Free (Clauses_Str);
-
-      This := Result;
+      This.Mode := Add_Use;
+      This.With_Could_Miss := With_Could_Miss;
+      This.Source_Position := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Source_Position));
+      This.File_Destination := File_Destination;
    end Add_Use;
 
    -------------------
@@ -1246,54 +1224,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       Object_Position : File_Cursor'Class;
       With_Could_Miss : Boolean)
    is
-      Pkg_Name    : constant String := Get_Package_To_Be_Withed
-        (Current_Text, Source_Position);
-      Result      : Get_Visible_Declaration_Cmd;
-      Word        : Word_Cursor;
-      With_Cursor : File_Cursor;
-
    begin
-      if With_Could_Miss then
-         With_Cursor := File_Cursor
-           (Search_With
-              (Current_Text, Get_File (Object_Position), Pkg_Name));
-
-         if With_Cursor = Null_File_Cursor then
-            Initialize
-              (Result.Insert_With,
-               Current_Text,
-               Get_Next_With_Position
-                 (Current_Text, Get_File (Object_Position)),
-               "with " & Pkg_Name & ";");
-
-            Result.Insert_With_Enabled := True;
-         end if;
-      end if;
-
-      declare
-         Prefix : constant String := Get_Full_Prefix
-           (Current_Text, Source_Position);
-      begin
-         if Prefix /= "" then
-            Word := (Clone (File_Cursor (Object_Position)) with
-                     String_Match => new String'
-                       (Prefix & "."),
-                     Mode         => Text_Ascii);
-
-            Initialize
-              (Result.Prefix_Obj,
-               Current_Text,
-               Word,
-               File_Cursor (Word),
-               False);
-
-            Result.Prefix_Obj_Enabled := True;
-
-            Free (Word);
-         end if;
-      end;
-
-      This := Result;
+      This.Mode := Prefix;
+      This.With_Could_Miss := With_Could_Miss;
+      This.Source_Position := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Source_Position));
+      This.Object_Position := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Object_Position));
+      This.File_Destination := Get_File (Object_Position);
    end Prefix_Object;
 
    -------------
@@ -1304,14 +1242,44 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This         : Get_Visible_Declaration_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
+      Source_Position : constant File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Source_Position.all);
+      Pkg_Name    : constant String := Get_Package_To_Be_Withed
+        (Current_Text, Source_Position);
+      With_Cursor : File_Cursor;
    begin
-      if This.Insert_With_Enabled and then not This.Prefix_Obj_Enabled then
-         Execute (This.Insert_With, Current_Text);
-      elsif This.Prefix_Obj_Enabled and then not This.Insert_With_Enabled then
-         Execute (This.Prefix_Obj, Current_Text);
-      else
-         Execute (This.Insert_With, Current_Text);
-         Execute (This.Prefix_Obj, Current_Text);
+      With_Cursor := File_Cursor
+        (Search_With
+           (Current_Text, This.File_Destination, Pkg_Name));
+
+      if This.Mode = Add_Use then
+         if This.With_Could_Miss and then With_Cursor = Null_File_Cursor then
+            Current_Text.Add_Line
+              (Get_Next_With_Position (Current_Text, This.File_Destination),
+               "with " & Pkg_Name & "; use " & Pkg_Name & ";");
+         else
+            Current_Text.Add_Line
+              (With_Cursor,
+               "with " & Pkg_Name & ";");
+         end if;
+      elsif This.Mode = Prefix then
+         if This.With_Could_Miss and then With_Cursor = Null_File_Cursor then
+            Current_Text.Add_Line
+              (Get_Next_With_Position (Current_Text, This.File_Destination),
+               "with " & Pkg_Name & ";");
+         end if;
+
+         declare
+            Prefix : constant String := Get_Full_Prefix
+              (Current_Text, Source_Position);
+            Object_Position : constant File_Cursor'Class :=
+              Current_Text.Get_Current_Cursor (This.Object_Position.all);
+         begin
+            if Prefix /= "" then
+               Current_Text.Replace (Object_Position, 0, Prefix & ".");
+            end if;
+         end;
+
       end if;
    end Execute;
 
@@ -1321,9 +1289,10 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Get_Visible_Declaration_Cmd) is
    begin
+      Free (This.Source_Position);
+      Free (This.Object_Position);
+      Free (This.Pkg_Name);
       Free (Text_Command (This));
-      Free (This.Insert_With);
-      Free (This.Prefix_Obj);
    end Free;
 
    --  Replace_Code_By_Cmd

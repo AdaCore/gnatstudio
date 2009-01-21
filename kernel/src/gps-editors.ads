@@ -129,6 +129,14 @@ package GPS.Editors is
    -- Editor_Mark --
    -----------------
 
+   function Line (This : Editor_Mark) return Integer is abstract;
+   --  Return the current line of the mark, without opening the buffer if not
+   --  open
+
+   function Column (This : Editor_Mark) return Integer is abstract;
+   --  Return the current column of the mark, without opening the buffer if not
+   --  open
+
    function Location
      (This : Editor_Mark) return Editor_Location'Class is abstract;
    --  Returns the current location of the mark. This location will vary
@@ -341,6 +349,10 @@ private
    ---------------------
 
    type Dummy_Editor_Mark is new Editor_Mark with null record;
+
+   overriding function Line (This : Dummy_Editor_Mark) return Integer;
+
+   overriding function Column (This : Dummy_Editor_Mark) return Integer;
 
    overriding function Location
      (This : Dummy_Editor_Mark) return Editor_Location'Class;

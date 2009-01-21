@@ -106,6 +106,18 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Forward_Char;
 
+   overriding function Line (This : Dummy_Editor_Mark) return Integer is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Line;
+
+   overriding function Column (This : Dummy_Editor_Mark) return Integer is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Column;
+
    overriding function Location
      (This : Dummy_Editor_Mark) return Editor_Location'Class
    is
