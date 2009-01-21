@@ -6,7 +6,7 @@ such a dependency is not always obvious, and this plug-in will help you in
 that respect.
 
 Once it has been activated, select the new menu
-   /Navigate/Show File Dependency Path
+   /Navigate/Show File Dependency Path...
 and in the dialog that appears enter the two source files you are interested
 in. This will then list in the console why the first file depends on the
 second (for instance "file1" depends on "file2", which depends on "file3")
@@ -88,5 +88,5 @@ def interactive_dependency_path (menu):
    (file1, file2) = GPS.MDI.input_dialog ("Show dependency path", "From", "To")
    print_dependency_path (GPS.File (file1), GPS.File (file2))
 
-GPS.Menu.create ("/Navigate/Show File Dependency Path",
+GPS.Menu.create ("/Navigate/Show File Dependency Path...",
                  interactive_dependency_path)
