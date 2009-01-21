@@ -38,7 +38,7 @@ if [ -f $root/etc/fonts/fonts.conf ]; then
 fi
 
 if [ -f /etc/fonts/fonts.conf ]; then
-  if grep -q '<cachedir>' /etc/fonts/fonts.conf; then
+  if grep '<cachedir>' /etc/fonts/fonts.conf > /dev/null 2>&1; then
     FONTCONFIG_FILE=/etc/fonts/fonts.conf
     export FONTCONFIG_FILE
   fi
