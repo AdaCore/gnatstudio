@@ -143,6 +143,10 @@ package body Src_Editor_Module.Editors is
    -- Src_Editor_Mark --
    ---------------------
 
+   overriding function Line (This : Src_Editor_Mark) return Integer;
+
+   overriding function Column (This : Src_Editor_Mark) return Integer;
+
    overriding function Is_Present (This : Src_Editor_Mark) return Boolean;
 
    overriding procedure Delete (This : Src_Editor_Mark);
@@ -718,6 +722,7 @@ package body Src_Editor_Module.Editors is
    overriding function Location
      (This : Src_Editor_Mark) return Editor_Location'Class
    is
+      Mark : Gtk_Text_Mark;
    begin
       declare
          Iter   : Gtk_Text_Iter;
@@ -726,8 +731,14 @@ package body Src_Editor_Module.Editors is
             (Get_File (This.Mark.Mark)));
       begin
          if This.Mark /= null then
+            Mark := Get_Mark (This.Mark.Mark);
+
+            if Mark = null or else Get_Deleted (Mark) then
+               return Nil_Editor_Location;
+            end if;
+
             Get_Iter_At_Mark
-              (Buffer.Buffer, Iter, Get_Mark (This.Mark.Mark));
+              (Buffer.Buffer, Iter, Mark);
 
             return Create_Editor_Location (Buffer, Iter);
          else
@@ -1249,6 +1260,24 @@ package body Src_Editor_Module.Editors is
            (This.Buffer, not Read_Only, Explicit => True);
       end if;
    end Set_Read_Only;
+
+   ----------
+   -- Line --
+   ----------
+
+   overriding function Line (This : Src_Editor_Mark) return Integer is
+   begin
+      return Integer (This.Mark.Mark.Get_Line);
+   end Line;
+
+   ------------
+   -- Column --
+   ------------
+
+   overriding function Column (This : Src_Editor_Mark) return Integer is
+   begin
+      return Integer (This.Mark.Mark.Get_Column);
+   end Column;
 
    ----------------
    -- Is_Present --
