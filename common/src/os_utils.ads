@@ -35,19 +35,19 @@ package OS_Utils is
    --  Returns True if C is a directory separator
 
    procedure Set_OpenVMS_Host (Setting : Boolean := True);
-   --  Set whether the host is an OpenVMS host.
+   --  Set whether the host is an OpenVMS host
 
    function Max_Path_Len return Natural;
-   --  Return the maximum length of a pathname for the current host.
+   --  Return the maximum length of a pathname for the current host
 
    procedure Put (File : File_Descriptor; Str : String);
-   --  Write Str to File.
+   --  Write Str to File
 
    procedure Put_Line (File : File_Descriptor; Str : String);
-   --  Write Str to File, and appends an end-of-line sequence.
+   --  Write Str to File, and appends an end-of-line sequence
 
    procedure New_Line (File : File_Descriptor; Count : Natural := 1);
-   --  Write an end-of-line sequence to File.
+   --  Write an end-of-line sequence to File
 
    type Ctrl_C_Handler is access procedure;
    pragma Convention (C, Ctrl_C_Handler);
@@ -55,7 +55,7 @@ package OS_Utils is
    --  Ctrl_C_Handler should not propagate exceptions.
 
    procedure Install_Ctrl_C_Handler (Handler : Ctrl_C_Handler);
-   --  Set up Handler to be called if the operator hits Ctrl-C.
+   --  Set up Handler to be called if the operator hits Ctrl-C
 
    procedure Uninstall_Ctrl_C_Handler;
    --  Reinstall the standard Control-C handler.

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
@@ -137,11 +138,9 @@ package body OS_Utils is
       --  and OS2 ports. On VMS, the situation is more complicated because
       --  there are two characters to check for.
 
-      return
-        C = Directory_Separator
-          or else C = '/'
-          or else (OpenVMS_Host
-                    and then (C = ']' or else C = ':'));
+      return C = Directory_Separator
+        or else C = '/'
+        or else (OpenVMS_Host and then (C = ']' or else C = ':'));
    end Is_Directory_Separator;
 
    ------------------
@@ -150,7 +149,7 @@ package body OS_Utils is
 
    Max_Path : Integer;
    pragma Import (C, Max_Path, "max_path_len");
-   --  Take advantage of max_path_len defined in the GNAT run time.
+   --  Take advantage of max_path_len defined in the GNAT run time
 
    function Max_Path_Len return Natural is
    begin

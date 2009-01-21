@@ -1583,6 +1583,7 @@ procedure GPS.Main is
          --  Load project, and set debugger-related project properties
 
          Setup_Debug;
+
       else
          if Project_Name /= No_File
            and then not Is_Regular_File (Project_Name)
