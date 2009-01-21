@@ -21,7 +21,7 @@ with GNATCOLL.VFS;
 with GPS.Kernel.Project;
 with Projects.Registry;
 
-package body Code_Peer.Bridge_Database_Readers is
+package body Code_Peer.Bridge.Inspection_Readers is
 
    Inspection_Tag          : constant String := "inspection";
    Message_Category_Tag    : constant String := "message_category";
@@ -197,4 +197,4 @@ package body Code_Peer.Bridge_Database_Readers is
       end if;
    end Start_Element;
 
-end Code_Peer.Bridge_Database_Readers;
+end Code_Peer.Bridge.Inspection_Readers;

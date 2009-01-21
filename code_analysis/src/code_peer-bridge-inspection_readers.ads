@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ private with Unicode.CES;
 with GPS.Kernel;
 with Code_Analysis;
 
-package Code_Peer.Bridge_Database_Readers is
+package Code_Peer.Bridge.Inspection_Readers is
 
    type Reader is new Sax.Readers.Reader with private;
 
@@ -65,4 +65,4 @@ private
       Qname         : Unicode.CES.Byte_Sequence := "";
       Attrs         : Sax.Attributes.Attributes'Class);
 
-end Code_Peer.Bridge_Database_Readers;
+end Code_Peer.Bridge.Inspection_Readers;

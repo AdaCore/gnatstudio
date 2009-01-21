@@ -43,7 +43,7 @@ with GPS.Kernel.Timeout;
 with GPS.Location_View;
 with Projects;
 
-with Code_Peer.Bridge_Database_Readers;
+with Code_Peer.Bridge.Inspection_Readers;
 
 package body Code_Peer.Module is
 
@@ -292,7 +292,7 @@ package body Code_Peer.Module is
       use type Code_Analysis.Code_Analysis_Tree;
 
       Input   : Input_Sources.File.File_Input;
-      Reader  : Code_Peer.Bridge_Database_Readers.Reader;
+      Reader  : Code_Peer.Bridge.Inspection_Readers.Reader;
       Child   : GPS.Kernel.MDI.GPS_MDI_Child;
 
       procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
