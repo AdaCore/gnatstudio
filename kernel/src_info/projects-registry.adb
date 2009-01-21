@@ -1002,63 +1002,23 @@ package body Projects.Registry is
                UTF8           : constant String :=
                                   Display_Full_Name
                                     (Create (Name_Buffer (1 .. Name_Len)));
-               Current_Source : constant Name_Id := Name_Id (Source.File);
-               Directory      : Name_Id := No_Name;
-               Unit           : Unit_Project;
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
                Source.Display_File := Name_Find;
 
-               Unit := Files_Htable.Get
-                 (Registry.Data.View_Tree.Files_HT,
-                  File_Name_Type (Current_Source));
+               declare
+                  Dir : constant String :=
+                     Display_Full_Name
+                        (Create (Get_Name_String (Source.Path.Display_Name)));
+               begin
+                  Name_Len := Dir'Length;
+                  Name_Buffer (1 .. Name_Len) := Dir;
+                  Set (Registry.Data.Sources,
+                       K => UTF8,
+                       E => (P, Name_Ada, Name_Find));
+               end;
 
-               --  If we are in the fast-project loading mode, then no symbolic
-               --  link is resolved, and files are seen through links. We get
-               --  in the project explorer the directories as mentioned in the
-               --  project file, and any link in these is properly displayed.
-               --
-               --  However, if not in this mode, symbolic links are resolved.
-               --  This means that if we have sub6 in the project, which
-               --  contains a link to sub4/d.adb, then the latter's directory,
-               --  which is not part of the project, will prevent the file from
-               --  being seen in the explorer.
-
-               if Registry.Data.Trusted_Mode then
-                  if Unit /= No_Unit_Project then
-                     for S in Spec_Or_Body'Range loop
-                        if Registry.Data.View_Tree.Units.Table
-                          (Unit.Unit).File_Names (S).Name =
-                               File_Name_Type (Current_Source)
-                        then
-                           Directory :=
-                             Name_Id (Registry.Data.View_Tree.Units.Table
-                             (Unit.Unit).File_Names (S).Path.Display_Name);
-
-                           --  Convert the directory name to UTF8 if needed.
-                           --  This might unfortunately be costly, but there is
-                           --  no way around that if we want to support
-                           --  non-utf8 file systems.
-                           Get_Name_String (Directory);
-                           declare
-                              Dir : constant String :=
-                                      Display_Full_Name
-                                        (Create (Name_Buffer (1 .. Name_Len)));
-                           begin
-                              Name_Len := Dir'Length;
-                              Name_Buffer (1 .. Name_Len) := Dir;
-                              Directory := Name_Find;
-                           end;
-                           exit;
-                        end if;
-                     end loop;
-                  end if;
-               end if;
-
-               Set (Registry.Data.Sources,
-                    K => UTF8,
-                    E => (P, Name_Ada, Directory));
             end;
 
             Next (Source_Iter);
