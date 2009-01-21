@@ -330,8 +330,7 @@ package body Codefix.GNAT_Parser is
    type Missing_All is new Error_Parser
      (new String'("Semantic_Incoherence"), 2)
    with record
-      Col_Matcher : Ptr_Matcher := new Pattern_Matcher'
-        (Compile ("type[\s]+[\w]+[\s]+is[\s]+(access)"));
+      null;
    end record;
 
    overriding
@@ -404,13 +403,10 @@ package body Codefix.GNAT_Parser is
    type Name_Missing is new Error_Parser
      (new String'("Block_Name_Expected"), 3)
    with record
-      Matcher_Aux : Arr_Matcher (1 .. 3) :=
-        (new Pattern_Matcher'
-         (Compile ("(end)[\s]*;", Case_Insensitive)),
-         new Pattern_Matcher'
-         (Compile ("(exit)", Case_Insensitive)),
-         new Pattern_Matcher'
-         (Compile ("(end[\s]+record);", Case_Insensitive)));
+      Matcher_Aux : GNAT.Strings.String_List (1 .. 3) :=
+        (new String'("(end)[\s]*;"),
+         new String'("(exit)"),
+         new String'("(end[\s]+record);"));
    end record;
 
    overriding
@@ -1528,7 +1524,7 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Str_Red,
-         False);
+         Add_Spaces => False);
    end Fix;
 
    -----------------
@@ -1537,7 +1533,6 @@ package body Codefix.GNAT_Parser is
 
    overriding procedure Free (This : in out Missing_All) is
    begin
-      Free (This.Col_Matcher);
       Free (Error_Parser (This));
    end Free;
 
@@ -1557,10 +1552,8 @@ package body Codefix.GNAT_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (Options);
+      pragma Unreferenced (This, Options);
 
-      Col_Matches        : Match_Array (0 .. 1);
-      Line_Red           : String_Access;
       Declaration_Cursor : File_Cursor;
       Message : constant Error_Message := Get_Message (Message_It);
 
@@ -1584,23 +1577,11 @@ package body Codefix.GNAT_Parser is
            (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
          1);
 
-      --  ??? I114-034
-      Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
-
-      Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
-
-      if Col_Matches (0) = No_Match then
-         raise Uncorrectable_Message;
-      end if;
-
-      Set_Location
-        (Declaration_Cursor,
-         Line   => Get_Line (Declaration_Cursor),
-         Column => Column_Index (Col_Matches (1).Last) + 1);
-
-      Solutions := Expected (Current_Text, Declaration_Cursor, "all");
-
-      Free (Line_Red);
+      Solutions := Expected
+        (Current_Text,
+         Declaration_Cursor,
+         "all",
+         After_Pattern => "type[\s]+[\w]+[\s]+is[\s]+(access)");
    end Fix;
 
    -----------------------
@@ -1650,7 +1631,7 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, " ", False);
+      Solutions := Expected (Current_Text, Message, " ", Add_Spaces => False);
    end Fix;
 
    ------------------------
@@ -1675,7 +1656,7 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, "  ", False);
+      Solutions := Expected (Current_Text, Message, "  ", Add_Spaces => False);
    end Fix;
 
    ------------------
@@ -1713,8 +1694,6 @@ package body Codefix.GNAT_Parser is
       pragma Unreferenced (Options);
 
       Message : constant Error_Message := Get_Message (Message_It);
-      Col_Matches : Match_Array (0 .. 1);
-      New_Message : Error_Message := Message;
       Line_Cursor : File_Cursor := File_Cursor (Message);
       Message_Kind : constant String :=
         Get_Message (Message) (Matches (1).First .. Matches (1).Last);
@@ -1733,19 +1712,11 @@ package body Codefix.GNAT_Parser is
          raise Codefix_Panic;
       end if;
 
-      --  ??? I114-034
-      Match (This.Matcher_Aux (Match_Number).all,
-             Get_Line (Current_Text, Line_Cursor),
-             Col_Matches);
-      Set_Location
-        (New_Message,
-         Get_Line (New_Message),
-         Column_Index (Col_Matches (1).Last) + 1);
-
       Solutions := Expected
         (Current_Text,
-         New_Message,
-         Get_Message (Message) (Matches (2).First .. Matches (2).Last));
+         Message,
+         Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+         After_Pattern => This.Matcher_Aux (Match_Number).all);
    end Fix;
 
    --------------------
@@ -2753,7 +2724,6 @@ package body Codefix.GNAT_Parser is
 
       Set_Column (Decl_Cur, 1);
 
-      --  ??? I114-034
       Solutions :=
          Clause_Missing
            (Current_Text   => Current_Text,

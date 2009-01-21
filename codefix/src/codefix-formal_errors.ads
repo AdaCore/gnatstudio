@@ -130,9 +130,12 @@ package Codefix.Formal_Errors is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
       String_Expected : String;
+      After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List;
-   --  Add the missing keyword into the text.
+   --  Add the missing keyword into the text. If after pattern is not empty,
+   --  then the cursor will be moved from the location specified after the
+   --  pattern given in parameter.
 
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
@@ -199,7 +202,6 @@ package Codefix.Formal_Errors is
       Object_Name  : String) return Solution_List;
    --  Remove the conversion at made at Cursor position.
 
-   --  ??? I114-034
    function Move_With_To_Body
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Solution_List;
@@ -213,7 +215,6 @@ package Codefix.Formal_Errors is
    --  Propose to make the body profile conformant with the spec one, or
    --  the spec profile conformant with the body one.
 
-   --  ??? I114-034
    function Remove_Dependency_Clause
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -223,7 +224,6 @@ package Codefix.Formal_Errors is
    --  position parameter specify where the actual begin of the unit is
    --  relatively to the cursor position.
 
-   --  ??? I114-034
    function Resolve_Unvisible_Declaration
      (Current_Text  : Text_Navigator_Abstr'Class;
       Object_Cursor : File_Cursor'Class;
@@ -239,14 +239,12 @@ package Codefix.Formal_Errors is
    --  Propose to replace the Replaced_Exp from Current_Text starting at
    --  Start_Cursor by New_String
 
-   --  ??? I114-034
    function Remove_Extra_Underlines
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;
    --  Propose to remove the extra underlines of the identifier pointed by the
    --  cursor.
 
-   --  ??? I114-034
    function Change_To_Tick_Valid
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List;

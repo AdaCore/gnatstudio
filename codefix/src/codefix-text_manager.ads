@@ -724,6 +724,7 @@ package Codefix.Text_Manager is
       Current_Text    : Text_Navigator_Abstr'Class;
       Word            : Word_Cursor'Class;
       New_Position    : File_Cursor'Class;
+      After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified;
       Insert_New_Line : Boolean := False);
@@ -973,6 +974,7 @@ private
       Position        : Relative_Position := Specified;
       New_Position    : Word_Mark;
       Insert_New_Line : Boolean := False;
+      After_Pattern   : String_Access;
    end record;
 
    type Move_Word_Cmd is new Text_Command with record

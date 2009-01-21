@@ -1955,6 +1955,7 @@ package body Codefix.Text_Manager is
       Current_Text    : Text_Navigator_Abstr'Class;
       Word            : Word_Cursor'Class;
       New_Position    : File_Cursor'Class;
+      After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified;
       Insert_New_Line : Boolean := False)
@@ -1964,6 +1965,7 @@ package body Codefix.Text_Manager is
       This.Add_Spaces := Add_Spaces;
       This.Position := Position;
       Make_Word_Mark (Word, Current_Text, This.Word);
+      This.After_Pattern := new String'(After_Pattern);
 
       Set_File (New_Word, Get_File (New_Position));
       Set_Location
@@ -1977,6 +1979,7 @@ package body Codefix.Text_Manager is
    begin
       Free (This.Word);
       Free (This.New_Position);
+      Free (This.After_Pattern);
       Free (Text_Command (This));
    end Free;
 
@@ -2001,10 +2004,25 @@ package body Codefix.Text_Manager is
       Line_Cursor := Clone (File_Cursor (New_Pos));
       Line_Cursor.Col := 1;
 
-      Word_Char_Index :=
-        To_Char_Index (Word.Col, Get_Line (Current_Text, Line_Cursor));
-
       Assign (New_Str, Word.Get_Matching_Word (Current_Text));
+
+      if This.After_Pattern.all /= "" then
+         declare
+            Matches : Match_Array (0 .. 1);
+         begin
+            Match
+              (This.After_Pattern.all,
+               Get_Line (Current_Text, New_Pos),
+               Matches);
+
+            New_Pos.Col := To_Column_Index
+              (Char_Index (Matches (1).Last) + 1,
+               Get_Line (Current_Text, New_Pos, 1));
+         end;
+      end if;
+
+      Word_Char_Index :=
+        To_Char_Index (New_Pos.Col, Get_Line (Current_Text, Line_Cursor));
 
       if This.Position = Specified then
          if This.Add_Spaces then

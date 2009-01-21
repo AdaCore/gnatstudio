@@ -1489,4 +1489,237 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This           : in out Change_To_Tick_Valid_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   procedure Execute
+     (This         : Change_To_Tick_Valid_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor : constant File_Cursor'Class :=
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Location.all));
+      Depth : Integer := 0;
+      Begin_Cursor, End_Cursor : File_Cursor;
+
+      Is_First : Boolean := True;
+
+      No_Fix : Boolean := False;
+
+      function Entity_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean;
+
+      ---------------------
+      -- Entity_Callback --
+      ---------------------
+
+      function Entity_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean;
+         Line           : String) return Boolean
+      is
+         pragma Unreferenced (Partial_Entity);
+
+         Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
+      begin
+         if Is_First and then To_Lower (Name) = "not" then
+            No_Fix := True;
+            return True;
+         end if;
+
+         Is_First := False;
+
+         if Name = "(" then
+            Depth := Depth + 1;
+         elsif Name = ")" then
+            if Depth = 0 then
+               return True;
+            end if;
+
+            Depth := Depth - 1;
+         elsif Depth = 0 then
+            if (Entity = Keyword_Text and then To_Lower (Name) /= "in")
+              or else
+                (Entity = Operator_Text
+                 and then Name /= "'"
+                 and then Name /= ".")
+            then
+               return True;
+            end if;
+         end if;
+
+         Set_Location
+           (End_Cursor,
+            Sloc_End.Line,
+            To_Column_Index (Char_Index (Sloc_End.Column), Line));
+
+         return False;
+      end Entity_Callback;
+   begin
+      Begin_Cursor := File_Cursor (Cursor);
+      End_Cursor := File_Cursor (Cursor);
+
+      loop
+         declare
+            Line       : constant String :=
+              Get_Line (Current_Text, Begin_Cursor, 1);
+            Real_Begin : Char_Index :=
+              To_Char_Index (Get_Column (Begin_Cursor), Line) - 1;
+         begin
+            while Real_Begin > 1
+              and then Is_Blank (Line (Natural (Real_Begin)))
+            loop
+               Real_Begin := Real_Begin - 1;
+            end loop;
+
+            if Is_Blank (Line (Natural (Real_Begin))) then
+               if Get_Line (Begin_Cursor) = 1 then
+                  Set_Location
+                    (Begin_Cursor,
+                     Get_Line (Begin_Cursor),
+                     To_Column_Index (Real_Begin, Line));
+
+                  exit;
+               else
+                  Set_Location (Begin_Cursor, Get_Line (Begin_Cursor) - 1, 1);
+                  Set_Location
+                    (Begin_Cursor,
+                     Get_Line (Begin_Cursor),
+                     Column_Index
+                       (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
+               end if;
+            else
+               Set_Location
+                 (Begin_Cursor,
+                  Get_Line (Begin_Cursor),
+                  To_Column_Index (Real_Begin, Line) + 1);
+
+               exit;
+            end if;
+         end;
+      end loop;
+
+      Parse_Entities
+        (Ada_Lang,
+         Current_Text,
+         Entity_Callback'Unrestricted_Access,
+         Begin_Cursor);
+
+      if not No_Fix then
+         Current_Text.Replace (Begin_Cursor, End_Cursor, "'Valid");
+      end if;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out Change_To_Tick_Valid_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This           : in out Remove_Extra_Underlines_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class)
+   is
+   begin
+      This.Location := new Mark_Abstr'Class'
+        (Current_Text.Get_New_Mark (Cursor));
+   end Initialize;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   procedure Execute
+     (This         : Remove_Extra_Underlines_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class)
+   is
+      Cursor       : File_Cursor'Class :=
+        Current_Text.Get_Current_Cursor (This.Location.all);
+      Line         : constant String := Get_Line (Current_Text, Cursor, 1);
+      New_Id       : String (1 .. Line'Length);
+      Index        : Char_Index := To_Char_Index (Get_Column (Cursor), Line);
+      New_Id_Index : Integer := 1;
+      Start_Index  : Char_Index;
+   begin
+      while Index > Char_Index (Line'First)
+        and then not Is_Separator (Line (Integer (Index)))
+      loop
+         Index := Index - 1;
+      end loop;
+
+      if Is_Blank (Line (Integer (Index))) then
+         Index := Index + 1;
+      end if;
+
+      Start_Index := Index;
+
+      while Index < Char_Index (Line'Last)
+        and then not Is_Separator (Line (Integer (Index)))
+      loop
+         if Line (Integer (Index)) = '_' then
+            New_Id (New_Id_Index) := Line (Integer (Index));
+            Index := Index + 1;
+            New_Id_Index := New_Id_Index + 1;
+
+            while Index < Char_Index (Line'Last)
+              and then Line (Integer (Index)) = '_'
+            loop
+               Index := Index + 1;
+            end loop;
+         else
+            New_Id (New_Id_Index) := Line (Integer (Index));
+            Index := Index + 1;
+            New_Id_Index := New_Id_Index + 1;
+         end if;
+      end loop;
+
+      Cursor.Col := To_Column_Index (Start_Index, Line);
+
+      Current_Text.Replace
+        (Cursor,
+         Integer (Index - Start_Index),
+         New_Id (1 .. New_Id_Index - 1));
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding
+   procedure Free (This : in out Remove_Extra_Underlines_Cmd) is
+   begin
+      Free (This.Location);
+   end Free;
+
 end Codefix.Text_Manager.Ada_Commands;

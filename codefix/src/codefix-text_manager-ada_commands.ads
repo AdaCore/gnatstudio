@@ -348,6 +348,46 @@ package Codefix.Text_Manager.Ada_Commands is
    overriding
    procedure Free (This : in out Add_Clauses_Cmd);
 
+   ------------------------------
+   -- Change_To_Tick_Valid_Cmd --
+   ------------------------------
+
+   type Change_To_Tick_Valid_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This           : in out Change_To_Tick_Valid_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class);
+   --  Add the missing clause in the text
+
+   overriding
+   procedure Execute
+     (This         : Change_To_Tick_Valid_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Change_To_Tick_Valid_Cmd);
+
+   -----------------------------
+   -- Remove_Extra_Underlines --
+   -----------------------------
+
+   type Remove_Extra_Underlines_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This           : in out Remove_Extra_Underlines_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class);
+   --  Add the missing clause in the text
+
+   overriding
+   procedure Execute
+     (This         : Remove_Extra_Underlines_Cmd;
+      Current_Text : in out Text_Navigator_Abstr'Class);
+
+   overriding
+   procedure Free (This : in out Remove_Extra_Underlines_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -435,6 +475,14 @@ private
       Missing_Clause : String_Access;
       Add_With       : Boolean;
       Add_Use        : Boolean;
+   end record;
+
+   type Change_To_Tick_Valid_Cmd is new Text_Command with record
+      Location : Ptr_Mark;
+   end record;
+
+   type Remove_Extra_Underlines_Cmd is new Text_Command with record
+      Location : Ptr_Mark;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;

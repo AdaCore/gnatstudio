@@ -25,7 +25,6 @@ with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
-with Language.Ada;                      use Language.Ada;
 with Language.Tree.Database;            use Language.Tree.Database;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
@@ -343,6 +342,7 @@ package body Codefix.Formal_Errors is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
       String_Expected : String;
+      After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List
    is
@@ -356,7 +356,7 @@ package body Codefix.Formal_Errors is
       Set_Word (Word, String_Expected, Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word,
-                  File_Cursor (Word), Add_Spaces, Position);
+                  File_Cursor (Word), After_Pattern, Add_Spaces, Position);
       Set_Caption
         (New_Command,
          "Add expected string """ & String_Expected & """");
@@ -953,7 +953,11 @@ package body Codefix.Formal_Errors is
             Set_Word (Word, Str_Array (Index_Str).all & ".", Text_Ascii);
 
             Initialize
-              (New_Command, Current_Text, Word, File_Cursor (Word), False);
+              (New_Command,
+               Current_Text,
+               Word,
+               File_Cursor (Word),
+               Add_Spaces => False);
             Set_Caption
               (New_Command,
                "Prefix """ & Name & """ by """ &
@@ -1167,58 +1171,14 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List
    is
-      Line         : constant String := Get_Line (Current_Text, Cursor, 1);
-      New_Id       : String (1 .. Line'Length);
-      Index        : Char_Index := To_Char_Index (Get_Column (Cursor), Line);
-      New_Id_Index : Integer := 1;
-      Start_Index  : Char_Index;
+      Command : Remove_Extra_Underlines_Cmd;
+      Result  : Solution_List;
    begin
-      while Index > Char_Index (Line'First)
-        and then not Is_Separator (Line (Integer (Index)))
-      loop
-         Index := Index - 1;
-      end loop;
+      Command.Initialize (Current_Text, Cursor);
+      Set_Caption (Command, "Remove extra underlines");
+      Append (Result, Command);
 
-      if Is_Blank (Line (Integer (Index))) then
-         Index := Index + 1;
-      end if;
-
-      Start_Index := Index;
-
-      while Index < Char_Index (Line'Last)
-        and then not Is_Separator (Line (Integer (Index)))
-      loop
-         if Line (Integer (Index)) = '_' then
-            New_Id (New_Id_Index) := Line (Integer (Index));
-            Index := Index + 1;
-            New_Id_Index := New_Id_Index + 1;
-
-            while Index < Char_Index (Line'Last)
-              and then Line (Integer (Index)) = '_'
-            loop
-               Index := Index + 1;
-            end loop;
-         else
-            New_Id (New_Id_Index) := Line (Integer (Index));
-            Index := Index + 1;
-            New_Id_Index := New_Id_Index + 1;
-         end if;
-      end loop;
-
-      declare
-         Begin_Cursor : File_Cursor := File_Cursor (Clone (Cursor));
-      begin
-         Set_Location
-           (Begin_Cursor,
-            Get_Line (Begin_Cursor),
-            To_Column_Index (Start_Index, Line));
-
-         return Replace_Code_By
-           (Begin_Cursor,
-            Current_Text,
-            "([\w]+)",
-            New_Id (1 .. New_Id_Index - 1));
-      end;
+      return Result;
    end Remove_Extra_Underlines;
 
    --------------------------
@@ -1229,128 +1189,12 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
       return Solution_List
    is
-      Depth : Integer := 0;
-      Begin_Cursor, End_Cursor : File_Cursor;
-
-      Is_First : Boolean := True;
-
-      No_Fix : Boolean := False;
-
-      function Entity_Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean;
-         Line           : String) return Boolean;
-
-      ---------------------
-      -- Entity_Callback --
-      ---------------------
-
-      function Entity_Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean;
-         Line           : String) return Boolean
-      is
-         pragma Unreferenced (Partial_Entity);
-
-         Name : constant String := Line (Sloc_Start.Column .. Sloc_End.Column);
-      begin
-         if Is_First and then To_Lower (Name) = "not" then
-            No_Fix := True;
-            return True;
-         end if;
-
-         Is_First := False;
-
-         if Name = "(" then
-            Depth := Depth + 1;
-         elsif Name = ")" then
-            if Depth = 0 then
-               return True;
-            end if;
-
-            Depth := Depth - 1;
-         elsif Depth = 0 then
-            if (Entity = Keyword_Text and then To_Lower (Name) /= "in")
-              or else
-                (Entity = Operator_Text
-                 and then Name /= "'"
-                 and then Name /= ".")
-            then
-               return True;
-            end if;
-         end if;
-
-         Set_Location
-           (End_Cursor,
-            Sloc_End.Line,
-            To_Column_Index (Char_Index (Sloc_End.Column), Line));
-
-         return False;
-      end Entity_Callback;
-
-      Command : Replace_Slice_Cmd;
+      Command : Change_To_Tick_Valid_Cmd;
       Result  : Solution_List;
-
    begin
-      Begin_Cursor := File_Cursor (Cursor);
-      End_Cursor := File_Cursor (Cursor);
-
-      loop
-         declare
-            Line       : constant String :=
-              Get_Line (Current_Text, Begin_Cursor, 1);
-            Real_Begin : Char_Index :=
-              To_Char_Index (Get_Column (Begin_Cursor), Line) - 1;
-         begin
-            while Real_Begin > 1
-              and then Is_Blank (Line (Natural (Real_Begin)))
-            loop
-               Real_Begin := Real_Begin - 1;
-            end loop;
-
-            if Is_Blank (Line (Natural (Real_Begin))) then
-               if Get_Line (Begin_Cursor) = 1 then
-                  Set_Location
-                    (Begin_Cursor,
-                     Get_Line (Begin_Cursor),
-                     To_Column_Index (Real_Begin, Line));
-
-                  exit;
-               else
-                  Set_Location (Begin_Cursor, Get_Line (Begin_Cursor) - 1, 1);
-                  Set_Location
-                    (Begin_Cursor,
-                     Get_Line (Begin_Cursor),
-                     Column_Index
-                       (Get_Line (Current_Text, Begin_Cursor)'Last + 1));
-               end if;
-            else
-               Set_Location
-                 (Begin_Cursor,
-                  Get_Line (Begin_Cursor),
-                  To_Column_Index (Real_Begin, Line) + 1);
-
-               exit;
-            end if;
-         end;
-      end loop;
-
-      Parse_Entities
-        (Ada_Lang,
-         Current_Text,
-         Entity_Callback'Unrestricted_Access,
-         Begin_Cursor);
-
-      if not No_Fix then
-         Initialize
-           (Command, Current_Text, Begin_Cursor, End_Cursor, "'Valid");
-         Set_Caption (Command, "Change 'in' expression by 'Valid");
-         Append (Result, Command);
-      end if;
+      Initialize (Command, Current_Text, Cursor);
+      Set_Caption (Command, "Change 'in' expression by 'Valid");
+      Append (Result, Command);
 
       return Result;
    end Change_To_Tick_Valid;
