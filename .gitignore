@@ -75,3 +75,4 @@ share/plug-ins/protocols.xml
 share/plug-ins/runtime.xml
 templates_parser
 widgets/Makefile.widgets
+scripts/sortxml
