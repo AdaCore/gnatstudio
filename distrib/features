@@ -15,6 +15,11 @@ of the feature.
 New features in GPS 4.3.2
 -------------------------
 
+NF-43-H813-012 Support for x86_64 / Mac OS X (2009-01-21)
+
+  GPS 4.3.2 is supported on Mac OS X (Leopard) with 64-bit-capable
+  Intel processors.
+
 New features in GPS 4.3.1
 -------------------------
 
