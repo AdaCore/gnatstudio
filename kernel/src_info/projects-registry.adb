@@ -949,6 +949,8 @@ package body Projects.Registry is
       Iter    : Imported_Project_Iterator := Start (Registry.Data.Root, True);
       Sources : String_List_Id;
       P       : Project_Type;
+      Source_Iter : Source_Iterator;
+      Source  : Source_Id;
 
    begin
       loop
@@ -988,23 +990,25 @@ package body Projects.Registry is
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
 
-         Sources := Projects_Table (Registry)(Get_View (P)).Ada_Sources;
-         while Sources /= Nil_String loop
-            Get_Name_String
-              (String_Elements (Registry) (Sources).Display_Value);
+         Source_Iter := For_Each_Source
+           (Registry.Data.View_Tree, Get_View (P));
+         loop
+            Source := Element (Source_Iter);
+            exit when Source = No_Source;
+
+            Get_Name_String (Source.Display_File);
 
             declare
-               Current_Source : constant Name_Id :=
-                                  String_Elements (Registry) (Sources).Value;
                UTF8           : constant String :=
                                   Display_Full_Name
                                     (Create (Name_Buffer (1 .. Name_Len)));
+               Current_Source : constant Name_Id := Name_Id (Source.File);
                Directory      : Name_Id := No_Name;
                Unit           : Unit_Project;
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
-               String_Elements (Registry)(Sources).Display_Value := Name_Find;
+               Source.Display_File := Name_Find;
 
                Unit := Files_Htable.Get
                  (Registry.Data.View_Tree.Files_HT,
@@ -1055,8 +1059,9 @@ package body Projects.Registry is
                Set (Registry.Data.Sources,
                     K => UTF8,
                     E => (P, Name_Ada, Directory));
-               Sources := String_Elements (Registry)(Sources).Next;
             end;
+
+            Next (Source_Iter);
          end loop;
 
          --  Canonicalize the file names in the naming exception lists
@@ -1364,20 +1369,25 @@ package body Projects.Registry is
       begin
          Append (Source_File_List, GNATCOLL.VFS.Create (Dir & Display_File));
 
-         String_Element_Table.Increment_Last
-           (Registry.Data.View_Tree.String_Elements);
-         String_Elements (Registry)
-           (String_Element_Table.Last
-              (Registry.Data.View_Tree.String_Elements)) :=
-           (Value         => Full_Path,
-            Display_Value => Get_String (Display_File),
-            Flag          => False,  --  Irrelevant for files
-            Location      => No_Location,
-            Index         => 0,
-            Next          => Projects_Table
-              (Registry) (Get_View (Project)).Ada_Sources);
-         Projects_Table (Registry) (Get_View (Project)).Ada_Sources :=
-           String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
+         --  ??? We use to update the internal data structure in prj.ads.
+         --  This should not be necessary in fact. We will at some point use
+         --  the multi_language mode anyway, which will automatically fill
+         --  that data structure
+
+--           String_Element_Table.Increment_Last
+--             (Registry.Data.View_Tree.String_Elements);
+--           String_Elements (Registry)
+--             (String_Element_Table.Last
+--                (Registry.Data.View_Tree.String_Elements)) :=
+--             (Value         => Full_Path,
+--              Display_Value => Get_String (Display_File),
+--              Flag          => False,  --  Irrelevant for files
+--              Location      => No_Location,
+--              Index         => 0,
+--              Next          => Projects_Table
+--                (Registry) (Get_View (Project)).Ada_Sources);
+--           Projects_Table (Registry) (Get_View (Project)).Ada_Sources :=
+--         String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
          Set
            (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
       end Record_Source;
@@ -1425,7 +1435,8 @@ package body Projects.Registry is
       Lang      : Name_Id;
       Has_File  : Boolean;
       Dirs_List : String_List_Id;
-      Src       : String_List_Id;
+      Src_Iter  : Source_Iterator;
+      Src       : Source_Id;
 
    begin
       for L in Languages'Range loop
@@ -1437,10 +1448,14 @@ package body Projects.Registry is
       --  We already know if the directories contain Ada files. Update the
       --  status accordingly, in case they don't contain any other file.
 
-      Src := Projects_Table (Registry) (Get_View (Project)).Ada_Sources;
+      Src_Iter := For_Each_Source
+        (Registry.Data.View_Tree, Get_View (Project), Language => Name_Ada);
 
-      while Src /= Nil_String loop
-         Get_Name_String (String_Elements (Registry) (Src).Display_Value);
+      loop
+         Src := Element (Src_Iter);
+         exit when Src = No_Source;
+
+         Get_Name_String (Src.Display_File);
 
          declare
             File : constant String :=
@@ -1461,7 +1476,7 @@ package body Projects.Registry is
             end if;
          end;
 
-         Src := String_Elements (Registry) (Src).Next;
+         Next (Src_Iter);
       end loop;
 
       Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
