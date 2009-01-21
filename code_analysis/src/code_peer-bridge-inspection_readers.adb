@@ -165,7 +165,8 @@ package body Code_Peer.Bridge.Inspection_Readers is
       elsif Qname = Message_Tag then
          Self.Subprogram_Data.Messages.Append
            (new Code_Peer.Message'
-              (Lifeage,
+              (Positive'Value (Attrs.Get_Value ("identifier")),
+               Lifeage,
                Positive'Value (Attrs.Get_Value ("line")),
                Positive'Value (Attrs.Get_Value ("column")),
                Self.Message_Categories.Element

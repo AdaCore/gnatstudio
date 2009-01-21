@@ -45,6 +45,7 @@ package Code_Peer is
      (Message_Category_Access, Hash, "=");
 
    type Message is record
+      Id          : Natural;
       Lifeage     : Lifeage_Kinds;
       Line        : Positive;
       Column      : Positive;
