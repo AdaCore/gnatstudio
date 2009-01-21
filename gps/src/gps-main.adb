@@ -1215,7 +1215,7 @@ procedure GPS.Main is
                   Open_File_Editor
                     (GPS_Main.Kernel,
                      Create
-                       (S (S'First + 1 .. S'Last),
+                       (Normalize_To_OS_Case (S (S'First + 1 .. S'Last)),
                         GPS_Main.Kernel,
                         Use_Source_Path => True,
                         Use_Object_Path => False),
@@ -1239,7 +1239,7 @@ procedure GPS.Main is
                   Open_File_Editor
                     (GPS_Main.Kernel,
                      Create
-                       (S,
+                       (Normalize_To_OS_Case (S),
                         GPS_Main.Kernel,
                         Use_Source_Path => False,
                         Use_Object_Path => False),

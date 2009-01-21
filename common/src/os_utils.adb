@@ -18,12 +18,15 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Directories;           use Ada.Directories;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
+
+with Config;
 
 package body OS_Utils is
 
@@ -326,5 +329,81 @@ package body OS_Utils is
             end;
       end case;
    end Format_Pathname;
+
+   --------------------------
+   -- Normalize_To_OS_Case --
+   --------------------------
+
+   function Normalize_To_OS_Case (Full_Name : String) return String is
+
+      use type Config.Host_Type;
+
+      function Norm (Dir, Name : String) return String;
+      --  Normalize Name using OS casing and do the same recusivelly for full
+      --  pathname in Dir.
+
+      ----------
+      -- Norm --
+      ----------
+
+      function Norm (Dir, Name : String) return String is
+         L_Name  : String := Name;
+         Search  : Search_Type;
+         Entries : Directory_Entry_Type;
+      begin
+         Case_Util.To_Lower (L_Name);
+
+         Start_Search (Search, Dir, "*");
+
+         while More_Entries (Search) loop
+            Get_Next_Entry (Search, Entries);
+
+            declare
+               S_Name : String := Simple_Name (Entries);
+            begin
+               Case_Util.To_Lower (S_Name);
+
+               if L_Name = S_Name then
+                  End_Search (Search);
+
+                  if Dir'Length = 3 then
+                     if Dir (Dir'First + 1 .. Dir'First + 2) = ":\" then
+                        return Compose
+                          (Case_Util.To_Upper (Dir (Dir'First)) & ":\",
+                           Simple_Name (Entries));
+
+                     else
+                        return Compose (Dir, Simple_Name (Entries));
+                     end if;
+
+                  else
+                     return Compose
+                       (Norm (Containing_Directory (Dir), Simple_Name (Dir)),
+                        Simple_Name (Entries));
+                  end if;
+               end if;
+            end;
+         end loop;
+
+         --  Not found, return Full_Name
+         End_Search (Search);
+         return Compose (Dir, Name);
+      end Norm;
+
+   begin
+      if Config.Host = Config.Windows
+        and then (Is_Regular_File (Full_Name)
+                  or else Is_Directory (Full_Name))
+      then
+         return Norm
+           (Containing_Directory (Full_Name), Simple_Name (Full_Name));
+      else
+         return Full_Name;
+      end if;
+
+   exception
+      when Name_Error | Use_Error | Status_Error =>
+         return Full_Name;
+   end Normalize_To_OS_Case;
 
 end OS_Utils;

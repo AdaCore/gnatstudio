@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 4.4.0
 
+- I117-011: Fail to commit activities on Windows
+  Problem:    GPS could fail to commit activities using Cygwin/Subversion
+              on Windows when a filename is passed on the command line with
+              the wrong casing. Windows is non case-sensitive but keeps
+              filename casing. Using different casing for the pathname
+              confuses Cygwin/Subversion which checks that all files, part
+              of a group commit, are all under the same repository.
+  Workaround: Make sure that proper casing is used on GPS command-line.
+
 - I115-004: Location View: "secondary" locations attached to wrong node
   Problem:    When the compiler emits information concerning the same line
               and same column in two different files, GPS might place the

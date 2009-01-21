@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2007, AdaCore                --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -86,6 +86,15 @@ package OS_Utils is
    function Is_Cygwin_Path (Path : String) return Boolean;
    pragma Inline (Is_Cygwin_Path);
    --  Return true if Path start with /cygdrive/<drive>/
+
+   function Normalize_To_OS_Case (Full_Name : String) return String;
+   --  On non case-sensitive OS returns the casing as recorded by the OS. This
+   --  routine can be time consuming as for example on Windows it parses all
+   --  directories and sub-directories to get the OS recorded casing.
+   --  On case-sensitive OS it just returns Full_Name.
+   --  At the moment, the only non case-sensitive OS supported is Windows.
+   --  This routine should be called for any pathname comming from the command
+   --  line or from dialogs filled by users.
 
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");
