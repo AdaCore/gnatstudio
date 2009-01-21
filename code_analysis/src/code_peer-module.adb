@@ -34,6 +34,7 @@ with Basic_Types;
 with GNATCOLL.Utils;
 with GPS.Editors;
 with GPS.Intl; use GPS.Intl;
+with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Project;
@@ -602,6 +603,7 @@ package body Code_Peer.Module is
         (Kernel        => Kernel,
          Command       => "gps_codepeer_bridge",
          Arguments     => Args,
+         Console       => GPS.Kernel.Console.Get_Console (Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
            new Bridge_Context'(Module, new String'(Reply_File_Name)),
