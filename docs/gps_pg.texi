@@ -7,7 +7,7 @@
 @syncodeindex fn cp
 
 @set GPS
-@set GPSVersion 4.3.1
+@set GPSVersion 4.3.2
 
 @titlepage
 
@@ -44,7 +44,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2002-2006, AdaCore.
+Copyright @copyright{} 2002-2009, AdaCore.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
