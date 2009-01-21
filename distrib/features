@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jan 13, 2009
+GPS 4.3 NEW FEATURES LIST Current as of Jan 21, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -11,6 +11,9 @@ documentation.
 An ISO date (YYYY-MM-DD) appears in parentheses after the
 description line. This date shows the implementation date
 of the feature.
+
+New features in GPS 4.3.2
+-------------------------
 
 New features in GPS 4.3.1
 -------------------------
