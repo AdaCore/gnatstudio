@@ -17,33 +17,25 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Directories;
 with Ada.Strings.Fixed;
-with GNAT.OS_Lib;
-with GNAT.Strings;
 
 with Input_Sources.File;
 
-with Glib.Xml_Int;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
 with Gtk.Text_Mark;
 
 with Basic_Types;
-with GNATCOLL.Utils;
 with GPS.Editors;
 with GPS.Intl; use GPS.Intl;
-with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Timeout;
 with GPS.Location_View;
-with Projects;
 
 with Code_Peer.Bridge.Inspection_Readers;
+with Code_Peer.Module.Bridge;
 
 package body Code_Peer.Module is
 
@@ -56,14 +48,6 @@ package body Code_Peer.Module is
       Project : Code_Analysis.Project_Access;
       File    : Code_Analysis.File_Access;
    end record;
-
-   type Bridge_Context is
-     new GPS.Kernel.Timeout.Callback_Data_Record with record
-      Module    : Code_Peer_Module_Id;
-      File_Name : GNAT.Strings.String_Access;
-   end record;
-
-   overriding procedure Destroy (Data : in out Bridge_Context);
 
    Annotation_Style_Name                : constant String
      := "CodePeer editor annotations";
@@ -106,11 +90,6 @@ package body Code_Peer.Module is
    procedure On_Load
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-
-   procedure On_Bridge_Exit
-     (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer);
-   --  Called when gps_codepeer_bridge program execution is done
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -228,15 +207,6 @@ package body Code_Peer.Module is
          end;
       end if;
    end Append_To_Menu;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Data : in out Bridge_Context) is
-   begin
-      GNAT.Strings.Free (Data.File_Name);
-   end Destroy;
 
    ----------------------
    -- Hide_Annotations --
@@ -424,23 +394,6 @@ package body Code_Peer.Module is
       Context.Module.Update_Location_View;
    end On_Activate;
 
-   --------------------
-   -- On_Bridge_Exit --
-   --------------------
-
-   procedure On_Bridge_Exit
-     (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer)
-   is
-      Context : Bridge_Context'Class
-        renames Bridge_Context'Class (Process.Callback_Data.all);
-
-   begin
-      if Status = 0 then
-         Context.Module.Load (Context.File_Name.all);
-      end if;
-   end On_Bridge_Exit;
-
    -------------------------
    -- On_Criteria_Changed --
    -------------------------
@@ -557,59 +510,10 @@ package body Code_Peer.Module is
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
-      Project            : constant Projects.Project_Type :=
-                             GPS.Kernel.Project.Get_Project (Kernel);
-      Project_Name       : constant String := Projects.Project_Name (Project);
-      Object_Directory   : constant String :=
-                             Projects.Object_Path (Project, False);
-      Output_Directory   : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, Project_Name, "output");
-      Command_File_Name  : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, "bridge_in", "xml");
-      Reply_File_Name    : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, "bridge_out", "xml");
-      Args               : GNAT.OS_Lib.Argument_List :=
-                            (1 => new String'(Command_File_Name));
-      Database_Node      : Glib.Xml_Int.Node_Ptr :=
-                             new Glib.Xml_Int.Node'
-                                   (Tag    => new String'("database"),
-                                    others => <>);
-      Inspection_Node    : constant Glib.Xml_Int.Node_Ptr :=
-                             new Glib.Xml_Int.Node'
-                                   (Tag    => new String'("inspection"),
-                                    others => <>);
-      Success            : Boolean;
-      pragma Warnings (Off, Success);
+      pragma Unreferenced (Widget, Kernel);
 
    begin
-      --  Generate command file
-
-      Glib.Xml_Int.Set_Attribute
-        (Database_Node, "output_directory", Output_Directory);
-      Glib.Xml_Int.Set_Attribute
-        (Inspection_Node, "output_file", Reply_File_Name);
-      Glib.Xml_Int.Add_Child (Database_Node, Inspection_Node);
-      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
-      Glib.Xml_Int.Free (Database_Node);
-
-      --  Run gps_codepeer_bridge
-
-      GPS.Kernel.Timeout.Launch_Process
-        (Kernel        => Kernel,
-         Command       => "gps_codepeer_bridge",
-         Arguments     => Args,
-         Console       => GPS.Kernel.Console.Get_Console (Kernel),
-         Directory     => Object_Directory,
-         Callback_Data =>
-           new Bridge_Context'(Module, new String'(Reply_File_Name)),
-         Success       => Success,
-         Exit_Cb       => On_Bridge_Exit'Access);
-      GNATCOLL.Utils.Free (Args);
+      Code_Peer.Module.Bridge.Inspection (Module);
    end On_Load;
 
    -------------------------
