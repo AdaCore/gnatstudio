@@ -44,3 +44,11 @@ Known Problems fixed in GPS 4.4.0
               spawn applications from GPS to another display, you can write
               a small python plug-in that does:
                   import os; os.environ["DISPLAY"]="..."
+
+- HA29-005: Block folding/unfolding broken with blank lines
+  Problem:    If you use the GPS shell/python command "Editor.add_blank_lines"
+              to add a blank line right after a line which starts a foldable
+              block, and then fold this block, text corruption might occur in
+              the current editor.
+  Workaround: Do not use Editor.add_blank_lines in combination with block
+              folding.

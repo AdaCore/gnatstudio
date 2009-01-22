@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -184,13 +184,16 @@ package Src_Editor_Buffer.Line_Information is
    --  Return the column of Position
 
    function Flatten_Area
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Boolean;
+     (Buffer            : access Source_Buffer_Record'Class;
+      Start_Line        : Editable_Line_Type;
+      End_Line          : Editable_Line_Type;
+      Start_Buffer_Line : Buffer_Line_Type) return Boolean;
    --  Remove all blank lines between Start_Line and End_Line. Unfold all
    --  lines between those locations.
    --  If the area was already flat before calling this function, return
    --  False. Otherwise, return True.
+   --  Start_Buffer_Line indicates the buffer line where the area to be
+   --  flattended starts.
 
    procedure Recalculate_Side_Column_Width
      (Buffer : access Source_Buffer_Record'Class);

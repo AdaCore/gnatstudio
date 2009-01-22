@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1302,8 +1302,21 @@ package body Src_Editor_Buffer.Line_Information is
       Get_Iter_At_Mark (Buffer, Iter, Mark);
       Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
+      if Buffer.Blank_Lines /= 0 then
+         --  The buffer line might be a blank line. In this case, move down
+         --  until we find an editable line.
+
+         while Get_Editable_Line (Buffer, Buffer_Line) = 0 loop
+            Buffer_Line := Buffer_Line + 1;
+
+            if Buffer_Line > Buffer.Line_Data'Last then
+               return;
+            end if;
+         end loop;
+      end if;
+
       Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
-      Line_End := Line_Start + Number;
+      Line_End := Line_Start + Number - 1;
 
       --  If there is no ASCII.LF at the end of the last line, add one since
       --  otherwise moving the cursor to the end of the buffer crashes GPS.
@@ -1325,8 +1338,11 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Remove all blank lines in the block that is to be folded
 
+      Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
       if Buffer.Blank_Lines /= 0 then
-         Result := Flatten_Area (Buffer, Line_Start, Line_End);
+         Result := Flatten_Area
+           (Buffer, Line_Start, Line_End, Buffer_Line);
       end if;
 
       --  Remove line by line in order to avoid problems when removing lines
@@ -1523,7 +1539,7 @@ package body Src_Editor_Buffer.Line_Information is
       Command.Buffer := Source_Buffer (Buffer);
       Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
       Command.Mark := Create_Mark (Buffer, "", Iter);
-      Command.Number := Editable_Line_Type (Number_Of_Lines_Unfolded - 1);
+      Command.Number := Editable_Line_Type (Number_Of_Lines_Unfolded);
 
       Add_Block_Command
         (Buffer, First_Line,
@@ -1591,7 +1607,7 @@ package body Src_Editor_Buffer.Line_Information is
             then
                if First_Line_Found then
                   Line := Line +
-                    Hide_Editable_Lines_Type (Command.all).Number;
+                    Hide_Editable_Lines_Type (Command.all).Number - 1;
                   Result := Execute (Command);
 
                   --  even though lines have been deleted, constructs info
@@ -1955,9 +1971,10 @@ package body Src_Editor_Buffer.Line_Information is
    ------------------
 
    function Flatten_Area
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Editable_Line_Type;
-      End_Line   : Editable_Line_Type) return Boolean
+     (Buffer            : access Source_Buffer_Record'Class;
+      Start_Line        : Editable_Line_Type;
+      End_Line          : Editable_Line_Type;
+      Start_Buffer_Line : Buffer_Line_Type) return Boolean
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
@@ -1984,7 +2001,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  Remove all blank lines
 
       if Buffer.Blank_Lines /= 0 then
-         Buffer_Line := Get_Buffer_Line (Buffer, Start_Line);
+         Buffer_Line := Start_Buffer_Line;
 
          while Buffer_Line < Get_Buffer_Line (Buffer, End_Line) loop
             if Get_Editable_Line (Buffer, Buffer_Line) = 0 then

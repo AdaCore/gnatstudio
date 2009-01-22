@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1811,7 +1811,8 @@ package body Src_Editor_Buffer is
            and then not Buffer.Inserting
          then
             if Flatten_Area
-              (Buffer, Editable_Line_Start, Editable_Line_End)
+              (Buffer, Editable_Line_Start, Editable_Line_End,
+               Buffer_Line_Type (Line_Start + 1))
             then
                --  We have modified the area. Stop propagation of this signal,
                --  and delete the new area.
