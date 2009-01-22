@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -153,9 +153,15 @@ package body Switches_Parser is
             Popup     => Popup);
       end Process_Title_Node;
 
+      -------------------------------------------
+      -- Process_Default_Value_Dependency_Node --
+      -------------------------------------------
+
       procedure Process_Default_Value_Dependency_Node (N : Node_Ptr) is
          Master_Switch : constant String := Get_Attribute (N, "master-switch");
          Slave_Switch  : constant String := Get_Attribute (N, "slave-switch");
+         Slave_Status  : constant String :=
+                          Get_Attribute (N, "slave-status", "on");
       begin
          if Master_Switch = "" or else Slave_Switch = "" then
             Log_Error
@@ -170,7 +176,8 @@ package body Switches_Parser is
             Master_Switch,
             Get_Attribute (N, "master-section"),
             Slave_Switch,
-            Get_Attribute (N, "slave-section"));
+            Get_Attribute (N, "slave-section"),
+            Slave_Status = "on" or else Slave_Status = "true");
       end Process_Default_Value_Dependency_Node;
 
       -----------------------------
@@ -492,6 +499,8 @@ package body Switches_Parser is
          Switch        : constant String := Get_Attribute (N, "switch");
          Switch_Unset  : constant String :=
                            Get_Attribute (N, "switch-off");
+         Default       : constant String :=
+                           To_Lower (Get_Attribute (N, "default", "off"));
          Default_State : Boolean;
       begin
          Coordinates_From_Node (N, Line, Col);
@@ -507,54 +516,35 @@ package body Switches_Parser is
             return;
          end if;
 
-         if Switch_Unset = "" then
-            Add_Check
-              (Config     => Current_Tool_Config,
-               Label      => Label,
-               Switch     => Switch,
-               Section    => Get_Attribute (N, "section"),
-               Tip        => Get_Tip_Value (N),
-               Line       => Line,
-               Column     => Col,
-               Add_Before => Get_Attribute (N, "before") = "true",
-               Popup      => Popup);
-
+         if Default = "off"
+           or else Default = "false"
+         then
+            Default_State := False;
+         elsif Default = "on"
+           or else Default = "true"
+         then
+            Default_State := True;
          else
-            declare
-               Default : constant String :=
-                           To_Lower (Get_Attribute (N, "default", "off"));
-            begin
-               if Default = "off"
-                 or else Default = "false"
-               then
-                  Default_State := False;
-               elsif Default = "on"
-                 or else Default = "true"
-               then
-                  Default_State := True;
-               else
-                  Log_Error
-                    (-("Invalid <switch> node in custom file: the " &
-                     """default"" attribute can only take the values " &
-                     "'on', 'true', 'off' or 'false'. " &
-                     "The value found is: ") & Default);
-                  return;
-               end if;
-            end;
-
-            Add_Check
-              (Config        => Current_Tool_Config,
-               Label         => Label,
-               Switch_Set    => Switch,
-               Switch_Unset  => Switch_Unset,
-               Default_State => Default_State,
-               Section       => Get_Attribute (N, "section"),
-               Tip           => Get_Tip_Value (N),
-               Line          => Line,
-               Column        => Col,
-               Add_Before    => Get_Attribute (N, "before") = "true",
-               Popup         => Popup);
+            Log_Error
+              (-("Invalid <switch> node in custom file: the " &
+               """default"" attribute can only take the values " &
+               "'on', 'true', 'off' or 'false'. " &
+               "The value found is: ") & Default);
+            return;
          end if;
+
+         Add_Check
+           (Config        => Current_Tool_Config,
+            Label         => Label,
+            Switch_Set    => Switch,
+            Switch_Unset  => Switch_Unset,
+            Default_State => Default_State,
+            Section       => Get_Attribute (N, "section"),
+            Tip           => Get_Tip_Value (N),
+            Line          => Line,
+            Column        => Col,
+            Add_Before    => Get_Attribute (N, "before") = "true",
+            Popup         => Popup);
       end Process_Check_Node;
 
       -------------------

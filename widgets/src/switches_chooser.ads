@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                      Copyright (C) 2007-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -89,20 +89,6 @@ package Switches_Chooser is
    --  Specify the title for a group of switches within the editor. It also
    --  defines how big the group is, since a cell can be merged with one or
    --  more of its neighbors through the *_Span parameters.
-
-   procedure Add_Check
-     (Config     : Switches_Editor_Config;
-      Label      : String;
-      Switch     : String;
-      Section    : String := "";
-      Tip        : String := "";
-      Line       : Positive := 1;
-      Column     : Positive := 1;
-      Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window);
-   --  Adds a check button in a specific area of the editor.
-   --  When the button is active, the corresponding command line switch is
-   --  present, otherwise it is omitted.
 
    procedure Add_Check
      (Config        : Switches_Editor_Config;
@@ -235,10 +221,11 @@ package Switches_Chooser is
       Switch         : String;
       Section        : String;
       Slave_Switch   : String;
-      Slave_Section  : String);
+      Slave_Section  : String;
+      Slave_Status   : Boolean := True);
    --  Add dependency between two switches: if Switch's status becomes
    --  Status, then Slave_Switch will have its default value set to
-   --  Slave_Default.
+   --  Slave_Status.
    --  For instance: if Switch is "-gnatwa" for the compiler, and Slave_Switch
    --  is "-gnatwc", with Status=True and
    --  Slave_Default=True, then everytime the user selects "-gnatwa" for the

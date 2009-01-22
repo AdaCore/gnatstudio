@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2007-2008, AdaCore             --
+--                      Copyright (C) 2007-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -214,42 +214,6 @@ package body Switches_Chooser is
          Define_Switch (Config.Config, Switch & ":");
       end if;
    end Add_To_Getopt;
-
-   ---------------
-   -- Add_Check --
-   ---------------
-
-   procedure Add_Check
-     (Config     : Switches_Editor_Config;
-      Label      : String;
-      Switch     : String;
-      Section    : String := "";
-      Tip        : String := "";
-      Line       : Positive := 1;
-      Column     : Positive := 1;
-      Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window)
-   is
-   begin
-      Append
-        (Config.Switches,
-         Switch_Description'
-          (Typ           => Switch_Check,
-           Switch        => To_Unbounded_String (Switch),
-           Switch_Unset  => Null_Unbounded_String,
-           Default_State => False,
-           Initial_State => False,
-           Dependencies  => null,
-           Label         => To_Unbounded_String (Label),
-           Tip           => To_Unbounded_String (Tip),
-           Section       => To_Unbounded_String (Section),
-           Separator     => ASCII.NUL,
-           Popup         => Popup,
-           Line          => Line,
-           Column        => Column,
-           Add_First     => Add_Before));
-      Add_To_Getopt (Config, Switch, ASCII.LF);
-   end Add_Check;
 
    ---------------
    -- Add_Check --
@@ -557,14 +521,16 @@ package body Switches_Chooser is
       Switch         : String;
       Section        : String;
       Slave_Switch   : String;
-      Slave_Section  : String)
+      Slave_Section  : String;
+      Slave_Status   : Boolean := True)
    is
       Cursor        : Switch_Description_Vectors.Cursor :=
                         Config.Switches.First;
       Slave_Cursor  : Switch_Description_Vectors.Cursor :=
                        Switch_Description_Vectors.No_Element;
       Master_Cursor : Switch_Description_Vectors.Cursor :=
-                        Switch_Description_Vectors.No_Element;
+                       Switch_Description_Vectors.No_Element;
+
    begin
       while Has_Element (Cursor) loop
          declare
@@ -601,7 +567,7 @@ package body Switches_Chooser is
             Enable : Boolean;
          begin
             if To_String (Slave.Switch) = Slave_Switch then
-               Enable := True;
+               Enable := Slave_Status;
             else
                Enable := False;
             end if;
