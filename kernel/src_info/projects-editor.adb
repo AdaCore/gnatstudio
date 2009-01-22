@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -766,8 +766,7 @@ package body Projects.Editor is
       if Pkg_Name /= "" then
          Pkg := Value_Of
            (Get_String (Pkg_Name),
-            In_Packages =>
-              Project.View_Tree.Projects.Table (Project_View).Decl.Packages,
+            In_Packages => Project_View.Decl.Packages,
             In_Tree     => Project.View_Tree);
          if Pkg = No_Package then
             if Use_Extended
@@ -783,9 +782,8 @@ package body Projects.Editor is
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
 
       else
-         Var := Project.View_Tree.Projects.Table
-           (Project_View).Decl.Attributes;
-         Arr := Project.View_Tree.Projects.Table (Project_View).Decl.Arrays;
+         Var := Project_View.Decl.Attributes;
+         Arr := Project_View.Decl.Arrays;
       end if;
 
       N := Get_String (Attribute_Name);
@@ -838,8 +836,7 @@ package body Projects.Editor is
       if Pkg_Name /= "" then
          Pkg := Value_Of
            (Get_String (Pkg_Name),
-            In_Packages =>
-              Project.View_Tree.Projects.Table (Project_View).Decl.Packages,
+            In_Packages => Project_View.Decl.Packages,
             In_Tree     => Project.View_Tree);
          if Pkg = No_Package then
             return False;
@@ -847,9 +844,8 @@ package body Projects.Editor is
          Var := Project.View_Tree.Packages.Table (Pkg).Decl.Attributes;
          Arr := Project.View_Tree.Packages.Table (Pkg).Decl.Arrays;
       else
-         Var :=
-           Project.View_Tree.Projects.Table (Project_View).Decl.Attributes;
-         Arr := Project.View_Tree.Projects.Table (Project_View).Decl.Arrays;
+         Var := Project_View.Decl.Attributes;
+         Arr := Project_View.Decl.Arrays;
       end if;
 
       N := Get_String (Attribute_Name);

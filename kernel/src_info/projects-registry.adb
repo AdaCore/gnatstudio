@@ -255,12 +255,9 @@ package body Projects.Registry is
 
    function String_Elements
      (R : Project_Registry) return Prj.String_Element_Table.Table_Ptr;
-   function Projects_Table
-     (R : Project_Registry) return Prj.Project_Table.Table_Ptr;
    function Array_Elements
      (R : Project_Registry) return Prj.Array_Element_Table.Table_Ptr;
    pragma Inline (String_Elements);
-   pragma Inline (Projects_Table);
    pragma Inline (Array_Elements);
    --  Return access to the various tables that contain information about the
    --  project
@@ -278,16 +275,6 @@ package body Projects.Registry is
    begin
       return R.Data.View_Tree.Array_Elements.Table;
    end Array_Elements;
-
-   --------------------
-   -- Projects_Table --
-   --------------------
-
-   function Projects_Table
-     (R : Project_Registry) return Prj.Project_Table.Table_Ptr is
-   begin
-      return R.Data.View_Tree.Projects.Table;
-   end Projects_Table;
 
    ---------------------
    -- String_Elements --
@@ -789,6 +776,7 @@ package body Projects.Registry is
       procedure Report_Error
         (S : String; Project : Project_Id; Tree : Project_Tree_Ref)
       is
+         pragma Unreferenced (Tree);
          P : Project_Type;
       begin
          if Project = Prj.No_Project then
@@ -805,8 +793,7 @@ package body Projects.Registry is
             end if;
 
          else
-            P := Get_Project_From_Name
-              (Registry, Tree.Projects.Table (Project).Name);
+            P := Get_Project_From_Name (Registry, Project.Name);
 
             --  Unless we have a warning...
             if Index (S, "Warning") < S'First then
@@ -835,9 +822,7 @@ package body Projects.Registry is
       --------------------
 
       procedure Normalize_View (Project : Project_Type) is
-         Var   : constant Variable_Id :=
-                   Registry.Data.View_Tree.Projects.Table
-                     (Get_View (Project)).Decl.Attributes;
+         Var   : constant Variable_Id := Get_View (Project).Decl.Attributes;
          Value : constant Variable_Value :=
                    Value_Of (Language, Var, Registry.Data.View_Tree);
          Lang  : String_List_Id;
@@ -973,19 +958,15 @@ package body Projects.Registry is
 
          --  Add the directories
 
-         Sources := Projects_Table (Registry)(Get_View (P)).Source_Dirs;
+         Sources := Get_View (P).Source_Dirs;
          while Sources /= Nil_String loop
             Register_Directory
               (Get_String (String_Elements (Registry)(Sources).Value));
             Sources := String_Elements (Registry)(Sources).Next;
          end loop;
 
-         Register_Directory
-           (Get_String (Projects_Table
-                          (Registry)(Get_View (P)).Object_Directory.Name));
-         Register_Directory
-           (Get_String (Projects_Table
-                          (Registry)(Get_View (P)).Exec_Directory.Name));
+         Register_Directory (Get_String (Get_View (P).Object_Directory.Name));
+         Register_Directory (Get_String (Get_View (P).Exec_Directory.Name));
 
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
@@ -1135,8 +1116,7 @@ package body Projects.Registry is
          end loop;
       end Process_List;
 
-      Naming : constant Naming_Data :=
-                 Projects_Table (Registry) (Get_View (P)).Naming;
+      Naming : constant Naming_Data := Get_View (P).Naming;
    begin
       Process_List (Naming.Implementation_Exceptions);
       Process_List (Naming.Specification_Exceptions);
@@ -1329,25 +1309,6 @@ package body Projects.Registry is
       begin
          Append (Source_File_List, GNATCOLL.VFS.Create (Dir & Display_File));
 
-         --  ??? We use to update the internal data structure in prj.ads.
-         --  This should not be necessary in fact. We will at some point use
-         --  the multi_language mode anyway, which will automatically fill
-         --  that data structure
-
---           String_Element_Table.Increment_Last
---             (Registry.Data.View_Tree.String_Elements);
---           String_Elements (Registry)
---             (String_Element_Table.Last
---                (Registry.Data.View_Tree.String_Elements)) :=
---             (Value         => Full_Path,
---              Display_Value => Get_String (Display_File),
---              Flag          => False,  --  Irrelevant for files
---              Location      => No_Location,
---              Index         => 0,
---              Next          => Projects_Table
---                (Registry) (Get_View (Project)).Ada_Sources);
---           Projects_Table (Registry) (Get_View (Project)).Ada_Sources :=
---         String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
          Set
            (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
       end Record_Source;
@@ -1439,7 +1400,7 @@ package body Projects.Registry is
          Next (Src_Iter);
       end loop;
 
-      Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
+      Dirs_List := Get_View (Project).Source_Dirs;
 
       while Dirs_List /= Nil_String loop
          Update_Directory_Cache
@@ -1471,11 +1432,10 @@ package body Projects.Registry is
       --  ??? Should be shared with the project parser (Prj.Nmsc)
 
       declare
-         Data    : constant Project_Data :=
-                     Projects_Table (Registry) (Get_View (Project));
+         View    : constant Project_Id := Get_View (Project);
          Sources : constant Variable_Value :=
                      Prj.Util.Value_Of
-                       (Name_Source_Files, Data.Decl.Attributes,
+                       (Name_Source_Files, View.Decl.Attributes,
                         Registry.Data.View_Tree);
          File    : String_List_Id := Sources.Values;
 
@@ -1495,11 +1455,10 @@ package body Projects.Registry is
       --  ??? Should also be shared with the project parser (Prj.Nmsc)
 
       declare
-         Data             : constant Project_Data :=
-                              Projects_Table (Registry) (Get_View (Project));
+         View             : constant Project_Id := Get_View (Project);
          Source_List_File : constant Variable_Value :=
                               Prj.Util.Value_Of
-                                (Name_Source_List_File, Data.Decl.Attributes,
+                                (Name_Source_List_File, View.Decl.Attributes,
                                  Registry.Data.View_Tree);
          File             : Prj.Util.Text_File;
          Line             : String (1 .. 2000);
@@ -1512,7 +1471,7 @@ package body Projects.Registry is
             declare
                F : constant String :=
                      Name_As_Directory
-                       (Get_String (Data.Directory.Name)) &
+                       (Get_String (View.Directory.Name)) &
                         Get_String (Source_List_File.Value);
             begin
                if Is_Regular_File (F) then
@@ -1978,8 +1937,7 @@ package body Projects.Registry is
          Minimize_Empty_Lines,
          W_Char, W_Eol, W_Str,
          Backward_Compatibility => Project_Backward_Compatibility,
-         Id                     => Get_View (Project),
-         Id_Tree                => Project.View_Tree);
+         Id                     => Get_View (Project));
    end Pretty_Print;
 
    ----------------

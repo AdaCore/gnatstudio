@@ -165,14 +165,11 @@ package body Projects is
 
    function String_Elements
      (P : Project_Type) return Prj.String_Element_Table.Table_Ptr;
-   function Projects_Table
-     (P : Project_Type) return Prj.Project_Table.Table_Ptr;
    function Array_Elements
      (P : Project_Type) return Prj.Array_Element_Table.Table_Ptr;
    function Packages
      (P : Project_Type) return Prj.Package_Table.Table_Ptr;
    pragma Inline (String_Elements);
-   pragma Inline (Projects_Table);
    pragma Inline (Array_Elements);
    pragma Inline (Packages);
    --  Return access to the various tables that contain information about the
@@ -196,16 +193,6 @@ package body Projects is
    begin
       return P.View_Tree.String_Elements.Table;
    end String_Elements;
-
-   --------------------
-   -- Projects_Table --
-   --------------------
-
-   function Projects_Table
-     (P : Project_Type) return Prj.Project_Table.Table_Ptr is
-   begin
-      return P.View_Tree.Projects.Table;
-   end Projects_Table;
 
    --------------------
    -- Array_Elements --
@@ -375,8 +362,7 @@ package body Projects is
          return "default";
 
       elsif Get_View (Project) /= Prj.No_Project then
-         return Get_String
-           (Projects_Table (Project) (Get_View (Project)).Display_Name);
+         return Get_String (Get_View (Project).Display_Name);
 
       else
          return Get_String
@@ -430,8 +416,7 @@ package body Projects is
          return Create
            (FS => Get_Filesystem (Host),
             Full_Filename => To_Remote
-              (Get_String (Projects_Table (Project)(View).Path.Display_Name),
-               Host));
+              (Get_String (View.Path.Display_Name), Host));
       end if;
    end Project_Path;
 
@@ -458,8 +443,7 @@ package body Projects is
 
       else
          declare
-            Src     : String_List_Id :=
-                        Projects_Table (Project) (View).Source_Dirs;
+            Src     : String_List_Id := View.Source_Dirs;
             Count   : constant Natural := Length (Project.View_Tree, Src);
             Sources : Name_Id_Array (1 .. Count);
          begin
@@ -494,8 +478,7 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
          Count := Count
-           + Length (Project.View_Tree,
-                     Projects_Table (Project)(Get_View (P)).Source_Dirs);
+           + Length (Project.View_Tree, Get_View (P).Source_Dirs);
          Next (Iter);
       end loop;
 
@@ -509,7 +492,7 @@ package body Projects is
          if not Has_VCS
            or else Get_Attribute_Value (P, VCS_Kind_Attribute) /= ""
          then
-            Src := Projects_Table (Project) (Get_View (P)).Source_Dirs;
+            Src := Get_View (P).Source_Dirs;
 
             while Src /= Nil_String loop
                Sources (Index) := new String'
@@ -589,7 +572,7 @@ package body Projects is
       begin
          if not Xrefs_Dirs or else Get_Xrefs_Subdir (Registry => Reg) = "" then
             return Path;
-         elsif Projects_Table (Project) (View).Externally_Built then
+         elsif View.Externally_Built then
             return Path;
          elsif Prj.Subdirs /= null then
             return Name_As_Directory
@@ -610,28 +593,18 @@ package body Projects is
            (View, Project.View_Tree, Including_Libraries).all;
 
       elsif Including_Libraries
-        and then Projects_Table (Project)(View).Library
-        and then Projects_Table (Project)(View).Library_ALI_Dir /=
-                                                  No_Path_Information
+        and then View.Library
+        and then View.Library_ALI_Dir /= No_Path_Information
       then
-         if Projects_Table (Project)(View).Object_Directory =
-                                             No_Path_Information
-         then
-            return Handle_Subdir
-              (Projects_Table (Project) (View).Library_ALI_Dir.Name);
+         if View.Object_Directory = No_Path_Information then
+            return Handle_Subdir (View.Library_ALI_Dir.Name);
          else
-            return Handle_Subdir
-                (Projects_Table (Project) (View).Object_Directory.Display_Name)
+            return Handle_Subdir (View.Object_Directory.Display_Name)
               & Path_Separator
-              & Handle_Subdir
-                 (Projects_Table (Project) (View).Library_ALI_Dir.Name);
+              & Handle_Subdir (View.Library_ALI_Dir.Name);
          end if;
-      elsif Projects_Table (Project)(View).Object_Directory /=
-                                             No_Path_Information
-      then
-         return Handle_Subdir
-              (Projects_Table (Project) (View).Object_Directory.Display_Name);
-
+      elsif View.Object_Directory /= No_Path_Information then
+         return Handle_Subdir (View.Object_Directory.Display_Name);
       else
          return "";
       end if;
@@ -833,7 +806,7 @@ package body Projects is
          Naming := Standard_Naming_Data;
       else
          View := Get_View (Project);
-         Naming := Projects_Table (Project)(View).Naming;
+         Naming := View.Naming;
       end if;
 
       Canonical_Case_File_Name (F);
@@ -1092,13 +1065,13 @@ package body Projects is
             when Unit_Body | Unit_Separate =>
                Value := Value_Of
                  (Index    => Unit,
-                  In_Array => Projects_Table (Project)(View).Naming.Bodies,
+                  In_Array => View.Naming.Bodies,
                   In_Tree  => Project.View_Tree);
 
             when Unit_Spec =>
                Value := Value_Of
                  (Index    => Unit,
-                  In_Array => Projects_Table (Project)(View).Naming.Specs,
+                  In_Array => View.Naming.Specs,
                   In_Tree  => Project.View_Tree);
          end case;
 
@@ -1108,7 +1081,7 @@ package body Projects is
 
          --  Otherwise test the standard naming scheme
 
-         case Projects_Table (Project)(View).Naming.Casing is
+         case View.Naming.Casing is
             when All_Lower_Case =>
                Fixed.Translate
                  (Source  => Unit_Name_Cased,
@@ -1125,13 +1098,12 @@ package body Projects is
 
          case Part is
             when Unit_Body =>
-               Arr := Projects_Table (Project)(View).Naming.Body_Suffix;
+               Arr := View.Naming.Body_Suffix;
 
             when Unit_Separate =>
                declare
                   N : constant String := Unit_Name_Cased & Get_String
-                    (Name_Id
-                      (Projects_Table (Project)(View).Naming.Separate_Suffix));
+                    (Name_Id (View.Naming.Separate_Suffix));
                begin
                   if not File_Must_Exist
                     or else Get_Project_From_File
@@ -1144,14 +1116,12 @@ package body Projects is
                return "";
 
             when Unit_Spec =>
-               Arr := Projects_Table (Project)(View).Naming.Spec_Suffix;
+               Arr := View.Naming.Spec_Suffix;
          end case;
 
          declare
             Dot_Replacement : constant String := Get_String
-              (Name_Id
-                (Projects_Table
-                 (Project)(Get_View (Project)).Naming.Dot_Replacement));
+              (Name_Id (Get_View (Project).Naming.Dot_Replacement));
             Uname           : String := Substitute_Dot
               (Unit_Name_Cased, Dot_Replacement);
 
@@ -1205,13 +1175,13 @@ package body Projects is
       if View /= Prj.No_Project then
          Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
 
-         Arr := Projects_Table (Project)(View).Naming.Spec_Suffix;
+         Arr := View.Naming.Spec_Suffix;
          Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
          end if;
 
-         Arr := Projects_Table (Project)(View).Naming.Body_Suffix;
+         Arr := View.Naming.Body_Suffix;
          Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
@@ -1304,7 +1274,7 @@ package body Projects is
       then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Projects_Table (Project)(View).Naming.Spec_Suffix,
+            In_Array => View.Naming.Spec_Suffix,
             In_Tree  => Project.View_Tree);
 
       elsif Attribute = Impl_Suffix_Attribute
@@ -1312,30 +1282,28 @@ package body Projects is
       then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Projects_Table (Project)(View).Naming.Body_Suffix,
+            In_Array => View.Naming.Body_Suffix,
             In_Tree  => Project.View_Tree);
 
       elsif Attribute = Separate_Suffix_Attribute then
-         return Get_String
-                  (Projects_Table (Project)(View).Naming.Separate_Suffix);
+         return Get_String (View.Naming.Separate_Suffix);
 
       elsif Attribute = Casing_Attribute then
-         return Prj.Image (Projects_Table (Project)(View).Naming.Casing);
+         return Prj.Image (View.Naming.Casing);
 
       elsif Attribute = Dot_Replacement_Attribute then
-         return Get_String
-                  (Projects_Table (Project)(View).Naming.Dot_Replacement);
+         return Get_String (View.Naming.Dot_Replacement);
 
       elsif Attribute = Old_Implementation_Attribute then
          Value := Value_Of
           (Index    => Get_String (Index),
-           In_Array => Projects_Table (Project)(View).Naming.Bodies,
+           In_Array => View.Naming.Bodies,
            In_Tree  => Project.View_Tree);
 
       elsif Attribute = Old_Specification_Attribute then
          Value := Value_Of
           (Index    => Get_String (Index),
-           In_Array => Projects_Table (Project)(View).Naming.Specs,
+           In_Array => View.Naming.Specs,
            In_Tree  => Project.View_Tree);
 
       else
@@ -1381,9 +1349,8 @@ package body Projects is
       if Pkg_Name /= "" then
          Pkg := Value_Of
            (Get_String (Pkg_Name),
-            In_Packages =>
-              Projects_Table (Project)(Project_View).Decl.Packages,
-            In_Tree => Project.View_Tree);
+            In_Packages => Project_View.Decl.Packages,
+            In_Tree     => Project.View_Tree);
          if Pkg = No_Package then
             if Use_Extended
               and then Extended_Project (Project) /= No_Project
@@ -1397,7 +1364,7 @@ package body Projects is
          Arr := Packages (Project)(Pkg).Decl.Arrays;
 
       else
-         Arr := Projects_Table (Project)(Project_View).Decl.Arrays;
+         Arr := Project_View.Decl.Arrays;
       end if;
 
       N := Get_String (Attribute_Name);
@@ -1585,9 +1552,7 @@ package body Projects is
       else
          declare
             Exec : constant String := Get_String
-             (Name_Id
-              (Projects_Table
-                (Project)(Get_View (Project)).Exec_Directory.Display_Name));
+             (Name_Id (Get_View (Project).Exec_Directory.Display_Name));
          begin
             if Exec /= "" then
                return Name_As_Directory (Exec);
@@ -2324,14 +2289,15 @@ package body Projects is
    --------------
 
    function Get_View
-     (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id is
+     (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id
+   is
+      Proj : Project_List := Tree.Projects;
    begin
-      for J in
-        Tree.Projects.Table'First .. Project_Table.Last (Tree.Projects)
-      loop
-         if Tree.Projects.Table (J).Name = Name then
-            return J;
+      while Proj /= null loop
+         if Proj.Project.Name = Name then
+            return Proj.Project;
          end if;
+         Proj := Proj.Next;
       end loop;
 
       return Prj.No_Project;
