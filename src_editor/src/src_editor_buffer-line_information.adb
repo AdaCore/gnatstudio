@@ -1338,6 +1338,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Remove all blank lines in the block that is to be folded
 
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
       Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
       if Buffer.Blank_Lines /= 0 then
