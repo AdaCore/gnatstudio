@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Jan 19, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Jan 22, 2009
 ====================================================
 
 Copyright (c) 2007-2008, AdaCore
@@ -19,6 +19,11 @@ NF-44-I116-026 Fixing "abstract must come before new" (2009-01-19)
 
    An automatic fix is now proposed for "abstract must come before new" error
    messages.
+
+NF-44-I109-036 Complete gnatpp switches in the project editor (2009-01-20)
+
+   GPS now handles the newer gnatpp switches in the 'Pretty Print' page of the
+   project editor.
 
 NF-44-HC08-012 Support for SPARK Toolset 7.6.2 (2008-12-10)
 
@@ -64,6 +69,12 @@ NF-44-H904-015 Minor optimization for handling VCS status (2008-12-09)
   on the VCS explorer. It is now updating the VCS explorer as long
   as the local status won't override a remote status (Needs update or
   Needs merge).
+
+NF-44-H707-022 Minor improvments in GNATCheck integration (2009-01-20)
+
+  The GNATCheck rules editor menu has been renamed, and the rules editor
+  now lets you choose whether you want to see the resulting file after
+  exiting the editor.
 
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 
