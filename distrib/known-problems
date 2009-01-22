@@ -32,6 +32,12 @@ Known Problems fixed in GPS 4.4.0
               cursor is not moved to the line you clicked on
   Workaround: scroll back to that line
 
+- I109-036: Missing gnatpp switches in the project editor
+  Problem:    Some of the gnatpp switches were not present in the Pretty Print
+              page of the project editor.
+  Workaround: Specify those switches by hand in the text field at the bottom
+              of the editor.
+
 - HC10-015: Wrong text replacement with auto-casing
   Problem:    When auto-casing is enabled in the preferences, the wrong
               text replacement can occur if there are single quotes in the text
