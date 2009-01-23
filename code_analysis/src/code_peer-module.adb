@@ -309,14 +309,14 @@ package body Code_Peer.Module is
             Code_Analysis.Free_Code_Analysis (Self.Tree);
          end if;
 
-         --  Load inspection information
+         --  Load code review information
 
          Input_Sources.File.Open (File, Input);
          Reader.Parse
            (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
          Input_Sources.File.Close (Input);
 
-         --  Create inspection report window
+         --  Create codepeer report window
 
          Code_Peer.Summary_Reports.Gtk_New
            (Self.Report,
@@ -578,7 +578,7 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
-         Text        => -"Load inspection information",
+         Text        => -"Load code review information",
          Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
