@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2008, AdaCore                --
+--                   Copyright (C) 2002-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -193,11 +193,6 @@ package Projects is
    --  and Xrefs_Dir is set, then the corresponding subdirectory is returned if
    --  it exists. Else, the subdir corresponding to the current builder mode
    --  is returned. This mode only works when recursive is unset.
-
-   function Directory_Contains_Files
-     (Project   : Project_Type;
-      Directory : String) return Boolean;
-   --  True if Directory contains at least one source file of Project
 
    ------------------
    -- Source files --
@@ -677,12 +672,6 @@ private
    --  name instead.
    --  (Tree, View_Tree) are used to identify to which of the loaded project
    --  trees the project belongs. These must have been initialized first.
-
-   procedure Update_Directory_Cache
-     (Project   : Project_Type;
-      Dir_Name  : String;
-      Has_Files : Boolean);
-   --  Update the directories cache
 
    procedure Destroy (Project : in out Project_Type);
    --  Free the memory associated with the project

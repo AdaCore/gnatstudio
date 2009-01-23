@@ -47,7 +47,6 @@ with Projects.Editor;            use Projects.Editor;
 with Projects.Registry;          use Projects.Registry;
 with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
 with Snames;                     use Snames;
-with String_Hash;
 with Traces;
 with Types;                      use Types;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -58,19 +57,6 @@ package body Projects is
    Debug : constant Trace_Handle := Create ("Projects.Debug", Default => Off);
 
    type Name_Id_Array_Access is access Name_Id_Array;
-
-   type Directory_Info is record
-      Has_Files : Boolean;
-   end record;
-   No_Directory_Info : constant Directory_Info := (Has_Files => False);
-
-   procedure Do_Nothing (Dep : in out Directory_Info);
-
-   package Directory_Htable is new String_Hash
-     (Data_Type => Directory_Info,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => No_Directory_Info);
-   use Directory_Htable.String_Hash_Table;
 
    type Project_Type_Data is record
       View : Prj.Project_Id;
@@ -90,9 +76,6 @@ package body Projects is
       Importing_Projects : Name_Id_Array_Access;
       --  Sorted list of imported projects (Cache for
       --  Imported_Project_Iterator)
-
-      Directories : Directory_Htable.String_Hash_Table.HTable;
-      --  Information for the various directories of the project
 
       Non_Recursive_Include_Path : GNAT.Strings.String_Access;
       --  The include path for this project
@@ -213,29 +196,6 @@ package body Projects is
    begin
       return P.View_Tree.Packages.Table;
    end Packages;
-
-   ----------------
-   -- Do_Nothing --
-   ----------------
-
-   procedure Do_Nothing (Dep : in out Directory_Info) is
-      pragma Unreferenced (Dep);
-   begin
-      null;
-   end Do_Nothing;
-
-   ----------------------------
-   -- Update_Directory_Cache --
-   ----------------------------
-
-   procedure Update_Directory_Cache
-     (Project   : Project_Type;
-      Dir_Name  : String;
-      Has_Files : Boolean) is
-   begin
-      Set (Project.Data.Directories,
-           Name_As_Directory (Dir_Name), (Has_Files => Has_Files));
-   end Update_Directory_Cache;
 
    ------------------
    -- Save_Project --
@@ -2280,7 +2240,6 @@ package body Projects is
 
       Free (Project.Data.Non_Recursive_Include_Path);
 
-      Reset (Project.Data.Directories);
       Unchecked_Free (Project.Data.Files);
    end Reset;
 
@@ -2919,20 +2878,6 @@ package body Projects is
          end;
       end if;
    end Get_Executable_Name;
-
-   ------------------------------
-   -- Directory_Contains_Files --
-   ------------------------------
-
-   function Directory_Contains_Files
-     (Project   : Project_Type;
-      Directory : String) return Boolean
-   is
-      Info : constant Directory_Info := Get
-        (Project.Data.Directories, Name_As_Directory (Directory));
-   begin
-      return Info.Has_Files;
-   end Directory_Contains_Files;
 
    --------------
    -- Get_Tree --

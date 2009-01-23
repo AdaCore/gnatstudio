@@ -1354,8 +1354,6 @@ package body Projects.Registry is
       Length    : Natural;
       Buffer    : String (1 .. 2048);
       Lang      : Name_Id;
-      Has_File  : Boolean;
-      Dirs_List : String_List_Id;
       Src_Iter  : Source_Iterator;
       Src       : Source_Id;
 
@@ -1398,15 +1396,6 @@ package body Projects.Registry is
          end;
 
          Next (Src_Iter);
-      end loop;
-
-      Dirs_List := Get_View (Project).Source_Dirs;
-
-      while Dirs_List /= Nil_String loop
-         Update_Directory_Cache
-           (Project, Get_String (String_Elements (Registry)(Dirs_List).Value),
-            String_Elements (Registry)(Dirs_List).Flag);
-         Dirs_List := String_Elements (Registry)(Dirs_List).Next;
       end loop;
 
       --  Nothing to do if the only language is Ada, since this has already
@@ -1506,7 +1495,6 @@ package body Projects.Registry is
 
          for D in Dirs'Range loop
             Open (Dir, Dirs (D).all);
-            Has_File := False;
 
             loop
                Read (Dir, Buffer, Length);
@@ -1548,7 +1536,6 @@ package body Projects.Registry is
                            if Languages2 (Index) = Lang then
                               Record_Source (Dirs (D).all, UTF8,
                                              Buffer (1 .. Length), Lang);
-                              Has_File := True;
 
                               Languages3 (Index) := No_Name;
                               exit;
@@ -1558,10 +1545,6 @@ package body Projects.Registry is
                   end if;
                end;
             end loop;
-
-            if Has_File then
-               Update_Directory_Cache (Project, Dirs (D).all, Has_File);
-            end if;
 
             Close (Dir);
          end loop;
