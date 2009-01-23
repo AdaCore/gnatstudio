@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -408,9 +408,7 @@ procedure GPS.Main is
       --  is launched through the startup script. In this case it contains the
       --  value that should be set as DYLD_LIBRARY_PATH.
       Tmp := Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
-      if Tmp.all /= "" then
-         Setenv ("DYLD_LIBRARY_PATH", Tmp.all);
-      end if;
+      Setenv ("DYLD_LIBRARY_PATH", Tmp.all);
       Free (Tmp);
 
       Charset := Getenv ("CHARSET");
