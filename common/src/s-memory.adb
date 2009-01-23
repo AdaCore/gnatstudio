@@ -31,6 +31,7 @@
 
 with Ada.Exceptions;
 with Ada.Exceptions.Traceback;
+with Ada.Unchecked_Deallocation;
 with GNAT.IO;                  use GNAT.IO;
 with GNAT.Traceback;           use GNAT.Traceback;
 with GNAT.HTable;
@@ -74,7 +75,9 @@ package body System.Memory is
    --  Number of elements in the hash-table
 
    type Tracebacks_Array_Access
-      is access GNAT.Traceback.Tracebacks_Array;
+     is access GNAT.Traceback.Tracebacks_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Traceback.Tracebacks_Array, Tracebacks_Array_Access);
 
    type Traceback_Htable_Elem;
    type Traceback_Htable_Elem_Ptr is access Traceback_Htable_Elem;
@@ -85,6 +88,9 @@ package body System.Memory is
       Total     : Byte_Count;
       Next      : Traceback_Htable_Elem_Ptr;
    end record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Traceback_Htable_Elem, Traceback_Htable_Elem_Ptr);
 
    --  Subprograms used for the Backtrace_Htable instantiation
 
@@ -113,9 +119,10 @@ package body System.Memory is
       Equal      => Equal);
 
    type Chunk_Data is record
-      Total : Byte_Count;
+      Total           : Byte_Count;
+      Alloc_Backtrace : Traceback_Htable_Elem_Ptr;
    end record;
-   No_Chunk_Data : constant Chunk_Data := (Total => 0);
+   No_Chunk_Data : constant Chunk_Data := (0, null);
 
    function Hash (F : System.Address) return Header;
    pragma Inline (Hash);
@@ -220,6 +227,7 @@ package body System.Memory is
       Trace : aliased Tracebacks_Array (1 .. Integer (Stack_Trace_Depth));
       Len   : Natural;
       Elem  : Traceback_Htable_Elem_Ptr;
+      Chunk : Chunk_Data;
       Size_Was : Byte_Count := 0;
    begin
       if Disable then
@@ -227,47 +235,54 @@ package body System.Memory is
       end if;
 
       Disable := True;
-      Call_Chain (Trace, Len);
 
       case Kind is
          when Allocation =>
             Size_Was := Byte_Count (Size);
-            Chunks_Htable.Set (Ptr, (Total => Size_Was));
 
-         when Deallocation =>
-            Size_Was := Chunks_Htable.Get (Ptr).Total;
-            Chunks_Htable.Remove (Ptr);
-      end case;
+            Call_Chain (Trace, Len);
 
-      --  Check if the traceback is already in the table
+            --  Check if the traceback is already in the table
+            --  Ignore the first two levels:
+            --    'First => Find_Or_Create_Traceback
+            --    'First + 1 => malloc or free
 
-      Elem :=
-        Backtrace_Htable.Get
-          (Trace (Trace'First + 1 .. Len)'Unrestricted_Access);
+            Elem :=
+              Backtrace_Htable.Get
+                (Trace (Trace'First + 2 .. Len)'Unrestricted_Access);
 
-      --  If not, insert it
+            --  If not, insert it
 
-      if Elem = null then
-         if Kind = Allocation then
-            Elem := new Traceback_Htable_Elem'
-              (Traceback =>
-               new Tracebacks_Array'(Trace (Trace'First + 1 .. Len)),
-               Count     => 1,
-               Total     => Byte_Count (Size),
-               Next      => null);
-            Backtrace_Htable.Set (Elem);
-         end if;
-
-      else
-         case Kind is
-            when Allocation =>
+            if Elem = null then
+               Elem := new Traceback_Htable_Elem'
+                 (Traceback =>
+                  new Tracebacks_Array'(Trace (Trace'First + 2 .. Len)),
+                  Count     => 1,
+                  Total     => Byte_Count (Size),
+                  Next      => null);
+               Backtrace_Htable.Set (Elem);
+            else
                Elem.Count := Elem.Count + 1;
                Elem.Total := Elem.Total + Byte_Count (Size);
-            when Deallocation =>
-               Elem.Count := Elem.Count - 1;
-               Elem.Total := Elem.Total - Size_Was;
-         end case;
-      end if;
+            end if;
+
+            Chunks_Htable.Set
+              (Ptr, (Total => Size_Was, Alloc_Backtrace => Elem));
+
+         when Deallocation =>
+            Chunk   := Chunks_Htable.Get (Ptr);
+            Size_Was := Chunk.Total;
+            Elem := Chunk.Alloc_Backtrace;
+            Elem.Count := Elem.Count - 1;
+            Elem.Total := Elem.Total - Size_Was;
+            Chunks_Htable.Remove (Ptr);
+
+            if Elem.Count = 0 then
+               Backtrace_Htable.Remove (Elem.Traceback);
+               Unchecked_Free (Elem.Traceback);
+               Unchecked_Free (Elem);
+            end if;
+      end case;
 
       Disable := False;
       return Size_Was;
