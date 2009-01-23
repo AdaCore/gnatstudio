@@ -53,6 +53,12 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Do not use Editor.add_blank_lines in combination with block
               folding.
 
+- F927-006: Folded blocks are deleted too easily
+  Problem:    If a block is folded, pressing "backspace" when the cursor is at
+              the beginning of the line following the folded block will delete
+              the entire folded block.
+  Workaround: Use Undo to go back to previous state.
+
 - E721-004: Lines cannot be removed after removing blank lines
   Problem:    When an editor has "blank lines" (for instance when the editor
               is part of a visual comparison), after these blank lines are

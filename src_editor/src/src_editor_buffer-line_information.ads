@@ -183,6 +183,13 @@ package Src_Editor_Buffer.Line_Information is
       Position : Gtk.Text_Mark.Gtk_Text_Mark) return Positive;
    --  Return the column of Position
 
+   function Fold_Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      Fold   : Boolean) return Boolean;
+   --  Fold or unfold the block containing Line.
+   --  Return True when an operation was executed, False otherwise.
+
    function Flatten_Area
      (Buffer            : access Source_Buffer_Record'Class;
       Start_Line        : Editable_Line_Type;

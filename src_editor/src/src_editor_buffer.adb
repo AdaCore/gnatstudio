@@ -77,7 +77,6 @@ with Language_Handlers;                   use Language_Handlers;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Text_Handling;     use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
@@ -1591,6 +1590,8 @@ package body Src_Editor_Buffer is
       Length  : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Pos     : Gtk_Text_Iter;
       Command : Editor_Command := Editor_Command (Buffer.Current_Command);
+      Line    : Editable_Line_Type;
+
    begin
       if Buffer.Prevent_CR_Insertion then
          Buffer.Prevent_CR_Insertion := False;
@@ -1629,6 +1630,43 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
+      --  We are editing characters on a line: unfold the block below, so
+      --  that the folding data remains in sync even if we remove the
+      --  information that justified the folding.
+      --
+      --  For instance, if the text is
+      --
+      --    1  procedure hello is
+      --    2  begin
+      --    3     null;
+      --    3  end hello;
+      --
+      --  If the block is folded and the user inserts a line break in line 1,
+      --  there is no longer a reason that there should be folded data
+      --  below this line.
+
+      Get_Text_Iter (Nth (Params, 1), Pos);
+      Line := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1));
+
+      if not Lines_Are_Real (Buffer) then
+         declare
+            Result : Boolean;
+         begin
+            Result := Fold_Unfold_Line (Buffer, Line, False);
+
+            if Result then
+               --  We did unfold a block: stop propagation and insert the
+               --  new text at the cursor position.
+               Emit_Stop_By_Name (Object => Buffer, Name   => "insert_text");
+
+               Result := Insert_Interactive_At_Cursor
+                 (Buffer, Text (1 .. Length), True);
+               return;
+            end if;
+         end;
+      end if;
+
       Edit_Hook (Buffer);
       Cursor_Move_Hook (Buffer);
 
@@ -1638,15 +1676,12 @@ package body Src_Editor_Buffer is
 
       User_Edit_Hook (Buffer);
 
-      Get_Text_Iter (Nth (Params, 1), Pos);
-
       if Is_Null_Command (Command) then
          Create
            (Command,
             Insertion,
             Source_Buffer (Buffer),
-            False,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+            False, Line,
             Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
          Enqueue (Buffer, Command_Access (Command));
@@ -1663,9 +1698,7 @@ package body Src_Editor_Buffer is
               (Command,
                Insertion,
                Source_Buffer (Buffer),
-               False,
-               Get_Editable_Line
-                 (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+               False, Line,
                Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
             Enqueue (Buffer, Command_Access (Command));
@@ -1681,7 +1714,7 @@ package body Src_Editor_Buffer is
             Insertion,
             Source_Buffer (Buffer),
             False,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
+            Line,
             Character_Offset_Type (Get_Line_Offset (Pos) + 1));
          Enqueue (Buffer, Command_Access (Command));
          Add_Text (Command, Text (1 .. Length));
@@ -1814,18 +1847,10 @@ package body Src_Editor_Buffer is
               (Buffer, Editable_Line_Start, Editable_Line_End,
                Buffer_Line_Type (Line_Start + 1))
             then
-               --  We have modified the area. Stop propagation of this signal,
-               --  and delete the new area.
+               --  We have modified the area. Stop propagation of this signal.
 
                Emit_Stop_By_Name (Buffer, "delete_range");
 
-               Replace_Slice
-                 (Buffer,
-                  "",
-                  Editable_Line_Start,
-                  Character_Offset_Type (Column_Start + 1),
-                  Editable_Line_End,
-                  Character_Offset_Type (Column_End + 1));
                return;
             end if;
          end if;
@@ -1834,6 +1859,46 @@ package body Src_Editor_Buffer is
            (Buffer,
             Buffer_Line_Type (Line_Start + 1),
             Buffer_Line_Type (Line_End + 1));
+      else
+         --  We are editing characters on a line: unfold the block below, so
+         --  that the folding data remains in sync even if we remove the
+         --  information that justified the folding.
+         --
+         --  For instance, if the text is
+         --
+         --    1  procedure hello is
+         --    2  begin
+         --    3     null;
+         --    3  end hello;
+         --
+         --  If the block is folded and the user removes the "is" in line 1,
+         --  there is no longer a reason that there should be folded data
+         --  below this line.
+
+         if not Lines_Are_Real (Buffer) then
+            declare
+               Result : Boolean;
+               M1     : Gtk_Text_Mark;
+               M2     : Gtk_Text_Mark;
+            begin
+               M1 := Create_Mark (Buffer, "", Start_Iter);
+               M2 := Create_Mark (Buffer, "", End_Iter);
+
+               Result := Fold_Unfold_Line (Buffer, Editable_Line_Start, False);
+               if Result then
+                  --  We have changed the buffer: stop propagation and reemit.
+                  Emit_Stop_By_Name (Buffer, "delete_range");
+
+                  Get_Iter_At_Mark (Buffer, Start_Iter, M1);
+                  Get_Iter_At_Mark (Buffer, End_Iter, M2);
+
+                  Delete_Mark (Buffer, M1);
+                  Delete_Mark (Buffer, M2);
+                  Delete (Buffer, Start_Iter, End_Iter);
+                  return;
+               end if;
+            end;
+         end if;
       end if;
 
       Edit_Hook (Buffer);
@@ -1882,9 +1947,7 @@ package body Src_Editor_Buffer is
                Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
                Character_Offset_Type (Column_Start + 1));
          else
-            Add_Text
-              (Command,
-               Get_Slice (Buffer, Start_Iter, End_Iter));
+            Add_Text (Command, Get_Slice (Buffer, Start_Iter, End_Iter));
          end if;
       end if;
 

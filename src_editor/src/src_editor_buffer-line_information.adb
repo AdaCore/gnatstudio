@@ -73,13 +73,6 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
-   function Fold_Unfold_Line
-     (Buffer : access Source_Buffer_Record'Class;
-      Line   : Editable_Line_Type;
-      Fold   : Boolean) return Boolean;
-   --  Fold or unfold the block containing Line.
-   --  Return True when an operation was executed, False otherwise.
-
    -----------------------------------
    -- Recalculate_Side_Column_Width --
    -----------------------------------
