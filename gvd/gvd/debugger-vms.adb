@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Basic_Types;       use Basic_Types;
 with Process_Proxies;   use Process_Proxies;
 with GVD.Process;       use GVD.Process;
+with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with String_Utils;      use String_Utils;
 with Language;          use Language;
@@ -33,7 +34,7 @@ with Debugger.VMS.Ada;  use Debugger.VMS.Ada;
 package body Debugger.VMS is
 
    Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^DBG> ", Multiple_Lines);
+     Compile ("DBG> ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -42,11 +43,11 @@ package body Debugger.VMS is
    --  Length of the prompt ("DBG> ")
 
    Highlight_Pattern : constant Pattern_Matcher :=
-     Compile ("^DBG> ", Multiple_Lines);
+     Compile ("DBG> ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window
 
    File_Name_Pattern : constant Pattern_Matcher :=
-     Compile ("^stepped to (.+)\.%LINE (\d+)$", Multiple_Lines);
+     Compile ("stepped to (.+)\.%LINE (\d+)", Multiple_Lines);
    --  Matches a file name/line indication in debug's output
 
    function Temp_String (Temporary : Boolean) return String;
@@ -119,11 +120,12 @@ package body Debugger.VMS is
       Debugger_Name   : String := "")
    is
       pragma Unreferenced
-        (Debugger_Args, Window, Remote_Target, Remote_Protocol, Debugger_Name);
+        (Debugger_Args, Remote_Target, Remote_Protocol, Debugger_Name);
 
       Exec_Args : Argument_List_Access :=
         Argument_String_To_List (Executable_Args);
-      Args : Argument_List (1 .. 2 + Exec_Args'Length);
+      Args      : Argument_List (1 .. 2 + Exec_Args'Length);
+      Process   : Visual_Debugger;
 
    begin
       Args (1) := new String'("/debug");
@@ -137,6 +139,22 @@ package body Debugger.VMS is
       for J in Args'Range loop
          Free (Args (J));
       end loop;
+      --  Set up an output filter to detect changes of the current language
+      --  We do that only in graphical mode, since the filter needs to
+      --  access the main_debug_window.
+
+      Process := Convert (Debugger);
+
+      if Process /= null then
+         Add_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Output_Filter'Access, Output,
+            Window.all'Address);
+         Add_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Input_Filter'Access, Input,
+            Window.all'Address);
+      end if;
    end Spawn;
 
    ----------------
@@ -388,6 +406,17 @@ package body Debugger.VMS is
          Matched := Matched2;
          Start := Matched (0).Last + 1;
       end loop;
+
+      if Matched (0) = No_Match then
+         First      := 0;
+         Last       := 0;
+         Name_First := 0;
+         Name_Last  := 1;
+         Addr_First := 0;
+         Addr_Last  := 0;
+         Line       := 0;
+         return;
+      end if;
 
       First := Matched (0).First;
       Last  := Matched (0).Last;
