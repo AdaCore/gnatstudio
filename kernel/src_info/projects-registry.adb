@@ -362,8 +362,8 @@ package body Projects.Registry is
       Old_Name, New_Name : String) is
    begin
       if Registry.Data /= null then
-         Set (Registry.Data.Projects, Old_Name, No_Project);
          Set (Registry.Data.Projects, New_Name, Project);
+         Remove (Registry.Data.Projects, Old_Name);
       end if;
    end Reset_Name_Table;
 
@@ -830,8 +830,7 @@ package body Projects.Registry is
          if Value /= Nil_Variable_Value then
             Lang := Value.Values;
             while Lang /= Nil_String loop
-               Get_Name_String
-                 (String_Elements (Registry)(Lang).Value);
+               Get_Name_String (String_Elements (Registry)(Lang).Value);
                To_Lower (Name_Buffer (1 .. Name_Len));
                String_Elements (Registry)(Lang).Value := Name_Find;
 
