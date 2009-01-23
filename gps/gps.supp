@@ -3514,11 +3514,6 @@
    fun:FcLangSetCopy
    fun:FcValueSave
    obj:*libfontconfig*
-   obj:*libfontconfig*
-   fun:FcFontRenderPrepare
-   obj:*libpangoft*
-   fun:pango_font_map_load_fontset
-   obj:*libpango*
 }
 {
    <insert a suppression name here>
@@ -4245,3 +4240,14 @@
   fun:memcpy
 }
 
+#### Temporary: this one is a real memory leak. The last time information
+#### is stored in the contextual menu's context, this information is not
+#### freed. This is very complex to analyze, since that involves automatic
+#### finalization when Ada terminates and references kept by python objects
+{
+  Real memory leak
+  Memcheck:Leak
+  fun:malloc
+  fun:__gnat_malloc
+  fun:gps__kernel__contexts__set_file_information
+}
