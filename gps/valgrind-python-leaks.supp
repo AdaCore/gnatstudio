@@ -48,7 +48,33 @@
   fun:malloc
   fun:PyObject_Malloc
 }
-
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:realloc
+  fun:_PyObject_GC_Resize
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:realloc
+  fun:_PyObject_GC_NewVar
+}
+{
+  Python leak (ignore all memory allocated by python itself....)
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_NewVar
+}
+{
+  Python leak
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_NewVar
+  fun:PyFrame_New
+  fun:PyEval_EvalCodeEx
+  fun:function_call
+}
 
 
 {
