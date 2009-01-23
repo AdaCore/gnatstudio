@@ -62,22 +62,22 @@ package body Code_Peer.Utilities is
          if Categories.Contains (Message.Category) then
             case Message.Lifeage is
                when Added =>
-                  Counts (Message.Probability).Added :=
-                    Counts (Message.Probability).Added + 1;
-                  Counts (Message.Probability).Current :=
-                    Counts (Message.Probability).Current + 1;
+                  Counts (Message.Current_Probability).Added :=
+                    Counts (Message.Current_Probability).Added + 1;
+                  Counts (Message.Current_Probability).Current :=
+                    Counts (Message.Current_Probability).Current + 1;
 
                when Unchanged =>
-                  Counts (Message.Probability).Base :=
-                    Counts (Message.Probability).Base + 1;
-                  Counts (Message.Probability).Current :=
-                    Counts (Message.Probability).Current + 1;
+                  Counts (Message.Current_Probability).Base :=
+                    Counts (Message.Current_Probability).Base + 1;
+                  Counts (Message.Current_Probability).Current :=
+                    Counts (Message.Current_Probability).Current + 1;
 
                when Removed =>
-                  Counts (Message.Probability).Base :=
-                    Counts (Message.Probability).Base + 1;
-                  Counts (Message.Probability).Removed :=
-                    Counts (Message.Probability).Removed + 1;
+                  Counts (Message.Current_Probability).Base :=
+                    Counts (Message.Current_Probability).Base + 1;
+                  Counts (Message.Current_Probability).Removed :=
+                    Counts (Message.Current_Probability).Removed + 1;
             end case;
          end if;
       end Process;
@@ -208,7 +208,7 @@ package body Code_Peer.Utilities is
                      Message_Vectors.Element (Position);
 
       begin
-         if Message.Probability = Level
+         if Message.Current_Probability = Level
            and then Message.Category = Category
          then
             Result := Result + 1;

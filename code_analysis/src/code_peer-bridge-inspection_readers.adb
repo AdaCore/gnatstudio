@@ -88,6 +88,27 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
       function Lifeage return Lifeage_Kinds;
 
+      function Computed_Probability return Message_Probability_Level;
+
+      --------------------------
+      -- Computed_Probability --
+      --------------------------
+
+      function Computed_Probability return Message_Probability_Level is
+         Index : constant Integer := Attrs.Get_Index ("computed_probability");
+
+      begin
+         if Index = -1 then
+            return
+              Message_Probability_Level'Value
+                (Attrs.Get_Value ("probability"));
+
+         else
+            return
+              Message_Probability_Level'Value (Attrs.Get_Value (Index));
+         end if;
+      end Computed_Probability;
+
       -------------
       -- Lifeage --
       -------------
@@ -171,6 +192,7 @@ package body Code_Peer.Bridge.Inspection_Readers is
                Positive'Value (Attrs.Get_Value ("column")),
                Self.Message_Categories.Element
                  (Positive'Value (Attrs.Get_Value ("category"))),
+               Computed_Probability,
                Code_Peer.Message_Probability_Level'Value
                  (Attrs.Get_Value ("probability")),
                new String'(Attrs.Get_Value ("text"))));

@@ -45,13 +45,14 @@ package Code_Peer is
      (Message_Category_Access, Hash, "=");
 
    type Message is record
-      Id          : Natural;
-      Lifeage     : Lifeage_Kinds;
-      Line        : Positive;
-      Column      : Positive;
-      Category    : Message_Category_Access;
-      Probability : Message_Probability_Level;
-      Text        : GNAT.Strings.String_Access;
+      Id                   : Natural;
+      Lifeage              : Lifeage_Kinds;
+      Line                 : Positive;
+      Column               : Positive;
+      Category             : Message_Category_Access;
+      Computed_Probability : Message_Probability_Level;
+      Current_Probability  : Message_Probability_Level;
+      Text                 : GNAT.Strings.String_Access;
    end record;
 
    type Message_Access is access all Message;

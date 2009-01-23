@@ -779,9 +779,10 @@ package body Code_Peer.Module is
             end Image;
 
          begin
-            if Message.Probability /= Code_Peer.Suppressed
+            if Message.Current_Probability /= Code_Peer.Suppressed
               and then Self.Filter_Criteria.Lineages (Message.Lifeage)
-              and then Self.Filter_Criteria.Probabilities (Message.Probability)
+              and then Self.Filter_Criteria.Probabilities
+                         (Message.Current_Probability)
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
@@ -790,13 +791,13 @@ package body Code_Peer.Module is
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
                   Text         =>
-                    Image (Message.Probability) & Message.Text.all,
+                    Image (Message.Current_Probability) & Message.Text.all,
                   Line         => Message.Line,
                   Column       =>
                     Basic_Types.Visible_Column_Type (Message.Column),
                   Highlight    => True,
                   Highlight_Category =>
-                    Module.Message_Styles (Message.Probability),
+                    Module.Message_Styles (Message.Current_Probability),
                   Quiet        => True,
                   Sort_In_File => True);
             end if;
