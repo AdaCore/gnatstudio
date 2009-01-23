@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,12 +108,12 @@ package body Convert.Gpr is
          Name_Buffer (1 .. Name_Len) := Pkg_Name;
          Pkg_Id := Value_Of
            (Name_Find,
-            In_Packages => Tree.Projects.Table (Project_View).Decl.Packages,
+            In_Packages => Project_View.Decl.Packages,
             In_Tree     => Tree);
       end if;
 
       if Pkg_Id = No_Package then
-         Decl := Tree.Projects.Table (Project_View).Decl.Attributes;
+         Decl := Project_View.Decl.Attributes;
       else
          Decl := Tree.Packages.Table (Pkg_Id).Decl.Attributes;
       end if;
@@ -167,12 +167,12 @@ package body Convert.Gpr is
          Name_Buffer (1 .. Name_Len) := Pkg_Name;
          Pkg_Id := Value_Of
            (Name_Find,
-            In_Packages => Tree.Projects.Table (Project_View).Decl.Packages,
+            In_Packages => Project_View.Decl.Packages,
             In_Tree     => Tree);
       end if;
 
       if Pkg_Id = No_Package then
-         Decl := Tree.Projects.Table (Project_View).Decl.Arrays;
+         Decl := Project_View.Decl.Arrays;
       else
          Decl := Tree.Packages.Table (Pkg_Id).Decl.Arrays;
       end if;
@@ -235,9 +235,7 @@ package body Convert.Gpr is
               (Ada_Objects_Path (Project_View, View_Tree), "obj_dir=");
             Put_Line
               ("build_dir=" &
-               Get_Name_String
-                 (View_Tree.Projects.Table
-                    (Project_View).Exec_Directory.Name));
+               Get_Name_String (Project_View.Exec_Directory.Name));
             Put_Line ("comp_opt=-gnatQ -P" & Gpr_Filename);
             Put_Line ("make_cmd=" & Compiler & " ${comp_opt} ${main}");
             Put_Line ("comp_cmd=" & Compiler
