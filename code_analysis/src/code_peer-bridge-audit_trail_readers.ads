@@ -16,23 +16,43 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  Generates command files for gps_codepeer_bridge commands
 
-package Code_Peer.Bridge.Commands is
+with Input_Sources;
+private with Sax.Attributes;
+with Sax.Readers;
+private with Unicode.CES;
 
-   procedure Inspection
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String);
-   --  Generates command file for export inspection information from the
-   --  database.
+package Code_Peer.Bridge.Audit_Trail_Readers is
 
-   procedure Audit_Trail
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String;
-      Message_Id        : Positive);
-   --  Generates command file for export audit trail information from the
-   --  database.
+   type Reader is new Sax.Readers.Reader with private;
 
-end Code_Peer.Bridge.Commands;
+   procedure Parse
+     (Self   : in out Reader;
+      Input  : in out Input_Sources.Input_Source'Class;
+      Audit  : out Code_Peer.Audit_Trail);
+
+private
+
+   type Reader is new Sax.Readers.Reader with record
+      Audit                 : Code_Peer.Audit_Trail;
+      Audit_Record          : Code_Peer.Audit_Access;
+   end record;
+
+   overriding procedure Start_Element
+     (Self          : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence;
+      Attrs         : Sax.Attributes.Attributes'Class);
+
+   overriding procedure End_Element
+     (Self          : in out Reader;
+      Namespace_URI : Unicode.CES.Byte_Sequence;
+      Local_Name    : Unicode.CES.Byte_Sequence;
+      Qname         : Unicode.CES.Byte_Sequence);
+
+   overriding procedure Characters
+     (Self : in out Reader;
+      Text : Unicode.CES.Byte_Sequence);
+
+end Code_Peer.Bridge.Audit_Trail_Readers;

@@ -21,10 +21,12 @@ with Ada.Strings.Fixed;
 
 with Input_Sources.File;
 
+with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Object;
 with Gtk.Text_Mark;
+with Gtk.Widget;
 
 with Basic_Types;
 with GPS.Editors;
@@ -34,8 +36,12 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;
 
+with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
+with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
+with Commands.Code_Peer;
+with Code_Analysis_GUI;
 
 package body Code_Peer.Module is
 
@@ -608,6 +614,54 @@ package body Code_Peer.Module is
         (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
    end Register_Module;
 
+   --------------------
+   -- Review_Message --
+   --------------------
+
+   procedure Review_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : Code_Peer.Message_Access;
+      File    : String)
+   is
+      Input  : Input_Sources.File.File_Input;
+      Reader : Code_Peer.Bridge.Audit_Trail_Readers.Reader;
+      Audit  : Code_Peer.Audit_Trail;
+      Review : Code_Peer.Message_Review_Dialogs.Message_Review_Dialog;
+
+   begin
+      --  Load inspection information
+
+      Input_Sources.File.Open (File, Input);
+      Reader.Parse (Input, Audit);
+      Input_Sources.File.Close (Input);
+
+      Audit.Computed_Probability := Message.Computed_Probability;
+      Audit.Current_Probability  := Message.Current_Probability;
+
+      --  Create and show review dialog
+
+      Code_Peer.Message_Review_Dialogs.Gtk_New (Review, Audit);
+      Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
+      Review.Show_All;
+
+      --  Cleanup audit data
+
+      Code_Peer.Free (Audit);
+   end Review_Message;
+
+   --------------------
+   -- Review_Message --
+   --------------------
+
+   procedure Review_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : Code_Peer.Message_Access)
+   is
+   begin
+      Code_Peer.Module.Bridge.Review_Message
+        (Code_Peer_Module_Id (Self), Message);
+   end Review_Message;
+
    ----------------------
    -- Show_Annotations --
    ----------------------
@@ -749,6 +803,7 @@ package body Code_Peer.Module is
          is
             Message : constant Code_Peer.Message_Access :=
               Code_Peer.Message_Vectors.Element (Position);
+            Review  : GPS.Kernel.Standard_Hooks.Action_Item;
 
             function Image
               (Item : Code_Peer.Message_Probability_Level) return String;
@@ -800,6 +855,31 @@ package body Code_Peer.Module is
                     Module.Message_Styles (Message.Current_Probability),
                   Quiet        => True,
                   Sort_In_File => True);
+
+               Review :=
+                 new GPS.Kernel.Standard_Hooks.Line_Information_Record'
+                   (Text               => null,
+                    Tooltip_Text       => new String'("Review message"),
+                    Image              =>
+                      Gtk.Widget.Gtk_Widget
+                        (Self.Kernel.Get_Main_Window).Render_Icon
+                        (Code_Analysis_GUI.Subp_Pixbuf_Cst,
+                         Gtk.Enums.Icon_Size_Menu),
+                    Associated_Command =>
+                    new Commands.Code_Peer.Review_Message_Command'
+                      (Commands.Root_Command with
+                       Code_Peer_Module_Id (Self), Message));
+
+               GPS.Kernel.Standard_Hooks.Add_Location_Action
+                 (Kernel     => Self.Kernel,
+                  Identifier => "CodePeer",
+                  Category   => Code_Peer_Category_Name,
+                  File       => File.Name,
+                  Line       => Message.Line,
+                  Column     => Message.Column,
+                  Message    =>
+                    Image (Message.Current_Probability) & Message.Text.all,
+                  Action     => Review);
             end if;
          end Process_Message;
 

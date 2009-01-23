@@ -142,6 +142,32 @@ package body Code_Peer is
    end Finalize;
 
    ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : in out Audit_Trail) is
+
+      procedure Process (Position : Audit_Vectors.Cursor);
+
+      procedure Process (Position : Audit_Vectors.Cursor) is
+
+         procedure Free is
+           new Ada.Unchecked_Deallocation (Audit_Record, Audit_Access);
+
+         Audit : Audit_Access := Audit_Vectors.Element (Position);
+
+      begin
+         GNAT.Strings.Free (Audit.Timestamp);
+         GNAT.Strings.Free (Audit.Comment);
+         Free (Audit);
+      end Process;
+
+   begin
+      Item.Trail.Iterate (Process'Access);
+      Item.Trail.Clear;
+   end Free;
+
+   ----------
    -- Hash --
    ----------
 

@@ -23,4 +23,8 @@ package Code_Peer.Module.Bridge is
 
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id);
 
+   procedure Review_Message
+     (Module  : Code_Peer.Module.Code_Peer_Module_Id;
+      Message : Code_Peer.Message_Access);
+
 end Code_Peer.Module.Bridge;

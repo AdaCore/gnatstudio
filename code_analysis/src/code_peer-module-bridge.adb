@@ -30,10 +30,20 @@ with Code_Peer.Bridge.Commands;
 
 package body Code_Peer.Module.Bridge is
 
-   type Bridge_Context is
+   type Bridge_Mode is (Audit_Trail, Inspection);
+
+   type Bridge_Context (Mode : Bridge_Mode) is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
       Module    : Code_Peer.Module.Code_Peer_Module_Id;
       File_Name : GNAT.Strings.String_Access;
+
+      case Mode is
+         when Inspection =>
+            null;
+
+         when Audit_Trail =>
+            Message : Code_Peer.Message_Access;
+      end case;
    end record;
 
    overriding procedure Destroy (Data : in out Bridge_Context);
@@ -51,23 +61,6 @@ package body Code_Peer.Module.Bridge is
    begin
       GNAT.Strings.Free (Data.File_Name);
    end Destroy;
-
-   --------------------
-   -- On_Bridge_Exit --
-   --------------------
-
-   procedure On_Bridge_Exit
-     (Process : GPS.Kernel.Timeout.Process_Data;
-      Status  : Integer)
-   is
-      Context : Bridge_Context'Class
-      renames Bridge_Context'Class (Process.Callback_Data.all);
-
-   begin
-      if Status = 0 then
-         Context.Module.Load (Context.File_Name.all);
-      end if;
-   end On_Bridge_Exit;
 
    ----------------
    -- Inspection --
@@ -108,10 +101,83 @@ package body Code_Peer.Module.Bridge is
          Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
-         new Bridge_Context'(Module, new String'(Reply_File_Name)),
+         new Bridge_Context'(Inspection, Module, new String'(Reply_File_Name)),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
    end Inspection;
+
+   --------------------
+   -- On_Bridge_Exit --
+   --------------------
+
+   procedure On_Bridge_Exit
+     (Process : GPS.Kernel.Timeout.Process_Data;
+      Status  : Integer)
+   is
+      Context : Bridge_Context'Class
+      renames Bridge_Context'Class (Process.Callback_Data.all);
+
+   begin
+      if Status = 0 then
+         case Context.Mode is
+            when Inspection =>
+               Context.Module.Load (Context.File_Name.all);
+
+            when Audit_Trail =>
+               Context.Module.Review_Message
+                 (Context.Message, Context.File_Name.all);
+         end case;
+      end if;
+   end On_Bridge_Exit;
+
+   --------------------
+   -- Review_Message --
+   --------------------
+
+   procedure Review_Message
+     (Module  : Code_Peer.Module.Code_Peer_Module_Id;
+      Message : Code_Peer.Message_Access)
+   is
+      Project            : constant Projects.Project_Type :=
+                             GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Project_Name       : constant String := Projects.Project_Name (Project);
+      Object_Directory   : constant String :=
+                             Projects.Object_Path (Project, False);
+      Output_Directory   : constant String :=
+                             Ada.Directories.Compose
+                               (Object_Directory, Project_Name, "output");
+      Command_File_Name  : constant String :=
+                             Ada.Directories.Compose
+                               (Object_Directory, "bridge_in", "xml");
+      Reply_File_Name    : constant String :=
+                             Ada.Directories.Compose
+                               (Object_Directory, "bridge_out", "xml");
+      Args               : GNAT.OS_Lib.Argument_List :=
+                            (1 => new String'(Command_File_Name));
+      Success            : Boolean;
+      pragma Warnings (Off, Success);
+
+   begin
+      --  Generate command file
+
+      Code_Peer.Bridge.Commands.Audit_Trail
+        (Command_File_Name, Output_Directory, Reply_File_Name, Message.Id);
+
+      --  Run gps_codepeer_bridge
+
+      GPS.Kernel.Timeout.Launch_Process
+        (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
+         Command       => "gps_codepeer_bridge",
+         Arguments     => Args,
+         Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
+         Directory     => Object_Directory,
+         Callback_Data =>
+           new Bridge_Context'
+                 (Audit_Trail, Module, new String'(Reply_File_Name), Message),
+         Success       => Success,
+         Exit_Cb       => On_Bridge_Exit'Access);
+      GNATCOLL.Utils.Free (Args);
+   end Review_Message;
 
 end Code_Peer.Module.Bridge;

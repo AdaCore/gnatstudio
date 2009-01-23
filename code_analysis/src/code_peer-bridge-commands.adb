@@ -21,6 +21,37 @@ with Glib.Xml_Int;
 
 package body Code_Peer.Bridge.Commands is
 
+   -----------------
+   -- Audit_Trail --
+   -----------------
+
+   procedure Audit_Trail
+     (Command_File_Name : String;
+      Output_Directory  : String;
+      Export_File_Name  : String;
+      Message_Id        : Positive)
+   is
+      Database_Node      : Glib.Xml_Int.Node_Ptr :=
+                             new Glib.Xml_Int.Node'
+                                   (Tag    => new String'("database"),
+                                    others => <>);
+      Audit_Trail_Node   : constant Glib.Xml_Int.Node_Ptr :=
+                             new Glib.Xml_Int.Node'
+                                   (Tag    => new String'("audit_trail"),
+                                    others => <>);
+
+   begin
+      Glib.Xml_Int.Set_Attribute
+        (Database_Node, "output_directory", Output_Directory);
+      Glib.Xml_Int.Set_Attribute
+        (Audit_Trail_Node, "message", Positive'Image (Message_Id));
+      Glib.Xml_Int.Set_Attribute
+        (Audit_Trail_Node, "output_file", Export_File_Name);
+      Glib.Xml_Int.Add_Child (Database_Node, Audit_Trail_Node);
+      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Free (Database_Node);
+   end Audit_Trail;
+
    ----------------
    -- Inspection --
    ----------------

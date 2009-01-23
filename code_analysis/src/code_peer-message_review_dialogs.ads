@@ -16,23 +16,32 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  Generates command files for gps_codepeer_bridge commands
 
-package Code_Peer.Bridge.Commands is
+with Gtk.Combo_Box;
+with Gtk.Dialog;
+with Gtk.Text_Buffer;
 
-   procedure Inspection
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String);
-   --  Generates command file for export inspection information from the
-   --  database.
+package Code_Peer.Message_Review_Dialogs is
 
-   procedure Audit_Trail
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String;
-      Message_Id        : Positive);
-   --  Generates command file for export audit trail information from the
-   --  database.
+   type Message_Review_Dialog_Record is
+     new Gtk.Dialog.Gtk_Dialog_Record with private;
 
-end Code_Peer.Bridge.Commands;
+   type Message_Review_Dialog is access all Message_Review_Dialog_Record'Class;
+
+   procedure Gtk_New
+     (Dialog : in out Message_Review_Dialog;
+      Audit  : Code_Peer.Audit_Trail);
+
+   procedure Initialize
+     (Self  : not null access Message_Review_Dialog_Record'Class;
+      Audit : Code_Peer.Audit_Trail);
+
+private
+
+   type Message_Review_Dialog_Record is
+     new Gtk.Dialog.Gtk_Dialog_Record with record
+      New_Probability : Gtk.Combo_Box.Gtk_Combo_Box;
+      Comment_Buffer  : Gtk.Text_Buffer.Gtk_Text_Buffer;
+   end record;
+
+end Code_Peer.Message_Review_Dialogs;

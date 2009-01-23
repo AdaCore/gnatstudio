@@ -16,23 +16,17 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
---  Generates command files for gps_codepeer_bridge commands
 
-package Code_Peer.Bridge.Commands is
+with Code_Peer.Module;
 
-   procedure Inspection
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String);
-   --  Generates command file for export inspection information from the
-   --  database.
+package Commands.Code_Peer is
 
-   procedure Audit_Trail
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String;
-      Message_Id        : Positive);
-   --  Generates command file for export audit trail information from the
-   --  database.
+   type Review_Message_Command is new Root_Command with record
+      Module  : Standard.Code_Peer.Module.Code_Peer_Module_Id;
+      Message : Standard.Code_Peer.Message_Access;
+   end record;
 
-end Code_Peer.Bridge.Commands;
+   overriding function Execute
+     (Self : access Review_Message_Command) return Command_Return_Type;
+
+end Commands.Code_Peer;

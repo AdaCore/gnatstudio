@@ -44,6 +44,15 @@ package Code_Peer.Module is
 
    procedure Load (Self : access Module_Id_Record'Class; File : String);
 
+   procedure Review_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : Code_Peer.Message_Access);
+
+   procedure Review_Message
+     (Self    : access Module_Id_Record'Class;
+      Message : Code_Peer.Message_Access;
+      File    : String);
+
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
      new GPS.Kernel.Modules.Submenu_Factory_Record with null record;
