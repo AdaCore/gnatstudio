@@ -80,9 +80,6 @@ package body GPS.Kernel.Scripts is
    Ref_Me : constant Trace_Handle :=
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
-   Memory_Monitor : constant Boolean :=
-     Getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL) /= null;
-
    Entity_Class_Name        : constant String := "Entity";
    File_Class_Name          : constant String := "File";
    Project_Class_Name       : constant String := "Project";
@@ -1844,6 +1841,7 @@ package body GPS.Kernel.Scripts is
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
       Logger             : constant Class_Type :=
                              New_Class (Kernel.Scripts, Logger_Class_Name);
+      Tmp : String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),
@@ -1926,13 +1924,17 @@ package body GPS.Kernel.Scripts is
          Minimum_Args => 1,
          Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
-      if Memory_Monitor then
+
+      Tmp := Getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL);
+      if Tmp /= null then
+         Free (Tmp);
          Register_Command
            (Kernel, "debug_memory_usage",
             Minimum_Args => 1,
             Maximum_Args => 1,
             Handler      => Default_Command_Handler'Access);
       end if;
+
       Register_Command
         (Kernel, "execute_asynchronous_action",
          Minimum_Args => 1,

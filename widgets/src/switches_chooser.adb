@@ -39,6 +39,9 @@ package body Switches_Chooser is
    procedure Free_List (Deps : in out Dependency_Description_Access);
    --  Free the whole list of dependencies
 
+   procedure Free (Dep : in out Default_Value_Dependency);
+   --  Free memory occupied by Dep
+
    ---------------
    -- Free_List --
    ---------------
@@ -64,11 +67,38 @@ package body Switches_Chooser is
    -- Free --
    ----------
 
+   procedure Free (Dep : in out Default_Value_Dependency) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Default_Value_Dependency_Record, Default_Value_Dependency);
+      Tmp : Default_Value_Dependency;
+   begin
+      while Dep /= null loop
+         Tmp := Dep.Next;
+         Unchecked_Free (Dep);
+         Dep := Tmp;
+      end loop;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Config : in out Switches_Editor_Config) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Switches_Editor_Config_Record, Switches_Editor_Config);
+      C : Switch_Description_Vectors.Cursor;
+      Dep : Default_Value_Dependency;
    begin
       if Config /= null then
+         C := First (Config.Switches);
+         while Has_Element (C) loop
+            if Element (C).Typ = Switch_Check then
+               Dep := Element (C).Dependencies;
+               Free (Dep);
+            end if;
+            Next (C);
+         end loop;
+
          Free (Config.Config);
          Free_List (Config.Dependencies);
          Unchecked_Free (Config);

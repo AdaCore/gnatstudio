@@ -1252,6 +1252,8 @@ procedure GPS.Main is
 
          Change_Dir (New_Dir);
 
+         Free (Parser);
+
          --  Load a dummy project, in case the wizard needs to be launched
 
          if not Auto_Load_Project and then not File_Opened then
