@@ -664,6 +664,13 @@ Known Problems fixed in GPS 4.3.0
   Workaround: Disable the synx higlighting by setting another language
               for the file.
 
+- E721-004: Lines cannot be removed after removing blank lines
+  Problem:    When an editor has "blank lines" (for instance when the editor
+              is part of a visual comparison), after these blank lines are
+              removed, some line breaks might be left read-only, making it
+              impossible to remove it using the backspace/delete keys.
+  Workaround: Close the editor and reopen it.
+
 - E703-001: Empty revision log when multiple files selected
   Problem:    It is possible to have an empty revision log when
               committing multiple files selected on the VCS Explorer.
