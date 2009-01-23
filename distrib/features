@@ -1,8 +1,8 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Jan 22, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Jan 23, 2009
 ====================================================
 
-Copyright (c) 2007-2008, AdaCore
+Copyright (c) 2007-2009, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -14,6 +14,11 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-I119-037 New plug-in: tab_expansion.py (2009-01-23)
+
+   A new optional plug-in is provided with GPS that redefines the TAB key
+   in Ada source editors to generate space characters.
 
 NF-44-I116-026 Fixing "abstract must come before new" (2009-01-19)
 
