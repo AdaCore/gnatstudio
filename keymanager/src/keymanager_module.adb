@@ -1191,7 +1191,7 @@ package body KeyManager_Module is
                                   Repeat_Count => R,
                                   Remaining_Repeat =>
                                     Keymanager_Module.Repeat_Count - R)),
-                              Destroy_On_Exit => False,
+                              Destroy_On_Exit => True,
                               Active          => True,
                               Show_Bar        => False,
                               Queue_Id        => "");

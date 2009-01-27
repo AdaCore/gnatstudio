@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +90,8 @@ package GPS.Kernel.Actions is
    --  Lookup a command by name. Return null if no such action has been
    --  registered.
    --  If Name represents the absolute path to a menu (starting with /), then
-   --  an action is created dynamically as appropriate.
+   --  an action is created dynamically as appropriate (but doesn't need to
+   --  be freed explicitly by the caller)
 
    type Action_Iterator is private;
 

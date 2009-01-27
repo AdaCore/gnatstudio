@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,17 @@ package body GPS.Kernel.Actions is
    overriding function Execute
      (Command : access Menu_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding procedure Free (X : in out Menu_Command_Record);
    --  See doc for interactive commands
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (X : in out Menu_Command_Record) is
+   begin
+      Free (X.Menu_Name);
+   end Free;
 
    -------------
    -- Execute --
@@ -288,6 +298,7 @@ package body GPS.Kernel.Actions is
             Command := new Menu_Command_Record;
             Command.Kernel    := Kernel_Handle (Kernel);
             Command.Menu_Name := new String'(Name);
+            Register_Perma_Command (Kernel, Command);
 
             Action := new Action_Record'
               (Command     => Interactive_Command_Access (Command),
