@@ -83,10 +83,10 @@ package body System.Memory is
    type Traceback_Htable_Elem_Ptr is access Traceback_Htable_Elem;
 
    type Traceback_Htable_Elem is record
-      Traceback : Tracebacks_Array_Access;
-      Count     : Natural;
-      Total     : Byte_Count;
-      Next      : Traceback_Htable_Elem_Ptr;
+      Traceback     : Tracebacks_Array_Access;
+      Current_Count : Natural;    --  number of live allocations
+      Total         : Byte_Count; --  currently allocated memory
+      Next          : Traceback_Htable_Elem_Ptr;
    end record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -257,27 +257,27 @@ package body System.Memory is
                Elem := new Traceback_Htable_Elem'
                  (Traceback =>
                   new Tracebacks_Array'(Trace (Trace'First + 2 .. Len)),
-                  Count     => 1,
-                  Total     => Byte_Count (Size),
-                  Next      => null);
+                  Current_Count => 1,
+                  Total         => Size_Was,
+                  Next          => null);
                Backtrace_Htable.Set (Elem);
             else
-               Elem.Count := Elem.Count + 1;
-               Elem.Total := Elem.Total + Byte_Count (Size);
+               Elem.Current_Count := Elem.Current_Count + 1;
+               Elem.Total         := Elem.Total + Size_Was;
             end if;
 
             Chunks_Htable.Set
               (Ptr, (Total => Size_Was, Alloc_Backtrace => Elem));
 
          when Deallocation =>
-            Chunk   := Chunks_Htable.Get (Ptr);
-            Size_Was := Chunk.Total;
-            Elem := Chunk.Alloc_Backtrace;
-            Elem.Count := Elem.Count - 1;
-            Elem.Total := Elem.Total - Size_Was;
+            Chunk              := Chunks_Htable.Get (Ptr);
+            Size_Was           := Chunk.Total;
+            Elem               := Chunk.Alloc_Backtrace;
+            Elem.Current_Count := Elem.Current_Count - 1;
+            Elem.Total         := Elem.Total - Size_Was;
             Chunks_Htable.Remove (Ptr);
 
-            if Elem.Count = 0 then
+            if Elem.Current_Count = 0 then
                Backtrace_Htable.Remove (Elem.Traceback);
                Unchecked_Free (Elem.Traceback);
                Unchecked_Free (Elem);
@@ -393,7 +393,10 @@ package body System.Memory is
    ----------
 
    procedure Dump (Size : Positive) is
-      Elem : Traceback_Htable_Elem_Ptr;
+      type Sort_Type is (Memory_Usage, Allocations_Count);
+
+      Elem   : Traceback_Htable_Elem_Ptr;
+      Bigger : Boolean;
 
       Max  : array (1 .. Size) of Traceback_Htable_Elem_Ptr :=
         (others => null);
@@ -416,41 +419,65 @@ package body System.Memory is
                 & " chunks");
       Put_Line ("Ada High watermark: " & High_Watermark'Img);
 
-      Put_Line (Size'Img & " biggest memory users at this time:");
+      for Sort in Sort_Type loop
+         New_Line;
+         case Sort is
+            when Memory_Usage =>
+               Put_Line
+                 (Size'Img & " biggest memory users at this time:");
+            when Allocations_Count =>
+               Put_Line
+                 (Size'Img & " biggest number of live allocations:");
+         end case;
 
-      Elem := Backtrace_Htable.Get_First;
-      while Elem /= null loop
-         --  Ignore if number of allocs is 1, it will never be the biggest
-         --  user for a real application.
-         if Elem.Count /= 1 then
-            for M in Max'Range loop
-               if Max (M) = null or else Max (M).Total < Elem.Total then
-                  Max (M + 1 .. Max'Last) := Max (M .. Max'Last - 1);
-                  Max (M) := Elem;
-                  exit;
-               end if;
-            end loop;
-         end if;
-         Elem := Backtrace_Htable.Get_Next;
-      end loop;
+         Elem := Backtrace_Htable.Get_First;
+         while Elem /= null loop
+            --  Ignore if number of allocs is 1, it will never be the biggest
+            --  user for a real application.
+            if Elem.Current_Count /= 1
+              and then Elem.Total /= 0
+            then
+               for M in Max'Range loop
 
-      for M in Max'Range loop
-         exit when Max (M) = null;
-         declare
-            type Percent is delta 0.1 range 0.0 .. 100.0;
-            P : constant Percent := Percent
-              (100.0 * Float (Max (M).Total)
-               / Float (Total_Allocs - Total_Free));
-         begin
-            Put (P'Img & "%:" & Max (M).Total'Img & " bytes in"
-              & Max (M).Count'Img & " chunks at");
-         end;
+                  Bigger := Max (M) = null;
+                  if not Bigger then
+                     case Sort is
+                        when Memory_Usage =>
+                           Bigger := Max (M).Total < Elem.Total;
+                        when Allocations_Count =>
+                           Bigger :=
+                             Max (M).Current_Count < Elem.Current_Count;
+                     end case;
+                  end if;
 
-         for J in Max (M).Traceback'Range loop
-            Put (" 0x" & Address_Image (PC_For (Max (M).Traceback (J))));
+                  if Bigger then
+                     Max (M + 1 .. Max'Last) := Max (M .. Max'Last - 1);
+                     Max (M) := Elem;
+                     exit;
+                  end if;
+               end loop;
+            end if;
+            Elem := Backtrace_Htable.Get_Next;
          end loop;
 
-         New_Line;
+         for M in Max'Range loop
+            exit when Max (M) = null;
+            declare
+               type Percent is delta 0.1 range 0.0 .. 100.0;
+               P : constant Percent := Percent
+                 (100.0 * Float (Max (M).Total)
+                  / Float (Total_Allocs - Total_Free));
+            begin
+               Put (P'Img & "%:" & Max (M).Total'Img & " bytes in"
+                    & Max (M).Current_Count'Img & " chunks at");
+            end;
+
+            for J in Max (M).Traceback'Range loop
+               Put (" 0x" & Address_Image (PC_For (Max (M).Traceback (J))));
+            end loop;
+
+            New_Line;
+         end loop;
       end loop;
    end Dump;
 
