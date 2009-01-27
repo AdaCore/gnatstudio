@@ -1148,8 +1148,7 @@ package body Entities is
    -----------
 
    procedure Reset (Db : Entities_Database) is
-
-      procedure Fast_Reset (File : Source_File);
+      procedure Fast_Reset (File : in out Source_File);
       --  Free the memory occupied by File and its entities. No attempt is made
       --  to respect the reference counter of the entities, and therefore all
       --  existing Entity_Information become obsolete.
@@ -1159,7 +1158,7 @@ package body Entities is
       -- Fast_Reset --
       ----------------
 
-      procedure Fast_Reset (File : Source_File) is
+      procedure Fast_Reset (File : in out Source_File) is
          Iter : Entities_Hash.Iterator;
          UEI  : Entity_Informations;
          EL   : Entity_Information_List_Access;
@@ -1199,26 +1198,19 @@ package body Entities is
 
          Reset (File.All_Entities);
          Reset (File.Entities);
+         Free (File.Instantiations);
          Free (File.Depends_On);
          Free (File.Depended_On);
       end Fast_Reset;
 
-      Iter : Files_HTable.Iterator;
-      File : Source_File_Item;
    begin
-      Get_First (Db.Files, Iter);
-      loop
-         File := Get_Element (Iter);
-         exit when File = null;
-         Get_Next (Db.Files, Iter);
-         Fast_Reset (File.File);
-      end loop;
-
-      --  Do not reset Db.Files: this results in invalid memory accesses
-      --  when Ada is finalized
-      --  Reset (Db.Files);
-
+      --  Reset Lis first, since this will indirectly change a field in the
+      --  source files (which are therefore better kept in memory in the
+      --  meantime)
       Reset (Db.LIs);
+
+      Foreach_Source_File (Db, Fast_Reset'Access);
+      Reset (Db.Files);
    end Reset;
 
    -------------------------
@@ -1299,7 +1291,7 @@ package body Entities is
          Set (Db.Files, S);
 
          if LI /= null then
-            Append (LI.Files, S.File);
+            Append (LI.Files, F);
          end if;
 
       else
