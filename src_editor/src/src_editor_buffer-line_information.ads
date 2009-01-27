@@ -78,13 +78,31 @@ package Src_Editor_Buffer.Line_Information is
 
    function Add_Blank_Lines
      (Buffer             : access Source_Buffer_Record'Class;
+      Line               : Buffer_Line_Type;
+      EL                 : Editable_Line_Type;
+      Highlight_Category : Integer;
+      Text               : String;
+      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Add Text at line Line, as a special line.
+   --  Blank lines cannot be edited, and are not saved on disk.
+   --  EL indicates the first editable line which will be after the insertion
+
+   function Add_Special_Blank_Lines
+     (Buffer             : access Source_Buffer_Record'Class;
+      Line               : Editable_Line_Type;
+      Highlight_Category : Integer;
+      Number             : Natural;
+      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Add Number blank special lines.
+
+   function Add_Special_Lines
+     (Buffer             : access Source_Buffer_Record'Class;
       Line               : Editable_Line_Type;
       Highlight_Category : Integer;
       Text               : String;
-      Number             : Positive;
       Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Add Number blank lines at line Line.
-   --  Blank lines cannot be edited, and are not saved on disk.
+   --  Same as Add_Blank_Lines above, but return a Marker_Id for the created
+   --  mark.
 
    function Create_Mark
      (Buffer : access Source_Buffer_Record'Class;
@@ -113,15 +131,15 @@ package Src_Editor_Buffer.Line_Information is
 
    procedure Hide_Lines
      (Buffer : access Source_Buffer_Record'Class;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Line   : Buffer_Line_Type;
       Number : Editable_Line_Type);
    --  Hide Number editable lines from Mark
 
    procedure Unhide_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
-   --  Unhide editable lines that are hidden between the line that Mark is on
-   --  and the following line.
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type);
+   --  Write after Start_Line the lines stored in the corresponding editable
+   --  line.
 
    procedure Add_Block_Command
      (Buffer        : access Source_Buffer_Record'Class;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -96,23 +96,13 @@ package body Commands.Editor is
 
    overriding procedure Free (X : in out Unhide_Editable_Lines_Type) is
    begin
-      if not Get_Deleted (X.Mark) then
-         Delete_Mark (X.Buffer, X.Mark);
-      end if;
+      null;
    end Free;
 
    overriding procedure Free (X : in out Hide_Editable_Lines_Type) is
+      pragma Unreferenced (X);
    begin
-      --  We do not want to free marks when the buffer is being destroyed,
-      --  because, in this case, the reference count for Buffer is set to 0,
-      --  and it therefore not possible to emit a signal using this buffer,
-      --  and Delete_Mark has the side effect of emitting a signal on the
-      --  buffer
-      if not Get_Deleted (X.Mark)
-        and then not In_Destruction_Is_Set (X.Buffer)
-      then
-         Delete_Mark (X.Buffer, X.Mark);
-      end if;
+      null;
    end Free;
 
    ---------------------
@@ -526,7 +516,7 @@ package body Commands.Editor is
       return Command_Return_Type is
    begin
       if Get_Constructs_State (Command.Buffer) >= Line_Exact then
-         Hide_Lines (Command.Buffer, Command.Mark, Command.Number);
+         Hide_Lines (Command.Buffer, Command.Base_Line, Command.Number);
       end if;
 
       return Success;
@@ -540,7 +530,9 @@ package body Commands.Editor is
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type is
    begin
-      Unhide_Lines (Command.Buffer, Command.Mark);
+      Unhide_Lines
+        (Command.Buffer,
+         Get_Editable_Line (Command.Buffer, Command.Base_Line));
 
       return Success;
    end Execute;

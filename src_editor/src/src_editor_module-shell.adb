@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,10 +59,13 @@ with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Src_Contexts;              use Src_Contexts;
 with Src_Editor_Box;            use Src_Editor_Box;
+
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;
 use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Buffer.Debug;
+
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
@@ -1654,10 +1657,10 @@ package body Src_Editor_Module.Shell is
                if Line >= 0 and then Number > 0 then
                   Marker := Create_File_Marker
                     (Kernel, Filename,
-                     Add_Blank_Lines
+                     Add_Special_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
-                        Highlight_Category, "", Number, ""));
+                        Highlight_Category, Number, ""));
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
             else
@@ -2423,7 +2426,6 @@ package body Src_Editor_Module.Shell is
                Highlight_Category : Natural := 0;
                Style              : Style_Access;
                Name               : GNAT.OS_Lib.String_Access;
-
             begin
                if Number_Of_Arguments (Data) >= 4
                  and then Nth_Arg (Data, 4) /= ""
@@ -2448,12 +2450,11 @@ package body Src_Editor_Module.Shell is
                   Name := new String'("");
                end if;
 
-               Mark := Add_Blank_Lines
+               Mark := Add_Special_Lines
                  (Buffer,
                   Editable_Line_Type (Line),
                   Highlight_Category,
                   Text,
-                  1,
                   Name.all);
 
                Free (Name);
@@ -3690,6 +3691,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "set_title", 2, 2, Edit_Command_Handler'Access,
          Editor_Class, True);
+
+      --  Register the debug commands
+      Src_Editor_Buffer.Debug.Register (Kernel);
    end Register_Commands;
 
 end Src_Editor_Module.Shell;

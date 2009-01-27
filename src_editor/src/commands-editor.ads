@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2008, AdaCore                --
+--                   Copyright (C) 2002-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,13 +27,20 @@ with GNAT.Strings;
 
 package Commands.Editor is
 
-   type Editor_Command_Type is new Root_Command with private;
+   type Base_Editor_Command_Type is abstract new Root_Command with record
+      Base_Line : Buffer_Line_Type;
+      --  This field is guaranteed to be set to the line number corresponding
+      --  to the line number right before the command is executed.
+   end record;
+   type Base_Editor_Command is access all Base_Editor_Command_Type;
+
+   type Editor_Command_Type is new Base_Editor_Command_Type with private;
    type Editor_Command is access all Editor_Command_Type;
 
-   type Editor_Replace_Slice_Type is new Root_Command with private;
+   type Editor_Replace_Slice_Type is new Base_Editor_Command_Type with private;
    type Editor_Replace_Slice is access all Editor_Replace_Slice_Type;
 
-   type Check_Modified_State_Type is new Root_Command with private;
+   type Check_Modified_State_Type is new Base_Editor_Command_Type with private;
    type Check_Modified_State is access all Check_Modified_State_Type;
 
    type Remove_Blank_Lines_Command_Type is new Root_Command with record
@@ -44,19 +51,16 @@ package Commands.Editor is
    type Remove_Blank_Lines_Command is access
      all Remove_Blank_Lines_Command_Type;
 
-   type Hide_Editable_Lines_Type is new Root_Command with record
+   type Hide_Editable_Lines_Type is new Base_Editor_Command_Type with record
       Buffer : Source_Buffer;
-      Mark   : Gtk_Text_Mark;
       Number : Editable_Line_Type;
    end record;
    type Hide_Editable_Lines_Command is access all Hide_Editable_Lines_Type;
 
-   type Unhide_Editable_Lines_Type is new Root_Command with record
+   type Unhide_Editable_Lines_Type is new Base_Editor_Command_Type with record
       Buffer     : Source_Buffer;
-      Mark       : Gtk_Text_Mark;
-      First_Line : Editable_Line_Type;
-      Last_Line  : Editable_Line_Type;
    end record;
+
    type Unhide_Editable_Lines_Command is access all Unhide_Editable_Lines_Type;
 
    overriding function Execute
@@ -169,12 +173,12 @@ package Commands.Editor is
 
 private
 
-   type Check_Modified_State_Type is new Root_Command with record
+   type Check_Modified_State_Type is new Base_Editor_Command_Type with record
       Buffer      : Source_Buffer;
       Check_Queue : Command_Queue;
    end record;
 
-   type Editor_Command_Type is new Root_Command with record
+   type Editor_Command_Type is new Base_Editor_Command_Type with record
       Buffer                    : Source_Buffer;
       Current_Text              : GNAT.Strings.String_Access;
       Current_Text_Total_Length : Natural := 512;
@@ -189,7 +193,7 @@ private
       Cursor_Column             : Character_Offset_Type;
    end record;
 
-   type Editor_Replace_Slice_Type is new Root_Command with record
+   type Editor_Replace_Slice_Type is new Base_Editor_Command_Type with record
       Buffer            : Source_Buffer;
 
       Start_Line        : Editable_Line_Type;

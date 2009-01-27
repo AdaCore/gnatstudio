@@ -2441,7 +2441,9 @@ package body Src_Editor_Buffer is
       Buffer.Editable_Lines (1) :=
         (Where          => In_Buffer,
          Buffer_Line    => 1,
-         Side_Info_Data => null);
+         Side_Info_Data => null,
+         Stored_Lines   => Lines_List.Empty_List,
+         Stored_Editable_Lines => 0);
 
       --  ??? create line info (above)
 
@@ -2796,7 +2798,9 @@ package body Src_Editor_Buffer is
          Buffer.Editable_Lines (1) :=
            (Where          => In_Buffer,
             Buffer_Line    => 1,
-            Side_Info_Data => null);
+            Side_Info_Data => null,
+            Stored_Lines   => Lines_List.Empty_List,
+            Stored_Editable_Lines => 0);
 
          Buffer.Line_Data := new Line_Data_Array (1 .. 1);
          Buffer.Line_Data (1) := New_Line_Data;

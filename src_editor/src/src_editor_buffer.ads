@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@
 --  </description>
 
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Calendar;
 with System;
 
@@ -986,28 +987,21 @@ private
    --  Signal the new cursor position by emitting the "cursor_position_changed"
    --  signal.
 
-   -----------------------
-   -- Line highlighting --
-   -----------------------
+   ---------------
+   -- Line data --
+   ---------------
 
    type Block_Access is access Block_Record;
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Boolean_Array, Boolean_Array_Access);
-
-   New_Block : constant Block_Record :=
-     (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
-
-   procedure Create_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type);
-   --  Create blank Side_Info_Data
-
    type Line_Data_Record is record
       Editable_Line      : Editable_Line_Type;
       --  The line in the real buffer
+
+      Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The mark used for referencing special lines, for example.
+      --  -1 if there is no marker for this line.
 
       --  The following corresponds to line highlighting. This is the category
       --  to use for highlighting. We cannot store the GC directly, since GPS
@@ -1037,8 +1031,23 @@ private
       --  of Mark_In_Speedbar in the category, though.
    end record;
 
+   -----------------------
+   -- Line highlighting --
+   -----------------------
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Boolean_Array, Boolean_Array_Access);
+
+   New_Block : constant Block_Record :=
+     (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
+
+   procedure Create_Side_Info
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type);
+   --  Create blank Side_Info_Data
+
    New_Line_Data : constant Line_Data_Record :=
-     (0, 0, null, null, 0, (others => False));
+     (0, null, 0, null, null, 0, (others => False));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
@@ -1057,6 +1066,30 @@ private
    --  Free memory associated to X
 
    --------------------
+   -- Universal line --
+   --------------------
+
+   --  An universal line can store either a special line or an editable line
+
+   type Line_Nature is (Editable, Special);
+
+   type Universal_Line is record
+      Nature : Line_Nature;
+      Data   : Line_Data_Record;
+
+      Text               : GNAT.Strings.String_Access;
+      --  The text contained in the original special line
+
+      Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  The mark used for referencing special lines, for example.
+
+      --  ??? Need to store the line category
+   end record;
+
+   package Lines_List is new Ada.Containers.Doubly_Linked_Lists
+     (Universal_Line);
+
+   --------------------
    -- Editable lines --
    --------------------
 
@@ -1066,6 +1099,13 @@ private
       Side_Info_Data : Line_Info_Width_Array_Access;
       --  The array corresponding to information to be displayed in columns,
       --  indexed on columns.
+
+      Stored_Lines   : Lines_List.List;
+      --  The list of stored lines
+
+      Stored_Editable_Lines : Natural := 0;
+      --  Caches the number of editable lines stored in Stored_Lines,
+      --  recursively.
 
       case Where is
          when In_Buffer =>

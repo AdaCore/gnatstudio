@@ -834,12 +834,11 @@ package body Src_Editor_Module.Editors is
                end if;
             end if;
 
-            Mark := Add_Blank_Lines
+            Mark := Add_Special_Lines
               (This.Buffer,
                Editable_Line_Type (Start_Line),
                Highlight_Category,
                Text,
-               1,
                Name);
 
             return Create_Editor_Mark (This, Mark);

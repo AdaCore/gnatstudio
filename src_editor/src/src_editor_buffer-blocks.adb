@@ -144,7 +144,6 @@ package body Src_Editor_Buffer.Blocks is
                      Command.Buffer := Source_Buffer (Buffer);
                      Get_Iter_At_Line
                        (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
-                     Command.Mark   := Create_Mark (Buffer, "", Iter);
                      Command.Number := Editable_Line_Type
                        (Current.Sloc_End.Line - Current.Sloc_Start.Line);
 
