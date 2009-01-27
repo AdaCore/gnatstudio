@@ -299,9 +299,6 @@ package body Src_Editor_Buffer.Debug is
         (Kernel, "debug_dump_editable_lines",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_side_info",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
-      Register_Command
         (Kernel, "debug_dump_all_lines",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
