@@ -5297,6 +5297,21 @@ A number of predefined overlay exits. Among these are the ones used for syntax h
       <see_also name="GPS.EditorBuffer.is_read_only" />
   </shell_doc>
 
+  <shell_doc name="GPS.EditorBuffer.debug_dump_editable_lines">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <description>(Debug function) dump the structure of editable lines.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.debug_dump_buffer_lines">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <description>(Debug function) dump the structure of buffer lines.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.EditorBuffer.debug_dump_all_lines">
+      <param name="self">An instance of GPS.EditorBuffer</param>
+      <description>(Debug function) dump the structure of all lines in buffer.</description>
+  </shell_doc>
+
   <!--#################################################################
       ### EditorView class
       #################################################################-->
