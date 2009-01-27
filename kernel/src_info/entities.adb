@@ -1214,7 +1214,10 @@ package body Entities is
          Fast_Reset (File.File);
       end loop;
 
-      Reset (Db.Files);
+      --  Do not reset Db.Files: this results in invalid memory accesses
+      --  when Ada is finalized
+      --  Reset (Db.Files);
+
       Reset (Db.LIs);
    end Reset;
 
