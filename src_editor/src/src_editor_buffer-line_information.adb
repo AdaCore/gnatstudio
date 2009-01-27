@@ -62,7 +62,8 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Remove_Blank_Lines
      (Buffer                : access Source_Buffer_Record'Class;
       Buffer_Line_At_Blanks : Buffer_Line_Type;
-      Number                : Natural);
+      Number                : Natural;
+      Shift                 : Boolean := True);
    --  Remove Number blank lines at Buffer_Line_At_Blanks. If Number = 0,
    --  remove all continuous blank lines at Buffer_Lines_At_Blanks.
 
@@ -850,6 +851,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       Mark := Create_Mark (Buffer, Name, Iter);
 
+      --  Store a reference to the mark in the Line_Data.
+      Buffer.Line_Data (Line).Line_Mark := Mark;
+
       Buffer.Modifying_Real_Lines := False;
 
       return Mark;
@@ -866,7 +870,7 @@ package body Src_Editor_Buffer.Line_Information is
       Number             : Natural;
       Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      LFs : constant String (1 .. Number) := (others => ASCII.LF);
+      LFs : constant String (1 .. Number - 1) := (others => ASCII.LF);
    begin
       return Add_Special_Lines (Buffer, Line, Highlight_Category, LFs, Name);
    end Add_Special_Blank_Lines;
@@ -1154,8 +1158,12 @@ package body Src_Editor_Buffer.Line_Information is
       --  actually removed is dependent on folded or hidden lines.
 
       if not Lines_Are_Real (Buffer) then
-         EN := Buffer_Lines (End_Line).Editable_Line -
-           Buffer_Lines (Start_Line).Editable_Line;
+         EN := 0;
+         for J in Start_Line .. End_Line loop
+            if Buffer_Lines (J).Editable_Line /= 0 then
+               EN := EN + 1;
+            end if;
+         end loop;
       end if;
 
       for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
@@ -1227,7 +1235,8 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Remove_Blank_Lines
      (Buffer                : access Source_Buffer_Record'Class;
       Buffer_Line_At_Blanks : Buffer_Line_Type;
-      Number                : Natural)
+      Number                : Natural;
+      Shift                 : Boolean := True)
    is
       Iter     : Gtk_Text_Iter;
       End_Iter : Gtk_Text_Iter;
@@ -1286,18 +1295,20 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Inserting := False;
       Buffer.Modifying_Editable_Lines := True;
 
-      for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
-         if Buffer_Lines (J).Editable_Line /= 0
-           and then Editable_Lines
-             (Buffer_Lines (J).Editable_Line).Where = In_Buffer
-           and then Editable_Lines
-             (Buffer_Lines (J).Editable_Line).Buffer_Line /= 0
-         then
-            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
-              Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
-              - Real_Number;
-         end if;
-      end loop;
+      if Shift then
+         for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
+            if Buffer_Lines (J).Editable_Line /= 0
+              and then Editable_Lines
+                (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+              and then Editable_Lines
+                (Buffer_Lines (J).Editable_Line).Buffer_Line /= 0
+            then
+               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
+                 Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
+                 - Real_Number;
+            end if;
+         end loop;
+      end if;
 
       --  Redraw the side column
 
@@ -1377,7 +1388,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command := new Unhide_Editable_Lines_Type;
 
-      while EL <= Line_End loop
+      while Number_Of_Lines_Folded <= Natural (Number) loop
          declare
             The_Line : Universal_Line;
             The_Text : String_Access;
@@ -1396,7 +1407,11 @@ package body Src_Editor_Buffer.Line_Information is
                --  We are in a special line
                The_Line.Nature := Special;
                The_Line.Text := The_Text;
+               The_Line.Line_Mark := Buffer.Line_Data (Buffer_Line).Line_Mark;
 
+               --  Remove the line from the screen
+
+               Remove_Blank_Lines (Buffer, Buffer_Line, 1, Shift => False);
             else
                --  We are in an editable line
                The_Line.Nature := Editable;
@@ -1417,7 +1432,7 @@ package body Src_Editor_Buffer.Line_Information is
                                  Stored_Editable_Lines => Editable_Lines
                                    (EL).Stored_Editable_Lines);
                begin
-                  --  ??? NICO could we simplify this?
+                  --  ??? Could we simplify this?
                   Line_Data.Text := The_Text;
                   Editable_Lines (EL) := Line_Data;
 
@@ -1426,23 +1441,23 @@ package body Src_Editor_Buffer.Line_Information is
                end;
 
                Number_Of_Lines_Folded := Number_Of_Lines_Folded + 1;
+
+               --  Remove the line from the screen
+
+               Forward_Char (End_Iter, Result);
+
+               Buffer.Modifying_Editable_Lines := False;
+               Buffer.Inserting := True;
+               Buffer.Blocks_Timeout_Registered := True;
+               Delete (Buffer, Start_Iter, End_Iter);
+               Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
+               Buffer.Inserting := False;
+               Buffer.Modifying_Editable_Lines := True;
             end if;
 
             --  Add the line to the store
 
             Buffer.Editable_Lines (Line_Start).Stored_Lines.Append (The_Line);
-
-            --  Remove the line from the screen
-
-            Forward_Char (End_Iter, Result);
-
-            Buffer.Modifying_Editable_Lines := False;
-            Buffer.Inserting := True;
-            Buffer.Blocks_Timeout_Registered := True;
-            Delete (Buffer, Start_Iter, End_Iter);
-            Buffer.Blocks_Timeout_Registered := Blocks_Timeout;
-            Buffer.Inserting := False;
-            Buffer.Modifying_Editable_Lines := True;
 
             Number_Of_Lines_Removed := Number_Of_Lines_Removed + 1;
          end;
@@ -1577,18 +1592,28 @@ package body Src_Editor_Buffer.Line_Information is
 
             when Special =>
                declare
-                  M : Gtk_Text_Mark;
-                  pragma Unreferenced (M);
+                  M    : Gtk_Text_Mark;
+                  Iter : Gtk_Text_Iter;
                begin
-                  M := Add_Blank_Lines (Buffer             => Buffer,
-                                        Line               => Current_B,
-                                        EL                 => Current + 1,
-                                        Highlight_Category => 0,
-                                        Text               => U.Text.all,
-                                        Name               => "");
-                  --  ??? Here we should manipulate M so as to replace the
-                  --  mark in the context, so as to be able to call
-                  --  remove_blank_lines even after folding/unfolding.
+                  M := Add_Blank_Lines
+                    (Buffer             => Buffer,
+                     Line               => Current_B,
+                     EL                 => Current + 1,
+                     Highlight_Category => 0,
+                     Text               => U.Text.all,
+                     Name               => "");
+
+                  --  If the line previously contained a mark, move it to the
+                  --  location of the new mark.
+
+                  if U.Line_Mark /= null then
+                     Get_Iter_At_Mark (Buffer, Iter, M);
+                     Move_Mark (Buffer => Buffer,
+                                Mark   => U.Line_Mark,
+                                Where  => Iter);
+                  end if;
+
+                  Delete_Mark (Buffer, M);
                end;
          end case;
 
@@ -1696,8 +1721,12 @@ package body Src_Editor_Buffer.Line_Information is
               and then Command.all in Hide_Editable_Lines_Type'Class
             then
                if First_Line_Found then
+                  Base_Editor_Command (Command).Base_Line :=
+                    Buffer.Editable_Lines (Line).Buffer_Line;
+
                   Line := Line +
                     Hide_Editable_Lines_Type (Command.all).Number - 1;
+
                   Result := Execute (Command);
 
                   --  even though lines have been deleted, constructs info
