@@ -204,7 +204,7 @@ package body Src_Editor_Buffer.Debug is
                Prev := Recurse_Explore (Prev + 1, Level + 1);
             else
                Set_Return_Value
-                 (Data, "[" & I (Level) & "] special: " & U.Text.all);
+                 (Data, "[" & I (Level + 1) & "] special: " & U.Text.all);
             end if;
 
             Next (C);
