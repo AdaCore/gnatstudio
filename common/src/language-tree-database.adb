@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -767,7 +767,15 @@ package body Language.Tree.Database is
       elsif Right = null then
          return True;
       else
-         return Left.all'Address < Right.all'Address;
+         if Left.all.File = Right.all.File then
+            if Left.all.Index = Right.all.Index then
+               return Left.all'Address < Right.all'Address;
+            else
+               return Left.all.Index < Right.all.Index;
+            end if;
+         else
+            return Left.all.File < Right.all.File;
+         end if;
       end if;
    end "<";
 
