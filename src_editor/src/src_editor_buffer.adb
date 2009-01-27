@@ -3199,6 +3199,8 @@ package body Src_Editor_Buffer is
          Write (FD, S (1 .. Length));
       end if;
 
+      U_Buffer := Null_Unbounded_String;
+
       Close (FD);
 
       --  If the file could be saved, emit the corresponding signal.
