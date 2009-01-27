@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                Copyright (C) 2004-2008, AdaCore                   --
+--                Copyright (C) 2004-2009, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -114,7 +114,7 @@ package body XML_Readers is
         (Tag           => new String'(Qname),
          Attributes    => Attributes_From_List (Atts),
          Value         => new String'(""),
-         Parent        => Handler.Current_Node,
+         Parent        => null,
          Child         => null,
          Next          => null,
          Specific_Data => No_Specific_Data);
