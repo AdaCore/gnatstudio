@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.4.0
 
-- I128-028: && should be "and then" not correctly auto-fixed
+- I120-033: && should be "and then" not correctly auto-fixed
   Problem:    The auto-fix made for messages such as "&& should be "and then""
               is incorrect, it adds an unexpected quote at the location of the
               fix.
