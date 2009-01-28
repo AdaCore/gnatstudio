@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I128-028: && should be "and then" not correctly auto-fixed
+  Problem:    The auto-fix made for messages such as "&& should be "and then""
+              is incorrect, it adds an unexpected quote at the location of the
+              fix.
+  Workaround: Manually delete the extra quote.
+
 - I117-011: Fail to commit activities on Windows
   Problem:    GPS could fail to commit activities using Cygwin/Subversion
               on Windows when a filename is passed on the command line with
