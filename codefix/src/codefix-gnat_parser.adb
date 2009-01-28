@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,7 +118,7 @@ package body Codefix.GNAT_Parser is
    --  Problems of misspelling of packages
 
    type Sth_Should_Be_Sth is new Error_Parser
-     (new String'("Wrong_Keyword"), 3)
+     (new String'("Wrong_Keyword"), 4)
    with null record;
 
    overriding
@@ -1161,6 +1161,8 @@ package body Codefix.GNAT_Parser is
       This.Matcher :=
         (new Pattern_Matcher'
            (Compile ("""([^""]+)"" should be ""([^""]+)""")),
+         new Pattern_Matcher'
+           (Compile ("([^\w\s][^\s][^,]*) should be ""([^""]+)""")),
          new Pattern_Matcher'
            (Compile ("([^\w\s][^\s][^,]*) should be ([^\w\s][^\s]*)")),
          new Pattern_Matcher'
