@@ -30,7 +30,7 @@ with Code_Peer.Bridge.Commands;
 
 package body Code_Peer.Module.Bridge is
 
-   type Bridge_Mode is (Audit_Trail, Inspection);
+   type Bridge_Mode is (Add_Audit, Audit_Trail, Inspection);
 
    type Bridge_Context (Mode : Bridge_Mode) is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
@@ -41,7 +41,7 @@ package body Code_Peer.Module.Bridge is
          when Inspection =>
             null;
 
-         when Audit_Trail =>
+         when Add_Audit | Audit_Trail =>
             Message : Code_Peer.Message_Access;
       end case;
    end record;
@@ -52,6 +52,67 @@ package body Code_Peer.Module.Bridge is
      (Process : GPS.Kernel.Timeout.Process_Data;
       Status  : Integer);
    --  Called when gps_codepeer_bridge program execution is done
+
+   ----------------------
+   -- Add_Audit_Record --
+   ----------------------
+
+   procedure Add_Audit_Record
+     (Module  : Code_Peer.Module.Code_Peer_Module_Id;
+      Message : Code_Peer.Message_Access)
+   is
+      Project           : constant Projects.Project_Type :=
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Project_Name      : constant String := Projects.Project_Name (Project);
+      Object_Directory  : constant String :=
+        Projects.Object_Path (Project, False);
+      Output_Directory  : constant String :=
+        Ada.Directories.Compose
+          (Object_Directory, Project_Name, "output");
+      Command_File_Name : constant String :=
+        Ada.Directories.Compose
+          (Object_Directory, "bridge_in", "xml");
+      Args              : GNAT.OS_Lib.Argument_List :=
+        (1 => new String'(Command_File_Name));
+      Success           : Boolean;
+      pragma Warnings (Off, Success);
+
+   begin
+      --  Generate command file
+
+      if Message.Audit.First_Element.Probability_Changed then
+         Code_Peer.Bridge.Commands.Add_Audit_Record
+           (Command_File_Name,
+            Output_Directory,
+            Message.Id,
+            True,
+            Message.Audit.First_Element.Probability,
+            Message.Audit.First_Element.Comment.all);
+
+      else
+         Code_Peer.Bridge.Commands.Add_Audit_Record
+           (Command_File_Name,
+            Output_Directory,
+            Message.Id,
+            False,
+            Code_Peer.High,
+            Message.Audit.First_Element.Comment.all);
+      end if;
+
+      --  Run gps_codepeer_bridge
+
+      GPS.Kernel.Timeout.Launch_Process
+        (Kernel        => GPS.Kernel.Kernel_Handle (Module.Kernel),
+         Command       => "gps_codepeer_bridge",
+         Arguments     => Args,
+         Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
+         Directory     => Object_Directory,
+         Callback_Data =>
+           new Bridge_Context'(Add_Audit, Module, null, Message),
+         Success       => Success,
+         Exit_Cb       => On_Bridge_Exit'Access);
+      GNATCOLL.Utils.Free (Args);
+   end Add_Audit_Record;
 
    -------------
    -- Destroy --
@@ -127,6 +188,9 @@ package body Code_Peer.Module.Bridge is
             when Audit_Trail =>
                Context.Module.Review_Message
                  (Context.Message, Context.File_Name.all);
+
+            when Add_Audit =>
+               null;
          end case;
       end if;
    end On_Bridge_Exit;

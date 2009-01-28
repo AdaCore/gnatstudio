@@ -29,13 +29,13 @@ package Code_Peer.Bridge.Audit_Trail_Readers is
    procedure Parse
      (Self   : in out Reader;
       Input  : in out Input_Sources.Input_Source'Class;
-      Audit  : out Code_Peer.Audit_Trail);
+      Audit  : out Code_Peer.Audit_Vectors.Vector);
 
 private
 
    type Reader is new Sax.Readers.Reader with record
-      Audit                 : Code_Peer.Audit_Trail;
-      Audit_Record          : Code_Peer.Audit_Access;
+      Audit                 : Code_Peer.Audit_Vectors.Vector;
+      Audit_Record          : Code_Peer.Audit_Record_Access;
    end record;
 
    overriding procedure Start_Element

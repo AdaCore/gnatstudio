@@ -17,6 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar.Formatting;
+with Interfaces.C.Strings;
+with System;
+
 with Glib.Object;
 with Gtk.Button;
 with Gtk.Cell_Layout;
@@ -28,6 +32,7 @@ with Gtk.Label;
 with Gtk.Scrolled_Window;
 with Gtk.Stock;
 with Gtk.Table;
+with Gtk.Text_Iter;
 with Gtk.Text_View;
 with Gtk.Tree_Model;
 with Gtk.Tree_Store;
@@ -40,12 +45,12 @@ with GPS.Intl; use GPS.Intl;
 package body Code_Peer.Message_Review_Dialogs is
 
    Probability_Model_Label_Column     : constant := 0;
-   Probability_Model_Unchanged_Column : constant := 1;
+   Probability_Model_Changed_Column : constant := 1;
    Probability_Model_New_Level_Column : constant := 2;
 
    Probability_Model_Types : constant Glib.GType_Array :=
      (Probability_Model_Label_Column     => Glib.GType_String,
-      Probability_Model_Unchanged_Column => Glib.GType_Boolean,
+      Probability_Model_Changed_Column => Glib.GType_Boolean,
       Probability_Model_New_Level_Column => Glib.GType_Int);
 
    History_Model_Timestamp_Column   : constant := 0;
@@ -69,17 +74,30 @@ package body Code_Peer.Message_Review_Dialogs is
      (Object : access Glib.Object.GObject_Record'Class;
       Self   : Message_Review_Dialog);
 
+   procedure Emit_By_Name
+     (Object : System.Address;
+      Name   : Glib.Signal_Name);
+   pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
+
+   Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
+
+   Signals : constant Interfaces.C.Strings.chars_ptr_array :=
+     (1 => Interfaces.C.Strings.New_String (String (Signal_Ok_Activated)));
+
+   Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
+     (1 => (1 => Glib.GType_None));
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Dialog : in out Message_Review_Dialog;
-      Audit  : Code_Peer.Audit_Trail)
+     (Dialog  : in out Message_Review_Dialog;
+      Message : Code_Peer.Message_Access)
    is
    begin
       Dialog := new Message_Review_Dialog_Record;
-      Initialize (Dialog, Audit);
+      Initialize (Dialog, Message);
    end Gtk_New;
 
    ----------------
@@ -87,8 +105,8 @@ package body Code_Peer.Message_Review_Dialogs is
    ----------------
 
    procedure Initialize
-     (Self  : not null access Message_Review_Dialog_Record'Class;
-      Audit : Code_Peer.Audit_Trail)
+     (Self    : not null access Message_Review_Dialog_Record'Class;
+      Message : Code_Peer.Message_Access)
    is
       Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Text_View     : Gtk.Text_View.Gtk_Text_View;
@@ -140,7 +158,7 @@ package body Code_Peer.Message_Review_Dialogs is
       -------------------
 
       procedure Process_Audit (Position : Code_Peer.Audit_Vectors.Cursor) is
-         Audit : constant Code_Peer.Audit_Access :=
+         Audit : constant Code_Peer.Audit_Record_Access :=
                    Code_Peer.Audit_Vectors.Element (Position);
 
       begin
@@ -171,7 +189,15 @@ package body Code_Peer.Message_Review_Dialogs is
 
    begin
       Gtk.Dialog.Initialize (Self);
+      Glib.Object.Initialize_Class_Record
+        (Self,
+         Signals,
+         Class_Record,
+         "CodePeerMessageReviewDialog",
+         Signal_Parameters);
       Self.Set_Title (-"CodePeer message review");
+
+      Self.Message := Message;
 
       Gtk.Table.Gtk_New (Table, 2, 3, False);
       Self.Get_Vbox.Pack_Start (Table, False, False);
@@ -181,7 +207,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.GEntry.Gtk_New (Text_Entry);
       Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Probability_Image (Audit.Computed_Probability));
+      Text_Entry.Set_Text (Probability_Image (Message.Computed_Probability));
       Table.Attach (Text_Entry, 1, 2, 0, 1);
 
       Gtk.Label.Gtk_New (Label, "Current probability");
@@ -189,18 +215,18 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.GEntry.Gtk_New (Text_Entry);
       Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Probability_Image (Audit.Current_Probability));
+      Text_Entry.Set_Text (Probability_Image (Message.Current_Probability));
       Table.Attach (Text_Entry, 1, 2, 1, 2);
 
       --  New probability combobox and underling model
 
       Gtk.Label.Gtk_New (Label, "New probability:");
---        Table.Attach (Label, 0, 1, 2, 3);
+      Table.Attach (Label, 0, 1, 2, 3);
 
       Gtk.Tree_Store.Gtk_New (Store, Probability_Model_Types);
 
       Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Probability, Store);
---        Table.Attach (Self.New_Probability, 1, 2, 2, 3);
+      Table.Attach (Self.New_Probability, 1, 2, 2, 3);
 
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Gtk.Cell_Layout.Pack_Start
@@ -213,12 +239,12 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Unchanged");
-      Store.Set (Iter, Probability_Model_Unchanged_Column, True);
+      Store.Set (Iter, Probability_Model_Changed_Column, False);
       Self.New_Probability.Set_Active_Iter (Iter);
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Low");
-      Store.Set (Iter, Probability_Model_Unchanged_Column, False);
+      Store.Set (Iter, Probability_Model_Changed_Column, True);
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
@@ -226,7 +252,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Medium");
-      Store.Set (Iter, Probability_Model_Unchanged_Column, False);
+      Store.Set (Iter, Probability_Model_Changed_Column, True);
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
@@ -234,7 +260,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"High");
-      Store.Set (Iter, Probability_Model_Unchanged_Column, False);
+      Store.Set (Iter, Probability_Model_Changed_Column, True);
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
@@ -242,7 +268,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
       Store.Set (Iter, Probability_Model_Label_Column, -"Not a error");
-      Store.Set (Iter, Probability_Model_Unchanged_Column, False);
+      Store.Set (Iter, Probability_Model_Changed_Column, True);
       Store.Set
         (Iter,
          Probability_Model_New_Level_Column,
@@ -252,13 +278,13 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.Label.Gtk_New (Label, "Comment");
       Label.Set_Alignment (0.0, 0.5);
---        Self.Get_Vbox.Pack_Start (Label, False, False);
+      Self.Get_Vbox.Pack_Start (Label, False, False);
 
       Gtk.Scrolled_Window.Gtk_New (Scrolled);
       Scrolled.Set_Size_Request (Height => 200);
       Scrolled.Set_Policy
         (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
---        Self.Get_Vbox.Pack_Start (Scrolled, False, False);
+      Self.Get_Vbox.Pack_Start (Scrolled, False, False);
 
       Gtk.Text_View.Gtk_New (Text_View);
       Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
@@ -276,7 +302,7 @@ package body Code_Peer.Message_Review_Dialogs is
 
       Gtk.Tree_Store.Gtk_New (Store, History_Model_Types);
 
-      Audit.Trail.Iterate (Process_Audit'Access);
+      Message.Audit.Iterate (Process_Audit'Access);
 
       Gtk.Tree_View.Gtk_New (Tree_View, Store);
       Scrolled.Add (Tree_View);
@@ -350,7 +376,46 @@ package body Code_Peer.Message_Review_Dialogs is
    is
       pragma Unreferenced (Object);
 
+      use type Glib.Signal_Name;
+
+      Model               : constant Gtk.Tree_Store.Gtk_Tree_Store :=
+                              Gtk.Tree_Store.Gtk_Tree_Store
+                                (Self.New_Probability.Get_Model);
+      Iter                : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                              Self.New_Probability.Get_Active_Iter;
+      Probability_Changed : constant Boolean :=
+                              Model.Get_Boolean
+                                (Iter, Probability_Model_Changed_Column);
+      New_Record          : constant Code_Peer.Audit_Record_Access :=
+                              new Code_Peer.Audit_Record (Probability_Changed);
+      Start_Iter          : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter            : Gtk.Text_Iter.Gtk_Text_Iter;
+
    begin
+      --  Add new record and change message probability
+
+      if Probability_Changed then
+         New_Record.Probability :=
+           Code_Peer.Message_Probability_Level'Val
+             (Model.Get_Int (Iter, Probability_Model_New_Level_Column));
+         Self.Message.Current_Probability := New_Record.Probability;
+      end if;
+
+      Self.Comment_Buffer.Get_Start_Iter (Start_Iter);
+      Self.Comment_Buffer.Get_End_Iter (End_Iter);
+
+      New_Record.Comment :=
+        new String'(Self.Comment_Buffer.Get_Text (Start_Iter, End_Iter));
+      New_Record.Timestamp :=
+        new String'(Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
+      Self.Message.Audit.Prepend (New_Record);
+
+      --  Emit signal
+
+      Emit_By_Name (Self.Get_Object, Signal_Ok_Activated & ASCII.NUL);
+
+      --  Hide dialog
+
       Self.Unref;
    end On_Ok;
 

@@ -35,4 +35,13 @@ package Code_Peer.Bridge.Commands is
    --  Generates command file for export audit trail information from the
    --  database.
 
+   procedure Add_Audit_Record
+     (Command_File_Name   : String;
+      Output_Directory    : String;
+      Message_Id          : Positive;
+      Probability_Changed : Boolean;
+      New_Probability     : Code_Peer.Message_Probability_Level;
+      Comment             : String);
+   --  Generates command file for add audit record to the database.
+
 end Code_Peer.Bridge.Commands;

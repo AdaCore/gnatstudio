@@ -57,7 +57,7 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
-         Self.Audit.Trail.Append (Self.Audit_Record);
+         Self.Audit.Append (Self.Audit_Record);
          Self.Audit_Record := null;
       end if;
    end End_Element;
@@ -69,11 +69,11 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
    procedure Parse
      (Self   : in out Reader;
       Input  : in out Input_Sources.Input_Source'Class;
-      Audit  : out Code_Peer.Audit_Trail)
+      Audit  : out Code_Peer.Audit_Vectors.Vector)
    is
    begin
-      Self.Audit.Trail.Clear;
-      Self.Audit_Record    := null;
+      Self.Audit.Clear;
+      Self.Audit_Record := null;
 
       Self.Parse (Input);
 
@@ -95,7 +95,7 @@ package body Code_Peer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Trail_Tag then
-         Self.Audit.Message_Id := Positive'Value (Attrs.Get_Value ("message"));
+         null;
 
       elsif Qname = Audit_Tag then
          if Attrs.Get_Index ("probability") /= -1 then

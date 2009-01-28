@@ -42,6 +42,8 @@ package Code_Peer.Message_Categories_Models is
 
    procedure Clear (Self : access Message_Categories_Model_Record);
 
+   procedure Update (Self : access Message_Categories_Model_Record'Class);
+
    procedure Row_Changed
      (Self     : access Message_Categories_Model_Record'Class;
       Category : Code_Peer.Message_Category_Access);

@@ -27,4 +27,8 @@ package Code_Peer.Module.Bridge is
      (Module  : Code_Peer.Module.Code_Peer_Module_Id;
       Message : Code_Peer.Message_Access);
 
+   procedure Add_Audit_Record
+     (Module  : Code_Peer.Module.Code_Peer_Module_Id;
+      Message : Code_Peer.Message_Access);
+
 end Code_Peer.Module.Bridge;

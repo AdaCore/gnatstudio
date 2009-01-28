@@ -944,6 +944,16 @@ package body Code_Peer.Summary_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Toggle_Category_Visibility;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Self : access Summary_Report_Record'Class) is
+   begin
+      Self.Analysis_Model.Reconstruct;
+      Self.Messages_Model.Update;
+   end Update;
+
    ---------------------
    -- Update_Criteria --
    ---------------------

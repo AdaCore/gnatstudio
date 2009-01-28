@@ -44,6 +44,24 @@ package Code_Peer is
    package Message_Category_Sets is new Ada.Containers.Hashed_Sets
      (Message_Category_Access, Hash, "=");
 
+   type Audit_Record (Probability_Changed : Boolean) is record
+      Timestamp   : GNAT.Strings.String_Access;
+      Comment     : GNAT.Strings.String_Access;
+
+      case Probability_Changed is
+         when True =>
+            Probability : Message_Probability_Level;
+
+         when False =>
+            null;
+      end case;
+   end record;
+
+   type Audit_Record_Access is access all Audit_Record;
+
+   package Audit_Vectors is
+     new Ada.Containers.Vectors (Positive, Audit_Record_Access);
+
    type Message is record
       Id                   : Natural;
       Lifeage              : Lifeage_Kinds;
@@ -53,6 +71,8 @@ package Code_Peer is
       Computed_Probability : Message_Probability_Level;
       Current_Probability  : Message_Probability_Level;
       Text                 : GNAT.Strings.String_Access;
+      Audit_Loaded         : Boolean;
+      Audit                : Audit_Vectors.Vector;
    end record;
 
    type Message_Access is access all Message;
@@ -117,35 +137,6 @@ package Code_Peer is
    overriding procedure Finalize (Self : access Subprogram_Data);
 
    Code_Peer_Editor_Mark_Name_Prefix : constant String := "CodePeer-";
-
-   --  Audit
-
-   type Audit_Record (Probability_Changed : Boolean) is record
-      Timestamp   : GNAT.Strings.String_Access;
-      Comment     : GNAT.Strings.String_Access;
-
-      case Probability_Changed is
-         when True =>
-            Probability : Message_Probability_Level;
-
-         when False =>
-            null;
-      end case;
-   end record;
-
-   type Audit_Access is access all Audit_Record;
-
-   package Audit_Vectors is
-     new Ada.Containers.Vectors (Positive, Audit_Access);
-
-   type Audit_Trail is record
-      Message_Id           : Positive;
-      Computed_Probability : Message_Probability_Level;
-      Current_Probability  : Message_Probability_Level;
-      Trail                : Audit_Vectors.Vector;
-   end record;
-
-   procedure Free (Item : in out Audit_Trail);
 
    --  Message filter criteria
 

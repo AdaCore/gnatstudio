@@ -21,6 +21,46 @@ with Glib.Xml_Int;
 
 package body Code_Peer.Bridge.Commands is
 
+   ----------------------
+   -- Add_Audit_Record --
+   ----------------------
+
+   procedure Add_Audit_Record
+     (Command_File_Name   : String;
+      Output_Directory    : String;
+      Message_Id          : Positive;
+      Probability_Changed : Boolean;
+      New_Probability     : Code_Peer.Message_Probability_Level;
+      Comment             : String)
+   is
+      Database_Node  : Glib.Xml_Int.Node_Ptr :=
+                         new Glib.Xml_Int.Node'
+                               (Tag    => new String'("database"),
+                                others => <>);
+      Add_Audit_Node : constant Glib.Xml_Int.Node_Ptr :=
+                         new Glib.Xml_Int.Node'
+                               (Tag    => new String'("add_audit_record"),
+                                Value  => new String'(Comment),
+                                others => <>);
+
+   begin
+      Glib.Xml_Int.Set_Attribute
+        (Database_Node, "output_directory", Output_Directory);
+      Glib.Xml_Int.Set_Attribute
+        (Add_Audit_Node, "message", Positive'Image (Message_Id));
+
+      if Probability_Changed then
+         Glib.Xml_Int.Set_Attribute
+           (Add_Audit_Node,
+            "probability",
+            Code_Peer.Message_Probability_Level'Image (New_Probability));
+      end if;
+
+      Glib.Xml_Int.Add_Child (Database_Node, Add_Audit_Node);
+      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Free (Database_Node);
+   end Add_Audit_Record;
+
    -----------------
    -- Audit_Trail --
    -----------------

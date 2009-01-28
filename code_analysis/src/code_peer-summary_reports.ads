@@ -62,6 +62,8 @@ package Code_Peer.Summary_Reports is
      (Self     : access Summary_Report_Record'Class;
       Criteria : in out Code_Peer.Message_Filter_Criteria);
 
+   procedure Update (Self : access Summary_Report_Record'Class);
+
    Signal_Activated        : constant Glib.Signal_Name;
    Signal_Criteria_Changed : constant Glib.Signal_Name;
 

@@ -126,11 +126,29 @@ package body Code_Peer is
       procedure Process_Message (Position : Message_Vectors.Cursor) is
          Element : Message_Access := Message_Vectors.Element (Position);
 
+         procedure Process (Position : Audit_Vectors.Cursor);
+
          procedure Free is new Ada.Unchecked_Deallocation
            (Message, Message_Access);
 
+         procedure Process (Position : Audit_Vectors.Cursor) is
+
+            procedure Free is
+              new Ada.Unchecked_Deallocation
+                    (Audit_Record, Audit_Record_Access);
+
+            Audit : Audit_Record_Access := Audit_Vectors.Element (Position);
+
+         begin
+            GNAT.Strings.Free (Audit.Timestamp);
+            GNAT.Strings.Free (Audit.Comment);
+            Free (Audit);
+         end Process;
+
       begin
          GNAT.Strings.Free (Element.Text);
+         Element.Audit.Iterate (Process'Access);
+         Element.Audit.Clear;
          Free (Element);
       end Process_Message;
 
@@ -140,32 +158,6 @@ package body Code_Peer is
       Self.Annotations.Iterate (Process_Annotations'Access);
       Self.Annotations.Clear;
    end Finalize;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Item : in out Audit_Trail) is
-
-      procedure Process (Position : Audit_Vectors.Cursor);
-
-      procedure Process (Position : Audit_Vectors.Cursor) is
-
-         procedure Free is
-           new Ada.Unchecked_Deallocation (Audit_Record, Audit_Access);
-
-         Audit : Audit_Access := Audit_Vectors.Element (Position);
-
-      begin
-         GNAT.Strings.Free (Audit.Timestamp);
-         GNAT.Strings.Free (Audit.Comment);
-         Free (Audit);
-      end Process;
-
-   begin
-      Item.Trail.Iterate (Process'Access);
-      Item.Trail.Clear;
-   end Free;
 
    ----------
    -- Hash --

@@ -53,6 +53,7 @@ package body Code_Peer.Module is
       Module  : Code_Peer_Module_Id;
       Project : Code_Analysis.Project_Access;
       File    : Code_Analysis.File_Access;
+      Message : Code_Peer.Message_Access;
    end record;
 
    Annotation_Style_Name                : constant String
@@ -98,6 +99,10 @@ package body Code_Peer.Module is
       Kernel : GPS.Kernel.Kernel_Handle);
 
    procedure On_Criteria_Changed
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context);
+
+   procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
@@ -170,7 +175,8 @@ package body Code_Peer.Module is
                            Module_Context'
                              (Code_Peer_Module_Id (Factory.Module),
                               Project_Node,
-                              File_Node));
+                              File_Node,
+                              null));
 
                      else
                         Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
@@ -183,7 +189,8 @@ package body Code_Peer.Module is
                            Module_Context'
                              (Code_Peer_Module_Id (Factory.Module),
                               Project_Node,
-                              File_Node));
+                              File_Node,
+                              null));
                      end if;
                   end;
                end if;
@@ -197,7 +204,8 @@ package body Code_Peer.Module is
                   Module_Context'
                     (Code_Peer_Module_Id (Factory.Module),
                      Project_Node,
-                     File_Node));
+                     File_Node,
+                     null));
 
                Gtk.Menu_Item.Gtk_New (Item, -"Hide messages");
                Menu.Append (Item);
@@ -208,7 +216,8 @@ package body Code_Peer.Module is
                   Module_Context'
                     (Code_Peer_Module_Id (Factory.Module),
                      Project_Node,
-                     File_Node));
+                     File_Node,
+                     null));
             end if;
          end;
       end if;
@@ -327,17 +336,17 @@ package body Code_Peer.Module is
            (Self.Report,
             Code_Peer.Summary_Reports.Signal_Activated,
             Context_CB.To_Marshaller (On_Activate'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null));
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect
            (Self.Report,
             Gtk.Object.Signal_Destroy,
             Context_CB.To_Marshaller (On_Destroy'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null));
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
          Context_CB.Connect
            (Self.Report,
             Code_Peer.Summary_Reports.Signal_Criteria_Changed,
             Context_CB.To_Marshaller (On_Criteria_Changed'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null));
+            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
 
          GPS.Kernel.MDI.Gtk_New (Child, Self.Report, Module => Self);
          Child.Set_Title (-"CodePeer report");
@@ -523,6 +532,23 @@ package body Code_Peer.Module is
    end On_Load;
 
    -------------------------
+   -- On_Message_Reviewed --
+   -------------------------
+
+   procedure On_Message_Reviewed
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context)
+   is
+      pragma Unreferenced (Item);
+
+   begin
+      Code_Peer.Module.Bridge.Add_Audit_Record
+        (Context.Module, Context.Message);
+      Context.Module.Report.Update;
+      Context.Module.Update_Location_View;
+   end On_Message_Reviewed;
+
+   -------------------------
    -- On_Show_Annotations --
    -------------------------
 
@@ -623,30 +649,21 @@ package body Code_Peer.Module is
       Message : Code_Peer.Message_Access;
       File    : String)
    is
+      pragma Unreferenced (Self);
+
       Input  : Input_Sources.File.File_Input;
       Reader : Code_Peer.Bridge.Audit_Trail_Readers.Reader;
-      Audit  : Code_Peer.Audit_Trail;
-      Review : Code_Peer.Message_Review_Dialogs.Message_Review_Dialog;
 
    begin
       --  Load inspection information
 
       Input_Sources.File.Open (File, Input);
-      Reader.Parse (Input, Audit);
+      Reader.Parse (Input, Message.Audit);
       Input_Sources.File.Close (Input);
 
-      Audit.Computed_Probability := Message.Computed_Probability;
-      Audit.Current_Probability  := Message.Current_Probability;
+      Message.Audit_Loaded := True;
 
-      --  Create and show review dialog
-
-      Code_Peer.Message_Review_Dialogs.Gtk_New (Review, Audit);
-      Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
-      Review.Show_All;
-
-      --  Cleanup audit data
-
-      Code_Peer.Free (Audit);
+      Module.Review_Message (Message);
    end Review_Message;
 
    --------------------
@@ -657,9 +674,25 @@ package body Code_Peer.Module is
      (Self    : access Module_Id_Record'Class;
       Message : Code_Peer.Message_Access)
    is
+      Review : Code_Peer.Message_Review_Dialogs.Message_Review_Dialog;
+
    begin
-      Code_Peer.Module.Bridge.Review_Message
-        (Code_Peer_Module_Id (Self), Message);
+      if not Message.Audit_Loaded then
+         Code_Peer.Module.Bridge.Review_Message
+           (Code_Peer_Module_Id (Self), Message);
+
+      else
+         --  Create and show review dialog
+
+         Code_Peer.Message_Review_Dialogs.Gtk_New (Review, Message);
+         Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
+         Review.Show_All;
+         Context_CB.Connect
+           (Review,
+            Code_Peer.Message_Review_Dialogs.Signal_Ok_Activated,
+            Context_CB.To_Marshaller (On_Message_Reviewed'Access),
+            (Code_Peer_Module_Id (Self), null, null, Message));
+      end if;
    end Review_Message;
 
    ----------------------

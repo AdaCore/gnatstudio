@@ -249,4 +249,28 @@ package body Code_Peer.Message_Categories_Models is
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Changed;
 
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Self : access Message_Categories_Model_Record'Class) is
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor);
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor) is
+      begin
+         Self.Row_Changed
+           (Code_Peer.Message_Category_Ordered_Sets.Element (Position));
+      end Process;
+
+   begin
+      Self.Categories.Iterate (Process'Access);
+   end Update;
+
 end Code_Peer.Message_Categories_Models;

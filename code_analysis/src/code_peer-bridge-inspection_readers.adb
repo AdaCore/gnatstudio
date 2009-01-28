@@ -195,7 +195,9 @@ package body Code_Peer.Bridge.Inspection_Readers is
                Computed_Probability,
                Code_Peer.Message_Probability_Level'Value
                  (Attrs.Get_Value ("probability")),
-               new String'(Attrs.Get_Value ("text"))));
+               new String'(Attrs.Get_Value ("text")),
+               False,
+               Code_Peer.Audit_Vectors.Empty_Vector));
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=
