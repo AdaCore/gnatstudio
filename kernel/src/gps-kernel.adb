@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -1625,9 +1625,6 @@ package body GPS.Kernel is
 
       Destroy (Language_Handler (Handle.Lang_Handler));
 
-      --  ??? Was commented out, with no explanation
-      Destroy (Handle.Database);
-
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
@@ -1635,6 +1632,11 @@ package body GPS.Kernel is
       Commands.Command_Queues.Free (Handle.Perma_Commands);
 
       Destroy (Handle.Scripts);
+
+      --  Destroy the entities database after we have finalized the
+      --  scripting languages, in case some class instances were still
+      --  owning references to entities
+      Destroy (Handle.Database);
 
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
