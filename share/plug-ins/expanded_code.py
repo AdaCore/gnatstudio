@@ -41,14 +41,21 @@ def show_gnatdg():
   context = GPS.current_context()
   file = context.file().name()
   line = context.location().line()
-  objdir = context.project().object_dirs (False)[0]
+
+  if context.project():
+    objdir = context.project().object_dirs (False)[0]
+    prj = "-P" + GPS.Project.root().file().name()
+  else:
+    objdir = GPS.Project.root().object_dirs (False)[0]
+    prj = ""
+
   dg = os.path.join (objdir, os.path.basename (file)) + '.dg'
 
   if distutils.dep_util.newer (file, dg):
     gnatmake = GPS.Project.root().get_attribute_as_string ("compiler_command",
                  package="ide", index="ada")
-    cmd = gnatmake + " -q -P" + GPS.Project.root().file().name() + \
-          " -f -c -u -gnatcdx -gnatws -gnatGL " + file
+    cmd = gnatmake + " -q " + prj + \
+          " -a -f -c -u -gnatcdx -gnatws -gnatGL " + file
     GPS.Console ("Messages").write ("Generating " + dg + "...\n")
     proc = GPS.Process (cmd, on_exit=on_exit)
     proc.dg = dg
