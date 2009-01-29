@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,8 @@ package Construct_Tries is
    type Construct_Trie is private;
    --  A construct trie holds construct iterators into a trie, based on their
    --  name. Several constructs can be stored under the same name.
+
+   Empty_Construct_Trie : constant Construct_Trie;
 
    type Construct_Trie_Iterator is private;
    --  This type gives a way of iterating over the contents of a construct
@@ -159,7 +161,11 @@ private
 
    use Construct_Trie_Trees;
 
-   type Construct_Trie is new Construct_Trie_Trees.Trie_Tree;
+   type Construct_Trie is
+     new Construct_Trie_Trees.Trie_Tree (Case_Sensitive => True);
+
+   Empty_Construct_Trie : constant Construct_Trie :=
+     Construct_Trie (Construct_Trie_Trees.Empty_Case_Sensitive_Trie_Tree);
 
    type Construct_Trie_Iterator is record
       Is_Partial : Boolean;

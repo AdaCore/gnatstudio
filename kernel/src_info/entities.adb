@@ -2645,22 +2645,18 @@ package body Entities is
       Entity  : Entity_Information)
    is
       Node : Entity_Array_Node;
-      Name : String := Get_Name (Entity).all;
    begin
       if Handler.Name_Index = null then
-         Handler.Name_Index := new Entities_Search_Tries.Trie_Tree;
+         Handler.Name_Index := new Entities_Search_Tries.Trie_Tree
+           (Case_Sensitive => not Case_Insensitive_Identifiers (Handler));
       end if;
 
-      if Case_Insensitive_Identifiers (Handler) then
-         Name := To_Lower (Name);
-      end if;
-
-      Node := Get (Handler.Name_Index, Name);
+      Node := Get (Handler.Name_Index, Get_Name (Entity).all);
 
       --  If there were no such node, create it
 
       if Node.Name = null then
-         Node.Name := new String'(Name);
+         Node.Name := new String'(Get_Name (Entity).all);
          Node.Entities := new Entity_Information_Array'(1 => Entity);
          Insert (Handler.Name_Index.all, Node);
          Entity.Trie_Tree_Index := 1;
@@ -2707,15 +2703,10 @@ package body Entities is
      (Handler : access LI_Handler_Record'Class;
       Entity  : Entity_Information)
    is
-      Name : String := Get_Name (Entity).all;
       Node : Entity_Array_Access;
    begin
       if Handler.Name_Index /= null then
-         if Case_Insensitive_Identifiers (Handler) then
-            Name := To_Lower (Name);
-         end if;
-
-         Node := Get (Handler.Name_Index, Name).Entities;
+         Node := Get (Handler.Name_Index, Get_Name (Entity).all).Entities;
          if Node /= null then
             Node (Entity.Trie_Tree_Index) := null;
          end if;

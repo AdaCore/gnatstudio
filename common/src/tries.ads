@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,11 +40,13 @@ generic
 
 package Tries is
 
-   type Trie_Tree is private;
+   type Trie_Tree (Case_Sensitive : Boolean) is private;
+   --  The case sensitive cannot be changed once the trie tree has been created
 
    type Trie_Tree_Access is access all Trie_Tree;
 
-   Empty_Trie_Tree : constant Trie_Tree;
+   Empty_Case_Sensitive_Trie_Tree : constant Trie_Tree;
+   Empty_Case_Insensitive_Trie_Tree : constant Trie_Tree;
 
    procedure Clear (Tree : in out Trie_Tree);
    --  Clear the full contents of the tree
@@ -140,13 +141,6 @@ private
 
    type Cell_Child_Access is access all Cell_Child;
 
-   procedure Find_Cell_Child
-     (Root_Cell : Cell_Child_Access;
-      Index     : String;
-      Pointer   : out Cell_Pointer);
-   --  Access a specific cell in the tree. The result value should only be
-   --  used before the next write-access to the tree, or it becomes obsolete.
-
    type Cell_Child is record
       First_Char_Of_Key : Character := 'a';
 
@@ -178,7 +172,7 @@ private
 
    type Mod_Access is access all Mod_Counter;
 
-   type Trie_Tree is record
+   type Trie_Tree (Case_Sensitive : Boolean) is record
       Mod_Clock : Mod_Access;
       --  This value is incremented each time a modification is done in the
       --  trie trie. This way, if there is any change made during e.g. the
@@ -187,8 +181,13 @@ private
       Child     : Cell_Child_Access := null;
    end record;
 
-   Empty_Trie_Tree : constant Trie_Tree :=
-     (Mod_Clock => null,
+   Empty_Case_Sensitive_Trie_Tree : constant Trie_Tree :=
+     (Case_Sensitive => True,
+      Mod_Clock => null,
+      Child     => null);
+   Empty_Case_Insensitive_Trie_Tree : constant Trie_Tree :=
+     (Case_Sensitive => False,
+      Mod_Clock => null,
       Child     => null);
 
    type Data_Type_Array is array (Positive) of Data_Type;
@@ -198,6 +197,9 @@ private
    type Iterator is record
       Trie_Root_Cell    : Cell_Child_Access;
       --  This is the cell at the root of the whole trie tree.
+
+      Case_Sensitive    : Boolean;
+      --  A property of the tree, but needed to traverse
 
       Mod_Clock         : Mod_Access;
       Initial_Timestamp : Mod_Counter;
@@ -218,7 +220,7 @@ private
    end record;
 
    Null_Iterator : constant Iterator :=
-     (null, null, 0, null, null, null, null, 0, 0);
+     (null, True, null, 0, null, null, null, null, 0, 0);
 
    type Cell_Pointer is record
       Cell              : Cell_Child_Access;

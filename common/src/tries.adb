@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2006                      --
---                              AdaCore                              --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System.Memory; use System.Memory;
@@ -104,6 +104,14 @@ package body Tries is
    --        "iv"  "to"                  "iv" "to"   "cdef" (new cell)
    --
    --  Fifth case: the tree is currently empty
+
+   procedure Find_Cell_Child
+     (Root_Cell      : Cell_Child_Access;
+      Case_Sensitive : Boolean;
+      Index          : String;
+      Pointer        : out Cell_Pointer);
+   --  Access a specific cell in the tree. The result value should only be
+   --  used before the next write-access to the tree, or it becomes obsolete.
 
    ----------
    -- Free --
@@ -214,15 +222,17 @@ package body Tries is
    ---------------------
 
    procedure Find_Cell_Child
-     (Root_Cell : Cell_Child_Access;
-      Index     : String;
-      Pointer   : out Cell_Pointer)
+     (Root_Cell      : Cell_Child_Access;
+      Case_Sensitive : Boolean;
+      Index          : String;
+      Pointer        : out Cell_Pointer)
    is
       Current  : Cell_Child_Access := Root_Cell;
       Start    : Integer := Index'First;
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
       Child    : Integer;
+      TL       : Character;
    begin
       --  If we are processing the root node
       if Root_Cell.Children = null then
@@ -237,9 +247,20 @@ package body Tries is
          --  Find matching child. There is at most one of these.
 
          Child := Current.Children'First;
+
+         if not Case_Sensitive then
+            TL := To_Lower (Index (Start));
+         end if;
+
          loop
-            exit when
-              Current.Children (Child).First_Char_Of_Key = Index (Start);
+            if Case_Sensitive then
+               exit when
+                 Current.Children (Child).First_Char_Of_Key = Index (Start);
+            else
+               exit when
+                 To_Lower (Current.Children (Child).First_Char_Of_Key) = TL;
+            end if;
+
             Child := Child + 1;
 
             if Child > Current.Num_Children then
@@ -286,7 +307,11 @@ package body Tries is
 
          Start := Start + 1;
          for J in Ind_First + 1 .. Ind_Last loop
-            if Ind (J) /= Index (Start) then
+            if (Case_Sensitive and then Ind (J) /= Index (Start))
+              or else
+                (not Case_Sensitive
+                 and then To_Lower (Ind (J)) = To_Lower (Index (Start)))
+            then
                --  If at least one character matched, this is the
                --  correct cell, although it will have to be split
                Pointer.Cell              := Current;
@@ -346,7 +371,7 @@ package body Tries is
          Tree.Child := new Cell_Child;
       end if;
 
-      Find_Cell_Child (Tree.Child, Index.all, Pointer);
+      Find_Cell_Child (Tree.Child, Tree.Case_Sensitive, Index.all, Pointer);
 
       if Pointer.Cell /= null then
          Increment_Clock (Tree);
@@ -531,7 +556,7 @@ package body Tries is
          Tree.Child := new Cell_Child;
       end if;
 
-      Find_Cell_Child (Tree.Child, Index, Pointer);
+      Find_Cell_Child (Tree.Child, Tree.Case_Sensitive, Index, Pointer);
 
       if Pointer.Cell /= null then
          Increment_Clock (Tree);
@@ -644,7 +669,7 @@ package body Tries is
          Tree.Child := new Cell_Child;
       end if;
 
-      Find_Cell_Child (Tree.Child, Index, Pointer);
+      Find_Cell_Child (Tree.Child, Tree.Case_Sensitive, Index, Pointer);
 
       if Pointer.Scenario = 3 then
          return Pointer.Cell.Data;
@@ -681,6 +706,7 @@ package body Tries is
       end if;
 
       Iter.Mod_Clock := Tree.Mod_Clock;
+      Iter.Case_Sensitive := Tree.Case_Sensitive;
 
       if Iter.Mod_Clock /= null then
          Iter.Initial_Timestamp := Iter.Mod_Clock.all;
@@ -691,7 +717,7 @@ package body Tries is
          Iter.Current_Index := 1;
       else
          --  Find the closest cell that matches the prefix
-         Find_Cell_Child (Tree.Child, Prefix, Pointer);
+         Find_Cell_Child (Tree.Child, Tree.Case_Sensitive, Prefix, Pointer);
 
          if Pointer.Scenario = 1 or else Pointer.Scenario in 4 .. 5 then
             Iter.Current_Cell := null;
@@ -887,7 +913,9 @@ package body Tries is
                Iter.Current_Cell := Tree_Root_Cell;
                Iter.Current_Index := 1;
             else
-               Find_Cell_Child (Tree_Root_Cell, Iter.Root_Name.all, Pointer);
+               Find_Cell_Child
+                 (Tree_Root_Cell, Iter.Case_Sensitive, Iter.Root_Name.all,
+                  Pointer);
             end if;
 
             if Pointer.Scenario /= 3 then
@@ -901,7 +929,8 @@ package body Tries is
                Iter.Current_Cell := Tree_Root_Cell;
                Iter.Current_Index := 1;
             else
-               Find_Cell_Child (Tree_Root_Cell, Full_Name, Pointer);
+               Find_Cell_Child
+                 (Tree_Root_Cell, Iter.Case_Sensitive, Full_Name, Pointer);
             end if;
 
             if Pointer.Scenario /= 3 then
