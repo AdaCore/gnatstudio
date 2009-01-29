@@ -569,6 +569,7 @@ package body Entities is
    -----------
 
    procedure Reset (File : Source_File) is
+      Tmp : Source_File;
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
@@ -580,13 +581,19 @@ package body Entities is
       Mark_And_Isolate_Entities (File);
 
       --  We can't reset the Depended_On field, since these other files still
-      --  referenced File (we haven't broken up the links between entities).
+      --  reference File (we haven't broken up the links between entities).
       --  The current file itself might depend on others, in case some entities
       --  had references in other files. But such references do not need to be
-      --  in the Depends_On array
+      --  in the Depends_On array.
+      --
+      --  If B depends on A, this means that some entities of B depends on
+      --  some entities of A. Therefore we can't remove A until B itself has
+      --  been removed, and therefore B should own a reference to A
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
-         Remove (File.Depends_On.Table (F).File.Depended_On, File);
+         Tmp := File.Depends_On.Table (F).File;
+         Remove (Tmp.Depended_On, File);
+         Unref (Tmp);  --  ref added in Add_Depends_On
       end loop;
 
       if not Active (Debug_Me) then
@@ -910,6 +917,8 @@ package body Entities is
                Remove (Entity.Declaration.File.Handler, Entity);
             end if;
 
+            Unref (Entity.Declaration.File); --  ref added in Get_Or_Create
+
             Entity.Ref_Count := 0;
 
             if Active (Debug_Me) then
@@ -1148,68 +1157,11 @@ package body Entities is
    -----------
 
    procedure Reset (Db : Entities_Database) is
-      procedure Fast_Reset (File : in out Source_File);
-      --  Free the memory occupied by File and its entities. No attempt is made
-      --  to respect the reference counter of the entities, and therefore all
-      --  existing Entity_Information become obsolete.
-      --  This must only be called when reseting the database itself
-
-      ----------------
-      -- Fast_Reset --
-      ----------------
-
-      procedure Fast_Reset (File : in out Source_File) is
-         Iter : Entities_Hash.Iterator;
-         UEI  : Entity_Informations;
-         EL   : Entity_Information_List_Access;
-      begin
-         Get_First (File.Entities, Iter);
-
-         if Active (Assert_Me) then
-            Trace (Assert_Me, "Fast_Reset All_Entities for "
-                   & Full_Name (Get_Filename (File)).all);
-         end if;
-
-         loop
-            UEI := Get_Element (Iter);
-            exit when UEI = null;
-            Get_Next (File.Entities, Iter);
-            EL := UEI.List;
-
-            for E in Entity_Information_Arrays.First .. Last (EL.all) loop
-               if EL.Table (E) /= null then
-                  Free  (EL.Table (E).Parent_Types);
-                  Free  (EL.Table (E).Primitive_Subprograms);
-                  Free  (EL.Table (E).Child_Types);
-                  Free  (EL.Table (E).References);
-                  Free (EL.Table (E).Called_Entities);
-
-                  if EL.Table (E).Declaration.File.Handler /= null then
-                     Remove
-                       (EL.Table (E).Declaration.File.Handler,
-                        EL.Table (E));
-                  end if;
-
-                  Unchecked_Free (EL.Table (E));
-                  EL.Table (E) := null;
-               end if;
-            end loop;
-         end loop;
-
-         Reset (File.All_Entities);
-         Reset (File.Entities);
-         Free (File.Instantiations);
-         Free (File.Depends_On);
-         Free (File.Depended_On);
-      end Fast_Reset;
-
    begin
       --  Reset Lis first, since this will indirectly change a field in the
       --  source files (which are therefore better kept in memory in the
       --  meantime)
       Reset (Db.LIs);
-
-      Foreach_Source_File (Db, Fast_Reset'Access);
       Reset (Db.Files);
    end Reset;
 
@@ -1424,9 +1376,15 @@ package body Entities is
          Append (File.Depends_On, (Depends_On, Explicit_Dependency));
          Append (Depends_On.Depended_On, (File, Explicit_Dependency));
 
+         --  See comments in Reset as to why we are increasing refcount only
+         --  when adding to Depends_On (that's because even when Depends_On is
+         --  no longer valid, some entities of File might depend on entities of
+         --  Depends_On, and therefore the latter should be kept)
+         Ref (Depends_On);
+
       elsif Explicit_Dependency then
          if File.Depends_On.Table (Index).Explicit /= Explicit_Dependency then
-            --  This is only added when File itself is actually parse, so be
+            --  This is only added when File itself is actually parsed, so be
             --  sure to reflect the dependency status
             File.Depends_On.Table (Index).Explicit := Explicit_Dependency;
 
@@ -1850,6 +1808,7 @@ package body Entities is
             Ref_Count             => 1,
             Trie_Tree_Array       => null,
             Trie_Tree_Index       => 0);
+         Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);
 
          --  ??? Trie trees are not used for completion, and potentially

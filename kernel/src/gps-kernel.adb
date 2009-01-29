@@ -1623,8 +1623,6 @@ package body GPS.Kernel is
       Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);
 
-      Destroy (Language_Handler (Handle.Lang_Handler));
-
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
@@ -1637,6 +1635,12 @@ package body GPS.Kernel is
       --  scripting languages, in case some class instances were still
       --  owning references to entities
       Destroy (Handle.Database);
+
+      --  Remove the language handlers (used for xref). This needs to be done
+      --  after finalizing the xref database, source_files contain a pointer
+      --  to their language handler.
+
+      Destroy (Language_Handler (Handle.Lang_Handler));
 
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);

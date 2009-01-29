@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -98,12 +98,8 @@ package Entities is
    --  Register a new language handler
 
    procedure Reset (Db : Entities_Database);
-   --  Empty the contents of the database.
-   --  All Source_File and Entity_Information structures become invalid, and
-   --  are freed from memory, even if a Ref is kept on them. Therefore,
-   --  modules that rely on keeping such information should connect to the
-   --  Project_Changed_Hook and reset their internal structures when the hook
-   --  is called.
+   --  Empty the contents of the database. Existing references to entities
+   --  remain valid, though.
 
    ------------
    -- E_Kind --
