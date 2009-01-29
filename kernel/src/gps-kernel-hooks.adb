@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1213,11 +1213,11 @@ package body GPS.Kernel.Hooks is
                if Tmp /= "" then
                   if Set_Busy then
                      Pop_State (Kernel_Handle (Kernel));
+                     Free (Data.Data);
                      return Tmp;
                   end if;
                end if;
             end;
-
          end loop;
 
          Free (Data.Data);

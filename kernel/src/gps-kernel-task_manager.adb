@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -654,6 +654,7 @@ package body GPS.Kernel.Task_Manager is
       Set_Data
         (Instance, Command_Class_Name, Command_Property'
            (Command => Scheduled_Command_Access (Command)));
+      Ref (Command_Access (Command));  --  unrefed in GPS.Command.__del__
       Set (Command.Instances, Language, Instance);
    end Set_Instance;
 
