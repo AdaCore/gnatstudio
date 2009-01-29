@@ -1570,6 +1570,7 @@ package body GPS.Kernel is
 
    procedure Destroy (Handle : access Kernel_Handle_Record) is
       Success : Boolean;
+      Tmp     : String_Access;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
@@ -1629,18 +1630,28 @@ package body GPS.Kernel is
 
       Commands.Command_Queues.Free (Handle.Perma_Commands);
 
-      Destroy (Handle.Scripts);
+      --  Most of the rest if for the sake of memory leaks checkin, and since
+      --  it can take a while for big projects we do not do this in normal
+      --  times.
 
-      --  Destroy the entities database after we have finalized the
-      --  scripting languages, in case some class instances were still
-      --  owning references to entities
-      Destroy (Handle.Database);
+      Tmp := GNAT.OS_Lib.Getenv ("VALGRIND");
+      if Tmp /= null then
+         Free (Tmp);
 
-      --  Remove the language handlers (used for xref). This needs to be done
-      --  after finalizing the xref database, source_files contain a pointer
-      --  to their language handler.
+         Destroy (Handle.Scripts);
 
-      Destroy (Language_Handler (Handle.Lang_Handler));
+         --  Destroy the entities database after we have finalized the
+         --  scripting languages, in case some class instances were still
+         --  owning references to entities
+
+         Destroy (Handle.Database);
+
+         --  Remove the language handlers (used for xref). This needs to be
+         --  done after finalizing the xref database, source_files contain a
+         --  pointer to their language handler.
+
+         Destroy (Language_Handler (Handle.Lang_Handler));
+      end if;
 
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);

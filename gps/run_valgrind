@@ -35,6 +35,10 @@ G_SLICE=always-malloc
 G_DEBUG=gc-friendly,resident-modules
 export G_SLICE G_DEBUG
 
+# Activate special behavior in GPS (among others reset entities database
+# on exit)
+export VALGRIND=yes
+
 case $mode in
    leaks2)   args="--tool=memcheck --leak-check=full --gen-suppressions=all" ;;
    leaks)    args="--tool=memcheck --leak-check=full" ;;
