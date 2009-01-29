@@ -1077,12 +1077,9 @@ private
       --  to keep using the same Entity_Information for entities that haven't
       --  changed.
 
-      Trie_Tree_Array : Entity_Array_Access := null;
-      --  This is the array where all the entities with the same name are
-      --  stored.
-
       Trie_Tree_Index : Natural := 0;
-      --  This is the index of the entity among the entities of the same name.
+      --  This is the index of the entity among the entities of the same name,
+      --  in LI_Handler.Name_Index
    end record;
 
    --------------------

@@ -1806,7 +1806,6 @@ package body Entities is
             References            => Null_Entity_Reference_List,
             Is_Valid              => True,
             Ref_Count             => 1,
-            Trie_Tree_Array       => null,
             Trie_Tree_Index       => 0);
          Ref (File);  --  Used in declaration
          Append (UEI.List.all, E);
@@ -2664,7 +2663,6 @@ package body Entities is
          Node.Name := new String'(Name);
          Node.Entities := new Entity_Information_Array'(1 => Entity);
          Insert (Handler.Name_Index.all, Node);
-         Entity.Trie_Tree_Array := Node.Entities;
          Entity.Trie_Tree_Index := 1;
 
          return;
@@ -2675,7 +2673,6 @@ package body Entities is
       for J in Node.Entities'Range loop
          if Node.Entities (J) = null then
             Node.Entities (J) := Entity;
-            Entity.Trie_Tree_Array := Node.Entities;
             Entity.Trie_Tree_Index := J;
 
             return;
@@ -2694,14 +2691,7 @@ package body Entities is
 
          Node.Name := new String'(Old_Name.all);
 
-         for J in Old_Array'Range loop
-            if Old_Array (J) /= null then
-               Old_Array (J).Trie_Tree_Array := Node.Entities;
-            end if;
-         end loop;
-
          Node.Entities (Old_Array'Length + 1) := Entity;
-         Entity.Trie_Tree_Array := Node.Entities;
          Entity.Trie_Tree_Index := Old_Array'Length + 1;
 
          --  This operation will free Old_Array and Old_Name
@@ -2717,10 +2707,18 @@ package body Entities is
      (Handler : access LI_Handler_Record'Class;
       Entity  : Entity_Information)
    is
-      pragma Unreferenced (Handler);
+      Name : String := Get_Name (Entity).all;
+      Node : Entity_Array_Access;
    begin
-      if Entity.Trie_Tree_Array /= null then
-         Entity.Trie_Tree_Array (Entity.Trie_Tree_Index) := null;
+      if Handler.Name_Index /= null then
+         if Case_Insensitive_Identifiers (Handler) then
+            Name := To_Lower (Name);
+         end if;
+
+         Node := Get (Handler.Name_Index, Name).Entities;
+         if Node /= null then
+            Node (Entity.Trie_Tree_Index) := null;
+         end if;
       end if;
    end Remove;
 
