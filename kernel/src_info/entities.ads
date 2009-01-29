@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;
+with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with HTables;
 with GNATCOLL.Utils;
@@ -960,21 +961,16 @@ private
 
    type Entity_Array_Access is access all Entity_Information_Array;
 
-   type Entity_Array_Node is record
-      Entities : Entity_Array_Access;
-      Name     : GNAT.Strings.String_Access;
-   end record;
-
-   function Get_Name (Entities : Entity_Array_Node)
+   function Get_Name (Entities : Entity_Array_Access)
       return GNAT.Strings.String_Access;
-   --  Return the name of the entity, in lower case if the language is
-   --  case-insensitive
+   --  Return the common name of all entities stored in this node
 
-   procedure Free (Entities : in out Entity_Array_Node);
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Entity_Information_Array, Entity_Array_Access);
 
    package Entities_Search_Tries is new Tries
-     (Data_Type => Entity_Array_Node,
-      No_Data   => (null, null),
+     (Data_Type => Entity_Array_Access,
+      No_Data   => null,
       Get_Index => Get_Name,
       Free      => Free);
 

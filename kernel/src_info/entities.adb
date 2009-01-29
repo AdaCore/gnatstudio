@@ -19,7 +19,6 @@
 
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -2619,22 +2618,10 @@ package body Entities is
    ------------------------------
 
    function Get_Name
-     (Entities : Entity_Array_Node) return GNAT.Strings.String_Access is
+     (Entities : Entity_Array_Access) return GNAT.Strings.String_Access is
    begin
-      return Entities.Name;
+      return Get_Name (Entities (Entities'First));
    end Get_Name;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Entities : in out Entity_Array_Node) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Entity_Information_Array, Entity_Array_Access);
-   begin
-      GNAT.OS_Lib.Free (Entities.Name);
-      Internal_Free (Entities.Entities);
-   end Free;
 
    ------------
    -- Insert --
@@ -2644,7 +2631,7 @@ package body Entities is
      (Handler : access LI_Handler_Record'Class;
       Entity  : Entity_Information)
    is
-      Node : Entity_Array_Node;
+      Node : Entity_Array_Access;
    begin
       if Handler.Name_Index = null then
          Handler.Name_Index := new Entities_Search_Tries.Trie_Tree
@@ -2655,9 +2642,8 @@ package body Entities is
 
       --  If there were no such node, create it
 
-      if Node.Name = null then
-         Node.Name := new String'(Get_Name (Entity).all);
-         Node.Entities := new Entity_Information_Array'(1 => Entity);
+      if Node = null then
+         Node := new Entity_Information_Array'(1 => Entity);
          Insert (Handler.Name_Index.all, Node);
          Entity.Trie_Tree_Index := 1;
 
@@ -2666,9 +2652,9 @@ package body Entities is
 
       --  Search an empty slot in the entities array
 
-      for J in Node.Entities'Range loop
-         if Node.Entities (J) = null then
-            Node.Entities (J) := Entity;
+      for J in Node'Range loop
+         if Node (J) = null then
+            Node (J) := Entity;
             Entity.Trie_Tree_Index := J;
 
             return;
@@ -2678,16 +2664,12 @@ package body Entities is
       --  If we did not find any empty slot, create a new and bigger array
 
       declare
-         Old_Array : constant Entity_Array_Access := Node.Entities;
-         Old_Name  : constant GNAT.Strings.String_Access := Node.Name;
+         Old_Array : constant Entity_Array_Access := Node;
       begin
-         Node.Entities := new Entity_Information_Array
-           (1 .. Old_Array'Length * 2);
-         Node.Entities (1 .. Old_Array'Length) := Old_Array.all;
+         Node := new Entity_Information_Array (1 .. Old_Array'Length * 2);
+         Node (1 .. Old_Array'Length) := Old_Array.all;
 
-         Node.Name := new String'(Old_Name.all);
-
-         Node.Entities (Old_Array'Length + 1) := Entity;
+         Node (Old_Array'Length + 1) := Entity;
          Entity.Trie_Tree_Index := Old_Array'Length + 1;
 
          --  This operation will free Old_Array and Old_Name
@@ -2706,7 +2688,7 @@ package body Entities is
       Node : Entity_Array_Access;
    begin
       if Handler.Name_Index /= null then
-         Node := Get (Handler.Name_Index, Get_Name (Entity).all).Entities;
+         Node := Get (Handler.Name_Index, Get_Name (Entity).all);
          if Node /= null then
             Node (Entity.Trie_Tree_Index) := null;
          end if;
@@ -2740,7 +2722,7 @@ package body Entities is
    ---------
 
    function Get (It : LI_Entities_Iterator) return Entity_Information is
-      Entities : constant Entity_Array_Access := Get (It.It).Entities;
+      Entities : constant Entity_Array_Access := Get (It.It);
    begin
       if Entities = null then
          --  This may happen if some xrefs where loaded before the last
@@ -2764,23 +2746,23 @@ package body Entities is
          return;
       end if;
 
-      if Get (It.It).Entities = null then
+      if Get (It.It) = null then
          Next (It.It);
       end if;
 
       while not At_End (It) loop
          while not At_End (It)
-           and then It.Index > Get (It.It).Entities'Last
+           and then It.Index > Get (It.It)'Last
          loop
             Next (It.It);
 
             if not At_End (It) then
-               It.Index := Get (It.It).Entities'First;
+               It.Index := Get (It.It)'First;
             end if;
          end loop;
 
          exit when At_End (It)
-           or else Get (It.It).Entities (It.Index) /= null;
+           or else Get (It.It) (It.Index) /= null;
 
          It.Index := It.Index + 1;
       end loop;
@@ -2806,7 +2788,7 @@ package body Entities is
          return True;
       end if;
 
-      Entities := Get (It.It).Entities;
+      Entities := Get (It.It);
 
       return Entities /= null
         and then
