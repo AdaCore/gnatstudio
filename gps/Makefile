@@ -5,6 +5,7 @@ else
 endif
 
 GPRBUILD=gprbuild
+GPRBUILD_FLAGS=
 
 .PHONY: default resources do_links all clean
 
@@ -16,8 +17,8 @@ all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
-	$(GPRBUILD) -p -ws -P../gnatlib/src/gnatcoll
-	$(GPRBUILD) -p -ws -XTP_TASKING=No_Tasking -Pgps
+	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -P../gnatlib/src/gnatcoll
+	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking -Pgps
 
 resources:
 ifeq ($(OS),Windows_NT)

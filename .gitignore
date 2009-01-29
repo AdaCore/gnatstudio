@@ -9,7 +9,7 @@ b~*
 */obj/*
 .#*
 .gpsrcs
-Makefile
+./Makefile
 Makefile.common
 common/Makefile.common
 common/common.gpr
