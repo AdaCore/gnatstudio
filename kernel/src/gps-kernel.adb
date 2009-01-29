@@ -1635,8 +1635,7 @@ package body GPS.Kernel is
       --  times.
 
       Tmp := GNAT.OS_Lib.Getenv ("VALGRIND");
-      if Tmp /= null then
-         Free (Tmp);
+      if Tmp.all /= "" then
 
          Destroy (Handle.Scripts);
 
@@ -1653,6 +1652,7 @@ package body GPS.Kernel is
          Destroy (Language_Handler (Handle.Lang_Handler));
       end if;
 
+      Free (Tmp);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
