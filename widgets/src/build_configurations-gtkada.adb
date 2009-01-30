@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1274,6 +1274,10 @@ package body Build_Configurations.Gtkada is
    procedure On_Remove_Target (UI : access Build_UI_Record'Class) is
       Target    : Target_Access;
       Cancelled : Boolean;
+
+      Model     : Gtk_Tree_Model;
+      Iter      : Gtk_Tree_Iter;
+      Name      : Unbounded_String;
    begin
       Target := Get_Selected_Target (UI);
       if Target = null then
@@ -1283,8 +1287,23 @@ package body Build_Configurations.Gtkada is
       Delete_Target_Dialog (UI, Target, Cancelled);
 
       if not Cancelled then
+         --  Attempt to get the name of the target immediately following the
+         --  current target in the tree, so that we can highlight it after
+         --  the target is removed.
+
+         Get_Selected (Get_Selection (UI.View), Model, Iter);
+
+         if Iter /= Null_Iter then
+            Next (Model, Iter);
+
+            if Iter /= Null_Iter then
+               Name := To_Unbounded_String
+                 (Get_String (Model, Iter, Name_Column));
+            end if;
+         end if;
+
          Remove_Target (UI.Registry, To_String (Target.Name));
-         Refresh (UI, "");
+         Refresh (UI, To_String (Name));
       end if;
 
    exception
