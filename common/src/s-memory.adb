@@ -71,8 +71,9 @@ package body System.Memory is
    Realloc_Count  : Long_Integer := 0;
    High_Watermark : Byte_Count := 0;
 
-   type Header is range 1 .. 1023;
-   --  Number of elements in the hash-table
+   type Header is range 0 .. 999983 - 1;
+   --  Number of elements in the hash-table. This must be relatively big to
+   --  avoid slowing down when there are a lot of allocations.
 
    type Tracebacks_Array_Access
      is access GNAT.Traceback.Tracebacks_Array;
@@ -201,7 +202,7 @@ package body System.Memory is
          Result := Result + To_Integer (PC_For (T (X)));
       end loop;
 
-      return Header (1 + Result mod Integer_Address (Header'Last));
+      return Header (Result mod Integer_Address (Header'Last));
    end Hash;
 
    ----------
