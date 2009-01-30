@@ -55,20 +55,13 @@ def check_toolchain():
 #----------------- Helper routines to run CodePeer ---------------------------
 
 def inspection_output (proc, matches, since_last):
-   if ('0' <= matches[0] <= '9'):
-      # Messages that start with a number are probably the "progress bar"
-      GPS.Console().write("Inspecting...\n")
-   else:
-      GPS.Console().write(matches + "\n")
-
-def inspection_exit(self, status, remaining_output):
-   GPS.Console().write("Inspection completed.\n")
+   GPS.Console().write(matches + "\n")
 
 def regenerate_output (proc, matches, since_last):
    GPS.Console().write("Regenerating reports...\n")  
 
 def regenerate_exit(self, status, remaining_output):
-   GPS.Console().write("Finished generating reports \n")
+   GPS.Console().write("Finished generating reports\n")
   
 #----------------- Create CodePeer library file ------------------------------
 
@@ -142,10 +135,13 @@ def run_inspection(menu):
       savedir = os.getcwd()     
       os.chdir(project_path());
 
-      ins_cmd = 'codepeer -all -global -background -lib "' + library_file() + \
+      ins_cmd = 'codepeer -all -global -background -dbg-on ide_progress_bar -lib "' + library_file() + \
         '"'
-      proc = GPS.Process(ins_cmd, regexp=".+", on_match=inspection_output,
-        on_exit=inspection_exit, show_command = True)
+      proc = GPS.Process (ins_cmd, regexp="^.+$", on_match=inspection_output,
+                          progress_regexp="^completed (\d*) out of (\d*).*$",
+                          progress_current = 1,
+                          progress_total = 2,
+                          show_command = True)
       proc.get_result()
       os.chdir(savedir)
 
