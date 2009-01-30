@@ -192,7 +192,8 @@ def create_codepeer_menu():
 
     global inspect_menu
     inspect_menu = GPS.Menu.create ("Tools/CodePeer/Run code review",
-            on_activate=run_inspection)
+            on_activate=run_inspection,
+            ref="Load code review information", add_before=True)
 
     global regenerate_menu
     regenerate_menu = GPS.Menu.create ("Tools/CodePeer/Regenerate reports",
