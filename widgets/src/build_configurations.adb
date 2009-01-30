@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -463,6 +463,7 @@ package body Build_Configurations is
       end if;
 
       Dest.Properties := Src.Properties;
+      Dest.Properties.Menu_Name := To_Unbounded_String (New_Name);
 
       --  If we have duplicated a target using this subprogram, this means the
       --  target is user-created.
