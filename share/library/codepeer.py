@@ -122,6 +122,10 @@ def check_params_for_reports():
           "Problem while checking parameters before for reporting\n", "error")
       return
 
+def reset_messages():
+   GPS.Console().clear ()
+   GPS.MDI.get ("Messages").raise_window ()
+
 #--------------------------- Run CodePeer ------------------------------------
 
 def run_inspection(menu):
@@ -135,6 +139,7 @@ def run_inspection(menu):
       savedir = os.getcwd()     
       os.chdir(project_path());
 
+      reset_messages()
       ins_cmd = 'codepeer -all -global -background -dbg-on ide_progress_bar -lib "' + library_file() + \
         '"'
       proc = GPS.Process (ins_cmd, regexp="^.+$", on_match=inspection_output,
@@ -160,6 +165,7 @@ def regenerate_report(menu):
       check_params_for_reports()
 
       projectname = GPS.Project.root().name()
+      reset_messages()
       ins_cmd = 'codepeer -all -global -background -output-only -lib "' + \
         library_file() + '"'
       proc = GPS.Process(ins_cmd, regexp=".+", on_match=regenerate_output,
@@ -207,7 +213,7 @@ def on_gps_started (hook_name):
     if not (gnat_toolchain_found):
         return
 
-    #toolbar menus
+    # toolbar menus
     create_codepeer_menu ()
 
 GPS.Hook ("gps_started").add (on_gps_started)
