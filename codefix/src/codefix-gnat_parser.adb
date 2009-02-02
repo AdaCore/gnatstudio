@@ -2239,7 +2239,7 @@ package body Codefix.GNAT_Parser is
       This.Matcher :=
         (new Pattern_Matcher'
            (Compile ("(procedure|variable|constant|parameter|type|literal|" &
-                     "named number|unit|) ""([\w]+)"" is not referenced")),
+                     "named number|unit|) ?""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
            (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
