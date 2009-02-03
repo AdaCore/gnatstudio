@@ -1159,7 +1159,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       if not Lines_Are_Real (Buffer) then
          EN := 0;
-         for J in Start_Line .. End_Line loop
+         for J in Start_Line + 1 .. End_Line loop
             if Buffer_Lines (J).Editable_Line /= 0 then
                EN := EN + 1;
             end if;
