@@ -486,6 +486,7 @@ package body Projects.Registry is
          Prj.Part.Parse (Registry.Data.Tree,
                          Node, Normalize_Project_Path (Project_Path), True,
                          Store_Comments => True,
+                         Is_Config_File => False,
                          Current_Directory => Get_Current_Dir);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
@@ -620,7 +621,7 @@ package body Projects.Registry is
          Sinput.P.Reset_First;
          Prj.Part.Parse
            (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
-            True, Store_Comments => True,
+            True, Store_Comments => True, Is_Config_File => False,
             Current_Directory => Get_Current_Dir);
          Prj.Com.Fail := null;
 
@@ -861,6 +862,7 @@ package body Projects.Registry is
          From_Project_Node      => Registry.Data.Root.Node,
          From_Project_Node_Tree => Registry.Data.Tree,
          Report_Error           => Report_Error'Unrestricted_Access,
+         Is_Config_File         => False,
          Current_Dir            => Current_Dir,
          When_No_Sources        => Warning);
 
