@@ -1272,9 +1272,9 @@ package body Codefix.GNAT_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-           (Compile ("""(end [\w]+;)"" expected")),
+           (Compile ("""(end [\w]+;)"" expected", Case_Insensitive)),
          new Pattern_Matcher'
-           (Compile ("""(end loop [\w]+;)"" expected")));
+           (Compile ("""(end loop [\w]+;)"" expected", Case_Insensitive)));
    end Initialize;
 
    overriding procedure Fix
