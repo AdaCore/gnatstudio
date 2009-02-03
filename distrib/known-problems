@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I202-039: Smart completion window behavior when scrolling
+  Problem:    The smart completion window stays open when scrolling the editor,
+              which can make it difficult to read text. Also, this causes the
+              first click on the editor to scroll back to the place where the
+              completion window was invoked.
+  Workaround: Click once to cancel the smart completion window.
+
 - I120-033: && should be "and then" not correctly auto-fixed
   Problem:    The auto-fix made for messages such as "&& should be "and then""
               is incorrect, it adds an unexpected quote at the location of the
