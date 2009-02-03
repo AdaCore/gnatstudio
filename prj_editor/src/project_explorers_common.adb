@@ -415,8 +415,7 @@ package body Project_Explorers_Common is
       Lang := Get_Language_From_File (Languages, File_Name);
 
       if Lang /= null then
-         Parse_File_Constructs
-           (Handler, Languages, File_Name, Constructs);
+         Parse_File_Constructs (Handler, Languages, File_Name, Constructs);
 
          Constructs.Current := Constructs.First;
 
