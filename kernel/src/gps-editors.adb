@@ -230,4 +230,15 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Cursor;
 
+   overriding procedure Get_Constructs
+     (This       : Dummy_Editor_Buffer;
+      Constructs : out Language.Construct_List;
+      Timestamp  : out Natural)
+   is
+      pragma Unreferenced (This);
+   begin
+      Constructs := (null, null, null, 0);
+      Timestamp := 0;
+   end Get_Constructs;
+
 end GPS.Editors;

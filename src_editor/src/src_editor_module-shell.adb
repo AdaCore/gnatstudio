@@ -64,6 +64,8 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;
 use Src_Editor_Buffer.Text_Handling;
+
+with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Debug;
 
 with Src_Editor_Module.Line_Highlighting;
@@ -1706,6 +1708,7 @@ package body Src_Editor_Module.Shell is
                   Src_Editor_Buffer.Line_Information.Fold_All
                     (Get_Buffer (Box));
                else
+                  Compute_Blocks (Get_Buffer (Box));
                   Src_Editor_Buffer.Line_Information.Fold_Block
                     (Get_Buffer (Box), Editable_Line_Type (Line));
                end if;

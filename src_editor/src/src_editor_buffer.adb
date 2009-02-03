@@ -6399,6 +6399,12 @@ package body Src_Editor_Buffer is
 
       Buffer.Constructs_State := Exact;
 
+      if Buffer.Constructs_Timestamp = Natural'Last then
+         Buffer.Constructs_Timestamp := 0;
+      else
+         Buffer.Constructs_Timestamp := Buffer.Constructs_Timestamp + 1;
+      end if;
+
       return Buffer.Constructs;
    end Get_Constructs;
 
@@ -6411,6 +6417,16 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Constructs_State;
    end Get_Constructs_State;
+
+   ------------------------------
+   -- Get_Constructs_Timestamp --
+   ------------------------------
+
+   function Get_Constructs_Timestamp
+     (Buffer : access Source_Buffer_Record) return Natural is
+   begin
+      return Buffer.Constructs_Timestamp;
+   end Get_Constructs_Timestamp;
 
    ------------------
    -- Set_Writable --

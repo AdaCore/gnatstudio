@@ -239,6 +239,11 @@ package body Src_Editor_Module.Editors is
    overriding procedure Set_Read_Only
      (This : Src_Editor_Buffer; Read_Only : Boolean);
 
+   overriding procedure Get_Constructs
+     (This       : Src_Editor_Buffer;
+      Constructs : out Language.Construct_List;
+      Timestamp  : out Natural);
+
    ---------------------
    -- Src_Editor_View --
    ---------------------
@@ -1259,6 +1264,25 @@ package body Src_Editor_Module.Editors is
            (This.Buffer, not Read_Only, Explicit => True);
       end if;
    end Set_Read_Only;
+
+   --------------------
+   -- Get_Constructs --
+   --------------------
+
+   overriding procedure Get_Constructs
+     (This       : Src_Editor_Buffer;
+      Constructs : out Language.Construct_List;
+      Timestamp  : out Natural) is
+   begin
+      if This.Buffer = null then
+         Constructs := (null, null, null, 0);
+         Timestamp := 0;
+         return;
+      end if;
+
+      Constructs := Get_Constructs (This.Buffer, Exact);
+      Timestamp  := Get_Constructs_Timestamp (This.Buffer);
+   end Get_Constructs;
 
    ----------
    -- Line --

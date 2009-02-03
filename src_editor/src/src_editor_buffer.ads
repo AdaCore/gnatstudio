@@ -593,6 +593,10 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Constructs_State_Type;
    --  Return the state of cached constructs
 
+   function Get_Constructs_Timestamp
+     (Buffer : access Source_Buffer_Record) return Natural;
+   --  Return the "timestamp" of the constructs.
+
    -----------------------
    -- Extra Information --
    -----------------------
@@ -1328,6 +1332,9 @@ private
 
       Constructs_State : Constructs_State_Type := Not_Parsed;
       --  The state of the constructs list
+
+      Constructs_Timestamp                  : Natural := 0;
+      --  The "timestamp" of the stored constructs information
 
       Blocks_Exact : Boolean := False;
       --  Whether the blocks information is exact

@@ -26,7 +26,6 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Unicode;              use Glib.Unicode;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Box;                   use Gtk.Box;
@@ -51,30 +50,29 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with Language;                  use Language;
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Entities.Tooltips;         use Entities.Tooltips;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
-with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
+with GUI_Utils;                 use GUI_Utils;
 with Project_Explorers_Common;  use Project_Explorers_Common;
 with Projects;                  use Projects;
-with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Traces;                    use Traces;
 
 package body Outline_View is
 
@@ -91,8 +89,8 @@ package body Outline_View is
    Pixbuf_Column       : constant := 0;
    Display_Name_Column : constant := 1;
    Entity_Name_Column  : constant := 2;
-   Mark_Column         : constant := 3;
    Line_Column         : constant := 4;
+   Column_Column       : constant := 3;
    Declaration_Column  : constant := 5;
 
    overriding procedure Default_Context_Factory
@@ -120,6 +118,10 @@ package body Outline_View is
       Kernel    : Kernel_Handle;
       Tree      : Gtk_Tree_View;
       File      : GNATCOLL.VFS.Virtual_File;
+      Timestamp : Natural := 0;
+      --  The timestamp of the constructs being displayed in the view.
+      --  0 means that the file has just changed and that the constructs should
+      --  be queried.
       Icon      : Gdk_Pixbuf;
       File_Icon : Gdk_Pixbuf;
    end record;
@@ -140,7 +142,21 @@ package body Outline_View is
    --  Recompute the information for Outline.File, and redisplay it.
    --  Change Outline.File first if needed
 
+   procedure Refresh
+     (View         : access Gtk_Widget_Record'Class;
+      Current_Iter : Gtk_Tree_Iter;
+      New_Iter     : out Gtk_Tree_Iter;
+      New_Model    : out Gtk_Tree_Model);
+   --  If Current_Iter points to the currently clicked item in the view, then
+   --  refresh the view and return the Iter/Model that correspond the best to
+   --  Current.
+
    function Button_Press
+     (Outline : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event) return Boolean;
+   --  Called every time a row is clicked
+
+   function Button_Release
      (Outline : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
@@ -217,6 +233,11 @@ package body Outline_View is
    --  Return the base model for the tree view, the top-level model is a
    --  Gtk_Tree_Model_Sort, the base model is the Gtk_Tree_Store.
 
+   procedure Set_File
+     (Outline : access Outline_View_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File);
+   --  Set the file viewed in Outline
+
    --------------
    -- Tooltips --
    --------------
@@ -240,17 +261,17 @@ package body Outline_View is
       Line    : out Integer;
       Column  : out Visible_Column_Type)
    is
-      Model     : constant Gtk_Tree_Store :=
-                    Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
-      Mark_Name : aliased String := Get_String (Model, Iter, Mark_Column);
-      Args      : constant Argument_List := (1 => Mark_Name'Unchecked_Access);
+      Model    : Gtk_Tree_Model;
+      New_Iter : Gtk_Tree_Iter;
    begin
-      Line := Safe_Value
-        (Execute_GPS_Shell_Command (Outline.Kernel, "Editor.get_line", Args));
-      Column := Visible_Column_Type
-        (Safe_Value
-           (Execute_GPS_Shell_Command
-              (Outline.Kernel, "Editor.get_column", Args)));
+      --  Refresh to make sure that Iter data is accurate.
+      Refresh (View         => Outline,
+               Current_Iter => Iter,
+               New_Iter     => New_Iter,
+               New_Model    => Model);
+
+      Line := Integer (Get_Int (Model, New_Iter, Line_Column));
+      Column := Visible_Column_Type (Get_Int (Model, Iter, Column_Column));
    end Entity_At_Iter;
 
    ----------
@@ -263,7 +284,7 @@ package body Outline_View is
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
       Model   : constant Gtk_Tree_Store :=
-                  Gtk_Tree_Store (Get_Base_Model (Tooltip.Outline.Tree));
+        Gtk_Tree_Store (Get_Model (Tooltip.Outline.Tree));
       Status  : Find_Decl_Or_Body_Query_Status := Success;
       Entity  : Entity_Information;
       Iter    : Gtk_Tree_Iter;
@@ -275,9 +296,6 @@ package body Outline_View is
       Initialize_Tooltips (Tooltip.Outline.Tree, Area, Iter);
 
       if Iter /= Null_Iter then
-         Convert_Iter_To_Child_Iter
-           (Gtk_Tree_Model_Sort
-              (Get_Model (Tooltip.Outline.Tree)), Iter, Iter);
          Entity_At_Iter
            (Outline => Tooltip.Outline,
             Iter    => Iter,
@@ -471,8 +489,6 @@ package body Outline_View is
       pragma Unreferenced (Event_Widget);
       Outline : constant Outline_View_Access := Outline_View_Access (Object);
       Model   : constant Gtk_Tree_Model := Get_Model (Outline.Tree);
-      B_Model : constant Gtk_Tree_Store :=
-                  Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
       Path    : Gtk_Tree_Path;
       Iter    : Gtk_Tree_Iter;
       Line    : Integer;
@@ -485,8 +501,7 @@ package body Outline_View is
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
       if Iter /= Null_Iter then
-         Convert_Iter_To_Child_Iter (Gtk_Tree_Model_Sort (Model), Iter, Iter);
-         Path := Get_Path (B_Model, Iter);
+         Path := Get_Path (Model, Iter);
          if not Path_Is_Selected (Get_Selection (Outline.Tree), Path) then
             Set_Cursor (Outline.Tree, Path, null, False);
          end if;
@@ -499,7 +514,7 @@ package body Outline_View is
             Column  => Column);
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Get_String (B_Model, Iter, Entity_Name_Column),
+            Entity_Name   => Get_String (Model, Iter, Entity_Name_Column),
             Entity_Column => Column);
       end if;
 
@@ -633,31 +648,76 @@ package body Outline_View is
    is
       View  : constant Outline_View_Access := Outline_View_Access (Outline);
       Model : constant Gtk_Tree_Model := Get_Model (View.Tree);
+      New_Model  : Gtk_Tree_Model;
+      New_Iter   : Gtk_Tree_Iter;
       Iter  : Gtk_Tree_Iter;
       Path  : Gtk_Tree_Path;
    begin
       if Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
-         if Iter /= Null_Iter then
-            Path := Get_Path (Model, Iter);
+         Refresh (Outline, Iter, New_Iter, New_Model);
+
+         if New_Iter /= Null_Iter then
+            Path := Get_Path (New_Model, New_Iter);
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);
 
             declare
-               Mark_Name : aliased String :=
-                             Get_String (Model, Iter, Mark_Column);
-               Args      : constant Argument_List :=
-                             (1 => Mark_Name'Unchecked_Access);
+               Buffer   : constant Editor_Buffer'Class :=
+                 Get (Get_Buffer_Factory (View.Kernel).all,
+                      View.File, False, False);
+
+               Line     : constant Integer :=
+                 Integer (Get_Int (New_Model, New_Iter, Line_Column));
+               Column   : constant Integer :=
+                 Integer (Get_Int (New_Model, New_Iter, Column_Column));
+
+               Location : constant Editor_Location'Class :=
+                 New_Location (Buffer, Line, Column);
+               End_Location : constant Editor_Location'Class :=
+                 New_Location
+                   (Buffer, Line,
+                    Column +
+                      Get_String (New_Model,
+                        New_Iter,
+                        Entity_Name_Column)'Length);
+
+               View     : constant Editor_View'Class :=
+                 Current_View (Buffer);
             begin
-               Execute_GPS_Shell_Command
-                 (View.Kernel, "Editor.goto_mark", Args);
+               Cursor_Goto (View, Location);
+               Select_Text (Buffer, Location, End_Location);
             end;
 
-            return True;
          end if;
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
    end Button_Press;
+
+   --------------------
+   -- Button_Release --
+   --------------------
+
+   function Button_Release
+     (Outline : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event) return Boolean is
+      pragma Unreferenced (Outline);
+   begin
+      if Get_Button (Event) = 1 then
+         return True;
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Button_Release;
 
    -----------------------
    -- Outline_View_Sort --
@@ -727,7 +787,7 @@ package body Outline_View is
            (Pixbuf_Column       => Gdk.Pixbuf.Get_Type,
             Display_Name_Column => GType_String,
             Entity_Name_Column  => GType_String,
-            Mark_Column         => GType_String, --  mark ID
+            Column_Column       => GType_Int,
             Line_Column         => GType_Int,
             Declaration_Column  => GType_Boolean));
 
@@ -783,6 +843,14 @@ package body Outline_View is
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Outline,
          After       => False);
+
+      Return_Callback.Object_Connect
+        (Outline.Tree,
+         Signal_Button_Release_Event,
+         Return_Callback.To_Marshaller (Button_Release'Access),
+         Slot_Object => Outline,
+         After       => False);
+
       Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
 
@@ -840,24 +908,8 @@ package body Outline_View is
 
    procedure Clear (Outline : access Outline_View_Record'Class) is
       Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
-      Args  : Argument_List (1 .. 1);
-
+        Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
    begin
-      while Iter /= Null_Iter loop
-         declare
-            Name : aliased String := Get_String (Model, Iter, Mark_Column);
-         begin
-            if Name /= "" then
-               Args (1) := Name'Unchecked_Access;
-               Execute_GPS_Shell_Command
-                 (Outline.Kernel, "Editor.delete_mark", Args);
-            end if;
-         end;
-         Next (Model, Iter);
-      end loop;
-
       Clear (Model);
    end Clear;
 
@@ -866,6 +918,23 @@ package body Outline_View is
    -------------
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+
+   begin
+      Refresh (View, Null_Iter, Iter, Model);
+   end Refresh;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (View         : access Gtk_Widget_Record'Class;
+      Current_Iter : Gtk_Tree_Iter;
+      New_Iter     : out Gtk_Tree_Iter;
+      New_Model    : out Gtk_Tree_Model)
+   is
       Outline       : constant Outline_View_Access :=
                         Outline_View_Access (View);
       Show_Specs    : constant Boolean :=
@@ -878,26 +947,87 @@ package body Outline_View is
                         Get_History
                           (Get_History (Outline.Kernel).all,
                            Hist_Show_Profile);
-      Model         : constant Gtk_Tree_Store :=
-                        Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
-      Root          : constant Gtk_Tree_Iter := Null_Iter;
-      Languages     : constant Language_Handler :=
-                        Language_Handler
-                          (Get_Language_Handler (Outline.Kernel));
+      Base_Model    : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
       Sorting       : constant Boolean :=
-                        Get_History
-                          (Get_History (Outline.Kernel).all,
-                           Hist_Sort_Alphabetical);
-      Sort_Column   : constant Gint := Freeze_Sort (Model);
+        Get_History
+          (Get_History (Outline.Kernel).all,
+           Hist_Sort_Alphabetical);
+      Sort_Column   : constant Gint := Freeze_Sort (Base_Model);
       pragma Unreferenced (Sort_Column);
-      Iter          : Gtk_Tree_Iter := Null_Iter;
-      Args          : Argument_List (1 .. 4);
-      Lang          : Language_Access;
-      Handler       : LI_Handler;
-      Constructs    : Construct_List;
       Is_Type       : Boolean;
+
+      Buffer        : constant Editor_Buffer'Class :=
+        Get (Get_Buffer_Factory (Outline.Kernel).all,
+             Outline.File, False, False);
+
+      Old_Timestamp : constant Natural := Outline.Timestamp;
+      Current       : Construct_Access;
+
+      Current_Entity_Name   : String_Access;
+      Current_Entity_Line   : Integer;
+      Current_Entity_Column : Integer;
+      Best_Entity_Line      : Integer := 0;
+      Best_Entity_Column    : Integer := 0;
+      Best_Row              : Gtk_Tree_Row_Reference := null;
+
+      Iter          : Gtk_Tree_Iter := Null_Iter;
+      Root          : constant Gtk_Tree_Iter := Null_Iter;
+
+      procedure Update_Best_Row (Iter : Gtk_Tree_Iter);
+
+      ---------------------
+      -- Update_Best_Row --
+      ---------------------
+
+      procedure Update_Best_Row (Iter : Gtk_Tree_Iter) is
+         Path : Gtk_Tree_Path;
+      begin
+         if Best_Row /= null then
+            Row_Reference_Free (Best_Row);
+         end if;
+
+         Path := Get_Path (Base_Model, Iter);
+         Best_Row := Gtk_New (Base_Model, Path);
+         Path_Free (Path);
+      end Update_Best_Row;
+
+      Constructs : Construct_List;
+
    begin
+      --  Get the name of the currently selected item, if any.
+
+      if Current_Iter /= Null_Iter then
+         declare
+            Tree_Model : constant Gtk_Tree_Model :=
+              Get_Model (Outline.Tree);
+         begin
+            Current_Entity_Name := new String'
+              (Get_String (Tree_Model, Current_Iter, Entity_Name_Column));
+            Current_Entity_Line := Integer
+              (Get_Int (Tree_Model, Current_Iter, Line_Column));
+            Current_Entity_Column := Integer
+              (Get_Int (Tree_Model, Current_Iter, Column_Column));
+         end;
+      else
+         New_Iter := Null_Iter;
+         New_Model := null;
+      end if;
+
+      Buffer.Get_Constructs (Constructs, Outline.Timestamp);
+
+      if Old_Timestamp /= 0
+        and then Outline.Timestamp = Old_Timestamp
+      then
+         --  The constructs are up-to-date: return now
+         New_Iter := Current_Iter;
+         New_Model := Get_Model (Outline.Tree);
+
+         return;
+      end if;
+
       Push_State (Outline.Kernel, Busy);
+
       Clear (Outline);
 
       if Sorting then
@@ -910,76 +1040,98 @@ package body Outline_View is
             Default_Sort_Column_Id, Sort_Ascending);
       end if;
 
-      if Outline.File /= GNATCOLL.VFS.No_File then
-         Handler := Get_LI_Handler_From_File (Languages, Outline.File);
-         Lang := Get_Language_From_File (Languages, Outline.File);
-      end if;
+      Current := Constructs.First;
 
-      if Handler = null or else Lang = null then
-         Append (Model, Iter, Root);
-         Set (Model, Iter, Pixbuf_Column, GObject (Outline.Icon));
-         Set (Model, Iter, Display_Name_Column, "<i>No outline available</i>");
+      while Current /= null loop
+         if Current.Name /= null then
+            Is_Type := Current.Category in Data_Type_Category;
 
-      else
-         Parse_File_Constructs
-           (Handler, Languages, Outline.File, Constructs);
-         Constructs.Current := Constructs.First;
+            if Category_Filter (Current.Category)
+              and then (Show_Specs or not Current.Is_Declaration)
+              and then (Show_Types or not Is_Type)
+            then
+               Append (Base_Model, Iter, Root);
 
-         while Constructs.Current /= null loop
-            if Constructs.Current.Name /= null then
-               Is_Type := Constructs.Current.Category in Data_Type_Category;
+               Set (Base_Model, Iter, Pixbuf_Column,
+                    GObject (Entity_Icon_Of (Current.all)));
 
-               if Category_Filter (Constructs.Current.Category)
-                 and then (Show_Specs or not Constructs.Current.Is_Declaration)
-                 and then (Show_Types or not Is_Type)
+               Display_Profile : declare
+                  Profile : constant String :=
+                    Entity_Name_Of
+                      (Current.all,
+                       Show_Profiles      => Show_Profiles,
+                       Max_Profile_Length => 500);
+               begin
+                  Set (Base_Model, Iter, Display_Name_Column, Profile);
+               end Display_Profile;
+
+               Set (Base_Model, Iter, Entity_Name_Column,
+                    Current.Name.all);
+               Set (Base_Model, Iter, Line_Column,
+                    Gint (Current.Sloc_Entity.Line));
+               Set (Base_Model, Iter, Column_Column,
+                    Gint (Current.Sloc_Entity.Column));
+               Set (Base_Model, Iter, Declaration_Column,
+                    Current.Is_Declaration);
+
+               --  Try to determine if this entity corresponds to the one that
+               --  was selected before.
+
+               if Current_Entity_Name /= null
+                 and then Current.Name.all = Current_Entity_Name.all
                then
-                  Append (Model, Iter, Root);
+                  --  We have a matching entity, check whether it has a
+                  --  closer line than the current best entity
 
-                  Set (Model, Iter, Pixbuf_Column,
-                       GObject (Entity_Icon_Of (Constructs.Current.all)));
+                  if (abs (Current_Entity_Line - Current.Sloc_Entity.Line))
+                    <= (abs (Current_Entity_Line - Best_Entity_Line))
+                  then
+                     Best_Entity_Line := Current.Sloc_Entity.Line;
+                     Best_Entity_Column := Current.Sloc_Entity.Column;
+                     Update_Best_Row (Iter);
 
-                  Display_Profile : declare
-                     Profile : constant String :=
-                                 Entity_Name_Of
-                                   (Constructs.Current.all,
-                                    Show_Profiles      => Show_Profiles,
-                                    Max_Profile_Length => 500);
-                  begin
-                     Set (Model, Iter, Display_Name_Column, Profile);
-                  end Display_Profile;
-
-                  Set (Model, Iter, Entity_Name_Column,
-                       Constructs.Current.Name.all);
-                  Set (Model, Iter, Line_Column,
-                       Gint (Constructs.Current.Sloc_Entity.Line));
-
-                  Set (Model, Iter, Declaration_Column,
-                       Constructs.Current.Is_Declaration);
-
-                  Args (1) := new String'(Full_Name (Outline.File).all);
-                  Args (2) := new String'
-                    (Constructs.Current.Sloc_Entity.Line'Img);
-                  Args (3) := new String'
-                    (Constructs.Current.Sloc_Entity.Column'Img);
-                  Args (4) := new String'
-                    (Glong'Image (UTF8_Strlen (Constructs.Current.Name.all)));
-
-                  Set (Model, Iter, Mark_Column,
-                       Execute_GPS_Shell_Command
-                         (Outline.Kernel, "Editor.create_mark", Args));
-                  Free (Args);
+                     if (abs (Current_Entity_Column
+                               - Current.Sloc_Entity.Column))
+                       <= (abs (Current_Entity_Column - Best_Entity_Column))
+                     then
+                        Best_Entity_Column := Current.Sloc_Entity.Column;
+                        Update_Best_Row (Iter);
+                     end if;
+                  end if;
                end if;
             end if;
-            Constructs.Current := Constructs.Current.Next;
-         end loop;
-      end if;
+         end if;
 
-      Free (Constructs);
+         Current := Current.Next;
+      end loop;
+
+      Free (Current_Entity_Name);
 
       Expand_All (Outline.Tree);
 
       if Sorting then
-         Thaw_Sort (Model, Entity_Name_Column);
+         Thaw_Sort (Base_Model, Entity_Name_Column);
+      end if;
+
+      --  If we have found a new best row, highlight it now
+
+      if Valid (Best_Row) then
+         declare
+            Path : Gtk_Tree_Path;
+         begin
+            Path := Get_Path (Best_Row);
+
+            Select_Path (Get_Selection (Outline.Tree), Path);
+            Iter := Get_Iter (Base_Model, Path);
+            Path_Free (Path);
+            Row_Reference_Free (Best_Row);
+
+            New_Model := Gtk_Tree_Model (Base_Model);
+            New_Iter := Iter;
+         end;
+      else
+         New_Iter := Current_Iter;
+         New_Model := Get_Model (Outline.Tree);
       end if;
 
       Pop_State (Outline.Kernel);
@@ -1103,7 +1255,7 @@ package body Outline_View is
          Outline := Outline_View_Access (Get_Widget (Child));
 
          if Outline.File = D.File then
-            Outline.File := GNATCOLL.VFS.No_File;
+            Outline.Set_File (GNATCOLL.VFS.No_File);
             Refresh (Outline);
          end if;
       end if;
@@ -1130,7 +1282,7 @@ package body Outline_View is
          if Outline.File = D.File then
             Refresh (Outline);
          elsif Outline.File = GNATCOLL.VFS.No_File then
-            Outline.File := D.File;
+            Outline.Set_File (D.File);
             Refresh (Outline);
          end if;
       end if;
@@ -1169,7 +1321,7 @@ package body Outline_View is
             end if;
 
             if File /= Outline.File then
-               Outline.File := File;
+               Outline.Set_File (File);
                Refresh (Outline);
             elsif Outline.File = GNATCOLL.VFS.No_File then
                Refresh (Outline);
@@ -1219,5 +1371,17 @@ package body Outline_View is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_Types, True);
    end Register_Module;
+
+   --------------
+   -- Set_File --
+   --------------
+
+   procedure Set_File
+     (Outline : access Outline_View_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Outline.File := File;
+      Outline.Timestamp := 0;
+   end Set_File;
 
 end Outline_View;
