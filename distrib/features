@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Jan 23, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Feb 03, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -40,6 +40,11 @@ NF-44-HA23-007 New menus in Edit->Selection (2008-10-23)
   - Move Left/Right: shift the selection one character left or right
   - Serialize: automatically increment a number in a set of adjacent lines
   - Untabify: replace tabs with spaces in the selection
+
+NF-44-HA21-047 listvars.py plugin can show non-local variables (2009-02-02)
+
+  This plug in shows which variables are used by a subprogram. It now provides
+  a second contextual menu to show only non-local variables
 
 NF-44-HA03-020 File changed dialog checks for diffs (2008-10-03)
 

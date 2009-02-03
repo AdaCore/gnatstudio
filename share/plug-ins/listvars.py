@@ -12,7 +12,7 @@ used in the selected subprogram.
 
 import GPS
 
-def list_vars (subprogram):
+def list_vars (subprogram, global_only=False):
    """List all variables referenced by the subprogram.
       subprogram is an instance of GPS.Entity"""
 
@@ -24,6 +24,9 @@ def list_vars (subprogram):
       return
 
    category = "variables referenced in " + subprogram.full_name()
+   if global_only:
+      category = "non local " + category
+
    GPS.Locations.remove_category (category)
    added = False
    highlight = ""
@@ -52,7 +55,8 @@ def list_vars (subprogram):
                                      + `e.declaration()` + ")",
                                      highlight=highlight,
                                      length=0)
-               else:
+                  added = True
+               elif not global_only:
                   GPS.Locations.add (category=category,
                                      file=r.file(),
                                      line=r.line(),
@@ -60,7 +64,7 @@ def list_vars (subprogram):
                                      message=e.name(),
                                      highlight=highlight,
                                      length=0)
-               added = True
+                  added = True
                found = True
 
    if added:
@@ -78,12 +82,21 @@ def on_label (context):
    else:
      return ""
 
-def on_activate (context):
-   list_vars (context.entity())
+def on_global_label (context):
+   entity = context.entity()
+   if entity:
+     return "References/Non local variables used in <b>" + entity.name() + "</b>"
+   else:
+     return ""
 
 def on_gps_started (hook_name):
-   GPS.Contextual ("Variables referenced").create (on_activate=on_activate,
-                   filter=on_filter,
-                   label=on_label)
+   GPS.Contextual ("Variables referenced").create (
+      on_activate=lambda context: list_vars (context.entity(), False),
+      filter=on_filter,
+      label=on_label)
+   GPS.Contextual ("Non local variables referenced").create (
+      on_activate=lambda context: list_vars (context.entity(), True),
+      filter=on_filter,
+      label=on_global_label)
 
 GPS.Hook ("gps_started").add (on_gps_started)
