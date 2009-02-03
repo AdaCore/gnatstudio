@@ -2733,8 +2733,7 @@ package body Project_Explorers is
             return False;
          end if;
 
-         Entities.Parse_File_Constructs
-           (Handler, Languages, File, Constructs);
+         Entities.Parse_File_Constructs (Handler, Languages, File, Constructs);
 
          Constructs.Current := Constructs.First;
 
