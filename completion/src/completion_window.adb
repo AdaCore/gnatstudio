@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -119,6 +119,11 @@ package body Completion_Window is
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback after a Mark set on the buffer.
+
+   procedure Viewport_Moved_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback after the viewport of the text view has moved
 
    procedure Delete_Text_Handler
      (Window : access Completion_Window_Record'Class;
@@ -731,6 +736,21 @@ package body Completion_Window is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Mark_Set_Handler;
+
+   ----------------------------
+   -- Viewport_Moved_Handler --
+   ----------------------------
+
+   procedure Viewport_Moved_Handler
+     (Window : access Completion_Window_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+   begin
+      Delete (Window);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Viewport_Moved_Handler;
 
    -------------------------
    -- Insert_Text_Handler --
@@ -1349,7 +1369,6 @@ package body Completion_Window is
       Modify_Bg (Window.Notes_Window, State_Normal, Tooltip_Color.Get_Pref);
 
       Gtk_New (Frame);
---        Modify_Bg (Frame, State_Normal, Get_Pref (Tooltip_Color));
 
       Gtk_New (Scroll);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
@@ -1392,6 +1411,8 @@ package body Completion_Window is
       Requisition        : Gtk_Requisition;
 
       Root_Width, Root_Height : Gint;
+
+      Parent             : Gtk_Widget;
 
       Cursor                  : Gtk_Text_Iter;
       Max_Width, Notes_Window_Width, Max_Height : Gint;
@@ -1529,6 +1550,16 @@ package body Completion_Window is
 
       Object_Connect
         (Buffer, Signal_Mark_Set, Mark_Set_Handler'Access, Window);
+
+      Parent := Get_Parent (View);
+      if Parent /= null
+        and then Parent.all in Gtk_Scrolled_Window_Record'Class
+      then
+         Object_Connect
+           (Get_Vadjustment (Gtk_Scrolled_Window (Parent)),
+            Gtk.Adjustment.Signal_Value_Changed,
+            Viewport_Moved_Handler'Access, Window);
+      end if;
 
       Object_Connect
         (Buffer, Signal_Delete_Range, Delete_Text_Handler'Access, Window,
