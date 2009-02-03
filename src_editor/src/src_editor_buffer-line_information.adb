@@ -1519,6 +1519,9 @@ package body Src_Editor_Buffer.Line_Information is
       --  The number of the line we are currently adding
       Current_B      : Buffer_Line_Type;
 
+      Start_Buffer_Line    : Buffer_Line_Type;
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+
    begin
       --  Initializations
 
@@ -1526,6 +1529,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Current := Start_Line;
       Current_B := Buffer.Editable_Lines (Start_Line).Buffer_Line;
+      Start_Buffer_Line := Current_B;
 
       if Current = 0 then
          --  This should never happen
@@ -1637,14 +1641,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Highlight the inserted text
 
-      --  ??? This needs to be reimplemented.
+      Get_Iter_At_Line (Buffer, Start_Iter, Gint (Start_Buffer_Line - 1));
+      Get_Iter_At_Line (Buffer, End_Iter, Gint (Current_B - 1));
 
---        Get_Iter_At_Line
---       (Buffer, Start_Iter, Gint (Get_Buffer_Line (Buffer, First_Line) - 1));
---        Get_Iter_At_Line
---          (Buffer, End_Iter, Gint (Get_Buffer_Line (Buffer, Last_Line) - 1));
---
---        Highlight_Slice (Buffer, Start_Iter, End_Iter);
+      Highlight_Slice (Buffer, Start_Iter, End_Iter);
 
       --  Redraw the side column
 
