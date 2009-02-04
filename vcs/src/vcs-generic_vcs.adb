@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1553,7 +1553,7 @@ package body VCS.Generic_VCS is
       S             : String renames Command.Text.all;
       Matches       : Match_Array (0 .. Command.Parser.Matches_Num);
       Num_Matches   : Natural := 0;
-      Status_Update : Boolean;
+      Status_Update : Boolean := False;
    begin
       Command.Prev_Start := Command.Start;
 
