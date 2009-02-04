@@ -92,7 +92,7 @@ NF-44-H904-015 Minor optimization for handling VCS status (2008-12-09)
   as the local status won't override a remote status (Needs update or
   Needs merge).
 
-NF-44-H707-022 Minor improvments in GNATCheck integration (2009-01-20)
+NF-44-H707-022 Minor improvements in GNATCheck integration (2009-01-20)
 
   The GNATCheck rules editor menu has been renamed, and the rules editor
   now lets you choose whether you want to see the resulting file after
