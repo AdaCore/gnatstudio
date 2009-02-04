@@ -3277,6 +3277,10 @@ package body Src_Editor_Buffer is
       Result            : Boolean;
       Original_Filename : constant Virtual_File := Buffer.Filename;
    begin
+      if not Internal then
+         Remove_Completion;
+      end if;
+
       Internal_Save_To_File
         (Source_Buffer (Buffer), Filename, Internal, Success,
          Force => Force);
