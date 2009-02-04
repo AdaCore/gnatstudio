@@ -342,10 +342,12 @@ package body GPS.Kernel.Standard_Hooks is
       Focus             : Boolean := True;
       Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position  : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Automatic)
+        Gtkada.MDI.Position_Automatic;
+      Title             : String := "")
    is
       Data : aliased Source_File_Hooks_Args :=
                (Hooks_Data with
+                Length            => Title'Length,
                 File              => Filename,
                 Line              => Line,
                 Column            => Column,
@@ -355,7 +357,8 @@ package body GPS.Kernel.Standard_Hooks is
                 Force_Reload      => Force_Reload,
                 Focus             => Focus,
                 Group             => Group,
-                Initial_Position  => Initial_Position);
+                Initial_Position  => Initial_Position,
+                Title             => Title);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -374,6 +377,7 @@ package body GPS.Kernel.Standard_Hooks is
    is
       Data : aliased Source_File_Hooks_Args :=
                (Hooks_Data with
+                Length            => 0,
                 File              => Filename,
                 Line              => -1,
                 Column            => 0,
@@ -383,7 +387,8 @@ package body GPS.Kernel.Standard_Hooks is
                 Force_Reload      => False,
                 Focus             => False,
                 Group             => Gtkada.MDI.Group_Default,
-                Initial_Position  => Gtkada.MDI.Position_Automatic);
+                Initial_Position  => Gtkada.MDI.Position_Automatic,
+                Title             => "");
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -856,7 +861,9 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       return Source_File_Hooks_Args'
         (Hooks_Data with
-         File         => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
+         Length            => 0,
+         File              => Get_Data
+           (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
          Line              => Nth_Arg (Data, 3),
          Column            => Basic_Types.Visible_Column_Type
            (Nth_Arg (Data, 4, Default => 1)),
@@ -868,10 +875,11 @@ package body GPS.Kernel.Standard_Hooks is
          Focus             => Nth_Arg (Data, 9, True),
          Group             => Gtkada.MDI.Child_Group
            (Nth_Arg (Data, 11, Natural (Gtkada.MDI.Group_Default))),
-         Initial_Position   => Gtkada.MDI.Child_Position'Val
+         Initial_Position  => Gtkada.MDI.Child_Position'Val
            (Nth_Arg (Data, 10,
             Gtkada.MDI.Child_Position'Pos
-              (Gtkada.MDI.Position_Automatic))));
+              (Gtkada.MDI.Position_Automatic))),
+         Title             => "");
    end From_Callback_Data_Open_File;
 
    --------------------------

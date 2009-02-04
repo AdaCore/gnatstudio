@@ -232,7 +232,7 @@ package GPS.Kernel.Standard_Hooks is
    -- Source_File_Action_Hook --
    -----------------------------
 
-   type Source_File_Hooks_Args is new Hooks_Data with record
+   type Source_File_Hooks_Args (Length : Natural) is new Hooks_Data with record
       File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line              : Integer := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
@@ -244,6 +244,7 @@ package GPS.Kernel.Standard_Hooks is
       Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position  : Gtkada.MDI.Child_Position :=
                             Gtkada.MDI.Position_Automatic;
+      Title             : String (1 .. Length);
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left
@@ -275,7 +276,8 @@ package GPS.Kernel.Standard_Hooks is
       Focus             : Boolean := True;
       Group             : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position  : Gtkada.MDI.Child_Position :=
-        Gtkada.MDI.Position_Automatic);
+        Gtkada.MDI.Position_Automatic;
+      Title             : String := "");
    --  Call Open_File_Action_Hook
 
    procedure Clear_Highlighting

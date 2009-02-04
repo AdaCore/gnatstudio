@@ -2235,6 +2235,11 @@ package body Src_Editor_Module is
             Column := 1;
          end if;
 
+         if D.Title /= "" then
+            Child := Find_Editor (Kernel, D.File);
+            Set_Title (Child, Title => D.Title, Short_Title => D.Title);
+         end if;
+
          return Edit /= null;
       end if;
    end Source_File_Hook;
