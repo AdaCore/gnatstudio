@@ -463,10 +463,11 @@ package GPS.Kernel.Standard_Hooks is
    -- Diff_Action_Hook --
    ----------------------
 
-   type Diff_Hooks_Args is new Hooks_Data with record
+   type Diff_Hooks_Args (Length : Natural) is new Hooks_Data with record
       Orig_File : GNATCOLL.VFS.Virtual_File;
       New_File  : GNATCOLL.VFS.Virtual_File;
       Diff_File : GNATCOLL.VFS.Virtual_File;
+      Title     : String (1 .. Length);
    end record;
 
    Diff_Action_Hook : constant Hook_Name := "diff_action_hook";
@@ -475,7 +476,8 @@ package GPS.Kernel.Standard_Hooks is
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Orig_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       New_File  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Diff_File : GNATCOLL.VFS.Virtual_File);
+      Diff_File : GNATCOLL.VFS.Virtual_File;
+      Title     : String);
    --  Display differences between Orig_File and New_File (Mime_Diff_File type)
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the

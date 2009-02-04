@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -277,7 +277,10 @@ package body VCS.ClearCase is
          Mode => Verbose);
 
       Display_Differences
-        (Kernel, New_File => Current_File, Diff_File => Patch_File);
+        (Kernel,
+         New_File  => Current_File,
+         Diff_File => Patch_File,
+         Title     => "");
       Delete (Patch_File, Success);
 
       return True;

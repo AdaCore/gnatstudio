@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -432,10 +432,12 @@ package body GPS.Kernel.Standard_Hooks is
      (Kernel    : access Kernel_Handle_Record'Class;
       Orig_File : Virtual_File := GNATCOLL.VFS.No_File;
       New_File  : Virtual_File := GNATCOLL.VFS.No_File;
-      Diff_File : Virtual_File)
+      Diff_File : Virtual_File;
+      Title     : String)
    is
       Data : aliased Diff_Hooks_Args :=
-               (Hooks_Data with Orig_File, New_File, Diff_File);
+               (Hooks_Data with
+                Title'Length, Orig_File, New_File, Diff_File, Title);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Diff_Action_Hook, Data'Unchecked_Access)
@@ -582,15 +584,18 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Title  : constant String := Nth_Arg (Data, 5, "");
    begin
       return Diff_Hooks_Args'
         (Hooks_Data with
+         Title'Length,
          Orig_File =>
            Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
          New_File  =>
            Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True)),
          Diff_File =>
-           Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True)));
+           Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True)),
+         Title => Title);
    end From_Callback_Data_Diff;
 
    -----------------------------
@@ -965,12 +970,13 @@ package body GPS.Kernel.Standard_Hooks is
       F2 : constant Class_Instance := Create_File (Script, Data.New_File);
       F3 : constant Class_Instance := Create_File (Script, Data.Diff_File);
       D  : constant Callback_Data_Access :=
-             new Callback_Data'Class'(Create (Script, 4));
+             new Callback_Data'Class'(Create (Script, 5));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, F1);
       Set_Nth_Arg (D.all, 3, F2);
       Set_Nth_Arg (D.all, 4, F3);
+      Set_Nth_Arg (D.all, 5, Data.Title);
       return D;
    end Create_Callback_Data;
 
