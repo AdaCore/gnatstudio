@@ -5892,11 +5892,13 @@ The package gps_utils.py provides a somewhat more convenient python interface to
        <param name="file" default="">A GPS.File</param>
        <param name="force" default="False">A Boolean</param>
        <param name="extra_args" default="">A String</param>
+       <param name="build_mode" default="">A String</param>
        <description>Launch the build target:
       - main_name indicates the base name of the main source to build, if this target acts on a main file.
       - file indicates the file to build if this targets acts on a file.
       - if force is True, this means that the target should be launched directly, even if its parameters indicate that it should be launched through an intermediary dialog.
-      - extra_args contains any extra parameters to pass to the command line. </description>
+      - extra_args contains any extra parameters to pass to the command line.
+      - build_mode indicates build mode to be used for build. </description>
   </shell_doc>
 
   <shell_doc name="GPS.BuildTarget.remove">

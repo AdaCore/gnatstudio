@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -52,6 +52,7 @@ package body Builder_Facility_Module.Scripts is
    Force_Cst         : aliased constant String := "force";
    File_Cst          : aliased constant String := "file";
    Extra_Args_Cst    : aliased constant String := "extra_args";
+   Build_Mode_Cst    : aliased constant String := "build_mode";
 
    Target_Class_Name : constant String := "BuildTarget";
 
@@ -62,7 +63,8 @@ package body Builder_Facility_Module.Scripts is
      (2 => Main_Name_Cst'Access,
       3 => File_Cst'Access,
       4 => Force_Cst'Access,
-      5 => Extra_Args_Cst'Access);
+      5 => Extra_Args_Cst'Access,
+      6 => Build_Mode_Cst'Access);
 
    type Target_Property is new Instance_Property_Record with record
       Target_Name : Unbounded_String;
@@ -173,11 +175,14 @@ package body Builder_Facility_Module.Scripts is
          Name_Parameters (Data, Execute_Args);
 
          declare
-            Inst  : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
-            Main  : constant String := Nth_Arg (Data, 2, "");
-            Force : constant Boolean := Nth_Arg (Data, 4, False);
-            Name  : constant String := Get_Target_Name (Inst);
-            Mode  : Dialog_Mode := Default;
+            Inst       : constant Class_Instance :=
+                           Nth_Arg (Data, 1, Target_Class);
+            Main       : constant String  := Nth_Arg (Data, 2, "");
+            Force      : constant Boolean := Nth_Arg (Data, 4, False);
+            Name       : constant String  := Get_Target_Name (Inst);
+            Mode       : Dialog_Mode      := Default;
+            Build_Mode : constant String  := Nth_Arg (Data, 6, "");
+
          begin
             Info := Get_Data
               (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
@@ -201,7 +206,7 @@ package body Builder_Facility_Module.Scripts is
             Launch_Target (Kernel       => Kernel,
                            Registry     => Registry,
                            Target_Name  => Name,
-                           Mode_Name    => "",
+                           Mode_Name    => Build_Mode,
                            Force_File   => Info,
                            Extra_Args   => Extra_Args,
                            Quiet        => False,
