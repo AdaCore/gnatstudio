@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -435,8 +435,7 @@ package body Vdiff2_Module.Callback is
             then
                declare
                   Child : constant MDI_Child :=
-                            Get_File_Editor
-                              (Kernel, Diff.Files (J));
+                            Get_File_Editor (Kernel, Diff.Files (J));
                begin
                   if Child /= null then
                      Close_Child (Child);

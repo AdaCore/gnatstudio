@@ -72,7 +72,7 @@ package GPS.Editors is
       File   : Virtual_File := No_File;
       Line   : Integer;
       Column : Integer) return Editor_Mark'Class is abstract;
-   --  Return a new mark without having to create an editor buffer.
+   --  Return a new mark without having to create an editor buffer
 
    --------------------
    -- Editor_Overlay --
@@ -84,11 +84,11 @@ package GPS.Editors is
 
    function Beginning_Of_Line
      (This : Editor_Location) return Editor_Location'Class is abstract;
-   --  Return a location located at the beginning of the line on which This is.
+   --  Return a location located at the beginning of the line on which This is
 
    function End_Of_Line
      (This : Editor_Location) return Editor_Location'Class is abstract;
-   --  Return a location located at the end of the line on which self is.
+   --  Return a location located at the end of the line on which self is
 
    function Block_Start
      (This : Editor_Location) return Editor_Location'Class is abstract;
@@ -119,7 +119,7 @@ package GPS.Editors is
    --  name already exists, it is moved to the new location, and then returned
 
    function Forward_Char
-     (This : Editor_Location;
+     (This  : Editor_Location;
       Count : Integer) return Editor_Location'Class is abstract;
    --  Return a new location located count characters after self. If count is
    --  negative, the location is moved backward instead
@@ -131,16 +131,16 @@ package GPS.Editors is
 
    function Line (This : Editor_Mark) return Integer is abstract;
    --  Return the current line of the mark, without opening the buffer if not
-   --  open
+   --  open.
 
    function Column (This : Editor_Mark) return Integer is abstract;
    --  Return the current column of the mark, without opening the buffer if not
-   --  open
+   --  open.
 
    function Location
      (This : Editor_Mark) return Editor_Location'Class is abstract;
    --  Returns the current location of the mark. This location will vary
-   --  depending on the changes that take place in the buffer
+   --  depending on the changes that take place in the buffer.
 
    function Is_Present (This : Editor_Mark) return Boolean is abstract;
    --  Returns True if mark's location is still present in the buffer
@@ -156,7 +156,7 @@ package GPS.Editors is
      (This   : Editor_Buffer;
       Line   : Integer;
       Column : Integer) return Editor_Location'Class is abstract;
-   --  Return a new location.
+   --  Return a new location
 
    function New_View
      (This : Editor_Buffer) return Editor_View'Class is abstract;

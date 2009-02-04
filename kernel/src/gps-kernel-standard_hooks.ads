@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -222,11 +222,11 @@ package GPS.Kernel.Standard_Hooks is
    ------------
 
    Stop_Macro_Action_Hook : constant Hook_Name := "stop_macro_action_hook";
-   --  Requests that the macro currently being replayed be stopped.
+   --  Requests that the macro currently being replayed be stopped
 
    procedure Stop_Macro
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Requests that the macro currently being replayed be stopped.
+   --  Requests that the macro currently being replayed be stopped
 
    -----------------------------
    -- Source_File_Action_Hook --

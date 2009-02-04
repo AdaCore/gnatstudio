@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,9 +39,9 @@ package body Vdiff2_Module.Utils.Shell_Command is
                      2 => new String'(Image (Pos)),
                      3 => new String'(Image (Number)),
                      4 => new String'(Style));
-      Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "Editor.add_blank_lines", Args_Line);
-
+      Res       : constant String :=
+                    Execute_GPS_Shell_Command
+                      (Kernel, "Editor.add_blank_lines", Args_Line);
    begin
       Free (Args_Line);
       return Natural'Value (Res);

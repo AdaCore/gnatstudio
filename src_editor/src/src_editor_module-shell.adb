@@ -965,8 +965,9 @@ package body Src_Editor_Module.Shell is
          end if;
 
          declare
-            File : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+            File     : constant Virtual_File :=
+                         Create (Nth_Arg (Data, 1),
+                                 Kernel, Use_Source_Path => True);
             Position : Natural;
          begin
             Line   := Nth_Arg (Data, 2, Default => 1);
@@ -1014,13 +1015,18 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "print_line_info" then
          declare
-            File : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
+            File  : constant Virtual_File :=
+                      Create
+                        (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
             Info  : Line_Info_Width_Array_Access;
             Box   : Source_Editor_Box;
 
             procedure Print_Line_Info (Info : Line_Information_Access);
+
+            ---------------------
+            -- Print_Line_Info --
+            ---------------------
 
             procedure Print_Line_Info (Info : Line_Information_Access) is
                Print : Unbounded_String;
@@ -1069,8 +1075,9 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, Indent_Cmd_Parameters);
          declare
             Current_Line_Only : constant Boolean := Nth_Arg (Data, 1, False);
-            Child : constant MDI_Child := Find_Current_Editor (Kernel);
-            Box   : Source_Editor_Box;
+            Child             : constant MDI_Child :=
+                                  Find_Current_Editor (Kernel);
+            Box               : Source_Editor_Box;
          begin
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
@@ -1514,9 +1521,9 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "cursor_center" then
          declare
-            File   : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
-            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            File  : constant Virtual_File :=
+                      Create (Nth_Arg (Data, 1), Kernel);
+            Child : constant MDI_Child := Find_Editor (Kernel, File);
          begin
             Scroll_To_Cursor_Location
               (Get_View (Source_Editor_Box (Get_Widget (Child))),
@@ -1526,7 +1533,7 @@ package body Src_Editor_Module.Shell is
       elsif Command = "get_buffer" then
          declare
             File  : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                      Create (Nth_Arg (Data, 1), Kernel);
             Child : constant MDI_Child := Find_Editor (Kernel, File);
             A     : GNAT.Strings.String_Access;
             B     : GNAT.Strings.String_Access;
@@ -1956,7 +1963,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "list" then
          declare
-            Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
             Child_Count : Natural := 0;
          begin
             while Get (Iter) /= null loop
@@ -3504,11 +3511,7 @@ package body Src_Editor_Module.Shell is
         (Kernel, "add_special_line", 2, 4, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel,
-         "remove_special_lines",
-         2,
-         3,
-         Buffer_Cmds'Access,
-         EditorBuffer);
+         "remove_special_lines", 2, 3, Buffer_Cmds'Access, EditorBuffer);
 
       --  EditorView
 

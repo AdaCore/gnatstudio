@@ -176,6 +176,7 @@ procedure GPS.Main is
                         Create ("MODULE.External_Editor", GNATCOLL.Traces.On);
    VCS_Trace              : constant Debug_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
+
    ClearCase_Trace        : constant Debug_Handle :=
                         Create ("MODULE.ClearCase", GNATCOLL.Traces.On);
    Custom_Trace           : constant Debug_Handle :=
