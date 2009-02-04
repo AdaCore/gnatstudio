@@ -331,6 +331,44 @@ package body Vdiff2_Module.Callback is
    is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
+
+      procedure Setup_Ref (Ref_File : Virtual_File);
+      --  Setup filename titles and writable permission
+
+      ---------------
+      -- Setup_Ref --
+      ---------------
+
+      procedure Setup_Ref (Ref_File : Virtual_File) is
+         Filename : constant String := Full_Name (Ref_File).all;
+      begin
+         declare
+            Args : Argument_List :=
+                     (1 => new String'(Filename),
+                      2 => new String'("FALSE"));
+         begin
+            Execute_GPS_Shell_Command
+              (Kernel, "Editor.set_writable", Args);
+            Free (Args);
+         end;
+         declare
+            Args : Argument_List (1 .. 3);
+         begin
+            Args (1) := new String'(Filename);
+            if D.Title = "" then
+               Args (2) := new String'(Base_Name (Ref_File));
+               Args (3) := new String'(Base_Name (Ref_File));
+            else
+               Args (2) := new String'(D.Title);
+               Args (3) := new String'(D.Title);
+            end if;
+
+            Execute_GPS_Shell_Command
+              (Kernel, "Editor.set_title", Args);
+            Free (Args);
+         end;
+      end Setup_Ref;
+
    begin
       if D.Orig_File = GNATCOLL.VFS.No_File then
          if D.New_File = GNATCOLL.VFS.No_File then
@@ -345,15 +383,7 @@ package body Vdiff2_Module.Callback is
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
 
             if Res /= null then
-               declare
-                  Args : Argument_List :=
-                           (1 => new String'(Full_Name (Ref_F).all),
-                            2 => new String'(Boolean'Image (False)));
-               begin
-                  Execute_GPS_Shell_Command
-                    (Kernel, "Editor.set_writable", Args);
-                  Free (Args);
-               end;
+               Setup_Ref (Ref_F);
             end if;
 
             Delete (Ref_F, Success);
@@ -374,15 +404,7 @@ package body Vdiff2_Module.Callback is
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
 
             if Res /= null then
-               declare
-                  Args : Argument_List :=
-                           (1 => new String'(Full_Name (Ref_F).all),
-                            2 => new String'(Boolean'Image (False)));
-               begin
-                  Execute_GPS_Shell_Command
-                    (Kernel, "Editor.set_writable", Args);
-                  Free (Args);
-               end;
+               Setup_Ref (Ref_F);
             end if;
 
             Delete (Ref_F, Success);

@@ -254,11 +254,12 @@
       <external check-password="true">cvs -f diff -rHEAD "$1"</external>
 
       <on-failure>
-        <shell>dump "%1" TRUE</shell>
+	<shell>base_name "$1"</shell>
+        <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>File "$1" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>Hook.run %1 null %2 %3 "%5 [HEAD]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -269,11 +270,12 @@
       <external check-password="true">cvs -f diff -r $1 "$2"</external>
 
       <on-failure>
-        <shell>dump "%1" TRUE</shell>
+	<shell>base_name "$2"</shell>
+        <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>Hook.run %1 null %2 %3 "%5 [$1]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -284,11 +286,12 @@
       <external check-password="true">cvs -f diff -r $1 "$2"</external>
 
       <on-failure>
-        <shell>dump "%1" TRUE</shell>
+	<shell>base_name "$2"</shell>
+        <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>Hook.run %1 null %2 %3 "%5 [$1]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -302,8 +305,10 @@
          <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>base_name "$3"</shell>
-      <shell>dump_file "%2" "r$1_$2_%1" TRUE</shell>
+      <shell>dump_file "%2" "%1.[r$2]" TRUE</shell>
       <shell>File "%1"</shell>
+      <shell>Editor.edit "%2"</shell>
+      <shell>Editor.set_title %3 "%4 [$2]" "%4 [$2]"</shell>
 
       <external check-password="true">cvs -f diff -r$1 -r$2 "$3"</external>
 
@@ -311,9 +316,9 @@
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %5 %2</shell>
+        <shell>Hook.run %1 null %7 %2 "%9 [$1]"</shell>
         <shell>delete "%4"</shell>
-        <shell>delete "%8"</shell>
+        <shell>delete "%10"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
    </action>
@@ -331,12 +336,13 @@
       <external check-password="true">cvs -f diff -rBASE -rHEAD "$1"</external>
 
       <on-failure>
-        <shell>dump "%1" TRUE</shell>
+	<shell>base_name "$1"</shell>
+        <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %5 %2</shell>
+        <shell>Hook.run %1 null %6 %2 "%4 [BASE]"</shell>
         <shell>delete "%4"</shell>
-        <shell>delete "%8"</shell>
+        <shell>delete "%9"</shell>
       </on-failure>
       <shell output="">echo "No differences found between BASE and HEAD for $1"</shell>
    </action>
@@ -377,9 +383,9 @@
          <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>base_name "$2"</shell>
-      <shell>dump_file "%2" "r$1_%1"</shell>
+      <shell>dump "%2"</shell>
       <shell>Editor.edit "%1"</shell>
-      <shell>Editor.set_title "%2" "%3 revision $1"</shell>
+      <shell>Editor.set_title "%2" "%3 [$1]" "%3 [$1]"</shell>
       <shell>Editor.set_writable "%3" FALSE</shell>
       <shell>delete "%4"</shell>
    </action>

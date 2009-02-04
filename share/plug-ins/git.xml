@@ -44,13 +44,14 @@
       <shell>dump "%1" TRUE</shell>
       <external>diff --normal -p %1 $1</external>
       <on-failure>
-         <shell>dump "%1" TRUE</shell>
+	 <shell>base_name "$1"</shell>
+         <shell>dump "%2" TRUE</shell>
          <shell>File "%1"</shell>
          <shell>File "$1"</shell>
          <shell>Hook "diff_action_hook"</shell>
-         <shell>Hook.run %1 null %2 %3</shell>
+         <shell>Hook.run %1 null %2 %3 "%5 [HEAD]"</shell>
          <shell>delete "%5"</shell>
-         <shell>delete "%8"</shell>
+         <shell>delete "%9"</shell>
       </on-failure>
       <shell>delete "%2"</shell>
    </action>
@@ -118,10 +119,12 @@
       <shell output="">echo "Getting $2 at revision $1"</shell>
       <shell lang="python">git_support.from_git_root ("$2")</shell>
       <external>git --no-pager show "$1:%1"</external>
-      <shell>dump_file "%1" "revision $1 for $2"</shell>
+      <shell>base_name "$2"</shell>
+      <shell>dump "%2" FALSE</shell>
       <shell>Editor.edit "%1"</shell>
-      <shell>Editor.set_writable "%2" FALSE</shell>
-      <shell>delete "%3"</shell>
+      <shell>Editor.set_title "%2" "%3 [$1]" "%3 [$1]"</shell>
+      <shell>Editor.set_writable "%3" FALSE</shell>
+      <shell>delete "%4"</shell>
    </action>
 
    <!-- Git -->

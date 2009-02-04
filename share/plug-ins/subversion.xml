@@ -275,11 +275,12 @@
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>dump "%1" TRUE</shell>
+      <shell>base_name "$1"</shell>
+      <shell>dump "%2" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>File "$1"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3</shell>
+      <shell>Hook.run %1 null %2 %3 "%5 [HEAD]"</shell>
       <shell>delete "%5"</shell>
    </action>
 
@@ -290,11 +291,12 @@
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>dump "%1" TRUE</shell>
+      <shell>base_name "$2"</shell>
+      <shell>dump "%2" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>File "$2"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3</shell>
+      <shell>Hook.run %1 null %2 %3 "%5 [r$1]"</shell>
       <shell>delete "%5"</shell>
    </action>
 
@@ -306,8 +308,10 @@
          <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>base_name "$3"</shell>
-      <shell>dump_file "%2" "r$1_$2_%1" TRUE</shell>
+      <shell>dump_file "%2" "%1.[$2]" TRUE</shell>
       <shell>File "%1"</shell>
+      <shell>Editor.edit "%2"</shell>
+      <shell>Editor.set_title %3 "%4 [r$2]" "%4 [r$2]"</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -r$1:$2 "$3"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
@@ -316,9 +320,9 @@
       <shell>dump "%1" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %5 %2</shell>
+      <shell>Hook.run %1 null %7 %2 "%9 [r$1]"</shell>
       <shell>delete "%4"</shell>
-      <shell>delete "%8"</shell>
+      <shell>delete "%10"</shell>
    </action>
 
    <action name="generic_svn_diff_base_head" show-command="false" output="none" category="">
@@ -328,16 +332,17 @@
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>dump "%1" TRUE</shell>
+      <shell>base_name "$1"</shell>
+      <shell>dump "%2" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>File "$1"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3</shell>
+      <shell>Hook.run %1 null %2 %3 "%5 [BASE]"</shell>
       <shell>delete "%5"</shell>
    </action>
 
    <action name="generic_svn_diff_tag" show-command="false" output="none" category="">
-      <shell output="">echo "Getting comparison for revision $1 of $3/$2 ..."</shell>
+      <shell output="">echo "Getting comparison for revision $1 of $2 ..."</shell>
       <shell output="">VCS.repository_path "$2"</shell>
       <shell output="">VCS.repository_path "$2" "$1"</shell>
       <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal "%2" "%1"</external>
@@ -346,11 +351,12 @@
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
-      <shell>dump "%1" TRUE</shell>
+      <shell>base_name "$2"</shell>
+      <shell>dump "%2" TRUE</shell>
       <shell>File "%1"</shell>
       <shell>File "$2"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3</shell>
+      <shell>Hook.run %1 null %2 %3 "%5 [$1]"</shell>
       <shell>delete "%5"</shell>
    </action>
 
@@ -376,9 +382,9 @@
          <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>base_name "$2"</shell>
-      <shell>dump_file "%2" "r$1_%1"</shell>
+      <shell>dump "%2"</shell>
       <shell>Editor.edit "%1"</shell>
-      <shell>Editor.set_title "%2" "%3 @ $1"</shell>
+      <shell>Editor.set_title "%2" "%3 [r$1]" "%3 [r$1]"</shell>
       <shell>Editor.set_writable "%3" FALSE</shell>
       <shell>delete "%4"</shell>
    </action>
