@@ -7,6 +7,13 @@ Known Problems fixed in GPS 4.3.3
   Workaround: Use the menu File->Change Directory to change the working
               directory.
 
+- FB07-017: Saving does not cancel Smart Completion window
+  Problem:    Saving the contents of a file editor using the associated key
+              shortcut does not cause the Smart Completion window to
+              disappear.
+  Workaround: Use another method to cancel the Smart Completion window, such as
+              clicking in the editor or pressing "ESC".
+
 Known Problems fixed in GPS 4.3.1
 
 - HC18-007: File totals for gcov-based file coverage are wrong
