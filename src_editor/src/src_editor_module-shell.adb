@@ -158,7 +158,8 @@ package body Src_Editor_Module.Shell is
       4 => End_Column_Cst'Access);
    Set_Title_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Cst'Access,
-      2 => Title_Cst'Access);
+      2 => Title_Cst'Access,
+      3 => Filename_Cst'Access);
 
    type Child_Triplet is array (1 .. 3) of Gtkada.MDI.MDI_Child;
    type Child_Triplet_Access is access Child_Triplet;
@@ -1875,15 +1876,20 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, Set_Title_Cmd_Parameters);
 
          declare
-            File  : constant Virtual_File :=
-                      Create (Nth_Arg (Data, 1), Kernel);
-            Title : constant String := Nth_Arg (Data, 2);
-            Child : MDI_Child;
+            File     : constant Virtual_File :=
+                         Create (Nth_Arg (Data, 1), Kernel);
+            Title    : constant String := Nth_Arg (Data, 2);
+            Filename : constant String := Nth_Arg (Data, 3, "");
+            Child    : MDI_Child;
          begin
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
-               Set_Title (Child, Full_Name (File).all, Title);
+               if Filename = "" then
+                  Set_Title (Child, Full_Name (File).all, Title);
+               else
+                  Set_Title (Child, Filename, Title);
+               end if;
             end if;
          end;
       end if;
@@ -3695,7 +3701,7 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_writable", 2, 2, Edit_Command_Handler'Access,
          Editor_Class, True);
       Register_Command
-        (Kernel, "set_title", 2, 2, Edit_Command_Handler'Access,
+        (Kernel, "set_title", 2, 3, Edit_Command_Handler'Access,
          Editor_Class, True);
 
       --  Register the debug commands
