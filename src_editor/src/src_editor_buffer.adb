@@ -807,11 +807,9 @@ package body Src_Editor_Buffer is
       --  Perform on-the-fly style check
 
       if Buffer.Auto_Syntax_Check then
-         --  NOT COVERED
          Execute_GPS_Shell_Command
            (Buffer.Kernel,
             "File " & Full_Name (Buffer.Filename).all);
-         --  NOT COVERED
          Execute_GPS_Shell_Command
            (Buffer.Kernel, "File.shadow_check_syntax %1");
       end if;
