@@ -15,6 +15,11 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I122-033 Meaningful buffer name (2009-02-04)
+
+   Improve the name of buffer used to store specific file revisions,
+   file logs or activity logs.
+
 NF-44-I120-054 Ability to specify font for annotation comments (2009-02-04)
 
    It is now possible to specify a different font for annotation comments.
