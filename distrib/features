@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Feb 03, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Feb 04, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-I120-054 Ability to specify font for annotation comments (2009-02-04)
+
+   It is now possible to specify a different font for annotation comments.
+   Previousely, the font for regular comments was always used for special
+   comments.
 
 NF-44-I119-037 New plug-in: tab_expansion.py (2009-01-23)
 
