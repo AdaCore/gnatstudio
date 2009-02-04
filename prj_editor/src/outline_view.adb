@@ -1047,6 +1047,7 @@ package body Outline_View is
          declare
             Arr   : Constructs_Array (1 .. Constructs.Size);
             Index : Natural := 1;
+            --  Index points to the last free element in Arr.
 
             procedure Xchg (Op1, Op2 : Natural);
             function Lt (Op1, Op2 : Natural) return Boolean;
@@ -1085,17 +1086,19 @@ package body Outline_View is
          begin
             Current := Constructs.First;
             while Current /= null loop
-               Arr (Index) := Current;
-               Index := Index + 1;
+               if Current.Name /= null then
+                  Arr (Index) := Current;
+                  Index := Index + 1;
+               end if;
                Current := Current.Next;
             end loop;
 
             Sort
-              (Constructs.Size,
+              (Index - 1,
                Xchg'Unrestricted_Access,
                Lt'Unrestricted_Access);
 
-            for J in Arr'Range loop
+            for J in 1 .. Index - 1 loop
                Add_Construct (Arr (J));
             end loop;
          end;
