@@ -66,6 +66,11 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Do not use Editor.add_blank_lines in combination with block
               folding.
 
+- H624-007: Outline View slow on huge files
+  Problem:    When displaying huge files (10000 significant lines of code or
+              more), the Outline View introduces slowdowns in GPS.
+  Workaround: Close the Outline View when working on big files.
+
 - F927-006: Folded blocks are deleted too easily
   Problem:    If a block is folded, pressing "backspace" when the cursor is at
               the beginning of the line following the folded block will delete
