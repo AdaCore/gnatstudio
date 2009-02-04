@@ -77,13 +77,6 @@ Known Problems fixed in GPS 4.4.0
               the entire folded block.
   Workaround: Use Undo to go back to previous state.
 
-- FB07-017: Saving does not cancel Smart Completion window
-  Problem:    Saving the contents of a file editor using the associated key
-              shortcut does not cause the Smart Completion window to
-              disappear.
-  Workaround: Use another method to cancel the Smart Completion window, such as
-              clicking in the editor or pressing "ESC".
-
 - E721-004: Lines cannot be removed after removing blank lines
   Problem:    When an editor has "blank lines" (for instance when the editor
               is part of a visual comparison), after these blank lines are
