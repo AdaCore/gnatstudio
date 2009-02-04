@@ -1,3 +1,12 @@
+Known Problems fixed in GPS 4.3.3
+
+- I204-012: Loading executable in the debugger changes the current directory
+  Problem:    When using the menu Debug->Debug->Load File... to load an
+              executable, the current working directory of GPS changes to the
+              directory containing the executable.
+  Workaround: Use the menu File->Change Directory to change the working
+              directory.
+
 Known Problems fixed in GPS 4.3.1
 
 - HC18-007: File totals for gcov-based file coverage are wrong
