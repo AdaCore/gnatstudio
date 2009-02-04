@@ -5359,6 +5359,13 @@ To get a handle on the current editor, use the following code:
       <description>Scrolls the view so that the location is centered</description>
   </shell_doc>
 
+  <shell_doc name="GPS.EditorView.title">
+      <param name="self">An instance of GPS.EditorView</param>
+      <param name="short" default="False">A boolean</param>
+      <description>Returns the view's title, the short title is returned if
+      short is set to True</description>
+  </shell_doc>
+
   <shell_doc name="GPS.EditorView.goto">
       <param name="self">An instance of GPS.EditorView</param>
       <param name="location">An instance of GPS.EditorLocation</param>

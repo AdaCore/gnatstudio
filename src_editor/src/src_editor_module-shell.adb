@@ -117,6 +117,7 @@ package body Src_Editor_Module.Shell is
    Dialog_On_Failure_Cst : aliased constant String := "dialog_on_failure";
    Open_Cst              : aliased constant String := "open";
    Title_Cst             : aliased constant String := "title";
+   Short_Cst             : aliased constant String := "short";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -3073,6 +3074,7 @@ package body Src_Editor_Module.Shell is
       Box        : Source_Editor_Box;
       Buffer     : Source_Buffer;
       Iter       : Gtk_Text_Iter;
+      Child      : MDI_Child;
       Success    : Boolean;
    begin
       if Command = Constructor_Method then
@@ -3131,6 +3133,18 @@ package body Src_Editor_Module.Shell is
                end;
             else
                Set_Error_Msg (Data, -"Invalid location");
+            end if;
+         end if;
+
+      elsif Command = "title" then
+         Name_Parameters (Data, (1 => Short_Cst'Access));
+         Get_Box (Box, Data, 1);
+         if Box /= null then
+            Child := Find_MDI_Child (Get_MDI (Get_Kernel (Data)), Box);
+            if Nth_Arg (Data, 2, True) then
+               Set_Return_Value (Data, Get_Title (Child));
+            else
+               Set_Return_Value (Data, Get_Short_Title (Child));
             end if;
          end if;
 
@@ -3532,6 +3546,7 @@ package body Src_Editor_Module.Shell is
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "goto", 1, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);
+      Register_Command (Kernel, "title", 0, 1, View_Cmds'Access, EditorView);
 
       --  Searching
 
