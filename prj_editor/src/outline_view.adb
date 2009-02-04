@@ -283,8 +283,8 @@ package body Outline_View is
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle)
    is
-      Model   : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Model (Tooltip.Outline.Tree));
+      Model   : constant Gtk_Tree_Model :=
+        Get_Model (Tooltip.Outline.Tree);
       Status  : Find_Decl_Or_Body_Query_Status := Success;
       Entity  : Entity_Information;
       Iter    : Gtk_Tree_Iter;
