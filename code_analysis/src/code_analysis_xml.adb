@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007, AdaCore                    --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@ with Code_Coverage;           use Code_Coverage;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with Projects.Registry;       use Projects.Registry;
 with Language.Tree.Database;  use Language.Tree.Database;
+
+with UTF8_Utils;              use UTF8_Utils;
 
 package body Code_Analysis_XML is
 
@@ -261,7 +263,8 @@ package body Code_Analysis_XML is
    ---------------
 
    procedure Dump_Line (Line_Node : Code_Analysis.Line; Parent : Node_Ptr) is
-      Loc : Node_Ptr;
+      Loc   : Node_Ptr;
+      Dummy : aliased Boolean;
    begin
       if Line_Node.Number /= 0 then
          Loc := new Glib.Xml_Int.Node;
@@ -271,7 +274,9 @@ package body Code_Analysis_XML is
          XML_Dump_Coverage (Line_Node.Analysis_Data.Coverage_Data, Loc);
 
          if Line_Node.Contents /= null then
-            Set_Attribute (Loc, "contents", Line_Node.Contents.all);
+            Set_Attribute
+              (Loc, "contents",
+               Unknown_To_UTF8 (Line_Node.Contents.all, Dummy'Access));
          end if;
       end if;
    end Dump_Line;
