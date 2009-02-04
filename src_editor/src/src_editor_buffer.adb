@@ -2672,6 +2672,8 @@ package body Src_Editor_Buffer is
                        Keywords_Style.Get_Pref_Font;
       Comment_Font : constant Pango.Font.Pango_Font_Description :=
                        Comments_Style.Get_Pref_Font;
+      Annotated_Comment_Font : constant Pango.Font.Pango_Font_Description :=
+                       Annotated_Comments_Style.Get_Pref_Font;
       String_Font  : constant Pango.Font.Pango_Font_Description :=
                        Strings_Style.Get_Pref_Font;
    begin
@@ -2688,7 +2690,7 @@ package body Src_Editor_Buffer is
          Comment_Font_Desc           => Comment_Font,
          Annotated_Comment_Color     => Annotated_Comments_Style.Get_Pref_Fg,
          Annotated_Comment_Color_Bg  => Annotated_Comments_Style.Get_Pref_Bg,
-         Annotated_Comment_Font_Desc => Comment_Font,
+         Annotated_Comment_Font_Desc => Annotated_Comment_Font,
          Character_Color             => Strings_Style.Get_Pref_Fg,
          Character_Color_Bg          => Strings_Style.Get_Pref_Bg,
          Character_Font_Desc         => String_Font,
