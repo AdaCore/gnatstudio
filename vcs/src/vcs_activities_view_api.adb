@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -674,7 +674,8 @@ package body VCS_Activities_View_API is
               (Kernel,
                Get_Log_File (Kernel, Activity),
                Group            => Group_Consoles,
-               Initial_Position => Position_Bottom);
+               Initial_Position => Position_Bottom,
+               Title            => Get_Name (Activity) & " [activity log]");
          end if;
       end if;
 

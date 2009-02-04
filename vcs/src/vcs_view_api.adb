@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1862,7 +1862,8 @@ package body VCS_View_API is
               (Kernel,
                Get_Log_From_File (Kernel, File, True),
                Group            => Group_Consoles,
-               Initial_Position => Position_Bottom);
+               Initial_Position => Position_Bottom,
+               Title            => Base_Name (File) & " [log]");
          end;
 
          String_List.Next (List);
@@ -2143,7 +2144,8 @@ package body VCS_View_API is
                  (Kernel,
                   Get_Log_From_File (Kernel, File, True, Suffix),
                   Group            => Group_Consoles,
-                  Initial_Position => Position_Bottom);
+                  Initial_Position => Position_Bottom,
+                  Title            => Base_Name (File) & " [log]");
             end if;
 
             Files_Temp := String_List.Next (Files_Temp);
