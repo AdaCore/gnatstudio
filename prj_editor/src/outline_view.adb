@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Heap_Sort;            use GNAT.Heap_Sort;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -37,9 +38,7 @@ with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Model_Sort;       use Gtk.Tree_Model_Sort;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -93,6 +92,8 @@ package body Outline_View is
    Column_Column       : constant := 3;
    Declaration_Column  : constant := 5;
 
+   type Constructs_Array is array (Natural range <>) of Construct_Access;
+
    overriding procedure Default_Context_Factory
      (Module  : access Outline_View_Module_Record;
       Context : in out Selection_Context;
@@ -140,7 +141,10 @@ package body Outline_View is
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Recompute the information for Outline.File, and redisplay it.
-   --  Change Outline.File first if needed
+   --  If the constructs are up-to-date, do nothing.
+
+   procedure Force_Refresh (View : access Gtk_Widget_Record'Class);
+   --  Same as above, but force a full refresh.
 
    procedure Refresh
      (View         : access Gtk_Widget_Record'Class;
@@ -220,18 +224,6 @@ package body Outline_View is
       Line    : out Integer;
       Column  : out Visible_Column_Type);
    --  Return the current coordinates for the entity referenced at Iter
-
-   function Outline_View_Sort
-     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
-   --  Outline view sorting routine
-
-   function Get_Base_Model
-     (Tree_View : access Gtk_Tree_View_Record'Class) return Gtk_Tree_Model;
-   pragma Inline (Get_Base_Model);
-   --  Return the base model for the tree view, the top-level model is a
-   --  Gtk_Tree_Model_Sort, the base model is the Gtk_Tree_Store.
 
    procedure Set_File
      (Outline : access Outline_View_Record'Class;
@@ -350,7 +342,7 @@ package body Outline_View is
         and then Child /= null
       then
          Outline := Outline_View_Access (Get_Widget (Child));
-         Model   := Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
+         Model   := Gtk_Tree_Store (Get_Model (Outline.Tree));
          Unselect_All (Get_Selection (Outline.Tree));
 
          Subprogram := Compute_Parent_Entity
@@ -426,8 +418,6 @@ package body Outline_View is
 
                if Distance /= Gint'Last then
                   Path := Get_Path (Model, Closest);
-                  Path := Convert_Child_Path_To_Path
-                    (Gtk_Tree_Model_Sort (Get_Model (Outline.Tree)), Path);
                   Set_Cursor (Outline.Tree, Path, null, False);
                   Path_Free (Path);
                end if;
@@ -537,31 +527,31 @@ package body Outline_View is
          Associate (Get_History (Kernel).all, Hist_Show_Profile, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Outline);
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Show types");
          Associate (Get_History (Kernel).all, Hist_Show_Types, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Outline);
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Show specifications");
          Associate (Get_History (Kernel).all, Hist_Show_Decls, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Outline);
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Sort alphabetically");
          Associate (Get_History (Kernel).all, Hist_Sort_Alphabetical, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Outline);
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
 
          Gtk_New (Check, Label => -"Dynamic link with editor");
          Associate (Get_History (Kernel).all, Hist_Editor_Link, Check);
          Append (Submenu, Check);
          Widget_Callback.Object_Connect
-           (Check, Signal_Toggled, Refresh'Access, Outline);
+           (Check, Signal_Toggled, Force_Refresh'Access, Outline);
       end if;
    end Outline_Context_Factory;
 
@@ -621,22 +611,6 @@ package body Outline_View is
       end if;
       return null;
    end Load_Desktop;
-
-   --------------------
-   -- Get_Base_Model --
-   --------------------
-
-   function Get_Base_Model
-     (Tree_View : access Gtk_Tree_View_Record'Class) return Gtk_Tree_Model
-   is
-      Model : constant Gtk_Tree_Model := Get_Model (Tree_View);
-   begin
-      if Model.all in Gtk_Tree_Model_Sort_Record then
-         return Get_Model (Gtk_Tree_Model_Sort (Model));
-      else
-         return Model;
-      end if;
-   end Get_Base_Model;
 
    ------------------
    -- Button_Press --
@@ -719,35 +693,6 @@ package body Outline_View is
          return False;
    end Button_Release;
 
-   -----------------------
-   -- Outline_View_Sort --
-   -----------------------
-
-   function Outline_View_Sort
-     (Model : access Gtk_Tree_Model_Record'Class;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Gint
-   is
-      Order  : constant array (Boolean) of Gint := (1, 0);
-      A_Name : constant String :=
-                 Get_String (Model, A, Entity_Name_Column);
-      B_Name : constant String :=
-                 Get_String (Model, B, Entity_Name_Column);
-      A_Decl : constant Boolean :=
-                 Get_Boolean (Model, A, Declaration_Column);
-      B_Decl : constant Boolean :=
-                 Get_Boolean (Model, B, Declaration_Column);
-   begin
-      --  If names are identical we want to have the declarations first then
-      --  the bodies.
-
-      if A_Name = B_Name then
-         return Order (A_Decl > B_Decl);
-      else
-         return Order (A_Name < B_Name);
-      end if;
-   end Outline_View_Sort;
-
    -------------
    -- Gtk_New --
    -------------
@@ -758,8 +703,6 @@ package body Outline_View is
    is
       Scrolled      : Gtk_Scrolled_Window;
       Model         : Gtk_Tree_Store;
-      Sort_Model    : Gtk_Tree_Model_Sort;
-
       Col           : Gtk_Tree_View_Column;
       Col_Number    : Gint;
       Text_Render   : Gtk_Cell_Renderer_Text;
@@ -791,20 +734,10 @@ package body Outline_View is
             Line_Column         => GType_Int,
             Declaration_Column  => GType_Boolean));
 
-      --  Stack a Sorting model on top of it
-
-      Gtk_New_With_Model (Sort_Model, Gtk_Tree_Model (Model));
-
       --  Create the tree view using the sorting model
 
-      Gtk_New (Outline.Tree, Sort_Model);
+      Gtk_New (Outline.Tree, Model);
       Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
-
-      --  Setup the sorting support
-
-      Set_Sort_Column_Id (+Sort_Model, Entity_Name_Column, Sort_Ascending);
-      Set_Sort_Func
-        (+Sort_Model, Entity_Name_Column, Outline_View_Sort'Access);
 
       Set_Headers_Visible (Outline.Tree, False);
 
@@ -907,8 +840,8 @@ package body Outline_View is
    -----------
 
    procedure Clear (Outline : access Outline_View_Record'Class) is
-      Model : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (Outline.Tree));
    begin
       Clear (Model);
    end Clear;
@@ -924,6 +857,19 @@ package body Outline_View is
    begin
       Refresh (View, Null_Iter, Iter, Model);
    end Refresh;
+
+   -------------------
+   -- Force_Refresh --
+   -------------------
+
+   procedure Force_Refresh (View : access Gtk_Widget_Record'Class) is
+      Outline : constant Outline_View_Access := Outline_View_Access (View);
+      Iter    : Gtk_Tree_Iter;
+      Model   : Gtk_Tree_Model;
+   begin
+      Outline.Timestamp := 0;
+      Refresh (View, Null_Iter, Iter, Model);
+   end Force_Refresh;
 
    -------------
    -- Refresh --
@@ -948,13 +894,11 @@ package body Outline_View is
                           (Get_History (Outline.Kernel).all,
                            Hist_Show_Profile);
       Base_Model    : constant Gtk_Tree_Store :=
-        Gtk_Tree_Store (Get_Base_Model (Outline.Tree));
+        Gtk_Tree_Store (Get_Model (Outline.Tree));
       Sorting       : constant Boolean :=
         Get_History
           (Get_History (Outline.Kernel).all,
            Hist_Sort_Alphabetical);
-      Sort_Column   : constant Gint := Freeze_Sort (Base_Model);
-      pragma Unreferenced (Sort_Column);
       Is_Type       : Boolean;
 
       Buffer        : constant Editor_Buffer'Class :=
@@ -975,6 +919,7 @@ package body Outline_View is
       Root          : constant Gtk_Tree_Iter := Null_Iter;
 
       procedure Update_Best_Row (Iter : Gtk_Tree_Iter);
+      procedure Add_Construct (Current : Construct_Access);
 
       ---------------------
       -- Update_Best_Row --
@@ -992,57 +937,12 @@ package body Outline_View is
          Path_Free (Path);
       end Update_Best_Row;
 
-      Constructs : Construct_List;
+      -------------------
+      -- Add_Construct --
+      -------------------
 
-   begin
-      --  Get the name of the currently selected item, if any.
-
-      if Current_Iter /= Null_Iter then
-         declare
-            Tree_Model : constant Gtk_Tree_Model :=
-              Get_Model (Outline.Tree);
-         begin
-            Current_Entity_Name := new String'
-              (Get_String (Tree_Model, Current_Iter, Entity_Name_Column));
-            Current_Entity_Line := Integer
-              (Get_Int (Tree_Model, Current_Iter, Line_Column));
-            Current_Entity_Column := Integer
-              (Get_Int (Tree_Model, Current_Iter, Column_Column));
-         end;
-      else
-         New_Iter := Null_Iter;
-         New_Model := null;
-      end if;
-
-      Buffer.Get_Constructs (Constructs, Outline.Timestamp);
-
-      if Old_Timestamp /= 0
-        and then Outline.Timestamp = Old_Timestamp
-      then
-         --  The constructs are up-to-date: return now
-         New_Iter := Current_Iter;
-         New_Model := Get_Model (Outline.Tree);
-
-         return;
-      end if;
-
-      Push_State (Outline.Kernel, Busy);
-
-      Clear (Outline);
-
-      if Sorting then
-         Set_Sort_Column_Id
-           (+Gtk_Tree_Model_Sort (Get_Model (Outline.Tree)),
-            Entity_Name_Column, Sort_Ascending);
-      else
-         Set_Sort_Column_Id
-           (+Gtk_Tree_Model_Sort (Get_Model (Outline.Tree)),
-            Default_Sort_Column_Id, Sort_Ascending);
-      end if;
-
-      Current := Constructs.First;
-
-      while Current /= null loop
+      procedure Add_Construct (Current : Construct_Access) is
+      begin
          if Current.Name /= null then
             Is_Type := Current.Category in Data_Type_Category;
 
@@ -1101,17 +1001,114 @@ package body Outline_View is
                end if;
             end if;
          end if;
+      end Add_Construct;
 
-         Current := Current.Next;
-      end loop;
+      Constructs : Construct_List;
 
-      Free (Current_Entity_Name);
+   begin
+      --  Get the name of the currently selected item, if any.
 
-      Expand_All (Outline.Tree);
+      if Current_Iter /= Null_Iter then
+         declare
+            Tree_Model : constant Gtk_Tree_Model :=
+              Get_Model (Outline.Tree);
+         begin
+            Current_Entity_Name := new String'
+              (Get_String (Tree_Model, Current_Iter, Entity_Name_Column));
+            Current_Entity_Line := Integer
+              (Get_Int (Tree_Model, Current_Iter, Line_Column));
+            Current_Entity_Column := Integer
+              (Get_Int (Tree_Model, Current_Iter, Column_Column));
+         end;
+      else
+         New_Iter := Null_Iter;
+         New_Model := null;
+      end if;
+
+      Buffer.Get_Constructs (Constructs, Outline.Timestamp);
+
+      if Old_Timestamp /= 0
+        and then Outline.Timestamp = Old_Timestamp
+      then
+         --  The constructs are up-to-date: return now
+         New_Iter := Current_Iter;
+         New_Model := Get_Model (Outline.Tree);
+
+         return;
+      end if;
+
+      Push_State (Outline.Kernel, Busy);
+
+      Clear (Outline);
+
+      --  Store all constructs in an array
 
       if Sorting then
-         Thaw_Sort (Base_Model, Entity_Name_Column);
+         declare
+            Arr   : Constructs_Array (1 .. Constructs.Size);
+            Index : Natural := 1;
+
+            procedure Xchg (Op1, Op2 : Natural);
+            function Lt (Op1, Op2 : Natural) return Boolean;
+
+            ----------
+            -- Xchg --
+            ----------
+
+            procedure Xchg (Op1, Op2 : Natural) is
+               D : Construct_Access;
+            begin
+               D := Arr (Op1);
+               Arr (Op1) := Arr (Op2);
+               Arr (Op2) := D;
+            end Xchg;
+
+            --------
+            -- Lt --
+            --------
+
+            function Lt (Op1, Op2 : Natural) return Boolean is
+            begin
+               --  If names are identical we want to have the declarations
+               --  first then the bodies.
+
+               if Arr (Op1).Name = null or else Arr (Op2).Name = null then
+                  return False;
+               end if;
+
+               if Arr (Op1).Name.all = Arr (Op2).Name.all then
+                  return Arr (Op1).Is_Declaration;
+               else
+                  return Arr (Op1).Name.all < Arr (Op2).Name.all;
+               end if;
+            end Lt;
+         begin
+            Current := Constructs.First;
+            while Current /= null loop
+               Arr (Index) := Current;
+               Index := Index + 1;
+               Current := Current.Next;
+            end loop;
+
+            Sort
+              (Constructs.Size,
+               Xchg'Unrestricted_Access,
+               Lt'Unrestricted_Access);
+
+            for J in Arr'Range loop
+               Add_Construct (Arr (J));
+            end loop;
+         end;
+
+      else
+         Current := Constructs.First;
+         while Current /= null loop
+            Add_Construct (Current);
+            Current := Current.Next;
+         end loop;
       end if;
+
+      Free (Current_Entity_Name);
 
       --  If we have found a new best row, highlight it now
 
