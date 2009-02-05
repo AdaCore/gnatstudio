@@ -77,6 +77,13 @@ Known Problems fixed in GPS 4.4.0
               the entire folded block.
   Workaround: Use Undo to go back to previous state.
 
+- EC12-010: Too many navigation locations stored.
+  Problem:    In some cases, multiple locations in the same area are stored
+              by GPS. As a result, GPS remains on the same location when
+              pressing the "Back" button multiple times.
+  Workaround: Press Back/Forward multiple times, or use other means of
+              navigation.
+
 - E721-004: Lines cannot be removed after removing blank lines
   Problem:    When an editor has "blank lines" (for instance when the editor
               is part of a visual comparison), after these blank lines are
