@@ -246,6 +246,9 @@ package body Browsers.Canvas is
      (Marker : access Browser_Marker_Record) return String;
    overriding function Save
      (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr;
+   overriding function Similar
+     (Left  : access Browser_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean;
    --  See inherited documentation
 
    function Create_Browser_Marker
@@ -2637,6 +2640,19 @@ package body Browsers.Canvas is
       N.Value := new String'(Marker.Title.all);
       return N;
    end Save;
+
+   -------------
+   -- Similar --
+   -------------
+
+   overriding function Similar
+     (Left  : access Browser_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Left, Right);
+   begin
+      return False;
+   end Similar;
 
    ---------------------------
    -- Create_Browser_Marker --

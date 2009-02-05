@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2008, AdaCore                --
+--                   Copyright (C) 2005-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -559,5 +559,24 @@ package body Src_Editor_Module.Markers is
       end if;
       return null;
    end Load;
+
+   -------------
+   -- Similar --
+   -------------
+
+   overriding function Similar
+     (Left  : access File_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean
+   is
+      FM : File_Marker;
+   begin
+      if Right.all in File_Marker_Record'Class then
+         FM := File_Marker (Right);
+         return (FM.File = Left.File) and then
+           (FM.Line = Left.Line);
+      else
+         return False;
+      end if;
+   end Similar;
 
 end Src_Editor_Module.Markers;

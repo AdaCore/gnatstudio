@@ -100,6 +100,9 @@ package body Navigation_Module is
      (Marker : access Shell_Marker_Record) return String;
    overriding function Save
      (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr;
+   overriding function Similar
+     (Left  : access Shell_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean;
    --  See inherited documentation
 
    -----------------------
@@ -245,19 +248,23 @@ package body Navigation_Module is
          Module.Last_Marker := 0;
       end if;
 
-      Module.Current_Marker := Module.Current_Marker + 1;
+      if Module.Last_Marker = 0
+        or else not Similar (D.Marker, Module.Markers (Module.Last_Marker))
+      then
+         Module.Current_Marker := Module.Current_Marker + 1;
 
-      if Module.Current_Marker > Module.Markers'Last then
-         Destroy (Module.Markers (Module.Markers'First).all);
-         Unchecked_Free (Module.Markers (Module.Markers'First));
-         Module.Markers (Module.Markers'First .. Module.Markers'Last - 1) :=
-           Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
-         Module.Current_Marker := Module.Markers'Last;
+         if Module.Current_Marker > Module.Markers'Last then
+            Destroy (Module.Markers (Module.Markers'First).all);
+            Unchecked_Free (Module.Markers (Module.Markers'First));
+            Module.Markers (Module.Markers'First .. Module.Markers'Last - 1) :=
+              Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
+            Module.Current_Marker := Module.Markers'Last;
+         end if;
+
+         Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
+         Module.Last_Marker := Module.Current_Marker;
+         Refresh_Location_Buttons (Kernel);
       end if;
-
-      Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
-      Module.Last_Marker := Module.Current_Marker;
-      Refresh_Location_Buttons (Kernel);
    end On_Marker_Added_In_History;
 
    --------------------------
@@ -592,6 +599,19 @@ package body Navigation_Module is
       N.Value := new String'(Marker.Command.all);
       return N;
    end Save;
+
+   -------------
+   -- Similar --
+   -------------
+
+   overriding function Similar
+     (Left  : access Shell_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Left, Right);
+   begin
+      return False;
+   end Similar;
 
    -------------------------
    -- Create_Shell_Marker --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -410,6 +410,13 @@ package GPS.Kernel is
    --  visited. This is the basic interface for the handling of the history of
    --  locations. It emits the hook Marker_Added_To_History.
 
+   function Similar
+     (Left  : access Location_Marker_Record;
+      Right : access Location_Marker_Record'Class) return Boolean is abstract;
+   --  Return True if Left and Right point to the same location in the sense
+   --  that GPS should not add a new marker in history for two locations that
+   --  are the same.
+
    --------------
    -- Commands --
    --------------
@@ -455,6 +462,7 @@ package GPS.Kernel is
       is new Action_Filter_Record with private;
    type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
 
+   overriding
    function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
       Context : Selection_Context) return Boolean;
@@ -910,7 +918,10 @@ private
    --  Selection_Context should not be visibly tagged, otherwise we would have
    --  operations dispatching on multiple types above
 
+   overriding
    procedure Adjust   (Context : in out Selection_Context_Controlled);
+
+   overriding
    procedure Finalize (Context : in out Selection_Context_Controlled);
    --  See inherited documentation
 

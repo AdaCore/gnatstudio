@@ -259,22 +259,21 @@ package body Src_Editor_Box is
      (Source : access Source_Editor_Box_Record'Class)
    is
       Line   : Editable_Line_Type;
-      Dummy  : Character_Offset_Type;
+      Column : Visible_Column_Type;
       File   : Virtual_File := Get_Filename (Source.Source_Buffer);
    begin
       if File = GNATCOLL.VFS.No_File then
          File := Get_File_Identifier (Source.Source_Buffer);
       end if;
 
-      Get_Cursor_Position (Source.Source_Buffer, Line, Dummy);
+      Get_Cursor_Position (Source.Source_Buffer, Line, Column);
       Push_Marker_In_History
         (Kernel => Source.Kernel,
          Marker => Create_File_Marker
            (Kernel => Source.Kernel,
             File   => File,
             Line   => Line,
-            Column => 1));
-      --  ??? Any reason to throw away the column and putting 1 here?
+            Column => Column));
    end Add_Navigation_Location;
 
    -----------
