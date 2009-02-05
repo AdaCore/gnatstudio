@@ -217,3 +217,22 @@ def on_gps_started (hook_name):
     create_codepeer_menu ()
 
 GPS.Hook ("gps_started").add (on_gps_started)
+GPS.parse_xml ("""
+  <builder-mode name="codepeer">
+    <description>Build SCIL for code review</description>
+    <subdir>codepeer</subdir>
+    <supported-model>builder</supported-model>
+    <supported-model>gnatmake</supported-model>
+    <supported-model>gprbuild</supported-model>
+    <extra-args>
+      <arg>--subdirs=%subdir</arg>
+      <arg>-c</arg>
+      <arg>-gnatc</arg>
+      <arg>-cargs</arg>
+      <arg>-gnatd.I</arg>
+      <arg>-gnatdx</arg>
+      <arg>-gnata</arg>
+      <arg>-gnatVim</arg>
+    </extra-args>
+  </builder-mode>
+""")
