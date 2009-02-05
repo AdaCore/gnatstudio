@@ -105,10 +105,16 @@ install_binaries() {
   cd $basedir
 
   rm -rf $basedir/lib/gps* $basedir/bin/gps*
-  rm -f $basedir/share/gps/plug-ins/*.xml
-  rm -f $basedir/share/gps/plug-ins/*.py*
+  rm -f $basedir/share/gps/plug-ins/*.pyc
   rm -f $basedir/share/gps/library/*.py*
   rm -f $basedir/share/gps/library/*.xml
+
+  for f in $basedir/share/gps/plug-ins/*.xml \
+           $basedir/share/gps/plug-ins/*.py; do
+    if ! grep '<documentation_file>' $f >/dev/null; then
+      rm -f $f
+    fi
+  done
 
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
@@ -152,8 +158,7 @@ end_message() {
    for csh and tcsh shells:
       setenv PATH $basedir/bin:\$PATH
    for sh, bash, ksh and zsh:
-      PATH=$basedir/bin:\$PATH
-      export PATH
+      PATH=$basedir/bin:\$PATH; export PATH
 
 EOF
 }
