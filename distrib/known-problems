@@ -7,6 +7,14 @@ Known Problems fixed in GPS 4.3.3
   Workaround: Use the menu File->Change Directory to change the working
               directory.
 
+- I122-008: Installation does not keep existing documentation plug-ins
+  Problem:    When installing GPS, if you have some existing plug-ins
+              (e.g. from a gnat or gprbuild installation) that provide access
+              to documentation in the GPS help menu, these documents will not
+              be available in the help menu.
+  Workaround: Reinstall the missing .xml file after installing GPS, or access
+              the documentation outside GPS.
+
 - FB07-017: Saving does not cancel Smart Completion window
   Problem:    Saving the contents of a file editor using the associated key
               shortcut does not cause the Smart Completion window to
