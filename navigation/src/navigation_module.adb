@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -426,7 +426,6 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
-      --  COVERED
       S_Line : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel, "Editor.cursor_get_line",
