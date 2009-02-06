@@ -888,7 +888,10 @@ package body Code_Peer.Module is
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
                   Text         =>
-                    Image (Message.Current_Probability) & Message.Text.all,
+                    Image (Message.Current_Probability)
+                    & Message.Category.Name.all
+                    & ": "
+                    & Message.Text.all,
                   Line         => Message.Line,
                   Column       =>
                     Basic_Types.Visible_Column_Type (Message.Column),
