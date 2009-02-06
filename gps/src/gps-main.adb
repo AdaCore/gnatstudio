@@ -186,7 +186,7 @@ procedure GPS.Main is
    Code_Analysis_Trace    : constant Debug_Handle :=
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
    Code_Peer_Trace        : constant Debug_Handle :=
-                              Create ("MODULE.Code_Peer", GNATCOLL.Traces.Off);
+                              Create ("MODULE.Code_Peer", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Debug_Handle :=
                               Create ("MODULE.Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Debug_Handle :=
