@@ -41,17 +41,6 @@ def fileExists(f):
        exists = 1
     return exists
 
-def check_toolchain():
-    global gnat_toolchain_found
-
-    gnat_toolchain_found = False
-
-    # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
-
-    gnat_toolchain_found = \
-      os_utils.locate_exec_on_path("codepeer") != "" \
-      and os_utils.locate_exec_on_path("gps_codepeer_bridge") != ""
-
 #----------------- Helper routines to run CodePeer ---------------------------
 
 def inspection_output (proc, matches, since_last):
@@ -194,8 +183,6 @@ def check_valid_project():
 
 #----------------- toolbar menus -----------------------------------
 def create_codepeer_menu():
-    # separation
-
     global inspect_menu
     inspect_menu = GPS.Menu.create ("Tools/CodePeer/Run code review",
             on_activate=run_inspection,
@@ -206,33 +193,28 @@ def create_codepeer_menu():
             on_activate=regenerate_report)
 
 def on_gps_started (hook_name):
-    check_toolchain()
-
-    global gnat_toolchain_found
-
-    if not (gnat_toolchain_found):
-        return
-
-    # toolbar menus
     create_codepeer_menu ()
 
-GPS.Hook ("gps_started").add (on_gps_started)
-GPS.parse_xml ("""
-  <builder-mode name="codepeer">
-    <description>Build SCIL for code review</description>
-    <subdir>codepeer</subdir>
-    <supported-model>builder</supported-model>
-    <supported-model>gnatmake</supported-model>
-    <supported-model>gprbuild</supported-model>
-    <extra-args>
-      <arg>--subdirs=%subdir</arg>
-      <arg>-c</arg>
-      <arg>-gnatc</arg>
-      <arg>-cargs</arg>
-      <arg>-gnatd.I</arg>
-      <arg>-gnatdx</arg>
-      <arg>-gnata</arg>
-      <arg>-gnatVim</arg>
-    </extra-args>
-  </builder-mode>
-""")
+# Check for GNAT toolchain: codepeer, gps_codepeer_bridge
+
+if os_utils.locate_exec_on_path("codepeer") != "" \
+  and os_utils.locate_exec_on_path("gps_codepeer_bridge") != "":
+  GPS.Hook ("gps_started").add (on_gps_started)
+  GPS.parse_xml ("""
+    <builder-mode name="codepeer">
+      <description>Build SCIL for code review</description>
+      <subdir>codepeer</subdir>
+      <supported-model>builder</supported-model>
+      <supported-model>gnatmake</supported-model>
+      <supported-model>gprbuild</supported-model>
+      <extra-args>
+        <arg>--subdirs=%subdir</arg>
+        <arg>-c</arg>
+        <arg>-gnatc</arg>
+        <arg>-cargs</arg>
+        <arg>-gnatd.I</arg>
+        <arg>-gnatdx</arg>
+        <arg>-gnata</arg>
+        <arg>-gnatVim</arg>
+      </extra-args>
+    </builder-mode>""")
