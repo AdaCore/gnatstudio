@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -587,8 +588,16 @@ package body Code_Peer.Module is
       use type GPS.Kernel.Action_Filter;
 
       Submenu_Factory : GPS.Kernel.Modules.Submenu_Factory;
+      Str : String_Access := Locate_Exec_On_Path ("codepeer");
 
    begin
+      if Str = null then
+         --  Do not register the CodePeer module if the codepeer executable
+         --  cannot be found.
+         return;
+      end if;
+
+      Free (Str);
       Module          := new Module_Id_Record (Kernel);
       Submenu_Factory := new Submenu_Factory_Record (Module);
 
