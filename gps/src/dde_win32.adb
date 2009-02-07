@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2008, AdaCore           --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@ with System;
 with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Exceptions;    use Ada.Exceptions;
+
+with Gtk.Window; use Gtk.Window;
 
 with GPS.Kernel.Standard_Hooks;
 with Traces;            use Traces;
@@ -139,6 +141,8 @@ package body DDE is
       Res      : INT;
       pragma Unreferenced (wFmt, hCnv, hsz1, hsz2, dwData1, dwData2, Res);
 
+      use GPS.Kernel;
+
    begin
       case wType is
          when XTYP_ADVDATA =>
@@ -176,6 +180,7 @@ package body DDE is
                      null;
                   when FileOpen =>
                      begin
+                        Deiconify (Get_Main_Window (Kernel_Local));
                         GPS.Kernel.Standard_Hooks.Open_File_Editor
                           (Kernel_Local, Create (Full_Filename => Argument));
                      exception
