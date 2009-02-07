@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.3.3
 
+- I206-024: Main window not always uniconified under Windows
+  Problem:    When the search window is open and floating, and the main
+              GPS window iconified, double-cliking on a source file in the
+              Windows explorer will not raise the GPS main window.
+  Workaround: Uniconify the main window manually.
+
 - I204-012: Loading executable in the debugger changes the current directory
   Problem:    When using the menu Debug->Debug->Load File... to load an
               executable, the current working directory of GPS changes to the
