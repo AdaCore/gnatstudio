@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.3 NEW FEATURES LIST Current as of Jan 21, 2009
+GPS 4.3 NEW FEATURES LIST Current as of Feb 09, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -17,7 +17,7 @@ New features in GPS 4.3.2
 
 NF-43-H813-012 Support for x86_64 / Mac OS X (2009-01-21)
 
-  GPS 4.3.2 is supported on Mac OS X (Leopard) with 64-bit-capable
+  GPS 4.3.2 is supported on Mac OS X (Leopard) with 64-bit capable
   Intel processors.
 
 New features in GPS 4.3.1
