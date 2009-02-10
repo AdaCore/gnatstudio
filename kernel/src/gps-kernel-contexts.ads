@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with GNATCOLL.VFS;
 with Basic_Types;
 with Entities;
 with Projects;
+with String_List_Utils;
 
 package GPS.Kernel.Contexts is
 
@@ -275,15 +276,20 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Activity_Information
      (Context : in out Selection_Context; Id : String);
-   --  Fill Context with an activity name
+   --  Fill Context with a single activity name
+
+   procedure Set_Activity_Information
+     (Context    : in out Selection_Context;
+      Activities : String_List_Utils.String_List.List);
+   --  Fill context with a set of activities
 
    function Has_Activity_Information
      (Context : Selection_Context) return Boolean;
-   --  Return True if Context has activity information
+   --  Return True if Context has some activity information
 
    function Activity_Information
-     (Context : Selection_Context) return String;
-   --  Returns the name of the activity
+     (Context : Selection_Context) return String_List_Utils.String_List.List;
+   --  Returns a list of activity names
 
 private
 

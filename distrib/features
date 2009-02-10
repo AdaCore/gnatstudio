@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Feb 04, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Feb 10, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -14,6 +14,12 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-I202-016 Support selection of multiple activities (2009-02-10)
+
+   Actions on the VCS Activities explorer can now be done on multiple
+   activities. For example, it is possible to delete or commit all selected
+   activities.
 
 NF-44-I122-033 Meaningful source editor titles (2009-02-04)
 

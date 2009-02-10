@@ -134,6 +134,14 @@ package body VCS_Activities_View_API is
    --  Add file in context or files selected on the VCS explorer into the given
    --  activity.
 
+   procedure Apply
+     (Context : Selection_Context;
+      Action  : access
+        procedure (Kernel   : not null access Kernel_Handle_Record'Class;
+                   Activity : Activity_Id));
+   --  Apply Action on the activity in Context or all activities selected on
+   --  the Activity Explorer.
+
    --  Action to open a file
 
    type Edit_Action_Command_Type is new Root_Command with record
@@ -160,6 +168,33 @@ package body VCS_Activities_View_API is
    overriding function Execute
      (Command : access Adjust_Patch_Action_Command_Type)
       return Command_Return_Type;
+
+   -----------
+   -- Apply --
+   -----------
+
+   procedure Apply
+     (Context : Selection_Context;
+      Action  : access
+        procedure (Kernel   : not null access Kernel_Handle_Record'Class;
+                   Activity : Activity_Id))
+   is
+      use type String_List.List_Node;
+   begin
+      if Context /= No_Context then
+         declare
+            Kernel : constant Kernel_Handle := Get_Kernel (Context);
+            List   : constant String_List.List :=
+                       Activity_Information (Context);
+            Iter   : String_List.List_Node := String_List.First (List);
+         begin
+            while Iter /= String_List.Null_Node loop
+               Action (Kernel, Value (String_List.Data (Iter)));
+               Iter := String_List.Next (Iter);
+            end loop;
+         end;
+      end if;
+   end Apply;
 
    ---------------------
    -- Context_Factory --
@@ -315,11 +350,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Activity : Activity_Id;
    begin
-      Activity := Value (Activity_Information (Context));
-      Toggle_Group_Commit (Kernel, Activity);
+      Apply (Context, Toggle_Group_Commit'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Toggle_Group_Commit;
@@ -349,9 +381,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      On_Delete_Activity (Kernel, Value (Activity_Information (Context)));
+      Apply (Context, On_Delete_Activity'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Delete_Activity;
@@ -391,7 +422,7 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id;
    begin
       if Has_Activity_Information (Context) then
-         Activity := Value (Activity_Information (Context));
+         Activity := Value (String_List.Head (Activity_Information (Context)));
 
          Populate_Activity (Kernel, Activity, Context);
 
@@ -487,11 +518,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Activity : constant Activity_Id :=
-                   Value (Activity_Information (Context));
    begin
-      Query_Status_Activity (Kernel, Activity);
+      Apply (Context, Query_Status_Activity'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Query_Status_Activity;
@@ -530,11 +558,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Activity : constant Activity_Id :=
-                   Value (Activity_Information (Context));
    begin
-      Update_Activity (Kernel, Activity);
+      Apply (Context, Update_Activity'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Update_Activity;
@@ -589,11 +614,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Activity : constant Activity_Id :=
-                   Value (Activity_Information (Context));
    begin
-      Commit_Activity (Kernel, Activity);
+      Apply (Context, Commit_Activity'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Commit_Activity;
@@ -629,14 +651,27 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Activity : constant Activity_Id :=
-                   Value (Activity_Information (Context));
    begin
-      Diff_Activity (Kernel, Activity);
+      Apply (Context, Diff_Activity'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Diff_Activity;
+
+   -----------------
+   -- On_Edit_Log --
+   -----------------
+
+   procedure On_Edit_Log
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id) is
+   begin
+      Open_File_Editor
+        (Kernel,
+         Get_Log_File (Kernel, Activity),
+         Group            => Group_Consoles,
+         Initial_Position => Position_Bottom,
+         Title            => Get_Name (Activity) & " [activity log]");
+   end On_Edit_Log;
 
    ----------------------
    -- On_Menu_Edit_Log --
@@ -647,9 +682,8 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      List     : String_List.List;
-      Activity : Activity_Id;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      List   : String_List.List;
 
    begin
       if Context /= No_Context then
@@ -678,20 +712,30 @@ package body VCS_Activities_View_API is
          else
             --  This is an activity line
 
-            Activity := Value (Activity_Information (Context));
-
-            Open_File_Editor
-              (Kernel,
-               Get_Log_File (Kernel, Activity),
-               Group            => Group_Consoles,
-               Initial_Position => Position_Bottom,
-               Title            => Get_Name (Activity) & " [activity log]");
+            Apply (Context, On_Edit_Log'Access);
          end if;
       end if;
 
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Edit_Log;
+
+   -------------------
+   -- On_Remove_Log --
+   -------------------
+
+   procedure On_Remove_Log
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
+   is
+      Log_File : constant Virtual_File := Get_Log_File (Kernel, Activity);
+      Success  : Boolean;
+      pragma Unreferenced (Success);
+   begin
+      Close_File_Editors (Kernel, Log_File);
+      Delete (Log_File, Success);
+      Query_Status (null, Kernel);
+   end On_Remove_Log;
 
    ------------------------
    -- On_Menu_Remove_Log --
@@ -701,21 +745,9 @@ package body VCS_Activities_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context)
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
-      Success : Boolean;
+      pragma Unreferenced (Widget);
    begin
-      if Context /= No_Context and then Has_Activity_Information (Context) then
-         declare
-            Log_File : constant Virtual_File :=
-                         Get_Log_File
-                           (Kernel, Value (Activity_Information (Context)));
-         begin
-            Close_File_Editors (Kernel, Log_File);
-            Delete (Log_File, Success);
-            Query_Status (Widget, Kernel);
-         end;
-      end if;
-
+      Apply (Context, On_Remove_Log'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Remove_Log;
@@ -729,25 +761,19 @@ package body VCS_Activities_View_API is
       Context : Selection_Context)
    is
       pragma Unreferenced (Widget);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      On_Close_Open_Activity (Kernel, Value (Activity_Information (Context)));
+      Apply (Context, On_Close_Open_Activity'Access);
    end On_Menu_Close_Open_Activity;
 
-   ------------------------------
-   -- On_Menu_Build_Patch_File --
-   ------------------------------
+   -------------------------
+   -- On_Build_Patch_File --
+   -------------------------
 
-   procedure On_Menu_Build_Patch_File
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context)
+   procedure On_Build_Patch_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
    is
-      pragma Unreferenced (Widget);
-
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context);
       Logs_Dir     : constant String := Get_Home_Dir (Kernel) & "log_files";
-      Activity     : constant Activity_Id :=
-                       Value (Activity_Information (Context));
       VCS          : constant VCS_Access :=
                        Get_VCS_For_Activity (Kernel, Activity);
       Files        : constant String_List.List :=
@@ -835,6 +861,19 @@ package body VCS_Activities_View_API is
       Launch_Background_Command
         (Kernel, Edit_File, True, True, Name (VCS));
 
+   end On_Build_Patch_File;
+
+   ------------------------------
+   -- On_Menu_Build_Patch_File --
+   ------------------------------
+
+   procedure On_Menu_Build_Patch_File
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Apply (Context, On_Build_Patch_File'Access);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Menu_Build_Patch_File;
@@ -935,23 +974,23 @@ package body VCS_Activities_View_API is
    is
       use type GNAT.Strings.String_Access;
 
-      File_Section     : Boolean;
-      Activity_Section : Boolean;
-      Active           : Boolean;
-      Item             : Gtk_Menu_Item;
-      Check            : Gtk_Check_Menu_Item;
-      Activity         : Activity_Id;
-      VCS              : VCS_Access;
-      Actions          : Action_Array;
-
+      File_Section       : Boolean;
+      Activity_Section   : Boolean;
+      Item               : Gtk_Menu_Item;
+      Check              : Gtk_Check_Menu_Item;
+      Actions            : Action_Array;
+      Atomic_Supported   : Boolean := True;
+      Same_Closed_Status : Boolean := True;
+      All_Opened         : Boolean := True;
+      All_Has_Log        : Boolean := True;
+      Group_Commit       : Boolean := True;
+      Single             : Boolean := True; -- single activity selected
    begin
       --  Determine which sections should be displayed
 
       if Has_Activity_Information (Context) then
          Activity_Section := not Has_File_Information (Context)
            and then not Has_Directory_Information (Context);
-         Activity         := Value (Activity_Information (Context));
-         Active           := not Is_Closed (Activity);
          File_Section     := Has_File_Information (Context)
            or else Has_Directory_Information (Context);
       else
@@ -960,24 +999,75 @@ package body VCS_Activities_View_API is
       end if;
 
       if Activity_Section then
-         VCS := Get_VCS_For_Activity (Kernel, Activity);
-         Actions := Get_Identified_Actions (VCS);
+         --  First setup the activity context, we need to know if all
+         --  activities are compatible (using VCS supporting atomic command,
+         --  all closed or opened, all have commit/status/... actions).
 
-         Gtk_New (Check, Label => -"Group commit");
-         Set_Active (Check, Get_Group_Commit (Activity));
-         Append (Menu, Check);
-         Context_Callback.Connect
-           (Check, Signal_Activate,
-            On_Menu_Toggle_Group_Commit'Access, Context);
-         Set_Sensitive
-           (Check,
-            VCS /= null
-            and then Actions (Commit) /= null
-            and then Atomic_Commands_Supported (VCS)
-            and then not Is_Closed (Activity));
+         declare
+            use type String_List.List_Node;
+            VCS       : VCS_Access;
+            Iter      : String_List.List_Node :=
+                          String_List.First (Activity_Information (Context));
+            Activity  : Activity_Id;
+            L_Actions : Action_Array;
+            First     : Boolean := True;
+            Closed    : Boolean;
+         begin
+            while Iter /= String_List.Null_Node loop
+               Activity := Value (String_List.Data (Iter));
 
-         Gtk_New (Item);
-         Append (Menu, Item);
+               VCS := Get_VCS_For_Activity (Kernel, Activity);
+               L_Actions := Get_Identified_Actions (VCS);
+
+               All_Opened := All_Opened and then not Is_Closed (Activity);
+               All_Has_Log := All_Has_Log and then Has_Log (Kernel, Activity);
+
+               Group_Commit := Group_Commit
+                 and then Get_Group_Commit (Activity);
+
+               if VCS = null then
+                  Atomic_Supported := False;
+               else
+                  Atomic_Supported := Atomic_Supported
+                    and then Atomic_Commands_Supported (VCS);
+               end if;
+
+               if First then
+                  Actions := L_Actions;
+                  Closed := Is_Closed (Activity);
+                  Group_Commit := Get_Group_Commit (Activity);
+                  First := False;
+
+               else
+                  Single := False;
+                  for K in Actions'Range loop
+                     if Actions (K) /= null and then L_Actions (K) = null then
+                        Actions (K) := null;
+                     end if;
+                  end loop;
+
+                  Same_Closed_Status := Same_Closed_Status
+                    and then Closed = Is_Closed (Activity);
+               end if;
+
+               Iter := String_List.Next (Iter);
+            end loop;
+
+            Gtk_New (Check, Label => -"Group commit");
+            Set_Active (Check, Atomic_Supported);
+            Append (Menu, Check);
+            Context_Callback.Connect
+              (Check, Signal_Activate,
+               On_Menu_Toggle_Group_Commit'Access, Context);
+            Set_Sensitive
+              (Check,
+               Actions (Commit) /= null
+               and then Atomic_Supported
+               and then All_Opened);
+
+            Gtk_New (Item);
+            Append (Menu, Item);
+         end;
       end if;
 
       Gtk_New (Item, Label => -"Create new activity");
@@ -987,19 +1077,31 @@ package body VCS_Activities_View_API is
       Set_Sensitive (Item, True);
 
       if Activity_Section then
-         if Is_Closed (Activity) then
-            Gtk_New (Item, Label => -"Re-open activity");
+         if All_Opened or else not Same_Closed_Status then
+            if Single then
+               Gtk_New (Item, Label => -"Close activity");
+            else
+               Gtk_New (Item, Label => -"Close activities");
+            end if;
          else
-            Gtk_New (Item, Label => -"Close activity");
+            if Single then
+               Gtk_New (Item, Label => -"Re-open activity");
+            else
+               Gtk_New (Item, Label => -"Re-open activities");
+            end if;
          end if;
 
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, Signal_Activate,
             On_Menu_Close_Open_Activity'Access, Context);
-         Set_Sensitive (Item, True);
+         Set_Sensitive (Item, Same_Closed_Status);
 
-         Gtk_New (Item, Label => -"Delete activity");
+         if Single then
+            Gtk_New (Item, Label => -"Delete activity");
+         else
+            Gtk_New (Item, Label => -"Delete activities");
+         end if;
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, Signal_Activate, On_Menu_Delete_Activity'Access, Context);
@@ -1009,11 +1111,15 @@ package body VCS_Activities_View_API is
          Append (Menu, Item);
 
          if Actions (Commit) /= null then
-            Gtk_New (Item, Label => -"Commit activity");
+            if Single then
+               Gtk_New (Item, Label => -"Commit activity");
+            else
+               Gtk_New (Item, Label => -"Commit activities");
+            end if;
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, Signal_Activate, On_Menu_Commit_Activity'Access, Context);
-            Set_Sensitive (Item, Active);
+            Set_Sensitive (Item, All_Opened);
          end if;
 
          if Actions (Status_Files) /= null then
@@ -1022,7 +1128,7 @@ package body VCS_Activities_View_API is
             Context_Callback.Connect
               (Item, Signal_Activate,
                On_Menu_Query_Status_Activity'Access, Context);
-            Set_Sensitive (Item, Active);
+            Set_Sensitive (Item, All_Opened);
          end if;
 
          if Actions (Update) /= null then
@@ -1030,7 +1136,7 @@ package body VCS_Activities_View_API is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, Signal_Activate, On_Menu_Update_Activity'Access, Context);
-            Set_Sensitive (Item, Active);
+            Set_Sensitive (Item, All_Opened);
          end if;
 
          if Actions (Diff_Head) /= null then
@@ -1038,14 +1144,14 @@ package body VCS_Activities_View_API is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, Signal_Activate, On_Menu_Diff_Activity'Access, Context);
-            Set_Sensitive (Item, Active);
+            Set_Sensitive (Item, All_Opened);
          end if;
 
          Gtk_New (Item, Label => -"Build patch file");
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, Signal_Activate, On_Menu_Build_Patch_File'Access, Context);
-         Set_Sensitive (Item, Active);
+         Set_Sensitive (Item, All_Opened);
       end if;
 
       if File_Section or else Activity_Section then
@@ -1059,18 +1165,26 @@ package body VCS_Activities_View_API is
          Context_Callback.Connect
            (Item, Signal_Activate,
             On_Menu_Remove_From_Activity'Access, Context);
-         Set_Sensitive (Item, Active);
+         Set_Sensitive (Item, All_Opened);
       end if;
 
       if Activity_Section then
-         Gtk_New (Item, Label => -"Edit revision log");
+         if Single then
+            Gtk_New (Item, Label => -"Edit revision log");
+         else
+            Gtk_New (Item, Label => -"Edit revision logs");
+         end if;
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, Signal_Activate, On_Menu_Edit_Log'Access, Context);
          Set_Sensitive (Item, True);
 
-         if Has_Log (Kernel, Activity) then
-            Gtk_New (Item, Label => -"Remove revision log");
+         if All_Has_Log then
+            if Single then
+               Gtk_New (Item, Label => -"Remove revision log");
+            else
+               Gtk_New (Item, Label => -"Remove revision logs");
+            end if;
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, Signal_Activate, On_Menu_Remove_Log'Access, Context);

@@ -713,6 +713,61 @@ package body VCS_View.Activities is
    is
       pragma Unreferenced (Event_Widget);
 
+      function Get_Selected_Activities
+        (Explorer : VCS_View_Access) return String_List.List;
+      --  Return the list of activities that are selected
+
+      -----------------------------
+      -- Get_Selected_Activities --
+      -----------------------------
+
+      function Get_Selected_Activities
+        (Explorer : VCS_View_Access) return String_List.List
+      is
+         Result : String_List.List;
+
+         procedure Add_Selected_Item
+           (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+            Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+            Data  : Explorer_Selection_Foreach.Data_Type_Access);
+         --  Add an item to Result
+
+         -----------------------
+         -- Add_Selected_Item --
+         -----------------------
+
+         procedure Add_Selected_Item
+           (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+            Path  : Gtk.Tree_Model.Gtk_Tree_Path;
+            Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+            Data  : Explorer_Selection_Foreach.Data_Type_Access)
+         is
+            pragma Unreferenced (Model, Path, Data);
+         begin
+            if Parent (Explorer.Model, Iter) = Null_Iter then
+               --  Take root nodes, those are the activity name
+
+               String_List.Append
+                 (Result, Get_String (Explorer.Model, Iter, Activity_Column));
+            end if;
+         end Add_Selected_Item;
+
+         E      : aliased VCS_View_Access := Explorer;
+         EA     : constant Explorer_Selection_Foreach.Data_Type_Access :=
+                    E'Unchecked_Access;
+
+      begin
+         if Explorer = null then
+            return Result;
+         end if;
+
+         Explorer_Selection_Foreach.Selected_Foreach
+           (Get_Selection (Explorer.Tree),
+            Add_Selected_Item'Unrestricted_Access, EA);
+         return Result;
+      end Get_Selected_Activities;
+
       Explorer : constant VCS_Activities_View_Access :=
                    VCS_Activities_View_Access (Object);
       Mitem    : Gtk_Menu_Item;
@@ -739,12 +794,13 @@ package body VCS_View.Activities is
          --  If Get_Depth (Path) is 1 then we are on an activity node
 
          if Get_Depth (Path) = 1 then
-            Iter := Get_Iter (Explorer.Model, Path);
-
             Set_Activity_Information
-              (Context, Get_String (Explorer.Model, Iter, Activity_Column));
+              (Context,
+               Get_Selected_Activities (VCS_View_Access (Explorer)));
 
          elsif Get_Depth (Path) > 1 then
+            --  Here we are on a file node
+
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
             Iter := Parent (Explorer.Model, Get_Iter (Explorer.Model, Path));

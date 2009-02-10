@@ -93,6 +93,7 @@ with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Remote_Descriptors;
+with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
@@ -1032,7 +1033,7 @@ package body GPS.Kernel is
             GNATCOLL.VFS.Unchecked_Free (Data.Files);
          end if;
 
-         Free (Data.Activity_Id);
+         String_List_Utils.String_List.Free (Data.Activities);
          Free (Data.Revision);
          Free (Data.Other_Revision);
          Free (Data.Tag);

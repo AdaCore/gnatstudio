@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -828,8 +828,16 @@ package body GPS.Kernel.Contexts is
      (Context : in out Selection_Context;
       Id      : String) is
    begin
-      Free (Context.Data.Data.Activity_Id);
-      Context.Data.Data.Activity_Id := new String'(Id);
+      String_List_Utils.String_List.Free (Context.Data.Data.Activities);
+      String_List_Utils.String_List.Append (Context.Data.Data.Activities, Id);
+   end Set_Activity_Information;
+
+   procedure Set_Activity_Information
+     (Context    : in out Selection_Context;
+      Activities : String_List_Utils.String_List.List) is
+   begin
+      String_List_Utils.String_List.Free (Context.Data.Data.Activities);
+      Context.Data.Data.Activities := Activities;
    end Set_Activity_Information;
 
    --------------------------
@@ -837,9 +845,9 @@ package body GPS.Kernel.Contexts is
    --------------------------
 
    function Activity_Information
-     (Context : Selection_Context) return String is
+     (Context : Selection_Context) return String_List_Utils.String_List.List is
    begin
-      return Context.Data.Data.Activity_Id.all;
+      return Context.Data.Data.Activities;
    end Activity_Information;
 
    ------------------------------
@@ -849,8 +857,8 @@ package body GPS.Kernel.Contexts is
    function Has_Activity_Information
      (Context : Selection_Context) return Boolean is
    begin
-      return Context.Data.Data /= null
-        and then Context.Data.Data.Activity_Id /= null;
+      return not String_List_Utils.String_List.Is_Empty
+        (Context.Data.Data.Activities);
    end Has_Activity_Information;
 
    ----------------------

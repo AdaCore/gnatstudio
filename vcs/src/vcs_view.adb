@@ -656,7 +656,8 @@ package body VCS_View is
          Result := New_Context;
 
          if Has_Activity_Information (Context) then
-            Set_Activity_Information (Result, Activity_Information (Context));
+            Set_Activity_Information
+              (Result, Copy_String_List (Activity_Information (Context)));
          end if;
 
          if Has_File_Information (Context) then
