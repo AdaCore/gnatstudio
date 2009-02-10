@@ -32,7 +32,6 @@ with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 

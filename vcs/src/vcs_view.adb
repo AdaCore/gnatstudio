@@ -25,7 +25,6 @@ with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Object;                use Gtk.Object;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -46,9 +45,6 @@ with GNAT.Strings;
 package body VCS_View is
 
    use type GNAT.Strings.String_Access;
-
-   package Explorer_Selection_Foreach is
-     new Selection_Foreach (VCS_View_Access);
 
    function Copy_Context
      (Context : Selection_Context) return Selection_Context;

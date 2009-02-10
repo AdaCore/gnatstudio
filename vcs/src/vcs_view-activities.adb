@@ -29,7 +29,6 @@ with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 

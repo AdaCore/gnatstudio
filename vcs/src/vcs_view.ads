@@ -31,6 +31,7 @@ with Gtk.Box;              use Gtk.Box;
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_Store;       use Gtk.Tree_Store;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
 
@@ -242,5 +243,8 @@ private
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
    --  See inherited documentation
+
+   package Explorer_Selection_Foreach is
+     new Selection_Foreach (VCS_View_Access);
 
 end VCS_View;
