@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,19 +19,22 @@
 
 with System;                   use System;
 with Ada.Unchecked_Conversion;
+with System.OS_Lib;            use System.OS_Lib;
+with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 
 package body Toolchains is
 
    type Toolchains_Property_Record is record
       Active        : Boolean       := False;
-      Tools_Path    : String_Access := null;
-      Compiler_Path : String_Access := null;
+      Tools_Path    : Filesystem_String_Access := null;
+      Compiler_Path : Filesystem_String_Access := null;
    end record;
 
    Property : Toolchains_Property_Record;
 
    function Internal_Locate_Exec
-     (Exec_Name : String; Extra_Path : String) return String_Access;
+     (Exec_Name  : Filesystem_String;
+      Extra_Path : Filesystem_String) return Filesystem_String_Access;
    --  Try to retrieve Exec_Name from Extra_Path. If not found, try to retrieve
    --  it from the regular path
 
@@ -41,8 +44,8 @@ package body Toolchains is
 
    procedure Set_Toolchains_Properties
      (Active               : Boolean;
-      Tool_Search_Path     : String;
-      Compiler_Search_Path : String) is
+      Tool_Search_Path     : Filesystem_String;
+      Compiler_Search_Path : Filesystem_String) is
    begin
       Free (Property.Tools_Path);
       Free (Property.Compiler_Path);
@@ -50,13 +53,14 @@ package body Toolchains is
       Property.Active := Active;
 
       if Tool_Search_Path /= "" then
-         Property.Tools_Path := new String'(Tool_Search_Path);
+         Property.Tools_Path := new Filesystem_String'(Tool_Search_Path);
       else
          Property.Tools_Path := null;
       end if;
 
       if Compiler_Search_Path /= "" then
-         Property.Compiler_Path := new String'(Compiler_Search_Path);
+         Property.Compiler_Path := new Filesystem_String'
+           (Compiler_Search_Path);
       else
          Property.Compiler_Path := null;
       end if;
@@ -75,7 +79,7 @@ package body Toolchains is
    -- Get_Tool_Search_Path --
    --------------------------
 
-   function Get_Tool_Search_Path return String is
+   function Get_Tool_Search_Path return Filesystem_String is
    begin
       if not Property.Active or else Property.Tools_Path = null then
          return "";
@@ -88,7 +92,7 @@ package body Toolchains is
    -- Get_Compiler_Search_Path --
    ------------------------------
 
-   function Get_Compiler_Search_Path return String is
+   function Get_Compiler_Search_Path return Filesystem_String is
    begin
       if not Property.Active or else Property.Compiler_Path = null then
          return "";
@@ -102,7 +106,8 @@ package body Toolchains is
    -----------------
 
    function Locate_Exec
-     (Exec_Name : String; Path : String) return String_Access
+     (Exec_Name : Filesystem_String;
+      Path      : Filesystem_String) return Filesystem_String_Access
    is
       function Internal (C_Exec, C_Path : System.Address)
                          return System.Address;
@@ -114,8 +119,8 @@ package body Toolchains is
       function Strlen (S : System.Address) return Integer;
       pragma Import (C, Strlen, "strlen");
 
-      C_Exec_Name : String := Exec_Name & ASCII.NUL;
-      C_Path      : String := Path & ASCII.NUL;
+      C_Exec_Name : String := +Exec_Name & ASCII.NUL;
+      C_Path      : String := +Path & ASCII.NUL;
       C_Ret       : System.Address;
       C_Ret_Len   : Integer;
       Result      : String_Access;
@@ -163,7 +168,7 @@ package body Toolchains is
             end;
          end if;
 
-         return Result;
+         return Convert (Result);
       end if;
    end Locate_Exec;
 
@@ -172,14 +177,15 @@ package body Toolchains is
    --------------------------
 
    function Internal_Locate_Exec
-     (Exec_Name : String; Extra_Path : String) return String_Access
+     (Exec_Name  : Filesystem_String;
+      Extra_Path : Filesystem_String) return Filesystem_String_Access
    is
-      Ret : String_Access;
+      Ret : Filesystem_String_Access;
    begin
       Ret := Locate_Exec (Exec_Name, Extra_Path);
 
       if Ret = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return Locate_Exec_On_Path (Exec_Name);
       else
          return Ret;
       end if;
@@ -189,10 +195,11 @@ package body Toolchains is
    -- Locate_Tool_Executable --
    ----------------------------
 
-   function Locate_Tool_Executable (Exec_Name : String) return String_Access is
+   function Locate_Tool_Executable
+     (Exec_Name : Filesystem_String) return Filesystem_String_Access is
    begin
       if not Property.Active or else Property.Tools_Path = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return Locate_Exec_On_Path (Exec_Name);
       end if;
 
       return Internal_Locate_Exec (Exec_Name, Property.Tools_Path.all);
@@ -203,10 +210,10 @@ package body Toolchains is
    --------------------------------
 
    function Locate_Compiler_Executable
-     (Exec_Name : String) return String_Access is
+     (Exec_Name : Filesystem_String) return Filesystem_String_Access is
    begin
       if not Property.Active or else Property.Compiler_Path = null then
-         return System.OS_Lib.Locate_Exec_On_Path (Exec_Name);
+         return Locate_Exec_On_Path (Exec_Name);
       end if;
 
       return Internal_Locate_Exec (Exec_Name, Property.Compiler_Path.all);

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,13 +18,15 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;             use Ada.Text_IO;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
 with Projects;                  use Projects;
 
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 
 package body AUnit_Templates is
 
@@ -35,13 +36,13 @@ package body AUnit_Templates is
 
    function Get_Template_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Base   : String) return String
+      Base   : Filesystem_String) return Filesystem_String
    is
-      Prefix   : constant String := "share/gps/aunit/";
+      Prefix   : constant Filesystem_String := "share/gps/aunit/";
       --  System prefix
    begin
       declare
-         Filename : constant String := Base & ".tmpl";
+         Filename : constant Filesystem_String := Base & ".tmpl";
       begin
          if Is_Regular_File (Get_System_Dir (Kernel) & Prefix & Filename) then
             return Get_System_Dir (Kernel) & Prefix & Filename;
@@ -57,27 +58,27 @@ package body AUnit_Templates is
 
    procedure Create_Files
      (Kernel         : access Kernel_Handle_Record'Class;
-      Base_Template  : String;
+      Base_Template  : Filesystem_String;
       Translations   : Translate_Set;
-      Directory_Name : String;
+      Directory_Name : Filesystem_String;
       Name           : String;
       Success        : out Boolean)
    is
       File          : File_Type;
-      Spec_Template : constant String :=
+      Spec_Template : constant Filesystem_String :=
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".ads");
-      Body_Template : constant String :=
+      Body_Template : constant Filesystem_String :=
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".adb");
-      Spec_Filename : constant String :=
+      Spec_Filename : constant Filesystem_String :=
                         Projects.Get_Filename_From_Unit
                           (Get_Project (Kernel),
                            Unit_Name       => Name,
                            Part            => Unit_Spec,
                            File_Must_Exist => False,
                            Language        => "Ada");
-      Body_Filename : constant String :=
+      Body_Filename : constant Filesystem_String :=
                         Projects.Get_Filename_From_Unit
                           (Get_Project (Kernel),
                            Unit_Name       => Name,
@@ -97,7 +98,8 @@ package body AUnit_Templates is
          if Spec_Template /= "" then
             if Is_Regular_File (Directory_Name & Spec_Filename) then
                if Message_Dialog
-                 ("File " & Spec_Filename & " exists. Overwrite?",
+                 ("File " & Unknown_To_UTF8 (+Spec_Filename)
+                  & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
                   Button_No,
@@ -112,8 +114,8 @@ package body AUnit_Templates is
             --  At least one file created. Set success
             Success := True;
             Ada.Text_IO.Create (File, Out_File,
-                                Directory_Name & Spec_Filename);
-            Put (File, Parse (Spec_Template, Translations));
+                                +(Directory_Name & Spec_Filename));
+            Put (File, Parse (+Spec_Template, Translations));
             Close (File);
             Open_File_Editor
               (Kernel, Create (Directory_Name & Spec_Filename, Kernel));
@@ -122,7 +124,8 @@ package body AUnit_Templates is
          if Body_Template /= "" then
             if Is_Regular_File (Directory_Name & Body_Filename) then
                if Message_Dialog
-                 ("File " & Body_Filename & " exists. Overwrite?",
+                 ("File " & Unknown_To_UTF8 (+Body_Filename)
+                  & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
                   Button_No,
@@ -137,8 +140,8 @@ package body AUnit_Templates is
             --  At least one file created. Set success
             Success := True;
             Ada.Text_IO.Create (File, Out_File,
-                                Directory_Name & Body_Filename);
-            Put (File, Parse (Body_Template, Translations));
+                                +(Directory_Name & Body_Filename));
+            Put (File, Parse (+Body_Template, Translations));
             Close (File);
             Open_File_Editor
               (Kernel, Create (Directory_Name & Body_Filename, Kernel));
@@ -147,7 +150,7 @@ package body AUnit_Templates is
 
       if not Success then
          Dead := Message_Dialog
-           ("No template with base name " & Base_Template &
+           ("No template with base name " & Unknown_To_UTF8 (+Base_Template) &
             " could be found: please verify your GPS installation",
             Warning,
             Button_Yes,

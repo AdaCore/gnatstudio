@@ -23,6 +23,7 @@ with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 with GNAT.OS_Lib;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 
 with Gdk.Color;                         use Gdk.Color;
 with Gdk.GC;                            use Gdk.GC;
@@ -937,7 +938,7 @@ package body Browsers.Canvas is
             Pixbuf := Get_Pixbuf (B);
 
             if Pixbuf /= null then
-               Save (Pixbuf, Full_Name (Name).all, PNG, Error);
+               Save (Pixbuf, +Full_Name (Name).all, PNG, Error);
                Unref (Pixbuf);
             end if;
 
@@ -980,11 +981,11 @@ package body Browsers.Canvas is
             Push_State (Get_Kernel (B), Busy);
             State_Pushed := True;
 
-            SVG_File_FD := Create_File (Full_Name (Name).all, Text);
+            SVG_File_FD := Create_File (+Full_Name (Name).all, Text);
 
             if SVG_File_FD = Invalid_FD then
                GPS.Kernel.Console.Insert
-                 (Kernel, "Cannot create " & Full_Name (Name).all,
+                 (Kernel, "Cannot create " & Display_Full_Name (Name),
                   Mode => GPS.Kernel.Console.Error);
             else
                Browser_To_SVG (B, SVG_File_FD);

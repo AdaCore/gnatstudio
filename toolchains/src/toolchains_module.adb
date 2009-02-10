@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2008, AdaCore                  --
+--                    Copyright (C) 2008-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System.OS_Lib;             use System.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -41,9 +42,9 @@ package body Toolchains_Module is
    type Toolchains_Property is new GPS.Kernel.Properties.Property_Record
    with record
       Active           : Boolean;
-      Tools_Path       : String_Access;
+      Tools_Path       : Filesystem_String_Access;
       Use_Xrefs_Subdir : Boolean;
-      Compiler_Path    : String_Access;
+      Compiler_Path    : Filesystem_String_Access;
    end record;
 
    overriding procedure Save
@@ -99,14 +100,14 @@ package body Toolchains_Module is
       if Property.Tools_Path /= null then
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("tools_path");
-         Child.Value := new String'(Property.Tools_Path.all);
+         Child.Value := new String'(+Property.Tools_Path.all);
          Add_Child (Node, Child);
       end if;
 
       if Property.Compiler_Path /= null then
          Child := new Glib.Xml_Int.Node;
          Child.Tag := new String'("compiler_path");
-         Child.Value := new String'(Property.Compiler_Path.all);
+         Child.Value := new String'(+Property.Compiler_Path.all);
          Add_Child (Node, Child);
       end if;
 
@@ -136,16 +137,16 @@ package body Toolchains_Module is
 
       Child := Find_Tag (From.Child, "tools_path");
       if Child /= null then
-         Property.Tools_Path := new String'(Child.Value.all);
+         Property.Tools_Path := new Filesystem_String'(+Child.Value.all);
       else
-         Property.Tools_Path := new String'("");
+         Property.Tools_Path := new Filesystem_String'("");
       end if;
 
       Child := Find_Tag (From.Child, "compiler_path");
       if Child /= null then
-         Property.Compiler_Path := new String'(Child.Value.all);
+         Property.Compiler_Path := new Filesystem_String'(+Child.Value.all);
       else
-         Property.Compiler_Path := new String'("");
+         Property.Compiler_Path := new Filesystem_String'("");
       end if;
    end Load;
 
@@ -236,15 +237,15 @@ package body Toolchains_Module is
       Prop_Access   : Property_Access;
       Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
-      Compiler      : constant String :=
-                        Projects.Get_Attribute_Value
-                          (GPS.Kernel.Project.Get_Project (Kernel),
-                           Projects.Compiler_Command_Attribute,
-                           Default => "gnatmake",
-                           Index   => "Ada");
-      Default_Path  : String_Access;
-      Tools_Path    : String_Access;
-      Compiler_Path : String_Access;
+      Compiler      : constant Filesystem_String :=
+        +Projects.Get_Attribute_Value
+        (GPS.Kernel.Project.Get_Project (Kernel),
+         Projects.Compiler_Command_Attribute,
+         Default => "gnatmake",
+         Index   => "Ada");
+      Default_Path  : Filesystem_String_Access;
+      Tools_Path    : Filesystem_String_Access;
+      Compiler_Path : Filesystem_String_Access;
 
    begin
       if Property.Tools_Path = null
@@ -253,13 +254,13 @@ package body Toolchains_Module is
         or else Property.Compiler_Path.all = ""
       then
          declare
-            Path : String_Access := Locate_Exec_On_Path (Compiler);
+            Path : Filesystem_String_Access := Locate_Exec_On_Path (Compiler);
          begin
             if Path /= null then
-               Default_Path := new String'(Dir_Name (Path.all));
+               Default_Path := new Filesystem_String'(Dir_Name (Path.all));
                Free (Path);
             else
-               Default_Path := new String'("");
+               Default_Path := new Filesystem_String'("");
             end if;
          end;
       end if;
@@ -293,8 +294,10 @@ package body Toolchains_Module is
 
       if Resp = Gtk_Response_OK then
          Property.Active := Get_Active (Dialog);
-         Property.Tools_Path := new String'(Get_Tools_Path (Dialog));
-         Property.Compiler_Path := new String'(Get_Compiler_Path (Dialog));
+         Property.Tools_Path :=
+           new Filesystem_String'(Get_Tools_Path (Dialog));
+         Property.Compiler_Path :=
+           new Filesystem_String'(Get_Compiler_Path (Dialog));
          Property.Use_Xrefs_Subdir := Get_Use_Xrefs_Subdir (Dialog);
 
          Prop_Access := new Toolchains_Property'(Property);

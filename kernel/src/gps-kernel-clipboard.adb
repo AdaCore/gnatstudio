@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@ with Ada.Unchecked_Deallocation;
 with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Xml_Int;               use Glib.Xml_Int;
@@ -103,7 +104,7 @@ package body GPS.Kernel.Clipboard is
    is
       Clipboard   : constant Clipboard_Access := new Clipboard_Record;
       Size        : Integer;
-      Filename    : constant String :=
+      Filename    : constant Filesystem_String :=
                       Get_Home_Dir (Kernel) & "clipboards.xml";
       File, Child : Node_Ptr;
       Err         : String_Access;
@@ -130,7 +131,7 @@ package body GPS.Kernel.Clipboard is
       Clipboard.Last_Paste := Clipboard.List'First;
 
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+         Trace (Me, "Loading " & (+Filename));
          XML_Parsers.Parse (Filename, File, Err);
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
@@ -167,7 +168,8 @@ package body GPS.Kernel.Clipboard is
    -----------------------
 
    procedure Destroy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Filename  : constant String := Get_Home_Dir (Kernel) & "clipboards.xml";
+      Filename  : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "clipboards.xml";
       File      : Node_Ptr;
       Child     : Node_Ptr;
       Clipboard : Clipboard_Access;
@@ -177,7 +179,7 @@ package body GPS.Kernel.Clipboard is
       if Kernel.Clipboard /= System.Null_Address then
          Clipboard := Convert (Kernel.Clipboard);
 
-         Trace (Me, "Saving " & Filename);
+         Trace (Me, "Saving " & (+Filename));
          File := new Node;
          File.Tag := new String'("Clipboard");
          for L in Clipboard.List'Range loop
@@ -199,7 +201,7 @@ package body GPS.Kernel.Clipboard is
             end if;
          end loop;
 
-         Print (File, Filename, Success);
+         Print (File, +Filename, Success);
          Free (File);
 
          if not Success then

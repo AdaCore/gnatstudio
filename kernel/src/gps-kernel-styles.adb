@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -321,7 +321,7 @@ package body GPS.Kernel.Styles is
          Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
       end loop;
 
-      Print (Main, Full_Name (File).all, Success);
+      Print (Main, +Full_Name (File).all, Success);
 
       Free (Main);
 
@@ -329,7 +329,8 @@ package body GPS.Kernel.Styles is
          Report_Preference_File_Error (Kernel, Full_Name (File).all);
          GPS.Kernel.Console.Insert
            (Kernel,
-            "Could not save the configuration file " & Full_Name (File).all &
+            "Could not save the configuration file " &
+            (+Full_Name (File).all) &
             ASCII.LF &
             "Please verify that you have write access to this file.",
             Mode => GPS.Kernel.Console.Error);

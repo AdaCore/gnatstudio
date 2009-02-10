@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Src_Editor_Box;     use Src_Editor_Box;
@@ -101,7 +102,7 @@ package body Src_Editor_Module.Line_Highlighting is
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
-                  & Full_Name (File).all);
+                  & (+Full_Name (File).all));
             end if;
          end;
 
@@ -187,7 +188,7 @@ package body Src_Editor_Module.Line_Highlighting is
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
-                  & Full_Name (File).all);
+                  & (+Full_Name (File).all));
             end if;
          end;
       end if;

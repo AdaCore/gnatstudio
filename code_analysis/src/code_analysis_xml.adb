@@ -20,7 +20,10 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Strings;            use GNAT.Strings;
 with Code_Coverage;           use Code_Coverage;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 with Projects.Registry;       use Projects.Registry;
 with Language.Tree.Database;  use Language.Tree.Database;
 
@@ -70,7 +73,10 @@ package body Code_Analysis_XML is
          if Child.Tag.all = "Project" then
             Prj_Node := Get_Or_Create
               (Projects, Load_Or_Find
-                 (Registry, To_Lower (Get_Attribute (Child, "name"))));
+                 (Registry, +To_Lower (Get_Attribute (Child, "name"))));
+            --  ??? Why the call to To_Lower?
+            --  ??? Potentially non-utf8 string should not be
+            --  stored in an XML attribute.
             Parse_Project (Prj_Node, Child);
          end if;
 
@@ -127,7 +133,9 @@ package body Code_Analysis_XML is
          while Child /= null loop
             if Child.Tag.all = "File" then
                File_Node := Get_Or_Create
-                 (Prj_Node, Create (Get_Attribute (Child, "name")));
+                 (Prj_Node, Create (+Get_Attribute (Child, "name")));
+               --  ??? Potentially non-utf8 string should not be
+               --  stored in an XML attribute.
                --  Create a Line_Array with exactly the same number of elements
                --  than to the number of code lines in the original src code
                --  file. It will contain the lines with analysis information.
@@ -157,7 +165,11 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("File");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name", GNATCOLL.VFS.Full_Name (File_Node.Name).all);
+      Set_Attribute (Loc, "name",
+                     +GNATCOLL.VFS.Full_Name (File_Node.Name).all);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+
       Set_Attribute
         (Loc, "line_count", Positive'Image (File_Node.Lines'Length));
       XML_Dump_Coverage (File_Node.Analysis_Data.Coverage_Data, Loc);

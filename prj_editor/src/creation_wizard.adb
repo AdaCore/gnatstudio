@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                    Copyright (C) 2004-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -47,7 +46,9 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body Creation_Wizard is
 
@@ -252,14 +253,16 @@ package body Creation_Wizard is
       Name : constant GNATCOLL.VFS.Virtual_File := Select_Directory
         (Title             => -"Select project file location",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
-         Base_Directory    => Create (Get_Text (P.Project_Location)),
+         Base_Directory    => Create (+Get_Text (P.Project_Location)),
+         --  ??? What if the filesystem path is non-UTF8?
          Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          History           => Get_History (P.Kernel));
 
    begin
       if Name /= GNATCOLL.VFS.No_File then
          GNATCOLL.VFS.Ensure_Directory (Name);
-         Set_Text (P.Project_Location, GNATCOLL.VFS.Full_Name (Name).all);
+         Set_Text (P.Project_Location, +GNATCOLL.VFS.Full_Name (Name).all);
+         --  ??? What if the filesystem path is non-UTF8?
       end if;
    end Advanced_Prj_Location;
 
@@ -274,8 +277,9 @@ package body Creation_Wizard is
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)
    is
-      Dir            : constant String := Name_As_Directory
-        (Get_Text (Page.Project_Location));
+      Dir            : constant Filesystem_String := Name_As_Directory
+        (+Get_Text (Page.Project_Location));
+      --  ??? What if the filesystem path is non-UTF8?
       Name           : constant String := Get_Text (Page.Project_Name);
       Relative_Paths : constant Boolean :=
         Page.Relative_Paths = null or else Get_Active (Page.Relative_Paths);
@@ -286,12 +290,15 @@ package body Creation_Wizard is
       pragma Unreferenced (Tmp, Scenario_Variables, Result);
 
       Project_Name : constant String := Get_Text (Page.Project_Name);
-      Prj_File     : constant String := To_File_Name (Project_Name);
-      Location     : constant String := Get_Text (Page.Project_Location);
+      Prj_File       : constant Filesystem_String := To_File_Name
+        (+Project_Name);
+      Location       : constant Filesystem_String :=
+        +Get_Text (Page.Project_Location);
+      --  ??? What if the filesystem path is non-UTF8?
    begin
       if Is_Regular_File (Location & Prj_File & Project_File_Extension) then
          if Message_Dialog
-           (Msg         => Location & Prj_File & Project_File_Extension
+           (Msg         => +(Location & Prj_File & Project_File_Extension)
                & (-" already exists. Do you want to overwrite ?"),
             Title       => -"File exists",
             Dialog_Type => Gtkada.Dialogs.Error,
@@ -303,14 +310,14 @@ package body Creation_Wizard is
 
       if not Is_Directory (Location) then
          if Message_Dialog
-           (Msg         => Location
+           (Msg         => +Location
             & (-" is not a directory, would you like to create it ?"),
             Title       => -"Directory not found",
             Dialog_Type => Information,
             Buttons     => Button_Yes or Button_No) = Button_Yes
          then
             begin
-               Make_Dir (Location);
+               Make_Dir (+Location);
             exception
                when Directory_Error =>
                   null;
@@ -352,7 +359,7 @@ package body Creation_Wizard is
                  (Root_Project => Get_Project (Kernel),
                   Project      => Project,
                   Imported_Project_Location =>
-                    Create (Name (Name'First .. J - 1)),
+                    Create (+Name (Name'First .. J - 1)),
                   Use_Relative_Path => True);
             end if;
 

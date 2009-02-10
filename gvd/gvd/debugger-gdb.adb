@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,6 +59,8 @@ with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with String_Utils;              use String_Utils;
+
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Debugger.Gdb is
 
@@ -1094,11 +1096,11 @@ package body Debugger.Gdb is
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
 
-      Remote_Exec         : constant String :=
+      Remote_Exec         : constant Filesystem_String :=
                               To_Remote (Full_Name (Executable, True).all,
                                          Debug_Server, True);
       Exec_Has_Spaces     : constant Boolean :=
-                              Index (Remote_Exec, " ") /= 0;
+        Index (+Remote_Exec, " ") /= 0;
       Process             : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
@@ -1112,9 +1114,9 @@ package body Debugger.Gdb is
          Cmd : GNAT.Strings.String_Access;
       begin
          if Exec_Has_Spaces then
-            Cmd := new String'(Command & " """ & Remote_Exec & '"');
+            Cmd := new String'(Command & " """ & (+Remote_Exec) & '"');
          else
-            Cmd := new String'(Command & " " & Remote_Exec);
+            Cmd := new String'(Command & " " & (+Remote_Exec));
          end if;
 
          if Process /= null then
@@ -1268,10 +1270,10 @@ package body Debugger.Gdb is
       Core     : String;
       Mode     : Command_Type := Hidden)
    is
-      Core_File : constant String := To_Unix_Pathname (Core);
+      Core_File : constant Filesystem_String := To_Unix_Pathname (+Core);
    begin
       Set_Is_Started (Debugger, False);
-      Send (Debugger, "core " & Core_File, Mode => Mode);
+      Send (Debugger, "core " & (+Core_File), Mode => Mode);
 
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
@@ -1293,7 +1295,7 @@ package body Debugger.Gdb is
       Module   : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      Symbols : constant String := To_Unix_Pathname (Module);
+      Symbols : constant String := +To_Unix_Pathname (+Module);
    begin
       Send (Debugger, "add-symbol-file " & Symbols, Mode => Mode);
 
@@ -1413,7 +1415,7 @@ package body Debugger.Gdb is
    ----------------
 
    function Get_Module (Executable : Virtual_File) return String is
-      Exec      : constant String := Base_Name (Executable);
+      Exec      : constant String := +Base_Name (Executable);
       Dot_Index : Natural;
    begin
       --  Strip extensions (e.g .out)
@@ -1832,12 +1834,12 @@ package body Debugger.Gdb is
    begin
       if Temporary then
          Send (Debugger,
-               "tbreak " & Base_Name (File) & ":" & Image (Line),
+               "tbreak " & (+Base_Name (File)) & ":" & Image (Line),
                Mode => Mode);
 
       else
          Send (Debugger,
-               "break " & Base_Name (File) & ':' & Image (Line),
+               "break " & (+Base_Name (File)) & ':' & Image (Line),
                Mode => Mode);
       end if;
    end Break_Source;
@@ -2417,7 +2419,7 @@ package body Debugger.Gdb is
             S              : constant String := Send
               (Debugger,
                "-symbol-list-lines "
-               & Format_Pathname (Full_Name (File).all, UNIX),
+               & (Format_Pathname (+Full_Name (File).all, UNIX)),
                Mode => Internal);
             Num_Lines, Pos : Natural;
 
@@ -2498,7 +2500,7 @@ package body Debugger.Gdb is
       Dir         : String;
       Mode        : Command_Type := Hidden)
    is
-      Directory : constant String := To_Unix_Pathname (Dir);
+      Directory : constant String := +To_Unix_Pathname (+Dir);
    begin
       Send (Debugger, "cd " & Directory, Mode => Mode);
    end Change_Directory;
@@ -3244,7 +3246,7 @@ package body Debugger.Gdb is
             --  Translate the matched filename into local file if needed
             Br (Num).File := Create_From_Base
               (To_Local
-                 (S (Matched (1).First .. Matched (1).Last),
+                 (+S (Matched (1).First .. Matched (1).Last),
                   Debug_Server),
                Debugger.Kernel);
 

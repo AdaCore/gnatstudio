@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2008, AdaCore             --
+--                      Copyright (C) 2005-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,7 +41,8 @@ with GUI_Utils;                use GUI_Utils;
 with Projects;                 use Projects;
 with Projects.Editor;          use Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
@@ -177,8 +178,8 @@ package body Creation_Wizard.Extending is
 
             Append (Model, FIter, TIter);
             Set (Model, FIter, 0, False);
-            Set (Model, FIter, 1, Base_Name (File));
-            Set (Model, FIter, 2, Full_Name (File).all);
+            Set (Model, FIter, 1, +Base_Name (File));
+            Set (Model, FIter, 2, +Full_Name (File).all);
 
             File_Index := File_Index + 1;
          end loop;
@@ -284,7 +285,7 @@ package body Creation_Wizard.Extending is
          FIter := Children (Model, PIter);
          while FIter /= Null_Iter loop
             if Get_Boolean (Model, FIter, 0) then
-               File := Create (Full_Filename => Get_String (Model, FIter, 2));
+               File := Create (Full_Filename => +Get_String (Model, FIter, 2));
                Add_File (Prj, File);
             end if;
 
@@ -365,7 +366,7 @@ package body Creation_Wizard.Extending is
       end if;
 
       for F in Files'Range loop
-         File_Names (F) := new String'(Base_Name (Files (F)));
+         File_Names (F) := new String'(+Base_Name (Files (F)));
       end loop;
 
       Update_Attribute_Value_In_Scenario
@@ -380,8 +381,8 @@ package body Creation_Wizard.Extending is
       if Copy_Files then
          for S in Files'Range loop
             Copy_File
-              (Name     => Full_Name (Files (S)).all,
-               Pathname => Full_Name (Project_Directory (Extended)).all,
+              (Name     => +Full_Name (Files (S)).all,
+               Pathname => +Full_Name (Project_Directory (Extended)).all,
                Success  => Success);
          end loop;
       end if;
@@ -413,7 +414,7 @@ package body Creation_Wizard.Extending is
       Button := Message_Dialog
         (-"Should GPS copy the file in the extending project's directory ?"
          & ASCII.LF
-         & Full_Name (Project_Directory (Get_Project (Kernel))).all,
+         & Display_Full_Name (Project_Directory (Get_Project (Kernel))),
          Dialog_Type => Confirmation,
          Buttons     => Button_Yes or Button_No,
          Title       => -"Copy files ?",

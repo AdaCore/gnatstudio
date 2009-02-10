@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,7 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body Src_Contexts is
 
@@ -1071,7 +1072,7 @@ package body Src_Contexts is
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : String  := "";
+      Directory     : Filesystem_String  := "";
       Recurse       : Boolean := False) is
    begin
       Free (Context.Directory);
@@ -1079,9 +1080,10 @@ package body Src_Contexts is
       Context.Recurse := Recurse;
 
       if Directory = "" then
-         Context.Directory := new String'(Get_Current_Dir);
+         Context.Directory := new Filesystem_String'(Get_Current_Dir);
       else
-         Context.Directory := new String'(Name_As_Directory (Directory));
+         Context.Directory := new Filesystem_String'
+           (Name_As_Directory (Directory));
       end if;
    end Set_File_List;
 
@@ -1268,7 +1270,8 @@ package body Src_Contexts is
          Set_File_List
            (Context,
             Files_Pattern => Re,
-            Directory     => Get_Text (Extra.Directory_Entry),
+            Directory     => +Get_Text (Extra.Directory_Entry),
+            --  ??? What if the filesystem path is non-UTF8?
             Recurse       => Get_Active (Extra.Subdirs_Check));
 
          return Search_Context_Access (Context);
@@ -1717,7 +1720,7 @@ package body Src_Contexts is
 
                if Buffer /= null then
                   --  ???  Should use VFS.Write_File
-                  FD := Create_File (Full_Name (File).all, Binary);
+                  FD := Create_File (+Full_Name (File).all, Binary);
                   Len := Write (FD, Buffer (1)'Address,
                                 Matches (Matches'First).Index - 1);
                   Len := Write (FD, Replace_String'Address,
@@ -2187,8 +2190,8 @@ package body Src_Contexts is
 
       if Context.Dirs = Null_List then
          Prepend (Context.Dirs, new Dir_Data);
-         Head (Context.Dirs).Name := new String'(Context.Directory.all);
-         Open (Head (Context.Dirs).Dir, Context.Directory.all);
+         Head (Context.Dirs).Name := new String'(+Context.Directory.all);
+         Open (Head (Context.Dirs).Dir, +Context.Directory.all);
       end if;
 
       while Context.Current_File = GNATCOLL.VFS.No_File loop
@@ -2220,13 +2223,13 @@ package body Src_Contexts is
                      Prepend (Context.Dirs, new Dir_Data);
                      Context.Total_Dirs := Context.Total_Dirs + 1;
                      Head (Context.Dirs).Name := new String'
-                       (Name_As_Directory (Full_Name));
+                       (+Name_As_Directory (+Full_Name));
                      Open (Head (Context.Dirs).Dir, Full_Name);
                   end if;
 
                --  ??? Should check that we have a text file
                elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
-                  Context.Current_File := Create (Full_Filename => Full_Name);
+                  Context.Current_File := Create (Full_Filename => +Full_Name);
                   return;
                end if;
             end;

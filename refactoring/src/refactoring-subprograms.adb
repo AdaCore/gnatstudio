@@ -44,6 +44,7 @@ with Language_Handlers;  use Language_Handlers;
 with Refactoring.Performers; use Refactoring.Performers;
 with Traces;                 use Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Refactoring.Subprograms is
 
@@ -590,7 +591,7 @@ package body Refactoring.Subprograms is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      File        : constant String  := Nth_Arg (Data, 1);
+      File        : constant Filesystem_String := Nth_Arg (Data, 1);
       Line_Start  : constant Integer := Nth_Arg (Data, 2);
       Line_End    : constant Integer := Nth_Arg (Data, 3);
       Method_Name : constant String  := Nth_Arg (Data, 4, "New_Method");

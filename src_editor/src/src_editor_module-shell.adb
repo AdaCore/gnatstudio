@@ -25,6 +25,8 @@ with System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
 with GNAT.Strings;
 
 with Glib.Convert;              use Glib.Convert;
@@ -1252,7 +1254,7 @@ package body Src_Editor_Module.Shell is
          Name_Parameters (Data, Get_Chars_Args);
 
          declare
-            File   : constant String  := Nth_Arg (Data, 1);
+            File   : constant Filesystem_String  := Nth_Arg (Data, 1);
             Line   : constant Integer := Nth_Arg (Data, 2, 0);
             Column : constant Integer := Nth_Arg (Data, 3, 1);
             Before : constant Integer := Nth_Arg (Data, 4, Default => -1);
@@ -1277,7 +1279,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "replace_text" then
          declare
-            File   : constant String  := Nth_Arg (Data, 1);
+            File   : constant Filesystem_String  := Nth_Arg (Data, 1);
             Line   : constant Integer := Nth_Arg (Data, 2);
             Column : constant Integer := Nth_Arg (Data, 3);
             Text   : constant String  := Nth_Arg (Data, 4);
@@ -1304,7 +1306,7 @@ package body Src_Editor_Module.Shell is
                else
                   Set_Error_Msg
                     (Data,
-                     -("Attempting to edit a non-writable file: ") & File);
+                     -("Attempting to edit a non-writable file: ") & (+File));
                end if;
             else
                Set_Error_Msg (Data, -"file not open");
@@ -1395,7 +1397,7 @@ package body Src_Editor_Module.Shell is
                Set_Error_Msg
                  (Data,
                     -("Attempting to get block information for non" &
-                      " open file : ") & Base_Name (File));
+                      " open file : ") & (+Base_Name (File)));
             else
                if Command = "block_get_start" then
                   Set_Return_Value
@@ -1444,7 +1446,7 @@ package body Src_Editor_Module.Shell is
                Set_Error_Msg
                  (Data,
                     -("Attempting to get cursor position for non open file: ")
-                  & Base_Name (File));
+                  & (+Base_Name (File)));
             else
                declare
                   Line   : Editable_Line_Type;
@@ -1478,7 +1480,7 @@ package body Src_Editor_Module.Shell is
                Set_Error_Msg
                  (Data,
                     -("Attempting to set cursor position for non open file: ")
-                  & Base_Name (File));
+                  & (+Base_Name (File)));
             else
                if Column = 0 then
                   --  Column has not been specified, set it to the first non
@@ -1869,7 +1871,7 @@ package body Src_Editor_Module.Shell is
                  (Source_Editor_Box (Get_Widget (Child)),
                   Write, Explicit => True);
             else
-               Trace (Me, "Editor not found: " & Full_Name (File).all);
+               Trace (Me, "Editor not found: " & (+Full_Name (File).all));
             end if;
          end;
 
@@ -1887,7 +1889,7 @@ package body Src_Editor_Module.Shell is
 
             if Child /= null then
                if Filename = "" then
-                  Set_Title (Child, Full_Name (File).all, Title);
+                  Set_Title (Child, Display_Full_Name (File), Title);
                else
                   Set_Title (Child, Filename, Title);
                end if;
@@ -2445,7 +2447,7 @@ package body Src_Editor_Module.Shell is
                Name               : GNAT.OS_Lib.String_Access;
             begin
                if Number_Of_Arguments (Data) >= 4
-                 and then Nth_Arg (Data, 4) /= ""
+                 and then Nth_Arg (Data, 4) /= String'("")
                then
                   Style := Get_Or_Create_Style
                     (Kernel, Nth_Arg (Data, 4), False);
@@ -2780,7 +2782,7 @@ package body Src_Editor_Module.Shell is
          Get_Location (Iter, Data, 1, Iter, Success);
 
          if Success then
-            if Nth_Arg (Data, 2, "") /= "" then
+            if Nth_Arg (Data, 2, "") /= String'("") then
                Mark := Get_Mark (Get_Buffer (Iter), Nth_Arg (Data, 2));
             end if;
 
@@ -2898,7 +2900,7 @@ package body Src_Editor_Module.Shell is
 
                elsif Command = "block_name" then
                   if Block.Name = null then
-                     Set_Return_Value (Data, "");
+                     Set_Return_Value (Data, String'(""));
                   else
                      Set_Return_Value (Data, Block.Name.all);
                   end if;
@@ -2918,7 +2920,7 @@ package body Src_Editor_Module.Shell is
                Get_Editable_Line (Buffer,
                  Buffer_Line_Type (Get_Line (Iter) + 1)));
             if Block.Name = null then
-               Set_Return_Value (Data, "");
+               Set_Return_Value (Data, String'(""));
             else
                Set_Return_Value (Data, Block.Name.all);
             end if;
@@ -3228,22 +3230,22 @@ package body Src_Editor_Module.Shell is
                   W := Get_Property (Tag, Weight_Property);
                   case W is
                      when Pango_Weight_Ultralight .. Pango_Weight_Light =>
-                        Set_Return_Value (Data, "light");
+                        Set_Return_Value (Data, String'("light"));
                      when Pango_Weight_Normal .. Pango_Weight_Medium =>
-                        Set_Return_Value (Data, "normal");
+                        Set_Return_Value (Data, String'("normal"));
                      when others =>
-                        Set_Return_Value (Data, "bold");
+                        Set_Return_Value (Data, String'("bold"));
                   end case;
 
                elsif Name = "style" then
                   S := Get_Property (Tag, Gtk.Text_Tag.Style_Property);
                   case S is
                      when Pango_Style_Normal =>
-                        Set_Return_Value (Data, "normal");
+                        Set_Return_Value (Data, String'("normal"));
                      when Pango_Style_Oblique =>
-                        Set_Return_Value (Data, "oblique");
+                        Set_Return_Value (Data, String'("oblique"));
                      when Pango_Style_Italic =>
-                        Set_Return_Value (Data, "italic");
+                        Set_Return_Value (Data, String'("italic"));
                   end case;
 
                elsif Name = "editable" then

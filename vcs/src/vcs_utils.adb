@@ -19,7 +19,6 @@
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
 
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -31,6 +30,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with Traces;                    use Traces;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body VCS_Utils is
 
@@ -105,7 +105,7 @@ package body VCS_Utils is
    ---------------------
 
    function Get_Current_Dir
-     (Context : Selection_Context) return String is
+     (Context : Selection_Context) return Filesystem_String is
    begin
       if Has_Directory_Information (Context) then
          return Directory_Information (Context);
@@ -144,7 +144,7 @@ package body VCS_Utils is
       File         : Virtual_File;
    begin
       for C in Children'Range loop
-         File := Create (Full_Filename => Data (Files_Temp));
+         File := Create (Full_Filename => +Data (Files_Temp));
          Children (C) := Get_File_Editor (Kernel, File);
 
          if Save_Logs then

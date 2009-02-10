@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2008, AdaCore             --
+--                      Copyright (C) 2005-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,6 +56,7 @@ with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
@@ -718,7 +719,7 @@ package body Completion_Module is
       if Get (M.Child) /= null then
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
          Trace (Me, "Testing new editor : "
-                & Full_Name (Get_Filename (M.Buffer)).all);
+                & (+Full_Name (Get_Filename (M.Buffer)).all));
          --  We do not care about untitled editor. Get_File_Identifier should
          --  be called instead if we did.
 
@@ -1205,6 +1206,13 @@ package body Completion_Module is
 
       Timeout : Gint;
    begin
+      if Edition_Data.Character = 8 then
+         --  This is a special case: we are calling Character_Added after
+         --  deleting some text, and the character is a backspace character.
+         --  In this case, return.
+         return;
+      end if;
+
       --  Remove the previous timeout, if registered.
       if Completion_Module.Has_Trigger_Timeout then
          Timeout_Remove (Completion_Module.Trigger_Timeout);

@@ -23,6 +23,7 @@ with GNAT.Strings;
 with HTables;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
@@ -417,7 +418,7 @@ package Entities is
 
    function Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : String;
+      Full_Filename : Filesystem_String;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;

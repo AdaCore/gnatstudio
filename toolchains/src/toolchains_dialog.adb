@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2008, AdaCore                  --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,8 +16,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
-with System.OS_Lib;             use System.OS_Lib;
 
 with Glib;                      use Glib;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -136,7 +134,8 @@ package body Toolchains_Dialog is
      (Button : access Gtk_Widget_Record'Class;
       Data   : Entry_Callback_Data)
    is
-      Current_Dir : constant String := Get_Text (Data.E);
+      Current_Dir : constant Filesystem_String := +Get_Text (Data.E);
+      --  ??? What if the filesystem path is non-UTF8?
       Start_Dir   : Virtual_File;
    begin
       if Current_Dir /= "" then
@@ -160,16 +159,16 @@ package body Toolchains_Dialog is
                          Projects.Compiler_Command_Attribute,
                          Default => "gnatmake",
                          Index   => "Ada");
-         Exec     : String_Access;
+         Exec     : Filesystem_String_Access;
       begin
          if Dir /= No_File then
-            Exec := Locate_Exec (Compiler, Dir.Full_Name.all);
+            Exec := Locate_Exec (+Compiler, Dir.Full_Name.all);
 
             if Exec /= null then
                --  OK, we could locate a valid compiler.
                Free (Exec);
-               Set_Text (Data.E, Dir.Full_Name.all);
-
+               Set_Text (Data.E, Display_Full_Name (Dir));
+               --  ??? What if the filesystem path is non-UTF8?
             else
                --  No compiler found: let's display an error.
                declare
@@ -185,7 +184,7 @@ package body Toolchains_Dialog is
                      Parent         => Gtk_Window (Data.D));
 
                   if Resp = Button_OK then
-                     Set_Text (Data.E, Dir.Full_Name.all);
+                     Set_Text (Data.E, Display_Full_Name (Dir));
                   end if;
                end;
             end if;
@@ -205,9 +204,9 @@ package body Toolchains_Dialog is
      (Widget            : out Dialog;
       Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active            : Boolean;
-      Tools_Path        : String;
+      Tools_Path        : Filesystem_String;
       Use_Xrefs_Subdirs : Boolean;
-      Compiler_Path     : String)
+      Compiler_Path     : Filesystem_String)
    is
       Check  : Gtk_Check_Button;
       Dead   : Gtk_Widget;
@@ -257,7 +256,8 @@ package body Toolchains_Dialog is
       Attach (Table, Label, 0, 1, 0, 1);
 
       Gtk_New (Widget.Compiler_Entry);
-      Set_Text (Widget.Compiler_Entry, Compiler_Path);
+      Set_Text (Widget.Compiler_Entry, +Compiler_Path);
+      --  ??? What if the filesystem path is non-UTF8?
       Show_All (Widget.Compiler_Entry);
       Attach (Table, Widget.Compiler_Entry, 1, 2, 0, 1);
       Set_Tip
@@ -284,7 +284,8 @@ package body Toolchains_Dialog is
       Attach (Table, Label, 0, 1, 1, 2);
 
       Gtk_New (Widget.Tools_Entry);
-      Set_Text (Widget.Tools_Entry, Tools_Path);
+      Set_Text (Widget.Tools_Entry, +Tools_Path);
+      --  ??? What if the filesystem path is non-UTF8?
       Show_All (Widget.Tools_Entry);
       Attach (Table, Widget.Tools_Entry, 1, 2, 1, 2);
       Set_Tip
@@ -385,9 +386,10 @@ package body Toolchains_Dialog is
    --------------------
 
    function Get_Tools_Path
-     (Widget : access Dialog_Record'Class) return String is
+     (Widget : access Dialog_Record'Class) return Filesystem_String is
    begin
-      return Get_Text (Widget.Tools_Entry);
+      return +Get_Text (Widget.Tools_Entry);
+      --  ??? What if the filesystem path is non-UTF8?
    end Get_Tools_Path;
 
    -----------------------
@@ -395,9 +397,10 @@ package body Toolchains_Dialog is
    -----------------------
 
    function Get_Compiler_Path
-     (Widget : access Dialog_Record'Class) return String is
+     (Widget : access Dialog_Record'Class) return Filesystem_String is
    begin
-      return Get_Text (Widget.Compiler_Entry);
+      return +Get_Text (Widget.Compiler_Entry);
+      --  ??? What if the filesystem path is non-UTF8?
    end Get_Compiler_Path;
 
 end Toolchains_Dialog;

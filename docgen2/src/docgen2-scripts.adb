@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -185,13 +185,13 @@ package body Docgen2.Scripts is
    begin
       if Command = "register_css" then
          declare
-            Filename : constant String := Nth_Arg (Data, 1);
+            Filename : constant Filesystem_String := Nth_Arg (Data, 1);
             File     : constant GNATCOLL.VFS.Virtual_File :=
                          GNATCOLL.VFS.Create (Filename);
          begin
             if not Is_Regular_File (File) then
                Set_Error_Msg
-                 (Data, -"Could not find file " & File.Full_Name.all);
+                 (Data, -"Could not find file " & (+File.Full_Name.all));
                return;
             end if;
 

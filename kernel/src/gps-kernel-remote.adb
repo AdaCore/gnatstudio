@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
@@ -33,6 +32,7 @@ with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 with GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -94,6 +94,7 @@ with Shell_Descriptors;          use Shell_Descriptors;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
+with UTF8_Utils;                 use UTF8_Utils;
 with XML_Parsers;
 
 with Remote_Descriptors;         use Remote_Descriptors;
@@ -240,8 +241,10 @@ package body GPS.Kernel.Remote is
    Modified_Col : constant := 1;
    User_Def_Col : constant := 2;
 
-   Enter_Local_Path_String  : constant String := -"<enter local path here>";
-   Enter_Remote_Path_String : constant String := -"<enter remote path here>";
+   Enter_Local_Path_String  : constant Filesystem_String :=
+     +(-"<enter local path here>");
+   Enter_Remote_Path_String : constant Filesystem_String :=
+     +(-"<enter remote path here>");
 
    Synchronisation_String : constant
      array (Synchronisation_Type) of GNAT.OS_Lib.String_Access :=
@@ -694,10 +697,14 @@ package body GPS.Kernel.Remote is
    begin
       while Child /= null loop
          declare
-            Local_Path  : constant String :=
-                            Get_Attribute (Child, "local_path");
-            Remote_Path : constant String :=
-                            Get_Attribute (Child, "remote_path");
+            Local_Path  : constant Filesystem_String :=
+              +Get_Attribute (Child, "local_path");
+            --  ??? Potentially non-utf8 string should not be
+            --  stored in an XML attribute.
+            Remote_Path : constant Filesystem_String :=
+              +Get_Attribute (Child, "remote_path");
+            --  ??? Potentially non-utf8 string should not be
+            --  stored in an XML attribute.
             Sync_Str    : constant String :=
                             Get_Attribute (Child, "sync", "never");
             Sync        : Synchronisation_Type;
@@ -726,13 +733,14 @@ package body GPS.Kernel.Remote is
    ------------------------------
 
    procedure Load_Remote_Config (Kernel : Kernel_Handle) is
-      Filename    : constant String := Get_Home_Dir (Kernel) & "remote.xml";
+      Filename    : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "remote.xml";
       File, Child : Node_Ptr;
       Err         : GNAT.OS_Lib.String_Access;
 
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+         Trace (Me, "Loading " & (+Filename));
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -762,7 +770,7 @@ package body GPS.Kernel.Remote is
    ------------------------
 
    procedure Save_Remote_Config (Kernel : Kernel_Handle) is
-      Filename                    : constant String :=
+      Filename                    : constant Filesystem_String :=
                                       Get_Home_Dir (Kernel) & "remote.xml";
       File, Item, Child, Cmd_Node : Node_Ptr;
       Desc                        : Machine_Descriptor;
@@ -770,7 +778,7 @@ package body GPS.Kernel.Remote is
       Success                     : Boolean;
 
    begin
-      Trace (Me, "Saving " & Filename);
+      Trace (Me, "Saving " & (+Filename));
 
       File := new Node;
       File.Tag := new String'("remote_config");
@@ -857,8 +865,12 @@ package body GPS.Kernel.Remote is
                        (Child, "sync",
                         Synchronisation_Type'Image (Path.Get_Synchronisation));
                      Set_Attribute
-                       (Child, "remote_path", Path.Get_Remote_Path);
-                     Set_Attribute (Child, "local_path", Path.Get_Local_Path);
+                       (Child, "remote_path", +Path.Get_Remote_Path);
+                     --  ??? Potentially non-utf8 string should not be
+                     --  stored in an XML attribute.
+                     Set_Attribute (Child, "local_path", +Path.Get_Local_Path);
+                     --  ??? Potentially non-utf8 string should not be
+                     --  stored in an XML attribute.
                      Add_Child (Item, Child, True);
                   end if;
 
@@ -870,13 +882,13 @@ package body GPS.Kernel.Remote is
          end if;
       end loop;
 
-      Print (File, Filename, Success);
+      Print (File, +Filename, Success);
       Free (File);
 
       if not Success then
          Report_Preference_File_Error (Kernel, Filename);
       elsif Active (Me) then
-         Trace (Me, Filename & " saved.");
+         Trace (Me, +Filename & " saved.");
       end if;
    end Save_Remote_Config;
 
@@ -1106,25 +1118,27 @@ package body GPS.Kernel.Remote is
       Path_Row_List.Append (Widget.List, Row);
 
       declare
-         Local  : constant String := Path.Get_Local_Path (True);
-         Remote : constant String := Path.Get_Remote_Path (True);
+         Local  : constant Filesystem_String := Path.Get_Local_Path (True);
+         Remote : constant Filesystem_String := Path.Get_Remote_Path (True);
       begin
          if Local = "" then
-            Set_Text (Row.Local_Entry, Enter_Local_Path_String);
+            Set_Text (Row.Local_Entry, +Enter_Local_Path_String);
             Widget_Callback.Object_Connect
               (Row.Local_Entry, Signal_Grab_Focus,
                On_Path_Grab_Focus'Access, Row.Local_Entry);
          else
-            Set_Text (Row.Local_Entry, Path.Get_Local_Path (True));
+            Set_Text (Row.Local_Entry, +Path.Get_Local_Path (True));
+            --  ??? What if the filesystem path is non-UTF8?
          end if;
 
          if Remote = "" then
-            Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
+            Set_Text (Row.Remote_Entry, +Enter_Remote_Path_String);
             Widget_Callback.Object_Connect
               (Row.Remote_Entry, Signal_Grab_Focus,
                On_Path_Grab_Focus'Access, Row.Remote_Entry);
          else
-            Set_Text (Row.Remote_Entry, Path.Get_Remote_Path (True));
+            Set_Text (Row.Remote_Entry, +Path.Get_Remote_Path (True));
+            --  ??? What if the filesystem path is non-UTF8?
          end if;
 
          Set_Text
@@ -1165,8 +1179,8 @@ package body GPS.Kernel.Remote is
       Gentry : constant Gtk_Entry := Gtk_Entry (Widget);
       Str    : constant String := Get_Text (Gentry);
    begin
-      if Str = Enter_Local_Path_String
-        or else Str = Enter_Remote_Path_String
+      if Str = +Enter_Local_Path_String
+        or else Str = +Enter_Remote_Path_String
       then
          Set_Text (Gentry, "");
       end if;
@@ -1203,8 +1217,10 @@ package body GPS.Kernel.Remote is
       FS   : Filesystem_Record'Class;
       Path : in out Mirror_Path)
    is
-      Local  : constant String := Get_Text (Row.Local_Entry);
-      Remote : constant String := Get_Text (Row.Remote_Entry);
+      Local  : constant Filesystem_String := +Get_Text (Row.Local_Entry);
+      --  ??? What if the filename is not UTF8?
+      Remote : constant Filesystem_String := +Get_Text (Row.Remote_Entry);
+      --  ??? What if the filename is not UTF8?
       Sync   : Synchronisation_Type := Never;
       Dead   : Message_Dialog_Buttons;
       pragma Unreferenced (Dead);
@@ -1228,14 +1244,14 @@ package body GPS.Kernel.Remote is
 
       if not Get_Local_Filesystem.Is_Absolute_Path (Local) then
          Dead := Message_Dialog
-           (-"Local path " & Local & (-" needs to be an absolute path"),
+           (-"Local path " & (+Local) & (-" needs to be an absolute path"),
             Error, Button_OK);
          raise Invalid_Path;
       end if;
 
       if not Is_Absolute_Path (FS, Remote) then
          Dead := Message_Dialog
-           (-"Remote path " & Remote & (-" needs to be an absolute path"),
+           (-"Remote path " & (+Remote) & (-" needs to be an absolute path"),
             Error, Button_OK);
          raise Invalid_Path;
       end if;
@@ -1250,7 +1266,7 @@ package body GPS.Kernel.Remote is
       end loop;
 
       if Active (Me) then
-         Trace (Me, "Set tentative : " & Local & " - " & Remote & " - " &
+         Trace (Me, "Set tentative : " & (+Local) & " - " & (+Remote) & " - " &
                 Synchronisation_Type'Image (Sync));
       end if;
 
@@ -1304,8 +1320,8 @@ package body GPS.Kernel.Remote is
    ---------------------
 
    procedure On_Browse_Local (Widget : access Path_Cb_Data'Class) is
-      Current_Dir : constant String :=
-                      Get_Text (Widget.Row.Local_Entry);
+      Current_Dir : constant Filesystem_String :=
+                      +Get_Text (Widget.Row.Local_Entry);
       Start_Dir   : Virtual_File := No_File;
    begin
       if Current_Dir /= Enter_Local_Path_String then
@@ -1323,7 +1339,7 @@ package body GPS.Kernel.Remote is
                     Parent         => Gtk_Window (Widget.Widget.Dialog));
       begin
          if Dir /= No_File then
-            Set_Text (Widget.Row.Local_Entry, Full_Name (Dir).all);
+            Set_Text (Widget.Row.Local_Entry, Display_Full_Name (Dir));
             On_Changed (Widget.Widget.Dialog, False);
          end if;
       end;
@@ -1334,8 +1350,8 @@ package body GPS.Kernel.Remote is
    ----------------------
 
    procedure On_Browse_Remote (Widget : access Path_Cb_Data'Class) is
-      Current_Dir : constant String :=
-                      Get_Text (Widget.Row.Remote_Entry);
+      Current_Dir : constant Filesystem_String :=
+                      +Get_Text (Widget.Row.Remote_Entry);
       Start_Dir   : Virtual_File := No_File;
       Dialog      : constant Server_List_Editor :=
                       Server_List_Editor (Widget.Widget.Dialog);
@@ -1399,7 +1415,7 @@ package body GPS.Kernel.Remote is
                     Parent         => Gtk_Window (Widget.Widget.Dialog));
       begin
          if Dir /= No_File then
-            Set_Text (Widget.Row.Remote_Entry, Full_Name (Dir).all);
+            Set_Text (Widget.Row.Remote_Entry, Display_Full_Name (Dir));
             On_Changed (Widget.Widget.Dialog, False);
          end if;
       end;
@@ -2696,8 +2712,8 @@ package body GPS.Kernel.Remote is
          Src_Name      : constant String  := Nth_Arg (Data,  3);
          Dest_Name     : constant String  := Nth_Arg (Data,  4);
          Queue_Id      : constant String  := Nth_Arg (Data,  5);
-         Src_Path      : constant String  := Nth_Arg (Data,  6);
-         Dest_Path     : constant String  := Nth_Arg (Data,  7);
+         Src_Path      : constant Filesystem_String  := Nth_Arg (Data,  6);
+         Dest_Path     : constant Filesystem_String  := Nth_Arg (Data,  7);
          Synchronous   : constant Boolean := Nth_Arg (Data,  8);
          Print_Output  : constant Boolean := Nth_Arg (Data,  9);
          Print_Command : constant Boolean := Nth_Arg (Data, 10);
@@ -2926,7 +2942,7 @@ package body GPS.Kernel.Remote is
       --  Get servers associated with this file
 
       Trace (Me, "Loading servers_config property for file " &
-             Full_Name (Local_File).all);
+             (+Full_Name (Local_File).all));
       Get_Property
         (Property, Local_File,
          Name => "servers_config", Found => Success);
@@ -3086,7 +3102,7 @@ package body GPS.Kernel.Remote is
          begin
             if Shell_Name = "" then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'name' attribute in remote_shell_config",
                   Mode => Error);
                return;
@@ -3095,7 +3111,7 @@ package body GPS.Kernel.Remote is
             Shell_Cmd := Get_Field (Node, "start_command");
             if Shell_Cmd = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'start_command' child in remote_shell_config",
                   Mode => Error);
                return;
@@ -3109,7 +3125,7 @@ package body GPS.Kernel.Remote is
             GPS_Prompt := Get_Field (Node, "gps_prompt");
             if GPS_Prompt = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'gps_prompt' child in remote_shell_config",
                   Mode => Error);
                return;
@@ -3118,7 +3134,7 @@ package body GPS.Kernel.Remote is
             FS_Str := Get_Field (Node, "filesystem");
             if FS_Str = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'filesystem' child in remote_shell_config",
                   Mode => Error);
                return;
@@ -3130,7 +3146,7 @@ package body GPS.Kernel.Remote is
                FS := Filesystems.Unix;
             else
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": 'filesystem' child has " & FS_Str.all &
                   " value. Only 'windows' or 'unix' values are supported",
                   Mode => Error);
@@ -3175,7 +3191,7 @@ package body GPS.Kernel.Remote is
             Cd_Cmd := Get_Field (Node, "cd_command");
             if Cd_Cmd = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'cd_command' child in remote_shell_config",
                   Mode => Error);
                return;
@@ -3184,7 +3200,7 @@ package body GPS.Kernel.Remote is
             Get_Status_Cmd := Get_Field (Node, "get_status_command");
             if Get_Status_Cmd = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'get_status_command' child in " &
                   "remote_shell_config",
                   Mode => Error);
@@ -3194,7 +3210,7 @@ package body GPS.Kernel.Remote is
             Get_Status_Ptrn := Get_Field (Node, "get_status_ptrn");
             if Get_Status_Ptrn = null then
                Console.Insert
-                 (Module.Kernel, "XML Error in " & Full_Name (File).all &
+                 (Module.Kernel, "XML Error in " & Display_Full_Name (File) &
                   ": missing 'get_status_ptrn' child in remote_shell_config",
                   Mode => Error);
                return;
@@ -3247,7 +3263,7 @@ package body GPS.Kernel.Remote is
             Console.Insert
               (Module.Kernel,
                -("XML Error: remote_connection_config tag is missing a " &
-                 "name attribute in " & Full_Name (File).all),
+                 "name attribute in " & Display_Full_Name (File)),
                Add_LF => True, Mode => Error);
             return;
          end if;
@@ -3266,7 +3282,7 @@ package body GPS.Kernel.Remote is
             Console.Insert
               (Module.Kernel,
                -("XML Error: remote_connection_config is missing a " &
-                 "start_command field in " & Full_Name (File).all),
+                 "start_command field in " & Display_Full_Name (File)),
                Add_LF => True, Mode => Error);
             return;
          end if;
@@ -3521,7 +3537,8 @@ package body GPS.Kernel.Remote is
 
          if Get_Host (Load_Data.File) /= Get_Nickname (Build_Server) then
             Insert (Kernel,
-                    -"Error: the project " & Full_Name (Load_Data.File).all &
+                    -"Error: the project " &
+                    Display_Full_Name (Load_Data.File) &
                     (-" has no path equivalence on remote machine ") &
                     Get_Nickname (Build_Server));
          else
@@ -3644,14 +3661,14 @@ package body GPS.Kernel.Remote is
 
          if Need_Sync then
             if From = "" then
-               From_Path := To_Unbounded_String (Path.Get_Local_Path);
-               To_Path   := To_Unbounded_String (Path.Get_Remote_Path);
+               From_Path := To_Unbounded_String (+Path.Get_Local_Path);
+               To_Path   := To_Unbounded_String (+Path.Get_Remote_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (To).all);
 
             else
-               From_Path := To_Unbounded_String (Path.Get_Remote_Path);
-               To_Path   := To_Unbounded_String (Path.Get_Local_Path);
+               From_Path := To_Unbounded_String (+Path.Get_Remote_Path);
+               To_Path   := To_Unbounded_String (+Path.Get_Local_Path);
                Machine   := Machine_Descriptor_Record
                  (Get_Machine_Descriptor (From).all);
             end if;
@@ -3669,14 +3686,14 @@ package body GPS.Kernel.Remote is
                          Src_Name         => From,
                          Dest_Name        => To,
                          Queue_Id         => The_Queue_Id,
-                         Src_Path         => To_String (From_Path),
-                         Dest_Path        => To_String (To_Path),
+                         Src_Path         => +To_String (From_Path),
+                         Dest_Path        => +To_String (To_Path),
                          Synchronous      => Blocking,
                          Print_Output     => Print_Output,
                          Print_Command    => Print_Command);
 
             begin
-               Trace (Me, "run sync hook for " & Data.Src_Path);
+               Trace (Me, "run sync hook for " & (+Data.Src_Path));
 
                if not Run_Hook_Until_Success
                  (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
@@ -3742,14 +3759,15 @@ package body GPS.Kernel.Remote is
       Use_Ext_Terminal : Boolean := False;
       Console          : Interactive_Consoles.Interactive_Console := null;
       Show_Command     : Boolean := True;
-      Directory        : String := "";
+      Directory        : Filesystem_String := "";
       Use_Pipes        : Boolean := True)
    is
-      Exec    : GNAT.OS_Lib.String_Access;
-      Old_Dir : GNAT.OS_Lib.String_Access;
+      Exec    : Filesystem_String_Access;
+      Old_Dir : Filesystem_String_Access;
       Args    : Argument_List_Access;
 
-      function Check_Exec (Exec : String) return GNAT.OS_Lib.String_Access;
+      function Check_Exec
+        (Exec : Filesystem_String) return Filesystem_String_Access;
       --  Check that executable is on the path, and return the full path if
       --  found, return null otherwise.
 
@@ -3760,9 +3778,11 @@ package body GPS.Kernel.Remote is
       -- Check_Exec --
       ----------------
 
-      function Check_Exec (Exec : String) return GNAT.OS_Lib.String_Access is
-         Full_Exec : GNAT.OS_Lib.String_Access;
-         Norm_Exec : GNAT.OS_Lib.String_Access;
+      function Check_Exec
+        (Exec : Filesystem_String) return Filesystem_String_Access
+      is
+         Full_Exec : Filesystem_String_Access;
+         Norm_Exec : Filesystem_String_Access;
       begin
          if Server = Build_Server then
             Full_Exec := Locate_Compiler_Executable (Exec);
@@ -3773,7 +3793,8 @@ package body GPS.Kernel.Remote is
          if Full_Exec = null then
             Insert
               (Kernel,
-               -"Could not locate executable on path: " & Exec,
+               -"Could not locate executable on path: " &
+               Unknown_To_UTF8 (+Exec),
                Mode => Error);
             return null;
          end if;
@@ -3782,7 +3803,7 @@ package body GPS.Kernel.Remote is
          --  ./my_prog. See F322-010 concerning problem with gnatls in this
          --  particular case.
 
-         Norm_Exec := new String'
+         Norm_Exec := new Filesystem_String'
            (Normalize_Pathname (Full_Exec.all, Resolve_Links => False));
          Free (Full_Exec);
          return Norm_Exec;
@@ -3805,14 +3826,14 @@ package body GPS.Kernel.Remote is
       --  First verify the executable to be launched
 
       if Is_Local (Server) then
-         Exec := Check_Exec (Arguments (Arguments'First).all);
+         Exec := Check_Exec (+Arguments (Arguments'First).all);
 
          if Exec = null then
             return;
          end if;
 
          Args := new Argument_List'
-           ((1 => Exec) &
+           ((1 => Convert (Exec)) &
             Clone (Arguments (Arguments'First + 1 .. Arguments'Last)));
       else
          Args := new Argument_List'(Clone (Arguments));
@@ -3852,7 +3873,7 @@ package body GPS.Kernel.Remote is
          end if;
 
          if Directory /= "" then
-            Old_Dir := new String'(Get_Current_Dir);
+            Old_Dir := new Filesystem_String'(Get_Current_Dir);
             Change_Dir (Directory);
          end if;
 
@@ -3871,19 +3892,19 @@ package body GPS.Kernel.Remote is
          --  Set buffer_size to 0 for dynamically allocated buffer (prevents
          --  possible overflow)
          declare
-            Oldpath : GNAT.OS_Lib.String_Access;
+            Oldpath : Filesystem_String_Access;
          begin
             if Is_Toolchains_Active then
-               Oldpath := Getenv ("PATH");
+               Oldpath := Convert (Getenv ("PATH"));
 
                if Server = Build_Server then
                   Setenv
-                    ("PATH", Get_Compiler_Search_Path & Path_Separator &
-                     Oldpath.all);
+                    ("PATH", +(Get_Compiler_Search_Path & Path_Separator &
+                     Oldpath.all));
                else
                   Setenv
-                    ("PATH", Get_Tool_Search_Path & Path_Separator &
-                     Oldpath.all);
+                    ("PATH", +(Get_Tool_Search_Path & Path_Separator &
+                     Oldpath.all));
                end if;
 
                Trace (Me, Getenv ("PATH").all);
@@ -3897,7 +3918,7 @@ package body GPS.Kernel.Remote is
                Err_To_Out  => True);
 
             if Is_Toolchains_Active then
-               Setenv ("PATH", Oldpath.all);
+               Setenv ("PATH", +Oldpath.all);
                Free (Oldpath);
             end if;
 
@@ -3918,9 +3939,10 @@ package body GPS.Kernel.Remote is
          end if;
 
          if Directory = "" then
-            Old_Dir := new String'(To_Remote (Get_Current_Dir, Server));
+            Old_Dir := new Filesystem_String'
+              (To_Remote (Get_Current_Dir, Server));
          else
-            Old_Dir := new String'(Directory);
+            Old_Dir := new Filesystem_String'(Directory);
          end if;
 
          --  Set buffer_size to 0 for dynamically allocated buffer

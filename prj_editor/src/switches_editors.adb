@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,7 +54,8 @@ with String_Utils;              use String_Utils;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
 with Histories;                 use Histories;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Switches_Editors is
 
@@ -416,13 +417,13 @@ package body Switches_Editors is
             if To_Remove then
                if File_Name /= GNATCOLL.VFS.No_File then
                   Trace (Me, "Removing file-specific switches for "
-                         & Base_Name (File_Name));
+                         & (+Base_Name (File_Name)));
                   Delete_Attribute
                     (Project            => Rename_Prj,
                      Scenario_Variables => Scenario_Variables,
                      Attribute          => Build
                        (Tool.Project_Package.all, Get_String (Name_Switches)),
-                     Attribute_Index    => Base_Name (File_Name));
+                     Attribute_Index    => +Base_Name (File_Name));
                   Changed := True;
                end if;
 
@@ -430,7 +431,7 @@ package body Switches_Editors is
                if File_Name /= GNATCOLL.VFS.No_File then
                   if Args'Length /= 0 then
                      Trace (Me, "Changing switches for "
-                            & Base_Name (File_Name));
+                            & (+Base_Name (File_Name)));
                      Update_Attribute_Value_In_Scenario
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
@@ -438,19 +439,19 @@ package body Switches_Editors is
                           (Tool.Project_Package.all,
                            Get_String (Name_Switches)),
                         Values             => Args.all,
-                        Attribute_Index    => Base_Name (File_Name),
+                        Attribute_Index    => +Base_Name (File_Name),
                         Prepend            => False);
                      Changed := True;
                   else
                      Trace (Me, "Removing switches for "
-                            & Base_Name (File_Name));
+                            & (+Base_Name (File_Name)));
                      Delete_Attribute
                        (Project            => Rename_Prj,
                         Scenario_Variables => Scenario_Variables,
                         Attribute          => Build
                           (Tool.Project_Package.all,
                            Get_String (Name_Switches)),
-                        Attribute_Index    => Base_Name (File_Name));
+                        Attribute_Index    => +Base_Name (File_Name));
                      Changed := True;
                   end if;
 

@@ -20,6 +20,7 @@
 with Language; use Language;
 with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Projects.Registry; use Projects.Registry;
 with GNAT.Regpat; use GNAT.Regpat;
 
@@ -1567,7 +1568,7 @@ package body Codefix.GNAT_Parser is
          Set_File
            (Declaration_Cursor,
             Create
-              (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+              (+Get_Message (Message) (Matches (1).First .. Matches (1).Last),
                Get_Registry (Current_Text).all));
       else
          Set_File (Declaration_Cursor, Get_File (Message));
@@ -2525,7 +2526,7 @@ package body Codefix.GNAT_Parser is
             else
                Set_File
                  (Solution_Cursor, Create
-                    (Get_Message (Preview)
+                    (+Get_Message (Preview)
                        (Matches_Prev (1).First .. Matches_Prev (1).Last),
                      Get_Registry (Current_Text).all));
                Set_Location
@@ -2641,7 +2642,7 @@ package body Codefix.GNAT_Parser is
             else
                Set_File
                  (Solution_Cursor, Create
-                    (Get_Message (Preview)
+                    (+Get_Message (Preview)
                        (Matches_Loc (1).First .. Matches_Loc (1).Last),
                      Get_Registry (Current_Text).all));
                Set_Location
@@ -2717,7 +2718,7 @@ package body Codefix.GNAT_Parser is
       Set_File
         (Decl_Cur,
          Create
-           (Get_Message (Message)
+           (+Get_Message (Message)
             (Matches (1).First .. Matches (1).Last),
             Get_Registry (Current_Text).all));
 
@@ -2844,7 +2845,7 @@ package body Codefix.GNAT_Parser is
          Set_File
            (Spec_Cursor,
             Create
-              (Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+              (+Get_Message (Message) (Matches (1).First .. Matches (1).Last),
                Get_Registry (Current_Text).all));
       end if;
 
@@ -2921,7 +2922,7 @@ package body Codefix.GNAT_Parser is
       else
          Set_File
            (Source_Cursor, Create
-              (Get_Message (Message)
+              (+Get_Message (Message)
                  (Matches (1).First .. Matches (1).Last),
                Get_Registry (Current_Text).all));
          Seek_With := True;

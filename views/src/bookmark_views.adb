@@ -21,8 +21,9 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
-with GNAT.OS_Lib;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -762,13 +763,14 @@ package body Bookmark_Views is
    --------------------
 
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
-      Filename    : constant String := Get_Home_Dir (Kernel) & "bookmarks.xml";
+      Filename    : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "bookmarks.xml";
       File, Child : Node_Ptr;
       Err         : String_Access;
       Marker      : Location_Marker;
    begin
-      if GNAT.OS_Lib.Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & (+Filename));
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -817,13 +819,14 @@ package body Bookmark_Views is
    --------------------
 
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
-      Filename    : constant String := Get_Home_Dir (Kernel) & "bookmarks.xml";
+      Filename    : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "bookmarks.xml";
       File, Child : Node_Ptr;
       List        : Bookmark_List.List_Node :=
                       First (Bookmark_Views_Module.List);
       Success     : Boolean;
    begin
-      Trace (Me, "Saving " & Filename);
+      Trace (Me, "Saving " & (+Filename));
       File := new Node;
       File.Tag := new String'("Bookmarks");
 
@@ -839,7 +842,7 @@ package body Bookmark_Views is
          List := Next (List);
       end loop;
 
-      Print (File, Filename, Success);
+      Print (File, +Filename, Success);
       Free (File);
 
       if not Success then

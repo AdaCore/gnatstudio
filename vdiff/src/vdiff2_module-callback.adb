@@ -21,6 +21,7 @@ with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Gtk.Window;                        use Gtk.Window;
 
@@ -44,7 +45,7 @@ package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
 
-   function Get_Ref_Filename (File : Virtual_File) return String;
+   function Get_Ref_Filename (File : Virtual_File) return Filesystem_String;
    pragma Inline (Get_Ref_Filename);
    --  Returns the ref filename for the give file
 
@@ -52,7 +53,7 @@ package body Vdiff2_Module.Callback is
    -- Get_Ref_Filename --
    ----------------------
 
-   function Get_Ref_Filename (File : Virtual_File) return String is
+   function Get_Ref_Filename (File : Virtual_File) return Filesystem_String is
    begin
       return Get_Local_Filesystem.Get_Tmp_Directory
         & "ref$" & Base_Name (File);
@@ -245,7 +246,7 @@ package body Vdiff2_Module.Callback is
 
             begin
                if Merge /= GNATCOLL.VFS.No_File then
-                  Show_Merge (Kernel, Full_Name (Merge).all);
+                  Show_Merge (Kernel, +Full_Name (Merge).all);
                end if;
             end;
          end;
@@ -312,7 +313,7 @@ package body Vdiff2_Module.Callback is
 
          begin
             if Merge /= GNATCOLL.VFS.No_File then
-               Show_Merge (Kernel, Full_Name (Merge).all);
+               Show_Merge (Kernel, +Full_Name (Merge).all);
             end if;
          end;
       end;
@@ -340,11 +341,11 @@ package body Vdiff2_Module.Callback is
       ---------------
 
       procedure Setup_Ref (Ref_File : Virtual_File) is
-         Filename : constant String := Full_Name (Ref_File).all;
+         Filename : constant Filesystem_String := Full_Name (Ref_File).all;
       begin
          declare
             Args : Argument_List :=
-                     (1 => new String'(Filename),
+                     (1 => new String'(+Filename),
                       2 => new String'("FALSE"));
          begin
             Execute_GPS_Shell_Command
@@ -354,10 +355,10 @@ package body Vdiff2_Module.Callback is
          declare
             Args : Argument_List (1 .. 3);
          begin
-            Args (1) := new String'(Filename);
+            Args (1) := new String'(+Filename);
             if D.Title = "" then
-               Args (2) := new String'(Base_Name (Ref_File));
-               Args (3) := new String'(Base_Name (Ref_File));
+               Args (2) := new String'(+Base_Name (Ref_File));
+               Args (3) := new String'(+Base_Name (Ref_File));
             else
                Args (2) := new String'(D.Title);
                Args (3) := new String'(D.Title);
@@ -608,14 +609,14 @@ package body Vdiff2_Module.Callback is
       for J in Data (Node).Files'Range loop
          if Data (Node).Files (J) /= GNATCOLL.VFS.No_File then
             declare
-               Filename : constant String :=
+               Filename : constant Filesystem_String :=
                             Full_Name (Data (Node).Files (J)).all;
             begin
                if not Is_Regular_File (Filename) then
                   To_Delete (J) := True;
                end if;
 
-               Arg := new String'(Filename);
+               Arg := new String'(+Filename);
                Execute_GPS_Shell_Command
                  (Get_Kernel (Vdiff_Module_ID.all),
                   "Editor.save_buffer", (1 => Arg));

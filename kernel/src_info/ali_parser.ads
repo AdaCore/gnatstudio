@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 with Entities;
 with GNATCOLL.VFS;
+with GNATCOLL.Filesystem;
 with Projects.Registry;
 
 package ALI_Parser is
@@ -57,12 +58,15 @@ package ALI_Parser is
       return Entities.LI_Handler_Iterator'Class;
    --  See doc for inherited subprograms
 
-   function Get_ALI_Ext (LI : access ALI_Handler_Record) return String;
+   function Get_ALI_Ext
+     (LI : access ALI_Handler_Record)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the ali file extension (e.g. ".ali") for the given handler
 
    function Get_ALI_Filename
      (Handler   : access ALI_Handler_Record;
-      Base_Name : String) return String;
+      Base_Name : GNATCOLL.Filesystem.Filesystem_String)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the most likely candidate for an ALI file, given a source name
 
 end ALI_Parser;

@@ -20,6 +20,8 @@
 with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
@@ -694,11 +696,11 @@ package body GVD_Module is
            or else Is_Regular_File (S)
          then
             Add_Symbols
-              (Process.Debugger, Full_Name (S).all,
+              (Process.Debugger, +Full_Name (S).all,
                Mode => GVD.Types.Visible);
          else
             Console.Insert
-              (Kernel, (-"Could not find file: ") & Full_Name (S).all,
+              (Kernel, (-"Could not find file: ") & (+Full_Name (S).all),
                Mode => Error);
          end if;
       end;
@@ -1290,7 +1292,7 @@ package body GVD_Module is
             if Use_Exec_Dir then
                Change_Directory
                  (Process.Debugger,
-                  Dir_Name (Process.Descriptor.Program).all);
+                  +Dir_Name (Process.Descriptor.Program).all);
             end if;
 
             if Is_Start then
@@ -1425,7 +1427,7 @@ package body GVD_Module is
                       GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
                       Get_Current_Process (Top);
-      Exec        : GNAT.Strings.String_Access;
+      Exec        : Filesystem_String_Access;
       Ptr         : GNAT.Strings.String_Access :=
                       GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
@@ -1457,13 +1459,13 @@ package body GVD_Module is
                S := Create (Full_Filename => Exec.all);
 
                if not Is_Regular_File (S) then
-                  S := Create (Full_Filename => Exec.all & Exec_Suffix);
+                  S := Create (Full_Filename => Exec.all & (+Exec_Suffix));
                end if;
 
                Free (Exec);
             else
                Console.Insert
-                 (Kernel, (-"Could not find file: ") & Base_Name (S),
+                 (Kernel, (-"Could not find file: ") & Display_Base_Name (S),
                   Mode => Error);
                S := GNATCOLL.VFS.No_File;
             end if;
@@ -1476,7 +1478,7 @@ package body GVD_Module is
       exception
          when Executable_Not_Found =>
             Console.Insert
-              (Kernel, (-"Could not find file: ") & Full_Name (S).all,
+              (Kernel, (-"Could not find file: ") & Display_Full_Name (S),
                Mode => Error);
       end;
 
@@ -1518,11 +1520,13 @@ package body GVD_Module is
            or else Is_Regular_File (S)
          then
             Load_Core_File
-              (Process.Debugger, Full_Name (S).all, Mode => GVD.Types.Visible);
+              (Process.Debugger, +Full_Name (S).all,
+               Mode => GVD.Types.Visible);
 
          else
             Console.Insert
-              (Kernel, (-"Could not find core file: ") & Full_Name (S).all,
+              (Kernel, (-"Could not find core file: ") &
+               Display_Full_Name (S),
                Mode => Error);
          end if;
       end;
@@ -2316,10 +2320,11 @@ package body GVD_Module is
       begin
          for M in reverse Mains'Range loop
             declare
-               Exec : constant String :=
-                 Get_Executable_Name (Prj, Mains (M).all);
+               Exec : constant Filesystem_String :=
+                 Get_Executable_Name (Prj, +Mains (M).all);
             begin
-               Gtk_New (Mitem, Exec);
+               Gtk_New (Mitem, +Exec);
+               --  ??? What if Exec is not utf-8 ?
                Prepend (Menu, Mitem);
                File_Project_Cb.Object_Connect
                  (Mitem, Gtk.Menu_Item.Signal_Activate,

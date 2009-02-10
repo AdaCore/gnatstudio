@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2001-2008, AdaCore               --
+--                    Copyright (C) 2001-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,8 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with GPS.Kernel;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Aunit_Filters is
 
@@ -34,7 +35,7 @@ package Aunit_Filters is
 
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
-      File_Name    : String;
+      File_Name    : Filesystem_String;
       Package_Name : out GNAT.Strings.String_Access;
       Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type);

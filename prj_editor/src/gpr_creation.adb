@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004-2008, AdaCore              --
+--                     Copyright (C) 2004-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body GPR_Creation is
 
@@ -690,7 +691,8 @@ package body GPR_Creation is
          --  Ignore all other object directories but the first one.
          --  The other directories do not contain any object file anyway
 
-         Trace (Me, "Creating " & Full_Name (Project_Path (Root_Project)).all);
+         Trace (Me, "Creating " &
+                (+Full_Name (Project_Path (Root_Project)).all));
          Project := Root_Project;
          Process_List (Project, Source_Dirs_Attribute, Source_Dirs);
 
@@ -745,7 +747,7 @@ package body GPR_Creation is
             for P in 0 .. Object_Dirs'Length - 1 loop
                Trace
                  (Me, "Manipulating "
-                  & Full_Name (Project_Path (Projects (P))).all);
+                  & (+Full_Name (Project_Path (Projects (P))).all));
 
                Generate_Withs
                  (Projects          => Projects,
@@ -798,11 +800,11 @@ package body GPR_Creation is
    begin
 
       for J in Source_Dirs'Range loop
-         S_Source_Dirs (J) := new String'(Full_Name (Source_Dirs (J)).all);
+         S_Source_Dirs (J) := new String'(+Full_Name (Source_Dirs (J)).all);
       end loop;
 
       for J in Object_Dirs'Range loop
-         S_Object_Dirs (J) := new String'(Full_Name (Object_Dirs (J)).all);
+         S_Object_Dirs (J) := new String'(+Full_Name (Object_Dirs (J)).all);
       end loop;
 
       Create_Gpr_Files

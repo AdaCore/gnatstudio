@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2006                       --
---                             AdaCore                               --
+--                  Copyright (C) 2003-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,7 +29,7 @@ package body XML_Parsers is
    -----------
 
    procedure Parse
-     (File  : String;
+     (File  : Filesystem_String;
       Tree  : out Glib.Xml_Int.Node_Ptr;
       Error : out GNAT.Strings.String_Access)
    is
@@ -46,14 +45,14 @@ package body XML_Parsers is
 
    procedure Parse_Buffer
      (Buffer     : Glib.UTF8_String;
-      From_File  : String := "<input>";
+      From_File  : Filesystem_String := "<input>";
       Start_Line : Natural := 1;
       Tree       : out Glib.Xml_Int.Node_Ptr;
       Error      : out GNAT.Strings.String_Access)
    is
       Err : Unicode.CES.Byte_Sequence_Access;
    begin
-      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err, From_File, Start_Line);
+      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err, +From_File, Start_Line);
       Error := GNAT.Strings.String_Access (Err);
    end Parse_Buffer;
 

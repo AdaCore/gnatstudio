@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada                --
 --                                                                   --
---                   Copyright (C) 2004-2008, AdaCore                --
+--                   Copyright (C) 2004-2009, AdaCore                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -32,6 +32,7 @@ with Sax.Exceptions;
 with Sax.Locators;
 with Unicode.CES;
 with Glib.XML;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 generic
    type XML_Specific_Data is private;
@@ -47,13 +48,13 @@ package XML_Readers is
    --  You should free the previous Tree before calling Parse multiple times
    --  if you want to avoid memory leaks.
 
-   function Parse (File : String) return Glib_XML.Node_Ptr;
+   function Parse (File : Filesystem_String) return Glib_XML.Node_Ptr;
    --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead.
    --  Errors in the XML file will return a null value, but the error itself
    --  is no longer accessible.
 
    procedure Parse
-       (File  : String;
+       (File  : Filesystem_String;
         Tree  : out Glib_XML.Node_Ptr;
         Error : out Unicode.CES.Byte_Sequence_Access);
    --  Same as above, except error messages are made available to the caller.

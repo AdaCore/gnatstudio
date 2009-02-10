@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2006-2008, AdaCore                     --
+--                     Copyright (C) 2006-2009, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -56,7 +56,7 @@ package body GNAT.Expect.TTY.Remote is
    procedure Internal_Sync_Execute
      (Host                : String;
       Args                : GNAT.OS_Lib.Argument_List;
-      Execution_Directory : String;
+      Execution_Directory : Filesystem_String;
       Get_Output          : Boolean;
       Out_Value           : out GNAT.Strings.String_Access;
       Status              : out Integer;
@@ -953,7 +953,7 @@ package body GNAT.Expect.TTY.Remote is
      (Descriptor          : out Process_Descriptor_Access;
       Target_Nickname     : String;
       Args                : GNAT.OS_Lib.Argument_List;
-      Execution_Directory : String := "";
+      Execution_Directory : Filesystem_String := "";
       Err_To_Out          : Boolean := False;
       On_New_Connection   : access procedure (Target_Name : String) := null)
    is
@@ -997,7 +997,7 @@ package body GNAT.Expect.TTY.Remote is
             begin
                Send (Descriptor.all,
                      Cd_Cmd (Cd_Cmd'First .. Idx - 1) & '"' &
-                     Execution_Directory & '"' &
+                     (+Execution_Directory) & '"' &
                      Cd_Cmd (Idx + 2 .. Cd_Cmd'Last));
                Expect (Descriptor.all,
                        Res,
@@ -1072,7 +1072,7 @@ package body GNAT.Expect.TTY.Remote is
       Args                  : GNAT.OS_Lib.Argument_List;
       Out_Value             : out GNAT.Strings.String_Access;
       Status                : out Boolean;
-      Execution_Directory   : String  := "")
+      Execution_Directory   : Filesystem_String  := "")
    is
       Status_Nb : Integer;
    begin
@@ -1088,7 +1088,7 @@ package body GNAT.Expect.TTY.Remote is
      (Host                  : String;
       Args                  : GNAT.OS_Lib.Argument_List;
       Status                : out Boolean;
-      Execution_Directory   : String  := "")
+      Execution_Directory   : Filesystem_String  := "")
    is
       Out_Value : GNAT.Strings.String_Access;
       Status_Nb : Integer;
@@ -1104,7 +1104,7 @@ package body GNAT.Expect.TTY.Remote is
    procedure Internal_Sync_Execute
      (Host                  : String;
       Args                  : GNAT.OS_Lib.Argument_List;
-      Execution_Directory   : String;
+      Execution_Directory   : Filesystem_String;
       Get_Output            : Boolean;
       Out_Value             : out GNAT.Strings.String_Access;
       Status                : out Integer;

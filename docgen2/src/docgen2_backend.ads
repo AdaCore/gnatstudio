@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,8 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language;              use Language;
+
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Docgen2_Backend is
 
@@ -42,32 +44,34 @@ package Docgen2_Backend is
       --  Source code index
      );
 
-   function Get_Template (Backend    : access Backend_Record;
-                          System_Dir : String;
-                          Kind       : Template_Kind) return String
-                          is abstract;
+   function Get_Template
+     (Backend    : access Backend_Record;
+      System_Dir : Filesystem_String;
+      Kind       : Template_Kind) return Filesystem_String
+      is abstract;
    --  Return the full path to the template used for transformation
    --  System_Dir is the main GPS directory
 
-   function Get_Support_Dir (Backend    : access Backend_Record;
-                             System_Dir : String) return String
-                             is abstract;
+   function Get_Support_Dir
+     (Backend    : access Backend_Record;
+      System_Dir : Filesystem_String) return Filesystem_String
+      is abstract;
    --  Return the full path to the directory containing the documentation's
    --  support files (scripts, css files, etc.)
 
    function To_Destination_Name
      (Backend  : access Backend_Record;
-      Basename : String)
-      return String is abstract;
+      Basename : Filesystem_String)
+      return Filesystem_String is abstract;
    --  Return a basename's destination file from source file.
    --  for example: gps-kernel.ads will be converted to gps-kernel.ads.html
    --  by the html backend
 
    function To_Destination_Name
      (Backend  : access Backend_Record;
-      Src_File : String;
+      Src_File : Filesystem_String;
       Pkg_Nb   : Natural)
-      return String is abstract;
+      return Filesystem_String is abstract;
    --  Return a basename's destination file from a package location and a
    --  package index.
    --  for example: "gps-kernel.ads:5:4" and "2" will return
@@ -76,7 +80,7 @@ package Docgen2_Backend is
    function To_Href
      (Backend  : access Backend_Record;
       Location : String;
-      Src_File : String;
+      Src_File : Filesystem_String;
       Pkg_Nb   : Natural)
       return String is abstract;
    --  Translate a location into an href that can be used by the Gen_Href

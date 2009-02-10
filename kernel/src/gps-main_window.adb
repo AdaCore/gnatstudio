@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;       use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;            use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
@@ -334,8 +334,8 @@ package body GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Home_Dir         : String;
-      Prefix_Directory : String) is
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String) is
    begin
       Main_Window := new GPS_Window_Record;
       GPS.Main_Window.Initialize (Main_Window, Home_Dir, Prefix_Directory);
@@ -385,10 +385,10 @@ package body GPS.Main_Window is
    -------------------
 
    procedure Put_Animation (Main_Window : access GPS_Window_Record'Class) is
-      Throbber : constant String := Normalize_Pathname
+      Throbber : constant Filesystem_String := Normalize_Pathname
         ("gps-animation.gif",
          Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
-      Image    : constant String := Normalize_Pathname
+      Image    : constant Filesystem_String := Normalize_Pathname
         ("gps-animation.png",
          Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
       Error    : GError;
@@ -397,7 +397,7 @@ package body GPS.Main_Window is
    begin
       if Is_Regular_File (Image) then
          Trace (Me, "loading gps-animation.png");
-         Gdk_New_From_File (Main_Window.Static_Image, Image, Error);
+         Gdk_New_From_File (Main_Window.Static_Image, +Image, Error);
          Gtk_New (Main_Window.Animation_Image, Main_Window.Static_Image);
          Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
       else
@@ -407,7 +407,7 @@ package body GPS.Main_Window is
 
       if Is_Regular_File (Throbber) then
          Trace (Me, "loading gps-animation.gif");
-         Gdk_New_From_File (Main_Window.Animation, Throbber, Error);
+         Gdk_New_From_File (Main_Window.Animation, +Throbber, Error);
          Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
          Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
          Set (Main_Window.Animation_Image, Pixbuf);
@@ -509,8 +509,8 @@ package body GPS.Main_Window is
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Home_Dir         : String;
-      Prefix_Directory : String)
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String)
    is
       Vbox      : Gtk_Vbox;
       Box1      : Gtk_Hbox;

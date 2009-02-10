@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -150,26 +150,26 @@ package body GPS.Kernel.Macros is
       then
          if Param = "f" then
             return String_Utils.Protect
-              (Base_Name (File_Information (Context)),
+              (+Base_Name (File_Information (Context)),
                Protect_Quotes => Quoted);
          elsif Param = "fk" then
             return String_Utils.Protect
-              (Krunch (Base_Name (File_Information (Context))),
+              (Krunch (+Base_Name (File_Information (Context))),
                Protect_Quotes => Quoted);
          else
             return String_Utils.Protect
-              (To_Remote (Full_Name (File_Information (Context)).all, Server),
+              (+To_Remote (Full_Name (File_Information (Context)).all, Server),
                Protect_Quotes => Quoted);
          end if;
 
       elsif Param = "d" then
          return String_Utils.Protect
-           (To_Remote (Directory_Information (Context), Server),
+           (+To_Remote (Directory_Information (Context), Server),
             Protect_Quotes => Quoted);
 
       elsif Param = "dk" then
          return String_Utils.Protect
-           (Krunch (To_Remote (Directory_Information (Context), Server)),
+           (Krunch (+To_Remote (Directory_Information (Context), Server)),
             Protect_Quotes => Quoted);
 
       elsif Param = "e" then
@@ -240,7 +240,8 @@ package body GPS.Kernel.Macros is
             else
                return String_Utils.Protect
                  ("-P"
-                  & To_Remote (Full_Name (Project_Path (Project)).all, Server),
+                  & (+To_Remote
+                    (Full_Name (Project_Path (Project)).all, Server)),
                   Protect_Spaces => not Quoted,
                   Protect_Quotes => Quoted);
             end if;
@@ -256,7 +257,7 @@ package body GPS.Kernel.Macros is
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
-              (To_Remote (Full_Name (Project_Path (Project)).all, Server),
+              (+To_Remote (Full_Name (Project_Path (Project)).all, Server),
                Protect_Quotes => Quoted);
 
          else
@@ -289,7 +290,7 @@ package body GPS.Kernel.Macros is
                         if List /= null then
                            for K in List'Range loop
                               Put_Line (File,
-                                        To_Remote (List (K).all, Server));
+                                        +To_Remote (+List (K).all, Server));
                            end loop;
                            Free (List);
                         end if;
@@ -301,7 +302,7 @@ package body GPS.Kernel.Macros is
                            for K in Files_List'Range loop
                               Put_Line
                                 (File,
-                                 To_Remote
+                                 +To_Remote
                                    (Full_Name (Files_List (K)).all, Server));
                            end loop;
                            Unchecked_Free (Files_List);
@@ -309,7 +310,8 @@ package body GPS.Kernel.Macros is
                      end if;
 
                      declare
-                        N : constant String := To_Remote (Name (File), Server);
+                        N : constant String := +To_Remote
+                          (+Name (File), Server);
                      begin
                         Close (File);
                         return String_Utils.Protect
@@ -330,7 +332,7 @@ package body GPS.Kernel.Macros is
                         if List /= null then
                            for K in List'Range loop
                               Append (Result, '"' &
-                                      To_Remote (List (K).all, Server) &
+                                      (+To_Remote (+List (K).all, Server)) &
                                       """ ");
                            end loop;
                            Free (List);
@@ -344,8 +346,8 @@ package body GPS.Kernel.Macros is
                               Append
                                 (Result,
                                 '"' &
-                                 To_Remote (Full_Name (Files_List (K)).all,
-                                            Server) &
+                                (+To_Remote (Full_Name (Files_List (K)).all,
+                                            Server)) &
                                  """ ");
                            end loop;
                            Unchecked_Free (Files_List);

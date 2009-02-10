@@ -23,6 +23,8 @@ with Ada.Strings.Fixed;
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
+with GNATCOLL.Filesystem;         use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;          use GNATCOLL.VFS_Utils;
 
 with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
@@ -60,7 +62,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
-      Subdir     : String;
+      Subdir     : Filesystem_String;
       Simulate   : Boolean := False) return Argument_List_Access;
    --  Expand all macros contained in CL using the GPS macro language.
    --  User must free the result.
@@ -74,7 +76,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
-      Subdir     : String;
+      Subdir     : Filesystem_String;
       Simulate   : Boolean) return Argument_List;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
@@ -108,7 +110,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
-      Subdir     : String;
+      Subdir     : Filesystem_String;
       Simulate   : Boolean) return Argument_List
    is
       function Substitution
@@ -125,7 +127,7 @@ package body Build_Command_Manager is
          Done : aliased Boolean := False;
       begin
          if Param = "subdir" then
-            return Subdir;
+            return +Subdir;
 
          else
             declare
@@ -319,7 +321,7 @@ package body Build_Command_Manager is
             --  remove reference to File from the Locations View.
             --  See F830-003.
             Remove_Location_Category (Kernel, Error_Category, Force_File);
-            return (1 => new String'(Base_Name (Force_File)));
+            return (1 => new String'(+Base_Name (Force_File)));
          end if;
 
          declare
@@ -344,7 +346,7 @@ package body Build_Command_Manager is
                else
                   Console.Insert
                     (Kernel, -"Could not determine the project for file: "
-                     & Full_Name (File).all,
+                     & Display_Full_Name (File),
                      Mode => Console.Error);
                   raise Invalid_Argument;
                end if;
@@ -355,7 +357,7 @@ package body Build_Command_Manager is
                --  See F830-003.
                Remove_Location_Category (Kernel, Error_Category, File);
 
-               return (1 => new String'(Base_Name (File)));
+               return (1 => new String'(+Base_Name (File)));
             end if;
          end;
 
@@ -388,7 +390,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : String;
-      Subdir     : String;
+      Subdir     : Filesystem_String;
       Simulate   : Boolean := False) return Argument_List_Access
    is
       Result : Argument_List_Access := new Argument_List (1 .. CL'Length * 2);
@@ -491,7 +493,7 @@ package body Build_Command_Manager is
          Shadow : Boolean)
       is
 
-         Subdir : constant String := Get_Mode_Subdir (Mode);
+         Subdir : constant Filesystem_String := Get_Mode_Subdir (Mode);
          Server : Server_Type;
 
          function Expand_Cmd_Line (CL : String) return String;

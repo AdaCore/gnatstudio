@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -453,6 +453,9 @@ package GUI_Utils is
    --  Append Item either to Parent, if not null, or directly to the menu
    --  bar.
    --  The menu is appended if Index is -1
+
+   function Format (S : String) return String;
+   --  Call Format_Pathname on S and add ending slash.
 
    ----------------------
    -- Contextual menus --

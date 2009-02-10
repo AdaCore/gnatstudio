@@ -109,6 +109,8 @@ with Build_Configurations;
 with String_List_Utils;
 with Remote;
 
+with GNATCOLL.Filesystem;            use GNATCOLL.Filesystem;
+
 package Builder_Facility_Module is
 
    procedure Register_Module
@@ -135,7 +137,7 @@ package Builder_Facility_Module is
    --  tree.
    --  Caller must free the result.
 
-   function Get_Mode_Subdir (Mode : String) return String;
+   function Get_Mode_Subdir (Mode : String) return Filesystem_String;
    --  Return the special directory ("subdir") for Mode
 
    function Apply_Mode_Args

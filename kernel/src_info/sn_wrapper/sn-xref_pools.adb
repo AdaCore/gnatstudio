@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2008, AdaCore             --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,7 @@ package body SN.Xref_Pools is
 
    function Generate_Filename
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
-      Directory       : String;
+      Directory       : Filesystem_String;
       N               : Integer) return Virtual_File;
    --  Generate xref file name based on specified source file name and counter
 
@@ -138,7 +138,7 @@ package body SN.Xref_Pools is
          --  ??? Should use GNAT.OS_Lib Open/Read instead, would be more
          --  efficient
 
-         Open (FD, In_File, Full_Name (Filename).all);
+         Open (FD, In_File, +Full_Name (Filename).all);
 
          if Is_Open (FD) then
             loop
@@ -158,7 +158,7 @@ package body SN.Xref_Pools is
                     new String'(Src_Buf (Src_Buf'First .. Src_Buf_Last));
                   Xref_Elmt.Xref_Filename := Create
                     (Full_Filename =>
-                       Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+                       +Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
 
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
@@ -196,7 +196,7 @@ package body SN.Xref_Pools is
          return;
       end if;
 
-      Create (FD, Out_File, Full_Name (Filename).all);
+      Create (FD, Out_File, +Full_Name (Filename).all);
       STable.Get_First (Pool.HTable, Iter);
 
       loop
@@ -209,7 +209,7 @@ package body SN.Xref_Pools is
          else
             Put (FD, '0');
          end if;
-         Put_Line (FD, Full_Name (E.Xref_Filename).all);
+         Put_Line (FD, +Full_Name (E.Xref_Filename).all);
          STable.Get_Next (Pool.HTable, Iter);
       end loop;
 
@@ -250,16 +250,16 @@ package body SN.Xref_Pools is
 
    function Generate_Filename
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
-      Directory       : String;
+      Directory       : Filesystem_String;
       N               : Integer) return Virtual_File
    is
-      Name  : constant String := Base_Name (Source_Filename);
+      Name  : constant Filesystem_String := Base_Name (Source_Filename);
    begin
       if N = 0 then
          return Create (Full_Filename => Directory & Name & Xref_Suffix);
       else
          return Create
-           (Full_Filename => Directory & Name & Image (N) & Xref_Suffix);
+           (Full_Filename => Directory & Name & (+Image (N)) & Xref_Suffix);
       end if;
    end Generate_Filename;
 
@@ -269,13 +269,13 @@ package body SN.Xref_Pools is
 
    function Xref_Filename_For
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
-      Directory       : String;
+      Directory       : Filesystem_String;
       Pool            : Xref_Pool) return GNATCOLL.VFS.Virtual_File
    is
       Data   : Xref_Elmt_Ptr;
       N      : Integer := 0;
       Source : GNAT.Strings.String_Access :=
-        new String'(Full_Name (Source_Filename).all);
+        new String'(+Full_Name (Source_Filename).all);
 
    begin
       --  Get hashed value
@@ -297,15 +297,15 @@ package body SN.Xref_Pools is
               Generate_Filename (Source_Filename, Directory, N);
             FD        : File_Descriptor;
          begin
-            if not Is_Directory (Directory) then
-               Make_Dir (Directory);
+            if not Is_Directory (+Directory) then
+               Make_Dir (+Directory);
             end if;
 
             if not Is_Regular_File (Full_Name) then
                Data.Xref_Filename := Full_Name;
 
                --  touch this file
-               FD := Create_New_File (Full_Name.Full_Name.all, Binary);
+               FD := Create_New_File (+Full_Name.Full_Name.all, Binary);
 
                if FD = Invalid_FD then -- unable to create a new file
                   --  raise an exception if unable to create new xref file
@@ -313,7 +313,7 @@ package body SN.Xref_Pools is
                   Raise_Exception
                     (Xref_File_Error'Identity,
                      "unable to create a new file: "
-                     & GNATCOLL.VFS.Full_Name (Full_Name).all);
+                     & (+GNATCOLL.VFS.Full_Name (Full_Name).all));
                end if;
 
                Close (FD);
@@ -339,7 +339,7 @@ package body SN.Xref_Pools is
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
-      Full      : aliased String := Full_Name (Source_Filename).all;
+      Full      : aliased String := +Full_Name (Source_Filename).all;
       Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin
@@ -355,7 +355,7 @@ package body SN.Xref_Pools is
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
-      Full      : aliased String := Full_Name (Source_Filename).all;
+      Full      : aliased String := +Full_Name (Source_Filename).all;
       Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin

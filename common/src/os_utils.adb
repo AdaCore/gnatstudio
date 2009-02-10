@@ -22,9 +22,10 @@ with Ada.Directories;           use Ada.Directories;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
+
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Config;
 
@@ -36,9 +37,10 @@ package body OS_Utils is
    -- Create_Tmp_File --
    ---------------------
 
-   function Create_Tmp_File return String is
-      Current_Dir : constant String := Get_Current_Dir;
-      Temp_Dir    : constant String := Get_Local_Filesystem.Get_Tmp_Directory;
+   function Create_Tmp_File return Filesystem_String is
+      Current_Dir : constant Filesystem_String := Get_Current_Dir;
+      Temp_Dir    : constant Filesystem_String :=
+        Get_Local_Filesystem.Get_Tmp_Directory;
       Fd          : File_Descriptor;
       Base        : String_Access;
 
@@ -48,7 +50,7 @@ package body OS_Utils is
       Close (Fd);
 
       declare
-         Result : constant String := Base.all;
+         Result : constant Filesystem_String := +Base.all;
       begin
          Free (Base);
          Change_Dir (Current_Dir);
@@ -172,7 +174,7 @@ package body OS_Utils is
    -- Make_Dir_Recursive --
    ------------------------
 
-   procedure Make_Dir_Recursive (Name : String) is
+   procedure Make_Dir_Recursive (Name : Filesystem_String) is
       Last     : Natural := Name'First + 1;
       UNC_Path : Boolean := False;
 
@@ -195,7 +197,7 @@ package body OS_Utils is
          if not Is_Directory (Name (Name'First .. Last - 1)) then
             begin
                GNAT.Directory_Operations.Make_Dir
-                 (Name (Name'First .. Last - 1));
+                 (+Name (Name'First .. Last - 1));
             exception
                when Directory_Error =>
                   --  ??? Ignore Directory_Error on UNC paths since apparently
@@ -258,8 +260,8 @@ package body OS_Utils is
    -- Is_Cygwin_Path --
    --------------------
 
-   function Is_Cygwin_Path (Path : String) return Boolean is
-      Cygdrive : constant String := "/cygdrive/";
+   function Is_Cygwin_Path (Path : Filesystem_String) return Boolean is
+      Cygdrive : constant Filesystem_String := "/cygdrive/";
    begin
       return Path'Length > Cygdrive'Length + 1
         and then
@@ -273,10 +275,11 @@ package body OS_Utils is
    ---------------------
 
    function Format_Pathname
-     (Path  : String;
-      Style : Path_Style := System_Default) return String
+     (Path  : Filesystem_String;
+      Style : Path_Style := System_Default) return Filesystem_String
    is
-      function Cygwin_To_Dos (Path : String) return String;
+      function Cygwin_To_Dos
+        (Path : Filesystem_String) return Filesystem_String;
       --  Convert the /cygdrive/<drive>/ prefix to the DOS <drive>:\ equivalent
       --  and convert a forward slashes to backward slashes.
 
@@ -284,7 +287,8 @@ package body OS_Utils is
       -- Cygwin_To_Dos --
       -------------------
 
-      function Cygwin_To_Dos (Path : String) return String is
+      function Cygwin_To_Dos
+        (Path : Filesystem_String) return Filesystem_String is
          Cygdrive : constant String := "/cygdrive/";
       begin
          if Is_Cygwin_Path (Path) then
@@ -304,14 +308,14 @@ package body OS_Utils is
 
          when DOS =>
             declare
-               Result : constant String := Cygwin_To_Dos (Path);
+               Result : constant Filesystem_String := Cygwin_To_Dos (Path);
             begin
                return Format_Pathname (Result, Directory_Operations.DOS);
             end;
 
          when Cygwin =>
             declare
-               Result : constant String :=
+               Result : constant Filesystem_String :=
                           Format_Pathname (Path, Directory_Operations.UNIX);
             begin
                if Result'Length > 2
@@ -334,7 +338,9 @@ package body OS_Utils is
    -- Normalize_To_OS_Case --
    --------------------------
 
-   function Normalize_To_OS_Case (Full_Name : String) return String is
+   function Normalize_To_OS_Case
+     (Full_Name : Filesystem_String) return Filesystem_String
+   is
 
       use type Config.Host_Type;
 
@@ -395,8 +401,8 @@ package body OS_Utils is
         and then (Is_Regular_File (Full_Name)
                   or else Is_Directory (Full_Name))
       then
-         return Norm
-           (Containing_Directory (Full_Name), Simple_Name (Full_Name));
+         return +Norm
+           (Containing_Directory (+Full_Name), Simple_Name (+Full_Name));
       else
          return Full_Name;
       end if;

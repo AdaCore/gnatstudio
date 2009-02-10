@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2004-2008, AdaCore               --
+--                    Copyright (C) 2004-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Creation_Wizard.Simple is
 
@@ -124,7 +125,7 @@ package body Creation_Wizard.Simple is
 
       declare
          Initial_Dirs : constant Argument_List :=
-           (1 => new String'(Full_Name (Current).all));
+           (1 => new String'(+Full_Name (Current).all));
       begin
          Gtk_New (Page.Dirs,
                   Initial_Directory    => Current,

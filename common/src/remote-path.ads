@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2006-2008, AdaCore                --
+--                   Copyright (C) 2006-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,8 @@
 --  This package defines the remote path element needed for path translation
 --  between remote and local host.
 
-with GNAT.Strings;
+with GNATCOLL.Filesystem;
+
 package Remote.Path is
 
    type Synchronisation_Type is (Never,
@@ -33,25 +34,29 @@ package Remote.Path is
    Null_Path : constant Mirror_Path;
 
    procedure Init (Mirror          : in out Mirror_Path'Class;
-                   Local_Path      : String;
-                   Remote_Path     : String;
+                   Local_Path      : GNATCOLL.Filesystem.Filesystem_String;
+                   Remote_Path     : GNATCOLL.Filesystem.Filesystem_String;
                    Synchronisation : Synchronisation_Type);
-   function Get_Local_Path (Mirror    : Mirror_Path;
-                            Tentative : Boolean := False) return String;
-   function Get_Remote_Path (Mirror    : Mirror_Path;
-                             Tentative : Boolean := False) return String;
+   function Get_Local_Path
+     (Mirror    : Mirror_Path;
+      Tentative : Boolean := False)
+      return GNATCOLL.Filesystem.Filesystem_String;
+   function Get_Remote_Path
+     (Mirror    : Mirror_Path;
+      Tentative : Boolean := False)
+      return GNATCOLL.Filesystem.Filesystem_String;
    function Get_Synchronisation
      (Mirror : Mirror_Path;
       Tentative : Boolean := False) return Synchronisation_Type;
 
    procedure Set_Tentative_Local_Path
      (Mirror : in out Mirror_Path;
-      Path   : String);
+      Path   : GNATCOLL.Filesystem.Filesystem_String);
    --  Tentatively set the local path. Call Apply to effectively set this path.
 
    procedure Set_Tentative_Remote_Path
      (Mirror : in out Mirror_Path;
-      Path   : String);
+      Path   : GNATCOLL.Filesystem.Filesystem_String);
    --  Same as above for the remote path
 
    procedure Set_Tentative_Synchronisation
@@ -75,8 +80,8 @@ package Remote.Path is
 private
 
    type Mirror_Path_Record is record
-      Local_Path  : GNAT.Strings.String_Access := null;
-      Remote_Path : GNAT.Strings.String_Access := null;
+      Local_Path  : GNATCOLL.Filesystem.Filesystem_String_Access := null;
+      Remote_Path : GNATCOLL.Filesystem.Filesystem_String_Access := null;
       Sync        : Synchronisation_Type       := Never;
    end record;
 

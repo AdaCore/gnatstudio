@@ -54,6 +54,8 @@ with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
 with Ignore_Db;                 use Ignore_Db;
 
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
 package body VCS_View.Explorer is
 
    --------------------
@@ -216,7 +218,7 @@ package body VCS_View.Explorer is
             else
                declare
                   File    : constant Virtual_File := Create
-                    (Get_String (Explorer.Model, Iter, Name_Column));
+                    (+Get_String (Explorer.Model, Iter, Name_Column));
                   Line    : constant Line_Record :=
                               Get_Cache (Get_Status_Cache, File);
                   Success : Boolean;
@@ -250,7 +252,7 @@ package body VCS_View.Explorer is
 
          while Get_Element (Iter) /= 1 loop
 
-            Status.File := Create (Get_Key (Iter));
+            Status.File := Create (+Get_Key (Iter));
 
             Display_File_Status
               (Explorer.Kernel, Status, Explorer.VCS,
@@ -941,7 +943,7 @@ package body VCS_View.Explorer is
       File_Data : access Hooks_Data'Class)
    is
       D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
-      Log_Name : constant String := Full_Name (D.File).all;
+      Log_Name : constant String := +Full_Name (D.File).all;
       Line     : Line_Record;
    begin
       if Log_Name'Length > 4

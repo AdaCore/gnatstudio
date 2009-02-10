@@ -160,15 +160,15 @@ package body GPS.Kernel.Actions is
                Insert
                  (Kernel,
                   '"' & Name & """: " & Overrides_Old
-                  & Full_Name (Old.Defined_In).all
-                  & Overridden_In & Full_Name (Defined_In).all
+                  & Display_Full_Name (Old.Defined_In)
+                  & Overridden_In & Display_Full_Name (Defined_In)
                   & Future,
                   Mode => Error);
             else
                Insert
                  (Kernel,
                   '"' & Name & """: " & Overrides_Old
-                  & Full_Name (Old.Defined_In).all & Future,
+                  & Display_Full_Name (Old.Defined_In) & Future,
                   Mode => Error);
             end if;
          else
@@ -177,7 +177,7 @@ package body GPS.Kernel.Actions is
                  (Kernel,
                   '"' & Name & """: " & Overrides_Builtin
                   & (-" New definition in ")
-                  & Full_Name (Defined_In).all & Future,
+                  & Display_Full_Name (Defined_In) & Future,
                   Mode => Error);
             else
                Insert (Kernel, '"' & Name & """: " & Overrides_Builtin

@@ -26,8 +26,8 @@ package body Code_Peer.Bridge.Commands is
    ----------------------
 
    procedure Add_Audit_Record
-     (Command_File_Name   : String;
-      Output_Directory    : String;
+     (Command_File_Name   : Filesystem_String;
+      Output_Directory    : Filesystem_String;
       Message_Id          : Positive;
       Probability_Changed : Boolean;
       New_Probability     : Code_Peer.Message_Probability_Level;
@@ -45,7 +45,9 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       Glib.Xml_Int.Set_Attribute
-        (Database_Node, "output_directory", Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Glib.Xml_Int.Set_Attribute
         (Add_Audit_Node, "message", Positive'Image (Message_Id));
 
@@ -57,7 +59,7 @@ package body Code_Peer.Bridge.Commands is
       end if;
 
       Glib.Xml_Int.Add_Child (Database_Node, Add_Audit_Node);
-      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
       Glib.Xml_Int.Free (Database_Node);
    end Add_Audit_Record;
 
@@ -66,9 +68,9 @@ package body Code_Peer.Bridge.Commands is
    -----------------
 
    procedure Audit_Trail
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String;
+     (Command_File_Name : Filesystem_String;
+      Output_Directory  : Filesystem_String;
+      Export_File_Name  : Filesystem_String;
       Message_Id        : Positive)
    is
       Database_Node      : Glib.Xml_Int.Node_Ptr :=
@@ -82,13 +84,17 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       Glib.Xml_Int.Set_Attribute
-        (Database_Node, "output_directory", Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Glib.Xml_Int.Set_Attribute
         (Audit_Trail_Node, "message", Positive'Image (Message_Id));
       Glib.Xml_Int.Set_Attribute
-        (Audit_Trail_Node, "output_file", Export_File_Name);
+        (Audit_Trail_Node, "output_file", +Export_File_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Glib.Xml_Int.Add_Child (Database_Node, Audit_Trail_Node);
-      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
       Glib.Xml_Int.Free (Database_Node);
    end Audit_Trail;
 
@@ -97,9 +103,9 @@ package body Code_Peer.Bridge.Commands is
    ----------------
 
    procedure Inspection
-     (Command_File_Name : String;
-      Output_Directory  : String;
-      Export_File_Name  : String)
+     (Command_File_Name : Filesystem_String;
+      Output_Directory  : Filesystem_String;
+      Export_File_Name  : Filesystem_String)
    is
       Database_Node      : Glib.Xml_Int.Node_Ptr :=
         new Glib.Xml_Int.Node'
@@ -112,11 +118,15 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       Glib.Xml_Int.Set_Attribute
-        (Database_Node, "output_directory", Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Glib.Xml_Int.Set_Attribute
-        (Inspection_Node, "output_file", Export_File_Name);
+        (Inspection_Node, "output_file", +Export_File_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Glib.Xml_Int.Add_Child (Database_Node, Inspection_Node);
-      Glib.Xml_Int.Print (Database_Node, Command_File_Name);
+      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
       Glib.Xml_Int.Free (Database_Node);
    end Inspection;
 

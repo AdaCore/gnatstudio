@@ -43,7 +43,8 @@ package GPS.Kernel.Preferences is
    --  Register the preference module
 
    procedure Save_Preferences
-     (Kernel : access Kernel_Handle_Record'Class; File_Name : String);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : Filesystem_String);
    --  See Default_Preferences.Save_Preferences
 
    procedure Set_Pref

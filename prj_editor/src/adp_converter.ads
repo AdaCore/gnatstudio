@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                            AdaCore                                --
+--                  Copyright (C) 2004-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,11 +18,12 @@
 -----------------------------------------------------------------------
 
 with Projects.Registry;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Adp_Converter is
 
    procedure Convert_Adp_File
-     (Adp_Filename   : String;
+     (Adp_Filename   : Filesystem_String;
       Registry       : Projects.Registry.Project_Registry'Class;
       Project        : in out Projects.Project_Type;
       Spec_Extension : String;

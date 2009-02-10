@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Directories;
 with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
@@ -28,6 +27,9 @@ with Projects;
 
 with Code_Peer.Bridge.Commands;
 
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+
 package body Code_Peer.Module.Bridge is
 
    type Bridge_Mode is (Add_Audit, Audit_Trail, Inspection);
@@ -35,7 +37,7 @@ package body Code_Peer.Module.Bridge is
    type Bridge_Context (Mode : Bridge_Mode) is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
       Module    : Code_Peer.Module.Code_Peer_Module_Id;
-      File_Name : GNAT.Strings.String_Access;
+      File_Name : Filesystem_String_Access;
 
       case Mode is
          when Inspection =>
@@ -63,17 +65,16 @@ package body Code_Peer.Module.Bridge is
    is
       Project           : constant Projects.Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name      : constant String := Projects.Project_Name (Project);
-      Object_Directory  : constant String :=
+      Project_Name      : constant Filesystem_String :=
+        +Projects.Project_Name (Project);
+      Object_Directory  : constant Filesystem_String :=
         Projects.Object_Path (Project, False);
-      Output_Directory  : constant String :=
-        Ada.Directories.Compose
-          (Object_Directory, Project_Name, "output");
-      Command_File_Name : constant String :=
-        Ada.Directories.Compose
-          (Object_Directory, "bridge_in", "xml");
+      Output_Directory  : constant Filesystem_String :=
+        Compose (Object_Directory, Project_Name, "output");
+      Command_File_Name : constant Filesystem_String :=
+        Compose (Object_Directory, "bridge_in", "xml");
       Args              : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(Command_File_Name));
+        (1 => new String'(+Command_File_Name));
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
@@ -120,7 +121,7 @@ package body Code_Peer.Module.Bridge is
 
    overriding procedure Destroy (Data : in out Bridge_Context) is
    begin
-      GNAT.Strings.Free (Data.File_Name);
+      Free (Data.File_Name);
    end Destroy;
 
    ----------------
@@ -130,20 +131,18 @@ package body Code_Peer.Module.Bridge is
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id) is
       Project            : constant Projects.Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant String := Projects.Project_Name (Project);
-      Object_Directory   : constant String :=
+      Project_Name       : constant Filesystem_String :=
+        +Projects.Project_Name (Project);
+      Object_Directory   : constant Filesystem_String :=
         Projects.Object_Path (Project, False);
-      Output_Directory   : constant String :=
-        Ada.Directories.Compose
-          (Object_Directory, Project_Name, "output");
-      Command_File_Name  : constant String :=
-        Ada.Directories.Compose
-          (Object_Directory, "bridge_in", "xml");
-      Reply_File_Name    : constant String :=
-        Ada.Directories.Compose
-          (Object_Directory, "bridge_out", "xml");
+      Output_Directory   : constant Filesystem_String :=
+        Compose (Object_Directory, Project_Name, "output");
+      Command_File_Name  : constant Filesystem_String :=
+        Compose (Object_Directory, "bridge_in", "xml");
+      Reply_File_Name    : constant Filesystem_String :=
+        Compose (Object_Directory, "bridge_out", "xml");
       Args               : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(Command_File_Name));
+        (1 => new String'(+Command_File_Name));
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
@@ -162,7 +161,8 @@ package body Code_Peer.Module.Bridge is
          Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
-         new Bridge_Context'(Inspection, Module, new String'(Reply_File_Name)),
+         new Bridge_Context'
+           (Inspection, Module, new Filesystem_String'(Reply_File_Name)),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
@@ -187,7 +187,7 @@ package body Code_Peer.Module.Bridge is
 
             when Audit_Trail =>
                Context.Module.Review_Message
-                 (Context.Message, Context.File_Name.all);
+                 (Context.Message, +Context.File_Name.all);
 
             when Add_Audit =>
                null;
@@ -205,20 +205,18 @@ package body Code_Peer.Module.Bridge is
    is
       Project            : constant Projects.Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant String := Projects.Project_Name (Project);
-      Object_Directory   : constant String :=
-                             Projects.Object_Path (Project, False);
-      Output_Directory   : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, Project_Name, "output");
-      Command_File_Name  : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, "bridge_in", "xml");
-      Reply_File_Name    : constant String :=
-                             Ada.Directories.Compose
-                               (Object_Directory, "bridge_out", "xml");
+      Project_Name       : constant Filesystem_String :=
+        +Projects.Project_Name (Project);
+      Object_Directory   : constant Filesystem_String :=
+        Projects.Object_Path (Project, False);
+      Output_Directory   : constant Filesystem_String :=
+        Compose (Object_Directory, Project_Name, "output");
+      Command_File_Name  : constant Filesystem_String :=
+        Compose (Object_Directory, "bridge_in", "xml");
+      Reply_File_Name    : constant Filesystem_String :=
+        Compose (Object_Directory, "bridge_out", "xml");
       Args               : GNAT.OS_Lib.Argument_List :=
-                            (1 => new String'(Command_File_Name));
+                            (1 => new String'(+Command_File_Name));
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
@@ -238,7 +236,8 @@ package body Code_Peer.Module.Bridge is
          Directory     => Object_Directory,
          Callback_Data =>
            new Bridge_Context'
-                 (Audit_Trail, Module, new String'(Reply_File_Name), Message),
+           (Audit_Trail, Module,
+            new Filesystem_String'(Reply_File_Name), Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);

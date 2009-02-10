@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +31,8 @@ package body VCS is
    -- Administrative_Directory --
    ------------------------------
 
-   function Administrative_Directory (Ref : access VCS_Record) return String is
+   function Administrative_Directory
+     (Ref : access VCS_Record) return Filesystem_String is
       pragma Unreferenced (Ref);
    begin
       return "";
@@ -100,7 +101,7 @@ package body VCS is
       end Free;
 
    begin
-      GNAT.Strings.Free (Ref.Ignore_Filename);
+      Free (Ref.Ignore_Filename);
       Free (Ref.Action_Labels);
    end Free;
 
@@ -181,7 +182,9 @@ package body VCS is
    -- Ignore_Filename --
    ---------------------
 
-   function Ignore_Filename (Ref : access VCS_Record) return String is
+   function Ignore_Filename
+     (Ref : access VCS_Record) return Filesystem_String
+   is
       use GNAT.Strings;
    begin
       if Ref.Ignore_Filename = null then

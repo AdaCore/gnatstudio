@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@ with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Filesystem;         use GNATCOLL.Filesystem;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
@@ -307,7 +308,8 @@ package body Call_Graph_Views is
             Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
 
             if Iter /= Null_Iter then
-               File := Create (Get_String (Model, Iter, Location_File_Column));
+               File := Create
+                 (+Get_String (Model, Iter, Location_File_Column));
 
                Open_File_Editor
                  (View.Kernel,
@@ -863,7 +865,10 @@ package body Call_Graph_Views is
       Result.Tag := new String'("loc");
       Set_Attribute (Result, "line", R.Line'Img);
       Set_Attribute (Result, "column", R.Column'Img);
-      Set_Attribute (Result, "file", Full_Name (R.File).all);
+      Set_Attribute (Result, "file", Display_Full_Name (R.File));
+      --   ??? Wrong: we have to call Display_Full_Name above only because we
+      --  are setting an attribute in an XML node. We should not put
+      --  text which is potentially not UTF8 in an attribute.
       if R.Through_Dispatching then
          Set_Attribute (Result, "dispatch", "true");
       end if;
@@ -879,7 +884,7 @@ package body Call_Graph_Views is
    begin
       Result.Line := Integer'Value (Get_Attribute (N, "line"));
       Result.Column := Visible_Column_Type'Value (Get_Attribute (N, "column"));
-      Result.File := Create (Get_Attribute (N, "file"));
+      Result.File := Create (+Get_Attribute (N, "file"));
       Result.Through_Dispatching := Get_Attribute (N, "dispatch") = "true";
       return Result;
    end From_XML;
@@ -983,9 +988,13 @@ package body Call_Graph_Views is
                N.Tag := new String'("entity");
                Set_Attribute
                  (N, "entity_name", Get_Name (Entity).all);
+               --  ??? This is potentially not UTF8, should not be in an
+               --  attribute
                Set_Attribute
                  (N, "entity_decl",
-                  Full_Name (Get_Filename (Get_File (Decl))).all);
+                  Display_Full_Name (Get_Filename (Get_File (Decl))));
+               --  ??? This is potentially not UTF8, should not be in an
+               --  attribute
                Set_Attribute (N, "entity_line", Image (Get_Line (Decl)));
                Set_Attribute
                  (N, "entity_column", Image (Integer (Get_Column (Decl))));
@@ -1083,7 +1092,7 @@ package body Call_Graph_Views is
                Set (Model, Iter, Decl_Column, Get_Attribute (N, "decl"));
 
                File := Create
-                 (Full_Filename => Get_Attribute (N, "entity_decl"));
+                 (Full_Filename => +Get_Attribute (N, "entity_decl"));
                Source := Get_Or_Create
                  (Db            => Get_Database (View.Kernel),
                   File          => File);

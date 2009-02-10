@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -97,7 +97,7 @@ package body Vdiff_Module is
    begin
       if Result = null then
          Insert (Kernel, -"No differences found for: " &
-                 Base_Name (File1) & ", " & Base_Name (File2));
+                 Display_Base_Name (File1) & ", " & Display_Base_Name (File2));
          return null;
       end if;
 
@@ -138,8 +138,8 @@ package body Vdiff_Module is
       if Node.Tag.all = "Vdiff" then
          Title1 := Get_Field (Node, "Title1");
          Title2 := Get_Field (Node, "Title2");
-         File1  := Create (Full_Filename => Get_Field (Node, "File1").all);
-         File2  := Create (Full_Filename => Get_Field (Node, "File2").all);
+         File1  := Create (Full_Filename => +Get_Field (Node, "File1").all);
+         File2  := Create (Full_Filename => +Get_Field (Node, "File2").all);
 
          return Compare_Two_Files
            (User, File1, File2, Title1.all, Title2.all,
@@ -176,12 +176,12 @@ package body Vdiff_Module is
 
          N2 := new Node;
          N2.Tag := new String'("File1");
-         N2.Value := new String'(Full_Name (Vdiff_Access (Widget).File1).all);
+         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File1).all);
          Add_Child (N, N2);
 
          N2 := new Node;
          N2.Tag := new String'("File2");
-         N2.Value := new String'(Full_Name (Vdiff_Access (Widget).File2).all);
+         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File2).all);
          Add_Child (N, N2);
 
          return N;
@@ -230,7 +230,7 @@ package body Vdiff_Module is
 
       Child := Compare_Two_Files
         (Kernel, File1, File2,
-         Full_Name (File1).all, Full_Name (File2).all,
+         Display_Full_Name (File1), Display_Full_Name (File2),
          Diff (File1, File2));
 
    exception
@@ -249,7 +249,8 @@ package body Vdiff_Module is
       Child   : MDI_Child;
       pragma Unreferenced (Child);
       Success : Boolean;
-      Tmp_Dir : constant String := Get_Local_Filesystem.Get_Tmp_Directory;
+      Tmp_Dir : constant Filesystem_String :=
+        Get_Local_Filesystem.Get_Tmp_Directory;
    begin
       if D.Orig_File = GNATCOLL.VFS.No_File then
          if D.New_File = GNATCOLL.VFS.No_File then
@@ -257,13 +258,13 @@ package body Vdiff_Module is
          end if;
 
          declare
-            Base     : constant String := Base_Name (D.New_File);
+            Base     : constant Filesystem_String := Base_Name (D.New_File);
             Ref_File : constant Virtual_File :=
               Create (Full_Filename => Tmp_Dir & Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, Ref_File, D.New_File,
-               Base & (-" <reference>"), Full_Name (D.New_File).all,
+               +Base & (-" <reference>"), Display_Full_Name (D.New_File),
                Diff (Kernel, Ref_File, D.New_File, D.Diff_File,
                      Revert => True));
             Delete (Ref_File, Success);
@@ -275,13 +276,13 @@ package body Vdiff_Module is
          end if;
 
          declare
-            Base     : constant String := Base_Name (D.Orig_File);
+            Base     : constant Filesystem_String := Base_Name (D.Orig_File);
             Ref_File : constant Virtual_File :=
               Create (Full_Filename => Tmp_Dir & Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, D.Orig_File, Ref_File,
-               Full_Name (D.Orig_File).all, Base & (-" <reference>"),
+               Display_Full_Name (D.Orig_File), +Base & (-" <reference>"),
                Diff (Kernel, D.Orig_File, Ref_File, D.Diff_File));
             Delete (Ref_File, Success);
          end;
@@ -291,8 +292,8 @@ package body Vdiff_Module is
 
          Child := Compare_Two_Files
            (Kernel, D.Orig_File, D.New_File,
-            Full_Name (D.Orig_File).all,
-            Full_Name (D.New_File).all,
+            Display_Full_Name (D.Orig_File),
+            Display_Full_Name (D.New_File),
             Diff (Kernel, D.Orig_File, D.New_File, D.Diff_File));
       end if;
 
@@ -313,9 +314,11 @@ package body Vdiff_Module is
       if Vdiff /= null then
          declare
             Label_1 : constant Virtual_File :=
-              Create (Full_Filename => Get_Text (Vdiff.File_Label1));
+              Create (Full_Filename => +Get_Text (Vdiff.File_Label1));
+            --  ??? What if the filesystem path is non-UTF8?
             Label_2 : constant Virtual_File :=
-              Create (Full_Filename => Get_Text (Vdiff.File_Label2));
+              Create (Full_Filename => +Get_Text (Vdiff.File_Label2));
+            --  ??? What if the filesystem path is non-UTF8?
          begin
             Set_Context_Information
               (Context => Context,

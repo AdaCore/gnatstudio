@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2006-2008, AdaCore              --
+--                     Copyright (C) 2006-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,7 +53,8 @@ with Gtk.Widget;               use Gtk.Widget;
 with GUI_Utils;                use GUI_Utils;
 with Pango.Enums;              use Pango.Enums;
 with System;                   use System;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 
 package body Startup_Module is
 
@@ -159,9 +160,10 @@ package body Startup_Module is
             Insert (Ed.Description, Text_Iter, -"<not found>" & ASCII.LF);
          else
             File := Create (Full_Filename =>
-                              Get_String (Model, Iter, Column_File));
+                              +Get_String (Model, Iter, Column_File));
             Insert (Ed.Description, Text_Iter,
-                    Full_Name (File).all & ASCII.LF);
+                    +Full_Name (File).all & ASCII.LF);
+            --  ??? What if the filesystem path is non-UTF8?
          end if;
 
          Insert_With_Tags (Ed.Description, Text_Iter,
@@ -416,7 +418,7 @@ package body Startup_Module is
          Set (Editor.Model, Iter, Column_Name, Get_Script (Script_Iter));
          Set (Editor.Model, Iter, Column_Explicit, Get_Explicit (Script));
          Set (Editor.Model, Iter, Column_File,
-              Full_Name (Get_Full_File (Script)).all);
+              +Full_Name (Get_Full_File (Script)).all);
          Set (Editor.Model, Iter, Column_Modified, False);
          Set (Editor.Model, Iter, Column_Initialize, +Get_Init (Script));
 

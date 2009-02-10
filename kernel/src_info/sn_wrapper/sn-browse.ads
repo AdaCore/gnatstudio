@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2008, AdaCore              --
+--                     Copyright (C) 2002-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,25 +24,27 @@ pragma Warnings (On);
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 package SN.Browse is
    Unlink_Failure    : exception;
    Spawn_Failure     : exception;
    Temp_File_Failure : exception;
 
-   DB_Dir_Name          : constant String := ".gpssnprj";
+   DB_Dir_Name          : constant Filesystem_String := ".gpssnprj";
    --  Name of directory where all SN files reside
 
-   DB_File_Name         : constant String := "data";
+   DB_File_Name         : constant Filesystem_String := "data";
    --  Name of the SN database files
 
-   Xref_Pool_Filename   : constant String := "xrefs";
+   Xref_Pool_Filename   : constant Filesystem_String := "xrefs";
    --  Name of file for persistent xref pool
 
    procedure Browse
-     (File_Name     : String;
-      DB_Directory  : String;
-      DBIMP_Path    : String;
-      Cbrowser_Path : String;
+     (File_Name     : Filesystem_String;
+      DB_Directory  : Filesystem_String;
+      DBIMP_Path    : Filesystem_String;
+      Cbrowser_Path : Filesystem_String;
       PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor);
    --  Start the language browser on the files lists in File_Name (one file per
    --  line, and lines can start with @ to specify the name of the xref file to
@@ -54,7 +56,7 @@ package SN.Browse is
 
    procedure Generate_Xrefs
      (DB_Directories : GNAT.Strings.String_List_Access;
-      DBIMP_Path     : String;
+      DBIMP_Path     : Filesystem_String;
       Started        : out Boolean;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor);
@@ -69,7 +71,7 @@ package SN.Browse is
    --  to be deleted when the latter has finished executing.
    --  Started is set to False if there was no need to start dbimp.
 
-   procedure Delete_Database (DB_Directory : String);
+   procedure Delete_Database (DB_Directory : Filesystem_String);
    --  Removes all files from SN DB directory except xref pool
 
    procedure Is_Alive

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,15 +27,16 @@ with Glib;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Intl;        use GPS.Intl;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Traces;          use Traces;
 with Code_Analysis;   use Code_Analysis;
 
 package Coverage_GUI is
 
-   Gcov_Extension_Cst : constant String := ".gcov";
+   Gcov_Extension_Cst : constant Filesystem_String := ".gcov";
    --  Constant String that represents the extension of GCOV files
 
-   Xcov_Extension_Cst : constant String := ".xcov";
+   Xcov_Extension_Cst : constant Filesystem_String := ".xcov";
    --  Constant String that represents the extension of XCOV files
 
    type Coverage_Toolchain_Kinds is (Gcov, Xcov);

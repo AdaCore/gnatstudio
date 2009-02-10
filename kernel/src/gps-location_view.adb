@@ -25,6 +25,8 @@ with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
+
 with System;
 
 with Gdk.Event;                use Gdk.Event;
@@ -663,7 +665,7 @@ package body GPS.Location_View is
       Length   : Natural := 0) return String
    is
       Args     : GNAT.Strings.String_List :=
-                   (1 => new String'(Full_Name (Filename).all),
+                   (1 => new String'(+Full_Name (Filename).all),
                     2 => new String'(Image (Line)),
                     3 => new String'(Image (Integer (Column))),
                     4 => new String'(Image (Length)));
@@ -697,7 +699,7 @@ package body GPS.Location_View is
       end if;
 
       Args :=
-        (1 => new String'(Full_Name (Filename).all),
+        (1 => new String'(+Full_Name (Filename).all),
          2 => new String'(Get_Name (Highlight_Category)),
          3 => new String'(Image (Line)),
          4 => new String'(Image (Integer (Column))),
@@ -2372,7 +2374,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Identifier);
    begin
       Trace (Me, "Add_Action_Item: "
-             & Full_Name (File).all
+             & (+Full_Name (File).all)
              & ' ' & Category & Line'Img & Column'Img
              & ' ' & Message);
 
@@ -2388,7 +2390,7 @@ package body GPS.Location_View is
       end if;
 
       if File_Iter = Null_Iter then
-         Trace (Me, "Add_Action_Item: File " & Full_Name (File).all
+         Trace (Me, "Add_Action_Item: File " & (+Full_Name (File).all)
                 & " not found");
       end if;
 
@@ -2680,7 +2682,9 @@ package body GPS.Location_View is
       begin
          Loc := new Location_Record'
            (Category => new String'(Category),
-            File     => Create (Get_Attribute (Iter, "file")),
+            File     => Create (+Get_Attribute (Iter, "file")),
+            --  ??? Potentially non-utf8 string should not be
+            --  stored in an XML attribute.
             Line     => Integer'Value (Get_Attribute (Iter, "line", "0")),
             Column   => Visible_Column_Type'Value
               (Get_Attribute (Iter, "column", "0")),
@@ -2780,7 +2784,9 @@ package body GPS.Location_View is
          Loc.Tag := new String'("Location");
          Add_Child (Parent, Loc, True);
          Set_Attribute
-           (Loc, "file", Full_Name (Get_File (View, Iter)).all);
+           (Loc, "file", +Full_Name (Get_File (View, Iter)).all);
+         --  ??? Potentially non-utf8 string should not be
+         --  stored in an XML attribute.
          Set_Attribute (Loc, "line",
            Gint'Image (Get_Int (View.Tree.Model, Iter, Line_Column)));
          Set_Attribute
@@ -2839,7 +2845,9 @@ package body GPS.Location_View is
                Add_Child (Category, File, True);
 
                Set_Attribute
-                 (File, "name", Full_Name (Get_File (View, File_Iter)).all);
+                 (File, "name", +Full_Name (Get_File (View, File_Iter)).all);
+               --  ??? Potentially non-utf8 string should not be
+               --  stored in an XML attribute.
 
                Location_Iter := Children (View.Tree.Model, File_Iter);
 
@@ -3164,7 +3172,7 @@ package body GPS.Location_View is
 
    begin
       N := Save_Desktop (View, Kernel_Handle (Kernel));
-      Print (N, Full_Name (File).all, Success);
+      Print (N, +Full_Name (File).all, Success);
       Free (N);
 
       if not Success then
@@ -3347,7 +3355,7 @@ package body GPS.Location_View is
               (View               => View,
                Category           => Glib.Convert.Escape_Text (Category),
                File               => Create
-                 (Text (Matched
+                 (+Text (Matched
                           (File_Index).First .. Matched (File_Index).Last),
                   Kernel),
                Line               => Positive (Line),
@@ -3488,7 +3496,7 @@ package body GPS.Location_View is
          exit when Matched (0) = No_Match;
 
          Loc.File := Create
-           (Message (Matched (View.SFF).First .. Matched (View.SFF).Last));
+           (+Message (Matched (View.SFF).First .. Matched (View.SFF).Last));
 
          Loc.Message := new String'
            (Message (Message'First .. Matched (0).First - 1)

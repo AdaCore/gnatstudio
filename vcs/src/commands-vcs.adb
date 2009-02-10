@@ -26,6 +26,7 @@ with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
 with VCS_View.Activities; use VCS_View.Activities;
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Commands.VCS is
 
@@ -237,7 +238,7 @@ package body Commands.VCS is
    begin
       while L_Temp /= Null_Node loop
          File_Changed_On_Disk
-           (Command.Kernel, Create (Full_Filename => Data (L_Temp)));
+           (Command.Kernel, Create (Full_Filename => +Data (L_Temp)));
          L_Temp := Next (L_Temp);
       end loop;
 
@@ -280,7 +281,7 @@ package body Commands.VCS is
       while Files_It /= String_List.Null_Node loop
          declare
             File : constant Virtual_File :=
-                     Create (Full_Filename => String_List.Data (Files_It));
+              Create (Full_Filename => +String_List.Data (Files_It));
          begin
             Closed := Closed
               and then

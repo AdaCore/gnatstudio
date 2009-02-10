@@ -29,6 +29,7 @@ with Language.Tree.Database;            use Language.Tree.Database;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 
 package body Codefix.Formal_Errors is
 
@@ -67,7 +68,7 @@ package body Codefix.Formal_Errors is
 
          Set_File
            (This, Create
-              (Error_Line
+              (+Error_Line
                  (Matches (File_Index).First .. Matches (File_Index).Last),
                Registry.all));
 
@@ -1024,8 +1025,8 @@ package body Codefix.Formal_Errors is
          Body_Name);
       Set_Caption
         (New_Command,
-         "Move with clause from """ & Base_Name (Get_File (Cursor)) &
-         """ to """ & Base_Name (Body_Name) & """");
+         "Move with clause from """ & Display_Base_Name (Get_File (Cursor)) &
+         """ to """ & Display_Base_Name (Body_Name) & """");
       Append (Result, New_Command);
       Free (With_Cursor);
 

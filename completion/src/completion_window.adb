@@ -256,7 +256,7 @@ package body Completion_Window is
 
       function Location_To_Label (Loc : File_Location) return String is
       begin
-         return "<span color=""blue""><u>" & Base_Name (Loc.File_Path)
+         return "<span color=""blue""><u>" & Display_Base_Name (Loc.File_Path)
            & ":" & Image (Loc.Line) & "</u></span>";
       end Location_To_Label;
 

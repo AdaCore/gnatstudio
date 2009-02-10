@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,12 +33,14 @@ with Traces;                use Traces;
 with VCS_View;              use VCS_View;
 with VCS_View_API;          use VCS_View_API;
 with XML_Parsers;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body VCS_Status is
 
    Me : constant Debug_Handle := Create ("VCS_Status");
 
-   VCS_Cache_Filename : constant String := "vcs_cache.xml";
+   VCS_Cache_Filename : constant Filesystem_String := "vcs_cache.xml";
 
    Valid_Delay        : constant Duration := 60.0 * 60.0;
    --  The cache status is valid for 1 hour
@@ -144,8 +146,8 @@ package body VCS_Status is
      (Kernel : access Kernel_Handle_Record'Class; Cache : Status_Cache)
    is
       Now      : constant Time := Clock;
-      Filename : constant String :=
-                   Get_Home_Dir (Kernel) & VCS_Cache_Filename;
+      Filename : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & VCS_Cache_Filename;
       File     : Node_Ptr;
       F_Child  : Node_Ptr;
       Iter     : Status_Hash.Iterator;
@@ -217,7 +219,9 @@ package body VCS_Status is
                Child     := new Node;
                Child.Tag := new String'("file_status");
 
-               Set_Attribute (Child, "file", Full_Name (File).all);
+               Set_Attribute (Child, "file", +Full_Name (File).all);
+               --  ??? Potentially non-utf8 string should not be
+               --  stored in an XML attribute.
                Set_Attribute
                  (Child, "date", Image (Item.Timestamp, "%Y-%m-%d %H:%M:%S"));
                Set_Attribute (Child, "log", Boolean'Image (Item.LR.Log));
@@ -234,7 +238,7 @@ package body VCS_Status is
          Status_Hash.Get_Next (Cache.T.all, Iter);
       end loop;
 
-      Print (File, Filename, Success);
+      Print (File, +Filename, Success);
       Free (File);
 
       if not Success then
@@ -256,7 +260,7 @@ package body VCS_Status is
       pragma Warnings (Off, Cache);
 
       Now         : constant Time := Clock;
-      Filename    : constant String :=
+      Filename    : constant Filesystem_String :=
                       Get_Home_Dir (Kernel) & VCS_Cache_Filename;
       File, Child : Node_Ptr;
       Err         : Strings.String_Access;
@@ -270,7 +274,10 @@ package body VCS_Status is
 
       procedure Parse_Status (Node : Node_Ptr) is
          File     : constant Virtual_File :=
-                      Create (Get_Attribute (Node, "file"));
+           Create (+Get_Attribute (Node, "file"));
+         --  ??? Potentially non-utf8 string should not be
+         --  stored in an XML attribute.
+
          Date_Str : constant String := Get_Attribute (Node, "date");
          F        : constant Positive := Date_Str'First;
          Date     : constant Time :=
@@ -340,8 +347,8 @@ package body VCS_Status is
       end Parse_Status;
 
    begin
-      if OS_Lib.Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & (+Filename));
 
          XML_Parsers.Parse (Filename, File, Err);
 

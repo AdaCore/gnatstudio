@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,7 @@ with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 with GPS.Kernel;
 
@@ -61,8 +62,8 @@ package GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Home_Dir         : String;
-      Prefix_Directory : String);
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
@@ -70,8 +71,8 @@ package GPS.Main_Window is
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Home_Dir         : String;
-      Prefix_Directory : String);
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String);
    --  Internal initialization function
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);

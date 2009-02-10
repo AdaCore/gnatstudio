@@ -307,7 +307,7 @@ package body GPS.Kernel.Contexts is
    ---------------------------
 
    function Directory_Information
-     (Context : Selection_Context) return String is
+     (Context : Selection_Context) return Filesystem_String is
    begin
       return Dir_Name
         (Context.Data.Data.Files (Context.Data.Data.Files'First)).all;
@@ -364,7 +364,7 @@ package body GPS.Kernel.Contexts is
       if not Context.Data.Data.File_Checked then
          for K in Context.Data.Data.Files'Range loop
             declare
-               Name : constant String :=
+               Name : constant Filesystem_String :=
                         Base_Name (Context.Data.Data.Files (K));
             begin
                if Context.Data.Data.Kernel /= null

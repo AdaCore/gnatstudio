@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                         Copyright (C) 2004                        --
---                             ACT-Europe                            --
+--                  Copyright (C) 2004-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,10 +18,12 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel; use GPS.Kernel;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Aunit_Utils is
 
-   function Get_Context_Directory (Kernel : Kernel_Handle) return String;
+   function Get_Context_Directory
+     (Kernel : Kernel_Handle) return Filesystem_String;
    --  Returns the full pathname for the current context in the given kernel
    --  (current selected file) Returns the empty string if the current context
    --  is not a file one.

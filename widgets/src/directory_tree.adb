@@ -61,6 +61,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Filesystems;               use Filesystems;
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with Traces;                    use Traces;
 
 package body Directory_Tree is
@@ -521,7 +522,7 @@ package body Directory_Tree is
          Unset (Value);
 
          Set (Selector.List_Model, Row, Base_Name_Column,
-              Base_Dir_Name (Dir));
+              Unknown_To_UTF8 (+Base_Dir_Name (Dir)));
       end if;
 
       if Recursive then
@@ -532,7 +533,7 @@ package body Directory_Tree is
                if Is_Directory (Files (F))
                  and then not Is_Symbolic_Link (Files (F))
                  and then Filter (Selector.Directory,
-                                  Full_Name (Files (F)).all)
+                                  +Full_Name (Files (F)).all)
                then
                   Add_Directory (Selector, Files (F), True);
                end if;
@@ -823,7 +824,9 @@ package body Directory_Tree is
 
       Gtk_New (Ent, Max => 1024);
       Set_Width_Chars (Ent, 30);
-      Set_Text (Ent, Full_Name (Current_Dir).all);
+      Set_Text (Ent, +Full_Name (Current_Dir).all);
+      --  ??? What if the filesystem path is non-UTF8?
+
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
       Widget := Add_Button (Dialog, "Create", Gtk_Response_OK);
@@ -846,7 +849,7 @@ package body Directory_Tree is
             Path := Get_Path (Selector.Directory.File_Model, Iter);
 
             Make_Dir_Recursive
-              (Filesystems.Filename_From_UTF8 (Get_Text (Ent)));
+              (+Filesystems.Filename_From_UTF8 (Get_Text (Ent)));
 
             Success := Collapse_Row (Selector.Directory.File_Tree, Path);
             Success := Expand_Row (Selector.Directory.File_Tree, Path, False);
@@ -981,7 +984,7 @@ package body Directory_Tree is
          for J in Initial_Selection'Range loop
             Append (Selector.List_Model, Iter, Null_Iter);
 
-            Dir := Create (Initial_Selection (J).all);
+            Dir := Create (+Initial_Selection (J).all);
             Ensure_Directory (Dir);
 
             declare
@@ -993,7 +996,7 @@ package body Directory_Tree is
                Unset (Value);
             end;
             Set (Selector.List_Model, Iter, Base_Name_Column,
-                 Base_Dir_Name (Dir));
+                 Unknown_To_UTF8 (+Base_Dir_Name (Dir)));
          end loop;
 
       else
@@ -1128,7 +1131,7 @@ package body Directory_Tree is
          end;
 
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-              Base_Dir_Name (D.Norm_Dir));
+              Unknown_To_UTF8 (+Base_Dir_Name (D.Norm_Dir)));
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
@@ -1199,7 +1202,7 @@ package body Directory_Tree is
             Unset (Value);
 
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Base_Dir_Name (Dir));
+                 Unknown_To_UTF8 (+Base_Dir_Name (Dir)));
 
             if D.Depth = 0 then
                exit;
@@ -1707,7 +1710,7 @@ package body Directory_Tree is
      (Explorer : access Dir_Tree_Record'Class;
       Dir      : Virtual_File)
    is
-      Buffer       : aliased String (1 .. 1024);
+      Buffer       : aliased Filesystem_String (1 .. 1024);
       Last, Len    : Integer;
       Dir_Inserted : Boolean := False;
 

@@ -24,6 +24,9 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT;
 with GNAT.Strings;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+
 with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
@@ -43,7 +46,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
-with OS_Utils;                  use OS_Utils;
 with Projects;                  use Projects;
 with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
@@ -159,7 +161,8 @@ package body VCS_Activities_View_API is
       Kernel        : access Kernel_Handle_Record'Class;
       Patch_File    : Virtual_File;     -- patch file
       Files         : String_List.List; -- all files contained in the patch
-      Root_Dir      : String_Access;    -- the patch root directory to set
+      Root_Dir      : Filesystem_String_Access;
+      --  The patch root directory to set
       Header_Length : Positive;         -- the character length of the header
    end record;
    type Adjust_Patch_Action_Command_Access is
@@ -227,10 +230,11 @@ package body VCS_Activities_View_API is
    overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type
    is
-      Filename : aliased String := Full_Name (Command.File).all;
+      Filename : aliased Filesystem_String := Full_Name (Command.File).all;
    begin
       Execute_GPS_Shell_Command
-        (Command.Kernel, "Editor.edit", (1 => Filename'Unchecked_Access));
+        (Command.Kernel, "Editor.edit",
+         (1 => Convert (Filename'Unchecked_Access)));
       return Success;
    end Execute;
 
@@ -241,7 +245,8 @@ package body VCS_Activities_View_API is
       procedure Handle (Filename : String);
       --  Handle this filename in the patch
 
-      Root_Dir      : constant String := To_Lower (Command.Root_Dir.all);
+      Root_Dir      : constant Filesystem_String :=
+        +To_Lower (+Command.Root_Dir.all);
       Iter          : String_List.List_Node;
       Patch         : Strings.String_Access := Read_File (Command.Patch_File);
       Patch_Content : Unbounded_String := To_Unbounded_String (Patch.all);
@@ -313,7 +318,7 @@ package body VCS_Activities_View_API is
             end if;
          end loop;
 
-         if LF (LF'First .. LF'First + Root_Dir'Length - 1) = Root_Dir then
+         if +LF (LF'First .. LF'First + Root_Dir'Length - 1) = Root_Dir then
             Replace_Token
               ("--- ", BF, NF (NF'First + Root_Dir'Length .. NF'Last));
             Replace_Token
@@ -637,7 +642,7 @@ package body VCS_Activities_View_API is
       Iter := String_List.First (Files);
 
       for K in 1 .. String_List.Length (Files) loop
-         Diff (VCS, Create (String_List.Data (Iter)));
+         Diff (VCS, Create (+String_List.Data (Iter)));
          Iter := String_List.Next (Iter);
       end loop;
    end Diff_Activity;
@@ -695,7 +700,7 @@ package body VCS_Activities_View_API is
             while not String_List.Is_Empty (List) loop
                declare
                   File : constant Virtual_File :=
-                           Create (String_List.Head (List));
+                           Create (+String_List.Head (List));
                begin
                   Get_Log_From_ChangeLog (Kernel, File);
 
@@ -773,14 +778,15 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      Logs_Dir     : constant String := Get_Home_Dir (Kernel) & "log_files";
+      Logs_Dir     : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "log_files";
       VCS          : constant VCS_Access :=
                        Get_VCS_For_Activity (Kernel, Activity);
       Files        : constant String_List.List :=
                        Get_Files_In_Activity (Activity);
-      Filename     : constant String :=
+      Filename     : constant Filesystem_String :=
                        Logs_Dir & OS_Lib.Directory_Separator
-                         & Image (Activity) & ".dif";
+                         & (+Image (Activity)) & ".dif";
       T_Set        : Translate_Set :=
                        Get_Activity_Template_Tags (Kernel, Activity);
       File         : Virtual_File;
@@ -808,7 +814,7 @@ package body VCS_Activities_View_API is
       Iter := String_List.First (Files);
 
       for K in 1 .. String_List.Length (Files) loop
-         Diff_Patch (VCS, Create (String_List.Data (Iter)), File);
+         Diff_Patch (VCS, Create (+String_List.Data (Iter)), File);
          Iter := String_List.Next (Iter);
       end loop;
 
@@ -816,12 +822,12 @@ package body VCS_Activities_View_API is
 
       declare
          Root_Project : constant Project_Type := Get_Project (Kernel);
-         Root_Dir     : constant String :=
+         Root_Dir     : constant Filesystem_String :=
                           Format_Pathname
-                            (Get_Attribute_Value
+                            (+Get_Attribute_Value
                                (Root_Project,
                                 VCS_Patch_Root,
-                                Default => Full_Name
+                                Default => +Full_Name
                                   (Project_Directory (Root_Project)).all));
          Path         : constant Virtual_File := Create (Root_Dir);
       begin
@@ -836,11 +842,12 @@ package body VCS_Activities_View_API is
          Ensure_Directory (Path);
 
          if Is_Absolute_Path (Path) then
-            Adjust_Patch.Root_Dir := new String'(Full_Name (Path).all);
+            Adjust_Patch.Root_Dir := new
+            Filesystem_String'(Full_Name (Path).all);
 
          else
-            Adjust_Patch.Root_Dir := new String'
-              (OS_Lib.Normalize_Pathname
+            Adjust_Patch.Root_Dir := new Filesystem_String'
+              (Normalize_Pathname
                  (Name      => Full_Name (Path).all,
                   Directory => Full_Name (Get_Current_Dir).all)
                & OS_Lib.Directory_Separator);

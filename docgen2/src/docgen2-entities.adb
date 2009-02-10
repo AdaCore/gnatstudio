@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -308,7 +308,7 @@ package body Docgen2.Entities is
 
    function Less_Than (Left, Right : Virtual_File) return Boolean is
    begin
-      return To_Lower (Base_Name (Left)) < To_Lower (Base_Name (Right));
+      return To_Lower (+Base_Name (Left)) < To_Lower (+Base_Name (Right));
    end Less_Than;
 
    ----------
@@ -322,7 +322,7 @@ package body Docgen2.Entities is
    begin
       return Ada.Containers.Hash_Type
         (Internal
-           (GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)).all &
+           (+GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)).all &
             Natural'Image (Key.Line) &
             Basic_Types.Visible_Column_Type'Image (Key.Column)));
    end Hash;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007, AdaCore             --
+--                      Copyright (C) 2004-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with System;                   use System;
-with GNAT.OS_Lib;
 with GNAT.Strings;             use GNAT.Strings;
 
 with Gdk.Event;                use Gdk.Event;
@@ -63,7 +62,9 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel;               use GPS.Kernel;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with XML_Parsers;              use XML_Parsers;
 
 package body Action_Editor is
@@ -521,7 +522,8 @@ package body Action_Editor is
    procedure Save_Custom_Actions
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Home_Dir (Kernel) & "actions.xml";
+      Filename : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "actions.xml";
       Tree        : Node_Ptr;
       Error       : String_Access;
       Action      : Action_Record_Access;
@@ -534,7 +536,7 @@ package body Action_Editor is
       --  We need to preserve the actions that were already defined in this
       --  file
 
-      if GNAT.OS_Lib.Is_Regular_File (Filename) then
+      if Is_Regular_File (Filename) then
          Parse (Filename, Tree, Error);
          Free (Error);
       end if;
@@ -579,8 +581,8 @@ package body Action_Editor is
          Next (Kernel, Action_Iter);
       end loop;
 
-      Trace (Me, "Saving " & Filename);
-      Print (Tree, Filename, Success);
+      Trace (Me, "Saving " & (+Filename));
+      Print (Tree, +Filename, Success);
       Free (Tree);
 
       if not Success then
@@ -595,7 +597,7 @@ package body Action_Editor is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filename : constant String :=
+      Filename : constant Filesystem_String :=
         Get_Home_Dir (Kernel) & "actions.xml";
       Tree : Node_Ptr;
       Err  : String_Access;
@@ -611,8 +613,8 @@ package body Action_Editor is
          Ref_Item   => -"Preferences",
          Callback   => On_Edit_Actions'Access);
 
-      if GNAT.OS_Lib.Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & (+Filename));
          XML_Parsers.Parse (Filename, Tree, Err);
          if Tree /= null then
             GPS.Kernel.Custom.Execute_Customization_String

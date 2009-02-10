@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2008, AdaCore                --
+--                   Copyright (C) 2002-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Default_Preferences;      use Default_Preferences;
 with Entities;                 use Entities;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
 with GNATCOLL.Traces;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
@@ -58,10 +59,10 @@ package body Cpp_Module is
    overriding function Case_Insensitive_Identifiers
      (Handler : access GLI_Handler_Record) return Boolean;
    overriding function Get_ALI_Ext
-     (LI : access GLI_Handler_Record) return String;
+     (LI : access GLI_Handler_Record) return Filesystem_String;
    overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
-      Base_Name : String) return String;
+      Base_Name : Filesystem_String) return Filesystem_String;
    --  See doc for inherited subprograms
 
    function Create_GLI_Handler
@@ -117,7 +118,7 @@ package body Cpp_Module is
    -----------------
 
    overriding function Get_ALI_Ext
-     (LI : access GLI_Handler_Record) return String
+     (LI : access GLI_Handler_Record) return Filesystem_String
    is
       pragma Unreferenced (LI);
    begin
@@ -130,7 +131,7 @@ package body Cpp_Module is
 
    overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
-      Base_Name : String) return String is
+      Base_Name : Filesystem_String) return Filesystem_String is
    begin
       return Base_Name & Get_ALI_Ext (Handler);
    end Get_ALI_Filename;

@@ -22,6 +22,7 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;
 
 with Glib.Main;                 use Glib, Glib.Main;
@@ -240,7 +241,7 @@ package body KeyManager_Module.Macros is
          Name_Parameters (Data, Load_Macro_Cmd_Parameters);
 
          declare
-            File    : constant String := Nth_Arg (Data, 1);
+            File    : constant Filesystem_String := Nth_Arg (Data, 1);
             Macro   : constant String := '/' & (-"Tools/Macro") & '/';
 
          begin
@@ -629,7 +630,7 @@ package body KeyManager_Module.Macros is
             return;
          end if;
 
-         Success := Save_List (Full_Name (Name).all, Events);
+         Success := Save_List (+Full_Name (Name).all, Events);
 
          if not Success then
             Insert (Kernel, -"Error while saving macro", Mode => Error);

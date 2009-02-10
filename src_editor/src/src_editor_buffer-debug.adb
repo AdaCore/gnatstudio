@@ -227,7 +227,7 @@ package body Src_Editor_Buffer.Debug is
                Set_Return_Value
                  (Data, "bl:" & I (Buffer.Editable_Lines (Line).Buffer_Line));
             else
-               Set_Return_Value (Data, "[hidden]");
+               Set_Return_Value (Data, String'("[hidden]"));
             end if;
          end loop;
 

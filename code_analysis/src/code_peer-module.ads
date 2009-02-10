@@ -26,6 +26,8 @@ with Code_Analysis;
 
 private with Code_Peer.Summary_Reports;
 
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 package Code_Peer.Module is
 
    type Module_Id_Record
@@ -42,7 +44,9 @@ package Code_Peer.Module is
      (Self : access Module_Id_Record'Class;
       File : Code_Analysis.File_Access);
 
-   procedure Load (Self : access Module_Id_Record'Class; File : String);
+   procedure Load
+     (Self : access Module_Id_Record'Class;
+      File : Filesystem_String);
 
    procedure Review_Message
      (Self    : access Module_Id_Record'Class;

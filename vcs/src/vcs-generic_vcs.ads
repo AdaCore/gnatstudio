@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,7 +36,7 @@ package VCS.Generic_VCS is
    overriding function Name (Ref : access Generic_VCS_Record) return String;
 
    overriding function Administrative_Directory
-     (Ref : access Generic_VCS_Record) return String;
+     (Ref : access Generic_VCS_Record) return Filesystem_String;
 
    overriding procedure Get_Status
      (Rep        : access Generic_VCS_Record;
@@ -216,7 +216,7 @@ private
 
    type Generic_VCS_Record is new VCS_Record with record
       Id                  : GNAT.Strings.String_Access;
-      Administrative_Dir  : GNAT.Strings.String_Access;
+      Administrative_Dir  : Filesystem_String_Access;
       --  Name of the directory where the external VCS keeps information
       Commands            : Action_Array;
 

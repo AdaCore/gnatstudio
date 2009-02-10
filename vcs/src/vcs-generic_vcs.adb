@@ -179,7 +179,7 @@ package body VCS.Generic_VCS is
    ------------------------------
 
    overriding function Administrative_Directory
-     (Ref : access Generic_VCS_Record) return String is
+     (Ref : access Generic_VCS_Record) return Filesystem_String is
    begin
       if Ref.Administrative_Dir = null then
          return "";
@@ -302,7 +302,7 @@ package body VCS.Generic_VCS is
 
    begin
       GNAT.Strings.Free (Ref.Id);
-      GNAT.Strings.Free (Ref.Administrative_Dir);
+      Free (Ref.Administrative_Dir);
       Basic_Types.Unchecked_Free (Ref.Parent_Revision_Regexp);
       Basic_Types.Unchecked_Free (Ref.Branch_Root_Revision_Regexp);
       Free (Ref.Status);
@@ -489,7 +489,7 @@ package body VCS.Generic_VCS is
                         Args (Index) := new String'(Filename);
                      else
                         Args (Index) := new String'
-                          (Format_Pathname (Filename, Ref.Path_Style));
+                          (+Format_Pathname (+Filename, Ref.Path_Style));
                      end if;
 
                   else
@@ -506,7 +506,7 @@ package body VCS.Generic_VCS is
                            Args (Index) := new String'(Suffix);
                         else
                            Args (Index) := new String'
-                             (Format_Pathname (Suffix, Ref.Path_Style));
+                             (+Format_Pathname (+Suffix, Ref.Path_Style));
                         end if;
                      end;
                   end if;
@@ -549,7 +549,7 @@ package body VCS.Generic_VCS is
                      Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
       Args       : GNAT.Strings.String_List_Access;
-      Dir        : GNAT.Strings.String_Access;
+      Dir        : Filesystem_String_Access;
 
       use type GNAT.Strings.String_List_Access;
       use GNAT.Strings;
@@ -559,7 +559,7 @@ package body VCS.Generic_VCS is
          return;
       end if;
 
-      Dir := new String'(Filesystems.Filename_From_UTF8 (Dir_Name (File).all));
+      Dir := new Filesystem_String'(Dir_Name (File).all);
 
       if First_Args /= null then
          Args := new GNAT.Strings.String_List (1 .. First_Args'Length + 1);
@@ -576,18 +576,15 @@ package body VCS.Generic_VCS is
       if Ref.Absolute_Names then
          if Ref.Path_Style = System_Default then
             Args (Args'Last) :=
-              new String'
-                (Filesystems.Filename_From_UTF8 (Full_Name (File).all));
+              new String'(+Full_Name (File).all);
          else
             Args (Args'Last) := new String'
-              (Format_Pathname
-                 (Filesystems.Filename_From_UTF8
-                    (Full_Name (File).all), Ref.Path_Style));
+              (+Format_Pathname (Full_Name (File).all,
+               Ref.Path_Style));
          end if;
 
       else
-         Args (Args'Last) :=
-           new String'(Filesystems.Filename_From_UTF8 (Base_Name (File)));
+         Args (Args'Last) := new String'(+Base_Name (File));
       end if;
 
       Custom := Create_Proxy
@@ -595,7 +592,7 @@ package body VCS.Generic_VCS is
          (Event            => null,
           Context          => Create_File_Context (Kernel, File),
           Synchronous      => False,
-          Dir              => Dir,
+          Dir              => Convert (Dir),
           Args             => Args,
           Label            => new String'(Describe_Action (Ref, Action)),
           Repeat_Count     => 1,
@@ -723,7 +720,8 @@ package body VCS.Generic_VCS is
                           and then File (1 .. Last) /= ".."
                           and then GNAT.OS_Lib.Is_Directory
                             (Data (Node) & File (1 .. Last))
-                          and then not Is_Hidden (Rep.Kernel, File (1 .. Last))
+                          and then not Is_Hidden
+                            (Rep.Kernel, +File (1 .. Last))
                         then
                            Append
                              (Files,
@@ -797,7 +795,7 @@ package body VCS.Generic_VCS is
    begin
       while Current_Filename /= Null_Node loop
          Current_Status := Blank_Status;
-         Current_Status.File := Create (Data (Current_Filename));
+         Current_Status.File := Create (+Data (Current_Filename));
 
          File_Status_List.Append (Result, Current_Status);
 
@@ -821,10 +819,10 @@ package body VCS.Generic_VCS is
       Dir_List : String_List.List;
    begin
       Args := new GNAT.Strings.String_List (1 .. 2);
-      Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
+      Args (1) := new String'(+Base_Dir_Name (Dir)); -- root dir
       Args (2) := new String'(Tag);                 -- tag name
 
-      Append (Dir_List, Full_Name (Dir).all);
+      Append (Dir_List, +Full_Name (Dir).all);
 
       if As_Branch then
          Generic_Dir_Command (Rep, Dir_List, Args, Create_Branch);
@@ -906,10 +904,10 @@ package body VCS.Generic_VCS is
       Dir_List : String_List.List;
    begin
       Args := new GNAT.Strings.String_List (1 .. 2);
-      Args (1) := new String'(Base_Dir_Name (Dir)); -- root dir
+      Args (1) := new String'(+Base_Dir_Name (Dir)); -- root dir
       Args (2) := new String'(Tag);                 -- tag name
 
-      Append (Dir_List, Full_Name (Dir).all);
+      Append (Dir_List, +Full_Name (Dir).all);
 
       Generic_Dir_Command (Rep, Dir_List, Args, Switch);
 
@@ -950,7 +948,7 @@ package body VCS.Generic_VCS is
       begin
          Node := First (Filenames);
          while Node /= Null_Node loop
-            Generic_Command (Rep, Create (Data (Node)), Args, Merge);
+            Generic_Command (Rep, Create (+Data (Node)), Args, Merge);
             Node := Next (Node);
          end loop;
       end;
@@ -1085,7 +1083,7 @@ package body VCS.Generic_VCS is
       Args : GNAT.Strings.String_List_Access;
    begin
       Args := new GNAT.Strings.String_List (1 .. 1);
-      Args (1) := new String'(Full_Name (Output).all);
+      Args (1) := new String'(+Full_Name (Output).all);
 
       Generic_Command (Rep, File, Args, Diff_Patch);
       GNAT.Strings.Free (Args);
@@ -1126,7 +1124,7 @@ package body VCS.Generic_VCS is
    begin
       Args := new GNAT.Strings.String_List (1 .. 2);
       Args (1) := new String'(Tag_Name);
-      Args (2) := new String'(Base_Name (File));
+      Args (2) := new String'(+Base_Name (File));
 
       Generic_Command (Rep, File, Args, Diff_Tag);
 
@@ -1431,8 +1429,11 @@ package body VCS.Generic_VCS is
            (Get_Attribute (M, "atomic_commands", "FALSE"));
          Ref.Commit_Directory := Boolean'Value
            (Get_Attribute (M, "commit_directory", "FALSE"));
-         Ref.Administrative_Dir := new String'
-           (Get_Attribute (M, "administrative_directory", ""));
+         Ref.Administrative_Dir := new Filesystem_String'
+           (+Get_Attribute (M, "administrative_directory", ""));
+         --  ??? Potentially non-utf8 string should not be
+         --  stored in an XML attribute.
+
          Ref.Require_Log := Boolean'Value
            (Get_Attribute (M, "require_log", "TRUE"));
 
@@ -1447,8 +1448,10 @@ package body VCS.Generic_VCS is
               (Get_Attribute (M, "path_style", "System_Default"));
          end if;
 
-         Ref.Ignore_Filename := new String'
-           (Get_Attribute (M, "ignore_file", ""));
+         Ref.Ignore_Filename := new Filesystem_String'
+           (+Get_Attribute (M, "ignore_file", ""));
+         --  ??? Potentially non-utf8 string should not be
+         --  stored in an XML attribute.
 
          --  Find the command descriptions
 
@@ -1598,15 +1601,15 @@ package body VCS.Generic_VCS is
             if Command.Parser.File_Index /= 0 then
                if Command.Dir = null or else Command.Dir.all = "" then
                   St.File := GPS.Kernel.Create
-                    (Filename, Command.Rep.Kernel, True, False);
+                    (+Filename, Command.Rep.Kernel, True, False);
 
                else
                   if Command.Rep.Absolute_Names
                     and then GNAT.OS_Lib.Is_Absolute_Path (Filename)
                   then
-                     St.File := Create (Filename);
+                     St.File := Create (+Filename);
                   else
-                     St.File := Create (Command.Dir.all & Filename);
+                     St.File := Create (+(Command.Dir.all & Filename));
                   end if;
                end if;
 
@@ -1623,7 +1626,7 @@ package body VCS.Generic_VCS is
 
             elsif not Is_Empty (Command.Rep.Current_Query_Files) then
                St.File := GPS.Kernel.Create
-                 (String_List.Head (Command.Rep.Current_Query_Files),
+                 (+String_List.Head (Command.Rep.Current_Query_Files),
                   Command.Rep.Kernel,
                   True, False);
 
@@ -1903,14 +1906,14 @@ package body VCS.Generic_VCS is
                  Execute_GPS_Shell_Command
                    (Kernel,
                     "Editor.get_last_line "
-                    & Argument_To_Quoted_String (Full_Name (File).all));
+                    & Argument_To_Quoted_String (+Full_Name (File).all));
       begin
          Max := Natural'Value (Res);
       exception
          when others =>
             Trace
               (Me, "Could not get last line of "
-               & Full_Name (File).all & ", result='" & Res & ''');
+               & (+Full_Name (File).all) & ", result='" & Res & ''');
             return;
       end;
 
@@ -1976,7 +1979,7 @@ package body VCS.Generic_VCS is
                   Create
                     (Command, -"query log", Kernel,
                      "VCS.log "
-                     & Argument_To_Quoted_String (Full_Name (File).all)
+                     & Argument_To_Quoted_String (+Full_Name (File).all)
                      & " """ & Rev & """",
                      Script);
 
@@ -2030,7 +2033,7 @@ package body VCS.Generic_VCS is
          Create
            (Command, -"add link", Kernel,
             "Revision.add_link " &
-            Argument_To_Quoted_String (Full_Name (File).all) &
+            Argument_To_Quoted_String (+Full_Name (File).all) &
             " """ & P_Rev & """ """ & Rev & """", Script);
 
          Launch_Background_Command
@@ -2103,7 +2106,7 @@ package body VCS.Generic_VCS is
             Create
               (Command, -"add log", Kernel,
                "Revision.add_log " &
-               Argument_To_Quoted_String (Full_Name (File).all) &
+               Argument_To_Quoted_String (+Full_Name (File).all) &
                " """ & Rev & """ """ & Author & """ """ &
                Date & """ """ & String_Utils.Protect (Log) & """ """ &
                Boolean'Image (First) & """",
@@ -2205,7 +2208,7 @@ package body VCS.Generic_VCS is
             Create
               (Command, -"add revision", Kernel,
                "Revision.add_revision " &
-               Argument_To_Quoted_String (Full_Name (File).all) &
+               Argument_To_Quoted_String (+Full_Name (File).all) &
                " """ & Rev & """ """ & Sym & """",
                Script);
 

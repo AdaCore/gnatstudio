@@ -28,6 +28,7 @@ with GNAT.Strings;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNATCOLL.VFS;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 with Glib.Object;  use Glib;
 with Glib.Xml_Int;
@@ -73,8 +74,8 @@ package GPS.Kernel is
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
-      Home_Dir         : String;
-      Prefix_Directory : String);
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String);
    --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
@@ -179,12 +180,15 @@ package GPS.Kernel is
      (Handle : access Kernel_Handle_Record'Class) return Boolean;
    --  Return whether the current state of the Kernel is a processing state
 
-   function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
+   function Get_Home_Dir
+     (Handle : access Kernel_Handle_Record)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the Home directory. (eg ~/.gps/).
    --  The directory ends with a directory separator
 
    function Get_System_Dir
-     (Handle : access Kernel_Handle_Record) return String;
+     (Handle : access Kernel_Handle_Record)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the installation directory for GPS. This always ends up with a
    --  directory separator.
 
@@ -223,8 +227,8 @@ package GPS.Kernel is
    --  When return True, the kernel is in the process of being destroyed
 
    procedure Report_Preference_File_Error
-     (Handle : access Kernel_Handle_Record;
-      Filename : String);
+     (Handle   : access Kernel_Handle_Record;
+      Filename : GNATCOLL.Filesystem.Filesystem_String);
    --  Print out an error message in messages window, or display a dialog
    --  if GPS is exiting.
 
@@ -244,7 +248,7 @@ package GPS.Kernel is
    --  in vfs.ads.
 
    function Create
-     (Name            : Glib.UTF8_String;
+     (Name            : Filesystem_String;
       Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
@@ -257,7 +261,7 @@ package GPS.Kernel is
    --  if it doesn't directly belong to a project.
 
    function Create_From_Base
-     (Name   : Glib.UTF8_String;
+     (Name   : Filesystem_String;
       Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File;
    --  Create a new file. First try to resolve Base_Name (Name) to an absolute
    --  path based on the source and object paths. If no file is found,
@@ -274,7 +278,7 @@ package GPS.Kernel is
 
    function Is_Hidden
      (Kernel    : access Kernel_Handle_Record;
-      Base_Name : String) return Boolean;
+      Base_Name : Filesystem_String) return Boolean;
    --  Return whether File or Directory identified by its Base_Name should be
    --  considered as hidden for all GUI purposes, such as the Project/File
    --  explorer or the VCS operations.
@@ -1077,10 +1081,10 @@ private
       Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
       --  The event triggering the last contextual menu
 
-      Home_Dir : GNAT.Strings.String_Access;
+      Home_Dir : Filesystem_String_Access;
       --  The home directory (e.g ~/.gps)
 
-      Prefix : GNAT.Strings.String_Access;
+      Prefix : Filesystem_String_Access;
       --  Prefix directory (e.g. /opt/gps)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,7 +113,7 @@ package body VCS.Unknown_VCS is
    begin
       while Current_Filename /= Null_Node loop
          Current_Status := Blank_Status;
-         Current_Status.File := Create (Data (Current_Filename));
+         Current_Status.File := Create (+Data (Current_Filename));
 
          File_Status_List.Append (Result, Current_Status);
          Current_Filename := Next (Current_Filename);
@@ -135,7 +135,7 @@ package body VCS.Unknown_VCS is
       pragma Unreferenced (Rep, Tag, As_Branch);
    begin
       if Dir /= No_File then
-         Error (Base_Name (Dir));
+         Error (+Base_Name (Dir));
       end if;
    end Create_Tag;
 
@@ -198,7 +198,7 @@ package body VCS.Unknown_VCS is
       pragma Unreferenced (Rep, Tag);
    begin
       if Dir /= No_File then
-         Error (Base_Name (Dir));
+         Error (+Base_Name (Dir));
       end if;
    end Switch;
 
@@ -379,7 +379,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep, Rev, As_Text);
    begin
-      Error (Full_Name (File).all);
+      Error (+Full_Name (File).all);
    end Log;
 
    --------------
@@ -392,7 +392,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep);
    begin
-      Error (Full_Name (File).all);
+      Error (+Full_Name (File).all);
    end Annotate;
 
    ---------------------

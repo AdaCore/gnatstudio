@@ -283,14 +283,16 @@ package body Gtkada.File_Selector is
    begin
       if Is_Local (Dir) then
          Add_Unique_Combo_Entry (Location_Combo,
-                                 Full_Name (Dir, True).all);
-         Set_Text (Get_Entry (Location_Combo), Full_Name (Dir, True).all);
+                                 Display_Full_Name (Dir, True));
+         --  ??? What if the filesystem path is non-UTF8?
+         Set_Text (Get_Entry (Location_Combo),
+                   Display_Full_Name (Dir, True));
       else
          Add_Unique_Combo_Entry
            (Location_Combo,
-            Get_Host (Dir) & ":|" & Full_Name (Dir, True).all);
+            Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True));
          Set_Text (Get_Entry (Location_Combo),
-                   Get_Host (Dir) & ":|" & Full_Name (Dir, True).all);
+                   Get_Host (Dir) & ":|" & Display_Full_Name (Dir, True));
       end if;
    end Set_Location;
 
@@ -300,16 +302,18 @@ package body Gtkada.File_Selector is
 
    function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File is
       Str : constant String := Get_Text (Get_Entry (Location_Combo));
+      --  ??? What if the filesystem path is non-UTF8?
+
    begin
       for J in Str'First .. Str'Last - 1 loop
          if Str (J .. J + 1) = ":|" then
             return Create
               (FS            => Get_Filesystem (Str (Str'First .. J - 1)),
-               Full_Filename => Str (J + 2 .. Str'Last));
+               Full_Filename => +Str (J + 2 .. Str'Last));
          end if;
       end loop;
 
-      return Create (Str);
+      return Create (+Str);
    end Get_Location;
 
    --------------
@@ -390,7 +394,7 @@ package body Gtkada.File_Selector is
       Text   := null;
       Pixbuf := null;
 
-      if Match (Base_Name (File), Filter.Pattern) then
+      if Match (+Base_Name (File), Filter.Pattern) then
          State := Normal;
       else
          State := Invisible;
@@ -433,7 +437,9 @@ package body Gtkada.File_Selector is
 
       else
          declare
-            Filename : constant String := Get_Text (Dialog.Selection_Entry);
+            Filename : constant Filesystem_String :=
+              +Get_Text (Dialog.Selection_Entry);
+            --  ??? What if the filesystem path is non-UTF8?
             File     : Virtual_File;
          begin
             File := Create
@@ -539,9 +545,9 @@ package body Gtkada.File_Selector is
             if Val = "" then
                return GNATCOLL.VFS.No_File;
             else
-               Last_Directory := Create (Dir_Name (Val));
+               Last_Directory := Create (+Dir_Name (Val));
 
-               return Create (Full_Filename => Val);
+               return Create (Full_Filename => +Val);
             end if;
          end;
       end if;
@@ -567,7 +573,8 @@ package body Gtkada.File_Selector is
       Set_Position (File_Selector, Win_Pos_Mouse);
       Set_Text
         (File_Selector.Selection_Entry,
-         Display_Full_Name (Create (Default_Name)));
+         Display_Full_Name (Create (+Default_Name)));
+      --  ??? What if the filesystem path is non-UTF8?
 
       if File_Pattern /= "" then
          declare
@@ -716,7 +723,7 @@ package body Gtkada.File_Selector is
                return GNATCOLL.VFS.No_File;
 
             else
-               Last_Directory := Create (Val);
+               Last_Directory := Create (+Val);
 
                return Last_Directory;
             end if;
@@ -1028,7 +1035,7 @@ package body Gtkada.File_Selector is
             Clear (Win.File_Model);
             Append (Win.File_Model, Iter, Null_Iter);
             Set (Win.File_Model, Iter, Base_Name_Column,
-                   -"Could not open " & Full_Name (Dir).all);
+                   -"Could not open " & Display_Full_Name (Dir));
       end;
 
       Set_Busy (Gtk_Window (Win), False);
@@ -1050,7 +1057,7 @@ package body Gtkada.File_Selector is
         and then Win.Current_Directory /= Dir
         and then Is_Directory (Dir)
       then
-         if Base_Dir_Name (Dir) = -"Drives" then
+         if +Base_Dir_Name (Dir) = -"Drives" then
             Win.Current_Directory := Create_From_Base ("");
          else
             Ensure_Directory (Dir);
@@ -1070,7 +1077,7 @@ package body Gtkada.File_Selector is
 
             if Win.History /= null and then Is_Local (Dir) then
                Add_To_History (Win.History.all, "directories",
-                               Full_Name (Dir, True).all);
+                               +Full_Name (Dir, True).all);
             end if;
          end if;
 
@@ -1085,7 +1092,8 @@ package body Gtkada.File_Selector is
 
          if Win.File_Tree = null then
             Ensure_Directory (Dir);
-            Set_Text (Win.Selection_Entry, Full_Name (Dir, True).all);
+            Set_Text (Win.Selection_Entry, Display_Full_Name (Dir, True));
+            --  ??? What if the filesystem path is non-UTF8?
             Set_Position (Win.Selection_Entry, Full_Name (Dir, True)'Length);
          else
             Refresh_Files (Win);
@@ -1684,12 +1692,12 @@ package body Gtkada.File_Selector is
             if S /= "" then
                File := Create
                  (FS => Get_Filesystem (Get_Host (Win.Current_Directory)),
-                  Full_Filename => S);
+                  Full_Filename => +S);
             else
                File := GNATCOLL.VFS.No_File;
             end if;
 
-            Sub_File := Create_From_Dir (Win.Current_Directory, S);
+            Sub_File := Create_From_Dir (Win.Current_Directory, +S);
 
             if Is_Absolute_Path (File)
               and then Is_Directory (GNATCOLL.VFS.Dir (File))
@@ -1698,7 +1706,8 @@ package body Gtkada.File_Selector is
             elsif Is_Directory (GNATCOLL.VFS.Dir (Sub_File)) then
                File := Sub_File;
                Change_Directory (Win, GNATCOLL.VFS.Dir (File));
-               Set_Text (Win.Selection_Entry, Base_Dir_Name (File));
+               Set_Text (Win.Selection_Entry, +Base_Dir_Name (File));
+               --  ??? What if the filesystem path is non-UTF8?
                Set_Position
                  (Win.Selection_Entry, Base_Dir_Name (File)'Length);
             else
@@ -1725,7 +1734,7 @@ package body Gtkada.File_Selector is
 
                while Iter /= Null_Iter loop
                   Matcher
-                    (GNATCOLL.VFS.Base_Dir_Name (File),
+                    (+GNATCOLL.VFS.Base_Dir_Name (File),
                      Locale_From_UTF8
                        (Get_String (Win.File_Model, Iter, Base_Name_Column)),
                      Iter);
@@ -1738,7 +1747,7 @@ package body Gtkada.File_Selector is
                          Read_Dir (Win.Current_Directory, Dirs_Only);
             begin
                for F in Files'Range loop
-                  Matcher (Base_Name (S), Base_Dir_Name (Files (F)));
+                  Matcher (Base_Name (S), +Base_Dir_Name (Files (F)));
                end loop;
                Unchecked_Free (Files);
             end;
@@ -1755,7 +1764,7 @@ package body Gtkada.File_Selector is
                   Set_Text
                     (Win.Selection_Entry,
                      Display_Full_Name
-                       (Create (Best_Match (1 .. Suffix_Length))));
+                       (Create (+Best_Match (1 .. Suffix_Length))));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
                end if;
 
@@ -1766,11 +1775,11 @@ package body Gtkada.File_Selector is
                   Set_Text
                     (Win.Selection_Entry,
                      Display_Full_Name
-                       (Create (Best_Match (1 .. Suffix_Length))));
+                       (Create (+Best_Match (1 .. Suffix_Length))));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
                   Dir := GNATCOLL.VFS.Sub_Dir
-                    (Win.Current_Directory, Best_Match (1 .. Suffix_Length));
+                    (Win.Current_Directory, +Best_Match (1 .. Suffix_Length));
 
                   if Is_Directory (Dir)
                     and then Win.Current_Directory /= Dir
@@ -2288,12 +2297,14 @@ package body Gtkada.File_Selector is
            (-"Select directory",
             Parent            => Gtk_Window (Get_Toplevel (Ent)),
             Use_Native_Dialog => True,
-            Base_Directory    => Create (Get_Text (Result)));
+            Base_Directory    => Create (+Get_Text (Result)));
+         --  ??? What if the filesystem path is non-UTF8?
       end if;
 
       if Name /= No_File then
          Ensure_Directory (Name);
-         Set_Text (Result, Full_Name (Name).all);
+         Set_Text (Result, +Full_Name (Name).all);
+         --  ??? What if the filesystem path is non-UTF8?
       end if;
    end Browse_Location;
 

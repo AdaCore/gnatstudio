@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,6 +40,7 @@ with Projects.Registry;              use Projects.Registry;
 with String_Utils;                   use String_Utils;
 with Entities;                       use Entities;
 with GNATCOLL.VFS;                            use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;                     use GNATCOLL.Filesystem;
 
 procedure Ada_Semantic_Tree.Test is
 
@@ -90,8 +91,9 @@ procedure Ada_Semantic_Tree.Test is
 
       Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
-      Put ("COMMAND " & Base_Name (Get_File_Path (File)) & " l" & Integer'Image
-        (Lines_Count (Buffer (Buffer'First .. Looked_Offset))) & ": ");
+      Put ("COMMAND " &
+           (+Base_Name (Get_File_Path (File))) & " l" & Integer'Image
+           (Lines_Count (Buffer (Buffer'First .. Looked_Offset))) & ": ");
 
       if Buffer (Word_Begin .. Word_End) = "DECLARATION" then
          Put_Line ("GET DECLARATION");
@@ -132,8 +134,7 @@ procedure Ada_Semantic_Tree.Test is
 
                Put_Line
                  ("---> DECLARATION "
-                  & Base_Name
-                    (Get_File_Path (Get_File (Decl)))
+                  & (+Base_Name (Get_File_Path (Get_File (Decl))))
                   & ":" & Construct.Sloc_Start.Line'Img
                   & ":" & Construct.Sloc_Start.Column'Img
                   & ": " & Construct.Name.all);
@@ -177,7 +178,7 @@ procedure Ada_Semantic_Tree.Test is
             else
                Put_Line
                  ("---> RELATION: "
-                  & Base_Name (Get_File_Path (Get_File (Relation_Entity)))
+                  & (+Base_Name (Get_File_Path (Get_File (Relation_Entity))))
                   & ":" & Get_Construct (Relation_Entity).Sloc_Start.Line'Img
                   & ":" & Get_Construct
                     (Relation_Entity).Sloc_Start.Column'Img);
@@ -207,7 +208,8 @@ procedure Ada_Semantic_Tree.Test is
 
                      Put_Line
                        ("---> PRIMITIVE: " & Get_Construct (Entity).Name.all
-                        & " " & Base_Name (Get_File_Path (Get_File (Entity)))
+                        & " " & (+Base_Name
+                          (Get_File_Path (Get_File (Entity))))
                         & " l" & Get_Construct (Entity).Sloc_Start.Line'Img);
                   end loop;
                end;
@@ -226,7 +228,7 @@ procedure Ada_Semantic_Tree.Test is
             Put (Buffer (Word_Begin .. Word_End));
 
             File_Modified :=
-              Create (Buffer (Word_Begin .. Word_End), New_Registry);
+              Create (+Buffer (Word_Begin .. Word_End), New_Registry);
 
             File_W := Write_File (File_Modified);
 
@@ -236,7 +238,7 @@ procedure Ada_Semantic_Tree.Test is
 
             Contents := Read_File
               (Create_From_Dir
-                 (Get_Current_Dir, Buffer (Word_Begin .. Word_End)));
+                 (Get_Current_Dir, +Buffer (Word_Begin .. Word_End)));
 
             Write (File_W, Contents.all);
 
@@ -252,7 +254,7 @@ procedure Ada_Semantic_Tree.Test is
          Put_Line ("ANALYZE " & Buffer (Word_Begin .. Word_End));
 
          Analyze_File
-           (Create (Buffer (Word_Begin .. Word_End), New_Registry));
+           (Create (+Buffer (Word_Begin .. Word_End), New_Registry));
       elsif Buffer (Word_Begin .. Word_End) = "DIFF" then
          declare
             Left_Tree, Right_Tree : Construct_Tree;
@@ -297,10 +299,10 @@ procedure Ada_Semantic_Tree.Test is
          begin
             Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
             Left_File := Create_From_Dir
-              (Get_Current_Dir, Buffer (Word_Begin .. Word_End));
+              (Get_Current_Dir, +Buffer (Word_Begin .. Word_End));
             Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
             Right_File := Create_From_Dir
-              (Get_Current_Dir, Buffer (Word_Begin .. Word_End));
+              (Get_Current_Dir, +Buffer (Word_Begin .. Word_End));
 
             Left_Tree :=
               Get_Tree
@@ -402,7 +404,7 @@ procedure Ada_Semantic_Tree.Test is
 
                   Put
                     ("---> ANALYZE"
-                     & J'Img & " => " & Base_Name (Files.all (J)));
+                     & J'Img & " => " & (+Base_Name (Files.all (J))));
 
                   Flush;
 
@@ -437,11 +439,11 @@ procedure Ada_Semantic_Tree.Test is
 
                Full_File := Get_Or_Create
                  (Get_Database (File),
-                  Create (Buffer (Word_Begin .. Word_End), New_Registry),
+                  Create (+Buffer (Word_Begin .. Word_End), New_Registry),
                   Ada_Tree_Lang);
 
                Put_Line
-                 ("---> ANALYZE " & Base_Name (Get_File_Path (Full_File)));
+                 ("---> ANALYZE " & (+Base_Name (Get_File_Path (Full_File))));
 
                Read_Next_Word (Buffer, Index, Word_Begin, Word_End);
 
@@ -481,7 +483,8 @@ procedure Ada_Semantic_Tree.Test is
             while not At_End (List_It) loop
                Put_Line
                  ("----> "
-                  & Base_Name (Get_File_Path (Get_File (Get_Entity (List_It))))
+                  & (+Base_Name
+                    (Get_File_Path (Get_File (Get_Entity (List_It)))))
                   & ":"
                   & Get_Construct (Get_Entity (List_It)).Sloc_Start.Line'Img
                   & ":"
@@ -568,7 +571,7 @@ begin
 
    Load
      (Registry           => New_Registry,
-      Root_Project_Path  => Create_From_Dir (Get_Current_Dir, Argument (1)),
+      Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Argument (1)),
       Errors             => Project_Error'Unrestricted_Access,
       New_Project_Loaded => Loaded,
       Status             => Success);
@@ -601,7 +604,7 @@ begin
 
       if Argument_Count > 1 then
          Analyze_File
-           (Create (Argument (2), New_Registry));
+           (Create (+Argument (2), New_Registry));
       else
          for J in Files.all'Range loop
             Analyze_File (Files.all (J));

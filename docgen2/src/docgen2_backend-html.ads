@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007-2008, AdaCore                --
+--                   Copyright (C) 2007-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,32 +25,32 @@ package Docgen2_Backend.HTML is
 
    overriding function Get_Template
      (Backend    : access HTML_Backend_Record;
-      System_Dir : String;
-      Kind       : Template_Kind) return String;
+      System_Dir : Filesystem_String;
+      Kind       : Template_Kind) return Filesystem_String;
    --  See inherited doc.
 
    overriding function Get_Support_Dir
      (Backend    : access HTML_Backend_Record;
-      System_Dir : String) return String;
+      System_Dir : Filesystem_String) return Filesystem_String;
    --  See inherited doc.
 
    overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
-      Basename : String)
-      return String;
+      Basename : Filesystem_String)
+      return Filesystem_String;
    --  See inherited doc.
 
    overriding function To_Destination_Name
      (Backend  : access HTML_Backend_Record;
-      Src_File : String;
+      Src_File : Filesystem_String;
       Pkg_Nb   : Natural)
-      return String;
+      return Filesystem_String;
    --  See inherited doc.
 
    overriding function To_Href
      (Backend  : access HTML_Backend_Record;
       Location : String;
-      Src_File : String;
+      Src_File : Filesystem_String;
       Pkg_Nb   : Natural)
       return String;
    --  See inherited doc.

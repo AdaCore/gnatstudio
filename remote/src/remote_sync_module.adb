@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,6 +51,7 @@ with Password_Manager;    use Password_Manager;
 with String_Utils;        use String_Utils;
 with Traces;              use Traces;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with UTF8_Utils;                   use UTF8_Utils;
 
 with Machine_Descriptors; use Machine_Descriptors;
 
@@ -91,7 +92,7 @@ package body Remote_Sync_Module is
 
    procedure Gtk_New (Dialog : out Rsync_Dialog;
                       Kernel : access Kernel_Handle_Record'Class;
-                      Src_Path, Dest_Path : String);
+                      Src_Path, Dest_Path : Filesystem_String);
    --  Creates a new Rsync_Dialog
 
    type Rsync_Callback_Data is new Callback_Data_Record with record
@@ -177,7 +178,7 @@ package body Remote_Sync_Module is
    procedure Gtk_New
      (Dialog              : out Rsync_Dialog;
       Kernel              : access Kernel_Handle_Record'Class;
-      Src_Path, Dest_Path : String)
+      Src_Path, Dest_Path : Filesystem_String)
    is
       Label : Gtk_Label;
    begin
@@ -189,11 +190,11 @@ package body Remote_Sync_Module is
       Pack_Start (Get_Vbox (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"From: ") & "<span foreground=""blue"">" &
-                  Src_Path & "</span>");
+                  Unknown_To_UTF8 (+Src_Path) & "</span>");
       Pack_Start (Get_Vbox (Dialog), Label);
       Gtk_New (Label);
       Set_Markup (Label, (-"To: ") & "<span foreground=""blue"">" &
-                  Dest_Path & "</span>");
+                  Unknown_To_UTF8 (+Dest_Path) & "</span>");
       Pack_Start (Get_Vbox (Dialog), Label);
       Gtk_New (Dialog.Progress);
       Pack_Start (Get_Vbox (Dialog), Dialog.Progress);
@@ -214,8 +215,8 @@ package body Remote_Sync_Module is
       Data   : access Hooks_Data'Class) return Boolean
    is
       Rsync_Data        : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
-      Src_Path          : GNAT.Strings.String_Access;
-      Dest_Path         : GNAT.Strings.String_Access;
+      Src_Path          : Filesystem_String_Access;
+      Dest_Path         : Filesystem_String_Access;
       Src_FS            : Filesystem_Access;
       Dest_FS           : Filesystem_Access;
       Machine           : Machine_Descriptor;
@@ -242,7 +243,7 @@ package body Remote_Sync_Module is
          --  Argument for link transfer
 
          function Protect
-           (S : GNAT.Strings.String_Access) return GNAT.Strings.String_Access;
+           (S : Filesystem_String_Access) return Filesystem_String_Access;
          --  Protects spaces and quotes
 
          -------------
@@ -250,11 +251,11 @@ package body Remote_Sync_Module is
          -------------
 
          function Protect
-           (S : GNAT.Strings.String_Access) return GNAT.Strings.String_Access
+           (S : Filesystem_String_Access) return Filesystem_String_Access
          is
             use Ada.Strings.Unbounded;
             Out_Str : Unbounded_String;
-            Ret     : GNAT.Strings.String_Access;
+            Ret     : Filesystem_String_Access;
             Ignore  : Boolean;
 
          begin
@@ -276,8 +277,10 @@ package body Remote_Sync_Module is
             end loop;
 
             Ret := S;
-            GNAT.Strings.Free (Ret);
-            Ret := new String'(To_String (Out_Str));
+            Free (Ret);
+            --  ??? What is the purpose of the two lines above?
+
+            Ret := new Filesystem_String'(+To_String (Out_Str));
 
             return Ret;
          end Protect;
@@ -311,7 +314,7 @@ package body Remote_Sync_Module is
 
       begin
          return Rsync_Args & Use_Links_Arg & Transport_Arg &
-           Protect (Src_Path) & Protect (Dest_Path);
+           Convert (Protect (Src_Path)) & Convert (Protect (Dest_Path));
       end Build_Arg;
 
    begin
@@ -331,19 +334,19 @@ package body Remote_Sync_Module is
          --  Local src machine, remote dest machine
          Machine   := Get_Machine_Descriptor (Rsync_Data.Dest_Name);
          Src_FS    := Get_Local_Filesystem;
-         Src_Path  := new String'
+         Src_Path  := new Filesystem_String'
            (To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          Dest_FS   := Get_Filesystem (Rsync_Data.Dest_Name);
 
          if Machine.User_Name.all /= "" then
-            Dest_Path := new String'
-              (Machine.User_Name.all & "@" &
-               Machine.Network_Name.all & ":" &
+            Dest_Path := new Filesystem_String'
+              (+Machine.User_Name.all & "@" &
+               (+Machine.Network_Name.all) & ":" &
                To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
 
          else
-            Dest_Path := new String'
-              (Machine.Network_Name.all & ":" &
+            Dest_Path := new Filesystem_String'
+              (+Machine.Network_Name.all & ":" &
                To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
          end if;
 
@@ -353,19 +356,19 @@ package body Remote_Sync_Module is
          Src_FS  := Get_Filesystem (Rsync_Data.Src_Name);
 
          if Machine.User_Name.all /= "" then
-            Src_Path  := new String'
-              (Machine.User_Name.all & "@" &
-               Machine.Network_Name.all & ":" &
+            Src_Path  := new Filesystem_String'
+              (+Machine.User_Name.all & "@" &
+               (+Machine.Network_Name.all) & ":" &
                To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
 
          else
-            Src_Path  := new String'
-              (Machine.Network_Name.all & ":" &
+            Src_Path  := new Filesystem_String'
+              (+Machine.Network_Name.all & ":" &
                To_Unix (Src_FS.all, Rsync_Data.Src_Path, True));
          end if;
 
          Dest_FS   := Get_Local_Filesystem;
-         Dest_Path := new String'
+         Dest_Path := new Filesystem_String'
            (To_Unix (Dest_FS.all, Rsync_Data.Dest_Path, True));
       end if;
 

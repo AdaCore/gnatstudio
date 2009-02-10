@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,13 +34,16 @@ with GPS.Intl;                  use GPS.Intl;
 with File_Utils;                use File_Utils;
 with Remote;                    use Remote;
 with String_Hash;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+
 with XML_Parsers;
 
 package body GPS.Kernel.Custom is
 
    Me            : constant Debug_Handle := Create ("Kernel.Custom");
-   XML_Extension : constant String := ".xml";
+   XML_Extension : constant Filesystem_String := ".xml";
 
    use Scripts_Hash.String_Hash_Table;
 
@@ -54,7 +57,7 @@ package body GPS.Kernel.Custom is
 
    procedure Parse_Custom_Dir
      (Kernel           : access Kernel_Handle_Record'Class;
-      Directory        : String;
+      Directory        : Filesystem_String;
       Level            : Customization_Level;
       Default_Autoload : Boolean);
    --  Parse and process all the XML files in the directory. Only those files
@@ -66,7 +69,7 @@ package body GPS.Kernel.Custom is
    -------------------------
 
    function Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String is
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
    begin
       return Format_Pathname (Get_System_Dir (Kernel), UNIX)
         & "share/gps/plug-ins/";
@@ -77,7 +80,7 @@ package body GPS.Kernel.Custom is
    ----------------------------
 
    function No_Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String is
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
    begin
       return Format_Pathname (Get_System_Dir (Kernel), UNIX)
         & "share/gps/library/";
@@ -88,13 +91,13 @@ package body GPS.Kernel.Custom is
    -----------------------
 
    function Autoload_User_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String
    is
-      Dir : constant String :=
+      Dir : constant Filesystem_String :=
         Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins/";
    begin
       if not Is_Directory (Dir) then
-         Make_Dir (Dir);
+         Make_Dir (+Dir);
       end if;
 
       return Dir;
@@ -104,12 +107,12 @@ package body GPS.Kernel.Custom is
    -- Get_Custom_Path --
    ---------------------
 
-   function Get_Custom_Path return String is
+   function Get_Custom_Path return Filesystem_String is
       Env : String_Access := Getenv ("GPS_CUSTOM_PATH");
       Result : constant String := Env.all;
    begin
       Free (Env);
-      return Result;
+      return +Result;
    end Get_Custom_Path;
 
    ----------------------------------
@@ -160,11 +163,11 @@ package body GPS.Kernel.Custom is
 
    procedure Parse_Custom_Dir
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : String;
+      Directory : Filesystem_String;
       Level     : Customization_Level;
       Default_Autoload : Boolean)
    is
-      Norm_Dir  : constant String := Name_As_Directory (Directory);
+      Norm_Dir  : constant Filesystem_String := Name_As_Directory (Directory);
       File      : String (1 .. 1024);
       Last      : Natural;
       Dir       : Dir_Type;
@@ -180,7 +183,7 @@ package body GPS.Kernel.Custom is
 
             declare
                F     : constant Virtual_File :=
-                 Create (Full_Filename => Norm_Dir & File (1 .. Last));
+                 Create (Full_Filename => Norm_Dir & (+File (1 .. Last)));
                Error : String_Access;
             begin
                if File_Extension (F) = XML_Extension
@@ -189,13 +192,13 @@ package body GPS.Kernel.Custom is
                   if Load_File_At_Startup
                     (Kernel, F, Default => Default_Autoload)
                   then
-                     Trace (Me, "Loading " & Full_Name (F).all);
+                     Trace (Me, "Loading " & Display_Full_Name (F));
 
                      XML_Parsers.Parse (Full_Name (F).all, File_Node, Error);
 
                      if File_Node = null then
                         Trace (Me, "Could not parse XML file: "
-                               & Full_Name (F).all);
+                               & Display_Full_Name (F));
                         Insert (Kernel, Error.all,
                                 Mode => GPS.Kernel.Console.Error);
                         Free (Error);
@@ -221,7 +224,7 @@ package body GPS.Kernel.Custom is
                when Assert_Failure =>
                   Console.Insert
                     (Kernel, -"Could not parse custom file "
-                     & Full_Name (F).all,
+                     & Display_Full_Name (F),
                      Mode => GPS.Kernel.Console.Error);
             end;
          end loop;
@@ -241,7 +244,7 @@ package body GPS.Kernel.Custom is
    procedure Load_System_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Env_Path : constant String := Get_Custom_Path;
+      Env_Path : constant Filesystem_String := Get_Custom_Path;
       Path     : Path_Iterator;
       N        : Node_Ptr;
 
@@ -329,7 +332,7 @@ package body GPS.Kernel.Custom is
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Customization : UTF8_String;
-      From_File     : String;
+      From_File     : Filesystem_String;
       Start_Line    : Positive := 1) return String
    is
       --  Add a valid prefix and toplevel node, since the string won't
@@ -430,7 +433,7 @@ package body GPS.Kernel.Custom is
    procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Startup : constant String :=
+      Startup : constant Filesystem_String :=
                   Format_Pathname
                     (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
       Err     : String_Access;
@@ -476,7 +479,7 @@ package body GPS.Kernel.Custom is
             Free (Node);
          end if;
       else
-         Trace (Me, "File not found: " & Startup);
+         Trace (Me, "File not found: " & (+Startup));
       end if;
    end Parse_Startup_Scripts_List;
 
@@ -487,7 +490,7 @@ package body GPS.Kernel.Custom is
    procedure Save_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Startup     : constant String :=
+      Startup     : constant Filesystem_String :=
                       Format_Pathname
                         (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
       File, Child : Node_Ptr;
@@ -520,8 +523,8 @@ package body GPS.Kernel.Custom is
          Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
       end loop;
 
-      Trace (Me, "Saving " & Startup);
-      Print (File, Startup, Success);
+      Trace (Me, "Saving " & (+Startup));
+      Print (File, +Startup, Success);
       Free (File);
 
       if not Success then
@@ -660,15 +663,15 @@ package body GPS.Kernel.Custom is
    is
       Startup : Script_Description_Access :=
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                       K => Base_Name (File));
+                       K => +Base_Name (File));
    begin
       if Startup /= null then
          if Startup.File /= GNATCOLL.VFS.No_File then
             Insert (Kernel,
                     -"There are several startup scripts with the same name: "
-                    & Base_Name (File)
+                    & Display_Base_Name (File)
                     & ASCII.LF
-                    & (-"Not loading: ") & Full_Name (File).all,
+                    & (-"Not loading: ") & Display_Full_Name (File),
                     Mode => Error);
             return False;
          else
@@ -682,7 +685,7 @@ package body GPS.Kernel.Custom is
             Explicit       => False,
             Initialization => null);
          Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-              K => Base_Name (File),
+              K => +Base_Name (File),
               E => Startup);
       end if;
 
@@ -700,14 +703,14 @@ package body GPS.Kernel.Custom is
    is
       Startup : constant Script_Description_Access :=
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                       K => Base_Name (File));
+                       K => +Base_Name (File));
       Custom  : Custom_Command_Access;
    begin
       if Startup /= null and then Startup.Initialization /= null then
          Custom := new Custom_Command;
          Create
            (Item           => Custom,
-            Name           => "Initialize " & Full_Name (File).all,
+            Name           => "Initialize " & Display_Full_Name (File),
             Kernel         => Kernel_Handle (Kernel),
             Default_Output => No_Output,
             Command        => Startup.Initialization);

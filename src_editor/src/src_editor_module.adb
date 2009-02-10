@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
@@ -100,7 +101,10 @@ with Src_Editor_View.Commands;          use Src_Editor_View.Commands;
 with Src_Editor_View;                   use Src_Editor_View;
 with Src_Printing;
 with String_Utils;                      use String_Utils;
+with UTF8_Utils;                        use UTF8_Utils;
 with Traces;                            use Traces;
+
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Src_Editor_Module is
 
@@ -131,6 +135,9 @@ package body Src_Editor_Module is
    overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
+
+   function Convert is new Ada.Unchecked_Conversion
+     (String_Ptr, Filesystem_String_Access);
 
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -767,7 +774,7 @@ package body Src_Editor_Module is
       User : Kernel_Handle) return MDI_Child
    is
       Src         : Source_Editor_Box;
-      File        : Glib.String_Ptr;
+      File        : Filesystem_String_Access;
       F           : Virtual_File;
       Str         : Glib.String_Ptr;
       Id          : Idle_Handler_Id;
@@ -783,7 +790,7 @@ package body Src_Editor_Module is
       Create_Files_Pixbufs_If_Needed (User);
 
       if Node.Tag.all = "Source_Editor" then
-         File := Get_Field (Node, "File");
+         File := Convert (Get_Field (Node, "File"));
 
          if File /= null and then File.all /= "" then
             Str := Get_Field (Node, "Line");
@@ -928,7 +935,7 @@ package body Src_Editor_Module is
       end if;
 
       declare
-         Filename : constant String := Full_Name (File).all;
+         Filename : constant Filesystem_String := Full_Name (File).all;
       begin
          if Filename = "" or else not Is_Regular_File (File) then
             return null;
@@ -939,7 +946,7 @@ package body Src_Editor_Module is
 
          Child := new Node;
          Child.Tag := new String'("File");
-         Child.Value := new String'(Filename);
+         Child.Value := new String'(+Filename);
          Add_Child (N, Child);
 
          Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
@@ -1204,7 +1211,7 @@ package body Src_Editor_Module is
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Add_To_History (Kernel, Hist_Key, Full_Name (File).all);
+      Add_To_History (Kernel, Hist_Key, +Full_Name (File).all);
    end Add_To_Recent_Menu;
 
    ---------------
@@ -1273,7 +1280,7 @@ package body Src_Editor_Module is
       Create_Files_Pixbufs_If_Needed (Kernel);
 
       if Active (Me) then
-         Trace (Me, "Open file " & Full_Name (File).all
+         Trace (Me, "Open file " & (+Full_Name (File).all)
                 & " Focus=" & Focus'Img);
       end if;
 
@@ -1353,7 +1360,7 @@ package body Src_Editor_Module is
          if File /= GNATCOLL.VFS.No_File then
             if Is_Local (File) then
                Set_Title
-                 (Child, Full_Name (File).all, Display_Base_Name (File));
+                 (Child, Display_Full_Name (File), Display_Base_Name (File));
             else
                Set_Title
                  (Child,
@@ -1381,7 +1388,7 @@ package body Src_Editor_Module is
                     and then Get_Filename (The_Child) = GNATCOLL.VFS.No_File
                   then
                      declare
-                        Ident : constant String := Base_Name
+                        Ident : constant String := Display_Base_Name
                           (Get_File_Identifier (The_Child));
                         Index : Natural;
                      begin
@@ -1411,7 +1418,7 @@ package body Src_Editor_Module is
 
                if Nb_Untitled = -1 then
                   Set_Title (Child, No_Name);
-                  Ident := Create (Full_Filename => '/' & No_Name);
+                  Ident := Create (Full_Filename => '/' & (+No_Name));
                else
                   declare
                      Identifier : constant String :=
@@ -1419,7 +1426,7 @@ package body Src_Editor_Module is
                                       & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
-                     Ident := Create (Full_Filename => '/' & Identifier);
+                     Ident := Create (Full_Filename => '/' & (+Identifier));
                   end;
                end if;
 
@@ -1436,7 +1443,8 @@ package body Src_Editor_Module is
 
       else
          Console.Insert
-           (Kernel, (-"Cannot open file ") & "'" & Full_Name (File).all & "'",
+           (Kernel, (-"Cannot open file ") & "'" & (+Full_Name (File).all)
+            & "'",
             Add_LF => True,
             Mode   => Error);
       end if;
@@ -1555,7 +1563,7 @@ package body Src_Editor_Module is
       if File = GNATCOLL.VFS.No_File then
          return "@$#$";  --  Unlikely string, will not match any suffix
       else
-         return Base_Name (File);
+         return +Base_Name (File);
       end if;
    end Completion;
 
@@ -1582,7 +1590,7 @@ package body Src_Editor_Module is
       if File = GNATCOLL.VFS.No_File then
          return "";
       else
-         return Full_Name (File).all;
+         return +Full_Name (File).all;
       end if;
    end Description;
 
@@ -1664,6 +1672,7 @@ package body Src_Editor_Module is
                         Current_Completion (Open_File_Entry);
             Text    : constant String :=
                         Get_Text (Get_Entry (Open_File_Entry));
+            --  ??? What if the filesystem path is non-UTF8?
             Full    : Virtual_File;
          begin
             --  Close the dialog first, so that the current context becomes the
@@ -1677,12 +1686,12 @@ package body Src_Editor_Module is
                   Full := List1 (List1'First + Complet - 1);
                end if;
             else
-               Full := Create (Text, Kernel, Use_Object_Path => False);
+               Full := Create (+Text, Kernel, Use_Object_Path => False);
             end if;
 
             Add_To_History
               (Get_History (Kernel).all, Open_From_Path_History,
-               Full_Name (Full).all);
+               +Full_Name (Full).all);
 
             if Is_Regular_File (Full) then
                Open_File_Editor
@@ -1718,7 +1727,7 @@ package body Src_Editor_Module is
    overriding procedure Activate
      (Callback : access On_Recent; Item : String) is
    begin
-      Open_File_Editor (Callback.Kernel, Create (Full_Filename => Item));
+      Open_File_Editor (Callback.Kernel, Create (Full_Filename => +Item));
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1878,11 +1887,12 @@ package body Src_Editor_Module is
          then
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
-                 (Print_Helper & " " & Full_Name (Get_Filename (Source)).all);
+                 (Print_Helper & " " &
+                  (+Full_Name (Get_Filename (Source)).all));
             begin
                Launch_Process
                  (Kernel,
-                  Command   => Cmd (Cmd'First).all,
+                  Command   => +Cmd (Cmd'First).all,
                   Arguments => Cmd (Cmd'First + 1 .. Cmd'Last),
                   Console   => Get_Console (Kernel),
                   Success   => Success);
@@ -2313,7 +2323,7 @@ package body Src_Editor_Module is
       Line : Natural;
    begin
       Trace (Me, "On_Edit_File: "
-             & Full_Name (File_Information (Context.Context)).all);
+             & (+Full_Name (File_Information (Context.Context)).all));
 
       if Has_Line_Information (Context.Context) then
          Line := Contexts.Line_Information (Context.Context);
@@ -2359,7 +2369,7 @@ package body Src_Editor_Module is
       end if;
 
       Gtk_New (Dialog,
-               Title  => -"Properties for " & Full_Name (File).all,
+               Title  => -"Properties for " & (+Full_Name (File).all),
                Parent => Get_Main_Window (Kernel),
                Flags  => Destroy_With_Parent);
       Set_Default_Size (Dialog, 400, 200);
@@ -2386,7 +2396,7 @@ package body Src_Editor_Module is
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Label, Dir_Name (File).all);
+      Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File).all));
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 
@@ -2494,10 +2504,10 @@ package body Src_Editor_Module is
                return Expansion & Image (Integer (Column));
 
             when 'f' =>
-               return Expansion & Base_Name (Get_Filename (Box));
+               return Expansion & (+Base_Name (Get_Filename (Box)));
 
             when 'd' =>
-               return Expansion & Dir_Name (Get_Filename (Box)).all;
+               return Expansion & (+Dir_Name (Get_Filename (Box)).all);
 
             when 'p' =>
                return Expansion & Project_Name
@@ -2507,11 +2517,12 @@ package body Src_Editor_Module is
                    Root_If_Not_Found => True));
 
             when 'P' =>
-               return Expansion & Full_Name (Project_Path
-                 (Get_Project_From_File
-                  (Get_Registry (Kernel).all,
-                   Get_Filename (Box),
-                   Root_If_Not_Found => True))).all;
+               return Expansion &
+               (+Full_Name (Project_Path
+                  (Get_Project_From_File
+                     (Get_Registry (Kernel).all,
+                        Get_Filename (Box),
+                        Root_If_Not_Found => True))).all);
 
             when others =>
                return Invalid_Expansion;
@@ -3501,7 +3512,7 @@ package body Src_Editor_Module is
            or else Get_File_Identifier (Child) = Full
 
             --  Handling of file identifiers
-           or else Get_Title (Child) = Full_Name (File).all;
+           or else Get_Title (Child) = Display_Full_Name (File);
 
          Next (Iter);
       end loop;
@@ -3581,9 +3592,9 @@ package body Src_Editor_Module is
    function Hash (F : Virtual_File) return Header_Num is
    begin
       if Is_Case_Sensitive (Build_Server) then
-         return Hash (Full_Name (F).all);
+         return Hash (+Full_Name (F).all);
       else
-         return Hash (To_Lower (Full_Name (F).all));
+         return Hash (To_Lower (+Full_Name (F).all));
       end if;
    end Hash;
 
@@ -3622,7 +3633,7 @@ package body Src_Editor_Module is
    ------------------
 
    function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean is
-      Base : constant String := Base_Name (File);
+      Base : constant String := +Base_Name (File);
    begin
       return Base'Length >= 2
         and then Base (Base'First .. Base'First + 1) = ".#"

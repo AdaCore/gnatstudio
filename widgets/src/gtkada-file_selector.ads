@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -118,6 +118,7 @@ package Gtkada.File_Selector is
    --  Default_Name is the default value entered in the text entry.
    --  If Use_Native_Dialog is True, this function will use the native file
    --  selection widget instead of one based on GtkAda.
+   --  ??? What if the filesystem path is non-UTF8?
 
    function Select_Directory
      (Title             : String  := "Select a directory";

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,7 +64,7 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean;
       Synchronous          : Boolean;
       Use_Ext_Terminal     : Boolean;
-      Directory            : String_Ptr;
+      Directory            : Filesystem_String_Access;
 
       Expect_Regexp        : GNAT.Expect.Pattern_Matcher_Access;
 
@@ -561,7 +561,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
@@ -573,7 +573,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -613,17 +613,17 @@ package body GPS.Kernel.Timeout is
       if Name_In_Task_Manager /= "" then
          C.Name := new String'(Name_In_Task_Manager);
       else
-         C.Name := new String'(Command);
+         C.Name := new String'(+Command);
       end if;
 
       C.Data := new Console_Process_Data'
         (GObject_Record with
          Args                 => new String_List'
-                             ((1 => new String'(Command)) & Clone (Arguments)),
+           ((1 => new String'(+Command)) & Clone (Arguments)),
          Server               => Server,
          Console              => Console,
          Use_Ext_Terminal     => Use_Ext_Terminal,
-         Directory            => new String'(Directory),
+         Directory            => new Filesystem_String'(Directory),
          Delete_Id            => No_Handler,
          Show_Output          => Show_Output,
          Show_Command         => Show_Command,
@@ -688,7 +688,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -699,7 +699,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -757,7 +757,7 @@ package body GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
@@ -769,7 +769,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";

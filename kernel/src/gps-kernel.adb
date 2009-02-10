@@ -20,7 +20,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
@@ -29,6 +28,7 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with System;                    use System;
 
 with Gdk;                       use Gdk;
@@ -99,6 +99,8 @@ with System.Address_Image;
 with Traces;                    use Traces;
 with XML_Parsers;
 
+with UTF8_Utils;                use UTF8_Utils;
+
 package body GPS.Kernel is
 
    Me        : constant Debug_Handle := Create ("gps_kernel");
@@ -110,7 +112,7 @@ package body GPS.Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
-   Desktop_Name : constant String := "desktop.xml";
+   Desktop_Name : constant Filesystem_String := "desktop.xml";
 
    use Action_Filters_Htable.String_Hash_Table;
 
@@ -242,8 +244,8 @@ package body GPS.Kernel is
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
-      Home_Dir         : String;
-      Prefix_Directory : String)
+      Home_Dir         : Filesystem_String;
+      Prefix_Directory : Filesystem_String)
    is
       Handler : Language_Handler;
    begin
@@ -255,8 +257,9 @@ package body GPS.Kernel is
                 On_Main_Window_Destroyed'Access,
                 Handle.all'Address);
 
-      Handle.Home_Dir := new String'(Name_As_Directory (Home_Dir));
-      Handle.Prefix   := new String'(Name_As_Directory (Prefix_Directory));
+      Handle.Home_Dir := new Filesystem_String'(Name_As_Directory (Home_Dir));
+      Handle.Prefix   := new Filesystem_String'
+        (Name_As_Directory (Prefix_Directory));
 
       --  Create the language handler
 
@@ -647,10 +650,10 @@ package body GPS.Kernel is
 
    function Is_Hidden
      (Kernel    : access Kernel_Handle_Record;
-      Base_Name : String) return Boolean is
+      Base_Name : Filesystem_String) return Boolean is
    begin
       return Kernel.Hidden_File_Matcher /= null
-        and then Match (Kernel.Hidden_File_Matcher.all, Base_Name);
+        and then Match (Kernel.Hidden_File_Matcher.all, +Base_Name);
    end Is_Hidden;
 
    ---------------------
@@ -751,7 +754,8 @@ package body GPS.Kernel is
       Main_Window : constant Gdk.Window.Gdk_Window :=
                       Get_Window (Handle.Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
-      File_Name    : constant String := Handle.Home_Dir.all & Desktop_Name;
+      File_Name    : constant Filesystem_String :=
+        Handle.Home_Dir.all & Desktop_Name;
       Project_Name : constant Virtual_File := Get_Project_Name;
       N            : Node_Ptr;
       M            : Node_Ptr;
@@ -770,14 +774,14 @@ package body GPS.Kernel is
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
-      Trace (Me, "saving desktop file " & File_Name
-             & " for project " & Full_Name (Project_Name).all);
+      Trace (Me, "saving desktop file " & (+File_Name)
+             & " for project " & (+Full_Name (Project_Name).all));
 
       if Main_Window = null then
          return;
       end if;
 
-      if GNAT.OS_Lib.Is_Regular_File (File_Name) then
+      if Is_Regular_File (File_Name) then
          XML_Parsers.Parse (File_Name, Old, Err);
 
          if Err /= null then
@@ -804,7 +808,9 @@ package body GPS.Kernel is
             if M.Tag /= null
               and then M.Tag.all = "MDI"
               and then Get_Attribute (M, "project") /=
-                 Full_Name (Project_Name).all
+            --  ??? Potentially non-utf8 string should not be
+            --  stored in an XML attribute.
+                 (+Full_Name (Project_Name).all)
             then
                Add_Child (N, Deep_Copy (M));
             end if;
@@ -819,10 +825,12 @@ package body GPS.Kernel is
 
       M := GPS.Kernel.Kernel_Desktop.Save_Desktop
         (MDI, Kernel_Handle (Handle));
-      Set_Attribute (M, "project", Full_Name (Project_Name).all);
+      Set_Attribute (M, "project", (+Full_Name (Project_Name).all));
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Add_Child (N, M);
 
-      Print (N, File_Name, Success);
+      Print (N, +File_Name, Success);
       Free (N);
 
       if not Success then
@@ -836,20 +844,22 @@ package body GPS.Kernel is
 
    procedure Report_Preference_File_Error
      (Handle   : access Kernel_Handle_Record;
-      Filename : String)
+      Filename : Filesystem_String)
    is
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
    begin
       if Is_In_Destruction (Handle) then
          Button := Message_Dialog
-           ((-"Could not save the configuration file ") & Filename & ASCII.LF &
+           ((-"Could not save the configuration file ") &
+            Unknown_To_UTF8 (+Filename) & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Error, Button_OK, Justification => Justify_Left);
       else
          GPS.Kernel.Console.Insert
            (Handle,
-            (-"Could not save the configuration file ") & Filename & ASCII.LF &
+            (-"Could not save the configuration file ") &
+            Unknown_To_UTF8 (+Filename) & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Mode => GPS.Kernel.Console.Error);
          Raise_Console (Handle);
@@ -863,7 +873,7 @@ package body GPS.Kernel is
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean is
    begin
-      return GNAT.OS_Lib.Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
+      return Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
    end Has_User_Desktop;
 
    ------------------
@@ -874,12 +884,12 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record) return Boolean
    is
       MDI                     : constant MDI_Window := Get_MDI (Handle);
-      File                    : constant String :=
+      File                    : constant Filesystem_String :=
                                   Handle.Home_Dir.all & Desktop_Name;
       Project                 : constant Project_Type := Get_Project (Handle);
       Main_Window             : constant GPS_Window :=
                                   GPS_Window (Handle.Main_Window);
-      Predefined_Desktop      : constant String :=
+      Predefined_Desktop      : constant Filesystem_String :=
                                   Get_System_Dir (Handle) &
                                     "share/gps/desktop.xml";
       Node                    : Node_Ptr;
@@ -905,12 +915,12 @@ package body GPS.Kernel is
       while not Success_Loading_Desktop
         and then (Try_User_Desktop or else not Is_Default_Desktop)
       loop
-         if Try_User_Desktop and then GNAT.OS_Lib.Is_Regular_File (File) then
-            Trace (Me, "loading desktop file " & File
-                   & " Project=" & Full_Name (Project_Name).all);
+         if Try_User_Desktop and then Is_Regular_File (File) then
+            Trace (Me, "loading desktop file " & (+File)
+                   & " Project=" & (+Full_Name (Project_Name).all));
             XML_Parsers.Parse (File, Node, Err);
 
-         elsif GNAT.OS_Lib.Is_Regular_File (Predefined_Desktop) then
+         elsif Is_Regular_File (Predefined_Desktop) then
             Trace (Me, "loading predefined desktop");
             Is_Default_Desktop := True;
             XML_Parsers.Parse (Predefined_Desktop, Node, Err);
@@ -936,7 +946,9 @@ package body GPS.Kernel is
                   if Get_Attribute (Child, "project") = "" then
                      Default_Desktop_Node := Child;
                   elsif Get_Attribute (Child, "project") =
-                    Full_Name (Project_Name).all
+                  --  ??? Potentially non-utf8 string should not be
+                  --  stored in an XML attribute.
+                    (+Full_Name (Project_Name).all)
                   then
                      Desktop_Node := Child;
                   end if;
@@ -954,7 +966,8 @@ package body GPS.Kernel is
          Success_Loading_Desktop := False;
 
          if Desktop_Node /= null then
-            Trace (Me, "loading desktop for " & Full_Name (Project_Name).all);
+            Trace (Me, "loading desktop for " &
+                   (+Full_Name (Project_Name).all));
             Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
 
@@ -1312,7 +1325,7 @@ package body GPS.Kernel is
    ------------------
 
    function Get_Home_Dir
-     (Handle : access Kernel_Handle_Record) return String is
+     (Handle : access Kernel_Handle_Record) return Filesystem_String is
    begin
       return Handle.Home_Dir.all;
    end Get_Home_Dir;
@@ -1322,7 +1335,7 @@ package body GPS.Kernel is
    --------------------
 
    function Get_System_Dir
-     (Handle : access Kernel_Handle_Record) return String is
+     (Handle : access Kernel_Handle_Record) return Filesystem_String is
    begin
       return Handle.Prefix.all;
    end Get_System_Dir;
@@ -1484,8 +1497,8 @@ package body GPS.Kernel is
 
          Append (Model, It, Null_Iter);
          Set (Get_Object (Model), It,
-              0, Base_Name
-                (Get_Filename (Get_File (Get_Declaration_Of (Candidate))))
+              0, (+Base_Name
+                (Get_Filename (Get_File (Get_Declaration_Of (Candidate)))))
               & ASCII.NUL,
               1, Gint (Get_Line (Get_Declaration_Of (Candidate))),
               2, Gint (Get_Column (Get_Declaration_Of (Candidate))));
@@ -1956,7 +1969,7 @@ package body GPS.Kernel is
    ------------
 
    function Create
-     (Name            : Glib.UTF8_String;
+     (Name            : Filesystem_String;
       Kernel          : access Kernel_Handle_Record;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
@@ -1970,10 +1983,10 @@ package body GPS.Kernel is
    ----------------------
 
    function Create_From_Base
-     (Name   : Glib.UTF8_String;
+     (Name   : Filesystem_String;
       Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File
    is
-      Full : constant String := Get_Full_Path_From_File
+      Full : constant Filesystem_String := Get_Full_Path_From_File
         (Registry        => Get_Registry (Kernel).all,
          Filename        => Base_Name (Name),
          Use_Source_Path => True,

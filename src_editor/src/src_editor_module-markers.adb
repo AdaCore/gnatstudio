@@ -32,6 +32,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Src_Editor_Module.Markers is
 
@@ -489,7 +490,7 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
 
       declare
-         Location : constant String := Base_Name (Marker.File)
+         Location : constant String := +Base_Name (Marker.File)
            & ":"  & Image (Integer (Marker.Line))
            & ":"  & Image (Integer (Marker.Column));
          Name     : constant String := Get_Subprogram_Name;
@@ -513,7 +514,9 @@ package body Src_Editor_Module.Markers is
    begin
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
-      Set_Attribute (Node, "file", Full_Name (Marker.File).all);
+      Set_Attribute (Node, "file", +Full_Name (Marker.File).all);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
       Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
       Set_Attribute (Node, "column", Visible_Column_Type'Image
                      (Marker.Column));
@@ -537,7 +540,9 @@ package body Src_Editor_Module.Markers is
             return Location_Marker
               (Create_File_Marker
                  (Kernel => Kernel,
-                  File   => Create (Get_Attribute (From_XML, "file")),
+                  File   => Create (+Get_Attribute (From_XML, "file")),
+                  --  ??? Potentially non-utf8 string should not be
+                  --  stored in an XML attribute.
                   Line   => Editable_Line_Type'Value
                    (Get_Attribute (From_XML, "line")),
                   Column =>

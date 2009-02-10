@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -164,7 +164,7 @@ package body Entities.Tooltips is
                Result := Result
                  & (-"from instance of ")
                  & Get_Name (Inst_Of).all & ':'
-                 & Base_Name (Get_Filename
+                 & Display_Base_Name (Get_Filename
                      (Get_File (Get_Declaration_Of (Inst_Of)))) & ':'
                  & Image (Get_Line (Get_Declaration_Of (Inst_Of)))
                  & ASCII.LF & "  at ";
@@ -173,7 +173,7 @@ package body Entities.Tooltips is
             Result := Result
               & Get_Name (Inst_E).all
               & ':'
-              &  Base_Name (Get_Filename
+              &  Display_Base_Name (Get_Filename
                               (Get_File (Get_Declaration_Of (Inst_E)))) & ':'
               & Image (Get_Line (Get_Declaration_Of (Inst_E)))
               & ASCII.LF & ASCII.LF;
@@ -195,7 +195,7 @@ package body Entities.Tooltips is
         & Attributes_To_String (Get_Attributes (Entity)) &
         ' ' & (-Kind_To_String (Get_Kind (Entity))) & ' ' &
       (-"declared at ") &
-      Base_Name (Get_Filename
+      Display_Base_Name (Get_Filename
                  (Get_File (Get_Declaration_Of (Entity)))) &
         ':' & Image (Get_Line (Get_Declaration_Of (Entity)));
    end Get_Header;

@@ -44,6 +44,7 @@ with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
 procedure Completion.Test is
    use Standard.Ada;
@@ -314,7 +315,7 @@ procedure Completion.Test is
 
          Load
            (Registry           => New_Registry,
-            Root_Project_Path  => Create_From_Dir (Get_Current_Dir, Project),
+            Root_Project_Path  => Create_From_Dir (Get_Current_Dir, +Project),
             Errors             => Project_Error'Unrestricted_Access,
             New_Project_Loaded => Loaded,
             Status             => Success);
@@ -608,7 +609,7 @@ begin
    Projects.Registry.Initialize;
 
    Given_File := Create_From_Base
-     (Current_Directory & GNAT.OS_Lib.Directory_Separator & Argument (1));
+     (+Current_Directory & GNAT.OS_Lib.Directory_Separator & (+Argument (1)));
 
    if Argument (2) = "parse" then
       Parse_File (Given_File);

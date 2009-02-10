@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,7 +37,7 @@ package body Docgen2.Utils is
       Line : constant String := Natural'Image (Loc.Line);
       Col  : constant String := Natural'Image (Loc.Column);
       Err  : constant String :=
-               Get_Filename (File).Base_Name & ":" &
+               +Get_Filename (File).Base_Name & ":" &
                Line (Line'First + 1 .. Line'Last) & ":" &
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin

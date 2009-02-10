@@ -4,6 +4,7 @@ with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Adp_Converter;             use Adp_Converter;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Convert.Adp is
 
@@ -26,9 +27,9 @@ package body Convert.Adp is
       Project := Create_Project
         (Registry,
          Name => Base_Name (Adp_Filename, ".adp"),
-         Path => Create (Dir_Name (Adp_Filename)));
+         Path => Create (+Dir_Name (Adp_Filename)));
       Set_Paths_Type (Project, Absolute);
-      Convert_Adp_File (Adp_Filename,
+      Convert_Adp_File (+Adp_Filename,
                         Registry       => Registry,
                         Project        => Project,
                         Spec_Extension => Spec_Extension.all,

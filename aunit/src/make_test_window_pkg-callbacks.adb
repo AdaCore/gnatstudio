@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2006                       --
---                              AdaCore                              --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +25,7 @@ with GPS.Intl;                use GPS.Intl;
 
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Make_Test_Window_Pkg.Callbacks is
    --  Handle callbacks from "AUnit_Make_Test" main window.  Template
@@ -91,7 +91,9 @@ package body Make_Test_Window_Pkg.Callbacks is
 
    procedure On_Ok_Clicked (Window : Make_Test_Window_Access) is
 
-      Directory_Name : constant String := Get_Text (Window.Directory_Entry);
+      Directory_Name : constant Filesystem_String :=
+        +Get_Text (Window.Directory_Entry);
+      --  ??? What if the filesystem path is non-UTF8?
       Name           : String := Get_Text (Window.Name_Entry);
       Description    : constant String := Get_Text (Window.Description_Entry);
       Translation    : Translate_Set;

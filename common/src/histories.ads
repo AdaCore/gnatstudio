@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@
 --  session of GPS to the other.
 
 with GNAT.Strings;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Gtk.Check_Menu_Item;
 with Gtk.Combo;
 with Gtk.Toggle_Button;
@@ -40,12 +41,14 @@ package Histories is
 
    No_Key : constant History_Key := "";
 
-   procedure Load (Hist : in out History_Record; File_Name : String);
+   procedure Load
+     (Hist      : in out History_Record;
+      File_Name : Filesystem_String);
    --  Load Hist from file File_Name
 
    procedure Save
      (Hist      : in out History_Record;
-      File_Name : String;
+      File_Name : Filesystem_String;
       Success   : out Boolean);
    --  Save Hist to a file
 

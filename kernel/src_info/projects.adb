@@ -50,6 +50,7 @@ with Snames;                     use Snames;
 with Traces;
 with Types;                      use Types;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 package body Projects is
 
@@ -77,7 +78,7 @@ package body Projects is
       --  Sorted list of imported projects (Cache for
       --  Imported_Project_Iterator)
 
-      Non_Recursive_Include_Path : GNAT.Strings.String_Access;
+      Non_Recursive_Include_Path : Filesystem_String_Access;
       --  The include path for this project
 
       Registry   : Project_Registry_Access;
@@ -128,7 +129,7 @@ package body Projects is
 
    procedure Check_Suffix_List
      (Tree     : Prj.Project_Tree_Ref;
-      Filename : String;
+      Filename : Filesystem_String;
       Langs    : String_List_Id;
       List     : in out Array_Element_Id;
       Len      : out Natural);
@@ -164,7 +165,7 @@ package body Projects is
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
-      Language                 : Name_Id) return String;
+      Language                 : Name_Id) return Filesystem_String;
    --  Internal version of Get_Filename_From_Unit
 
    ---------------------
@@ -251,11 +252,11 @@ package body Projects is
          then
             if Report_Error /= null then
                Report_Error
-                 ("The file " & Full_Name (Project_Path (Project)).all
+                 ("The file " & Display_Full_Name (Project_Path (Project))
                   & " is not writable. Project not saved");
             end if;
             Trace (Me, "Project file not writable: "
-                   & Full_Name (Project_Path (Project)).all);
+                   & (+Full_Name (Project_Path (Project)).all));
             return False;
          end if;
 
@@ -266,19 +267,19 @@ package body Projects is
          end if;
 
          declare
-            Dirname  : constant String := Dir_Name (Filename).all;
+            Dirname  : constant Filesystem_String := Dir_Name (Filename).all;
          begin
             Trace (Me, "Save_Project: Creating new file "
-                   & Full_Name (Filename).all);
+                   & (+Full_Name (Filename).all));
 
             begin
                Make_Dir_Recursive (Dirname);
             exception
                when Directory_Error =>
-                  Trace (Me, "Couldn't create directory " & Dirname);
+                  Trace (Me, "Couldn't create directory " & (+Dirname));
 
                   if Report_Error /= null then
-                     Report_Error ("Couldn't create directory " & Dirname);
+                     Report_Error ("Couldn't create directory " & (+Dirname));
                   end if;
 
                   return False;
@@ -286,7 +287,7 @@ package body Projects is
 
             Normalize_Cases (Project);
 
-            Create (File, Mode => Out_File, Name => Full_Name (Filename).all);
+            Create (File, Mode => Out_File, Name => +Full_Name (Filename).all);
             Pretty_Print
               (Project => Project,
                W_Char  => Internal_Write_Char'Unrestricted_Access,
@@ -300,11 +301,11 @@ package body Projects is
 
          exception
             when Ada.Text_IO.Name_Error =>
-               Trace (Me, "Couldn't create " & Full_Name (Filename).all);
+               Trace (Me, "Couldn't create " & (+Full_Name (Filename).all));
 
                if Report_Error /= null then
                   Report_Error ("Couldn't create file "
-                                & Full_Name (Filename).all);
+                                & Display_Full_Name (Filename));
                end if;
                return False;
          end;
@@ -369,14 +370,14 @@ package body Projects is
          return Create
            (FS => Get_Filesystem (Host),
             Full_Filename => To_Remote
-              (Get_String (Path_Name_Of (Project.Node, Project.Tree)),
+              (+Get_String (Path_Name_Of (Project.Node, Project.Tree)),
                Host));
 
       else
          return Create
            (FS => Get_Filesystem (Host),
             Full_Filename => To_Remote
-              (Get_String (View.Path.Display_Name), Host));
+              (+Get_String (View.Path.Display_Name), Host));
       end if;
    end Project_Path;
 
@@ -425,7 +426,7 @@ package body Projects is
       Recursive : Boolean;
       Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access
    is
-      Current_Dir : constant String := Get_Current_Dir;
+      Current_Dir : constant Filesystem_String := Get_Current_Dir;
       Iter        : Imported_Project_Iterator := Start (Project, Recursive);
       Count       : Natural := 0;
       P           : Project_Type;
@@ -456,9 +457,9 @@ package body Projects is
 
             while Src /= Nil_String loop
                Sources (Index) := new String'
-                 (Name_As_Directory
+                 (+Name_As_Directory
                     (Normalize_Pathname
-                       (Get_String (String_Elements (P) (Src).Display_Value),
+                       (+Get_String (String_Elements (P) (Src).Display_Value),
                         Current_Dir,
                         Resolve_Links => False)));
                Index := Index + 1;
@@ -484,7 +485,7 @@ package body Projects is
    ------------------
 
    function Include_Path
-     (Project : Project_Type; Recursive : Boolean) return String is
+     (Project : Project_Type; Recursive : Boolean) return Filesystem_String is
    begin
       if Get_View (Project) = Prj.No_Project then
          return "";
@@ -493,15 +494,15 @@ package body Projects is
       --  ??? The project parser doesn't cache the non-recursive version
       if not Recursive then
          if Project.Data.Non_Recursive_Include_Path = null then
-            Project.Data.Non_Recursive_Include_Path := new String'
-              (Prj.Env.Ada_Include_Path
+            Project.Data.Non_Recursive_Include_Path := new Filesystem_String'
+              (+Prj.Env.Ada_Include_Path
                  (Get_View (Project), Project.View_Tree, Recursive));
          end if;
 
          return Project.Data.Non_Recursive_Include_Path.all;
       end if;
 
-      return Prj.Env.Ada_Include_Path
+      return +Prj.Env.Ada_Include_Path
         (Get_View (Project), Project.View_Tree, Recursive);
    end Include_Path;
 
@@ -513,11 +514,12 @@ package body Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean := True;
-      Xrefs_Dirs          : Boolean := False) return String
+      Xrefs_Dirs          : Boolean := False) return Filesystem_String
    is
       View : constant Project_Id := Get_View (Project);
 
-      function Handle_Subdir (Id : Namet.Path_Name_Type) return String;
+      function Handle_Subdir
+        (Id : Namet.Path_Name_Type) return Filesystem_String;
       --  for all directories defined in Path, detect if "From_Subdir" exists,
       --  and return it instead.
 
@@ -525,8 +527,10 @@ package body Projects is
       -- Handle_Subdir --
       -------------------
 
-      function Handle_Subdir (Id : Namet.Path_Name_Type) return String is
-         Path : constant String := Name_As_Directory (Get_String (Id));
+      function Handle_Subdir
+        (Id : Namet.Path_Name_Type) return Filesystem_String is
+         Path : constant Filesystem_String :=
+           Name_As_Directory (+Get_String (Id));
          Reg  : constant Project_Registry :=
                   Project_Registry (Get_Registry (Project));
       begin
@@ -549,7 +553,7 @@ package body Projects is
          return "";
 
       elsif Recursive then
-         return Prj.Env.Ada_Objects_Path
+         return +Prj.Env.Ada_Objects_Path
            (View, Project.View_Tree, Including_Libraries).all;
 
       elsif Including_Libraries
@@ -591,12 +595,12 @@ package body Projects is
    ------------
 
    function Create
-     (Base_Name       : Glib.UTF8_String;
+     (Base_Name       : Filesystem_String;
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File
    is
-      Full : constant String := Get_Full_Path_From_File
+      Full : constant Filesystem_String := Get_Full_Path_From_File
         (Project_Registry (Get_Registry (Project)), Base_Name,
          Use_Source_Path, Use_Object_Path, Project);
    begin
@@ -695,7 +699,7 @@ package body Projects is
 
    procedure Check_Suffix_List
      (Tree     : Prj.Project_Tree_Ref;
-      Filename : String;
+      Filename : Filesystem_String;
       Langs    : String_List_Id;
       List     : in out Array_Element_Id;
       Len      : out Natural)
@@ -721,7 +725,7 @@ package body Projects is
             Canonical_Case_File_Name (Ext);
 
             L := Langs;
-            if Suffix_Matches (Filename, Ext) then
+            if Suffix_Matches (Filename, +Ext) then
                while L /= Nil_String loop
                   if Tree.String_Elements.Table (L).Value = Lang then
                      Len := Name_Len;
@@ -748,7 +752,7 @@ package body Projects is
    ------------------------------------------
 
    procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : Glib.UTF8_String;
+     (Filename  : Filesystem_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Name_Id;
@@ -756,7 +760,7 @@ package body Projects is
    is
       View   : Project_Id;
       Naming : Naming_Data;
-      F      : String := Filename;
+      F      : String := +Filename;
       Arr    : Array_Element_Id;
       Len    : Natural;
       File   : Name_Id;
@@ -827,7 +831,7 @@ package body Projects is
       end if;
 
       Arr := Naming.Spec_Suffix;
-      Check_Suffix_List (Project.View_Tree, F, Langs, Arr, Len);
+      Check_Suffix_List (Project.View_Tree, +F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Spec;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
@@ -836,7 +840,7 @@ package body Projects is
       end if;
 
       Arr := Naming.Body_Suffix;
-      Check_Suffix_List (Project.View_Tree, F, Langs, Arr, Len);
+      Check_Suffix_List (Project.View_Tree, +F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Body;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
@@ -849,7 +853,7 @@ package body Projects is
       declare
          Suffix : constant String := Get_String (Naming.Separate_Suffix);
       begin
-         if Suffix_Matches (F, Suffix) then
+         if Suffix_Matches (+F, +Suffix) then
             Part      := Unit_Separate;
             Lang      := Name_Ada;
             Unit_Name := Get_String (F (F'First .. F'Last - Suffix'Length));
@@ -862,13 +866,13 @@ package body Projects is
 
       if GNAT.Directory_Operations.File_Extension (F) = ".ads" then
          Part      := Unit_Spec;
-         Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         Unit_Name := Get_String (+Base_Name (Filename, ".ads"));
          Lang      := Name_Ada;
          return;
 
       elsif GNAT.Directory_Operations.File_Extension (F) = ".adb" then
          Part      := Unit_Spec;
-         Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         Unit_Name := Get_String (+Base_Name (Filename, ".ads"));
          Lang      := Name_Ada;
          return;
       end if;
@@ -877,7 +881,7 @@ package body Projects is
 
       Lang      := No_Name;
       Part      := Unit_Separate;
-      Unit_Name := Get_String (Base_Name (Filename));
+      Unit_Name := Get_String (+Base_Name (Filename));
    end Get_Unit_Part_And_Name_From_Filename;
 
    ---------------------------------
@@ -955,7 +959,7 @@ package body Projects is
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
-      Language                 : String) return String
+      Language                 : String) return Filesystem_String
    is
    begin
       return Get_Filename_From_Unit
@@ -973,7 +977,7 @@ package body Projects is
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
-      Language                 : Name_Id) return String
+      Language                 : Name_Id) return Filesystem_String
    is
       Arr             : Array_Element_Id := No_Array_Element;
       Unit            : Name_Id;
@@ -1004,9 +1008,9 @@ package body Projects is
       if Check_Predefined_Library and then Language = Name_Ada then
          case Part is
             when Unit_Body =>
-               return Substitute_Dot (Unit_Name, "-") & ".adb";
+               return +Substitute_Dot (Unit_Name, "-") & ".adb";
             when Unit_Spec =>
-               return Substitute_Dot (Unit_Name, "-") & ".ads";
+               return +Substitute_Dot (Unit_Name, "-") & ".ads";
             when others =>
                Assert (Me, False, "Unexpected Unit_Part");
                return "";
@@ -1036,7 +1040,7 @@ package body Projects is
          end case;
 
          if Value /= Nil_Variable_Value then
-            return Get_String (Value.Value);
+            return +Get_String (Value.Value);
          end if;
 
          --  Otherwise test the standard naming scheme
@@ -1062,8 +1066,9 @@ package body Projects is
 
             when Unit_Separate =>
                declare
-                  N : constant String := Unit_Name_Cased & Get_String
-                    (Name_Id (View.Naming.Separate_Suffix));
+                  N : constant Filesystem_String :=
+                    +(Unit_Name_Cased & Get_String
+                      (Name_Id (View.Naming.Separate_Suffix)));
                begin
                   if not File_Must_Exist
                     or else Get_Project_From_File
@@ -1098,8 +1103,9 @@ package body Projects is
             while Arr /= No_Array_Element loop
                if Array_Elements (Project)(Arr).Index = Language then
                   declare
-                     N : constant String := Uname
-                      & Get_String (Array_Elements (Project)(Arr).Value.Value);
+                     N : constant Filesystem_String :=
+                       +(Uname & Get_String
+                         (Array_Elements (Project) (Arr).Value.Value));
                   begin
                      if not File_Must_Exist
                        or else Get_Project_From_File
@@ -1123,7 +1129,7 @@ package body Projects is
    ------------------------
 
    function Delete_File_Suffix
-     (Filename : String; Project : Project_Type) return Natural
+     (Filename : Filesystem_String; Project : Project_Type) return Natural
    is
       View  : constant Project_Id := Get_View (Project);
       Arr   : Array_Element_Id;
@@ -1154,7 +1160,7 @@ package body Projects is
 
       declare
          Ext : constant String :=
-                 GNAT.Directory_Operations.File_Extension (Filename);
+           GNAT.Directory_Operations.File_Extension (+Filename);
       begin
          if  Ext = ".ads" or else Ext = ".adb" then
             return Filename'Last - 4;
@@ -1169,7 +1175,8 @@ package body Projects is
    --------------------------
 
    function Other_File_Base_Name
-     (Project : Project_Type; Source_Filename : Virtual_File) return String
+     (Project         : Project_Type;
+      Source_Filename : Virtual_File) return Filesystem_String
    is
       Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
@@ -1185,7 +1192,7 @@ package body Projects is
       Get_Name_String (Name);
       declare
          Unit : constant String := Name_Buffer (1 .. Name_Len);
-         N    : constant String := Get_Filename_From_Unit
+         N    : constant Filesystem_String := Get_Filename_From_Unit
            (Project, Unit, Part, Language => Lang);
       begin
          if N /= "" then
@@ -1194,7 +1201,7 @@ package body Projects is
          elsif Lang = Name_Ada then
             --  Default to the GNAT naming scheme (for runtime files)
             declare
-               N2 : constant String := Get_Filename_From_Unit
+               N2 : constant Filesystem_String := Get_Filename_From_Unit
                  (Project, Unit, Part, Check_Predefined_Library => True,
                   Language => Lang);
             begin
@@ -1504,14 +1511,15 @@ package body Projects is
    -- Executables_Directory --
    ---------------------------
 
-   function Executables_Directory (Project : Project_Type) return String is
+   function Executables_Directory
+     (Project : Project_Type) return Filesystem_String is
    begin
       if Project = No_Project or else Get_View (Project) = Prj.No_Project then
          return "";
 
       else
          declare
-            Exec : constant String := Get_String
+            Exec : constant Filesystem_String := +Get_String
              (Name_Id (Get_View (Project).Exec_Directory.Display_Name));
          begin
             if Exec /= "" then
@@ -2490,7 +2498,7 @@ package body Projects is
            (Project        => Project,
             Attribute      =>
               Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
-            Index          => Base_Name (File));
+            Index          => +Base_Name (File));
 
          Is_Default_Value := Value = Nil_Variable_Value;
       end if;
@@ -2835,10 +2843,11 @@ package body Projects is
    -------------------------
 
    function Get_Executable_Name
-     (Project : Project_Type; File : String) return String
+     (Project : Project_Type;
+      File    : Filesystem_String) return Filesystem_String
    is
-      Base         : constant String := Base_Name (File);
-      Default_Exec : constant String := Base
+      Base         : constant Filesystem_String := Base_Name (File);
+      Default_Exec : constant Filesystem_String := Base
         (Base'First .. Delete_File_Suffix (Base, Project));
 
    begin
@@ -2851,7 +2860,7 @@ package body Projects is
          declare
             From_Project : constant String := Get_Attribute_Value
               (Project, Executable_Attribute,
-               Index => File, Default => "");
+               Index => +File, Default => "");
          begin
             if From_Project = "" then
                --  Check whether the file is a special naming scheme for an
@@ -2859,13 +2868,13 @@ package body Projects is
                --  name of the executable
 
                declare
-                  Base_Id : constant Name_Id := Get_String (Base);
+                  Base_Id : constant Name_Id := Get_String (+Base);
                   Args    : constant Associative_Array := Get_Attribute_Value
                     (Project, Attribute => Implementation_Attribute);
                begin
                   for A in Args'Range loop
                      if Args (A).Value.Value = Base_Id then
-                        return Get_String (Args (A).Index);
+                        return +Get_String (Args (A).Index);
                      end if;
                   end loop;
                end;
@@ -2874,7 +2883,7 @@ package body Projects is
                return Default_Exec;
             end if;
 
-            return From_Project;
+            return +From_Project;
          end;
       end if;
    end Get_Executable_Name;

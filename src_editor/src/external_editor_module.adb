@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Strings;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
@@ -47,7 +46,8 @@ with Toolchains;                use Toolchains;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body External_Editor_Module is
 
@@ -249,7 +249,7 @@ package body External_Editor_Module is
 
    procedure Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
-      File          : String := "";
+      File          : Filesystem_String := "";
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
       Extended_Lisp : String := "");
@@ -271,7 +271,7 @@ package body External_Editor_Module is
 
    procedure Spawn_New_Process
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
+      Command : Filesystem_String;
       Args    : GNAT.OS_Lib.Argument_List;
       Result  : out Boolean);
    --  Spawn a new process, and store it in External_Clients, so that we can
@@ -285,7 +285,7 @@ package body External_Editor_Module is
    --  Called when the timeout for the external editors is terminated.
 
    function Blocking_Spawn
-     (Command : String; Args : Argument_List) return Integer;
+     (Command : Filesystem_String; Args : Argument_List) return Integer;
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
@@ -297,7 +297,7 @@ package body External_Editor_Module is
    -------------------
 
    procedure Select_Client is
-      Path           : GNAT.Strings.String_Access;
+      Path           : Filesystem_String_Access;
       Args           : Argument_List_Access;
       Match          : Boolean;
       Default_Client : constant Supported_Clients := Supported_Clients'Val
@@ -328,7 +328,7 @@ package body External_Editor_Module is
             end;
 
             if Args'Length /= 0 then
-               Path := Locate_Tool_Executable (Args (Args'First).all);
+               Path := Locate_Tool_Executable (+Args (Args'First).all);
 
                if Path /= null then
                   Free (Path);
@@ -344,7 +344,7 @@ package body External_Editor_Module is
             Args := Argument_String_To_List
               (Clients (C).Lisp_Command_Name.all);
 
-            Path := Locate_Tool_Executable (Args (Args'First).all);
+            Path := Locate_Tool_Executable (+Args (Args'First).all);
             if Path /= null then
                Free (Path);
             else
@@ -356,7 +356,7 @@ package body External_Editor_Module is
          end if;
 
          if Match and then Clients (C).Extra_Test /= null then
-            Path := Locate_Tool_Executable (Clients (C).Extra_Test.all);
+            Path := Locate_Tool_Executable (+Clients (C).Extra_Test.all);
             if Path /= null then
                Free (Path);
             else
@@ -481,7 +481,7 @@ package body External_Editor_Module is
 
    procedure Spawn_New_Process
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
+      Command : Filesystem_String;
       Args    : GNAT.OS_Lib.Argument_List;
       Result  : out Boolean)
    is
@@ -489,13 +489,13 @@ package body External_Editor_Module is
       Process : TTY_Process_Descriptor;
    begin
       if Active (Me) then
-         Trace (Me, "Spawn: " & Command &
+         Trace (Me, "Spawn: " & (+Command) &
                 " " & Argument_List_To_String (Args));
       end if;
 
       Non_Blocking_Spawn
         (Descriptor  => Process,
-         Command     => Command,
+         Command     => +Command,
          Args        => Args,
          Buffer_Size => 0,
          Err_To_Out  => True);
@@ -542,7 +542,7 @@ package body External_Editor_Module is
       Success : out Boolean)
    is
       Args : Argument_List_Access;
-      Path : GNAT.Strings.String_Access;
+      Path : Filesystem_String_Access;
 
    begin
       Success := False;
@@ -555,7 +555,7 @@ package body External_Editor_Module is
 
       for S in Servers'Range loop
          Args := Argument_String_To_List (Servers (S).Command_Name.all);
-         Path := Locate_Tool_Executable (Args (Args'First).all);
+         Path := Locate_Tool_Executable (+Args (Args'First).all);
 
          if Path /= null then
             Substitute
@@ -588,14 +588,14 @@ package body External_Editor_Module is
    --------------------
 
    function Blocking_Spawn
-     (Command : String; Args : Argument_List) return Integer
+     (Command : Filesystem_String; Args : Argument_List) return Integer
    is
       Status : Integer;
       Result : Expect_Match;
       Pd     : TTY_Process_Descriptor;
    begin
       Non_Blocking_Spawn
-        (Pd, Command, Args, Buffer_Size => 0, Err_To_Out => True);
+        (Pd, +Command, Args, Buffer_Size => 0, Err_To_Out => True);
 
       loop
          Expect (Pd, Result, "@@@");
@@ -613,7 +613,7 @@ package body External_Editor_Module is
 
    procedure Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
-      File          : String := "";
+      File          : Filesystem_String := "";
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
       Extended_Lisp : String := "")
@@ -623,7 +623,7 @@ package body External_Editor_Module is
       Col_Str   : constant String := Visible_Column_Type'Image (Column);
       Result    : Integer := 0;
       Success   : Boolean;
-      Path      : GNAT.Strings.String_Access;
+      Path      : Filesystem_String_Access;
       Args      : Argument_List_Access;
 
    begin
@@ -658,13 +658,13 @@ package body External_Editor_Module is
       Substitute
         (Args,
          P => Project_Name (Get_Project (Kernel)),
-         F => File,
+         F => +File,
          C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
          L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
          E => Extended_Lisp);
 
       if Args'Length /= 0 then
-         Path := Locate_Tool_Executable (Args (Args'First).all);
+         Path := Locate_Tool_Executable (+Args (Args'First).all);
       else
          Insert (Kernel, """" & Get_Pref (Custom_Editor)
                     & """ is not a valid external editor",
@@ -731,7 +731,7 @@ package body External_Editor_Module is
    begin
       Push_State (Get_Kernel (Context.Context), Busy);
       Trace (Me, "Edit file with external editor "
-             & Full_Name (File_Information (Context.Context)).all);
+             & Display_Full_Name (File_Information (Context.Context)));
 
       if Has_Entity_Column_Information (Context.Context) then
          Line := Line_Information (Context.Context);

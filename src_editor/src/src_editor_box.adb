@@ -21,6 +21,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
@@ -332,7 +333,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Full_Name (Get_Filename (Editor)).all & ASCII.LF
+            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
             Mode           => Error);
@@ -366,7 +367,7 @@ package body Src_Editor_Box is
 
          Filename := Get_Filename (Get_File (Location));
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & Full_Name (Filename).all);
+                & (+Full_Name (Filename).all));
       else
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
@@ -1733,7 +1734,7 @@ package body Src_Editor_Box is
             File    : constant Virtual_File := File_Information (Context);
             Project    : constant Project_Type := Get_Project_From_File
               (Get_Registry (Kernel).all, File);
-            Other_File : constant String := Other_File_Base_Name
+            Other_File : constant Filesystem_String := Other_File_Base_Name
               (Project, File);
          begin
             if Other_File /= "" and then Other_File /= Base_Name (File) then
@@ -1839,9 +1840,9 @@ package body Src_Editor_Box is
         (Other_File_Base_Name (Project, File), Project);
    begin
       Trace (Me, "Goto_Other_File_Command File="
-             & Full_Name (File).all
+             & (+Full_Name (File).all)
              & " Project=" & Project_Name (Project)
-             & " Other_File=" & Full_Name (Other_File).all);
+             & " Other_File=" & (+Full_Name (Other_File).all));
       if Other_File /= GNATCOLL.VFS.No_File then
          Open_File_Editor (Kernel, Other_File, Line => 0);
          return Commands.Success;
@@ -1977,7 +1978,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Full_Name (Get_Filename (Editor)).all & ASCII.LF
+            & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
             Mode           => Error);
@@ -2194,7 +2195,7 @@ package body Src_Editor_Box is
                         Get_Filename (Editor.Source_Buffer);
       Constructs    : Construct_List;
       Info          : Construct_Access;
-      New_Base_Name : GNAT.Strings.String_Access;
+      New_Base_Name : Filesystem_String_Access;
       Part          : Projects.Unit_Part;
 
       Buffer        : GNAT.Strings.String_Access;
@@ -2236,7 +2237,7 @@ package body Src_Editor_Box is
               or else Info.Name = null
             then
                --  No unit name found
-               New_Base_Name := new String'("");
+               New_Base_Name := new Filesystem_String'("");
             else
                --  Info.Name is a valid Ada unit name
 
@@ -2246,7 +2247,7 @@ package body Src_Editor_Box is
                   Part := Projects.Unit_Body;
                end if;
 
-               New_Base_Name := new String'
+               New_Base_Name := new Filesystem_String'
                  (Projects.Get_Filename_From_Unit
                     (Project         => Get_Project (Editor.Kernel),
                      Unit_Name       => To_Lower (Info.Name.all),
@@ -2261,7 +2262,7 @@ package body Src_Editor_Box is
                Name : constant Virtual_File := Select_File
                  (Title             => -"Save File As",
                   Parent            => Get_Current_Window (Editor.Kernel),
-                  Default_Name      => New_Base_Name.all,
+                  Default_Name      => +New_Base_Name.all,
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Save_File,
                   File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
@@ -2269,7 +2270,7 @@ package body Src_Editor_Box is
                   History           => Get_History (Editor.Kernel));
 
             begin
-               GNAT.OS_Lib.Free (New_Base_Name);
+               Free (New_Base_Name);
 
                if Name = GNATCOLL.VFS.No_File then
                   Success := False;

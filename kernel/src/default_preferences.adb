@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -74,6 +74,8 @@ with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
 with XML_Parsers;
+
+with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 
 package body Default_Preferences is
 
@@ -818,7 +820,8 @@ package body Default_Preferences is
    ----------------------
 
    procedure Load_Preferences
-     (Manager : access  Preferences_Manager_Record; File_Name : String)
+     (Manager   : access  Preferences_Manager_Record;
+      File_Name : Filesystem_String)
    is
       File, Node : Node_Ptr;
       Err        : String_Access;
@@ -874,7 +877,7 @@ package body Default_Preferences is
 
    procedure Save_Preferences
      (Manager   : access Preferences_Manager_Record;
-      File_Name : String;
+      File_Name : Filesystem_String;
       Success   : out Boolean)
    is
       File, Node : Node_Ptr;
@@ -894,7 +897,7 @@ package body Default_Preferences is
          Next (C);
       end loop;
 
-      Print (File, File_Name, Success);
+      Print (File, +File_Name, Success);
 
    exception
       when E : others => Trace (Exception_Handle, E);

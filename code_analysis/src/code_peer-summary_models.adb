@@ -21,6 +21,7 @@ with Glib.Object;
 
 with GPS.Intl; use GPS.Intl;
 with Projects;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Code_Peer.Summary_Models is
 
@@ -362,7 +363,7 @@ package body Code_Peer.Summary_Models is
 
             elsif File_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
-               Glib.Values.Set_String (Value, File_Node.Node.Name.Base_Name);
+               Glib.Values.Set_String (Value, +File_Node.Node.Name.Base_Name);
 
             elsif Project_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
@@ -588,7 +589,7 @@ package body Code_Peer.Summary_Models is
       File_Node : constant File_Item_Access := File_Item_Access (File);
 
    begin
-      if File.Node.Name.Base_Name = "Standard" then
+      if +File.Node.Name.Base_Name = "Standard" then
          return False;
       end if;
 

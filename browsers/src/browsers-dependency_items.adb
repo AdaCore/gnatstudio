@@ -58,6 +58,7 @@ with Projects.Registry;      use Projects.Registry;
 with Projects;               use Projects;
 with Traces;                 use Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
 package body Browsers.Dependency_Items is
 
@@ -794,10 +795,10 @@ package body Browsers.Dependency_Items is
    --------------------
 
    function Is_System_File (Source : Source_File) return Boolean is
-      Name : constant String := Base_Name (Get_Filename (Source));
+      Name : constant Filesystem_String := Base_Name (Get_Filename (Source));
    begin
       Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
+      Name_Buffer (1 .. Name_Len) := +Name;
 
       --  Check Language.Is_System_File as well, which does it depending on
       --  the specific language.
@@ -1158,7 +1159,7 @@ package body Browsers.Dependency_Items is
       Browser : access General_Browser_Record'Class;
       File  : Source_File) is
    begin
-      Initialize (Item, Browser, Base_Name (Get_Filename (File)),
+      Initialize (Item, Browser, Display_Base_Name (Get_Filename (File)),
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
@@ -1233,7 +1234,7 @@ package body Browsers.Dependency_Items is
 
       if P = No_Project then
          Trace (Me, "Project_Of return No_Project for "
-                & Full_Name (File_Name).all);
+                & Display_Full_Name (File_Name));
       end if;
 
       return P;

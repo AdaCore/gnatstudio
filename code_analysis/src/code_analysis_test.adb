@@ -33,6 +33,7 @@ with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Window;               use Gtk.Window;
@@ -125,20 +126,20 @@ procedure Code_Analysis_Test is
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
    begin
-      Cov_File_Name := Create (File_Name);
+      Cov_File_Name := Create (+File_Name);
       Src_File_Name := Create
-        (File_Name (File_Name'First .. File_Name'Last - 5));
+        (+File_Name (File_Name'First .. File_Name'Last - 5));
 
       Initialize; --  From Projects.Registry
       Load
         (Registry           => Registry.all,
          Root_Project_Path  => Create_From_Dir
-           (Get_Current_Dir, Project_File),
+           (Get_Current_Dir, +Project_File),
          Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded,
          Status             => Status);
       Project_Node  := Get_Or_Create
-        (Projects, Load_Or_Find (Registry.all, Project_File));
+        (Projects, Load_Or_Find (Registry.all, +Project_File));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -231,7 +232,7 @@ procedure Code_Analysis_Test is
       for J in 0 .. Integer'Value (Project_Num) loop
          Project_Name  := Load_Or_Find
            (Registry,
-            (Project_File
+            (+Project_File
                (Project_File'First .. Project_File'Last - 4)
              & "_"
              & Integer'Image (J) (2)
@@ -239,10 +240,10 @@ procedure Code_Analysis_Test is
          Project_Node  := Get_Or_Create (Projects, Project_Name);
 
          for JJ in 0 .. Integer'Value (File_Num) loop
-            Cov_File_Name := Create (File_Name);
-            VFS_File_Name := Create (File_Name
+            Cov_File_Name := Create (+File_Name);
+            VFS_File_Name := Create (+File_Name
                                      (File_Name'First .. File_Name'Last - 5)
-                                     & Integer'Image (JJ));
+                                     & (+Integer'Image (JJ)));
             File_Contents := Read_File (Cov_File_Name);
             File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
             Add_File_Info (File_Node, File_Contents);
@@ -260,16 +261,16 @@ procedure Code_Analysis_Test is
 
       Project_Name  := Load_Or_Find
         (Registry,
-         (Project_File
+         (+Project_File
             (Project_File'First .. Project_File'Last - 4)
           & "_"
           & Integer'Image (5) (2)
           & ".gpr"));
       Time_Before   := Clock;
       Project_Node  := Element (Projects.Find (Project_Name));
-      VFS_File_Name := Create (File_Name
+      VFS_File_Name := Create (+File_Name
                                      (File_Name'First .. File_Name'Last - 5)
-                                     & Integer'Image (50));
+                                     & (+Integer'Image (50)));
       File_Node     := Get_Or_Create (Project_Node, VFS_File_Name);
       Put_Line ("Request result   :");
       Dump_Line (File_Node.Lines (534));

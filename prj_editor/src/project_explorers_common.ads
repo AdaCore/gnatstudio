@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
@@ -62,8 +64,8 @@ package Project_Explorers_Common is
    --  in Columns_Types.
 
    Icon_Column          : constant := 0;
-   Base_Name_Column     : constant := 1;
-   Absolute_Name_Column : constant := 2;
+   Display_Name_Column     : constant := 1;
+   Filesystem_Name_Column  : constant := 2;
    Node_Type_Column     : constant := 3;
    User_Data_Column     : constant := 4;
    Line_Column          : constant := 5;
@@ -178,18 +180,18 @@ package Project_Explorers_Common is
 
    function Get_Base_Name
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return String;
+      Node  : Gtk_Tree_Iter) return Filesystem_String;
    --  Return the base name for Node.
    --  Returns a UTF8-encoded string.
 
    function Get_Absolute_Name
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return String;
+      Node  : Gtk_Tree_Iter) return Filesystem_String;
    --  Return the absolute name for Node
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return String;
+      Node  : Gtk_Tree_Iter) return Filesystem_String;
    --  Return the name of the directory to which Node belongs. This returns the
    --  full directory name, relative to the project.
    --  The return strings always ends with a directory separator.

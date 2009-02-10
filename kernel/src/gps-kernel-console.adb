@@ -68,7 +68,7 @@ package body GPS.Kernel.Console is
    Console_Module_Id   : Console_Module_Id_Access;
    Console_Module_Name : constant String := "GPS.Kernel.Console";
 
-   Me : constant Debug_Handle := Create (Console_Module_Name);
+   Me : constant Debug_Handle := Traces.Create (Console_Module_Name);
 
    type GPS_Console_MDI_Child_Record is
      new GPS_MDI_Child_Record with null record;
@@ -251,7 +251,7 @@ package body GPS.Kernel.Console is
          declare
             Contents : constant String := Get_Chars (Console);
          begin
-            FD := Create_File (Full_Name (File).all, Binary);
+            FD := Create_File (+Full_Name (File).all, Binary);
             Len := Write (FD, Contents'Address, Contents'Length);
             Close (FD);
          end;

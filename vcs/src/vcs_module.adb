@@ -22,6 +22,7 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
@@ -729,7 +730,7 @@ package body VCS_Module is
    begin
       if Command = "supported_systems" then
          Set_Return_Value_As_List (Data);
-         Set_Return_Value (Data, "Auto");
+         Set_Return_Value (Data, String'("Auto"));
          VCS_Module_ID.Registered_VCS.Iterate (Add_VCS'Access);
       end if;
    end VCS_Command_Handler_No_Param;
@@ -1423,7 +1424,7 @@ package body VCS_Module is
         or else Status.Status.Stock_Id.all = "gps-vcs-unknown"
       then
          --  If file not found in the cache or the status is not yet known
-         Append (Files, Full_Name (D.File).all);
+         Append (Files, +Full_Name (D.File).all);
          Get_Status (Ref, Files, False, Local => True);
          Free (Files);
       else

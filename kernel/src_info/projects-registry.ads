@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,6 @@
 with Namet;
 with Prj.PP;
 with GNATCOLL.VFS;
-with Glib;
 
 package Projects.Registry is
 
@@ -44,7 +43,7 @@ package Projects.Registry is
    --  Registry instances you may have)
 
    function Create
-     (Name            : Glib.UTF8_String;
+     (Name            : Filesystem_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
@@ -73,8 +72,8 @@ package Projects.Registry is
    --  Used to report an error to the user
 
    type Null_Error_Handler_Record is new Error_Handler_Record with null record;
-   procedure Report (Handler : access Null_Error_Handler_Record;
-                     Msg     : String);
+   overriding procedure Report (Handler : access Null_Error_Handler_Record;
+                                Msg     : String);
    --  Just does nothing. Use in stand-alone library
 
    Null_E_Handler : constant Error_Handler := new Null_Error_Handler_Record;
@@ -87,17 +86,20 @@ package Projects.Registry is
    --  for Ada, or the C library (/usr/include/...) for C files.
 
    function Get_Predefined_Source_Path
-     (Registry : Project_Registry) return String;
+     (Registry : Project_Registry)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the predefined Source Path.
    --  Return the current directory if no source path has been set yet.
 
    function Get_Predefined_Object_Path
-     (Registry : Project_Registry) return String;
+     (Registry : Project_Registry)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the predefined Object Path.
    --  Return the current directory if no object path has been set yet.
 
    function Get_Predefined_Project_Path
-     (Registry : Project_Registry) return String;
+     (Registry : Project_Registry)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the predefined project path, or the current directory if no
    --  project path has been set yet.
 
@@ -107,32 +109,39 @@ package Projects.Registry is
    --  runtime). Returned memory must be freed by the caller
 
    function Get_Xrefs_Subdir
-     (Registry : Project_Registry) return String;
+     (Registry : Project_Registry)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the object dir's subdirectory containing the cross reference
    --  files (ali files).
 
    function Get_Mode_Subdir
-     (Registry : Project_Registry) return String;
+     (Registry : Project_Registry)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the object dir's subdirectory for the current builder mode.
 
    procedure Set_Predefined_Source_Path
-     (Registry : in out Project_Registry; Path : String);
+     (Registry : in out Project_Registry;
+      Path     : GNATCOLL.Filesystem.Filesystem_String);
    --  Set the predefined source path
 
    procedure Set_Predefined_Object_Path
-     (Registry : in out Project_Registry; Path : String);
+     (Registry : in out Project_Registry;
+      Path     : GNATCOLL.Filesystem.Filesystem_String);
    --  Set the predefined object path
 
    procedure Set_Predefined_Project_Path
-     (Registry : in out Project_Registry; Path : String);
+     (Registry : in out Project_Registry;
+      Path     : GNATCOLL.Filesystem.Filesystem_String);
    --  Set the predefined project path
 
    procedure Set_Xrefs_Subdir
-     (Registry : in out Project_Registry; Subdir : String);
+     (Registry : in out Project_Registry;
+      Subdir   : GNATCOLL.Filesystem.Filesystem_String);
    --  Set the object dirs subdirectory for xrefs.
 
    procedure Set_Mode_Subdir
-     (Registry : in out Project_Registry; Subdir : String);
+     (Registry : in out Project_Registry;
+      Subdir   : GNATCOLL.Filesystem.Filesystem_String);
    --  Set the object dirs subdirectory for current build mode.
 
    ----------------------
@@ -175,7 +184,7 @@ package Projects.Registry is
 
    function Load_Or_Find
      (Registry     : Project_Registry;
-      Project_Path : String) return Project_Type;
+      Project_Path : Filesystem_String) return Project_Type;
    --  Check if Project_Path is already loaded. If not, load it and add it to
    --  the list of currently loaded tree.
 
@@ -249,7 +258,7 @@ package Projects.Registry is
       Root_If_Not_Found : Boolean := True) return Project_Type;
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Base_Name         : String;
+      Base_Name         : Filesystem_String;
       Root_If_Not_Found : Boolean := True) return Project_Type;
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.
@@ -263,7 +272,7 @@ package Projects.Registry is
 
    function Directory_Belongs_To_Project
      (Registry    : Project_Registry;
-      Directory   : String;
+      Directory   : Filesystem_String;
       Direct_Only : Boolean := True) return Boolean;
    --  True if Directory belongs to one of the projects in the hierarchy.
    --  If Direct_Only is False, then True is returned if one of the
@@ -275,10 +284,10 @@ package Projects.Registry is
 
    function Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : Glib.UTF8_String;
+      Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project) return String;
+      Project         : Project_Type := No_Project) return Filesystem_String;
    --  Return the directory to which Source_Filename belongs.
    --  the returned path is normalized, and includes directory/basename.
    --  If Use_Source_Path is true, the file is looked for on the include
@@ -297,7 +306,7 @@ package Projects.Registry is
 
    procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : Glib.UTF8_String;
+      Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
       Project         : Project_Type := No_Project);

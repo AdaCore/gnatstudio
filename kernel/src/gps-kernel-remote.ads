@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -76,7 +76,7 @@ package GPS.Kernel.Remote is
       Use_Ext_Terminal  : Boolean := False;
       Console           : Interactive_Consoles.Interactive_Console := null;
       Show_Command      : Boolean := True;
-      Directory         : String := "";
+      Directory         : Filesystem_String := "";
       Use_Pipes         : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
@@ -125,9 +125,9 @@ package GPS.Kernel.Remote is
       --  Destination server nickname
       Queue_Id      : String (1 .. Queue_Id_Length);
       --  Queue_Id used to enqueue the sync command
-      Src_Path      : String (1 .. Src_Path_Length);
+      Src_Path      : Filesystem_String (1 .. Src_Path_Length);
       --  Source path
-      Dest_Path     : String (1 .. Dest_Path_Length);
+      Dest_Path     : Filesystem_String (1 .. Dest_Path_Length);
       --  Destination path
    end record;
 

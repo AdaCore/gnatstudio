@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2008, AdaCore             --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,10 +40,10 @@ package body SN.Browse is
    ------------
 
    procedure Browse
-     (File_Name     : String;
-      DB_Directory  : String;
-      DBIMP_Path    : String;
-      Cbrowser_Path : String;
+     (File_Name     : Filesystem_String;
+      DB_Directory  : Filesystem_String;
+      DBIMP_Path    : Filesystem_String;
+      Cbrowser_Path : Filesystem_String;
       PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
       Args : Argument_List (1 .. 6);
@@ -51,16 +51,16 @@ package body SN.Browse is
       --  Execute browser
       Args :=
         (1 => new String'("-n"),
-         2 => new String'(DB_Directory & DB_File_Name),
+         2 => new String'(+(DB_Directory & DB_File_Name)),
          3 => new String'("-p"),
-         4 => new String'(DBIMP_Path),
+         4 => new String'(+DBIMP_Path),
          5 => new String'("-y"),
-         6 => new String'(File_Name));
+         6 => new String'(+File_Name));
 
-      Trace (Me, "Spawn: " & Cbrowser_Path
+      Trace (Me, "Spawn: " & (+Cbrowser_Path)
              & " " & Argument_List_To_String (Args));
       GNAT.Expect.Non_Blocking_Spawn
-        (PD, Cbrowser_Path, Args, Err_To_Out => True);
+        (PD, +Cbrowser_Path, Args, Err_To_Out => True);
       Free (Args);
    end Browse;
 
@@ -70,15 +70,18 @@ package body SN.Browse is
 
    procedure Generate_Xrefs
      (DB_Directories : GNAT.Strings.String_List_Access;
-      DBIMP_Path     : String;
+      DBIMP_Path     : Filesystem_String;
       Started        : out Boolean;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
-      DB_Directory : String renames DB_Directories (1).all;
-      LV_File_Name : constant String := DB_Directory & DB_File_Name & ".lv";
-      TO_File_Name : constant String := DB_Directory & DB_File_Name & ".to";
-      F_File_Name  : constant String := DB_Directory & DB_File_Name & ".f";
+      DB_Directory : constant Filesystem_String := +DB_Directories (1).all;
+      LV_File_Name : constant Filesystem_String :=
+        DB_Directory & DB_File_Name & ".lv";
+      TO_File_Name : constant Filesystem_String :=
+        DB_Directory & DB_File_Name & ".to";
+      F_File_Name  : constant Filesystem_String :=
+        DB_Directory & DB_File_Name & ".f";
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 8192);
@@ -92,7 +95,7 @@ package body SN.Browse is
       --  take a while, no need to do it if the files are already up-to-date
 
       if Active (Me) then
-         if File_Exists (F_File_Name) then
+         if File_Exists (+F_File_Name) then
             Trace
               (Me, ".f timestamp: "
                & Image (File_Time_Stamp (Create (F_File_Name)),
@@ -100,7 +103,7 @@ package body SN.Browse is
          else
             Trace (Me, "No .f file");
          end if;
-         if File_Exists (TO_File_Name) then
+         if File_Exists (+TO_File_Name) then
             Trace
               (Me, ".to timestamp: "
                & Image (File_Time_Stamp (Create (TO_File_Name)),
@@ -110,10 +113,10 @@ package body SN.Browse is
          end if;
       end if;
 
-      if File_Exists (TO_File_Name)
-        and then File_Exists (F_File_Name)
+      if File_Exists (+TO_File_Name)
+        and then File_Exists (+F_File_Name)
         and then
-          File_Time_Stamp (TO_File_Name) >= File_Time_Stamp (F_File_Name)
+          File_Time_Stamp (+TO_File_Name) >= File_Time_Stamp (+F_File_Name)
       then
          Trace (Me, "No need to start dbimp, since db is up to date");
          Started := False;
@@ -121,16 +124,16 @@ package body SN.Browse is
       end if;
 
       --  remove .to and .lv tables
-      if File_Exists (LV_File_Name) then
-         Delete_File (LV_File_Name, Success);
+      if File_Exists (+LV_File_Name) then
+         Delete_File (+LV_File_Name, Success);
 
          if not Success then
             raise Unlink_Failure;
          end if;
       end if;
 
-      if File_Exists (TO_File_Name) then
-         Delete_File (TO_File_Name, Success);
+      if File_Exists (+TO_File_Name) then
+         Delete_File (+TO_File_Name, Success);
 
          if not Success then
             raise Unlink_Failure;
@@ -150,18 +153,18 @@ package body SN.Browse is
          raise Temp_File_Failure;
       end if;
 
-      if Is_Directory (DB_Directory) then
-         Open (Dir, DB_Directory);
+      if Is_Directory (+DB_Directory) then
+         Open (Dir, +DB_Directory);
 
          loop
             Read (Dir, Dir_Entry, Last);
             exit when Last = 0;
 
             if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) =
-              Xref_Suffix
+              +Xref_Suffix
             then
                Content := Read_Whole_File
-                 (Name_As_Directory (DB_Directory) & Dir_Entry (1 .. Last));
+                 (Name_As_Directory (DB_Directory) & (+Dir_Entry (1 .. Last)));
 
                if Content /= null then
                   if Content'Length /=
@@ -188,12 +191,12 @@ package body SN.Browse is
 
       for D in DB_Directories'Range loop
          Args (4 + D - DB_Directories'First) :=
-           new String'(DB_Directories (D).all & DB_File_Name);
+           new String'(DB_Directories (D).all & (+DB_File_Name));
       end loop;
 
-      Trace (Me, "Spawn: " & DBIMP_Path
+      Trace (Me, "Spawn: " & (+DBIMP_Path)
              & " " & Argument_List_To_String (Args.all));
-      Non_Blocking_Spawn (PD, DBIMP_Path, Args.all, Err_To_Out => True);
+      Non_Blocking_Spawn (PD, +DBIMP_Path, Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
 
       Started := True;
@@ -222,20 +225,20 @@ package body SN.Browse is
    -- Delete_Database --
    ---------------------
 
-   procedure Delete_Database (DB_Directory : String) is
+   procedure Delete_Database (DB_Directory : Filesystem_String) is
       Dir       : Dir_Type;
       Last      : Natural;
       Dir_Entry : String (1 .. 1024);
       --  1024 is the value of FILENAME_MAX in stdio.h (see
       --  GNAT.Directory_Operations)
    begin
-      if not Is_Directory (DB_Directory) then
+      if not Is_Directory (+DB_Directory) then
          --  ignore if dir does not exist
          return;
       end if;
 
       --  enumerate all files in the target directory
-      Open (Dir, DB_Directory);
+      Open (Dir, +DB_Directory);
       if not Is_Open (Dir) then
          raise Directory_Error;
       end if;
@@ -243,7 +246,7 @@ package body SN.Browse is
       Read (Dir, Dir_Entry, Last); -- read first directory entry
       while Last /= 0 loop --  delete all files in directory
          declare
-            F : String := Name_As_Directory (DB_Directory)
+            F : String := +Name_As_Directory (DB_Directory)
               & Dir_Entry (1 .. Last) & ASCII.NUL;
             Success : Boolean;
             pragma Unreferenced (Success);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,8 @@ with Aunit_Filters;   use Aunit_Filters;
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 with GPS.Intl;                  use GPS.Intl;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
@@ -131,7 +132,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Gtk_New
            (Explorer,
             GNATCOLL.VFS.Local_Root_Dir,
-            GNATCOLL.VFS.Create (Get_Text (Win.Directory_Entry)),
+            GNATCOLL.VFS.Create (+Get_Text (Win.Directory_Entry)),
+            --  ??? What if the filesystem path is non-UTF8?
             -"Select test harness",
             History => null); --  ??? No history
       end if;
@@ -180,7 +182,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
 
       Win.Suite_Name := Suite_Name;
       Win.Package_Name := Package_Name;
-      Set_Text (Win.File_Name_Entry, Response.Full_Name.all);
+      Set_Text (Win.File_Name_Entry, +Response.Full_Name.all);
+      --  ??? What if the filesystem path is non-UTF8?
 
       Check_Validity (Win);
    end On_Browse_Clicked;
@@ -209,7 +212,9 @@ package body Make_Harness_Window_Pkg.Callbacks is
       --  Generate harness body source file. Close window and main loop if
       --  successful
 
-      Directory_Name : constant String := Get_Text (Win.Directory_Entry);
+      Directory_Name : constant Filesystem_String :=
+        +Get_Text (Win.Directory_Entry);
+      --  ??? What if the filesystem path is non-UTF8?
       Procedure_Name : String := Get_Text (Win.Procedure_Entry);
       Translation    : Translate_Set;
       Success        : Boolean;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -30,6 +30,7 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNATCOLL.Scripts.Utils;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
@@ -442,7 +443,7 @@ package body Commands.Builder is
 
             Launch_Process
               (Kernel,
-               Command              => Shell_Env,
+               Command              => +Shell_Env,
                Arguments            => Args.all,
                Server               => Server,
                Console              => Console,
@@ -463,7 +464,7 @@ package body Commands.Builder is
          else
             Launch_Process
               (Kernel,
-               Command              => CL (CL'First).all,
+               Command              => +CL (CL'First).all,
                Arguments            => CL (CL'First + 1 .. CL'Last),
                Server               => Server,
                Console              => Console,

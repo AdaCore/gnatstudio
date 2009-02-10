@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,34 +17,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System.OS_Lib; use System.OS_Lib;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Toolchains is
 
    function Is_Toolchains_Active return Boolean;
    --  Tell if the multiple toolchains mode is active
 
-   function Get_Tool_Search_Path return String;
+   function Get_Tool_Search_Path return Filesystem_String;
    --  Get the tool search path
 
-   function Get_Compiler_Search_Path return String;
+   function Get_Compiler_Search_Path return Filesystem_String;
    --  Get the compiler search path
 
-   function Locate_Exec (Exec_Name : String; Path : String)
-                         return String_Access;
+   function Locate_Exec
+     (Exec_Name : Filesystem_String; Path : Filesystem_String)
+      return Filesystem_String_Access;
    --  Locate exec on specified Path.
 
-   function Locate_Tool_Executable (Exec_Name : String) return String_Access;
+   function Locate_Tool_Executable
+     (Exec_Name : Filesystem_String) return Filesystem_String_Access;
    --  Locate a tool executable on path
 
    function Locate_Compiler_Executable
-     (Exec_Name : String) return String_Access;
+     (Exec_Name : Filesystem_String) return Filesystem_String_Access;
    --  Locate a compiler executable on path
 
    procedure Set_Toolchains_Properties
      (Active               : Boolean;
-      Tool_Search_Path     : String;
-      Compiler_Search_Path : String);
+      Tool_Search_Path     : Filesystem_String;
+      Compiler_Search_Path : Filesystem_String);
    --  Set the toolchains selections global properties
 
 end Toolchains;

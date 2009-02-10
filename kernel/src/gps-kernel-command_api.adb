@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -109,7 +109,8 @@ package body GPS.Kernel.Command_API is
       elsif Command = "get_result" then
          Set_Return_Value
            (Data,
-            "Error: this primitive should be implemeted by subclasses");
+            String'
+              ("Error: this primitive should be implemeted by subclasses"));
       end if;
    end Command_Cmds;
 

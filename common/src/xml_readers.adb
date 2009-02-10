@@ -246,7 +246,7 @@ package body XML_Readers is
    -- Parse --
    -----------
 
-   function Parse (File : String) return Glib_XML.Node_Ptr is
+   function Parse (File : Filesystem_String) return Glib_XML.Node_Ptr is
       Tree  : Glib_XML.Node_Ptr;
       Error : Unicode.CES.Byte_Sequence_Access;
    begin
@@ -260,7 +260,7 @@ package body XML_Readers is
    -----------
 
    procedure Parse
-     (File  : String;
+     (File  : Filesystem_String;
       Tree  : out Glib_XML.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is

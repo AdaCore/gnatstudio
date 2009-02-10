@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2006-2008, AdaCore               --
+--                    Copyright (C) 2006-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with Traces; use Traces;
-with GNAT.Strings; use GNAT.Strings;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 package body Remote.Path is
 
    Me : constant Debug_Handle := Create ("Remote.Path");
@@ -29,14 +30,14 @@ package body Remote.Path is
 
    procedure Init
      (Mirror          : in out Mirror_Path'Class;
-      Local_Path      : String;
-      Remote_Path     : String;
+      Local_Path      : Filesystem_String;
+      Remote_Path     : Filesystem_String;
       Synchronisation : Synchronisation_Type)
    is
    begin
       Mirror.Actual :=
-        (Local_Path  => new String'(Local_Path),
-         Remote_Path => new String'(Remote_Path),
+        (Local_Path  => new Filesystem_String'(Local_Path),
+         Remote_Path => new Filesystem_String'(Remote_Path),
          Sync        => Synchronisation);
       Mirror.Tentative :=
         (Local_Path  => null,
@@ -53,7 +54,7 @@ package body Remote.Path is
    function Get_Local_Path
      (Mirror    : Mirror_Path;
       Tentative : Boolean := False)
-      return String is
+      return Filesystem_String is
    begin
       if not Tentative or else Mirror.Tentative.Local_Path = null then
          if Mirror.Actual.Local_Path = null then
@@ -74,7 +75,7 @@ package body Remote.Path is
    function Get_Remote_Path
      (Mirror    : Mirror_Path;
       Tentative : Boolean := False)
-      return String is
+      return Filesystem_String is
    begin
       if not Tentative or else Mirror.Tentative.Remote_Path = null then
          if Mirror.Actual.Remote_Path = null then
@@ -110,7 +111,7 @@ package body Remote.Path is
 
    procedure Set_Tentative_Local_Path
      (Mirror : in out Mirror_Path;
-      Path   : String) is
+      Path   : Filesystem_String) is
    begin
       if Mirror.Tentative.Local_Path /= null then
          Free (Mirror.Tentative.Local_Path);
@@ -119,12 +120,12 @@ package body Remote.Path is
       if Mirror.Actual.Local_Path /= null
         and then Mirror.Actual.Local_Path.all = Path
       then
-         Trace (Me, "tentative local path identical to actual: " & Path);
+         Trace (Me, "tentative local path identical to actual: " & (+Path));
          return;
       end if;
 
-      Mirror.Tentative.Local_Path := new String'(Path);
-      Trace (Me, "tentative local path set to " & Path);
+      Mirror.Tentative.Local_Path := new Filesystem_String'(Path);
+      Trace (Me, "tentative local path set to " & (+Path));
    end Set_Tentative_Local_Path;
 
    -------------------------------
@@ -133,7 +134,7 @@ package body Remote.Path is
 
    procedure Set_Tentative_Remote_Path
      (Mirror : in out Mirror_Path;
-      Path   : String) is
+      Path   : Filesystem_String) is
    begin
       if Mirror.Tentative.Remote_Path /= null then
          Free (Mirror.Tentative.Remote_Path);
@@ -142,12 +143,12 @@ package body Remote.Path is
       if Mirror.Actual.Remote_Path /= null
         and then Mirror.Actual.Remote_Path.all = Path
       then
-         Trace (Me, "tentative remote path identical to actual: " & Path);
+         Trace (Me, "tentative remote path identical to actual: " & (+Path));
          return;
       end if;
 
-      Mirror.Tentative.Remote_Path := new String'(Path);
-      Trace (Me, "tentative remote path set to " & Path);
+      Mirror.Tentative.Remote_Path := new Filesystem_String'(Path);
+      Trace (Me, "tentative remote path set to " & (+Path));
    end Set_Tentative_Remote_Path;
 
    -----------------------------------
@@ -215,7 +216,7 @@ package body Remote.Path is
 
          Mirror.Actual.Local_Path := Mirror.Tentative.Local_Path;
          Mirror.Tentative.Local_Path := null;
-         Trace (Me, "Apply local path " & Mirror.Actual.Local_Path.all);
+         Trace (Me, "Apply local path " & (+Mirror.Actual.Local_Path.all));
       end if;
 
       if Mirror.Tentative.Remote_Path /= null then
@@ -225,7 +226,7 @@ package body Remote.Path is
 
          Mirror.Actual.Remote_Path := Mirror.Tentative.Remote_Path;
          Mirror.Tentative.Remote_Path := null;
-         Trace (Me, "Apply remote path " & Mirror.Actual.Remote_Path.all);
+         Trace (Me, "Apply remote path " & (+Mirror.Actual.Remote_Path.all));
       end if;
 
       if Mirror.Tentative_Sync_Set then
@@ -259,9 +260,9 @@ package body Remote.Path is
    ---------
 
    overriding function "=" (M1, M2 : Mirror_Path) return Boolean is
-      function Same (P1, P2 : String_Access) return Boolean;
+      function Same (P1, P2 : Filesystem_String_Access) return Boolean;
 
-      function Same (P1, P2 : String_Access) return Boolean is
+      function Same (P1, P2 : Filesystem_String_Access) return Boolean is
       begin
          if P1 = null then
             return P2 = null;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -76,7 +76,7 @@ package Projects.Editor is
    procedure Rename_And_Move
      (Root_Project  : Project_Type;
       Project       : Project_Type;
-      New_Name      : String;
+      New_Name      : Filesystem_String;
       New_Path      : GNATCOLL.VFS.Virtual_File;
       Report_Errors : Output.Output_Proc := null);
    --  Rename Project to New_Name. All the nodes in the project tree starting
@@ -166,13 +166,13 @@ package Projects.Editor is
 
    function Contains_Path
      (Project : Project_Type;
-      Path    : String) return Boolean;
+      Path    : Filesystem_String) return Boolean;
    --  Return value is True if the path is defined in the project
 
    function Rename_Path
      (Project            : Project_Type;
-      Old_Path           : String;
-      New_Path           : String;
+      Old_Path           : Filesystem_String;
+      New_Path           : Filesystem_String;
       Use_Relative_Paths : Boolean) return Boolean;
    --  Renames the path to New_Path.
    --  Return value is True if the directory path could be renamed.

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Basic_Types;                use Basic_Types;
 with Toolchains;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Remote_Descriptors is
 
@@ -124,14 +125,14 @@ package body Remote_Descriptors is
    is
       --  ??? Add max_password_prompt in parameters
       Remote          : Remote_Descriptor_Access;
-      Full_Exec       : String_Access;
+      Full_Exec       : Filesystem_String_Access;
       Send_Intr       : String_Access;
       Password_Ptrn   : Pattern_Matcher_Access;
       Passphrase_Ptrn : Pattern_Matcher_Access;
       Login_Ptrn      : Pattern_Matcher_Access;
 
    begin
-      Full_Exec := Toolchains.Locate_Tool_Executable (Start_Command);
+      Full_Exec := Toolchains.Locate_Tool_Executable (+Start_Command);
 
       Remote := new Remote_Descriptor_Record;
 
@@ -168,7 +169,7 @@ package body Remote_Descriptors is
 
       Remote.all :=
         (Name => new String'(Name),
-         Start_Cmd              => Full_Exec,
+         Start_Cmd              => Convert (Full_Exec),
          Start_Cmd_Common_Args  => new String_List'(Start_Command_Common_Args),
          Start_Cmd_User_Args    => new String_List'(Start_Command_User_Args),
          Send_Interrupt         => Send_Intr,
@@ -188,7 +189,7 @@ package body Remote_Descriptors is
       --  by the GNAT.Expect.TTY.Remote package.
 
       if Full_Exec = null
-        or else Index (To_Lower (Full_Exec.all), "system32\telnet") >=
+        or else Index (To_Lower (+Full_Exec.all), "system32\telnet") >=
           Full_Exec'First
       then
          Free (Remote);

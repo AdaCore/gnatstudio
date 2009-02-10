@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -16,6 +16,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Types;              use Gdk.Types;
@@ -134,7 +136,7 @@ package body GPS.Menu is
          GPS.Kernel.Console.Insert
            (Kernel,
             "Cannot change to directory: " &
-            Full_Name (Dir).all,
+            (+Full_Name (Dir).all),
             Mode => Error);
       when E : others => Trace (Exception_Handle, E);
    end On_Change_Dir;
@@ -217,7 +219,7 @@ package body GPS.Menu is
    overriding procedure Activate
      (Callback : access On_Reopen; Item : String) is
    begin
-      Load_Project (Callback.Kernel, Create (Item));
+      Load_Project (Callback.Kernel, Create (+Item));
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -234,7 +236,7 @@ package body GPS.Menu is
       if Status (Project) = From_File and then Path /= No_File then
          Add_To_History
            (Kernel, Project_History_Key,
-            Full_Name (Path, Normalize => False).all);
+            +Full_Name (Path, Normalize => False).all);
       end if;
 
    exception

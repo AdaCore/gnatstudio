@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -177,7 +177,7 @@ package body GPS.Kernel.MDI is
 
       --  First, try to find the editor using the normalized name of File
       Child := Find_MDI_Child_By_Name
-        (MDI, Full_Name (File, Normalize => True).all);
+        (MDI, Display_Full_Name (File, Normalize => True));
 
       --  If no editor could be found matching the file name, look in the open
       --  files for a file that matches File, and then try to find an editor
@@ -197,8 +197,8 @@ package body GPS.Kernel.MDI is
                if File = Handle.Open_Files (J) then
                   return Find_MDI_Child_By_Name
                     (MDI,
-                     Full_Name
-                       (Handle.Open_Files (J), Normalize => False).all);
+                     Display_Full_Name
+                       (Handle.Open_Files (J), Normalize => False));
                end if;
             end loop;
          end if;

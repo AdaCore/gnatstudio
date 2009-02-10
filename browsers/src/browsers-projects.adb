@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,6 +41,8 @@ with Namet;                  use Namet;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
+
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Browsers.Projects is
 
@@ -280,7 +282,7 @@ package body Browsers.Projects is
    begin
       V := new Browser_Project_Vertex;
       Initialize (V, Browser,
-                  Project_Name (Project) & Project_File_Extension,
+                  Project_Name (Project) & (+Project_File_Extension),
                   On_Examine_Ancestor_Hierarchy'Access,
                   On_Examine_Prj_Hierarchy'Access);
       V.Name := Project_Name (Project);

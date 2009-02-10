@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,8 @@ pragma Warnings (On);
 with GNAT.Strings;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with System;                     use System;
 
 with Glib;                       use Glib;
@@ -256,7 +258,9 @@ package body GVD.Process is
                   Set_Attribute (Breaks, "expression", Br.Expression.all);
                end if;
                if Br.File /= GNATCOLL.VFS.No_File then
-                  Set_Attribute (Breaks, "file", Full_Name (Br.File).all);
+                  Set_Attribute (Breaks, "file", +Full_Name (Br.File).all);
+                  --  ??? Potentially non-utf8 string should not be
+                  --  stored in an XML attribute.
                end if;
                if Br.Except /= null then
                   Set_Attribute (Breaks, "exception", Br.Except.all);
@@ -364,7 +368,9 @@ package body GVD.Process is
                Br.File := GNATCOLL.VFS.No_File;
             else
                Br.File := Create
-                 (Full_Filename => Get_Attribute (Breaks, "file"));
+                 (Full_Filename => +Get_Attribute (Breaks, "file"));
+               --  ??? Potentially non-utf8 string should not be
+               --  stored in an XML attribute.
             end if;
          end;
 
@@ -717,7 +723,7 @@ package body GVD.Process is
                --  file name
                  Normalize_Pathname
                    (To_Local
-                        (Process.Current_Output (File_First .. File_Last),
+                        (+Process.Current_Output (File_First .. File_Last),
                          Debug_Server),
                     Resolve_Links => False));
          begin
@@ -1781,7 +1787,7 @@ package body GVD.Process is
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
-      Exec         : GNAT.Strings.String_Access;
+      Exec         : Filesystem_String_Access;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1792,7 +1798,8 @@ package body GVD.Process is
       ---------------------
 
       procedure Check_Extension (Module : in out Virtual_File) is
-         type Extension_Array is array (Positive range <>) of String (1 .. 4);
+         type Extension_Array is array (Positive range <>) of
+           Filesystem_String (1 .. 4);
          Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
          Tmp        : Virtual_File;
 
@@ -1842,7 +1849,8 @@ package body GVD.Process is
          --  Args (Args'First .. End_Of_Exec).
 
          declare
-            Exec_Name : constant String := Args (Args'First .. End_Of_Exec);
+            Exec_Name : constant Filesystem_String :=
+              +Args (Args'First .. End_Of_Exec);
          begin
             --  First check whether Exec_Name is an absolute path
 
@@ -1979,7 +1987,7 @@ package body GVD.Process is
          List : Argument_List := Get_Attribute_Value (Project, Main_Attribute);
       begin
          for L in List'Range loop
-            if List (L).all = Full_Name (Exec).all then
+            if +List (L).all = Full_Name (Exec).all then
                Free (List);
                return;
             end if;
@@ -2007,7 +2015,7 @@ package body GVD.Process is
          if Exec /= GNATCOLL.VFS.No_File then
             Project := Create_Project
               (Project_Registry (Get_Registry (Kernel).all),
-               "debugger_" & Base_Name (Exec), Get_Current_Dir);
+               "debugger_" & (+Base_Name (Exec)), Get_Current_Dir);
          else
             Project := Create_Project
               (Project_Registry (Get_Registry (Kernel).all),
@@ -2055,41 +2063,41 @@ package body GVD.Process is
 
          for L in List'Range loop
             declare
-               Dir   : constant String :=
-                         To_Local
-                           (GNAT.OS_Lib.Normalize_Pathname
-                              (Dir_Name (List (L).all),
-                               Dir_Name (Exec).all,
-                               Resolve_Links => False),
-                            Debug_Server);
-               Base  : constant String :=
-                         Base_Name (To_Local (List (L).all, Debug_Server));
+               Dir   : constant Filesystem_String :=
+                 To_Local
+                   (Normalize_Pathname
+                        (Dir_Name (+List (L).all),
+                         Dir_Name (Exec).all,
+                         Resolve_Links => False),
+                    Debug_Server);
+               Base  : constant Filesystem_String :=
+                 Base_Name (To_Local (+List (L).all, Debug_Server));
                Lang  : constant String :=
-                         Get_Language_From_File
-                           (Get_Language_Handler (Kernel),
-                            Create
-                              (Full_Filename => To_Local
-                                 (List (L).all, Debug_Server)));
+                 Get_Language_From_File
+                   (Get_Language_Handler (Kernel),
+                    Create
+                      (Full_Filename => To_Local
+                         (+List (L).all, Debug_Server)));
                Found : Boolean;
             begin
                Found := False;
 
-               if GNAT.OS_Lib.Is_Directory (Dir) then
+               if Is_Directory (Dir) then
                   for D in Dirs'First .. Dirs_Index - 1 loop
-                     if Dirs (D).all = Dir then
+                     if +Dirs (D).all = Dir then
                         Found := True;
                         exit;
                      end if;
                   end loop;
 
                   if not Found then
-                     Dirs (Dirs_Index) := new String'(Dir);
+                     Dirs (Dirs_Index) := new String'(+Dir);
                      Dirs_Index := Dirs_Index + 1;
                   end if;
 
                   Found := False;
                   for J in Bases'First .. Bases_Index - 1 loop
-                     if Bases (J).all = Base then
+                     if +Bases (J).all = Base then
                         Found := True;
                         exit;
                      end if;
@@ -2145,14 +2153,14 @@ package body GVD.Process is
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Obj_Dir_Attribute,
-               Value              => Dir_Name (Exec).all);
+               Value              => +Dir_Name (Exec).all);
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Exec_Dir_Attribute,
-               Value              => Dir_Name (Exec).all);
+               Value              => +Dir_Name (Exec).all);
 
-            Main (Main'First) := new String'(Full_Name (Exec).all);
+            Main (Main'First) := new String'(+Full_Name (Exec).all);
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -73,6 +73,7 @@ with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Traces;                        use Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;                    use GNATCOLL.Filesystem;
 with Generic_List;
 
 package body Browsers.Call_Graph is
@@ -497,19 +498,19 @@ package body Browsers.Call_Graph is
    begin
       if All_From_Same_File then
          return -"Entities imported from "
-           & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & Krunch (+Base_Name (Get_Filename (Decl.File)))
            & (-" into ")
-           & Krunch (Base_Name (Local_File));
+           & Krunch (+Base_Name (Local_File));
 
       elsif Local_Only then
          return -"Local references for " & Get_Name (Entity).all
-           & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & " ("  & Krunch (+Base_Name (Get_Filename (Decl.File)))
            & ":" & Image (Decl.Line) & ") " & (-"in ")
-           & Krunch (Base_Name (Local_File));
+           & Krunch (+Base_Name (Local_File));
 
       else
          return -"References for " & Get_Name (Entity).all
-           & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+           & " ("  & Krunch (+Base_Name (Get_Filename (Decl.File)))
            & ":" & Image (Decl.Line) & ")";
       end if;
    end All_Refs_Category;
@@ -549,7 +550,7 @@ package body Browsers.Call_Graph is
          Add_Line
            (Item.Refs,
             "(Decl) @"
-            & Base_Name
+            & Display_Base_Name
               (Get_Filename (Get_File (Get_Declaration_Of (Item.Entity))))
             & ':' & Image (Get_Line (Get_Declaration_Of (Item.Entity))) & '@',
             Callback =>
@@ -1623,9 +1624,10 @@ package body Browsers.Call_Graph is
 
    begin
       if Command = "dump_xref_db" then
-         Create (Output, Name => Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+         Create (Output,
+                 Name => +Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
          Trace (Me, "Database dumped in "
-                & Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+                & (+Get_Home_Dir (Get_Kernel (Data))) & "db_dump");
          Entities.Debug.Output      := My_Output'Unrestricted_Access;
          Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
          Dump (Get_Database (Get_Kernel (Data)), Full => True);
@@ -1778,7 +1780,8 @@ package body Browsers.Call_Graph is
       else
          Insert (Get_Kernel (Context.Context),
                  -"No information found for the file "
-                   & Full_Name (File_Information (Context.Context)).all,
+                 & Display_Full_Name
+                   (File_Information (Context.Context)),
                  Mode => Error);
       end if;
 

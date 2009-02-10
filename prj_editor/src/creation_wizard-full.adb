@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,8 @@ with File_Utils;         use File_Utils;
 with Project_Viewers;    use Project_Viewers;
 with Project_Properties; use Project_Properties;
 with Projects;           use Projects;
+
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Creation_Wizard.Full is
 
@@ -61,10 +63,11 @@ package body Creation_Wizard.Full is
         (Page         => Page.Page,
          Project      => Projects.No_Project,
          Full_Project =>
-           Name_As_Directory (Get_Text
+           Name_As_Directory (+Get_Text
              (Get_Path_Widget (Page.Name_And_Loc)))
-           & Get_Text (Get_Name_Widget (Page.Name_And_Loc)),
+         & (+Get_Text (Get_Name_Widget (Page.Name_And_Loc))),
          Kernel       => Get_Kernel (Wiz));
+      --  ??? What if the filesystem path is non-UTF8?
    end Create_Content;
 
    -----------------

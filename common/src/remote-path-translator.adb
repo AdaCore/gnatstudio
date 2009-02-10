@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,6 @@
 
 with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 with Filesystems;         use Filesystems;
 with Traces;              use Traces;
 
@@ -89,7 +88,7 @@ package body Remote.Path.Translator is
    ------------------------
 
    function To_Remote_Possible
-     (Path     : String;
+     (Path     : Filesystem_String;
       To       : String) return Boolean
    is
       List   : constant Mirror_List_Access := Get_List (To);
@@ -123,7 +122,7 @@ package body Remote.Path.Translator is
    -----------------------
 
    function To_Local_Possible
-     (Path : String;
+     (Path : Filesystem_String;
       From : String) return Boolean
    is
       List   : constant Mirror_List_Access := Get_List (From);
@@ -159,9 +158,9 @@ package body Remote.Path.Translator is
    ---------------
 
    function To_Remote
-     (Path       : String;
+     (Path       : Filesystem_String;
       To         : Server_Type;
-      Unix_Style : Boolean := False) return String is
+      Unix_Style : Boolean := False) return Filesystem_String is
    begin
       return To_Remote (Path, Get_Nickname (To), Unix_Style);
    end To_Remote;
@@ -171,9 +170,9 @@ package body Remote.Path.Translator is
    ---------------
 
    function To_Remote
-     (Path       : String;
+     (Path       : Filesystem_String;
       To         : String;
-      Unix_Style : Boolean := False) return String
+      Unix_Style : Boolean := False) return Filesystem_String
    is
       List      : constant Mirror_List_Access := Get_List (To);
       Cursor    : Mirror_List.Cursor;
@@ -208,16 +207,16 @@ package body Remote.Path.Translator is
       end if;
 
       declare
-         Path_From     : constant String := Mirror.Get_Local_Path;
-         Path_To       : constant String := Mirror.Get_Remote_Path;
+         Path_From     : constant Filesystem_String := Mirror.Get_Local_Path;
+         Path_To       : constant Filesystem_String := Mirror.Get_Remote_Path;
          To_Filesystem : constant Filesystem_Access := Get_Filesystem (To);
-         U_Path        : constant String :=
+         U_Path        : constant Filesystem_String :=
            Get_Local_Filesystem.To_Unix (Path);
          --  The input path in unix style
-         U_Frompath    : constant String :=
+         U_Frompath    : constant Filesystem_String :=
                            Get_Local_Filesystem.To_Unix (Path_From);
          --  The local root dir, in unix style
-         U_Subpath  : constant String :=
+         U_Subpath  : constant Filesystem_String :=
                            U_Path
                              (U_Path'First + U_Frompath'Length .. U_Path'Last);
       begin
@@ -239,7 +238,9 @@ package body Remote.Path.Translator is
    -- To_Local --
    --------------
 
-   function To_Local (Path : String; From : Server_Type) return String is
+   function To_Local
+     (Path : Filesystem_String;
+      From : Server_Type) return Filesystem_String is
    begin
       return To_Local (Path, Get_Nickname (From));
    end To_Local;
@@ -248,7 +249,10 @@ package body Remote.Path.Translator is
    -- To_Local --
    --------------
 
-   function To_Local (Path : String; From : String) return String is
+   function To_Local
+     (Path : Filesystem_String;
+      From : String) return Filesystem_String
+   is
       List      : constant Mirror_List_Access := Get_List (From);
       Cursor    : Mirror_List.Cursor;
       Mirror    : Mirror_Path := Null_Path;
@@ -261,7 +265,7 @@ package body Remote.Path.Translator is
       end if;
 
       if Active (Me) then
-         Trace (Me, "To_Local: " & Path & " on server " & From);
+         Trace (Me, "To_Local: " & (+Path) & " on server " & From);
       end if;
 
       --  Search for mirror path in 'From' config
@@ -286,14 +290,14 @@ package body Remote.Path.Translator is
       --  the path
 
       declare
-         Path_From  : constant String := Mirror.Get_Remote_Path;
-         Path_To    : constant String := Mirror.Get_Local_Path;
+         Path_From  : constant Filesystem_String := Mirror.Get_Remote_Path;
+         Path_To    : constant Filesystem_String := Mirror.Get_Local_Path;
          FS         : constant Filesystem_Access := Get_Filesystem (From);
-         U_Path     : constant String := FS.To_Unix (Path);
+         U_Path     : constant Filesystem_String := FS.To_Unix (Path);
          --  The input path in unix style
-         U_Frompath : constant String := FS.To_Unix (Path_From);
+         U_Frompath : constant Filesystem_String := FS.To_Unix (Path_From);
          --  The local root dir, in unix style
-         U_Subpath  : constant String :=
+         U_Subpath  : constant Filesystem_String :=
                         U_Path
                           (U_Path'First + U_Frompath'Length .. U_Path'Last);
 
@@ -301,8 +305,8 @@ package body Remote.Path.Translator is
          if Active (Me) then
             Trace
               (Me, " => " &
-               Get_Local_Filesystem.Concat
-                 (Path_To, Get_Local_Filesystem.From_Unix (U_Subpath)));
+               (+Get_Local_Filesystem.Concat
+                 (Path_To, Get_Local_Filesystem.From_Unix (U_Subpath))));
          end if;
 
          return Get_Local_Filesystem.Concat
@@ -315,9 +319,9 @@ package body Remote.Path.Translator is
    ------------------
 
    function To_Unix_Path
-     (Path       : String;
+     (Path       : Filesystem_String;
       Server     : Server_Type;
-      Use_Cygwin : Boolean := False) return String is
+      Use_Cygwin : Boolean := False) return Filesystem_String is
    begin
       return Get_Filesystem (Get_Nickname (Server)).To_Unix (Path, Use_Cygwin);
    end To_Unix_Path;

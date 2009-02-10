@@ -24,7 +24,7 @@ with Prj.Tree;
 with String_List_Utils;
 with Namet;
 with GNATCOLL.VFS;
-with Glib;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Projects is
 
@@ -33,7 +33,8 @@ package Projects is
    --  This type groups both the project tree and its view (i.e the tree
    --  processed according to the current environment variables)
 
-   Project_File_Extension : String renames Prj.Project_File_Extension;
+   Project_File_Extension : GNATCOLL.Filesystem.Filesystem_String :=
+     GNATCOLL.Filesystem.Filesystem_String (Prj.Project_File_Extension);
 
    type Abstract_Registry is abstract tagged null record;
    type Abstract_Registry_Access is access all Abstract_Registry'Class;
@@ -43,6 +44,7 @@ package Projects is
 
    type Error_Report is access procedure (Msg : String);
 
+   overriding
    function "=" (Prj1, Prj2 : Project_Type) return Boolean;
    --  Return true if Prj1 and Prj2 reference the same project
 
@@ -87,7 +89,7 @@ package Projects is
    --  that the latter remains independent of GPS as much as possible.
 
    function Create
-     (Base_Name       : Glib.UTF8_String;
+     (Base_Name       : Filesystem_String;
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
@@ -175,7 +177,7 @@ package Projects is
    --  Returned array must be freed by the user.
 
    function Include_Path
-     (Project : Project_Type; Recursive : Boolean) return String;
+     (Project : Project_Type; Recursive : Boolean) return Filesystem_String;
    --  Return the source path for this project. If Recursive is True, it also
    --  includes the source path for all imported projects.
    --  The directories are not normalized.
@@ -184,7 +186,7 @@ package Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean := True;
-      Xrefs_Dirs          : Boolean := False) return String;
+      Xrefs_Dirs          : Boolean := False) return Filesystem_String;
    --  Return the object path for this project. If Recursive is True, it also
    --  includes the object path for all imported projects.
    --  The empty string is returned if the project doesn't have any object
@@ -249,7 +251,7 @@ package Projects is
    --  string if the name of the unit couldn't be computed.
 
    procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : Glib.UTF8_String;
+     (Filename  : Filesystem_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Namet.Name_Id;
@@ -260,7 +262,7 @@ package Projects is
    --  used.
 
    function Delete_File_Suffix
-     (Filename : String; Project : Project_Type) return Natural;
+     (Filename : Filesystem_String; Project : Project_Type) return Natural;
    --  Return the last index in Filename before the beginning of the file
    --  suffix. Suffixes are searched independently from the language.
    --  If not matching suffix is found in project, the returned value will
@@ -268,7 +270,7 @@ package Projects is
 
    function Other_File_Base_Name
      (Project : Project_Type; Source_Filename : GNATCOLL.VFS.Virtual_File)
-      return String;
+      return Filesystem_String;
    --  Return the base name of the spec or body for Source_Filename.
    --  If the other file is not found in the project, then the other file base
    --  name, according to the GNAT naming scheme, is returned.
@@ -280,7 +282,7 @@ package Projects is
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
-      Language                 : String) return String;
+      Language                 : String) return Filesystem_String;
    --  Return the base name for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
@@ -404,7 +406,9 @@ package Projects is
    --  were defined to the empty list by the user.
 
    function Get_Executable_Name
-     (Project : Project_Type; File : String) return String;
+     (Project : Project_Type;
+      File    : GNATCOLL.Filesystem.Filesystem_String)
+      return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the name of the executable, either read from the project or
    --  computed from File
    --  If Project is No_Project, the default executable name for File is
@@ -414,7 +418,8 @@ package Projects is
      (Project : Project_Type; File : String) return Boolean;
    --  Return True if File is one of the main files of Project
 
-   function Executables_Directory (Project : Project_Type) return String;
+   function Executables_Directory
+     (Project : Project_Type) return GNATCOLL.Filesystem.Filesystem_String;
    --  Return the directory that contains the executables generated for the
    --  main programs in Project. This is either Exec_Dir or Object_Dir.
    --  The returned string always ends with a directory separator.

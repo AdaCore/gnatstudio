@@ -30,6 +30,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with ALI;
 with Namet;                     use Namet;
@@ -43,7 +44,6 @@ with Stringt;
 
 with Csets;
 with File_Utils;                use File_Utils;
-with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
@@ -173,10 +173,10 @@ package body Projects.Registry is
       --  through the function Scenario_Variables, since it needs to be
       --  initialized first.
 
-      Predefined_Object_Path : GNAT.Strings.String_Access;
+      Predefined_Object_Path : Filesystem_String_Access;
       --  Predefined object path for the runtime library
 
-      Predefined_Source_Path : GNAT.Strings.String_Access;
+      Predefined_Source_Path : Filesystem_String_Access;
       --  Predefined source paths for the runtime library
 
       Predefined_Source_Files : GNATCOLL.VFS.File_Array_Access;
@@ -233,10 +233,11 @@ package body Projects.Registry is
    --  hash-table.
 
    procedure Add_Runtime_Files
-     (Registry : in out Project_Registry; Path : String);
+     (Registry : in out Project_Registry; Path : Filesystem_String);
    --  Add all runtime files to the caches
 
-   function Normalize_Project_Path (Path : String) return String;
+   function Normalize_Project_Path
+     (Path : Filesystem_String) return Filesystem_String;
    --  Normalize the full path to a project (and make sure the project file
    --  extension is set)
 
@@ -470,21 +471,21 @@ package body Projects.Registry is
 
    function Load_Or_Find
      (Registry     : Project_Registry;
-      Project_Path : String) return Project_Type
+      Project_Path : Filesystem_String) return Project_Type
    is
-      Path : constant String :=
-               Base_Name (Project_Path, Project_File_Extension);
+      Path : constant Filesystem_String :=
+        Base_Name (Project_Path, Project_File_Extension);
       P    : Project_Type;
       Node : Project_Node_Id;
    begin
       Name_Len := Path'Length;
-      Name_Buffer (1 .. Name_Len) := Path;
+      Name_Buffer (1 .. Name_Len) := +Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
          Sinput.P.Clear_Source_File_Table;
          Sinput.P.Reset_First;
          Prj.Part.Parse (Registry.Data.Tree,
-                         Node, Normalize_Project_Path (Project_Path), True,
+                         Node, +Normalize_Project_Path (Project_Path), True,
                          Store_Comments => True,
                          Is_Config_File => False,
                          Current_Directory => Get_Current_Dir);
@@ -499,9 +500,10 @@ package body Projects.Registry is
    -- Normalize_Project_Path --
    ----------------------------
 
-   function Normalize_Project_Path (Path : String) return String is
-
-      function Extension return String;
+   function Normalize_Project_Path
+     (Path : Filesystem_String) return Filesystem_String
+   is
+      function Extension return Filesystem_String;
       --  Return the extension to add to the file name (.gpr if not already
       --  there)
 
@@ -509,7 +511,7 @@ package body Projects.Registry is
       -- Extension --
       ---------------
 
-      function Extension return String is
+      function Extension return Filesystem_String is
       begin
          if File_Extension (Path) /= Project_File_Extension then
             return Project_File_Extension;
@@ -585,11 +587,11 @@ package body Projects.Registry is
          end if;
 
          if not Is_Regular_File (Root_Project_Path) then
-            Trace (Me, "Load: " & Full_Name (Root_Project_Path).all
+            Trace (Me, "Load: " & (+Full_Name (Root_Project_Path).all)
                    & " is not a regular file");
 
             if Errors /= null then
-               Errors (Full_Name (Root_Project_Path).all
+               Errors (+Full_Name (Root_Project_Path).all
                        & (-" is not a regular file"));
             end if;
 
@@ -599,9 +601,9 @@ package body Projects.Registry is
          end if;
 
          Trace (Me, "Set project path to "
-                & Get_Predefined_Project_Path (Registry));
+                & (+Get_Predefined_Project_Path (Registry)));
          Prj.Ext.Set_Project_Path
-           (Get_Predefined_Project_Path (Registry));
+           (+Get_Predefined_Project_Path (Registry));
 
          New_Project_Loaded := True;
 
@@ -620,7 +622,7 @@ package body Projects.Registry is
          Sinput.P.Clear_Source_File_Table;
          Sinput.P.Reset_First;
          Prj.Part.Parse
-           (Registry.Data.Tree, Project, Full_Name (Root_Project_Path).all,
+           (Registry.Data.Tree, Project, +Full_Name (Root_Project_Path).all,
             True, Store_Comments => True, Is_Config_File => False,
             Current_Directory => Get_Current_Dir);
          Prj.Com.Fail := null;
@@ -896,7 +898,7 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Put_Line_Access)
    is
-      procedure Register_Directory (Directory : String);
+      procedure Register_Directory (Directory : Filesystem_String);
       --  Register Directory as belonging to Project.
       --  The parent directories are also registered.
 
@@ -904,11 +906,11 @@ package body Projects.Registry is
       -- Register_Directory --
       ------------------------
 
-      procedure Register_Directory (Directory : String) is
-         Dir  : constant String := Name_As_Directory (Directory);
+      procedure Register_Directory (Directory : Filesystem_String) is
+         Dir  : constant Filesystem_String := Name_As_Directory (Directory);
          Last : Integer := Dir'Last - 1;
       begin
-         Set (Registry.Data.Directories, K => Dir, E => Direct);
+         Set (Registry.Data.Directories, K => +Dir, E => Direct);
 
          loop
             while Last >= Dir'First
@@ -922,10 +924,10 @@ package body Projects.Registry is
             exit when Last <= Dir'First;
 
             if Get (Registry.Data.Directories,
-                    Dir (Dir'First .. Last)) /= Direct
+                    +Dir (Dir'First .. Last)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => Dir (Dir'First .. Last), E => As_Parent);
+                    K => +Dir (Dir'First .. Last), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;
@@ -962,12 +964,12 @@ package body Projects.Registry is
          Sources := Get_View (P).Source_Dirs;
          while Sources /= Nil_String loop
             Register_Directory
-              (Get_String (String_Elements (Registry)(Sources).Value));
+              (+Get_String (String_Elements (Registry)(Sources).Value));
             Sources := String_Elements (Registry)(Sources).Next;
          end loop;
 
-         Register_Directory (Get_String (Get_View (P).Object_Directory.Name));
-         Register_Directory (Get_String (Get_View (P).Exec_Directory.Name));
+         Register_Directory (+Get_String (Get_View (P).Object_Directory.Name));
+         Register_Directory (+Get_String (Get_View (P).Exec_Directory.Name));
 
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
@@ -981,9 +983,8 @@ package body Projects.Registry is
             Get_Name_String (Source.Display_File);
 
             declare
-               UTF8 : constant String :=
-                        Display_Full_Name
-                          (Create (Name_Buffer (1 .. Name_Len)));
+               UTF8           : constant String :=
+                 Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
@@ -991,9 +992,8 @@ package body Projects.Registry is
 
                declare
                   Dir : constant String :=
-                          Display_Full_Name
-                            (Create
-                               (Get_Name_String (Source.Path.Display_Name)));
+                     Display_Full_Name
+                        (Create (+Get_Name_String (Source.Path.Display_Name)));
                begin
                   Name_Len := Dir'Length;
                   Name_Buffer (1 .. Name_Len) := Dir;
@@ -1024,7 +1024,7 @@ package body Projects.Registry is
    -----------------------
 
    procedure Add_Runtime_Files
-     (Registry : in out Project_Registry; Path : String)
+     (Registry : in out Project_Registry; Path : Filesystem_String)
    is
       Iter      : Path_Iterator := Start (Path);
       Dir       : Dir_Type;
@@ -1035,10 +1035,11 @@ package body Projects.Registry is
    begin
       while not At_End (Path, Iter) loop
          declare
-            Curr : constant String := Name_As_Directory (Current (Path, Iter));
+            Curr : constant Filesystem_String :=
+              Name_As_Directory (Current (Path, Iter));
          begin
             if Curr /= "" then
-               Open (Dir, Curr);
+               Open (Dir, +Curr);
 
                loop
                   Read (Dir, File, Last);
@@ -1053,7 +1054,7 @@ package body Projects.Registry is
                      Info := Get (Registry.Data.Sources, File (1 .. Last));
                      if Info.Full_Name = No_Name then
                         Name_Len  := Curr'Length;
-                        Name_Buffer (1 .. Name_Len) := Curr;
+                        Name_Buffer (1 .. Name_Len) := +Curr;
                         Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
                           File (1 .. Last);
                         Name_Len := Name_Len + Last;
@@ -1072,7 +1073,7 @@ package body Projects.Registry is
 
          exception
             when Directory_Error =>
-               Trace (Me, "Directory_Error while opening " & Curr);
+               Trace (Me, "Directory_Error while opening " & (+Curr));
          end;
 
          Iter := Next (Path, Iter);
@@ -1238,9 +1239,9 @@ package body Projects.Registry is
             F : Virtual_File;
          begin
             if Src = No_Source_File_Data then
-               F := Create (File, Project, Use_Object_Path => False);
+               F := Create (+File, Project, Use_Object_Path => False);
             else
-               F := Create (Get_String (Src.Full_Name));
+               F := Create (+Get_String (Src.Full_Name));
             end if;
 
             --  We only add sources that can be found. In case of a debugger
@@ -1309,7 +1310,10 @@ package body Projects.Registry is
       is
          Full_Path : constant Name_Id := Get_String (Dir & Display_File);
       begin
-         Append (Source_File_List, GNATCOLL.VFS.Create (Dir & Display_File));
+         Append (Source_File_List,
+                 GNATCOLL.VFS.Create (+(Dir & Display_File)));
+         --  ??? Is Display_File the filesystem name or the name converted to
+         --  UTF8?
 
          Set
            (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
@@ -1380,7 +1384,9 @@ package body Projects.Registry is
 
          declare
             File : constant String :=
-                     Display_Full_Name (Create (Name_Buffer (1 .. Name_Len)));
+              Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
+            --  ??? This call to Display_Full_Name seems wrong: we might want
+            --  the filesystem name here?
          begin
             --  The project manager duplicates files that contain several
             --  units. Only add them once in the project sources.
@@ -1388,7 +1394,7 @@ package body Projects.Registry is
             if not Get (Seen, File) then
                Append
                  (Source_File_List,
-                  Create (File, Project, Use_Object_Path => False));
+                  Create (+File, Project, Use_Object_Path => False));
 
                --  We must set the source has seen so that it does not appear
                --  twice in the project explorer which happens for project
@@ -1460,13 +1466,13 @@ package body Projects.Registry is
             Sources_Specified := True;
 
             declare
-               F : constant String :=
+               F : constant Filesystem_String :=
                      Name_As_Directory
-                       (Get_String (View.Directory.Name)) &
-                        Get_String (Source_List_File.Value);
+                       (+Get_String (View.Directory.Name)) &
+                        (+Get_String (Source_List_File.Value));
             begin
                if Is_Regular_File (F) then
-                  Open (File, F);
+                  Open (File, +F);
 
                   while not Prj.Util.End_Of_File (File) loop
                      Prj.Util.Get_Line (File, Line, Last);
@@ -1512,7 +1518,7 @@ package body Projects.Registry is
                declare
                   UTF8      : String :=
                                 Display_Full_Name
-                                  (Create (Buffer (1 .. Length)));
+                                  (Create (+Buffer (1 .. Length)));
                   Part      : Unit_Part;
                   Unit_Name : Name_Id;
                begin
@@ -1526,7 +1532,7 @@ package body Projects.Registry is
                      --  naming scheme overrides GPS's default.
 
                      Get_Unit_Part_And_Name_From_Filename
-                       (UTF8, Project, Part, Unit_Name, Lang);
+                       (+Buffer (1 .. Length), Project, Part, Unit_Name, Lang);
 
                      --  Check if the returned language belongs to the
                      --  supported languages for the project.
@@ -1683,13 +1689,13 @@ package body Projects.Registry is
       return Project_Type
    is
       S : constant Source_File_Data :=
-            Get (Registry.Data.Sources, Base_Name (Source_Filename));
+        Get (Registry.Data.Sources, +Base_Name (Source_Filename));
       P : Project_Type := S.Project;
    begin
       --  Make sure the file we found has the same full name, since it might
       --  match a file from the project that has the same base name, but not
       --  belong to the project (FB03-003)
-      if Create (Get_String (S.Full_Name)) /= Source_Filename then
+      if Create (+Get_String (S.Full_Name)) /= Source_Filename then
          P := No_Project;
       end if;
 
@@ -1705,12 +1711,12 @@ package body Projects.Registry is
 
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Base_Name         : String;
+      Base_Name         : Filesystem_String;
       Root_If_Not_Found : Boolean := True)
       return Project_Type
    is
       P : constant Project_Type :=
-            Get (Registry.Data.Sources, Base_Name).Project;
+            Get (Registry.Data.Sources, +Base_Name).Project;
    begin
       if P = No_Project and then Root_If_Not_Found then
          return Registry.Data.Root;
@@ -1726,7 +1732,7 @@ package body Projects.Registry is
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Namet.Name_Id
    is
-      Base_Name : constant String := GNATCOLL.VFS.Base_Name (Source_Filename);
+      Base_Name : constant String := +GNATCOLL.VFS.Base_Name (Source_Filename);
       S         : constant Source_File_Data :=
                     Get (Registry.Data.Sources, Base_Name);
 
@@ -1761,7 +1767,7 @@ package body Projects.Registry is
                --  naming scheme
 
                return Languages_Htable.String_Hash_Table.Get
-                 (Registry.Data.Extensions, File_Extension (Source_Filename));
+                 (Registry.Data.Extensions, +File_Extension (Source_Filename));
             end if;
          end;
 
@@ -1977,7 +1983,7 @@ package body Projects.Registry is
    --------------------------------
 
    function Get_Predefined_Source_Path
-     (Registry : Project_Registry) return String is
+     (Registry : Project_Registry) return Filesystem_String is
    begin
       if Registry.Data.Predefined_Source_Path /= null then
          return Registry.Data.Predefined_Source_Path.all;
@@ -1991,7 +1997,7 @@ package body Projects.Registry is
    --------------------------------
 
    function Get_Predefined_Object_Path
-     (Registry : Project_Registry) return String is
+     (Registry : Project_Registry) return Filesystem_String is
    begin
       if Registry.Data.Predefined_Object_Path /= null then
          return Registry.Data.Predefined_Object_Path.all;
@@ -2028,10 +2034,10 @@ package body Projects.Registry is
    --------------------------------
 
    procedure Set_Predefined_Source_Path
-     (Registry : in out Project_Registry; Path : String) is
+     (Registry : in out Project_Registry; Path : Filesystem_String) is
    begin
       Free (Registry.Data.Predefined_Source_Path);
-      Registry.Data.Predefined_Source_Path := new String'(Path);
+      Registry.Data.Predefined_Source_Path := new Filesystem_String'(Path);
 
       Unchecked_Free (Registry.Data.Predefined_Source_Files);
 
@@ -2043,10 +2049,10 @@ package body Projects.Registry is
    --------------------------------
 
    procedure Set_Predefined_Object_Path
-     (Registry : in out Project_Registry; Path : String) is
+     (Registry : in out Project_Registry; Path : Filesystem_String) is
    begin
       Free (Registry.Data.Predefined_Object_Path);
-      Registry.Data.Predefined_Object_Path := new String'(Path);
+      Registry.Data.Predefined_Object_Path := new Filesystem_String'(Path);
    end Set_Predefined_Object_Path;
 
    ---------------------------------
@@ -2054,10 +2060,10 @@ package body Projects.Registry is
    ---------------------------------
 
    procedure Set_Predefined_Project_Path
-     (Registry : in out Project_Registry; Path : String) is
+     (Registry : in out Project_Registry; Path : Filesystem_String) is
       pragma Unreferenced (Registry);
    begin
-      Prj.Ext.Set_Project_Path (Path);
+      Prj.Ext.Set_Project_Path (+Path);
    end Set_Predefined_Project_Path;
 
    -----------------------------
@@ -2066,15 +2072,14 @@ package body Projects.Registry is
 
    procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : Glib.UTF8_String;
+      Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
       Project         : Project_Type := No_Project)
    is
-      Locale                 : constant String :=
-                                 Filesystems.Filename_From_UTF8 (Filename);
+      Locale                 : Filesystem_String renames Filename;
       Project2, Real_Project : Project_Type;
-      Path                   : GNAT.Strings.String_Access;
+      Path                   : Filesystem_String_Access;
       Iterator               : Imported_Project_Iterator;
       Info                   : Source_File_Data := No_Source_File_Data;
 
@@ -2098,7 +2103,7 @@ package body Projects.Registry is
          --  First check the cache
 
          if Use_Source_Path then
-            Info := Get (Registry.Data.Sources, Filename);
+            Info := Get (Registry.Data.Sources, +Filename);
 
             if Info.Full_Name = Name_A then
                --  Not found previously, we do not try again
@@ -2115,8 +2120,7 @@ package body Projects.Registry is
          --  (in case an old copy is kept somewhere in the source or object
          --  path)
 
-         if GNAT.Directory_Operations.File_Extension (Locale) =
-           Project_File_Extension
+         if File_Extension (Locale) = Project_File_Extension
            and then Get_View (Get_Root_Project (Registry)) /= Prj.No_Project
          then
             Iterator := Start (Get_Root_Project (Registry));
@@ -2125,7 +2129,7 @@ package body Projects.Registry is
                Project2 := Current (Iterator);
                exit when Project2 = No_Project;
 
-               if Project_Name (Project2) & Project_File_Extension =
+               if +Project_Name (Project2) & Project_File_Extension =
                  Filename
                then
                   declare
@@ -2133,10 +2137,10 @@ package body Projects.Registry is
                      --  otherwise references to S in this block are reported
                      --  by valgrind as reference memory that has been freed
                      P : constant Virtual_File := Project_Path (Project2);
-                     S : constant String := Full_Name (P).all;
+                     S : constant Filesystem_String := Full_Name (P).all;
                   begin
                      Name_Len := S'Length;
-                     Name_Buffer (1 .. Name_Len) := S;
+                     Name_Buffer (1 .. Name_Len) := +S;
                      return;
                   end;
                end if;
@@ -2211,7 +2215,7 @@ package body Projects.Registry is
                  and then Project2 = Real_Project
                then
                   Info.Full_Name := Name_Find;
-                  Set (Registry.Data.Sources, Filename, Info);
+                  Set (Registry.Data.Sources, +Filename, Info);
                end if;
             end;
 
@@ -2225,7 +2229,7 @@ package body Projects.Registry is
                Info := (Project   => Project2,
                         Lang      => No_Name,
                         Full_Name => Name_A);
-               Set (Registry.Data.Sources, Filename, Info);
+               Set (Registry.Data.Sources, +Filename, Info);
             end if;
 
             Name_Len := 0;
@@ -2243,14 +2247,14 @@ package body Projects.Registry is
 
    function Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : String;
+      Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project) return String is
+      Project         : Project_Type := No_Project) return Filesystem_String is
    begin
       Get_Full_Path_From_File
         (Registry, Filename, Use_Source_Path, Use_Object_Path, Project);
-      return Name_Buffer (1 .. Name_Len);
+      return +Name_Buffer (1 .. Name_Len);
    end Get_Full_Path_From_File;
 
    ----------------------------------
@@ -2259,12 +2263,12 @@ package body Projects.Registry is
 
    function Directory_Belongs_To_Project
      (Registry    : Project_Registry;
-      Directory   : String;
+      Directory   : Filesystem_String;
       Direct_Only : Boolean := True) return Boolean
    is
       Belong : constant Directory_Dependency :=
                  Get (Registry.Data.Directories,
-                      Name_As_Directory (Directory));
+                      +Name_As_Directory (Directory));
    begin
       return Belong = Direct
         or else (not Direct_Only and then Belong = As_Parent);
@@ -2275,7 +2279,7 @@ package body Projects.Registry is
    ------------
 
    function Create
-     (Name            : Glib.UTF8_String;
+     (Name            : Filesystem_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
@@ -2285,7 +2289,7 @@ package body Projects.Registry is
 
       else
          declare
-            Full : constant String := Get_Full_Path_From_File
+            Full : constant Filesystem_String := Get_Full_Path_From_File
               (Registry        => Registry,
                Filename        => Name,
                Use_Source_Path => Use_Source_Path,
@@ -2302,8 +2306,8 @@ package body Projects.Registry is
          --  ??? To remove convertion to/from UTF8 we need a Normalize_Pathname
          --  which supports UTF-8.
          return Create
-           (Full_Filename => Filesystems.Filename_To_UTF8
-              (Normalize_Pathname (Filesystems.Filename_From_UTF8 (Name),
+           (Full_Filename =>
+              (Normalize_Pathname (Name,
                                    Resolve_Links => False)));
       end if;
    end Create;
@@ -2313,11 +2317,11 @@ package body Projects.Registry is
    ---------------------------------
 
    function Get_Predefined_Project_Path
-     (Registry : Project_Registry) return String
+     (Registry : Project_Registry) return Filesystem_String
    is
       pragma Unreferenced (Registry);
    begin
-      return Prj.Ext.Project_Path;
+      return +Prj.Ext.Project_Path;
    end Get_Predefined_Project_Path;
 
    ----------------------
@@ -2325,7 +2329,7 @@ package body Projects.Registry is
    ----------------------
 
    procedure Set_Xrefs_Subdir
-     (Registry : in out Project_Registry; Subdir : String)
+     (Registry : in out Project_Registry; Subdir : Filesystem_String)
    is
    begin
       if Registry.Data.Xrefs_Subdir /= null then
@@ -2333,7 +2337,7 @@ package body Projects.Registry is
       end if;
 
       if Subdir /= "" then
-         Registry.Data.Xrefs_Subdir := new String'(Subdir);
+         Registry.Data.Xrefs_Subdir := new String'(+Subdir);
       end if;
    end Set_Xrefs_Subdir;
 
@@ -2342,7 +2346,7 @@ package body Projects.Registry is
    ---------------------
 
    procedure Set_Mode_Subdir
-     (Registry : in out Project_Registry; Subdir : String)
+     (Registry : in out Project_Registry; Subdir : Filesystem_String)
    is
    begin
       if Prj.Subdirs /= null then
@@ -2351,7 +2355,7 @@ package body Projects.Registry is
       end if;
 
       if Subdir /= "" then
-         Prj.Subdirs := new String'(Subdir);
+         Prj.Subdirs := new String'(+Subdir);
       end if;
    end Set_Mode_Subdir;
 
@@ -2360,20 +2364,21 @@ package body Projects.Registry is
    ----------------------
 
    function Get_Xrefs_Subdir
-     (Registry : Project_Registry) return String is
+     (Registry : Project_Registry) return Filesystem_String is
    begin
       if Registry.Data.Xrefs_Subdir = null then
          return "";
       end if;
 
-      return Registry.Data.Xrefs_Subdir.all;
+      return +Registry.Data.Xrefs_Subdir.all;
    end Get_Xrefs_Subdir;
 
    ---------------------
    -- Get_Mode_Subdir --
    ---------------------
 
-   function Get_Mode_Subdir (Registry : Project_Registry) return String
+   function Get_Mode_Subdir
+     (Registry : Project_Registry) return Filesystem_String
    is
       pragma Unreferenced (Registry);
    begin
@@ -2381,7 +2386,7 @@ package body Projects.Registry is
          return "";
       end if;
 
-      return Prj.Subdirs.all;
+      return +Prj.Subdirs.all;
    end Get_Mode_Subdir;
 
    ------------------------
@@ -2389,15 +2394,15 @@ package body Projects.Registry is
    ------------------------
 
    procedure Do_Subdirs_Cleanup (Registry : Project_Registry) is
-      function Get_Paths return String;
+      function Get_Paths return Filesystem_String;
       --  Get the list of directories that potentially need cleanup
 
-      function Get_Paths return String is
+      function Get_Paths return Filesystem_String is
       begin
          if Registry.Data = null
            or else Get_View (Registry.Data.Root) = Prj.No_Project
          then
-            return Prj.Subdirs.all;
+            return +Prj.Subdirs.all;
          else
             declare
                Objs : constant String :=
@@ -2406,9 +2411,9 @@ package body Projects.Registry is
                            Registry.Data.Root.View_Tree).all;
             begin
                if Objs = "" then
-                  return Prj.Subdirs.all;
+                  return +Prj.Subdirs.all;
                else
-                  return Objs;
+                  return +Objs;
                end if;
             end;
          end if;
@@ -2423,20 +2428,20 @@ package body Projects.Registry is
       end if;
 
       declare
-         Objs : constant String := Get_Paths;
+         Objs : constant Filesystem_String := Get_Paths;
       begin
          Dir_Iter := Start (Objs);
 
          while not At_End (Objs, Dir_Iter) loop
             declare
-               Dir : constant String := Current (Objs, Dir_Iter);
+               Dir : constant Filesystem_String := Current (Objs, Dir_Iter);
             begin
                if Dir /= ""
                  and then Is_Directory (Dir)
                  and then Is_Empty (Dir)
                then
                   --  Remove emtpy directories
-                  GNAT.Directory_Operations.Remove_Dir (Dir);
+                  GNAT.Directory_Operations.Remove_Dir (+Dir);
                end if;
             end;
 

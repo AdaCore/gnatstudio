@@ -22,9 +22,9 @@ with Ada.Unchecked_Deallocation; use Ada;
 with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Strings;
 with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -66,6 +66,7 @@ with String_List_Utils;          use String_List_Utils;
 with File_Utils;                 use File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with OS_Utils;                   use OS_Utils;
+with UTF8_Utils;                 use UTF8_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
@@ -88,8 +89,8 @@ package body Project_Explorers_Files is
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
-      Norm_Dest     : GNAT.Strings.String_Access;
-      Norm_Dir      : GNAT.Strings.String_Access;
+      Norm_Dest     : Filesystem_String_Access;
+      Norm_Dir      : Filesystem_String_Access;
       D             : GNAT.Directory_Operations.Dir_Type;
       Depth         : Integer := 0;
       Base          : Gtk_Tree_Iter;
@@ -107,15 +108,15 @@ package body Project_Explorers_Files is
    --  Sets the types of columns to be displayed in the tree_view
 
    function Parse_Path
-     (Path : String) return String_List_Utils.String_List.List;
+     (Path : Filesystem_String) return String_List_Utils.String_List.List;
    --  Parse a path string and return a list of all directories in it
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
-      Dir           : String;
+      Dir           : Filesystem_String;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : String  := "";
+      Append_To_Dir : Filesystem_String  := "";
       Idle          : Boolean := False;
       Physical_Read : Boolean := True);
    --  Add to the file view the directory Dir, at node given by Iter.
@@ -186,7 +187,7 @@ package body Project_Explorers_Files is
    --  event or a null menu.
 
    function Greatest_Common_Path
-     (L : String_List_Utils.String_List.List) return String;
+     (L : String_List_Utils.String_List.List) return Filesystem_String;
    --  Return the greatest common path to a list of directories
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -309,11 +310,13 @@ package body Project_Explorers_Files is
          Append (D.Explorer.File_Model, Iter, D.Base);
 
          declare
-            Dir : constant String :=
-                    Display_Full_Name (Create (D.Norm_Dir.all));
+            Dir         : constant Virtual_File := Create (D.Norm_Dir.all);
+            FS_Dir      : constant Filesystem_String := Full_Name (Dir).all;
+            Display_Dir : constant String := Display_Full_Name (Dir);
          begin
-            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column, Dir);
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column, Dir);
+            Set (D.Explorer.File_Model, Iter, Filesystem_Name_Column, +FS_Dir);
+            Set
+              (D.Explorer.File_Model, Iter, Display_Name_Column, Display_Dir);
          end;
 
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
@@ -345,7 +348,7 @@ package body Project_Explorers_Files is
            and then not (Last = 2 and then File (1 .. 2) = "..")
          then
             declare
-               Name : constant String := File (File'First .. Last);
+               Name : constant Filesystem_String := +File (File'First .. Last);
                P    : Project_Type;
             begin
                if Get_History
@@ -377,10 +380,10 @@ package body Project_Explorers_Files is
 
                      if P /= No_Project
                        and then File_Equal
-                         (Dir_Name (Name_Buffer (1 .. Name_Len)),
+                         (+Dir_Name (Name_Buffer (1 .. Name_Len)),
                           D.Norm_Dir.all, Build_Server)
                      then
-                        Append (D.Files, Name);
+                        Append (D.Files, +Name);
                      end if;
                   end if;
 
@@ -422,13 +425,13 @@ package body Project_Explorers_Files is
 
       while not Is_Empty (D.Dirs) loop
          declare
-            Dir : constant String := Head (D.Dirs);
+            Dir : constant Filesystem_String := +Head (D.Dirs);
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
-            Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-                 Display_Full_Name
-                   (Create (D.Norm_Dir.all & Dir & Directory_Separator)));
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+            Set (D.Explorer.File_Model, Iter, Filesystem_Name_Column,
+                 +Full_Name
+                   (Create (D.Norm_Dir.all & Dir & Directory_Separator)).all);
+            Set (D.Explorer.File_Model, Iter, Display_Name_Column,
                  Display_Full_Name (Create (Dir)));
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
                  Gint (Node_Types'Pos (Directory_Node)));
@@ -527,7 +530,7 @@ package body Project_Explorers_Files is
            (D.Explorer.Kernel,
             D.Explorer.File_Model,
             D.Base,
-            Create (Full_Filename => D.Norm_Dir.all & Head (D.Files)));
+            Create (Full_Filename => D.Norm_Dir.all & (+Head (D.Files))));
          Next (D.Files);
       end loop;
 
@@ -560,10 +563,10 @@ package body Project_Explorers_Files is
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
-      Dir           : String;
+      Dir           : Filesystem_String;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : String  := "";
+      Append_To_Dir : Filesystem_String  := "";
       Idle          : Boolean := False;
       Physical_Read : Boolean := True)
    is
@@ -585,15 +588,15 @@ package body Project_Explorers_Files is
          --  Force a final directory separator, since otherwise on Windows
          --  "C:\" is converted to "C:" and only file names relative to the
          --  current directory will be returned
-         D.Norm_Dir := new String'
+         D.Norm_Dir := new Filesystem_String'
            (Name_As_Directory (Normalize_Pathname (Dir)));
 
       else
-         D.Norm_Dir := new String'
+         D.Norm_Dir := new Filesystem_String'
            (Name_As_Directory (Normalize_Pathname (Dir)));
       end if;
 
-      D.Norm_Dest     := new String'
+      D.Norm_Dest     := new Filesystem_String'
         (Name_As_Directory (Normalize_Pathname (Append_To_Dir)));
       D.Depth         := Depth;
       D.Base          := Base;
@@ -645,7 +648,7 @@ package body Project_Explorers_Files is
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
+      Add_Attribute (Col, Text_Rend, "text", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
@@ -804,7 +807,8 @@ package body Project_Explorers_Files is
             when Directory_Node | File_Node =>
                File := Create
                  (Full_Filename =>
-                    (Get_String (T.File_Model, Iter, Absolute_Name_Column)));
+                    (+Get_String
+                       (T.File_Model, Iter, Filesystem_Name_Column)));
                Set_File_Information (Context, (1 => File));
 
             when Entity_Node =>
@@ -876,8 +880,8 @@ package body Project_Explorers_Files is
 
       if Iter /= Null_Iter then
          declare
-            Iter_Name : constant String :=
-              Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            Iter_Name : constant Filesystem_String :=
+              +Get_String (T.File_Model, Iter, Filesystem_Name_Column);
 
          begin
             if Is_Directory (Iter_Name) then
@@ -946,8 +950,8 @@ package body Project_Explorers_Files is
          T.Expanding := True;
 
          declare
-            Iter_Name : constant String :=
-                         Get_String (T.File_Model, Iter, Absolute_Name_Column);
+            Iter_Name : constant Filesystem_String :=
+              +Get_String (T.File_Model, Iter, Filesystem_Name_Column);
             N_Type    : constant Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
@@ -1059,9 +1063,9 @@ package body Project_Explorers_Files is
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Explorer     : constant Project_Explorer_Files :=
                        Project_Explorer_Files (Files);
-      Buffer       : aliased String (1 .. 1024);
+      Buffer       : aliased Filesystem_String (1 .. 1024);
       Last, Len    : Integer;
-      Cur_Dir      : constant String := Get_Current_Dir;
+      Cur_Dir      : constant Filesystem_String := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
 
    begin
@@ -1149,7 +1153,7 @@ package body Project_Explorers_Files is
    ----------------
 
    function Parse_Path
-     (Path : String) return String_List_Utils.String_List.List
+     (Path : Filesystem_String) return String_List_Utils.String_List.List
    is
       First : Integer;
       Index : Integer;
@@ -1163,7 +1167,7 @@ package body Project_Explorers_Files is
 
       while Index <= Path'Last loop
          if Path (Index) = Path_Separator then
-            Append (Result, Path (First .. Index - 1));
+            Append (Result, +Path (First .. Index - 1));
             Index := Index + 1;
             First := Index;
          end if;
@@ -1172,7 +1176,7 @@ package body Project_Explorers_Files is
       end loop;
 
       if First /= Path'Last then
-         Append (Result, Path (First .. Path'Last));
+         Append (Result, +Path (First .. Path'Last));
       end if;
 
       return Result;
@@ -1183,7 +1187,7 @@ package body Project_Explorers_Files is
    --------------------------
 
    function Greatest_Common_Path
-     (L : String_List_Utils.String_List.List) return String
+     (L : String_List_Utils.String_List.List) return Filesystem_String
    is
       use String_List_Utils.String_List;
 
@@ -1196,7 +1200,7 @@ package body Project_Explorers_Files is
       N := First (L);
 
       declare
-         Greatest_Prefix        : constant String  := Data (N);
+         Greatest_Prefix        : constant Filesystem_String := +Data (N);
          Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
       begin
          N := Next (N);
@@ -1277,7 +1281,7 @@ package body Project_Explorers_Files is
 
       while Iter /= Null_Iter loop
          if File_Equal
-           (Get_String (View.File_Model, Iter, Absolute_Name_Column),
+           (+Get_String (View.File_Model, Iter, Filesystem_Name_Column),
             File.Full_Name.all)
          then
             --  First select the parent and set the 'scroll to dir' state
@@ -1339,7 +1343,7 @@ package body Project_Explorers_Files is
 
       while Iter /= Null_Iter loop
          if File_Equal
-           (Get_String (View.File_Model, Iter, Absolute_Name_Column),
+           (+Get_String (View.File_Model, Iter, Filesystem_Name_Column),
             Dir.Full_Name.all)
          then
             --  We found the file's directory
@@ -1362,8 +1366,8 @@ package body Project_Explorers_Files is
 
             while Next_Iter /= Null_Iter loop
                if File_Equal
-                 (Get_String
-                    (View.File_Model, Next_Iter, Absolute_Name_Column),
+                 (+Get_String
+                    (View.File_Model, Next_Iter, Filesystem_Name_Column),
                   File.Full_Name.all)
                then
                   --  File already present. Do nothing
@@ -1386,8 +1390,8 @@ package body Project_Explorers_Files is
                     Directory_Node
                   then
                      declare
-                        Name : constant String :=
-                                 Get_Base_Name (View.File_Model, Next_Iter);
+                        Name : constant Filesystem_String :=
+                          Get_Base_Name (View.File_Model, Next_Iter);
                      begin
                         if Name > File.Base_Dir_Name then
                            Insert_Before
@@ -1414,10 +1418,10 @@ package body Project_Explorers_Files is
                   Append (View.File_Model, Iter2, Iter);
                end if;
 
-               Set (View.File_Model, Iter2, Absolute_Name_Column,
-                    File.Full_Name.all);
-               Set (View.File_Model, Iter2, Base_Name_Column,
-                    File.Base_Dir_Name);
+               Set (View.File_Model, Iter2, Filesystem_Name_Column,
+                    +File.Full_Name.all);
+               Set (View.File_Model, Iter2, Display_Name_Column,
+                    Unknown_To_UTF8 (+File.Base_Dir_Name));
                Set_Node_Type (View.File_Model, Iter2, Directory_Node, False);
                File_Append_Directory (View, File.Full_Name.all, Iter2);
             else

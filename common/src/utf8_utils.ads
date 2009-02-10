@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2007-2008, AdaCore               --
+--                    Copyright (C) 2007-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,11 @@ package UTF8_Utils is
    --    - if S does not contain valid UTF-8, assume it is encoded using the
    --      locale, and attempt to convert it from the locale to UTF-8.
    --  Success is set to False if the conversion failed.
+
+   function Unknown_To_UTF8
+     (Input   : String) return Glib.UTF8_String;
+   --  Same as above, but return "<could not convert to UTF8>" if the
+   --  conversion could not be done.
 
    procedure Unknown_To_UTF8
      (Input   : String;

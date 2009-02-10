@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,7 @@
 --  between a remote host and the local machine.
 
 with Ada.Containers.Doubly_Linked_Lists;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Remote.Path.Translator is
 
@@ -44,42 +44,42 @@ package Remote.Path.Translator is
    -----------------------
 
    function To_Remote_Possible
-     (Path : String;
+     (Path : Filesystem_String;
       To   : String) return Boolean;
    --  Tell if path equivalence on To server exists
 
    function To_Local_Possible
-     (Path : String;
+     (Path : Filesystem_String;
       From : String) return Boolean;
    --  Tell if From'path equivalence on local server exists
 
    function To_Remote
-     (Path       : String;
+     (Path       : Filesystem_String;
       To         : Server_Type;
-      Unix_Style : Boolean := False) return String;
+      Unix_Style : Boolean := False) return Filesystem_String;
    --  Translate a local file/directory path to server 'To'
    --  if Unix_Style is set, the translated path will have a unix style.
 
    function To_Remote
-     (Path       : String;
+     (Path       : Filesystem_String;
       To         : String;
-      Unix_Style : Boolean := False) return String;
+      Unix_Style : Boolean := False) return Filesystem_String;
    --  Same as above, using To's nickname instead of Server_Type
 
    function To_Local
-     (Path : String;
-      From : Server_Type) return String;
+     (Path : Filesystem_String;
+      From : Server_Type) return Filesystem_String;
    --  Translate a remote file/directory path from server 'From' to local path.
 
    function To_Local
-     (Path : String;
-      From : String) return String;
+     (Path : Filesystem_String;
+      From : String) return Filesystem_String;
    --  Same as above, using From's nickname instead of Server_Type.
 
    function To_Unix_Path
-     (Path       : String;
+     (Path       : Filesystem_String;
       Server     : Server_Type;
-      Use_Cygwin : Boolean := False) return String;
+      Use_Cygwin : Boolean := False) return Filesystem_String;
    --  Transform a remote path into unix path style.
    --  Use_Cygwin forces cygwin style path if filesystem of server is
    --  windows fs

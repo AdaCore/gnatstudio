@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -72,7 +72,8 @@ package body Coverage_GUI is
          else
             GPS.Kernel.Console.Insert
               (Kernel,
-               -"Could not find coverage file " & Full_Name (Cov_File).all);
+               -"Could not find coverage file " &
+               Display_Full_Name (Cov_File));
 
             declare
                File_Node : constant Code_Analysis.File_Access :=
@@ -106,7 +107,7 @@ package body Coverage_GUI is
    begin
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
          GPS.Kernel.Console.Insert
-           (Kernel, Base_Name (Src_File) &
+           (Kernel, Display_Base_Name (Src_File) &
          (-" has been modified since GCOV information were generated.") &
          (-" Skipped."),
             Mode => GPS.Kernel.Console.Error);
@@ -300,12 +301,12 @@ package body Coverage_GUI is
          if not File_Added then
             GPS.Kernel.Console.Insert
               (Kernel, -"There is no uncovered line in " &
-               Base_Name (File_Node.Name));
+               Display_Base_Name (File_Node.Name));
          end if;
       else
          GPS.Kernel.Console.Insert
            (Kernel, -"There is no Gcov information associated with " &
-            Base_Name (File_Node.Name),
+            Display_Base_Name (File_Node.Name),
             Mode => GPS.Kernel.Console.Info);
       end if;
    end List_File_Uncovered_Lines;
@@ -405,7 +406,7 @@ package body Coverage_GUI is
       else
          GPS.Kernel.Console.Insert
            (Kernel, -"There is no Gcov information associated with " &
-            Base_Name (File_Node.Name),
+            Display_Base_Name (File_Node.Name),
             Mode => GPS.Kernel.Console.Error);
       end if;
    end List_Subprogram_Uncovered_Lines;
@@ -490,7 +491,7 @@ package body Coverage_GUI is
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
                Result := Create
-                 (Gcov_Root.all & Directory_Separator &
+                 (+Gcov_Root.all & Directory_Separator &
                   Base_Name (Source) & Gcov_Extension_Cst);
 
                Free (Gcov_Root);

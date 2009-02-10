@@ -22,8 +22,10 @@ with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Object;              use Glib.Object;
@@ -950,7 +952,7 @@ package body GUI_Utils is
    begin
       Initialize
         (Gtk_Menu_Item (Menu_Item),
-         Krunch (Display_Full_Name (Create (Label)), 60));
+         Krunch (Display_Full_Name (Create (+Label)), 60));
       Menu_Item.Full_Path := Path;
    end Initialize;
 
@@ -1986,5 +1988,23 @@ package body GUI_Utils is
       Gtk_New (Lab, Label);
       Pack_Start (Box, Lab, Expand => False, Fill => True);
    end Gtk_New_From_Stock_And_Label;
+
+   ------------
+   -- Format --
+   ------------
+
+   function Format (S : String) return String is
+      D : constant String := Format_Pathname (S, UNIX);
+   begin
+      if S = "" then
+         return "";
+      end if;
+
+      if D (D'Last) = '/' then
+         return D;
+      else
+         return D & '/';
+      end if;
+   end Format;
 
 end GUI_Utils;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -39,7 +39,7 @@ package body Input_Sources.Mmap is
    -- Open --
    ----------
 
-   procedure Open (Filename : String; Input : out Mmap_Input) is
+   procedure Open (Filename : Filesystem_String; Input : out Mmap_Input) is
       BOM    : Bom_Type;
    begin
       Input.File := Open_Read (Filename);
@@ -67,8 +67,8 @@ package body Input_Sources.Mmap is
       Input.Index := 1 + Input.Prolog_Size;
 
       --  Base file name should be used as the public Id
-      Set_Public_Id (Input, Filename);
-      Set_System_Id (Input, Filename);
+      Set_Public_Id (Input, +Filename);
+      Set_System_Id (Input, +Filename);
    end Open;
 
    -----------

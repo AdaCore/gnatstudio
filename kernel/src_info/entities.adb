@@ -24,6 +24,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
@@ -430,7 +431,7 @@ package body Entities is
    procedure Reset (LI : LI_File) is
    begin
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Reseting LI " & Full_Name (LI.Name).all);
+         Trace (Assert_Me, "Reseting LI " & (+Full_Name (LI.Name).all));
       end if;
 
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
@@ -494,7 +495,7 @@ package body Entities is
                Check_Entity_Is_Valid
                  (Entity,
                   "Mark_And_Isolate_Entities "
-                  & Base_Name (Get_Filename (File)));
+                  & Display_Base_Name (Get_Filename (File)));
             end if;
 
             To := Entity_Reference_Arrays.Index_Type'Last;
@@ -571,7 +572,7 @@ package body Entities is
       Tmp : Source_File;
    begin
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
+         Trace (Assert_Me, "Reseting " & (+Full_Name (File.Name).all));
          if Base_Name (Get_Filename (File)) = "atree.ads" then
             Debug.Dump (File, Show_Entities => True, Full => True);
          end if;
@@ -883,7 +884,7 @@ package body Entities is
             if Active (Ref_Me) then
                Trace (Ref_Me, "Freeing " & Entity.Name.all
                       & ":"
-                      & Base_Name (Get_Filename (Entity.Declaration.File))
+                      & (+Base_Name (Get_Filename (Entity.Declaration.File)))
                       & Entity.Declaration.Line'Img
                       & " ref_count=" & Entity.Ref_Count'Img);
             end if;
@@ -898,7 +899,7 @@ package body Entities is
             if Active (Debug_Me) then
                Shared := new String'
                  (Entity.Name.all
-                  & ':' & Base_Name (Entity.Declaration.File.Name));
+                  & ':' & (+Base_Name (Entity.Declaration.File.Name)));
             end if;
 
             --  Temporarily fool the system, otherwise we cannot remove the
@@ -1026,9 +1027,9 @@ package body Entities is
    function Hash (Key : GNATCOLL.VFS.Cst_String_Access) return HTable_Header is
    begin
       if Is_Case_Sensitive (Build_Server) then
-         return String_Hash (Key.all);
+         return String_Hash (+Key.all);
       else
-         return String_Hash (To_Lower (Key.all));
+         return String_Hash (To_Lower (+Key.all));
       end if;
    end Hash;
 
@@ -1087,7 +1088,7 @@ package body Entities is
       if Is_Case_Sensitive (Build_Server) then
          return K1 = K2 or else K1.all = K2.all;
       else
-         return K1 = K2 or else To_Lower (K1.all) = To_Lower (K2.all);
+         return K1 = K2 or else To_Lower (+K1.all) = To_Lower (+K2.all);
       end if;
    end Equal;
 
@@ -1301,7 +1302,7 @@ package body Entities is
 
    function Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : String;
+      Full_Filename : Filesystem_String;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
       Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
@@ -1321,12 +1322,18 @@ package body Entities is
             Use_Object_Path => False);
 
          if Name_Len /= 0 then
-            return Internal_Get_Or_Create
-              (Db, Name_Buffer (1 .. Name_Len)'Unrestricted_Access,
-               GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
+            declare
+               Str : aliased constant Filesystem_String :=
+                 +Name_Buffer (1 .. Name_Len);
+            begin
+               return Internal_Get_Or_Create
+                 (Db, Str'Unrestricted_Access,
+                  GNATCOLL.VFS.No_File,
+                  Handler, LI, Timestamp, Allow_Create);
+            end;
          else
             declare
-               Str : aliased constant String := Normalize_Pathname
+               Str : aliased constant Filesystem_String := Normalize_Pathname
                  (Full_Filename, Resolve_Links => False);
             begin
                return Internal_Get_Or_Create
@@ -1766,7 +1773,7 @@ package body Entities is
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
       if Active (Ref_Me) then
          Trace (Ref_Me, "Get_Or_Create entity name=" & Name
-                & " File=" & Base_Name (Get_Filename (File))
+                & " File=" & (+Base_Name (Get_Filename (File)))
                 & " Line=" & Line'Img);
       end if;
 
@@ -1989,7 +1996,7 @@ package body Entities is
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Is_Up_To_Date: "
-                & Base_Name (Get_Filename (File))
+                & (+Base_Name (Get_Filename (File)))
                 & " file time:" & Image (From_Disk, "%D-%T")
                 & " memory: " & Image (File.Timestamp, "%D-%T")
                 & " => " & Result'Img);

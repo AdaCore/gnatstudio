@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2007                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,6 +32,8 @@ with Histories;           use Histories;
 
 with Aunit_Utils;         use Aunit_Utils;
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
+
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Make_Suite_Window_Pkg is
    --  "AUnit_Make_Suite" main window definition.
@@ -111,7 +112,8 @@ package body Make_Suite_Window_Pkg is
       Set_Editable (Make_Suite_Window.Directory_Entry, True);
       Set_Max_Length (Make_Suite_Window.Directory_Entry, 0);
       Set_Text (Make_Suite_Window.Directory_Entry,
-                Get_Context_Directory (Handle));
+                +Get_Context_Directory (Handle));
+      --  ??? What if the filesystem path is non-UTF8?
       Set_Visibility (Make_Suite_Window.Directory_Entry, True);
       Pack_Start (Hbox4, Make_Suite_Window.Directory_Entry, True, True, 3);
       Widget_Callback.Connect

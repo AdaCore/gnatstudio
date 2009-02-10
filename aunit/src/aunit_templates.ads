@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2006                            --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,19 +23,20 @@
 with GPS.Kernel; use GPS.Kernel;
 
 with Templates_Parser; use Templates_Parser;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package AUnit_Templates is
 
    function Get_Template_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Base   : String) return String;
+      Base   : Filesystem_String) return Filesystem_String;
    --  Retrieve the template's full file name from base name
 
    procedure Create_Files
      (Kernel         : access Kernel_Handle_Record'Class;
-      Base_Template  : String;
+      Base_Template  : Filesystem_String;
       Translations   : Translate_Set;
-      Directory_Name : String;
+      Directory_Name : Filesystem_String;
       Name           : String;
       Success        : out Boolean);
    --  Create Directory_Name/Name.ads and Directory_Name/Name.adb files using

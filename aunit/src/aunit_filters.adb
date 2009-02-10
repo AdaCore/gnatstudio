@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,17 +19,16 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNAT.OS_Lib;
 with GNATCOLL.Mmap;
 
 with Glib.Convert;            use Glib.Convert;
 
-with Filesystems;             use Filesystems;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Language;                use Language;
 with Language.Ada;            use Language.Ada;
 with Projects;                use Projects;
 with Namet;                   use Namet;
+with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
 package body Aunit_Filters is
 
@@ -39,7 +38,7 @@ package body Aunit_Filters is
 
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
-      File_Name    : String;
+      File_Name    : Filesystem_String;
       Package_Name : out GNAT.Strings.String_Access;
       Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type)
@@ -58,7 +57,7 @@ package body Aunit_Filters is
       Suite_Name   := null;
       F_Type       := Unknown;
 
-      if not GNAT.OS_Lib.Is_Regular_File (File_Name) then
+      if not Is_Regular_File (File_Name) then
          return;
       end if;
 
@@ -74,7 +73,7 @@ package body Aunit_Filters is
       end if;
 
       File_Buffer := GNATCOLL.Mmap.Read_Whole_File
-        (Filesystems.Filename_From_UTF8 (File_Name),
+        (File_Name,
          Empty_If_Not_Found => True);
       Parse_Constructs
         (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);

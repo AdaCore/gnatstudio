@@ -38,7 +38,8 @@ with Remote;                    use Remote;
 with Snames;                    use Snames;
 with Traces;                    use Traces;
 with Types;                     use Types;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body Projects.Editor is
 
@@ -63,7 +64,7 @@ package body Projects.Editor is
    procedure Set_With_Clause_Path
      (Tree                      : Project_Node_Tree_Ref;
       With_Clause               : Project_Node_Id;
-      Imported_Project_Location : String;
+      Imported_Project_Location : Filesystem_String;
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
       Use_Relative_Path         : Boolean;
@@ -2463,12 +2464,12 @@ package body Projects.Editor is
 
    function Contains_Path
      (Project : Project_Type;
-      Path    : String) return Boolean
+      Path    : Filesystem_String) return Boolean
    is
       Tree   : constant Project_Node_Tree_Ref := Project.Tree;
       Result : Boolean;
 
-      function Normalize (P : String) return String;
+      function Normalize (P : Filesystem_String) return Filesystem_String;
       --  Normalizes the paths before comparison
 
       procedure Test_P (Node : Project_Node_Id);
@@ -2478,11 +2479,11 @@ package body Projects.Editor is
       -- Normalize --
       ---------------
 
-      function Normalize (P : String) return String is
+      function Normalize (P : Filesystem_String) return Filesystem_String is
       begin
          if Is_Absolute_Path_Or_URL (P) then
             declare
-               Conv : constant String :=
+               Conv : constant Filesystem_String :=
                         Relative_Path_Name
                           (P,
                            Dir (Project_Path (Project)).Full_Name.all,
@@ -2495,15 +2496,15 @@ package body Projects.Editor is
          return P;
       end Normalize;
 
-      The_Path : constant String := Normalize (Path);
+      The_Path : constant Filesystem_String := Normalize (Path);
 
       ------------
       -- Test_P --
       ------------
 
       procedure Test_P (Node : Project_Node_Id) is
-         Node_P : constant String :=
-                    Normalize (Get_String (String_Value_Of (Node, Tree)));
+         Node_P : constant Filesystem_String :=
+           Normalize (+Get_String (String_Value_Of (Node, Tree)));
       begin
          --  Test if Node_P is a subdir of The_Path
          if Node_P'Length >= The_Path'Length
@@ -2529,8 +2530,8 @@ package body Projects.Editor is
 
    function Rename_Path
      (Project            : Project_Type;
-      Old_Path           : String;
-      New_Path           : String;
+      Old_Path           : Filesystem_String;
+      New_Path           : Filesystem_String;
       Use_Relative_Paths : Boolean) return Boolean
    is
       Tree    : constant Project_Node_Tree_Ref := Project.Tree;
@@ -2539,20 +2540,20 @@ package body Projects.Editor is
       procedure Rename_P (Node : Project_Node_Id);
       --  Convert the path to an absolute path
 
-      function Path (P : String) return String;
+      function Path (P : Filesystem_String) return Filesystem_String;
       --  Returns the path with relative or absolute convention
 
       ----------
       -- Path --
       ----------
 
-      function Path (P : String) return String is
+      function Path (P : Filesystem_String) return Filesystem_String is
       begin
          if Use_Relative_Paths
            and then Is_Absolute_Path_Or_URL (P)
          then
             declare
-               Conv : constant String :=
+               Conv : constant Filesystem_String :=
                         Relative_Path_Name
                           (P,
                            Dir (Project_Path (Project)).Full_Name.all,
@@ -2562,7 +2563,7 @@ package body Projects.Editor is
             end;
          elsif not Use_Relative_Paths then
             declare
-               Conv : constant String := Normalize_Pathname
+               Conv : constant Filesystem_String := Normalize_Pathname
                  (P, Dir (Project_Path (Project)).Full_Name.all);
             begin
                return Conv;
@@ -2572,16 +2573,16 @@ package body Projects.Editor is
          return P;
       end Path;
 
-      Old_P : constant String := Path (Old_Path);
-      New_P : constant String := Path (New_Path);
+      Old_P : constant Filesystem_String := Path (Old_Path);
+      New_P : constant Filesystem_String := Path (New_Path);
 
       --------------
       -- Rename_P --
       --------------
 
       procedure Rename_P (Node : Project_Node_Id) is
-         Node_P : constant String :=
-                    Path (Get_String (String_Value_Of (Node, Tree)));
+         Node_P : constant Filesystem_String :=
+           Path (+Get_String (String_Value_Of (Node, Tree)));
       begin
          if Node_P'Length >= Old_P'Length
            and then File_Equal
@@ -2591,8 +2592,8 @@ package body Projects.Editor is
             Set_String_Value_Of
               (Node, Tree,
                Get_String
-                 (New_P &
-                  Node_P (Node_P'First + Old_P'Length .. Node_P'Last)));
+                 (+New_P &
+                  (+Node_P (Node_P'First + Old_P'Length .. Node_P'Last))));
             Changed := True;
          end if;
       end Rename_P;
@@ -3114,7 +3115,7 @@ package body Projects.Editor is
    procedure Set_With_Clause_Path
      (Tree                      : Project_Node_Tree_Ref;
       With_Clause               : Project_Node_Id;
-      Imported_Project_Location : String;
+      Imported_Project_Location : Filesystem_String;
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
       Use_Relative_Path         : Boolean;
@@ -3124,18 +3125,18 @@ package body Projects.Editor is
       Clause : Name_Id;
    begin
       if Use_Base_Name then
-         Clause := Get_String (Base_Name (Imported_Project_Location));
+         Clause := Get_String (+Base_Name (Imported_Project_Location));
 
       elsif Use_Relative_Path then
          Clause := Get_String
-           (Relative_Path_Name
+           (+Relative_Path_Name
               (Imported_Project_Location,
                Dir_Name
-                 (Get_String (Path_Name_Of (Importing_Project, Tree))),
+                 (+Get_String (Path_Name_Of (Importing_Project, Tree))),
                Build_Server));
 
       else
-         Clause := Get_String (Imported_Project_Location);
+         Clause := Get_String (+Imported_Project_Location);
       end if;
 
       Set_String_Value_Of (With_Clause, Tree, Clause);
@@ -3272,7 +3273,7 @@ package body Projects.Editor is
            (Project_Registry'Class (Get_Registry (Project)),
             Get_String
               (To_Lower
-                 (Base_Name
+                 (+Base_Name
                     (Imported_Project_Location,  Project_File_Extension)))),
          Imported_By => True);
          return Success;
@@ -3340,7 +3341,7 @@ package body Projects.Editor is
          end if;
       end Fail;
 
-      Basename         : constant String := Base_Name
+      Basename         : constant Filesystem_String := Base_Name
         (Imported_Project_Location, Project_File_Extension);
       Imported_Project : Project_Node_Id := Empty_Node;
       Dep_ID           : Name_Id;
@@ -3350,7 +3351,7 @@ package body Projects.Editor is
       Prj_Output.Set_Special_Output (Report_Errors);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
-      Dep_ID := Get_String (Basename);
+      Dep_ID := Get_String (+Basename);
 
       Dep_Name := Tree_Private_Part.Projects_Htable.Get
         (Tree.Projects_HT, Dep_ID);
@@ -3358,7 +3359,7 @@ package body Projects.Editor is
       if Dep_Name /= No_Project_Name_And_Node then
          if not File_Equal
            (Format_Pathname
-              (Get_String (Path_Name_Of (Dep_Name.Node, Tree))),
+              (+Get_String (Path_Name_Of (Dep_Name.Node, Tree))),
             Full_Name (Imported_Project_Location).all,
             Build_Server)
          then
@@ -3377,7 +3378,7 @@ package body Projects.Editor is
       else
          Prj.Part.Parse
            (Tree, Imported_Project,
-            Full_Name (Imported_Project_Location).all,
+            +Full_Name (Imported_Project_Location).all,
             Is_Config_File         => False,
             Current_Directory      => Get_Current_Dir,
             Always_Errout_Finalize => True);
@@ -3385,7 +3386,7 @@ package body Projects.Editor is
 
       if Imported_Project = Empty_Node then
          Trace (Me, "Add_Imported_Project: imported project not found ("
-                & Full_Name (Imported_Project_Location).all & ")");
+                & (+Full_Name (Imported_Project_Location).all & ")"));
          Prj_Output.Cancel_Special_Output;
          Prj.Com.Fail := null;
          return Imported_Project_Not_Found;
@@ -3509,7 +3510,7 @@ package body Projects.Editor is
    procedure Rename_And_Move
      (Root_Project  : Project_Type;
       Project       : Project_Type;
-      New_Name      : String;
+      New_Name      : Filesystem_String;
       New_Path      : Virtual_File;
       Report_Errors : Output.Output_Proc := null)
    is
@@ -3528,15 +3529,15 @@ package body Projects.Editor is
          case Kind_Of (Node, Tree) is
             when N_Literal_String =>
                declare
-                  D : constant String :=
-                    Get_String (String_Value_Of (Node, Tree));
+                  D : constant Filesystem_String :=
+                    +Get_String (String_Value_Of (Node, Tree));
                begin
                   if not Is_Absolute_Path (D) then
                      Set_String_Value_Of
                        (Node,
                         Tree,
                         Get_String
-                          (Relative_Path_Name
+                          (+Relative_Path_Name
                              (Normalize_Pathname
                                 (D, Full_Name
                                    (Old_Path).all, Resolve_Links => False),
@@ -3551,11 +3552,11 @@ package body Projects.Editor is
          end case;
       end Change_Directory;
 
-      D           : constant String :=
+      D           : constant Filesystem_String :=
                       Name_As_Directory (Full_Name (New_Path).all)
                       & To_File_Name (New_Name) & Project_File_Extension;
       Full_Path   : Name_Id := No_Name;
-      Name        : constant Name_Id := Get_String (New_Name);
+      Name        : constant Name_Id := Get_String (+New_Name);
       Old_Name    : constant Name_Id := Prj.Tree.Name_Of (Project.Node, Tree);
       Old         : constant Project_Node_Id :=
                       Find_Project_In_Hierarchy (Root_Project, Name);
@@ -3568,10 +3569,10 @@ package body Projects.Editor is
       if Old /= Empty_Node
         and then Old /= Project.Node
       then
-         Trace (Me, "Rename_And_Move: project " & New_Name
+         Trace (Me, "Rename_And_Move: project " & (+New_Name)
                 & " already exists in the hierarchy");
          Report_Errors
-           (-"Couldn't rename the project to " & New_Name
+           (-"Couldn't rename the project to " & (+New_Name)
             & ASCII.LF & (-"Project already exists in the project graph"));
          return;
       end if;
@@ -3596,7 +3597,7 @@ package body Projects.Editor is
                                  Path_Name_Of (Project.Node, Tree));
 
                if Full_Path = No_Name then
-                  Full_Path := Get_String (D);
+                  Full_Path := Get_String (+D);
                end if;
 
                Set_String_Value_Of (With_Clause, Tree, Full_Path);
@@ -3627,8 +3628,8 @@ package body Projects.Editor is
       Set_Directory_Of
         (Project.Node,
          Tree,
-         Get_String (Full_Name (New_Path).all));
-      Set_Path_Name_Of (Project.Node, Tree, Get_String (D));
+         Get_String (+Full_Name (New_Path).all));
+      Set_Path_Name_Of (Project.Node, Tree, Get_String (+D));
 
       --  We do not want to reread the display_name from the source, which is
       --  no longer up-to-date, so we'll force its refresh from the tree
@@ -3651,14 +3652,14 @@ package body Projects.Editor is
          Prj.Tree.Name_Of (Project.Node, Tree),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Name,
-          Canonical_Path => Get_String (D),
+          Canonical_Path => Get_String (+D),
           Node           => Project.Node,
           Extended       => False,
           Proj_Qualifier => Unspecified));
 
       Reset_Name_Table
         (Project_Registry (Get_Registry (Project)),
-         Project, Get_String (Old_Name), New_Name);
+         Project, Get_String (+Old_Name), +New_Name);
 
       Set_Project_Modified (Project, True);
       Reset_Cache (Project, Imported_By => True);
@@ -3683,9 +3684,9 @@ package body Projects.Editor is
       Path     : GNATCOLL.VFS.Virtual_File) return Project_Type
    is
       Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
-      D            : constant String :=
+      D            : constant Filesystem_String :=
                        Name_As_Directory (Full_Name (Path).all)
-                       & To_File_Name (Name) & Project_File_Extension;
+                       & To_File_Name (+Name) & Project_File_Extension;
       Project      : constant Project_Node_Id :=
                        Default_Project_Node (Tree, N_Project);
       Project_Name : Name_Id;
@@ -3698,8 +3699,8 @@ package body Projects.Editor is
 
       --  Adding the project path
       Set_Directory_Of
-        (Project, Tree, Get_String (Full_Name (Path).all));
-      Set_Path_Name_Of (Project, Tree, Get_String (D));
+        (Project, Tree, Get_String (+Full_Name (Path).all));
+      Set_Path_Name_Of (Project, Tree, Get_String (+D));
 
       --  Create the project declaration
       Set_Project_Declaration_Of
@@ -3985,7 +3986,7 @@ package body Projects.Editor is
    begin
       if Use_Relative_Paths then
          declare
-            Path : constant String :=
+            Path : constant Filesystem_String :=
               Relative_Path_Name (Full_Name (Project_Path (Extended)).all,
                                   Full_Name (Project_Directory (Project)).all,
                                   Build_Server);
@@ -3993,13 +3994,13 @@ package body Projects.Editor is
             Set_Extended_Project_Path_Of
               (Project.Node,
                Project.Tree,
-               To => Get_String (Path));
+               To => Get_String (+Path));
          end;
       else
          Set_Extended_Project_Path_Of
            (Project.Node,
             Project.Tree,
-            To => Get_String (Full_Name (Project_Path (Extended)).all));
+            To => Get_String (+Full_Name (Project_Path (Extended)).all));
       end if;
 
       Set_Extended_Project_Of

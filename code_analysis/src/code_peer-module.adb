@@ -273,7 +273,10 @@ package body Code_Peer.Module is
    -- Load --
    ----------
 
-   procedure Load (Self : access Module_Id_Record'Class; File : String) is
+   procedure Load
+     (Self : access Module_Id_Record'Class;
+      File : Filesystem_String)
+   is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
 
@@ -321,7 +324,7 @@ package body Code_Peer.Module is
 
          --  Load code review information
 
-         Input_Sources.File.Open (File, Input);
+         Input_Sources.File.Open (+File, Input);
          Reader.Parse
            (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
          Input_Sources.File.Close (Input);

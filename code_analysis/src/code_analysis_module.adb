@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,8 @@ with Ada.Calendar;                           use Ada.Calendar;
 with Ada.Containers.Indefinite_Ordered_Sets; use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
-with GNATCOLL.Scripts;                           use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;                       use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;                    use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
@@ -855,7 +856,7 @@ package body Code_Analysis_Module is
       if not Is_Regular_File (Cov_File) then
          GPS.Kernel.Console.Insert
            (Kernel,
-            -"Could not find coverage file " & Full_Name (Cov_File).all);
+            -"Could not find coverage file " & Display_Full_Name (Cov_File));
 
          Set_Error (File_Node, File_Not_Found);
 
@@ -2185,7 +2186,7 @@ package body Code_Analysis_Module is
       Gtk_New (Item);
       Append (Submenu, Item);
 
-      Gtk_New (Item, -"Load data for " & Emphasize (Base_Name
+      Gtk_New (Item, -"Load data for " & Emphasize (Display_Base_Name
         (File_Information (Cont_N_Anal.Context))));
       Activate_Pango_Markup (Item);
       Append (Submenu, Item);
@@ -2771,7 +2772,7 @@ package body Code_Analysis_Module is
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
       Dump_XML (Analysis.Projects, Root);
-      Print (Root, Full_Name (File).all);
+      Print (Root, +Full_Name (File).all);
       Free (Root);
    end Dump_To_File;
 
@@ -2860,7 +2861,7 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      Root_Node := Parse (Full_Name (Loaded_File).all);
+      Root_Node := Parse (+Full_Name (Loaded_File).all);
       Parse_XML
         (Get_Project (Get_Kernel (Data)),
          Code_Analysis_Property (Property).Analysis.Projects, Root_Node.Child);

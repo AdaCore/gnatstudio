@@ -1478,12 +1478,13 @@ package body GPS.Kernel.Preferences is
    ----------------------
 
    procedure Save_Preferences
-     (Kernel : access Kernel_Handle_Record'Class; File_Name : String)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : Filesystem_String)
    is
       Success : Boolean;
 
    begin
-      Trace (Me, "Saving preferences in " & File_Name);
+      Trace (Me, "Saving preferences in " & (+File_Name));
       Save_Preferences (Kernel.Preferences, File_Name, Success);
 
       if not Success then

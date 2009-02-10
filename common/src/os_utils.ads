@@ -21,6 +21,7 @@
 --  to OS functionnalities.
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package OS_Utils is
 
@@ -61,11 +62,11 @@ package OS_Utils is
    --  Reinstall the standard Control-C handler.
    --  If Install_Handler has never been called, this procedure has no effect.
 
-   function Create_Tmp_File return String;
+   function Create_Tmp_File return Filesystem_String;
    --  Create a temporary file in the temporary directoy.
    --  Return the full name of the file.
 
-   procedure Make_Dir_Recursive (Name : String);
+   procedure Make_Dir_Recursive (Name : Filesystem_String);
    --  Create the directory Name, and its parents if necessary (for instance,
    --  if Name is /tmp/foo/bar, the directories /tmp, /tmp/foo and /tmp/foo/bar
    --  are created if they don't exist yet).
@@ -77,17 +78,18 @@ package OS_Utils is
 
    type Path_Style is (UNIX, DOS, System_Default, Cygwin);
    function Format_Pathname
-     (Path  : String;
-      Style : Path_Style := System_Default) return String;
+     (Path  : Filesystem_String;
+      Style : Path_Style := System_Default) return Filesystem_String;
    --  This routines call GNAT.Directory_Operations.Format_Pathname. The only
    --  difference is for the Cygwin mode. In this case the drive prefix is
    --  converted to the cygwin equivalent (/cygdrive/<drive>).
 
-   function Is_Cygwin_Path (Path : String) return Boolean;
+   function Is_Cygwin_Path (Path : Filesystem_String) return Boolean;
    pragma Inline (Is_Cygwin_Path);
    --  Return true if Path start with /cygdrive/<drive>/
 
-   function Normalize_To_OS_Case (Full_Name : String) return String;
+   function Normalize_To_OS_Case
+     (Full_Name : Filesystem_String) return Filesystem_String;
    --  On non case-sensitive OS returns the casing as recorded by the OS. This
    --  routine can be time consuming as for example on Windows it parses all
    --  directories and sub-directories to get the OS recorded casing.

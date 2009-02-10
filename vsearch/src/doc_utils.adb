@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2008, AdaCore             --
+--                      Copyright (C) 2005-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,8 +27,9 @@ with Find_Utils;             use Find_Utils;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.Strings;           use GNAT.Strings;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 with Language_Handlers;      use Language_Handlers;
 with Language.Documentation; use Language.Documentation;
 
@@ -75,7 +76,7 @@ package body Doc_Utils is
       if Lang = null then
          if Active (Me) then
             Trace (Me, "Get_Documentation language unknown for "
-                   & Full_Name (Declaration_File).all);
+                   & (+Full_Name (Declaration_File).all));
          end if;
 
          return "";
@@ -92,7 +93,7 @@ package body Doc_Utils is
             if Tmp_Buffer = null then
                if Active (Me) then
                   Trace (Me, "Get_Documentation, no file found "
-                         & Full_Name (Declaration_File).all);
+                         & (+Full_Name (Declaration_File).all));
                end if;
 
                return "";

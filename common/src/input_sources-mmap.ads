@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                XML/Ada - An XML suite for Ada95                   --
 --                                                                   --
---                       Copyright (C) 2001-2008, AdaCore            --
+--                       Copyright (C) 2001-2009, AdaCore            --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -29,6 +29,7 @@
 with GNATCOLL.Mmap;
 with Unicode;
 with Unicode.CES;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Input_Sources.Mmap is
 
@@ -36,7 +37,7 @@ package Input_Sources.Mmap is
    type Mmap_Input_Access is access all Mmap_Input'Class;
    --  A special implementation of a reader, that reads from a file.
 
-   procedure Open (Filename : String; Input : out Mmap_Input);
+   procedure Open (Filename : Filesystem_String; Input : out Mmap_Input);
    overriding procedure Close (Input : in out Mmap_Input);
    overriding procedure Next_Char
      (From : in out Mmap_Input; C : out Unicode.Unicode_Char);

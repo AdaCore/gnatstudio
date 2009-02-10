@@ -46,7 +46,9 @@ with GPS.Intl;                  use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 
@@ -199,7 +201,8 @@ package body Welcome is
       if Project_Name /= No_File then
          Set_Text
            (Get_Entry (Screen.Open_Project),
-            Full_Name (Project_Name, Normalize => False).all);
+            Display_Full_Name (Project_Name, Normalize => False));
+         --  ??? What if the filesystem path is non-UTF8?
       end if;
 
       Gtk_New (Screen.Open_Browse, -"Browse");
@@ -309,7 +312,8 @@ package body Welcome is
    procedure On_Default_Project (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
-      Load_Default_Project (S.Kernel, Create (Get_Text (S.Default_Dir)));
+      Load_Default_Project (S.Kernel, Create (+Get_Text (S.Default_Dir)));
+      --  ??? What if the filesystem path is non-UTF8?
       Response (S, Gtk_Response_OK);
 
    exception
@@ -325,7 +329,8 @@ package body Welcome is
    is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : Virtual_File := Create
-        (Get_Text (Get_Entry (S.Open_Project)));
+        (+Get_Text (Get_Entry (S.Open_Project)));
+      --  ??? What if the filesystem path is non-UTF8?
       Button       : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
@@ -340,7 +345,7 @@ package body Welcome is
       if not Is_Regular_File (Project_Name) then
          Button := Message_Dialog
            ((-"Project file ")
-            & Full_Name (Project_Name).all & (-" doesn't exist"),
+            & Display_Full_Name (Project_Name) & (-" doesn't exist"),
             Error, Button_OK, Parent => Gtk_Window (S));
          return False;
       end if;
@@ -353,7 +358,7 @@ package body Welcome is
       when E : others => Trace (Exception_Handle, E);
          Button := Message_Dialog
            ((-"Project file ")
-            & Full_Name (Project_Name).all & (-" couldn't be loaded"),
+            & Display_Full_Name (Project_Name) & (-" couldn't be loaded"),
             Error, Button_OK, Parent => Gtk_Window (S));
          return False;
    end On_Load_Project;
@@ -366,13 +371,14 @@ package body Welcome is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
       Dir : constant Virtual_File := Select_Directory
         (Title             => -"Select a directory",
-         Base_Directory    => Create (Get_Text (S.Default_Dir)),
+         Base_Directory    => Create (+Get_Text (S.Default_Dir)),
+         --  ??? What if the filesystem path is non-UTF8?
          Parent            => Gtk_Window (S),
          Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          History           => Get_History (S.Kernel));
    begin
       if Dir /= No_File then
-         Set_Text (S.Default_Dir, Full_Name (Dir).all);
+         Set_Text (S.Default_Dir, Display_Full_Name (Dir));
       end if;
 
    exception
@@ -385,12 +391,14 @@ package body Welcome is
 
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class) is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
-      Project_Name : constant String := Get_Text (Get_Entry (S.Open_Project));
+      Project_Name : constant Filesystem_String :=
+        +Get_Text (Get_Entry (S.Open_Project));
+      --  ??? What if the filesystem path is non-UTF8?
       Dir          : Virtual_File;
    begin
       Push_State (S.Kernel, Busy);
       if Project_Name = "" then
-         Dir := Create (Get_Text (S.Default_Dir));
+         Dir := Create (+Get_Text (S.Default_Dir));
       else
          Dir := Create (Dir_Name (Project_Name));
       end if;

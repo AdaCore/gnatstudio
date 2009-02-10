@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
@@ -110,9 +111,9 @@ package body GPS.Kernel.Project is
 
    type Predefined_Paths_Property is new GPS.Kernel.Properties.Property_Record
    with record
-      Source_Path  : Glib.String_Ptr;
-      Object_Path  : Glib.String_Ptr;
-      Project_Path : Glib.String_Ptr;
+      Source_Path  : Filesystem_String_Access;
+      Object_Path  : Filesystem_String_Access;
+      Project_Path : Filesystem_String_Access;
    end record;
 
    overriding procedure Save
@@ -137,15 +138,15 @@ package body GPS.Kernel.Project is
    begin
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("source_path");
-      Child.Value := new String'(Property.Source_Path.all);
+      Child.Value := new String'(+Property.Source_Path.all);
       Add_Child (Node, Child);
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("object_path");
-      Child.Value := new String'(Property.Object_Path.all);
+      Child.Value := new String'(+Property.Object_Path.all);
       Add_Child (Node, Child);
       Child := new Glib.Xml_Int.Node;
       Child.Tag := new String'("project_path");
-      Child.Value := new String'(Property.Project_Path.all);
+      Child.Value := new String'(+Property.Project_Path.all);
       Add_Child (Node, Child);
 
    exception
@@ -163,11 +164,11 @@ package body GPS.Kernel.Project is
       Child : Glib.Xml_Int.Node_Ptr;
    begin
       Child := Find_Tag (From.Child, "source_path");
-      Property.Source_Path := new String'(Child.Value.all);
+      Property.Source_Path := new Filesystem_String'(+Child.Value.all);
       Child := Find_Tag (From.Child, "object_path");
-      Property.Object_Path := new String'(Child.Value.all);
+      Property.Object_Path := new Filesystem_String'(+Child.Value.all);
       Child := Find_Tag (From.Child, "project_path");
-      Property.Project_Path := new String'(Child.Value.all);
+      Property.Project_Path := new Filesystem_String'(+Child.Value.all);
    end Load;
 
    ---------------------------------------
@@ -240,11 +241,11 @@ package body GPS.Kernel.Project is
             if Success then
                if Active (Me) then
                   Trace (Me, "set source path from cache to " &
-                         Property.Source_Path.all);
+                         (+Property.Source_Path.all));
                   Trace (Me, "set object path from cache to " &
-                         Property.Object_Path.all);
+                         (+Property.Object_Path.all));
                   Trace (Me, "set project path from cache to " &
-                         Property.Project_Path.all);
+                         (+Property.Project_Path.all));
                end if;
 
                Set_Predefined_Source_Path
@@ -275,11 +276,14 @@ package body GPS.Kernel.Project is
 
          if Property_Index /= No_Index then
             Property.Source_Path :=
-              new String'(Get_Predefined_Source_Path (Handle.Registry.all));
+              new Filesystem_String'
+                (Get_Predefined_Source_Path (Handle.Registry.all));
             Property.Object_Path :=
-              new String'(Get_Predefined_Object_Path (Handle.Registry.all));
+              new Filesystem_String'
+                (Get_Predefined_Object_Path (Handle.Registry.all));
             Property.Project_Path :=
-              new String'(Get_Predefined_Project_Path (Handle.Registry.all));
+              new Filesystem_String'
+                (Get_Predefined_Project_Path (Handle.Registry.all));
             Prop_Access := new Predefined_Paths_Property'(Property);
             Set_Property
               (Handle,
@@ -321,10 +325,12 @@ package body GPS.Kernel.Project is
    is
       Project             : Virtual_File :=
                               Create_From_Dir (Directory, "default.gpr");
-      Share_Dir           : constant String :=
+      Share_Dir           : constant Filesystem_String :=
                               Get_System_Dir (Kernel) & "share/gps/";
-      Default             : constant String := Share_Dir & "default.gpr";
-      Readonly            : constant String := Share_Dir & "readonly.gpr";
+      Default             : constant Filesystem_String :=
+        Share_Dir & "default.gpr";
+      Readonly            : constant Filesystem_String :=
+        Share_Dir & "readonly.gpr";
       Found               : Boolean;
       Is_Default          : Boolean := False;
 
@@ -534,8 +540,8 @@ package body GPS.Kernel.Project is
             if not Is_Regular_File (Local_Project) then
                Console.Insert
                  (Kernel, (-"Cannot find remote project file ")
-                  & Full_Name (Project).all & (-" at local place ")
-                  & Full_Name (Local_Project).all &
+                  & Display_Full_Name (Project) & (-" at local place ")
+                  & Display_Full_Name (Local_Project) &
                   (-". Please check your remote configuration."),
                   Mode => Console.Error, Add_LF => False);
 
@@ -590,7 +596,7 @@ package body GPS.Kernel.Project is
             if not Is_Local (Build_Server) then
                Report_Error
                  (-"Error while loading project '" &
-                  Full_Name (Local_Project, True).all &
+                  Display_Full_Name (Local_Project, True) &
                   (-"'. Trying with the build server set to (local)...") &
                   ASCII.LF);
 
@@ -617,9 +623,10 @@ package body GPS.Kernel.Project is
 
             elsif Previous_Project /= GNATCOLL.VFS.No_File then
                Report_Error (-"Couldn't parse the project "
-                             & Full_Name (Local_Project).all
+                             & Display_Full_Name (Local_Project)
                              & ASCII.LF & (-"Reverting to previous project ")
-                             & Full_Name (Previous_Project).all & ASCII.LF);
+                             & Display_Full_Name (Previous_Project)
+                             & ASCII.LF);
                Data.File := Previous_Project;
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
                Compute_Predefined_Paths (Kernel);
@@ -633,14 +640,14 @@ package body GPS.Kernel.Project is
                if Empty_Project_On_Failure then
                   Report_Error
                     (-"Error while loading project '" &
-                     Full_Name (Local_Project, True).all &
+                     Display_Full_Name (Local_Project, True) &
                      (-"'. Loading the empty project.") & ASCII.LF);
                   Load_Empty_Project (Kernel);
 
                else
                   Report_Error
                     (-"Error while loading project '" &
-                     Full_Name (Local_Project, True).all &
+                     Display_Full_Name (Local_Project, True) &
                      (-"'. Loading the default project.") & ASCII.LF);
                   Load_Default_Project
                     (Kernel, Dir (Local_Project), Clear => False);
@@ -674,7 +681,7 @@ package body GPS.Kernel.Project is
 
       elsif not Same_Project then
          Console.Insert (Kernel, (-"Cannot find project file ")
-                         & Full_Name (Project).all,
+                         & Display_Full_Name (Project),
                          Mode => Console.Error, Add_LF => False);
          Had_Project_Desktop := Load_Desktop (Kernel);
       end if;

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,10 +21,11 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed; use Ada.Strings;
 with Ada.Text_IO;                use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                use GNAT;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.Strings;
 
 with String_Hash;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Ignore_Db is
 
@@ -52,7 +52,7 @@ package body Ignore_Db is
 
    DB : Dir_Table.String_Hash_Table.HTable;
 
-   function Load (Ignore_File : String) return File_Table_Access;
+   function Load (Ignore_File : Filesystem_String) return File_Table_Access;
    --  Load Ignore_File and store the values into DB. Returns the new table
    --  created.
 
@@ -65,20 +65,20 @@ package body Ignore_Db is
       File : Virtual_File)
       return Boolean
    is
-      Ign_File : constant String :=
+      Ign_File : constant Filesystem_String :=
                    Dir_Name (File).all & Ignore_Filename (VCS);
       Files    : File_Table_Access :=
-                   Dir_Table.String_Hash_Table.Get (DB, Ign_File);
+                   Dir_Table.String_Hash_Table.Get (DB, +Ign_File);
    begin
       if Files = null
-        and then OS_Lib.Is_Regular_File (Ign_File)
+        and then Is_Regular_File (Ign_File)
       then
          Files := Load (Ign_File);
       end if;
 
       if Files /= null then
          return String_Hash_Table.Get
-           (Files.all, Base_Name (File)) /= null;
+           (Files.all, +Base_Name (File)) /= null;
       else
          return False;
       end if;
@@ -88,7 +88,7 @@ package body Ignore_Db is
    -- Load --
    ----------
 
-   function Load (Ignore_File : String) return File_Table_Access is
+   function Load (Ignore_File : Filesystem_String) return File_Table_Access is
       Files  : constant File_Table_Access := new String_Hash_Table.HTable;
       File   : File_Type;
       Buffer : String (1 .. 256);
@@ -96,7 +96,7 @@ package body Ignore_Db is
    begin
       --  Add all files read from Ignore_File
 
-      Open (File, In_File, Ignore_File);
+      Open (File, In_File, +Ignore_File);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -108,7 +108,7 @@ package body Ignore_Db is
 
       --  Register this table
 
-      Dir_Table.String_Hash_Table.Set (DB, Ignore_File, Files);
+      Dir_Table.String_Hash_Table.Set (DB, +Ignore_File, Files);
 
       return Files;
    end Load;

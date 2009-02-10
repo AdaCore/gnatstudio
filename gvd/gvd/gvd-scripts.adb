@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -100,9 +100,9 @@ package body GVD.Scripts is
       Set_Nth_Arg (D.all, 2, Inst);
 
       case Data.New_State is
-         when Debug_None      => Set_Nth_Arg (D.all, 3, "none");
-         when Debug_Busy      => Set_Nth_Arg (D.all, 3, "busy");
-         when Debug_Available => Set_Nth_Arg (D.all, 3, "idle");
+         when Debug_None      => Set_Nth_Arg (D.all, 3, String'("none"));
+         when Debug_Busy      => Set_Nth_Arg (D.all, 3, String'("busy"));
+         when Debug_Available => Set_Nth_Arg (D.all, 3, String'("idle"));
       end case;
 
       return D;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2003-2008, AdaCore                 --
+--                  Copyright (C) 2003-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@
 
 with String_Hash;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package Basic_Mapper is
 
@@ -48,12 +49,12 @@ package Basic_Mapper is
 
    procedure Save_Mapper
      (Mapper    : File_Mapper_Access;
-      File_Name : String);
+      File_Name : Filesystem_String);
    --  Save Mapper to file File_Name
 
    procedure Load_Mapper
      (Mapper    : out File_Mapper_Access;
-      File_Name : String);
+      File_Name : Filesystem_String);
    --  Load Mapper from file File_Name
 
    procedure Empty_Mapper (Mapper : out File_Mapper_Access);

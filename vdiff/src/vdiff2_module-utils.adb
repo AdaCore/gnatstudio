@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,6 +41,7 @@ with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module;                     use Vdiff2_Module;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Vdiff2_Module.Utils is
 
@@ -560,8 +561,9 @@ package body Vdiff2_Module.Utils is
       --------------------------
 
       function Is_Ref_Editor_Opened return Boolean is
-         Filename : aliased String := Base_Name (Item.Files (Ref));
-         Args     : constant Argument_List := (1 => Filename'Unchecked_Access);
+         Filename : aliased Filesystem_String := Base_Name (Item.Files (Ref));
+         Args     : constant Argument_List :=
+           (1 => Convert (Filename'Unchecked_Access));
       begin
          return Execute_GPS_Shell_Command (Kernel, "MDI.get", Args) /= "null";
       end Is_Ref_Editor_Opened;
@@ -1037,7 +1039,7 @@ package body Vdiff2_Module.Utils is
          end if;
       end if;
 
-      Edit (Kernel, Create (Merge));
+      Edit (Kernel, Create (+Merge));
    end Show_Merge;
 
    -------------------------

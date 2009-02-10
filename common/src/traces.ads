@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2007, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@
 with Ada.Exceptions;
 with GNAT.Source_Info;
 with GNATCOLL.Traces;
+with GNATCOLL.Filesystem;
 
 package Traces is
 
@@ -34,7 +35,7 @@ package Traces is
      (Unit_Name : String;
       Default   : GNATCOLL.Traces.Default_Activation_Status :=
         GNATCOLL.Traces.From_Config;
-      Stream    : String := "";
+      Stream    : GNATCOLL.Filesystem.Filesystem_String := "";
       Factory   : GNATCOLL.Traces.Handle_Factory := null;
       Finalize  : Boolean := True)
       return Debug_Handle

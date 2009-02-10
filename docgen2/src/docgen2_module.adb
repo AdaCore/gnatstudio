@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2007-2008, AdaCore                --
+--                   Copyright (C) 2007-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -260,7 +260,8 @@ package body Docgen2_Module is
          declare
             File : constant Virtual_File := Get_Data (Data, 1);
          begin
-            Trace (Me, "Generating doc for file " & Full_Name (File).all);
+            Trace (Me, "Generating doc for file " &
+                   Display_Full_Name (File));
             Generate
               (Get_Kernel (Data),
                Docgen_Module (Docgen_Module_Id).Backend,

@@ -47,6 +47,7 @@ with Traces;                    use Traces;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body VCS_View.Activities is
 
@@ -293,7 +294,7 @@ package body VCS_View.Activities is
          while Iter /= String_List.Null_Node loop
             declare
                File       : constant Virtual_File :=
-                              Create (String_List.Data (Iter));
+                              Create (+String_List.Data (Iter));
                F_Activity : Activity_Id;
                Button     : Message_Dialog_Buttons := Button_OK;
                pragma Unreferenced (Button);
@@ -843,16 +844,16 @@ package body VCS_View.Activities is
       File_Data : access Hooks_Data'Class)
    is
       D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
-      Log_Name : constant String := Base_Name (D.File);
+      Log_Name : constant Filesystem_String := Base_Name (D.File);
       Line     : Line_Record;
    begin
       if Log_Name'Length > 4
         and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
       then
          declare
-            File_Name : constant String :=
+            File_Name : constant Filesystem_String :=
                           Log_Name (Log_Name'First .. Log_Name'Last - 4);
-            Activity  : constant Activity_Id := Value (File_Name);
+            Activity  : constant Activity_Id := Value (+File_Name);
          begin
             if Activity = No_Activity then
                --  This is a file

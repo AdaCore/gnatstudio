@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,6 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNATCOLL.Templates;            use GNATCOLL.Templates;
 with GNATCOLL.Traces;
@@ -58,7 +57,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -1196,7 +1194,7 @@ package body GPS.Kernel.Modules is
       Parent := Find_Or_Create_Menu_Tree
         (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
-         Path         => Name_As_Directory (Parent_Path, UNIX),
+         Path         => Format (Parent_Path),
          Accelerators => Get_Default_Accelerators (Kernel),
          Add_Before   => Add_Before,
          Ref_Item     => Ref_Item,
@@ -1547,7 +1545,7 @@ package body GPS.Kernel.Modules is
       Parent := Find_Or_Create_Menu_Tree
         (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
          Menu         => null,
-         Path         => Name_As_Directory (Parent_Path, UNIX),
+         Path         => Format (Parent_Path),
          Accelerators => Get_Default_Accelerators (Kernel),
          Add_Before   => Add_Before,
          Ref_Item     => Ref_Item,
@@ -1721,7 +1719,7 @@ package body GPS.Kernel.Modules is
                  and then Files (First .. First + 7) = "file:///"
                then
                   File := Create
-                    (Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
+                    (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
                        (URL_Decode (Files (First + 8 .. Last - 1)))));
 
                   if Is_Regular_File (File) then

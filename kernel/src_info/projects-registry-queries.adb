@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +90,7 @@ package body Projects.Registry.Queries is
          else
             Tmp := Current;
             Current := new String'(Current.all & Path_Separator &
-                                   To_Local (S, Build_Server));
+                                   (+To_Local (+S, Build_Server)));
             Free (Tmp);
          end if;
       end Add_Directory;
@@ -107,9 +107,9 @@ package body Projects.Registry.Queries is
 
          if Is_Local (Build_Server) then
             declare
-               Gnatls_Path : GNAT.Strings.String_Access :=
-                               Locate_Compiler_Executable
-                                 (Gnatls_Args (Gnatls_Args'First).all);
+               Gnatls_Path : Filesystem_String_Access :=
+                 Locate_Compiler_Executable
+                   (+Gnatls_Args (Gnatls_Args'First).all);
             begin
                if Gnatls_Path = null then
                   Success := False;
@@ -126,7 +126,7 @@ package body Projects.Registry.Queries is
                   Fd := new TTY_Process_Descriptor;
                   Non_Blocking_Spawn
                     (Fd.all,
-                     Gnatls_Path.all,
+                     +Gnatls_Path.all,
                      Gnatls_Args (2 .. Gnatls_Args'Last),
                      Buffer_Size => 0, Err_To_Out => True);
                   Free (Gnatls_Path);
@@ -178,14 +178,14 @@ package body Projects.Registry.Queries is
          begin
             if S = "Object Search Path:" & ASCII.LF then
                Trace (Me, "Set source path from gnatls to " & Current.all);
-               Set_Predefined_Source_Path (Registry.all, Current.all);
+               Set_Predefined_Source_Path (Registry.all, +Current.all);
                Free (Current);
                Current := new String'("");
 
             elsif S = "Project Search Path:" & ASCII.LF then
                Trace (Me, "Set object path from gnatls to " & Current.all);
                Object_Path_Set := True;
-               Set_Predefined_Object_Path (Registry.all, Current.all);
+               Set_Predefined_Object_Path (Registry.all, +Current.all);
                Free (Current);
                Current := new String'("");
 
@@ -202,7 +202,7 @@ package body Projects.Registry.Queries is
             Prj.Ext.Set_Project_Path (Current.all);
          else
             Trace (Me, "Set object path (2) from gnatls to " & Current.all);
-            Set_Predefined_Object_Path (Registry.all, Current.all);
+            Set_Predefined_Object_Path (Registry.all, +Current.all);
          end if;
 
          Free (Current);

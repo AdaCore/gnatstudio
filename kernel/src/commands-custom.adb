@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,7 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib;                      use Glib;
@@ -1454,7 +1455,7 @@ package body Commands.Custom is
 
                Launch_Process
                  (Command.Kernel,
-                  Command              => Args (Args'First).all,
+                  Command              => +Args (Args'First).all,
                   Arguments            => Args (Args'First + 1 .. Args'Last),
                   Server               => Component.Server,
                   Console              => Console,
@@ -1473,7 +1474,7 @@ package body Commands.Custom is
                   Show_In_Task_Manager => Component.Show_In_Task_Manager,
                   Line_By_Line         => False,
                   Synchronous          => Context.Synchronous,
-                  Directory            => To_Remote (To_String (Context.Dir),
+                  Directory            => To_Remote (+To_String (Context.Dir),
                     Component.Server),
                   Created_Command      => Command.Sub_Command);
                Free (Args);

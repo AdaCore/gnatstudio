@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,6 +23,8 @@ with System;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -271,7 +273,7 @@ package body Revision_Views is
                  Open_Revision_View (Kernel, File);
       Rev    : constant String := Nth_Arg (Data, 2);
       Sym    : constant String := Nth_Arg (Data, 3);
-      Key    : constant String := Full_Name (File, True).all & "$" & Rev;
+      Key    : constant String := +Full_Name (File, True).all & "$" & Rev;
       List   : SL.List;
    begin
       List := String_Hash_Table.Get (View.Syms, Key);
@@ -436,7 +438,7 @@ package body Revision_Views is
       File : constant Virtual_File := Create (Nth_Arg (Data, 1));
       View : constant Revision_View := BT.Get
         (Revision_View_Module (Revision_View_Module_ID.all).Table,
-         Base_Name (File));
+         +Base_Name (File));
    begin
       if View /= null then
          Destroy (View);
@@ -597,7 +599,7 @@ package body Revision_Views is
          use type SL.List_Node;
          Rev   : constant String := To_String (Line.Log.Revision);
          Key   : constant String :=
-                   Full_Name (View.File, True).all & "$" & Rev;
+                   +Full_Name (View.File, True).all & "$" & Rev;
          List  : SL.List;
          Node  : SL.List_Node;
          First : Boolean := True;
@@ -719,7 +721,7 @@ package body Revision_Views is
       String_Hash_Table.Reset (View.Syms);
       BT.Remove
         (Revision_View_Module (Revision_View_Module_ID.all).Table,
-         Base_Name (View.File));
+         +Base_Name (View.File));
    end On_Destroy;
 
    -------------------
@@ -776,7 +778,7 @@ package body Revision_Views is
      (Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File) return Revision_View
    is
-      B_Name : constant String := Base_Name (File);
+      B_Name : constant String := +Base_Name (File);
       Title  : constant String := "Revision View - " & B_Name;
       View   : Revision_View;
       Child  : MDI_Child;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,6 +54,7 @@ package Code_Analysis_GUI is
    Name_Col : constant := 1;
    --  Gtk_Tree_Model column number dedicated to the name of the nodes of
    --  code_analysis structure
+   --  This is a UTF8 representation of the filesystem path.
    Node_Col : constant := 2;
    --  Gtk_Tree_Model column number dedicated to the nodes of code_analysis
    --  structure

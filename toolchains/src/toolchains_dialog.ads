@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2008, AdaCore                  --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,8 @@ with Gtk.Dialog;  use Gtk.Dialog;
 with Gtk.Frame;   use Gtk.Frame;
 with Gtk.GEntry;  use Gtk.GEntry;
 
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 with GPS.Kernel;  use GPS.Kernel;
 
 package Toolchains_Dialog is
@@ -33,9 +35,9 @@ package Toolchains_Dialog is
      (Widget            : out Dialog;
       Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active            : Boolean;
-      Tools_Path        : String;
+      Tools_Path        : Filesystem_String;
       Use_Xrefs_Subdirs : Boolean;
-      Compiler_Path     : String);
+      Compiler_Path     : Filesystem_String);
 
    function Get_Active
      (Widget : access Dialog_Record'Class) return Boolean;
@@ -46,11 +48,11 @@ package Toolchains_Dialog is
    --  Whether we should read ali files from a separate xrefs subdir
 
    function Get_Tools_Path
-     (Widget : access Dialog_Record'Class) return String;
+     (Widget : access Dialog_Record'Class) return Filesystem_String;
    --  Get the path where to find the Bleeding edge compiler
 
    function Get_Compiler_Path
-     (Widget : access Dialog_Record'Class) return String;
+     (Widget : access Dialog_Record'Class) return Filesystem_String;
    --  Get the path where to find the regular compiler
 
 private

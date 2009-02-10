@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2007, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,6 +35,8 @@ with GPS.Kernel;
 with Language_Handlers;
 with GNATCOLL.VFS;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
+
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package Src_Contexts is
 
@@ -167,16 +169,16 @@ package Src_Contexts is
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Files_Context) return Integer;
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Files_Context) return Integer;
    --  Get the current/total search progress.
 
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : String  := "";
+      Directory     : Filesystem_String  := "";
       Recurse       : Boolean := False);
    --  Set the list of files to search
 
@@ -207,9 +209,9 @@ package Src_Contexts is
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
    --  Context used to search in all files from the project
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Files_Project_Context) return Integer;
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Files_Project_Context) return Integer;
    --  Get the current/total search progress.
 
@@ -247,9 +249,9 @@ package Src_Contexts is
    type Open_Files_Context_Access is access all Open_Files_Context'Class;
    --  Context used to search in all files current edited
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Context : access Open_Files_Context) return Integer;
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Context : access Open_Files_Context) return Integer;
    --  Get the current/total search progress.
 
@@ -273,7 +275,7 @@ package Src_Contexts is
 
 private
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -282,7 +284,7 @@ private
       Continue        : out Boolean);
    --  Search function for "Current File"
 
-   function Replace
+   overriding function Replace
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -343,12 +345,12 @@ private
    type Abstract_Files_Context_Access is access all
      Abstract_Files_Context'Class;
 
-   procedure Reset
+   overriding procedure Reset
      (Context : access Abstract_Files_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  See inherited documentation
 
-   procedure Search
+   overriding procedure Search
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
@@ -357,7 +359,7 @@ private
       Continue        : out Boolean);
    --  Search function for "Files From Project" and "Open_Files"
 
-   function Replace
+   overriding function Replace
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -371,7 +373,7 @@ private
       Dirs          : Directory_List.List;
       Current_File  : GNATCOLL.VFS.Virtual_File;
 
-      Directory     : GNAT.Strings.String_Access := null;
+      Directory     : Filesystem_String_Access := null;
 
       At_End        : Boolean := False;
       --  Set to true at the end of the search
@@ -390,23 +392,28 @@ private
       Current_File : Natural := 0;
    end record;
 
-   function Current_File
+   overriding function Current_File
      (Context : access Files_Project_Context) return GNATCOLL.VFS.Virtual_File;
+   overriding
    procedure Move_To_Next_File (Context : access Files_Project_Context);
+   overriding
    procedure Move_To_First_File (Context : access Files_Project_Context);
+   overriding
    procedure Free (Context : in out Files_Project_Context);
 
-   function Current_File (Context : access Files_Context)
+   overriding function Current_File (Context : access Files_Context)
      return GNATCOLL.VFS.Virtual_File;
-   procedure Move_To_Next_File (Context : access Files_Context);
-   procedure Move_To_First_File (Context : access Files_Context);
-   procedure Free (Context : in out Files_Context);
+   overriding procedure Move_To_Next_File (Context : access Files_Context);
+   overriding procedure Move_To_First_File (Context : access Files_Context);
+   overriding procedure Free (Context : in out Files_Context);
 
-   function Current_File
+   overriding function Current_File
      (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File;
+   overriding
    procedure Move_To_Next_File (Context : access Open_Files_Context);
+   overriding
    procedure Move_To_First_File (Context : access Open_Files_Context);
-   procedure Free (Context : in out Open_Files_Context);
+   overriding procedure Free (Context : in out Open_Files_Context);
 
    type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Combo : Gtk.Combo.Gtk_Combo;

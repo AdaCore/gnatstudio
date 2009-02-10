@@ -670,7 +670,8 @@ package body Builder_Facility_Module is
    ----------------------
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File is
-      Filename : constant String := Get_Home_Dir (Get_Kernel) & "targets.xml";
+      Filename : constant Filesystem_String :=
+        Get_Home_Dir (Get_Kernel) & "targets.xml";
    begin
       return Create (Filename);
    end Get_Targets_File;
@@ -684,7 +685,7 @@ package body Builder_Facility_Module is
       Success : Boolean;
    begin
       N := Save_All_Targets_To_XML (Builder_Module_ID.Registry);
-      Print (N, Full_Name (Get_Targets_File).all, Success);
+      Print (N, +Full_Name (Get_Targets_File).all, Success);
 
       if not Success then
          Trace (Me, "Error when saving targets file");
@@ -699,7 +700,7 @@ package body Builder_Facility_Module is
       N : Node_Ptr;
       C : Node_Ptr;
    begin
-      N := Parse (Full_Name (Get_Targets_File).all);
+      N := Parse (+Full_Name (Get_Targets_File).all);
 
       if N = null then
          Trace (Me, "Error when loading targets file");
@@ -2097,9 +2098,9 @@ package body Builder_Facility_Module is
    -- Get_Mode_Subdir --
    ---------------------
 
-   function Get_Mode_Subdir (Mode : String) return String is
+   function Get_Mode_Subdir (Mode : String) return Filesystem_String is
    begin
-      return To_String
+      return +To_String
         (Element_Mode
            (Builder_Module_ID.Registry, To_Unbounded_String (Mode)).Subdir);
    end Get_Mode_Subdir;

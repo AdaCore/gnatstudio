@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2008, AdaCore                 --
+--                  Copyright (C) 2004-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,6 +38,8 @@ with Traces;         use Traces;
 with Glib.Xml_Int;   use Glib.Xml_Int;
 with XML_Parsers;
 
+with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
+
 package body Case_Handling.IO is
 
    Me : constant Debug_Handle := Create ("Case_Handling.IO");
@@ -48,14 +50,14 @@ package body Case_Handling.IO is
 
    procedure Load_Exceptions
      (C         : in out Casing_Exceptions;
-      Filename  : String;
+      Filename  : Filesystem_String;
       Read_Only : Boolean)
    is
       File, Child : Node_Ptr;
       Err         : String_Access;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+         Trace (Me, "Loading " & (+Filename));
 
          XML_Parsers.Parse (Filename, File, Err);
 
@@ -98,7 +100,7 @@ package body Case_Handling.IO is
 
    procedure Save_Exceptions
      (C        : Casing_Exceptions;
-      Filename : String;
+      Filename : Filesystem_String;
       Success  : out Boolean)
    is
       File, Ada_Child : Node_Ptr;
@@ -160,8 +162,8 @@ package body Case_Handling.IO is
          end loop;
       end if;
 
-      Trace (Me, "Saving " & Filename);
-      Print (File, Filename, Success);
+      Trace (Me, "Saving " & (+Filename));
+      Print (File, +Filename, Success);
       Free (File);
 
    exception

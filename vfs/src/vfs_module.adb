@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2002-2008, AdaCore               --
+--                    Copyright (C) 2002-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNAT.Strings;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
@@ -42,7 +41,8 @@ with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Remote;                    use Remote;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with OS_Utils;
 with UTF8_Utils;                use UTF8_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -110,7 +110,7 @@ package body VFS_Module is
    is
       Success : Boolean;
 
-      procedure List_Files (Pattern : String);
+      procedure List_Files (Pattern : Filesystem_String);
       --  List files following Pattern
       --  Pattern may contain directory information and
       --  regular expressions.
@@ -119,24 +119,24 @@ package body VFS_Module is
       -- List_Files --
       ----------------
 
-      procedure List_Files (Pattern : String) is
-         Directory_Name : constant String := Dir_Name (Pattern);
-         Base           : constant String := Base_Name (Pattern);
+      procedure List_Files (Pattern : Filesystem_String) is
+         Directory_Name : constant Filesystem_String := Dir_Name (Pattern);
+         Base           : constant Filesystem_String := Base_Name (Pattern);
          Is_Cur_Dir     : Boolean;
          File_Regexp    : Regexp;
-         Directory      : GNAT.Strings.String_Access;
+         Directory      : Filesystem_String_Access;
          Dir            : Dir_Type;
          Buffer         : String (1 .. 4096);
          Last           : Natural;
 
       begin
          if Is_Directory (Pattern) then
-            Directory := new String'(Name_As_Directory (Pattern));
+            Directory := new Filesystem_String'(Name_As_Directory (Pattern));
             File_Regexp :=
               Compile ("*", Glob => True,
                        Case_Sensitive => Is_Case_Sensitive (Build_Server));
          else
-            Directory := new String'(Directory_Name);
+            Directory := new Filesystem_String'(Directory_Name);
 
             if Base = "" then
                File_Regexp :=
@@ -144,7 +144,7 @@ package body VFS_Module is
                           Case_Sensitive => Is_Case_Sensitive (Build_Server));
             else
                File_Regexp :=
-                 Compile (Base, Glob => True,
+                 Compile (+Base, Glob => True,
                           Case_Sensitive => Is_Case_Sensitive (Build_Server));
             end if;
          end if;
@@ -164,7 +164,7 @@ package body VFS_Module is
                   Set_Return_Value (Data, Buffer (1 .. Last));
                else
                   Set_Return_Value
-                    (Data, Directory.all & Buffer (1 .. Last));
+                    (Data, Directory.all & (+Buffer (1 .. Last)));
                end if;
             end if;
          end loop;
@@ -180,13 +180,13 @@ package body VFS_Module is
 
    begin
       if Command = "pwd" then
-         Set_Return_Value (Data, Get_Current_Dir);
+         Set_Return_Value (Data, Filesystem_String'(Get_Current_Dir));
 
       elsif Command = "cd" then
          Name_Parameters (Data, Cd_Cmd_Parameters);
 
          begin
-            Change_Dir (Nth_Arg (Data, 1));
+            Change_Dir (Filesystem_String'(Nth_Arg (Data, 1)));
          exception
             when Directory_Error =>
                Set_Error_Msg
@@ -234,7 +234,7 @@ package body VFS_Module is
 
       elsif Command = "dump" then
          declare
-            Temp_File : constant String := OS_Utils.Create_Tmp_File;
+            Temp_File : constant Filesystem_String := OS_Utils.Create_Tmp_File;
             Writable  : Writable_File;
          begin
             Writable := Write_File (Create (Temp_File));
@@ -251,10 +251,10 @@ package body VFS_Module is
 
       elsif Command = "dump_file" then
          declare
-            Filename : constant String := Nth_Arg (Data, 2);
+            Filename : constant Filesystem_String := Nth_Arg (Data, 2);
             File     : Virtual_File;
             Writable : Writable_File;
-            Tmp_Dir  : constant String :=
+            Tmp_Dir  : constant Filesystem_String :=
                          Get_Local_Filesystem.Get_Tmp_Directory;
          begin
             File := Create (Filename);
@@ -277,7 +277,7 @@ package body VFS_Module is
 
       elsif Command = "base_name" then
          declare
-            Filename : constant String := Nth_Arg (Data, 1);
+            Filename : constant Filesystem_String := Nth_Arg (Data, 1);
             File     : Virtual_File;
          begin
             File := Create (Filename);
@@ -286,7 +286,7 @@ package body VFS_Module is
 
       elsif Command = "dir_name" then
          declare
-            Filename : constant String := Nth_Arg (Data, 1);
+            Filename : constant Filesystem_String := Nth_Arg (Data, 1);
             File     : Virtual_File;
          begin
             File := Create (Filename);
@@ -379,7 +379,8 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Dir     : constant String := Directory_Information (Context.Context);
+      Dir     : constant Filesystem_String :=
+        Directory_Information (Context.Context);
       Success : Boolean;
       Res     : Gtkada.Dialogs.Message_Dialog_Buttons;
       File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -387,7 +388,7 @@ package body VFS_Module is
 
    begin
       Trace (Me, "deleting "
-             & Full_Name (File_Information (Context.Context)).all);
+             & (+Full_Name (File_Information (Context.Context)).all));
       Push_State (Get_Kernel (Context.Context), Busy);
 
       if Has_File_Information (Context.Context) then
@@ -395,7 +396,7 @@ package body VFS_Module is
 
          Res := Gtkada.Dialogs.Message_Dialog
            (-"Are you sure you want to delete " &
-            File.Full_Name.all &
+            Display_Full_Name (File) &
             " ?",
             Gtkada.Dialogs.Confirmation,
             Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
@@ -407,7 +408,7 @@ package body VFS_Module is
                Console.Insert
                  (Get_Kernel (Context.Context),
                   (-"Cannot remove file: ") &
-                  File.Full_Name.all,
+                  Display_Full_Name (File),
                   Mode => Error);
             end if;
          else
@@ -417,7 +418,7 @@ package body VFS_Module is
       else
          Res := Gtkada.Dialogs.Message_Dialog
            (-"Are you sure you want to delete the directory " &
-            Dir & (-" and all its subdirectories ?"),
+            (Unknown_To_UTF8 (+Dir)) & (-" and all its subdirectories ?"),
             Gtkada.Dialogs.Confirmation,
             Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
 
@@ -428,7 +429,7 @@ package body VFS_Module is
                --  because File cannot be marked as such after deletion of the
                --  physical dir.
                if Is_Directory (File) then
-                  Remove_Dir (Dir, True);
+                  Remove_Dir (+Dir, True);
                   Success := True;
                else
                   Success :=  False;
@@ -438,7 +439,7 @@ package body VFS_Module is
                   Success := False;
                   Console.Insert
                     (Get_Kernel (Context.Context),
-                     (-"Cannot remove directory: ") & Dir,
+                     (-"Cannot remove directory: ") & Unknown_To_UTF8 (+Dir),
                      Mode => Error);
             end;
          else
@@ -479,7 +480,8 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Dir      : constant String := Directory_Information (Context.Context);
+      Dir      : constant Filesystem_String :=
+        Directory_Information (Context.Context);
       Success  : Boolean;
       Button   : Gtkada.Dialogs.Message_Dialog_Buttons;
       Is_Dir   : Boolean;
@@ -492,7 +494,7 @@ package body VFS_Module is
       --  Performs the actual renaming
 
       procedure Rename_In_Prj
-        (File_In, File_Out : String; Success : out Boolean);
+        (File_In, File_Out : Filesystem_String; Success : out Boolean);
       --  Rename the path in the projects
 
       -------------------
@@ -500,7 +502,7 @@ package body VFS_Module is
       -------------------
 
       procedure Rename_In_Prj
-        (File_In, File_Out : String; Success : out Boolean)
+        (File_In, File_Out : Filesystem_String; Success : out Boolean)
       is
          Project  : constant Projects.Project_Type :=
                       Get_Project (Get_Kernel (Context.Context));
@@ -548,10 +550,10 @@ package body VFS_Module is
                     (-"Please enter the directory's new name:"),
                     Password_Mode => False,
                     Urgent        => False,
-                    Default       => File_In.Base_Dir_Name);
+                    Default       => +File_In.Base_Dir_Name);
             begin
                Renamed :=
-                 To_Unbounded_String (File_In.Get_Parent.Full_Name.all) & Res;
+                 To_Unbounded_String (+File_In.Get_Parent.Full_Name.all) & Res;
             end;
 
          else
@@ -562,16 +564,15 @@ package body VFS_Module is
                     (-"Please enter the file's new name:"),
                     Password_Mode => False,
                     Urgent        => False,
-                    Default       => File_In.Base_Name);
+                    Default       => +File_In.Base_Name);
             begin
                Renamed :=
-                 To_Unbounded_String (File_In.Dir.Full_Name.all) & Res;
+                 To_Unbounded_String (+File_In.Dir.Full_Name.all) & Res;
             end;
          end if;
 
          declare
-            Res : constant String :=
-                    To_String (Renamed);
+            Res : constant Filesystem_String := +To_String (Renamed);
          begin
             if Res = File_In.Full_Name.all or else Res = "" then
                Success     := True;
@@ -586,9 +587,9 @@ package body VFS_Module is
                Console.Insert
                  (Get_Kernel (Context.Context),
                   (-"Cannot rename ") &
-                  File_In.Full_Name.all &
+                  Display_Full_Name (File_In) &
                   (-" into ") &
-                  Res,
+                  (+Res),
                   Mode => Error);
 
                return;
@@ -645,7 +646,7 @@ package body VFS_Module is
 
    begin
       Trace (Me, "renaming "
-             & Full_Name (File_Information (Context.Context)).all);
+             & (+Full_Name (File_Information (Context.Context)).all));
       Push_State (Get_Kernel (Context.Context), Busy);
 
       Is_Dir := not Has_File_Information (Context.Context);
@@ -678,7 +679,8 @@ package body VFS_Module is
      (Command : access Create_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Dir         : constant String := Directory_Information (Context.Context);
+      Dir         : constant Filesystem_String :=
+        Directory_Information (Context.Context);
       File        : GNATCOLL.VFS.Virtual_File;
       Prj_Changed : Boolean;
       Prj_List    : Unbounded_String;
@@ -695,7 +697,7 @@ package body VFS_Module is
                        Default       => "");
          begin
             if Res /= "" then
-               File := Create (Dir & Res);
+               File := Create (Dir & (+Res));
                Make_Dir (File);
             end if;
          exception
@@ -703,7 +705,7 @@ package body VFS_Module is
                Console.Insert
                  (Get_Kernel (Context.Context),
                   (-"Cannot create dir ") &
-                  File.Full_Name.all,
+                  Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;
          end;
@@ -719,7 +721,7 @@ package body VFS_Module is
             W_File : GNATCOLL.VFS.Writable_File;
          begin
             if Res /= "" then
-               File := Create (Dir & Res);
+               File := Create (Dir & (+Res));
                W_File := GNATCOLL.VFS.Write_File (File);
                GNATCOLL.VFS.Close (W_File);
             end if;
@@ -728,7 +730,7 @@ package body VFS_Module is
                Console.Insert
                  (Get_Kernel (Context.Context),
                   (-"Cannot create file ") &
-                  File.Full_Name.all,
+                  Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;
          end;

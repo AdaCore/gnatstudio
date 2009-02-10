@@ -25,6 +25,7 @@ with Ada.Strings.Hash;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -86,6 +87,7 @@ with Project_Explorers_Common;  use Project_Explorers_Common;
 with Remote;                    use Remote;
 with String_Hash;
 with String_Utils;              use String_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with Tooltips;
 with Traces;                    use Traces;
 
@@ -111,10 +113,13 @@ package body Project_Explorers is
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
 
+   function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
+   pragma Inline (Hash);
+
    package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
+     (Key_Type        => Filesystem_String,
       Element_Type    => Gtk_Tree_Iter,
-      Hash            => Ada.Strings.Hash,
+      Hash            => Hash,
       Equivalent_Keys => "=");
    use File_Node_Hash;
    --  Note: the hash is case sensitive: since we always display the file names
@@ -270,7 +275,7 @@ package body Project_Explorers is
 
    procedure Set_Directory_Node_Attributes
      (Explorer  : access Project_Explorer_Record'Class;
-      Directory : String;
+      Directory : Filesystem_String;
       Node      : Gtk_Tree_Iter;
       Project   : Project_Type;
       Node_Type : Directory_Node_Types);
@@ -584,7 +589,7 @@ package body Project_Explorers is
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
+      Add_Attribute (Col, Text_Rend, "markup", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
@@ -765,10 +770,10 @@ package body Project_Explorers is
 
       Set_Sort_Func
         (+Explorer.Tree.Model,
-         Base_Name_Column,
+         Display_Name_Column,
          Sort_Func      => Sort_Func'Access);
       Set_Sort_Column_Id
-        (+Explorer.Tree.Model, Base_Name_Column, Sort_Ascending);
+        (+Explorer.Tree.Model, Display_Name_Column, Sort_Ascending);
 
       --  Initialize tooltips
 
@@ -944,7 +949,7 @@ package body Project_Explorers is
         or else Child = null
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
-                   Full_Name (Get_File_From_Node (E.Tree.Model, Node)).all)
+                   Display_Full_Name (Get_File_From_Node (E.Tree.Model, Node)))
       then
          return;
       end if;
@@ -1166,7 +1171,8 @@ package body Project_Explorers is
          while Ref /= Null_Iter
            and then
              (Get_Node_Type (Explorer.Tree.Model, Ref) /= Project_Node
-              or else Get_String (Explorer.Tree.Model, Ref, Base_Name_Column)
+               or else Get_String (Explorer.Tree.Model, Ref,
+                                    Display_Name_Column)
                 < Node_Text)
          loop
             Next (Explorer.Tree.Model, Ref);
@@ -1179,17 +1185,17 @@ package body Project_Explorers is
          Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
       end if;
 
-      Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-           Full_Name (Project_Path (Project)).all);
+      Set (Explorer.Tree.Model, N, Filesystem_Name_Column,
+           +Full_Name (Project_Path (Project)).all);
 
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
-         Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Display_Full_Name (Create (Node_Text))
+         Set (Explorer.Tree.Model, N, Display_Name_Column,
+              Display_Full_Name (Create (+Node_Text))
               & " (extended)" & Name_Suffix);
       else
-         Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Display_Full_Name (Create (Node_Text & Name_Suffix)));
+         Set (Explorer.Tree.Model, N, Display_Name_Column,
+              Display_Full_Name (Create (+(Node_Text & Name_Suffix))));
       end if;
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
@@ -1214,17 +1220,19 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter)
    is
       Node_Text : constant String :=
-                    Get_String
-                      (Explorer.Tree.Model, Node, Absolute_Name_Column);
+        Get_String
+          (Explorer.Tree.Model, Node, Filesystem_Name_Column);
    begin
       if Get_History
         (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
       then
-         Set (Explorer.Tree.Model, Node, Base_Name_Column, Node_Text);
+         Set (Explorer.Tree.Model, Node, Display_Name_Column,
+              Unknown_To_UTF8 (Node_Text));
       else
-         Set (Explorer.Tree.Model, Node, Base_Name_Column,
-              Relative_Path_Name
-               (Node_Text, Dir_Name (Project_Path (Project)).all,
+         Set (Explorer.Tree.Model, Node,
+              Display_Name_Column,
+              +Relative_Path_Name
+               (+Node_Text, Dir_Name (Project_Path (Project)).all,
                 Build_Server));
       end if;
    end Update_Directory_Node_Text;
@@ -1316,13 +1324,13 @@ package body Project_Explorers is
 
    procedure Set_Directory_Node_Attributes
      (Explorer  : access Project_Explorer_Record'Class;
-      Directory : String;
+      Directory : Filesystem_String;
       Node      : Gtk_Tree_Iter;
       Project   : Project_Type;
       Node_Type : Directory_Node_Types) is
    begin
-      Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
-           Display_Full_Name (Create (Name_As_Directory (Directory))));
+      Set (Explorer.Tree.Model, Node, Filesystem_Name_Column,
+           +Full_Name (Create (Name_As_Directory (Directory))).all);
 
       Update_Directory_Node_Text (Explorer, Project, Node);
 
@@ -1381,7 +1389,7 @@ package body Project_Explorers is
 
          declare
             Str     : constant String := Get_String
-              (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column);
+              (Tooltip.Explorer.Tree.Model, Iter, Display_Name_Column);
             S_Icon  : constant Gint := 15; -- size used for the icon
             S_Level : constant Gint := 12; -- size used for each indent level
             --  ??? S_Icon and S_Level have been computed experimentally. It is
@@ -1412,8 +1420,10 @@ package body Project_Explorers is
          when Project_Node | Extends_Project_Node =>
             --  Project or extended project full pathname
             Text := new String'
-              (Get_String
-                 (Tooltip.Explorer.Tree.Model, Iter, Absolute_Name_Column));
+              (Unknown_To_UTF8
+                 (Get_String
+                    (Tooltip.Explorer.Tree.Model, Iter,
+                     Filesystem_Name_Column)));
 
          when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
             --  Directroy full pathname and project name
@@ -1421,12 +1431,14 @@ package body Project_Explorers is
             Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
 
             Text := new String'
-              (Get_String
-                 (Tooltip.Explorer.Tree.Model, Iter, Absolute_Name_Column) &
-               ASCII.LF &
+              (Unknown_To_UTF8
+                 (Get_String
+                    (Tooltip.Explorer.Tree.Model, Iter,
+                     Filesystem_Name_Column))
+               & ASCII.LF &
                (-"in project ") &
                Get_String
-                 (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column));
+                 (Tooltip.Explorer.Tree.Model, Par, Display_Name_Column));
 
          when File_Node =>
             --  Base filename and Project name
@@ -1436,11 +1448,13 @@ package body Project_Explorers is
                Parent (Tooltip.Explorer.Tree.Model, Iter));
 
             Text := new String'
-              (Get_String (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column)
+              (Get_String
+                 (Tooltip.Explorer.Tree.Model, Iter,
+                  Display_Name_Column)
                & ASCII.LF &
                (-"in project ") &
                Get_String
-                 (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column));
+                 (Tooltip.Explorer.Tree.Model, Par, Display_Name_Column));
 
          when Entity_Node =>
             --  Entity (parameters) declared at Filename:line
@@ -1450,10 +1464,12 @@ package body Project_Explorers is
                Parent (Tooltip.Explorer.Tree.Model, Iter));
 
             Text := new String'
-              (Get_String (Tooltip.Explorer.Tree.Model, Iter, Base_Name_Column)
+              (Get_String
+                 (Tooltip.Explorer.Tree.Model, Iter, Display_Name_Column)
                & ASCII.LF &
                (-"declared at ") &
-               Get_String (Tooltip.Explorer.Tree.Model, Par, Base_Name_Column)
+               Get_String (Tooltip.Explorer.Tree.Model, Par,
+                 Display_Name_Column)
                & ':' &
                Image (Integer
                  (Get_Int (Tooltip.Explorer.Tree.Model, Iter, Line_Column))));
@@ -1504,10 +1520,10 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      Obj  : constant String :=
+      Obj  : constant Filesystem_String :=
                Name_As_Directory
                  (Object_Path (Project, False, Xrefs_Dirs => False));
-      Exec : constant String := Executables_Directory (Project);
+      Exec : constant Filesystem_String := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
       --  Create a node for display of the object directory
@@ -1801,7 +1817,7 @@ package body Project_Explorers is
       Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
-      function Is_Hidden (Dir : String) return Boolean;
+      function Is_Hidden (Dir : Filesystem_String) return Boolean;
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
 
@@ -1820,26 +1836,26 @@ package body Project_Explorers is
       -- Is_Hidden --
       ---------------
 
-      function Is_Hidden (Dir : String) return Boolean is
-         D : constant String := Dir (Dir'First .. Dir'Last - 1);
+      function Is_Hidden (Dir : Filesystem_String) return Boolean is
+         D : constant Filesystem_String := Dir (Dir'First .. Dir'Last - 1);
 
-         function Is_Hidden (CD, Dir : String) return Boolean;
+         function Is_Hidden (CD, Dir : Filesystem_String) return Boolean;
          --  Return true if path name is hidden
 
          ---------------
          -- Is_Hidden --
          ---------------
 
-         function Is_Hidden (CD, Dir : String) return Boolean is
+         function Is_Hidden (CD, Dir : Filesystem_String) return Boolean is
 
-            function Is_Root (Dir : String) return Boolean;
+            function Is_Root (Dir : Filesystem_String) return Boolean;
             --  Returns True if Dir is a root directory
 
             -------------
             -- Is_Root --
             -------------
 
-            function Is_Root (Dir : String) return Boolean is
+            function Is_Root (Dir : Filesystem_String) return Boolean is
             begin
                return (Dir'Length = 1 and then Dir (Dir'First) = '/')
                  or else (Dir'Length = 3
@@ -1865,7 +1881,7 @@ package body Project_Explorers is
             else
                return Is_Hidden (Explorer.Kernel, Dir)
                  or else Is_Hidden
-                   (Containing_Directory (CD), Simple_Name (CD));
+                   (+Containing_Directory (+CD), +Simple_Name (+CD));
             end if;
          end Is_Hidden;
 
@@ -1873,7 +1889,7 @@ package body Project_Explorers is
          if D = "" then
             return False;
          else
-            return Is_Hidden (Containing_Directory (D), Simple_Name (D));
+            return Is_Hidden (+Containing_Directory (+D), +Simple_Name (+D));
          end if;
       end Is_Hidden;
 
@@ -2064,8 +2080,8 @@ package body Project_Explorers is
 
       for D in Dirs'Range loop
          declare
-            Dir : constant String :=
-              Name_As_Directory (Get_Name_String (Dirs (D)));
+            Dir : constant Filesystem_String :=
+              Name_As_Directory (+Get_Name_String (Dirs (D)));
          begin
             if Find (S_Dirs, Dir) = No_Element then
                if Get_History
@@ -2560,11 +2576,11 @@ package body Project_Explorers is
          Result : out Gtk_Tree_Iter;
          Finish : out Boolean)
       is
-         N      : aliased constant String :=
+         N      : aliased constant Filesystem_String :=
                     Get_Base_Name (Explorer.Tree.Model, Start);
          Status : Search_Status;
       begin
-         Status := Get (C.Matches, N);
+         Status := Get (C.Matches, +N);
          if C.Include_Entities then
             --  The file was already parsed, and we know it matched
             if Status >= Search_Match then
@@ -2579,7 +2595,7 @@ package body Project_Explorers is
                  (Create (Full_Filename => Get_Directory_From_Node
                             (Explorer.Tree.Model, Start) & N))
                then
-                  Set (C.Matches, N, Search_Match);
+                  Set (C.Matches, +N, Search_Match);
                   Compute_Children (Explorer, Start);
                   Result := Children (Explorer.Tree.Model, Start);
                   Finish := False;
@@ -2665,7 +2681,7 @@ package body Project_Explorers is
 
                   when Directory_Node =>
                      Next_Or_Child
-                       (Get_Directory_From_Node
+                       (+Get_Directory_From_Node
                           (Explorer.Tree.Model, Start_Node),
                         Start_Node,
                         Context.Include_Directories, Tmp, Finish);
@@ -2691,7 +2707,7 @@ package body Project_Explorers is
                        and then Get
                          (C.Matches,
                           First_Word
-                            (Get_Base_Name (Explorer.Tree.Model, Start_Node)))
+                            (+Get_Base_Name (Explorer.Tree.Model, Start_Node)))
                           /= No_Match
                      then
                         return Start_Node;
@@ -2769,19 +2785,19 @@ package body Project_Explorers is
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
-         Dir  : constant String := Dir_Name (File).all;
+         Dir  : constant Filesystem_String := Dir_Name (File).all;
          Iter : Imported_Project_Iterator;
 
       begin
-         Set (C.Matches, Base_Name (File), Mark_File);
+         Set (C.Matches, +Base_Name (File), Mark_File);
 
          --  Mark the number of entries in the directory, so that if a file
          --  doesn't match we can decrease it later, and finally no longer
          --  examine the directory
-         if Get (C.Matches, Dir) /= No_Match then
-            Set (C.Matches, Dir, Get (C.Matches, Dir) + Increment);
+         if Get (C.Matches, +Dir) /= No_Match then
+            Set (C.Matches, +Dir, Get (C.Matches, +Dir) + Increment);
          elsif Increment > 0 then
-            Set (C.Matches, Dir, 1);
+            Set (C.Matches, +Dir, 1);
          end if;
 
          if not Project_Marked then
@@ -2838,9 +2854,10 @@ package body Project_Explorers is
                Project_Marked := False;
                for S in Sources'Range loop
                   declare
-                     Base : constant String := Base_Name (Sources (S));
+                     Base : constant Filesystem_String :=
+                       Base_Name (Sources (S));
                   begin
-                     if Match (C, Base) /= -1 then
+                     if Match (C, +Base) /= -1 then
                         Mark_File_And_Projects
                           (File           => Sources (S),
                            Project_Marked => Project_Marked,
@@ -2972,7 +2989,7 @@ package body Project_Explorers is
       Set_Context
         (Context  => C,
          Look_For =>
-           "^" & Base_Name (File_Information (Context.Context)) & "$",
+           "^" & (+Base_Name (File_Information (Context.Context))) & "$",
          Options  => (Case_Sensitive => Is_Case_Sensitive (Build_Server),
                       Whole_Word     => True,
                       Regexp         => True));
@@ -3166,5 +3183,14 @@ package body Project_Explorers is
                      Last_Of_Module => No_Search_History_Key));
       end;
    end Register_Module;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (+Key);
+   end Hash;
 
 end Project_Explorers;

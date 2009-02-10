@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2007-2008, AdaCore                 --
+--                  Copyright (C) 2007-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -45,6 +45,7 @@ with Docgen2_Backend;
 with GPS.Kernel;
 with Projects;
 with GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Docgen2 is
 
@@ -136,7 +137,8 @@ package Docgen2 is
      (D : Docgen_Object) return Docgen_Options;
    --  Get current docgen options from docgen object
 
-   function Get_Doc_Directory (Object : Docgen_Object) return String;
+   function Get_Doc_Directory
+     (Object : Docgen_Object) return Filesystem_String;
    --  Return the directory in which the documentation will be generated
 
    function Get_Current_File

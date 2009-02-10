@@ -26,6 +26,7 @@ pragma Warnings (On);
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;                 use GNATCOLL.Filesystem;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -809,7 +810,7 @@ package body Src_Editor_Buffer is
       if Buffer.Auto_Syntax_Check then
          Execute_GPS_Shell_Command
            (Buffer.Kernel,
-            "File " & Full_Name (Buffer.Filename).all);
+            "File " & (+Full_Name (Buffer.Filename).all));
          Execute_GPS_Shell_Command
            (Buffer.Kernel, "File.shadow_check_syntax %1");
       end if;
@@ -2294,7 +2295,7 @@ package body Src_Editor_Buffer is
                  (Source_Buffer (Buffer), Entity_End, Success, Line, Col);
                if not Success then
                   Trace (Me, "invalid position """
-                         & Full_Name (Buffer.Filename).all & """"
+                         & (+Full_Name (Buffer.Filename).all) & """"
                          & Line'Img & Col'Img);
                   return False;
                end if;
@@ -2306,7 +2307,7 @@ package body Src_Editor_Buffer is
                  (Source_Buffer (Buffer), Entity_End, Success, Line, 0);
                if not Success then
                   Trace (Me, "invalid position """
-                         & Full_Name (Buffer.Filename).all & """"
+                         & (+Full_Name (Buffer.Filename).all) & """"
                          & Line'Img & " 0--");
                   return False;
                end if;
@@ -2882,7 +2883,7 @@ package body Src_Editor_Buffer is
 
       if Contents = null then
          Trace (Me, "Load_File: Couldn't read contents of "
-                & Full_Name (Filename).all);
+                & (+Full_Name (Filename).all));
          Success := False;
          return;
       end if;
@@ -2908,7 +2909,7 @@ package body Src_Editor_Buffer is
          Console.Insert
            (Buffer.Kernel,
             (-"Warning: NUL characters stripped from ")
-            & Full_Name (Filename).all, Mode => Console.Error);
+            & Display_Full_Name (Filename), Mode => Console.Error);
       end if;
 
       UTF8 := Glib.Convert.Convert
@@ -2935,7 +2936,7 @@ package body Src_Editor_Buffer is
          Console.Insert
            (Buffer.Kernel,
             (-"Warning: invalid characters stripped from ")
-            & Full_Name (Filename).all, Mode => Console.Error);
+            & Display_Full_Name (Filename), Mode => Console.Error);
       end if;
 
       Insert_At_Cursor (Buffer, UTF8, Gint (Length));
@@ -3191,7 +3192,8 @@ package body Src_Editor_Buffer is
       if FD = Invalid_File then
          Insert
            (Buffer.Kernel,
-            -"Could not open file for writing: " & Full_Name (Filename).all,
+            -"Could not open file for writing: "
+            & Display_Full_Name (Filename),
             Mode => GPS.Kernel.Console.Error);
          Success := False;
          return;
@@ -3476,7 +3478,7 @@ package body Src_Editor_Buffer is
    begin
       if not Is_Valid_Position (Buffer, Line, Column) then
          Trace (Me, "invalid position for Set_Cursor_Position "
-                & Full_Name (Get_Filename (Buffer)).all
+                & (+Full_Name (Get_Filename (Buffer)).all)
                 & Line'Img & Column'Img);
          return;
       end if;
@@ -3546,7 +3548,7 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
       else
          Trace (Me, "Invalid position for Set_Screen_Position "
-                & Full_Name (Get_Filename (Buffer)).all & Line'Img);
+                & (+Full_Name (Get_Filename (Buffer)).all) & Line'Img);
          Get_End_Iter (Buffer, Iter);
       end if;
 

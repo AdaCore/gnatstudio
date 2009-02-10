@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2008, AdaCore             --
+--                      Copyright (C) 2004-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,10 +31,12 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Casing_Exceptions is
 
-   Case_Exceptions_Filename : constant String := "case_exceptions.xml";
+   Case_Exceptions_Filename : constant Filesystem_String :=
+     "case_exceptions.xml";
 
    type Casing_Module_Record is new Module_ID_Record with record
       Casing_Exceptions_Table : Case_Handling.Casing_Exceptions;
@@ -164,7 +166,7 @@ package body Casing_Exceptions is
       is
          Args   : Argument_List_Access :=
                     new Argument_List'
-                      (new String'(Full_Name (File).all),
+                      (new String'(+Full_Name (File).all),
                        new String'(Integer'Image (Line)),
                        new String'(Integer'Image (Column)),
                        new String'(New_Name),
@@ -342,7 +344,7 @@ package body Casing_Exceptions is
       end Get_Name;
 
       Name : constant String := Get_Name;
-      Filename : constant String :=
+      Filename : constant Filesystem_String :=
         Get_Home_Dir (Get_Kernel (Context.Context)) & Case_Exceptions_Filename;
       Success  : Boolean;
 
@@ -444,8 +446,8 @@ package body Casing_Exceptions is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filename           : constant String :=
-                             Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
+      Filename           : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
       Command            : Interactive_Command_Access;
       Label              : Contextual_Label;
       Substring_Filter   : Action_Filter;

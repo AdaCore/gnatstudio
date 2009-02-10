@@ -131,7 +131,8 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set
         (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
+        (Model, Iter, Name_Col,
+         GNATCOLL.VFS.Display_Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
@@ -175,7 +176,8 @@ package body Code_Analysis_Tree_Model is
       Gtk.Tree_Store.Set
         (Model, Iter, Pix_Col, Glib.Object.GObject (Icons.File_Pixbuf));
       Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col, GNATCOLL.VFS.Base_Name (File_Node.Name));
+        (Model, Iter, Name_Col,
+         GNATCOLL.VFS.Display_Base_Name (File_Node.Name));
       File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
       File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
       Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);

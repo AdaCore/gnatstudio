@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2009, AdaCore             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,6 +62,7 @@ with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -275,9 +276,11 @@ package body Breakpoints_Editor is
          if Br.File /= GNATCOLL.VFS.No_File then
             Set_Active (Editor.Location_Selected, True);
             Add_Unique_Combo_Entry
-              (Editor.File_Combo, Base_Name (Br.File));
+              (Editor.File_Combo, +Base_Name (Br.File));
+            --  ??? What if the filesystem path is non-UTF8?
             Set_Text
-              (Get_Entry (Editor.File_Combo), Base_Name (Br.File));
+              (Get_Entry (Editor.File_Combo), +Base_Name (Br.File));
+            --  ??? What if the filesystem path is non-UTF8?
             Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
          else
             Set_Active (Editor.Address_Selected, True);
@@ -540,8 +543,10 @@ package body Breakpoints_Editor is
 
       if Get_Active (Editor.Location_Selected) then
          declare
-            File : constant String :=
-              Get_Text (Get_Entry (Editor.File_Combo));
+            File : constant Filesystem_String :=
+              +Get_Text (Get_Entry (Editor.File_Combo));
+            --  ??? What if the filesystem path is non-UTF8?
+
             Line : constant Integer :=
               Integer (Get_Value_As_Int (Editor.Line_Spin));
 
@@ -630,7 +635,8 @@ package body Breakpoints_Editor is
       --  Reinitialize the contents of the file combo boxes
       Set_Text
         (Get_Entry (Editor.File_Combo),
-         Base_Name (Get_Current_File (Process.Editor_Text)));
+         +Base_Name (Get_Current_File (Process.Editor_Text)));
+      --  ??? What if the filesystem path is non-UTF8?
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
@@ -775,7 +781,7 @@ package body Breakpoints_Editor is
          end if;
 
          if Br.File /= GNATCOLL.VFS.No_File then
-            Set (Model, Iter, Col_File, Base_Name (Br.File));
+            Set (Model, Iter, Col_File, +Base_Name (Br.File));
             Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
          end if;
 

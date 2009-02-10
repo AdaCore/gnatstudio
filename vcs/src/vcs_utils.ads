@@ -23,6 +23,7 @@ with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package VCS_Utils is
 
@@ -42,7 +43,7 @@ package VCS_Utils is
    --  Return False if the user has cancelled the action.
 
    function Get_Current_Dir
-     (Context : Selection_Context) return String;
+     (Context : Selection_Context) return Filesystem_String;
    --  Convenience function to get the current directory
 
    function Get_Current_File

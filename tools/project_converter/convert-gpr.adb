@@ -31,6 +31,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line;          use Ada.Command_Line;
 with File_Utils;                use File_Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Convert.Gpr is
 
@@ -76,8 +77,8 @@ package body Convert.Gpr is
          end loop;
 
          Put_Line (Prefix
-                   & Name_As_Directory
-                      (Format_Pathname (Path (Start .. Last - 1), UNIX)));
+                   & (+Name_As_Directory
+                      (+Format_Pathname (Path (Start .. Last - 1), UNIX))));
          Start := Last + 1;
       end loop;
    end Output_Path;

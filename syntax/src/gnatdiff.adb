@@ -24,6 +24,7 @@ with GNATCOLL.Mmap;        use GNATCOLL.Mmap;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Ada.Text_IO;      use Ada.Text_IO;
 with Language;         use Language;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 --  ??? TODO:
 --  - add switch to choose which category to take into account
@@ -53,7 +54,7 @@ procedure Gnatdiff is
       Result     : aliased Construct_List;
 
    begin
-      Buffer := Read_Whole_File (File);
+      Buffer := Read_Whole_File (+File);
       Analyze_Ada_Source
         (Buffer.all, Default_Indent_Parameters,
          Format           => False,

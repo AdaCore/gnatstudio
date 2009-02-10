@@ -19,8 +19,9 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 with GNAT.Strings;               use GNAT.Strings;
 
 with Glib;                       use Glib;
@@ -274,7 +275,8 @@ package body Navigation_Module is
    procedure Save_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant String := Get_Home_Dir (Kernel) & "locations.xml";
+      Filename    : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "locations.xml";
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       File, Child : Node_Ptr;
@@ -282,7 +284,7 @@ package body Navigation_Module is
 
    begin
       if M.Markers /= null then
-         Trace (Me, "Saving " & Filename);
+         Trace (Me, "Saving " & (+Filename));
          File     := new Node;
          File.Tag := new String'("Locations");
 
@@ -296,7 +298,7 @@ package body Navigation_Module is
             end if;
          end loop;
 
-         Print (File, Filename, Success);
+         Print (File, +Filename, Success);
          Free (File);
 
          if not Success then
@@ -312,15 +314,16 @@ package body Navigation_Module is
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant String := Get_Home_Dir (Kernel) & "locations.xml";
+      Filename    : constant Filesystem_String :=
+        Get_Home_Dir (Kernel) & "locations.xml";
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       File, Child : Node_Ptr;
       Marker      : Location_Marker;
       Err         : String_Access;
    begin
-      if GNAT.OS_Lib.Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename);
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & (+Filename));
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -436,7 +439,7 @@ package body Navigation_Module is
       S_Line : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel, "Editor.cursor_get_line",
-                    (1 => Full_Name (File).all'Unrestricted_Access));
+                    (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
    begin
       return Natural'Value (S_Line);
    exception
@@ -459,14 +462,14 @@ package body Navigation_Module is
       Execute_GPS_Shell_Command
         (Kernel,
          "Editor.cursor_set_position",
-         (Full_Name (File).all'Unrestricted_Access,
+         (Convert (Full_Name (File).all'Unrestricted_Access),
           Line_Img'Unchecked_Access));
 
       if Center then
          Execute_GPS_Shell_Command
            (Kernel,
             "Editor.cursor_center",
-            (1 => Full_Name (File).all'Unrestricted_Access));
+            (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
       end if;
    end Set_Current_Line;
 
@@ -481,7 +484,7 @@ package body Navigation_Module is
       S_Line : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel, "Editor.get_last_line",
-                    (1 => Full_Name (File).all'Unrestricted_Access));
+                    (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
    begin
       return Natural'Value (S_Line);
    exception
@@ -933,7 +936,7 @@ package body Navigation_Module is
                Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & Full_Name (File_Information (Context)).all);
+                      & (+Full_Name (File_Information (Context)).all));
             end if;
          end;
       else

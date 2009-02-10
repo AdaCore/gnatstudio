@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,7 @@ with Traces;                 use Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
 with String_Diff;            use String_Diff;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Diff_Utils2 is
 
@@ -247,12 +248,12 @@ package body Diff_Utils2 is
       Result     : Expect_Match;
       Ret        : Diff_List;
       Occurrence : Diff_Chunk_Access;
-      Cmd        : String_Access;
+      Cmd        : Filesystem_String_Access;
       Cmd_Args   : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
-      Cmd := Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
+      Cmd := Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -264,16 +265,16 @@ package body Diff_Utils2 is
          return Ret;
       end if;
 
-      Args (1) := new String'(Full_Name (Ref_File).all);
-      Args (2) := new String'(Full_Name (New_File).all);
+      Args (1) := new String'(+Full_Name (Ref_File).all);
+      Args (2) := new String'(+Full_Name (New_File).all);
 
       Trace (Me, "spawn: " & Diff_Command
-             & " " & Full_Name (New_File).all
-             & " " & Full_Name (Ref_File).all);
+             & " " & (+Full_Name (New_File).all)
+             & " " & (+Full_Name (Ref_File).all));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, Cmd.all,
+           (Descriptor, +Cmd.all,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
          Free (Cmd);
          Free (Cmd_Args);
@@ -317,7 +318,7 @@ package body Diff_Utils2 is
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
       Occurrence    : Diff_Chunk_Access;
-      Cmd           : String_Access;
+      Cmd           : Filesystem_String_Access;
       Matches       : Match_Array (0 .. 5);
       Result        : Expect_Match;
       File          : File_Type;
@@ -329,7 +330,7 @@ package body Diff_Utils2 is
    begin
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      :=
-        Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
+        Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -345,23 +346,23 @@ package body Diff_Utils2 is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (Orig_File).all);
          Args (4) := new String'("-R");
-         Args (5) := new String'(Full_Name (New_File).all);
+         Args (5) := new String'(+Full_Name (New_File).all);
          Num_Args := 6;
       else
-         Args (3) := new String'(Full_Name (New_File).all);
-         Args (4) := new String'(Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (New_File).all);
+         Args (4) := new String'(+Full_Name (Orig_File).all);
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Full_Name (Diff_File).all);
+      Args (Num_Args) := new String'(+Full_Name (Diff_File).all);
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, Cmd.all,
+           (Descriptor, +Cmd.all,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
             Args (1 .. Num_Args));
          Free (Cmd);
@@ -378,7 +379,7 @@ package body Diff_Utils2 is
       end;
 
       --  ??? Should use VFS.Read_File instead, more efficient
-      Open (File, In_File, Full_Name (Diff_File).all);
+      Open (File, In_File, +Full_Name (Diff_File).all);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -458,12 +459,12 @@ package body Diff_Utils2 is
       Result         : Expect_Match;
       Ret            : Diff_List;
       Occurrence     : Diff_Chunk_Access;
-      Cmd            : String_Access;
+      Cmd            : Filesystem_String_Access;
       Cmd_Args       : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
-      Cmd      := Locate_Tool_Executable (Cmd_Args (Cmd_Args'First).all);
+      Cmd      := Locate_Tool_Executable (+Cmd_Args (Cmd_Args'First).all);
 
       if Cmd = null or else Cmd.all = "" then
          Console.Insert
@@ -475,17 +476,17 @@ package body Diff_Utils2 is
          return Ret;
       end if;
 
-      Args (1) := new String'(Full_Name (My_Change).all);
-      Args (2) := new String'(Full_Name (Old_File).all);
-      Args (3) := new String'(Full_Name (Your_Change).all);
+      Args (1) := new String'(+Full_Name (My_Change).all);
+      Args (2) := new String'(+Full_Name (Old_File).all);
+      Args (3) := new String'(+Full_Name (Your_Change).all);
 
       Trace (Me, "spawn: " & Diff3_Command & " " &
-             Full_Name (My_Change).all
-             & " " & Full_Name (Old_File).all
-             & " " & Full_Name (Your_Change).all);
+             (+Full_Name (My_Change).all)
+             & " " & (+Full_Name (Old_File).all)
+             & " " & (+Full_Name (Your_Change).all));
 
       Non_Blocking_Spawn
-        (Descriptor, Cmd.all,
+        (Descriptor, +Cmd.all,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
       Free (Cmd);
       Free (Cmd_Args);

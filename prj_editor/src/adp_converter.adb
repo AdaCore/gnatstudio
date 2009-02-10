@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2007, AdaCore             --
+--                      Copyright (C) 2004-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -73,7 +73,7 @@ package body Adp_Converter is
    ----------------------
 
    procedure Convert_Adp_File
-     (Adp_Filename   : String;
+     (Adp_Filename   : Filesystem_String;
       Registry       : Projects.Registry.Project_Registry'Class;
       Project        : in out Project_Type;
       Spec_Extension : String;
@@ -83,7 +83,7 @@ package body Adp_Converter is
       Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
    begin
       if Buffer = null then
-         Trace (Me, "No such file " & Adp_Filename);
+         Trace (Me, "No such file " & (+Adp_Filename));
          return;
       end if;
 
@@ -91,7 +91,7 @@ package body Adp_Converter is
          Build_Dir : constant String :=
            Normalize_Pathname
              (Get_Attribute_Value (Buffer, "build_dir"),
-              Dir_Name (Adp_Filename));
+              Dir_Name (+Adp_Filename));
       begin
          if Build_Dir = "" then
             Trace (Me, "No build dir specified in .adp file");

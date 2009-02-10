@@ -21,6 +21,8 @@ with GNATCOLL.VFS;
 with GPS.Kernel.Project;
 with Projects.Registry;
 
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+
 package body Code_Peer.Bridge.Inspection_Readers is
 
    Inspection_Tag          : constant String := "inspection";
@@ -153,7 +155,10 @@ package body Code_Peer.Bridge.Inspection_Readers is
 
       elsif Qname = File_Tag then
          File_Name :=
-           GPS.Kernel.Create (Attrs.Get_Value ("name"), Self.Kernel);
+           GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
+         --  ??? Potentially non-utf8 string should not be
+         --  stored in an XML attribute.
+
          Project_Node :=
            Code_Analysis.Get_Or_Create
              (Self.Projects, Projects.Registry.Get_Project_From_File

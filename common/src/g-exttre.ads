@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                      Copyright (C) 2006-2008, AdaCore                    --
+--                      Copyright (C) 2006-2009, AdaCore                    --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -31,6 +31,8 @@ with GNAT.Strings;    use GNAT.Strings;
 with System;          use System;
 
 with Ada.Unchecked_Deallocation;
+
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Shell_Descriptors;   use Shell_Descriptors;
 with Machine_Descriptors; use Machine_Descriptors;
@@ -111,7 +113,7 @@ package GNAT.Expect.TTY.Remote is
      (Descriptor          : out Process_Descriptor_Access;
       Target_Nickname     : String;
       Args                : GNAT.OS_Lib.Argument_List;
-      Execution_Directory : String := "";
+      Execution_Directory : Filesystem_String := "";
       Err_To_Out          : Boolean := False;
       On_New_Connection   : access procedure (Target_Name : String) := null);
    --  Spawns a process on a remote machine
@@ -129,7 +131,7 @@ package GNAT.Expect.TTY.Remote is
      (Host                : String;
       Args                : GNAT.OS_Lib.Argument_List;
       Status              : out Boolean;
-      Execution_Directory : String  := "");
+      Execution_Directory : Filesystem_String  := "");
    --  Spawns synchronously a remote program and returns its status
    --  Host : Host on which the program is launched
    --  Args : The program to launch
@@ -141,7 +143,7 @@ package GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Out_Value           : out GNAT.Strings.String_Access;
       Status              : out Boolean;
-      Execution_Directory : String  := "");
+      Execution_Directory : Filesystem_String  := "");
    --  Same as above, except that the program output is also returned
 
    procedure Close_All;

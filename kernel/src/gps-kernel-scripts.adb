@@ -26,6 +26,7 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
 with Gdk.Types;               use Gdk.Types;
 with Glib.Object;             use Glib.Object;
@@ -493,13 +494,13 @@ package body GPS.Kernel.Scripts is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "get_system_dir" then
-         Set_Return_Value (Data, Get_System_Dir (Kernel));
+         Set_Return_Value (Data, +Get_System_Dir (Kernel));
 
       elsif Command = "get_tmp_dir" then
-         Set_Return_Value (Data, Get_Local_Filesystem.Get_Tmp_Directory);
+         Set_Return_Value (Data, +Get_Local_Filesystem.Get_Tmp_Directory);
 
       elsif Command = "get_home_dir" then
-         Set_Return_Value (Data, Get_Home_Dir (Kernel));
+         Set_Return_Value (Data, +Get_Home_Dir (Kernel));
 
       elsif Command = "debug_memory_usage" then
          Memory_Dump (Size => Nth_Arg (Data, 1));
@@ -569,7 +570,7 @@ package body GPS.Kernel.Scripts is
             Err : constant String :=
                     GPS.Kernel.Custom.Add_Customization_String
                       (Kernel, Nth_Arg (Data, 1),
-                       From_File  => Current_Script (Get_Script (Data)),
+                       From_File  => +Current_Script (Get_Script (Data)),
                        Start_Line => 1);
          begin
             if Err /= "" then
@@ -919,7 +920,7 @@ package body GPS.Kernel.Scripts is
          declare
             Instance : constant Class_Instance :=
                          Nth_Arg (Data, 1, Get_File_Class (Kernel));
-            Name     : constant String := Nth_Arg (Data, 2);
+            Name     : constant Filesystem_String := Nth_Arg (Data, 2);
             File     : Virtual_File;
          begin
             if Is_Absolute_Path (Name) then
@@ -1372,7 +1373,7 @@ package body GPS.Kernel.Scripts is
                Set_Return_Value_As_List (Data);
                Recursive_Analyze_Menu (1, Menu);
             else
-               Set_Return_Value (Data, "<empty menu>");
+               Set_Return_Value (Data, String'("<empty menu>"));
             end if;
             Destroy (Menu);
          else

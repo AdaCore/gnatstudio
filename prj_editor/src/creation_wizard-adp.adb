@@ -34,6 +34,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Wizards;                   use Wizards;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Creation_Wizard.Adp is
 
@@ -103,7 +104,8 @@ package body Creation_Wizard.Adp is
       Changed            : in out Boolean)
    is
       pragma Unreferenced (Scenario_Variables);
-      Adp_File : constant String := Get_Text (Page.Adp_File_Name);
+      Adp_File : constant Filesystem_String := +Get_Text (Page.Adp_File_Name);
+      --  ??? What if the filesystem path is non-UTF8?
    begin
       if Adp_File /= "" then
          Convert_Adp_File

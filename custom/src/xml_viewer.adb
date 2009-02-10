@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Strings;
 with System;
 
@@ -202,13 +203,13 @@ package body XML_Viewer is
       Set_Nth_Arg (C, 1, Node.Tag.all);
 
       if Node.Attributes = null then
-         Set_Nth_Arg (C, 2, "");
+         Set_Nth_Arg (C, 2, String'(""));
       else
          Set_Nth_Arg (C, 2, Node.Attributes.all);
       end if;
 
       if Node.Value = null then
-         Set_Nth_Arg (C, 3, "");
+         Set_Nth_Arg (C, 3, String'(""));
       else
          Set_Nth_Arg (C, 3, Node.Value.all);
       end if;
@@ -549,7 +550,7 @@ package body XML_Viewer is
 
       if Is_File_Name then
          declare
-            V : constant Virtual_File := Create (Buffer);
+            V : constant Virtual_File := Create (+Buffer);
             S : GNAT.Strings.String_Access := Read_File (V);
             W : Writable_File;
          begin
@@ -568,7 +569,7 @@ package body XML_Viewer is
             GNAT.Strings.Free (S);
          end;
 
-         Parse (Buffer, Root, Error);
+         Parse (+Buffer, Root, Error);
       else
          Parse_Buffer (Buffer, Tree => Root, Error => Error);
       end if;

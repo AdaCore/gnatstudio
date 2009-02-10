@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                              AdaCore                              --
+--                  Copyright (C) 2003-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -76,7 +75,7 @@ package GPS.Kernel.Custom is
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Customization : UTF8_String;
-      From_File     : String;
+      From_File     : Filesystem_String;
       Start_Line    : Positive := 1) return String;
    --  Add a new customization string, as if it had been parsed from a custom
    --  file. Customization should contain one or more top-level XML tags, as in
@@ -102,23 +101,23 @@ package GPS.Kernel.Custom is
    -------------------------------
 
    function Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
    --  Return the system directory for automatically loaded scripts.
    --  This is $prefix/share/gps/plug-ins
 
    function No_Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
    --  Return the system directory for scripts that are not automatically
    --  loaded by default.
    --  This is $prefix/share/gps/libraries
 
    function Autoload_User_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
    --  Return the user directory for automatically loaded scripts
    --  This is ~/.gps/plug-ins.
    --  The directory is created if it doesn't exist yet.
 
-   function Get_Custom_Path return String;
+   function Get_Custom_Path return Filesystem_String;
    --  Return a colon-separated list of directories in which the user might
    --  have put custom scripts to autoload.
 

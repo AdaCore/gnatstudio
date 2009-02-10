@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,13 +19,13 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Filesystems;               use Filesystems;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with OS_Utils;                  use OS_Utils;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body File_Utils is
 
@@ -33,8 +33,9 @@ package body File_Utils is
    -- Subdirectories_Count --
    --------------------------
 
-   function Subdirectories_Count (Directory : String) return Integer is
-      function C_Subdirectories_Count (Dir : String) return Integer;
+   function Subdirectories_Count
+     (Directory : Filesystem_String) return Integer is
+      function C_Subdirectories_Count (Dir : Filesystem_String) return Integer;
       pragma Import (C, C_Subdirectories_Count, "__gps_subdirectories_count");
 
    begin
@@ -46,7 +47,7 @@ package body File_Utils is
    --------------------------
 
    function Read_Files_From_Dirs
-     (Dirs : String) return File_Array_Access
+     (Dirs : Filesystem_String) return File_Array_Access
    is
       Dir          : Dir_Type;
       File         : String (1 .. 1024);
@@ -59,7 +60,7 @@ package body File_Utils is
    begin
       while not At_End (Dirs, Iter) loop
          declare
-            Normalized_Dir : constant String := Name_As_Directory
+            Normalized_Dir : constant Filesystem_String := Name_As_Directory
               (Current (Dirs, Iter));
          begin
             if Normalized_Dir /= "" then
@@ -70,7 +71,7 @@ package body File_Utils is
                   exit when File_Last = 0;
 
                   if Is_Regular_File
-                    (Normalized_Dir & File (File'First .. File_Last))
+                    (Normalized_Dir & (+File (File'First .. File_Last)))
                   then
                      --  We just need one more item in the array, so doubling
                      --  is more than enough, we do not need to loop until the
@@ -85,7 +86,7 @@ package body File_Utils is
 
                      Result (Result_Index) := Create
                        (Full_Filename =>
-                          Normalized_Dir & File (File'First .. File_Last));
+                          Normalized_Dir & (+File (File'First .. File_Last)));
                      Result_Index := Result_Index + 1;
                   end if;
                end loop;
@@ -113,14 +114,15 @@ package body File_Utils is
    -- Is_Empty --
    --------------
 
-   function Is_Empty (Directory : String) return Boolean is
+   function Is_Empty (Directory : Filesystem_String) return Boolean is
       Dir          : Dir_Type;
       File         : String (1 .. 1024);
       File_Last    : Natural;
 
    begin
       declare
-         Normalized_Dir : constant String := Name_As_Directory (Directory);
+         Normalized_Dir : constant Filesystem_String :=
+           Name_As_Directory (Directory);
       begin
          if Normalized_Dir /= "" then
             Open (Dir, Normalized_Dir);
@@ -170,19 +172,19 @@ package body File_Utils is
    ----------------
 
    function File_Equal
-     (File1, File2 : String;
+     (File1, File2 : Filesystem_String;
       Server : Server_Type := GPS_Server) return Boolean is
    begin
       return Equal
-        (File1, File2, Case_Sensitive => Is_Case_Sensitive (Server));
+        (+File1, +File2, Case_Sensitive => Is_Case_Sensitive (Server));
    end File_Equal;
 
    ------------------
    -- To_File_Name --
    ------------------
 
-   function To_File_Name (Name : String) return String is
-      Result : String (1 .. Name'Length) := To_Lower (Name);
+   function To_File_Name (Name : Filesystem_String) return Filesystem_String is
+      Result : String (1 .. Name'Length) := To_Lower (+Name);
    begin
       for J in Result'First .. Result'Last loop
          if Result (J) = '.' then
@@ -190,15 +192,16 @@ package body File_Utils is
          end if;
       end loop;
 
-      return Result;
+      return +Result;
    end To_File_Name;
 
    ----------------------
    -- To_Host_Pathname --
    ----------------------
 
-   function To_Host_Pathname (Path : String) return String is
-      Cygdrv : constant String := "cygdrive";
+   function To_Host_Pathname
+     (Path : Filesystem_String) return Filesystem_String is
+      Cygdrv : constant Filesystem_String := "cygdrive";
    begin
       if GNAT.OS_Lib.Directory_Separator = '/' then
          return Path;
@@ -224,8 +227,9 @@ package body File_Utils is
    -- To_Unix_Pathname --
    ----------------------
 
-   function To_Unix_Pathname (Path : String) return String is
-      Result : String (Path'Range);
+   function To_Unix_Pathname
+     (Path : Filesystem_String) return Filesystem_String is
+      Result : Filesystem_String (Path'Range);
    begin
       if GNAT.OS_Lib.Directory_Separator = '/' then
          return Path;
@@ -284,7 +288,7 @@ package body File_Utils is
    --------------------
 
    function Suffix_Matches
-     (File_Name : String; Suffix : String) return Boolean
+     (File_Name : Filesystem_String; Suffix : Filesystem_String) return Boolean
    is
       pragma Suppress (All_Checks);
    begin
@@ -313,11 +317,11 @@ package body File_Utils is
    -----------------------
 
    function Name_As_Directory
-     (Name  : String;
+     (Name  : Filesystem_String;
       Style : GNAT.Directory_Operations.Path_Style :=
-        GNAT.Directory_Operations.System_Default) return String
+        GNAT.Directory_Operations.System_Default) return Filesystem_String
    is
-      Dir : constant String := Format_Pathname (Name, Style);
+      Dir : constant Filesystem_String := Format_Pathname (Name, Style);
 
    begin
       if Dir = "" then
@@ -348,17 +352,17 @@ package body File_Utils is
    ------------------------
 
    function Relative_Path_Name
-     (File_Name, Base_Name : String;
-      Server    : Server_Type := GPS_Server) return String
+     (File_Name, Base_Name : Filesystem_String;
+      Server    : Server_Type := GPS_Server) return Filesystem_String
    is
-      Base       : constant String := Name_As_Directory
+      Base       : constant Filesystem_String := Name_As_Directory
         (Normalize_Pathname (Base_Name, Resolve_Links => False));
-      File       : constant String :=
+      File       : constant Filesystem_String :=
         Normalize_Pathname (File_Name, Resolve_Links => False);
       Level      : Natural := 0;
       Base_End   : Natural := Base'Last;
       Length     : Natural;
-      Parent_Dir : constant String := ".." & Directory_Separator;
+      Parent_Dir : constant Filesystem_String := ".." & Directory_Separator;
 
    begin
       if File_Equal (File, Base, Server)
@@ -379,16 +383,16 @@ package body File_Utils is
               Base (Base'First .. Base_End),
               Server)
          then
-            return (Level * Parent_Dir) & File
-              (File'First + Length .. File'Last);
+            return +((Level * (+Parent_Dir)) & (+File
+              (File'First + Length .. File'Last)));
 
          --  Else try without the last directory separator
          elsif File'Length = Length - 1
            and then File_Equal
              (File, Base (Base'First .. Base_End - 1), Server)
          then
-            return (Level * Parent_Dir) & File
-              (File'First + Length .. File'Last);
+            return +((Level * (+Parent_Dir)) & (+File
+              (File'First + Length .. File'Last)));
          end if;
 
          --  Look for the parent directory.
@@ -407,7 +411,7 @@ package body File_Utils is
    -- Start --
    -----------
 
-   function Start (Path : String) return Path_Iterator is
+   function Start (Path : Filesystem_String) return Path_Iterator is
    begin
       return Next (Path, (First => 0, Last => Path'First - 1));
    end Start;
@@ -416,7 +420,10 @@ package body File_Utils is
    -- Next --
    ----------
 
-   function Next (Path : String; Iter : Path_Iterator) return Path_Iterator is
+   function Next
+     (Path : Filesystem_String;
+      Iter : Path_Iterator) return Path_Iterator
+   is
       Pos : Natural := Iter.Last + 1;
    begin
       while Pos <= Path'Last
@@ -432,7 +439,9 @@ package body File_Utils is
    -- Current --
    -------------
 
-   function Current (Path : String; Iter : Path_Iterator) return String is
+   function Current
+     (Path : Filesystem_String;
+      Iter : Path_Iterator) return Filesystem_String is
    begin
       if Iter.First <= Path'Last then
          return Path (Iter.First .. Iter.Last - 1);
@@ -445,7 +454,9 @@ package body File_Utils is
    -- At_End --
    ------------
 
-   function At_End (Path : String; Iter : Path_Iterator) return Boolean is
+   function At_End
+     (Path : Filesystem_String;
+      Iter : Path_Iterator) return Boolean is
    begin
       return Iter.First > Path'Last;
    end At_End;
@@ -454,7 +465,9 @@ package body File_Utils is
    -- Is_Absolute_Path_Or_URL --
    -----------------------------
 
-   function Is_Absolute_Path_Or_URL (Name : String) return Boolean is
+   function Is_Absolute_Path_Or_URL
+     (Name : Filesystem_String) return Boolean
+   is
       Index : Natural;
    begin
       if Is_Absolute_Path (Name) then
@@ -477,13 +490,14 @@ package body File_Utils is
    ------------------
 
    function Find_On_Path
-     (Base_Name : String; Path : String) return GNATCOLL.VFS.Virtual_File
+     (Base_Name : Filesystem_String;
+      Path      : Filesystem_String) return GNATCOLL.VFS.Virtual_File
    is
       Iter : Path_Iterator := Start (Path);
    begin
       while not At_End (Path, Iter) loop
          declare
-            S : constant String :=
+            S : constant Filesystem_String :=
                  Name_As_Directory (Current (Path, Iter)) & Base_Name;
          begin
             if Is_Regular_File (S) then

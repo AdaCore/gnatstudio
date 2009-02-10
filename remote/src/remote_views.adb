@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 
 with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
@@ -885,7 +886,7 @@ package body Remote_Views is
       --  it for now
       Prj              : constant GNATCOLL.VFS.Virtual_File :=
                            Project_Path (Get_Project (User.View.Kernel));
-      Project          : constant String := Full_Name (Prj).all;
+      Project          : constant Filesystem_String := Full_Name (Prj).all;
       Reasons          : Ada.Strings.Unbounded.Unbounded_String;
       Failure          : Boolean := False;
       Res              : Message_Dialog_Buttons;
@@ -941,7 +942,7 @@ package body Remote_Views is
                       Full_Filename => Project))
          then
             Failure := True;
-            Reasons := Reasons & "Project " & Project &
+            Reasons := Reasons & "Project " & (+Project) &
               " has no equivalence on build server " & New_Build_Server &
               ASCII.LF;
          end if;

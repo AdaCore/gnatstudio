@@ -41,6 +41,7 @@ with VCS_Module;                use VCS_Module;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 with Traces;                    use Traces;
 with GNAT.Strings;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body VCS_View is
 
@@ -62,12 +63,12 @@ package body VCS_View is
          --  What we want here is to be able to have the path to the directory
          --  to handle.
          declare
-            Dir : constant String := Full_Name (File, True).all;
+            Dir : constant String := +Full_Name (File, True).all;
          begin
             return Dir (Dir'First .. Dir'Last - 1);
          end;
       else
-         return Full_Name (File, True).all;
+         return +Full_Name (File, True).all;
       end if;
    end File_Key;
 
@@ -210,7 +211,7 @@ package body VCS_View is
                  (Kernel,
                   Create
                     (Full_Filename =>
-                       Get_String (Explorer.Model, Iter, Name_Column)),
+                       +Get_String (Explorer.Model, Iter, Name_Column)),
                   Line   => 0,
                   Column => 0);
                Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
@@ -327,16 +328,16 @@ package body VCS_View is
 
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
-           Full_Name (Line_Info.Status.File).all);
+           +Full_Name (Line_Info.Status.File).all);
       Set (Explorer.Model, Iter, Key_Column,
            File_Key (Line_Info.Status.File));
 
       if Is_Directory (Line_Info.Status.File) then
          Set (Explorer.Model, Iter, Base_Name_Column,
-              '[' & Base_Dir_Name (Line_Info.Status.File) & ']');
+              '[' & (+Base_Dir_Name (Line_Info.Status.File)) & ']');
       else
          Set (Explorer.Model, Iter, Base_Name_Column,
-              Base_Name (Line_Info.Status.File));
+              Display_Base_Name (Line_Info.Status.File));
       end if;
 
       if Line_Info.Status.Working_Revision = null then
@@ -764,7 +765,7 @@ package body VCS_View is
 
          Iter := Get_Iter_From_File
            (Explorer,
-            Create (String_List.Data (String_List.First (Files))));
+            Create (+String_List.Data (String_List.First (Files))));
 
          declare
             procedure Select_Same_Status

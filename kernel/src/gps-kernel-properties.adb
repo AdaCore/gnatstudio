@@ -22,7 +22,7 @@ with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Glib.Xml_Int;               use Glib.Xml_Int;
@@ -79,7 +79,7 @@ package body GPS.Kernel.Properties is
    --  For now, we'll leave with this global variable.
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
    --  Return the filename to use when saving the persistent properties for the
    --  current project
 
@@ -358,7 +358,8 @@ package body GPS.Kernel.Properties is
       Remove_Resource_Property (Kernel, Index_Value, Index_Name, Name);
    end Remove_Property;
 
-   function To_String (File : GNATCOLL.VFS.Virtual_File) return String;
+   function To_String
+     (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Returns the file name
 
    function To_String (Prj : Projects.Project_Type) return String;
@@ -368,8 +369,9 @@ package body GPS.Kernel.Properties is
    -- To_String --
    ---------------
 
-   function To_String (File : GNATCOLL.VFS.Virtual_File) return String is
-      Filename : String := Full_Name (File, True).all;
+   function To_String
+     (File : GNATCOLL.VFS.Virtual_File) return String is
+      Filename : String := +Full_Name (File, True).all;
    begin
       Canonical_Case_File_Name (Filename);
 
@@ -470,7 +472,7 @@ package body GPS.Kernel.Properties is
    -----------------------------
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return String is
+     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
    begin
       --  We could use the .gps directory, but that would mean we have to keep
       --  in memory information for files that do not belong to the current
@@ -486,7 +488,8 @@ package body GPS.Kernel.Properties is
    procedure Save_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Properties_Filename (Kernel);
+      Filename : constant Filesystem_String :=
+        Get_Properties_Filename (Kernel);
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
       Root, Src, Dst : Node_Ptr;
       Descr    : Property_Description_Access;
@@ -505,7 +508,7 @@ package body GPS.Kernel.Properties is
       File  : Node_Ptr;
 
    begin
-      Trace (Me, "Saving " & Filename);
+      Trace (Me, "Saving " & (+Filename));
       Root := new Node'
         (Tag        => new String'("persistent_properties"),
          Attributes => null,
@@ -610,7 +613,7 @@ package body GPS.Kernel.Properties is
          Next (C);
       end loop;
 
-      Print (Root, Filename, Success);
+      Print (Root, +Filename, Success);
       Free (Root);
 
       Clear (Nodes);
@@ -639,13 +642,14 @@ package body GPS.Kernel.Properties is
    procedure Restore_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant String := Get_Properties_Filename (Kernel);
+      Filename : constant Filesystem_String :=
+        Get_Properties_Filename (Kernel);
       Root, File, Prop, Prop2 : Node_Ptr;
    begin
-      Trace (Me, "Loading " & Filename);
+      Trace (Me, "Loading " & (+Filename));
 
-      if Is_Readable_File (Filename) then
-         Root := Parse (Filename);
+      if Is_Readable_File (+Filename) then
+         Root := Parse (+Filename);
 
          if Root /= null then
             File := Root.Child;
@@ -744,7 +748,7 @@ package body GPS.Kernel.Properties is
             Set_Error_Msg (Data, -"Property not found");
 
          elsif Prop2.Value = null then
-            Set_Return_Value (Data, "");
+            Set_Return_Value (Data, String'(""));
 
          else
             Set_Return_Value (Data, Prop2.Value.all);
@@ -799,7 +803,7 @@ package body GPS.Kernel.Properties is
             Set_Error_Msg (Data, -"Property not found");
 
          elsif Prop2.Value = null then
-            Set_Return_Value (Data, "");
+            Set_Return_Value (Data, String'(""));
 
          else
             Set_Return_Value (Data, Prop2.Value.all);

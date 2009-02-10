@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -75,7 +75,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
@@ -87,7 +87,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -150,7 +150,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
@@ -162,7 +162,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -179,7 +179,7 @@ package GPS.Kernel.Timeout is
 
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
-      Command              : String;
+      Command              : Filesystem_String;
       Arguments            : GNAT.OS_Lib.Argument_List;
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
@@ -190,7 +190,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : String := "";
+      Directory            : Filesystem_String := "";
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";

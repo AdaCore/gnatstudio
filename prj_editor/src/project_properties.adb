@@ -27,6 +27,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -84,6 +86,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with Language_Handlers;         use Language_Handlers;
 with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
@@ -351,7 +354,7 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return GNAT.Strings.String_List;
+      Project_Path    : Filesystem_String) return GNAT.Strings.String_List;
    --  Ask the user (through a dialog) for a new value for the attribute.
    --  Multiple values can be returned if the attribute is a list. Returned
    --  value must be freed by the user.
@@ -623,8 +626,8 @@ package body Project_Properties is
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
       Project        : Project_Type;
-      Default        : String;
-      Project_Path   : String;
+      Default        : Filesystem_String;
+      Project_Path   : Filesystem_String;
       As_Directory   : Boolean;
       Filter         : File_Filter;
       Allow_Multiple : Boolean := False) return GNATCOLL.VFS.File_Array;
@@ -1197,8 +1200,8 @@ package body Project_Properties is
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Value              => Relative_Path_Name
-                 (Get_Text (Editor.Ent), Get_Text (Editor.Path_Widget),
+               Value              => +Relative_Path_Name
+                 (+Get_Text (Editor.Ent), +Get_Text (Editor.Path_Widget),
                   Build_Server),
                Entry_Value        => Get_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
@@ -1234,17 +1237,18 @@ package body Project_Properties is
                   --  platforms (remote mode safe)
                   if Relative then
                      Values (N) := new String'
-                       (Name_As_Directory
+                       (+Name_As_Directory
                           (Relative_Path_Name
-                             (Get_String (Editor.Model, Iter, 0),
-                              Get_Text (Editor.Path_Widget),
+                             (+Get_String (Editor.Model, Iter, 0),
+                              +Get_Text (Editor.Path_Widget),
+                              --  ??? What if the filesystem path is non-UTF8?
                               Build_Server),
                            UNIX)
                         & "**");
                   else
                      Values (N) := new String'
-                       (Name_As_Directory
-                          (Get_String (Editor.Model, Iter, 0))
+                       (+Name_As_Directory
+                          (+Get_String (Editor.Model, Iter, 0))
                         & "**");
                   end if;
 
@@ -1254,9 +1258,9 @@ package body Project_Properties is
 
                elsif Relative then
                   Values (N) := new String'
-                    (Relative_Path_Name
-                       (Get_String (Editor.Model, Iter, 0),
-                        Get_Text (Editor.Path_Widget),
+                    (+Relative_Path_Name
+                       (+Get_String (Editor.Model, Iter, 0),
+                        +Get_Text (Editor.Path_Widget),
                         Build_Server));
 
                else
@@ -2485,7 +2489,7 @@ package body Project_Properties is
 
       Gtk_New (Editor.Path);
       Set_Width_Chars (Editor.Path, 0);
-      Set_Text (Editor.Path, Full_Name (Project_Directory (Project)).all);
+      Set_Text (Editor.Path, Display_Full_Name (Project_Directory (Project)));
       Pack_Start (Hbox, Editor.Path, Expand => True);
 
       Gtk_New (Button2, -"Browse");
@@ -2817,8 +2821,8 @@ package body Project_Properties is
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
       Project        : Project_Type;
-      Default        : String;
-      Project_Path   : String;
+      Default        : Filesystem_String;
+      Project_Path   : Filesystem_String;
       As_Directory   : Boolean;
       Filter         : File_Filter;
       Allow_Multiple : Boolean := False) return GNATCOLL.VFS.File_Array
@@ -2927,7 +2931,8 @@ package body Project_Properties is
                         if Get_Boolean (Model, Iter, 0) then
                            Result (Source) :=
                              Create (Full_Filename =>
-                                       Get_String (Model, Iter, 2));
+                                     +Get_String (Model, Iter, 2));
+                           --  ??? What if the filesystem path is non-UTF8?
                            Source := Source + 1;
                         end if;
 
@@ -2957,7 +2962,7 @@ package body Project_Properties is
                File := Select_File
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Dir_Name (Default)),
-                  Default_Name      => Base_Name (Default),
+                  Default_Name      => +Base_Name (Default),
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File);
             end if;
@@ -2982,14 +2987,16 @@ package body Project_Properties is
       Files : constant GNATCOLL.VFS.File_Array := Select_Files_Or_Directories
         (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
          Project        => Ed.Project,
-         Default        => Get_Text (Gtk_Entry (Ed.Ent)),
-         Project_Path   => Get_Text (Ed.Path_Widget),
+         Default        => +Get_Text (Gtk_Entry (Ed.Ent)),
+         Project_Path   => +Get_Text (Ed.Path_Widget),
+         --  ??? What if the filesystem path is non-UTF8?
          As_Directory   => Ed.As_Directory,
          Filter         => Ed.Filter,
          Allow_Multiple => False);
    begin
       for F in Files'Range loop
-         Set_Text (Gtk_Entry (Ed.Ent), Full_Name (Files (F)).all);
+         Set_Text (Gtk_Entry (Ed.Ent), Display_Full_Name (Files (F)));
+         --  ??? What if the filesystem path is non-UTF8?
       end loop;
    end Select_File;
 
@@ -3002,7 +3009,8 @@ package body Project_Properties is
       Value : GNAT.Strings.String_List := Create_Attribute_Dialog
         (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
          Ed.Project, Ed.Attribute, Attribute_Index => "",
-         Project_Path => Get_Text (Ed.Path_Widget));
+         Project_Path => +Get_Text (Ed.Path_Widget));
+      --  ??? What if the filesystem path is non-UTF8?
       Iter  : Gtk_Tree_Iter;
    begin
       for V in Value'Range loop
@@ -3384,7 +3392,7 @@ package body Project_Properties is
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String;
-      Project_Path    : String) return GNAT.Strings.String_List
+      Project_Path    : Filesystem_String) return GNAT.Strings.String_List
    is
       Attr   : constant Attribute_Type := Get_Attribute_Type_From_Description
         (Description, Attribute_Index);
@@ -3426,7 +3434,7 @@ package body Project_Properties is
 
          when Attribute_As_Filename | Attribute_As_Directory =>
             declare
-               Current : constant String := Get_Current_Value
+               Current : constant Filesystem_String := +Get_Current_Value
                  (Project, Description, Index => Attribute_Index);
                Files   : constant File_Array := Select_Files_Or_Directories
                  (Toplevel          => Toplevel,
@@ -3439,7 +3447,7 @@ package body Project_Properties is
                Result : GNAT.Strings.String_List (Files'Range);
             begin
                for F in Files'Range loop
-                  Result (F) := new String'(Full_Name (Files (F)).all);
+                  Result (F) := new String'(+Full_Name (Files (F)).all);
                end loop;
                return Result;
             end;
@@ -3931,7 +3939,7 @@ package body Project_Properties is
                      Result : GNAT.Strings.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
-                        Result (R) := new String'(Full_Name (Files (R)).all);
+                        Result (R) := new String'(+Full_Name (Files (R)).all);
                      end loop;
                      Unchecked_Free (Files);
                      return Result;
@@ -4056,7 +4064,8 @@ package body Project_Properties is
                              Project         => Ed.Project,
                              Description     => Ed.Attribute,
                              Attribute_Index => Attribute_Index,
-                             Project_Path    => Get_Text (Ed.Path_Widget));
+                             Project_Path    => +Get_Text (Ed.Path_Widget));
+                        --  ??? What if the filesystem path is non-UTF8?
                      begin
                         if Value'Length /= 0 then
                            Set (Ed.Model, Iter, 1, Value (Value'First).all);
@@ -4644,7 +4653,8 @@ package body Project_Properties is
 
          Editor.Pages (E) := Widget_Factory
            (Page, Project,
-            Full_Name (Project_Path (Project)).all, Editor.Kernel);
+            Full_Name (Project_Path (Project)).all,
+            Editor.Kernel);
 
          if Editor.Pages (E) /= null then
             Gtk_New (Label, Get_Label (Page));
@@ -5114,10 +5124,13 @@ package body Project_Properties is
                Parent      => Get_Current_Window (Kernel));
 
          elsif not Is_Directory
-           (Name_As_Directory (Get_Text (Editor.Path)))
+           (Name_As_Directory (+Get_Text (Editor.Path)))
+         --  ??? What if the filesystem path is non-UTF8?
          then
             Response2 := Message_Dialog
-              (Msg         => Name_As_Directory (Get_Text (Editor.Path))
+              (Msg         => Unknown_To_UTF8
+                 (+Name_As_Directory (+Get_Text (Editor.Path)))
+               --  ??? What if the filesystem path is non-UTF8?
                & (-" is not a valid directory"),
                Buttons     => Button_OK,
                Dialog_Type => Error,
@@ -5129,10 +5142,13 @@ package body Project_Properties is
 
          else
             declare
-               New_Name : constant String := Get_Text (Editor.Name);
-               New_File : constant String := To_File_Name (New_Name);
-               New_Path : constant String :=
-                            Name_As_Directory (Get_Text (Editor.Path));
+               New_Name : constant String :=
+                 Get_Text (Editor.Name);
+               New_File : constant Filesystem_String :=
+                 To_File_Name (+New_Name);
+               New_Path : constant Filesystem_String :=
+                 Name_As_Directory (+Get_Text (Editor.Path));
+               --  ??? What if the filesystem path is non-UTF8?
             begin
                if (New_Name /= Project_Name (Project)
                    or else New_Path /=
@@ -5141,7 +5157,10 @@ package body Project_Properties is
                  (New_Path & New_File & Projects.Project_File_Extension)
                then
                   Response2 := Message_Dialog
-                    (New_Path & New_File & Projects.Project_File_Extension
+                    (Unknown_To_UTF8
+                       (+(New_Path &
+                        New_File &
+                        Projects.Project_File_Extension))
                        & (-" already exists. Do you want to overwrite ?"),
                      Buttons     => Button_Yes or Button_No,
                      Dialog_Type => Error,
@@ -5251,11 +5270,13 @@ package body Project_Properties is
          --  project.
 
          declare
-            New_Name : constant String := Get_Text (Editor.Name);
-            New_Path : constant String :=
-                         Name_As_Directory (Get_Text (Editor.Path));
+            New_Name : constant Filesystem_String := +Get_Text (Editor.Name);
+            --  ??? What if the filesystem path is non-UTF8?
+            New_Path : constant Filesystem_String :=
+                         Name_As_Directory (+Get_Text (Editor.Path));
+            --  ??? What if the filesystem path is non-UTF8?
          begin
-            if New_Name /= Project_Name (Project)
+            if New_Name /= +Project_Name (Project)
               or else New_Path /= Full_Name (Project_Directory (Project)).all
             then
                Project_Renamed_Or_Moved := True;

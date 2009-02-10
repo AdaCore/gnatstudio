@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Tags;                  use Ada.Tags;
 
@@ -26,6 +27,7 @@ with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
 
@@ -70,6 +72,8 @@ with GUI_Utils;                 use GUI_Utils;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 
+with UTF8_Utils;                use UTF8_Utils;
+
 with Commands.Generic_Asynchronous;
 
 package body Builder_Module is
@@ -103,10 +107,10 @@ package body Builder_Module is
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Run_Description is record
-      Command      : GNAT.Strings.String_Access;
+      Command      : Filesystem_String_Access;
       Arguments    : GNAT.OS_Lib.Argument_List_Access;
       Ext_Terminal : Boolean;
-      Directory    : GNAT.Strings.String_Access;
+      Directory    : Filesystem_String_Access;
       Title        : GNAT.Strings.String_Access;
    end record;
    --  The arguments used to run an executable from the "Run" menu
@@ -622,6 +626,8 @@ package body Builder_Module is
       Command      : String)
    is
       Local_Args : Argument_List_Access;
+      function Unch is new Ada.Unchecked_Conversion
+        (String_Access, Filesystem_String_Access);
    begin
       Run.Ext_Terminal := Ext_Terminal;
 
@@ -632,13 +638,13 @@ package body Builder_Module is
          --  Launch "$SHELL -c cmd" if $SHELL is set and the build server
          --  is local.
 
-         Run.Command := new String'(Shell_Env);
+         Run.Command := new Filesystem_String'(+Shell_Env);
          Run.Arguments := new Argument_List'
            (new String'("-c"),
             new String'(Command));
       else
          Local_Args := Argument_String_To_List (Command);
-         Run.Command := Local_Args (Local_Args'First);
+         Run.Command := Unch (Local_Args (Local_Args'First));
          Run.Arguments := new Argument_List'
            (Local_Args (Local_Args'First + 1 .. Local_Args'Last));
          Basic_Types.Unchecked_Free (Local_Args);  --  Not the actual strings
@@ -687,7 +693,7 @@ package body Builder_Module is
               and then Command (Command'First) /= ASCII.NUL
             then
                Set_Command (Run, Active, Command);
-               Run.Directory := new String'("");
+               Run.Directory := new Filesystem_String'("");
 
                if Is_Local (Execution_Server) then
                   Run.Title := new String'(-"Run: " & Command);
@@ -718,26 +724,28 @@ package body Builder_Module is
             if Arguments = ""
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
-               Run.Command := new String'
+               Run.Command := new Filesystem_String'
                  (To_Remote (Full_Name (Data.File).all, Execution_Server));
                Run.Arguments := Argument_String_To_List (Arguments);
                Run.Ext_Terminal := Active;
 
                if Use_Exec_Dir then
-                  Run.Directory := new String'
+                  Run.Directory := new Filesystem_String'
                     (Executables_Directory (Data.Project));
                else
-                  Run.Directory := new String'("");
+                  Run.Directory := new Filesystem_String'("");
                end if;
 
                if Is_Local (Execution_Server) then
                   Run.Title := new String'
                     (-"Run: " &
-                     Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
+                     Display_Base_Name (Data.File)
+                     & ' ' & Krunch (Arguments, 12));
                else
                   Run.Title := new String'
                     (-"Run on " & Get_Nickname (Execution_Server) & ": " &
-                     Base_Name (Data.File) & ' ' & Krunch (Arguments, 12));
+                     Display_Base_Name (Data.File)
+                     & ' ' & Krunch (Arguments, 12));
                end if;
 
             end if;
@@ -802,11 +810,11 @@ package body Builder_Module is
       for M in reverse Mains'Range loop
          if Mains (M).all /= "" then
             declare
-               Exec : constant String :=
-                        Get_Executable_Name (Project, Mains (M).all);
+               Exec : constant Filesystem_String :=
+                        Get_Executable_Name (Project, +Mains (M).all);
             begin
                Mitem := new Dynamic_Menu_Item_Record;
-               Gtk.Menu_Item.Initialize (Mitem, Exec);
+               Gtk.Menu_Item.Initialize (Mitem, Unknown_To_UTF8 (+Exec));
                Prepend (Menu, Mitem);
                File_Project_Cb.Object_Connect
                  (Mitem, Signal_Activate, On_Run'Access,

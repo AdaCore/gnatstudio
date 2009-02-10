@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,6 +26,7 @@ with Generic_List;
 with OS_Utils;                  use OS_Utils;
 with String_List_Utils;         use String_List_Utils;
 with GNATCOLL.VFS;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package VCS is
 
@@ -89,7 +90,8 @@ package VCS is
    function Name (Ref : access VCS_Record) return String is abstract;
    --  The name of the VCS system
 
-   function Administrative_Directory (Ref : access VCS_Record) return String;
+   function Administrative_Directory
+     (Ref : access VCS_Record) return Filesystem_String;
    --  Returns the name of the directory where the external VCS keeps
    --  information about the repository. This is .svn for Subversion for
    --  example.
@@ -118,7 +120,7 @@ package VCS is
    --  Returns Trus if GPS must check for log presence and open if necessary
    --  log editor.
 
-   function Ignore_Filename (Ref : access VCS_Record) return String;
+   function Ignore_Filename (Ref : access VCS_Record) return Filesystem_String;
    --  Returns the file containing a list of file to ignore. Returns the empty
    --  string if no such file is set for this VCS.
 
@@ -145,7 +147,7 @@ package VCS is
    --  Note that file status are intended to be static objects, they should not
    --  be freed until the end of the program.
 
-   function "=" (S1, S2 : File_Status) return Boolean;
+   overriding function "=" (S1, S2 : File_Status) return Boolean;
    --  Returns true if status S1 is equal/equivalent to status S2
 
    function Is_Local_Status (Status : File_Status) return Boolean;
@@ -532,7 +534,7 @@ private
       Commit_Directory    : Boolean    := False;
       Require_Log         : Boolean    := True;
       Path_Style          : OS_Utils.Path_Style := System_Default;
-      Ignore_Filename     : GNAT.Strings.String_Access;
+      Ignore_Filename     : Filesystem_String_Access;
       Used                : Boolean    := False;
       Action_Labels       : Action_Array;
    end record;

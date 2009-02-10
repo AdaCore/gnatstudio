@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -50,7 +50,6 @@ with Commands;                  use Commands;
 with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
 with Expect_Interface;          use Expect_Interface;
-with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -64,7 +63,9 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with XML_Viewer;
 
 with Switches_Parser; use Switches_Parser;
@@ -294,7 +295,7 @@ package body Custom_Module is
          Insert
            (Kernel,
             (-("Error when parsing file "))
-            & Full_Name (File).all & ":" & ASCII.LF
+            & Display_Full_Name (File) & ":" & ASCII.LF
             & To_String (M),
             Mode => Error);
       end if;
@@ -982,16 +983,14 @@ package body Custom_Module is
          if Before /= "" then
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path =>
-                 Name_As_Directory (Parent_Path, UNIX) & Title.all,
+               Parent_Path => Format (Parent_Path) & Title.all,
                Item        => null,
                Ref_Item    => Before,
                Add_Before  => True);
          elsif After /= "" then
             Register_Menu
               (Kernel      => Kernel,
-               Parent_Path =>
-                 Name_As_Directory (Parent_Path, UNIX) & Title.all,
+               Parent_Path => Format (Parent_Path) & Title.all,
                Item        => null,
                Ref_Item    => After,
                Add_Before  => False);
@@ -1002,10 +1001,10 @@ package body Custom_Module is
                null; --  Already handled
             elsif To_Lower (Child.Tag.all) = "submenu" then
                Parse_Submenu_Node
-                 (Child, Name_As_Directory (Parent_Path, UNIX) & Title.all);
+                 (Child, Format (Parent_Path) & Title.all);
             elsif To_Lower (Child.Tag.all) = "menu" then
                Parse_Menu_Node
-                 (Child, Name_As_Directory (Parent_Path, UNIX) & Title.all);
+                 (Child, Format (Parent_Path) & Title.all);
             elsif To_Lower (Child.Tag.all) = "menu_item"
               or else To_Lower (Child.Tag.all) = "toolbar_item"
             then
@@ -1076,8 +1075,7 @@ package body Custom_Module is
                if Before /= "" then
                   Register_Menu
                     (Kernel,
-                     Dir_Name
-                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
+                     Dir_Name (Format (Parent_Path) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
@@ -1087,8 +1085,7 @@ package body Custom_Module is
                elsif After /= "" then
                   Register_Menu
                     (Kernel,
-                     Dir_Name
-                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
+                     Dir_Name (Format (Parent_Path) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
@@ -1099,8 +1096,7 @@ package body Custom_Module is
                else
                   Register_Menu
                     (Kernel,
-                     Dir_Name
-                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
+                     Dir_Name (Format (Parent_Path) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
@@ -1139,8 +1135,10 @@ package body Custom_Module is
             while Files /= null loop
                if To_Lower (Files.Tag.all) = "alternate" then
                   declare
-                     Filename : constant String :=
-                       Get_Attribute (Files, "file");
+                     Filename : constant Filesystem_String :=
+                       +Get_Attribute (Files, "file");
+                     --  ??? Potentially non-utf8 string should not be
+                     --  stored in an XML attribute.
                   begin
                      if Filename = "" then
                         Insert
@@ -1161,7 +1159,7 @@ package body Custom_Module is
 
                         if Is_Regular_File (Pic_File) then
                            Source := Gtk_New;
-                           Set_Filename (Source, Full_Name (Pic_File).all);
+                           Set_Filename (Source, +Full_Name (Pic_File).all);
 
                            declare
                               Size : Gtk.Enums.Gtk_Icon_Size;
@@ -1188,7 +1186,7 @@ package body Custom_Module is
                               -"Error when creating stock icon "
                               & Get_Attribute (Child, "id")
                               & (-". File not found: ")
-                              & Full_Name (Pic_File).all);
+                              & Display_Full_Name (Pic_File));
                         end if;
 
                      end if;
@@ -1209,7 +1207,11 @@ package body Custom_Module is
             if To_Lower (Child.Tag.all) = "icon" then
                declare
                   Id       : constant String := Get_Attribute (Child, "id");
-                  Filename : constant String := Get_Attribute (Child, "file");
+                  Filename : constant Filesystem_String :=
+                    +Get_Attribute (Child, "file");
+                  --  ??? Potentially non-utf8 string should not be
+                  --  stored in an XML attribute.
+
                   Pic_File : GNATCOLL.VFS.Virtual_File;
                begin
                   if Id = "" then
@@ -1239,7 +1241,7 @@ package body Custom_Module is
                         Set    := Gtk_New;
 
                         Source := Gtk_New;
-                        Set_Filename (Source, Full_Name (Pic_File).all);
+                        Set_Filename (Source, +Full_Name (Pic_File).all);
                         Add_Source (Set, Source);
                         Free (Source);
 
@@ -1263,7 +1265,7 @@ package body Custom_Module is
                           (Kernel,
                            -"Error when creating stock icon " & Id
                            & (-". File not found: ")
-                           & Full_Name (Pic_File).all);
+                           & Display_Full_Name (Pic_File));
                      end if;
                   end if;
                end;

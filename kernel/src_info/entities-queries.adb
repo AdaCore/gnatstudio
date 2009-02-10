@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -207,7 +207,7 @@ package body Entities.Queries is
       if Location = No_File_Location then
          return "<no loc>";
       else
-         return Full_Name (Get_Filename (Location.File)).all
+         return (+Full_Name (Get_Filename (Location.File)).all)
            & ':' & Location.Line'Img
            & ':' & Location.Column'Img;
       end if;
@@ -355,7 +355,7 @@ package body Entities.Queries is
    begin
       if Active (Me) then
          Trace (Me, "Find name=" & Normalized_Entity_Name
-                & " Source=" & Full_Name (Get_Filename (Source)).all
+                & " Source=" & (+Full_Name (Get_Filename (Source)).all)
                 & " line=" & Line'Img & " column=" & Column'Img
                 & " check_decl=" & Check_Decl_Only'Img);
       end if;
@@ -477,7 +477,7 @@ package body Entities.Queries is
          end if;
       end if;
 
-      Trace (Me, "No such file registered: " & Full_Name (File_Name).all);
+      Trace (Me, "No such file registered: " & (+Full_Name (File_Name).all));
    end Find_Declaration;
 
    ----------------------
@@ -502,7 +502,7 @@ package body Entities.Queries is
       if Active (Me) then
          if Source /= null then
             Trace (Me, "Find_Declaration entity=" & Entity_Name
-                   & " source=" & Full_Name (Get_Filename (Source)).all
+                   & " source=" & (+Full_Name (Get_Filename (Source)).all)
                    & " line=" & Line'Img
                    & " column=" & Column'Img);
          else
@@ -695,8 +695,9 @@ package body Entities.Queries is
       if Active (Me) then
          Trace (Me, "Setup_For_Entity " & Get_Name (Entity).all
                 & " declared at "
-                & Base_Name (Get_Filename (Get_Declaration_Of (Entity).File))
-                & Get_Declaration_Of (Entity).Line'Img);
+           & (+Base_Name
+             (Get_Filename (Get_Declaration_Of (Entity).File))
+                & Get_Declaration_Of (Entity).Line'Img));
       end if;
 
       if Iter.In_File = null then
@@ -1240,7 +1241,7 @@ package body Entities.Queries is
    begin
       if Active (Me) then
          Trace (Me, "Find_Ancestor_Dependencies: "
-                & Full_Name (Get_Filename (File)).all
+                & (+Full_Name (Get_Filename (File)).all)
                 & " Self=" & Boolean'Image (Include_Self)
                 & " Single=" & Boolean'Image (Single_Source_File));
       end if;
@@ -2285,7 +2286,7 @@ package body Entities.Queries is
 
             if Active (Me) then
                Trace (Me, "Compute_Callers_And_Called for "
-                      & Full_Name (Get_Filename (File)).all);
+                      & (+Full_Name (Get_Filename (File)).all));
                for L in Line_Info'Range loop
                   if Line_Info (L) /= null then
                      if Info_For_Decl (L) /= null then

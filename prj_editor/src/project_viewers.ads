@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2007, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,6 +24,7 @@ with Gtk.Widget;
 with GPS.Kernel;
 with Projects;
 with Naming_Editors;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Project_Viewers is
 
@@ -47,7 +48,7 @@ package Project_Viewers is
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
       Project      : Projects.Project_Type;
-      Full_Project : String;
+      Full_Project : Filesystem_String;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a new widget to display in the project properties editor or the

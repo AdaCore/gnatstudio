@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003-2008, AdaCore           --
+--                        Copyright (C) 2003-2009, AdaCore           --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -143,9 +143,9 @@ package body Entities.Debug is
    procedure Dump (File : Virtual_File; Full : Boolean := False) is
    begin
       if Dump_Full_File_Names or else Full then
-         Output (Full_Name (File).all);
+         Output (+Full_Name (File).all);
       else
-         Output (Base_Name (File));
+         Output (+Base_Name (File));
       end if;
    end Dump;
 
@@ -640,7 +640,7 @@ package body Entities.Debug is
       else
          for F in Files'Range loop
             Dump (Files (F).Entities, Full => False,
-                  Name => Base_Name (Get_Filename (Files (F))));
+                  Name => +Base_Name (Get_Filename (Files (F))));
          end loop;
       end if;
    end Dump_Entities_From_Files;

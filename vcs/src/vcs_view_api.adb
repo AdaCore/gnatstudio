@@ -74,6 +74,9 @@ with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View.Explorer;         use VCS_View.Explorer;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
+with UTF8_Utils;                use UTF8_Utils;
 
 package body VCS_View_API is
    use type GNAT.Strings.String_Access;
@@ -152,7 +155,7 @@ package body VCS_View_API is
    --  Perform VCS operations on directories contained in Context
 
    procedure Process_Dir
-     (Directory  : String;
+     (Directory  : Filesystem_String;
       Ref        : VCS_Access;
       Kernel     : Kernel_Handle;
       Recursive  : Boolean;
@@ -211,13 +214,14 @@ package body VCS_View_API is
       Params : Glib.Values.GValues;
       Dialog : Switch_Tag_Dialog);
 
-   function Get_Repository_Root (Project : Project_Type) return String;
+   function Get_Repository_Root
+     (Project : Project_Type) return Filesystem_String;
    --  Return the repository root as defined in project, ensure that it has an
    --  ending directory separator.
 
    function Get_Branches_Root
      (Project    : Project_Type;
-      Repository : Boolean := False) return String;
+      Repository : Boolean := False) return Filesystem_String;
    --  Return the root directory containing the branches. This routines expects
    --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
    --  is set the returned directory is referencing the repository root instead
@@ -225,14 +229,15 @@ package body VCS_View_API is
 
    function Get_Tags_Root
      (Project    : Project_Type;
-      Repository : Boolean := False) return String;
+      Repository : Boolean := False) return Filesystem_String;
    --  Return the root directory containing the tags. This routines expects
    --  a Subversion standard layout (i.e. trunk, branches, tags). If Repository
    --  is set the returned directory is referencing the repository root instead
    --  of the local copy.
 
    function Get_Repository_Path
-     (Kernel : Kernel_Handle; File : Virtual_File; Tag : String) return String;
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File; Tag : String) return Filesystem_String;
    --  Return the "trunk" repository path for File or the path to the
    --  corresponding tag/branch if specificed.
 
@@ -240,9 +245,11 @@ package body VCS_View_API is
    -- Get_Repository_Root --
    -------------------------
 
-   function Get_Repository_Root (Project : Project_Type) return String is
-      Rep_Root : constant String :=
-                   Get_Attribute_Value (Project, VCS_Repository_Root);
+   function Get_Repository_Root
+     (Project : Project_Type) return Filesystem_String
+   is
+      Rep_Root : constant Filesystem_String :=
+                   +Get_Attribute_Value (Project, VCS_Repository_Root);
    begin
       if Rep_Root = "" then
          return "";
@@ -261,24 +268,25 @@ package body VCS_View_API is
 
    function Get_Branches_Root
      (Project    : Project_Type;
-      Repository : Boolean := False) return String
+      Repository : Boolean := False) return Filesystem_String
    is
-      Pattern : constant String := Dir_Separator & "trunk" & Dir_Separator;
+      Pattern : constant Filesystem_String :=
+        Dir_Separator & "trunk" & Dir_Separator;
 
-      function Rep_Root return String;
+      function Rep_Root return Filesystem_String;
       --  Return the repository root
 
-      function Loc_Root return String;
+      function Loc_Root return Filesystem_String;
       --  Return the local root
 
       --------------
       -- Loc_Root --
       --------------
 
-      function Loc_Root return String is
+      function Loc_Root return Filesystem_String is
          Proj : constant Virtual_File := Project_Path (Project);
-         Path : constant String := Full_Name (Proj, True).all;
-         J    : constant Natural := Index (Path, Pattern);
+         Path : constant Filesystem_String := Full_Name (Proj, True).all;
+         J    : constant Natural := Index (+Path, +Pattern);
       begin
          if J = 0 then
             return "";
@@ -292,8 +300,9 @@ package body VCS_View_API is
       -- Rep_Root --
       --------------
 
-      function Rep_Root return String is
-         Rep_Root : constant String := Get_Repository_Root (Project);
+      function Rep_Root return Filesystem_String is
+         Rep_Root : constant Filesystem_String :=
+           Get_Repository_Root (Project);
       begin
          if Rep_Root = "" then
             return "";
@@ -316,24 +325,24 @@ package body VCS_View_API is
 
    function Get_Tags_Root
      (Project    : Project_Type;
-      Repository : Boolean := False) return String
+      Repository : Boolean := False) return Filesystem_String
    is
       Pattern : constant String := Dir_Separator & "trunk" & Dir_Separator;
 
-      function Rep_Root return String;
+      function Rep_Root return Filesystem_String;
       --  Return the repository root
 
-      function Loc_Root return String;
+      function Loc_Root return Filesystem_String;
       --  Return the local root
 
       --------------
       -- Loc_Root --
       --------------
 
-      function Loc_Root return String is
+      function Loc_Root return Filesystem_String is
          Proj : constant Virtual_File := Project_Path (Project);
-         Path : constant String := Full_Name (Proj, True).all;
-         J    : constant Natural := Index (Path, Pattern);
+         Path : constant Filesystem_String := Full_Name (Proj, True).all;
+         J    : constant Natural := Index (+Path, Pattern);
       begin
          if J = 0 then
             return "";
@@ -347,8 +356,9 @@ package body VCS_View_API is
       -- Rep_Root --
       --------------
 
-      function Rep_Root return String is
-         Rep_Root : constant String := Get_Repository_Root (Project);
+      function Rep_Root return Filesystem_String is
+         Rep_Root : constant Filesystem_String :=
+           Get_Repository_Root (Project);
       begin
          if Rep_Root = "" then
             return "";
@@ -371,7 +381,8 @@ package body VCS_View_API is
    -------------------------
 
    function Get_Repository_Path
-     (Kernel : Kernel_Handle; File : Virtual_File; Tag : String) return String
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File; Tag : String) return Filesystem_String
    is
       Slash     : constant Character_Mapping := To_Mapping ("\", "/");
       DS        : Character renames Dir_Separator;
@@ -379,8 +390,8 @@ package body VCS_View_API is
       T_Pattern : constant String := DS & "tags" & DS;
       B_Pattern : constant String := DS & "branches" & DS;
       Project   : constant Project_Type := Get_Project (Kernel);
-      Rep_Root  : constant String := Get_Repository_Root (Project);
-      Full      : constant String := Full_Name (File).all;
+      Rep_Root  : constant Filesystem_String := Get_Repository_Root (Project);
+      Full      : constant Filesystem_String := Full_Name (File).all;
       K, P, N   : Natural;
    begin
       if Rep_Root = "" then
@@ -390,18 +401,18 @@ package body VCS_View_API is
 
       if File = No_File then
          --  Just return the directory for the given tag
-         return Rep_Root & Tag;
+         return Rep_Root & (+Tag);
       end if;
 
       --  look for part after the repository path
 
-      K := Index (Full, H_Pattern);
+      K := Index (+Full, H_Pattern);
 
       if K = 0 then
-         K := Index (Full, T_Pattern);
+         K := Index (+Full, T_Pattern);
 
          if K = 0 then
-            K := Index (Full, B_Pattern);
+            K := Index (+Full, B_Pattern);
 
             if K = 0 then
                --  Unknown layout
@@ -411,7 +422,7 @@ package body VCS_View_API is
       end if;
 
       if Tag = "" then
-         return Rep_Root & Translate (Full (K .. Full'Last), Slash);
+         return Rep_Root & (+Translate (+Full (K .. Full'Last), Slash));
 
       else
          if Full (K + 1 .. K + 5) = "trunk" then
@@ -438,7 +449,8 @@ package body VCS_View_API is
             P := P + 1;
          end loop;
 
-         return Rep_Root & Tag & Translate (Full (P .. Full'Last), Slash);
+         return Rep_Root &
+         (+(Tag & Translate (+Full (P .. Full'Last), Slash)));
       end if;
    end Get_Repository_Path;
 
@@ -550,11 +562,13 @@ package body VCS_View_API is
         (Title             => -"Select root directory",
          Parent            => Gtk_Window (Get_Toplevel (Widget)),
          Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-         Base_Directory    => GNATCOLL.VFS.Create (Get_Text (Dialog.Dir)));
+         Base_Directory    => GNATCOLL.VFS.Create (+Get_Text (Dialog.Dir)));
+      --  ??? What if the filesystem path is non-UTF8?
 
    begin
       if Name /= GNATCOLL.VFS.No_File then
-         Set_Text (Dialog.Dir, Full_Name (Name).all);
+         Set_Text (Dialog.Dir, +Full_Name (Name).all);
+         --  ??? What if the filesystem path is non-UTF8?
       end if;
    end On_Select_Dir;
 
@@ -634,7 +648,8 @@ package body VCS_View_API is
          begin
             if VCS = null then
                declare
-                  Adir : constant String := Ref.Administrative_Directory;
+                  Adir : constant Filesystem_String :=
+                    Ref.Administrative_Directory;
                begin
                   if Adir /= ""
                     and then Is_Directory (Create_From_Dir (Dir, Adir))
@@ -674,7 +689,7 @@ package body VCS_View_API is
                                  Source_Dirs (Project, Recursive => False);
                      begin
                         for K in Srcs'Range loop
-                           Check (Create (Srcs (K).all), VCS);
+                           Check (Create (+Srcs (K).all), VCS);
                            exit when VCS /= null;
                         end loop;
 
@@ -701,7 +716,7 @@ package body VCS_View_API is
                Srcs : GNAT.Strings.String_List_Access :=
                         Source_Dirs (Project, Recursive => False);
                Dir  : constant Virtual_File :=
-                        Create (Longest_Prefix (Srcs));
+                        Create (+Longest_Prefix (Srcs));
                Pdir : constant Virtual_File := Get_Parent (Dir);
             begin
                Check (Get_Parent (Pdir), VCS);
@@ -934,8 +949,8 @@ package body VCS_View_API is
 
       if File_Section then
          declare
-            File_S : constant String :=
-                       Full_Name (File_Information (Context)).all;
+            File_S : constant Filesystem_String :=
+              Full_Name (File_Information (Context)).all;
          begin
             if File_S'Length > 4
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
@@ -949,11 +964,11 @@ package body VCS_View_API is
                   --  Attempt to read Action from the name of the log file
 
                   Index := File_S'Last - 4;
-                  Skip_To_Char (File_S, Index, '$', -1);
+                  Skip_To_Char (+File_S, Index, '$', -1);
 
                   if Index - 1 in File_S'Range then
                      Log_Action := VCS_Action'Value
-                       (File_S (Index + 1 .. File_S'Last - 4));
+                       (+File_S (Index + 1 .. File_S'Last - 4));
                   end if;
 
                exception
@@ -1030,7 +1045,7 @@ package body VCS_View_API is
                        (Get_Registry (Kernel).all, Original));
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
-                           & Krunch (Base_Name (Original)) & ")");
+                           & Krunch (+Base_Name (Original)) & ")");
 
                   Append (Menu, Item);
 
@@ -1553,7 +1568,7 @@ package body VCS_View_API is
       if Has_Directory_Information (Context)
         and then not Has_File_Information (Context)
       then
-         String_List.Append (Dirs, Directory_Information (Context));
+         String_List.Append (Dirs, +Directory_Information (Context));
          Status := Local_Get_Status (Ref, Dirs);
          String_List.Free (Dirs);
          Display_File_Status
@@ -1627,7 +1642,7 @@ package body VCS_View_API is
 
          else
             String_List.Append
-              (List, Full_Name (File_Information (Context)).all);
+              (List, +Full_Name (File_Information (Context)).all);
          end if;
       end if;
 
@@ -1662,10 +1677,11 @@ package body VCS_View_API is
         (File, ChangeLog_File : Virtual_File;
          Line, Column         : out Natural)
       is
-         Filename           : constant String := Base_Name (File);
+         Filename           : constant Filesystem_String := Base_Name (File);
          --  The filename to look for in the ChangeLog file
 
-         ChangeLog_Filename : aliased String := Full_Name (ChangeLog_File).all;
+         ChangeLog_Filename : aliased Filesystem_String :=
+           Full_Name (ChangeLog_File).all;
          --  The global ChangeLog file
 
          Last               : Natural;
@@ -1681,7 +1697,7 @@ package body VCS_View_API is
            (Execute_GPS_Shell_Command
               (Kernel,
                "Editor.get_last_line",
-               (1 => ChangeLog_Filename'Unchecked_Access)));
+               (1 => Convert (ChangeLog_Filename'Unchecked_Access))));
 
          --  First, look for the filename entry
 
@@ -1692,11 +1708,11 @@ package body VCS_View_API is
                  Execute_GPS_Shell_Command
                    (Kernel,
                     "Editor.get_chars",
-                    (ChangeLog_Filename'Unchecked_Access,
+                    (Convert (ChangeLog_Filename'Unchecked_Access),
                      L_Img'Unchecked_Access));
 
             begin
-               Entry_Found := Index (B_Line, Filename) /= 0;
+               Entry_Found := Index (B_Line, +Filename) /= 0;
 
                exit when Entry_Found or else Line = Last;
 
@@ -1724,7 +1740,7 @@ package body VCS_View_API is
                  Execute_GPS_Shell_Command
                    (Kernel,
                     "Editor.get_chars",
-                    (ChangeLog_Filename'Unchecked_Access,
+                    (Convert (ChangeLog_Filename'Unchecked_Access),
                      L_Img'Unchecked_Access));
                Is_Empty : Boolean := True;
             begin
@@ -1755,7 +1771,8 @@ package body VCS_View_API is
                         Args  : GNAT.OS_Lib.Argument_List (1 .. 4);
 
                      begin
-                        Args (1) := ChangeLog_Filename'Unchecked_Access;
+                        Args (1) := Convert
+                          (ChangeLog_Filename'Unchecked_Access);
                         Args (2) := L_Img'Unchecked_Access;
                         Args (3) := C_Img'Unchecked_Access;
 
@@ -1793,7 +1810,7 @@ package body VCS_View_API is
       while not String_List.Is_Empty (List) loop
          declare
             File           : constant Virtual_File :=
-                               Create (String_List.Head (List));
+                               Create (+String_List.Head (List));
             ChangeLog_File : constant Virtual_File :=
                                Get_ChangeLog_From_File (Kernel, File);
             Already_Open   : Boolean;
@@ -1811,14 +1828,14 @@ package body VCS_View_API is
             declare
                L_Img              : aliased String := Image (Line);
                C_Img              : aliased String := Image (Column);
-               ChangeLog_Filename : aliased String :=
+               ChangeLog_Filename : aliased Filesystem_String :=
                  Full_Name (ChangeLog_File).all;
 
             begin
                Execute_GPS_Shell_Command
                  (Kernel,
                   "Editor.edit",
-                  (ChangeLog_Filename'Unchecked_Access,
+                  (Convert (ChangeLog_Filename'Unchecked_Access),
                    L_Img'Unchecked_Access, C_Img'Unchecked_Access));
             end;
 
@@ -1854,7 +1871,7 @@ package body VCS_View_API is
       while not String_List.Is_Empty (List) loop
          declare
             File : constant Virtual_File :=
-                     Create (String_List.Head (List));
+                     Create (+String_List.Head (List));
          begin
             Get_Log_From_ChangeLog (Kernel, File);
 
@@ -1863,7 +1880,7 @@ package body VCS_View_API is
                Get_Log_From_File (Kernel, File, True),
                Group            => Group_Consoles,
                Initial_Position => Position_Bottom,
-               Title            => Base_Name (File) & " [log]");
+               Title            => +Base_Name (File) & " [log]");
          end;
 
          String_List.Next (List);
@@ -1886,12 +1903,13 @@ package body VCS_View_API is
       Project : constant Project_Type := Get_Project (Kernel);
       Dialog  : Create_Tag_Dialog;
    begin
-      Gtk_New (Dialog, Full_Name (Project_Directory (Project)).all);
+      Gtk_New (Dialog, Display_Full_Name (Project_Directory (Project)));
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Dir       : constant String := Get_Text (Dialog.Dir);
+            Dir       : constant Filesystem_String := +Get_Text (Dialog.Dir);
+            --  ??? What if the filesystem path is non-UTF8?
             Tag       : constant String := Get_Text (Dialog.Tag_Name);
             As_Branch : constant Boolean := Get_Active (Dialog.Branch);
          begin
@@ -1922,16 +1940,17 @@ package body VCS_View_API is
          Gtk_New
            (Dialog,
             Tag_Information (Context),
-            Full_Name (Project_Directory (Project)).all);
+            +Full_Name (Project_Directory (Project)).all);
       else
-         Gtk_New (Dialog, "", Full_Name (Project_Directory (Project)).all);
+         Gtk_New (Dialog, "", +Full_Name (Project_Directory (Project)).all);
       end if;
 
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
          declare
-            Dir : constant String := Get_Text (Dialog.Dir);
+            Dir : constant Filesystem_String := +Get_Text (Dialog.Dir);
+            --  ??? What if the filesystem path is non-UTF8?
             Tag : constant String := Get_Text (Dialog.Tag_Name);
          begin
             Switch (Get_Current_Ref (Context), Create (Dir), Tag);
@@ -2004,7 +2023,7 @@ package body VCS_View_API is
       while Files_Temp /= Null_Node loop
          declare
             File    : constant Virtual_File :=
-                        Create (Full_Filename => Data (Files_Temp));
+                        Create (Full_Filename => +Data (Files_Temp));
             Log     : constant Virtual_File :=
                         Get_Log_From_File (Kernel, File, False);
             Success : Boolean;
@@ -2054,9 +2073,10 @@ package body VCS_View_API is
          --  directory separator.
 
          declare
-            Dir : constant String := Directory_Information (Context);
+            Dir : constant Filesystem_String :=
+              Directory_Information (Context);
          begin
-            String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+            String_List.Append (Files, +Dir (Dir'First .. Dir'Last - 1));
          end;
 
       else
@@ -2110,10 +2130,10 @@ package body VCS_View_API is
                declare
                   L : constant Virtual_File :=
                         Get_File_From_Log
-                          (Kernel, Create (Full_Filename => S));
+                          (Kernel, Create (Full_Filename => +S));
                begin
                   if L /= GNATCOLL.VFS.No_File then
-                     Append (Real_Files, Full_Name (L).all);
+                     Append (Real_Files, +Full_Name (L).all);
                   end if;
                end;
 
@@ -2132,7 +2152,7 @@ package body VCS_View_API is
          Files_Temp := String_List.First (Real_Files);
 
          while Files_Temp /= String_List.Null_Node loop
-            File := Create (Full_Filename => String_List.Data (Files_Temp));
+            File := Create (Full_Filename => +String_List.Data (Files_Temp));
 
             if Get_Log_From_File (Kernel, File, False)
               = GNATCOLL.VFS.No_File
@@ -2145,7 +2165,7 @@ package body VCS_View_API is
                   Get_Log_From_File (Kernel, File, True, Suffix),
                   Group            => Group_Consoles,
                   Initial_Position => Position_Bottom,
-                  Title            => Base_Name (File) & " [log]");
+                  Title            => +Base_Name (File) & " [log]");
             end if;
 
             Files_Temp := String_List.Next (Files_Temp);
@@ -2222,12 +2242,12 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
       Files : String_List.List;
       Ref   : VCS_Access;
-      Dir   : constant String := Directory_Information (Context);
+      Dir   : constant Filesystem_String := Directory_Information (Context);
    begin
       --  Do not pass the ending directory separator as we really want the last
       --  part to be the name we add.
 
-      String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+      String_List.Append (Files, +Dir (Dir'First .. Dir'Last - 1));
 
       Ref := Get_Current_Ref (Context);
 
@@ -2373,12 +2393,12 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
       Files : String_List.List;
       Ref   : VCS_Access;
-      Dir   : constant String := Directory_Information (Context);
+      Dir   : constant Filesystem_String := Directory_Information (Context);
    begin
       --  Do not pass the ending directory separator as we really want the last
       --  part to be the name we add.
 
-      String_List.Append (Files, Dir (Dir'First .. Dir'Last - 1));
+      String_List.Append (Files, +Dir (Dir'First .. Dir'Last - 1));
 
       Ref := Get_Current_Ref (Context);
 
@@ -2447,7 +2467,7 @@ package body VCS_View_API is
       end if;
 
       while not String_List.Is_Empty (Files) loop
-         File := Create (Full_Filename => String_List.Head (Files));
+         File := Create (Full_Filename => +String_List.Head (Files));
 
          if not Is_Open (Get_Kernel (Context), File) then
             Open_File_Editor (Get_Kernel (Context), File);
@@ -2491,7 +2511,7 @@ package body VCS_View_API is
       while not String_List.Is_Empty (Files) loop
          Remove_Line_Information_Column
            (Kernel,
-            Create (Full_Filename => String_List.Head (Files)),
+            Create (Full_Filename => +String_List.Head (Files)),
             Annotation_Id);
          String_List.Next (Files);
       end loop;
@@ -2593,7 +2613,7 @@ package body VCS_View_API is
    -----------------
 
    procedure Process_Dir
-     (Directory  : String;
+     (Directory  : Filesystem_String;
       Ref        : VCS_Access;
       Kernel     : Kernel_Handle;
       Recursive  : Boolean;
@@ -2604,11 +2624,11 @@ package body VCS_View_API is
 
    begin
       --  Do not process hidden directories
-      if Is_Hidden (Kernel, Simple_Name (Directory)) then
+      if Is_Hidden (Kernel, +Simple_Name (+Directory)) then
          return;
       end if;
 
-      String_List.Append (Files, Directory);
+      String_List.Append (Files, +Directory);
 
       if Update then
          VCS.Update (Ref, Files);
@@ -2823,7 +2843,7 @@ package body VCS_View_API is
 
                      while Node /= Null_Node loop
                         Process_Dir
-                          (Directory  => Data (Node),
+                          (Directory  => +Data (Node),
                            Ref        => Ref,
                            Kernel     => Kernel,
                            Recursive  => False,
@@ -3007,7 +3027,7 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (Files) loop
          Diff (Get_Current_Ref (Context),
-               Create (Full_Filename => String_List.Head (Files)));
+               Create (Full_Filename => +String_List.Head (Files)));
          String_List.Next (Files);
       end loop;
 
@@ -3042,7 +3062,7 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (Files) loop
          Diff_Working (Get_Current_Ref (Context),
-                       Create (Full_Filename => String_List.Head (Files)));
+                       Create (Full_Filename => +String_List.Head (Files)));
          String_List.Next (Files);
       end loop;
 
@@ -3074,7 +3094,7 @@ package body VCS_View_API is
       while not String_List.Is_Empty (Files) loop
          Diff_Base_Head
            (Get_Current_Ref (Context),
-            Create (Full_Filename => String_List.Head (Files)));
+            Create (Full_Filename => +String_List.Head (Files)));
          String_List.Next (Files);
       end loop;
 
@@ -3092,16 +3112,17 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      procedure Get_Log (VCS : VCS_Access; Filename : String);
+      procedure Get_Log (VCS : VCS_Access; Filename : Filesystem_String);
       --  Get log information for the file, handles tags & branches
 
       -------------
       -- Get_Log --
       -------------
 
-      procedure Get_Log (VCS : VCS_Access; Filename : String) is
+      procedure Get_Log (VCS : VCS_Access; Filename : Filesystem_String) is
 
-         procedure Get_Log_For_Root (File : Virtual_File; Root : String);
+         procedure Get_Log_For_Root
+           (File : Virtual_File; Root : Filesystem_String);
          --  Get the log for the file as found in one of the Root
          --  subdirectories. This is to handle branches and tags stored in a
          --  separate directory as done by Subversion.
@@ -3110,10 +3131,14 @@ package body VCS_View_API is
          -- Get_Log_For_Root --
          ----------------------
 
-         procedure Get_Log_For_Root (File : Virtual_File; Root : String) is
+         procedure Get_Log_For_Root
+           (File : Virtual_File; Root : Filesystem_String)
+         is
             Dir          : constant Virtual_File := Create (Root);
-            F_Dir        : constant String := Full_Name (Dir, True).all;
-            F_File       : constant String := Full_Name (File, True).all;
+            F_Dir        : constant Filesystem_String :=
+              Full_Name (Dir, True).all;
+            F_File       : constant Filesystem_String :=
+              Full_Name (File, True).all;
             Subdirs      : File_Array_Access;
             F_Sep, D_Sep : Natural := 0;
          begin
@@ -3151,7 +3176,8 @@ package body VCS_View_API is
                if F_Sep /= 0 then
                   for K in Subdirs'Range loop
                      declare
-                        Name   : constant String := Base_Name (Subdirs (K));
+                        Name   : constant Filesystem_String :=
+                          Base_Name (Subdirs (K));
                         R_File : constant Virtual_File :=
                                    Create (Full_Name (Dir).all & Name &
                                            F_File (F_Sep .. F_File'Last));
@@ -3171,8 +3197,9 @@ package body VCS_View_API is
          Project       : constant Project_Type :=
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);
-         Root_Branches : constant String := Get_Branches_Root (Project);
-         Root_Tags     : constant String := Get_Tags_Root (Project);
+         Root_Branches : constant Filesystem_String :=
+           Get_Branches_Root (Project);
+         Root_Tags     : constant Filesystem_String := Get_Tags_Root (Project);
          Script        : constant Scripting_Language :=
                            Lookup_Scripting_Language
                              (Get_Scripts (Kernel), GPS_Shell_Name);
@@ -3184,7 +3211,7 @@ package body VCS_View_API is
          Create
            (Command, -"clear revision view", Kernel,
             "Revision.clear_view "
-            & Argument_To_Quoted_String (Full_Name (File).all), Script);
+            & Argument_To_Quoted_String (+Full_Name (File).all), Script);
 
          Launch_Background_Command
            (Kernel, Command_Access (Command), True, False, "");
@@ -3222,7 +3249,7 @@ package body VCS_View_API is
       VCS := Get_Current_Ref (Context);
 
       while not String_List.Is_Empty (Files) loop
-         Get_Log (VCS, String_List.Head (Files));
+         Get_Log (VCS, +String_List.Head (Files));
          String_List.Next (Files);
       end loop;
    exception
@@ -3254,7 +3281,7 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (Files) loop
          Log (VCS,
-              Create (Full_Filename => String_List.Head (Files)),
+              Create (Full_Filename => +String_List.Head (Files)),
               "",
               As_Text => True);
          String_List.Next (Files);
@@ -3288,7 +3315,7 @@ package body VCS_View_API is
       end if;
 
       Status := Get_Cache
-        (Get_Status_Cache, Create (String_List.Head (Files))).Status;
+        (Get_Status_Cache, Create (+String_List.Head (Files))).Status;
 
       if Status.Repository_Revision = null
         or else Status.Repository_Revision.all = "n/a"
@@ -3314,7 +3341,7 @@ package body VCS_View_API is
          if Str /= "" then
             Log
               (Get_Current_Ref (Context),
-               Create (Full_Filename => String_List.Head (Files)),
+               Create (Full_Filename => +String_List.Head (Files)),
                Str);
          end if;
       end;
@@ -3456,7 +3483,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      Status := Get_Cache (Get_Status_Cache, Create (Head (Files))).Status;
+      Status := Get_Cache (Get_Status_Cache, Create (+Head (Files))).Status;
 
       if not One_Rev then
          if Status.Repository_Revision = null then
@@ -3522,7 +3549,7 @@ package body VCS_View_API is
          if Str'Length /= 0 then
             Diff
               (Ref,
-               Create (Full_Filename => Head (Files)),
+               Create (Full_Filename => +Head (Files)),
                Str.all,
                "");
          end if;
@@ -3533,7 +3560,7 @@ package body VCS_View_API is
             Skip_To_Char (Str.all, Index, ASCII.LF);
             Diff
               (Ref,
-               Create (Full_Filename => Head (Files)),
+               Create (Full_Filename => +Head (Files)),
                Str (Str'First .. Index - 1),
                Str (Index + 1 .. Str'Last));
          end if;
@@ -3561,7 +3588,7 @@ package body VCS_View_API is
       Files := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Full_Name (Files (J)).all);
+         String_List.Prepend (Result, +Full_Name (Files (J)).all);
       end loop;
 
       Unchecked_Free (Files);
@@ -3613,7 +3640,7 @@ package body VCS_View_API is
             S : constant String := Data (Node);
          begin
             if Prev = Null_Node
-              or else not File_Equal (Data (Prev), S, Build_Server)
+              or else not File_Equal (+Data (Prev), +S, Build_Server)
             then
                Append (Final, S);
             end if;
@@ -3700,7 +3727,7 @@ package body VCS_View_API is
       Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      File   : constant String := Nth_Arg (Data, 1, "");
+      File   : constant Filesystem_String := Nth_Arg (Data, 1, "");
       Full   : Virtual_File;
       Prj    : Project_Type;
       Ref    : VCS_Access;
@@ -3724,7 +3751,8 @@ package body VCS_View_API is
       Full := Create (File, Kernel, Use_Object_Path => False);
 
       if Dir_Name (Full).all = "" then
-         Insert (Kernel, -"Could not find file: " & File, Mode => Error);
+         Insert (Kernel, -"Could not find file: " &
+                 Unknown_To_UTF8 (+File), Mode => Error);
          return;
       end if;
 
@@ -3735,7 +3763,7 @@ package body VCS_View_API is
       if Prj = No_Project then
          Insert
            (Kernel,
-            -"Could not find project for file: " & File,
+            -"Could not find project for file: " & Unknown_To_UTF8 (+File),
             Mode => Error);
 
          return;
@@ -3759,7 +3787,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      String_List.Append (Files, Full_Name (Full).all);
+      String_List.Append (Files, +Full_Name (Full).all);
 
       --  Process the command
 

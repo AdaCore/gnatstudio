@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
@@ -54,7 +53,9 @@ with Projects.Registry;         use Projects.Registry;
 with GPS.Intl;                  use GPS.Intl;
 with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
 with Wizards;                   use Wizards;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
 with File_Utils;                use File_Utils;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GUI_Utils;                 use GUI_Utils;
@@ -144,7 +145,7 @@ package body Creation_Wizard.Dependencies is
    procedure Add_Dependency_Internal
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
-      Imported_Project_Path : String;
+      Imported_Project_Path : Filesystem_String;
       Limited_With          : Boolean;
       Use_Base_Name         : Boolean);
    --  Internal function that creates a dependency between two projects. It
@@ -158,7 +159,7 @@ package body Creation_Wizard.Dependencies is
    procedure Add_Dependency_Internal
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
-      Imported_Project_Path : String;
+      Imported_Project_Path : Filesystem_String;
       Limited_With          : Boolean;
       Use_Base_Name         : Boolean)
    is
@@ -248,7 +249,8 @@ package body Creation_Wizard.Dependencies is
       Model   : access Gtk_Tree_Store_Record'Class)
    is
       Iter             : Gtk_Tree_Iter;
-      Project_Path     : constant String := Get_Predefined_Project_Path
+      Project_Path     : constant Filesystem_String :=
+        Get_Predefined_Project_Path
         (Get_Registry (Kernel).all);
       Path_Iter        : Path_Iterator;
       Dir              : Dir_Type;
@@ -260,7 +262,7 @@ package body Creation_Wizard.Dependencies is
 
       while not At_End (Project_Path, Path_Iter) loop
          declare
-            Directory    : constant String :=
+            Directory    : constant Filesystem_String :=
                              Current (Project_Path, Path_Iter);
             Found        : Boolean := False;
             Iter2        : Path_Iterator := Start (Project_Path);
@@ -300,9 +302,9 @@ package body Creation_Wizard.Dependencies is
                            Set (Model, Iter, Selected_Column2, False);
                            Set (Model, Iter, Project_Name_Column2,
                                 File (File'First .. Last - 4));
-                           Set (Model, Iter, Directory_Column2, Directory);
+                           Set (Model, Iter, Directory_Column2, +Directory);
                            Set (Model, Iter, Full_Path_Column2,
-                                Name_As_Directory (Directory)
+                                +Name_As_Directory (Directory)
                                 & File (File'First .. Last));
                            Set (Model, Iter, Is_Limited_Column2, False);
                         end if;
@@ -402,7 +404,7 @@ package body Creation_Wizard.Dependencies is
             Set (Model, Iter, Column_Is_Limited,
                  Is_Limited or else Must_Be_Limited);
             Set (Model, Iter, Column_Full_Path,
-                 Full_Name (Project_Path (Imported)).all);
+                 +Full_Name (Project_Path (Imported)).all);
 
             if Column_Can_Change_Limited /= -1 then
                Set (Model, Iter, Column_Can_Change_Limited,
@@ -411,7 +413,7 @@ package body Creation_Wizard.Dependencies is
 
             if Column_Directory /= -1 then
                Set (Model, Iter, Column_Directory,
-                    Full_Name (Project_Directory (Imported)).all);
+                    +Full_Name (Project_Directory (Imported)).all);
             end if;
 
             if Column_Selected /= -1 then
@@ -737,7 +739,7 @@ package body Creation_Wizard.Dependencies is
                  (Kernel                => Kernel,
                   Importing_Project     => Project,
                   Imported_Project_Path =>
-                    Get_String (Model, Iter, Full_Path_Column),
+                    +Get_String (Model, Iter, Full_Path_Column),
                   Limited_With          =>
                     Get_Boolean (Model, Iter, Is_Limited_Column),
                   Use_Base_Name         =>

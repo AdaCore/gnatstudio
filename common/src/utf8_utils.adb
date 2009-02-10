@@ -115,6 +115,23 @@ package body UTF8_Utils is
       end if;
    end Unknown_To_UTF8;
 
+   ---------------------
+   -- Unknown_To_UTF8 --
+   ---------------------
+
+   function Unknown_To_UTF8
+     (Input   : String) return Glib.UTF8_String
+   is
+      Success : aliased Boolean;
+      S       : constant String := Unknown_To_UTF8 (Input, Success'Access);
+   begin
+      if Success then
+         return S;
+      else
+         return "<could not convert to UTF8>";
+      end if;
+   end Unknown_To_UTF8;
+
    --------------------
    -- UTF8_To_Locale --
    --------------------

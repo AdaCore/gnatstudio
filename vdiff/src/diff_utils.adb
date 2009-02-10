@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                  Copyright (C) 2002-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,7 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -129,12 +130,12 @@ package body Diff_Utils is
       Ret          : Diff_Occurrence_Link;
       Occurrence   : Diff_Occurrence_Link;
       Diff_Command : constant String := Diff_Cmd.Get_Pref;
-      Cmd          : String_Access;
+      Cmd          : Filesystem_String_Access;
       Cmd_Args     : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
-      Cmd := Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
+      Cmd := Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd.all = "" then
          Trace (Me, "command not found: " & Diff_Command);
@@ -143,14 +144,14 @@ package body Diff_Utils is
          return Ret;
       end if;
 
-      Args (1) := new String'(Full_Name (File1).all);
-      Args (2) := new String'(Full_Name (File2).all);
+      Args (1) := new String'(+Full_Name (File1).all);
+      Args (2) := new String'(+Full_Name (File2).all);
 
       Trace (Me, "spawn: " & Diff_Command & " "
-             & Full_Name (File1).all & " " & Full_Name (File2).all);
+             & (+(Full_Name (File1).all & " " & Full_Name (File2).all)));
 
       Non_Blocking_Spawn
-        (Descriptor, Cmd.all,
+        (Descriptor, +Cmd.all,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
       Free (Cmd);
       Free (Cmd_Args);
@@ -194,7 +195,7 @@ package body Diff_Utils is
       Args          : Argument_List (1 .. 6);
       Ret           : Diff_Occurrence_Link;
       Occurrence    : Diff_Occurrence_Link;
-      Cmd           : String_Access;
+      Cmd           : Filesystem_String_Access;
       Pattern_Any   : constant Pattern_Matcher := Compile (".+");
       Pattern       : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
@@ -209,7 +210,7 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      :=
-        Locate_Tool_Executable (Unquote (Cmd_Args (Cmd_Args'First).all));
+        Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
       if Cmd = null or else Cmd.all = "" then
          Insert (Kernel,
@@ -226,25 +227,25 @@ package body Diff_Utils is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (Orig_File).all);
          Args (4) := new String'("-R");
-         Args (5) := new String'(Full_Name (New_File).all);
+         Args (5) := new String'(+Full_Name (New_File).all);
          Num_Args := 6;
 
       else
-         Args (3) := new String'(Full_Name (New_File).all);
-         Args (4) := new String'(Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (New_File).all);
+         Args (4) := new String'(+Full_Name (Orig_File).all);
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Full_Name (Diff_File).all);
+      Args (Num_Args) := new String'(+Full_Name (Diff_File).all);
 
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, Cmd.all,
+           (Descriptor, +Cmd.all,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
             Args (1 .. Num_Args));
          Free (Cmd);
@@ -260,7 +261,7 @@ package body Diff_Utils is
             Close (Descriptor);
       end;
 
-      Open (File, In_File, Full_Name (Diff_File).all);
+      Open (File, In_File, +Full_Name (Diff_File).all);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);

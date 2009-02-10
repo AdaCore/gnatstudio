@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2006                    --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +32,9 @@ with Case_Handling;           use Case_Handling;
 with GPS.Intl;                use GPS.Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Row_Data;                use Row_Data;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Templates_Parser;        use Templates_Parser;
 with AUnit_Templates;         use AUnit_Templates;
@@ -122,7 +123,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Gtk_New
            (Explorer,
             Local_Root_Dir,
-            Create (Get_Text (Suite_Window.Directory_Entry)),
+            Create (+Get_Text (Suite_Window.Directory_Entry)),
+            --  ??? What if the filesystem path is non-UTF8?
             "Select test suite",
             History => null);
       end if;
@@ -149,14 +151,14 @@ package body Make_Suite_Window_Pkg.Callbacks is
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + Response.Full_Name.all + ("(test) " & Suite_Name.all));
+               + (+Response.Full_Name.all) + ("(test) " & Suite_Name.all));
             Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
 
          elsif F_Type = Test_Suite then
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + Response.Full_Name.all + ("(suite) " & Suite_Name.all));
+               + (+Response.Full_Name.all) + ("(suite) " & Suite_Name.all));
             Set (Suite_Window.Test_List,
                  Row_Num,
                  Package_Name.all);
@@ -217,7 +219,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
    procedure On_Ok_Clicked (Window : Make_Suite_Window_Access) is
       --  Generate suite source file.  Exit program if successful
 
-      Directory_Name : constant String := Get_Text (Window.Directory_Entry);
+      Directory_Name : constant Filesystem_String :=
+        +Get_Text (Window.Directory_Entry);
+      --  ??? What if the filesystem path is non-UTF8?
       Name           : String := Get_Text (Window.Name_Entry);
       use Row_List;
       List : Row_List.Glist := Get_Row_List (Window.Test_List);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,14 +46,14 @@ package body Filesystems is
       Host                : String;
       Args                : GNAT.Strings.String_List;
       Status              : out Boolean;
-      Execution_Directory : String := "");
+      Execution_Directory : Filesystem_String := "");
    overriding procedure Execute_Remotely
      (Transport           : access GPS_Transport_Record;
       Host                : String;
       Args                : GNAT.Strings.String_List;
       Result              : out GNAT.Strings.String_Access;
       Status              : out Boolean;
-      Execution_Directory : String := "");
+      Execution_Directory : Filesystem_String := "");
    overriding procedure Spawn_Remotely
      (Transport           : access GPS_Transport_Record;
       Descriptor          : out GNAT.Expect.Process_Descriptor_Access;
@@ -63,21 +63,21 @@ package body Filesystems is
    Transport : aliased GPS_Transport_Record;
    --  A global variable, only used as a dispatcher below
 
-   function Encode_To_UTF8 (Name : String) return String;
+   function Encode_To_UTF8 (Name : Filesystem_String) return String;
    --  Convert Name into a proper utf8 string if needed
 
    --------------------
    -- Encode_To_UTF8 --
    --------------------
 
-   function Encode_To_UTF8 (Name : String) return String is
-      Result : constant String := Locale_To_UTF8 (Name);
+   function Encode_To_UTF8 (Name : Filesystem_String) return String is
+      Result : constant String := Locale_To_UTF8 (+Name);
    begin
       --  The name might already be UTF-8 (for instance on windows), but we
       --  try anyway and handle errors appropriately
 
       if Result = "" then
-         return Name;
+         return +Name;
       else
          return Result;
       end if;
@@ -92,7 +92,7 @@ package body Filesystems is
       Host                : String;
       Args                : GNAT.Strings.String_List;
       Status              : out Boolean;
-      Execution_Directory : String := "")
+      Execution_Directory : Filesystem_String := "")
    is
       pragma Unreferenced (Transport);
    begin
@@ -109,7 +109,7 @@ package body Filesystems is
       Args                : GNAT.Strings.String_List;
       Result              : out GNAT.Strings.String_Access;
       Status              : out Boolean;
-      Execution_Directory : String := "")
+      Execution_Directory : Filesystem_String := "")
    is
       pragma Unreferenced (Transport);
    begin
@@ -239,7 +239,7 @@ package body Filesystems is
       Iter := SLU.String_List.First (Files);
 
       for K in FA'Range loop
-         FA (K) := Create (SLU.String_List.Data (Iter));
+         FA (K) := Create (+SLU.String_List.Data (Iter));
          Iter := SLU.String_List.Next (Iter);
       end loop;
 

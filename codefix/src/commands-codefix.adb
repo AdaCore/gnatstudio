@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2008, AdaCore              --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,7 @@ with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix_Module;        use Codefix_Module;
 with GPS.Intl;              use GPS.Intl;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.Filesystem;            use GNATCOLL.Filesystem;
 
 package body Commands.Codefix is
 
@@ -110,8 +111,8 @@ package body Commands.Codefix is
       if Command.Current_Error /= Null_Error_Id then
          Trace
            (Me, "Activate_Codefix: Error found at "
-            & Full_Name
-              (Get_File (Get_Error_Message (Command.Current_Error))).all
+            & (+Full_Name
+              (Get_File (Get_Error_Message (Command.Current_Error))).all)
             & Get_Line (Get_Error_Message (Command.Current_Error))'Img
             & Get_Column (Get_Error_Message (Command.Current_Error))'Img);
 
