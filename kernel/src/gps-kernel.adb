@@ -1113,8 +1113,7 @@ package body GPS.Kernel is
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel
-     (Context : Selection_Context) return Kernel_Handle is
+   function Get_Kernel (Context : Selection_Context) return Kernel_Handle is
    begin
       if Context.Data.Data = null then
          return null;

@@ -926,10 +926,10 @@ private
    --  See inherited documentation
 
    No_Context : constant Selection_Context :=
-     (Data => (Ada.Finalization.Controlled with null));
+                  (Data => (Ada.Finalization.Controlled with null));
 
    No_Tool : constant Tool_Properties_Record :=
-     (null, null, null, null, null, False, null, null);
+               (null, null, null, null, null, False, null, null);
 
    package Tools_List is new Ada.Containers.Doubly_Linked_Lists
      (Tool_Properties_Record);

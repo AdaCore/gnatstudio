@@ -74,7 +74,7 @@ package Log_Utils is
    --  if such an entry exists.
 
    function Action_To_Log_Suffix (Action : VCS_Action) return String;
-   --  Return the suffix to be used in log files that correspond to Action.
+   --  Return the suffix to be used in log files that correspond to Action
 
    procedure Log_Action_Files
      (Kernel   : Kernel_Handle;

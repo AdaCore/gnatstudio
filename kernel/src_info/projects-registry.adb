@@ -981,9 +981,9 @@ package body Projects.Registry is
             Get_Name_String (Source.Display_File);
 
             declare
-               UTF8           : constant String :=
-                                  Display_Full_Name
-                                    (Create (Name_Buffer (1 .. Name_Len)));
+               UTF8 : constant String :=
+                        Display_Full_Name
+                          (Create (Name_Buffer (1 .. Name_Len)));
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
@@ -991,8 +991,9 @@ package body Projects.Registry is
 
                declare
                   Dir : constant String :=
-                     Display_Full_Name
-                        (Create (Get_Name_String (Source.Path.Display_Name)));
+                          Display_Full_Name
+                            (Create
+                               (Get_Name_String (Source.Path.Display_Name)));
                begin
                   Name_Len := Dir'Length;
                   Name_Buffer (1 .. Name_Len) := Dir;

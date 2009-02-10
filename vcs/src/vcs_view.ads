@@ -37,7 +37,7 @@ with Gtk.Widget;           use Gtk.Widget;
 with GPS.Kernel;           use GPS.Kernel;
 with String_List_Utils;    use String_List_Utils;
 with VCS_Status;           use VCS_Status;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with Tooltips;
 
 package VCS_View is
