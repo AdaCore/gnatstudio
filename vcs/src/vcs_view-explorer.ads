@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -105,23 +105,24 @@ private
       --  In this case it will be more space-efficient.
    end record;
 
-   function Columns_Types
+   overriding function Columns_Types
      (Explorer : access VCS_Explorer_View_Record) return GType_Array;
 
-   procedure Do_Delete (Explorer : VCS_Explorer_View_Record);
+   overriding procedure Do_Delete (Explorer : VCS_Explorer_View_Record);
    --  ???
 
-   procedure Do_Refresh (Explorer : access VCS_Explorer_View_Record);
+   overriding procedure Do_Refresh
+     (Explorer : access VCS_Explorer_View_Record);
    --  ???
 
-   procedure Do_Fill_Info
+   overriding procedure Do_Fill_Info
      (Explorer  : VCS_Explorer_View_Record;
       Iter      : Gtk_Tree_Iter;
       Line_Info : Line_Record;
       Success   : out Boolean);
    --  ???
 
-   procedure Do_Initialize
+   overriding procedure Do_Initialize
      (Explorer : access VCS_Explorer_View_Record;
       Kernel   : Kernel_Handle);
    --  ???
