@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2007, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -138,7 +138,7 @@ package VCS_Activities is
    --  Returns the group-commit status
 
    procedure Toggle_Group_Commit
-     (Kernel   : access Kernel_Handle_Record'Class;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Invert the group-commit status
 

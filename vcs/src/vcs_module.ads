@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -118,7 +118,7 @@ package VCS_Module is
    --  VCS identifiers are registered using Register_VCS_Identifier.
 
    function Get_Explorer
-     (Kernel      : Kernel_Handle;
+     (Kernel      : not null access Kernel_Handle_Record'Class;
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_Explorer_View_Access;
    --  Return the VCS Explorer. If Show is True, place it in the MDI and show
@@ -131,7 +131,7 @@ package VCS_Module is
    --  Return whether the Explorer is open
 
    function Get_Activities_Explorer
-     (Kernel      : Kernel_Handle;
+     (Kernel      : not null access Kernel_Handle_Record'Class;
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_Activities_View_Access;
    --  Return the VCS Explorer. If Show is True, place it in the MDI and show

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -238,7 +238,8 @@ package body VCS_View.Activities is
    ------------------------
 
    procedure On_Delete_Activity
-     (Kernel : Kernel_Handle; Activity : Activity_Id)
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
    is
       Explorer   : constant VCS_Activities_View_Access :=
                      Get_Activities_Explorer (Kernel, False, False);
@@ -273,7 +274,8 @@ package body VCS_View.Activities is
    ----------------------------
 
    procedure On_Close_Open_Activity
-     (Kernel : Kernel_Handle; Activity : Activity_Id)
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id)
    is
       use type String_List.List_Node;
       Closed : constant Boolean := Is_Closed (Activity);
@@ -350,7 +352,7 @@ package body VCS_View.Activities is
    -------------------------
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       Activity       : Activity_Id;
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
@@ -691,7 +693,7 @@ package body VCS_View.Activities is
 
    procedure Gtk_New
      (Explorer : out VCS_Activities_View_Access;
-      Kernel   : Kernel_Handle := null) is
+      Kernel   : access Kernel_Handle_Record'Class := null) is
    begin
       Explorer := new VCS_Activities_View_Record;
       Initialize (Explorer, Kernel);

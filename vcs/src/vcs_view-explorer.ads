@@ -30,11 +30,11 @@ package VCS_View.Explorer is
 
    procedure Gtk_New
      (Explorer : out VCS_Explorer_View_Access;
-      Kernel   : Kernel_Handle := null);
+      Kernel   : access Kernel_Handle_Record'Class := null);
    --  Create a new VCS explorer
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;

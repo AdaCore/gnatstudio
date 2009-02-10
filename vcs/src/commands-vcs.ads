@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,10 +35,7 @@ package Commands.VCS is
    type Update_Files_Command_Type is new Root_Command with private;
    type Update_Files_Command_Access is access all Update_Files_Command_Type;
 
-   type Generic_Kernel_Command is new Interactive_Command with record
-      Kernel   : Kernel_Handle;
-      Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
-   end record;
+   type Generic_Kernel_Command is new Interactive_Command with private;
    type Generic_Kernel_Command_Access is access all Generic_Kernel_Command;
 
    --  Activity committed action (check if activity can be closed)
@@ -48,13 +45,13 @@ package Commands.VCS is
 
    procedure Create
      (Item      : out Generic_Kernel_Command_Access;
-      Kernel    : Kernel_Handle;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler);
    --  Create a new Generic_Kernel_Command
 
    procedure Create
      (Item      : out Log_Action_Command_Access;
-      Kernel    : Kernel_Handle;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : String_List.List;
@@ -73,14 +70,14 @@ package Commands.VCS is
 
    procedure Create
      (Item      : out Update_Files_Command_Access;
-      Kernel    : Kernel_Handle;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       Filenames : String_List.List);
    --  Create a new Update_Files_Command.
    --  The user must free Filenames after calling Create.
 
    procedure Create
      (Item     : out Check_Activity_Command_Access;
-      Kernel   : Kernel_Handle;
+      Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Create a new Check_Activity_Command
 
@@ -118,12 +115,12 @@ private
    end record;
 
    type Update_Files_Command_Type is new Root_Command with record
-      Kernel    : Kernel_Handle;
+      Kernel    : access Kernel_Handle_Record'Class;
       Filenames : String_List.List;
    end record;
 
    type Log_Action_Command_Type is new Root_Command with record
-      Kernel    : Kernel_Handle;
+      Kernel    : access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : String_List.List;
@@ -131,8 +128,13 @@ private
    end record;
 
    type Check_Activity_Command_Type is new Root_Command with record
-      Kernel   : Kernel_Handle;
+      Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id;
+   end record;
+
+   type Generic_Kernel_Command is new Interactive_Command with record
+      Kernel   : access Kernel_Handle_Record'Class;
+      Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
    end record;
 
 end Commands.VCS;

@@ -65,7 +65,7 @@ package body Commands.VCS is
 
    procedure Create
      (Item      : out Log_Action_Command_Access;
-      Kernel    : Kernel_Handle;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
       Filenames : String_List.List;
@@ -91,7 +91,7 @@ package body Commands.VCS is
 
    procedure Create
      (Item      : out Update_Files_Command_Access;
-      Kernel    : Kernel_Handle;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       Filenames : String_List.List) is
    begin
       Item := new Update_Files_Command_Type;
@@ -100,9 +100,9 @@ package body Commands.VCS is
    end Create;
 
    procedure Create
-     (Item      : out Generic_Kernel_Command_Access;
-      Kernel    : Kernel_Handle;
-      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler) is
+     (Item     : out Generic_Kernel_Command_Access;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Callback : Context_Callback.Marshallers.Void_Marshaller.Handler) is
    begin
       Item := new Generic_Kernel_Command;
       Item.Kernel   := Kernel;
@@ -111,7 +111,7 @@ package body Commands.VCS is
 
    procedure Create
      (Item     : out Check_Activity_Command_Access;
-      Kernel   : Kernel_Handle;
+      Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id) is
    begin
       Item := new Check_Activity_Command_Type;

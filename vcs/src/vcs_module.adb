@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -331,7 +331,7 @@ package body VCS_Module is
       begin
          if Actions = No_Action or else One_Action_Defined (Actions) then
             Items := True;
-            Create (Command, Kernel_Handle (Kernel), Callback);
+            Create (Command, Kernel, Callback);
             Register_Action
               (Kernel, Action_Label, Command, Description, Filter,
                Category => "VCS");
@@ -1521,7 +1521,7 @@ package body VCS_Module is
    ------------------
 
    function Get_Explorer
-     (Kernel      : Kernel_Handle;
+     (Kernel      : not null access Kernel_Handle_Record'Class;
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_Explorer_View_Access
    is
@@ -1586,7 +1586,7 @@ package body VCS_Module is
    -----------------------------
 
    function Get_Activities_Explorer
-     (Kernel      : Kernel_Handle;
+     (Kernel      : not null access Kernel_Handle_Record'Class;
       Raise_Child : Boolean := True;
       Show        : Boolean := False) return VCS_Activities_View_Access
    is

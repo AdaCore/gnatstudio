@@ -66,7 +66,7 @@ package body VCS.ClearCase is
    --  Display L in the console with mode Mode, with a small indentation
 
    function Checkin_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Check that List corresponds to the output of a ClearCase checkin.
@@ -75,20 +75,20 @@ package body VCS.ClearCase is
    --  contains a file corresponding to a log file.
 
    function Checkout_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Check that List corresponds to the output of a ClearCase checkout
    --  or a ClearCase mkelem command.
 
    function Remove_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Check that List corresponds to the output of a ClearCase remove
 
    function Diff_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Display the visual differences listed in List in the standard diff
@@ -97,13 +97,13 @@ package body VCS.ClearCase is
    --  ??? This is a copy of VCS.CVS.Diff_Handler.
 
    function Display_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Display Head and List, and return True
 
    function Status_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Parse the output of the command "describe -fmt "%Vn;%f;\n"".
@@ -112,7 +112,7 @@ package body VCS.ClearCase is
    --   checked-out version, if any).
 
    procedure Parse_Describe
-     (Kernel     : Kernel_Handle;
+     (Kernel     : not null access Kernel_Handle_Record'Class;
       Files      : String_List.List;
       List       : String_List.List;
       Clear_Logs : Boolean);
@@ -121,13 +121,13 @@ package body VCS.ClearCase is
    --  the same order as List.
 
    procedure Report_Error
-     (Kernel  : Kernel_Handle;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Message : String;
       List    : String_List.List := Null_List);
    --  Report a ClearCase error
 
    function Text_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Create a file with the information from List, and display it in an
@@ -135,7 +135,7 @@ package body VCS.ClearCase is
    --  ??? This is code duplication from vcs-cvs.adb
 
    function Annotation_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Display the annotations for the file
@@ -145,7 +145,7 @@ package body VCS.ClearCase is
    -------------------------------
 
    function Annotation_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -194,7 +194,7 @@ package body VCS.ClearCase is
    -------------------------
 
    function Text_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -227,7 +227,7 @@ package body VCS.ClearCase is
    ------------------
 
    procedure Report_Error
-     (Kernel  : Kernel_Handle;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Message : String;
       List    : String_List.List := Null_List)
    is
@@ -246,7 +246,7 @@ package body VCS.ClearCase is
    ------------------
 
    function Diff_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -291,7 +291,7 @@ package body VCS.ClearCase is
    ---------------------------
 
    function Status_Output_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -323,7 +323,7 @@ package body VCS.ClearCase is
    ---------------------
 
    function Display_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -462,7 +462,7 @@ package body VCS.ClearCase is
    --------------------
 
    procedure Parse_Describe
-     (Kernel     : Kernel_Handle;
+     (Kernel     : not null access Kernel_Handle_Record'Class;
       Files      : String_List.List;
       List       : String_List.List;
       Clear_Logs : Boolean)
@@ -1004,7 +1004,7 @@ package body VCS.ClearCase is
    ---------------------
 
    function Checkin_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -1055,7 +1055,7 @@ package body VCS.ClearCase is
    ----------------------
 
    function Checkout_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -1091,7 +1091,7 @@ package body VCS.ClearCase is
    --------------------
 
    function Remove_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is

@@ -57,22 +57,22 @@ with VCS_View;                  use VCS_View;
 package body VCS_Activities_View_API is
 
    procedure Commit_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Commit the given activity
 
    procedure Query_Status_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Query status of the given activity
 
    procedure Update_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Update the given activity
 
    procedure Diff_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id);
    --  Diff the given activity against head
 
@@ -107,15 +107,25 @@ package body VCS_Activities_View_API is
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
+   procedure On_Edit_Log
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
+   --  Open activity log
 
    procedure On_Menu_Remove_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
+   procedure On_Remove_Log
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
    --  Delete activity log file
 
    procedure On_Menu_Build_Patch_File
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
+   procedure On_Build_Patch_File
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
 
    procedure Populate_Activity
      (Kernel   : Kernel_Handle;
@@ -127,7 +137,7 @@ package body VCS_Activities_View_API is
    --  Action to open a file
 
    type Edit_Action_Command_Type is new Root_Command with record
-      Kernel : Kernel_Handle;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Virtual_File;
    end record;
    type Edit_Action_Command_Access is access Edit_Action_Command_Type;
@@ -138,7 +148,7 @@ package body VCS_Activities_View_API is
    --  Action adjust patch root
 
    type Adjust_Patch_Action_Command_Type is new Root_Command with record
-      Kernel        : Kernel_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Patch_File    : Virtual_File;     -- patch file
       Files         : String_List.List; -- all files contained in the patch
       Root_Dir      : String_Access;    -- the patch root directory to set
@@ -162,7 +172,7 @@ package body VCS_Activities_View_API is
       pragma Unreferenced (Child);
       Explorer : VCS_Activities_View_Access;
    begin
-      Explorer := Get_Activities_Explorer (Kernel_Handle (Kernel), False);
+      Explorer := Get_Activities_Explorer (Kernel, False);
 
       if Explorer /= null then
          return Get_Current_Context (Explorer);
@@ -452,7 +462,7 @@ package body VCS_Activities_View_API is
    ---------------------------
 
    procedure Query_Status_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
       Files : String_List.List;
@@ -491,7 +501,7 @@ package body VCS_Activities_View_API is
    ---------------------
 
    procedure Update_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
       Files : String_List.List;
@@ -534,7 +544,7 @@ package body VCS_Activities_View_API is
    ---------------------
 
    procedure Commit_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
       use String_List;
@@ -593,7 +603,7 @@ package body VCS_Activities_View_API is
    -------------------
 
    procedure Diff_Activity
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
       VCS   : constant VCS_Access := Get_VCS_For_Activity (Kernel, Activity);
@@ -834,7 +844,7 @@ package body VCS_Activities_View_API is
    -------------------
 
    procedure Open_Activities_Explorer
-     (Kernel  : Kernel_Handle;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context)
    is
       pragma Unreferenced (Context);
@@ -851,7 +861,7 @@ package body VCS_Activities_View_API is
 
    procedure Query_Activities_Files
      (Explorer   : VCS_Activities_View_Access;
-      Kernel     : Kernel_Handle;
+      Kernel     : not null access Kernel_Handle_Record'Class;
       Real_Query : Boolean)
    is
       pragma Unreferenced (Explorer);
@@ -901,7 +911,7 @@ package body VCS_Activities_View_API is
 
    procedure Query_Status
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Widget);
       Explorer : VCS_Activities_View_Access;

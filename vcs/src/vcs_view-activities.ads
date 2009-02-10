@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +28,7 @@ package VCS_View.Activities is
 
    procedure Gtk_New
      (Explorer : out VCS_Activities_View_Access;
-      Kernel   : Kernel_Handle := null);
+      Kernel   : access Kernel_Handle_Record'Class := null);
    --  Create a new VCS explorer
 
    function Columns_Types
@@ -37,7 +36,7 @@ package VCS_View.Activities is
    --  Redefined for the VCS Activities
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       Activity       : Activity_Id;
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
@@ -64,11 +63,13 @@ package VCS_View.Activities is
    --  editing mode.
 
    procedure On_Delete_Activity
-     (Kernel : Kernel_Handle; Activity : Activity_Id);
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
    --  Delete the given activity from the explorer
 
    procedure On_Close_Open_Activity
-     (Kernel : Kernel_Handle; Activity : Activity_Id);
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Activity : Activity_Id);
    --  Change Activity's status to/from closed/opened
 
    procedure On_Remove_From_Activity

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -131,7 +131,7 @@ package body VCS_Utils is
    ----------------
 
    function Save_Files
-     (Kernel    : Kernel_Handle;
+     (Kernel    : not null access Kernel_Handle_Record'Class;
       Files     : String_List.List;
       Activity  : Activity_Id := No_Activity;
       Save_Logs : Boolean     := False) return Boolean
@@ -179,7 +179,7 @@ package body VCS_Utils is
    -------------------------
 
    procedure Update_Files_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Clear_Logs     : Boolean;

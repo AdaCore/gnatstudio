@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2002-2008, AdaCore                 --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -56,7 +56,7 @@ with UTF8_Utils;                use UTF8_Utils;
 package body Log_Utils is
 
    function Check_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Display Head in the console, then return True if List is not
@@ -624,7 +624,7 @@ package body Log_Utils is
    -------------------
 
    function Check_Handler
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
@@ -683,7 +683,7 @@ package body Log_Utils is
    ----------------------
 
    procedure Log_Action_Files
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Ref      : VCS_Access;
       Action   : VCS_Action;
       Files    : String_List.List;

@@ -136,7 +136,7 @@ package VCS_View is
 
    procedure Initialize
      (Explorer : access VCS_View_Record'Class;
-      Kernel   : Kernel_Handle);
+      Kernel   : access Kernel_Handle_Record'Class);
    --  Initialize the explorer
 
    procedure Collapse_All (Explorer : access VCS_View_Record'Class);

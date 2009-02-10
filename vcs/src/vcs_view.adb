@@ -120,7 +120,7 @@ package body VCS_View is
 
    procedure Initialize
      (Explorer : access VCS_View_Record'Class;
-      Kernel   : Kernel_Handle)
+      Kernel   : access Kernel_Handle_Record'Class)
    is
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Tooltip         : VCS_Tooltips_Access;
@@ -130,7 +130,7 @@ package body VCS_View is
       Init_Graphics;
       Initialize_Hbox (Explorer);
 
-      Explorer.Kernel := Kernel;
+      Explorer.Kernel := Kernel_Handle (Kernel);
 
       Create_Model (Explorer);
 
@@ -146,7 +146,7 @@ package body VCS_View is
       Set_Mode (Selection, Gtk.Enums.Selection_Multiple);
       Add (Scrolledwindow1, Explorer.Tree);
 
-      Do_Initialize (Explorer, Kernel);
+      Do_Initialize (Explorer, Explorer.Kernel);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,

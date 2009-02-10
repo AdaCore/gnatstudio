@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -69,7 +69,7 @@ package body Commands.External is
 
    procedure Create
      (Item           : out External_Command_Access;
-      Kernel         : Kernel_Handle;
+      Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
       Dir            : String;
       Args           : String_List.List;

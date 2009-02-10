@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,7 @@ package Commands.External is
    --  Free memory associated to D
 
    type String_List_Handler is access
-     function (Kernel : Kernel_Handle;
+     function (Kernel : not null access Kernel_Handle_Record'Class;
                Head   : String_List.List;
                List   : String_List.List) return Boolean;
    --  Parses the output of a command, contained in List.
@@ -42,7 +42,7 @@ package Commands.External is
 
    procedure Create
      (Item           : out External_Command_Access;
-      Kernel         : Kernel_Handle;
+      Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
       Dir            : String;
       Args           : String_List.List;
@@ -76,7 +76,7 @@ private
      new Gtk.Main.Timeout (External_Command_Access);
 
    type External_Command is new Root_Command with record
-      Kernel          : Kernel_Handle;
+      Kernel          : access Kernel_Handle_Record'Class;
       Fd              : TTY_Process_Descriptor;
       Command         : GNAT.Strings.String_Access;
       Dir             : GNAT.Strings.String_Access;

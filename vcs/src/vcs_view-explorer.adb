@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -138,7 +138,7 @@ package body VCS_View.Explorer is
    --  Returns True if Status can be displayed in the explorer
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       File_Status    : File_Status_Record;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
@@ -353,7 +353,7 @@ package body VCS_View.Explorer is
    -------------------------
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       File_Status    : File_Status_Record;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
@@ -511,7 +511,7 @@ package body VCS_View.Explorer is
    end Display_File_Status;
 
    procedure Display_File_Status
-     (Kernel         : Kernel_Handle;
+     (Kernel         : not null access Kernel_Handle_Record'Class;
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
@@ -698,7 +698,7 @@ package body VCS_View.Explorer is
 
    procedure Gtk_New
      (Explorer : out VCS_Explorer_View_Access;
-      Kernel   : Kernel_Handle := null) is
+      Kernel   : access Kernel_Handle_Record'Class := null) is
    begin
       Explorer := new VCS_Explorer_View_Record;
       Initialize (Explorer, Kernel);

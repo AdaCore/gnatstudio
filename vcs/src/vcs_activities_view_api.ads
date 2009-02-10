@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,13 +29,13 @@ with VCS_View.Activities; use VCS_View.Activities;
 package VCS_Activities_View_API is
 
    procedure Open_Activities_Explorer
-     (Kernel  : Kernel_Handle;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context);
    --  If the VCS Activities Explorer is not displayed, display it
 
    procedure Query_Status
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  List all files as part of an activity
 
    procedure Query_Activities_Files
@@ -45,7 +45,7 @@ package VCS_Activities_View_API is
 
    procedure Query_Activities_Files
      (Explorer   : VCS_Activities_View_Access;
-      Kernel     : Kernel_Handle;
+      Kernel     : not null access Kernel_Handle_Record'Class;
       Real_Query : Boolean);
    --  Query/List the status of files belonging to activities.
    --  If Real_Query is True, a real VCS query will be made, otherwise

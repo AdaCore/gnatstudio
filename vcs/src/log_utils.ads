@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -77,7 +76,7 @@ package Log_Utils is
    --  Return the suffix to be used in log files that correspond to Action
 
    procedure Log_Action_Files
-     (Kernel   : Kernel_Handle;
+     (Kernel   : not null access Kernel_Handle_Record'Class;
       Ref      : VCS_Access;
       Action   : VCS_Action;
       Files    : String_List.List;
