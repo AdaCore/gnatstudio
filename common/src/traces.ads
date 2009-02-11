@@ -25,7 +25,6 @@
 with Ada.Exceptions;
 with GNAT.Source_Info;
 with GNATCOLL.Traces;
-with GNATCOLL.Filesystem;
 
 package Traces is
 
@@ -35,7 +34,7 @@ package Traces is
      (Unit_Name : String;
       Default   : GNATCOLL.Traces.Default_Activation_Status :=
         GNATCOLL.Traces.From_Config;
-      Stream    : GNATCOLL.Filesystem.Filesystem_String := "";
+      Stream    : String := "";
       Factory   : GNATCOLL.Traces.Handle_Factory := null;
       Finalize  : Boolean := True)
       return Debug_Handle

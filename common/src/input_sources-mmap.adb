@@ -42,7 +42,7 @@ package body Input_Sources.Mmap is
    procedure Open (Filename : Filesystem_String; Input : out Mmap_Input) is
       BOM    : Bom_Type;
    begin
-      Input.File := Open_Read (Filename);
+      Input.File := Open_Read (+Filename);
       Read (Input.File);
       Input.Buffer := Data (Input.File);
 

@@ -79,7 +79,7 @@ package body Adp_Converter is
       Spec_Extension : String;
       Body_Extension : String)
    is
-      Buffer : String_Access := Read_Whole_File (Adp_Filename);
+      Buffer : String_Access := Read_Whole_File (+Adp_Filename);
       Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
    begin
       if Buffer = null then

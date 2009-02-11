@@ -931,7 +931,7 @@ package body Help_Module is
 
    begin
       Contents := GNATCOLL.Mmap.Read_Whole_File
-        (About_File, Empty_If_Not_Found => True);
+        (+About_File, Empty_If_Not_Found => True);
 
       Button := Message_Dialog
         (GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &

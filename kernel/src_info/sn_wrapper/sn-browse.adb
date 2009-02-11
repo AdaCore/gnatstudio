@@ -164,7 +164,7 @@ package body SN.Browse is
               +Xref_Suffix
             then
                Content := Read_Whole_File
-                 (Name_As_Directory (DB_Directory) & (+Dir_Entry (1 .. Last)));
+                 (+Name_As_Directory (DB_Directory) & Dir_Entry (1 .. Last));
 
                if Content /= null then
                   if Content'Length /=

@@ -628,7 +628,7 @@ procedure GPS.Main is
       --  Initialize the traces
 
       GNATCOLL.Traces.Parse_Config_File
-        (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg",
+        (Default => +File_Utils.Name_As_Directory (Dir.all) & "traces.cfg",
          On_Exception => GNATCOLL.Traces.Deactivate);
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
@@ -644,7 +644,7 @@ procedure GPS.Main is
       Gtk_New (GPS_Main, Dir.all, +Prefix.all);
 
       About_Contents := GNATCOLL.Mmap.Read_Whole_File
-        (+Directory_Operations.Format_Pathname
+        (Directory_Operations.Format_Pathname
            (Prefix.all & "/share/gps/about.txt"),
          Empty_If_Not_Found => True);
 
@@ -817,7 +817,7 @@ procedure GPS.Main is
 
                      elsif Full = "-tracefile" then
                         GNATCOLL.Traces.Parse_Config_File
-                           (Filename => +Parameter (Parser));
+                           (Filename => Parameter (Parser));
 
                      elsif Full = "-tracelist" then
                         GNATCOLL.Traces.Show_Configuration

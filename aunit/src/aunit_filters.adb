@@ -73,7 +73,7 @@ package body Aunit_Filters is
       end if;
 
       File_Buffer := GNATCOLL.Mmap.Read_Whole_File
-        (File_Name,
+        (+File_Name,
          Empty_If_Not_Found => True);
       Parse_Constructs
         (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
