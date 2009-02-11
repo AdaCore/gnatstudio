@@ -20,15 +20,16 @@
 --  Windows implementation
 
 with System;
-with Interfaces.C;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Exceptions;    use Ada.Exceptions;
+with Interfaces.C;           use Interfaces.C;
+with Ada.Strings.Wide_Fixed; use Ada.Strings.Wide_Fixed;
+with Ada.Exceptions;         use Ada.Exceptions;
 
 with Gtk.Window; use Gtk.Window;
 
 with GPS.Kernel.Standard_Hooks;
 with Traces;            use Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body DDE is
 
@@ -52,6 +53,9 @@ package body DDE is
 
    DNS_REGISTER              : constant := 16#1#;     --  ddeml.h:289
 
+   CP_WINUNICODE             : constant := 1200;      --  ddeml.h:13
+   CP_UTF8                   : constant := 65001;
+
    subtype INT     is Interfaces.C.int;               --  windef.h
    subtype UINT    is Interfaces.C.unsigned;          --  windef.h
    subtype DWORD   is Interfaces.C.unsigned_long;     --  windef.h
@@ -62,8 +66,8 @@ package body DDE is
    type HDDEDATA   is new DWORD;                      --  ddeml.h:25
 
    type PFNCALLBACK is access function
-     (wType      : UINT;
-      wFmt       : UINT;
+     (uType      : UINT;
+      uFmt       : UINT;
       hCnv       : HCONV;
       hsz1, hsz2 : HSZ;
       hData      : HDDEDATA;
@@ -72,12 +76,12 @@ package body DDE is
    pragma Convention (Stdcall, PFNCALLBACK);
    --  ddeml.h:204
 
-   function DdeInitializeA
+   function DdeInitializeW
      (pidInst   : LPDWORD;
       pfnCallbk : PFNCALLBACK;
       afCmd     : DWORD;
       ulRes     : DWORD) return UINT;
-   pragma Import (Stdcall, DdeInitializeA, "DdeInitializeA");
+   pragma Import (Stdcall, DdeInitializeW, "DdeInitializeW");
    --  ddeml.h:211
 
    function DdeUninitialize (idInst : DWORD) return INT;
@@ -101,11 +105,11 @@ package body DDE is
    pragma Import (Stdcall, DdeUnaccessData, "DdeUnaccessData");
    --  ddeml.h:313
 
-   function DdeCreateStringHandleA
+   function DdeCreateStringHandleW
      (idInst    : DWORD;
       psz       : System.Address;
       iCodePage : INT) return HSZ;
-   pragma Import (Stdcall, DdeCreateStringHandleA, "DdeCreateStringHandleA");
+   pragma Import (Stdcall, DdeCreateStringHandleW, "DdeCreateStringHandleW");
    --  ddeml.h:346
 
    --  End of DDEML section
@@ -116,8 +120,8 @@ package body DDE is
    idInst : aliased DWORD := 0; --  DDE Instance
 
    function DDE_Callback
-     (wType      : UINT;
-      wFmt       : UINT;
+     (uType      : UINT;
+      uFmt       : UINT;
       hCnv       : HCONV;
       hsz1, hsz2 : HSZ;
       hData      : HDDEDATA;
@@ -125,13 +129,60 @@ package body DDE is
       dwData2    : DWORD) return HDDEDATA;
    pragma Convention (Stdcall, DDE_Callback);
 
+   function To_UTF8 (S : Wide_String) return Filesystem_String;
+   --  Translates a Windows Unicode string into utf8
+
+   -------------
+   -- To_UTF8 --
+   -------------
+
+   function To_UTF8 (S : Wide_String) return Filesystem_String
+   is
+      function WideCharToMultiByte
+        (CodePage          : DWORD;
+         dwFlags           : DWORD;
+         lpWideCharStr     : System.Address;
+         cchWideChar       : INT;
+         lpMultiByteStr    : System.Address;
+         cchMultiByte      : INT;
+         lpDefaultChar     : System.Address;
+         lpUsedDefaultChar : System.Address) return INT;
+      pragma Import (Stdcall, WideCharToMultiByte, "WideCharToMultiByte");
+
+      Size : constant INT :=
+               WideCharToMultiByte
+                 (CP_UTF8,
+                  0,
+                  S (S'First)'Address,
+                  S'Length,
+                  System.Null_Address,
+                  0, -- indicates that we want to get the size of the result
+                  System.Null_Address, System.Null_Address);
+      Ret   : aliased GNATCOLL.Filesystem.Filesystem_String
+                (1 .. Integer (Size));
+      Res   : INT;
+      pragma Unreferenced (Res);
+
+   begin
+      Res := WideCharToMultiByte
+        (CP_UTF8,
+         0,
+         S (S'First)'Address,
+         S'Length,
+         Ret (1)'Address,
+         Size,
+         System.Null_Address, System.Null_Address);
+
+      return Ret;
+   end To_UTF8;
+
    ------------------
    -- DDE_Callback --
    ------------------
 
    function DDE_Callback
-     (wType      : UINT;
-      wFmt       : UINT;
+     (uType      : UINT;
+      uFmt       : UINT;
       hCnv       : HCONV;
       hsz1, hsz2 : HSZ;
       hData      : HDDEDATA;
@@ -139,12 +190,12 @@ package body DDE is
       dwData2    : DWORD) return HDDEDATA
    is
       Res      : INT;
-      pragma Unreferenced (wFmt, hCnv, hsz1, hsz2, dwData1, dwData2, Res);
+      pragma Unreferenced (uFmt, hCnv, hsz1, hsz2, dwData1, dwData2, Res);
 
       use GPS.Kernel;
 
    begin
-      case wType is
+      case uType is
          when XTYP_ADVDATA =>
             return DDE_FACK;
 
@@ -157,18 +208,22 @@ package body DDE is
                Data_Len : aliased DWORD;
                Data_Raw : constant System.Address :=
                  DdeAccessData (hData, Data_Len'Unchecked_Access);
-               Data : String (1 .. Integer (Data_Len));
+               Data     : Wide_String (1 .. Integer (Data_Len / 2));
                for Data'Address use Data_Raw;
 
                Pos       : constant Natural := Index (Data, ":");
                Operation : DDE_Operation;
-               Argument  : constant String :=
-                 Data (Pos + 1 .. Index (Data, (1 => ASCII.NUL)) - 1);
+               Argument  : constant Wide_String :=
+                             Data
+                               (Pos + 1 ..
+                                  Index (Data,
+                                         (1 => Wide_Character'Val (0))) - 1);
                --  The data block is terminated by a nul character
 
             begin
                begin
-                  Operation := DDE_Operation'Value (Data (1 .. Pos - 1));
+                  Operation :=
+                    DDE_Operation'Value (+To_UTF8 (Data (1 .. Pos - 1)));
                exception
                   when Constraint_Error =>
                      Operation := Unsupported;
@@ -182,7 +237,8 @@ package body DDE is
                      begin
                         Deiconify (Get_Main_Window (Kernel_Local));
                         GPS.Kernel.Standard_Hooks.Open_File_Editor
-                          (Kernel_Local, Create (Full_Filename => Argument));
+                          (Kernel_Local,
+                           Create (Full_Filename => To_UTF8 (Argument)));
                      exception
                         when Constraint_Error =>
                            --  ??? Currently Constraint_Error is raised if
@@ -215,23 +271,22 @@ package body DDE is
 
    procedure Register_DDE_Server (Kernel : GPS.Kernel.Kernel_Handle) is
       hszAppName : HSZ;
-      szAppName  : aliased String := "GPS" & ASCII.NUL;
+      szAppName  : aliased Wide_String := "GPS" & Wide_Character'Val (0);
       Res1       : UINT;
       Res2       : HDDEDATA;
       pragma Unreferenced (Res1, Res2);
 
-      use type DWORD;
-
    begin
       Kernel_Local := Kernel;
-      Res1 := DdeInitializeA
+      Res1 := DdeInitializeW
         (idInst'Access, --  receives instance identifier
          DDE_Callback'Access, --  callback function
          APPCMD_FILTERINITS or CBF_SKIP_CONNECT_CONFIRMS
            or CBF_FAIL_SELFCONNECTIONS or CBF_FAIL_POKES,
          0);
 
-      hszAppName := DdeCreateStringHandleA (idInst, szAppName (1)'Address, 0);
+      hszAppName := DdeCreateStringHandleW
+        (idInst, szAppName (1)'Address, CP_WINUNICODE);
 
       Res2 := DdeNameService
         (idInst,   --  instance identifier
