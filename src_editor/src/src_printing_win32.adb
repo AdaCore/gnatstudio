@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003-2008, AdaCore                --
+--                   Copyright (C) 2003-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
 with Traces;              use Traces;
 with Ada.Exceptions;      use Ada.Exceptions;
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Src_Printing is
 
@@ -139,10 +140,10 @@ package body Src_Printing is
 
       Buffer         : constant Source_Buffer := Get_Buffer (Editor);
 
-      File_Name      : constant String :=
+      File_Name      : constant Filesystem_String :=
         VFS.Full_Name (Get_Filename (Editor)).all;
 
-      Document_Name  : constant String := File_Name & ASCII.NUL;
+      Document_Name  : constant Filesystem_String := File_Name & ASCII.NUL;
 
       Total_Lines    : constant INT := INT (Get_Line_Count (Buffer));
 
@@ -229,7 +230,7 @@ package body Src_Printing is
                   --  be used consistently across Windows versions...
                   New_Font := SelectObject (PD.DC, New_Font);
 
-                  Print_Header (File_Name, Banner_Font, PD.DC);
+                  Print_Header (+File_Name, Banner_Font, PD.DC);
                   Print_Body
                     (This_Page,
                      Lines_Per_Page,
