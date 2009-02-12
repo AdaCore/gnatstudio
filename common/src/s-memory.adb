@@ -31,7 +31,7 @@
 
 with Ada.Exceptions;
 with Ada.Exceptions.Traceback;
-with Ada.Unchecked_Deallocation;
+--  with Ada.Unchecked_Deallocation;
 with GNAT.IO;                  use GNAT.IO;
 with GNAT.Traceback;           use GNAT.Traceback;
 with GNAT.HTable;
@@ -77,21 +77,22 @@ package body System.Memory is
 
    type Tracebacks_Array_Access
      is access GNAT.Traceback.Tracebacks_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Traceback.Tracebacks_Array, Tracebacks_Array_Access);
+--     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+--       (GNAT.Traceback.Tracebacks_Array, Tracebacks_Array_Access);
 
    type Traceback_Htable_Elem;
    type Traceback_Htable_Elem_Ptr is access Traceback_Htable_Elem;
 
    type Traceback_Htable_Elem is record
       Traceback     : Tracebacks_Array_Access;
-      Current_Count : Natural;    --  number of live allocations
-      Total         : Byte_Count; --  currently allocated memory
+      Allocs, Frees : Natural;    --  number of allocs and frees
+      Total_Allocs  : Byte_Count; --  currently allocated memory
+      Total_Frees   : Byte_Count;
       Next          : Traceback_Htable_Elem_Ptr;
    end record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Traceback_Htable_Elem, Traceback_Htable_Elem_Ptr);
+--     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+--       (Traceback_Htable_Elem, Traceback_Htable_Elem_Ptr);
 
    --  Subprograms used for the Backtrace_Htable instantiation
 
@@ -258,31 +259,43 @@ package body System.Memory is
                Elem := new Traceback_Htable_Elem'
                  (Traceback =>
                   new Tracebacks_Array'(Trace (Trace'First + 2 .. Len)),
-                  Current_Count => 1,
-                  Total         => Size_Was,
+                  Allocs        => 1,
+                  Frees         => 0,
+                  Total_Allocs  => Size_Was,
+                  Total_Frees   => 0,
                   Next          => null);
                Backtrace_Htable.Set (Elem);
             else
-               Elem.Current_Count := Elem.Current_Count + 1;
-               Elem.Total         := Elem.Total + Size_Was;
+               Elem.Allocs       := Elem.Allocs + 1;
+               Elem.Total_Allocs := Elem.Total_Allocs + Size_Was;
             end if;
 
             Chunks_Htable.Set
               (Ptr, (Total => Size_Was, Alloc_Backtrace => Elem));
 
          when Deallocation =>
-            Chunk              := Chunks_Htable.Get (Ptr);
-            Size_Was           := Chunk.Total;
-            Elem               := Chunk.Alloc_Backtrace;
-            Elem.Current_Count := Elem.Current_Count - 1;
-            Elem.Total         := Elem.Total - Size_Was;
-            Chunks_Htable.Remove (Ptr);
+            if Ptr /= System.Null_Address then
+               Chunk              := Chunks_Htable.Get (Ptr);
 
-            if Elem.Current_Count = 0 then
-               Backtrace_Htable.Remove (Elem.Traceback);
-               Unchecked_Free (Elem.Traceback);
-               Unchecked_Free (Elem);
+               --  Protect ourselves in case the allocation was done in C for
+               --  instance (which should not happen, of course)
+               if Chunk /= No_Chunk_Data then
+                  Size_Was           := Chunk.Total;
+                  Elem               := Chunk.Alloc_Backtrace;
+                  Elem.Frees         := Elem.Frees + 1;
+                  Elem.Total_Frees   := Elem.Total_Frees + Size_Was;
+                  Chunks_Htable.Remove (Ptr);
+               end if;
             end if;
+
+            --  Never remove the chunk info, since we might be allocating again
+            --  at the same location later on, and in any case it might count
+            --  in the biggest number of allocs for instance.
+--              if Elem.Current_Count = 0 then
+--                 Backtrace_Htable.Remove (Elem.Traceback);
+--                 Unchecked_Free (Elem.Traceback);
+--                 Unchecked_Free (Elem);
+--              end if;
       end case;
 
       Disable := False;
@@ -343,7 +356,7 @@ package body System.Memory is
          System.CRTL.free (Ptr);
 
          if Memory_Monitor then
-            Size_Was := Find_Or_Create_Traceback (Allocation, Ptr, 0);
+            Size_Was := Find_Or_Create_Traceback (Deallocation, Ptr, 0);
             Total_Free := Total_Free + Size_Was;
             Free_Count := Free_Count + 1;
          end if;
@@ -394,13 +407,13 @@ package body System.Memory is
    ----------
 
    procedure Dump (Size : Positive) is
-      type Sort_Type is (Memory_Usage, Allocations_Count);
+      type Sort_Type is (Memory_Usage, Allocations_Count, Sort_Total_Allocs);
 
       Elem   : Traceback_Htable_Elem_Ptr;
       Bigger : Boolean;
+      Grand_Total : Float;
 
-      Max  : array (1 .. Size) of Traceback_Htable_Elem_Ptr :=
-        (others => null);
+      Max  : array (1 .. Size) of Traceback_Htable_Elem_Ptr;
       --  Sorted array for the biggest memory users
 
    begin
@@ -424,30 +437,45 @@ package body System.Memory is
          New_Line;
          case Sort is
             when Memory_Usage =>
-               Put_Line
-                 (Size'Img & " biggest memory users at this time:");
+               Put_Line (Size'Img & " biggest memory users at this time:");
+               Put_Line ("Results include bytes and chunks still allocated");
             when Allocations_Count =>
-               Put_Line
-                 (Size'Img & " biggest number of live allocations:");
+               Put_Line (Size'Img & " biggest number of live allocations:");
+               Put_Line ("Results include bytes and chunks still allocated");
+            when Sort_Total_Allocs =>
+               Put_Line (Size'Img & " biggest number of allocations:");
+               Put_Line ("Results include total bytes and chunks allocated,");
+               Put_Line ("even if no longer allocated - Deallocations are");
+               Put_Line ("ignored");
          end case;
+
+         Max := (others => null);
 
          Elem := Backtrace_Htable.Get_First;
          while Elem /= null loop
-            --  Ignore if number of allocs is 1, it will never be the biggest
-            --  user for a real application.
-            if Elem.Current_Count /= 1
-              and then Elem.Total /= 0
+            --  Ignore small blocks (depending on the sorting criteria) to gain
+            --  speed
+
+            if (Sort = Memory_Usage
+                and then Elem.Total_Allocs - Elem.Total_Frees >= 1_000)
+              or else (Sort = Allocations_Count
+                       and then Elem.Allocs - Elem.Frees > 1)
+              or else (Sort = Sort_Total_Allocs and then Elem.Allocs > 1)
             then
                for M in Max'Range loop
-
                   Bigger := Max (M) = null;
                   if not Bigger then
                      case Sort is
                         when Memory_Usage =>
-                           Bigger := Max (M).Total < Elem.Total;
+                           Bigger :=
+                             Max (M).Total_Allocs - Max (M).Total_Frees <
+                             Elem.Total_Allocs - Elem.Total_Frees;
                         when Allocations_Count =>
                            Bigger :=
-                             Max (M).Current_Count < Elem.Current_Count;
+                             Max (M).Allocs - Max (M).Frees
+                             < Elem.Allocs - Elem.Frees;
+                        when Sort_Total_Allocs =>
+                           Bigger := Max (M).Allocs < Elem.Allocs;
                      end case;
                   end if;
 
@@ -461,16 +489,30 @@ package body System.Memory is
             Elem := Backtrace_Htable.Get_Next;
          end loop;
 
+         case Sort is
+            when Memory_Usage | Allocations_Count =>
+               Grand_Total := Float (Total_Allocs - Total_Free);
+            when Sort_Total_Allocs =>
+               Grand_Total := Float (Total_Allocs);
+         end case;
+
          for M in Max'Range loop
             exit when Max (M) = null;
             declare
                type Percent is delta 0.1 range 0.0 .. 100.0;
-               P : constant Percent := Percent
-                 (100.0 * Float (Max (M).Total)
-                  / Float (Total_Allocs - Total_Free));
+               Total : Byte_Count;
+               P : Percent;
             begin
-               Put (P'Img & "%:" & Max (M).Total'Img & " bytes in"
-                    & Max (M).Current_Count'Img & " chunks at");
+               case Sort is
+                  when Memory_Usage | Allocations_Count =>
+                     Total := Max (M).Total_Allocs - Max (M).Total_Frees;
+                  when Sort_Total_Allocs =>
+                     Total := Max (M).Total_Allocs;
+               end case;
+
+               P := Percent (100.0 * Float (Total) / Grand_Total);
+               Put (P'Img & "%:" & Total'Img & " bytes in"
+                    & Max (M).Allocs'Img & " chunks at");
             end;
 
             for J in Max (M).Traceback'Range loop
