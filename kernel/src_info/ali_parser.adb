@@ -1437,7 +1437,8 @@ package body ALI_Parser is
                   end if;
                end;
 
-               Is_Parent_LI := True;
+               Is_Parent_LI :=
+                 Last /= Short_ALI_Filename'Last - Extension'Length;
                Next_Candidate (Last, Dot_Replacement);
             end loop;
          end;
