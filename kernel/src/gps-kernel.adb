@@ -1997,8 +1997,12 @@ package body GPS.Kernel is
          Filename        => Base_Name (Name),
          Use_Source_Path => True,
          Use_Object_Path => True,
-         Create_As_Base_If_Not_Found => True,
          File            => File);
+
+      if File = GNATCOLL.VFS.No_File then
+         return Create (Full_Filename => Name);
+      end if;
+
       return File;
    end Create_From_Base;
 
