@@ -1152,14 +1152,22 @@ package body Builder_Facility_Module is
          Recompute_View (Get_Kernel);
       end if;
 
-      Prop := new GPS.Kernel.Properties.String_Property;
-      Prop.Value := new String'(Mode);
-      GPS.Kernel.Properties.Set_Property
-        (Get_Kernel,
-         GPS.Kernel.Project.Get_Project (Get_Kernel),
-         Mode_Property,
-         Prop,
-         True);
+      if Mode /= "default" then
+         Prop := new GPS.Kernel.Properties.String_Property;
+         Prop.Value := new String'(Mode);
+         GPS.Kernel.Properties.Set_Property
+           (Get_Kernel,
+            GPS.Kernel.Project.Get_Project (Get_Kernel),
+            Mode_Property,
+            Prop,
+            True);
+
+      else
+         GPS.Kernel.Properties.Remove_Property
+           (Get_Kernel,
+            GPS.Kernel.Project.Get_Project (Get_Kernel),
+            Mode_Property);
+      end if;
    end On_Mode_Changed;
 
    ----------
