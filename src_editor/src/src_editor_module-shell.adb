@@ -1201,21 +1201,19 @@ package body Src_Editor_Module.Shell is
         or else Command = "redo"
       then
          declare
-            Filename : constant Virtual_File :=
+            Filename : Virtual_File :=
               Create (Full_Filename => Nth_Arg (Data, 1));
          begin
             if Command = "close" then
-               if Is_Absolute_Path (Filename) then
-                  Close_File_Editors (Kernel, Filename);
-               else
-                  Close_File_Editors
-                    (Kernel,
-                     Create
-                       (Get_Full_Path_From_File
-                          (Get_Registry (Kernel).all,
-                           Full_Name (Filename).all,
-                           True, False)));
+               if not Is_Absolute_Path (Filename) then
+                  Get_Full_Path_From_File
+                    (Get_Registry (Kernel).all,
+                     Full_Name (Filename).all,
+                     True, False,
+                     File => Filename);
                end if;
+
+               Close_File_Editors (Kernel, Filename);
             else
                declare
                   Child : MDI_Child;

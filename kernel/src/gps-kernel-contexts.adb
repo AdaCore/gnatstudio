@@ -373,12 +373,12 @@ package body GPS.Kernel.Contexts is
                then
                   --  This is a reference file, we have no need of it in the
                   --  context. We record then the corresponding file.
-                  Context.Data.Data.Files (K) := Create
-                    (Get_Full_Path_From_File
-                       (Get_Registry (Context.Data.Data.Kernel).all,
-                        Name (Name'First + 4 .. Name'Last),
-                        Use_Source_Path => True,
-                        Use_Object_Path => False));
+                  Get_Full_Path_From_File
+                    (Get_Registry (Context.Data.Data.Kernel).all,
+                     Name (Name'First + 4 .. Name'Last),
+                     Use_Source_Path => True,
+                     Use_Object_Path => False,
+                     File => Context.Data.Data.Files (K));
                end if;
             end;
          end loop;

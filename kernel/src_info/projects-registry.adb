@@ -81,6 +81,10 @@ package body Projects.Registry is
    --  A dummy suffixes that is used for languages that have either no spec or
    --  no implementation suffix defined.
 
+   package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Virtual_File);
+   use Virtual_File_List;
+
    procedure Do_Nothing (Project : in out Project_Type) is null;
    --  Do not free the project (in the hash tables), since it shared by several
    --  entries and several htables
@@ -107,11 +111,11 @@ package body Projects.Registry is
 
    type Source_File_Data is record
       Project   : Project_Type;
+      File      : GNATCOLL.VFS.Virtual_File;
       Lang      : Name_Id;
-      Full_Name : Name_Id;
    end record;
    No_Source_File_Data : constant Source_File_Data :=
-     (No_Project, No_Name, No_Name);
+     (No_Project, GNATCOLL.VFS.No_File, No_Name);
    --   In some case, Lang might be set to Unknown_Language, if the file was
    --   set in the project (for instance through the Source_Files attribute),
    --   but no matching language was found.
@@ -136,6 +140,7 @@ package body Projects.Registry is
         (Data_Type => Boolean,
          Free_Data => Do_Nothing,
          Null_Ptr  => False);
+   use Boolean_Htable.String_Hash_Table;
 
    type Naming_Scheme_Record;
    type Naming_Scheme_Access is access Naming_Scheme_Record;
@@ -198,11 +203,16 @@ package body Projects.Registry is
    end record;
 
    procedure Add_Foreign_Source_Files
-     (Registry : Project_Registry;
-      Project  : Project_Type;
-      Errors   : Put_Line_Access);
+     (Registry         : Project_Registry;
+      Project          : Project_Type;
+      Errors           : Put_Line_Access;
+      Source_File_List : in out Virtual_File_List.List;
+      Seen             : in out Boolean_Htable.String_Hash_Table.HTable);
    --  Add to Project the list of source files for languages other than
    --  Ada. These sources are also cached in the registry.
+   --  (Source_File_List, Seen) are preinitialized list of source files for
+   --  the current project. They have been initialized from the project manager
+   --  structures (currently only Ada files, therefore).
 
    procedure Reset
      (Registry  : in out Project_Registry;
@@ -939,6 +949,8 @@ package body Projects.Registry is
       P       : Project_Type;
       Source_Iter : Source_Iterator;
       Source  : Source_Id;
+      Seen             : Boolean_Htable.String_Hash_Table.HTable;
+      Source_File_List : Virtual_File_List.List;
 
    begin
       loop
@@ -947,7 +959,7 @@ package body Projects.Registry is
 
          declare
             Ls : constant String :=
-                   Get_Attribute_Value (P, Gnatlist_Attribute);
+              Get_Attribute_Value (P, Gnatlist_Attribute);
          begin
             if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
                Errors
@@ -958,6 +970,11 @@ package body Projects.Registry is
                   Registry.Data.View_Tree);
             end if;
          end;
+
+         --  Reset the list of source files for this project. We must not
+         --  Free it, since it is now stored in the previous project's instance
+
+         Source_File_List := Virtual_File_List.Empty_List;
 
          --  Add the directories
 
@@ -980,42 +997,30 @@ package body Projects.Registry is
             Source := Element (Source_Iter);
             exit when Source = No_Source;
 
-            Get_Name_String (Source.Display_File);
+            --  Get the absolute path name for this source
+            Get_Name_String (Source.Path.Display_Name);
 
             declare
-               --  ??? We used to do
-               --  UTF8           : constant String :=
-               --    Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
-               --  but since we are only passing a basename, there is no
-               --  normalization taking place
-
-               UTF8 : constant String := Name_Buffer (1 .. Name_Len);
-
+               File : constant Virtual_File := Create
+                 (+Name_Buffer (1 .. Name_Len));
             begin
-               Name_Len := UTF8'Length;
-               Name_Buffer (1 .. Name_Len) := UTF8;
-               Source.Display_File := Name_Find;
+               Set (Registry.Data.Sources,
+                    K => +Base_Name (File),
+                    E => (P, File, Source.Language.Name));
 
-               declare
-                  --  ??? We use to do
-                  --  Display_Full_Name
-                  --    (Create (+Get_Name_String (Source.Path.Display_Name)));
-                  --  just to get the normalized full name. This is a waste of
-                  --  time because creating the virtual file is also long. But
-                  --  we can still use the filesystem abstraction anyway
+               --  The project manager duplicates files that contain several
+               --  units. Only add them once in the project sources.
 
-                  Dir : constant String :=
-                    +Get_Local_Filesystem.Normalize
-                      (+Get_Name_String (Source.Path.Display_Name));
+               if not Get (Seen, +Base_Name (File)) then
+                  Append (Source_File_List, File);
 
-               begin
-                  Name_Len := Dir'Length;
-                  Name_Buffer (1 .. Name_Len) := Dir;
-                  Set (Registry.Data.Sources,
-                       K => UTF8,
-                       E => (P, Name_Ada, Name_Find));
-               end;
+                  --  We must set the source has seen so that it does not
+                  --  appear twice in the project explorer which happens for
+                  --  project that uses both Source_Files and Source_Dirs
+                  --  attributes.
 
+                  Set (Seen, +Base_Name (File), True);
+               end if;
             end;
 
             Next (Source_Iter);
@@ -1027,7 +1032,10 @@ package body Projects.Registry is
 
          --  Add the other languages' files
 
-         Add_Foreign_Source_Files (Registry, P, Errors);
+         Add_Foreign_Source_Files
+           (Registry, P, Errors, Source_File_List, Seen);
+
+         Boolean_Htable.String_Hash_Table.Reset (Seen);
 
          Next (Iter);
       end loop;
@@ -1044,8 +1052,8 @@ package body Projects.Registry is
       Dir       : Dir_Type;
       File      : String (1 .. 1024);
       Last      : Natural;
-      Directory : Name_Id;
       Info      : Source_File_Data;
+      VFile     : Virtual_File;
    begin
       while not At_End (Path, Iter) loop
          declare
@@ -1066,18 +1074,11 @@ package body Projects.Registry is
                      --  Do not override runtime files that are in the
                      --  current project
                      Info := Get (Registry.Data.Sources, File (1 .. Last));
-                     if Info.Full_Name = No_Name then
-                        Name_Len  := Curr'Length;
-                        Name_Buffer (1 .. Name_Len) := +Curr;
-                        Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
-                          File (1 .. Last);
-                        Name_Len := Name_Len + Last;
-
-                        Directory := Name_Find;
-
+                     if Info.Lang = No_Name then
+                        VFile := Create (Curr & (+File (1 .. Last)));
                         Set (Registry.Data.Sources,
                              K => File (1 .. Last),
-                             E => (No_Project, Name_Ada, Directory));
+                             E => (No_Project, VFile, Name_Ada));
                      end if;
                   end if;
                end loop;
@@ -1195,12 +1196,12 @@ package body Projects.Registry is
    procedure Add_Foreign_Source_Files
      (Registry : Project_Registry;
       Project  : Project_Type;
-      Errors   : Put_Line_Access)
+      Errors   : Put_Line_Access;
+      Source_File_List : in out Virtual_File_List.List;
+      Seen             : in out Boolean_Htable.String_Hash_Table.HTable)
    is
       Sources_Specified       : Boolean := False;
       Specified_Sources_Count : Natural := 0;
-      Seen                    : Boolean_Htable.String_Hash_Table.HTable;
-      use Boolean_Htable.String_Hash_Table;
 
       Languages  : Argument_List := Get_Languages (Project);
       Languages2 : Name_Id_Array (Languages'Range);
@@ -1209,17 +1210,6 @@ package body Projects.Registry is
       --  Languages to speed up string comparison. Languages3's contents is
       --  reset to No_Name if at least one file exists for the given language.
       --  Thus we can easily issue warnings when a language has no file.
-
-      package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
-        (Element_Type => Virtual_File);
-      use Virtual_File_List;
-      Source_File_List : Virtual_File_List.List;
-
-      procedure Record_Source
-        (Dir, File, Display_File : String; Lang : Name_Id);
-      --  Add file to the list of source files for Project.
-      --  File's casing must have been normalized, whereas Display_File is the
-      --  name with the same casing as on the disk.
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
@@ -1237,52 +1227,44 @@ package body Projects.Registry is
       -----------------------------
 
       procedure Process_Explicit_Source (File : String) is
-         F   : String := File;
          Src : Source_File_Data;
       begin
          if Get (Seen, File) then
             return;
          end if;
 
-         Canonical_Case_File_Name (F);
          Specified_Sources_Count := Specified_Sources_Count + 1;
 
-         Src := Get (Registry.Data.Sources, F);
+         Src := Get (Registry.Data.Sources, File);
 
-         declare
-            F : Virtual_File;
-         begin
-            if Src = No_Source_File_Data then
-               F := Create (+File, Project, Use_Object_Path => False);
-            else
-               F := Create (+Get_String (Src.Full_Name));
-            end if;
+         if Src.File = GNATCOLL.VFS.No_File then
+            Src.File := Create (+File, Project, Use_Object_Path => False);
+         end if;
 
-            --  We only add sources that can be found. In case of a debugger
-            --  project, it can appears that some of the explicit sources
-            --  (returned by the debugger itself) cannot be found (they were
-            --  used to compile the run-time for example but are not part of
-            --  the compiler distribution).
+         --  We only add sources that can be found. In case of a debugger
+         --  project, it can appears that some of the explicit sources
+         --  (returned by the debugger itself) cannot be found (they were
+         --  used to compile the run-time for example but are not part of
+         --  the compiler distribution).
 
-            if F.Is_Regular_File then
-               Append (Source_File_List, F);
-               Set (Seen, File, True);
-            end if;
-         end;
+         if Src.File.Is_Regular_File then
+            Append (Source_File_List, Src.File);
+            Set (Seen, File, True);
+         end if;
 
          if Src.Lang = No_Name then
             --  Language not found from the project, check the default
             --  list of extensions.
 
             declare
-               Ext : constant String := File_Extension (F);
+               Ext : constant String := File_Extension (File);
             begin
                if Ext = "" then
                   --  No extension, use Base_Name to find the
                   --  proper language for this file. This is needed
                   --  for makefile and ChangeLog files for example.
                   Src.Lang := Languages_Htable.String_Hash_Table.Get
-                    (Registry.Data.Extensions, To_Lower (F));
+                    (Registry.Data.Extensions, To_Lower (File));
                else
                   Src.Lang := Languages_Htable.String_Hash_Table.Get
                     (Registry.Data.Extensions, Ext);
@@ -1295,7 +1277,7 @@ package body Projects.Registry is
             null;
 
          elsif Src.Project /= No_Project then
-            Errors (-("Warning, duplicate source file ") & F
+            Errors (-("Warning, duplicate source file ") & File
                     & " (already in "
                     & Project_Name (Src.Project) & ')',
                     Get_View (Project),
@@ -1310,28 +1292,10 @@ package body Projects.Registry is
             end loop;
 
             Set (Registry.Data.Sources,
-                 K => F,
-                 E => (Project, Src.Lang, No_Name));
+                 K => File,
+                 E => Src);
          end if;
       end Process_Explicit_Source;
-
-      -------------------
-      -- Record_Source --
-      -------------------
-
-      procedure Record_Source
-        (Dir, File, Display_File : String; Lang : Name_Id)
-      is
-         Full_Path : constant Name_Id := Get_String (Dir & Display_File);
-      begin
-         Append (Source_File_List,
-                 GNATCOLL.VFS.Create (+(Dir & Display_File)));
-         --  ??? Is Display_File the filesystem name or the name converted to
-         --  UTF8?
-
-         Set
-           (Registry.Data.Sources, K => File, E => (Project, Lang, Full_Path));
-      end Record_Source;
 
       ---------------------
       -- File_In_Sources --
@@ -1374,8 +1338,6 @@ package body Projects.Registry is
       Length    : Natural;
       Buffer    : String (1 .. 2048);
       Lang      : Name_Id;
-      Src_Iter  : Source_Iterator;
-      Src       : Source_Id;
 
    begin
       for L in Languages'Range loop
@@ -1383,43 +1345,6 @@ package body Projects.Registry is
       end loop;
 
       Languages3 := Languages2;
-
-      --  We already know if the directories contain Ada files. Update the
-      --  status accordingly, in case they don't contain any other file.
-
-      Src_Iter := For_Each_Source
-        (Registry.Data.View_Tree, Get_View (Project), Language => Name_Ada);
-
-      loop
-         Src := Element (Src_Iter);
-         exit when Src = No_Source;
-
-         Get_Name_String (Src.Display_File);
-
-         --  ??? We used to do
-         --  File := Dispay_Full_Name (Create (+Name_Buffer (...))
-         --  but in fact since we are passing a basename there is no
-         --  normalization anyway in VFS, and thus this is just a waste of
-         --  time.
-
-         --  The project manager duplicates files that contain several
-         --  units. Only add them once in the project sources.
-
-         if not Get (Seen, Name_Buffer (1 .. Name_Len)) then
-            Append
-              (Source_File_List,
-               Create
-                 (+Name_Buffer (1 .. Name_Len), Project,
-                  Use_Object_Path => False));
-
-            --  We must set the source has seen so that it does not appear
-            --  twice in the project explorer which happens for project
-            --  that uses both Source_Files and Source_Dirs attributes.
-            Set (Seen, Name_Buffer (1 .. Name_Len), True);
-         end if;
-
-         Next (Src_Iter);
-      end loop;
 
       --  Nothing to do if the only language is Ada, since this has already
       --  been taken care of.
@@ -1436,7 +1361,6 @@ package body Projects.Registry is
       then
          Set_Source_Files;
          Free (Languages);
-         Boolean_Htable.String_Hash_Table.Reset (Seen);
          return;
       end if;
 
@@ -1536,6 +1460,7 @@ package body Projects.Registry is
                                   (Create (+Buffer (1 .. Length)));
                   Part      : Unit_Part;
                   Unit_Name : Name_Id;
+                  File      : Virtual_File;
                begin
                   Canonical_Case_File_Name (UTF8);
 
@@ -1557,8 +1482,14 @@ package body Projects.Registry is
                      then
                         for Index in Languages2'Range loop
                            if Languages2 (Index) = Lang then
-                              Record_Source (Dirs (D).all, UTF8,
-                                             Buffer (1 .. Length), Lang);
+                              File := Create
+                                (+(Dirs (D).all & Buffer (1 .. Length)));
+                              Append (Source_File_List, File);
+
+                              Set
+                                (Registry.Data.Sources,
+                                 K => +Base_Name (File),
+                                 E => (Project, File, Lang));
 
                               Languages3 (Index) := No_Name;
                               exit;
@@ -1614,7 +1545,6 @@ package body Projects.Registry is
          end if;
       end if;
 
-      Boolean_Htable.String_Hash_Table.Reset (Seen);
       Free (Languages);
       Free (Dirs);
    end Add_Foreign_Source_Files;
@@ -1710,19 +1640,8 @@ package body Projects.Registry is
       --  Make sure the file we found has the same full name, since it might
       --  match a file from the project that has the same base name, but not
       --  belong to the project (FB03-003).
-      --  When in trusted mode, file normalization would not play a role here,
-      --  since there are no symbolic links, so we take a somewhat more
-      --  efficient path.
 
-      if Registry.Data.Trusted_Mode
-        and then not File_Equal
-          (+Get_String (S.Full_Name), Full_Name (Source_Filename).all)
-      then
-         P := No_Project;
-
-      elsif not Registry.Data.Trusted_Mode
-        and then Create (+Get_String (S.Full_Name)) /= Source_Filename
-      then
+      if S.File /= Source_Filename then
          P := No_Project;
       end if;
 
@@ -2068,7 +1987,12 @@ package body Projects.Registry is
 
       Unchecked_Free (Registry.Data.Predefined_Source_Files);
 
-      Add_Runtime_Files (Registry, Path);
+      --  ??? We used to initialize the caches with the runtime files, but I
+      --  am not sure why this is needed since Get_Full_Path_From_File will do
+      --  it just as well anyway, lazily. That speeds up start time in GPS.
+      if False then
+         Add_Runtime_Files (Registry, Path);
+      end if;
    end Set_Predefined_Source_Path;
 
    --------------------------------
@@ -2102,47 +2026,45 @@ package body Projects.Registry is
       Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project)
+      Project         : Project_Type := No_Project;
+      Create_As_Base_If_Not_Found : Boolean := False;
+      File            : out Virtual_File)
    is
       Locale                 : Filesystem_String renames Filename;
       Project2, Real_Project : Project_Type;
       Path                   : Filesystem_String_Access;
       Iterator               : Imported_Project_Iterator;
       Info                   : Source_File_Data := No_Source_File_Data;
+      In_Predefined          : Boolean := False;
 
    begin
+      --  First check the cache, so that we always return the same instance
+      --  of Virtual_File (thus saving allocation and system calls)
+
+      if Use_Source_Path then
+         Info := Get (Registry.Data.Sources, +Filename);
+
+         if Info.Lang = Name_Error then
+            --  Not found previously, we do not try again
+            File := GNATCOLL.VFS.No_File;
+            return;
+         end if;
+
+         if Info.File /= GNATCOLL.VFS.No_File then
+            File := Info.File;
+            return;
+         end if;
+      end if;
+
       --  Note: in this procedure, we test project with
       --  Get_View (..) /= Prj.No_Project
       --  rathen than by comparing directly with Projects.No_Project.
       --  This is slightly more efficient
 
       if Is_Absolute_Path (Filename) then
-         declare
-            S : constant String := Display_Full_Name
-              (Create (Normalize_Pathname (Locale, Resolve_Links => False)));
-         begin
-            Name_Len := S'Length;
-            Name_Buffer (1 .. Name_Len) := S;
-            return;
-         end;
+         File := Create (Normalize_Pathname (Locale, Resolve_Links => False));
 
       else
-         --  First check the cache
-
-         if Use_Source_Path then
-            Info := Get (Registry.Data.Sources, +Filename);
-
-            if Info.Full_Name = Name_A then
-               --  Not found previously, we do not try again
-               Name_Len := 0;
-               return;
-
-            elsif Info.Full_Name /= No_Name then
-               Get_Name_String (Info.Full_Name);
-               return;
-            end if;
-         end if;
-
          --  If we are editing a project file, check in the loaded tree first
          --  (in case an old copy is kept somewhere in the source or object
          --  path)
@@ -2159,17 +2081,8 @@ package body Projects.Registry is
                if +Project_Name (Project2) & Project_File_Extension =
                  Filename
                then
-                  declare
-                     --  Use a temporary variable to hold project path, since
-                     --  otherwise references to S in this block are reported
-                     --  by valgrind as reference memory that has been freed
-                     P : constant Virtual_File := Project_Path (Project2);
-                     S : constant Filesystem_String := Full_Name (P).all;
-                  begin
-                     Name_Len := S'Length;
-                     Name_Buffer (1 .. Name_Len) := +S;
-                     return;
-                  end;
+                  File := Project_Path (Project2);
+                  return;
                end if;
 
                Next (Iterator);
@@ -2209,6 +2122,10 @@ package body Projects.Registry is
                      Include_Path (Get_Root_Project (Registry), True)
                      & Path_Separator & Get_Predefined_Source_Path (Registry)
                      & Path_Separator & ".");
+
+                  if Path /= null then
+                     In_Predefined := True;
+                  end if;
                end if;
 
                if Path = null and then Use_Object_Path then
@@ -2221,30 +2138,40 @@ package body Projects.Registry is
          end if;
 
          if Path /= null then
-            declare
-               Full : constant String :=
-                 +Normalize_Pathname
-                   (Path.all, Resolve_Links => not Registry.Data.Trusted_Mode);
-            begin
-               Free (Path);
-               Name_Len := Full'Length;
-               Name_Buffer (1 .. Name_Len) := Full;
+            File := Create (Full_Filename => Path.all);
+            Free (Path);
 
-               --  If this is one of the source files, we cache the
-               --  directory. This significantly speeds up the explorer. If
-               --  this is not a source file, not need to cache it, it is a
-               --  one-time request most probably.
-               --  We do not cache anything if the project was forced, however
-               --  since this wouldn't work with extended projects were sources
-               --  can be duplicated.
+            --  If this is one of the source files, we cache the
+            --  directory. This significantly speeds up the explorer. If
+            --  this is not a source file, not need to cache it, it is a
+            --  one-time request most probably.
+            --  We do not cache anything if the project was forced, however
+            --  since this wouldn't work with extended projects were sources
+            --  can be duplicated.
 
-               if Info /= No_Source_File_Data
-                 and then Project2 = Real_Project
-               then
-                  Info.Full_Name := Name_Find;
-                  Set (Registry.Data.Sources, +Filename, Info);
+            if In_Predefined then
+               --  Make sure the file will be added in the cache. This is
+               --  similar to what we used to do when the project is loaded
+               --  (initialize the cache with files from the predefined
+               --  path, assuming they are Ada), but done lazily
+
+               if Info.Lang = No_Name then
+                  Info.Lang := Get_Language_From_File_From_Project
+                    (Registry, File);
                end if;
-            end;
+
+               Info.File := File;
+               Info.Project := No_Project;
+            end if;
+
+            if Info /= No_Source_File_Data
+              and then Project2 = Real_Project
+            then
+               Info.File := File;
+               Set (Registry.Data.Sources, +Filename, Info);
+            end if;
+
+            return;
 
          elsif Project2 = Real_Project then
             --  Still update the cache, to avoid further system calls to
@@ -2254,34 +2181,18 @@ package body Projects.Registry is
             --  source files)
             if Use_Source_Path then
                Info := (Project   => Project2,
-                        Lang      => No_Name,
-                        Full_Name => Name_A);
+                        File      => GNATCOLL.VFS.No_File,
+                        Lang      => Name_Error);
                Set (Registry.Data.Sources, +Filename, Info);
             end if;
-
-            Name_Len := 0;
-
-         else
-            Name_Len := 0;
          end if;
 
+         if Create_As_Base_If_Not_Found then
+            File := Create (Full_Filename => Filename);
+         else
+            File := GNATCOLL.VFS.No_File;
+         end if;
       end if;
-   end Get_Full_Path_From_File;
-
-   -----------------------------
-   -- Get_Full_Path_From_File --
-   -----------------------------
-
-   function Get_Full_Path_From_File
-     (Registry        : Project_Registry;
-      Filename        : Filesystem_String;
-      Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project) return Filesystem_String is
-   begin
-      Get_Full_Path_From_File
-        (Registry, Filename, Use_Source_Path, Use_Object_Path, Project);
-      return +Name_Buffer (1 .. Name_Len);
    end Get_Full_Path_From_File;
 
    ----------------------------------
@@ -2309,22 +2220,25 @@ package body Projects.Registry is
      (Name            : Filesystem_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File is
+      Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File
+   is
    begin
       if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);
 
       else
          declare
-            Full : constant Filesystem_String := Get_Full_Path_From_File
+            File : Virtual_File;
+         begin
+            Get_Full_Path_From_File
               (Registry        => Registry,
                Filename        => Name,
                Use_Source_Path => Use_Source_Path,
-               Use_Object_Path => Use_Object_Path);
+               Use_Object_Path => Use_Object_Path,
+               File            => File);
 
-         begin
-            if Full /= "" then
-               return Create (Full_Filename => Full);
+            if File /= GNATCOLL.VFS.No_File then
+               return File;
             end if;
          end;
 

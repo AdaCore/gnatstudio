@@ -600,15 +600,13 @@ package body Projects is
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File
    is
-      Full : constant Filesystem_String := Get_Full_Path_From_File
-        (Project_Registry (Get_Registry (Project)), Base_Name,
-         Use_Source_Path, Use_Object_Path, Project);
+      File : Virtual_File;
    begin
-      if Full = "" then
-         return GNATCOLL.VFS.No_File;
-      else
-         return GNATCOLL.VFS.Create (Full);
-      end if;
+      Get_Full_Path_From_File
+        (Project_Registry (Get_Registry (Project)), Base_Name,
+         Use_Source_Path, Use_Object_Path, Project,
+         File => File);
+      return File;
    end Create;
 
    ---------------------

@@ -3497,9 +3497,9 @@ package body Src_Editor_Module is
       if Is_Absolute_Path (File) then
          Full := File;
       else
-         Full := Create
-           (Get_Full_Path_From_File
-              (Get_Registry (Kernel).all, Full_Name (File).all, True, False));
+         Get_Full_Path_From_File
+           (Get_Registry (Kernel).all, Full_Name (File).all, True, False,
+            File => Full);
       end if;
 
       Iter := First_Child (Get_MDI (Kernel));

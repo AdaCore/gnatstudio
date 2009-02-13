@@ -33,7 +33,6 @@ with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Language_Utils;             use Language_Utils;
-with Namet;                      use Namet;
 with Projects.Registry;          use Projects.Registry;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
@@ -1308,6 +1307,7 @@ package body Entities is
       Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
       Allow_Create  : Boolean := True) return Source_File
    is
+      File : Virtual_File;
    begin
       if Is_Absolute_Path (Full_Filename) then
          return Internal_Get_Or_Create
@@ -1319,28 +1319,13 @@ package body Entities is
            (Db.Registry.all,
             Full_Filename,
             Use_Source_Path => True,
-            Use_Object_Path => False);
+            Use_Object_Path => False,
+            Create_As_Base_If_Not_Found => True,
+            File            => File);
 
-         if Name_Len /= 0 then
-            declare
-               Str : aliased constant Filesystem_String :=
-                 +Name_Buffer (1 .. Name_Len);
-            begin
-               return Internal_Get_Or_Create
-                 (Db, Str'Unrestricted_Access,
-                  GNATCOLL.VFS.No_File,
-                  Handler, LI, Timestamp, Allow_Create);
-            end;
-         else
-            declare
-               Str : aliased constant Filesystem_String := Normalize_Pathname
-                 (Full_Filename, Resolve_Links => False);
-            begin
-               return Internal_Get_Or_Create
-                 (Db, Str'Unrestricted_Access,
-                  GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
-            end;
-         end if;
+         return Internal_Get_Or_Create
+           (Db, Full_Name (File),
+            File, Handler, LI, Timestamp, Allow_Create);
       end if;
    end Get_Or_Create;
 

@@ -71,8 +71,6 @@ with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
 
-with Namet;                      use Namet;
-
 package body Project_Explorers_Files is
 
    Explorer_Files_Module_Id     : Module_ID;
@@ -350,6 +348,7 @@ package body Project_Explorers_Files is
             declare
                Name : constant Filesystem_String := +File (File'First .. Last);
                P    : Project_Type;
+               File : Virtual_File;
             begin
                if Get_History
                  (Get_History (D.Explorer.Kernel).all,
@@ -376,12 +375,12 @@ package body Project_Explorers_Files is
                         Filename => Name,
                         Use_Source_Path => True,
                         Use_Object_Path => True,
-                        Project => P);
+                        Project => P,
+                        File    => File);
 
                      if P /= No_Project
                        and then File_Equal
-                         (+Dir_Name (Name_Buffer (1 .. Name_Len)),
-                          D.Norm_Dir.all, Build_Server)
+                         (Dir_Name (File).all, D.Norm_Dir.all, Build_Server)
                      then
                         Append (D.Files, +Name);
                      end if;

@@ -282,39 +282,33 @@ package Projects.Registry is
    -- Sources --
    -------------
 
-   function Get_Full_Path_From_File
+   procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
       Filename        : Filesystem_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project) return Filesystem_String;
-   --  Return the directory to which Source_Filename belongs.
-   --  the returned path is normalized, and includes directory/basename.
+      Project         : Project_Type := No_Project;
+      Create_As_Base_If_Not_Found : Boolean := False;
+      File            : out GNATCOLL.VFS.Virtual_File);
+   --  Return an instance of the file.
+   --  This instance is shared by all callers of this function, so that they
+   --  get the normalized name of the file almost for free for instance. This
+   --  also saves memory allocations.
+   --
    --  If Use_Source_Path is true, the file is looked for on the include
    --  path. If Use_Object_Path is true, it is also looked for on the object
    --  path.
    --
    --  If the path is not found because the file doesn't belong to any of
-   --  the source directories defined in the project hierarchy, then the empty
-   --  string is returned.
+   --  the source directories defined in the project hierarchy, then No_File
+   --  is returned. Unless Create_As_Base_If_Not_Found is true, in which case
+   --  a virtual file using only the file name is created.
    --
    --  This function also works for project files, which are looked for among
    --  the loaded project tree.
    --
    --  Project is used to save time. This must be the project to which
    --  filename belongs, if it is known
-
-   procedure Get_Full_Path_From_File
-     (Registry        : Project_Registry;
-      Filename        : Filesystem_String;
-      Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project);
-   --  Internal version of Get_Full_Path_From_File, which returns its result in
-   --  Name_Buffer (1 .. Name_Len) for efficiency.
-   --  Do not use outside of the projects.* hierarchy
-   --
-   --  Name_Len is set to 0 if the file wasn't found on the search path
 
    function Get_Language_From_File_From_Project
      (Registry : Project_Registry; Source_Filename : GNATCOLL.VFS.Virtual_File)

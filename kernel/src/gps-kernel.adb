@@ -1990,18 +1990,16 @@ package body GPS.Kernel is
      (Name   : Filesystem_String;
       Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.Virtual_File
    is
-      Full : constant Filesystem_String := Get_Full_Path_From_File
+      File : Virtual_File;
+   begin
+      Get_Full_Path_From_File
         (Registry        => Get_Registry (Kernel).all,
          Filename        => Base_Name (Name),
          Use_Source_Path => True,
-         Use_Object_Path => True);
-
-   begin
-      if Full = "" then
-         return Create (Full_Filename => Name);
-      else
-         return Create (Full_Filename => Full);
-      end if;
+         Use_Object_Path => True,
+         Create_As_Base_If_Not_Found => True,
+         File            => File);
+      return File;
    end Create_From_Base;
 
    ----------
