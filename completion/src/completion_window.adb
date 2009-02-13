@@ -206,11 +206,18 @@ package body Completion_Window is
          Info.Notes := new Notes_Array'(1 => Note);
       else
          declare
-            A : constant Notes_Array :=
-                  Info.Notes.all & Notes_Array'(1 => Note);
+            Old_Notes : Notes_Array_Access := Info.Notes;
          begin
-            Unchecked_Free (Info.Notes);
-            Info.Notes := new Notes_Array'(A);
+            Info.Notes := new Notes_Array (1 .. Old_Notes'Length + 1);
+
+            pragma Assert (Old_Notes'First = 1);
+
+            for J in 1 .. Old_Notes'Length loop
+               Info.Notes (J) := Old_Notes (J);
+            end loop;
+
+            Info.Notes (Info.Notes'Last) := Note;
+            Unchecked_Free (Old_Notes);
          end;
       end if;
    end Augment_Notes;
