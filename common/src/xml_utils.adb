@@ -499,7 +499,12 @@ package body XML_Utils is
                if Get_Category
                  (UTF_32'Val (Wide_Wide_Character'Pos (Wide (J)))) = Cc
                then
-                  Append (R, "&#" & Wide (J) & ";");
+                  declare
+                     Img : constant Wide_Wide_String := Natural'Wide_Wide_Image
+                       (Wide_Wide_Character'Pos (Wide (J)));
+                  begin
+                     Append (R, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
+                  end;
                else
                   Append (R, Wide (J));
                end if;
