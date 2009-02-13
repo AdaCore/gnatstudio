@@ -1464,7 +1464,6 @@ package body Entities is
       L : LI_File_Item := Get (Db.LIs, Full_Name (File));
    begin
       Assert (Assert_Me, File /= GNATCOLL.VFS.No_File, "No LI filename");
-      Assert (Assert_Me, Project /= No_Project, "No project specified");
       if L = null then
          L := new LI_File_Item_Record'
            (File => new LI_File_Record'

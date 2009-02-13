@@ -223,13 +223,16 @@ package body ALI_Parser is
    --  files
 
    function Imported_Projects_Count (Project : Project_Type) return Natural;
-   --  Return the number of projects imported by Project
+   --  Return the number of projects imported by Project. This returns 1 if
+   --  No_Project is passed (since runtime files can depend on other runtime
+   --  files).
 
    procedure Get_Imported_Projects
      (Project  : Project_Type;
       Imported : out Project_Type_Array);
    --  Get the projects imported by Project. Imported must have the size
    --  returned by Imported_Projects_Count.
+   --  This works for No_Project
 
    procedure Process_Xref_Entity
      (Handler               : access ALI_Handler_Record'Class;
@@ -326,19 +329,29 @@ package body ALI_Parser is
       First_Sect, Last_Sect : Nat);
    --  Process a reference to the entity
 
-   function LI_Filename_From_Source
+   procedure LI_Filename_From_Source
      (Handler         : access ALI_Handler_Record'Class;
       Source_Filename : Virtual_File;
-      Project         : Project_Type) return Virtual_File;
-   --  Return the ALI file associated with Source_Filename
+      Project         : Project_Type;
+      LI              : out Virtual_File;
+      Predefined      : out Boolean);
+   --  Return the ALI file associated with Source_Filename.
+   --  Predefined is set to True if the project was found in the predefined
+   --  path (ie does not belong to any project). Project might be No_Project on
+   --  input if we know in advance the file does not belong to a project.
 
-   function Locate_ALI
+   procedure Locate_ALI
      (Handler            : access ALI_Handler_Record'Class;
       Short_ALI_Filename : Filesystem_String;
       Source_Filename    : GNATCOLL.VFS.Virtual_File;
-      Project            : Project_Type) return Virtual_File;
+      Project            : Project_Type;
+      LI_Filename        : out Virtual_File;
+      Predefined         : out Boolean);
    --  Search for the full name of the ALI file. We also search the parent
    --  unit's ALi file, in case the file is a separate.
+   --  Predefined is set to True if the project was found in the predefined
+   --  path (ie does not belong to any project). Project might be No_Project on
+   --  input if we know in advance the file does not belong to a project.
 
    function Find_Multi_Unit_ALI
      (Handler         : access ALI_Handler_Record'Class;
@@ -347,6 +360,7 @@ package body ALI_Parser is
    --  Parse all ALI files in the object directory of Project and its extending
    --  projects, looking for LI files representing multi-unit source files.
    --  If one is found for Source_Filename, return its name.
+   --  It is valid to pass No_Project
 
    function Get_Source_Info_Internal
      (Handler               : access ALI_Handler_Record'Class;
@@ -397,11 +411,7 @@ package body ALI_Parser is
       LI      : LI_File;
       Id      : Unit_Id) return Source_File
    is
-      Base_Name : constant String :=
-                    Display_Full_Name
-                      (Create (+Get_String (Units.Table (Id).Sfile)));
-      --  ??? (UTF8) this seems wrong: what if the filename is not
-      --  valid UTF8?
+      Base_Name : constant String := Get_String (Units.Table (Id).Sfile);
       File      : Source_File;
 
    begin
@@ -454,8 +464,7 @@ package body ALI_Parser is
    is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
-      Base_Name   : constant String :=
-        Display_Full_Name (Create (+Get_String (Dep.Sfile)));
+      Base_Name   : constant String := Get_String (Dep.Sfile);
       --  ??? (UTF8) this seems wrong: what if the filename is not valid UTF8?
       L           : LI_File := LI;
    begin
@@ -528,19 +537,21 @@ package body ALI_Parser is
          Part := Unit_Body;
       end if;
 
-      for P in reverse Imported_Projects'Range loop
-         declare
-            N : constant Filesystem_String := Get_Filename_From_Unit
-              (Imported_Projects (P),
-               Unit_Name (1 .. Unit_Name'Last - 2),
-               Part,
-               Language => Ada_String);
-         begin
-            if N /= "" then
-               return Get_String (+N);
-            end if;
-         end;
-      end loop;
+      if Imported_Projects (Imported_Projects'First) /= No_Project then
+         for P in reverse Imported_Projects'Range loop
+            declare
+               N : constant Filesystem_String := Get_Filename_From_Unit
+                 (Imported_Projects (P),
+                  Unit_Name (1 .. Unit_Name'Last - 2),
+                  Part,
+                  Language => Ada_String);
+            begin
+               if N /= "" then
+                  return Get_String (+N);
+               end if;
+            end;
+         end loop;
+      end if;
 
       --  We end up here for the runtime files, so we just try to append the
       --  standard GNAT extensions.
@@ -552,7 +563,6 @@ package body ALI_Parser is
            (+Get_Filename_From_Unit
               (Imported_Projects (Imported_Projects'First),
                Base (Base'First .. Base'Last - 4),
-               --            Unit_Name (1 .. Unit_Name'Last - 2),
                Part,
                Check_Predefined_Library => True,
                Language => Ada_String));
@@ -633,8 +643,14 @@ package body ALI_Parser is
 
    function Imported_Projects_Count (Project : Project_Type) return Natural is
       Count : Natural := 0;
-      Iter  : Imported_Project_Iterator := Start (Project, Recursive => True);
+      Iter  : Imported_Project_Iterator;
    begin
+      if Project = No_Project then
+         return 1;
+      end if;
+
+      Iter := Start (Project, Recursive => True);
+
       while Current (Iter) /= No_Project loop
          Count := Count + 1;
          Next (Iter);
@@ -650,12 +666,18 @@ package body ALI_Parser is
      (Project  : Project_Type;
       Imported : out Project_Type_Array)
    is
-      Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
+      Iter : Imported_Project_Iterator;
    begin
-      for J in Imported'Range loop
-         Imported (J) := Current (Iter);
-         Next (Iter);
-      end loop;
+      if Project = No_Project then
+         Imported (Imported'First) := No_Project;
+      else
+         Iter := Start (Project, Recursive => True);
+
+         for J in Imported'Range loop
+            Imported (J) := Current (Iter);
+            Next (Iter);
+         end loop;
+      end if;
    end Get_Imported_Projects;
 
    -------------------------
@@ -1213,12 +1235,13 @@ package body ALI_Parser is
    is
       Sunits : Unit_To_Sfile_Table (New_ALI.First_Unit .. New_ALI.Last_Unit);
       Sfiles : Sdep_To_Sfile_Table (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
+      Project : constant Project_Type := Get_Project (LI);
       Imported_Projects : Project_Type_Array
-        (1 .. Imported_Projects_Count (Get_Project (LI)));
+        (1 .. Imported_Projects_Count (Project));
       Is_ALI_For_Separate : Boolean;
 
    begin
-      Get_Imported_Projects (Get_Project (LI), Imported_Projects);
+      Get_Imported_Projects (Project, Imported_Projects);
 
       Process_Units (Handler, LI, New_ALI, Sunits);
       Process_Sdeps (Handler, LI, New_ALI, Sunits, Sfiles);
@@ -1369,11 +1392,13 @@ package body ALI_Parser is
    -- Locate_ALI --
    ----------------
 
-   function Locate_ALI
+   procedure Locate_ALI
      (Handler            : access ALI_Handler_Record'Class;
       Short_ALI_Filename : Filesystem_String;
       Source_Filename    : GNATCOLL.VFS.Virtual_File;
-      Project            : Project_Type) return Virtual_File
+      Project            : Project_Type;
+      LI_Filename        : out Virtual_File;
+      Predefined         : out Boolean)
    is
       procedure Next_Candidate
         (Last : in out Integer; Dot : Filesystem_String);
@@ -1408,58 +1433,62 @@ package body ALI_Parser is
       Is_Parent_LI : Boolean := False;
 
    begin
-      --  Start searching in the extending projects, in case the file was
-      --  recompiled in their context
+      Predefined := False;
 
-      while Extending_Project (P) /= No_Project loop
-         P := Extending_Project (P);
-      end loop;
+      if P /= No_Project then
+         --  Start searching in the extending projects, in case the file was
+         --  recompiled in their context
 
-      --  Compute the search path. If the objects path of the project is
-      --  not null, then prepend it to the total search path.
-      while P /= No_Project loop
-         declare
-            Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
-            Dot_Replacement : constant Filesystem_String :=
-              +Get_Attribute_Value
-              (P, Dot_Replacement_Attribute, Default => "-");
-         begin
-            while Dir = null and then Last >= Short_ALI_Filename'First loop
-               declare
-                  Path : constant Filesystem_String :=
-                    Object_Path (P, False, True, True);
-                  File : constant Filesystem_String :=
-                    (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                     & Extension);
-               begin
-                  if Path /= "" then
-                     Dir := Locate_Regular_File (File, Path);
-                  end if;
-               end;
+         while Extending_Project (P) /= No_Project loop
+            P := Extending_Project (P);
+         end loop;
 
-               Is_Parent_LI :=
-                 Last /= Short_ALI_Filename'Last - Extension'Length;
-               Next_Candidate (Last, Dot_Replacement);
-            end loop;
-         end;
+         --  Compute the search path. If the objects path of the project is
+         --  not null, then prepend it to the total search path.
+         while P /= No_Project loop
+            declare
+               Last    : Integer := Short_ALI_Filename'Last - Extension'Length;
+               Dot_Replacement : constant Filesystem_String :=
+                 +Get_Attribute_Value
+                 (P, Dot_Replacement_Attribute, Default => "-");
+            begin
+               while Dir = null and then Last >= Short_ALI_Filename'First loop
+                  declare
+                     Path : constant Filesystem_String :=
+                       Object_Path (P, False, True, True);
+                     File : constant Filesystem_String :=
+                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                        & Extension);
+                  begin
+                     if Path /= "" then
+                        Dir := Locate_Regular_File (File, Path);
+                     end if;
+                  end;
 
-         if P /= Project then
-            P := Extended_Project (P);
-         else
-            P := No_Project;
-         end if;
-      end loop;
+                  Is_Parent_LI :=
+                    Last /= Short_ALI_Filename'Last - Extension'Length;
+                  Next_Candidate (Last, Dot_Replacement);
+               end loop;
+            end;
+
+            if P /= Project then
+               P := Extended_Project (P);
+            else
+               P := No_Project;
+            end if;
+         end loop;
+      end if;
 
       --  Still not found ? Check in the predefined object path
 
       if Dir = null then
          declare
             Predefined_Object_Path : constant Filesystem_String :=
-              Get_Predefined_Object_Path
-                (Project_Registry (Get_Registry (Project)))
+              Get_Predefined_Object_Path (Handler.Registry)
               & Path_Separator & Current_Dir_Name;
             Last : Integer := Short_ALI_Filename'Last - Extension'Length;
          begin
+            Predefined := True;
             while Dir = null and then Last >= Short_ALI_Filename'First loop
                Dir := Locate_Regular_File
                  (Short_ALI_Filename
@@ -1471,12 +1500,12 @@ package body ALI_Parser is
       end if;
 
       if Dir = null then
-         return GNATCOLL.VFS.No_File;
+         LI_Filename := GNATCOLL.VFS.No_File;
       else
          declare
-            F  : constant Virtual_File := Create (Dir.all);
             LI : LI_File;
          begin
+            LI_Filename := Create (Dir.all);
             Free (Dir);
 
             if Is_Parent_LI then
@@ -1485,10 +1514,10 @@ package body ALI_Parser is
 
                LI := Get_Or_Create
                  (Db        => Handler.Db,
-                  File      => F,
+                  File      => LI_Filename,
                   Project   => Project);
                if LI = null then
-                  return GNATCOLL.VFS.No_File;
+                  LI_Filename := GNATCOLL.VFS.No_File;
 
                --  Do not reset ALI below, since we are in the process of
                --  parsing an ALI file, and need to parse a second one. We
@@ -1496,12 +1525,8 @@ package body ALI_Parser is
                elsif not Update_ALI (Handler, LI, Reset_ALI => False)
                  or else not Check_LI_And_Source (LI, Source_Filename)
                then
-                  return GNATCOLL.VFS.No_File;
-               else
-                  return F;
+                  LI_Filename := GNATCOLL.VFS.No_File;
                end if;
-            else
-               return F;
             end if;
          end;
       end if;
@@ -1560,9 +1585,11 @@ package body ALI_Parser is
       --  Start searching in the extending projects, in case the file was
       --  recompiled in their context
 
-      while Extending_Project (P) /= No_Project loop
-         P := Extending_Project (P);
-      end loop;
+      if Project /= No_Project then
+         while Extending_Project (P) /= No_Project loop
+            P := Extending_Project (P);
+         end loop;
+      end if;
 
       --  Search for all candidate ALI files. We might end up parsing too many,
       --  but the result is not lost, since put in the entities database, and
@@ -1642,33 +1669,41 @@ package body ALI_Parser is
    -- LI_Filename_From_Source --
    -----------------------------
 
-   function LI_Filename_From_Source
+   procedure LI_Filename_From_Source
      (Handler         : access ALI_Handler_Record'Class;
       Source_Filename : Virtual_File;
-      Project         : Project_Type) return Virtual_File
+      Project         : Project_Type;
+      LI              : out Virtual_File;
+      Predefined      : out Boolean)
    is
-      LI  : Virtual_File;
-      Ext : Project_Type;
+      Ext  : Project_Type;
    begin
+      --  Do we have a runtime file ?
+
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
             --  Check the most likely ALI file (<file>.ali)
-            LI := Locate_ALI
+            Locate_ALI
               (Handler,
                Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
-               Source_Filename, Project);
+               Source_Filename, Project, LI, Predefined);
+
             if LI /= GNATCOLL.VFS.No_File then
-               return LI;
+               return;
             end if;
 
             --  If the source comes from an extended project, look for object
             --  files there in addition
 
-            Ext := Extended_Project (Project);
-            if Ext /= No_Project then
-               LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
-               if LI /= GNATCOLL.VFS.No_File then
-                  return LI;
+            if Project /= No_Project then
+               Ext := Extended_Project (Project);
+               if Ext /= No_Project then
+                  LI_Filename_From_Source
+                    (Handler, Source_Filename, Ext, LI, Predefined);
+
+                  if LI /= GNATCOLL.VFS.No_File then
+                     return;
+                  end if;
                end if;
             end if;
 
@@ -1689,7 +1724,7 @@ package body ALI_Parser is
                   --  Thus, in addition to checking directly for an ALI file,
                   --  we also check for ALI file from the parent unit.
 
-                  return Locate_ALI
+                  Locate_ALI
                     (Handler,
                      Get_ALI_Filename
                        (Handler,
@@ -1697,7 +1732,9 @@ package body ALI_Parser is
                           (Project, Unit (Unit'First .. Last - 1), Unit_Body,
                            Language => Ada_String)),
                      Source_Filename,
-                     Project);
+                     Project,
+                     LI,
+                     Predefined);
 
                else
                   --  We might have a multi-unit source file, in which case we
@@ -1705,8 +1742,9 @@ package body ALI_Parser is
                   --  This is a little slower, therefore the above algorithm is
                   --  preferred.
 
-                  return Find_Multi_Unit_ALI
+                  LI := Find_Multi_Unit_ALI
                     (Handler, Source_Filename, Project);
+                  Predefined := False;
                end if;
             end;
 
@@ -1714,44 +1752,48 @@ package body ALI_Parser is
             --  Use the ALI for the body, if there is a body, otherwise the one
             --  for the spec will do.
 
-            LI :=  Locate_ALI
+            Locate_ALI
               (Handler,
                Get_ALI_Filename
                  (Handler, Other_File_Base_Name (Project, Source_Filename)),
                Source_Filename,
-               Project);
+               Project, LI, Predefined);
 
             if LI /= GNATCOLL.VFS.No_File then
-               return LI;
+               return;
             end if;
 
             --  If the source comes from an extended project, look for object
             --  files there in addition
 
-            Ext := Extended_Project (Project);
-            if Ext /= No_Project then
-               LI := LI_Filename_From_Source (Handler, Source_Filename, Ext);
-               if LI /= GNATCOLL.VFS.No_File then
-                  return LI;
+            if Project /= No_Project then
+               Ext := Extended_Project (Project);
+               if Ext /= No_Project then
+                  LI_Filename_From_Source
+                    (Handler, Source_Filename, Ext, LI, Predefined);
+                  if LI /= GNATCOLL.VFS.No_File then
+                     return;
+                  end if;
                end if;
             end if;
 
             --  No ALI for the body ? Use the one for the spec as a fallback
 
-            LI := Locate_ALI
+            Locate_ALI
               (Handler,
                Get_ALI_Filename (Handler, Base_Name (Source_Filename)),
-               Source_Filename, Project);
+               Source_Filename, Project, LI, Predefined);
 
             if LI /= GNATCOLL.VFS.No_File then
-               return LI;
+               return;
             end if;
 
             --  Still not found ? We might have a multi-unit source file, check
             --  this.
 
-            return Find_Multi_Unit_ALI
+            LI := Find_Multi_Unit_ALI
               (Handler, Source_Filename, Project);
+            Predefined := False;
       end case;
    end LI_Filename_From_Source;
 
@@ -1784,11 +1826,11 @@ package body ALI_Parser is
       LI_Name : Virtual_File;
       Source  : Source_File;
       Project : Project_Type;
+      Predefined : Boolean;
+      Is_Up_To_Date : Boolean;
    begin
       --  If we already know about the file, we get the name of the LI file
-      --  from it. However, we also need to check wether the object directory
-      --  of the project has changed (in case the user changed the scenario for
-      --  instance)
+      --  from it.
 
       Source := Get_Or_Create
         (Db           => Handler.Db,
@@ -1803,28 +1845,59 @@ package body ALI_Parser is
 
       if Source /= null
         and then Get_LI (Source) /= null
-        and then Name_As_Directory
-          (Object_Path
-               (Get_Project (Get_LI (Source)),
-                Recursive   => False,
-                Xrefs_Dirs  => True)) =
-        Dir_Name (Get_LI_Filename (Get_LI (Source))).all
       then
-         if not Update_ALI (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
-           and then File_Has_No_LI_Report /= null
-         then
-            Entities.Error
-              (File_Has_No_LI_Report.all, Source);
+         --  If we have a file outside of the project hierarchy, its location
+         --  can't have changed when a scenario has changed, so not need to
+         --  check directories
+
+         Is_Up_To_Date := Get_Project (Get_LI (Source)) = No_Project;
+
+         if not Is_Up_To_Date then
+            --  Check that the object directory hasn't changed (in case the
+            --  user changed the scenario for instance)
+            --  The call to Object_Path might return several directories in the
+            --  case of a library project for instance, so we can't simply
+            --  compare strings.
+
+            declare
+               Dir  : constant Cst_String_Access :=
+                 Dir_Name (Get_LI_Filename (Get_LI (Source)));
+               Path : constant Filesystem_String := Object_Path
+                 (Get_Project (Get_LI (Source)),
+                  Recursive   => False,
+                  Xrefs_Dirs  => True);
+               Iter : Path_Iterator := Start (Path);
+            begin
+               while not At_End (Path, Iter) loop
+                  Is_Up_To_Date := Current (Path, Iter) = Dir.all;
+                  exit when Is_Up_To_Date;
+
+                  Iter := Next (Path, Iter);
+               end loop;
+            end;
          end if;
 
-         return Source;
+         if Is_Up_To_Date then
+            if not Update_ALI
+              (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
+              and then File_Has_No_LI_Report /= null
+            then
+               Entities.Error
+                 (File_Has_No_LI_Report.all, Source);
+            end if;
+
+            return Source;
+         end if;
       end if;
 
-      --  Otherwise we have to compute the name of the LI file from scratch
+      --  Otherwise we have to compute the name of the LI file from scratch.
+      --  The call below might result in No_Project for runtime files
 
-      Project := Get_Project_From_File (Handler.Registry, Source_Filename);
+      Project := Get_Project_From_File
+        (Handler.Registry, Source_Filename, Root_If_Not_Found => False);
 
-      LI_Name := LI_Filename_From_Source (Handler, Source_Filename, Project);
+      LI_Filename_From_Source
+        (Handler, Source_Filename, Project, LI_Name, Predefined);
 
       if LI_Name = GNATCOLL.VFS.No_File then
          Trace (Me, "No LI found for " & (+Full_Name (Source_Filename).all));
@@ -1858,18 +1931,14 @@ package body ALI_Parser is
          LI := null;
       end if;
 
-      if Source = null then
-         --  Do another lookup, to update the LI file, since apparently we
-         --  didn't know it before
-         return Get_Or_Create
-           (Db           => Handler.Db,
-            File         => Source_Filename,
-            LI           => LI,
-            Handler      => LI_Handler (Handler),
-            Allow_Create => False);
-      else
-         return Source;
-      end if;
+      --  Do another lookup, to update the LI file, since apparently we
+      --  didn't know it before
+      return Get_Or_Create
+        (Db           => Handler.Db,
+         File         => Source_Filename,
+         LI           => LI,
+         Handler      => LI_Handler (Handler),
+         Allow_Create => False);
    end Get_Source_Info_Internal;
 
    ----------------------------------

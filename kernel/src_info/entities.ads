@@ -346,6 +346,8 @@ package Entities is
    --  already exists, it is returned.
    --  You need to Ref the entry if you intend to keep it in a separate
    --  structure.
+   --  It is valid to pass No_Project when the file doesn't belong to any of
+   --  the project's source files (for instance a runtime file)
 
    procedure Set_Time_Stamp
      (LI : LI_File; Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time);
@@ -354,7 +356,8 @@ package Entities is
 
    function Get_Project (LI : LI_File) return Projects.Project_Type;
    pragma Inline (Get_Project);
-   --  Return the project to which LI belongs
+   --  Return the project to which LI belongs. This could be No_Project for
+   --  runtime files.
 
    function Get_Database (LI : LI_File) return Entities_Database;
    pragma Inline (Get_Database);

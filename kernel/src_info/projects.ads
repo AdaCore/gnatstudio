@@ -249,6 +249,8 @@ package Projects is
       return String;
    --  Return the unit name associated with a given file name, or the empty
    --  string if the name of the unit couldn't be computed.
+   --  Project can be No_Project, in which case the default naming scheme is
+   --  used.
 
    procedure Get_Unit_Part_And_Name_From_Filename
      (Filename  : Filesystem_String;
@@ -293,7 +295,8 @@ package Projects is
    --  If Check_Predefined_Library is False, the file must by default be
    --  found in the project hierarchy. If File_Must_Exist is False, then
    --  the Project's naming scheme is used to compute the result.
-   --  Project must never be No_Project.
+   --
+   --  If Project is No_Project, the default naming scheme is used
 
    ----------------
    -- Attributes --

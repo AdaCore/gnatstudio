@@ -249,7 +249,8 @@ package body CPP_Parser is
      (Project : Projects.Project_Type) return Filesystem_String;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
-   --  for specified project
+   --  for specified project. If No_Project is given, the empty string is
+   --  returned.
 
    function Get_DB_Dirs
      (Project : Project_Type) return GNAT.Strings.String_List_Access;
@@ -558,15 +559,23 @@ package body CPP_Parser is
    ----------------
 
    function Get_DB_Dir
-     (Project : Projects.Project_Type) return Filesystem_String is
-      Obj_Dir : constant Filesystem_String := Object_Path
-        (Project, False, Including_Libraries => False);
+     (Project : Projects.Project_Type) return Filesystem_String
+   is
    begin
-      if Obj_Dir = "" then
+      if Project = No_Project then
          return "";
       else
-         return Name_As_Directory (Obj_Dir)
-           & Name_As_Directory (SN.Browse.DB_Dir_Name);
+         declare
+            Obj_Dir : constant Filesystem_String := Object_Path
+              (Project, False, Including_Libraries => False);
+         begin
+            if Obj_Dir = "" then
+               return "";
+            else
+               return Name_As_Directory (Obj_Dir)
+                 & Name_As_Directory (SN.Browse.DB_Dir_Name);
+            end if;
+         end;
       end if;
    end Get_DB_Dir;
 

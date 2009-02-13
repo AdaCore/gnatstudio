@@ -1694,8 +1694,20 @@ package body Projects.Registry is
    begin
       --  Make sure the file we found has the same full name, since it might
       --  match a file from the project that has the same base name, but not
-      --  belong to the project (FB03-003)
-      if Create (+Get_String (S.Full_Name)) /= Source_Filename then
+      --  belong to the project (FB03-003).
+      --  When in trusted mode, file normalization would not play a role here,
+      --  since there are no symbolic links, so we take a somewhat more
+      --  efficient path.
+
+      if Registry.Data.Trusted_Mode
+        and then not File_Equal
+          (+Get_String (S.Full_Name), Full_Name (Source_Filename).all)
+      then
+         P := No_Project;
+
+      elsif not Registry.Data.Trusted_Mode
+        and then Create (+Get_String (S.Full_Name)) /= Source_Filename
+      then
          P := No_Project;
       end if;
 
@@ -2195,9 +2207,9 @@ package body Projects.Registry is
 
          if Path /= null then
             declare
-               Full : constant String := Display_Full_Name
-                 (Create
-                    (Normalize_Pathname (Path.all, Resolve_Links => False)));
+               Full : constant String :=
+                 +Normalize_Pathname
+                   (Path.all, Resolve_Links => not Registry.Data.Trusted_Mode);
             begin
                Free (Path);
                Name_Len := Full'Length;

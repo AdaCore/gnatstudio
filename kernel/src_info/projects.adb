@@ -1005,7 +1005,9 @@ package body Projects is
       --  ??? This isn't language independent, what if other languages have
       --  similar requirements
 
-      if Check_Predefined_Library and then Language = Name_Ada then
+      if Project = No_Project
+        or else (Check_Predefined_Library and then Language = Name_Ada)
+      then
          case Part is
             when Unit_Body =>
                return +Substitute_Dot (Unit_Name, "-") & ".adb";
