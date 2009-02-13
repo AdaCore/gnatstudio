@@ -1291,6 +1291,8 @@ package body Projects.Registry is
                end if;
             end loop;
 
+            Src.Project := Project;
+
             Set (Registry.Data.Sources,
                  K => File,
                  E => Src);
