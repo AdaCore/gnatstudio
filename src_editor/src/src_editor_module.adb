@@ -3500,6 +3500,9 @@ package body Src_Editor_Module is
          Get_Full_Path_From_File
            (Get_Registry (Kernel).all, Full_Name (File).all, True, False,
             File => Full);
+         if Full = No_File then
+            return null;
+         end if;
       end if;
 
       Iter := First_Child (Get_MDI (Kernel));
