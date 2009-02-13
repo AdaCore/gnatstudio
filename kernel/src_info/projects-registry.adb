@@ -983,17 +983,31 @@ package body Projects.Registry is
             Get_Name_String (Source.Display_File);
 
             declare
-               UTF8           : constant String :=
-                 Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
+               --  ??? We used to do
+               --  UTF8           : constant String :=
+               --    Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
+               --  but since we are only passing a basename, there is no
+               --  normalization taking place
+
+               UTF8 : constant String := Name_Buffer (1 .. Name_Len);
+
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
                Source.Display_File := Name_Find;
 
                declare
+                  --  ??? We use to do
+                  --  Display_Full_Name
+                  --    (Create (+Get_Name_String (Source.Path.Display_Name)));
+                  --  just to get the normalized full name. This is a waste of
+                  --  time because creating the virtual file is also long. But
+                  --  we can still use the filesystem abstraction anyway
+
                   Dir : constant String :=
-                     Display_Full_Name
-                        (Create (+Get_Name_String (Source.Path.Display_Name)));
+                    +Get_Local_Filesystem.Normalize
+                      (+Get_Name_String (Source.Path.Display_Name));
+
                begin
                   Name_Len := Dir'Length;
                   Name_Buffer (1 .. Name_Len) := Dir;
@@ -1382,26 +1396,27 @@ package body Projects.Registry is
 
          Get_Name_String (Src.Display_File);
 
-         declare
-            File : constant String :=
-              Display_Full_Name (Create (+Name_Buffer (1 .. Name_Len)));
-            --  ??? This call to Display_Full_Name seems wrong: we might want
-            --  the filesystem name here?
-         begin
-            --  The project manager duplicates files that contain several
-            --  units. Only add them once in the project sources.
+         --  ??? We used to do
+         --  File := Dispay_Full_Name (Create (+Name_Buffer (...))
+         --  but in fact since we are passing a basename there is no
+         --  normalization anyway in VFS, and thus this is just a waste of
+         --  time.
 
-            if not Get (Seen, File) then
-               Append
-                 (Source_File_List,
-                  Create (+File, Project, Use_Object_Path => False));
+         --  The project manager duplicates files that contain several
+         --  units. Only add them once in the project sources.
 
-               --  We must set the source has seen so that it does not appear
-               --  twice in the project explorer which happens for project
-               --  that uses both Source_Files and Source_Dirs attributes.
-               Set (Seen, File, True);
-            end if;
-         end;
+         if not Get (Seen, Name_Buffer (1 .. Name_Len)) then
+            Append
+              (Source_File_List,
+               Create
+                 (+Name_Buffer (1 .. Name_Len), Project,
+                  Use_Object_Path => False));
+
+            --  We must set the source has seen so that it does not appear
+            --  twice in the project explorer which happens for project
+            --  that uses both Source_Files and Source_Dirs attributes.
+            Set (Seen, Name_Buffer (1 .. Name_Len), True);
+         end if;
 
          Next (Src_Iter);
       end loop;
