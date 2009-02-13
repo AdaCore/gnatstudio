@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,6 +61,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;         use GPS.Location_View;
@@ -70,7 +71,6 @@ with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Traces;
 
-with Histories;                 use Histories;
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
 
@@ -101,7 +101,7 @@ package body Builder_Facility_Module is
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
-   Mode_Pref : constant History_Key := "Build-Mode";
+   Mode_Property : constant String := "Build-Mode";
    --  History to store which mode is selected.
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
@@ -347,6 +347,11 @@ package body Builder_Facility_Module is
       Kernel       : access Kernel_Handle_Record'Class);
    --  Add new entries for all the main subprograms of Project and for
    --  the "Clean" item.
+
+   procedure On_Project_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when project changed. Selects value in the build-mode combobox
+   --  previously used for project
 
    --------------------
    -- Add_Build_Menu --
@@ -1138,6 +1143,8 @@ package body Builder_Facility_Module is
       Mode : constant String := Get_Active_Text (Widget);
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Get_Kernel).all);
+      Prop : aliased GPS.Kernel.Properties.String_Property_Access;
+
    begin
       if Projects.Registry.Get_Mode_Subdir (Reg) /= Get_Mode_Subdir (Mode) then
          Projects.Registry.Set_Mode_Subdir
@@ -1145,7 +1152,14 @@ package body Builder_Facility_Module is
          Recompute_View (Get_Kernel);
       end if;
 
-      Add_To_History (Get_History (Get_Kernel).all, Mode_Pref, Mode);
+      Prop := new GPS.Kernel.Properties.String_Property;
+      Prop.Value := new String'(Mode);
+      GPS.Kernel.Properties.Set_Property
+        (Get_Kernel,
+         GPS.Kernel.Project.Get_Project (Get_Kernel),
+         Mode_Property,
+         Prop,
+         True);
    end On_Mode_Changed;
 
    ----------
@@ -1503,6 +1517,44 @@ package body Builder_Facility_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Modes_Manager;
 
+   -----------------------------
+   -- On_Project_Changed_Hook --
+   -----------------------------
+
+   procedure On_Project_Changed_Hook
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      use type Glib.Gint;
+
+      Prop  : GPS.Kernel.Properties.String_Property;
+      Found : Boolean;
+
+   begin
+      Prop.Get_Property
+        (GPS.Kernel.Project.Get_Project (Kernel), Mode_Property, Found);
+
+      if Found then
+         declare
+            Mode : constant String := Prop.Value.all;
+
+         begin
+            --  Going in reverse order, so if unknown mode is specified in the
+            --  property then 'default' mode will be selected
+
+            for J in reverse 0 ..
+              Builder_Module_ID.Modes_Combo.Get_Model.N_Children - 1
+            loop
+               Builder_Module_ID.Modes_Combo.Set_Active (J);
+
+               exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
+            end loop;
+         end;
+
+      else
+         Builder_Module_ID.Modes_Combo.Set_Active (0);
+      end if;
+   end On_Project_Changed_Hook;
+
    -----------------------
    -- On_Shadow_Console --
    -----------------------
@@ -1675,27 +1727,9 @@ package body Builder_Facility_Module is
 
          Append_Text (Builder_Module_ID.Modes_Combo, To_String (Mode.Name));
 
-         declare
-            H : constant String_List_Access :=
-              Get_History (Get_History (Get_Kernel).all, Mode_Pref);
-         begin
-            if H /= null
-              and then H.all'Length > 0
-            then
-               if H (H'First) /= null
-                 and then To_String (Mode.Name) = H (H'First).all
-               then
-                  Set_Active
-                    (Builder_Module_ID.Modes_Combo,
-                     N_Children (Get_Model (Builder_Module_ID.Modes_Combo))
-                     - 1);
-               end if;
-            else
-               if First_Mode then
-                  Set_Active (Builder_Module_ID.Modes_Combo, 0);
-               end if;
-            end if;
-         end;
+         if First_Mode then
+            Set_Active (Builder_Module_ID.Modes_Combo, 0);
+         end if;
 
          --  Regenerate the tooltips for the combo box
 
@@ -1875,6 +1909,12 @@ package body Builder_Facility_Module is
       Add_Hook (Kernel, Compute_Build_Targets_Hook,
                 Wrapper (On_Compute_Build_Targets'Access),
                 Name => "builder_facility_module.compute_build_targets");
+
+      Add_Hook
+        (Kernel => Kernel,
+         Hook   => Project_Changed_Hook,
+         Func   => Wrapper (On_Project_Changed_Hook'Access),
+         Name   => "builder_facility_module.on_project_changed");
 
       --  Register the shell commands
 
