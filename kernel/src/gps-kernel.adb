@@ -37,7 +37,7 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;                 use XML_Utils;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -98,7 +98,7 @@ with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
 with XML_Parsers;
-
+with XML_Utils.GtkAda;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel is
@@ -823,8 +823,8 @@ package body GPS.Kernel is
 
       --  Add the current content, indexed on the current project
 
-      M := GPS.Kernel.Kernel_Desktop.Save_Desktop
-        (MDI, Kernel_Handle (Handle));
+      M := XML_Utils.GtkAda.Convert (GPS.Kernel.Kernel_Desktop.Save_Desktop
+        (MDI, Kernel_Handle (Handle)));
       Set_Attribute (M, "project", (+Full_Name (Project_Name).all));
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
@@ -968,13 +968,17 @@ package body GPS.Kernel is
          if Desktop_Node /= null then
             Trace (Me, "loading desktop for " &
                    (+Full_Name (Project_Name).all));
-            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
-              (MDI, Desktop_Node, Kernel_Handle (Handle));
+            Success_Loading_Desktop :=
+              Kernel_Desktop.Restore_Desktop
+                (MDI, XML_Utils.GtkAda.Convert (Desktop_Node),
+                 Kernel_Handle (Handle));
 
          elsif Default_Desktop_Node /= null then
             Trace (Me, "loading default desktop (from file)");
-            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
-              (MDI, Default_Desktop_Node, Kernel_Handle (Handle));
+            Success_Loading_Desktop :=
+              Kernel_Desktop.Restore_Desktop
+                     (MDI, XML_Utils.GtkAda.Convert (Default_Desktop_Node),
+                      Kernel_Handle (Handle));
          end if;
 
          Free (Node);
@@ -2462,5 +2466,22 @@ package body GPS.Kernel is
       Commands.Command_Queues.Append
         (Kernel.Perma_Commands, Commands.Command_Access (Command));
    end Register_Perma_Command;
+
+   --------------------------------
+   -- Register_Desktop_Functions --
+   --------------------------------
+
+   procedure Register_Desktop_Functions
+     (Save : Save_Desktop_Function;
+      Load : Load_Desktop_Function)
+   is
+      function Unch is new Ada.Unchecked_Conversion
+        (Save_Desktop_Function, Kernel_Desktop.Save_Desktop_Function);
+
+      function Unch is new Ada.Unchecked_Conversion
+        (Load_Desktop_Function, Kernel_Desktop.Load_Desktop_Function);
+   begin
+      Kernel_Desktop.Register_Desktop_Functions (Unch (Save), Unch (Load));
+   end Register_Desktop_Functions;
 
 end GPS.Kernel;

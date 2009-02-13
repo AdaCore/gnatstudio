@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2007, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;        use Glib.Object;
-with Glib.Xml_Int;       use Glib.Xml_Int;
+with XML_Utils;       use XML_Utils;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.MDI;         use Gtkada.MDI;
 
@@ -34,7 +34,7 @@ package body Generic_Views is
    -------------------
 
    procedure Load_From_XML
-     (View : access View_Record; XML : Glib.Xml_Int.Node_Ptr)
+     (View : access View_Record; XML : XML_Utils.Node_Ptr)
    is
       pragma Unreferenced (View, XML);
    begin
@@ -46,7 +46,7 @@ package body Generic_Views is
    -----------------
 
    function Save_To_XML
-     (View : access View_Record) return Glib.Xml_Int.Node_Ptr
+     (View : access View_Record) return XML_Utils.Node_Ptr
    is
       pragma Unreferenced (View);
    begin
@@ -200,7 +200,7 @@ package body Generic_Views is
             Kernel      => Kernel,
             Module_Name => Module_Name,
             Priority    => GPS.Kernel.Modules.Default_Priority);
-         GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+         GPS.Kernel.Register_Desktop_Functions
            (Save_Desktop_Access, Load_Desktop_Access);
 
          Register_Menu

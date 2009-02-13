@@ -23,7 +23,7 @@ with GNAT.Calendar.Time_IO; use GNAT.Calendar; use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;           use GNAT;
 with GNAT.Strings;
 
-with Glib.Xml_Int;          use Glib.Xml_Int;
+with XML_Utils;          use XML_Utils;
 
 with GPS.Kernel.Project;    use GPS.Kernel.Project;
 with Projects;              use Projects;

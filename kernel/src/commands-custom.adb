@@ -34,7 +34,7 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -174,7 +174,7 @@ package body Commands.Custom is
 
    function To_XML
      (Editor : access Custom_Component_Editor_Record'Class)
-      return Glib.Xml_Int.Node_Ptr;
+      return XML_Utils.Node_Ptr;
    --  Return the XML representation of the component edited in Editor
 
    procedure On_Command_Changed (Editor : access Gtk_Widget_Record'Class);
@@ -228,7 +228,7 @@ package body Commands.Custom is
 
    overriding function To_XML
      (Editor : access Custom_Command_Editor_Record)
-      return Glib.Xml_Int.Node_Ptr;
+      return XML_Utils.Node_Ptr;
    --  See inherited documentation
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -304,18 +304,18 @@ package body Commands.Custom is
    --  Free Execution and its contents
 
    function External_From_XML
-     (Command                      : Glib.Xml_Int.Node_Ptr;
+     (Command                      : XML_Utils.Node_Ptr;
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Command_Component;
    function Shell_From_XML
      (Kernel               : access Kernel_Handle_Record'Class;
-      Command              : Glib.Xml_Int.Node_Ptr;
+      Command              : XML_Utils.Node_Ptr;
       Default_Show_Command : Boolean) return Command_Component;
    --  Create a command component from an XML node
 
    function From_XML
      (Kernel                       : access Kernel_Handle_Record'Class;
-      Command                      : Glib.Xml_Int.Node_Ptr;
+      Command                      : XML_Utils.Node_Ptr;
       Name                         : String;
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Components_Array_Access;
@@ -341,7 +341,7 @@ package body Commands.Custom is
    -------------------
 
    function Create_Filter
-     (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter
+     (Command : XML_Utils.Node_Ptr) return Action_Filter
    is
       Filter : Macro_Filter;
       N      : Node_Ptr := Command;
@@ -805,7 +805,7 @@ package body Commands.Custom is
 
    function Shell_From_XML
      (Kernel               : access Kernel_Handle_Record'Class;
-      Command              : Glib.Xml_Int.Node_Ptr;
+      Command              : XML_Utils.Node_Ptr;
       Default_Show_Command : Boolean) return Command_Component
    is
       Output       : constant String :=
@@ -841,7 +841,7 @@ package body Commands.Custom is
    -----------------------
 
    function External_From_XML
-     (Command                      : Glib.Xml_Int.Node_Ptr;
+     (Command                      : XML_Utils.Node_Ptr;
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Command_Component
    is
@@ -913,7 +913,7 @@ package body Commands.Custom is
 
    function From_XML
      (Kernel                       : access Kernel_Handle_Record'Class;
-      Command                      : Glib.Xml_Int.Node_Ptr;
+      Command                      : XML_Utils.Node_Ptr;
       Name                         : String;
       Default_Show_In_Task_Manager : Boolean;
       Default_Show_Command         : Boolean) return Components_Array_Access
@@ -1051,7 +1051,7 @@ package body Commands.Custom is
      (Item                 : out Custom_Command_Access;
       Name                 : String;
       Kernel               : Kernel_Handle;
-      Command              : Glib.Xml_Int.Node_Ptr;
+      Command              : XML_Utils.Node_Ptr;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
       Show_In_Task_Manager : Boolean := False) is
@@ -2312,7 +2312,7 @@ package body Commands.Custom is
 
    overriding function To_XML
      (Editor : access Custom_Command_Editor_Record)
-      return Glib.Xml_Int.Node_Ptr
+      return XML_Utils.Node_Ptr
    is
       Action, Tmp, Parent, XML : Node_Ptr;
    begin
@@ -2356,7 +2356,7 @@ package body Commands.Custom is
 
    function To_XML
      (Editor : access Custom_Component_Editor_Record'Class)
-      return Glib.Xml_Int.Node_Ptr
+      return XML_Utils.Node_Ptr
    is
       Output      : constant String := Get_Text (Editor.Output);
       Node        : Node_Ptr;
@@ -2373,7 +2373,7 @@ package body Commands.Custom is
             return null;
          end if;
 
-         Node := new Glib.Xml_Int.Node;
+         Node := new XML_Utils.Node;
 
          case Editor.The_Type is
             when Component_Shell =>

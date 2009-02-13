@@ -23,7 +23,6 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with GNATCOLL.VFS_Utils;  use GNATCOLL.VFS_Utils;
 
-with Glib.Xml_Int;        use Glib.Xml_Int;
 with Glib;                use Glib;
 
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
@@ -39,6 +38,7 @@ with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
 with Gtk.Widget;          use Gtk.Widget;
 
 with GUI_Utils;           use GUI_Utils;
+with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
 with XML_Parsers;
 

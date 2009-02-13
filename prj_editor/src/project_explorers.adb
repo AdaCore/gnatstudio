@@ -30,7 +30,7 @@ with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
@@ -1231,9 +1231,10 @@ package body Project_Explorers is
       else
          Set (Explorer.Tree.Model, Node,
               Display_Name_Column,
-              +Relative_Path_Name
-               (+Node_Text, Dir_Name (Project_Path (Project)).all,
-                Build_Server));
+              Unknown_To_UTF8
+                (+Relative_Path_Name
+                (+Node_Text, Dir_Name (Project_Path (Project)).all,
+                 Build_Server)));
       end if;
    end Update_Directory_Node_Text;
 
@@ -3086,7 +3087,7 @@ package body Project_Explorers is
          Module_Name => Explorer_Module_Name,
          Priority    => GPS.Kernel.Modules.Default_Priority);
 
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Locate_File_In_Explorer_Command;

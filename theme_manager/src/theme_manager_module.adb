@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003-2008, AdaCore                --
+--                   Copyright (C) 2003-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,7 @@ with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with XML_Utils;                use XML_Utils;
 with GPS.Intl;                 use GPS.Intl;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -278,7 +278,7 @@ package body Theme_Manager_Module is
                  (Name        => new String'(Name),
                   Description => new String'(Descr),
                   Category    => new String'(Cat),
-                  Xml         => new Glib.Xml_Int.Node,
+                  Xml         => new XML_Utils.Node,
                   Next        => Theme_Manager_Module.Themes);
                Theme_Manager_Module.Themes := Themes;
                Trace (Me, "Registering new theme: " & Name);

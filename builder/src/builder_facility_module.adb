@@ -27,7 +27,6 @@ with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
@@ -76,6 +75,7 @@ with Build_Command_Manager;     use Build_Command_Manager;
 
 with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
+with XML_Utils;                 use XML_Utils;
 
 package body Builder_Facility_Module is
 
@@ -226,7 +226,7 @@ package body Builder_Facility_Module is
    overriding procedure Customize
      (Module : access Builder_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
 
@@ -332,7 +332,7 @@ package body Builder_Facility_Module is
    procedure Free (Ar : in out Argument_List);
    --  Free memory associated to Ar.
 
-   procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr);
+   procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
    --  XML format.
 
@@ -1597,7 +1597,7 @@ package body Builder_Facility_Module is
    -- Parse_Mode_Node --
    ---------------------
 
-   procedure Parse_Mode_Node (XML : Glib.Xml_Int.Node_Ptr) is
+   procedure Parse_Mode_Node (XML : Node_Ptr) is
       Mode       : Mode_Record;
       C          : Node_Ptr;
       First_Mode : Boolean := False;
@@ -1796,7 +1796,7 @@ package body Builder_Facility_Module is
    overriding procedure Customize
      (Module : access Builder_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Module, File);

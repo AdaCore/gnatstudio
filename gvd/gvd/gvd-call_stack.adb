@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,6 @@ with GNAT.Strings;           use GNAT.Strings;
 with Gdk.Event;              use Gdk.Event;
 
 with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
 with Glib;                   use Glib;
 
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
@@ -55,6 +54,7 @@ with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
 with Process_Proxies;        use Process_Proxies;
 with Traces;                 use Traces;
+with XML_Utils;              use XML_Utils;
 
 package body GVD.Call_Stack is
 
@@ -98,9 +98,9 @@ package body GVD.Call_Stack is
    overriding procedure On_State_Changed
      (View : access Call_Stack_Record; New_State : Debugger_State);
    overriding procedure Load_From_XML
-     (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr);
+     (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr);
    overriding function Save_To_XML
-     (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr;
+     (View : access Call_Stack_Record) return XML_Utils.Node_Ptr;
    --  See inherited documentation
 
    procedure Initialize
@@ -433,7 +433,7 @@ package body GVD.Call_Stack is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access Call_Stack_Record; XML : Glib.Xml_Int.Node_Ptr) is
+     (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr) is
    begin
       View.Backtrace_Mask := Stack_List_Mask'Value (XML.Value.all);
    exception
@@ -446,7 +446,7 @@ package body GVD.Call_Stack is
    -----------------
 
    overriding function Save_To_XML
-     (View : access Call_Stack_Record) return Glib.Xml_Int.Node_Ptr
+     (View : access Call_Stack_Record) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin

@@ -19,7 +19,7 @@
 
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
-with Glib.Xml_Int;          use Glib.Xml_Int;
+with XML_Utils;          use XML_Utils;
 
 package body Docgen2_Backend.HTML is
 
@@ -169,7 +169,7 @@ package body Docgen2_Backend.HTML is
    is
       pragma Unreferenced (Backend);
    begin
-      return Glib.Xml_Int.Protect  (S);
+      return XML_Utils.Protect  (S);
    end Filter;
 
    -------------

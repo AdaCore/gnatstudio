@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;                 use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Label;                 use Gtk.Label;
@@ -567,7 +567,7 @@ package body GPS.Kernel.Task_Manager is
          Kernel       => Kernel,
          Module_Name  => Task_Manager_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Set_Progress_Area

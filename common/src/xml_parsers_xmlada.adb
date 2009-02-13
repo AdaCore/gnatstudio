@@ -18,11 +18,9 @@
 -----------------------------------------------------------------------
 
 with Unicode.CES;
-with XML_Readers;
+with XML_Readers; use XML_Readers;
 
 package body XML_Parsers is
-   package Gtk_Readers is new XML_Readers (Glib.Gint, 0, Glib.Xml_Int);
-   use Gtk_Readers;
 
    -----------
    -- Parse --
@@ -30,12 +28,12 @@ package body XML_Parsers is
 
    procedure Parse
      (File  : Filesystem_String;
-      Tree  : out Glib.Xml_Int.Node_Ptr;
+      Tree  : out XML_Utils.Node_Ptr;
       Error : out GNAT.Strings.String_Access)
    is
       Err : Unicode.CES.Byte_Sequence_Access;
    begin
-      Gtk_Readers.Parse (File, Tree, Err);
+      Parse (File, Tree, Err);
       Error := GNAT.Strings.String_Access (Err);
    end Parse;
 
@@ -44,15 +42,15 @@ package body XML_Parsers is
    ------------------
 
    procedure Parse_Buffer
-     (Buffer     : Glib.UTF8_String;
+     (Buffer     : String;
       From_File  : Filesystem_String := "<input>";
       Start_Line : Natural := 1;
-      Tree       : out Glib.Xml_Int.Node_Ptr;
+      Tree       : out XML_Utils.Node_Ptr;
       Error      : out GNAT.Strings.String_Access)
    is
       Err : Unicode.CES.Byte_Sequence_Access;
    begin
-      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err, +From_File, Start_Line);
+      Parse_Buffer (Buffer, Tree, Err, +From_File, Start_Line);
       Error := GNAT.Strings.String_Access (Err);
    end Parse_Buffer;
 

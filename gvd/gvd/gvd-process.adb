@@ -34,7 +34,7 @@ with System;                     use System;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 
 with Gtk.Arguments;              use Gtk.Arguments;
 with Gtk.Dialog;                 use Gtk.Dialog;
@@ -194,10 +194,10 @@ package body GVD.Process is
 
    overriding procedure Save
      (Property : access Breakpoint_Property_Record;
-      Node     : in out Glib.Xml_Int.Node_Ptr);
+      Node     : in out XML_Utils.Node_Ptr);
    overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
-      From     : Glib.Xml_Int.Node_Ptr);
+      From     : XML_Utils.Node_Ptr);
    overriding procedure Destroy (Property : in out Breakpoint_Property_Record);
    --  See inherited documentation
 
@@ -228,7 +228,7 @@ package body GVD.Process is
 
    overriding procedure Save
      (Property : access Breakpoint_Property_Record;
-      Node     : in out Glib.Xml_Int.Node_Ptr)
+      Node     : in out XML_Utils.Node_Ptr)
    is
       Breaks : Node_Ptr;
    begin
@@ -238,7 +238,7 @@ package body GVD.Process is
             declare
                Br : Breakpoint_Data renames Property.Breakpoints (B);
             begin
-               Breaks := new Glib.Xml_Int.Node;
+               Breaks := new XML_Utils.Node;
                Breaks.Next := Node.Child;
                Node.Child := Breaks;
                Breaks.Tag := new String'("breakpoint");
@@ -304,7 +304,7 @@ package body GVD.Process is
 
    overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
-      From     : Glib.Xml_Int.Node_Ptr)
+      From     : XML_Utils.Node_Ptr)
    is
       Breaks : Node_Ptr;
       Count  : Natural := 0;

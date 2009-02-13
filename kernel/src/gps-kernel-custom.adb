@@ -24,7 +24,7 @@ with System.Assertions;         use System.Assertions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -331,7 +331,7 @@ package body GPS.Kernel.Custom is
 
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Customization : UTF8_String;
+      Customization : XML_Utils.UTF8_String;
       From_File     : Filesystem_String;
       Start_Line    : Positive := 1) return String
    is
@@ -626,7 +626,7 @@ package body GPS.Kernel.Custom is
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
       Load           : Boolean;
-      Initialization : Glib.Xml_Int.Node_Ptr)
+      Initialization : XML_Utils.Node_Ptr)
    is
       Startup : Script_Description_Access :=
                   Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,

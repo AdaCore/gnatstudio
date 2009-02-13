@@ -40,16 +40,16 @@ with Input_Sources.Strings; use Input_Sources.Strings;
 
 package body XML_Readers is
 
-   use Glib_XML;
+   use XML_Utils;
 
    function Attributes_From_List
-     (Atts : Sax.Attributes.Attributes'Class) return Glib.String_Ptr;
-   --  Convert a list of attributes to a string suitable for Glib.XML
+     (Atts : Sax.Attributes.Attributes'Class) return XML_Utils.String_Ptr;
+   --  Convert a list of attributes to a string suitable for XML_Utils
 
    procedure Parse
      (Start_Line : Natural := 1;
       Input : in out Input_Source'Class;
-      Tree  : out Glib_XML.Node_Ptr;
+      Tree  : out XML_Utils.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access);
    --  Parse an input stream.
    --  Input is freed before returning from this procedure
@@ -72,7 +72,7 @@ package body XML_Readers is
    --------------------------
 
    function Attributes_From_List
-     (Atts : Sax.Attributes.Attributes'Class) return Glib.String_Ptr
+     (Atts : Sax.Attributes.Attributes'Class) return XML_Utils.String_Ptr
    is
       Str    : Unbounded_String;
       Length : constant Natural := Get_Length (Atts);
@@ -110,14 +110,14 @@ package body XML_Readers is
       pragma Unreferenced (Local_Name, Namespace_URI);
       N : Node_Ptr;
    begin
-      N := new Glib_XML.Node'
+      N := new XML_Utils.Node'
         (Tag           => new String'(Qname),
          Attributes    => Attributes_From_List (Atts),
          Value         => new String'(""),
          Parent        => null,
          Child         => null,
          Next          => null,
-         Specific_Data => No_Specific_Data);
+         Specific_Data => 0);
 
       if Handler.Current_Node /= null then
          Add_Child (Handler.Current_Node, N, Append => True);
@@ -152,7 +152,7 @@ package body XML_Readers is
    overriding procedure Characters
      (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
-      S : Glib.String_Ptr;
+      S : XML_Utils.String_Ptr;
    begin
       if Handler.Current_Node /= null then
          if Handler.Current_Node.Value /= null then
@@ -163,7 +163,7 @@ package body XML_Readers is
             S (1 .. Handler.Current_Node.Value'Length) :=
               Handler.Current_Node.Value.all;
             S (Handler.Current_Node.Value'Length + 1 .. S'Last) := Ch;
-            Glib.Free (Handler.Current_Node.Value);
+            Free (Handler.Current_Node.Value);
             Handler.Current_Node.Value := S;
          else
             Handler.Current_Node.Value := new String'(Ch);
@@ -194,7 +194,7 @@ package body XML_Readers is
    -- Get_Tree --
    --------------
 
-   function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr is
+   function Get_Tree (Read : Gtk_Reader) return XML_Utils.Node_Ptr is
    begin
       return Read.Tree;
    end Get_Tree;
@@ -246,8 +246,8 @@ package body XML_Readers is
    -- Parse --
    -----------
 
-   function Parse (File : Filesystem_String) return Glib_XML.Node_Ptr is
-      Tree  : Glib_XML.Node_Ptr;
+   function Parse (File : Filesystem_String) return XML_Utils.Node_Ptr is
+      Tree  : XML_Utils.Node_Ptr;
       Error : Unicode.CES.Byte_Sequence_Access;
    begin
       Parse (File, Tree, Error);
@@ -261,7 +261,7 @@ package body XML_Readers is
 
    procedure Parse
      (File  : Filesystem_String;
-      Tree  : out Glib_XML.Node_Ptr;
+      Tree  : out XML_Utils.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is
       Input : Mmap_Input;
@@ -278,7 +278,7 @@ package body XML_Readers is
    procedure Parse
      (Start_Line : Natural := 1;
       Input : in out Input_Source'Class;
-      Tree  : out Glib_XML.Node_Ptr;
+      Tree  : out XML_Utils.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is
       Reader : Gtk_Reader;
@@ -308,7 +308,7 @@ package body XML_Readers is
 
    procedure Parse_Buffer
      (Buffer     : Glib.UTF8_String;
-      Tree       : out Glib_XML.Node_Ptr;
+      Tree       : out XML_Utils.Node_Ptr;
       Error      : out Unicode.CES.Byte_Sequence_Access;
       From_File  : String := "<input>";
       Start_Line : Natural := 1)

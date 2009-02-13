@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,7 +39,7 @@ with Gtk.Viewport;        use Gtk.Viewport;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Combo;        use Gtkada.Combo;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Glib.Xml_Int;        use Glib.Xml_Int;
+with XML_Utils;        use XML_Utils;
 with Gtkada.MDI;          use Gtkada.MDI;
 
 with Projects.Editor;     use Projects, Projects.Editor;
@@ -531,7 +531,7 @@ package body Scenario_Views is
         (Module      => Scenario_Module_Id,
          Kernel      => Kernel,
          Module_Name => "Scenario_View");
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu

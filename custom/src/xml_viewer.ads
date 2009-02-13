@@ -20,7 +20,7 @@
 
 --  This package provides XML Tree viewers
 
-with Glib.Xml_Int;
+with XML_Utils;
 with GPS.Kernel; use GPS.Kernel;
 with Gtk.Box;
 with Gtk.Tree_Model;
@@ -37,7 +37,7 @@ private
    function Node_Parser
      (View        : access Abstract_XML_Viewer_Record;
       Parent      : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node        : Glib.Xml_Int.Node_Ptr;
+      Node        : XML_Utils.Node_Ptr;
       Child_Index : Positive) return Gtk.Tree_Model.Gtk_Tree_Iter is abstract;
    --  Parse Node, and create a new row in View.
    --  Returns an iterator to the newly created row. If Null_Iter is returned,
@@ -51,7 +51,7 @@ private
      (View         : access Abstract_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : Glib.Xml_Int.Node_Ptr) return Boolean is abstract;
+      Node         : XML_Utils.Node_Ptr) return Boolean is abstract;
    --  Called when a row of the table is clicked on.
    --  Return true if an action was performed
 

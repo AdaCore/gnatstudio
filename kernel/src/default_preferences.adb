@@ -28,7 +28,7 @@ with Gdk.Types;                use Gdk.Types;
 
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with XML_Utils;             use XML_Utils;
 
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
@@ -884,12 +884,12 @@ package body Default_Preferences is
       C          : Preferences_Maps.Cursor := First (Manager.Preferences);
       P          : Preference;
    begin
-      File := new Glib.Xml_Int.Node;
+      File := new XML_Utils.Node;
       File.Tag := new String'("Prefs");
 
       while Has_Element (C) loop
          P := Element (C);
-         Node     := new Glib.Xml_Int.Node;
+         Node     := new XML_Utils.Node;
          Node.Tag := new String'("pref");
          Set_Attribute (Node, "name", Get_Name (P));
          Node.Value := new String'(Get_Pref (P));

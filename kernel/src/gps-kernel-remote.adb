@@ -39,7 +39,7 @@ with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Glist;
 with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Check_Button;           use Gtk.Check_Button;
@@ -226,11 +226,11 @@ package body GPS.Kernel.Remote is
 
    procedure Parse_Remote_Machine_Descriptor_Node
      (Kernel    : Kernel_Handle;
-      Node      : Glib.Xml_Int.Node_Ptr;
+      Node      : XML_Utils.Node_Ptr;
       Attribute : Descriptor_Attribute);
    --  Parse a remote_machine_descriptor node
 
-   procedure Parse_Remote_Path_Node (Node : Glib.Xml_Int.Node_Ptr);
+   procedure Parse_Remote_Path_Node (Node : XML_Utils.Node_Ptr);
    --  Parse a remote_path node
 
    ------------------------
@@ -428,9 +428,9 @@ package body GPS.Kernel.Remote is
 
    overriding procedure Save
      (Property : access Servers_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr);
+      Node     : in out XML_Utils.Node_Ptr);
    overriding procedure Load
-     (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out Servers_Property; From : XML_Utils.Node_Ptr);
    overriding procedure Destroy
      (Property : in out Servers_Property);
 
@@ -502,7 +502,7 @@ package body GPS.Kernel.Remote is
 
    procedure Parse_Remote_Machine_Descriptor_Node
      (Kernel    : Kernel_Handle;
-      Node      : Glib.Xml_Int.Node_Ptr;
+      Node      : XML_Utils.Node_Ptr;
       Attribute : Descriptor_Attribute)
    is
       Nickname           : constant String := Get_Attribute (Node, "nickname");
@@ -516,7 +516,7 @@ package body GPS.Kernel.Remote is
                              Get_Attribute (Node, "remote_sync", "rsync");
       Debug_Console      : constant String :=
                              Get_Attribute (Node, "debug_console", "false");
-      Field              : Glib.String_Ptr;
+      Field              : XML_Utils.String_Ptr;
       Max_Nb_Connections : Natural;
       User_Name          : GNAT.OS_Lib.String_Access;
       Timeout            : Natural;
@@ -687,7 +687,7 @@ package body GPS.Kernel.Remote is
    ----------------------------
 
    procedure Parse_Remote_Path_Node
-     (Node      : Glib.Xml_Int.Node_Ptr)
+     (Node      : XML_Utils.Node_Ptr)
    is
       Nickname : constant String := Get_Attribute (Node, "server_name");
       List     : constant Mirror_List_Access := Get_List (Nickname);
@@ -843,7 +843,7 @@ package body GPS.Kernel.Remote is
 
          --  Save remote paths list
          if not Get_List (Desc.Nickname.all).Is_Empty then
-            Item := new Glib.Xml_Int.Node;
+            Item := new XML_Utils.Node;
             Item.Tag := new String'("remote_path_config");
             Set_Attribute (Item, "server_name", Desc.Nickname.all);
 
@@ -859,7 +859,7 @@ package body GPS.Kernel.Remote is
                   Path := Mirror_List.Element (Cursor);
 
                   if Path /= Null_Path then
-                     Child := new Glib.Xml_Int.Node;
+                     Child := new XML_Utils.Node;
                      Child.Tag := new String'("mirror_path");
                      Set_Attribute
                        (Child, "sync",
@@ -2856,14 +2856,14 @@ package body GPS.Kernel.Remote is
 
    overriding procedure Save
      (Property : access Servers_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr)
+      Node     : in out XML_Utils.Node_Ptr)
    is
       Srv : Node_Ptr;
    begin
       Trace (Me, "Saving remote property");
 
       for J in Property.Servers'Range loop
-         Srv := new Glib.Xml_Int.Node;
+         Srv := new XML_Utils.Node;
          Srv.Tag := new String'(Server_Type'Image (J));
          Srv.Value := new String'(Property.Servers (J).Nickname.all);
          Add_Child (Node, Srv);
@@ -2875,7 +2875,7 @@ package body GPS.Kernel.Remote is
    ----------
 
    overriding procedure Load
-     (Property : in out Servers_Property; From : Glib.Xml_Int.Node_Ptr)
+     (Property : in out Servers_Property; From : XML_Utils.Node_Ptr)
    is
       Srv : Node_Ptr;
    begin
@@ -3049,19 +3049,19 @@ package body GPS.Kernel.Remote is
    overriding procedure Customize
      (Module : access Remote_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
       Child                     : Node_Ptr;
-      Name                      : Glib.String_Ptr;
-      Start_Command             : Glib.String_Ptr;
+      Name                      : XML_Utils.String_Ptr;
+      Start_Command             : XML_Utils.String_Ptr;
       Start_Command_Common_Args : String_List_Access;
       Start_Command_User_Args   : String_List_Access;
-      Interrupt                 : Glib.String_Ptr;
-      User_Prompt_Ptrn          : Glib.String_Ptr;
-      Password_Prompt_Ptrn      : Glib.String_Ptr;
-      Passphrase_Prompt_Ptrn    : Glib.String_Ptr;
+      Interrupt                 : XML_Utils.String_Ptr;
+      User_Prompt_Ptrn          : XML_Utils.String_Ptr;
+      Password_Prompt_Ptrn      : XML_Utils.String_Ptr;
+      Passphrase_Prompt_Ptrn    : XML_Utils.String_Ptr;
       Extra_Ptrn_Length         : Natural;
       Use_Pipes                 : Boolean;
 
@@ -3082,21 +3082,21 @@ package body GPS.Kernel.Remote is
          declare
             Shell_Name             : constant String
                                       := Get_Attribute (Node, "name", "");
-            Shell_Cmd              : Glib.String_Ptr;
+            Shell_Cmd              : XML_Utils.String_Ptr;
             Default_Generic_Prompt : aliased String
                                       := "^[^\n]*[#$%>\]}\\] *$";
-            Generic_Prompt         : Glib.String_Ptr;
-            GPS_Prompt             : Glib.String_Ptr;
-            FS_Str                 : Glib.String_Ptr;
-            No_Echo_Cmd            : Glib.String_Ptr;
+            Generic_Prompt         : XML_Utils.String_Ptr;
+            GPS_Prompt             : XML_Utils.String_Ptr;
+            FS_Str                 : XML_Utils.String_Ptr;
+            No_Echo_Cmd            : XML_Utils.String_Ptr;
             FS                     : Filesystem_Type;
             Init_Cmds_Child        : Node_Ptr;
             Exit_Cmds_Child        : Node_Ptr;
             Nb_Init_Cmds           : Natural;
             Nb_Exit_Cmds           : Natural;
-            Cd_Cmd                 : Glib.String_Ptr;
-            Get_Status_Cmd         : Glib.String_Ptr;
-            Get_Status_Ptrn        : Glib.String_Ptr;
+            Cd_Cmd                 : XML_Utils.String_Ptr;
+            Get_Status_Cmd         : XML_Utils.String_Ptr;
+            Get_Status_Ptrn        : XML_Utils.String_Ptr;
             Empty_String           : aliased String := "";
 
          begin
@@ -3364,7 +3364,7 @@ package body GPS.Kernel.Remote is
             Basic_Types.Unchecked_Free (Start_Command_Common_Args);
          end;
 
-         Glib.Xml_Int.Free (Name);
+         XML_Utils.Free (Name);
       end if;
    end Customize;
 

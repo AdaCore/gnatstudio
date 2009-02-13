@@ -19,7 +19,6 @@
 
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gdk.Event;              use Gdk.Event;
 
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
@@ -57,6 +56,7 @@ with Pango.Layout;           use Pango.Layout;
 with Projects.Registry;      use Projects.Registry;
 with Projects;               use Projects;
 with Traces;                 use Traces;
+with XML_Utils;              use XML_Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
@@ -1068,7 +1068,7 @@ package body Browsers.Dependency_Items is
          Kernel       => Kernel,
          Module_Name  => Dependency_Browser_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? Sensitivity will be handled in the hook "contextual_menu"

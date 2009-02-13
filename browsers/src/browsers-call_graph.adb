@@ -27,7 +27,6 @@ with Gdk.Event;                     use Gdk.Event;
 
 with Glib;                          use Glib;
 with Glib.Object;                   use Glib.Object;
-with Glib.Xml_Int;                  use Glib.Xml_Int;
 
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Button;                    use Gtk.Button;
@@ -71,6 +70,7 @@ with GPS.Kernel;                    use GPS.Kernel;
 with GPS.Location_View;             use GPS.Location_View;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
+with XML_Utils;                     use XML_Utils;
 with Traces;                        use Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with GNATCOLL.Filesystem;                    use GNATCOLL.Filesystem;
@@ -2178,7 +2178,7 @@ package body Browsers.Call_Graph is
          Kernel      => Kernel,
          Module_Name => Call_Graph_Module_Name,
          Priority    => GPS.Kernel.Modules.Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Entity_Calls_Command;

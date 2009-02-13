@@ -508,9 +508,9 @@ package body Src_Editor_Module.Markers is
    ----------
 
    overriding function Save
-     (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr
+     (Marker : access File_Marker_Record) return XML_Utils.Node_Ptr
    is
-      Node : constant Node_Ptr := new Glib.Xml_Int.Node;
+      Node : constant Node_Ptr := new XML_Utils.Node;
    begin
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
@@ -529,7 +529,7 @@ package body Src_Editor_Module.Markers is
 
    function Load
      (Kernel   : access Kernel_Handle_Record'Class;
-      From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker
+      From_XML : XML_Utils.Node_Ptr := null) return Location_Marker
    is
       Source : Source_Editor_Box;
       Line   : Editable_Line_Type;

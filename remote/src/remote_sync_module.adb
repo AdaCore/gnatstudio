@@ -25,7 +25,7 @@ with GNAT.Expect;         use GNAT.Expect;
 with GNAT.Strings;
 
 with Glib;                use Glib;
-with Glib.Xml_Int;        use Glib.Xml_Int;
+with XML_Utils;        use XML_Utils;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Dialog;          use Gtk.Dialog;

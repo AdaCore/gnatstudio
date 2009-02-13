@@ -29,7 +29,7 @@ with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
@@ -1595,7 +1595,7 @@ package body Project_Explorers_Files is
          Kernel      => Kernel,
          Module_Name => "Files_View",
          Priority    => GPS.Kernel.Modules.Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel, Tools, -"_Files", "", On_Open_Explorer'Access,

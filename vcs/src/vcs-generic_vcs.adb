@@ -28,9 +28,6 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-
 with Basic_Types;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
@@ -53,6 +50,7 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with String_Utils;              use String_Utils;
+with XML_Utils;                 use XML_Utils;
 
 package body VCS.Generic_VCS is
 

@@ -24,7 +24,6 @@ with Gdk.Event;                use Gdk.Event;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -66,6 +65,7 @@ with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with XML_Parsers;              use XML_Parsers;
+with XML_Utils;                use XML_Utils;
 
 package body Action_Editor is
 

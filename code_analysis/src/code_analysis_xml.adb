@@ -93,7 +93,7 @@ package body Code_Analysis_XML is
       Parent   : Node_Ptr)
    is
       use File_Maps;
-      Loc      : constant Node_Ptr := new Glib.Xml_Int.Node;
+      Loc      : constant Node_Ptr := new XML_Utils.Node;
       Map_Cur  : Cursor := Prj_Node.Files.First;
       Sort_Arr : Code_Analysis.File_Array
         (1 .. Integer (Prj_Node.Files.Length));
@@ -158,7 +158,7 @@ package body Code_Analysis_XML is
      (File_Node : Code_Analysis.File_Access; Parent : Node_Ptr)
    is
       use Subprogram_Maps;
-      Loc       : constant Node_Ptr := new Glib.Xml_Int.Node;
+      Loc       : constant Node_Ptr := new XML_Utils.Node;
       Map_Cur   : Cursor := File_Node.Subprograms.First;
       Sort_Arr  : Subprogram_Array
         (1 .. Integer (File_Node.Subprograms.Length));
@@ -258,7 +258,7 @@ package body Code_Analysis_XML is
      (Subp_Node : Subprogram_Access; Parent : Node_Ptr)
    is
       use Subprogram_Maps;
-      Loc : constant Node_Ptr := new Glib.Xml_Int.Node;
+      Loc : constant Node_Ptr := new XML_Utils.Node;
    begin
       Loc.Tag := new String'("Subprogram");
       Add_Child (Parent, Loc, True);
@@ -279,7 +279,7 @@ package body Code_Analysis_XML is
       Dummy : aliased Boolean;
    begin
       if Line_Node.Number /= 0 then
-         Loc := new Glib.Xml_Int.Node;
+         Loc := new XML_Utils.Node;
          Loc.Tag := new String'("Line");
          Add_Child (Parent, Loc, True);
          Set_Attribute (Loc, "number", Natural'Image (Line_Node.Number));

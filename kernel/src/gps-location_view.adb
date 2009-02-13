@@ -36,7 +36,6 @@ with Glib.Convert;
 with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
-with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
 
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
@@ -70,6 +69,7 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with UTF8_Utils;               use UTF8_Utils;
+with XML_Utils;                use XML_Utils;
 with Traces;                   use Traces;
 
 package body GPS.Location_View is
@@ -272,7 +272,7 @@ package body GPS.Location_View is
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
-      Message            : UTF8_String;
+      Message            : Glib.UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
       Column             : Visible_Column_Type;
@@ -293,7 +293,7 @@ package body GPS.Location_View is
       Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
-      Message            : UTF8_String;
+      Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
@@ -974,7 +974,7 @@ package body GPS.Location_View is
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
-      Message            : UTF8_String;
+      Message            : Glib.UTF8_String;
       Mark               : Integer := -1;
       Line               : Integer;
       Column             : Visible_Column_Type;
@@ -1283,7 +1283,7 @@ package body GPS.Location_View is
       Column             : Visible_Column_Type;
       Length             : Natural;
       Highlight          : Boolean;
-      Message            : UTF8_String;
+      Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
       Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
@@ -1999,7 +1999,7 @@ package body GPS.Location_View is
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : Glib.UTF8_String;
       File               : GNATCOLL.VFS.Virtual_File;
-      Text               : UTF8_String;
+      Text               : Glib.UTF8_String;
       Line               : Positive;
       Column             : Visible_Column_Type;
       Length             : Natural := 0;
@@ -2909,7 +2909,7 @@ package body GPS.Location_View is
       Add_Hook (Kernel, Location_Action_Hook,
                 Wrapper (Location_Hook'Access),
                 Name => "location_view.location");
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Clear_Locations_View_Command;
@@ -3210,7 +3210,7 @@ package body GPS.Location_View is
          Value : Integer) return Integer;
       --  If Value is -1, return Pref, otherwise return Value
 
-      function Get_Message (Last : Natural) return UTF8_String;
+      function Get_Message (Last : Natural) return Glib.UTF8_String;
       --  Return the error message. For backward compatibility with existing
       --  preferences file, we check that the message Index is still good.
       --  Otherwise, we return the last part of the regexp
@@ -3282,7 +3282,7 @@ package body GPS.Location_View is
       -- Get_Message --
       -----------------
 
-      function Get_Message (Last : Natural) return String is
+      function Get_Message (Last : Natural) return Glib.UTF8_String is
       begin
          if Matched (Msg_Index) /= No_Match then
             return Text

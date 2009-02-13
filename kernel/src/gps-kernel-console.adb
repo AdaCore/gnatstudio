@@ -27,7 +27,7 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Object;             use Gtk.Object;
@@ -554,7 +554,7 @@ package body GPS.Kernel.Console is
          Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Initialize_Console (Kernel);

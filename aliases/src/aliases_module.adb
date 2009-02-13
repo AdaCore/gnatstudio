@@ -39,7 +39,6 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
-with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -90,6 +89,7 @@ with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with String_Hash;
 with String_Utils;             use String_Utils;
+with XML_Utils;                use XML_Utils;
 with Traces;                   use Traces;
 with XML_Parsers;
 
@@ -172,7 +172,7 @@ package body Aliases_Module is
    overriding procedure Customize
      (Module : access Aliases_Module_Id_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
 
@@ -2144,7 +2144,7 @@ package body Aliases_Module is
    is
       pragma Unreferenced (Level);
       Child  : Node_Ptr;
-      Expand : String_Ptr;
+      Expand : XML_Utils.String_Ptr;
       P      : Param_Access;
       Old    : Alias_Record;
       N      : Node_Ptr := Node;

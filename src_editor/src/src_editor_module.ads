@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ with Gdk.GC;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
 
 with Glib.Object;
-with Glib.Xml_Int;       use Glib.Xml_Int;
 with Glib;               use Glib;
 
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
@@ -46,6 +45,7 @@ with GNATCOLL.VFS;                use GNATCOLL.VFS;
 
 with Basic_Types;        use Basic_Types;
 with Src_Editor_Buffer;  use Src_Editor_Buffer;
+with XML_Utils;          use XML_Utils;
 
 package Src_Editor_Module is
 
@@ -221,7 +221,7 @@ private
    type Lines_Revealed_Hook_Record is new GPS.Kernel.Hooks.Function_With_Args
       with null record;
    type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
-   procedure Execute
+   overriding procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
@@ -254,25 +254,25 @@ private
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
-   procedure Destroy (Id : in out Source_Editor_Module_Record);
-   procedure Default_Context_Factory
+   overriding procedure Destroy (Id : in out Source_Editor_Module_Record);
+   overriding procedure Default_Context_Factory
      (Module  : access Source_Editor_Module_Record;
       Context : in out Selection_Context;
       Child   : Gtk.Widget.Gtk_Widget);
-   function Save_Function
+   overriding function Save_Function
      (Module       : access Source_Editor_Module_Record;
       Child        : Gtk.Widget.Gtk_Widget;
       Mode         : Save_Function_Mode;
       Single_Child : Boolean;
       Force        : Boolean) return Boolean;
-   procedure Customize
+   overriding procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
-   function Bookmark_Handler
+   overriding function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
-      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
    --  See inherited documentation
 
    ----------

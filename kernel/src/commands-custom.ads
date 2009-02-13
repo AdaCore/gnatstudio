@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2002-2008, AdaCore                  --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,7 +61,7 @@ with GNAT.Expect;
 with GNATCOLL.Scripts;
 with GNAT.Strings;            use GNAT.Strings;
 
-with Glib.Xml_Int;
+with XML_Utils;
 
 with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
@@ -100,7 +100,7 @@ package Commands.Custom is
      (Item                 : out Custom_Command_Access;
       Name                 : String;
       Kernel               : Kernel_Handle;
-      Command              : Glib.Xml_Int.Node_Ptr;
+      Command              : XML_Utils.Node_Ptr;
       Default_Output       : String := Console_Output;
       Show_Command         : Boolean := True;
       Show_In_Task_Manager : Boolean := False);
@@ -118,7 +118,7 @@ package Commands.Custom is
    --  Name is used in the progress bar while the command is executing
 
    function Create_Filter
-     (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter;
+     (Command : XML_Utils.Node_Ptr) return Action_Filter;
    --  Return null or a filter suitable for Command. This filter ensures that
    --  all %f,... parameters can be properly substituted.
    --  This filter should be checked if the command is used as an action in

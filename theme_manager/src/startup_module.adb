@@ -20,7 +20,7 @@
 with Ada.Unchecked_Conversion;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Values;              use Glib.Values;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with XML_Utils;             use XML_Utils;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
@@ -108,9 +108,9 @@ package body Startup_Module is
    --  These UC are safe aliasing-wise
 
    function "+" is new Ada.Unchecked_Conversion
-     (Glib.Xml_Int.Node_Ptr, System.Address);
+     (XML_Utils.Node_Ptr, System.Address);
    function "+" is new Ada.Unchecked_Conversion
-     (System.Address, Glib.Xml_Int.Node_Ptr);
+     (System.Address, XML_Utils.Node_Ptr);
 
    pragma Warnings (On);
 

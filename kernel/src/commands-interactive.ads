@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,10 +22,10 @@
 --  instance)
 
 with Gdk.Event;
-with Glib.Xml_Int;
 with GNAT.Strings;
 with GPS.Kernel;
 with Gtk.Box;
+with XML_Utils;
 
 package Commands.Interactive is
 
@@ -145,7 +145,7 @@ package Commands.Interactive is
 
    function To_XML
      (Editor : access Command_Editor_Record)
-      return Glib.Xml_Int.Node_Ptr is abstract;
+      return XML_Utils.Node_Ptr is abstract;
    --  Return a newly allocated XML node representing the command edited by
    --  Editor. null will be returned if the command cannot be represented in
    --  XML (internal command for instance).

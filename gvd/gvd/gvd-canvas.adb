@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with Gdk.Window;          use Gdk.Window;
 with Gdk;                 use Gdk;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
-with Glib.Xml_Int;        use Glib.Xml_Int;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -70,6 +69,7 @@ with Pixmaps_IDE;            use Pixmaps_IDE;
 with Std_Dialogs;            use Std_Dialogs;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
+with XML_Utils;              use XML_Utils;
 
 package body GVD.Canvas is
    Me : constant Debug_Handle := Create ("Canvas");
@@ -243,10 +243,10 @@ package body GVD.Canvas is
 
    overriding procedure Save
      (Property : access GVD_Items_Property_Record;
-      Node     : in out Glib.Xml_Int.Node_Ptr);
+      Node     : in out XML_Utils.Node_Ptr);
    overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
-      From     : Glib.Xml_Int.Node_Ptr);
+      From     : XML_Utils.Node_Ptr);
    overriding procedure Destroy (Property : in out GVD_Items_Property_Record);
    --  See inherited documentation
 
@@ -371,13 +371,13 @@ package body GVD.Canvas is
 
    overriding procedure Save
      (Property : access GVD_Items_Property_Record;
-      Node     : in out Glib.Xml_Int.Node_Ptr)
+      Node     : in out XML_Utils.Node_Ptr)
    is
-      Tmp : Glib.Xml_Int.Node_Ptr;
+      Tmp : XML_Utils.Node_Ptr;
    begin
       if Property.Items /= null then
          for Item in reverse Property.Items'Range loop
-            Tmp := new Glib.Xml_Int.Node;
+            Tmp := new XML_Utils.Node;
             Add_Child (Node, Tmp);
             Tmp.Tag   := new String'("item");
             Tmp.Value := new String'(Property.Items (Item).all);
@@ -391,9 +391,9 @@ package body GVD.Canvas is
 
    overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
-      From     : Glib.Xml_Int.Node_Ptr)
+      From     : XML_Utils.Node_Ptr)
    is
-      Tmp : Glib.Xml_Int.Node_Ptr := From.Child;
+      Tmp : XML_Utils.Node_Ptr := From.Child;
       Count : Natural := 0;
    begin
       while Tmp /= null loop

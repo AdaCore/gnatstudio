@@ -27,7 +27,7 @@ with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
@@ -1357,7 +1357,7 @@ package body Outline_View is
          Filter => Action_Filter (Create (Module => Outline_View_Module_Name)),
          Label  => -"Refresh");
 
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Create_New_Boolean_Key_If_Necessary

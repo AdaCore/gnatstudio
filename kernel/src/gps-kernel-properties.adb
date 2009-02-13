@@ -25,7 +25,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 with Osint;                      use Osint;
 with Projects;                   use Projects;
 with String_Hash;
@@ -158,7 +158,7 @@ package body GPS.Kernel.Properties is
 
    overriding procedure Save
      (Property : access String_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr) is
+      Node     : in out XML_Utils.Node_Ptr) is
    begin
       if Property.Value /= null then
          Node.Value := new String'(Property.Value.all);
@@ -171,7 +171,7 @@ package body GPS.Kernel.Properties is
 
    overriding procedure Save
      (Property : access Integer_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr) is
+      Node     : in out XML_Utils.Node_Ptr) is
    begin
       Node.Value := new String'(Integer'Image (Property.Value));
    end Save;
@@ -182,7 +182,7 @@ package body GPS.Kernel.Properties is
 
    overriding procedure Save
      (Property : access Boolean_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr) is
+      Node     : in out XML_Utils.Node_Ptr) is
    begin
       Node.Value := new String'(Boolean'Image (Property.Value));
    end Save;
@@ -192,7 +192,7 @@ package body GPS.Kernel.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out String_Property; From : Glib.Xml_Int.Node_Ptr) is
+     (Property : in out String_Property; From : XML_Utils.Node_Ptr) is
    begin
       if From.Value /= null then
          Property.Value := new String'(From.Value.all);
@@ -206,7 +206,7 @@ package body GPS.Kernel.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out Integer_Property; From : Glib.Xml_Int.Node_Ptr) is
+     (Property : in out Integer_Property; From : XML_Utils.Node_Ptr) is
    begin
       Property.Value := Integer'Value (From.Value.all);
    exception
@@ -219,7 +219,7 @@ package body GPS.Kernel.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out Boolean_Property; From : Glib.Xml_Int.Node_Ptr) is
+     (Property : in out Boolean_Property; From : XML_Utils.Node_Ptr) is
    begin
       Property.Value := Boolean'Value (From.Value.all);
    exception
@@ -493,7 +493,7 @@ package body GPS.Kernel.Properties is
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
       Root, Src, Dst : Node_Ptr;
       Descr    : Property_Description_Access;
-      Val      : String_Ptr;
+      Val      : XML_Utils.String_Ptr;
       Success  : Boolean;
 
       package Resource_Hash is new Ada.Containers.Indefinite_Ordered_Maps
@@ -660,7 +660,7 @@ package body GPS.Kernel.Properties is
 
             while Prop /= null loop
                Prop2 := Deep_Copy (Prop);
-               Xml_Int.Free (Prop2.Tag);
+               Free (Prop2.Tag);
                --  Prop.Tag is not needed, always "property", and this
                --  saves space in memory
 

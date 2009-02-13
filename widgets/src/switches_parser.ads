@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,8 +22,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Switches_Chooser;      use Switches_Chooser;
-
-with Glib.Xml_Int;
+with XML_Utils;
 
 package Switches_Parser is
 
@@ -36,7 +35,7 @@ package Switches_Parser is
       Current_Tool_Config : out Switches_Editor_Config;
       Error_Message       : out Unbounded_String;
       Finder              : Other_Config_Finder;
-      Node                : Glib.Xml_Int.Node_Ptr);
+      Node                : XML_Utils.Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
    --  Current_Tool_Name is the name of the tool we are currently parsing.
    --  Node contains the XML data to parse.

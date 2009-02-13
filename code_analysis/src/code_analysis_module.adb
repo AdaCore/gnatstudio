@@ -26,7 +26,7 @@ with GNATCOLL.Filesystem;                    use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
-with Glib.Xml_Int;                           use Glib.Xml_Int;
+with XML_Utils;                           use XML_Utils;
 with Gtk.Button;
 with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
@@ -2706,7 +2706,7 @@ package body Code_Analysis_Module is
    begin
       if Widget.all in Code_Analysis_View_Record'Class then
          View     := Code_Analysis_View (Widget);
-         Root     := new Glib.Xml_Int.Node;
+         Root     := new XML_Utils.Node;
          Root.Tag := new String'("Code_Analysis_Tree");
          Set_Attribute (Root, "name", Get_Name (View.Tree));
          Dump_XML (View.Projects, Root);
@@ -2768,7 +2768,7 @@ package body Code_Analysis_Module is
    is
       Root : Node_Ptr;
    begin
-      Root     := new Glib.Xml_Int.Node;
+      Root     := new XML_Utils.Node;
       Root.Tag := new String'("Code_Analysis_Tree");
       Set_Attribute (Root, "name", Analysis.Name.all);
       Dump_XML (Analysis.Projects, Root);
@@ -3003,7 +3003,7 @@ package body Code_Analysis_Module is
          Hook    => Project_Changing_Hook,
          Func    => Wrapper (On_Project_Changing_Hook'Access),
          Name    => "destroy_all_code_analysis");
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Command
         (Kernel, Constructor_Method,

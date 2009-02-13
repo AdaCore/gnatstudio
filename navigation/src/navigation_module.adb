@@ -26,7 +26,7 @@ with GNAT.Strings;               use GNAT.Strings;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
@@ -100,7 +100,7 @@ package body Navigation_Module is
    overriding function To_String
      (Marker : access Shell_Marker_Record) return String;
    overriding function Save
-     (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr;
+     (Marker : access Shell_Marker_Record) return XML_Utils.Node_Ptr;
    overriding function Similar
      (Left  : access Shell_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;
@@ -594,7 +594,7 @@ package body Navigation_Module is
    ----------
 
    overriding function Save
-     (Marker : access Shell_Marker_Record) return Xml_Int.Node_Ptr
+     (Marker : access Shell_Marker_Record) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin

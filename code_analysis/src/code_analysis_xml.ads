@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@
 --  of a Code_Analysis tree structure on the standard output.
 --  </description>
 
-with Glib.Xml_Int;  use Glib.Xml_Int;
+with XML_Utils;  use XML_Utils;
 with Code_Analysis; use Code_Analysis;
 with Projects;      use Projects;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                     Copyright (C) 2003-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Impl;         use GNATCOLL.Scripts.Impl;
 with GNATCOLL.Scripts.Shell;        use GNATCOLL.Scripts.Shell;
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Object;                use Gtk.Object;
@@ -232,7 +232,7 @@ package body Shell_Script is
       Register_Shell_Scripting (Get_Scripts (Kernel), Script);
       Set_Prompt (Script, "GPS>");
 
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu

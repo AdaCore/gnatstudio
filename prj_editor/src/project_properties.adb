@@ -35,7 +35,7 @@ with Gdk.Event;                 use Gdk.Event;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
@@ -286,7 +286,7 @@ package body Project_Properties is
    overriding procedure Customize
      (Module : access Properties_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
 
@@ -2343,7 +2343,7 @@ package body Project_Properties is
    overriding procedure Customize
      (Module : access Properties_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);

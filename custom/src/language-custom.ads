@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2000-2008, AdaCore                --
+--                   Copyright (C) 2000-2009, AdaCore                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ with System;
 with GNAT.Expect;
 with GNAT.Strings;
 
-with Glib.Xml_Int;
+with XML_Utils;
 
 with Language_Handlers;
 with GPS.Kernel;
@@ -39,7 +39,7 @@ package Language.Custom is
    procedure Initialize
      (Handler : access Language_Handlers.Language_Handler_Record'Class;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top     : Glib.Xml_Int.Node_Ptr);
+      Top     : XML_Utils.Node_Ptr);
    --  Initialize a new language based on the contents of an XML node.
    --  The language and its extensions are automatically registered in the
    --  handler.
@@ -327,7 +327,7 @@ private
       Keywords_Regexp  : Strings.String_Access;
       Keywords_List    : GNAT.Strings.String_List_Access;
       Context          : Language_Context_Access;
-      Name             : Glib.String_Ptr;
+      Name             : XML_Utils.String_Ptr;
       Project_Fields   : Project_Field_Array_Access;
       Comment_Line     : Comment_Line_Proc;
       Parse_Constructs : Parse_Constructs_Proc;

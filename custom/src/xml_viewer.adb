@@ -27,7 +27,6 @@ with System;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -51,6 +50,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
 with UTF8_Utils;                use UTF8_Utils;
+with XML_Utils;                 use XML_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
@@ -105,7 +105,7 @@ package body XML_Viewer is
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : Glib.Xml_Int.Node_Ptr) return Boolean;
+      Node         : XML_Utils.Node_Ptr) return Boolean;
    --  See inherited documentation
 
    type Custom_XML_Viewer_Record is new XML_Viewer_Record with record
@@ -124,7 +124,7 @@ package body XML_Viewer is
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : Glib.Xml_Int.Node_Ptr) return Boolean;
+      Node         : XML_Utils.Node_Ptr) return Boolean;
    --  See inherited documentation
 
    function Create_Callback_Data
@@ -278,7 +278,7 @@ package body XML_Viewer is
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : Glib.Xml_Int.Node_Ptr) return Boolean
+      Node         : XML_Utils.Node_Ptr) return Boolean
    is
       Tmp : Boolean;
       pragma Unreferenced (Iter, Tmp);
@@ -318,7 +318,7 @@ package body XML_Viewer is
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : Glib.Xml_Int.Node_Ptr) return Boolean
+      Node         : XML_Utils.Node_Ptr) return Boolean
    is
       pragma Unreferenced (Node);
       Cmd : constant String :=
@@ -437,7 +437,7 @@ package body XML_Viewer is
       --------------
 
       function Get_Kind return String is
-         Kind : constant UTF8_String := Get_Attribute (Node, "kind");
+         Kind : constant XML_Utils.UTF8_String := Get_Attribute (Node, "kind");
       begin
          if Kind = "" then
             return "";
@@ -456,7 +456,7 @@ package body XML_Viewer is
          return (1 .. 7 - Img'Length => ' ') & Img;
       end Right_Align;
 
-      Name : constant UTF8_String := Get_Attribute (Node, "name");
+      Name : constant XML_Utils.UTF8_String := Get_Attribute (Node, "name");
    begin
       if Node.Tag.all = "file" then
          GNAT.Strings.Free (View.File);

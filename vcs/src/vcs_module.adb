@@ -27,7 +27,7 @@ with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Glib;                      use Glib;
 
 with Gtk.Menu;                  use Gtk.Menu;
@@ -955,7 +955,7 @@ package body VCS_Module is
 
       Load_Activities (Kernel);
 
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Filter := new Has_VCS_Filter;

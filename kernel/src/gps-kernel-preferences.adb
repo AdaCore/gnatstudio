@@ -23,7 +23,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
 
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 
 with Config;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
@@ -56,7 +56,7 @@ package body GPS.Kernel.Preferences is
    overriding procedure Customize
      (Module : access Preferences_Module;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
 
@@ -1213,12 +1213,12 @@ package body GPS.Kernel.Preferences is
    overriding procedure Customize
      (Module : access Preferences_Module;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
       Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
-      Child : Glib.Xml_Int.Node_Ptr;
+      Child : XML_Utils.Node_Ptr;
       Child_Count : Natural;
    begin
       if Node.Tag.all = "preference" then

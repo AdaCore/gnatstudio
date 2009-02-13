@@ -33,7 +33,7 @@ with Projects.Registry;         use Projects.Registry;
 with Projects.Registry.Queries;
 with Basic_Types;
 with Entities;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;                 use XML_Utils;
 with Prj;
 with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
 with Traces;                    use Traces;
@@ -118,12 +118,12 @@ package body GPS.Kernel.Project is
 
    overriding procedure Save
      (Property : access Predefined_Paths_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr);
+      Node     : in out XML_Utils.Node_Ptr);
    --  See inherited procedure
 
    overriding procedure Load
      (Property : in out Predefined_Paths_Property;
-      From     : Glib.Xml_Int.Node_Ptr);
+      From     : XML_Utils.Node_Ptr);
    --  See inherited procedure
 
    ----------
@@ -132,19 +132,19 @@ package body GPS.Kernel.Project is
 
    overriding procedure Save
      (Property : access Predefined_Paths_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr)
+      Node     : in out XML_Utils.Node_Ptr)
    is
-      Child : Glib.Xml_Int.Node_Ptr;
+      Child : XML_Utils.Node_Ptr;
    begin
-      Child := new Glib.Xml_Int.Node;
+      Child := new XML_Utils.Node;
       Child.Tag := new String'("source_path");
       Child.Value := new String'(+Property.Source_Path.all);
       Add_Child (Node, Child);
-      Child := new Glib.Xml_Int.Node;
+      Child := new XML_Utils.Node;
       Child.Tag := new String'("object_path");
       Child.Value := new String'(+Property.Object_Path.all);
       Add_Child (Node, Child);
-      Child := new Glib.Xml_Int.Node;
+      Child := new XML_Utils.Node;
       Child.Tag := new String'("project_path");
       Child.Value := new String'(+Property.Project_Path.all);
       Add_Child (Node, Child);
@@ -159,9 +159,9 @@ package body GPS.Kernel.Project is
 
    overriding procedure Load
      (Property : in out Predefined_Paths_Property;
-      From     : Glib.Xml_Int.Node_Ptr)
+      From     : XML_Utils.Node_Ptr)
    is
-      Child : Glib.Xml_Int.Node_Ptr;
+      Child : XML_Utils.Node_Ptr;
    begin
       Child := Find_Tag (From.Child, "source_path");
       Property.Source_Path := new Filesystem_String'(+Child.Value.all);

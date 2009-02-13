@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
@@ -132,7 +132,7 @@ package body Vdiff_Module is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
-      Title1, Title2 : Glib.String_Ptr;
+      Title1, Title2 : XML_Utils.String_Ptr;
       File1, File2   : GNATCOLL.VFS.Virtual_File;
    begin
       if Node.Tag.all = "Vdiff" then
@@ -359,7 +359,7 @@ package body Vdiff_Module is
       Register_Menu
         (Kernel, Tools, -"_Two Files...", "", On_Compare_Two_Files'Access,
          Ref_Item => -"Browsers", Add_Before => False);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Diff_Context_Length := Default_Preferences.Create

@@ -30,7 +30,7 @@ with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
-with Glib.Xml_Int;           use Glib.Xml_Int;
+with XML_Utils;           use XML_Utils;
 
 with Gdk.Color;              use Gdk.Color;
 
@@ -113,11 +113,11 @@ package body Remote_Views is
 
    function Load_Desktop
      (MDI  : Gtkada.MDI.MDI_Window;
-      Node : Glib.Xml_Int.Node_Ptr;
+      Node : XML_Utils.Node_Ptr;
       User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : GPS.Kernel.Kernel_Handle) return Glib.Xml_Int.Node_Ptr;
+      User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
    --  Load and save desktop
 
    procedure Set_Servers
@@ -1141,7 +1141,7 @@ package body Remote_Views is
         (Module      => Remote_View_Module_Id,
          Kernel      => Kernel,
          Module_Name => Module_Name);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu

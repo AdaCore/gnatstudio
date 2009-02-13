@@ -137,7 +137,7 @@ package body Src_Editor_Module is
    --  See inherited documentation
 
    function Convert is new Ada.Unchecked_Conversion
-     (String_Ptr, Filesystem_String_Access);
+     (XML_Utils.String_Ptr, Filesystem_String_Access);
 
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -776,7 +776,7 @@ package body Src_Editor_Module is
       Src         : Source_Editor_Box;
       File        : Filesystem_String_Access;
       F           : Virtual_File;
-      Str         : Glib.String_Ptr;
+      Str         : XML_Utils.String_Ptr;
       Id          : Idle_Handler_Id;
       Line        : Editable_Line_Type := 1;
       Column      : Visible_Column_Type := 1;
@@ -2539,7 +2539,7 @@ package body Src_Editor_Module is
 
    overriding function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
-      Load   : Glib.Xml_Int.Node_Ptr := null) return Location_Marker is
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker is
    begin
       return Src_Editor_Module.Markers.Load (Get_Kernel (Module.all), Load);
    end Bookmark_Handler;
@@ -2551,7 +2551,7 @@ package body Src_Editor_Module is
    overriding procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level) is
    begin
       Casing_Customize (Get_Kernel (Module.all), File, Node, Level);
@@ -2824,7 +2824,7 @@ package body Src_Editor_Module is
          Kernel      => Kernel,
          Module_Name => Src_Editor_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Add_Hook (Kernel, Open_File_Action_Hook,

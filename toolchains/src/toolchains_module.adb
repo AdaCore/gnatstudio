@@ -21,7 +21,7 @@ with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Utils;              use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
@@ -49,9 +49,9 @@ package body Toolchains_Module is
 
    overriding procedure Save
      (Property : access Toolchains_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr);
+      Node     : in out XML_Utils.Node_Ptr);
    overriding procedure Load
-     (Property : in out Toolchains_Property; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out Toolchains_Property; From : XML_Utils.Node_Ptr);
    overriding procedure Destroy (Property : in out Toolchains_Property);
    --  See inherited doc.
 
@@ -81,31 +81,31 @@ package body Toolchains_Module is
 
    overriding procedure Save
      (Property : access Toolchains_Property;
-      Node     : in out Glib.Xml_Int.Node_Ptr)
+      Node     : in out XML_Utils.Node_Ptr)
    is
-      Child : Glib.Xml_Int.Node_Ptr;
+      Child : XML_Utils.Node_Ptr;
    begin
       if Property.Active then
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("active");
          Add_Child (Node, Child);
       end if;
 
       if Property.Use_Xrefs_Subdir then
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("use_xrefs_subdir");
          Add_Child (Node, Child);
       end if;
 
       if Property.Tools_Path /= null then
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("tools_path");
          Child.Value := new String'(+Property.Tools_Path.all);
          Add_Child (Node, Child);
       end if;
 
       if Property.Compiler_Path /= null then
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("compiler_path");
          Child.Value := new String'(+Property.Compiler_Path.all);
          Add_Child (Node, Child);
@@ -121,9 +121,9 @@ package body Toolchains_Module is
    ----------
 
    overriding procedure Load
-     (Property : in out Toolchains_Property; From : Glib.Xml_Int.Node_Ptr)
+     (Property : in out Toolchains_Property; From : XML_Utils.Node_Ptr)
    is
-      Child : Glib.Xml_Int.Node_Ptr;
+      Child : XML_Utils.Node_Ptr;
    begin
       Child := Find_Tag (From.Child, "active");
       Property.Active := Child /= null;

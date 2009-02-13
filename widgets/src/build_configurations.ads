@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -40,8 +40,7 @@ with GNAT.OS_Lib;
 
 with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
-
-with Glib.Xml_Int;     use Glib.Xml_Int;
+with XML_Utils;        use XML_Utils;
 
 package Build_Configurations is
 

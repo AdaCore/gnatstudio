@@ -28,7 +28,6 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Values;               use Glib.Values;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -68,6 +67,7 @@ with Generic_List;
 with Traces;                    use Traces;
 with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
+with XML_Utils;                 use XML_Utils;
 
 package body Bookmark_Views is
 

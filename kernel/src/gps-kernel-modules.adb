@@ -31,7 +31,6 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Glib.Xml_Int;
 
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -326,7 +325,7 @@ package body GPS.Kernel.Modules is
 
    function Bookmark_Handler
      (Module : access Module_ID_Record;
-      Load   : Xml_Int.Node_Ptr := null) return Location_Marker
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
    is
       pragma Unreferenced (Module, Load);
    begin
@@ -449,10 +448,10 @@ package body GPS.Kernel.Modules is
 
    function Create_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      Load   : Xml_Int.Node_Ptr := null) return Location_Marker
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
    is
       use type Module_List.List_Node;
-      use type Xml_Int.Node_Ptr;
+      use type XML_Utils.Node_Ptr;
       Current : Module_List.List_Node :=
                   Module_List.First (List_Of_Modules (Kernel));
       Module  : Module_ID;
@@ -540,7 +539,7 @@ package body GPS.Kernel.Modules is
       if Filter_Matches (Action_Filter (Creator.Filter), Context) then
          declare
             Tmp : constant String := Substitute
-              (Glib.Xml_Int.Protect (Creator.Label.all),
+              (XML_Utils.Protect (Creator.Label.all),
                Delimiter => GPS.Kernel.Macros.Special_Character,
                Callback  => Substitution'Unrestricted_Access,
                Recursive => False);

@@ -20,7 +20,6 @@
 with Ada.Unchecked_Deallocation;
 
 with Gdk;                    use Gdk;
-with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
@@ -29,6 +28,8 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Traces;                 use Traces;
+
+with XML_Utils;              use XML_Utils;
 with XML_Parsers;
 
 package body GPS.Kernel.Styles is
@@ -279,7 +280,7 @@ package body GPS.Kernel.Styles is
       Success : Boolean;
 
    begin
-      Main := new Glib.Xml_Int.Node;
+      Main := new XML_Utils.Node;
       Main.Tag := new String'("Styles");
 
       Get_First (Style_Htable_Access (Kernel.Styles).Table, Iter);
@@ -288,28 +289,28 @@ package body GPS.Kernel.Styles is
          Info := Get_Element (Iter);
          exit when Info = null;
 
-         Node := new Glib.Xml_Int.Node;
+         Node := new XML_Utils.Node;
          Node.Tag := new String'("style");
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("name");
          Child.Value := new String'(Get_Key (Iter));
          Add_Child (Node, Child, True);
 
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("desc");
          if Info.Description /= null then
             Child.Value := new String'(Info.Description.all);
          end if;
          Add_Child (Node, Child, True);
 
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("fg");
          if Info.Foreground.Value /= null then
             Child.Value := new String'(Info.Foreground.Value.all);
          end if;
          Add_Child (Node, Child, True);
 
-         Child := new Glib.Xml_Int.Node;
+         Child := new XML_Utils.Node;
          Child.Tag := new String'("bg");
          if Info.Background.Value /= null then
             Child.Value := new String'(Info.Background.Value.all);

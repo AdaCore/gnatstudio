@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,6 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Xml_Int;             use Glib.Xml_Int;
 with Gtk.Alignment;            use Gtk.Alignment;
 with Gtk.Clipboard;            use Gtk.Clipboard;
 with Gtk.Hbutton_Box;          use Gtk.Hbutton_Box;
@@ -61,6 +60,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
+with XML_Utils;                use XML_Utils;
 with Generic_List;
 with Histories;                use Histories;
 
@@ -2283,7 +2283,7 @@ package body Vsearch is
          Kernel      => Kernel,
          Module_Name => Search_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Vsearch_Module_Id.Tab_Width := Tab_Width.Get_Pref;

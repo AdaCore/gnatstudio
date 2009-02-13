@@ -60,7 +60,7 @@ with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
-with Glib.Xml_Int;                use Glib.Xml_Int;
+with XML_Utils;                use XML_Utils;
 
 with Generic_List;
 with System;
@@ -156,9 +156,9 @@ package body Call_Graph_Views is
    --  Conversion functions
 
    overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return Glib.Xml_Int.Node_Ptr;
+     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr;
    overriding procedure Load_From_XML
-     (View : access Callgraph_View_Record; XML : Glib.Xml_Int.Node_Ptr);
+     (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr);
    procedure Initialize
      (View   : access Callgraph_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
@@ -930,7 +930,7 @@ package body Call_Graph_Views is
    -----------------
 
    overriding function Save_To_XML
-     (View : access Callgraph_View_Record) return Glib.Xml_Int.Node_Ptr
+     (View : access Callgraph_View_Record) return XML_Utils.Node_Ptr
    is
       Model : constant Gtk_Tree_Store :=
                 Gtk_Tree_Store (Get_Model (View.Tree));
@@ -969,7 +969,7 @@ package body Call_Graph_Views is
             Unset (Value);
 
             if Entity /= null then
-               N := new Glib.Xml_Int.Node;
+               N := new XML_Utils.Node;
                N.Tag := new String'("entity");
                Add_Child (Parent, N, Append => True);
 
@@ -1005,7 +1005,7 @@ package body Call_Graph_Views is
                   Node := First (L.all);
 
                   while Node /= Null_Node loop
-                     Glib.Xml_Int.Add_Child
+                     XML_Utils.Add_Child
                        (N, To_XML (Data (Node)), True);
                      Node := Next (Node);
                   end loop;
@@ -1039,7 +1039,7 @@ package body Call_Graph_Views is
    -------------------
 
    overriding procedure Load_From_XML
-     (View : access Callgraph_View_Record; XML : Glib.Xml_Int.Node_Ptr)
+     (View : access Callgraph_View_Record; XML : XML_Utils.Node_Ptr)
    is
       Model : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (View.Tree));

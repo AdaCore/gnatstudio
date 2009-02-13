@@ -31,13 +31,9 @@ with Sax.Attributes;
 with Sax.Exceptions;
 with Sax.Locators;
 with Unicode.CES;
-with Glib.XML;
+with XML_Utils;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
-generic
-   type XML_Specific_Data is private;
-   No_Specific_Data : XML_Specific_Data;
-   with package Glib_XML is new Glib.XML (XML_Specific_Data);
 package XML_Readers is
 
    type Gtk_Reader is new Reader with private;
@@ -48,22 +44,22 @@ package XML_Readers is
    --  You should free the previous Tree before calling Parse multiple times
    --  if you want to avoid memory leaks.
 
-   function Parse (File : Filesystem_String) return Glib_XML.Node_Ptr;
+   function Parse (File : Filesystem_String) return XML_Utils.Node_Ptr;
    --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead.
    --  Errors in the XML file will return a null value, but the error itself
    --  is no longer accessible.
 
    procedure Parse
        (File  : Filesystem_String;
-        Tree  : out Glib_XML.Node_Ptr;
+        Tree  : out XML_Utils.Node_Ptr;
         Error : out Unicode.CES.Byte_Sequence_Access);
    --  Same as above, except error messages are made available to the caller.
    --  Both return value must be freed by the user.
    --  If there is an error, Tree is always set to null.
 
    procedure Parse_Buffer
-     (Buffer     : Glib.UTF8_String;
-      Tree       : out Glib_XML.Node_Ptr;
+     (Buffer     : XML_Utils.UTF8_String;
+      Tree       : out XML_Utils.Node_Ptr;
       Error      : out Unicode.CES.Byte_Sequence_Access;
       From_File  : String := "<input>";
       Start_Line : Natural := 1);
@@ -71,7 +67,7 @@ package XML_Readers is
    --  (From_File, Start_Line) can be used to identify where the buffer was
    --  read from, and will show up in error messages locations
 
-   function Get_Tree (Read : Gtk_Reader) return Glib_XML.Node_Ptr;
+   function Get_Tree (Read : Gtk_Reader) return XML_Utils.Node_Ptr;
    --  Get the tree that Read created
 
    procedure Free (Read : in out Gtk_Reader);
@@ -86,9 +82,9 @@ package XML_Readers is
 private
 
    type Gtk_Reader is new Reader with record
-      Tree                       : Glib_XML.Node_Ptr;
+      Tree                       : XML_Utils.Node_Ptr;
       Start_Line                 : Natural := 1;
-      Current_Node               : Glib_XML.Node_Ptr;
+      Current_Node               : XML_Utils.Node_Ptr;
       Internal_Encoding          : Unicode.CES.Encoding_Scheme;
       Warnings_As_Error          : Boolean := False;
    end record;

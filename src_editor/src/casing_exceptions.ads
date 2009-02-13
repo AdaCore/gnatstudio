@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2005                      --
---                              AdaCore                              --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +21,7 @@
 --  to add or remove a casing exception and to initialize the casing
 --  GPS feature (create menu, read/write casing XML files).
 
-with Glib.Xml_Int;  use Glib.Xml_Int;
+with XML_Utils;  use XML_Utils;
 with GPS.Kernel;    use GPS.Kernel;
 with Case_Handling; use Case_Handling;
 with GNATCOLL.VFS;

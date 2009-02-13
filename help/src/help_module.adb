@@ -34,7 +34,7 @@ with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
+with XML_Utils;               use XML_Utils;
 
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Object;                 use Gtk.Object;
@@ -237,14 +237,14 @@ package body Help_Module is
    --  Parse the index file for one specific directory
 
    function Get_Shell_Documentation
-     (XML_Doc_File        : Glib.Xml_Int.Node_Ptr;
+     (XML_Doc_File        : XML_Utils.Node_Ptr;
       Language, Full_Name : String;
       HTML_Format         : Boolean) return String;
    --  Return the documentation for Entity, as read in the XML file.
    --  The documentation is formated in HTML if HTML_Format is True
 
    function Initialize_XML_Doc
-     (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr;
+     (Kernel : access Kernel_Handle_Record'Class) return XML_Utils.Node_Ptr;
    --  Parse and return the XML documentation file
 
    ----------------
@@ -347,7 +347,7 @@ package body Help_Module is
    -----------------------------
 
    function Get_Shell_Documentation
-     (XML_Doc_File        : Glib.Xml_Int.Node_Ptr;
+     (XML_Doc_File        : XML_Utils.Node_Ptr;
       Language, Full_Name : String;
       HTML_Format         : Boolean) return String
    is
@@ -370,7 +370,7 @@ package body Help_Module is
                if Child.Tag.all = "description" then
                   if HTML_Format then
                      Descr := Descr & "<tr><td colspan='3'>"
-                       & Glib.Xml_Int.Protect (Child.Value.all) & "</td></tr>";
+                       & XML_Utils.Protect (Child.Value.all) & "</td></tr>";
                   else
                      Descr := Descr & Child.Value.all;
                   end if;
@@ -386,7 +386,7 @@ package body Help_Module is
                   if HTML_Format then
                      Params := Params
                        & "<tr><td class=""name"">"
-                       & Glib.Xml_Int.Protect
+                       & XML_Utils.Protect
                           (Get_Attribute (Child, "name")) & "</td>";
                   else
                      if Params /= Null_Unbounded_String then
@@ -404,7 +404,7 @@ package body Help_Module is
                         if HTML_Format then
                            Params := Params
                              & "<td class='default'>(default="""
-                             & Glib.Xml_Int.Protect (Default) & """)</td>";
+                             & XML_Utils.Protect (Default) & """)</td>";
                         else
                            Params := Params & Default & ASCII.HT;
                         end if;
@@ -416,7 +416,7 @@ package body Help_Module is
 
                   if HTML_Format then
                      Params :=
-                       Params & "<td>" & Glib.Xml_Int.Protect (Child.Value.all)
+                       Params & "<td>" & XML_Utils.Protect (Child.Value.all)
                        & "</td></tr>";
                   else
                      Params := Params & Child.Value.all;
@@ -427,7 +427,7 @@ package body Help_Module is
                      Returns := To_Unbounded_String
                        ("</tr><td class=""return"">Returns</td>"
                         & "<td colspan='2' class=""descr"">"
-                        & Glib.Xml_Int.Protect (Child.Value.all)
+                        & XML_Utils.Protect (Child.Value.all)
                         & "</td></tr>");
                   else
                      Returns :=
@@ -439,7 +439,7 @@ package body Help_Module is
                      See_Also := See_Also
                        & "<tr><td class='header'>See also</td>"
                        & "<td class='seeAlso' colspan='2'>"
-                       & Glib.Xml_Int.Protect
+                       & XML_Utils.Protect
                           (Get_Attribute (Child, "name", ""))
                        & "</td></tr>";
                   end if;
@@ -452,7 +452,7 @@ package body Help_Module is
                      if HTML_Format then
                         Descr := Descr
                           & "<tr><td colspan='3' class='example'>"
-                          & Glib.Xml_Int.Protect (Child.Value.all)
+                          & XML_Utils.Protect (Child.Value.all)
                           & "</td></tr>";
                      else
                         Example := Example & ASCII.LF & Child.Value.all;
@@ -511,10 +511,10 @@ package body Help_Module is
    ------------------------
 
    function Initialize_XML_Doc
-     (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr
+     (Kernel : access Kernel_Handle_Record'Class) return XML_Utils.Node_Ptr
    is
       Error : GNAT.Strings.String_Access;
-      Tmp   : Glib.Xml_Int.Node_Ptr;
+      Tmp   : XML_Utils.Node_Ptr;
    begin
       Trace (Me, "Parsing XML file "
              & (+Get_System_Dir (Kernel)) & "share/gps/shell_commands.xml");
@@ -537,7 +537,7 @@ package body Help_Module is
    begin
       if Property.XML /= null then
          Trace (Me, "Freeing XML file");
-         Glib.Xml_Int.Free (Property.XML);
+         XML_Utils.Free (Property.XML);
       end if;
    end Destroy;
 
@@ -1218,7 +1218,7 @@ package body Help_Module is
          Kernel       => Kernel,
          Module_Name  => Help_Module_Name,
          Priority     => GPS.Kernel.Modules.Default_Priority - 20);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Add_Hook (Kernel, Html_Action_Hook,
                 Wrapper (Open_Help_Hook'Access),

@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;
+with XML_Utils;
 with Gtk.Text_Mark;
 
 with GPS.Kernel;
@@ -56,7 +56,7 @@ package Src_Editor_Module.Markers is
 
    function Load
      (Kernel   : access Kernel_Handle_Record'Class;
-      From_XML : Glib.Xml_Int.Node_Ptr := null) return Location_Marker;
+      From_XML : XML_Utils.Node_Ptr := null) return Location_Marker;
    --  Create a new marker either from From_XML or from the current context
 
    function Get_File
@@ -106,7 +106,7 @@ private
    overriding function To_String
      (Marker : access File_Marker_Record) return String;
    overriding function Save
-     (Marker : access File_Marker_Record) return Glib.Xml_Int.Node_Ptr;
+     (Marker : access File_Marker_Record) return XML_Utils.Node_Ptr;
    overriding function Similar
      (Left  : access File_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;

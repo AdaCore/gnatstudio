@@ -39,7 +39,7 @@ with Glib;                              use Glib;
 with Glib.Error;                        use Glib.Error;
 with Glib.Graphs;                       use Glib.Graphs;
 with Glib.Object;                       use Glib.Object;
-with Glib.Xml_Int;                      use Glib.Xml_Int;
+with XML_Utils;                      use XML_Utils;
 
 with Gtk.Accel_Group;                   use Gtk.Accel_Group;
 with Gtk.Adjustment;                    use Gtk.Adjustment;
@@ -246,7 +246,7 @@ package body Browsers.Canvas is
    overriding function To_String
      (Marker : access Browser_Marker_Record) return String;
    overriding function Save
-     (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr;
+     (Marker : access Browser_Marker_Record) return XML_Utils.Node_Ptr;
    overriding function Similar
      (Left  : access Browser_Marker_Record;
       Right : access Location_Marker_Record'Class) return Boolean;
@@ -2633,7 +2633,7 @@ package body Browsers.Canvas is
    ----------
 
    overriding function Save
-     (Marker : access Browser_Marker_Record) return Glib.Xml_Int.Node_Ptr
+     (Marker : access Browser_Marker_Record) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin

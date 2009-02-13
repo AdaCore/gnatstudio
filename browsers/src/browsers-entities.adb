@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,7 +33,6 @@ with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
 
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
@@ -66,6 +65,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with XML_Utils;                 use XML_Utils;
 
 package body Browsers.Entities is
 
@@ -492,7 +492,7 @@ package body Browsers.Entities is
          Kernel      => Kernel,
          Module_Name => "Entity_Browser");
 
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Command := new Examine_Entity_Command;

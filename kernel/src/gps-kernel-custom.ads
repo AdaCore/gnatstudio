@@ -48,11 +48,10 @@
 --    - Dynamic modules need to be loaded when the menus they have registered
 --      are called initially.
 
-with Glib;
-with Glib.Xml_Int;
 with Commands.Custom;
 with File_Utils;
 with Remote;
+with XML_Utils;
 
 package GPS.Kernel.Custom is
 
@@ -74,7 +73,7 @@ package GPS.Kernel.Custom is
 
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Customization : UTF8_String;
+      Customization : Glib.UTF8_String;
       From_File     : Filesystem_String;
       Start_Line    : Positive := 1) return String;
    --  Add a new customization string, as if it had been parsed from a custom
@@ -91,7 +90,7 @@ package GPS.Kernel.Custom is
    procedure Execute_Customization_String
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : GPS.Kernel.Customization_Level);
    --  Send a signal to all registered modules to indicate a new customization
    --  string.
@@ -138,7 +137,7 @@ package GPS.Kernel.Custom is
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Name      : String;
       Load           : Boolean;
-      Initialization : Glib.Xml_Int.Node_Ptr);
+      Initialization : XML_Utils.Node_Ptr);
    --  Override the attributes of startup.xml for this specific script. This
    --  new value will automatically be saved in startup.xml at the end of the
    --  session.
@@ -194,14 +193,14 @@ package GPS.Kernel.Custom is
    --  Whether the current loading status of the file was given by startup.xml
    --  (if True is returned), or found automatically
 
-   function Get_Init (Descr : Script_Description) return Glib.Xml_Int.Node_Ptr;
+   function Get_Init (Descr : Script_Description) return XML_Utils.Node_Ptr;
    --  The initialization commands that should be performed after the script
    --  has been loaded. You mustn't free the returned value, which points to
    --  internal data.
 
 private
    type Script_Description is record
-      Initialization : Glib.Xml_Int.Node_Ptr; --  from startup.xml
+      Initialization : XML_Utils.Node_Ptr;    --  from startup.xml
       Load           : Boolean;               --  from startup.xml
       Explicit       : Boolean;               --  whether it was in startup.xml
       File           : GNATCOLL.VFS.Virtual_File;

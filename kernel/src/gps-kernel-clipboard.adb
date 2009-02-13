@@ -26,7 +26,6 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Glib.Object;                use Glib.Object;
-with Glib.Xml_Int;               use Glib.Xml_Int;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Text_View;              use Gtk.Text_View;
@@ -42,6 +41,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with Traces;                     use Traces;
 with GUI_Utils;                  use GUI_Utils;
+with XML_Utils;                  use XML_Utils;
 with XML_Parsers;
 
 package body GPS.Kernel.Clipboard is

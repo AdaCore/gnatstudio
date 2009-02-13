@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -127,6 +127,7 @@ with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
+with XML_Utils;
 
 package GPS.Kernel.Modules is
 
@@ -230,7 +231,7 @@ package GPS.Kernel.Modules is
 
    function Bookmark_Handler
      (Module : access Module_ID_Record;
-      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the
    --  bookmarks when GPS is started, and is the same XML node created by
@@ -241,7 +242,7 @@ package GPS.Kernel.Modules is
    procedure Customize
      (Module : access Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level) is null;
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
@@ -332,7 +333,7 @@ package GPS.Kernel.Modules is
 
    function Create_Marker
      (Kernel : access Kernel_Handle_Record'Class;
-      Load   : Xml_Int.Node_Ptr := null) return Location_Marker;
+      Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
    --  Create a marker for the current module at the current location.
    --  Load is an XML node created through a call to Save
    --  (for a Location_Marker and is used to restore a marker from a previous

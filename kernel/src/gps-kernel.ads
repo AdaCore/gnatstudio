@@ -31,7 +31,6 @@ with GNATCOLL.VFS;
 with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 with Glib.Object;  use Glib;
-with Glib.Xml_Int;
 with Gdk.Event;    use Gdk.Event;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
@@ -59,6 +58,7 @@ with Projects.Registry;
 with Switches_Chooser;
 with String_List_Utils;
 with Task_Manager;
+with XML_Utils;
 
 with GPS.Editors;
 
@@ -69,7 +69,29 @@ package GPS.Kernel is
    pragma No_Strict_Aliasing (Kernel_Handle);
    --  A kernel handle used to share information throughout GPS
 
+   ----------------------
+   -- Desktop handling --
+   ----------------------
+
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
+
+   type Save_Desktop_Function is access function
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return XML_Utils.Node_Ptr;
+
+   type Load_Desktop_Function is access function
+     (MDI  : Gtkada.MDI.MDI_Window;
+      Node : XML_Utils.Node_Ptr;
+      User : Kernel_Handle) return Gtkada.MDI.MDI_Child;
+
+   procedure Register_Desktop_Functions
+     (Save : Save_Desktop_Function;
+      Load : Load_Desktop_Function);
+   --  Wrapper around Kernel_Desktop.Register_Desktop_Functions
+
+   -------------------
+   -- Kernel_Handle --
+   -------------------
 
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
@@ -404,7 +426,7 @@ package GPS.Kernel is
 
    function Save
      (Marker : access Location_Marker_Record)
-      return Xml_Int.Node_Ptr is abstract;
+      return XML_Utils.Node_Ptr is abstract;
    --  Saves the marker to an XML node, so that it can be reloaded later on,
    --  possibly in a different GPS session.
 
@@ -1105,7 +1127,7 @@ private
       Custom_Files_Loaded : Custom_Load_State := None;
       --  Whether all custom files have already been loaded
 
-      Customization_Strings : Glib.Xml_Int.Node_Ptr;
+      Customization_Strings : XML_Utils.Node_Ptr;
       --  The customization strings hard-coded by the modules, and they have
       --  been registered before all modules are loaded.
 

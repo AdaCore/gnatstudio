@@ -26,8 +26,6 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with System.Assertions;         use System.Assertions;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib;                      use Glib;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Enums;
@@ -69,6 +67,7 @@ with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with XML_Viewer;
 
 with Switches_Parser; use Switches_Parser;
+with XML_Utils; use XML_Utils;
 
 package body Custom_Module is
 
@@ -143,7 +142,7 @@ package body Custom_Module is
    overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
 
@@ -456,7 +455,7 @@ package body Custom_Module is
    overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Glib.Xml_Int.Node_Ptr;
+      Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
@@ -825,6 +824,7 @@ package body Custom_Module is
          Image   : Gtk_Image;
          Command : Action_Record_Access;
          Space   : Gtk_Separator_Tool_Item;
+         use type Glib.Gint;
 
       begin
          Child := Node.Child;

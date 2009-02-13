@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,9 +24,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 
-with Glib;                    use Glib;
+with Glib;
 with Glib.Module;             use Glib.Module;
-with Glib.Xml_Int;            use Glib.Xml_Int;
 with Traces;                  use Traces;
 
 --  ??? Would be nice if languages registered themselves somewhere instead
@@ -48,6 +47,7 @@ with Naming_Editors;            use Naming_Editors;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with String_Utils;              use String_Utils;
+with XML_Utils;                 use XML_Utils;
 
 package body Language.Custom is
 
@@ -178,7 +178,7 @@ package body Language.Custom is
       Basic_Types.Unchecked_Free (Lang.Keywords);
       GNAT.Strings.Free (Lang.Keywords_Regexp);
       GNAT.Strings.Free (Lang.Keywords_List);
-      Glib.Free (Lang.Name);
+      Free (Lang.Name);
       Unchecked_Free (Lang.Word_Chars);
 
       if Lang.Context /= Null_Context'Access then
@@ -198,7 +198,7 @@ package body Language.Custom is
    procedure Initialize
      (Handler : access Language_Handler_Record'Class;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Top     : Glib.Xml_Int.Node_Ptr)
+      Top     : XML_Utils.Node_Ptr)
    is
       use type Strings.String_Access;
 
@@ -1062,6 +1062,7 @@ package body Language.Custom is
    overriding function Is_Word_Char
      (Lang : access Custom_Language; Char : Glib.Gunichar) return Boolean
    is
+      use type Glib.Gunichar;
    begin
       if Is_Entity_Letter (Char) then
          return True;

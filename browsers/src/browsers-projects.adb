@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                   use Glib;
-with Glib.Xml_Int;           use Glib.Xml_Int;
 with Gdk.Event;              use Gdk.Event;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Stock;              use Gtk.Stock;
@@ -40,6 +39,7 @@ with Browsers.Canvas;        use Browsers.Canvas;
 with Namet;                  use Namet;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
+with XML_Utils;              use XML_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
 with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
@@ -774,7 +774,7 @@ package body Browsers.Projects is
          Kernel      => Kernel,
          Module_Name => Project_Browser_Module_Name,
          Priority    => Default_Priority);
-      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+      GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
       --  ??? will be done in hook

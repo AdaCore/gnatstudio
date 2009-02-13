@@ -36,7 +36,6 @@ with Gdk.Types;               use Gdk.Types;
 with Gdk.Window;              use Gdk.Window;
 
 with Glib.Object;             use Glib.Object;
-with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glib.Values;             use Glib.Values;
 with Glib;                    use Glib;
 
@@ -67,6 +66,7 @@ with KeyManager_Module.GUI;
 with Traces;
 
 with UTF8_Utils;              use UTF8_Utils;
+with XML_Utils;               use XML_Utils;
 
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with XML_Parsers;

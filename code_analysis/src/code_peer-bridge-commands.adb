@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int;
+with XML_Utils;
 
 package body Code_Peer.Bridge.Commands is
 
@@ -33,34 +33,34 @@ package body Code_Peer.Bridge.Commands is
       New_Probability     : Code_Peer.Message_Probability_Level;
       Comment             : String)
    is
-      Database_Node  : Glib.Xml_Int.Node_Ptr :=
-                         new Glib.Xml_Int.Node'
+      Database_Node  : XML_Utils.Node_Ptr :=
+                         new XML_Utils.Node'
                                (Tag    => new String'("database"),
                                 others => <>);
-      Add_Audit_Node : constant Glib.Xml_Int.Node_Ptr :=
-                         new Glib.Xml_Int.Node'
+      Add_Audit_Node : constant XML_Utils.Node_Ptr :=
+                         new XML_Utils.Node'
                                (Tag    => new String'("add_audit_record"),
                                 Value  => new String'(Comment),
                                 others => <>);
 
    begin
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Add_Audit_Node, "message", Positive'Image (Message_Id));
 
       if Probability_Changed then
-         Glib.Xml_Int.Set_Attribute
+         XML_Utils.Set_Attribute
            (Add_Audit_Node,
             "probability",
             Code_Peer.Message_Probability_Level'Image (New_Probability));
       end if;
 
-      Glib.Xml_Int.Add_Child (Database_Node, Add_Audit_Node);
-      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
-      Glib.Xml_Int.Free (Database_Node);
+      XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
+      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Free (Database_Node);
    end Add_Audit_Record;
 
    -----------------
@@ -73,29 +73,29 @@ package body Code_Peer.Bridge.Commands is
       Export_File_Name  : Filesystem_String;
       Message_Id        : Positive)
    is
-      Database_Node      : Glib.Xml_Int.Node_Ptr :=
-                             new Glib.Xml_Int.Node'
+      Database_Node      : XML_Utils.Node_Ptr :=
+                             new XML_Utils.Node'
                                    (Tag    => new String'("database"),
                                     others => <>);
-      Audit_Trail_Node   : constant Glib.Xml_Int.Node_Ptr :=
-                             new Glib.Xml_Int.Node'
+      Audit_Trail_Node   : constant XML_Utils.Node_Ptr :=
+                             new XML_Utils.Node'
                                    (Tag    => new String'("audit_trail"),
                                     others => <>);
 
    begin
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Audit_Trail_Node, "message", Positive'Image (Message_Id));
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Audit_Trail_Node, "output_file", +Export_File_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      Glib.Xml_Int.Add_Child (Database_Node, Audit_Trail_Node);
-      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
-      Glib.Xml_Int.Free (Database_Node);
+      XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
+      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Free (Database_Node);
    end Audit_Trail;
 
    ----------------
@@ -107,27 +107,27 @@ package body Code_Peer.Bridge.Commands is
       Output_Directory  : Filesystem_String;
       Export_File_Name  : Filesystem_String)
    is
-      Database_Node      : Glib.Xml_Int.Node_Ptr :=
-        new Glib.Xml_Int.Node'
+      Database_Node      : XML_Utils.Node_Ptr :=
+        new XML_Utils.Node'
           (Tag    => new String'("database"),
            others => <>);
-      Inspection_Node    : constant Glib.Xml_Int.Node_Ptr :=
-        new Glib.Xml_Int.Node'
+      Inspection_Node    : constant XML_Utils.Node_Ptr :=
+        new XML_Utils.Node'
           (Tag    => new String'("inspection"),
            others => <>);
 
    begin
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      Glib.Xml_Int.Set_Attribute
+      XML_Utils.Set_Attribute
         (Inspection_Node, "output_file", +Export_File_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      Glib.Xml_Int.Add_Child (Database_Node, Inspection_Node);
-      Glib.Xml_Int.Print (Database_Node, +Command_File_Name);
-      Glib.Xml_Int.Free (Database_Node);
+      XML_Utils.Add_Child (Database_Node, Inspection_Node);
+      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Free (Database_Node);
    end Inspection;
 
 end Code_Peer.Bridge.Commands;

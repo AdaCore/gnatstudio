@@ -202,7 +202,6 @@ package body Build_Configurations is
          Cat   : constant String := Get_Attribute (N, "category", "");
          Child : Node_Ptr;
 
-         use type Glib.String_Ptr;
       begin
          if Name = "" then
             Log
@@ -275,7 +274,6 @@ package body Build_Configurations is
          Model.Switches := Switches;
       end Parse_Switches_Node;
 
-      use type Glib.String_Ptr;
    begin
       if XML = null or else XML.Tag = null then
          Log (Registry, -"Error: empty XML passed to builder configuration");
@@ -760,7 +758,6 @@ package body Build_Configurations is
    is
       Count : Natural := 0;
       Arg   : Node_Ptr;
-      use type Glib.String_Ptr;
    begin
       Arg := N.Child;
 
@@ -807,11 +804,11 @@ package body Build_Configurations is
       --  Main node
       N.Attributes := new String'
         ("model="""
-         & Glib.Xml_Int.Protect (To_String (Target.Model.Name))
+         & XML_Utils.Protect (To_String (Target.Model.Name))
          & """ category="""
-         & Glib.Xml_Int.Protect (To_String (Target.Properties.Category))
+         & XML_Utils.Protect (To_String (Target.Properties.Category))
          & """ name="""
-         & Glib.Xml_Int.Protect  (To_String (Target.Properties.Menu_Name))
+         & XML_Utils.Protect  (To_String (Target.Properties.Menu_Name))
          & """");
       --  Insert a <icon> node if needed
 
@@ -879,7 +876,6 @@ package body Build_Configurations is
       Child  : Node_Ptr;
       Target : Target_Access;
 
-      use type Glib.String_Ptr;
    begin
       if XML = null
         or else XML.Tag = null
@@ -1063,7 +1059,6 @@ package body Build_Configurations is
       N : Node_Ptr;
       T : Target_Access;
       pragma Unreferenced (T);
-      use type Glib.String_Ptr;
    begin
       if XML = null
         or else XML.Tag = null

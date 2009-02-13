@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Xml_Int; use Glib.Xml_Int;
+with XML_Utils; use XML_Utils;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;
@@ -48,7 +48,7 @@ package body Switches_Parser is
       Current_Tool_Config : out Switches_Editor_Config;
       Error_Message       : out Unbounded_String;
       Finder              : Other_Config_Finder;
-      Node                : Glib.Xml_Int.Node_Ptr)
+      Node                : XML_Utils.Node_Ptr)
    is
       Char        : constant String :=
                       Get_Attribute (Node, "switch_char", "-");

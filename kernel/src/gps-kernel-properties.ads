@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,7 @@
 --     end;
 
 with GNAT.Strings;
-with Glib.Xml_Int;
+with XML_Utils;
 with Projects;
 
 package GPS.Kernel.Properties is
@@ -52,7 +52,7 @@ package GPS.Kernel.Properties is
 
    procedure Save
      (Property : access Property_Record;
-      Node     : in out Glib.Xml_Int.Node_Ptr) is abstract;
+      Node     : in out XML_Utils.Node_Ptr) is abstract;
    --  Save the property to an XML node.
    --  The Node has already been created, and its name must not be changed.
    --  Attributes can be added if needed, though.
@@ -64,7 +64,7 @@ package GPS.Kernel.Properties is
    --  where "save1" and "save2" are set by Save.
 
    procedure Load
-     (Property : in out Property_Record; From : Glib.Xml_Int.Node_Ptr)
+     (Property : in out Property_Record; From : XML_Utils.Node_Ptr)
      is abstract;
    --  Load a property from an XML node.
    --  From has been found automatically by GPS based on the property node. If
@@ -251,21 +251,21 @@ package GPS.Kernel.Properties is
 private
    overriding procedure Destroy (Property : in out String_Property);
    overriding procedure Save
-     (Property : access String_Property; Node : in out Glib.Xml_Int.Node_Ptr);
+     (Property : access String_Property; Node : in out XML_Utils.Node_Ptr);
    overriding procedure Load
-     (Property : in out String_Property; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out String_Property; From : XML_Utils.Node_Ptr);
    --  See inherited documentation
 
    overriding procedure Save
-     (Property : access Integer_Property; Node : in out Glib.Xml_Int.Node_Ptr);
+     (Property : access Integer_Property; Node : in out XML_Utils.Node_Ptr);
    overriding procedure Load
-     (Property : in out Integer_Property; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out Integer_Property; From : XML_Utils.Node_Ptr);
    --  See inherited documentation
 
    overriding procedure Save
-     (Property : access Boolean_Property; Node : in out Glib.Xml_Int.Node_Ptr);
+     (Property : access Boolean_Property; Node : in out XML_Utils.Node_Ptr);
    overriding procedure Load
-     (Property : in out Boolean_Property; From : Glib.Xml_Int.Node_Ptr);
+     (Property : in out Boolean_Property; From : XML_Utils.Node_Ptr);
    --  See inherited documentation
 
 end GPS.Kernel.Properties;

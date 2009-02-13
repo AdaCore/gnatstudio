@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2008, AdaCore             --
+--                      Copyright (C) 2000-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,7 +20,6 @@
 with Ada.Tags;            use Ada.Tags;
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
-with Glib.Xml_Int;        use Glib.Xml_Int;
 with GNATCOLL.Traces;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
@@ -35,6 +34,7 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 with GVD.Preferences;     use GVD.Preferences;
 with String_Utils;        use String_Utils;
+with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
 
 package body GVD.Generic_View is
@@ -61,7 +61,7 @@ package body GVD.Generic_View is
    -----------------
 
    function Save_To_XML
-     (View : access Process_View_Record) return Glib.Xml_Int.Node_Ptr
+     (View : access Process_View_Record) return XML_Utils.Node_Ptr
    is
       pragma Unreferenced (View);
    begin
@@ -300,7 +300,7 @@ package body GVD.Generic_View is
 
       function Load_Desktop
         (MDI    : MDI_Window;
-         Node   : Glib.Xml_Int.Node_Ptr;
+         Node   : XML_Utils.Node_Ptr;
          Kernel : Kernel_Handle) return MDI_Child
       is
          Child : GPS_MDI_Child;
@@ -323,13 +323,13 @@ package body GVD.Generic_View is
 
       function Save_Desktop
         (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-         Kernel : Kernel_Handle) return Glib.Xml_Int.Node_Ptr
+         Kernel : Kernel_Handle) return XML_Utils.Node_Ptr
       is
          pragma Unreferenced (Kernel);
-         N : Glib.Xml_Int.Node_Ptr;
+         N : XML_Utils.Node_Ptr;
       begin
          if Widget'Tag = Formal_View_Record'Tag then
-            N       := new Glib.Xml_Int.Node;
+            N       := new XML_Utils.Node;
             N.Tag   := new String'(Module_Name);
             N.Child := Save_To_XML (Formal_View_Access (Widget));
             return N;
@@ -408,7 +408,7 @@ package body GVD.Generic_View is
       procedure Register_Desktop_Functions
         (Kernel : access Kernel_Handle_Record'Class) is
       begin
-         GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+         GPS.Kernel.Register_Desktop_Functions
            (Simple_Views.Save_Desktop'Unrestricted_Access,
             Simple_Views.Load_Desktop'Unrestricted_Access);
          Add_Hook (Kernel, Debugger_Process_Stopped_Hook,

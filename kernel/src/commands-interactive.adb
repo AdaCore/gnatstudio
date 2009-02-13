@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,9 +19,10 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Glib.Xml_Int; use Glib.Xml_Int;
 with Gdk.Event;    use Gdk.Event;
 with GPS.Intl;     use GPS.Intl;
+
+with XML_Utils;    use XML_Utils;
 
 package body Commands.Interactive is
 

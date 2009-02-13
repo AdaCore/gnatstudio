@@ -35,7 +35,7 @@
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 
 with Traces;         use Traces;
-with Glib.Xml_Int;   use Glib.Xml_Int;
+with XML_Utils;   use XML_Utils;
 with XML_Parsers;
 
 with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
