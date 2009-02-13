@@ -220,7 +220,7 @@ package body Outline_View is
 
    procedure Entity_At_Iter
      (Outline : access Outline_View_Record'Class;
-      Iter    : Gtk_Tree_Iter;
+      Iter    : in out Gtk_Tree_Iter;
       Line    : out Integer;
       Column  : out Visible_Column_Type);
    --  Return the current coordinates for the entity referenced at Iter
@@ -249,7 +249,7 @@ package body Outline_View is
 
    procedure Entity_At_Iter
      (Outline : access Outline_View_Record'Class;
-      Iter    : Gtk_Tree_Iter;
+      Iter    : in out Gtk_Tree_Iter;
       Line    : out Integer;
       Column  : out Visible_Column_Type)
    is
@@ -263,7 +263,8 @@ package body Outline_View is
                New_Model    => Model);
 
       Line := Integer (Get_Int (Model, New_Iter, Line_Column));
-      Column := Visible_Column_Type (Get_Int (Model, Iter, Column_Column));
+      Column := Visible_Column_Type (Get_Int (Model, New_Iter, Column_Column));
+      Iter := New_Iter;
    end Entity_At_Iter;
 
    ----------
