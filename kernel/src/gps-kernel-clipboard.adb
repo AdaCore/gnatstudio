@@ -201,7 +201,7 @@ package body GPS.Kernel.Clipboard is
             end if;
          end loop;
 
-         Print (File, +Filename, Success);
+         Print (File, GNATCOLL.VFS.Create (Filename), Success);
          Free (File);
 
          if not Success then

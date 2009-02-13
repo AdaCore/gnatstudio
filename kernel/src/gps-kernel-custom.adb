@@ -524,7 +524,7 @@ package body GPS.Kernel.Custom is
       end loop;
 
       Trace (Me, "Saving " & (+Startup));
-      Print (File, +Startup, Success);
+      Print (File, GNATCOLL.VFS.Create (Startup), Success);
       Free (File);
 
       if not Success then

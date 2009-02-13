@@ -39,6 +39,7 @@ with XML_Utils;   use XML_Utils;
 with XML_Parsers;
 
 with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;
 
 package body Case_Handling.IO is
 
@@ -163,7 +164,7 @@ package body Case_Handling.IO is
       end if;
 
       Trace (Me, "Saving " & (+Filename));
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
    exception

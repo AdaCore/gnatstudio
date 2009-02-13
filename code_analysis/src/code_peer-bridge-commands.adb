@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with XML_Utils;
+with GNATCOLL.VFS;
 
 package body Code_Peer.Bridge.Commands is
 
@@ -59,7 +60,7 @@ package body Code_Peer.Bridge.Commands is
       end if;
 
       XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
-      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record;
 
@@ -94,7 +95,7 @@ package body Code_Peer.Bridge.Commands is
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
-      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
       XML_Utils.Free (Database_Node);
    end Audit_Trail;
 
@@ -126,7 +127,7 @@ package body Code_Peer.Bridge.Commands is
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Inspection_Node);
-      XML_Utils.Print (Database_Node, +Command_File_Name);
+      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
       XML_Utils.Free (Database_Node);
    end Inspection;
 

@@ -281,7 +281,7 @@ package body VCS_Activities is
       end loop;
 
       Trace (Me, "Saving " & (+Filename));
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
       if not Success then

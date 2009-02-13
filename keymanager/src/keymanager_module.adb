@@ -329,7 +329,7 @@ package body KeyManager_Module is
       Save_Table (Keymanager_Module.Table.all, "");
 
       Trace (Me, "Saving " & (+Filename));
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
       if not Success then

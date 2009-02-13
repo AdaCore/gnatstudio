@@ -17,56 +17,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? The following dependencies on Glib should be removed.
-with Glib.Messages; use Glib.Messages;
-with Glib.Convert;  use Glib.Convert;
-with Glib.Unicode;  use Glib.Unicode;
-with Glib.Error;    use Glib.Error;
-
 with Unchecked_Deallocation;
-with System;
 with Ada.Strings.Fixed;
+
+with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
+
+with GNAT.Decode_UTF8_String; use GNAT.Decode_UTF8_String;
+with GNAT.Encode_UTF8_String; use GNAT.Encode_UTF8_String;
+
+with GNAT.UTF_32;             use GNAT.UTF_32;
+
+with GNAT.Strings; use GNAT.Strings;
+with Traces;       use Traces;
 
 package body XML_Utils is
 
-   function File_Length (FD : Integer) return Long_Integer;
-   pragma Import (C, File_Length, "__gnat_file_length");
-   --  Get length of file from file descriptor FD
-
-   function Open_Read
-     (Name  : String;
-      Fmode : Integer := 0) return Integer;
-   pragma Import (C, Open_Read, "__gnat_open_read");
-   --  Open file Name and return a file descriptor
-
-   function Create_File
-     (Name  : String;
-      Fmode : Integer := 0) return Integer;
-   pragma Import (C, Create_File, "__gnat_open_create");
-   --  Creates new file with given name for writing, returning file descriptor
-   --  for subsequent use in Write calls. File descriptor returned is
-   --  negative if file cannot be successfully created.
-
-   function Read
-     (FD   : Integer;
-      A    : System.Address;
-      N    : Integer) return Integer;
-   pragma Import (C, Read, "read");
-   --  Read N bytes to address A from file referenced by FD. Returned value is
-   --  count of bytes actually read, which can be less than N at EOF.
-
-   procedure Write
-     (FD   : Integer;
-      S    : String;
-      N    : Integer);
-   pragma Import (C, Write, "write");
-   --  Write N bytes from address A to file referenced by FD. The returned
-   --  value is the number of bytes written, which can be less than N if a
-   --  disk full condition was detected.
-
-   procedure Close (FD : Integer);
-   pragma Import (C, Close, "close");
-   --  Close file referenced by FD
+   Me : constant Debug_Handle := Create ("XML_Utils");
 
    procedure Skip_Blanks (Buf : String; Index : in out Natural);
    --  Skip blanks, LF and CR, starting at Index. Index is updated to the
@@ -511,154 +477,47 @@ package body XML_Utils is
    -------------
 
    function Protect (S : String) return String is
-      Length      : Natural := 0;
-      Valid_Utf8  : Boolean;
-      Invalid_Pos : Natural;
-      Pos         : Natural;
+      R      : Unbounded_Wide_Wide_String;
+      Wide   : Wide_Wide_String (1 .. S'Length);
+      Length : Natural;
+   begin
+      Decode_Wide_Wide_String (S, Wide, Length);
 
-      procedure Update_Length (Idx : Natural);
-      --  Update the final length of the result string
-
-      procedure Translate
-        (Idx : Natural; Res : in out String; Res_Idx : in out Natural);
-      --  Protect an xml-reserved character into its entities equivalence
-
-      -------------------
-      -- Update_Length --
-      -------------------
-
-      procedure Update_Length (Idx : Natural) is
-      begin
-         case S (Idx) is
-            when '<' => Length := Length + 4;
-            when '>' => Length := Length + 4;
-            when '&' => Length := Length + 5;
-            when ''' => Length := Length + 6;
-            when '"' => Length := Length + 6;
+      for J in 1 .. Length loop
+         case Wide (J) is
+            when '<' =>
+               Append (R, "&lt;");
+            when '>' =>
+               Append (R, "&gt;");
+            when '&' =>
+               Append (R, "&amp;");
+            when ''' =>
+               Append (R, "&apos;");
+            when '"' =>
+               Append (R, "&quot;");
             when others =>
-               --  Single case for ascii/utf8: ascii control characters will
-               --  also match.
-               if Unichar_Type (UTF8_Get_Char (S (Idx .. S'Last))) =
-                 Unicode_Control
+               if Get_Category
+                 (UTF_32'Val (Wide_Wide_Character'Pos (Wide (J)))) = Cc
                then
-                  declare
-                     Str : constant String :=
-                             Glib.Gunichar'Image
-                               (UTF8_Get_Char (S (Idx .. S'Last)));
-                  begin
-                     --  Add 2: -1 for the starting space, and +3 for leading
-                     --  &# and trailing ;
-                     Length := Length + Str'Length + 2;
-                  end;
-               elsif Valid_Utf8 then
-                  Length := Length + UTF8_Next_Char (S, Idx) - Idx;
+                  Append (R, "&#" & Wide (J) & ";");
                else
-                  Length := Length + 1;
+                  Append (R, Wide (J));
                end if;
          end case;
-      end Update_Length;
+      end loop;
 
-      ---------------
-      -- Translate --
-      ---------------
-
-      procedure Translate
-        (Idx : Natural; Res : in out String; Res_Idx : in out Natural) is
-      begin
-         case S (Idx) is
-            when '<' =>
-               Res (Res_Idx .. Res_Idx + 3) := "&lt;";
-               Res_Idx := Res_Idx + 4;
-            when '>' =>
-               Res (Res_Idx .. Res_Idx + 3) := "&gt;";
-               Res_Idx := Res_Idx + 4;
-            when '&' =>
-               Res (Res_Idx .. Res_Idx + 4) := "&amp;";
-               Res_Idx := Res_Idx + 5;
-            when ''' =>
-               Res (Res_Idx .. Res_Idx + 5) := "&apos;";
-               Res_Idx := Res_Idx + 6;
-            when '"' =>
-               Res (Res_Idx .. Res_Idx + 5) := "&quot;";
-               Res_Idx := Res_Idx + 6;
-            when others =>
-               declare
-                  Char : constant Glib.Gunichar :=
-                           UTF8_Get_Char (S (Idx .. S'Last));
-                  Next : Natural;
-               begin
-                  if Unichar_Type (Char) = Unicode_Control then
-                     declare
-                        Str : constant String := Glib.Gunichar'Image (Char);
-                     begin
-                        Res (Res_Idx .. Res_Idx + Str'Length + 1) :=
-                          "&#" & Str (Str'First + 1 .. Str'Last) & ";";
-                        Res_Idx := Res_Idx + Str'Length + 2;
-                     end;
-
-                  elsif Valid_Utf8 then
-                     Next := UTF8_Next_Char (S, Idx);
-                     Res (Res_Idx .. Res_Idx + Next - Idx - 1) :=
-                       S (Idx .. Next - 1);
-                     Res_Idx := Res_Idx + Next - Idx;
-
-                  else
-                     Res (Res_Idx) := S (Idx);
-                     Res_Idx := Res_Idx + 1;
-                  end if;
-               end;
-         end case;
-      end Translate;
-
-   begin
-      UTF8_Validate (S, Valid_Utf8, Invalid_Pos);
-
-      if Valid_Utf8 then
-         Pos := S'First;
-
-         while Pos <= S'Last loop
-            Update_Length (Pos);
-            Pos := UTF8_Next_Char (S, Pos);
-         end loop;
-
-      else
-         for J in S'Range loop
-            Update_Length (J);
-         end loop;
-      end if;
-
-      declare
-         Result : String (1 .. Length);
-         Index : Integer := 1;
-
-      begin
-         if Valid_Utf8 then
-            Pos := S'First;
-
-            while Pos <= S'Last loop
-               Translate (Pos, Result, Index);
-               Pos := UTF8_Next_Char (S, Pos);
-            end loop;
-
-         else
-            for J in S'Range loop
-               Translate (J, Result, Index);
-            end loop;
-         end if;
-
-         return Result;
-      end;
+      return Encode_Wide_Wide_String (To_Wide_Wide_String (R));
    end Protect;
 
    -----------
    -- Print --
    -----------
 
-   procedure Print (N : Node_Ptr; File_Name : String := "") is
+   procedure Print (N : Node_Ptr; File : Virtual_File) is
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      Print (N, File_Name, Success);
+      Print (N, File, Success);
    end Print;
 
    -----------
@@ -666,11 +525,11 @@ package body XML_Utils is
    -----------
 
    procedure Print
-     (N         : Node_Ptr;
-      File_Name : String;
-      Success   : out Boolean)
+     (N       : Node_Ptr;
+      File    : Virtual_File;
+      Success : out Boolean)
    is
-      File : Integer := 1;
+      Writable : Writable_File;
 
       procedure Do_Indent (Indent : Natural);
       --  Print a string made of Indent blank characters.
@@ -694,7 +553,7 @@ package body XML_Utils is
 
       procedure Put (S : String) is
       begin
-         Write (File, S, S'Length);
+         Write (Writable, S);
       end Put;
 
       --------------
@@ -782,23 +641,19 @@ package body XML_Utils is
             Put_Line ("</" & N.Tag.all & ">");
          end if;
       end Print_Node;
-
    begin
-      if File_Name /= "" then
-         File := Create_File (File_Name & ASCII.NUL);
 
-         if File < 0 then
-            Success := False;
-            return;
-         end if;
+      if File = GNATCOLL.VFS.No_File then
+         Success := False;
+         return;
       end if;
+
+      Writable := Write_File (File);
 
       Put_Line ("<?xml version=""1.0""?>");
       Print_Node (N, 0);
 
-      if File_Name /= "" then
-         Close (File);
-      end if;
+      Close (Writable);
 
       Success := True;
    end Print;
@@ -807,38 +662,9 @@ package body XML_Utils is
    -- Parse --
    -----------
 
-   function Parse (File : String) return Node_Ptr is
+   function Parse (File : Virtual_File) return Node_Ptr is
 
-      function Read_File (The_File : String) return String_Ptr;
-      --  Return the contents of an entire file.
-      --  If the file cannot be found, return null.
-      --  The caller is responsible for freeing the returned memory.
-
-      ---------------
-      -- Read_File --
-      ---------------
-
-      function Read_File (The_File : String) return String_Ptr is
-         FD     : Integer;
-         Buffer : String_Ptr;
-         Length : Integer;
-         pragma Warnings (Off, Length);
-
-      begin
-         FD := Open_Read (The_File & ASCII.NUL);
-
-         if FD < 0 then
-            return null;
-         end if;
-
-         Length := Integer (File_Length (FD));
-         Buffer := new String (1 .. Length);
-         Length := Read (FD, Buffer.all'Address, Length);
-         Close (FD);
-         return Buffer;
-      end Read_File;
-
-      Buf    : String_Ptr;
+      Buf    : String_Access;
       Result : Node_Ptr;
 
    begin
@@ -888,23 +714,10 @@ package body XML_Utils is
             end loop;
 
             if Encoding_Last <= XML_Version'Last then
-               declare
-                  Error       : aliased GError;
-                  Utf8_Buffer : constant String := Glib.Convert.Convert
-                    (Buffer,
-                     To_Codeset => "UTF-8",
-                     From_Codeset =>
-                       XML_Version (Encoding .. Encoding_Last - 1),
-                     Error => Error'Unchecked_Access);
-               begin
-                  if Utf8_Buffer /= "" then
-                     Result := Get_Node (Utf8_Buffer, Index'Unchecked_Access);
-                  else
-                     Glib.Messages.Log
-                       ("Glib", Log_Level_Warning, Get_Message (Error));
-                     Error_Free (Error);
-                  end if;
-               end;
+               --  In GPS, we assume all XML files are encoded in UTF_8
+               if XML_Version (Encoding .. Encoding_Last - 1) /= "UTF-8" then
+                  Trace (Me, "XML file is not UTF-8");
+               end if;
             else
                Result := Get_Node (Buffer, Index'Unchecked_Access);
             end if;

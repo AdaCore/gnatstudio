@@ -613,7 +613,7 @@ package body GPS.Kernel.Properties is
          Next (C);
       end loop;
 
-      Print (Root, +Filename, Success);
+      Print (Root, GNATCOLL.VFS.Create (Filename), Success);
       Free (Root);
 
       Clear (Nodes);
@@ -649,7 +649,7 @@ package body GPS.Kernel.Properties is
       Trace (Me, "Loading " & (+Filename));
 
       if Is_Readable_File (+Filename) then
-         Root := Parse (+Filename);
+         Root := Parse (GNATCOLL.VFS.Create (Filename));
 
          if Root /= null then
             File := Root.Child;

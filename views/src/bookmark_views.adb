@@ -68,6 +68,7 @@ with Traces;                    use Traces;
 with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
 with XML_Utils;                 use XML_Utils;
+with GNATCOLL.VFS;
 
 package body Bookmark_Views is
 
@@ -842,7 +843,7 @@ package body Bookmark_Views is
          List := Next (List);
       end loop;
 
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
       if not Success then

@@ -586,7 +586,7 @@ package body Aliases_Module is
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
 
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
       if not Success then

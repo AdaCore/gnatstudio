@@ -690,7 +690,7 @@ package body Builder_Facility_Module is
       Success : Boolean;
    begin
       N := Save_All_Targets_To_XML (Builder_Module_ID.Registry);
-      Print (N, +Full_Name (Get_Targets_File).all, Success);
+      Print (N, Get_Targets_File, Success);
 
       if not Success then
          Trace (Me, "Error when saving targets file");
@@ -705,7 +705,7 @@ package body Builder_Facility_Module is
       N : Node_Ptr;
       C : Node_Ptr;
    begin
-      N := Parse (+Full_Name (Get_Targets_File).all);
+      N := Parse (Get_Targets_File);
 
       if N = null then
          Trace (Me, "Error when loading targets file");

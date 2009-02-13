@@ -76,6 +76,7 @@ with Traces;                   use Traces;
 with XML_Parsers;
 
 with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;
 
 package body Default_Preferences is
 
@@ -897,7 +898,7 @@ package body Default_Preferences is
          Next (C);
       end loop;
 
-      Print (File, +File_Name, Success);
+      Print (File, GNATCOLL.VFS.Create (File_Name), Success);
 
    exception
       when E : others => Trace (Exception_Handle, E);

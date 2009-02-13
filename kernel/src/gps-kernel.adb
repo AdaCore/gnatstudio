@@ -830,7 +830,7 @@ package body GPS.Kernel is
       --  stored in an XML attribute.
       Add_Child (N, M);
 
-      Print (N, +File_Name, Success);
+      Print (N, GNATCOLL.VFS.Create (File_Name), Success);
       Free (N);
 
       if not Success then

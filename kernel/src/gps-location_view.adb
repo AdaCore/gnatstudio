@@ -3172,7 +3172,7 @@ package body GPS.Location_View is
 
    begin
       N := Save_Desktop (View, Kernel_Handle (Kernel));
-      Print (N, +Full_Name (File).all, Success);
+      Print (N, File, Success);
       Free (N);
 
       if not Success then

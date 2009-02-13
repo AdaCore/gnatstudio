@@ -582,7 +582,7 @@ package body Action_Editor is
       end loop;
 
       Trace (Me, "Saving " & (+Filename));
-      Print (Tree, +Filename, Success);
+      Print (Tree, Create (Filename), Success);
       Free (Tree);
 
       if not Success then

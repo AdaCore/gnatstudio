@@ -23,6 +23,8 @@
 with Interfaces.C;
 with Ada.Unchecked_Deallocation;
 
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+
 package XML_Utils is
 
    subtype UTF8_String is String;
@@ -62,14 +64,14 @@ package XML_Utils is
    --  points to its parent, its children and its siblings (nodes at the same
    --  level in the tree and with the same parent).
 
-   function Parse (File : String) return Node_Ptr;
+   function Parse (File : Virtual_File) return Node_Ptr;
    --  Parse File and return the first node representing the XML file.
 
    function Parse_Buffer (Buffer : UTF8_String) return Node_Ptr;
    --  Parse a given Buffer in memory and return the first node representing
    --  the XML contents.
 
-   procedure Print (N : Node_Ptr; File_Name : String := "");
+   procedure Print (N : Node_Ptr; File : Virtual_File);
    --  Write the tree starting with N into a file File_Name. The generated
    --  file is valid XML, and can be parsed with the Parse function.
    --  If File_Name is the empty string, then the tree is printed on the
@@ -77,7 +79,7 @@ package XML_Utils is
 
    procedure Print
      (N         : Node_Ptr;
-      File_Name : String;
+      File      : Virtual_File;
       Success   : out Boolean);
    --  Same as above, with Success reporting the success of the operation.
 

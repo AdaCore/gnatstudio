@@ -238,7 +238,7 @@ package body VCS_Status is
          Status_Hash.Get_Next (Cache.T.all, Iter);
       end loop;
 
-      Print (File, +Filename, Success);
+      Print (File, GNATCOLL.VFS.Create (Filename), Success);
       Free (File);
 
       if not Success then

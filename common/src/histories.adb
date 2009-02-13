@@ -41,6 +41,7 @@ with GUI_Utils;           use GUI_Utils;
 with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
 with XML_Parsers;
+with GNATCOLL.VFS;
 
 package body Histories is
 
@@ -366,7 +367,7 @@ package body Histories is
          Get_Next (Hist.Table.all, Iter);
       end loop;
 
-      Print (File, +File_Name, Success);
+      Print (File, GNATCOLL.VFS.Create (File_Name), Success);
       Free (File);
    end Save;
 

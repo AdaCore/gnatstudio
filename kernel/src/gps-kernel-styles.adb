@@ -322,7 +322,7 @@ package body GPS.Kernel.Styles is
          Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
       end loop;
 
-      Print (Main, +Full_Name (File).all, Success);
+      Print (Main, File, Success);
 
       Free (Main);
 
