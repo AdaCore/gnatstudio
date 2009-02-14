@@ -1457,9 +1457,7 @@ package body Projects.Registry is
                --  Convert the file to UTF8
 
                declare
-                  UTF8      : String :=
-                                Display_Full_Name
-                                  (Create (+Buffer (1 .. Length)));
+                  UTF8      : String := Buffer (1 .. Length);
                   Part      : Unit_Part;
                   Unit_Name : Name_Id;
                   File      : Virtual_File;
