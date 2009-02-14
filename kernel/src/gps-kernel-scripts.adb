@@ -70,6 +70,7 @@ with String_List_Utils;
 with System;                  use System;
 with System.Address_Image;
 with System.Assertions;
+with GNATCOLL.Memory;
 with Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with OS_Utils;                use OS_Utils;
@@ -488,9 +489,6 @@ package body GPS.Kernel.Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      procedure Memory_Dump (Size : Positive);
-      pragma Import (Ada, Memory_Dump, "__system__memory__dump");
-
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "get_system_dir" then
@@ -503,7 +501,12 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, +Get_Home_Dir (Kernel));
 
       elsif Command = "debug_memory_usage" then
-         Memory_Dump (Size => Nth_Arg (Data, 1));
+         GNATCOLL.Memory.Dump
+           (Size   => Nth_Arg (Data, 1, 3),
+            Report => GNATCOLL.Memory.Report_Type'Val (Nth_Arg (Data, 2, 1)));
+
+      elsif Command = "debug_memory_reset" then
+         GNATCOLL.Memory.Reset;
 
       elsif Command = "insmod" then
          Name_Parameters (Data, Insmod_Cmd_Parameters);
@@ -1931,8 +1934,13 @@ package body GPS.Kernel.Scripts is
          Free (Tmp);
          Register_Command
            (Kernel, "debug_memory_usage",
-            Minimum_Args => 1,
-            Maximum_Args => 1,
+            Minimum_Args => 0,
+            Maximum_Args => 2,
+            Handler      => Default_Command_Handler'Access);
+         Register_Command
+           (Kernel, "debug_memory_reset",
+            Minimum_Args => 0,
+            Maximum_Args => 0,
             Handler      => Default_Command_Handler'Access);
       end if;
 

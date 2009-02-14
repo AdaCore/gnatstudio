@@ -30,6 +30,7 @@ with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.Memory;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -386,12 +387,22 @@ procedure GPS.Main is
       Charset     : String_Access;
       Make_Root   : String_Access;
       Python_Home : String_Access;
-      Tmp         : String_Access;
+      Tmp, Tmp2   : String_Access;
 
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
    begin
+      Tmp  := Getenv ("GPS_MEMORY_MONITOR");
+      Tmp2 := Getenv ("GPS_MEMORY_CHECK");
+
+      GNATCOLL.Memory.Configure
+        (Activate_Monitor => Tmp /= null,
+         Disable_Free     => Tmp2 /= null);
+
+      Free (Tmp);
+      Free (Tmp2);
+
       OS_Utils.Install_Ctrl_C_Handler (Callbacks.Ctrl_C_Handler'Access);
       Projects.Registry.Initialize;
 
