@@ -397,8 +397,8 @@ procedure GPS.Main is
       Tmp2 := Getenv ("GPS_MEMORY_CHECK");
 
       GNATCOLL.Memory.Configure
-        (Activate_Monitor => Tmp /= null,
-         Disable_Free     => Tmp2 /= null);
+        (Activate_Monitor => Tmp.all /= "",
+         Disable_Free     => Tmp2.all /= "");
 
       Free (Tmp);
       Free (Tmp2);
