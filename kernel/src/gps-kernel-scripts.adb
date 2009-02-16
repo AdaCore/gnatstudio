@@ -1943,6 +1943,7 @@ package body GPS.Kernel.Scripts is
             Maximum_Args => 0,
             Handler      => Default_Command_Handler'Access);
       end if;
+      Free (Tmp);
 
       Register_Command
         (Kernel, "execute_asynchronous_action",
