@@ -764,7 +764,7 @@ package body GPS.Location_View is
          Loc : constant Editor_Location'Class := Mark.Location;
       begin
          if Mark /= Nil_Editor_Mark then
-            Loc.Buffer.Current_View.Cursor_Goto (Loc);
+            Loc.Buffer.Current_View.Cursor_Goto (Loc, Raise_View => True);
          end if;
       end;
 

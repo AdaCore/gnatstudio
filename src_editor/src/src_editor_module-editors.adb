@@ -259,8 +259,9 @@ package body Src_Editor_Module.Editors is
       Location : Editor_Location'Class := Nil_Editor_Location);
 
    overriding procedure Cursor_Goto
-     (This     : Src_Editor_View;
-      Location : Editor_Location'Class);
+     (This       : Src_Editor_View;
+      Location   : Editor_Location'Class;
+      Raise_View : Boolean := False);
 
    overriding function Cursor
      (This : Src_Editor_View) return Editor_Location'Class;
@@ -1406,8 +1407,9 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding procedure Cursor_Goto
-     (This     : Src_Editor_View;
-      Location : Editor_Location'Class)
+     (This       : Src_Editor_View;
+      Location   : Editor_Location'Class;
+      Raise_View : Boolean := False)
    is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
@@ -1426,7 +1428,7 @@ package body Src_Editor_Module.Editors is
                  (This.Box,
                   Line        => Line,
                   Column      => Col,
-                  Force_Focus => False);
+                  Force_Focus => Raise_View);
             end;
 
          end if;

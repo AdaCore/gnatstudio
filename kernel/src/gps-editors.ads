@@ -312,8 +312,9 @@ package GPS.Editors is
    --  editor is centered around the location of the cursor.
 
    procedure Cursor_Goto
-     (This     : Editor_View;
-      Location : Editor_Location'Class) is abstract;
+     (This       : Editor_View;
+      Location   : Editor_Location'Class;
+      Raise_View : Boolean := False) is abstract;
    --  Moves the cursor at the given location. Each view of a particular buffer
    --  has its own cursor position, which is where characters typed by the user
    --  will be inserted.
@@ -488,8 +489,9 @@ private
       Location : Editor_Location'Class := Nil_Editor_Location) is null;
 
    overriding procedure Cursor_Goto
-     (This     : Dummy_Editor_View;
-      Location : Editor_Location'Class) is null;
+     (This       : Dummy_Editor_View;
+      Location   : Editor_Location'Class;
+      Raise_View : Boolean := False) is null;
 
    overriding function Cursor
      (This : Dummy_Editor_View) return Editor_Location'Class;
