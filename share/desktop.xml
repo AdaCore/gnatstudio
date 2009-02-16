@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <GPS_Desktop>
-  <MDI project="" state=" 0" y=" 0" x=" 0" height=" 600" width=" 800" >
+  <MDI state=" 0" y=" 0" x=" 0" height=" 600" width=" 800" >
+    <vfs_project />
     <Pane Orientation="ORIENTATION_HORIZONTAL" >
       <Pane Orientation="ORIENTATION_VERTICAL" >
         <Notebook Height=" 67" Width=" 279" >

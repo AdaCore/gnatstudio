@@ -1148,6 +1148,10 @@ package body XML_Utils is
          Host  : constant String := Get_Attribute (Child, "server", "");
          FS    : Filesystem_Access;
       begin
+         if Value = "" then
+            return No_File;
+         end if;
+
          if Host = "" then
             return Create (+Value);
          else
