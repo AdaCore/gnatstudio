@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -548,6 +548,7 @@ package body GPS.Kernel.Properties is
             Next       => null,
             Specific_Data => 1);
 
+         Dst := null;
          Get_First (Hash.all, Iter2);
          loop
             Descr := Get_Element (Iter2);
