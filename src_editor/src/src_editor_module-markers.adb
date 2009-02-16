@@ -514,9 +514,7 @@ package body Src_Editor_Module.Markers is
    begin
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
-      Set_Attribute (Node, "file", +Full_Name (Marker.File).all);
-      --  ??? Potentially non-utf8 string should not be
-      --  stored in an XML attribute.
+      Add_File_Child (Node, "file", Marker.File);
       Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
       Set_Attribute (Node, "column", Visible_Column_Type'Image
                      (Marker.Column));
@@ -540,9 +538,7 @@ package body Src_Editor_Module.Markers is
             return Location_Marker
               (Create_File_Marker
                  (Kernel => Kernel,
-                  File   => Create (+Get_Attribute (From_XML, "file")),
-                  --  ??? Potentially non-utf8 string should not be
-                  --  stored in an XML attribute.
+                  File   => Get_File_Child (From_XML, "file"),
                   Line   => Editable_Line_Type'Value
                    (Get_Attribute (From_XML, "line")),
                   Column =>

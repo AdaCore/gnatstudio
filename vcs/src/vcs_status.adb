@@ -219,9 +219,7 @@ package body VCS_Status is
                Child     := new Node;
                Child.Tag := new String'("file_status");
 
-               Set_Attribute (Child, "file", +Full_Name (File).all);
-               --  ??? Potentially non-utf8 string should not be
-               --  stored in an XML attribute.
+               Add_File_Child (Child, "file", File);
                Set_Attribute
                  (Child, "date", Image (Item.Timestamp, "%Y-%m-%d %H:%M:%S"));
                Set_Attribute (Child, "log", Boolean'Image (Item.LR.Log));
@@ -273,11 +271,7 @@ package body VCS_Status is
       ------------------
 
       procedure Parse_Status (Node : Node_Ptr) is
-         File     : constant Virtual_File :=
-           Create (+Get_Attribute (Node, "file"));
-         --  ??? Potentially non-utf8 string should not be
-         --  stored in an XML attribute.
-
+         File     : constant Virtual_File := Get_File_Child (Node, "file");
          Date_Str : constant String := Get_Attribute (Node, "date");
          F        : constant Positive := Date_Str'First;
          Date     : constant Time :=

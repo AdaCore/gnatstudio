@@ -19,7 +19,7 @@
 
 with Unchecked_Deallocation;
 with Ada.Strings.Fixed;
-
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
 with GNAT.Decode_UTF8_String; use GNAT.Decode_UTF8_String;
@@ -29,6 +29,9 @@ with GNAT.UTF_32;             use GNAT.UTF_32;
 
 with GNAT.Strings; use GNAT.Strings;
 with Traces;       use Traces;
+
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with Filesystems;  use Filesystems;
 
 package body XML_Utils is
 
@@ -246,7 +249,17 @@ package body XML_Utils is
                   pragma Assert (Index <= S'Last);
                end loop;
 
-               if S (Start .. Index - 1) = "quot" then
+               if S (Start) = '#' then
+                  declare
+                     N : Natural;
+                  begin
+                     N := Natural'Value (S (Start + 1 .. Index - 1));
+                     Str (J) := Character'Val (N);
+                  exception
+                     when Constraint_Error =>
+                        Str (J) := '?';
+                  end;
+               elsif S (Start .. Index - 1) = "quot" then
                   Str (J) := '"';
                elsif S (Start .. Index - 1) = "gt" then
                   Str (J) := '>';
@@ -668,8 +681,7 @@ package body XML_Utils is
    -----------
 
    function Parse (File : Virtual_File) return Node_Ptr is
-
-      Buf    : String_Access;
+      Buf    : GNAT.Strings.String_Access;
       Result : Node_Ptr;
 
    begin
@@ -998,5 +1010,151 @@ package body XML_Utils is
       end if;
       return True;
    end Is_Equal;
+
+   -----------------------------
+   -- String_To_Encoded_ASCII --
+   -----------------------------
+
+   function String_To_Encoded_ASCII (S : String) return String is
+      U : Unbounded_String;
+   begin
+      for J in S'Range loop
+         if S (J) = '#'
+           or else Character'Pos (S (J)) >= 127
+         then
+            declare
+               Img : constant String := Natural'Image
+                 (Character'Pos (S (J)));
+            begin
+               Append (U, "#" & Img (Img'First + 1 .. Img'Last) & ";");
+            end;
+         else
+            Append (U, S (J));
+         end if;
+      end loop;
+
+      return To_String (U);
+   end String_To_Encoded_ASCII;
+
+   -----------------------------
+   -- Encoded_ASCII_To_String --
+   -----------------------------
+
+   function Encoded_ASCII_To_String (S : String) return String
+   is
+      U     : Unbounded_String;
+      Index : Natural := S'First;
+      Next  : Natural;
+   begin
+      while Index <= S'Last loop
+         if S (Index) = '#' then
+            Next := Index + 1;
+            loop
+               if Next > S'Last then
+                  Trace (Me, "XML error: '#' not corresponding to ';'");
+                  return To_String (U);
+               end if;
+
+               exit when S (Next) = ';';
+
+               Next := Next + 1;
+            end loop;
+
+            declare
+               N : Natural;
+            begin
+               N := Natural'Value (S (Index + 1 .. Next - 1));
+               Append (U, Character'Val (N));
+            exception
+               when Constraint_Error =>
+                  Trace
+                    (Me, "XML error: could not read number in '#' entity");
+                  return To_String (U);
+            end;
+
+            Index := Next + 1;
+         else
+            Append (U, S (Index));
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      return To_String (U);
+   end Encoded_ASCII_To_String;
+
+   --------------------
+   -- Add_File_Child --
+   --------------------
+
+   procedure Add_File_Child
+     (N    : Node_Ptr;
+      Tag  : UTF8_String;
+      File : Virtual_File)
+   is
+      Child : Node_Ptr;
+
+   begin
+      Child := new Node;
+
+      Child.Tag := new UTF8_String'("vfs_" & Tag);
+      Child.Value := new UTF8_String'
+        (String_To_Encoded_ASCII (+Full_Name (File).all));
+
+      declare
+         Host : constant String := Get_Host (File);
+      begin
+         if Host /= "" then
+            Set_Attribute (Child, "server", Host);
+         end if;
+      end;
+
+      Add_Child (N, Child);
+   end Add_File_Child;
+
+   --------------------
+   -- Get_File_Child --
+   --------------------
+
+   function Get_File_Child
+     (N   : Node_Ptr;
+      Tag : UTF8_String) return Virtual_File
+   is
+      Child : Node_Ptr;
+
+   begin
+      Child := N.Child;
+
+      if Child /= null then
+         Child := Find_Tag (Child, "vfs_" & Tag);
+      end if;
+
+      if Child = null then
+         --  Revert to trying to find in an attribute named Tag: this might
+         --  be the case when trying to parse previous XML file formats.
+
+         declare
+            S : constant String := Get_Attribute (N, Tag, "");
+         begin
+            if S /= "" then
+               return Create (+S);
+            end if;
+         end;
+
+         return No_File;
+      end if;
+
+      declare
+         Value : constant String := Encoded_ASCII_To_String (Child.Value.all);
+         Host  : constant String := Get_Attribute (Child, "server", "");
+         FS    : Filesystem_Access;
+      begin
+         if Host = "" then
+            return Create (+Value);
+         else
+            FS := Get_Filesystem (Host);
+            return Create (FS, +Value);
+         end if;
+      end;
+   end Get_File_Child;
 
 end XML_Utils;

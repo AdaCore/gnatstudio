@@ -807,10 +807,7 @@ package body GPS.Kernel is
          while M /= null loop
             if M.Tag /= null
               and then M.Tag.all = "MDI"
-              and then Get_Attribute (M, "project") /=
-            --  ??? Potentially non-utf8 string should not be
-            --  stored in an XML attribute.
-                 (+Full_Name (Project_Name).all)
+              and then Get_File_Child (M, "project") /= Project_Name
             then
                Add_Child (N, Deep_Copy (M));
             end if;
@@ -825,9 +822,7 @@ package body GPS.Kernel is
 
       M := XML_Utils.GtkAda.Convert (GPS.Kernel.Kernel_Desktop.Save_Desktop
         (MDI, Kernel_Handle (Handle)));
-      Set_Attribute (M, "project", (+Full_Name (Project_Name).all));
-      --  ??? Potentially non-utf8 string should not be
-      --  stored in an XML attribute.
+      Add_File_Child (M, "project", Project_Name);
       Add_Child (N, M);
 
       Print (N, GNATCOLL.VFS.Create (File_Name), Success);
@@ -943,15 +938,16 @@ package body GPS.Kernel is
          while Child /= null loop
             if Child.Tag /= null then
                if Child.Tag.all = "MDI" then
-                  if Get_Attribute (Child, "project") = "" then
-                     Default_Desktop_Node := Child;
-                  elsif Get_Attribute (Child, "project") =
-                  --  ??? Potentially non-utf8 string should not be
-                  --  stored in an XML attribute.
-                    (+Full_Name (Project_Name).all)
-                  then
-                     Desktop_Node := Child;
-                  end if;
+                  declare
+                     F : constant Virtual_File :=
+                       Get_File_Child (Child, "project");
+                  begin
+                     if F = GNATCOLL.VFS.No_File then
+                        Default_Desktop_Node := Child;
+                     elsif F = Project_Name then
+                        Desktop_Node := Child;
+                     end if;
+                  end;
                end if;
             end if;
 

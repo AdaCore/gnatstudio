@@ -2682,9 +2682,7 @@ package body GPS.Location_View is
       begin
          Loc := new Location_Record'
            (Category => new String'(Category),
-            File     => Create (+Get_Attribute (Iter, "file")),
-            --  ??? Potentially non-utf8 string should not be
-            --  stored in an XML attribute.
+            File     => Get_File_Child (Iter, "file"),
             Line     => Integer'Value (Get_Attribute (Iter, "line", "0")),
             Column   => Visible_Column_Type'Value
               (Get_Attribute (Iter, "column", "0")),
@@ -2783,10 +2781,8 @@ package body GPS.Location_View is
          Loc := new Node;
          Loc.Tag := new String'("Location");
          Add_Child (Parent, Loc, True);
-         Set_Attribute
-           (Loc, "file", +Full_Name (Get_File (View, Iter)).all);
-         --  ??? Potentially non-utf8 string should not be
-         --  stored in an XML attribute.
+         Add_File_Child
+           (Loc, "file", Get_File (View, Iter));
          Set_Attribute (Loc, "line",
            Gint'Image (Get_Int (View.Tree.Model, Iter, Line_Column)));
          Set_Attribute
@@ -2844,10 +2840,8 @@ package body GPS.Location_View is
                File.Tag := new String'("File");
                Add_Child (Category, File, True);
 
-               Set_Attribute
-                 (File, "name", +Full_Name (Get_File (View, File_Iter)).all);
-               --  ??? Potentially non-utf8 string should not be
-               --  stored in an XML attribute.
+               Add_File_Child
+                 (File, "name", Get_File (View, File_Iter));
 
                Location_Iter := Children (View.Tree.Model, File_Iter);
 

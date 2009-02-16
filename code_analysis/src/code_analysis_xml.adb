@@ -133,9 +133,7 @@ package body Code_Analysis_XML is
          while Child /= null loop
             if Child.Tag.all = "File" then
                File_Node := Get_Or_Create
-                 (Prj_Node, Create (+Get_Attribute (Child, "name")));
-               --  ??? Potentially non-utf8 string should not be
-               --  stored in an XML attribute.
+                 (Prj_Node, Get_File_Child (Child, "name"));
                --  Create a Line_Array with exactly the same number of elements
                --  than to the number of code lines in the original src code
                --  file. It will contain the lines with analysis information.
@@ -165,10 +163,7 @@ package body Code_Analysis_XML is
    begin
       Loc.Tag := new String'("File");
       Add_Child (Parent, Loc, True);
-      Set_Attribute (Loc, "name",
-                     +GNATCOLL.VFS.Full_Name (File_Node.Name).all);
-      --  ??? Potentially non-utf8 string should not be
-      --  stored in an XML attribute.
+      Add_File_Child (Loc, "name", File_Node.Name);
 
       Set_Attribute
         (Loc, "line_count", Positive'Image (File_Node.Lines'Length));

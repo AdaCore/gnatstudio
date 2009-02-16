@@ -137,4 +137,22 @@ package XML_Utils is
      return Node_Ptr;
    --  Find a tag Tag in N that has a given key (and value if given).
 
+   procedure Add_File_Child
+     (N    : Node_Ptr;
+      Tag  : UTF8_String;
+      File : Virtual_File);
+   --  Add File as a child of N using tag Tag.
+   --  Note that Tag is not the actual XML tag, but is the same tag that should
+   --  be used to retrieve the file using Get_File_Child.
+
+   function Get_File_Child
+     (N   : Node_Ptr;
+      Tag : UTF8_String) return Virtual_File;
+   --  Retrieve the file stored using Add_File_Child
+
+   function String_To_Encoded_ASCII (S : String) return String;
+   --  Escape all special characters using the "#<character number;" method
+   function Encoded_ASCII_To_String (S : String) return String;
+   --  Reciprocal to String_To_Encoded_ASCII
+
 end XML_Utils;

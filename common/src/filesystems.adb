@@ -251,8 +251,13 @@ package body Filesystems is
    --------------
 
    function Get_Host (File : Virtual_File) return String is
+      FS : constant Filesystem_Access := File.Get_Filesystem;
    begin
-      return Get_Host (File.Get_Filesystem);
+      if FS = null then
+         return "";
+      end if;
+
+      return Get_Host (FS);
    end Get_Host;
 
    ----------------------

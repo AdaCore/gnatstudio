@@ -258,9 +258,7 @@ package body GVD.Process is
                   Set_Attribute (Breaks, "expression", Br.Expression.all);
                end if;
                if Br.File /= GNATCOLL.VFS.No_File then
-                  Set_Attribute (Breaks, "file", +Full_Name (Br.File).all);
-                  --  ??? Potentially non-utf8 string should not be
-                  --  stored in an XML attribute.
+                  Add_File_Child (Breaks, "file", Br.File);
                end if;
                if Br.Except /= null then
                   Set_Attribute (Breaks, "exception", Br.Except.all);
@@ -367,10 +365,7 @@ package body GVD.Process is
             if Get_Attribute (Breaks, "file", "") = "" then
                Br.File := GNATCOLL.VFS.No_File;
             else
-               Br.File := Create
-                 (Full_Filename => +Get_Attribute (Breaks, "file"));
-               --  ??? Potentially non-utf8 string should not be
-               --  stored in an XML attribute.
+               Br.File := Get_File_Child (Breaks, "file");
             end if;
          end;
 
