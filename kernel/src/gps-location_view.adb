@@ -761,12 +761,10 @@ package body GPS.Location_View is
       declare
          Mark : constant Editor_Mark'Class :=
            Get_Mark (Model, Iter, Mark_Column);
-         File : constant Virtual_File := Get_File (View, Iter);
+         Loc : constant Editor_Location'Class := Mark.Location;
       begin
          if Mark /= Nil_Editor_Mark then
-            Get (Get_Buffer_Factory (View.Kernel).all, File => File)
-              .Current_View
-              .Cursor_Goto (Location => Mark.Location);
+            Loc.Buffer.Current_View.Cursor_Goto (Loc);
          end if;
       end;
 

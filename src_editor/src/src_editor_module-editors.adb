@@ -131,6 +131,9 @@ package body Src_Editor_Module.Editors is
 
    overriding function Column (This : Src_Editor_Location) return Integer;
 
+   overriding function Buffer
+     (This : Src_Editor_Location) return Editor_Buffer'Class;
+
    overriding function Create_Mark
      (This : Src_Editor_Location; Name : String := "")
       return Editor_Mark'Class;
@@ -419,8 +422,6 @@ package body Src_Editor_Module.Editors is
          if Open then
             Box := Open_File
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
-         else
-            return Nil_Editor_Buffer;
          end if;
       else
          Box := Get_Source_Box_From_MDI (Child);
@@ -430,11 +431,15 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
 
-      return Src_Editor_Buffer'
-        (Editor_Buffer with
-         File   => File,
-         Kernel => This.Kernel,
-         Buffer => Get_Buffer (Box));
+      if Box = null then
+         return Nil_Editor_Buffer;
+      else
+         return Src_Editor_Buffer'
+           (Editor_Buffer with
+            File   => File,
+            Kernel => This.Kernel,
+            Buffer => Get_Buffer (Box));
+      end if;
    end Get;
 
    --------------
@@ -617,6 +622,16 @@ package body Src_Editor_Module.Editors is
       return Integer (This.Column);
    end Column;
 
+   ------------
+   -- Buffer --
+   ------------
+
+   overriding function Buffer
+     (This : Src_Editor_Location) return Editor_Buffer'Class is
+   begin
+      return This.Buffer;
+   end Buffer;
+
    -----------------
    -- Create_Mark --
    -----------------
@@ -731,9 +746,7 @@ package body Src_Editor_Module.Editors is
    begin
       declare
          Iter   : Gtk_Text_Iter;
-         Buffer : constant Src_Editor_Buffer := Src_Editor_Buffer
-           (Get_Buffer_Factory (This.Kernel).Get
-            (Get_File (This.Mark.Mark)));
+         Buffer : Src_Editor_Buffer;
       begin
          if This.Mark /= null then
             Mark := Get_Mark (This.Mark.Mark);
@@ -742,8 +755,11 @@ package body Src_Editor_Module.Editors is
                return Nil_Editor_Location;
             end if;
 
-            Get_Iter_At_Mark
-              (Buffer.Buffer, Iter, Mark);
+            Buffer := Src_Editor_Buffer
+              (Get_Buffer_Factory (This.Kernel).Get
+               (Get_File (This.Mark.Mark)));
+
+            Get_Iter_At_Mark (Buffer.Buffer, Iter, Mark);
 
             return Create_Editor_Location (Buffer, Iter);
          else

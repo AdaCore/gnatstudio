@@ -109,6 +109,10 @@ package GPS.Editors is
    function Column (This : Editor_Location) return Integer is abstract;
    --  Return the column of the location
 
+   function Buffer
+     (This : Editor_Location) return Editor_Buffer'Class is abstract;
+   --  Return the editor in which the location is found
+
    function Create_Mark
      (This : Editor_Location; Name : String := "")
       return Editor_Mark'Class is abstract;
@@ -344,6 +348,9 @@ private
    overriding function Line (This : Dummy_Editor_Location) return Integer;
 
    overriding function Column (This : Dummy_Editor_Location) return Integer;
+
+   overriding function Buffer
+     (This : Dummy_Editor_Location) return Editor_Buffer'Class;
 
    overriding function Create_Mark
      (This : Dummy_Editor_Location; Name : String := "")

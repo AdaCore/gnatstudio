@@ -88,6 +88,14 @@ package body GPS.Editors is
       return 0;
    end Column;
 
+   overriding function Buffer
+     (This : Dummy_Editor_Location) return Editor_Buffer'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Buffer;
+   end Buffer;
+
    overriding function Create_Mark
      (This : Dummy_Editor_Location; Name : String := "")
       return Editor_Mark'Class
