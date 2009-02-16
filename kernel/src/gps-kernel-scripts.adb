@@ -1930,7 +1930,7 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
 
       Tmp := Getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL);
-      if Tmp /= null then
+      if Tmp.all /= "" then
          Free (Tmp);
          Register_Command
            (Kernel, "debug_memory_usage",
