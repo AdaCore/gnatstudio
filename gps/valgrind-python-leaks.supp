@@ -75,6 +75,14 @@
   fun:PyEval_EvalCodeEx
   fun:function_call
 }
+{
+  Python leak (Python 2.6)
+  Memcheck:Leak
+  fun:malloc
+  fun:_PyObject_GC_Malloc
+  fun:_PyObject_GC_NewVar
+  fun:PyFrame_New
+}
 
 
 {

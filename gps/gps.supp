@@ -7,7 +7,7 @@
    Python requires a static string for the program name
    Memcheck:Leak
    fun:malloc
-   fun:__gnat_malloc
+   fun:gnatcoll__memory__alloc
    fun:gnatcoll__python__py_setprogramname
 }
 {
@@ -46,7 +46,7 @@
    Elaboration in GNAT
    Memcheck:Leak
    fun:malloc
-   fun:__gnat_malloc
+   fun:gnatcoll__memory__alloc
    fun:osint___elabb
    fun:adainit
 }
@@ -3983,7 +3983,7 @@
    <insert a suppression name here>
    Memcheck:Leak
    fun:_vgrZU_libcZdsoZa_malloc
-   fun:__gnat_malloc
+   fun:gnatcoll__memory__alloc
    fun:system__secondary_stack___elabb
    fun:adainit
    fun:main
@@ -4248,6 +4248,6 @@
   Real memory leak
   Memcheck:Leak
   fun:malloc
-  fun:__gnat_malloc
+  fun:gnatcoll__memory__alloc
   fun:gps__kernel__contexts__set_file_information
 }
