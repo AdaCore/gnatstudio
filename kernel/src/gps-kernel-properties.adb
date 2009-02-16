@@ -491,7 +491,7 @@ package body GPS.Kernel.Properties is
       Filename : constant Filesystem_String :=
         Get_Properties_Filename (Kernel);
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
-      Root, Src, Dst : Node_Ptr;
+      Root     : Node_Ptr;
       Descr    : Property_Description_Access;
       Val      : XML_Utils.String_Ptr;
       Success  : Boolean;
@@ -528,6 +528,8 @@ package body GPS.Kernel.Properties is
                Prop : Node_Ptr;
                Key  : constant String := Get_Key (Iter);
                Pos  : constant Integer := Ada.Strings.Fixed.Index (Key, Sep);
+               Src  : Node_Ptr;
+               Dst  : Node_Ptr;
             begin
                if Descr.Value = null then
                   --  Descr.Unparsed.Value might be null if the properties is
