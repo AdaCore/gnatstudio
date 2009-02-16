@@ -58,6 +58,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Commands.Interactive;     use Commands.Interactive;
 with Commands;                 use Commands;
 with Default_Preferences;      use Default_Preferences;
+with GPS.Editors.GtkAda;       use GPS.Editors, GPS.Editors.GtkAda;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
@@ -273,7 +274,7 @@ package body GPS.Location_View is
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
       Message            : Glib.UTF8_String;
-      Mark               : Integer := -1;
+      Mark               : Editor_Mark'Class := Nil_Editor_Mark;
       Line               : Integer;
       Column             : Visible_Column_Type;
       Length             : Integer;
@@ -374,11 +375,9 @@ package body GPS.Location_View is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : GNATCOLL.VFS.Virtual_File;
       Line     : Natural := 1;
-      Column   : Visible_Column_Type := 1;
-      Length   : Natural := 0) return String;
+      Column   : Visible_Column_Type := 1) return Editor_Mark'Class;
    --  Create a mark for Filename, at position given by Line, Column, with
    --  length Length.
-   --  Return the identifier corresponding to the mark that has been created.
 
    procedure Highlight_Line
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -661,20 +660,14 @@ package body GPS.Location_View is
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : GNATCOLL.VFS.Virtual_File;
       Line     : Natural := 1;
-      Column   : Visible_Column_Type := 1;
-      Length   : Natural := 0) return String
+      Column   : Visible_Column_Type := 1) return Editor_Mark'Class
    is
-      Args     : GNAT.Strings.String_List :=
-                   (1 => new String'(+Full_Name (Filename).all),
-                    2 => new String'(Image (Line)),
-                    3 => new String'(Image (Integer (Column))),
-                    4 => new String'(Image (Length)));
-      Location : constant String :=
-                   Execute_GPS_Shell_Command
-                     (Kernel, "Editor.create_mark", Args);
    begin
-      Free (Args);
-      return Location;
+      return New_Mark
+        (Get_Buffer_Factory (Kernel).all,
+         File   => Filename,
+         Line   => Line,
+         Column => Integer (Column));
    end Create_Mark;
 
    --------------------
@@ -766,15 +759,15 @@ package body GPS.Location_View is
       end if;
 
       declare
-         Mark : constant Gint := Get_Int (Model, Iter, Mark_Column);
-         Args : GNAT.Strings.String_List :=
-                  (1 => new String'(Image (Integer (Mark))));
-
+         Mark : constant Editor_Mark'Class :=
+           Get_Mark (Model, Iter, Mark_Column);
+         File : constant Virtual_File := Get_File (View, Iter);
       begin
-         if Mark /= -1 then
-            Execute_GPS_Shell_Command (View.Kernel, "Editor.goto_mark", Args);
+         if Mark /= Nil_Editor_Mark then
+            Get (Get_Buffer_Factory (View.Kernel).all, File => File)
+              .Current_View
+              .Cursor_Goto (Location => Mark.Location);
          end if;
-         Free (Args);
       end;
 
    exception
@@ -892,18 +885,14 @@ package body GPS.Location_View is
       Categories : in out String_List.List;
       Loc_Iter   : Gtk_Tree_Iter)
    is
-      Mark  : constant Gint :=
-                Get_Int (View.Tree.Model, Loc_Iter, Mark_Column);
-      Args  : GNAT.Strings.String_List :=
-                (1 => new String'(Image (Integer (Mark))));
+      Mark : constant Editor_Mark'Class :=
+        Get_Mark (View.Tree.Model, Loc_Iter, Mark_Column);
       Style : Style_Access;
    begin
-      if Mark /= -1 then
-         Execute_GPS_Shell_Command
-           (View.Kernel, "Editor.delete_mark", Args);
+      if Mark /= Nil_Editor_Mark then
+         Mark.Delete;
       end if;
 
-      Free (Args);
       Style := Get_Highlighting_Style (View, Loc_Iter);
 
       if Style /= null then
@@ -975,7 +964,7 @@ package body GPS.Location_View is
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
       Message            : Glib.UTF8_String;
-      Mark               : Integer := -1;
+      Mark               : Editor_Mark'Class := Nil_Editor_Mark;
       Line               : Integer;
       Column             : Visible_Column_Type;
       Length             : Integer;
@@ -1010,11 +999,14 @@ package body GPS.Location_View is
 
       Init (Value, Get_Virtual_File_Type);
       Set_File (Value, Absolute_Name);
-
       Set_Value (Model, Iter, Absolute_Name_Column, Value);
       Unset (Value);
 
-      Set (Model, Iter, Mark_Column, Gint (Mark));
+      Init (Value, Get_Editor_Mark_Type);
+      Set_Mark (Value, Mark);
+      Set_Value (Model, Iter, Mark_Column, Value);
+      Unset (Value);
+
       Set (Model, Iter, Line_Column, Gint (Line));
       Set (Model, Iter, Column_Column, Gint (Column));
       Set (Model, Iter, Length_Column, Gint (Length));
@@ -1208,7 +1200,7 @@ package body GPS.Location_View is
             Append (Model, Category_Iter, Null_Iter);
             Fill_Iter
               (View, Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
-               "", -1, 0, 0, 0, False,
+               "", Nil_Editor_Mark, 0, 0, 0, False,
                H_Category, View.Category_Pixbuf);
             New_Category := True;
          else
@@ -1235,7 +1227,7 @@ package body GPS.Location_View is
       if Create then
          Append (Model, File_Iter, Category_Iter);
          Fill_Iter
-           (View, Model, File_Iter, "", File, "", -1, 0, 0, 0,
+           (View, Model, File_Iter, "", File, "", Nil_Editor_Mark, 0, 0, 0,
             False, H_Category, View.File_Pixbuf);
       end if;
 
@@ -1435,9 +1427,7 @@ package body GPS.Location_View is
                  (View, Model, Iter,
                   Image (Line) & ":" & Image (Integer (Column)),
                   File, Message,
-                  Safe_Value
-                    (Create_Mark (View.Kernel, File, Line, Column, Length),
-                     -1),
+                  Create_Mark (View.Kernel, File, Line, Column),
                   Line, Column, Length, Highlight,
                   Highlight_Category);
 
@@ -1473,10 +1463,7 @@ package body GPS.Location_View is
 
                Fill_Iter
                  (View, Model, Iter, " ", Loc.File, Loc.Message.all,
-                  Safe_Value
-                    (Create_Mark
-                       (View.Kernel,
-                        Loc.File, Loc.Line, Loc.Column, 0), -1),
+                  Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                   Loc.Line, Loc.Column, Length,
                   Highlight, Highlight_Category);
                Path := Get_Path (Model, Potential_Parent);
@@ -1501,8 +1488,7 @@ package body GPS.Location_View is
               (View, Model, Iter,
                Image (Line) & ":" & Image (Integer (Column)),
                File, Message,
-               Safe_Value
-                 (Create_Mark (View.Kernel, File, Line, Column, Length), -1),
+               Create_Mark (View.Kernel, File, Line, Column),
                Line, Column, Length, Highlight,
                Highlight_Category);
 
@@ -1591,12 +1577,8 @@ package body GPS.Location_View is
       return GType_Array'
         (Icon_Column               => Gdk.Pixbuf.Get_Type,
          Absolute_Name_Column      => Get_Virtual_File_Type,
-
          Base_Name_Column          => GType_String,
-
-         Mark_Column               => GType_Int,
-         --  Number of the mark, -1 if no mark is set
-
+         Mark_Column               => Get_Editor_Mark_Type,
          Line_Column               => GType_Int,
          Column_Column             => GType_Int,
          Length_Column             => GType_Int,
@@ -2626,9 +2608,7 @@ package body GPS.Location_View is
             Fill_Iter
               (View, View.Tree.Model, Iter, " ",
                Loc.File, Loc.Message.all,
-               Safe_Value
-                 (Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column,
-                  Loc.Length), -1),
+               Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                Loc.Line, Loc.Column, Loc.Length, False,
                Get_Or_Create_Style
                  (Kernel_Handle (Kernel), Loc.Highlight_Category.all));
