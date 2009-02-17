@@ -242,6 +242,18 @@ package body Src_Editor_Module.Editors is
    overriding procedure Set_Read_Only
      (This : Src_Editor_Buffer; Read_Only : Boolean);
 
+   overriding procedure Apply_Style
+     (This  : Src_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1);
+
+   overriding procedure Remove_Style
+     (This  : Src_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1);
+
    overriding procedure Get_Constructs
      (This       : Src_Editor_Buffer;
       Constructs : out Language.Construct_List;
@@ -1234,6 +1246,60 @@ package body Src_Editor_Module.Editors is
 
       return Nil_Editor_Mark;
    end Get_Mark;
+
+   -----------------
+   -- Apply_Style --
+   -----------------
+
+   overriding procedure Apply_Style
+     (This  : Src_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1)
+   is
+   begin
+      --  ??? The interface for Add_Line_Highlighting only works on a single
+      --  line. It should probably be enhanced rather than do it in this
+      --  procedure
+
+      if From_Column = To_Column then
+         Add_Line_Highlighting
+           (This.Buffer,
+            Editable_Line_Type (Line),
+            Style_Access (Style),
+            Highlight_In => (others => True));
+
+      else
+         Highlight_Range
+           (This.Buffer, Style_Access (Style),
+            Editable_Line_Type (Line),
+            Visible_Column_Type (From_Column),
+            Visible_Column_Type (To_Column));
+      end if;
+   end Apply_Style;
+
+   ------------------
+   -- Remove_Style --
+   ------------------
+
+   overriding procedure Remove_Style
+     (This  : Src_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1) is
+   begin
+      if From_Column = To_Column then
+         Remove_Line_Highlighting
+           (This.Buffer, Editable_Line_Type (Line), Style_Access (Style));
+      else
+         Highlight_Range
+           (This.Buffer, Style_Access (Style),
+            Editable_Line_Type (Line),
+            Visible_Column_Type (From_Column),
+            Visible_Column_Type (To_Column),
+            Remove => True);
+      end if;
+   end Remove_Style;
 
    ----------------------
    -- Start_Undo_Group --

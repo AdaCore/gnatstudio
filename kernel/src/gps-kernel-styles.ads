@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2005-2008, AdaCore                 --
+--                  Copyright (C) 2005-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,14 +28,15 @@ with Gdk.GC;     use Gdk.GC;
 with Gdk.Color; use Gdk.Color;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GPS.Editors;
 with String_Hash;
 
 with GNAT.Strings;
 
 package GPS.Kernel.Styles is
 
-   type Style_Record is private;
-   type Style_Access is access Style_Record;
+   type Style_Record is new GPS.Editors.Simple_Style_Record with private;
+   type Style_Access is access all Style_Record'Class;
    pragma No_Strict_Aliasing (Style_Access);
 
    ---------------------------
@@ -50,24 +51,18 @@ package GPS.Kernel.Styles is
    Builder_Style_Style    : Style_Access;
    Builder_Shadow_Style   : Style_Access;
 
+   overriding procedure Set_Foreground
+     (Style : not null access Style_Record; Color : String);
+   overriding procedure Set_Background
+     (Style : not null access Style_Record; Color : String);
+
    --  Note: when adding default styles, do not forget to update
    --  Initialize_Predefined_Styles and Preferences_Changed.
 
-   procedure Set_Foreground (Style : Style_Access; Color : String);
-   --  Set the foreground color for Style. Color must be a recognized color.
-   --  (Either a simple color, or "#RRGGBB");
-
-   procedure Set_Background (Style : Style_Access; Color : String);
-   --  Set the background color for Style. Color must be a recognized color.
-   --  (Either a simple color, or "#RRGGBB");
-
-   function Get_Foreground_GC (Style : Style_Access) return Gdk_GC;
-   function Get_Foreground_Color (Style : Style_Access) return Gdk_Color;
-   --  Return the foreground GC stored in Style. Return Null_GC if there is
-   --  none.
-
-   function Get_Background_GC (Style : Style_Access) return Gdk_GC;
-   function Get_Background_Color (Style : Style_Access) return Gdk_Color;
+   function Get_Background_GC
+     (Style : not null access Style_Record) return Gdk_GC;
+   function Get_Background_Color
+     (Style : not null access Style_Record) return Gdk_Color;
    --  Return the background GC stored in Style. Return Null_GC if there is
    --  none.
 
@@ -93,21 +88,18 @@ package GPS.Kernel.Styles is
 
 private
 
-   type Color_Record is record
-      Value : GNAT.Strings.String_Access;
-      Color : Gdk_Color := Null_Color;
-      GC    : Gdk_GC    := Null_GC;
-   end record;
-
-   type Style_Record is record
+   type Style_Record is new GPS.Editors.Simple_Style_Record with record
       Name        : GNAT.Strings.String_Access;
       Description : GNAT.Strings.String_Access;
       --  A short description of the style
 
-      Foreground : Color_Record;
-      Background : Color_Record;
+      Fg_Color   : Gdk_Color := Null_Color;
+      Fg_GC      : Gdk_GC    := Null_GC;
+      Bg_Color   : Gdk_Color := Null_Color;
+      Bg_GC      : Gdk_GC    := Null_GC;
    end record;
 
+   overriding procedure Free (Style : in out Style_Record);
    procedure Free (Style : in out Style_Access);
    --  Free memory occupied by Style.
 

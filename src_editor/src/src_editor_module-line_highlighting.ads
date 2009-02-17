@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2007, AdaCore             --
+--                      Copyright (C) 2003-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,13 +34,9 @@ package Src_Editor_Module.Line_Highlighting is
    --  for storing and retrieving categories.
    --  The category indexes begin at 1.
 
-   procedure Add_Category
-     (Style            : Style_Access;
-      Mark_In_Speedbar : Boolean := False);
+   procedure Add_Category (Style : Style_Access);
    --  Add a new category to the category cache.
    --  Update the Color of the category if it already exists.
-   --  If Mark_In_Speedbar is true, then a mark is added in the speedbar even
-   --  if we only highlight part of a line.
 
    function Lookup_Category (Style : Style_Access) return Natural;
    --  Return the index corresponding to Style.

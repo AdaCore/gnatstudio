@@ -190,6 +190,8 @@ package Src_Editor_Buffer.Line_Information is
    --  If End_Col <= 0, end at end of line.
    --  If Remove is True, remove the highlighting instead of adding it.
    --  If Line = 0, (un)highlight the whole buffer.
+   --  If the style was created so that a mark should be put in the speedbar,
+   --  this function also takes care of this.
 
    function Get_Line
      (Buffer   : access Source_Buffer_Record'Class;

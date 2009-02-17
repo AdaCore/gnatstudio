@@ -17,8 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Ada.Finalization; use Ada.Finalization;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNAT.Strings;     use GNAT.Strings;
 with Language;         use Language;
 
 package GPS.Editors is
@@ -77,6 +78,48 @@ package GPS.Editors is
    --------------------
    -- Editor_Overlay --
    --------------------
+   --  Overlays (ie text and presentation properties) in an editor can be
+   --  represented in two ways:
+   --    * historically, GPS has used a Style_Access to represent the highlight
+   --      style. This only provides basic support for styling, giving access
+   --      to foreground and background colors only
+   --    * a more complete (and complex) version via an Editor_Overlay, which
+   --      more closely models what is available in GtkAda.
+   --  We provide both interfaces here for backward compatibility, until the
+   --  internal GPS code no longer uses the Style_Access.
+
+   ------------
+   -- Styles --
+   ------------
+   --  See description for Editor_Overlay
+
+   type Simple_Style_Record is tagged private;
+   type Simple_Style_Access is access all Simple_Style_Record'Class;
+   pragma No_Strict_Aliasing (Simple_Style_Access);
+
+   procedure Set_Foreground
+     (Style : not null access Simple_Style_Record; Color : String);
+   procedure Set_Background
+     (Style : not null access Simple_Style_Record; Color : String);
+   --  Set the foreground or background color for Style. Color must be a
+   --  recognized color. (Either a simple color, or "#RRGGBB");
+
+   function Get_Foreground
+     (Style : not null access Simple_Style_Record) return String;
+   function Get_Background
+     (Style : not null access Simple_Style_Record) return String;
+   --  Return the background color used for the style
+
+   procedure Set_In_Speedbar
+     (Style       : not null access Simple_Style_Record;
+      In_Speedbar : Boolean);
+   function In_Speedbar
+     (Style       : not null access Simple_Style_Record) return Boolean;
+   --  Set or get whether a mark should be put in the speedbar when this style
+   --  is used within the line
+
+   procedure Free (Style : in out Simple_Style_Record);
+   --  Free style.
 
    ---------------------
    -- Editor_Location --
@@ -295,6 +338,24 @@ package GPS.Editors is
    --  Timestamp, the caller can assume that the constructs have not changed
    --  in the meantime.
 
+   procedure Apply_Style
+     (This  : Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1) is abstract;
+   --  Apply a specific style to part of a buffer.
+   --  If From_Column and To_Column are equal, the highlighting is drawn so
+   --  that the whole line including the trailing spaces appear selected.
+   --  Otherwise only the actual characters will be styled.
+
+   procedure Remove_Style
+     (This  : Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1) is abstract;
+   --  Remove highlighting from a specific part of the text.
+   --  If Line is 0, the removal is done on the whole buffer.
+
    -----------------
    -- Editor_View --
    -----------------
@@ -324,6 +385,12 @@ package GPS.Editors is
    --  Return the current location of the cursor in this view
 
 private
+
+   type Simple_Style_Record is tagged record
+      Foreground : GNAT.Strings.String_Access;
+      Background : GNAT.Strings.String_Access;
+      Speedbar   : Boolean := False;
+   end record;
 
    -------------------------
    -- Nil_Editor_Location --
@@ -471,6 +538,18 @@ private
      (This       : Dummy_Editor_Buffer;
       Constructs : out Language.Construct_List;
       Timestamp  : out Natural);
+
+   overriding procedure Apply_Style
+     (This  : Dummy_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1) is null;
+
+   overriding procedure Remove_Style
+     (This  : Dummy_Editor_Buffer;
+      Style : not null access Simple_Style_Record'Class;
+      Line  : Integer;
+      From_Column, To_Column : Integer := -1) is null;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with others => <>);

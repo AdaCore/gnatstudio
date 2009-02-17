@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Expect;              use GNAT.Expect;
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
@@ -683,47 +682,35 @@ package body GPS.Location_View is
       Highlight_Category : Style_Access;
       Highlight          : Boolean := True)
    is
-      Args    : GNAT.Strings.String_List (1 .. 5);
-      Command : GNAT.Strings.String_Access;
-
    begin
       if Highlight_Category = null then
          return;
       end if;
 
-      Args :=
-        (1 => new String'(+Full_Name (Filename).all),
-         2 => new String'(Get_Name (Highlight_Category)),
-         3 => new String'(Image (Line)),
-         4 => new String'(Image (Integer (Column))),
-         5 => new String'(Image (Integer (Column) + Length)));
-
       if Highlight then
-         if Length = 0 then
-            Command := new String'("Editor.highlight");
-         else
-            Command := new String'("Editor.highlight_range");
-         end if;
-      else
-         Command := new String'("Editor.unhighlight");
-      end if;
+         if Length /= 0 then
+            Get_Buffer_Factory (Kernel)
+              .Get (Filename, Open => False)
+              .Apply_Style
+                (Style => Highlight_Category,
+                 Line  => Line,
+                 From_Column => Integer (Column),
+                 To_Column   => Integer (Column) + Length);
 
-      if Line = 0 then
-         Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 2));
-      else
-         if Length = 0 then
-            Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 3));
          else
-            if Highlight then
-               Execute_GPS_Shell_Command (Kernel, Command.all, Args);
-            else
-               Execute_GPS_Shell_Command (Kernel, Command.all, Args (1 .. 3));
-            end if;
+            Get_Buffer_Factory (Kernel)
+              .Get (Filename, Open => False)
+              .Apply_Style (Style => Highlight_Category, Line  => Line);
          end if;
-      end if;
 
-      Free (Args);
-      GNAT.Strings.Free (Command);
+      else
+         Get_Buffer_Factory (Kernel)
+           .Get (Filename, Open => False)
+           .Remove_Style (Style       => Highlight_Category,
+                          Line        => Line,
+                          From_Column => Integer (Column),
+                          To_Column   => Integer (Column) + Length);
+      end if;
    end Highlight_Line;
 
    -------------------

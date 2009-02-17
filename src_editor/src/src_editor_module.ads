@@ -192,9 +192,6 @@ private
 
    type Highlighting_Category_Record is record
       Style : Style_Access;
-      Mark_In_Speedbar : Boolean := False;
-      --  If True, a mark is added in the speedbar even when we only highlight
-      --  a small range of a line, as opposed to the whole line.
    end record;
 
    type Highlighting_Category is access Highlighting_Category_Record;

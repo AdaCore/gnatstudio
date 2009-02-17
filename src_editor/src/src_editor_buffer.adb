@@ -4907,6 +4907,8 @@ package body Src_Editor_Buffer is
       end if;
 
       if Line = 0 then
+         --  This procedure is called by Highlight_Range, but not when Line=0,
+         --  so there are no recursive calls here
          Highlight_Range (Editor, Style, 0, 1, 1, True);
 
          for J in Editor.Line_Data'Range loop

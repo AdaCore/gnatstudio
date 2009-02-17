@@ -249,4 +249,85 @@ package body GPS.Editors is
       Timestamp := 0;
    end Get_Constructs;
 
+   --------------------
+   -- Set_Foreground --
+   --------------------
+
+   procedure Set_Foreground
+     (Style : not null access Simple_Style_Record; Color : String) is
+   begin
+      Free (Style.Foreground);
+      Style.Foreground := new String'(Color);
+   end Set_Foreground;
+
+   --------------------
+   -- Set_Background --
+   --------------------
+
+   procedure Set_Background
+     (Style : not null access Simple_Style_Record; Color : String) is
+   begin
+      Free (Style.Background);
+      Style.Background := new String'(Color);
+   end Set_Background;
+
+   --------------------
+   -- Get_Background --
+   --------------------
+
+   function Get_Background
+     (Style : not null access Simple_Style_Record) return String is
+   begin
+      if Style.Background = null then
+         return "";
+      else
+         return Style.Background.all;
+      end if;
+   end Get_Background;
+
+   --------------------
+   -- Get_Foreground --
+   --------------------
+
+   function Get_Foreground
+     (Style : not null access Simple_Style_Record) return String is
+   begin
+      if Style.Foreground = null then
+         return "";
+      else
+         return Style.Foreground.all;
+      end if;
+   end Get_Foreground;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Style : in out Simple_Style_Record) is
+   begin
+      Free (Style.Background);
+      Free (Style.Foreground);
+   end Free;
+
+   ---------------------
+   -- Set_In_Speedbar --
+   ---------------------
+
+   procedure Set_In_Speedbar
+     (Style       : not null access Simple_Style_Record;
+      In_Speedbar : Boolean) is
+   begin
+      Style.Speedbar := In_Speedbar;
+   end Set_In_Speedbar;
+
+   -----------------
+   -- In_Speedbar --
+   -----------------
+
+   function In_Speedbar
+     (Style       : not null access Simple_Style_Record) return Boolean is
+   begin
+      return Style.Speedbar;
+   end In_Speedbar;
+
 end GPS.Editors;

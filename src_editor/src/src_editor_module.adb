@@ -3294,9 +3294,7 @@ package body Src_Editor_Module is
       Iter  : Child_Iterator;
       Child : MDI_Child;
    begin
-      Line_Highlighting.Add_Category
-        (Search_Results_Style,
-         Mark_In_Speedbar => True);
+      Line_Highlighting.Add_Category (Search_Results_Style);
 
       if Pref_Display_Subprogram_Names /= Id.Show_Subprogram_Names then
          --  The preference for showing the subprogram name has changed:

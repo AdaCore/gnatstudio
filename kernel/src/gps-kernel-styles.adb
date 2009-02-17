@@ -23,6 +23,7 @@ with Gdk;                    use Gdk;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
+with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -47,10 +48,8 @@ package body GPS.Kernel.Styles is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
-   procedure Free (Color : in out Color_Record);
-   --  Free memory associated to Color.
-
-   procedure Allocate_Color (Color : in out Color_Record);
+   procedure Allocate_Color
+     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC);
    --  Allocates the low-level structures for Color.
 
    procedure Initialize_Predefined_Styles (Kernel : Kernel_Handle);
@@ -66,7 +65,8 @@ package body GPS.Kernel.Styles is
          Name  : String;
          Desc  : String;
          Fg    : String := "";
-         Bg    : String := "");
+         Bg    : String := "";
+         Speedbar : Boolean := False);
       --  Initialize one style, if it has never been initialized before.
       --  Otherwise, do nothing.
 
@@ -75,7 +75,8 @@ package body GPS.Kernel.Styles is
          Name  : String;
          Desc  : String;
          Fg    : String := "";
-         Bg    : String := "") is
+         Bg    : String := "";
+         Speedbar : Boolean := False) is
       begin
          Style := Get_Or_Create_Style (Kernel, Name, False);
 
@@ -90,6 +91,8 @@ package body GPS.Kernel.Styles is
             if Bg /= "" then
                Set_Background (Style, Bg);
             end if;
+
+            Set_In_Speedbar (Style, Speedbar);
          end if;
       end Init;
    begin
@@ -97,27 +100,27 @@ package body GPS.Kernel.Styles is
       Init (Search_Results_Style,
             -"Search results",
             -"Color used to highlight the search results",
-            Bg => "light blue");
+            Bg => "light blue", Speedbar => True);
 
       Init (Builder_Errors_Style,
             -"Builder results",
             -"Color used to highlight the build errors",
-            Bg => "red");
+            Bg => "red", Speedbar => True);
 
       Init (Builder_Warnings_Style,
             -"Builder warnings",
             -"Color used to highlight the build warnings",
-            Bg => "orange");
+            Bg => "orange", Speedbar => True);
 
       Init (Builder_Style_Style,
             -"Style errors",
             -"Color used to highlight the style errors",
-            Bg => "yellow");
+            Bg => "yellow", Speedbar => True);
 
       Init (Builder_Shadow_Style,
             -"Syntax check",
             -"Color used to highlight the build errors in background builds",
-            Bg => "light grey");
+            Bg => "light grey", Speedbar => True);
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
@@ -143,30 +146,33 @@ package body GPS.Kernel.Styles is
    -- Allocate_Color --
    --------------------
 
-   procedure Allocate_Color (Color : in out Color_Record) is
+   procedure Allocate_Color
+     (Name : String; Color : out Gdk_Color; GC : out Gdk.Gdk_GC)
+   is
       Success : Boolean;
       Widget  : Gtk_Widget;
       Tops    : Gtk.Widget.Widget_List.Glist;
    begin
-      if Color.Value = null
-        or else Color.Value.all = ""
-      then
+      Color := Null_Color;
+      GC    := Null_GC;
+
+      if Name = "" then
          Trace (Me, "Color field not filled");
          return;
       end if;
 
       begin
-         Color.Color := Parse (Color.Value.all);
+         Color := Parse (Name);
       exception
          when Wrong_Color =>
-            Trace (Me, "Could not parse color " & Color.Value.all);
+            Trace (Me, "Could not parse color " & Name);
             return;
       end;
 
-      Alloc_Color (Get_Default_Colormap, Color.Color, False, True, Success);
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
       if not Success then
-         Trace (Me, "Could not allocate color " & Color.Value.all);
+         Trace (Me, "Could not allocate color " & Name);
          return;
       end if;
 
@@ -181,8 +187,8 @@ package body GPS.Kernel.Styles is
          return;
       end if;
 
-      Gdk_New (Color.GC, Get_Window (Widget));
-      Set_Foreground (Color.GC, Color.Color);
+      Gdk_New (GC, Get_Window (Widget));
+      Set_Foreground (GC, Color);
    end Allocate_Color;
 
    -----------
@@ -195,75 +201,31 @@ package body GPS.Kernel.Styles is
    end Reset;
 
    -----------------------
-   -- Get_Foreground_GC --
-   -----------------------
-
-   function Get_Foreground_GC (Style : Style_Access) return Gdk.GC.Gdk_GC is
-   begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return Null_GC;
-      end if;
-
-      if Style.Foreground.GC = Null_GC then
-         Allocate_Color (Style.Foreground);
-      end if;
-
-      return Style.Foreground.GC;
-   end Get_Foreground_GC;
-
-   --------------------------
-   -- Get_Foreground_Color --
-   --------------------------
-
-   function Get_Foreground_Color (Style : Style_Access) return Gdk_Color is
-   begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return Null_Color;
-      end if;
-
-      if Style.Foreground.Color = Null_Color then
-         Allocate_Color (Style.Foreground);
-      end if;
-
-      return Style.Foreground.Color;
-   end Get_Foreground_Color;
-
-   -----------------------
    -- Get_Background_GC --
    -----------------------
 
-   function Get_Background_GC (Style : Style_Access) return Gdk.GC.Gdk_GC is
+   function Get_Background_GC
+     (Style : not null access Style_Record) return Gdk.GC.Gdk_GC is
    begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return Null_GC;
+      if Style.Bg_GC = null then
+         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
       end if;
 
-      if Style.Background.GC = null then
-         Allocate_Color (Style.Background);
-      end if;
-
-      return Style.Background.GC;
+      return Style.Bg_GC;
    end Get_Background_GC;
 
    --------------------------
    -- Get_Background_Color --
    --------------------------
 
-   function Get_Background_Color (Style : Style_Access) return Gdk_Color is
+   function Get_Background_Color
+     (Style : not null access Style_Record) return Gdk_Color is
    begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return Null_Color;
+      if Style.Bg_GC = null then
+         Allocate_Color (Get_Background (Style), Style.Bg_Color, Style.Bg_GC);
       end if;
 
-      if Style.Background.Color = Null_Color then
-         Allocate_Color (Style.Background);
-      end if;
-
-      return Style.Background.Color;
+      return Style.Bg_Color;
    end Get_Background_Color;
 
    -----------------
@@ -305,15 +267,16 @@ package body GPS.Kernel.Styles is
 
          Child := new XML_Utils.Node;
          Child.Tag := new String'("fg");
-         if Info.Foreground.Value /= null then
-            Child.Value := new String'(Info.Foreground.Value.all);
+
+         if Get_Foreground (Info) /= "" then
+            Child.Value := new String'(Get_Foreground (Info));
          end if;
          Add_Child (Node, Child, True);
 
          Child := new XML_Utils.Node;
          Child.Tag := new String'("bg");
-         if Info.Background.Value /= null then
-            Child.Value := new String'(Info.Background.Value.all);
+         if Get_Background (Info) /= "" then
+            Child.Value := new String'(Get_Background (Info));
          end if;
          Add_Child (Node, Child, True);
 
@@ -409,29 +372,24 @@ package body GPS.Kernel.Styles is
    -- Free --
    ----------
 
-   procedure Free (Style : in out Style_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Style_Record, Style_Access);
+   overriding procedure Free (Style : in out Style_Record) is
    begin
-      if Style /= null then
-         Free (Style.Name);
-         Free (Style.Description);
-         Free (Style.Foreground);
-         Free (Style.Background);
-         Unchecked_Free (Style);
-      end if;
+      Free (Style.Name);
+      Free (Style.Description);
+      Free (Simple_Style_Record (Style));
    end Free;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Color : in out Color_Record) is
+   procedure Free (Style : in out Style_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Style_Record'Class, Style_Access);
    begin
-      Free (Color.Value);
-      if Color.GC /= Null_GC then
-         Unref (Color.GC);
-         Color.GC := Null_GC;
+      if Style /= null then
+         Free (Style.all);
+         Unchecked_Free (Style);
       end if;
    end Free;
 
@@ -463,32 +421,24 @@ package body GPS.Kernel.Styles is
    -- Set_Foreground --
    --------------------
 
-   procedure Set_Foreground (Style : Style_Access; Color : String) is
+   overriding procedure Set_Foreground
+     (Style : not null access Style_Record; Color : String) is
    begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return;
-      end if;
-
-      Free (Style.Foreground);
-      Style.Foreground.Color := Null_Color;
-      Style.Foreground.Value := new String'(Color);
+      Set_Foreground (Simple_Style_Record (Style.all)'Access, Color);
+      Style.Fg_Color := Null_Color;
+      Style.Fg_GC    := Null_GC;
    end Set_Foreground;
 
    --------------------
    -- Set_Background --
    --------------------
 
-   procedure Set_Background (Style : Style_Access; Color : String) is
+   overriding procedure Set_Background
+     (Style : not null access Style_Record; Color : String) is
    begin
-      if Style = null then
-         Trace (Me, "Trying to access null style");
-         return;
-      end if;
-
-      Free (Style.Background);
-      Style.Background.Color := Null_Color;
-      Style.Background.Value := new String'(Color);
+      Set_Background (Simple_Style_Record (Style.all)'Access, Color);
+      Style.Bg_Color := Null_Color;
+      Style.Bg_GC    := Null_GC;
    end Set_Background;
 
    --------------

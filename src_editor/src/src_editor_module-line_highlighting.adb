@@ -52,9 +52,7 @@ package body Src_Editor_Module.Line_Highlighting is
       4 => Start_Col_Cst'Access,
       5 => End_Col_Cst'Access);
 
-   procedure Create_Category
-     (Style            : Style_Access;
-      Mark_In_Speedbar : Boolean := False);
+   procedure Create_Category (Style : Style_Access);
    --  Create a new category with Style and Mark_In_Speedbar.
 
    --------------------------
@@ -117,8 +115,9 @@ package body Src_Editor_Module.Line_Highlighting is
             --  Create the style corresponding to the higlighing category
             Style := Get_Or_Create_Style (Kernel, Category, Create => True);
             Set_Background (Style, Color);
+            Set_In_Speedbar (Style, Mark_In_Speedbar);
 
-            Add_Category (Style, Mark_In_Speedbar => Mark_In_Speedbar);
+            Add_Category (Style);
          end;
 
       elsif Command = "highlight_range"
@@ -126,8 +125,6 @@ package body Src_Editor_Module.Line_Highlighting is
       then
          Name_Parameters (Data, Highlight_Range_Parameters);
          declare
-            Module_Id : constant Source_Editor_Module :=
-              Source_Editor_Module (Src_Editor_Module_Id);
             File      : constant Virtual_File  :=
               Create (Nth_Arg (Data, 1), Kernel);
             Style_ID  : constant String  := Nth_Arg (Data, 2);
@@ -138,9 +135,7 @@ package body Src_Editor_Module.Line_Highlighting is
               Visible_Column_Type (Nth_Arg (Data, 5, Default => -1));
             Style     : constant Style_Access :=
                           Get_Or_Create_Style (Kernel, Style_ID, False);
-            Box       : Source_Editor_Box;
             Child     : MDI_Child;
-            Category_Index : Integer;
          begin
             if Style = null then
                Set_Error_Msg (Data, -"No such style: " & Style_ID);
@@ -150,41 +145,10 @@ package body Src_Editor_Module.Line_Highlighting is
             Child := Find_Editor (Kernel, File);
 
             if Child /= null then
-               Box := Source_Editor_Box (Get_Widget (Child));
-               Category_Index := Lookup_Category (Style);
-
-               if Command = "highlight_range" then
-                  Highlight_Range
-                    (Get_Buffer (Box), Style,
-                     Editable_Line_Type (Line),
-                     Start_Col, End_Col);
-
-                  if Category_Index /= 0
-                    and then
-                      Module_Id.Categories (Category_Index).Mark_In_Speedbar
-                  then
-                     Add_Line_Highlighting
-                       (Get_Buffer (Box),
-                        Editable_Line_Type (Line), Style,
-                        Highlight_In => (Highlight_Speedbar => True,
-                                         others             => False));
-                  end if;
-               else
-                  Highlight_Range
-                    (Get_Buffer (Box), Style,
-                     Editable_Line_Type (Line),
-                     Start_Col, End_Col, Remove => True);
-
-                  if Category_Index /= 0
-                    and then
-                      Module_Id.Categories (Category_Index).Mark_In_Speedbar
-                  then
-                     Remove_Line_Highlighting
-                       (Get_Buffer (Box),
-                        Editable_Line_Type (Line),
-                        Style);
-                  end if;
-               end if;
+               Highlight_Range
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))), Style,
+                  Editable_Line_Type (Line), Start_Col, End_Col,
+                  Remove => Command = "unhighlight_range");
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
@@ -198,10 +162,7 @@ package body Src_Editor_Module.Line_Highlighting is
    -- Create_Category --
    ---------------------
 
-   procedure Create_Category
-     (Style            : Style_Access;
-      Mark_In_Speedbar : Boolean := False)
-   is
+   procedure Create_Category (Style : Style_Access) is
       Module_Id : constant Source_Editor_Module :=
                     Source_Editor_Module (Src_Editor_Module_Id);
       A         : Highlighting_Category_Array_Access;
@@ -210,8 +171,7 @@ package body Src_Editor_Module.Line_Highlighting is
       if Module_Id.Categories = null then
          Module_Id.Categories := new Highlighting_Category_Array (1 .. 1);
          Module_Id.Categories (1) := new Highlighting_Category_Record'
-           (Mark_In_Speedbar => Mark_In_Speedbar,
-            Style => Style);
+           (Style => Style);
 
       else
          A := new Highlighting_Category_Array
@@ -221,9 +181,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
          Unchecked_Free (Module_Id.Categories);
 
-         A (A'Last) := new Highlighting_Category_Record'
-           (Mark_In_Speedbar => Mark_In_Speedbar,
-            Style => Style);
+         A (A'Last) := new Highlighting_Category_Record'(Style => Style);
 
          Module_Id.Categories := A;
       end if;
@@ -233,10 +191,7 @@ package body Src_Editor_Module.Line_Highlighting is
    -- Add_Category --
    ------------------
 
-   procedure Add_Category
-     (Style            : Style_Access;
-      Mark_In_Speedbar : Boolean := False)
-   is
+   procedure Add_Category (Style : Style_Access) is
       Module_Id : constant Source_Editor_Module :=
                     Source_Editor_Module (Src_Editor_Module_Id);
       N         : Natural;
@@ -247,12 +202,11 @@ package body Src_Editor_Module.Line_Highlighting is
 
       if N /= 0 then
          Module_Id.Categories (N).Style := Style;
-         Module_Id.Categories (N).Mark_In_Speedbar := Mark_In_Speedbar;
          return;
       end if;
 
       --  If we reach this point, the category wasn't previously found.
-      Create_Category (Style, Mark_In_Speedbar);
+      Create_Category (Style);
    end Add_Category;
 
    ---------------------
@@ -279,7 +233,7 @@ package body Src_Editor_Module.Line_Highlighting is
       --  If the Category doesn't exist, but the style exists, create a
       --  category for this style.
 
-      Create_Category (Style, False);
+      Create_Category (Style);
       return Module_Id.Categories'Last;
    end Lookup_Category;
 
