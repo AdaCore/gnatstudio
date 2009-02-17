@@ -19,11 +19,9 @@
 
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Src_Editor_Box;     use Src_Editor_Box;
-with Src_Editor_Buffer.Line_Information;
-use Src_Editor_Buffer.Line_Information;
+with GPS.Editors;            use GPS.Editors;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -75,27 +73,19 @@ package body Src_Editor_Module.Line_Highlighting is
             Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
             Style    : constant Style_Access :=
                          Get_Or_Create_Style (Kernel, Style_ID, False);
-            Box      : Source_Editor_Box;
-            Child    : MDI_Child;
+            Buffer   : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get (File, Open => False);
          begin
             if Style = null then
                Set_Error_Msg (Data, -"No such style: " & Style_ID);
                return;
             end if;
 
-            Child := Find_Editor (Kernel, File);
-
-            if Child /= null then
-               Box := Source_Editor_Box (Get_Widget (Child));
+            if Buffer /= Nil_Editor_Buffer then
                if Command = "highlight" then
-                  Add_Line_Highlighting
-                    (Get_Buffer (Box),
-                     Editable_Line_Type (Line),
-                     Style,
-                     Highlight_In => (others => True));
+                  Buffer.Apply_Style (Style => Style, Line  => Line);
                else
-                  Remove_Line_Highlighting
-                    (Get_Buffer (Box), Editable_Line_Type (Line), Style);
+                  Buffer.Remove_Style (Style => Style, Line => Line);
                end if;
             else
                Set_Error_Msg
@@ -135,20 +125,28 @@ package body Src_Editor_Module.Line_Highlighting is
               Visible_Column_Type (Nth_Arg (Data, 5, Default => -1));
             Style     : constant Style_Access :=
                           Get_Or_Create_Style (Kernel, Style_ID, False);
-            Child     : MDI_Child;
+            Buffer    : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get (File, Open => False);
          begin
             if Style = null then
                Set_Error_Msg (Data, -"No such style: " & Style_ID);
                return;
             end if;
 
-            Child := Find_Editor (Kernel, File);
-
-            if Child /= null then
-               Highlight_Range
-                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))), Style,
-                  Editable_Line_Type (Line), Start_Col, End_Col,
-                  Remove => Command = "unhighlight_range");
+            if Buffer /= Nil_Editor_Buffer then
+               if Command = "highlight_range" then
+                  Buffer.Apply_Style
+                    (Style       => Style,
+                     Line        => Line,
+                     From_Column => Integer (Start_Col),
+                     To_Column   => Integer (End_Col));
+               else
+                  Buffer.Remove_Style
+                    (Style       => Style,
+                     Line        => Line,
+                     From_Column => Integer (Start_Col),
+                     To_Column   => Integer (End_Col));
+               end if;
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
