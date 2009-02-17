@@ -33,7 +33,6 @@ with Basic_Types;
 with GPS.Editors;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;
 
@@ -275,14 +274,14 @@ package body Code_Peer.Module is
 
    procedure Load
      (Self : access Module_Id_Record'Class;
-      File : Filesystem_String)
+      File : GNATCOLL.Filesystem.Filesystem_String)
    is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
+      use type GPS.Kernel.MDI.GPS_MDI_Child;
 
       Input   : Input_Sources.File.File_Input;
       Reader  : Code_Peer.Bridge.Inspection_Readers.Reader;
-      Child   : GPS.Kernel.MDI.GPS_MDI_Child;
 
       procedure Process_Project (Position : Code_Analysis.Project_Maps.Cursor);
 
@@ -315,61 +314,59 @@ package body Code_Peer.Module is
       end Process_Project;
 
    begin
-      if Self.Report = null then
-         --  Clean up existent data
+      if Self.Report_Subwindow /= null then
+         --  Destroy old report window if present
 
-         if Self.Tree /= null then
-            Code_Analysis.Free_Code_Analysis (Self.Tree);
-         end if;
-
-         --  Load code review information
-
-         Input_Sources.File.Open (+File, Input);
-         Reader.Parse
-           (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
-         Input_Sources.File.Close (Input);
-
-         --  Create codepeer report window
-
-         Code_Peer.Summary_Reports.Gtk_New
-           (Self.Report,
-            GPS.Kernel.Kernel_Handle (Self.Kernel),
-            GPS.Kernel.Modules.Module_ID (Self),
-            Self.Tree);
-         Context_CB.Connect
-           (Self.Report,
-            Code_Peer.Summary_Reports.Signal_Activated,
-            Context_CB.To_Marshaller (On_Activate'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-         Context_CB.Connect
-           (Self.Report,
-            Gtk.Object.Signal_Destroy,
-            Context_CB.To_Marshaller (On_Destroy'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-         Context_CB.Connect
-           (Self.Report,
-            Code_Peer.Summary_Reports.Signal_Criteria_Changed,
-            Context_CB.To_Marshaller (On_Criteria_Changed'Access),
-            Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
-
-         GPS.Kernel.MDI.Gtk_New (Child, Self.Report, Module => Self);
-         Child.Set_Title (-"CodePeer report");
-         GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Child);
-
-         --  Setup filter criteria
-
-         Self.Filter_Criteria.Files.Clear;
-         Self.Tree.Iterate (Process_Project'Access);
-         Self.Report.Update_Criteria (Self.Filter_Criteria);
-
-         --  Update location view
-
-         Self.Update_Location_View;
-
-         --  Raise report window
-
-         Child.Raise_Child;
+         Self.Report_Subwindow.Destroy;
       end if;
+
+      --  Load code review information
+
+      Input_Sources.File.Open (+File, Input);
+      Reader.Parse (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
+      Input_Sources.File.Close (Input);
+
+      --  Create codepeer report window
+
+      Code_Peer.Summary_Reports.Gtk_New
+        (Self.Report,
+         GPS.Kernel.Kernel_Handle (Self.Kernel),
+         GPS.Kernel.Modules.Module_ID (Self),
+         Self.Tree);
+      Context_CB.Connect
+        (Self.Report,
+         Code_Peer.Summary_Reports.Signal_Activated,
+         Context_CB.To_Marshaller (On_Activate'Access),
+         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+      Context_CB.Connect
+        (Self.Report,
+         Gtk.Object.Signal_Destroy,
+         Context_CB.To_Marshaller (On_Destroy'Access),
+         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+      Context_CB.Connect
+        (Self.Report,
+         Code_Peer.Summary_Reports.Signal_Criteria_Changed,
+         Context_CB.To_Marshaller (On_Criteria_Changed'Access),
+         Module_Context'(Code_Peer_Module_Id (Self), null, null, null));
+
+      GPS.Kernel.MDI.Gtk_New
+        (Self.Report_Subwindow, Self.Report, Module => Self);
+      Self.Report_Subwindow.Set_Title (-"CodePeer report");
+      GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report_Subwindow);
+
+      --  Setup filter criteria
+
+      Self.Filter_Criteria.Files.Clear;
+      Self.Tree.Iterate (Process_Project'Access);
+      Self.Report.Update_Criteria (Self.Filter_Criteria);
+
+      --  Update location view
+
+      Self.Update_Location_View;
+
+      --  Raise report window
+
+      Self.Report_Subwindow.Raise_Child;
    end Load;
 
    -----------------
@@ -486,6 +483,7 @@ package body Code_Peer.Module is
       --  Mark report as destroyed
 
       Context.Module.Report := null;
+      Context.Module.Report_Subwindow := null;
 
       --  Cleanup project tree
 

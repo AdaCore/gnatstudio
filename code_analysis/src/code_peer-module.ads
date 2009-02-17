@@ -20,13 +20,13 @@
 with Glib.Object;
 with Gtk.Menu;
 
+with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Styles;
+with GPS.Kernel.MDI;
 with Code_Analysis;
 
 private with Code_Peer.Summary_Reports;
-
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Code_Peer.Module is
 
@@ -81,6 +81,7 @@ private
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
       Tree             : Code_Analysis.Code_Analysis_Tree;
+      Report_Subwindow : GPS.Kernel.MDI.GPS_MDI_Child;
       Report           : Code_Peer.Summary_Reports.Summary_Report;
       Annotation_Style : GPS.Kernel.Styles.Style_Access;
       Message_Styles   : Message_Probability_Style_Array;
