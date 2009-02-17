@@ -1236,7 +1236,6 @@ package body Browsers.Entities is
       Sort (Fields, Sort_By => Sort_Source_Order);
 
       for F in Entity_Information_Arrays.First .. Last (Fields) loop
-         Trace (Me, "MANU Adding " & Get_Name (Fields.Table (F)).all);
          if Is_Enum then
             Add_Line (List, Get_Name (Fields.Table (F)).all);
          else
