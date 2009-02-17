@@ -1184,11 +1184,14 @@ package body Browsers.Entities is
      (List : in out Xref_List;
       Item : access Type_Item_Record'Class)
    is
+      use Entity_Information_Arrays;
+
       Field         : Entity_Information;
       Is_Enum       : constant Boolean :=
                         Get_Kind (Item.Entity).Kind = Enumeration_Kind;
       Discriminants : Entity_Reference_Iterator;
       Iter          : Calls_Iterator;
+      Fields        : Entity_Information_List;
 
    begin
       Find_All_References
@@ -1223,16 +1226,25 @@ package body Browsers.Entities is
                         and then Get_Kind (Field).Kind /= Procedure_Kind
                         and then Get_Kind (Field).Kind /= Package_Kind)
             then
-               if Is_Enum then
-                  Add_Line (List, Get_Name (Field).all);
-               else
-                  Add_Type (List, Item, Field, Get_Name (Field).all);
-               end if;
+               Entity_Information_Arrays.Append (Fields, Field);
             end if;
          end if;
 
          Next (Iter);
       end loop;
+
+      Sort (Fields, Sort_By => Sort_Source_Order);
+
+      for F in Entity_Information_Arrays.First .. Last (Fields) loop
+         Trace (Me, "MANU Adding " & Get_Name (Fields.Table (F)).all);
+         if Is_Enum then
+            Add_Line (List, Get_Name (Fields.Table (F)).all);
+         else
+            Add_Type (List, Item, Fields.Table (F),
+                      Get_Name (Fields.Table (F)).all);
+         end if;
+      end loop;
+
    end Add_Fields;
 
    --------------

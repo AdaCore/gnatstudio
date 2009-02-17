@@ -20,6 +20,7 @@
 with Ada.Calendar;               use Ada.Calendar;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
+with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
@@ -2795,5 +2796,45 @@ package body Entities is
    begin
       Free (It.It);
    end Free;
+
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort
+     (List    : in out Entity_Information_List;
+      Sort_By : Sort_Type)
+   is
+      subtype IT is Entity_Information_Arrays.Index_Type;
+
+      procedure Xchg (Op1, Op2 : Natural);
+      function Lt    (Op1, Op2 : Natural) return Boolean;
+
+      procedure Xchg (Op1, Op2 : Natural) is
+         T : constant Entity_Information := List.Table (IT (Op1));
+      begin
+         List.Table (IT (Op1)) := List.Table (IT (Op2));
+         List.Table (IT (Op2)) := T;
+      end Xchg;
+
+      function Lt (Op1, Op2 : Natural) return Boolean is
+      begin
+         if List.Table (IT (Op1)) = null then
+            return True;
+         elsif List.Table (IT (Op2)) = null then
+            return False;
+         elsif Sort_By = Sort_Alphabetical then
+            return Get_Name (List.Table (IT (Op1))).all <
+              Get_Name (List.Table (IT (Op2))).all;
+         else
+            return Get_Declaration_Of (List.Table (IT (Op1))) <
+              Get_Declaration_Of (List.Table (IT (Op2)));
+         end if;
+      end Lt;
+
+   begin
+      Sort (Natural (Length (List)), Xchg'Unrestricted_Access,
+            Lt'Unrestricted_Access);
+   end Sort;
 
 end Entities;

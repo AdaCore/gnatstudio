@@ -555,6 +555,14 @@ package Entities is
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 5);
 
+   subtype Entity_Information_List is Entity_Information_Arrays.Instance;
+   type Sort_Type is (Sort_Source_Order, Sort_Alphabetical);
+
+   procedure Sort
+     (List    : in out Entity_Information_List;
+      Sort_By : Sort_Type);
+   --  Sort a list of entities
+
    procedure Unref (Entity : in out Entity_Information);
    procedure Ref   (Entity : Entity_Information);
    pragma Inline (Ref);
@@ -871,7 +879,6 @@ private
    -- Entity_Information_List --
    -----------------------------
 
-   subtype Entity_Information_List is Entity_Information_Arrays.Instance;
    Null_Entity_Information_List : constant Entity_Information_List :=
      Entity_Information_Arrays.Empty_Instance;
 
