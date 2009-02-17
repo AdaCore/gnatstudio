@@ -2645,6 +2645,10 @@ package body GPS.Location_View is
          N   : Node_Ptr;
          Loc : Location_Record_Access;
       begin
+         if Iter.Tag.all /= "Location" then
+            return;
+         end if;
+
          Loc := new Location_Record'
            (Category => new String'(Category),
             File     => Get_File_Child (Iter, "file"),
