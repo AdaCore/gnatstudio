@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                  Copyright (C) 2008-2008, AdaCore                 --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -404,6 +404,10 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[2J",      Clear_Screen_And_Home);
       Add_Sequence (FSM, ASCII.ESC & "]0;%s" & ASCII.BEL,
                     Display_In_Status_Line);
+      Add_Sequence (FSM, ASCII.ESC & "]1;%s" & ASCII.BEL,
+                    Do_Nothing);  --  Output by bash
+      Add_Sequence (FSM, ASCII.ESC & "]2;%s" & ASCII.BEL,
+                    Do_Nothing);  --  Output by bash
       Add_Sequence (FSM, ASCII.LF & "",      Newline);
       Add_Sequence (FSM, ASCII.CR & "",      Beginning_Of_Line);
       Add_Sequence (FSM, ASCII.BS & "",      Cursor_Left);
