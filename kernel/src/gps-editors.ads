@@ -30,6 +30,10 @@ package GPS.Editors is
    --  editor facilities by the GPS code. This avoid relying directly on Gtk
    --  internals, and open the door to possible alternate implementation, such
    --  as Eclipse for GNATbench.
+   --
+   --  No dependecy on e.g. GTK or GPS.Kernel should be added in the spec or
+   --  the body of this unit, in order to be able to separate it completely
+   --  from the GPS UI.
 
    type Editor_Buffer_Factory is abstract new Controlled with null record;
 
