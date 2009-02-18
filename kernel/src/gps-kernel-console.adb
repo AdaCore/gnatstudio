@@ -111,6 +111,14 @@ package body GPS.Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
+   procedure Insert
+     (Kernel : access Kernel_Handle_Record'Class;
+      Text   : String;
+      UTF8   : Boolean;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   --  Factor code between Insert_Non_UTF8 and Insert_UTF8
+
    ---------------
    -- Interrupt --
    ---------------
@@ -159,6 +167,7 @@ package body GPS.Kernel.Console is
    procedure Insert
      (Kernel : access Kernel_Handle_Record'Class;
       Text   : String;
+      UTF8   : Boolean;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info)
    is
@@ -171,17 +180,54 @@ package body GPS.Kernel.Console is
       elsif Text /= "" then
          if Mode = Error then
             Trace (Me, "Error: " & Text);
-            Insert
-              (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
-               Add_LF, Mode = Error);
+            if UTF8 then
+               Insert_UTF8
+                 (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
+                  Add_LF, Mode = Error);
+            else
+               Insert
+                 (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
+                  Add_LF, Mode = Error);
+            end if;
+
             Raise_Console (Kernel);
 
          else
-            Insert (Console, Text, Add_LF, Mode = Error);
+            if UTF8 then
+               Insert_UTF8 (Console, Text, Add_LF, Mode = Error);
+            else
+               Insert (Console, Text, Add_LF, Mode = Error);
+            end if;
             Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
          end if;
       end if;
    end Insert;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Kernel : access Kernel_Handle_Record'Class;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is
+   begin
+      Insert (Kernel, Text, False, Add_LF, Mode);
+   end Insert;
+
+   -----------------
+   -- Insert_UTF8 --
+   -----------------
+
+   procedure Insert_UTF8
+     (Kernel : access Kernel_Handle_Record'Class;
+      UTF8   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info) is
+   begin
+      Insert (Kernel, UTF8, True, Add_LF, Mode);
+   end Insert_UTF8;
 
    -------------------
    -- Raise_Console --

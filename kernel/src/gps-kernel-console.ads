@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2008, AdaCore             --
+--                      Copyright (C) 2001-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,6 +39,11 @@ package GPS.Kernel.Console is
    procedure Insert
      (Kernel : access Kernel_Handle_Record'Class;
       Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
+   procedure Insert_UTF8
+     (Kernel : access Kernel_Handle_Record'Class;
+      UTF8   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info);
    --  Insert Text in the GPS's console.
