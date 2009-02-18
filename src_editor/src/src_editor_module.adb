@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
@@ -135,9 +134,6 @@ package body Src_Editor_Module is
    overriding function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
    --  See inherited documentation
-
-   function Convert is new Ada.Unchecked_Conversion
-     (XML_Utils.String_Ptr, Filesystem_String_Access);
 
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -774,7 +770,6 @@ package body Src_Editor_Module is
       User : Kernel_Handle) return MDI_Child
    is
       Src         : Source_Editor_Box;
-      File        : Filesystem_String_Access;
       F           : Virtual_File;
       Str         : XML_Utils.String_Ptr;
       Id          : Idle_Handler_Id;
@@ -790,9 +785,9 @@ package body Src_Editor_Module is
       Create_Files_Pixbufs_If_Needed (User);
 
       if Node.Tag.all = "Source_Editor" then
-         File := Convert (Get_Field (Node, "File"));
+         F := Get_File_Child (Node, "File");
 
-         if File /= null and then File.all /= "" then
+         if F /= No_File then
             Str := Get_Field (Node, "Line");
 
             if Str /= null then
@@ -805,7 +800,6 @@ package body Src_Editor_Module is
                Column := Visible_Column_Type'Value (Str.all);
             end if;
 
-            F := Create (Full_Filename => File.all);
             if not Is_Open (User, F) then
                Src := Open_File
                  (User, F, False,
@@ -934,40 +928,33 @@ package body Src_Editor_Module is
          return null;
       end if;
 
-      declare
-         Filename : constant Filesystem_String := Full_Name (File).all;
-      begin
-         if Filename = "" or else not Is_Regular_File (File) then
-            return null;
-         end if;
+      if File = No_File or else not Is_Regular_File (File) then
+         return null;
+      end if;
 
-         N := new Node;
-         N.Tag := new String'("Source_Editor");
+      N := new Node;
+      N.Tag := new String'("Source_Editor");
 
-         Child := new Node;
-         Child.Tag := new String'("File");
-         Child.Value := new String'(+Filename);
-         Add_Child (N, Child);
+      Add_File_Child (N, "File", File);
 
-         Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
+      Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
 
-         Child := new Node;
-         Child.Tag := new String'("Line");
-         Child.Value := new String'(Image (Integer (Line)));
-         Add_Child (N, Child);
+      Child := new Node;
+      Child.Tag := new String'("Line");
+      Child.Value := new String'(Image (Integer (Line)));
+      Add_Child (N, Child);
 
-         Child := new Node;
-         Child.Tag := new String'("Column");
-         Child.Value := new String'(Image (Integer (Column)));
-         Add_Child (N, Child);
+      Child := new Node;
+      Child.Tag := new String'("Column");
+      Child.Value := new String'(Image (Integer (Column)));
+      Add_Child (N, Child);
 
-         Child := new Node;
-         Child.Tag := new String'("Column_End");
-         Child.Value := new String'(Image (Integer (Column)));
-         Add_Child (N, Child);
+      Child := new Node;
+      Child.Tag := new String'("Column_End");
+      Child.Value := new String'(Image (Integer (Column)));
+      Add_Child (N, Child);
 
-         return N;
-      end;
+      return N;
    end Save_Desktop;
 
    -----------------------------
