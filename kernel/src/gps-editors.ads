@@ -192,6 +192,7 @@ package GPS.Editors is
      (This : Editor_Mark) return Editor_Location'Class is abstract;
    --  Returns the current location of the mark. This location will vary
    --  depending on the changes that take place in the buffer.
+   --  This opens the editor if it is currently closed.
 
    function Is_Present (This : Editor_Mark) return Boolean is abstract;
    --  Returns True if mark's location is still present in the buffer

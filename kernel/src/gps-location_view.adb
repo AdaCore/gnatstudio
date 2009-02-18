@@ -747,7 +747,7 @@ package body GPS.Location_View is
 
       declare
          Mark : constant Editor_Mark'Class :=
-           Get_Mark (Model, Iter, Mark_Column);
+           Get_Mark (View.Tree.Model, Iter, Mark_Column);
          Loc : constant Editor_Location'Class := Mark.Location;
       begin
          if Mark /= Nil_Editor_Mark then
@@ -2178,6 +2178,7 @@ package body GPS.Location_View is
 
             --  If we are clicking before the beginning of the cell, allow the
             --  event to pass. This allows clicking on expanders.
+
             if Buffer_X > Back_Rect.X
               and then Buffer_X < Cell_Rect.X
             then

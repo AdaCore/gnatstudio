@@ -756,29 +756,28 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Mark) return Editor_Location'Class
    is
       Mark : Gtk_Text_Mark;
+      Iter   : Gtk_Text_Iter;
+      Buffer : Src_Editor_Buffer;
    begin
-      declare
-         Iter   : Gtk_Text_Iter;
-         Buffer : Src_Editor_Buffer;
-      begin
-         if This.Mark /= null then
-            Mark := Get_Mark (This.Mark.Mark);
+      if This.Mark /= null then
+         --  Open the buffer, if necessary. This will also automatically create
+         --  the gtk+ mark
+         Buffer := Src_Editor_Buffer
+           (Get_Buffer_Factory (This.Kernel).Get
+            (Get_File (This.Mark.Mark)));
 
-            if Mark = null or else Get_Deleted (Mark) then
-               return Nil_Editor_Location;
-            end if;
+         Mark := Get_Mark (This.Mark.Mark);
 
-            Buffer := Src_Editor_Buffer
-              (Get_Buffer_Factory (This.Kernel).Get
-               (Get_File (This.Mark.Mark)));
-
-            Get_Iter_At_Mark (Buffer.Buffer, Iter, Mark);
-
-            return Create_Editor_Location (Buffer, Iter);
-         else
+         if Mark = null or else Get_Deleted (Mark) then
             return Nil_Editor_Location;
          end if;
-      end;
+
+         Get_Iter_At_Mark (Buffer.Buffer, Iter, Mark);
+
+         return Create_Editor_Location (Buffer, Iter);
+      else
+         return Nil_Editor_Location;
+      end if;
    end Location;
 
    ------------------
