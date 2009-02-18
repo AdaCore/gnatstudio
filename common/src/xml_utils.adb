@@ -1143,9 +1143,11 @@ package body XML_Utils is
          --  Another way to falling back to a previous scheme.
          --  (this is in the case of the desktop only)
 
-         Child := Find_Tag (Child, "File");
+         Child := Find_Tag (N.Child, "File");
 
-         return No_File;
+         if Child = null then
+            return No_File;
+         end if;
       end if;
 
       declare
