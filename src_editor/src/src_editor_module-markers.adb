@@ -377,6 +377,9 @@ package body Src_Editor_Module.Markers is
          Buffer  => Get_Buffer (Mark),
          Mark    => Mark,
          Kernel  => Kernel_Handle (Kernel));
+
+      Weak_Ref (Marker.Mark, On_Destroy_Mark'Access, Convert (Marker));
+
       Update_Marker_Location (Marker);
       Register_Persistent_Marker (Marker);
       return Marker;
