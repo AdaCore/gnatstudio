@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2008, AdaCore             --
+--                      Copyright (C) 2004-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Calendar;            use Ada.Calendar;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with System;
 
@@ -749,8 +750,20 @@ package body Expect_Interface is
       User_Data   : System.Address)
    is
       pragma Unreferenced (Description, User_Data);
+      Start : Integer := Str'First;
    begin
-      Trace (Me, "Sending: " & Str);
+      for S in Str'Range loop
+         if not Is_Graphic (Str (S)) then
+            if S /= Start then
+               Trace (Me, "Sending: " & Str (Start .. S - 1));
+            end if;
+            Trace (Me, "Sending< ASCII." & Character'Image (Str (S)));
+            Start := S + 1;
+         end if;
+      end loop;
+      if Str'Last + 1 /= Start then
+         Trace (Me, "Sending: " & Str (Start .. Str'Last));
+      end if;
    end In_Trace_Filter;
 
    ----------------------

@@ -10,8 +10,8 @@ See the GPS documentation for more details.
 ## No user customization below this line
 ###########################################################################
 
-import os, os.path, re, string
-import os_utils
+import os, os.path, re, string, tempfile
+import os_utils, text_utils
 import GPS
 
 # Future work
@@ -75,37 +75,69 @@ def pogs_directory():
 
   return dir
 
-def _spawn_cmd (cmd):
+def _spawn_cmd (cmd_name, prj_attr):
   """
-  Prepare the spark console and spawn a command that sends its output to it
+  Prepare the spark console and spawn a command that sends its output to it.
+  See _spawn_spark_tool for a description of the arguments
   """
 
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
+  # ??? In this case, the process should be run asynchronousl so as not to
+  # block GPS
+
+  result = _spawn_spark_tool (cmd_name, prj_attr, show_cmd=True)
+  GPS.Console (spark_console).write (result)
   GPS.MDI.get (spark_console).raise_window ()
 
-def _spawn_spark_tool (cmd_name, prj_attr):
+def _spawn_spark_tool (cmd_name, prj_attr, input=None,
+                       show_cmd=False, ctx=None):
   """
-  Spawn a spark tool on the current file, after gettins its switches from
-  the project
+  Spawn a SPARK tool. Get its switches from the project file (attribute
+  name specified as prj_attr)
+  If input is a string, it is sent to stdin for the process. Otherwise it
+  should be an instance of GPS.File, and is added to the command line. If it
+  is none, the current file is used
+  Returns the output of the process. This is run synchronously.
   """
 
-  GPS.MDI.save_all (False)
-  sw = GPS.current_context().project().get_tool_switches_as_string (prj_attr)
-  cmd = cmd_name + " " + sw + " " + GPS.current_context().file().name()
-  _spawn_cmd (cmd)
+  result = ""
+
+  def local_on_exit (proc, status, output):
+     GPS.Logger ("FOO").log ("local_on_exit: " + output)
+     proc._output_on_exit = output
+      
+  if not ctx:
+     ctx = GPS.current_context()
+
+  sw = ctx.project().get_tool_switches_as_string (prj_attr)
+  cmd = cmd_name + " " + sw
+
+  if input == None:
+     input = ctx.file ()
+
+  if not isinstance (input, str):
+     GPS.MDI.save_all (False)
+     cmd = cmd + " " + input.name()
+
+  if show_cmd:
+     GPS.Console (spark_console, accept_input=False).clear ()
+     GPS.Console (spark_console).write (cmd + "\n")
+
+  proc = GPS.Process (cmd, remote_server="Build_Server")#,on_exit=local_on_exit)
+  if isinstance (input, str):
+     proc.send (input, add_lf=True)
+     proc.send (chr (4), add_lf=False) # End of transmission
+
+  return proc.get_result ()
 
 def show_pogs_file():
   """Show the pogs file of the current project"""
   # Pogs looks for .vcg files in current dir and all subdirs. For now,
   # we'll start it in the root project's directory, but we should be
   # smarter
-  GPS.MDI.save_all (False)
   dir = pogs_directory()
   GPS.cd (dir)
-  sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
-  _spawn_cmd ("pogs " + sw)
+  _spawn_cmd (cmd_name="pogs", prj_attr="POGS", input="")
+
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
   GPS.MDI.get_by_child (buf.current_view()).raise_window()
@@ -156,12 +188,40 @@ def has_vc (context):
      return context.has_vc
 
 def sparkmake ():
-  _spawn_spark_tool (cmd_name="sparkmake", prj_attr="SPARKmake")
+  _spawn_cmd (cmd_name="sparkmake", prj_attr="SPARKmake")
 
 def format_file ():
   buffer = GPS.EditorBuffer.get ()
-  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat")
+  _spawn_cmd (cmd_name="sparkformat", prj_attr="SPARKFormat")
   GPS.EditorBuffer.get (file=buffer.file(), force=True)
+
+def format_selection ():
+  """sparkformat the selection or the current line"""
+  ctx = GPS.current_context()
+  buffer = GPS.EditorBuffer.get ()
+  start = buffer.selection_start ().beginning_of_line ()
+  end   = buffer.selection_end ().end_of_line () - 1
+  buffer.start_undo_group ()
+  selection = buffer.get_chars (start, end)
+
+  # Go through a temporary file, instead of sending the contents on stdin,
+  # because in the latter case we are sometimes getting duplicate output
+  # (both the input and the output)
+
+  fd, name = tempfile.mkstemp (suffix=".ada")
+  f = file (name, "w+b")
+  f.write (selection);
+  f.close ()
+
+  _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat",
+                     show_cmd=False, ctx=ctx, input=GPS.File (name))
+
+  f = file (name)
+  text_utils.replace (start, end, f.read())
+  f.close ()
+
+  buffer.finish_undo_group ()
+  os.unlink (name)
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
@@ -387,6 +447,12 @@ a = """<?xml version="1.0"?>
      <shell lang="python">spark.format_file ()</shell>
   </action>
 
+  <action name="SPARKFormat selection" category="Spark" output="none">
+     <filter language="SPARK" />
+     <filter language="Ada" />
+     <shell lang="python">spark.format_selection ()</shell>
+  </action>
+
   <action name="Examine metafile" category="Spark" output="none">
      <filter language="Metafile" />
      <shell>MDI.save_all false</shell>
@@ -444,6 +510,9 @@ a = """<?xml version="1.0"?>
       </menu>
       <menu action="SPARKFormat file">
         <Title>SPARK_Format File</Title>
+      </menu>
+      <menu action="SPARKFormat selection">
+        <Title>SPARK _Format Selection</Title>
       </menu>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
