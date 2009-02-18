@@ -20,6 +20,7 @@
 with GNAT.Strings; use GNAT.Strings;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib.Object; use Glib.Object;
 with Gdk.Pixbuf;  use Gdk.Pixbuf;
@@ -30,7 +31,15 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
+with Traces; use Traces;
+with GNATCOLL.Traces;
+with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Language; use Language;
+
 package body Src_Editor_Buffer.Debug is
+
+   Me : constant Debug_Handle := Create ("buffer_debug", GNATCOLL.Traces.Off);
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
@@ -43,6 +52,11 @@ package body Src_Editor_Buffer.Debug is
    --  not be found or is no longer valid.
    --  If the buffer is no longer valid, null is returned and an error msg is
    --  set in Data.
+
+   function Dump_Text_For_Tag
+     (Buffer : Source_Buffer; Tag : Gtk_Text_Tag) return String;
+   --  Dump text in buffer, replacing graphic characters with "." unless they
+   --  are in tag Tag, in which case replace them with "#".
 
    function To_String (Info : Line_Info_Width_Array_Access) return String;
    function To_String (Info : Line_Data_Record) return String;
@@ -162,6 +176,36 @@ package body Src_Editor_Buffer.Debug is
       return "el:" & I (Info.Editable_Line);
    end To_String;
 
+   function Dump_Text_For_Tag
+     (Buffer : Source_Buffer; Tag : Gtk_Text_Tag) return String
+   is
+      Iter : Gtk_Text_Iter;
+      R    : Unbounded_String;
+      C    : Character;
+      Success : Boolean;
+   begin
+      Get_Start_Iter (Buffer, Iter);
+
+      while not Is_End (Iter) loop
+         C := Get_Char (Iter);
+
+         if Is_Graphic (C) then
+            if Has_Tag (Iter, Tag) then
+               Append (R, '#');
+            else
+               Append (R, '.');
+            end if;
+         else
+            Append (R, C);
+         end if;
+
+         Forward_Char (Iter, Success);
+         exit when not Success;
+      end loop;
+
+      return To_String (R);
+   end Dump_Text_For_Tag;
+
    -----------------
    -- Buffer_Cmds --
    -----------------
@@ -263,8 +307,15 @@ package body Src_Editor_Buffer.Debug is
                  (Data, "[0] special:" & To_String (Buffer.Line_Data (Line)));
             end if;
          end loop;
-      end if;
 
+      elsif Command = "debug_dump_syntax_highlighting" then
+         Set_Return_Value
+           (Data,
+            Dump_Text_For_Tag
+              (Buffer,
+               Buffer.Syntax_Tags
+                 (Language_Entity'Value (Nth_Arg (Data, 2)))));
+      end if;
    end Buffer_Cmds;
 
    ----------------
@@ -295,6 +346,10 @@ package body Src_Editor_Buffer.Debug is
    is
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
    begin
+      if not Active (Me) then
+         return;
+      end if;
+
       Register_Command
         (Kernel, "debug_dump_editable_lines",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
@@ -304,6 +359,9 @@ package body Src_Editor_Buffer.Debug is
       Register_Command
         (Kernel, "debug_dump_buffer_lines",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_syntax_highlighting",
+         1, 1, Buffer_Cmds'Access, EditorBuffer);
    end Register;
 
 end Src_Editor_Buffer.Debug;
