@@ -330,7 +330,7 @@ package body Src_Editor_Box is
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
 
-         Console.Insert
+         Console.Insert_UTF8
            (Kernel,
             -"No cross-reference information found for "
             & Display_Full_Name (Get_Filename (Editor)) & ASCII.LF
