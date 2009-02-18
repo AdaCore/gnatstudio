@@ -265,6 +265,10 @@ package body Navigation_Module is
          Module.Markers (Module.Current_Marker) := Location_Marker (D.Marker);
          Module.Last_Marker := Module.Current_Marker;
          Refresh_Location_Buttons (Kernel);
+      else
+         --  We are not storing marker: release memory now.
+         Destroy (D.Marker.all);
+         Unchecked_Free (D.Marker);
       end if;
    end On_Marker_Added_In_History;
 
