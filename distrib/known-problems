@@ -7,6 +7,13 @@ Known Problems fixed in GPS 4.4.0
               completion window was invoked.
   Workaround: Click once to cancel the smart completion window.
 
+- I126-024: Creation of corrupted XML files when using international characters
+  Problem:    When manipulating file system paths that contain international
+              characters, GPS might create invalid XML files.
+  Workaround: Avoid working in directories that contain international
+              characters, and remove the invalid XML files from the .gps
+              directory.
+
 - I120-033: && should be "and then" not correctly auto-fixed
   Problem:    The auto-fix made for messages such as "&& should be "and then""
               is incorrect, it adds an unexpected quote at the location of the
