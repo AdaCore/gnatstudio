@@ -23,12 +23,16 @@ class Unix_Shell (ANSI_Console_Process):
     ANSI_Console_Process.__init__ (self, process, args)
     os.environ["TERM"] = oldterm
 
+class Win32_Shell (Console_Process):
+  def __init__ (self, process, args=""):
+    Console_Process.__init__ (self, process, args)
+
 def create_default_shell (menu):
   """Spawns the user's shell as read from the environment variable SHELL"""
   if os.getenv ("SHELL"):
     Unix_Shell (os.getenv ("SHELL"), "-i")
   elif os.getenv ("COMSPEC"):
-    Unix_Shell (os.getenv ("COMSPEC"))
+    Win32_Shell (os.getenv ("COMSPEC"))
 
 GPS.Menu.create ("/Tools/Consoles/_OS Shell", create_default_shell, ref="Auxiliary Builds", add_before=1)
 
