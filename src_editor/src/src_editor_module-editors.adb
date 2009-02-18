@@ -762,9 +762,17 @@ package body Src_Editor_Module.Editors is
       if This.Mark /= null then
          --  Open the buffer, if necessary. This will also automatically create
          --  the gtk+ mark
-         Buffer := Src_Editor_Buffer
-           (Get_Buffer_Factory (This.Kernel).Get
-            (Get_File (This.Mark.Mark)));
+
+         declare
+            Buf : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (This.Kernel).Get (Get_File (This.Mark.Mark));
+         begin
+            if Buf = Nil_Editor_Buffer then
+               return Nil_Editor_Location;
+            end if;
+
+            Buffer := Src_Editor_Buffer (Buf);
+         end;
 
          Mark := Get_Mark (This.Mark.Mark);
 
