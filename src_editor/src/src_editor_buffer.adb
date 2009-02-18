@@ -2359,11 +2359,11 @@ package body Src_Editor_Buffer is
       Copy (Source => Start_Iter, Dest => Entity_Start);
       Copy (Source => End_Iter, Dest => Entity_End);
 
-      --  Highlight from the previous tag if on the same line, to handle
+      --  Highlight from the beginning of the current line, to handle
       --  special language semantics requiring information from previous
       --  characters, such as x.all'address in Ada.
 
-      Backward_To_Tag_Toggle (Entity_Start, Result => Result);
+      Set_Line_Offset (Entity_Start, 0);
 
       if Get_Line (Entity_Start) /= Get_Line (Start_Iter) then
          Copy (Source => Start_Iter, Dest => Entity_Start);
