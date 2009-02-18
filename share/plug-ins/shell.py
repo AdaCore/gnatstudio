@@ -1,14 +1,21 @@
-"""This plug-in will spawn a Unix/Windows shell console in your GPS
+"""This plug-in will spawn a Unix/Windows shell console in your GPS.
+   The shell that is spawned is read from your environment variables
+   SHELL or COMSPEC. When the latter is used, the terminal will not
+   do special handling for ANSI escape sequences (the ones used to color
+   text, move the cursor to specific locations,...).
+   However, when a Unix-like shell is spawned (ie when SHELL is set), the
+   terminal is fully capable of handling these escape sequences. In
+   particular, you can also run commands like "vi" in the terminal.
 
-   When spawning zsh, it is recommended that your .zshrc file contains
-   the following:
-      [[ $EMACS = t ]] && unsetopt zle
-   This prevents zsh from duplicating its input to the output, as well
-   as some missynchronization between GPS and zsh after a while
-
-   This plugin will filter out ANSI sequences that your shell might be
-   writting (for instance colors). These are currently not supported by
-   GPS)
+   This terminal behaves a lot like a standard Unix terminal. In particular,
+   you need to make sure that your shell will output all the information.
+   In some cases, the configuration of your shell (.bashrc if you are
+   running bash for instance) will deactivate the echo of what you type to
+   the terminal. Since GPS is not outputing anything on its own, just showing
+   what the shell is outputing, you need to somehow ensure that your shell
+   always echos what you type. This is done by running the command
+       stty echo
+   in such cases. In general, this can be safely done in your .bashrc
 
 """
 
