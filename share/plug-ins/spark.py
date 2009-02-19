@@ -494,7 +494,6 @@ a = """<?xml version="1.0"?>
     <shell lang="python">spark.sparkmake ()</shell>
   </action>
 
-
  <!-- Set up SPARK menu -->
 
  <submenu before="Window">
@@ -512,7 +511,7 @@ a = """<?xml version="1.0"?>
         <Title>SPARK_Format File</Title>
       </menu>
       <menu action="SPARKFormat selection">
-        <Title>SPARK _Format Selection</Title>
+        <Title>SPARKFormat _Selection</Title>
       </menu>
       <menu action="Simplify file">
         <Title>_Simplify File</Title>
@@ -538,6 +537,10 @@ a = """<?xml version="1.0"?>
 
   <contextual action="SPARKFormat file" >
     <Title>SPARK/SPARKFormat File</Title>
+  </contextual>
+
+  <contextual action="SPARKFormat selection" >
+    <Title>SPARK/SPARKFormat Selection</Title>
   </contextual>
 
   <contextual action="Simplify file" >
