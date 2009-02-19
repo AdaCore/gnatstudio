@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I205-006: Problems when manipulating non-utf8 paths
+  Problem:    Parts of GPS (like the Project View) do not fully support
+              paths that contain international characters which are not
+              valid UTF-8.
+  Workaround: Rename the directories.
+
 - I202-039: Smart completion window behavior when scrolling
   Problem:    The smart completion window stays open when scrolling the editor,
               which can make it difficult to read text. Also, this causes the
