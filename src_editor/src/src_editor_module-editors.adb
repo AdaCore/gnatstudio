@@ -533,12 +533,16 @@ package body Src_Editor_Module.Editors is
       Line    : Buffer_Line_Type;
       Block   : Block_Record;
       Iter    : Gtk_Text_Iter;
+      Buffer  : Source_Buffer;
    begin
       Get_Location (Iter, This, Iter, Success);
 
       if Success then
+         Buffer := Source_Buffer (Get_Buffer (Iter));
          Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+         Block := Get_Block
+           (Buffer,
+            Get_Editable_Line (Buffer, Line));
 
          return Src_Editor_Location'
            (Editor_Location with
@@ -566,7 +570,8 @@ package body Src_Editor_Module.Editors is
 
       if Success then
          Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)),
+            Get_Editable_Line (Source_Buffer (Get_Buffer (Iter)), Line));
 
          Get_Iter_At_Line_Offset
            (Source_Buffer (Get_Buffer (Iter)), Iter2,
@@ -609,7 +614,8 @@ package body Src_Editor_Module.Editors is
 
       if Success then
          Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
+         Block := Get_Block (Source_Buffer (Get_Buffer (Iter)),
+            Get_Editable_Line (Source_Buffer (Get_Buffer (Iter)), Line));
 
          return Block.Block_Type;
       else

@@ -46,8 +46,6 @@ package body Src_Editor_Buffer.Blocks is
       Line_Start        : Editable_Line_Type;
       Line_End          : Editable_Line_Type;
       Block             : Block_Access;
-      Buffer_Line       : Buffer_Line_Type;
-      First_Buffer_Line : Buffer_Line_Type;
 
       ----------
       -- Copy --
@@ -76,7 +74,7 @@ package body Src_Editor_Buffer.Blocks is
 
       Buffer.Blocks_Exact := True;
 
-      Reset_Blocks_Info (Buffer.Line_Data);
+      Reset_Blocks_Info (Source_Buffer (Buffer));
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);
@@ -93,30 +91,23 @@ package body Src_Editor_Buffer.Blocks is
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
 
-            First_Buffer_Line := Get_Buffer_Line (Buffer, Line_Start);
-            if First_Buffer_Line /= 0 then
-               Block := new Block_Record'
-                 (Indentation_Level => 0,
-                  Offset_Start      => Current.Sloc_Start.Column,
-                  Stored_Offset     => Current.Sloc_Start.Column,
-                  First_Line        => Line_Start,
-                  Last_Line         => Line_End,
-                  Name              => Copy (Current.Name),
-                  Block_Type        => Current.Category,
-                  GC                => null);
+            Block := new Block_Record'
+              (Indentation_Level => 0,
+               Offset_Start      => Current.Sloc_Start.Column,
+               Stored_Offset     => Current.Sloc_Start.Column,
+               First_Line        => Line_Start,
+               Last_Line         => Line_End,
+               Name              => Copy (Current.Name),
+               Block_Type        => Current.Category,
+               GC                => null);
 
-               for J in Line_Start .. Line_End loop
-                  Buffer_Line := Get_Buffer_Line (Buffer, J);
+            for J in Line_Start + 1 .. Line_End loop
+               if Buffer.Editable_Lines (J).Block = null then
+                  Buffer.Editable_Lines (J).Block := Block;
+               end if;
+            end loop;
 
-                  if Buffer_Line /= 0 then
-                     if Buffer.Line_Data (Buffer_Line).Block = null then
-                        Buffer.Line_Data (Buffer_Line).Block := Block;
-                     end if;
-                  end if;
-               end loop;
-
-               Buffer.Line_Data (First_Buffer_Line).Block := Block;
-            end if;
+            Buffer.Editable_Lines (Line_Start).Block := Block;
          end if;
 
          --  Fill the folding information

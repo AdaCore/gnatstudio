@@ -596,36 +596,36 @@ package body Src_Editor_Buffer is
    -- Reset_Blocks_Info --
    -----------------------
 
-   procedure Reset_Blocks_Info (Data : Line_Data_Array_Access) is
+   procedure Reset_Blocks_Info (Buffer : Source_Buffer) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Block_Record, Block_Access);
       Block : Block_Access;
    begin
-      if Data /= null then
-         for Line in Data'Range loop
+      if Buffer.Editable_Lines = null then
+         return;
+      end if;
+
+      for Line in Buffer.Editable_Lines'Range loop
+         if Buffer.Editable_Lines (Line).Block /= null then
+            Block := Buffer.Editable_Lines (Line).Block;
+
             --  Block info is shared among multiple lines, so we need to free
             --  it only once. It is possible that the same block is used on
             --  disjoint blocks as well (for instance if we have a nested block
             --  in the middle)
-
-            if Data (Line).Block /= null then
-               Block := Data (Line).Block;
-
-               --  ??? Would be better to use Block.Last_Line below, but types
-               --  do not match and I am not sure of the index for Data
-               for L in Line .. Data'Last loop
-                  if Data (L).Block = Block then
-                     Data (L).Block := null;
+            if Block /= null then
+               for Sub in Line + 1 .. Buffer.Editable_Lines'Last loop
+                  if Buffer.Editable_Lines (Sub).Block = Block then
+                     Buffer.Editable_Lines (Sub).Block := null;
                   end if;
                end loop;
 
-               if Block /= null then
-                  GNAT.Strings.Free (Block.Name);
-                  Unchecked_Free (Block);
-               end if;
+               GNAT.Strings.Free (Block.Name);
+               Unchecked_Free (Block);
+               Buffer.Editable_Lines (Line).Block := null;
             end if;
-         end loop;
-      end if;
+         end if;
+      end loop;
    end Reset_Blocks_Info;
 
    ----------------
@@ -1403,22 +1403,22 @@ package body Src_Editor_Buffer is
             if Buffer.Editable_Lines (J).Where = In_Mark then
                GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
             end if;
-
-            if Buffer.Editable_Lines (J).Side_Info_Data /= null then
-               Free (Buffer.Editable_Lines (J).Side_Info_Data.all);
-               Unchecked_Free (Buffer.Editable_Lines (J).Side_Info_Data);
-            end if;
          end loop;
 
          Unchecked_Free (Buffer.Editable_Lines);
       end if;
 
-      Reset_Blocks_Info (Buffer.Line_Data);
+      Reset_Blocks_Info (Buffer);
 
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
             Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
             --  Block already freed by the call to Reset_Blocks_Info
+         end if;
+
+         if Buffer.Line_Data (J).Side_Info_Data /= null then
+            Free (Buffer.Line_Data (J).Side_Info_Data.all);
+            Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
          end if;
       end loop;
 
@@ -2440,8 +2440,8 @@ package body Src_Editor_Buffer is
       Buffer.Editable_Lines (1) :=
         (Where          => In_Buffer,
          Buffer_Line    => 1,
-         Side_Info_Data => null,
          Stored_Lines   => Lines_List.Empty_List,
+         Block          => null,
          Stored_Editable_Lines => 0);
 
       --  ??? create line info (above)
@@ -2799,8 +2799,8 @@ package body Src_Editor_Buffer is
          Buffer.Editable_Lines (1) :=
            (Where          => In_Buffer,
             Buffer_Line    => 1,
-            Side_Info_Data => null,
             Stored_Lines   => Lines_List.Empty_List,
+            Block          => null,
             Stored_Editable_Lines => 0);
 
          Buffer.Line_Data := new Line_Data_Array (1 .. 1);
@@ -4663,19 +4663,11 @@ package body Src_Editor_Buffer is
 
    function Line_Needs_Refresh
      (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Boolean
-   is
-      EL : Editable_Line_Type;
+      Line   : Buffer_Line_Type) return Boolean is
    begin
-      EL := Get_Editable_Line (Buffer, Line);
-
-      if EL = 0 then
-         return False;
-      end if;
-
-      if Buffer.Editable_Lines (EL).Side_Info_Data /= null then
-         for J in Buffer.Editable_Lines (EL).Side_Info_Data'Range loop
-            if not Buffer.Editable_Lines (EL).Side_Info_Data (J).Set then
+      if Buffer.Line_Data (Line).Side_Info_Data /= null then
+         for J in Buffer.Line_Data (Line).Side_Info_Data'Range loop
+            if not Buffer.Line_Data (Line).Side_Info_Data (J).Set then
                return True;
             end if;
          end loop;
@@ -4690,20 +4682,18 @@ package body Src_Editor_Buffer is
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type)
+      Line   : Buffer_Line_Type)
    is
-      Editable_Lines   : Editable_Line_Array_Access
-        renames Buffer.Editable_Lines;
       Columns_Config : Line_Info_Display_Array_Access
         renames Buffer.Editable_Line_Info_Columns.all;
    begin
       if Columns_Config /= null then
-         if Editable_Lines (Line).Side_Info_Data = null then
-            Editable_Lines (Line).Side_Info_Data := new
+         if Buffer.Line_Data (Line).Side_Info_Data = null then
+            Buffer.Line_Data (Line).Side_Info_Data := new
               Line_Info_Width_Array (Columns_Config'Range);
 
             for K in Columns_Config'Range loop
-               Editable_Lines (Line).Side_Info_Data (K) :=
+               Buffer.Line_Data (Line).Side_Info_Data (K) :=
                  (null,
                   Width => -1,
                   Set   => not Columns_Config (K).Every_Line);
@@ -4955,7 +4945,7 @@ package body Src_Editor_Buffer is
 
    function Get_Block
      (Editor        : access Source_Buffer_Record;
-      Line          : Buffer_Line_Type;
+      Line          : Editable_Line_Type;
       Force_Compute : Boolean := True) return Block_Record
    is
       Prev : Boolean;
@@ -4978,13 +4968,13 @@ package body Src_Editor_Buffer is
          Editor.Block_Highlighting := Prev;
       end if;
 
-      if Editor.Line_Data /= null
-        and then Line <= Editor.Line_Data'Last
+      if Editor.Editable_Lines /= null
+        and then Line <= Editor.Editable_Lines'Last
       then
-         if Editor.Line_Data (Line).Block = null then
+         if Editor.Editable_Lines (Line).Block = null then
             return New_Block;
          else
-            return Editor.Line_Data (Line).Block.all;
+            return Editor.Editable_Lines (Line).Block.all;
          end if;
       end if;
 
@@ -5286,7 +5276,8 @@ package body Src_Editor_Buffer is
             --  can be resolved (see TODO).
 
             Block := Get_Block
-              (Buffer, Buffer_Line_Type (Line + 1), Force_Compute => False);
+              (Buffer, Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
+               Force_Compute => False);
             Offset_Line := Block.First_Line;
 
             Get_Iter_At_Line_Offset
@@ -6174,13 +6165,13 @@ package body Src_Editor_Buffer is
    is
       Empty_Block : constant Block_Record :=
                       (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
-      L           : Buffer_Line_Type;
-      New_L       : Buffer_Line_Type;
+      L           : Editable_Line_Type;
+      New_L       : Editable_Line_Type;
       Block       : Block_Record;
    begin
-      L := Get_Buffer_Line (Editor, Line);
+      L := Line;
 
-      Block := Get_Block (Editor, L, Force_Compute => True);
+      Block := Get_Block (Editor, Line, Force_Compute => True);
 
       if Block.Block_Type = Cat_Unknown
         and then Block.Indentation_Level = 0
@@ -6200,7 +6191,7 @@ package body Src_Editor_Buffer is
          end if;
 
          if Block.First_Line > 1 then
-            New_L := Get_Buffer_Line (Editor, Block.First_Line - 1);
+            New_L := Block.First_Line - 1;
 
             --  At this point, we have to check that we are not stuck on
             --  the same line, this can happen when block information is not

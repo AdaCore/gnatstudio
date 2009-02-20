@@ -288,9 +288,9 @@ package body Src_Editor_Buffer.Debug is
       elsif Command = "debug_dump_side_info" then
          Set_Return_Value_As_List (Data);
 
-         for Line in 1 .. Buffer.Last_Editable_Line loop
+         for Line in Buffer.Line_Data'Range loop
             Set_Return_Value
-              (Data, To_String (Buffer.Editable_Lines (Line).Side_Info_Data));
+              (Data, To_String (Buffer.Line_Data (Line).Side_Info_Data));
          end loop;
 
       elsif Command = "debug_dump_all_lines" then

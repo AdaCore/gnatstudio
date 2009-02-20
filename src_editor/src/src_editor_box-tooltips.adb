@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2005-2008, AdaCore                  --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -186,7 +186,7 @@ package body Src_Editor_Box.Tooltips is
             Line_Info     : constant Line_Info_Width_Array_Access :=
                               Get_Side_Information
                                 (Box.Source_Buffer,
-                                 Editable_Line_Type (Line + 1));
+                                 Buffer_Line_Type (Line + 1));
             Content       : Unbounded_String;
             Font          : constant Pango_Font_Description :=
                               Default_Font.Get_Pref;

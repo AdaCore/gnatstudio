@@ -2855,8 +2855,8 @@ package body Src_Editor_Module.Shell is
 
          if Success then
             declare
-               Line  : constant Buffer_Line_Type :=
-                         Buffer_Line_Type (Get_Line (Iter) + 1);
+               Line  : constant Editable_Line_Type :=
+                         Editable_Line_Type (Get_Line (Iter) + 1);
                Block : constant Block_Record :=
                          Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
                Iter2 : Gtk_Text_Iter;

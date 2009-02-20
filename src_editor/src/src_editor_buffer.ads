@@ -735,7 +735,7 @@ package Src_Editor_Buffer is
 
    function Get_Block
      (Editor        : access Source_Buffer_Record;
-      Line          : Buffer_Line_Type;
+      Line          : Editable_Line_Type;
       Force_Compute : Boolean := True) return Block_Record;
    --  Return the block information associated with Line.
    --  If Force_Compute is True, then the buffer blocks will be parsed
@@ -1000,6 +1000,10 @@ private
    type Boolean_Array_Access is access Boolean_Array;
 
    type Line_Data_Record is record
+      Side_Info_Data : Line_Info_Width_Array_Access;
+      --  The array corresponding to information to be displayed in columns,
+      --  indexed on columns.
+
       Editable_Line      : Editable_Line_Type;
       --  The line in the real buffer
 
@@ -1018,10 +1022,6 @@ private
       --  enabled for that categories.
       --  For simplicity, the range of this array should match the range of
       --  the array of categories in the cache.
-
-      Block              : Block_Access;
-      --  Points to the corresponding block, or null if the line doesn't belong
-      --  to a block.
 
       File_Line          : File_Line_Type;
       --  The corresponding line in the file corresponding to Buffer.
@@ -1047,17 +1047,17 @@ private
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type);
+      Line   : Buffer_Line_Type);
    --  Create blank Side_Info_Data
 
    New_Line_Data : constant Line_Data_Record :=
-     (0, null, 0, null, null, 0, (others => False));
+     (null, 0, null, 0, null, 0, (others => False));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
 
-   procedure Reset_Blocks_Info (Data : Line_Data_Array_Access);
+   procedure Reset_Blocks_Info (Buffer : Source_Buffer);
    --  Reset block information used by Data
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -1093,6 +1093,10 @@ private
    package Lines_List is new Ada.Containers.Doubly_Linked_Lists
      (Universal_Line);
 
+   type Universal_Line_Access is access Universal_Line;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Universal_Line, Universal_Line_Access);
+
    --------------------
    -- Editable lines --
    --------------------
@@ -1100,16 +1104,16 @@ private
    type Line_Location_Type is (In_Buffer, In_Mark);
 
    type Editable_Line_Data (Where : Line_Location_Type := In_Buffer) is record
-      Side_Info_Data : Line_Info_Width_Array_Access;
-      --  The array corresponding to information to be displayed in columns,
-      --  indexed on columns.
-
       Stored_Lines   : Lines_List.List;
       --  The list of stored lines
 
       Stored_Editable_Lines : Natural := 0;
       --  Caches the number of editable lines stored in Stored_Lines,
       --  recursively.
+
+      Block              : Block_Access;
+      --  Points to the corresponding block, or null if the line doesn't belong
+      --  to a block.
 
       case Where is
          when In_Buffer =>
@@ -1118,6 +1122,8 @@ private
          when In_Mark =>
             Text : GNAT.Strings.String_Access := null;
             --  ??? This string is UTF-8, it should be marked as so!
+
+            UL   : Universal_Line_Access := null;
       end case;
    end record;
 

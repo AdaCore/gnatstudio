@@ -56,6 +56,9 @@ package Src_Editor_Buffer.Line_Information is
 
    function Get_Side_Information
      (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access;
+   function Get_Side_Information
+     (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type) return Line_Info_Width_Array_Access;
    --  Return the side information for the given line
 
