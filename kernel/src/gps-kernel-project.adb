@@ -76,7 +76,7 @@ package body GPS.Kernel.Project is
 
    overriding procedure Report
      (Handler : access Registry_Error_Handler_Record; Msg : String);
-   --  Used to report an error to the user.
+   --  Used to report an error to the user
 
    ------------
    -- Report --
@@ -328,9 +328,9 @@ package body GPS.Kernel.Project is
       Share_Dir           : constant Filesystem_String :=
                               Get_System_Dir (Kernel) & "share/gps/";
       Default             : constant Filesystem_String :=
-        Share_Dir & "default.gpr";
+                              Share_Dir & "default.gpr";
       Readonly            : constant Filesystem_String :=
-        Share_Dir & "readonly.gpr";
+                              Share_Dir & "readonly.gpr";
       Found               : Boolean;
       Is_Default          : Boolean := False;
 
@@ -349,12 +349,15 @@ package body GPS.Kernel.Project is
 
       if Is_Regular_File (Project) then
          Found := True;
+
       elsif Is_Writable (Directory) and then Is_Regular_File (Default) then
          Copy_File (Default, Full_Name (Project).all, Found);
          Is_Default := True;
+
       elsif Is_Regular_File (Readonly) then
          Project := GNATCOLL.VFS.Create (Readonly);
          Found := True;
+
       else
          Found := False;
       end if;
@@ -405,7 +408,7 @@ package body GPS.Kernel.Project is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the console.
+      --  Output error messages from the project parser to the console
 
       procedure Report_Error (S : String) is
          Old_Pref : constant Boolean := Auto_Jump_To_First.Get_Pref;
@@ -446,7 +449,7 @@ package body GPS.Kernel.Project is
       Empty_Project_On_Failure : Boolean := False)
    is
       procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the console.
+      --  Output error messages from the project parser to the console
 
       ------------------
       -- Report_Error --
@@ -672,7 +675,7 @@ package body GPS.Kernel.Project is
          Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup
-         --  already
+         --  already.
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
          end if;
@@ -703,11 +706,11 @@ package body GPS.Kernel.Project is
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
       procedure Report_Error (S : String);
-      --  Handler called when the project parser finds an error.
+      --  Handler called when the project parser finds an error
 
       procedure Reset_File_If_External (S : in out Entities.Source_File);
       --  Reset the xref info for a source file that no longer belongs to the
-      --  project
+      --  project.
 
       ------------------
       -- Report_Error --
