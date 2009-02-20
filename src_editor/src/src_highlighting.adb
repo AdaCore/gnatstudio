@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -153,17 +153,5 @@ package body Src_Highlighting is
       New_Tag (Tag, Highlight_Line_Tag_Name, Back_Color => Color);
       --  ??? Set the tag priority...
    end Create_Highlight_Line_Tag;
-
-   ---------------------------------
-   -- Create_Highlight_Region_Tag --
-   ---------------------------------
-
-   procedure Create_Highlight_Region_Tag
-     (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk_Color) is
-   begin
-      New_Tag (Tag, Highlight_Region_Tag_Name, Back_Color => Color);
-      --  ??? Add the priority
-   end Create_Highlight_Region_Tag;
 
 end Src_Highlighting;
