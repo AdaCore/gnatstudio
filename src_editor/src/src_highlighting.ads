@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,12 +87,5 @@ package Src_Highlighting is
    --  syntax highlighting tags to ensure that highlighting a part of the
    --  buffer using this tag will always override their colors and font
    --  attributes.
-
-   procedure Create_Highlight_Region_Tag
-     (Tag   : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color : Gdk.Color.Gdk_Color);
-   --  Create a tag and set the Background_Gdk property using the given Color.
-   --  The priority of this Tag is guarantied to exceed the priority of the
-   --  line highlighting tag.
 
 end Src_Highlighting;
