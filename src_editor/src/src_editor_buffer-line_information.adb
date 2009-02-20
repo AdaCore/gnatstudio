@@ -1561,7 +1561,6 @@ package body Src_Editor_Buffer.Line_Information is
                   Line_Data : Editable_Line_Data :=
                     (Where              => In_Mark,
                      UL                 => new Universal_Line'(The_Line),
-                     --  ??? Free this
                      Text               => null,
                      Block              => null,
                      Stored_Lines       => Editable_Lines
@@ -1717,7 +1716,7 @@ package body Src_Editor_Buffer.Line_Information is
                begin
                   Buffer.Line_Data (Current_B) :=
                     Editable_Lines (Current).UL.Data;
-                  --  ??? Free UL here ?
+                  Unchecked_Free (Editable_Lines (Current).UL);
                   GNAT.Strings.Free (Editable_Lines (Current).Text);
                   Editable_Lines (Current) := Line_Data;
                end;
