@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.3.3
 
-- I212-042: Suprious GtkWarning message under Windows
+- I212-042: Spurious GtkWarning message under Windows
   Problem:    Under Windows, GPS sometimes displays spurious GtkWarning
               messages in the Message window such as:
               sys:1: GtkWarning: gdkdrawable-win32.c:1607: BitBlt failed:...
