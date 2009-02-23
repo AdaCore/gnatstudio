@@ -4,7 +4,7 @@
  *                                                                          *
  *                          C Implementation File                           *
  *                                                                          *
- *                      Copyright (C) 2008-2008, AdaCore                    *
+ *                      Copyright (C) 2008-2009, AdaCore                    *
  *                                                                          *
  * GNAT is free software;  you can  redistribute it  and/or modify it under *
  * terms of the  GNU General Public License as published  by the Free Soft- *
@@ -69,6 +69,7 @@
 #endif
 #if defined (__hpux__)
 #   include <sys/termio.h>
+#   include <sys/stropts.h>
 #endif
 
 #define CDISABLE _POSIX_VDISABLE
@@ -112,10 +113,10 @@
    also the openpty interface but it does not seems to work as expected */
 #define USE_CLONE_DEVICE "/dev/ptmx_bsd"
 #elif defined (__hpux__)
-/* On HP-UX we use the non streamed version available through cloning device
-   /dev/ptym/clone. There is also a streamed driver available through
-   /dev/ptmx but this one does not work in our context */
-#define USE_CLONE_DEVICE "/dev/ptym/clone"
+/* On HP-UX we use the streamed version. Using the non streamed version is not
+   recommanded (through "/dev/ptym/clone"). Indeed it seems that there are
+   issues to detect process terminations. */
+#define USE_CLONE_DEVICE "/dev/ptmx"
 #endif
 
 /* structure that holds information about the terminal used and the process
@@ -178,6 +179,7 @@ allocate_pty_desc (pty_desc **desc) {
    int  slave_fd    = -1;
    int  master_fd   = -1;
    char *slave_name = NULL;
+
 #ifdef USE_GETPT
   master_fd = getpt ();
 #elif defined (USE_OPENPTY)
@@ -400,10 +402,10 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv,
   if (desc->slave_fd == -1)
     desc->slave_fd = open (desc->slave_name, O_RDWR, 0);
 
-#if defined (sun)
-  /* On Sun systems, we are using stream. We need to push the right "modules"
-     in order to get the expected terminal behaviors. Otherwise functionalities
-     such as termios are not available */
+#if defined (sun) || defined (__hpux__)
+  /* On systems such as Solaris we are using stream. We need to push the right
+     "modules" in order to get the expected terminal behaviors. Otherwise
+     functionalities such as termios are not available.  */
   ioctl (desc->slave_fd, I_PUSH, "ptem");
   ioctl (desc->slave_fd, I_PUSH, "ldterm");
   ioctl (desc->slave_fd, I_PUSH, "ttcompat");
@@ -488,7 +490,7 @@ gvd_interrupt_pid (int pid)
   return 0;
 }
 
-/* gvd_interrupt_process - kill a child process
+/* gvd_terminate_process - kill a child process
  *
  * PARAMETERS
  *   desc pty_desc structure
