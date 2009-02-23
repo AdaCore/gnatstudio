@@ -76,7 +76,7 @@
 
 /* On HP-UX and Sun system, there is a bzero function but with a different
    signature. Use memset instead */
-#if defined (__hpux__) || defined (sun)
+#if defined (__hpux__) || defined (sun) || defined (_AIX)
 #   define bzero(s,n) memset (s,0,n)
 #endif
 
@@ -171,6 +171,9 @@ relocate_fd (int fd, int min_fd)
  *   the child process (note that opening the slave side at this stage will
  *   failed...).
  */
+
+extern char* ptsname (int);
+
 static int
 allocate_pty_desc (pty_desc **desc) {
 
@@ -474,7 +477,16 @@ send_signal_via_characters
 int
 gvd_interrupt_process (pty_desc *desc)
 {
+#if defined (_AIX)
+  /* Currently if we send the character Ctrl-C a process such as gdb
+     will hang. Furthermore the proces cannot be killed afterward.
+     The workaround is to send explicitely SIGINT signal to the child
+     process. Providing that we don't spawn process through ssh (remote)
+     on AIX, this does not impact any testsuite or program. */
+  kill (desc->child_pid, SIGINT);
+#else
   send_signal_via_characters (desc, SIGINT);
+#endif
   return 0;
 }
 
