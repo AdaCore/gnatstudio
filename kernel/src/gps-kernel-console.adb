@@ -26,6 +26,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
+with Config;                 use Config;
 with Glib.Object;            use Glib.Object;
 with XML_Utils;              use XML_Utils;
 
@@ -193,6 +194,19 @@ package body GPS.Kernel.Console is
             Raise_Console (Kernel);
 
          else
+            --  Do not display GtkWarnings coming from python under Windows,
+            --  since they are usually harmless, and cause confusion in the
+            --  test suite and on users.
+
+            if Host = Windows
+              and then Text'Length > 17
+              and then Text
+                (Text'First .. Text'First + 16) = "sys:1: GtkWarning"
+            then
+               Trace (Me, Text);
+               return;
+            end if;
+
             if UTF8 then
                Insert_UTF8 (Console, Text, Add_LF, Mode = Error);
             else
