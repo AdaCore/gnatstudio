@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2007-2008, AdaCore                  --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -55,10 +55,12 @@ package body Codefix.Error_Lists is
       Registry : Project_Registry_Access;
       Messages : String)
    is
-      Last_Index : Integer := Messages'First;
+      Last_Index    : Integer := Messages'First;
       Current_Index : Integer := Messages'First;
+      Order_Id      : Long_Long_Integer := 0;
    begin
       while Current_Index < Messages'Last loop
+         Order_Id := Order_Id + 1;
          Last_Index := Current_Index;
 
          Skip_To_Char (Messages, Current_Index, ASCII.LF);
@@ -77,7 +79,8 @@ package body Codefix.Error_Lists is
                Col_Index     => List.Col_Index,
                Msg_Index     => List.Msg_Index,
                Style_Index   => List.Style_Index,
-               Warning_Index => List.Warning_Index);
+               Warning_Index => List.Warning_Index,
+               Order         => Order_Id);
 
             Internal_Add_Error (List, Error);
          end;
@@ -95,7 +98,8 @@ package body Codefix.Error_Lists is
       File    : Virtual_File;
       Line    : Integer;
       Column  : Column_Index;
-      Message : String)
+      Message : String;
+      Order   : Long_Long_Integer)
    is
       Error : Error_Message;
    begin
@@ -104,7 +108,8 @@ package body Codefix.Error_Lists is
          File    => File,
          Line    => Line,
          Col     => Column,
-         Message => Message);
+         Message => Message,
+         Order   => Order);
 
       Internal_Add_Error (List, Error);
    end Add_Error;
@@ -127,11 +132,11 @@ package body Codefix.Error_Lists is
          if Contains (List.Messages, Loc) then
             Loc_List := Element (List.Messages, Loc);
          else
-            Loc_List := new Internal_Message_List_Pckg.List;
+            Loc_List := new Internal_Message_List_Pckg.Set;
             Insert (List.Messages, Loc, Loc_List);
          end if;
 
-         Append (Loc_List.all, Error);
+         Insert (Loc_List.all, Error);
       end if;
    end Internal_Add_Error;
 
@@ -287,6 +292,15 @@ package body Codefix.Error_Lists is
       This.Style_Index   := Style_Index_In_Regexp;
       This.Warning_Index := Warning_Index_In_Regexp;
    end Set_Regexp;
+
+   --------
+   -- Lt --
+   --------
+
+   function Lt (Left, Right : Error_Message) return Boolean is
+   begin
+      return Left.Get_Order < Right.Get_Order;
+   end Lt;
 
    ---------
    -- "<" --

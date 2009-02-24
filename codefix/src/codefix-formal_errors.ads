@@ -46,7 +46,8 @@ package Codefix.Formal_Errors is
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer);
+      Style_Index, Warning_Index : Integer;
+      Order   : Long_Long_Integer);
    --  Parses an error message from the tool based on the regular expression
 
    procedure Initialize
@@ -54,11 +55,15 @@ package Codefix.Formal_Errors is
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Column_Index;
-      Message : String);
+      Message : String;
+      Order   : Long_Long_Integer);
    --  Store the contents of an error message, after it has been parsed
 
    function Get_Message (This : Error_Message) return String;
    --  Returns the message text (no line or column number)
+
+   function Get_Order (This : Error_Message) return Long_Long_Integer;
+   --  Return the order number of this message.
 
    overriding procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
@@ -267,6 +272,10 @@ private
       Message : GNAT.Strings.String_Access;
       --  Message should be encoded in UTF-8.
       Is_Style, Is_Warning : Boolean := False;
+
+      Order : Long_Long_Integer;
+      --  This has to be a long long integer, as it may be initialized with a
+      --  timestamp on e.g. GNATbench.
    end record;
 
    package Command_List is new Generic_List (Text_Command'Class, Free_Data);
@@ -278,7 +287,7 @@ private
    type Solution_List_Iterator is new Command_List.List_Node;
 
    Invalid_Error_Message : constant Error_Message :=
-     (Null_File_Cursor with null, False, False);
+     (Null_File_Cursor with null, False, False, 0);
 
    Null_Solution_List : constant Solution_List := Solution_List
      (Command_List.Null_List);

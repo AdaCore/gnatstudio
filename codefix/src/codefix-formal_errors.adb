@@ -43,7 +43,8 @@ package body Codefix.Formal_Errors is
       Error_Line : String;
       Regexp     : GNAT.Regpat.Pattern_Matcher;
       File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer)
+      Style_Index, Warning_Index : Integer;
+      Order   : Long_Long_Integer)
    is
       Max_Index : Integer := File_Index;
    begin
@@ -100,6 +101,8 @@ package body Codefix.Formal_Errors is
          else
             Assign (This.Message, "");
          end if;
+
+         This.Order := Order;
       end;
 
    exception
@@ -120,11 +123,13 @@ package body Codefix.Formal_Errors is
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Column_Index;
-      Message : String) is
+      Message : String;
+      Order   : Long_Long_Integer) is
    begin
       Assign (This.Message, Message);
       Set_File (This, File);
       Set_Location (This, Line, Col);
+      This.Order := Order;
    end Initialize;
 
    -----------------
@@ -139,6 +144,15 @@ package body Codefix.Formal_Errors is
          return This.Message.all;
       end if;
    end Get_Message;
+
+   ---------------
+   -- Get_Order --
+   ---------------
+
+   function Get_Order (This : Error_Message) return Long_Long_Integer is
+   begin
+      return This.Order;
+   end Get_Order;
 
    ----------
    -- Free --
@@ -160,7 +174,8 @@ package body Codefix.Formal_Errors is
       New_Message := (Clone (File_Cursor (This)) with
                       Message    => new String'(This.Message.all),
                       Is_Style   => This.Is_Style,
-                      Is_Warning => This.Is_Warning);
+                      Is_Warning => This.Is_Warning,
+                      Order      => This.Order);
       return New_Message;
    end Clone;
 

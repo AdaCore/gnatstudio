@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2007, AdaCore                   --
+--                 Copyright (C) 2007-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Maps;
-with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Ordered_Sets;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Regpat; use GNAT.Regpat;
@@ -51,8 +51,10 @@ package Codefix.Error_Lists is
       File    : Virtual_File;
       Line    : Integer;
       Column  : Column_Index;
-      Message : String);
-   --  Add the given error to the list.
+      Message : String;
+      Order   : Long_Long_Integer);
+   --  Add the given error to the list. Order is an optional field that may be
+   --  set to force an order between messages at a similar location.
 
    procedure Clear_Messages (List : Error_Message_List);
    --  Remove all the messages from the list.
@@ -102,8 +104,10 @@ package Codefix.Error_Lists is
 
 private
 
-   package Internal_Message_List_Pckg is new Ada.Containers.Doubly_Linked_Lists
-     (Error_Message);
+   function Lt (Left, Right : Error_Message) return Boolean;
+
+   package Internal_Message_List_Pckg is new Ada.Containers.Ordered_Sets
+     (Error_Message, "<" => Lt);
 
    use Internal_Message_List_Pckg;
 
@@ -115,10 +119,10 @@ private
 
    function "<" (Left, Right : Messages_Loc) return Boolean;
 
-   type Internal_List_Access is access all Internal_Message_List_Pckg.List;
+   type Internal_List_Access is access all Internal_Message_List_Pckg.Set;
 
    procedure Free is new Ada.Unchecked_Deallocation
-     (Internal_Message_List_Pckg.List, Internal_List_Access);
+     (Internal_Message_List_Pckg.Set, Internal_List_Access);
 
    package Error_Message_Container is new Ada.Containers.Ordered_Maps
      (Messages_Loc, Internal_List_Access);
