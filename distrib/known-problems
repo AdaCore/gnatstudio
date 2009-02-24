@@ -91,6 +91,11 @@ Known Problems fixed in GPS 4.4.0
               more), the Outline View introduces slowdowns in GPS.
   Workaround: Close the Outline View when working on big files.
 
+- GC24-014: Auto-fix not ideal whem fixing "missing =>" or "missing :="
+  Problem:    When fixing messages like "missing =>", the fix performed by 
+              the auto fix does not add a space before the arrow.
+  Workaround: Manually add the space.
+
 - F927-006: Folded blocks are deleted too easily
   Problem:    If a block is folded, pressing "backspace" when the cursor is at
               the beginning of the line following the folded block will delete
