@@ -1005,6 +1005,29 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'suggested replacement:'.
 
+   type Pragma_Pack is new Error_Parser
+     (new String'("Pragma_Pack"), 1)
+   with record
+      Use_Pragma : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("use explicit pragma Pack"));
+   end record;
+
+   overriding
+   procedure Initialize (This : in out Pragma_Pack);
+
+   overriding
+   procedure Free (This : in out Pragma_Pack);
+
+   overriding
+   procedure Fix
+     (This         : Pragma_Pack;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'size given is too small, use pragma Pack'.
+
    ---------------------------
    -- Aggregate_Misspelling --
    ---------------------------
@@ -3037,6 +3060,58 @@ package body Codefix.GNAT_Parser is
          Regular_Expression);
    end Fix;
 
+   -----------------
+   -- Pragma_Pack --
+   -----------------
+
+   overriding
+   procedure Initialize (This : in out Pragma_Pack) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("size given for ""([^""]+)"" too small")));
+   end Initialize;
+
+   overriding
+   procedure Free (This : in out Pragma_Pack) is
+   begin
+      Free (This.Use_Pragma);
+      Free (Error_Parser (This));
+   end Free;
+
+   overriding
+   procedure Fix
+     (This         : Pragma_Pack;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (Options);
+      Message : constant Error_Message := Get_Message (Message_It);
+
+      Use_Pragma_Match : Match_Array (0 .. 0);
+   begin
+      if not At_End (Next (Message_It)) then
+         Match
+           (This.Use_Pragma.all,
+            Get_Message (Get_Message (Next (Message_It))),
+            Use_Pragma_Match);
+
+         if Use_Pragma_Match (0) /= No_Match then
+            Solutions := Expected
+              (Current_Text    => Current_Text,
+               Message         => Message,
+               String_Expected =>
+                 "pragma Pack ("
+               & Get_Message (Message)
+               (Matches (1).First .. Matches (1).Last) & ");",
+               Position        => After);
+         end if;
+      end if;
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -3098,6 +3173,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Consecutive_Underlines);
       Add_Parser (Processor, new Multiple_Blank_Lines);
       Add_Parser (Processor, new Suggested_Replacement);
+      Add_Parser (Processor, new Pragma_Pack);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;
