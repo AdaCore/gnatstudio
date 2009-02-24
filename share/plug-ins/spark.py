@@ -136,7 +136,7 @@ def show_pogs_file():
   # smarter
   dir = pogs_directory()
   GPS.cd (dir)
-  _spawn_cmd (cmd_name="pogs", prj_attr="POGS", input="")
+  _spawn_cmd (cmd_name="pogs", prj_attr="POGS")
 
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
