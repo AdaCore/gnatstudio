@@ -56,16 +56,20 @@ package body Entities is
    --  around bugs in GPS. This should never be needed however, and is just
    --  provided as a backdoor.
    --  ??? Comment above is obsolete and should be updated
+   --  ??? Given that we now have an ordered list of references, this should
+   --  probably be removed, or given a different semantic.
 
    use Entities_Hash;
    use Files_HTable;
    use LI_HTable;
    use Entity_Information_Arrays;
    use Source_File_Arrays;
-   use Entity_Reference_Arrays;
+   use Entity_File_Maps;
+   use Entities_In_File_Sets;
    use Dependency_Arrays;
    use Instantiation_Arrays;
    use Entities_Search_Tries;
+   use Virtual_File_Indexes;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Record'Class, Entity_Information);
@@ -486,8 +490,6 @@ package body Entities is
          Mark_Valid : Boolean)
       is
          Entity : Entity_Information;
-         From, To : Entity_Reference_Arrays.Index_Type :=
-           Entity_Reference_Arrays.Index_Type'Last;
       begin
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
@@ -498,28 +500,25 @@ package body Entities is
                   & Display_Base_Name (Get_Filename (File)));
             end if;
 
-            To := Entity_Reference_Arrays.Index_Type'Last;
-            for R in reverse
-              Entity_Reference_Arrays.First .. Last (Entity.References)
-            loop
-               if Entity.References.Table (R).Location.File = File then
-                  Unref (Entity.References.Table (R).Caller,
-                         "reference.caller");
-                  Entity.References.Table (R).From_Instantiation_At := null;
-                  if To = Entity_Reference_Arrays.Index_Type'Last then
-                     To := R;
-                  end if;
-                  From := R;
-               else
-                  if To /= Entity_Reference_Arrays.Index_Type'Last then
-                     Remove (Entity.References, From, To);
-                     To := Entity_Reference_Arrays.Index_Type'Last;
-                  end if;
-               end if;
-            end loop;
+            if Entity.References.Contains (File.Ordered_Index) then
+               declare
+                  Refs : File_With_Refs_Access :=
+                    Entity.References.Element (File.Ordered_Index);
+                  It   : Entities_In_File_Sets.Cursor := Refs.Refs.First;
+                  Copy : E_Reference;
+               begin
+                  while It /= Entities_In_File_Sets.No_Element loop
+                     Copy := Element (It);
+                     Unref (Copy.Caller, "reference.caller");
 
-            if To /= Entity_Reference_Arrays.Index_Type'Last then
-               Remove (Entity.References, From, To);
+                     It := Next (It);
+                  end loop;
+
+                  Entities_In_File_Sets.Clear (Refs.Refs);
+                  Free (Refs);
+
+                  Entity.References.Delete (File.Ordered_Index);
+               end;
             end if;
 
             if Mark_Valid then
@@ -747,15 +746,19 @@ package body Entities is
       Unref_All_Entities_In_List (Entity.Child_Types, "child_types");
 
       if Clear_References then
-         for R in reverse
-           Entity_Reference_Arrays.First .. Last (Entity.References)
-         loop
-            Unref (Entity.References.Table (R).Caller, "reference.caller");
-            Entity.References.Table (R).Caller := null;
-            Entity.References.Table (R).From_Instantiation_At := null;
-         end loop;
+         declare
+            It   : Entity_Reference_Cursor := First (Entity.References);
+            Copy : E_Reference;
+         begin
+            while It /= Null_Entity_Reference_Cursor loop
+               Copy := Element (It);
+               Unref (Copy.Caller, "reference.caller");
 
-         Free (Entity.References);
+               It := Next (It);
+            end loop;
+
+            Clear (Entity.References);
+         end;
       end if;
    end Isolate;
 
@@ -979,6 +982,7 @@ package body Entities is
       Db          := new Entities_Database_Record;
       Db.Registry := Registry;
       Db.Frozen   := False;
+      Db.FS_Optimizer := Create;
       return Db;
    end Create;
 
@@ -1195,6 +1199,9 @@ package body Entities is
         (Entities_Database_Record, Entities_Database);
    begin
       Reset (Db);
+
+      Destroy (Db.FS_Optimizer);
+
       if Active (Debug_Me) then
          Db := null;
       else
@@ -1237,10 +1244,12 @@ package body Entities is
             F.Name := File;
          end if;
 
+         F.Ordered_Index := Get_Key (Db.FS_Optimizer, F.Name);
+
          F.Handler := LI_Handler (Handler);
 
          S := new Source_File_Item_Record'(File => F, Next => null);
-         Set (Db.Files, S);
+         Files_HTable.Set (Db.Files, S);
 
          if LI /= null then
             Append (LI.Files, F);
@@ -1349,6 +1358,137 @@ package body Entities is
       return null;
    end Find;
 
+   ----------------
+   -- Lt_No_File --
+   ----------------
+
+   function Lt_No_File (Left, Right : E_Reference) return Boolean is
+   begin
+      return Left.Location.Line < Right.Location.Line
+        or else
+          (Left.Location.Line = Right.Location.Line
+           and then Left.Location.Column < Right.Location.Column);
+   end Lt_No_File;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next
+     (Cursor : Entity_Reference_Cursor)
+      return Entity_Reference_Cursor
+   is
+
+      Result : Entity_Reference_Cursor := Cursor;
+   begin
+      Result.Entity_Cursor := Next (Result.Entity_Cursor);
+
+      if Result.Entity_Cursor = Entities_In_File_Sets.No_Element then
+         loop
+            Result.File_Cursor := Next (Result.File_Cursor);
+
+            exit when Result.File_Cursor = Entity_File_Maps.No_Element;
+
+            Result.Entity_Cursor := First (Element (Result.File_Cursor).Refs);
+
+            exit when Result.Entity_Cursor /= Entities_In_File_Sets.No_Element;
+         end loop;
+      end if;
+
+      return Result;
+   end Next;
+
+   -----------
+   -- First --
+   -----------
+
+   function First
+     (List : Entity_Reference_List) return Entity_Reference_Cursor
+   is
+
+      Result : Entity_Reference_Cursor;
+   begin
+      Result.File_Cursor := First (List);
+
+      if Result.File_Cursor /= Entity_File_Maps.No_Element then
+         Result.Entity_Cursor := First (Element (Result.File_Cursor).Refs);
+
+         if Result.Entity_Cursor = Entities_In_File_Sets.No_Element then
+            Result := Next (Result);
+         end if;
+      end if;
+
+      return Result;
+   end First;
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element (Cursor : Entity_Reference_Cursor) return E_Reference is
+   begin
+      return Element (Cursor.Entity_Cursor);
+   end Element;
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element
+     (List : Entity_Reference_List; Key : Entity_Reference_Index)
+      return E_Reference
+   is
+      Map : constant File_With_Refs_Access :=
+        List.Element (Key.Loc.File.Ordered_Index);
+   begin
+      return Element (Map.Refs.Find ((Location => Key.Loc, others => <>)));
+   end Element;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (Element : Entity_Reference_List; Key : Entity_Reference_Index)
+      return Boolean
+   is
+      Refs : File_With_Refs_Access;
+   begin
+      if Element.Contains (Key.Loc.File.Ordered_Index) then
+         Refs := Element.Element (Key.Loc.File.Ordered_Index);
+
+         return Refs.Refs.Contains ((Location => Key.Loc, others => <>));
+      else
+         return False;
+      end if;
+   end Contains;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (List   : Entity_Reference_List;
+      Key    : Entity_Reference_Index;
+      Val    : E_Reference)
+   is
+   begin
+      Element (List, Key.Loc.File.Ordered_Index).Refs.Replace (Val);
+   end Replace;
+
+   -----------
+   -- Index --
+   -----------
+
+   function Index
+     (Cursor : Entity_Reference_Cursor) return Entity_Reference_Index
+   is
+   begin
+      return
+        (Element (Cursor.Entity_Cursor).Location,
+         Element (Cursor.Entity_Cursor).Is_Declaration);
+   end Index;
+
    --------------------
    -- Add_Depends_On --
    --------------------
@@ -1415,7 +1555,7 @@ package body Entities is
             Next => null);
 
          Append (UEI.List.all, Entity);
-         Set (Entities, UEI);
+         Entities_Hash.Set (Entities, UEI);
          Ref (Entity, "Add");
 
       else
@@ -1460,7 +1600,7 @@ package body Entities is
                Files     => Null_Source_File_List,
                Ref_Count => 1),
             Next => null);
-         Set (Db.LIs, L);
+         LI_HTable.Set (Db.LIs, L);
       end if;
 
       return L.File;
@@ -1510,7 +1650,7 @@ package body Entities is
                Location => Entity.End_Of_Scope.Location,
                Kind     => Entity.End_Of_Scope.Kind);
             Unref (Entity.End_Of_Scope.Caller);
-            Entity.End_Of_Scope := (Location, null, null, Kind);
+            Entity.End_Of_Scope := (Location, null, null, Kind, False);
          else
             Add_Reference
               (Entity,
@@ -1519,7 +1659,7 @@ package body Entities is
          end if;
       else
          Unref (Entity.End_Of_Scope.Caller);
-         Entity.End_Of_Scope := (Location, null, null, Kind);
+         Entity.End_Of_Scope := (Location, null, null, Kind, False);
       end if;
    end Set_End_Of_Scope;
 
@@ -1608,21 +1748,29 @@ package body Entities is
      (Entity                : Entity_Information;
       Location              : File_Location;
       Kind                  : Reference_Kind;
-      From_Instantiation_At : Entity_Instantiation := No_Instantiation) is
+      From_Instantiation_At : Entity_Instantiation := No_Instantiation)
+   is
+      Refs : File_With_Refs_Access;
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
-      if Active (Add_Reference_Force_Unique) then
-         for R in
-           Entity_Reference_Arrays.First .. Last (Entity.References)
-         loop
-            if Entity.References.Table (R).Location = Location then
-               return;
-            end if;
-         end loop;
+
+      if not Entity.References.Contains (Location.File.Ordered_Index) then
+         Refs := new File_With_Refs;
+         Refs.File := Location.File;
+
+         Entity.References.Insert (Location.File.Ordered_Index, Refs);
+      else
+         Refs := Entity.References.Element (Location.File.Ordered_Index);
       end if;
 
-      Append
-        (Entity.References, (Location, null, From_Instantiation_At, Kind));
+      if Active (Add_Reference_Force_Unique) then
+         if Refs.Refs.Contains ((Location => Location, others => <>)) then
+            return;
+         end if;
+      end if;
+
+      Refs.Refs.Insert
+        ((Location, null, From_Instantiation_At, Kind, others => <>));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
@@ -1794,7 +1942,7 @@ package body Entities is
             Called_Entities       => Null_Entity_Information_List,
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
-            References            => Null_Entity_Reference_List,
+            References            => Entity_File_Maps.Empty_Map,
             Is_Valid              => True,
             Ref_Count             => 1,
             Trie_Tree_Index       => 0);
@@ -1808,7 +1956,7 @@ package body Entities is
 --           end if;
 
          if Must_Add_To_File then
-            Set (File.Entities, UEI);
+            Entities_Hash.Set (File.Entities, UEI);
          end if;
 
       elsif E /= null then
@@ -2127,15 +2275,12 @@ package body Entities is
 
    function Get_Location (Ref : Entity_Reference) return File_Location is
    begin
-      if Ref.Entity /= null
-        and then Ref.Entity.References /= Null_Entity_Reference_List
-        and then Ref.Index <= Last (Ref.Entity.References)
-      then
-         return Ref.Entity.References.Table (Ref.Index).Location;
-
-      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+      if Ref.Entity = null then
+         return No_File_Location;
+      elsif Ref.Index.Is_Declaration then
          return Ref.Entity.Declaration;
-
+      elsif Ref.Entity.References /= Entity_File_Maps.Empty_Map then
+         return Ref.Index.Loc;
       else
          return No_File_Location;
       end if;
@@ -2161,15 +2306,14 @@ package body Entities is
 
    function Get_Kind (Ref : Entity_Reference) return Reference_Kind is
    begin
-      if Ref.Entity /= null
-        and then Ref.Entity.References /= Null_Entity_Reference_List
-        and then Ref.Index <= Last (Ref.Entity.References)
-      then
-         return Ref.Entity.References.Table (Ref.Index).Kind;
-
-      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+      if Ref.Entity = null then
+         return Reference;
+      elsif Ref.Index.Is_Declaration then
          return Declaration;
-
+      elsif Ref.Entity.References /= Entity_File_Maps.Empty_Map then
+         return Element (Ref.Entity.References, Ref.Index).Kind;
+      elsif Ref.Index.Is_Declaration then
+         return Declaration;
       else
          return Reference;
       end if;
@@ -2183,10 +2327,11 @@ package body Entities is
      (Ref : Entity_Reference) return Entity_Instantiation is
    begin
       if Ref.Entity /= null
-        and then Ref.Entity.References /= Null_Entity_Reference_List
-        and then Ref.Index <= Last (Ref.Entity.References)
+        and then Ref.Entity.References /= Entity_File_Maps.Empty_Map
+        and then Contains (Ref.Entity.References, Ref.Index)
       then
-         return Ref.Entity.References.Table (Ref.Index).From_Instantiation_At;
+         return Element
+           (Ref.Entity.References, Ref.Index).From_Instantiation_At;
       else
          return null;
       end if;
@@ -2506,7 +2651,9 @@ package body Entities is
      (Entity : Entity_Information) return Entity_Reference
    is
    begin
-      return (Entity, Entity_Reference_Arrays.Index_Type'Last);
+      return
+        (Entity,
+         (Loc => No_File_Location, Is_Declaration => True, others => <>));
    end Declaration_As_Reference;
 
    ---------------------------------

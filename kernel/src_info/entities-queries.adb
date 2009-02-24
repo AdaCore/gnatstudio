@@ -32,6 +32,7 @@ with Projects.Registry;         use Projects.Registry;
 with String_Utils;              use String_Utils;
 with Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with Ada.Containers; use Ada.Containers;
 
 package body Entities.Queries is
 
@@ -63,7 +64,8 @@ package body Entities.Queries is
 
    use Entities_Hash;
    use Entity_Information_Arrays;
-   use Entity_Reference_Arrays;
+   use Entity_File_Maps;
+   use Entities_In_File_Sets;
    use Source_File_Arrays;
    use Dependency_Arrays;
 
@@ -249,26 +251,30 @@ package body Entities.Queries is
             end if;
 
             if not Check_Decl_Only then
-               for R in
-                 Entity_Reference_Arrays.First .. Last (E.References)
-               loop
-                  Ref := E.References.Table (R);
+               declare
+                  It : Entity_Reference_Cursor := First (E.References);
+               begin
+                  while It /= Null_Entity_Reference_Cursor loop
+                     Ref := Element (It);
 
-                  if Is_Real_Reference (Ref.Kind)
-                    and then Ref.Location.File = File
-                  then
-                     Prox := Natural (abs (Ref.Location.Column - Column)) +
+                     if Is_Real_Reference (Ref.Kind)
+                       and then Ref.Location.File = File
+                     then
+                        Prox := Natural (abs (Ref.Location.Column - Column)) +
                         abs (Ref.Location.Line - Line) * Num_Columns_Per_Line;
 
-                     if Prox < Distance then
-                        Closest := E;
-                        Closest_Ref := (E, R);
-                        Distance := Prox;
+                        if Prox < Distance then
+                           Closest := E;
+                           Closest_Ref := (E, Index (It));
+                           Distance := Prox;
 
-                        exit For_Each_Entity when Distance = 0;
+                           exit For_Each_Entity when Distance = 0;
+                        end if;
                      end if;
-                  end if;
-               end loop;
+
+                     It := Next (It);
+                  end loop;
+               end;
             end if;
          end loop For_Each_Entity;
       else
@@ -566,10 +572,11 @@ package body Entities.Queries is
       Location             : out File_Location;
       No_Location_If_First : Boolean := False)
    is
-      Ref         : E_Reference;
-      First       : Entity_Reference_Arrays.Index_Type :=
-                      Entity_Reference_Arrays.First - 1;
-      Return_Next : Boolean := Current_Location = No_File_Location;
+      Ref          : E_Reference;
+      First_Entity : Entity_Reference_Cursor :=
+                     Null_Entity_Reference_Cursor;
+      Return_Next  : Boolean := Current_Location = No_File_Location;
+      It           : Entity_Reference_Cursor;
    begin
       if Active (Me) then
          Trace (Me, "Find_Next_Body for "
@@ -579,8 +586,11 @@ package body Entities.Queries is
 
       Update_Xref (Entity.Declaration.File);
 
-      for R in Entity_Reference_Arrays.First .. Last (Entity.References) loop
-         Ref := Entity.References.Table (R);
+      It := First (Entity.References);
+
+      while It /= Null_Entity_Reference_Cursor loop
+         Ref := Element (It);
+
          if Ref.Kind = Body_Entity
            or else Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
          then
@@ -589,22 +599,24 @@ package body Entities.Queries is
                return;
             end if;
 
-            if First = Entity_Reference_Arrays.First - 1 then
-               First := R;
+            if First_Entity = Null_Entity_Reference_Cursor then
+               First_Entity := It;
             end if;
          end if;
 
          if Ref.Location = Current_Location then
             Return_Next := True;
          end if;
+
+         It := Next (It);
       end loop;
 
       if No_Location_If_First
-        or else First = Entity_Reference_Arrays.First - 1
+        or else First_Entity = Null_Entity_Reference_Cursor
       then
          Location := No_File_Location;
       else
-         Location := Entity.References.Table (First).Location;
+         Location := Element (First_Entity).Location;
       end if;
    end Find_Next_Body;
 
@@ -716,7 +728,18 @@ package body Entities.Queries is
       end if;
 
       Iter.Entity        := Entity;
-      Iter.Index         := Entity_Reference_Arrays.First;
+
+      --  Iter.It            := First (Entity.References);
+      Iter.Files_It := Entity.References.First;
+
+      Iter.Files_Analyzed.Clear;
+
+      if Iter.Files_It /= Entity_File_Maps.No_Element then
+         Update_Xref (Element (Iter.Files_It).File);
+         Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+         Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+      end if;
+
       Iter.Decl_Returned := not Iter.Filter (Declaration)
         or else
           (In_Scope /= null
@@ -724,15 +747,14 @@ package body Entities.Queries is
              (Iter.Entity.Declaration,
               Iter.In_File, Iter.Start_Line, Iter.Last_Line));
       Iter.Deps          := Deps;
-      Iter.Returning_Existing_Refs := Length (Entity.References) /= 0;
-
       --  If the first reference in the list is not correct, move to next one
       if Iter.Decl_Returned
         and then
           (Length (Entity.References) = 0
-           or else not Iter.Filter (Entity.References.Table (Iter.Index).Kind)
+           or else Iter.Entity_It = Entities_In_File_Sets.No_Element
+           or else not Iter.Filter (Element (Iter.Entity_It).Kind)
            or else not In_Range
-             (Entity.References.Table (Iter.Index).Location,
+             (Element (Iter.Entity_It).Location,
               Iter.In_File, Iter.Start_Line, Iter.Last_Line))
       then
          Next (Iter);
@@ -792,7 +814,6 @@ package body Entities.Queries is
          Last  := Integer'Last;
       end if;
 
-      Iter.Last_Returned_File   := null;
       Iter.In_File              := F;
       Iter.Start_Line           := Start;
       Iter.Last_Line            := Last;
@@ -801,6 +822,7 @@ package body Entities.Queries is
       Iter.Include_Overridden   := Include_Overridden;
       Iter.Extra_Entities       := Entity_Information_Arrays.Empty_Instance;
       Iter.Extra_Entities_Index := Entity_Information_Arrays.First;
+      Iter.Files_Analyzed       := new File_Analyzed_Set.Set;
 
       Setup_For_Entity (Iter, Entity, File_Has_No_LI_Report, In_Scope);
    end Find_All_References;
@@ -838,7 +860,8 @@ package body Entities.Queries is
           (Iter.Extra_Entities = Entity_Information_Arrays.Empty_Instance
            or else Iter.Extra_Entities_Index > Last (Iter.Extra_Entities))
         and then At_End (Iter.Deps)
-        and then Iter.Index > Last (Iter.Entity.References);
+        and then Iter.Files_It = Entity_File_Maps.No_Element
+        and then Iter.Entity_It = Entities_In_File_Sets.No_Element;
    end At_End;
 
    --------------
@@ -1062,61 +1085,79 @@ package body Entities.Queries is
       --  We always return the declaration first
       if not Iter.Decl_Returned then
          Iter.Decl_Returned := True;
-      elsif Iter.Index <= Last (Iter.Entity.References) then
-         Iter.Index := Iter.Index + 1;
+      elsif Iter.Entity_It /= Entities_In_File_Sets.No_Element then
+         Iter.Entity_It := Next (Iter.Entity_It);
+
+         if Iter.Entity_It = Entities_In_File_Sets.No_Element
+           and then Iter.Files_It /= Entity_File_Maps.No_Element
+         then
+            while Iter.Entity_It = Entities_In_File_Sets.No_Element
+              and then Iter.Files_It /= Entity_File_Maps.No_Element
+              and then Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
+            loop
+               Iter.Files_It := Next (Iter.Files_It);
+
+               if Iter.Files_It /= Entity_File_Maps.No_Element
+                 and then not
+                   Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
+               then
+                  Update_Xref (Element (Iter.Files_It).File);
+                  Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+                  Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+               end if;
+            end loop;
+         end if;
       end if;
 
       while Repeat loop
          --  Return the references we already know about (from inspecting
          --  prior files or parsing them in memory).
 
-         while Iter.Index <= Last (Iter.Entity.References) loop
-            if Iter.Returning_Existing_Refs
-              and then Iter.Entity.References.Table (Iter.Index).Location.File
-              /= Iter.Last_Returned_File
+         while Iter.Entity_It /= Entities_In_File_Sets.No_Element loop
+            if Iter.Filter (Element (Iter.Entity_It).Kind)
+              and then In_Range
+                (Element (Iter.Entity_It).Location,
+                 Iter.In_File, Iter.Start_Line, Iter.Last_Line)
             then
-               --  Are we still parsing the list of references that were there
-               --  before the call to Find_All_References ? If yes, we need to
-               --  check whether the file is still up-to-date.
+               --  Special case here: if the entity has no separate
+               --  declaration, then the location of the body and the spec
+               --  are the same. Avoid duplicates with the following test.
+               --  This test is further complicated because Decl_Returned is
+               --  set to true if the filters are such that the declaration
+               --  will never be returned anyway. So if the user explicitly
+               --  requested bodies, we show them.
 
-               Iter.Last_Returned_File :=
-                 Iter.Entity.References.Table (Iter.Index).Location.File;
-               Update_Xref (Iter.Last_Returned_File);
-               --  Do not move the index forward now, since parsing the file
-               --  might have removed the reference from the list.
-
-            else
-               if Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
-                 and then In_Range
-                   (Iter.Entity.References.Table (Iter.Index).Location,
-                    Iter.In_File, Iter.Start_Line, Iter.Last_Line)
+               if Iter.Decl_Returned
+                 and then Iter.Filter (Declaration)
+                 and then Element (Iter.Entity_It).Kind =
+                 Body_Entity
+                 and then Element (Iter.Entity_It).Location
+                 = Iter.Entity.Declaration
                then
-                  --  Special case here: if the entity has no separate
-                  --  declaration, then the location of the body and the spec
-                  --  are the same. Avoid duplicates with the following test.
-                  --  This test is further complicated because Decl_Returned is
-                  --  set to true if the filters are such that the declaration
-                  --  will never be returned anyway. So if the user explicitly
-                  --  requested bodies, we show them.
-
-                  if Iter.Decl_Returned
-                    and then Iter.Filter (Declaration)
-                    and then Iter.Entity.References.Table (Iter.Index).Kind =
-                    Body_Entity
-                    and then Iter.Entity.References.Table (Iter.Index).Location
-                    = Iter.Entity.Declaration
-                  then
-                     Next (Iter);
-                  end if;
-
-                  return;
+                  Next (Iter);
                end if;
 
-               Iter.Index := Iter.Index + 1;
+               return;
             end if;
-         end loop;
 
-         Iter.Returning_Existing_Refs := False;
+            Iter.Entity_It := Next (Iter.Entity_It);
+
+            while Iter.Entity_It = Entities_In_File_Sets.No_Element
+              and then Iter.Files_It /= Entity_File_Maps.No_Element
+              and then Iter.Files_Analyzed.Contains (Key (Iter.Files_It))
+            loop
+               Iter.Files_It := Next (Iter.Files_It);
+
+               if Iter.Files_It /= Entity_File_Maps.No_Element
+                 and then not Iter.Files_Analyzed.Contains
+                   (Key (Iter.Files_It))
+               then
+                  Update_Xref (Element (Iter.Files_It).File);
+                  Iter.Entity_It := Element (Iter.Files_It).Refs.First;
+                  Iter.Files_Analyzed.Insert (Key (Iter.Files_It));
+               end if;
+            end loop;
+         end loop;
 
          --  Parse the current file on the list
 
@@ -1154,14 +1195,18 @@ package body Entities.Queries is
 
          Next (Iter.Deps);
 
-         --  The next time Next is called, Index will be incremented, so we
-         --  have to make sure not to lose a reference here.
-
          if not At_End (Iter.Deps)
            and then Get (Iter.Deps) /= null
-           and then Iter.Index <= Last (Iter.Entity.References)
+           and then not Iter.Files_Analyzed.Contains
+             (Get (Iter.Deps).Ordered_Index)
+           and then Iter.Entity.References.Contains
+             (Get (Iter.Deps).Ordered_Index)
          then
-            Iter.Index := Iter.Index - 1;
+            Iter.Entity_It :=
+              First
+                (Iter.Entity.References.Element
+                     (Get (Iter.Deps).Ordered_Index).Refs);
+            Iter.Files_Analyzed.Insert (Get (Iter.Deps).Ordered_Index);
          end if;
       end loop;
    end Next;
@@ -1174,11 +1219,14 @@ package body Entities.Queries is
    begin
       if not Iter.Decl_Returned then
          return (Entity => Iter.Entity,
-                 Index  => Entity_Reference_Arrays.Index_Type'Last);
-      elsif Iter.Index > Last (Iter.Entity.References) then
+                 Index  => (Is_Declaration => True, others => <>));
+      elsif Iter.Entity_It = Entities_In_File_Sets.No_Element then
          return No_Entity_Reference;
       else
-         return (Entity => Iter.Entity, Index => Iter.Index);
+         return
+           (Entity => Iter.Entity,
+            Index => (Element (Iter.Entity_It).Location,
+                      Element (Iter.Entity_It).Is_Declaration));
       end if;
    end Get;
 
@@ -1191,12 +1239,12 @@ package body Entities.Queries is
    begin
       if not Iter.Decl_Returned then
          return Iter.Entity;
-      elsif Iter.Index > Last (Iter.Entity.References) then
+      elsif Iter.Entity_It = Entities_In_File_Sets.No_Element then
          return null;
       else
          return Get_Entity_From_Ref
            (Iter.Entity,
-            Iter.Entity.References.Table (Iter.Index));
+            Element (Iter.Entity_It));
       end if;
    end Get_Entity;
 
@@ -1207,6 +1255,7 @@ package body Entities.Queries is
    procedure Destroy (Iter : in out Entity_Reference_Iterator) is
    begin
       Destroy (Iter.Deps);
+      Free (Iter.Files_Analyzed);
    end Destroy;
 
    -------------
@@ -1504,12 +1553,12 @@ package body Entities.Queries is
    begin
       Update_Xref
         (Get_File (Get_Declaration_Of (Subprogram)), File_Has_No_LI_Report);
-      Iter := (Index         => Entity_Reference_Arrays.First,
+      Iter := (It            => First (Subprogram.References),
                Entity        => Subprogram,
                Cache_Current => null);
       if Length (Iter.Entity.References) > 0
         and then not Is_Parameter_Reference
-          (Iter.Entity.References.Table (Iter.Index).Kind)
+          (Element (Iter.It).Kind)
       then
          Next (Iter);
       end if;
@@ -1524,10 +1573,10 @@ package body Entities.Queries is
    procedure Next (Iterator : in out Subprogram_Iterator) is
    begin
       loop
-         Iterator.Index := Iterator.Index + 1;
-         exit when Iterator.Index > Last (Iterator.Entity.References)
+         Iterator.It := Next (Iterator.It);
+         exit when Iterator.It = Null_Entity_Reference_Cursor
            or else Is_Parameter_Reference
-             (Iterator.Entity.References.Table (Iterator.Index).Kind);
+             (Element (Iterator.It).Kind);
       end loop;
       Iterator.Cache_Current := null;
    end Next;
@@ -1545,9 +1594,9 @@ package body Entities.Queries is
       Status : Find_Decl_Or_Body_Query_Status;
    begin
       if Iterator.Cache_Current = null
-        and then Iterator.Index <= Last (Iterator.Entity.References)
+        and then Iterator.It /= Null_Entity_Reference_Cursor
       then
-         Loc := Iterator.Entity.References.Table (Iterator.Index).Location;
+         Loc := Element (Iterator.It).Location;
 
          Find_Declaration
            (Db          => Get_Database
@@ -1575,7 +1624,7 @@ package body Entities.Queries is
 
    function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type is
    begin
-      case Iterator.Entity.References.Table (Iterator.Index).Kind is
+      case Element (Iterator.It).Kind is
          when Subprogram_In_Parameter     => return In_Parameter;
          when Subprogram_In_Out_Parameter => return In_Out_Parameter;
          when Subprogram_Out_Parameter    => return Out_Parameter;
@@ -1613,11 +1662,11 @@ package body Entities.Queries is
    begin
       Update_Xref (Get_File (Get_Declaration_Of (Generic_Entity)),
                    File_Has_No_LI_Report);
-      Iter := (Index         => Entity_Reference_Arrays.First,
+      Iter := (It            => First (Generic_Entity.References),
                Entity        => Generic_Entity,
                Cache_Current => null);
-      if Length (Iter.Entity.References) > 0
-        and then Iter.Entity.References.Table (Iter.Index).Kind /=
+      if Iter.Entity.References.Length > 0
+        and then Element (Iter.It).Kind /=
                    Formal_Generic_Parameter
       then
          Next (Iter);
@@ -1633,9 +1682,9 @@ package body Entities.Queries is
    procedure Next (Iterator : in out Generic_Iterator) is
    begin
       loop
-         Iterator.Index := Iterator.Index + 1;
-         exit when Iterator.Index > Last (Iterator.Entity.References)
-           or else Iterator.Entity.References.Table (Iterator.Index).Kind =
+         Iterator.It := Next (Iterator.It);
+         exit when Iterator.It = Null_Entity_Reference_Cursor
+           or else Element (Iterator.It).Kind =
                      Formal_Generic_Parameter;
       end loop;
       Iterator.Cache_Current := null;
@@ -1654,9 +1703,9 @@ package body Entities.Queries is
       Status : Find_Decl_Or_Body_Query_Status;
    begin
       if Iterator.Cache_Current = null
-        and then Iterator.Index <= Last (Iterator.Entity.References)
+        and then Iterator.It /= Null_Entity_Reference_Cursor
       then
-         Loc := Iterator.Entity.References.Table (Iterator.Index).Location;
+         Loc := Element (Iterator.It).Location;
 
          Find_Declaration
            (Db          => Get_Database
@@ -1710,12 +1759,13 @@ package body Entities.Queries is
    is
       Loc : File_Location := No_File_Location;
       Ref : E_Reference;
+      It  : Entity_Reference_Cursor;
    begin
       if Force_Spec then
-         for R in
-           Entity_Reference_Arrays.First .. Last (Entity.References)
-         loop
-            Ref := Entity.References.Table (R);
+         It := First (Entity.References);
+
+         while It /= Null_Entity_Reference_Cursor loop
+            Ref := Element (It);
 
             --  Use this as the "declaration", since otherwise the
             --  End_Of_Spec reference is meaningless.
@@ -1724,6 +1774,8 @@ package body Entities.Queries is
             then
                return Ref.Location;
             end if;
+
+            It := Next (It);
          end loop;
 
          if Entity.Declaration.File = File then
@@ -1760,6 +1812,7 @@ package body Entities.Queries is
       Max          : File_Location := No_File_Location;
       Ref_Is_Body  : Boolean := False;
       Body_Seen    : Boolean := False;
+      It           : Entity_Reference_Cursor;
    begin
       if Entity.End_Of_Scope.Location.File = File
         and then ((Force_Spec and then Entity.End_Of_Scope.Kind = End_Of_Spec)
@@ -1768,41 +1821,43 @@ package body Entities.Queries is
       then
          return Entity.End_Of_Scope.Location;
       else
-         for R in
-           Entity_Reference_Arrays.First .. Last (Entity.References)
-         loop
-            Ref := Entity.References.Table (R);
-            if ((Force_Spec and then Ref.Kind = End_Of_Spec)
-                or else (not Force_Spec and then Ref.Kind = End_Of_Body))
-              and then Ref.Location.File = File
-            then
-               return Ref.Location;
-            end if;
+         It := First (Entity.References);
 
-            if Ref.Kind = Body_Entity then
-               Body_Seen := True;
+         while It /= Null_Entity_Reference_Cursor loop
+            Ref := Element (It);
+            if Ref.Location.File = File then
+               if (Force_Spec and then Ref.Kind = End_Of_Spec)
+                   or else (not Force_Spec and then Ref.Kind = End_Of_Body)
+               then
+                  return Ref.Location;
+               end if;
 
-               if Ref.Location = Entity.Declaration then
-                  Ref_Is_Body := True;
+               if Ref.Location.File = File and then Ref.Kind = Body_Entity then
+                  Body_Seen := True;
+
+                  if Ref.Location = Entity.Declaration then
+                     Ref_Is_Body := True;
+                  end if;
+               end if;
+
+               --  Subprograms sometimes have no end-of-spec reference,
+               --  although they should so that the parameters are correctly
+               --  associated to them. We simulate these by considering the
+               --  end-of-spec is the location of the last parameter
+               --  declaration. This however fails with some languages (C...)
+               --  where the backend might generate the parameters declaration
+               --  associated with the body. We need to protect against that.
+
+               if Force_Spec
+                 and then not Body_Seen
+                 and then Is_Parameter_Reference (Ref.Kind)
+                 and then Ref.Location.File = File
+               then
+                  Max := Ref.Location;
+                  Max.Column := Max.Column + 1;
                end if;
             end if;
-
-            --  Subprograms sometimes have no end-of-spec reference, although
-            --  they should so that the parameters are correctly associated to
-            --  them. We simulate these by considering the end-of-spec is the
-            --  location of the last parameter declaration. This however fails
-            --  with some languages (C...) where the backend might generate
-            --  the parameters declaration associated with the body. We need to
-            --  protect against that.
-
-            if Force_Spec
-              and then not Body_Seen
-              and then Is_Parameter_Reference (Ref.Kind)
-              and then Ref.Location.File = File
-            then
-               Max := Ref.Location;
-               Max.Column := Max.Column + 1;
-            end if;
+            It := Next (It);
          end loop;
 
          if Ref_Is_Body then
@@ -2170,17 +2225,21 @@ package body Entities.Queries is
          Entity        : Entity_Information;
          Info_For_Decl : Entity_Info_Array)
       is
-         Refs   : constant Entity_Reference_List := Entity.References;
+         Refs   : Entity_Reference_List renames Entity.References;
          Caller : Entity_Information;
+         It     : Entity_Reference_Cursor := First (Refs);
+         E_Ref  : E_Reference;
       begin
-         for R in Entity_Reference_Arrays.First .. Last (Refs) loop
-            if Refs.Table (R).Location.File = File
-              and then Is_Real_Reference (Refs.Table (R).Kind)
-              and then Refs.Table (R).Kind /= Label
-              and then Refs.Table (R).Location.Line <= Info'Last
+         while It /= Null_Entity_Reference_Cursor loop
+            E_Ref := Element (It);
+
+            if E_Ref.Location.File = File
+              and then Is_Real_Reference (E_Ref.Kind)
+              and then E_Ref.Kind /= Label
+              and then E_Ref.Location.Line <= Info'Last
             then
                declare
-                  Line : constant Integer := Refs.Table (R).Location.Line;
+                  Line : constant Integer := E_Ref.Location.Line;
                begin
                   if Line >= Info'First then
                      Caller := Info (Line);
@@ -2191,14 +2250,15 @@ package body Entities.Queries is
                end;
 
                if Caller = Entity then
-                  Caller := Info_For_Decl (Refs.Table (R).Location.Line);
+                  Caller := Info_For_Decl (E_Ref.Location.Line);
                end if;
 
                if Caller = Entity then
                   Caller := null;
                end if;
 
-               Refs.Table (R).Caller := Caller;
+               E_Ref.Caller := Caller;
+               Replace (Refs, Index (It), E_Ref);
 
                if Caller /= null then
                   Trace (Ref_Me, "Ref " & Caller.Name.all
@@ -2208,6 +2268,8 @@ package body Entities.Queries is
                   Add_Called (Caller, Entity);
                end if;
             end if;
+
+            It := Next (It);
          end loop;
       end Process_All_Refs;
 
@@ -2378,15 +2440,20 @@ package body Entities.Queries is
      (Pkg : Entity_Information; Force_Load_Xrefs : Boolean := True)
       return Entity_Information
    is
+      It : Entity_Reference_Cursor;
    begin
       if Force_Load_Xrefs then
          Update_Xref (Pkg.Declaration.File);
       end if;
 
-      for R in Entity_Reference_Arrays.First .. Last (Pkg.References) loop
-         if Pkg.References.Table (R).Kind = Parent_Package then
-            return Get_Entity_From_Ref (Pkg, Pkg.References.Table (R));
+      It := First (Pkg.References);
+
+      while It /= Null_Entity_Reference_Cursor loop
+         if Element (It).Kind = Parent_Package then
+            return Get_Entity_From_Ref (Pkg, Element (It));
          end if;
+
+         It := Next (It);
       end loop;
       return null;
    end Get_Parent_Package;
@@ -2451,13 +2518,13 @@ package body Entities.Queries is
    begin
       if Ref.Entity = null then
          return null;
-      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+      elsif Ref.Index.Is_Declaration then
          Compute_Callers_And_Called (Ref.Entity.Declaration.File);
          return Ref.Entity.Caller_At_Declaration;
       else
          Compute_Callers_And_Called
-           (Ref.Entity.References.Table (Ref.Index).Location.File);
-         return Ref.Entity.References.Table (Ref.Index).Caller;
+           (Element (Ref.Entity.References, Ref.Index).Location.File);
+         return Element (Ref.Entity.References, Ref.Index).Caller;
       end if;
    end Get_Caller;
 

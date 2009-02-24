@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2007, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 with GNATCOLL.VFS;
 with GNAT.Strings;
 with Interfaces.C;
+with Ada.Containers.Ordered_Sets;
 
 package Entities.Queries is
 
@@ -587,32 +588,34 @@ private
    end record;
 
    type Subprogram_Iterator is record
-      Index         : Entity_Reference_Arrays.Index_Type;
+      It            : Entity_Reference_Cursor;
       Entity        : Entity_Information;
       Cache_Current : Entity_Information;
    end record;
 
    type Generic_Iterator is record
-      Index         : Entity_Reference_Arrays.Index_Type;
+      It            : Entity_Reference_Cursor;
       Entity        : Entity_Information;
       Cache_Current : Entity_Information;
    end record;
+
+   package File_Analyzed_Set is new Ada.Containers.Ordered_Sets
+     (Virtual_File_Indexes.VF_Key,
+      "<" => Virtual_File_Indexes."<",
+      "=" => Virtual_File_Indexes."=");
+
+   type File_Analyzed_Set_Access is access all File_Analyzed_Set.Set;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (File_Analyzed_Set.Set, File_Analyzed_Set_Access);
 
    type Entity_Reference_Iterator is record
       Decl_Returned : Boolean;
       --  Whether the declaration has already been returned or not
 
-      Returning_Existing_Refs : Boolean;
-      --  Whether we are currently returning references that were already there
-      --  at the call to Find_All_References. This means that we should check
-      --  whether the other files are obsolete.
+      Entity_It : Entities_In_File_Sets.Cursor;
+      Files_It  : Entity_File_Maps.Cursor;
 
-      Last_Returned_File : Source_File;
-      --  Source file of the last returned entity. This is used to avoid
-      --  checking a second time whether it is up-to-date, since this can be
-      --  long for some languages.
-
-      Index   : Entity_Reference_Arrays.Index_Type;
       Entity  : Entity_Information;
       In_File : Source_File;
       Start_Line, Last_Line  : Integer;
@@ -629,6 +632,8 @@ private
         Entity_Information_Arrays.First;
 
       Deps    : Dependency_Iterator;
+
+      Files_Analyzed : File_Analyzed_Set_Access;
    end record;
 
    type Children_Iterator is record
@@ -644,7 +649,6 @@ private
    type Calls_Iterator is record
       Entity  : Entity_Information;
       Index   : Entity_Information_Arrays.Index_Type;
-      --  Index in Entity.Called_Entities
    end record;
 
 end Entities.Queries;

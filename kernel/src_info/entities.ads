@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Ordered_Sets;
 with Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
@@ -29,6 +31,7 @@ with Projects.Registry;
 with Language;
 with Basic_Types;
 with Tries;
+with Virtual_File_Indexes;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -483,8 +486,8 @@ package Entities is
 
    type File_Location is record
       File   : Source_File;
-      Line   : Integer;
-      Column : Basic_Types.Visible_Column_Type;
+      Line   : Integer := 0;
+      Column : Basic_Types.Visible_Column_Type := 0;
    end record;
    No_File_Location : constant File_Location := (null, 0, 0);
 
@@ -939,6 +942,7 @@ private
       Caller                : Entity_Information;
       From_Instantiation_At : Entity_Instantiation;
       Kind                  : Reference_Kind;
+      Is_Declaration        : Boolean;
    end record;
    --  To spare some memory in the entity table, pack E_Reference,
    --  but keep a reasonable alignment to avoid inefficiencies.
@@ -946,25 +950,87 @@ private
    for E_Reference'Alignment use 4;
 
    No_E_Reference : constant E_Reference :=
-     (No_File_Location, null, null, Reference);
+     (No_File_Location, null, null, Reference, False);
    --  Caller is the enclosing entity at that location
 
-   package Entity_Reference_Arrays is new Dynamic_Arrays
-     (Data                    => E_Reference,
-      Table_Multiplier        => 1,
-      Table_Minimum_Increment => 10,
-      Table_Initial_Size      => 5);
-   subtype Entity_Reference_List is Entity_Reference_Arrays.Instance;
-   Null_Entity_Reference_List : constant Entity_Reference_List :=
-     Entity_Reference_Arrays.Empty_Instance;
+   function Lt_No_File (Left, Right : E_Reference) return Boolean;
+   --  This subprogram does not take the file into account
+
+   package Entities_In_File_Sets is new Ada.Containers.Ordered_Sets
+     (E_Reference, "<" => Lt_No_File);
+
+   type File_With_Refs is record
+      Refs : Entities_In_File_Sets.Set;
+      File : Source_File;
+   end record;
+
+   type Entity_Reference_Index is record
+      Loc            : File_Location;
+      Is_Declaration : Boolean;
+   end record;
+
+   Null_Entity_Reference_Index : Entity_Reference_Index :=
+     (No_File_Location, False);
+
+   type File_With_Refs_Access is access all File_With_Refs;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (File_With_Refs, File_With_Refs_Access);
+
+   package Entity_File_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Virtual_File_Indexes.VF_Key,
+        File_With_Refs_Access,
+        "<" => Virtual_File_Indexes."<");
+
+   subtype Entity_Reference_List is Entity_File_Maps.Map;
+
+   type Entity_Reference_Cursor is record
+      Entity_Cursor : Entities_In_File_Sets.Cursor;
+      File_Cursor   : Entity_File_Maps.Cursor;
+   end record;
+
+   function Next
+     (Cursor : Entity_Reference_Cursor) return Entity_Reference_Cursor;
+   --  Return a cursor moved to the next element in the list
+
+   function First
+     (List : Entity_Reference_List) return Entity_Reference_Cursor;
+   --  Return a cursor on the first element
+
+   function Element (Cursor : Entity_Reference_Cursor) return E_Reference;
+   --  Return the reference pointed by this cursor
+
+   function Element
+     (List : Entity_Reference_List; Key : Entity_Reference_Index)
+      return E_Reference;
+   --  Return the element pointed by this cursor
+
+   function Contains
+     (Element : Entity_Reference_List; Key : Entity_Reference_Index)
+      return Boolean;
+   --  Return true if the key given in parameter is contained in the list.
+
+   procedure Replace
+     (List   : Entity_Reference_List;
+      Key    : Entity_Reference_Index;
+      Val    : E_Reference);
+   --  Replace the element at the given index by val.
+
+   function Index
+     (Cursor : Entity_Reference_Cursor) return Entity_Reference_Index;
+   --  Return the index of the element.
+
+   Null_Entity_Reference_Cursor : Entity_Reference_Cursor :=
+     (Entities_In_File_Sets.No_Element,
+      Entity_File_Maps.No_Element);
 
    type Entity_Reference is record
       Entity : Entity_Information;
-      Index  : Entity_Reference_Arrays.Index_Type;
-      --  If Index = Index_Type'Last, then this is a reference to the
-      --  declaration of the entity
+      Index  : Entity_Reference_Index;
    end record;
-   No_Entity_Reference : constant Entity_Reference := (null, 0);
+   No_Entity_Reference : constant Entity_Reference :=
+     (null, Null_Entity_Reference_Index);
 
    --------------------------
    -- LI_Entities_Iterator --
@@ -1207,6 +1273,9 @@ private
 
       Ref_Count   : Integer := 0;
       --  The reference counter
+
+      Ordered_Index : Virtual_File_Indexes.VF_Key;
+      --  The ordered index, used to optimize file comparisons.
    end record;
 
    -----------------
@@ -1304,6 +1373,7 @@ private
       Lang            : Abstract_Language_Handler;
       Registry        : Projects.Registry.Project_Registry_Access;
       Frozen          : Boolean := False;
+      FS_Optimizer    : Virtual_File_Indexes.Comparison_Optimizer;
    end record;
    type Entities_Database is access Entities_Database_Record;
 

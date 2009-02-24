@@ -36,7 +36,7 @@ package body Entities.Debug is
    use Files_HTable;
    use LI_HTable;
    use Source_File_Arrays;
-   use Entity_Reference_Arrays;
+   use Entity_File_Maps;
    use Entity_Information_Arrays;
    use Dependency_Arrays;
    use Instantiation_Arrays;
@@ -227,12 +227,16 @@ package body Entities.Debug is
    ----------
 
    procedure Dump
-     (Locs : Entity_Reference_List; Name : String; Full : Boolean) is
+     (Locs : Entity_Reference_List; Name : String; Full : Boolean)
+   is
+      It : Entity_Reference_Cursor := First (Locs);
    begin
-      if Length (Locs) /= 0 then
+      if It /= Null_Entity_Reference_Cursor then
          Output ("   " & Name & "= ");
-         for L in Entity_Reference_Arrays.First .. Last (Locs) loop
-            Dump (Locs.Table (L), Full); Output (" ");
+         while It /= Null_Entity_Reference_Cursor loop
+            Dump (Element (It), Full);
+            Output (" ");
+            It := Next (It);
          end loop;
          Output_Line ("");
       end if;
