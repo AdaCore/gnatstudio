@@ -133,9 +133,14 @@ NF-44-G903-006 Report all style errors at once (2008-12-11)
   now report errors from all files and will not stop checking
   on the first file violating some styles.
 
+NF-44-G510-012 Auto-fix for "use explicit pragma Pack" (2009-02-24)
+
+  An auto-fix is now offered for message like "size for T is too small,
+  use explicit pragma Pack", automatically adding a pragma Pack for the entity.
+
 NF-44-F327-008 Auto-fix for "suggested replacement" (2009-02-24)
 
-  The auto fix now offers a fix for messages like "suggested replacement",
+  An auto fix is now offered for messages like "suggested replacement",
   automatically applying the replacement suggested by the compiler.
 
 NF-44-E817-003 Message on the VCS Explorer when no VCS defined (2008-10-27)
