@@ -109,6 +109,11 @@ NF-44-H707-022 Minor improvements in GNATCheck integration (2009-01-20)
   now lets you choose whether you want to see the resulting file after
   exiting the editor.
 
+NF-44-H223-004 Auto fixes for "missing string quote" (2009-02-24)
+
+  An auto-fix is now offered for message like "missing string quote", adding
+  the missing quote.
+
 NF-44-GB03-007 Export debugger data window to png (2008-10-01)
 
   The debugger Data window can now be exported to png like all
