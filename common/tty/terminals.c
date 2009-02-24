@@ -403,7 +403,15 @@ gvd_setup_child_communication (pty_desc *desc, char **new_argv,
 
   /* open the slave side of the terminal if necessary */
   if (desc->slave_fd == -1)
+#if defined (_AIX)
+    /* On AIX, if the slave process is not opened with O_NONBLOCK then we
+       might have some processes hanging on I/O system calls. Not sure
+       we can do that for all platforms so do it only on AIX for the 
+       moment. */
+    desc->slave_fd = open (desc->slave_name, O_RDWR | O_NONBLOCK, 0);
+#else
     desc->slave_fd = open (desc->slave_name, O_RDWR, 0);
+#endif
 
 #if defined (sun) || defined (__hpux__)
   /* On systems such as Solaris we are using stream. We need to push the right
@@ -477,16 +485,7 @@ send_signal_via_characters
 int
 gvd_interrupt_process (pty_desc *desc)
 {
-#if defined (_AIX)
-  /* Currently if we send the character Ctrl-C a process such as gdb
-     will hang. Furthermore the proces cannot be killed afterward.
-     The workaround is to send explicitely SIGINT signal to the child
-     process. Providing that we don't spawn process through ssh (remote)
-     on AIX, this does not impact any testsuite or program. */
-  kill (desc->child_pid, SIGINT);
-#else
   send_signal_via_characters (desc, SIGINT);
-#endif
   return 0;
 }
 
