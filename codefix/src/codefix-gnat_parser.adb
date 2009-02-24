@@ -988,6 +988,23 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like 'two consecutives underlines not permitted'.
 
+   type Suggested_Replacement is new Error_Parser
+     (new String'("Suggested_Replacement"), 1)
+   with null record;
+
+   overriding
+   procedure Initialize (This : in out Suggested_Replacement);
+
+   overriding
+   procedure Fix
+     (This         : Suggested_Replacement;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'suggested replacement:'.
+
    ---------------------------
    -- Aggregate_Misspelling --
    ---------------------------
@@ -2989,6 +3006,41 @@ package body Codefix.GNAT_Parser is
         (Current_Text, First_Line_To_Remove);
    end Fix;
 
+   ----------------------------
+   -- Lower_Bound_Assumption --
+   ----------------------------
+
+   overriding procedure Initialize (This : in out Suggested_Replacement) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("suggested replacement: ""([^""]*)""")));
+   end Initialize;
+
+   overriding procedure Fix
+     (This         : Suggested_Replacement;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : in out Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Message)
+         (Matches (1).First .. Matches (1).Last),
+         "([\w]+)",
+         Regular_Expression);
+   end Fix;
+
+   ----------------------
+   -- Register_Parsers --
+   ----------------------
+
    procedure Register_Parsers (Processor : in out Fix_Processor) is
    begin
       Add_Parser (Processor, new Agregate_Misspelling);
@@ -3045,6 +3097,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Redundant_With_In_Body);
       Add_Parser (Processor, new Consecutive_Underlines);
       Add_Parser (Processor, new Multiple_Blank_Lines);
+      Add_Parser (Processor, new Suggested_Replacement);
    end Register_Parsers;
 
 end Codefix.GNAT_Parser;
