@@ -1556,6 +1556,7 @@ package body Codefix.GNAT_Parser is
       Wrong_Matches : Match_Array (0 .. 1);
       Str_Red : constant String :=
         Get_Message (Message) (Matches (1).First .. Matches (1).Last);
+      Add_Spaces : Boolean;
    begin
       if Str_Red = "string quote" then
          Solutions := Expected
@@ -1573,11 +1574,17 @@ package body Codefix.GNAT_Parser is
             raise Uncorrectable_Message;
          end if;
 
+         if Str_Red = "=>" or else Str_Red = ":=" then
+            Add_Spaces := True;
+         else
+            Add_Spaces := False;
+         end if;
+
          Solutions := Expected
            (Current_Text,
             Message,
             Str_Red,
-            Add_Spaces => False);
+            Add_Spaces => Add_Spaces);
       end if;
    end Fix;
 
