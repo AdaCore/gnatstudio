@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,8 @@ with GNAT.Expect;         use GNAT.Expect;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with GNAT.Regpat;         use GNAT.Regpat;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+
+with Config;              use Config;
 
 with Glib;                use Glib;
 with Glib.Convert;
@@ -677,6 +679,19 @@ package body Interactive_Consoles is
               (Console.Buffer, Last_Iter, UTF8 & ASCII.LF,
                Highlight_Tag);
          else
+            --  Do not display GtkWarnings coming from python under Windows,
+            --  since they are usually harmless, and cause confusion in the
+            --  test suite and on users.
+
+            if Host = Windows
+              and then UTF8'Length > 17
+              and then UTF8
+                (UTF8'First .. UTF8'First + 16) = "sys:1: GtkWarning"
+            then
+               Trace (Me, UTF8);
+               return;
+            end if;
+
             Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
          end if;
 
