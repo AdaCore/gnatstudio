@@ -306,7 +306,7 @@ package body Codefix.GNAT_Parser is
    --  Fix 'kw missing'.
 
    type Missing_Sep is new Error_Parser
-     (new String'("Separator_Missing"), 1)
+     (new String'("Separator_Missing"), 2)
    with record
       Wrong_Form : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("([\w|\s]+;)"));
@@ -1535,8 +1535,11 @@ package body Codefix.GNAT_Parser is
 
    overriding procedure Initialize (This : in out Missing_Sep) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("missing ""([^""\w]+)""")));
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("missing ""([^""\w]+)""")),
+         2 => new Pattern_Matcher'
+           (Compile ("missing (string quote)")));
    end Initialize;
 
    overriding procedure Fix
@@ -1554,20 +1557,28 @@ package body Codefix.GNAT_Parser is
       Str_Red : constant String :=
         Get_Message (Message) (Matches (1).First .. Matches (1).Last);
    begin
-      Match
-        (This.Wrong_Form.all,
-         Str_Red,
-         Wrong_Matches);
+      if Str_Red = "string quote" then
+         Solutions := Expected
+           (Current_Text,
+            Message,
+            """",
+            Add_Spaces => False);
+      else
+         Match
+           (This.Wrong_Form.all,
+            Str_Red,
+            Wrong_Matches);
 
-      if Wrong_Matches (0) /= No_Match then
-         raise Uncorrectable_Message;
+         if Wrong_Matches (0) /= No_Match then
+            raise Uncorrectable_Message;
+         end if;
+
+         Solutions := Expected
+           (Current_Text,
+            Message,
+            Str_Red,
+            Add_Spaces => False);
       end if;
-
-      Solutions := Expected
-        (Current_Text,
-         Message,
-         Str_Red,
-         Add_Spaces => False);
    end Fix;
 
    -----------------
