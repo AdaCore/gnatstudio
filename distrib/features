@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Feb 17, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Feb 24, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -132,6 +132,11 @@ NF-44-G903-006 Report all style errors at once (2008-12-11)
   When running the style checkers (on files and logs) GPS will
   now report errors from all files and will not stop checking
   on the first file violating some styles.
+
+NF-44-F327-008 Auto-fix for "suggested replacement" (2009-02-24)
+
+  The auto fix now offers a fix for messages like "suggested replacement",
+  automatically applying the replacement suggested by the compiler.
 
 NF-44-E817-003 Message on the VCS Explorer when no VCS defined (2008-10-27)
 
