@@ -8617,7 +8617,7 @@ main GPS interface.
 @anchor{The SPARK Menu}
 The commands available under the SPARK menu are:
 
-@itemize
+@table @b
 @item Examine File
 Runs the SPARK Examiner to analyse the file that is currently selected in the
 editing window. The results of the analysis will be displayed in the SPARK
@@ -8677,7 +8677,7 @@ SPARKMake User Manual for more details. Note that this command can also be
 invoked by right-clicking anywhere in a SPARK source file in the editing
 window and selecting @code{SPARK->SPARKmake}.
 
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
