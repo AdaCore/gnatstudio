@@ -1200,7 +1200,7 @@ package body GPS.Location_View is
       File_Iter := Children (Model, Category_Iter);
 
       while File_Iter /= Null_Iter loop
-         if Get_File (View.Tree.Model, File_Iter) = File then
+         if Get_File (Model, File_Iter) = File then
             return;
          end if;
 
