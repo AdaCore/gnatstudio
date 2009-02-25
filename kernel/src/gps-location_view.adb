@@ -1001,8 +1001,7 @@ package body GPS.Location_View is
       Init (Value, GType_Pointer);
       Set_Address (Value, To_Address (Highlight_Category));
 
-      Set_Value
-        (View.Tree.Model, Iter, Highlight_Category_Column, Value);
+      Set_Value (Model, Iter, Highlight_Category_Column, Value);
       Unset (Value);
 
       Set (Model, Iter, Number_Of_Items_Column, 0);
