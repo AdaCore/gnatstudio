@@ -216,18 +216,18 @@ package body GPS.Location_View is
      (Style_Access, System.Address);
 
    function Get_Message
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return String;
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return String;
    --  Return the message stored at Iter
 
    function Get_Highlighting_Style
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Style_Access;
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return Style_Access;
    --  Return the highlighting style stored at Iter
 
    function Get_File
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the file stored at Iter
 
    procedure Remove_Category
@@ -337,7 +337,7 @@ package body GPS.Location_View is
    --  ??? Document parameter Line.
 
    procedure Remove_Line
-     (View       : Location_View;
+     (Model      : not null access Gtk_Tree_Model_Record'Class;
       Categories : in out String_List.List;
       Loc_Iter   : Gtk_Tree_Iter);
    --  Clear the marks and highlightings of one specific line
@@ -480,7 +480,7 @@ package body GPS.Location_View is
          File_Iter := Children (View.Tree.Model, Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            if File = Get_File (View, File_Iter) then
+            if File = Get_File (View.Tree.Model, File_Iter) then
                --  The file which has just been opened was in the locations
                --  view, highlight lines as necessary.
                Line_Iter := Children (View.Tree.Model, File_Iter);
@@ -495,7 +495,7 @@ package body GPS.Location_View is
                        (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
                      Integer
                        (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
-                     Get_Highlighting_Style (View, File_Iter));
+                     Get_Highlighting_Style (View.Tree.Model, File_Iter));
 
                   Next (View.Tree.Model, Line_Iter);
                end loop;
@@ -730,7 +730,7 @@ package body GPS.Location_View is
          return;
       end if;
 
-      Path := Get_Path (View.Tree.Model, Iter);
+      Path := Get_Path (Model, Iter);
 
       while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (View.Tree, Path, False);
@@ -738,7 +738,7 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (View.Tree), Path);
       end loop;
 
-      Iter := Get_Iter (View.Tree.Model, Path);
+      Iter := Get_Iter (Model, Path);
       Path_Free (Path);
 
       if Iter = Null_Iter then
@@ -747,7 +747,7 @@ package body GPS.Location_View is
 
       declare
          Mark : constant Editor_Mark'Class :=
-           Get_Mark (View.Tree.Model, Iter, Mark_Column);
+           Get_Mark (Model, Iter, Mark_Column);
          Loc : constant Editor_Location'Class := Mark.Location;
       begin
          if Mark /= Nil_Editor_Mark then
@@ -810,7 +810,7 @@ package body GPS.Location_View is
             while Loc_Iter /= Null_Iter loop
                if Get_Int (View.Tree.Model, Loc_Iter, Line_Column)
                  = Gint (Line) then
-                  Remove_Line (View, Categories, Loc_Iter);
+                  Remove_Line (View.Tree.Model, Categories, Loc_Iter);
                   Remove (View.Tree.Model, Loc_Iter);
                else
                   Next (View.Tree.Model, Loc_Iter);
@@ -818,7 +818,7 @@ package body GPS.Location_View is
             end loop;
          else
             while Loc_Iter /= Null_Iter loop
-               Remove_Line (View, Categories, Loc_Iter);
+               Remove_Line (View.Tree.Model, Categories, Loc_Iter);
                Next (View.Tree.Model, Loc_Iter);
             end loop;
          end if;
@@ -829,7 +829,7 @@ package body GPS.Location_View is
          while not Is_Empty (Categories) loop
             Highlight_Line
               (View.Kernel,
-               Get_File (View, File_Iter), 0, 0, 0,
+               Get_File (View.Tree.Model, File_Iter), 0, 0, 0,
                Get_Or_Create_Style (View.Kernel, Head (Categories), False),
                False);
             Next (Categories, Free_Data => True);
@@ -866,19 +866,20 @@ package body GPS.Location_View is
    -----------------
 
    procedure Remove_Line
-     (View       : Location_View;
+     (Model      : not null access Gtk_Tree_Model_Record'Class;
       Categories : in out String_List.List;
       Loc_Iter   : Gtk_Tree_Iter)
    is
-      Mark : constant Editor_Mark'Class :=
-        Get_Mark (View.Tree.Model, Loc_Iter, Mark_Column);
+      Mark  : constant Editor_Mark'Class :=
+        Get_Mark (Model, Loc_Iter, Mark_Column);
       Style : Style_Access;
+
    begin
       if Mark /= Nil_Editor_Mark then
          Mark.Delete;
       end if;
 
-      Style := Get_Highlighting_Style (View, Loc_Iter);
+      Style := Get_Highlighting_Style (Model, Loc_Iter);
 
       if Style /= null then
          Add_Unique_Sorted (Categories, Get_Name (Style));
@@ -1199,7 +1200,7 @@ package body GPS.Location_View is
       File_Iter := Children (Model, Category_Iter);
 
       while File_Iter /= Null_Iter loop
-         if Get_File (View, File_Iter) = File then
+         if Get_File (View.Tree.Model, File_Iter) = File then
             return;
          end if;
 
@@ -1295,7 +1296,7 @@ package body GPS.Location_View is
       begin
          return  Get_Int (Model, Iter, Line_Column) = Gint (Line)
            and then Get_Int (Model, Iter, Column_Column) = Gint (Column)
-           and then Get_File (View, Iter) = File;
+           and then Get_File (View.Tree.Model, Iter) = File;
       end Matches_Location;
 
    begin
@@ -1319,7 +1320,7 @@ package body GPS.Location_View is
                if Get_Int (Model, Iter, Line_Column) = Gint (Line)
                  and then Get_Int
                    (Model, Iter, Column_Column) = Gint (Column)
-                 and then Get_Message (View, Iter) = Message
+                 and then Get_Message (View.Tree.Model, Iter) = Message
                then
                   return;
                end if;
@@ -1721,13 +1722,13 @@ package body GPS.Location_View is
             Created := True;
             Set_File_Information
               (Context,
-               Files  => (1 => Get_File (Explorer, Par)),
+               Files  => (1 => Get_File (Explorer.Tree.Model, Par)),
                Line   => Line,
                Column => Column);
             Set_Message_Information
               (Context,
                Category => Get_String (Model, Granpa, Base_Name_Column),
-               Message  => Get_Message (Explorer, Iter));
+               Message  => Get_Message (Explorer.Tree.Model, Iter));
          end;
       end if;
 
@@ -2376,7 +2377,7 @@ package body GPS.Location_View is
                 (View.Tree.Model, Main_Line_Iter, Column_Column)
                 = Gint (Column)
               and then Escaped_Compare
-                (Get_Message (View, Line_Iter), Escaped_Message)
+                (Get_Message (View.Tree.Model, Line_Iter), Escaped_Message)
             then
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
@@ -2750,8 +2751,7 @@ package body GPS.Location_View is
          Loc := new Node;
          Loc.Tag := new String'("Location");
          Add_Child (Parent, Loc, True);
-         Add_File_Child
-           (Loc, "file", Get_File (View, Iter));
+         Add_File_Child (Loc, "file", Get_File (View.Tree.Model, Iter));
          Set_Attribute (Loc, "line",
            Gint'Image (Get_Int (View.Tree.Model, Iter, Line_Column)));
          Set_Attribute
@@ -2760,10 +2760,10 @@ package body GPS.Location_View is
          Set_Attribute
            (Loc, "length",
             Gint'Image (Get_Int (View.Tree.Model, Iter, Length_Column)));
-         Set_Attribute (Loc, "message", Get_Message (View, Iter));
+         Set_Attribute (Loc, "message", Get_Message (View.Tree.Model, Iter));
          Set_Attribute
            (Loc, "category",
-            Get_Name (Get_Highlighting_Style (View, Iter)));
+            Get_Name (Get_Highlighting_Style (View.Tree.Model, Iter)));
          Set_Attribute
            (Loc, "highlight",
             Boolean'Image
@@ -2810,7 +2810,7 @@ package body GPS.Location_View is
                Add_Child (Category, File, True);
 
                Add_File_Child
-                 (File, "name", Get_File (View, File_Iter));
+                 (File, "name", Get_File (View.Tree.Model, File_Iter));
 
                Location_Iter := Children (View.Tree.Model, File_Iter);
 
@@ -3380,11 +3380,11 @@ package body GPS.Location_View is
    -----------------
 
    function Get_Message
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return String
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return String
    is
-      M : constant String :=
-            Get_String (View.Tree.Model, Iter, Base_Name_Column);
+      M : constant String := Get_String (Model, Iter, Base_Name_Column);
+
    begin
       if M'Length > Messages_Padding then
          return M (M'First + Messages_Padding + 7 .. M'Last);
@@ -3398,13 +3398,13 @@ package body GPS.Location_View is
    --------------
 
    function Get_File
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
    is
       Result : Virtual_File;
       Value  : GValue;
    begin
-      Get_Value (View.Tree.Model, Iter, Absolute_Name_Column, Value);
+      Get_Value (Model, Iter, Absolute_Name_Column, Value);
       Result := Get_File (Value);
       Unset (Value);
       return Result;
@@ -3415,13 +3415,13 @@ package body GPS.Location_View is
    ----------------------------
 
    function Get_Highlighting_Style
-     (View : access Location_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Style_Access
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return Style_Access
    is
       Result : Style_Access;
       Value  : GValue;
    begin
-      Get_Value (View.Tree.Model, Iter, Highlight_Category_Column, Value);
+      Get_Value (Model, Iter, Highlight_Category_Column, Value);
       Result := To_Style (Get_Address (Value));
       Unset (Value);
 
