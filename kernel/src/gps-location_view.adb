@@ -1049,7 +1049,7 @@ package body GPS.Location_View is
          return;
       end if;
 
-      Path := Get_Path (View.Tree.Model, Iter);
+      Path := Get_Path (Model, Iter);
 
       --  Expand to the next path corresponding to a location node
 
@@ -1077,7 +1077,7 @@ package body GPS.Location_View is
          Next (Path);
       end if;
 
-      if not Success or else Get_Iter (View.Tree.Model, Path) = Null_Iter then
+      if not Success or else Get_Iter (Model, Path) = Null_Iter then
          if Backwards then
             Success := Prev (File_Path);
          else
@@ -1085,13 +1085,13 @@ package body GPS.Location_View is
          end if;
 
          if not Success
-           or else Get_Iter (View.Tree.Model, File_Path) = Null_Iter
+           or else Get_Iter (Model, File_Path) = Null_Iter
          then
             File_Path := Copy (Category_Path);
             Down (File_Path);
 
             if Backwards then
-               while Get_Iter (View.Tree.Model, File_Path) /= Null_Iter loop
+               while Get_Iter (Model, File_Path) /= Null_Iter loop
                   Next (File_Path);
                end loop;
 
@@ -1104,7 +1104,7 @@ package body GPS.Location_View is
          Down (Path);
 
          if Backwards then
-            while Get_Iter (View.Tree.Model, Path) /= Null_Iter loop
+            while Get_Iter (Model, Path) /= Null_Iter loop
                Next (Path);
             end loop;
 
