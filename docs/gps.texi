@@ -8606,7 +8606,7 @@ the meaning of these settings please refer to the SPARK Examiner User Manual.
 
 @item The tabs for SPARKSimp, Simplifier, SPARKFormat, POGS and SPARKmake allow
 the settings for these tools to be controlled in a similar way to that
-described fo r the Examiner above. Please refer to the specific user manual
+described for the Examiner above. Please refer to the specific user manual
 for each tool to find more information about these settings.
 
 @item When you have finished making changes click @code{OK} to return to the
