@@ -106,12 +106,17 @@
 #elif defined (_AIX)
 #define USE_CLONE_DEVICE "/dev/ptc"
 #elif defined (OSF1)
-/* On Tru64, the system offers two masters pseudo terminal drivers. One BSD
-   compatible which is non-streamed through /dev/ptmx_bsd cloning device. And
-   a second one, System V compatible and stream based. We prefer here the non
-   streamed driver (see man pty for more info). Note that the system offers
-   also the openpty interface but it does not seems to work as expected */
-#define USE_CLONE_DEVICE "/dev/ptmx_bsd"
+/* On Tru64, the systems offers various interfaces to open a terminal:
+    - /dev/ptmx: this the system V driver (stream based),
+    - /dev/ptmx_bsd: the non stream based clone device,
+    - the openpty function which use BSD interface.
+
+   Using directly /dev/ptmx_bsd on Tru64 5.1B seems to consume all the
+   available slave ptys (why ?). When using openpty it seems that the function
+   handles the creation of entries in /dev/pts when necessary and so avoid this
+   starvation issue. The pty man entry suggests also to use openpty.
+*/
+#define USE_OPENPTY
 #elif defined (__hpux__)
 /* On HP-UX we use the streamed version. Using the non streamed version is not
    recommanded (through "/dev/ptym/clone"). Indeed it seems that there are
@@ -201,6 +206,7 @@ allocate_pty_desc (pty_desc **desc) {
   if (status != 0 || master_fd < 0)
     {
       /* If this is not the case close all opened files and return -1 */
+      printf ("[error]: cannot allocate master side of the pty\n");
       if (master_fd >= 0) close (master_fd);
       if (slave_fd  >= 0) close (slave_fd);
       *desc = NULL;
@@ -214,6 +220,7 @@ allocate_pty_desc (pty_desc **desc) {
   if (slave_name == NULL)
     {
       /* If not the case close any opened file and return - 1 */
+      printf ("[error]: cannot allocate slave side of the pty\n");
       if (master_fd >= 0) close (master_fd);
       if (slave_fd  >= 0) close (slave_fd);
       *desc = NULL;
