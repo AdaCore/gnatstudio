@@ -1791,7 +1791,7 @@ package body GPS.Location_View is
       Get_Selected (Get_Selection (Locations.Tree), Model, Current);
 
       if Current /= Null_Iter
-        and then Integer (Get_Int (Locations.Tree.Model, Current, Line_Column))
+        and then Integer (Get_Int (Model, Current, Line_Column))
         = D.Line
       then
          return;
@@ -1816,7 +1816,7 @@ package body GPS.Location_View is
       else
          Get_Category_File
            (Locations,
-            Category      => Get_Category_Name (Locations.Tree.Model, Current),
+            Category      => Get_Category_Name (Model, Current),
             H_Category    => null,
             File          => D.File,
             Category_Iter => Category_Iter,
@@ -1827,14 +1827,14 @@ package body GPS.Location_View is
 
       if File_Iter /= Null_Iter then
          Get_Line_Column_Iter
-           (Model     => Locations.Tree.Model,
+           (Model     => Model,
             File_Iter => File_Iter,
             Line      => D.Line,
             Column    => 0,
             Loc_Iter  => Loc_Iter);
 
          if Loc_Iter /= Null_Iter then
-            Path := Get_Path (Locations.Tree.Model, Loc_Iter);
+            Path := Get_Path (Model, Loc_Iter);
             Expand_To_Path (Locations.Tree, Path);
             Select_Iter (Get_Selection (Locations.Tree), Loc_Iter);
             Scroll_To_Cell (Locations.Tree, Path, null, False, 0.1, 0.1);
