@@ -1296,7 +1296,7 @@ package body GPS.Location_View is
       begin
          return  Get_Int (Model, Iter, Line_Column) = Gint (Line)
            and then Get_Int (Model, Iter, Column_Column) = Gint (Column)
-           and then Get_File (View.Tree.Model, Iter) = File;
+           and then Get_File (Model, Iter) = File;
       end Matches_Location;
 
    begin
@@ -1320,7 +1320,7 @@ package body GPS.Location_View is
                if Get_Int (Model, Iter, Line_Column) = Gint (Line)
                  and then Get_Int
                    (Model, Iter, Column_Column) = Gint (Column)
-                 and then Get_Message (View.Tree.Model, Iter) = Message
+                 and then Get_Message (Model, Iter) = Message
                then
                   return;
                end if;
@@ -1687,7 +1687,7 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (Explorer.Tree), Path);
       end if;
 
-      Iter := Get_Iter (Explorer.Tree.Model, Path);
+      Iter := Get_Iter (Model, Path);
 
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
@@ -1722,13 +1722,13 @@ package body GPS.Location_View is
             Created := True;
             Set_File_Information
               (Context,
-               Files  => (1 => Get_File (Explorer.Tree.Model, Par)),
+               Files  => (1 => Get_File (Model, Par)),
                Line   => Line,
                Column => Column);
             Set_Message_Information
               (Context,
                Category => Get_String (Model, Granpa, Base_Name_Column),
-               Message  => Get_Message (Explorer.Tree.Model, Iter));
+               Message  => Get_Message (Model, Iter));
          end;
       end if;
 
