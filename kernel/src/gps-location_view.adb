@@ -433,7 +433,7 @@ package body GPS.Location_View is
    --  Callback for the activation of the sort contextual menu item
 
    function Get_Category_Name
-     (Model    : access Gtk_Tree_Store_Record'Class;
+     (Model    : access Gtk_Tree_Model_Record'Class;
       Category : Gtk_Tree_Iter) return String;
    --  Return the name of the category associated with that iterator
 
@@ -1127,7 +1127,7 @@ package body GPS.Location_View is
    -----------------------
 
    function Get_Category_Name
-     (Model    : access Gtk_Tree_Store_Record'Class;
+     (Model    : access Gtk_Tree_Model_Record'Class;
       Category : Gtk_Tree_Iter) return String
    is
       Cat : Gtk_Tree_Iter := Category;
