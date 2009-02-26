@@ -258,7 +258,7 @@ package body GPS.Location_View is
    --  Category is the escaped string.
 
    procedure Get_Line_Column_Iter
-     (View      : access Location_View_Record'Class;
+     (Model     : not null access Gtk_Tree_Model_Record'Class;
       File_Iter : Gtk_Tree_Iter;
       Line      : Natural;
       Column    : Natural := 0;
@@ -1224,27 +1224,27 @@ package body GPS.Location_View is
    --------------------------
 
    procedure Get_Line_Column_Iter
-     (View      : access Location_View_Record'Class;
+     (Model     : not null access Gtk_Tree_Model_Record'Class;
       File_Iter : Gtk_Tree_Iter;
       Line      : Natural;
       Column    : Natural := 0;
       Loc_Iter  : out Gtk_Tree_Iter)
    is
    begin
-      Loc_Iter := Children (View.Tree.Model, File_Iter);
+      Loc_Iter := Model.Children (File_Iter);
 
       while Loc_Iter /= Null_Iter loop
-         if Get_Int (View.Tree.Model, Loc_Iter, Line_Column) = Gint (Line)
+         if Model.Get_Int (Loc_Iter, Line_Column) = Gint (Line)
            and then
              (Column = 0
-              or else Get_Int
-                (View.Tree.Model, Loc_Iter, Column_Column) = Gint (Column))
+              or else Model.Get_Int (Loc_Iter, Column_Column) = Gint (Column))
          then
             return;
          end if;
 
-         Next (View.Tree.Model, Loc_Iter);
+         Model.Next (Loc_Iter);
       end loop;
+
       Loc_Iter := Null_Iter;
    end Get_Line_Column_Iter;
 
@@ -1827,7 +1827,7 @@ package body GPS.Location_View is
 
       if File_Iter /= Null_Iter then
          Get_Line_Column_Iter
-           (View      => Locations,
+           (Model     => Locations.Tree.Model,
             File_Iter => File_Iter,
             Line      => D.Line,
             Column    => 0,
