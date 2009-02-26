@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                Copyright (C) 2001-2007 AdaCore                    --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -52,6 +52,84 @@ package body Gtkada.Tree_View is
       Params : Glib.Values.GValues);
    --  Callback for the "row_inserted" signal.
 
+   ----------------------------
+   -- Convert_To_Filter_Iter --
+   ----------------------------
+
+   procedure Convert_To_Filter_Iter
+     (Self        : access Tree_View_Record'Class;
+      Filter_Iter : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Store_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) is
+   begin
+      if Self.Filter /= null then
+         Self.Filter.Convert_Child_Iter_To_Iter (Filter_Iter, Store_Iter);
+
+      else
+         Gtk.Tree_Model.Iter_Copy (Store_Iter, Filter_Iter);
+      end if;
+   end Convert_To_Filter_Iter;
+
+   ---------------------------
+   -- Convert_To_Store_Iter --
+   ---------------------------
+
+   procedure Convert_To_Store_Iter
+     (Self        : access Tree_View_Record'Class;
+      Store_Iter  : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Filter_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is
+   begin
+      if Self.Filter /= null then
+         Self.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
+
+      else
+         Gtk.Tree_Model.Iter_Copy (Filter_Iter, Store_Iter);
+      end if;
+   end Convert_To_Store_Iter;
+
+   ------------------------------------
+   -- Get_Filter_Path_For_Store_Iter --
+   ------------------------------------
+
+   function Get_Filter_Path_For_Store_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
+      return Gtk.Tree_Model.Gtk_Tree_Path
+   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+
+   begin
+      if Self.Filter /= null then
+         Self.Filter.Convert_Child_Iter_To_Iter (Iter, Store_Iter);
+         return Self.Filter.Get_Path (Iter);
+
+      else
+         return Self.Model.Get_Path (Store_Iter);
+      end if;
+   end Get_Filter_Path_For_Store_Iter;
+
+   ------------------------------------
+   -- Get_Store_Iter_For_Filter_Path --
+   ------------------------------------
+
+   function Get_Store_Iter_For_Filter_Path
+     (Self        : access Tree_View_Record'Class;
+      Filter_Path : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Gtk.Tree_Model.Gtk_Tree_Iter
+   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+
+   begin
+      if Self.Filter /= null then
+         Iter := Self.Filter.Get_Iter (Filter_Path);
+         Self.Filter.Convert_Iter_To_Child_Iter (Iter, Iter);
+
+         return Iter;
+
+      else
+         return Self.Model.Get_Iter (Filter_Path);
+      end if;
+   end Get_Store_Iter_For_Filter_Path;
+
    ---------------------------
    -- Row_Expanded_Callback --
    ---------------------------
@@ -60,10 +138,11 @@ package body Gtkada.Tree_View is
      (Widget : access GObject_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Tree  : constant Tree_View := Tree_View (Widget);
-      Iter  : Gtk_Tree_Iter;
-      Path  : Gtk_Tree_Path;
-      Dummy : Boolean;
+      Tree       : constant Tree_View := Tree_View (Widget);
+      Iter       : Gtk_Tree_Iter;
+      Store_Iter : Gtk_Tree_Iter;
+      Path       : Gtk_Tree_Path;
+      Dummy      : Boolean;
       pragma Unreferenced (Dummy);
 
    begin
@@ -72,18 +151,41 @@ package body Gtkada.Tree_View is
       end if;
 
       Get_Tree_Iter (Nth (Params, 1), Iter);
-      Set (Tree.Model, Iter, Tree.Expanded_State_Column, True);
 
-      Iter := Children (Tree.Model, Iter);
+      Tree.Convert_To_Store_Iter (Store_Iter, Iter);
+
+      Set (Tree.Model, Store_Iter, Tree.Expanded_State_Column, True);
+
+      if Tree.Filter /= null then
+         Iter := Children (Tree.Filter, Iter);
+
+      else
+         Iter := Children (Tree.Model, Iter);
+      end if;
 
       while Iter /= Null_Iter loop
-         if Get_Boolean (Tree.Model, Iter, Tree.Expanded_State_Column) then
-            Path := Get_Path (Tree.Model, Iter);
+         Tree.Convert_To_Store_Iter (Store_Iter, Iter);
+
+         if Get_Boolean
+           (Tree.Model, Store_Iter, Tree.Expanded_State_Column)
+         then
+            if Tree.Filter /= null then
+               Path := Tree.Filter.Get_Path (Iter);
+
+            else
+               Path := Tree.Model.Get_Path (Iter);
+            end if;
+
             Dummy := Expand_Row (Tree, Path, False);
             Path_Free (Path);
          end if;
 
-         Next (Tree.Model, Iter);
+         if Tree.Filter /= null then
+            Next (Tree.Filter, Iter);
+
+         else
+            Next (Tree.Model, Iter);
+         end if;
       end loop;
    end Row_Expanded_Callback;
 
@@ -123,10 +225,11 @@ package body Gtkada.Tree_View is
 
    procedure Gtk_New
      (Widget       : out Tree_View;
-      Column_Types : GType_Array) is
+      Column_Types : GType_Array;
+      Filtered     : Boolean := False) is
    begin
       Widget := new Tree_View_Record;
-      Initialize (Widget, Column_Types);
+      Initialize (Widget, Column_Types, Filtered);
    end Gtk_New;
 
    ----------------
@@ -135,17 +238,29 @@ package body Gtkada.Tree_View is
 
    procedure Initialize
      (Widget       : access Tree_View_Record'Class;
-      Column_Types : GType_Array)
+      Column_Types : GType_Array;
+      Filtered     : Boolean)
    is
       Real_Column_Types : GType_Array
         (Column_Types'First .. Column_Types'Last + 1);
+      --  Reserve space for expanded state
+
    begin
       Real_Column_Types := Column_Types & (GType_Boolean);
-      Widget.Expanded_State_Column :=
-        Gint (Real_Column_Types'Length - 1);
+      Widget.Expanded_State_Column := Gint (Real_Column_Types'Last);
 
-      Gtk_New (Widget.Model, Real_Column_Types);
-      Initialize (Gtk_Tree_View (Widget), Widget.Model);
+      if Filtered then
+         Gtk_New (Widget.Model, Real_Column_Types);
+         Gtk_New (Widget.Filter, Widget.Model);
+         Initialize (Gtk_Tree_View (Widget), Widget.Filter);
+
+      else
+         Gtk_New
+           (Widget.Model,
+            Real_Column_Types
+              (Real_Column_Types'First .. Real_Column_Types'Last - 1));
+         Initialize (Gtk_Tree_View (Widget), Widget.Model);
+      end if;
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Widget,

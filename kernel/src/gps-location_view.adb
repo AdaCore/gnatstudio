@@ -929,12 +929,14 @@ package body GPS.Location_View is
    ---------------------
 
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class) is
-      View  : constant Location_View := Location_View (Object);
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
+      View        : constant Location_View := Location_View (Object);
+      Filter_Iter : Gtk_Tree_Iter;
+      Store_Iter  : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Remove_Category_Or_File_Iter (View, Iter);
+      Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
+      View.Tree.Convert_To_Store_Iter (Store_Iter, Filter_Iter);
+      Remove_Category_Or_File_Iter (View, Store_Iter);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Remove_Category;
@@ -1451,7 +1453,8 @@ package body GPS.Location_View is
                   Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                   Loc.Line, Loc.Column, Length,
                   Highlight, Highlight_Category);
-               Path := Get_Path (Model, Potential_Parent);
+               Path :=
+                 View.Tree.Get_Filter_Path_For_Store_Iter (Potential_Parent);
                Dummy := Expand_Row (View.Tree, Path, False);
                Path_Free (Path);
 
@@ -1482,35 +1485,33 @@ package body GPS.Location_View is
       end;
 
       if Category_Created then
-         if Gtk_Tree_Model (Model) = Get_Model (View.Tree) then
-            Path := Get_Path (Model, Category_Iter);
-            Dummy := Expand_Row (View.Tree, Path, False);
-            Path_Free (Path);
+         Path := View.Tree.Get_Filter_Path_For_Store_Iter (Category_Iter);
+         Dummy := Expand_Row (View.Tree, Path, False);
+         Path_Free (Path);
 
-            declare
-               MDI   : constant MDI_Window := Get_MDI (View.Kernel);
-               Child : constant MDI_Child :=
-                         Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
-            begin
-               if Child /= null then
-                  Raise_Child (Child, Give_Focus => False);
-               end if;
-            end;
-
-            Path := Get_Path (Model, File_Iter);
-            Dummy := Expand_Row (View.Tree, Path, False);
-            Path_Free (Path);
-
-            Path := Get_Path (Model, Iter);
-            Select_Path (Get_Selection (View.Tree), Path);
-            Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
-            Path_Free (Path);
-
-            if not Quiet
-              and then Auto_Jump_To_First.Get_Pref
-            then
-               Goto_Location (View);
+         declare
+            MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+            Child : constant MDI_Child :=
+                      Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
+         begin
+            if Child /= null then
+               Raise_Child (Child, Give_Focus => False);
             end if;
+         end;
+
+         Path := View.Tree.Get_Filter_Path_For_Store_Iter (File_Iter);
+         Dummy := Expand_Row (View.Tree, Path, False);
+         Path_Free (Path);
+
+         Path := View.Tree.Get_Filter_Path_For_Store_Iter (Iter);
+         Select_Path (Get_Selection (View.Tree), Path);
+         Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
+         Path_Free (Path);
+
+         if not Quiet
+           and then Auto_Jump_To_First.Get_Pref
+         then
+            Goto_Location (View);
          end if;
       end if;
    end Add_Location;
@@ -1775,6 +1776,7 @@ package body GPS.Location_View is
       Child       : MDI_Child;
       Locations   : Location_View;
       Category_Iter, File_Iter, Loc_Iter, Current : Gtk_Tree_Iter;
+      Filter_Loc_Iter  : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Model            : Gtk_Tree_Model;
       Path             : Gtk_Tree_Path;
@@ -1827,18 +1829,23 @@ package body GPS.Location_View is
 
       if File_Iter /= Null_Iter then
          Get_Line_Column_Iter
-           (Model     => Model,
+           (Model     => Locations.Tree.Model,
+            --  File_Iter belongs to model store
             File_Iter => File_Iter,
             Line      => D.Line,
             Column    => 0,
             Loc_Iter  => Loc_Iter);
 
          if Loc_Iter /= Null_Iter then
-            Path := Get_Path (Model, Loc_Iter);
-            Expand_To_Path (Locations.Tree, Path);
-            Select_Iter (Get_Selection (Locations.Tree), Loc_Iter);
-            Scroll_To_Cell (Locations.Tree, Path, null, False, 0.1, 0.1);
-            Path_Free (Path);
+            Locations.Tree.Convert_To_Filter_Iter (Filter_Loc_Iter, Loc_Iter);
+
+            if Loc_Iter /= Null_Iter then
+               Path := Get_Path (Model, Filter_Loc_Iter);
+               Expand_To_Path (Locations.Tree, Path);
+               Select_Iter (Get_Selection (Locations.Tree), Filter_Loc_Iter);
+               Scroll_To_Cell (Locations.Tree, Path, null, False, 0.1, 0.1);
+               Path_Free (Path);
+            end if;
          end if;
       end if;
    end Location_Changed;
@@ -1872,7 +1879,7 @@ package body GPS.Location_View is
 
       --  Initialize the tree
 
-      Gtk_New (View.Tree, Columns_Types);
+      Gtk_New (View.Tree, Columns_Types, True);
       Set_Column_Types (View);
       Set_Headers_Visible (View.Tree, False);
       Set_Name (View.Tree, "Locations Tree");
@@ -2199,7 +2206,8 @@ package body GPS.Location_View is
                      Action : Action_Item;
 
                   begin
-                     Iter := Get_Iter (Explorer.Tree.Model, Path);
+                     Iter :=
+                       Explorer.Tree.Get_Store_Iter_For_Filter_Path (Path);
                      Get_Value
                        (Explorer.Tree.Model, Iter, Action_Column, Value);
                      Action := To_Action_Item (Get_Address (Value));
@@ -2603,7 +2611,7 @@ package body GPS.Location_View is
          end loop;
 
          if Appended then
-            Path := Get_Path (View.Tree.Model, Parent_Iter);
+            Path := View.Tree.Get_Filter_Path_For_Store_Iter (Parent_Iter);
             Appended := Expand_Row (View.Tree, Path, False);
             Path_Free (Path);
          end if;
