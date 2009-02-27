@@ -41,10 +41,13 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Enums;
+with Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -440,6 +443,24 @@ package body GPS.Location_View is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
+
+   procedure On_RegExp_Activate
+     (Object : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Self   : Location_View);
+   --  Called on regexp entry activation
+
+   function Is_Visible
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Location_View) return Boolean;
+   --  Used by model filter for query item visibility.
+
+   package Entry_Callbacks is
+     new Gtk.Handlers.User_Callback
+       (Gtk.GEntry.Gtk_Entry_Record, Location_View);
+
+   package Visible_Funcs is
+     new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
 
    -----------
    -- Hooks --
@@ -1610,6 +1631,11 @@ package body GPS.Location_View is
       if V.Idle_Row_Handler /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (V.Idle_Row_Handler);
       end if;
+
+      --  Free regular expression
+
+      Basic_Types.Unchecked_Free (V.RegExp);
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Destroy;
@@ -1666,20 +1692,23 @@ package body GPS.Location_View is
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
       Widget_Callback.Object_Connect
-        (Check, Signal_Activate, Toggle_Sort'Access, Explorer);
+        (Check, Gtk.Menu_Item.Signal_Activate, Toggle_Sort'Access, Explorer);
 
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Expand category");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, Signal_Activate, Expand_Category'Access, Explorer,
+        (Mitem,
+         Gtk.Menu_Item.Signal_Activate,
+         Expand_Category'Access,
+         Explorer,
          After => False);
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, -"Collapse all");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, Signal_Activate, Collapse'Access, Explorer,
+        (Mitem, Gtk.Menu_Item.Signal_Activate, Collapse'Access, Explorer,
          After => False);
       Append (Menu, Mitem);
 
@@ -1693,21 +1722,30 @@ package body GPS.Location_View is
       if Get_Depth (Path) = 1 then
          Gtk_New (Mitem, -"Remove category");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, Signal_Activate, Remove_Category'Access, Explorer,
+           (Mitem,
+            Gtk.Menu_Item.Signal_Activate,
+            Remove_Category'Access,
+            Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) = 2 then
          Gtk_New (Mitem, -"Remove File");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, Signal_Activate, Remove_Category'Access, Explorer,
+           (Mitem,
+            Gtk.Menu_Item.Signal_Activate,
+            Remove_Category'Access,
+            Explorer,
             After => False);
          Append (Menu, Mitem);
 
       elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Jump to location");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Mitem, Signal_Activate, Goto_Location'Access, Explorer,
+           (Mitem,
+            Gtk.Menu_Item.Signal_Activate,
+            Goto_Location'Access,
+            Explorer,
             After => False);
 
          Append (Menu, Mitem);
@@ -1860,6 +1898,8 @@ package body GPS.Location_View is
       Module : Abstract_Module_ID)
    is
       Scrolled  : Gtk_Scrolled_Window;
+      Box       : Gtk_Vbox;
+      Label     : Gtk_Label;
       Success   : Boolean;
       File_Hook : File_Edited_Hook;
 
@@ -1889,7 +1929,29 @@ package body GPS.Location_View is
         (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
       Add (Scrolled, View.Tree);
 
-      Add (View, Scrolled);
+      View.Pack_Start (Scrolled);
+
+      --  Initialize the RegExp entry
+
+      Gtk_New_Vbox (Box);
+
+      Gtk_New (Label);
+      Label.Set_Text ("Reg Exp");
+      Box.Pack_Start (Label, False, False);
+
+      Gtk_New (View.RegExp_Entry);
+      Box.Pack_Start (View.RegExp_Entry, False, False);
+
+      View.Pack_Start (Box, False, False);
+
+      Entry_Callbacks.Connect
+        (View.RegExp_Entry,
+         Gtk.GEntry.Signal_Activate,
+         Entry_Callbacks.To_Marshaller (On_RegExp_Activate'Access),
+         Location_View (View));
+
+      Visible_Funcs.Set_Visible_Func
+        (View.Tree.Filter, Is_Visible'Access, Location_View (View));
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
@@ -3511,5 +3573,61 @@ package body GPS.Location_View is
 
       return Result;
    end Extract_Locations;
+
+   ------------------------
+   -- On_RegExp_Activate --
+   ------------------------
+
+   procedure On_RegExp_Activate
+     (Object : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Self   : Location_View)
+   is
+      pragma Unreferenced (Object);
+
+      Text       : constant String := Self.RegExp_Entry.Get_Text;
+      New_RegExp : GNAT.Expect.Pattern_Matcher_Access;
+
+   begin
+      if Text /= "" then
+         New_RegExp :=
+           new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Text));
+      end if;
+
+      Basic_Types.Unchecked_Free (Self.RegExp);
+      Self.RegExp := New_RegExp;
+      Self.Tree.Filter.Refilter;
+
+   exception
+      when GNAT.Regpat.Expression_Error =>
+         null;
+   end On_RegExp_Activate;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   function Is_Visible
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self  : Location_View) return Boolean
+   is
+      use type GNAT.Strings.String_Access;
+
+      Message : constant String := Get_Message (Model, Iter);
+      Depth   : Natural := 0;
+      Path    : Gtk_Tree_Path;
+
+   begin
+      Path := Model.Get_Path (Iter);
+      Depth := Natural (Get_Depth (Path));
+      Path_Free (Path);
+
+      if Depth < 3 or else Self.RegExp = null then
+         return True;
+
+      else
+         return GNAT.Regpat.Match (Self.RegExp.all, Message);
+      end if;
+   end Is_Visible;
 
 end GPS.Location_View;

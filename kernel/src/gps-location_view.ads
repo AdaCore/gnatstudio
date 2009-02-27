@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,8 +27,9 @@ with GNATCOLL.VFS;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Glib;
 with Glib.Main;
@@ -204,7 +205,10 @@ private
 
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
-      Tree   : Tree_View;
+
+      Tree         : Tree_View;
+      RegExp_Entry : Gtk_Entry;
+      RegExp       : GNAT.Expect.Pattern_Matcher_Access;
 
       Non_Leaf_Color : Gdk.Color.Gdk_Color;
       --  The color to use in the first column, depending on the status of the
