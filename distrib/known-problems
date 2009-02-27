@@ -3,7 +3,7 @@ Known Problems fixed in GPS 4.3.3
 - I213-026: Crash while doing search & replace on Windows
   Problem:    When doing a search and replace, at the end of the search, if
               the user answers yes to the popup asking if he wants to start
-              from the beginning, GPS will crash.
+              from the beginning, GPS may sometimes crash.
   Workaround: Answer no, and run a new search & replace session.
 
 - I212-042: Spurious GtkWarning message under Windows
