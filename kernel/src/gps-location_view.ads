@@ -28,6 +28,7 @@ with GNATCOLL.VFS;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -209,6 +210,10 @@ private
       Tree         : Tree_View;
       RegExp_Entry : Gtk_Entry;
       RegExp       : GNAT.Expect.Pattern_Matcher_Access;
+      Text         : GNAT.Strings.String_Access;
+      RegExp_Check : Gtk_Check_Button;
+      Hide_Check   : Gtk_Check_Button;
+      Is_Hide      : Boolean := False;
 
       Non_Leaf_Color : Gdk.Color.Gdk_Color;
       --  The color to use in the first column, depending on the status of the

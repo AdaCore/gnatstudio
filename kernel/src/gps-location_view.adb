@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;              use GNAT.Expect;
@@ -47,6 +48,7 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Toggle_Button;
 with Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -449,6 +451,16 @@ package body GPS.Location_View is
       Self   : Location_View);
    --  Called on regexp entry activation
 
+   procedure On_RegExp_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Location_View);
+   --  Called on RegExp check button toggle
+
+   procedure On_Hide_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Location_View);
+   --  Called on Hide matched check button toggle
+
    function Is_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -458,6 +470,10 @@ package body GPS.Location_View is
    package Entry_Callbacks is
      new Gtk.Handlers.User_Callback
        (Gtk.GEntry.Gtk_Entry_Record, Location_View);
+
+   package Check_Button_Callbacks is
+     new Gtk.Handlers.User_Callback
+       (Gtk.Check_Button.Gtk_Check_Button_Record, Location_View);
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
@@ -1635,6 +1651,7 @@ package body GPS.Location_View is
       --  Free regular expression
 
       Basic_Types.Unchecked_Free (V.RegExp);
+      GNAT.Strings.Free (V.Text);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1936,11 +1953,19 @@ package body GPS.Location_View is
       Gtk_New_Vbox (Box);
 
       Gtk_New (Label);
-      Label.Set_Text ("Reg Exp");
+      Label.Set_Text ("Text");
       Box.Pack_Start (Label, False, False);
 
       Gtk_New (View.RegExp_Entry);
       Box.Pack_Start (View.RegExp_Entry, False, False);
+
+      Gtk_New (View.RegExp_Check);
+      View.RegExp_Check.Set_Label ("RegExp");
+      Box.Pack_Start (View.RegExp_Check, False, False);
+
+      Gtk_New (View.Hide_Check);
+      View.Hide_Check.Set_Label ("Hide matched");
+      Box.Pack_Start (View.Hide_Check, False, False);
 
       View.Pack_Start (Box, False, False);
 
@@ -1948,6 +1973,16 @@ package body GPS.Location_View is
         (View.RegExp_Entry,
          Gtk.GEntry.Signal_Activate,
          Entry_Callbacks.To_Marshaller (On_RegExp_Activate'Access),
+         Location_View (View));
+      Check_Button_Callbacks.Connect
+        (View.RegExp_Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Callbacks.To_Marshaller (On_RegExp_Toggled'Access),
+         Location_View (View));
+      Check_Button_Callbacks.Connect
+        (View.Hide_Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Callbacks.To_Marshaller (On_Hide_Toggled'Access),
          Location_View (View));
 
       Visible_Funcs.Set_Visible_Func
@@ -3586,21 +3621,61 @@ package body GPS.Location_View is
 
       Text       : constant String := Self.RegExp_Entry.Get_Text;
       New_RegExp : GNAT.Expect.Pattern_Matcher_Access;
+      New_Text   : GNAT.Strings.String_Access;
 
    begin
       if Text /= "" then
-         New_RegExp :=
-           new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Text));
+         if Self.RegExp_Check.Get_Active then
+            New_RegExp :=
+              new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Text));
+
+         else
+            New_Text := new String'(Text);
+         end if;
       end if;
 
       Basic_Types.Unchecked_Free (Self.RegExp);
+      GNAT.Strings.Free (Self.Text);
+
       Self.RegExp := New_RegExp;
+      Self.Text := New_Text;
+
       Self.Tree.Filter.Refilter;
 
    exception
       when GNAT.Regpat.Expression_Error =>
          null;
    end On_RegExp_Activate;
+
+   -----------------------
+   -- On_RegExp_Toggled --
+   -----------------------
+
+   procedure On_RegExp_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Location_View)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      On_RegExp_Activate (Self.RegExp_Entry, Self);
+   end On_RegExp_Toggled;
+
+   ---------------------
+   -- On_Hide_Toggled --
+   ---------------------
+
+   procedure On_Hide_Toggled
+     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Location_View)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      Self.Is_Hide := Self.Hide_Check.Get_Active;
+
+      Self.Tree.Filter.Refilter;
+   end On_Hide_Toggled;
 
    ----------------
    -- Is_Visible --
@@ -3616,17 +3691,32 @@ package body GPS.Location_View is
       Message : constant String := Get_Message (Model, Iter);
       Depth   : Natural := 0;
       Path    : Gtk_Tree_Path;
+      Found   : Boolean;
 
    begin
       Path := Model.Get_Path (Iter);
       Depth := Natural (Get_Depth (Path));
       Path_Free (Path);
 
-      if Depth < 3 or else Self.RegExp = null then
+      if Depth < 3 then
          return True;
 
       else
-         return GNAT.Regpat.Match (Self.RegExp.all, Message);
+         if Self.RegExp /= null then
+            Found := GNAT.Regpat.Match (Self.RegExp.all, Message);
+
+         elsif Self.Text /= null then
+            Found := Ada.Strings.Fixed.Index (Message, Self.Text.all) /= 0;
+
+         else
+            return True;
+         end if;
+
+         if Self.Is_Hide then
+            Found := not Found;
+         end if;
+
+         return Found;
       end if;
    end Is_Visible;
 
