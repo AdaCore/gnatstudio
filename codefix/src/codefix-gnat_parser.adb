@@ -1175,6 +1175,10 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
+      if At_end (Next (Message_It)) then
+         raise Uncorrectable_Message;
+      end if;
+
       Preview := Get_Message (Next (Message_It));
       Match (This.Misspelling_Matcher.all, Get_Message (Preview), Fix_Matches);
 
