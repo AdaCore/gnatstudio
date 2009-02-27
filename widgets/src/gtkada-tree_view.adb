@@ -197,11 +197,13 @@ package body Gtkada.Tree_View is
      (Widget : access GObject_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Tree : constant Tree_View := Tree_View (Widget);
-      Iter : Gtk_Tree_Iter;
+      Tree       : constant Tree_View := Tree_View (Widget);
+      Iter       : Gtk_Tree_Iter;
+      Store_Iter : Gtk_Tree_Iter;
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
-      Set (Tree.Model, Iter, Tree.Expanded_State_Column, False);
+      Tree.Convert_To_Store_Iter (Store_Iter, Iter);
+      Set (Tree.Model, Store_Iter, Tree.Expanded_State_Column, False);
    end Row_Collapsed_Callback;
 
    ---------------------------

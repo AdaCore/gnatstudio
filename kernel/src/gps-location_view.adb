@@ -936,7 +936,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Dummy);
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
-      Path := Get_Path (View.Tree.Model, Iter);
+      Path := Get_Path (Model, Iter);
 
       while Get_Depth (Path) > 1 loop
          Dummy := Up (Path);
