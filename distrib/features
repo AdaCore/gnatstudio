@@ -28,8 +28,8 @@ NF-44-I202-016 Support selection of multiple activities (2009-02-10)
 
 NF-44-I129-010 Improved cross references loading time (2009-02-27)
 
-   Cross references are now much more faster to load by GPS. This brings a
-   significant improvement when displaying tooltips on very big projects.
+   Cross references are now loaded much faster by GPS. This brings a
+   significant improvement when e.g. displaying tooltips on very big projects.
 
 NF-44-I122-033 Meaningful source editor titles (2009-02-04)
 
