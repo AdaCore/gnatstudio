@@ -315,6 +315,20 @@ package body Src_Editor_Buffer.Debug is
               (Buffer,
                Buffer.Syntax_Tags
                  (Language_Entity'Value (Nth_Arg (Data, 2)))));
+
+      elsif Command = "debug_dump_side_info_config" then
+         Set_Return_Value_As_List (Data);
+
+         if Buffer.Editable_Line_Info_Columns /= null
+           and then Buffer.Editable_Line_Info_Columns.all /= null
+         then
+            for L in Buffer.Editable_Line_Info_Columns.all'Range loop
+               Set_Return_Value
+                 (Data,
+                  To_String
+                    (Buffer.Editable_Line_Info_Columns.all (L).Identifier));
+            end loop;
+         end if;
       end if;
    end Buffer_Cmds;
 
@@ -352,6 +366,9 @@ package body Src_Editor_Buffer.Debug is
 
       Register_Command
         (Kernel, "debug_dump_editable_lines",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_side_info_config",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "debug_dump_all_lines",
