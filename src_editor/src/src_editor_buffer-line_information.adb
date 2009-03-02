@@ -160,6 +160,10 @@ package body Src_Editor_Buffer.Line_Information is
       if Line_Char_Width > 0 then
          Buffer.Line_Numbers_Width := 2;
 
+         if BL.all = null then
+            Create_Line_Information_Column (Buffer, "", True);
+         end if;
+
          loop
             Buffer.Line_Numbers_Width :=
               Buffer.Line_Numbers_Width + Natural (Line_Char_Width);
