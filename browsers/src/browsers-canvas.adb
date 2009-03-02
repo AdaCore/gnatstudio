@@ -494,8 +494,9 @@ package body Browsers.Canvas is
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
 
+      use type Gdk.Gdk_GC;
    begin
-      if Realized_Is_Set (Hook.Browser) then
+      if Hook.Browser.Selected_Item_GC /= null then
          Hook.Browser.Selected_Link_Color :=
            Selected_Link_Color.Get_Pref;
          Hook.Browser.Unselected_Link_Color :=
