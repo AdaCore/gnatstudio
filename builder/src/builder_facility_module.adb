@@ -276,10 +276,6 @@ package body Builder_Facility_Module is
       Tip    : Gtk_Tooltips);
    --  Called when a user selects a new item from the combo.
 
-   procedure Save_Targets;
-   procedure Load_Targets;
-   --  Save/Load the targets in the user-defined XML
-
    procedure On_File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);

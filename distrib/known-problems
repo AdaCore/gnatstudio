@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I302-022: Cloning a target does not take into account the Category field
+  Problem:    When cloning a target, the field 'Category' is not taken into
+              account: the new target is created in the same category as the
+              original target.
+  Workaround: Exit GPS, and then modify the file "targets.xml" in the .gps
+              directory manually.
+
 - I226-002: Problem when loading desktop that contains a browser
   Problem:    When loading GPS, if the saved desktop contains a browser (such
               as the Debugger Data view or a Call graph Browser for instance),

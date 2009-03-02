@@ -462,6 +462,7 @@ package body Build_Configurations is
 
       Dest.Properties := Src.Properties;
       Dest.Properties.Menu_Name := To_Unbounded_String (New_Name);
+      Dest.Properties.Category  := To_Unbounded_String (New_Category);
 
       --  If we have duplicated a target using this subprogram, this means the
       --  target is user-created.

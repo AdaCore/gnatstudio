@@ -169,6 +169,25 @@ package body Builder_Facility_Module.Scripts is
             Remove_Target (Registry, Name);
 
             Refresh_Graphical_Elements;
+            Save_Targets;
+         end;
+
+      elsif Command = "clone" then
+         declare
+            Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
+            Name : constant String := Get_Target_Name (Inst);
+            New_Name     : constant String := Nth_Arg (Data, 2);
+            New_Category : constant String := Nth_Arg (Data, 3);
+         begin
+            if Name = "" then
+               Set_Error_Msg (Data, -"Invalid target");
+               return;
+            end if;
+
+            Duplicate_Target (Registry, Name, New_Name, New_Category);
+
+            Refresh_Graphical_Elements;
+            Save_Targets;
          end;
 
       elsif Command = "execute" then
@@ -310,6 +329,13 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "remove",
          Minimum_Args => 0,
          Maximum_Args => 0,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "clone",
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

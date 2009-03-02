@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2008, AdaCore                    --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -179,5 +179,9 @@ package Builder_Facility_Module is
    procedure Set_Mode (Mode : String);
    --  Set the mode to Mode. If Mode does not correspond to a registered mode,
    --  do nothing.
+
+   procedure Save_Targets;
+   procedure Load_Targets;
+   --  Save/Load the targets in the user-defined XML
 
 end Builder_Facility_Module;
