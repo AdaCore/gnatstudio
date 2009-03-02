@@ -571,10 +571,13 @@ package body Gtkada.File_Selector is
       end if;
 
       Set_Position (File_Selector, Win_Pos_Mouse);
-      Set_Text
-        (File_Selector.Selection_Entry,
-         Display_Full_Name (Create (+Default_Name)));
-      --  ??? What if the filesystem path is non-UTF8?
+
+      if Default_Name /= "" then
+         Set_Text
+           (File_Selector.Selection_Entry,
+            Display_Full_Name (Create (+Default_Name)));
+         --  ??? What if the filesystem path is non-UTF8?
+      end if;
 
       if File_Pattern /= "" then
          declare
