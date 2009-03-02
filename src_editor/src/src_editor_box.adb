@@ -1889,7 +1889,8 @@ package body Src_Editor_Box is
          end if;
 
          Push_Current_Editor_Location_In_History (Kernel);
-         Set_Cursor_Location (Box, Editable_Line_Type'Value (Str), 1);
+         Set_Cursor_Location
+           (Box, Editable_Line_Type'Value (Str), 1, Centering => With_Margin);
          Add_Navigation_Location (Box);
 
       exception
