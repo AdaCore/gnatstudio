@@ -25,21 +25,20 @@ with GNAT.Strings;
 
 with GNATCOLL.VFS;
 
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gdk.Color;                      use Gdk.Color;
+with Gdk.Pixbuf;                     use Gdk.Pixbuf;
+with Gtk.Box;                        use Gtk.Box;
+with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Glib;
 with Glib.Main;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with Gtkada.Tree_View;          use Gtkada.Tree_View;
-with Basic_Types;               use Basic_Types;
+with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;              use GPS.Kernel.Styles;
+with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
+with Gtkada.Tree_View;               use Gtkada.Tree_View;
+with Basic_Types;                    use Basic_Types;
 with Generic_List;
 
 package GPS.Location_View is
@@ -53,7 +52,7 @@ package GPS.Location_View is
    --  subprogram, since the console is loaded before all other modules,
    --  including the scripting languages.
 
-   type Location_View_Record is new Gtk_Hbox_Record with private;
+   type Location_View_Record is new Gtk_Vbox_Record with private;
    type Location_View is access all Location_View_Record'Class;
 
    procedure Gtk_New
@@ -208,11 +207,10 @@ private
       Kernel : Kernel_Handle;
 
       Tree         : Tree_View;
-      RegExp_Entry : Gtk_Entry;
+      Filter_Panel : Locations_Filter_Panel;
+
       RegExp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;
-      RegExp_Check : Gtk_Check_Button;
-      Hide_Check   : Gtk_Check_Button;
       Is_Hide      : Boolean := False;
 
       Non_Leaf_Color : Gdk.Color.Gdk_Color;

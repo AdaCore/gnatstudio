@@ -43,12 +43,10 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Toggle_Button;
 with Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -446,34 +444,34 @@ package body GPS.Location_View is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
-   procedure On_RegExp_Activate
-     (Object : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Self   : Location_View);
-   --  Called on regexp entry activation
-
-   procedure On_RegExp_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Location_View);
-   --  Called on RegExp check button toggle
-
-   procedure On_Hide_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
-      Self   : Location_View);
-   --  Called on Hide matched check button toggle
-
    function Is_Visible
      (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self  : Location_View) return Boolean;
    --  Used by model filter for query item visibility.
 
-   package Entry_Callbacks is
-     new Gtk.Handlers.User_Callback
-       (Gtk.GEntry.Gtk_Entry_Record, Location_View);
+   procedure On_Apply_Filter
+     (Object : access Locations_Filter_Panel_Record'Class;
+      Self   : Location_View);
+   --  Called on "apply-filter" signal from filter panel
 
-   package Check_Button_Callbacks is
+   procedure On_Cancel_Filter
+     (Object : access Locations_Filter_Panel_Record'Class;
+      Self   : Location_View);
+   --  Called on "cancel-filter" signal from filter panel
+
+   procedure On_Visibility_Toggled
+     (Object : access Locations_Filter_Panel_Record'Class;
+      Self   : Location_View);
+   --  Called on "visibility-toggled" signal from filter panel
+
+   procedure On_Filter_Panel_Activated
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Called when filter panel item in the context menu is activated
+
+   package Locations_Filter_Panel_Callbacks is
      new Gtk.Handlers.User_Callback
-       (Gtk.Check_Button.Gtk_Check_Button_Record, Location_View);
+       (Locations_Filter_Panel_Record, Location_View);
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
@@ -1705,6 +1703,15 @@ package body GPS.Location_View is
          return;
       end if;
 
+      Gtk_New (Check, -"Filter panel");
+      Set_Active (Check, Explorer.Filter_Panel.Mapped_Is_Set);
+      Append (Menu, Check);
+      Widget_Callback.Object_Connect
+        (Check,
+         Gtk.Menu_Item.Signal_Activate,
+         On_Filter_Panel_Activated'Access,
+         Explorer);
+
       Gtk_New (Check, -"Sort by subcategory");
       Set_Active (Check, Explorer.Sort_By_Category);
       Append (Menu, Check);
@@ -1915,13 +1922,11 @@ package body GPS.Location_View is
       Module : Abstract_Module_ID)
    is
       Scrolled  : Gtk_Scrolled_Window;
-      Box       : Gtk_Vbox;
-      Label     : Gtk_Label;
       Success   : Boolean;
       File_Hook : File_Edited_Hook;
 
    begin
-      Initialize_Hbox (View);
+      Initialize_Vbox (View);
 
       View.Kernel := Kernel;
 
@@ -1948,42 +1953,29 @@ package body GPS.Location_View is
 
       View.Pack_Start (Scrolled);
 
-      --  Initialize the RegExp entry
+      --  Initialize the filter panel
 
-      Gtk_New_Vbox (Box);
-
-      Gtk_New (Label);
-      Label.Set_Text ("Text");
-      Box.Pack_Start (Label, False, False);
-
-      Gtk_New (View.RegExp_Entry);
-      Box.Pack_Start (View.RegExp_Entry, False, False);
-
-      Gtk_New (View.RegExp_Check);
-      View.RegExp_Check.Set_Label ("RegExp");
-      Box.Pack_Start (View.RegExp_Check, False, False);
-
-      Gtk_New (View.Hide_Check);
-      View.Hide_Check.Set_Label ("Hide matched");
-      Box.Pack_Start (View.Hide_Check, False, False);
-
-      View.Pack_Start (Box, False, False);
-
-      Entry_Callbacks.Connect
-        (View.RegExp_Entry,
-         Gtk.GEntry.Signal_Activate,
-         Entry_Callbacks.To_Marshaller (On_RegExp_Activate'Access),
+      Gtk_New (View.Filter_Panel, Kernel);
+      Locations_Filter_Panel_Callbacks.Connect
+        (View.Filter_Panel,
+         Signal_Apply_Filter,
+         Locations_Filter_Panel_Callbacks.To_Marshaller
+           (On_Apply_Filter'Access),
          Location_View (View));
-      Check_Button_Callbacks.Connect
-        (View.RegExp_Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Callbacks.To_Marshaller (On_RegExp_Toggled'Access),
+      Locations_Filter_Panel_Callbacks.Connect
+        (View.Filter_Panel,
+         Signal_Cancel_Filter,
+         Locations_Filter_Panel_Callbacks.To_Marshaller
+           (On_Cancel_Filter'Access),
          Location_View (View));
-      Check_Button_Callbacks.Connect
-        (View.Hide_Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Callbacks.To_Marshaller (On_Hide_Toggled'Access),
+      Locations_Filter_Panel_Callbacks.Connect
+        (View.Filter_Panel,
+         Signal_Visibility_Toggled,
+         Locations_Filter_Panel_Callbacks.To_Marshaller
+           (On_Visibility_Toggled'Access),
          Location_View (View));
+      View.Filter_Panel.Show;
+      View.Pack_Start (View.Filter_Panel);
 
       Visible_Funcs.Set_Visible_Func
         (View.Tree.Filter, Is_Visible'Access, Location_View (View));
@@ -2786,6 +2778,13 @@ package body GPS.Location_View is
          View := Location_View (Get_Widget (Child));
          Category := Node.Child;
 
+         if Boolean'Value (Get_Attribute (Node, "filter_panel", "FALSE")) then
+            View.Filter_Panel.Show;
+
+         else
+            View.Filter_Panel.Hide;
+         end if;
+
          while Category /= null loop
             declare
                Category_Name : constant String :=
@@ -2893,10 +2892,16 @@ package body GPS.Location_View is
 
    begin
       if Widget.all in Location_View_Record'Class then
+         View := Location_View (Widget);
+
          N := new Node;
          N.Tag := new String'("Location_View_Record");
 
-         View := Location_View (Widget);
+         Set_Attribute
+           (N,
+            "filter_panel",
+            Boolean'Image (View.Filter_Panel.Mapped_Is_Set));
+
          Category_Iter := Get_Iter_First (View.Tree.Model);
 
          while Category_Iter /= Null_Iter loop
@@ -3609,73 +3614,96 @@ package body GPS.Location_View is
       return Result;
    end Extract_Locations;
 
-   ------------------------
-   -- On_RegExp_Activate --
-   ------------------------
+   ---------------------
+   -- On_Apply_Filter --
+   ---------------------
 
-   procedure On_RegExp_Activate
-     (Object : access Gtk.GEntry.Gtk_Entry_Record'Class;
+   procedure On_Apply_Filter
+     (Object : access Locations_Filter_Panel_Record'Class;
       Self   : Location_View)
    is
       pragma Unreferenced (Object);
 
-      Text       : constant String := Self.RegExp_Entry.Get_Text;
-      New_RegExp : GNAT.Expect.Pattern_Matcher_Access;
-      New_Text   : GNAT.Strings.String_Access;
+      Pattern     : constant String := Self.Filter_Panel.Get_Pattern;
+      New_Reg_Exp : GNAT.Expect.Pattern_Matcher_Access;
+      New_Text    : GNAT.Strings.String_Access;
 
    begin
-      if Text /= "" then
-         if Self.RegExp_Check.Get_Active then
-            New_RegExp :=
-              new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Text));
+      if Pattern /= "" then
+         if Self.Filter_Panel.Get_Is_Reg_Exp then
+            New_Reg_Exp :=
+              new GNAT.Regpat.Pattern_Matcher'(GNAT.Regpat.Compile (Pattern));
 
          else
-            New_Text := new String'(Text);
+            New_Text := new String'(Pattern);
          end if;
       end if;
 
       Basic_Types.Unchecked_Free (Self.RegExp);
       GNAT.Strings.Free (Self.Text);
 
-      Self.RegExp := New_RegExp;
+      Self.RegExp := New_Reg_Exp;
       Self.Text := New_Text;
+      Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
 
       Self.Tree.Filter.Refilter;
 
-   exception
-      when GNAT.Regpat.Expression_Error =>
-         null;
-   end On_RegExp_Activate;
+      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title
+        (+"Locations (filtered)");
+   end On_Apply_Filter;
 
-   -----------------------
-   -- On_RegExp_Toggled --
-   -----------------------
+   ----------------------
+   -- On_Cancel_Filter --
+   ----------------------
 
-   procedure On_RegExp_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+   procedure On_Cancel_Filter
+     (Object : access Locations_Filter_Panel_Record'Class;
       Self   : Location_View)
    is
       pragma Unreferenced (Object);
 
    begin
-      On_RegExp_Activate (Self.RegExp_Entry, Self);
-   end On_RegExp_Toggled;
+      Basic_Types.Unchecked_Free (Self.RegExp);
+      GNAT.Strings.Free (Self.Text);
 
-   ---------------------
-   -- On_Hide_Toggled --
-   ---------------------
+      Self.Tree.Filter.Refilter;
 
-   procedure On_Hide_Toggled
-     (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Get_Or_Create_Location_View_MDI (Self.Kernel).Set_Title (+"Locations");
+   end On_Cancel_Filter;
+
+   -------------------------------
+   -- On_Filter_Panel_Activated --
+   -------------------------------
+
+   procedure On_Filter_Panel_Activated
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Self : constant Location_View := Location_View (Widget);
+
+   begin
+      if Self.Filter_Panel.Mapped_Is_Set then
+         Self.Filter_Panel.Hide;
+
+      else
+         Self.Filter_Panel.Show;
+      end if;
+   end On_Filter_Panel_Activated;
+
+   ---------------------------
+   -- On_Visibility_Toggled --
+   ---------------------------
+
+   procedure On_Visibility_Toggled
+     (Object : access Locations_Filter_Panel_Record'Class;
       Self   : Location_View)
    is
       pragma Unreferenced (Object);
 
    begin
-      Self.Is_Hide := Self.Hide_Check.Get_Active;
+      Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
 
       Self.Tree.Filter.Refilter;
-   end On_Hide_Toggled;
+   end On_Visibility_Toggled;
 
    ----------------
    -- Is_Visible --
