@@ -2897,10 +2897,9 @@ package body GPS.Location_View is
          N := new Node;
          N.Tag := new String'("Location_View_Record");
 
-         Set_Attribute
-           (N,
-            "filter_panel",
-            Boolean'Image (View.Filter_Panel.Mapped_Is_Set));
+         if View.Filter_Panel.Mapped_Is_Set then
+            Set_Attribute (N, "filter_panel", "TRUE");
+         end if;
 
          Category_Iter := Get_Iter_First (View.Tree.Model);
 
