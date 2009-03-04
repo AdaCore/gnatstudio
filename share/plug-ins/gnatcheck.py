@@ -457,9 +457,7 @@ class gnatCheckProc:
       self.locations_string = "Coding Standard violations"
       self.gnatCmd = ""
 
-   def edit(self):
-      global ruleseditor
-      prev_cmd = self.gnatCmd
+   def updateGnatCmd(self):
       self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
 
       if self.gnatCmd == "":
@@ -469,6 +467,13 @@ class gnatCheckProc:
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")
+
+   def edit(self):
+      global ruleseditor
+      prev_cmd = self.gnatCmd
+      self.updateGnatCmd()
+
+      if self.gnatCmd == "":
          return
 
       # gnat check command changed: we reinitialize the rules list
@@ -635,6 +640,8 @@ class gnatCheckProc:
          else:
             selector.destroy()
             return;
+
+      self.updateGnatCmd()
 
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
