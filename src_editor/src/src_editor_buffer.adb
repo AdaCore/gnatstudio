@@ -59,7 +59,6 @@ with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
 with Commands.Controls;                   use Commands.Controls;
 with Completion_Module;                   use Completion_Module;
-with GPS.Editors;                         use GPS.Editors;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Location_View;                   use GPS.Location_View;
 with GPS.Kernel;                          use GPS.Kernel;

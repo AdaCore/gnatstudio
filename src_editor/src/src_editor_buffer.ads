@@ -42,7 +42,7 @@ with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
 with Basic_Types;               use Basic_Types;
 with Commands;                  use Commands;
-with GPS.Editors;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
@@ -50,8 +50,6 @@ with Language;
 with Src_Highlighting;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
-
-with GPS.Editors; use GPS.Editors;
 
 package Src_Editor_Buffer is
 

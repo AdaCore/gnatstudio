@@ -52,7 +52,6 @@ with Src_Editor_View;
 with GNATCOLL.VFS;
 with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
-with GPS.Editors;
 
 package Src_Editor_Box is
 
