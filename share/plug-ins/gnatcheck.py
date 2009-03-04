@@ -132,6 +132,17 @@ class rulesEditor(gtk.Dialog):
       scrolled.show()
       self.vbox.pack_start (scrolled, True, True, 0);
 
+      # Check box for optional rules file edition after exit
+      hbox = gtk.HBox()
+      hbox.show()
+      label = gtk.Label("")
+      label.hide()
+      hbox.pack_start (label, True, True, 0)
+      self.vbox.pack_start (hbox, False, False, 0)
+      self.open_file_after_exit_check = gtk.CheckButton("Open rules file after exit")
+      self.open_file_after_exit_check.show()
+      hbox.pack_end (self.open_file_after_exit_check, False, False, 0)
+
       self.switchvbox = gtk.VBox()
       self.switchvbox.show()
       scrolled.add_with_viewport (self.switchvbox)
@@ -423,7 +434,8 @@ class rulesEditor(gtk.Dialog):
          f.write (sw)
 
       f.close ()
-      GPS.EditorBuffer.get(file)
+      if self.open_file_after_exit_check.get_active():
+        GPS.EditorBuffer.get(file)
       self.response(gtk.RESPONSE_NONE)
 
 def deactivate (widg):
@@ -445,9 +457,7 @@ class gnatCheckProc:
       self.locations_string = "Coding Standard violations"
       self.gnatCmd = ""
 
-   def edit(self):
-      global ruleseditor
-      prev_cmd = self.gnatCmd
+   def updateGnatCmd(self):
       self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
 
       if self.gnatCmd == "":
@@ -457,6 +467,13 @@ class gnatCheckProc:
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
          GPS.Console ("Messages").write ("Error: Could not initialize the gnatcheck module.\n")
+
+   def edit(self):
+      global ruleseditor
+      prev_cmd = self.gnatCmd
+      self.updateGnatCmd()
+
+      if self.gnatCmd == "":
          return
 
       # gnat check command changed: we reinitialize the rules list
@@ -623,6 +640,8 @@ class gnatCheckProc:
          else:
             selector.destroy()
             return;
+
+      self.updateGnatCmd()
 
       if self.gnatCmd == "":
          GPS.Console ("Messages").write ("Error: could not find gnatcheck");
@@ -798,7 +817,7 @@ def on_gps_started (hook_name):
     <submenu after="Browsers">
       <title>Coding _Standard</title>
       <menu action="edit gnatcheck rules">
-        <title>_Edit coding standard file</title>
+        <title>_Edit rules file</title>
       </menu>
       <menu action="gnatcheck root project recursive">
         <title>Check root project and _subprojects</title>
