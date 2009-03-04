@@ -8570,11 +8570,27 @@ specific to SPARK. For details of the Project menu in general,
 @itemize
 @item Select @code{Edit Project Properties} from the Project menu.
 
-@item Click the Languages tab and ensure that the following items are ticked:
-Ada, Index, Listing, Metafile, Siv, Vcg.
+@item If you want to access SPARK generated files from the GPS project explorer, click the Languages tab and ensure that the following items are ticked:
+ Ada, Index, Listing, Metafile, Siv, Vcg. Otherwise, you only need the Ada
+ language selected.
+ You may also want to add in your project file the following line for
+ each of the languages in the @code{Compiler} package:
 
-@item Click the Source Dirs tab and enable @code{Include Subdirectories}
-to ensure that VCG and SIV files are recognised properly.
+@smallexample
+package Compiler is
+   [...]
+   for Driver ("Vcg") use "";
+   for Driver ("Index") use "";
+   ...
+@end smallexample
+
+ otherwise if you build with gprbuild, you will get warning messages. Another
+ alternative is to specify @code{gnatmake} in the Preferences dialog as the
+ mutli-language builder.
+
+@item Similarly, you may want to optionally click the Source Dirs tab and
+enable @code{Include Subdirectories} so that VCG and SIV files are displayed in
+e.g. the project explorer.
 
 @item Click the Switches tab and select the Examiner tab.
 This allows you to control the following settings:
