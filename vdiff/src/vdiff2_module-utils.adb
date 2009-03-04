@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;
 
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 
@@ -33,6 +34,7 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Location_View;                 use GPS.Location_View;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 with String_Utils;                      use String_Utils;
@@ -42,6 +44,7 @@ with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module;                     use Vdiff2_Module;
 with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GPS.Editors; use GPS.Editors;
 
 package body Vdiff2_Module.Utils is
 
@@ -96,6 +99,11 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : access Diff_Head);
    --  Show a result of diff Item
+
+   procedure Show_Unified_Differences
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item   : access Diff_Head);
+   --  Show a result of diff Item as an Udiff
 
    procedure Show_Diff_Chunk
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -304,14 +312,34 @@ package body Vdiff2_Module.Utils is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
 
+      procedure Remove_Blank_And_Special (D : in out Diff_Range);
+      --  Remove blank and special lines associated with D.
+
+      ------------------------------
+      -- Remove_Blank_And_Special --
+      ------------------------------
+
+      procedure Remove_Blank_And_Special (D : in out Diff_Range) is
+      begin
+         Remove_Blank_Lines (Kernel, D.Blank_Lines_Mark);
+         if D.Special_Lines_Mark /= null then
+            Remove_Special_Lines
+              (D.Special_Lines_Mark.all.Location.Buffer,
+               D.Special_Lines_Mark.all,
+               D.Last - D.First);
+
+            Unchecked_Free (D.Special_Lines_Mark);
+         end if;
+      end Remove_Blank_And_Special;
+
    begin
       Curr_Node := First (Item.List);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range1.Blank_Lines_Mark);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range2.Blank_Lines_Mark);
-         Remove_Blank_Lines (Kernel, Curr_Chunk.Range3.Blank_Lines_Mark);
+         Remove_Blank_And_Special (Curr_Chunk.Range1);
+         Remove_Blank_And_Special (Curr_Chunk.Range2);
+         Remove_Blank_And_Special (Curr_Chunk.Range3);
          Curr_Node := Next (Curr_Node);
       end loop;
 
@@ -738,6 +766,157 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Show_Differences;
 
+   ------------------------------
+   -- Show_Unified_Differences --
+   ------------------------------
+
+   procedure Show_Unified_Differences
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Item   : access Diff_Head)
+   is
+      use Ada.Strings.Unbounded;
+
+      Ref        : constant T_Loc := Item.Ref_File;
+      File       : constant Virtual_File := Item.Files (3 - Ref);
+      List       : constant Diff_List := Item.List;
+      Curr_Node  : Diff_List_Node := First (List);
+      Curr_Chunk : Diff_Chunk_Access;
+      Buf        : constant Editor_Buffer'Class := Get
+        (Get_Buffer_Factory (Kernel).all, File, Open => True);
+      Refbuf     : constant Editor_Buffer'Class := Get
+        (Get_Buffer_Factory (Kernel).all, Item.Files (Ref), Open => False);
+
+      function Get_Line
+        (Buf : Editor_Buffer'Class; Line : Integer) return String;
+      --  Return the contents of Line.
+      procedure Show_Deleted;
+      procedure Show_Added;
+      --  Display the deleted/added lines in the current chunk.
+
+      --------------
+      -- Get_Line --
+      --------------
+
+      function Get_Line
+        (Buf : Editor_Buffer'Class; Line : Integer) return String
+      is
+         Start : constant Editor_Location'Class := Buf.New_Location (Line, 1);
+         The_End : constant Editor_Location'Class := Start.End_Of_Line;
+      begin
+         return Buf.Get_Chars (Start, The_End);
+      end Get_Line;
+
+      ------------------
+      -- Show_Deleted --
+      ------------------
+
+      procedure Show_Deleted is
+         Original : Unbounded_String;
+         Arr      : Line_Information_Data;
+
+      begin
+         Arr := new Line_Information_Array
+           (Curr_Chunk.Range1.First .. Curr_Chunk.Range1.Last - 1);
+
+         for L in Curr_Chunk.Range1.First ..
+           Curr_Chunk.Range1.Last - 1
+         loop
+            Arr (L).Text := new String'("-");
+            Append (Original, Get_Line (Refbuf, L));
+         end loop;
+
+         declare
+            --  Strip last ASCII.LF in Original
+            O : constant String := To_String (Original);
+         begin
+            Curr_Chunk.Range1.Special_Lines_Mark := new Editor_Mark'Class'
+              (Buf.Add_Special_Line
+                 (Start_Line => Curr_Chunk.Range2.First,
+                  Text       => O (O'First .. O'Last - 1),
+                  Category   => Remove_Style,
+                  Name       => "",
+                  Column_Id  => Id_Col_Vdiff,
+                  Info       => Arr));
+         end;
+
+         if Arr'Length = 1 then
+            Insert_Location
+              (Kernel, -"Visual differences", File,
+               "1 line removed", Curr_Chunk.Range2.First - 1, 1);
+         else
+            Insert_Location
+              (Kernel, -"Visual differences", File,
+               Image (Arr'Length) & " lines removed",
+               Curr_Chunk.Range2.First - 1, 1);
+         end if;
+
+         Unchecked_Free (Arr);
+      end Show_Deleted;
+
+      ----------------
+      -- Show_Added --
+      ----------------
+
+      procedure Show_Added is
+         Arr : Line_Information_Data;
+      begin
+         Arr := new Line_Information_Array
+           (Curr_Chunk.Range2.First .. Curr_Chunk.Range2.Last - 1);
+
+         for L in Arr'Range loop
+            Arr (L).Text := new String'("+");
+         end loop;
+
+         Highlight_Line
+           (Kernel, Item.Files (2),
+            Curr_Chunk.Range2.First,
+            Append_Style,
+            Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First);
+
+         Buf.Add_File_Information (Id_Col_Vdiff, Arr);
+
+         if Arr'Length = 1 then
+            Insert_Location
+              (Kernel, -"Visual differences", File,
+               "1 line added", Curr_Chunk.Range2.First, 1);
+         else
+            Insert_Location
+              (Kernel, -"Visual differences", File,
+               Image (Arr'Length) & " lines added",
+               Curr_Chunk.Range2.First, 1);
+         end if;
+
+         Unchecked_Free (Arr);
+      end Show_Added;
+
+   begin
+      Create_Line_Information_Column
+        (Kernel, Item.Files (3 - Ref), Id_Col_Vdiff, True, True);
+
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
+         Curr_Chunk := Data (Curr_Node);
+
+         case Curr_Chunk.Range2.Action is
+            when Append =>
+               Show_Added;
+
+            when Change =>
+               Show_Deleted;
+               Show_Added;
+
+            when Delete =>
+               Show_Deleted;
+
+            when Nothing => null;
+         end case;
+
+         Curr_Node := Next (Curr_Node);
+      end loop;
+
+      --  ??? This needs to be implemented!
+      --  Refbuf.Close;
+   end Show_Unified_Differences;
+
    ------------------------
    --  Show_Differences3 --
    ------------------------
@@ -755,7 +934,12 @@ package body Vdiff2_Module.Utils is
       Register_Highlighting (Kernel);
 
       if Item.Files (3) = GNATCOLL.VFS.No_File then
-         Show_Differences (Kernel, Item);
+         if Diff_Mode.Get_Pref = Unified then
+            Show_Unified_Differences (Kernel, Item);
+         else
+            Show_Differences (Kernel, Item);
+         end if;
+
          return;
       end if;
 

@@ -434,9 +434,7 @@ package body Vdiff2_Module.Callback is
       end if;
 
       Node :=
-        Get_Diff_Node
-          (D.File,
-           VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+        Get_Diff_Node (D.File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       if Node = Diff_Head_List.Null_Node then
          return;
@@ -573,6 +571,43 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Data (Node));
+      Free (Root_Command (Cmd.all));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Remove_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Node          : Diff_Head_List.List_Node;
+      Selected_File : Virtual_File;
+      Cmd           : Diff_Command_Access;
+   begin
+      Create
+        (Cmd,
+         Get_Kernel (Vdiff_Module_ID.all),
+         VDiff2_Module (Vdiff_Module_ID).List_Diff,
+         Unhighlight_Difference'Access);
+
+      Selected_File :=
+        Create (Get_Ref_Filename (File_Information (Context.Context)));
+
+      Node := Get_Diff_Node
+        (Selected_File,
+         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+
+      Unchecked_Execute (Cmd, Data (Node));
+
+      Remove_Nodes
+        (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+         Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
+         Node);
+
       Free (Root_Command (Cmd.all));
       return Commands.Success;
    end Execute;

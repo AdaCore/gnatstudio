@@ -669,7 +669,8 @@ package body Diff_Utils2 is
                   Current_Chunk := new Diff_Chunk'
                     (Range1 => (First => Old_Range, Last => Old_Range + 1,
                                 Action           => Action,
-                                Blank_Lines_Mark => Invalid_Mark),
+                                Blank_Lines_Mark => Invalid_Mark,
+                                Special_Lines_Mark => null),
                      Range2 => Null_Range,
                      Range3 => Null_Range,
                      Location  => 0,
@@ -685,7 +686,8 @@ package body Diff_Utils2 is
                   Current_Chunk := new Diff_Chunk'
                     (Range1 => (First => Old_Range - 1, Last => Old_Range,
                                 Action           => Action,
-                                Blank_Lines_Mark => Invalid_Mark),
+                                Blank_Lines_Mark => Invalid_Mark,
+                                Special_Lines_Mark => null),
                      Range2 => Null_Range,
                      Range3 => Null_Range,
                      Location  => 0,

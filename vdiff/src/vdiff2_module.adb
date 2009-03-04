@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -287,6 +287,13 @@ package body Vdiff2_Module is
 
       Filter := new In_Diff_List_Filter;
       Filter_3_Files := new In_3Diff_List_Filter;
+
+      Command := new Remove_Difference_Command;
+      Register_Contextual_Menu
+        (Kernel, "Vdiff remove difference",
+         Label  => -"Visual Diff/Close",
+         Action => Command,
+         Filter => Filter);
 
       Command := new Recompute_Diff_Command;
       Register_Contextual_Menu

@@ -51,6 +51,7 @@ with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
+with GPS.Editors; use GPS.Editors;
 
 package body VCS.Generic_VCS is
 

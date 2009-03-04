@@ -96,6 +96,7 @@ with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Editors; use GPS.Editors;
 
 package body GVD_Module is
    Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";

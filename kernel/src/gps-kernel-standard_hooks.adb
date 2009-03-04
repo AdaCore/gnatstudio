@@ -19,12 +19,7 @@
 
 with Ada.Command_Line;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with System;            use System;
-
-with Gdk.Pixbuf;        use Gdk.Pixbuf;
-
-with Commands;          use Commands;
 with GPS.Kernel;        use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Traces;            use Traces;
@@ -114,20 +109,6 @@ package body GPS.Kernel.Standard_Hooks is
       if X /= null then
          Free (X.all);
          Unchecked_Free (X);
-      end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Line_Information_Record) is
-   begin
-      Free (X.Text);
-      Free (X.Tooltip_Text);
-
-      if X.Associated_Command /= null then
-         Unref (X.Associated_Command);
       end if;
    end Free;
 

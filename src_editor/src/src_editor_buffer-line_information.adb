@@ -84,6 +84,16 @@ package body Src_Editor_Buffer.Line_Information is
       Fun    : Line_Processor);
    --  Apply Fun once to all hidden lines, in order.
 
+   procedure Add_Side_Information
+     (Buffer         : access Source_Buffer_Record'Class;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      At_Buffer_Line : Buffer_Line_Type);
+   --  Factor code between Add_File_Information and Add_Special_Lines.
+   --  If At_Buffer_Line is 0, insert the information at the editable lines
+   --  indicated by the indexes of Info. Otherwise, add them at the buffer
+   --  lines starting at At_Buffer_Line.
+
    -------------------------
    -- Foreach_Hidden_Line --
    -------------------------
@@ -105,7 +115,7 @@ package body Src_Editor_Buffer.Line_Information is
       function Recurse_Explore
         (L : Editable_Line_Type) return Editable_Line_Type
       is
-         C        : Cursor;
+         C        : Lines_List.Cursor;
          U        : Universal_Line;
          Prev     : Editable_Line_Type;
       begin
@@ -522,8 +532,21 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Add_File_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Box        : Gtk_Widget;
-      Info       : Standard_Hooks.Line_Information_Data)
+      Info       : Line_Information_Data)
+   is
+   begin
+      Add_Side_Information (Buffer, Identifier, Info, 0);
+   end Add_File_Information;
+
+   --------------------------
+   -- Add_Side_Information --
+   --------------------------
+
+   procedure Add_Side_Information
+     (Buffer         : access Source_Buffer_Record'Class;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      At_Buffer_Line : Buffer_Line_Type)
    is
       Column : Integer := -1;
       Num    : Gint := 1;
@@ -534,6 +557,7 @@ package body Src_Editor_Buffer.Line_Information is
       Found  : Boolean := False;
 
       Editable_Line : Editable_Line_Type;
+      BL : Buffer_Line_Type;
 
       Columns_Config : Columns_Config_Access;
 
@@ -582,7 +606,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  If we reach this point, the info corresponds to line information
 
-      Layout := Create_Pango_Layout (Box);
+      Layout := Create_Pango_Layout
+        (Gtk_Widget (Get_Main_Window (Buffer.Kernel)));
       Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
 
       --  Compute the maximum width of the items to add.
@@ -641,22 +666,20 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  The column has been found: update the stored data
 
-      for K in Info'Range loop
-         Editable_Line := Editable_Line_Type (K);
+      if At_Buffer_Line = 0 then
+         for K in Info'Range loop
+            Editable_Line := Editable_Line_Type (K);
 
-         if Editable_Line /= 0 then
-            case Buffer.Editable_Lines (Editable_Line).Where is
+            if Editable_Line /= 0 then
+               case Buffer.Editable_Lines (Editable_Line).Where is
                when In_Buffer =>
-                  declare
-                     BL : constant Buffer_Line_Type :=
-                       Buffer.Editable_Lines (Editable_Line).Buffer_Line;
-                  begin
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Info :=
-                       new Line_Information_Record'(Info (K));
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
-                       Integer (Widths (K));
-                     Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
-                  end;
+                  BL := Buffer.Editable_Lines (Editable_Line).Buffer_Line;
+                  Buffer.Line_Data (BL).Side_Info_Data (Column).Info :=
+                    new Line_Information_Record'(Info (K));
+                  Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
+                    Integer (Widths (K));
+                  Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
+
                when In_Mark =>
                   Buffer.Editable_Lines
                     (Editable_Line).UL.Data.Side_Info_Data (Column).Info :=
@@ -667,9 +690,19 @@ package body Src_Editor_Buffer.Line_Information is
                   Buffer.Editable_Lines
                     (Editable_Line).UL.Data.Side_Info_Data
                     (Column).Set := True;
-            end case;
-         end if;
-      end loop;
+               end case;
+            end if;
+         end loop;
+      else
+         for K in Info'Range loop
+            BL := At_Buffer_Line + Buffer_Line_Type (K - Info'First);
+            Buffer.Line_Data (BL).Side_Info_Data (Column).Info :=
+              new Line_Information_Record'(Info (K));
+            Buffer.Line_Data (BL).Side_Info_Data (Column).Width :=
+              Integer (Widths (K));
+            Buffer.Line_Data (BL).Side_Info_Data (Column).Set := True;
+         end loop;
+      end if;
 
       --  If the line info width is bigger than the column width, resize the
       --  column and all columns.
@@ -688,7 +721,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Changed (Buffer);
       Unref (Layout);
-   end Add_File_Information;
+   end Add_Side_Information;
 
    -------------------------
    -- Side_Column_Changed --
@@ -921,7 +954,10 @@ package body Src_Editor_Buffer.Line_Information is
       EL                 : Editable_Line_Type;
       Highlight_Category : Integer;
       Text               : String;
-      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark
    is
       Iter        : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
@@ -974,6 +1010,8 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Line_Data (J).Editable_Line := 0;
          Buffer.Line_Data (J).Highlight_Category := Highlight_Category;
          Buffer.Line_Data (J).Highlight_In := (True, True);
+
+         Create_Side_Info (Buffer, J);
       end loop;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Line - 1), 0);
@@ -989,6 +1027,14 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Modifying_Real_Lines := False;
 
+      if Info /= null then
+         Add_Side_Information
+           (Buffer         => Buffer,
+            Identifier     => Column_Id,
+            Info           => Info,
+            At_Buffer_Line => Line);
+      end if;
+
       return Mark;
    end Add_Blank_Lines;
 
@@ -1001,11 +1047,15 @@ package body Src_Editor_Buffer.Line_Information is
       Line               : Editable_Line_Type;
       Highlight_Category : Integer;
       Number             : Natural;
-      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark
    is
       LFs : constant String (1 .. Number - 1) := (others => ASCII.LF);
    begin
-      return Add_Special_Lines (Buffer, Line, Highlight_Category, LFs, Name);
+      return Add_Special_Lines
+        (Buffer, Line, Highlight_Category, LFs, Name, Column_Id, Info);
    end Add_Special_Blank_Lines;
 
    -----------------------
@@ -1017,7 +1067,9 @@ package body Src_Editor_Buffer.Line_Information is
       Line               : Editable_Line_Type;
       Highlight_Category : Integer;
       Text               : String;
-      Name               : String) return Gtk_Text_Mark
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data) return Gtk_Text_Mark
    is
       M : Gtk_Text_Mark;
       B : Buffer_Line_Type;
@@ -1025,7 +1077,7 @@ package body Src_Editor_Buffer.Line_Information is
       Unfold_Line (Buffer, Line);
       B := Buffer.Editable_Lines (Line).Buffer_Line;
       M := Add_Blank_Lines
-        (Buffer, B, Line, Highlight_Category, Text, Name);
+        (Buffer, B, Line, Highlight_Category, Text, Name, Column_Id, Info);
 
       return M;
    end Add_Special_Lines;
@@ -1656,7 +1708,7 @@ package body Src_Editor_Buffer.Line_Information is
       Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
 
       use Lines_List;
-      C              : Cursor;
+      C              : Lines_List.Cursor;
       U              : Universal_Line;
 
       Current        : Editable_Line_Type;
@@ -1752,7 +1804,9 @@ package body Src_Editor_Buffer.Line_Information is
                      EL                 => Current + 1,
                      Highlight_Category => 0,
                      Text               => U.Text.all,
-                     Name               => "");
+                     Name               => "",
+                     Column_Id          => "",
+                     Info               => null);
 
                   --  If the line previously contained a mark, move it to the
                   --  location of the new mark.

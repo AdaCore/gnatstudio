@@ -825,6 +825,18 @@ package body GPS.Kernel.Preferences is
 
       -- Diff_Utils --
 
+      Diff_Mode := Vdiff_Modes_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "Diff-Utils-Mode",
+         Label   => "Mode",
+         Doc     => -("How diffs are represented in GPS:" & ASCII.LF
+           & " - Unified: the differences are shown directly in the editor,"
+           & ASCII.LF
+           & " - Side_By_Side: the differences are shown in a separate editor."
+          ),
+         Default => Side_By_Side,
+         Page    => -"Visual diff");
+
       Diff_Cmd := Create
         (Manager => Kernel.Preferences,
          Name    => "Diff-Utils-Diff",

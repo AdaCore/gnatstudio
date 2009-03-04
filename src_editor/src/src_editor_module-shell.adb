@@ -1671,7 +1671,7 @@ package body Src_Editor_Module.Shell is
                      Add_Special_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
-                        Highlight_Category, Number, ""));
+                        Highlight_Category, Number, "", "", null));
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
             else
@@ -2472,7 +2472,7 @@ package body Src_Editor_Module.Shell is
                   Editable_Line_Type (Line),
                   Highlight_Category,
                   Text,
-                  Name.all);
+                  Name.all, "", null);
 
                Free (Name);
 

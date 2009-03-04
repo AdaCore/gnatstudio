@@ -27,8 +27,6 @@ with Gtk.Widget;    use Gtk.Widget;
 
 with Pango.Layout;  use Pango.Layout;
 
-with GPS.Kernel.Standard_Hooks;
-
 package Src_Editor_Buffer.Line_Information is
 
    procedure Create_Line_Information_Column
@@ -45,8 +43,7 @@ package Src_Editor_Buffer.Line_Information is
    procedure Add_File_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Box        : Gtk_Widget;
-      Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
+      Info       : GPS.Editors.Line_Information_Data);
    --  Add the line information to the Buffer.
    --  User must not free Info.
 
@@ -85,7 +82,10 @@ package Src_Editor_Buffer.Line_Information is
       EL                 : Editable_Line_Type;
       Highlight_Category : Integer;
       Text               : String;
-      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Text at line Line, as a special line.
    --  Blank lines cannot be edited, and are not saved on disk.
    --  EL indicates the first editable line which will be after the insertion
@@ -95,7 +95,10 @@ package Src_Editor_Buffer.Line_Information is
       Line               : Editable_Line_Type;
       Highlight_Category : Integer;
       Number             : Natural;
-      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank special lines.
 
    function Add_Special_Lines
@@ -103,7 +106,10 @@ package Src_Editor_Buffer.Line_Information is
       Line               : Editable_Line_Type;
       Highlight_Category : Integer;
       Text               : String;
-      Name               : String) return Gtk.Text_Mark.Gtk_Text_Mark;
+      Name               : String;
+      Column_Id          : String;
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Same as Add_Blank_Lines above, but return a Marker_Id for the created
    --  mark.
 

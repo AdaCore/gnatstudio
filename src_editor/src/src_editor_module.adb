@@ -157,16 +157,6 @@ package body Src_Editor_Module is
    --  Save the current editor to Name, or its associated filename if Name is
    --  null.
 
-   function Create_File_Editor
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Create_New : Boolean := True) return Source_Editor_Box;
-   --  Create a new text editor that edits File.
-   --  If File is the empty string, or the file doesn't exist and Create_New is
-   --  True, then an empty editor is created.
-   --  No check is done to make sure that File is not already edited
-   --  elsewhere. The resulting editor is not put in the MDI window.
-
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line  : Editable_Line_Type;

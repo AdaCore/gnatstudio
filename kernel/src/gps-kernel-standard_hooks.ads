@@ -18,17 +18,14 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 with System;
 
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-with GNAT.Strings;
 with Basic_Types;
 
+with GPS.Editors;        use GPS.Editors;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with Gdk.Pixbuf;
-with Commands;
 with Entities;
 with Projects;
 
@@ -298,24 +295,6 @@ package GPS.Kernel.Standard_Hooks is
    --  File_Line_Action_Hook --
    ----------------------------
 
-   type Line_Information_Record is record
-      Text               : GNAT.Strings.String_Access := null;
-      Tooltip_Text       : GNAT.Strings.String_Access := null;
-      --  A text to be displayed in a tooltip
-      Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
-      Associated_Command : Commands.Command_Access := null;
-   end record;
-   --  Text must be a valid UTF8 string, which may contain markups in the pango
-   --  markup format.
-
-   Empty_Line_Information : constant Line_Information_Record;
-
-   type Line_Information_Array is array (Integer range <>)
-     of Line_Information_Record;
-
-   type Line_Information_Data is access Line_Information_Array;
-   for Line_Information_Data'Size use Standard'Address_Size;
-
    type File_Line_Hooks_Args (Identifier_Length : Natural)
      is new Hooks_Data with
    record
@@ -372,12 +351,6 @@ package GPS.Kernel.Standard_Hooks is
       Label      : String);
    --  Add a label in the editors for File.
    --  See File_Line_Action_Hook
-
-   procedure Free (X : in out Line_Information_Record);
-   --  Free memory associated with X
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Information_Array, Line_Information_Data);
 
    function To_Line_Information is new Ada.Unchecked_Conversion
      (System.Address, Line_Information_Data);
@@ -505,9 +478,6 @@ package GPS.Kernel.Standard_Hooks is
    --  Call the file_status_changed hook
 
 private
-
-   Empty_Line_Information : constant Line_Information_Record :=
-                              (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
 
    overriding function Create_Callback_Data
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;

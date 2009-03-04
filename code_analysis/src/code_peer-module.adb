@@ -903,7 +903,7 @@ package body Code_Peer.Module is
                   Sort_In_File => True);
 
                Review :=
-                 new GPS.Kernel.Standard_Hooks.Line_Information_Record'
+                 new GPS.Editors.Line_Information_Record'
                    (Text               => null,
                     Tooltip_Text       => new String'("Review message"),
                     Image              =>

@@ -19,6 +19,8 @@
 
 package body GPS.Editors is
 
+   use Commands;
+
    --  Dummy bodies for implementation of Nil values.
 
    procedure Add_Special_Line
@@ -26,10 +28,13 @@ package body GPS.Editors is
       Start_Line : Integer;
       Text       : String;
       Category   : String := "";
-      Name       : String := "")
+      Name       : String := "";
+      Column_Id  : String := "";
+      Info       : Line_Information_Data := null)
    is
       Mark : constant Editor_Mark'Class :=
-               This.Add_Special_Line (Start_Line, Text, Category, Name);
+        This.Add_Special_Line
+          (Start_Line, Text, Category, Name, Column_Id, Info);
       pragma Unreferenced (Mark);
 
    begin
@@ -165,9 +170,12 @@ package body GPS.Editors is
       Start_Line : Integer;
       Text       : String;
       Category   : String := "";
-      Name       : String := "") return Editor_Mark'Class
+      Name       : String := "";
+      Column_Id  : String := "";
+      Info       : Line_Information_Data := null) return Editor_Mark'Class
    is
-      pragma Unreferenced (This, Start_Line, Text, Category, Name);
+      pragma Unreferenced
+        (This, Start_Line, Text, Category, Name, Column_Id, Info);
    begin
       return Nil_Editor_Mark;
    end Add_Special_Line;
@@ -329,5 +337,19 @@ package body GPS.Editors is
    begin
       return Style.Speedbar;
    end In_Speedbar;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Information_Record) is
+   begin
+      Free (X.Text);
+      Free (X.Tooltip_Text);
+
+      if X.Associated_Command /= null then
+         Unref (X.Associated_Command);
+      end if;
+   end Free;
 
 end GPS.Editors;

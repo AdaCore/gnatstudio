@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2008, AdaCore                     --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -242,7 +242,7 @@ package body Code_Coverage.Xcov is
    overriding function Line_Coverage_Info
      (Coverage : Xcov_Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Kernel.Standard_Hooks.Line_Information_Record
+      return GPS.Editors.Line_Information_Record
    is
       pragma Unreferenced (Bin_Mode);
       --  It is used by the gcov plugin.
@@ -255,7 +255,7 @@ package body Code_Coverage.Xcov is
       Partially_Covered_Color : constant String := "orange";
       Fully_Covered_Color     : constant String := "green";
 
-      Result : GPS.Kernel.Standard_Hooks.Line_Information_Record;
+      Result : GPS.Editors.Line_Information_Record;
 
    begin
       case Coverage.Status is

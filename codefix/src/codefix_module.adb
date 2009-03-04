@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,6 +54,7 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 with Glib;                      use Glib;
+with GPS.Editors;               use GPS.Editors;
 
 package body Codefix_Module is
 

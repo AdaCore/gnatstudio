@@ -106,6 +106,10 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Multi_Language_Builder_Policy);
    --  The List of possible multi-language builders
 
+   type Vdiff_Modes is (Unified, Side_By_Side);
+   package Vdiff_Modes_Prefs is new
+     Default_Preferences.Enums.Generics (Vdiff_Modes);
+
    package Dispatching_Menu_Policy_Prefs is new
      Default_Preferences.Enums.Generics
        (Entities.Queries.Dispatching_Menu_Policy);
@@ -152,6 +156,7 @@ package GPS.Kernel.Preferences is
    Warning_Pattern_Index          : Integer_Preference;
 
    -- Diff_Utils --
+   Diff_Mode           : Vdiff_Modes_Prefs.Preference;
    Diff_Cmd            : String_Preference;
    Patch_Cmd           : String_Preference;
    Old_Vdiff           : Boolean_Preference;

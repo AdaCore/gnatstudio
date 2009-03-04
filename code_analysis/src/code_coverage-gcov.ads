@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2008, AdaCore                     --
+--                 Copyright (C) 2008-2009, AdaCore                  --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.VFS;
-with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;
+with GPS.Editors;
 
 package Code_Coverage.Gcov is
 
@@ -37,7 +38,7 @@ package Code_Coverage.Gcov is
    overriding function Line_Coverage_Info
      (Coverage : Gcov_Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Kernel.Standard_Hooks.Line_Information_Record;
+      return GPS.Editors.Line_Information_Record;
 
    overriding procedure Add_Location_If_Uncovered
      (Coverage    : Gcov_Line_Coverage;

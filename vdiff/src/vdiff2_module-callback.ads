@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2001-2008, AdaCore               --
+--                    Copyright (C) 2001-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,6 +64,12 @@ package Vdiff2_Module.Callback is
    type Hide_Difference_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Hide_Difference_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Hide the highlighting and free the difference list
+
+   type Remove_Difference_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Remove_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Hide the highlighting and free the difference list
 

@@ -50,6 +50,8 @@ with Src_Highlighting;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 
+with GPS.Editors; use GPS.Editors;
+
 package Src_Editor_Buffer is
 
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;

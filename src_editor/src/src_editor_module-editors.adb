@@ -181,7 +181,9 @@ package body Src_Editor_Module.Editors is
       Start_Line : Integer;
       Text       : String;
       Category   : String := "";
-      Name       : String := "") return Editor_Mark'Class;
+      Name       : String := "";
+      Column_Id  : String := "";
+      Info       : Line_Information_Data := null) return Editor_Mark'Class;
 
    overriding procedure Remove_Special_Lines
      (This  : Src_Editor_Buffer;
@@ -258,6 +260,11 @@ package body Src_Editor_Module.Editors is
      (This       : Src_Editor_Buffer;
       Constructs : out Language.Construct_List;
       Timestamp  : out Natural);
+
+   overriding procedure Add_File_Information
+     (This       : Src_Editor_Buffer;
+      Identifier : String;
+      Info       : Line_Information_Data);
 
    ---------------------
    -- Src_Editor_View --
@@ -435,6 +442,8 @@ package body Src_Editor_Module.Editors is
          if Open then
             Box := Open_File
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
+         else
+            Box := Create_File_Editor (This.Kernel, File, False);
          end if;
       else
          Box := Get_Source_Box_From_MDI (Child);
@@ -861,7 +870,9 @@ package body Src_Editor_Module.Editors is
       Start_Line : Integer;
       Text       : String;
       Category   : String := "";
-      Name       : String := "") return Editor_Mark'Class
+      Name       : String := "";
+      Column_Id  : String := "";
+      Info       : Line_Information_Data := null) return Editor_Mark'Class
    is
       Mark : Gtk_Text_Mark;
    begin
@@ -886,7 +897,9 @@ package body Src_Editor_Module.Editors is
                Editable_Line_Type (Start_Line),
                Highlight_Category,
                Text,
-               Name);
+               Name,
+               Column_Id,
+               Info);
 
             return Create_Editor_Mark (This, Mark);
          end;
@@ -1360,6 +1373,22 @@ package body Src_Editor_Module.Editors is
            (This.Buffer, not Read_Only, Explicit => True);
       end if;
    end Set_Read_Only;
+
+   --------------------------
+   -- Add_File_Information --
+   --------------------------
+
+   overriding procedure Add_File_Information
+     (This       : Src_Editor_Buffer;
+      Identifier : String;
+      Info       : Line_Information_Data) is
+   begin
+      if This.Buffer = null then
+         return;
+      end if;
+
+      Add_File_Information (This.Buffer, Identifier, Info);
+   end Add_File_Information;
 
    --------------------
    -- Get_Constructs --

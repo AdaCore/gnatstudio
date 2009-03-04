@@ -223,7 +223,7 @@ package body Src_Editor_Buffer.Debug is
         (L : Editable_Line_Type; Level : Natural) return Editable_Line_Type
       is
          use Lines_List;
-         C        : Cursor;
+         C        : Lines_List.Cursor;
          U        : Universal_Line;
          Prev     : Editable_Line_Type;
          R        : Unbounded_String;

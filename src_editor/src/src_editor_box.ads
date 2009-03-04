@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,12 +46,12 @@ with Language;
 with Language_Handlers;
 with GPS.Kernel;
 with GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with GNATCOLL.VFS;
 with Entities;
 with Commands.Interactive;  use Commands, Commands.Interactive;
+with GPS.Editors;
 
 package Src_Editor_Box is
 
@@ -210,7 +210,7 @@ package Src_Editor_Box is
    --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).
 
-   procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
+   overriding procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view
 
    procedure Clear_Subprogram_Name
@@ -411,7 +411,7 @@ package Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : GPS.Kernel.Standard_Hooks.Line_Information_Data);
+      Info       : GPS.Editors.Line_Information_Data);
    --  See GPS.Kernel.Modules for more information
 
    procedure Create_Line_Information_Column

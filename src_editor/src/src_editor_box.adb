@@ -2512,12 +2512,11 @@ package body Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : Standard_Hooks.Line_Information_Data) is
+      Info       : GPS.Editors.Line_Information_Data) is
    begin
       Add_File_Information
         (Editor.Source_Buffer,
          Identifier,
-         Gtk_Widget (Editor.Source_View),
          Info);
    end Add_File_Information;
 

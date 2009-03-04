@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,8 @@ with GNAT.Strings;                          use GNAT.Strings;
 
 with Projects;                              use Projects;
 with GNATCOLL.VFS;                          use GNATCOLL.VFS;
-with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;
+with GPS.Editors;
 
 package Code_Analysis is
 
@@ -76,7 +77,7 @@ package Code_Analysis is
    function Line_Coverage_Info
      (Coverage : Line_Coverage;
       Bin_Mode : Boolean := False)
-      return GPS.Kernel.Standard_Hooks.Line_Information_Record is abstract;
+      return GPS.Editors.Line_Information_Record is abstract;
    --  Return a String_Access pointing on a message describing the coverage
    --  state of the line from which the Coverage record had been extracted
    --  If Bin_Mode is True, then the returned messages can only be between

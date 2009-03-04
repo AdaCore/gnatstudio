@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,7 @@ with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Generic_List;
 with GPS.Kernel;         use GPS.Kernel;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GPS.Editors;        use GPS.Editors;
 
 package Diff_Utils2 is
 
@@ -38,14 +39,19 @@ package Diff_Utils2 is
 
    Invalid_Mark : constant Natural := Natural'Last;
 
+   type Editor_Mark_Access is access all Editor_Mark'Class;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Editor_Mark'Class, Editor_Mark_Access);
+
    type Diff_Range is record
       First            : Natural := 0;
       Last             : Natural := 0;
       Action           : Diff_Action := Nothing;
       Blank_Lines_Mark : Natural := Invalid_Mark;
+      Special_Lines_Mark : Editor_Mark_Access;
    end record;
 
-   Null_Range : constant Diff_Range := (0, 0, Nothing, 0);
+   Null_Range : constant Diff_Range := (0, 0, Nothing, 0, null);
 
    type T_VRange  is array (1 .. 3) of Diff_Range;
    type T_VStr    is array (1 .. 3) of String_Access;
