@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 4.3.3
 
+- I304-012: Issues with gnatcheck in GPS
+  Problem:    When using the contextual menu "Check Coding Standard of file in
+              project" or when using the Tools->Coding Standard->Check* menus,
+              GPS reports that gnatcheck is not available.
+  Workaround: Editing first the coding standard file (menu Tools->Coding
+              Standard->Edit coding standard) will make GPS being able to
+              run gnatcheck.
+
 - I213-026: Crash while doing search & replace on Windows
   Problem:    When doing a search and replace, at the end of the search, if
               the user answers yes to the popup asking if he wants to start
