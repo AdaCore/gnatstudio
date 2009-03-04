@@ -188,7 +188,10 @@ package Projects is
       Including_Libraries : Boolean := True;
       Xrefs_Dirs          : Boolean := False) return Filesystem_String;
    --  Return the object path for this project. If Recursive is True, it also
-   --  includes the object path for all imported projects.
+   --  includes the object path for all imported projects. Multiple directory
+   --  can be returned even when not in recursive mode, since compiling a
+   --  library project will impact both its object dir and its library
+   --  directory. Both are returned.
    --  The empty string is returned if the project doesn't have any object
    --  directory (i.e. the user explicitely set it to the empty string).
    --  If an Xrefs Subdir is set in the project registry to a non-empty string,
