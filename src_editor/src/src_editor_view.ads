@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,6 +34,7 @@ with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 
+with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -74,8 +75,7 @@ package Src_Editor_View is
 
    procedure Scroll_To_Cursor_Location
      (View      : access Source_View_Record;
-      Centering : Src_Editor_Buffer.Centering_Type :=
-        Src_Editor_Buffer.Minimal);
+      Centering : Centering_Type := Minimal);
    --  Scroll the Source View if the position of the insert cursor is not
    --  within the part of the text currently visible.
 

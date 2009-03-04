@@ -42,6 +42,7 @@ with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
 
 with Basic_Types;               use Basic_Types;
 with Commands;                  use Commands;
+with GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
@@ -209,20 +210,11 @@ package Src_Editor_Buffer is
    pragma Inline (Is_Valid_Position);
    --  Same as above
 
-   type Centering_Type is (Minimal, Center, With_Margin);
-   --  Indicates the behaviour when scrolling a text view to reveal the cursor:
-   --    - Minimal indicates that minimal scrolling should be performed
-   --    - Center indicates that the cursor should be placed in the exact
-   --      middle of the view
-   --    - With_Margin indicates that minimal scrolling should occur in order
-   --      to place the cursor onscreen, with a margin above and below the
-   --      cursor.
-
    procedure Set_Cursor_Position
      (Buffer    : access Source_Buffer_Record;
       Line      : Editable_Line_Type;
       Column    : Character_Offset_Type;
-      Centering : Centering_Type := Center;
+      Centering : GPS.Editors.Centering_Type := GPS.Editors.Center;
       Internal  : Boolean);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the
@@ -942,7 +934,7 @@ private
      (Buffer    : access Source_Buffer_Record;
       Line      : Gint;
       Column    : Gint;
-      Centering : Centering_Type;
+      Centering : GPS.Editors.Centering_Type;
       Internal  : Boolean);
    --  Move the insert cursor to the given position.
    --  If, following this call, the cursor location needs to be displayed, the

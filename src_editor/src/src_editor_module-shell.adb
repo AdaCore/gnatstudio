@@ -49,6 +49,7 @@ with Pango.Enums;               use Pango.Enums;
 with Casing_Exceptions;         use Casing_Exceptions;
 with Commands;                  use Commands;
 with Find_Utils;                use Find_Utils;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;

@@ -45,6 +45,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Basic_Types;               use Basic_Types;
 with File_Utils;                use File_Utils;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
+with GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -1654,7 +1655,7 @@ package body Src_Contexts is
                  (Get_Buffer (Editor),
                   Context.End_Line,
                   Context.End_Column,
-                  With_Margin,
+                  GPS.Editors.With_Margin,
                   Internal => True);
 
                Save_Cursor_Position (Get_View (Editor));

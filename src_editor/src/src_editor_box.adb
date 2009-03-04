@@ -64,6 +64,7 @@ with Commands.Editor;           use Commands.Editor;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with Find_Utils;                use Find_Utils;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;

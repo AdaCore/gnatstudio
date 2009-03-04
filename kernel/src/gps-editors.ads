@@ -424,13 +424,25 @@ package GPS.Editors is
    --  Scrolls the view so that the location is centered. By default, the
    --  editor is centered around the location of the cursor.
 
+   type Centering_Type is (Minimal, Center, With_Margin);
+   --  Indicates the behaviour when scrolling a text view to reveal the cursor:
+   --    - Minimal indicates that minimal scrolling should be performed
+   --    - Center indicates that the cursor should be placed in the exact
+   --      middle of the view
+   --    - With_Margin indicates that minimal scrolling should occur in order
+   --      to place the cursor onscreen, with a margin above and below the
+   --      cursor.
+
    procedure Cursor_Goto
      (This       : Editor_View;
       Location   : Editor_Location'Class;
-      Raise_View : Boolean := False) is abstract;
+      Raise_View : Boolean := False;
+      Centering  : Centering_Type := With_Margin) is abstract;
    --  Moves the cursor at the given location. Each view of a particular buffer
    --  has its own cursor position, which is where characters typed by the user
    --  will be inserted.
+   --  The view is scrolled to make the cursor visible according to the
+   --  specified policy
 
    function Cursor
      (This : Editor_View) return Editor_Location'Class is abstract;
@@ -632,7 +644,8 @@ private
    overriding procedure Cursor_Goto
      (This       : Dummy_Editor_View;
       Location   : Editor_Location'Class;
-      Raise_View : Boolean := False) is null;
+      Raise_View : Boolean := False;
+      Centering  : Centering_Type := With_Margin) is null;
 
    overriding function Cursor
      (This : Dummy_Editor_View) return Editor_Location'Class;

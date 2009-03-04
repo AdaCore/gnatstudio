@@ -25,6 +25,7 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body Commands.Editor is

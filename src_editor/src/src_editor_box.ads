@@ -44,6 +44,7 @@ with Gtk.Text_Mark;
 with Basic_Types;           use Basic_Types;
 with Language;
 with Language_Handlers;
+with GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Modules;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
@@ -176,7 +177,7 @@ package Src_Editor_Box is
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean := True;
-      Centering   : Centering_Type := Minimal);
+      Centering   : GPS.Editors.Centering_Type := GPS.Editors.Minimal);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
