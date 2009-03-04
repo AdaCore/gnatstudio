@@ -8199,9 +8199,12 @@ The 3-file comparison tool is based on the text command @command{diff3},
 available on all Unix systems. Under Windows, this tool is not shipped
 with GPS. It is available as part of cygwin, for example.
 
-When querying a visual comparison in GPS, the user area will show, side by
-side, editors for the files involved in the comparison. The reference file is
-placed by default on the left side.
+When querying a visual comparison in GPS, in Side_By_Side mode, the user area
+will show, side by side, editors for the files involved in the comparison.
+The reference file is placed by default on the left side. When in Unified mode,
+GPS will not open a new editor, but will show all the changes directly in the
+original editor. Note that Unified mode is relevant only when comparing two
+files: when comparing three files, the Side_By_Side mode is used.
 
 Color highlighting will be added to the file editors:
 
@@ -10272,8 +10275,21 @@ cygwin (@url{http://www.cygwin.com}).
 
 @table @i
 
-@item Diff command
+@item mode
 @cindex diff
+How GPS displays visual diffs between two files:
+
+@table @b
+@item Side_By_Side
+Editors are displayed side-by-side; new editors are created as needed
+
+@item Unified
+No new editor is created, and changes are displayed directly in the reference
+editor.
+
+@end table
+
+@item Diff command
 @cindex -u
 @cindex -c
 Command used to compute differences between two files.
