@@ -22,9 +22,13 @@ with GPS.Editors; use GPS.Editors;
 package Src_Editor_Module.Editors is
 
    type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
-   with record
-      Kernel : Kernel_Handle;
-   end record;
+   with private;
+
+   function Create (Kernel : Kernel_Handle) return Src_Editor_Buffer_Factory;
+   --  Constructor
+
+   procedure Destroy (X : in out Src_Editor_Buffer_Factory);
+   --  Destructor
 
    overriding function Get
      (This  : Src_Editor_Buffer_Factory;
@@ -37,5 +41,30 @@ package Src_Editor_Module.Editors is
       File   : Virtual_File := No_File;
       Line   : Integer;
       Column : Integer) return Editor_Mark'Class;
+
+private
+
+   type Element is record
+      Box : Src_Editor_Box.Source_Editor_Box;
+   end record;
+
+   procedure Free (X : in out Element) is null;
+
+   No_Element : constant Element := (Box => null);
+
+   package Pure_Editors_Hash is new HTables.Simple_HTable
+     (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
+
+   type Table_Access is access Pure_Editors_Hash.HTable;
+
+   type Src_Editor_Buffer_Factory is new GPS.Editors.Editor_Buffer_Factory
+   with record
+      Kernel : Kernel_Handle;
+
+      Pure_Buffers : Table_Access;
+      --  Pure_Buffers are editors which are not realized to an MDI widget.
+      --  This is used to support editor APIs without having to create
+      --  corresponding widgets.
+   end record;
 
 end Src_Editor_Module.Editors;

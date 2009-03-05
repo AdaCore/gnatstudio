@@ -3113,9 +3113,8 @@ package body Src_Editor_Module is
       Register_Commands (Kernel);
 
       Set_Buffer_Factory
-        (Kernel,
-         new Src_Editor_Buffer_Factory'
-           (Editor_Buffer_Factory with Kernel => Kernel_Handle (Kernel)));
+        (Kernel, new Src_Editor_Buffer_Factory'
+           (Src_Editor_Module.Editors.Create (Kernel_Handle (Kernel))));
 
       --  Register the search functions
 
@@ -3418,6 +3417,9 @@ package body Src_Editor_Module is
          Free (Id.Categories.all);
          Unchecked_Free (Id.Categories);
       end if;
+
+      Destroy (Src_Editor_Buffer_Factory
+               (Get_Buffer_Factory (Get_Kernel (Id)).all));
 
       Src_Editor_Module_Id := null;
    end Destroy;

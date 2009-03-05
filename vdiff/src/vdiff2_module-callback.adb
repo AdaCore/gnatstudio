@@ -40,6 +40,7 @@ with Traces;                            use Traces;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
+with GPS.Editors; use GPS.Editors;
 
 package body Vdiff2_Module.Callback is
 
@@ -624,7 +625,6 @@ package body Vdiff2_Module.Callback is
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
-      Arg           : String_Access;
       Success       : Boolean;
       To_Delete     : array (T_VFile'Range) of Boolean := (others => False);
 
@@ -644,18 +644,23 @@ package body Vdiff2_Module.Callback is
       for J in Data (Node).Files'Range loop
          if Data (Node).Files (J) /= GNATCOLL.VFS.No_File then
             declare
+               File     : constant Virtual_File := Data (Node).Files (J);
                Filename : constant Filesystem_String :=
-                            Full_Name (Data (Node).Files (J)).all;
+                 Full_Name (File).all;
             begin
                if not Is_Regular_File (Filename) then
                   To_Delete (J) := True;
                end if;
 
-               Arg := new String'(+Filename);
-               Execute_GPS_Shell_Command
-                 (Get_Kernel (Vdiff_Module_ID.all),
-                  "Editor.save_buffer", (1 => Arg));
-               Free (Arg);
+               declare
+                  Editor : constant Editor_Buffer'Class :=
+                    Get_Buffer_Factory
+                      (Get_Kernel (Vdiff_Module_ID.all)).Get
+                    (File, Open => False);
+               begin
+                  Editor.Save (Interactive => False,
+                               File        => File);
+               end;
             end;
          end if;
       end loop;

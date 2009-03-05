@@ -444,7 +444,13 @@ package body Src_Editor_Module.Editors is
             Box := Open_File
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
          else
-            Box := Create_File_Editor (This.Kernel, File, False);
+            Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
+
+            if Box = null then
+               Box := Create_File_Editor (This.Kernel, File, False);
+               Pure_Editors_Hash.Set
+                 (This.Pure_Buffers.all, File, (Box => Box));
+            end if;
          end if;
       else
          Box := Get_Source_Box_From_MDI (Child);
@@ -1562,5 +1568,28 @@ package body Src_Editor_Module.Editors is
          return Nil_Editor_Location;
       end if;
    end Cursor;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create (Kernel : Kernel_Handle) return Src_Editor_Buffer_Factory is
+      R : Src_Editor_Buffer_Factory;
+   begin
+      R.Kernel := Kernel;
+      R.Pure_Buffers := new Pure_Editors_Hash.HTable;
+      return R;
+   end Create;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (X : in out Src_Editor_Buffer_Factory) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Pure_Editors_Hash.HTable, Table_Access);
+   begin
+      Free (X.Pure_Buffers);
+   end Destroy;
 
 end Src_Editor_Module.Editors;
