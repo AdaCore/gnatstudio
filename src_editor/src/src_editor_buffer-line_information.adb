@@ -2254,14 +2254,16 @@ package body Src_Editor_Buffer.Line_Information is
          Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
       end if;
 
-      if Style.In_Speedbar then
-         if Remove then
-            Remove_Line_Highlighting (Buffer, Line, Style);
-         else
-            Add_Line_Highlighting
-              (Buffer, Line, Style,
-               Highlight_In => (Highlight_Speedbar => True,
-                                others             => False));
+      if Line /= 0 then
+         if Style.In_Speedbar then
+            if Remove then
+               Remove_Line_Highlighting (Buffer, Line, Style);
+            else
+               Add_Line_Highlighting
+                 (Buffer, Line, Style,
+                  Highlight_In => (Highlight_Speedbar => True,
+                                   others             => False));
+            end if;
          end if;
       end if;
    end Highlight_Range;
