@@ -3567,7 +3567,8 @@ package body GPS.Location_View is
          exit when Matched (0) = No_Match;
 
          Loc.File := Create
-           (+Message (Matched (View.SFF).First .. Matched (View.SFF).Last));
+           (+Message (Matched (View.SFF).First .. Matched (View.SFF).Last),
+            View.Kernel);
 
          Loc.Message := new String'
            (Message (Message'First .. Matched (0).First - 1)
