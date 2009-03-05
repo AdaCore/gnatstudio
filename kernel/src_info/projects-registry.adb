@@ -2109,7 +2109,7 @@ package body Projects.Registry is
 
                if Path = null and then Use_Object_Path then
                   Path := Locate_Regular_File
-                    (Locale, Object_Path (Project2, False));
+                    (Locale, Object_Path (Project2, False, True));
                end if;
             end if;
 
@@ -2131,7 +2131,7 @@ package body Projects.Registry is
                if Path = null and then Use_Object_Path then
                   Path := Locate_Regular_File
                     (Locale,
-                     Object_Path (Get_Root_Project (Registry), True)
+                     Object_Path (Get_Root_Project (Registry), True, True)
                      & Path_Separator & Get_Predefined_Object_Path (Registry));
                end if;
             end if;

@@ -1081,7 +1081,7 @@ package body Project_Explorers_Files is
             Inc := Parse_Path
               (Include_Path (Get_Project (Explorer.Kernel), True));
             Obj := Parse_Path
-              (Object_Path (Get_Project (Explorer.Kernel), True));
+              (Object_Path (Get_Project (Explorer.Kernel), True, False));
             String_List_Utils.String_List.Concat (Inc, Obj);
 
             File_Append_Directory

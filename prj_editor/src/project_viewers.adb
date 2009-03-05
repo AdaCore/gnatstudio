@@ -1389,7 +1389,7 @@ package body Project_Viewers is
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
             Object    : constant Filesystem_String :=
-              Object_Path (Project, Recursive);
+              Object_Path (Project, Recursive, False);
             Iter      : Path_Iterator := Start (Object);
          begin
             Set_Return_Value_As_List (Data);

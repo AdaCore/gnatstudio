@@ -185,19 +185,18 @@ package Projects is
    function Object_Path
      (Project             : Project_Type;
       Recursive           : Boolean;
-      Including_Libraries : Boolean := True;
+      Including_Libraries : Boolean;
       Xrefs_Dirs          : Boolean := False) return Filesystem_String;
-   --  Return the object path for this project. If Recursive is True, it also
-   --  includes the object path for all imported projects. Multiple directory
-   --  can be returned even when not in recursive mode, since compiling a
-   --  library project will impact both its object dir and its library
-   --  directory. Both are returned.
-   --  The empty string is returned if the project doesn't have any object
-   --  directory (i.e. the user explicitely set it to the empty string).
-   --  If an Xrefs Subdir is set in the project registry to a non-empty string,
-   --  and Xrefs_Dir is set, then the corresponding subdirectory is returned if
-   --  it exists. Else, the subdir corresponding to the current builder mode
-   --  is returned. This mode only works when recursive is unset.
+   --  Return the object path for this project. The empty string is returned
+   --  if the project doesn't have any object directory (i.e. the user
+   --  explicitely set it to the empty string). If Including_Libraries is True
+   --  and Project is a library project, it returns both object and ALI paths,
+   --  or only ALI path if project doesn't have object directory.
+   --  If an Xrefs Subdir is set in the project registry to a non-empty
+   --  string, and Xrefs_Dir is set, then the corresponding subdirectory is
+   --  returned if it exists. Else, the subdir corresponding to the current
+   --  builder mode is returned. If Recursive is True, it also includes the
+   --  object path (and ALI paths if requested) for all imported projects.
 
    ------------------
    -- Source files --

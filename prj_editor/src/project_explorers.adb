@@ -1523,7 +1523,7 @@ package body Project_Explorers is
    is
       Obj  : constant Filesystem_String :=
                Name_As_Directory
-                 (Object_Path (Project, False, Xrefs_Dirs => False));
+                 (Object_Path (Project, False, False));
       Exec : constant Filesystem_String := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;

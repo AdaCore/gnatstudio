@@ -513,7 +513,7 @@ package body Projects is
    function Object_Path
      (Project             : Project_Type;
       Recursive           : Boolean;
-      Including_Libraries : Boolean := True;
+      Including_Libraries : Boolean;
       Xrefs_Dirs          : Boolean := False) return Filesystem_String
    is
       View : constant Project_Id := Get_View (Project);
@@ -1526,7 +1526,7 @@ package body Projects is
                return Name_As_Directory (Exec);
             else
                return Name_As_Directory
-                 (Object_Path (Project, Recursive => False));
+                 (Object_Path (Project, False, False));
             end if;
          end;
       end if;

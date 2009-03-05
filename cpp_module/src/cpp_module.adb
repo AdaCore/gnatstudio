@@ -213,7 +213,7 @@ package body Cpp_Module is
       Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
    begin
-      if Object_Path (Get_Project (Kernel), False) = "" then
+      if Object_Path (Get_Project (Kernel), False, True) = "" then
          Insert (Kernel,
                  -("The root project must have an object directory set, or"
                    & " C/C++ browsing is disabled"), Mode => Error);

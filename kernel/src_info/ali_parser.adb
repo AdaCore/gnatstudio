@@ -1863,9 +1863,7 @@ package body ALI_Parser is
                Dir  : constant Cst_String_Access :=
                  Dir_Name (Get_LI_Filename (Get_LI (Source)));
                Path : constant Filesystem_String := Object_Path
-                 (Get_Project (Get_LI (Source)),
-                  Recursive   => False,
-                  Xrefs_Dirs  => True);
+                 (Get_Project (Get_LI (Source)), False, True, True);
                Iter : Path_Iterator := Start (Path);
             begin
                while not At_End (Path, Iter) loop
