@@ -1974,7 +1974,7 @@ package body GPS.Location_View is
          Locations_Filter_Panel_Callbacks.To_Marshaller
            (On_Visibility_Toggled'Access),
          Location_View (View));
-      View.Pack_Start (View.Filter_Panel);
+      View.Pack_Start (View.Filter_Panel, False, False);
 
       Visible_Funcs.Set_Visible_Func
         (View.Tree.Filter, Is_Visible'Access, Location_View (View));

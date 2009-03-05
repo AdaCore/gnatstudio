@@ -32,6 +32,7 @@ with Gtk.Tool_Item;
 
 with GUI_Utils;
 with Histories;
+with Gtk.Enums; use Gtk.Enums;
 
 package body GPS.Location_View_Filter_Panel is
 
@@ -245,6 +246,9 @@ package body GPS.Location_View_Filter_Panel is
          "GPSLocationViewFilterPanel",
          Signals_Parameters);
 
+      Self.Set_Icon_Size (Icon_Size_Small_Toolbar);
+      Self.Set_Style (Toolbar_Icons);
+
       Self.Kernel := Kernel;
 
       --  Close button
@@ -284,7 +288,7 @@ package body GPS.Location_View_Filter_Panel is
 
       --  RegExp check button
 
-      Gtk.Check_Button.Gtk_New (Self.Reg_Exp, "RegExp");
+      Gtk.Check_Button.Gtk_New (Self.Reg_Exp, "Regexp");
       Gtk_Check_Button_Callbacks.Connect
         (Self.Reg_Exp,
          Gtk.Toggle_Button.Signal_Toggled,
