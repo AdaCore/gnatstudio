@@ -1454,7 +1454,9 @@ package body Entities is
    is
       Refs : File_With_Refs_Access;
    begin
-      if Element.Contains (Key.Loc.File.Ordered_Index) then
+      if Key.Loc /= No_File_Location
+        and then Element.Contains (Key.Loc.File.Ordered_Index)
+      then
          Refs := Element.Element (Key.Loc.File.Ordered_Index);
 
          return Refs.Refs.Contains ((Location => Key.Loc, others => <>));
