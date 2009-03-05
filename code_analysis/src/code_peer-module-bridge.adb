@@ -68,7 +68,7 @@ package body Code_Peer.Module.Bridge is
       Project_Name      : constant Filesystem_String :=
         +Projects.Project_Name (Project);
       Object_Directory  : constant Filesystem_String :=
-        Projects.Object_Path (Project, False);
+        Projects.Object_Path (Project, False, False);
       Output_Directory  : constant Filesystem_String :=
         Compose (Object_Directory, Project_Name, "output");
       Command_File_Name : constant Filesystem_String :=
@@ -134,7 +134,7 @@ package body Code_Peer.Module.Bridge is
       Project_Name       : constant Filesystem_String :=
         +Projects.Project_Name (Project);
       Object_Directory   : constant Filesystem_String :=
-        Projects.Object_Path (Project, False);
+        Projects.Object_Path (Project, False, False);
       Output_Directory   : constant Filesystem_String :=
         Compose (Object_Directory, Project_Name, "output");
       Command_File_Name  : constant Filesystem_String :=
@@ -208,7 +208,7 @@ package body Code_Peer.Module.Bridge is
       Project_Name       : constant Filesystem_String :=
         +Projects.Project_Name (Project);
       Object_Directory   : constant Filesystem_String :=
-        Projects.Object_Path (Project, False);
+        Projects.Object_Path (Project, False, False);
       Output_Directory   : constant Filesystem_String :=
         Compose (Object_Directory, Project_Name, "output");
       Command_File_Name  : constant Filesystem_String :=
