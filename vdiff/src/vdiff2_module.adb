@@ -302,20 +302,6 @@ package body Vdiff2_Module is
          Action => Command,
          Filter => Filter);
 
-      Command := new Hide_Difference_Command;
-      Register_Contextual_Menu
-        (Kernel, "Vdiff hide difference",
-         Label  => -"Visual Diff/Hide",
-         Action => Command,
-         Filter => Filter);
-
-      Command := new Close_Difference_Command;
-      Register_Contextual_Menu
-        (Kernel, "Vdiff close difference",
-         Label  => -"Visual Diff/Close editors",
-         Action => Command,
-         Filter => Filter);
-
       Command := new Change_Ref_File_Command;
       Register_Contextual_Menu
         (Kernel, "Vdiff change reference file",
