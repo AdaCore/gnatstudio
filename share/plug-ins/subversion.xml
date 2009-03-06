@@ -326,19 +326,28 @@
    </action>
 
    <action name="generic_svn_diff_base_head" show-command="false" output="none" category="">
-      <shell output="">echo "Getting comparison between base and head of $1 ..."</shell>
-      <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
+      <shell output="">echo "Getting comparison between revisions BASE:HEAD of $1 ..."</shell>
+      <external check-password="true">svn --non-interactive cat -rHEAD "$1"</external>
       <on-failure>
          <shell output="">echo_error "SVN error:"</shell>
          <shell output="">echo_error "%2"</shell>
       </on-failure>
       <shell>base_name "$1"</shell>
-      <shell>dump "%2" TRUE</shell>
+      <shell>dump_file "%2" "%1.[rHEAD]" TRUE</shell>
       <shell>File "%1"</shell>
-      <shell>File "$1"</shell>
+      <shell>Editor.edit "%2"</shell>
+      <shell>Editor.set_title %3 "%4 [rHEAD]" "%4 [rHEAD]"</shell>
+      <external check-password="true">svn --non-interactive diff --diff-cmd diff -x --normal -rBASE:HEAD "$1"</external>
+      <on-failure>
+         <shell output="">echo_error "SVN error:"</shell>
+         <shell output="">echo_error "%2"</shell>
+      </on-failure>
+      <shell>dump "%1" TRUE</shell>
+      <shell>File "%1"</shell>
       <shell>Hook "diff_action_hook"</shell>
-      <shell>Hook.run %1 null %2 %3 "%5 [BASE]"</shell>
-      <shell>delete "%5"</shell>
+      <shell>Hook.run %1 null %7 %2 "%9 [rBASE]"</shell>
+      <shell>delete "%4"</shell>
+      <shell>delete "%10"</shell>
    </action>
 
    <action name="generic_svn_diff_tag" show-command="false" output="none" category="">
