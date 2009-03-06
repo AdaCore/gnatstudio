@@ -294,7 +294,7 @@ package body Project_Explorers_Common is
 
    begin
       if Show_Profiles and then Construct.Profile /= null then
-         return Name & " <span foreground=""#555555"">"
+         return Name & " <span foreground=""#A0A0A0"">"
            & Escape_Text (Reduce (Construct.Profile.all, Max_Profile_Length))
            & "</span>";
       else
