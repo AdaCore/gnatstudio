@@ -57,7 +57,6 @@ with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Style;                         use Gtk.Style;
 with Gtk.Widget;                        use Gtk.Widget;
 
-with Pango.Context;                     use Pango.Context;
 with Pango.Enums;                       use Pango.Enums;
 with Pango.Font;                        use Pango.Font;
 with Pango.Layout;                      use Pango.Layout;
@@ -2188,10 +2187,7 @@ package body Browsers.Canvas is
       W1, W2, H : out Gint;
       Layout    : access Pango_Layout_Record'Class)
    is
-      Descr              : constant Pango_Font_Description :=
-        Default_Font.Get_Pref;
-      Font               : Pango_Font;
-      Metrics            : Pango_Font_Metrics;
+      pragma Unreferenced (Browser);
       Longest1, Longest2 : Gint := 0;
       H2, W              : Gint;
       Last               : Natural;
@@ -2201,9 +2197,6 @@ package body Browsers.Canvas is
       H := 0;
 
       if List.Lines /= null then
-         Font := Load_Font (Get_Pango_Context (Browser), Descr);
-         Metrics := Get_Metrics (Font);
-
          for L in List.Lines'Range loop
             Line := List.Lines (L).Text;
             Last := Natural'Min (List.Lines (L).Length, Line'Length);
@@ -2228,7 +2221,7 @@ package body Browsers.Canvas is
             end;
 
             --  Second column
-            if L < Line'Length then
+            if Last < Line'Length then
                declare
                   Str   : String (1 .. Line'Length - Last);
                   Index : Natural := Str'First;
@@ -2246,9 +2239,6 @@ package body Browsers.Canvas is
                end;
             end if;
          end loop;
-
-         Unref (Metrics);
-         Unref (Font);
       end if;
 
       W1 := Longest1;

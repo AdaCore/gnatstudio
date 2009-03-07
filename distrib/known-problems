@@ -13,6 +13,13 @@ Known Problems fixed in GPS 4.4.0
               GPS might crash when loading.
   Workaround: Remove the "desktop.xml" file from the .gps directory.
 
+- I217-007: Incorrect width computation in entity browser
+  Problem:    The width of boxes in the entity browser was sometimes
+              incorrect, resulting in truncated columns
+  Workaround: Most of the time the name of the type is still readable, and
+              otherwise you can click on the link to expand a new box for
+              the type itself
+
 - I205-006: Problems when manipulating non-utf8 paths
   Problem:    Parts of GPS (like the Project View) do not fully support
               paths that contain international characters which are not
