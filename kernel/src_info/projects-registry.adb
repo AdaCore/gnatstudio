@@ -2291,7 +2291,10 @@ package body Projects.Registry is
    is
    begin
       if Prj.Subdirs /= null then
-         Do_Subdirs_Cleanup (Registry);
+         if Prj.Subdirs.all /= +Subdir then
+            Do_Subdirs_Cleanup (Registry);
+         end if;
+
          Types.Free (Prj.Subdirs);
       end if;
 
