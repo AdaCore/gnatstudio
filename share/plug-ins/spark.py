@@ -11,7 +11,7 @@ See the GPS documentation for more details.
 ###########################################################################
 
 import os, os.path, re, string, tempfile
-import os_utils, text_utils
+import os_utils, text_utils, gps_utils
 import GPS
 
 # Future work
@@ -129,6 +129,7 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
 
   return proc.get_result ()
 
+@save_dir
 def show_pogs_file():
   """Show the pogs file of the current project"""
   # Pogs looks for .vcg files in current dir and all subdirs. For now,
@@ -187,7 +188,10 @@ def has_vc (context):
      context.has_vc = re.search ("\|\s+YES\s+\|", line) != None
      return context.has_vc
 
+@save_dir
 def sparkmake ():
+  dir = os.path.dirname (GPS.current_context().file().name())
+  GPS.cd (dir)
   _spawn_cmd (cmd_name="sparkmake", prj_attr="SPARKmake")
 
 def format_file ():

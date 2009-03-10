@@ -3,6 +3,20 @@
 
 from GPS import *
 
+def save_dir (f, args=[], kwargs=dict()):
+   """Saves the current directory before executing the instrumented
+      function, and restore it on exit. This is a python decorator which
+      should be used as
+          @save_dir
+          def my_function ():
+              ,,,
+   """
+   saved = GPS.pwd ()
+   try:
+      apply (f, args, kwargs)
+   finally:
+      GPS.cd (saved)
+
 def save_excursion (f, args=[], kwargs=dict(), undo_group=True):
    """Save current buffer, cursor position and selection and execute f.
       (args and kwargs) are passed as arguments to f. They indicate that any
@@ -146,3 +160,5 @@ def in_xml_file (context):
       context.in_xml_file =  MDI.current ().name () == buffer.file().name () \
          and buffer.file ().language ().lower () in ["xml", "html"]
    return context.in_xml_file
+
+
