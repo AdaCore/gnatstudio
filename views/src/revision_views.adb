@@ -17,10 +17,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings; use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;          use Ada.Strings; use Ada.Strings.Fixed;
+with Ada.Strings.Maps;           use Ada.Strings.Maps;
+with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
 
+with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
@@ -33,6 +37,8 @@ with Gdk.Color;                 use Gdk.Color;
 with Gdk.Event;                 use Gdk.Event;
 with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
+with Gtk.Tree_Model_Sort;        use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Sortable;          use Gtk.Tree_Sortable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Object;                use Gtk.Object;
@@ -196,6 +202,18 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter) return Line_Data;
    --  Get the Data at Iter
 
+   function Sort_On_Date
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Sort tree on date field
+
+   function Sort_On_Revision
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Sort tree on revision number field
+
    ----------
    -- Free --
    ----------
@@ -292,8 +310,9 @@ package body Revision_Views is
    procedure Add_Link_If_Not_Present
      (View : Revision_View; Log_1, Log_2 : Log_Data)
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Model_Sort :=
+                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
+      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
 
       procedure Move (From : in out Gtk_Tree_Iter; To : Gtk_Tree_Iter);
       --  Move line pointed by From into To
@@ -306,7 +325,7 @@ package body Revision_Views is
          Line : constant Line_Data := Get_Data_From_Iter (View, From);
       begin
          Fill_Info (View, To, Line);
-         Remove (Model, From);
+         Remove (Store, From);
       end Move;
 
       Rev_1 : Gtk_Tree_Iter := Find_Revision (View, Log_1);
@@ -328,10 +347,10 @@ package body Revision_Views is
                Has_Link : Boolean;
                Parent   : Gtk_Tree_Iter := Rev_2;
             begin
-               Path := Get_Path (Model, Rev_1);
+               Path := Get_Path (Store, Rev_1);
 
                loop
-                  Append (Model, Iter, Parent);
+                  Append (Store, Iter, Parent);
 
                   if Parent = Rev_2 then
                      --  The first node becomes the parent of the next
@@ -339,8 +358,8 @@ package body Revision_Views is
                      Parent := Iter;
                   end if;
 
-                  Tmp := Get_Iter (Model, Path);
-                  Has_Link := Get_Boolean (Model, Tmp, Link_Column);
+                  Tmp := Get_Iter (Store, Path);
+                  Has_Link := Get_Boolean (Store, Tmp, Link_Column);
 
                   exit when not Prev (Path);
 
@@ -361,11 +380,11 @@ package body Revision_Views is
                --  Check if we need to reparent Rev_1 under Rev_2
 
                if To_String (Log_1.Revision) /= To_String (View.Prev2) then
-                  Append (Model, Iter, Rev_2);
+                  Append (Store, Iter, Rev_2);
                   Move (Rev_1, Iter);
                   View.Parent := Rev_2;
                else
-                  Set (Model, Rev_2, Link_Column, True);
+                  Set (Store, Rev_2, Link_Column, True);
                end if;
             end if;
       end case;
@@ -378,12 +397,13 @@ package body Revision_Views is
    procedure Add_Log_If_Not_Present
      (View : Revision_View; Log : Log_Data; Expand : Boolean)
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Model_Sort :=
+                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
+      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
       Iter  : Gtk_Tree_Iter := Find_Revision (View, Log);
    begin
       if Iter = Null_Iter then
-         Append (Model, Iter, View.Parent);
+         Append (Store, Iter, View.Parent);
          Fill_Info (View, Iter, (Log, False));
          View.Prev2 := View.Prev1;
          View.Prev1 := Log.Revision;
@@ -395,7 +415,7 @@ package body Revision_Views is
                Tmp  : Boolean;
                pragma Warnings (Off, Tmp);
             begin
-               Path := Get_Path (Model, Iter);
+               Path := Get_Path (Store, Iter);
                Tmp := Expand_Row (View.Tree, Path, Open_All => True);
                Path_Free (Path);
             end;
@@ -408,7 +428,7 @@ package body Revision_Views is
             Tmp  : Boolean;
             pragma Warnings (Off, Tmp);
          begin
-            Path := Get_Path (Model, Iter);
+            Path := Get_Path (Store, Iter);
             Select_Path (Get_Selection (View.Tree), Path);
             if Expand then
                Tmp := Expand_Row (View.Tree, Path, Open_All => True);
@@ -569,8 +589,10 @@ package body Revision_Views is
       Iter : Gtk_Tree_Iter;
       Line : Line_Data)
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Model_Sort :=
+                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
+      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
+
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
 
@@ -578,20 +600,20 @@ package body Revision_Views is
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
    begin
-      Set (Model, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
-      Set (Model, Iter, Revision_Column, To_String (Line.Log.Revision));
-      Set (Model, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
-      Set (Model, Iter, Author_Column, To_String (Line.Log.Author));
-      Set (Model, Iter, Date_Column, To_String (Line.Log.Date));
-      Set (Model, Iter, Log_Column, To_String (Line.Log.Log));
-      Set (Model, Iter, Link_Column, Line.Link);
+      Set (Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
+      Set (Store, Iter, Revision_Column, To_String (Line.Log.Revision));
+      Set (Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
+      Set (Store, Iter, Author_Column, To_String (Line.Log.Author));
+      Set (Store, Iter, Date_Column, To_String (Line.Log.Date));
+      Set (Store, Iter, Log_Column, To_String (Line.Log.Log));
+      Set (Store, Iter, Link_Column, Line.Link);
       Info := Line.Log.Date;
 
       --  Create log entry
 
-      Append (Model, Child, Iter);
-      Set (Model, Child, Color_Column, C_Proxy'(null));
-      Set (Model, Child, Info_Column, To_String (Line.Log.Log));
+      Append (Store, Child, Iter);
+      Set (Store, Child, Color_Column, C_Proxy'(null));
+      Set (Store, Child, Info_Column, To_String (Line.Log.Log));
 
       --  Tags & Branches
 
@@ -611,9 +633,9 @@ package body Revision_Views is
             Node := SL.First (List);
 
             while Node /= SL.Null_Node loop
-               Append (Model, Child, Iter);
-               Set (Model, Child, Info_Column, "tag: " & SL.Data (Node));
-               Set (Model, Child, Rev_Info_Column, SL.Data (Node));
+               Append (Store, Child, Iter);
+               Set (Store, Child, Info_Column, "tag: " & SL.Data (Node));
+               Set (Store, Child, Rev_Info_Column, SL.Data (Node));
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -627,7 +649,7 @@ package body Revision_Views is
          end if;
       end;
 
-      Set (Model, Iter, Info_Column, To_String (Info));
+      Set (Store, Iter, Info_Column, To_String (Info));
    end Fill_Info;
 
    ------------------------
@@ -638,16 +660,232 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Line_Data
    is
-      Model : constant Gtk_Tree_Store :=
-                Gtk_Tree_Store (Get_Model (View.Tree));
+      Model : constant Gtk_Tree_Model_Sort :=
+                Gtk_Tree_Model_Sort (Get_Model (View.Tree));
+      Store : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
       Log   : Log_Data;
    begin
-      Log.Revision := +Get_String (Model, Iter, Rev_Info_Column);
-      Log.Author := +Get_String (Model, Iter, Author_Column);
-      Log.Date := +Get_String (Model, Iter, Date_Column);
-      Log.Log := +Get_String (Model, Iter, Log_Column);
-      return (Log, Get_Boolean (Model, Iter, Link_Column));
+      Log.Revision := +Get_String (Store, Iter, Rev_Info_Column);
+      Log.Author := +Get_String (Store, Iter, Author_Column);
+      Log.Date := +Get_String (Store, Iter, Date_Column);
+      Log.Log := +Get_String (Store, Iter, Log_Column);
+      return (Log, Get_Boolean (Store, Iter, Link_Column));
    end Get_Data_From_Iter;
+
+   ------------------
+   -- Sort_On_Date --
+   ------------------
+
+   function Sort_On_Date
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      function Canonical (Date : String; M : Match_Array) return String;
+      --  Returns the canonical form for Date
+
+      ---------------
+      -- Canonical --
+      ---------------
+
+      function Canonical (Date : String; M : Match_Array) return String is
+
+         function Month_Number return String;
+         --  Returns the month number
+
+         ------------------
+         -- Month_Number --
+         ------------------
+
+         function Month_Number return String is
+            D : constant String := Date (M (1).First .. M (1).Last);
+         begin
+            if D = "Jan" then
+               return "01";
+            end if;
+            if D = "Feb" then
+               return "02";
+            end if;
+            if D = "Mar" then
+               return "03";
+            end if;
+            if D = "Apr" then
+               return "04";
+            end if;
+            if D = "May" then
+               return "05";
+            end if;
+            if D = "Jun" then
+               return "06";
+            end if;
+            if D = "Jul" then
+               return "07";
+            end if;
+            if D = "Aug" then
+               return "08";
+            end if;
+            if D = "Sep" then
+               return "09";
+            end if;
+            if D = "Oct" then
+               return "10";
+            end if;
+            if D = "Nov" then
+               return "11";
+            end if;
+            if D = "Dec" then
+               return "12";
+            end if;
+            return "00";
+         end Month_Number;
+
+         Day_Number : constant String :=
+                        "0" & Date (M (2).First .. M (2).Last);
+      begin
+         return
+           --  Year
+           Date (M (4).First .. M (4).Last)
+           --  Month and Day numbers
+           & Month_Number & Day_Number (Day_Number'Last - 1 .. Day_Number'Last)
+           --  Time
+           & Date (M (3).First .. M (3).Last);
+      end Canonical;
+
+      --  Check for date with format: Mar 2 18:15:58 2009
+
+      Rev_A   : constant String := Get_String (Model, A, Date_Column);
+      Rev_B   : constant String := Get_String (Model, B, Date_Column);
+      Regexp  : constant String :=
+                  "(\D\D\D) (\d+) (\d\d:\d\d:\d\d) (\d\d\d\d).*";
+      Matcher : constant Pattern_Matcher := Compile (Regexp);
+      MA, MB  : Match_Array (0 .. 4);
+
+   begin
+      Match (Matcher, Rev_A, MA);
+      Match (Matcher, Rev_B, MB);
+
+      --  Check for date with format: "Mon Mar 2 18:15:58 2009"
+
+      if MA (0) = No_Match or else MB (0) = No_Match then
+         if Rev_A < Rev_B then
+            return -1;
+         elsif Rev_A > Rev_B then
+            return 1;
+         else
+            return 0;
+         end if;
+
+      else
+         declare
+            C_Rev_A : constant String := Canonical (Rev_A, MA);
+            C_Rev_B : constant String := Canonical (Rev_B, MB);
+         begin
+            if C_Rev_A < C_Rev_B then
+               return -1;
+            elsif C_Rev_A > C_Rev_B then
+               return 1;
+            else
+               return 0;
+            end if;
+         end;
+      end if;
+   end Sort_On_Date;
+
+   ----------------------
+   -- Sort_On_Revision --
+   ----------------------
+
+   function Sort_On_Revision
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      Number_Set : constant Character_Set := Decimal_Digit_Set or To_Set (".");
+      Rev_A      : constant String := Get_String (Model, A, Rev_Info_Column);
+      Rev_B      : constant String := Get_String (Model, B, Rev_Info_Column);
+
+      function Get_Number (Rev : String; N : Positive) return Integer;
+      --  Returns the Nth number in Rev separated by '.'
+
+      ----------------
+      -- Get_Number --
+      ----------------
+
+      function Get_Number (Rev : String; N : Positive) return Integer is
+         S, L, C : Natural := 0;
+      begin
+         S := Rev'First;
+
+         for K in Rev'Range loop
+            if Rev (K) = '.' then
+               C := C + 1;
+               exit when C = N;
+
+               S := K + 1;
+            end if;
+
+            L := K;
+         end loop;
+
+         if C /= 0 and then C < N - 1 then
+            return 0;
+         else
+            return Integer'Value (Rev (S .. L));
+         end if;
+      end Get_Number;
+
+   begin
+      --  Check for Subversion kind of revision numbers
+      if Is_Subset (To_Set (Rev_A), Decimal_Digit_Set)
+        and then Is_Subset (To_Set (Rev_B), Decimal_Digit_Set)
+      then
+         declare
+            N_A : constant Integer := Integer'Value (Rev_A);
+            N_B : constant Integer := Integer'Value (Rev_B);
+         begin
+            if N_A < N_B then
+               return -1;
+            elsif N_A > N_B then
+               return 1;
+            else
+               return 0;
+            end if;
+         end;
+
+      --  Check for CVS kind of revision numbers
+      elsif Is_Subset (To_Set (Rev_A), Number_Set)
+        and then Is_Subset (To_Set (Rev_B), Number_Set)
+      then
+         for K in
+           1 .. Natural'Max (Count (Rev_A, "."), Count (Rev_B, "."))
+         loop
+            declare
+               N_A : constant Integer := Get_Number (Rev_A, K);
+               N_B : constant Integer := Get_Number (Rev_B, K);
+            begin
+               --  If equal then we check the next number
+               if N_A < N_B then
+                  return -1;
+               elsif N_A > N_B then
+                  return 1;
+               end if;
+            end;
+         end loop;
+
+         --  Both numbers are equal, (should not happen in reality)
+         return 0;
+
+      --  Other kind of revision numbers
+      else
+         if Rev_A < Rev_B then
+            return -1;
+         elsif Rev_A > Rev_B then
+            return 1;
+         else
+            return 0;
+         end if;
+      end if;
+   end Sort_On_Revision;
 
    ----------------
    -- Initialize --
@@ -696,8 +934,21 @@ package body Revision_Views is
                                 Rev_Info_Column => GType_String),
          Column_Names       => Names,
          Show_Column_Titles => True,
-         Sortable_Columns   => True,
-         Initial_Sort_On    => Date_Column + 1);
+         Sortable_Columns   => True);
+
+      --  Adjust model to have a user defined sorting
+
+      Adjust_Model : declare
+         S_Model : Gtk_Tree_Model_Sort;
+      begin
+         Gtk_New_With_Model (S_Model, Get_Model (View.Tree));
+
+         Set_Sort_Func (+S_Model, Revision_Column, Sort_On_Revision'Access);
+         Set_Sort_Func (+S_Model, Info_Column, Sort_On_Date'Access);
+
+         Set_Model (View.Tree, Gtk_Tree_Model (S_Model));
+      end Adjust_Model;
+
       Add (View, View.Tree);
 
       View.Root_Color := Parse (Root_Color_Name);
@@ -732,8 +983,9 @@ package body Revision_Views is
      (View : access Revision_View_Record'Class;
       Log  : Log_Data) return Gtk_Tree_Iter
    is
-      Model  : constant Gtk_Tree_Store :=
-                 Gtk_Tree_Store (Get_Model (View.Tree));
+      Model  : constant Gtk_Tree_Model_Sort :=
+                 Gtk_Tree_Model_Sort (Get_Model (View.Tree));
+      Store  : constant Gtk_Tree_Store := Gtk_Tree_Store (Get_Model (Model));
       Rev    : constant String := To_String (Log.Revision);
       Result : Gtk_Tree_Iter := Null_Iter;
 
@@ -751,22 +1003,22 @@ package body Revision_Views is
          Iter_Copy (Iter, J);
 
          while not Quit and then J /= Null_Iter loop
-            if Has_Child (Model, J) then
-               Iterate (Children (Model, J));
+            if Has_Child (Store, J) then
+               Iterate (Children (Store, J));
             end if;
 
-            if Get_String (Model, J, Rev_Info_Column) = Rev then
+            if Get_String (Store, J, Rev_Info_Column) = Rev then
                Quit := True;
                Iter_Copy (J, Result);
                return;
             end if;
 
-            Next (Model, J);
+            Next (Store, J);
          end loop;
       end Iterate;
 
    begin
-      Iterate (Get_Iter_First (Model));
+      Iterate (Get_Iter_First (Store));
       return Result;
    end Find_Revision;
 

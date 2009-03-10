@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I304-009: Better sorting on the revision view
+  Problem:    The dates and revision numbers were not properly sorted.
+              (using an alphabetical comparison for Subversion numbers for
+              example). This problem is VCS dependent.
+  Workaround: Do not sort on those columns. The default sort is chronological.
+
 - I302-022: Cloning a target does not take into account the Category field
   Problem:    When cloning a target, the field 'Category' is not taken into
               account: the new target is created in the same category as the
