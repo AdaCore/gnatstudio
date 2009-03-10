@@ -25,47 +25,47 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Regpat;                use GNAT.Regpat;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNAT.Strings;               use GNAT.Strings;
 
-with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Event;                 use Gdk.Event;
-with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
+with Glib;                       use Glib;
+with Glib.Object;                use Glib.Object;
+with Gdk.Color;                  use Gdk.Color;
+with Gdk.Event;                  use Gdk.Event;
+with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Object;                 use Gtk.Object;
+with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Sort;        use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Sortable;          use Gtk.Tree_Sortable;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Object;                use Gtk.Object;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Tree_Store;             use Gtk.Tree_Store;
+with Gtk.Tree_View;              use Gtk.Tree_View;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GUI_Utils;                 use GUI_Utils;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
-with String_List_Utils;         use String_List_Utils;
-with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with String_List_Utils;          use String_List_Utils;
+with String_Utils;               use String_Utils;
+with Traces;                     use Traces;
 
 package body Revision_Views is
 
@@ -331,6 +331,7 @@ package body Revision_Views is
       Rev_1 : Gtk_Tree_Iter := Find_Revision (View, Log_1);
       Rev_2 : constant Gtk_Tree_Iter := Find_Revision (View, Log_2);
       Iter  : Gtk_Tree_Iter;
+
    begin
       case View.Mode is
          when Filter_Out =>
@@ -918,6 +919,7 @@ package body Revision_Views is
                    2 => new String'(-"Author"),
                    3 => new String'(-"Date / Log"));
       Success : Boolean;
+
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Scrolled_Window.Initialize (View);
