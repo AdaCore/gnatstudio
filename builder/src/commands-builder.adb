@@ -53,6 +53,9 @@ package body Commands.Builder is
       Target_Name : Unbounded_String;
       --  The name of the target being built
 
+      Mode_Name   : Unbounded_String;
+      --  The name of the mode being built
+
       Quiet : Boolean := False;
       --  Whether the target should be Quiet.
       --  A Quiet target does not cause the cursor to jump to the first
@@ -163,6 +166,9 @@ package body Commands.Builder is
    ------------------------
 
    procedure End_Build_Callback (Data : Process_Data; Status : Integer) is
+      Build_Data : Build_Callback_Data
+                     renames Build_Callback_Data (Data.Callback_Data.all);
+
    begin
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
@@ -176,7 +182,12 @@ package body Commands.Builder is
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
 
-      Compilation_Finished (Data.Kernel, Error_Category);
+      Compilation_Finished
+        (Data.Kernel,
+         Error_Category,
+         To_String (Build_Data.Target_Name),
+         To_String (Build_Data.Mode_Name),
+         Status);
    end End_Build_Callback;
 
    --------------------
@@ -410,6 +421,7 @@ package body Commands.Builder is
    begin
       Data := new Build_Callback_Data;
       Data.Target_Name := To_Unbounded_String (Target_Name);
+      Data.Mode_Name := To_Unbounded_String (Mode_Name);
       Data.Quiet := Quiet;
       Data.Shadow := Shadow;
 

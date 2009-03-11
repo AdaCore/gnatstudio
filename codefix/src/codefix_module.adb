@@ -456,14 +456,14 @@ package body Codefix_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Compilation_Data : constant String_Hooks_Args :=
-                           String_Hooks_Args (Data.all);
+      Compilation_Data : constant Compilation_Finished_Hooks_Args :=
+                           Compilation_Finished_Hooks_Args (Data.all);
 
    begin
       Activate_Codefix
         (Kernel_Handle (Kernel),
          Execute_GPS_Shell_Command (Kernel, "get_build_output"),
-         Compilation_Data.Value);
+         Compilation_Data.Category);
    exception
       when E : others => Trace (Exception_Handle, E);
    end Compilation_Finished_Cb;

@@ -105,6 +105,28 @@ package GPS.Kernel.Standard_Hooks is
    --  Type_Name parameter of String_Boolean_Hook_Type
    --  See inherited doc
 
+   Compilation_Finished_Hook_Type : constant Hook_Type :=
+                                      "compilation_finished_hook";
+   type Compilation_Finished_Hooks_Args
+     (Category_Length    : Natural;
+      Target_Name_Length : Natural;
+      Mode_Name_Length   : Natural) is new Hooks_Data with
+      record
+         Category    : String (1 .. Category_Length);
+         Target_Name : String (1 .. Target_Name_Length);
+         Mode_Name   : String (1 .. Mode_Name_Length);
+         Status      : Integer;
+      end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Compilation_Finished_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+   --  Hooks that take a three strings as a parameter.
+   --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
+   --  Type_Name parameter of Compilation_Finished_Hook_Type
+   --  See inherited doc
+
    Project_Hook_Type : constant Hook_Type := "project_hooks";
    type Project_Hooks_Args is new Hooks_Data with record
       Project : Projects.Project_Type;

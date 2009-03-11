@@ -760,8 +760,11 @@ package GPS.Kernel is
    --  Return True if the compilation should be started.
 
    procedure Compilation_Finished
-     (Handle   : access Kernel_Handle_Record;
-      Category : String);
+     (Handle      : access Kernel_Handle_Record;
+      Category    : String;
+      Target_Name : String;
+      Mode_Name   : String;
+      Status      : Integer);
    --  Runs the "compilation_finished" hook
    --  The Category corresponds to the location/highlighting category that
    --  contains the compilation output.

@@ -58,6 +58,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_Compilation
      (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Compilation_Finished
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_String
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_String_Boolean
@@ -517,6 +519,28 @@ package body GPS.Kernel.Standard_Hooks is
          Shadow => Nth_Arg (Data, 4));
    end From_Callback_Data_Compilation;
 
+   ---------------------------------------------
+   -- From_Callback_Data_Compilation_Finished --
+   ---------------------------------------------
+
+   function From_Callback_Data_Compilation_Finished
+     (Data : Callback_Data'Class) return Hooks_Data'Class
+   is
+      Category    : constant String := Nth_Arg (Data, 2);
+      Target_Name : constant String := Nth_Arg (Data, 3);
+      Mode_Name   : constant String := Nth_Arg (Data, 4);
+   begin
+      return Compilation_Finished_Hooks_Args'
+        (Hooks_Data with
+         Category_Length    => Category'Length,
+         Category           => Category,
+         Target_Name_Length => Target_Name'Length,
+         Target_Name        => Target_Name,
+         Mode_Name_Length   => Mode_Name'Length,
+         Mode_Name          => Mode_Name,
+         Status             => Nth_Arg (Data, 5));
+   end From_Callback_Data_Compilation_Finished;
+
    ---------------------------------
    -- From_Callback_Data_Location --
    ---------------------------------
@@ -766,6 +790,29 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 2, Data.Value);
       Set_Nth_Arg (D.all, 3, Data.Quiet);
       Set_Nth_Arg (D.all, 4, Data.Shadow);
+      return D;
+   end Create_Callback_Data;
+
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Compilation_Finished_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      D : constant Callback_Data_Access :=
+            new Callback_Data'Class'(Create (Script, 5));
+
+   begin
+      Set_Nth_Arg (D.all, 1, String (Hook));
+      Set_Nth_Arg (D.all, 2, Data.Category);
+      Set_Nth_Arg (D.all, 3, Data.Target_Name);
+      Set_Nth_Arg (D.all, 4, Data.Mode_Name);
+      Set_Nth_Arg (D.all, 5, Data.Status);
+
       return D;
    end Create_Callback_Data;
 
@@ -1082,6 +1129,10 @@ package body GPS.Kernel.Standard_Hooks is
       Register_Hook_Data_Type
         (Kernel, Compilation_Hook_Type,
          Args_Creator => From_Callback_Data_Compilation'Access);
+
+      Register_Hook_Data_Type
+        (Kernel, Compilation_Finished_Hook_Type,
+         Args_Creator => From_Callback_Data_Compilation_Finished'Access);
 
       Register_Hook_Data_Type
         (Kernel, Project_Hook_Type,

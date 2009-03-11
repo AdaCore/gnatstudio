@@ -581,11 +581,22 @@ package body GPS.Kernel is
    --------------------------
 
    procedure Compilation_Finished
-     (Handle   : access Kernel_Handle_Record;
-      Category : String)
+     (Handle      : access Kernel_Handle_Record;
+      Category    : String;
+      Target_Name : String;
+      Mode_Name   : String;
+      Status      : Integer)
    is
-      Data : aliased String_Hooks_Args :=
-               (Hooks_Data with Length => Category'Length, Value => Category);
+      Data : aliased Compilation_Finished_Hooks_Args :=
+               (Hooks_Data with
+                Category_Length    => Category'Length,
+                Category           => Category,
+                Target_Name_Length => Target_Name'Length,
+                Target_Name        => Target_Name,
+                Mode_Name_Length   => Mode_Name'Length,
+                Mode_Name          => Mode_Name,
+                Status             => Status);
+
    begin
       Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
    end Compilation_Finished;
