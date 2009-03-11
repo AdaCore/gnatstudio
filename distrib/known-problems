@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I310-028: Messages informing of creation of directories for each build mode
+  Problem:    When loading GPS with a Build Mode set to something other than
+              "default", GPS will create subdirectories in the object
+              directories for every other build mode.
+  Workaround: These directories are harmless, so the message can be safely
+              ignored.
+
 - I304-009: Better sorting on the revision view
   Problem:    The dates and revision numbers were not properly sorted.
               (using an alphabetical comparison for Subversion numbers for
