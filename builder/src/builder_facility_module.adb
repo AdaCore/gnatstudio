@@ -185,6 +185,10 @@ package body Builder_Facility_Module is
       Modes_Toolbar_Item : Gtk_Tool_Item;
       Modes_Combo : Gtk_Combo_Box;
       --  The toolbar item containing the modes.
+
+      Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
+      --  The mode we are currently looking for when filling the combo,
+      --  set to Null_Unbounded_String if we are not browsing.
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
@@ -1142,6 +1146,15 @@ package body Builder_Facility_Module is
       Prop : aliased GPS.Kernel.Properties.String_Property_Access;
 
    begin
+      --  Do not consider a change to be effective if we are just creating
+      --  items or browsign through them.
+
+      if Builder_Module_ID.Browsing_For_Mode /= Null_Unbounded_String
+        and then Mode /= To_String (Builder_Module_ID.Browsing_For_Mode)
+      then
+         return;
+      end if;
+
       if Projects.Registry.Get_Mode_Subdir (Reg) /= Get_Mode_Subdir (Mode) then
          Projects.Registry.Set_Mode_Subdir
            (Reg, Get_Mode_Subdir (Mode));
@@ -1545,6 +1558,8 @@ package body Builder_Facility_Module is
             --  Going in reverse order, so if unknown mode is specified in the
             --  property then 'default' mode will be selected
 
+            Builder_Module_ID.Browsing_For_Mode := To_Unbounded_String (Mode);
+
             for J in reverse 0 ..
               Builder_Module_ID.Modes_Combo.Get_Model.N_Children - 1
             loop
@@ -1552,6 +1567,8 @@ package body Builder_Facility_Module is
 
                exit when Builder_Module_ID.Modes_Combo.Get_Active_Text = Mode;
             end loop;
+
+            Builder_Module_ID.Browsing_For_Mode := Null_Unbounded_String;
          end;
 
       else
