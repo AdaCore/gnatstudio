@@ -11,8 +11,9 @@ See the GPS documentation for more details.
 ###########################################################################
 
 import os, os.path, re, string, tempfile
-import os_utils, text_utils, gps_utils
+import os_utils, text_utils
 import GPS
+from gps_utils import *
 
 # Future work
 # -----------
