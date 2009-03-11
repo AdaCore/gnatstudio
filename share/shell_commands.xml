@@ -278,6 +278,9 @@ Funtions connected to this hook should return False if the compilation should no
   <shell_doc name="@hook@ compilation_finished">
      <param name="hook">A string, the name of the hook</param>
      <param name="category">A string, the location/highlighting category that contains the compilation output.</param>
+     <param name="target_name">A string, name of the executed build target.</param>
+     <param name="mode_name">A string, name of the executed build mode.</param>
+     <param name="status">An integer, exit status of the execuded program.</param>
      <description>Hook called when a compile operation has finished.
 Among the various tasks that GPS connects to this hook are the automatic reparsing of all xref information, and the activation of the automatic-error fixes</description>
   </shell_doc>
