@@ -3,7 +3,7 @@
 
 from GPS import *
 
-def save_dir (f, args=[], kwargs=dict()):
+def save_dir (fn):
    """Saves the current directory before executing the instrumented
       function, and restore it on exit. This is a python decorator which
       should be used as
@@ -11,11 +11,16 @@ def save_dir (f, args=[], kwargs=dict()):
           def my_function ():
               ,,,
    """
-   saved = pwd ()
-   try:
-      apply (f, args, kwargs)
-   finally:
-      cd (saved)
+
+   def do_work (*args, **kwargs):
+      saved = pwd ()
+      try:
+         apply (f, args, kwargs)
+      finally:
+         cd (saved)
+   do_work.__name__ = fn.__name__   # Reset name 
+   do_work.__doc__ = fn.__doc__
+   return do_work
 
 def save_excursion (f, args=[], kwargs=dict(), undo_group=True):
    """Save current buffer, cursor position and selection and execute f.
