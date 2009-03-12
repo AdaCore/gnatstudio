@@ -342,7 +342,7 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "execute",
          Minimum_Args => 0,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
