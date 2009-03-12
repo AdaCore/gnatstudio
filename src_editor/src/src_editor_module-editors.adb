@@ -43,9 +43,10 @@ package body Src_Editor_Module.Editors is
    Editor_Exception : exception;
 
    type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
-      Kernel : Kernel_Handle;
-      Buffer : Source_Buffer;
-      File   : Virtual_File;
+      Kernel  : Kernel_Handle;
+      Buffer  : Source_Buffer;
+      File    : Virtual_File;
+      Factory : Src_Editor_Buffer_Factory;
    end record;
 
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
@@ -164,6 +165,8 @@ package body Src_Editor_Module.Editors is
    -----------------------
    -- Src_Editor_Buffer --
    -----------------------
+
+   overriding procedure Close (This : Src_Editor_Buffer);
 
    overriding function New_Location
      (This   : Src_Editor_Buffer;
@@ -420,6 +423,21 @@ package body Src_Editor_Module.Editors is
         (Editor_Mark with Kernel => Buffer.Kernel, Mark => New_Ref);
    end Create_Editor_Mark;
 
+   -----------
+   -- Close --
+   -----------
+
+   overriding procedure Close (This : Src_Editor_Buffer) is
+   begin
+      Unref (This.Buffer);
+
+      while Pure_Editors_Hash.Get
+        (This.Factory.Pure_Buffers.all, This.File).Box /= null
+      loop
+         Pure_Editors_Hash.Remove (This.Factory.Pure_Buffers.all, This.File);
+      end loop;
+   end Close;
+
    ---------
    -- Get --
    ---------
@@ -466,6 +484,7 @@ package body Src_Editor_Module.Editors is
          return Src_Editor_Buffer'
            (Editor_Buffer with
             File   => File,
+            Factory => This,
             Kernel => This.Kernel,
             Buffer => Get_Buffer (Box));
       end if;

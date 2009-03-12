@@ -223,6 +223,9 @@ package GPS.Editors is
    --  Opens a view for the given buffer. If the view is already exists, it
    --  will get the focus, otherwise a new view will be opened.
 
+   procedure Close (This : Editor_Buffer) is abstract;
+   --  Close all views and internal representations of the given buffer
+
    ----------------------
    -- Line information --
    ----------------------
@@ -523,6 +526,8 @@ private
    -----------------------
 
    type Dummy_Editor_Buffer is new Editor_Buffer with null record;
+
+   overriding procedure Close (This : Dummy_Editor_Buffer) is null;
 
    overriding function New_Location
      (This   : Dummy_Editor_Buffer;
