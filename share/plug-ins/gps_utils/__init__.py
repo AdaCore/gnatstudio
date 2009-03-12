@@ -11,11 +11,11 @@ def save_dir (f, args=[], kwargs=dict()):
           def my_function ():
               ,,,
    """
-   saved = GPS.pwd ()
+   saved = pwd ()
    try:
       apply (f, args, kwargs)
    finally:
-      GPS.cd (saved)
+      cd (saved)
 
 def save_excursion (f, args=[], kwargs=dict(), undo_group=True):
    """Save current buffer, cursor position and selection and execute f.
