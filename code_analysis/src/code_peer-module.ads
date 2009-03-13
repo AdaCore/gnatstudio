@@ -20,6 +20,7 @@
 with Glib.Object;
 with Gtk.Menu;
 
+with Default_Preferences;
 with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Styles;
@@ -89,8 +90,16 @@ private
       --  Global messages filter
 
       Filter_Criteria  : Code_Peer.Message_Filter_Criteria;
+
+      --  Preferences
+
+      Expert_Mode      : Default_Preferences.Boolean_Preference;
    end record;
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class);
+
+   function Is_In_Expert_Mode
+     (Self : access Module_Id_Record'Class) return Boolean;
+   --  Returns True if expert mode is activated.
 
 end Code_Peer.Module;

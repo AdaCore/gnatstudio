@@ -43,53 +43,11 @@ def fileExists(f):
 
 #----------------- Helper routines to run CodePeer ---------------------------
 
-def inspection_output (proc, matches, since_last):
-   GPS.Console().write(matches + "\n")
-
 def regenerate_output (proc, matches, since_last):
    GPS.Console().write("Regenerating reports...\n")  
 
 def regenerate_exit(self, status, remaining_output):
    GPS.Console().write("Finished generating reports\n")
-  
-#----------------- Create CodePeer library file ------------------------------
-
-def create_library_file():
-  try:
-      projectname = GPS.Project.root().name()
-      if not os.path.exists(project_path()):
-         os.mkdir(project_path())
-      
-      database_dir = os.path.join(project_path(), projectname + ".db")
-      class_dir = os.path.join(project_path(), "ada_classes")
-
-      f = open(library_file(), 'w') 
-
-      f.write("--  Specify name of directory where codepeer output will be" \
-                + " created.\n")
-      f.write("Output_Dir := \"" + output_dir() + "\";\n\n")
-
-      f.write("--  Specify name of database directory where codepeer" \
-                + " messages will be archived.\n")
-      f.write("Database_Dir := \"" + database_dir + "\";\n\n")
-
-      #  Generate GNAT toolchain specific information
-
-#--      project_object_dirs = GPS.Project.root().object_dirs()
-#--      for dir in project_object_dirs:
-      f.write('Source (Directory => "SCIL",\n')
-#--            f.write('Source (Directory => "' \
-#--                    + os.path.join(dir, "SCIL") \
-#--                   + '",\n')
-      f.write('  Include_Subdirectories => True,\n')
-      f.write('        Files     => ("*.scil"),\n')
-      f.write('        Language  => SCIL);\n')
-
-      f.close()
-
-  except:
-      GPS.Console().write("Problem while creating the library file\n", "error")
-      return
 
 #--------------- check parameters before regenerating reports ----------------
 
@@ -115,42 +73,10 @@ def reset_messages():
    GPS.Console().clear ()
    GPS.MDI.get ("Messages").raise_window ()
 
-#--------------------------- Run CodePeer ------------------------------------
-
-def run_inspection(menu):
-  try:  
-      regenerate_menu.set_sensitive(False)
-      inspect_menu.set_sensitive(False)
-      create_library_file()
-
-      projectname = GPS.Project.root().name()
-
-      savedir = os.getcwd()     
-      os.chdir(project_path());
-
-      reset_messages()
-      ins_cmd = 'codepeer -all -global -background -dbg-on ide_progress_bar -lib "' + library_file() + \
-        '"'
-      proc = GPS.Process (ins_cmd, regexp="^.+$", on_match=inspection_output,
-                          progress_regexp="^completed (\d*) out of (\d*).*$",
-                          progress_current = 1,
-                          progress_total = 2,
-                          show_command = True)
-      proc.get_result()
-      os.chdir(savedir)
-
-      regenerate_menu.set_sensitive(True)
-      inspect_menu.set_sensitive(True)     
-
-  except:
-      GPS.Console().write("Problem while running CodePeer\n", "error")
-      return
-
 #----------------- Regenerate Reports ------------------------------------
 def regenerate_report(menu):
   try:  
       regenerate_menu.set_sensitive(False)
-      inspect_menu.set_sensitive(False)
       check_params_for_reports()
 
       projectname = GPS.Project.root().name()
@@ -162,7 +88,7 @@ def regenerate_report(menu):
       proc.get_result()
 
       regenerate_menu.set_sensitive(True)
-      inspect_menu.set_sensitive(True)
+
   except:
       GPS.Console().write("Problem while regenerating reports\n", "error")
       return
@@ -182,18 +108,10 @@ def check_valid_project():
         return
 
 #----------------- toolbar menus -----------------------------------
-def create_codepeer_menu():
-    global inspect_menu
-    inspect_menu = GPS.Menu.create ("Tools/CodePeer/Run code review",
-            on_activate=run_inspection,
-            ref="Load code review information", add_before=True)
-
+def on_gps_started (hook_name):
     global regenerate_menu
     regenerate_menu = GPS.Menu.create ("Tools/CodePeer/Regenerate reports",
             on_activate=regenerate_report)
-
-def on_gps_started (hook_name):
-    create_codepeer_menu ()
 
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 

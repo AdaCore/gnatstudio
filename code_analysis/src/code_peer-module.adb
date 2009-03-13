@@ -33,6 +33,7 @@ with Basic_Types;
 with GPS.Editors;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;
 
@@ -40,6 +41,8 @@ with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
 with Code_Peer.Message_Review_Dialogs;
 with Code_Peer.Module.Bridge;
+with Code_Peer.Module.Codepeer;
+with Code_Peer.Shell_Commands;
 with Commands.Code_Peer;
 with Code_Analysis_GUI;
 
@@ -93,6 +96,14 @@ package body Code_Peer.Module is
    procedure On_Destroy
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
+
+   procedure On_Run_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+
+   procedure On_Compilation_Finished
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
 
    procedure On_Load
      (Widget : access Glib.Object.GObject_Record'Class;
@@ -268,6 +279,16 @@ package body Code_Peer.Module is
       end if;
    end Hide_Annotations;
 
+   -----------------------
+   -- Is_In_Expret_Mode --
+   -----------------------
+
+   function Is_In_Expert_Mode
+     (Self : access Module_Id_Record'Class) return Boolean is
+   begin
+      return Self.Expert_Mode.Get_Pref;
+   end Is_In_Expert_Mode;
+
    ----------
    -- Load --
    ----------
@@ -410,6 +431,36 @@ package body Code_Peer.Module is
       Context.Module.Update_Location_View;
    end On_Activate;
 
+   -----------------------------
+   -- On_Compilation_Finished --
+   -----------------------------
+
+   procedure On_Compilation_Finished
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   is
+      Hook_Data : constant
+        GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args :=
+          GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
+      Mode      : constant String :=
+        Code_Peer.Shell_Commands.Get_Build_Mode
+          (GPS.Kernel.Kernel_Handle (Kernel));
+
+   begin
+      if Hook_Data.Mode_Name = "codepeer"
+        and then Hook_Data.Status = 0
+        and then not Is_In_Expert_Mode (Module)
+      then
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
+
+         Code_Peer.Module.Codepeer.Review (Module);
+
+         Code_Peer.Shell_Commands.Set_Build_Mode
+           (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+      end if;
+   end On_Compilation_Finished;
+
    -------------------------
    -- On_Criteria_Changed --
    -------------------------
@@ -550,6 +601,29 @@ package body Code_Peer.Module is
       Context.Module.Update_Location_View;
    end On_Message_Reviewed;
 
+   -------------------
+   -- On_Run_Review --
+   -------------------
+
+   procedure On_Run_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      if Is_In_Expert_Mode (Module) then
+         Code_Peer.Module.Codepeer.Review (Module);
+
+      else
+         Code_Peer.Shell_Commands.Build_Target_Execute
+           (Kernel,
+            Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+            Force => True,
+            Build_Mode => "codepeer");
+      end if;
+   end On_Run_Review;
+
    -------------------------
    -- On_Show_Annotations --
    -------------------------
@@ -614,10 +688,27 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
+         Text        => -"Run code review",
+         Callback    => On_Run_Review'Access);
+
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => '/' & "Tools" & '/' & "CodePeer",
          Text        => -"Load code review information",
          Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
+
+      Module.Expert_Mode :=
+        Default_Preferences.Create
+          (Manager => Kernel.Get_Preferences,
+           Name    => "Codepeer-Expert-Mode",
+           Default => False,
+           Doc     => -("If disabled, GPS runs all programs in the CodePeer " &
+                        "toolchain automatically; otherwise user is " &
+                        "resposible to call programs in right order"),
+           Label   => -"Expert Mode",
+           Page    => -"CodePeer");
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style
@@ -648,6 +739,11 @@ package body Code_Peer.Module is
            Informational_Probability_Style_Name);
       GPS.Kernel.Styles.Set_Background
         (Module.Message_Styles (Code_Peer.Informational), "#EFEFEF");
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
+         Name => "codefix.compilation_finished");
    end Register_Module;
 
    --------------------
