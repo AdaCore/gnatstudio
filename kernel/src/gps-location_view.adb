@@ -1981,6 +1981,8 @@ package body GPS.Location_View is
       Visible_Funcs.Set_Visible_Func
         (View.Tree.Filter, Is_Visible'Access, Location_View (View));
 
+      View.Tree.Set_Tooltip_Column (Base_Name_Column);
+
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
