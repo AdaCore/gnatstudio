@@ -34,6 +34,7 @@ with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with Traces; use Traces;
 with GNATCOLL.Traces;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Language; use Language;
 
@@ -309,12 +310,24 @@ package body Src_Editor_Buffer.Debug is
          end loop;
 
       elsif Command = "debug_dump_syntax_highlighting" then
-         Set_Return_Value
-           (Data,
-            Dump_Text_For_Tag
-              (Buffer,
-               Buffer.Syntax_Tags
-                 (Language_Entity'Value (Nth_Arg (Data, 2)))));
+         declare
+            Tag : Gtk_Text_Tag;
+         begin
+            declare
+            begin
+               --  Check whether the parameter is a syntax tag
+               Tag := Buffer.Syntax_Tags
+                 (Language_Entity'Value (Nth_Arg (Data, 2)));
+            exception
+               when Constraint_Error =>
+                  --  Try to find the parameter in the syntax highlighting tags
+                  Tag := Lookup (Get_Tag_Table (Buffer), Nth_Arg (Data, 2));
+            end;
+
+            if Tag /= null then
+               Set_Return_Value (Data, Dump_Text_For_Tag (Buffer, Tag));
+            end if;
+         end;
 
       elsif Command = "debug_dump_side_info_config" then
          Set_Return_Value_As_List (Data);
