@@ -1,5 +1,5 @@
 ====================================================
-GPS 4.4 NEW FEATURES LIST Current as of Mar 13, 2009
+GPS 4.4 NEW FEATURES LIST Current as of Mar 16, 2009
 ====================================================
 
 Copyright (c) 2007-2009, AdaCore
@@ -17,7 +17,9 @@ New features on 4.4.0
 
 NF-44-I304-017 Tooltip in locations window (2009-03-13)
 
-   Full message text is shown in the tooltips on locations window.
+   A tooltip appears when leaving the mouse on items in the Locations view.
+   This is useful to view long messages without having to scroll the view
+   horizontally.
 
 NF-44-I217-007 Entities browser preserves source order (2009-02-17)
 
