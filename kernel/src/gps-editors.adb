@@ -352,4 +352,15 @@ package body GPS.Editors is
       end if;
    end Free;
 
+   -------------------
+   -- Get_MDI_Child --
+   -------------------
+
+   overriding function Get_MDI_Child
+     (This : Dummy_Editor_View) return System.Address is
+      pragma Unreferenced (This);
+   begin
+      return System.Null_Address;
+   end Get_MDI_Child;
+
 end GPS.Editors;

@@ -17,7 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
 with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
@@ -288,6 +290,9 @@ package body Src_Editor_Module.Editors is
 
    overriding function Cursor
      (This : Src_Editor_View) return Editor_Location'Class;
+
+   overriding function Get_MDI_Child
+     (This : Src_Editor_View) return System.Address;
 
    ----------------------------
    -- Create_Editor_Location --
@@ -1587,6 +1592,26 @@ package body Src_Editor_Module.Editors is
          return Nil_Editor_Location;
       end if;
    end Cursor;
+
+   -------------------
+   -- Get_MDI_Child --
+   -------------------
+
+   overriding function Get_MDI_Child
+     (This : Src_Editor_View) return System.Address
+   is
+      Child : Gtkada.MDI.MDI_Child;
+      function Unchecked is new Ada.Unchecked_Conversion
+        (Gtkada.MDI.MDI_Child, System.Address);
+   begin
+      Child := Find_MDI_Child_From_Widget (This.Box);
+
+      if Child = null then
+         return System.Null_Address;
+      else
+         return Unchecked (Child);
+      end if;
+   end Get_MDI_Child;
 
    ------------
    -- Create --

@@ -20,6 +20,8 @@
 --  This package provides interfaces on top of GPS.Editors that are
 --  specialized for GtkAda
 
+with Gtkada.MDI;
+
 with Glib.Values;      use Glib.Values;
 with Gtk.Tree_Model;   use Gtk.Tree_Model;
 
@@ -45,5 +47,13 @@ package GPS.Editors.GtkAda is
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return Editor_Mark'Class;
    --  Return the mark stored in the tree at the specified location
+
+   ---------
+   -- MDI --
+   ---------
+
+   function Get_MDI_Child
+     (This : Editor_View'Class) return Standard.Gtkada.MDI.MDI_Child;
+   --  Return the MDI child created for this view
 
 end GPS.Editors.GtkAda;

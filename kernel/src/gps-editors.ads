@@ -19,6 +19,8 @@
 
 with Gdk.Pixbuf;
 
+with System;
+
 with Ada.Finalization; use Ada.Finalization;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
@@ -451,6 +453,11 @@ package GPS.Editors is
      (This : Editor_View) return Editor_Location'Class is abstract;
    --  Return the current location of the cursor in this view
 
+   function Get_MDI_Child
+     (This : Editor_View) return System.Address is abstract;
+   --  Return the MDI child created for this view.
+   --  The address returned is a GtkAda.MDI.MDI_Child.
+
 private
 
    Empty_Line_Information : constant Line_Information_Record :=
@@ -638,6 +645,9 @@ private
    ---------------------
 
    type Dummy_Editor_View is new Editor_View with null record;
+
+   overriding function Get_MDI_Child
+     (This : Dummy_Editor_View) return System.Address;
 
    overriding procedure Set_Read_Only
      (This : Dummy_Editor_View; Read_Only : Boolean) is null;

@@ -46,6 +46,9 @@ with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Main_Window;          use GPS.Main_Window;
 with Projects;                 use Projects;
 
+with GPS.Editors;              use GPS.Editors;
+with GPS.Editors.GtkAda;
+
 package body GPS.Kernel.MDI is
 
    -----------------------
@@ -164,47 +167,16 @@ package body GPS.Kernel.MDI is
      (Handle : access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
-      MDI   : constant MDI_Window := Get_MDI (Handle);
-      Child : MDI_Child;
-
+      Buf  : constant Editor_Buffer'Class := Get_Buffer_Factory (Handle).Get
+        (File  => File,
+         Force => False,
+         Open  => False);
    begin
-      --  ??? the following implementation assumes that the file editors
-      --  are MDI children that have corresponding file names for title, and
-      --  that they are the only MDI children that do so.
-      --  ??? We might improve a little by checking the Tag of the child
-      --  against that of the source editor module. The ID for that module
-      --  needs to be moved to gps-kernel.ads.
-
-      --  First, try to find the editor using the normalized name of File
-      Child := Find_MDI_Child_By_Name
-        (MDI, Display_Full_Name (File, Normalize => True));
-
-      --  If no editor could be found matching the file name, look in the open
-      --  files for a file that matches File, and then try to find an editor
-      --  for the non-normalized file name for this file.
-
-      --  ??? A correct implementation would be either to always normalize file
-      --  names when opening editors, or to store the MDI Child along with the
-      --  files in Handle.Open_Files.
-      --  The temporary implementation below was chosen because we didn't want
-      --  to make overly massive changes at the time.
-
-      if Child /= null then
-         return Child;
-      else
-         if Handle.Open_Files /= null then
-            for J in Handle.Open_Files'Range loop
-               if File = Handle.Open_Files (J) then
-                  return Find_MDI_Child_By_Name
-                    (MDI,
-                     Display_Full_Name
-                       (Handle.Open_Files (J), Normalize => False));
-               end if;
-            end loop;
-         end if;
-
+      if Buf = Nil_Editor_Buffer then
          return null;
       end if;
+
+      return GPS.Editors.GtkAda.Get_MDI_Child (Buf.Current_View);
    end Get_File_Editor;
 
    -----------------------

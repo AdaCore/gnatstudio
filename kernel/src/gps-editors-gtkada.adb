@@ -144,4 +144,25 @@ package body GPS.Editors.GtkAda is
       end;
    end Get_Mark;
 
+   -------------------
+   -- Get_MDI_Child --
+   -------------------
+
+   function Get_MDI_Child
+     (This : Editor_View'Class) return Standard.Gtkada.MDI.MDI_Child
+   is
+      function Unchecked is new Ada.Unchecked_Conversion
+        (System.Address, Standard.Gtkada.MDI.MDI_Child);
+
+      use type System.Address;
+      A : System.Address;
+   begin
+      A := GPS.Editors.Get_MDI_Child (This);
+      if A = System.Null_Address then
+         return null;
+      else
+         return Unchecked (A);
+      end if;
+   end Get_MDI_Child;
+
 end GPS.Editors.GtkAda;
