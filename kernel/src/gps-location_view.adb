@@ -69,7 +69,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with UTF8_Utils;               use UTF8_Utils;
 with XML_Utils;                use XML_Utils;
@@ -340,8 +339,8 @@ package body GPS.Location_View is
    --  ??? Document parameter Line.
 
    procedure Remove_Line
-     (Model      : not null access Gtk_Tree_Model_Record'Class;
-      Categories : in out String_List.List;
+     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model      : not null access Gtk_Tree_Model_Record'Class;
       Loc_Iter   : Gtk_Tree_Iter);
    --  Clear the marks and highlightings of one specific line
 
@@ -813,8 +812,6 @@ package body GPS.Location_View is
       Removing_Category : Boolean := False;
       --  Indicates whether we are removing a whole category or just a file
 
-      use String_List;
-      Categories : String_List.List;
    begin
       --  Unhighlight all the lines and remove all marks in children of the
       --  category / file.
@@ -847,7 +844,7 @@ package body GPS.Location_View is
             while Loc_Iter /= Null_Iter loop
                if Get_Int (View.Tree.Model, Loc_Iter, Line_Column)
                  = Gint (Line) then
-                  Remove_Line (View.Tree.Model, Categories, Loc_Iter);
+                  Remove_Line (View.Kernel, View.Tree.Model, Loc_Iter);
                   Remove (View.Tree.Model, Loc_Iter);
                else
                   Next (View.Tree.Model, Loc_Iter);
@@ -855,22 +852,10 @@ package body GPS.Location_View is
             end loop;
          else
             while Loc_Iter /= Null_Iter loop
-               Remove_Line (View.Tree.Model, Categories, Loc_Iter);
+               Remove_Line (View.Kernel, View.Tree.Model, Loc_Iter);
                Next (View.Tree.Model, Loc_Iter);
             end loop;
          end if;
-
-         --  ??? Shouldn't we only remove for the specific lines, in case
-         --  we have multiple categories associated with the file (for
-         --  instance a loca search and all refs search)
-         while not Is_Empty (Categories) loop
-            Highlight_Line
-              (View.Kernel,
-               Get_File (View.Tree.Model, File_Iter), 0, 0, 0,
-               Get_Or_Create_Style (View.Kernel, Head (Categories), False),
-               False);
-            Next (Categories, Free_Data => True);
-         end loop;
 
          if Line /= 0 then
             if Children (View.Tree.Model, File_Iter) = Null_Iter then
@@ -903,24 +888,28 @@ package body GPS.Location_View is
    -----------------
 
    procedure Remove_Line
-     (Model      : not null access Gtk_Tree_Model_Record'Class;
-      Categories : in out String_List.List;
+     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model      : not null access Gtk_Tree_Model_Record'Class;
       Loc_Iter   : Gtk_Tree_Iter)
    is
-      Mark  : constant Editor_Mark'Class :=
-        Get_Mark (Model, Loc_Iter, Mark_Column);
-      Style : Style_Access;
+      File_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                    Model.Parent (Loc_Iter);
+      Mark      : constant Editor_Mark'Class :=
+                    Get_Mark (Model, Loc_Iter, Mark_Column);
 
    begin
       if Mark /= Nil_Editor_Mark then
          Mark.Delete;
       end if;
 
-      Style := Get_Highlighting_Style (Model, Loc_Iter);
-
-      if Style /= null then
-         Add_Unique_Sorted (Categories, Get_Name (Style));
-      end if;
+      Highlight_Line
+        (Kernel,
+         Get_File (Model, File_Iter),
+         Integer (Get_Int (Model, Loc_Iter, Line_Column)),
+         Visible_Column_Type (Get_Int (Model, Loc_Iter, Column_Column)),
+         Integer (Get_Int (Model, Loc_Iter, Length_Column)),
+         Get_Highlighting_Style (Model, File_Iter),
+         False);
    end Remove_Line;
 
    ---------------------
