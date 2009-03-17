@@ -1,12 +1,5 @@
 Known Problems fixed in GPS 4.3.3
 
-- I316-029: Issue with the Pretty Print command
-  Problem:    When using the menu "Edit->Pretty Print", the "gnat pretty"
-              command is spawned without the proper Project file switch.
-  Workaround: Either spawn the command manually, or replace in the file
-              share/gps/plug-ins/gnatpp.xml the "external" tag value by
-              '%1 pretty -rf -P"%2" %pps %3 "%F"'
-
 - I304-012: Issues with gnatcheck in GPS
   Problem:    When using the contextual menu "Check Coding Standard of file in
               project" or when using the Tools->Coding Standard->Check* menus,
