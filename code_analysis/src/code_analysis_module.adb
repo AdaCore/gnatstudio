@@ -932,8 +932,9 @@ package body Code_Analysis_Module is
          return;
       end if;
 
-      Prj_Name  := Load_Or_Find (Get_Registry (Get_Kernel (Data)).all,
-                                 Full_Name (Prj_File).all);
+      Prj_Name  := Load_Or_Find
+         (Get_Registry (Get_Kernel (Data)).all,
+          Full_Name (Prj_File).all, Errors => null);
       Prj_Node  := Get_Or_Create
         (Code_Analysis_Property (Property).Analysis.Projects, Prj_Name);
       Add_Gcov_Project_Info (Get_Kernel (Data), Prj_Node);

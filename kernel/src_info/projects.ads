@@ -361,6 +361,9 @@ package Projects is
    Binder_Default_Switches_Attribute   : constant Attribute_Pkg;
    Executable_Attribute                : constant Attribute_Pkg;
 
+   --  Configuration
+   Compiler_Driver_Attribute           : constant Attribute_Pkg;
+
    type Associative_Array_Element is record
       Index : Namet.Name_Id;
       Value : Prj.Variable_Value;
@@ -805,6 +808,9 @@ private
                                   "naming#dot_replacement";
    Specification_Attribute    : constant Attribute_Pkg := "naming#spec";
    Implementation_Attribute   : constant Attribute_Pkg := "naming#body";
+
+   --  Configuration
+   Compiler_Driver_Attribute  : constant Attribute_Pkg := "compiler#driver";
 
    --  For backward compatiblity
    Old_Specification_Attribute  : constant Attribute_Pkg :=

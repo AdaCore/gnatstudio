@@ -73,7 +73,8 @@ package body Code_Analysis_XML is
          if Child.Tag.all = "Project" then
             Prj_Node := Get_Or_Create
               (Projects, Load_Or_Find
-                 (Registry, +To_Lower (Get_Attribute (Child, "name"))));
+                 (Registry, +To_Lower (Get_Attribute (Child, "name")),
+                  Errors => null));
             --  ??? Why the call to To_Lower?
             --  ??? Potentially non-utf8 string should not be
             --  stored in an XML attribute.
