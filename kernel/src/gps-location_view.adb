@@ -726,7 +726,7 @@ package body GPS.Location_View is
       if Highlight then
          if Length /= 0 then
             Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open => False)
+              .Get (Filename, Open_View => False)
               .Apply_Style
                 (Style => Highlight_Category,
                  Line  => Line,
@@ -735,13 +735,13 @@ package body GPS.Location_View is
 
          else
             Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open => False)
+              .Get (Filename, Open_View => False)
               .Apply_Style (Style => Highlight_Category, Line  => Line);
          end if;
 
       else
          Get_Buffer_Factory (Kernel)
-           .Get (Filename, Open => False)
+           .Get (Filename, Open_View => False)
            .Remove_Style (Style       => Highlight_Category,
                           Line        => Line,
                           From_Column => Integer (Column),

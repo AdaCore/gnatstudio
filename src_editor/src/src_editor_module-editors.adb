@@ -448,10 +448,11 @@ package body Src_Editor_Module.Editors is
    ---------
 
    overriding function Get
-     (This  : Src_Editor_Buffer_Factory;
-      File  : Virtual_File := No_File;
-      Force : Boolean := False;
-      Open  : Boolean := True) return Editor_Buffer'Class
+     (This        : Src_Editor_Buffer_Factory;
+      File        : Virtual_File;
+      Force       : Boolean := False;
+      Open_Buffer : Boolean := False;
+      Open_View   : Boolean := True) return Editor_Buffer'Class
    is
       Child : MDI_Child;
       Box   : Source_Editor_Box;
@@ -463,16 +464,18 @@ package body Src_Editor_Module.Editors is
       end if;
 
       if Child = null then
-         if Open then
+         if Open_View then
             Box := Open_File
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
          else
-            Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
+            if Open_Buffer then
+               Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
 
-            if Box = null then
-               Box := Create_File_Editor (This.Kernel, File, False);
-               Pure_Editors_Hash.Set
-                 (This.Pure_Buffers.all, File, (Box => Box));
+               if Box = null then
+                  Box := Create_File_Editor (This.Kernel, File, False);
+                  Pure_Editors_Hash.Set
+                    (This.Pure_Buffers.all, File, (Box => Box));
+               end if;
             end if;
          end if;
       else

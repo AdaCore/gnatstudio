@@ -782,9 +782,11 @@ package body Vdiff2_Module.Utils is
       Curr_Node  : Diff_List_Node := First (List);
       Curr_Chunk : Diff_Chunk_Access;
       Buf        : constant Editor_Buffer'Class := Get
-        (Get_Buffer_Factory (Kernel).all, File, Open => True);
+        (Get_Buffer_Factory (Kernel).all, File,
+         Open_Buffer => True, Open_View => True);
       Refbuf     : constant Editor_Buffer'Class := Get
-        (Get_Buffer_Factory (Kernel).all, Item.Files (Ref), Open => False);
+        (Get_Buffer_Factory (Kernel).all, Item.Files (Ref),
+         Open_Buffer => True, Open_View => False);
 
       function Get_Line
         (Buf : Editor_Buffer'Class; Line : Integer) return String;

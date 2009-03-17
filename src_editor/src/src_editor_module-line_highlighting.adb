@@ -74,7 +74,7 @@ package body Src_Editor_Module.Line_Highlighting is
             Style    : constant Style_Access :=
                          Get_Or_Create_Style (Kernel, Style_ID, False);
             Buffer   : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get (File, Open => False);
+              Get_Buffer_Factory (Kernel).Get (File, Open_View => False);
          begin
             if Style = null then
                Set_Error_Msg (Data, -"No such style: " & Style_ID);
@@ -126,7 +126,7 @@ package body Src_Editor_Module.Line_Highlighting is
             Style     : constant Style_Access :=
                           Get_Or_Create_Style (Kernel, Style_ID, False);
             Buffer    : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get (File, Open => False);
+              Get_Buffer_Factory (Kernel).Get (File, Open_View => False);
          begin
             if Style = null then
                Set_Error_Msg (Data, -"No such style: " & Style_ID);

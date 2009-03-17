@@ -656,7 +656,7 @@ package body Vdiff2_Module.Callback is
                   Editor : constant Editor_Buffer'Class :=
                     Get_Buffer_Factory
                       (Get_Kernel (Vdiff_Module_ID.all)).Get
-                    (File, Open => False);
+                    (File, Open_View => False);
                begin
                   Editor.Save (Interactive => False,
                                File        => File);

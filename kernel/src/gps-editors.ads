@@ -61,18 +61,21 @@ package GPS.Editors is
    ---------------------------
 
    function Get
-     (This  : Editor_Buffer_Factory;
-      File  : Virtual_File := No_File;
-      Force : Boolean := False;
-      Open  : Boolean := True) return Editor_Buffer'Class is abstract;
+     (This        : Editor_Buffer_Factory;
+      File        : Virtual_File;
+      Force       : Boolean := False;
+      Open_Buffer : Boolean := False;
+      Open_View   : Boolean := True) return Editor_Buffer'Class is abstract;
    --  If file is not specified, the current editor is returned, ie the last
    --  one that had the keyboard focus.
    --
-   --  If the file is not currently open, the behavior depends on the open
-   --  parameter: if true, a new editor is created for that file, otherwise
-   --  None is returned.
+   --  If no buffer exists for the file:
+   --      - if Open_View is True, open a buffer and a view
+   --      - if Open_View is False:
+   --           - if Open_Buffer is True, open a buffer but not a view
+   --           - if Open_Buffer is False, open nothing
    --
-   --  When a new file is open, it has received the focus. But if the editor
+   --  When a new editor is opened, it receives the focus. But if the editor
    --  already existed, it is not raised explicitly, and you need to do it
    --  yourself.
    --
