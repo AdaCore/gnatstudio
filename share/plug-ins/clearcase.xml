@@ -50,7 +50,7 @@
 
 
    <action name="clearcase_history" show-command="true" output="none" category="">
-      <external>cleartool lshistory "$1"</external>
+      <shell>Process "xedit $1"</shell>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
       <shell>MDI.split_vertically TRUE</shell>
