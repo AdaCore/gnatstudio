@@ -19,7 +19,7 @@
       <shell>Project.scenario_variables_cmd_line -X</shell>
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
-      <external output="" server="tools_server">%1 pretty -rf %pps %3 "%F"</external>
+      <external output="" server="tools_server">%1 pretty -rf -P"%2" %pps %3 "%F"</external>
       <on-failure>
         <shell>Locations.parse """%1 """ "Pretty printer"</shell>
       </on-failure>
