@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I313-019: "Remove Category" removes highlighting for all references
+  Problem:    When multiple references in the Locations window are present,
+              "Remove Category" removes the highlighting of all the other
+	      references. The references still work when is clicked, but the
+              highlighting is missing.
+  Workaround: This can be safely ignored.
+
 - I310-028: Messages informing of creation of directories for each build mode
   Problem:    When loading GPS with a Build Mode set to something other than
               "default", GPS will create subdirectories in the object
