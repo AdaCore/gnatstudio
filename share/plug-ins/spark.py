@@ -214,9 +214,8 @@ def format_selection ():
   # (both the input and the output)
 
   fd, name = tempfile.mkstemp (suffix=".ada")
-  f = file (name, "w+b")
-  f.write (selection);
-  f.close ()
+  os.write (fd, selection)
+  os.close (fd)
 
   _spawn_spark_tool (cmd_name="sparkformat", prj_attr="SPARKFormat",
                      show_cmd=False, ctx=ctx, input=GPS.File (name))
