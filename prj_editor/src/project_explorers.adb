@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Directories;           use Ada.Directories;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
@@ -1818,7 +1817,7 @@ package body Project_Explorers is
       Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
-      function Is_Hidden (Dir : Filesystem_String) return Boolean;
+      function Is_Hidden (Dir : Virtual_File) return Boolean;
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
 
@@ -1837,61 +1836,23 @@ package body Project_Explorers is
       -- Is_Hidden --
       ---------------
 
-      function Is_Hidden (Dir : Filesystem_String) return Boolean is
-         D : constant Filesystem_String := Dir (Dir'First .. Dir'Last - 1);
+      function Is_Hidden (Dir : Virtual_File) return Boolean is
 
-         function Is_Hidden (CD, Dir : Filesystem_String) return Boolean;
-         --  Return true if path name is hidden
-
-         ---------------
-         -- Is_Hidden --
-         ---------------
-
-         function Is_Hidden (CD, Dir : Filesystem_String) return Boolean is
-
-            function Is_Root (Dir : Filesystem_String) return Boolean;
-            --  Returns True if Dir is a root directory
-
-            -------------
-            -- Is_Root --
-            -------------
-
-            function Is_Root (Dir : Filesystem_String) return Boolean is
-            begin
-               return (Dir'Length = 1 and then Dir (Dir'First) = '/')
-                 or else (Dir'Length = 3
-                          and then Dir (Dir'First + 1 .. Dir'First + 2) = ":\"
-                          and then (Dir (Dir'First) in 'a' .. 'z'
-                                    or else Dir (Dir'First) in 'A' .. 'Z'));
-            end Is_Root;
-
-         begin
-            if Dir = "" then
-               return False;
-
-            elsif Is_Root (CD)
-              or else CD = ""
-              or else (CD'Length = 2 and then CD (CD'First + 1) = ':')
-            --  ??? both tests above are needed to workaround an
-            --  Ada.Directories problem with GNAT 6.0.1 on Windows (G216-009).
-            --  Is_Root is the only test needed with a proper Ada.Directories
-            --  implementation.
-            then
-               return Is_Hidden (Explorer.Kernel, Dir);
-
-            else
-               return Is_Hidden (Explorer.Kernel, Dir)
-                 or else Is_Hidden
-                   (+Containing_Directory (+CD), +Simple_Name (+CD));
-            end if;
-         end Is_Hidden;
+         D : Virtual_File := Dir;
+         Root : constant Virtual_File := Get_Root (Dir);
 
       begin
-         if D = "" then
-            return False;
-         else
-            return Is_Hidden (+Containing_Directory (+D), +Simple_Name (+D));
-         end if;
+         while D /= GNATCOLL.VFS.No_File
+           and then D /= Root
+         loop
+            if Is_Hidden (Explorer.Kernel, D.Base_Name) then
+               return True;
+            end if;
+
+            D := D.Get_Parent;
+         end loop;
+
+         return False;
       end Is_Hidden;
 
       S_Dirs   : File_Node_Hash.Map;
@@ -1989,7 +1950,7 @@ package body Project_Explorers is
 
                   if Get_History
                     (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                    or else not Is_Hidden (Dir.all)
+                    or else not Is_Hidden (Files (F).Get_Parent)
                   then
                      Append
                        (Explorer.Tree.Model,
@@ -2081,10 +2042,12 @@ package body Project_Explorers is
 
       for D in Dirs'Range loop
          declare
-            Dir : constant Filesystem_String :=
-              Name_As_Directory (+Get_Name_String (Dirs (D)));
+            Dir : constant Virtual_File :=
+              Create (+Get_Name_String (Dirs (D)));
          begin
-            if Find (S_Dirs, Dir) = No_Element then
+            Ensure_Directory (Dir);
+
+            if Find (S_Dirs, Dir.Full_Name.all) = No_Element then
                if Get_History
                  (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
                  or else not Is_Hidden (Dir)
@@ -2095,7 +2058,7 @@ package body Project_Explorers is
                      Parent  => Node);
                   Set_Directory_Node_Attributes
                     (Explorer  => Explorer,
-                     Directory => Dir,
+                     Directory => Dir.Full_Name.all,
                      Node      => N,
                      Project   => Project,
                      Node_Type => Directory_Node);
