@@ -306,8 +306,8 @@ class rulesEditor(gtk.Dialog):
            return
       switches = re.findall("[^ ]*", content)
 
-      # all switches are on by default, so we need to check all checkboxes
-      self.check_all (True)
+      # all switches are off by default, so we need to uncheck all checkboxes
+      self.check_all (False)
       # we now parse the switches to initialize the different check states
       # We also store unknown switches in a separate string list
       for sw in switches:
