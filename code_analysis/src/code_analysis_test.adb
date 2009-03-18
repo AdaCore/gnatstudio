@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2009, AdaCore                 --
+--                  Copyright (C) 2006-2008, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -139,7 +139,7 @@ procedure Code_Analysis_Test is
          New_Project_Loaded => Loaded,
          Status             => Status);
       Project_Node  := Get_Or_Create
-        (Projects, Load_Or_Find (Registry.all, +Project_File, Errors => null));
+        (Projects, Load_Or_Find (Registry.all, +Project_File));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -236,8 +236,7 @@ procedure Code_Analysis_Test is
                (Project_File'First .. Project_File'Last - 4)
              & "_"
              & Integer'Image (J) (2)
-             & ".gpr"),
-            Errors => null);
+             & ".gpr"));
          Project_Node  := Get_Or_Create (Projects, Project_Name);
 
          for JJ in 0 .. Integer'Value (File_Num) loop
@@ -266,8 +265,7 @@ procedure Code_Analysis_Test is
             (Project_File'First .. Project_File'Last - 4)
           & "_"
           & Integer'Image (5) (2)
-          & ".gpr"),
-         Errors => null);
+          & ".gpr"));
       Time_Before   := Clock;
       Project_Node  := Element (Projects.Find (Project_Name));
       VFS_File_Name := Create (+File_Name

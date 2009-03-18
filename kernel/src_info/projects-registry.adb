@@ -25,6 +25,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -46,12 +47,12 @@ with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with OS_Utils;                  use OS_Utils;
 with Prj.Com;                   use Prj.Com;
-with Prj.Conf;                  use Prj.Conf;
 with Prj.Env;                   use Prj.Env;
-with Prj.Err;                   use Prj.Err;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
+with Prj.Util;                  use Prj.Util;
 with Prj.Part;                  use Prj.Part;
+with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
 with Prj;                       use Prj;
 with Projects.Editor;           use Projects.Editor;
@@ -201,6 +202,18 @@ package body Projects.Registry is
       --  Implicit dependency on the global htables in the Prj.* packages
    end record;
 
+   procedure Add_Foreign_Source_Files
+     (Registry         : Project_Registry;
+      Project          : Project_Type;
+      Errors           : Put_Line_Access;
+      Source_File_List : in out Virtual_File_List.List;
+      Seen             : in out Boolean_Htable.String_Hash_Table.HTable);
+   --  Add to Project the list of source files for languages other than
+   --  Ada. These sources are also cached in the registry.
+   --  (Source_File_List, Seen) are preinitialized list of source files for
+   --  the current project. They have been initialized from the project manager
+   --  structures (currently only Ada files, therefore).
+
    procedure Reset
      (Registry  : in out Project_Registry;
       View_Only : Boolean);
@@ -233,6 +246,19 @@ package body Projects.Registry is
      (Registry : in out Project_Registry; Path : Filesystem_String);
    --  Add all runtime files to the caches
 
+   function Normalize_Project_Path
+     (Path : Filesystem_String) return Filesystem_String;
+   --  Normalize the full path to a project (and make sure the project file
+   --  extension is set)
+
+   procedure Canonicalize_File_Names_In_Project (Registry : Project_Registry);
+   --  Canonicalize the file and directory names in the project tree, as
+   --  needed.
+
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry; P : Project_Type);
+   --  Canonicalize the file and directory names for a single project
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Scenario_Variable_Array, Scenario_Variable_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -240,22 +266,26 @@ package body Projects.Registry is
 
    function String_Elements
      (R : Project_Registry) return Prj.String_Element_Table.Table_Ptr;
+   function Array_Elements
+     (R : Project_Registry) return Prj.Array_Element_Table.Table_Ptr;
    pragma Inline (String_Elements);
+   pragma Inline (Array_Elements);
    --  Return access to the various tables that contain information about the
    --  project
-
-   procedure Internal_Load
-     (Registry           : Project_Registry;
-      Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
-      Errors             : Projects.Error_Report;
-      Project            : out Project_Node_Id);
-   --  Internal implementation of load. This doesn't reset the registry at all,
-   --  but will properly setup the GNAT project manager so that error messages
-   --  are redirected and fatal errors do not kill GPS
 
    procedure Do_Subdirs_Cleanup (Registry : Project_Registry);
    --  Cleanup empty subdirs created when opening a project with prj.subdirs
    --  set.
+
+   --------------------
+   -- Array_Elements --
+   --------------------
+
+   function Array_Elements
+     (R : Project_Registry) return Prj.Array_Element_Table.Table_Ptr is
+   begin
+      return R.Data.View_Tree.Array_Elements.Table;
+   end Array_Elements;
 
    ---------------------
    -- String_Elements --
@@ -451,8 +481,7 @@ package body Projects.Registry is
 
    function Load_Or_Find
      (Registry     : Project_Registry;
-      Project_Path : Filesystem_String;
-      Errors      : Projects.Error_Report) return Project_Type
+      Project_Path : Filesystem_String) return Project_Type
    is
       Path : constant Filesystem_String :=
         Base_Name (Project_Path, Project_File_Extension);
@@ -463,11 +492,13 @@ package body Projects.Registry is
       Name_Buffer (1 .. Name_Len) := +Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
-         Internal_Load
-           (Registry           => Registry,
-            Root_Project_Path  => Create (Project_Path),
-            Errors             => Errors,
-            Project            => Node);
+         Sinput.P.Clear_Source_File_Table;
+         Sinput.P.Reset_First;
+         Prj.Part.Parse (Registry.Data.Tree,
+                         Node, +Normalize_Project_Path (Project_Path), True,
+                         Store_Comments => True,
+                         Is_Config_File => False,
+                         Current_Directory => Get_Current_Dir);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -475,69 +506,33 @@ package body Projects.Registry is
       return P;
    end Load_Or_Find;
 
-   -------------------
-   -- Internal_Load --
-   -------------------
+   ----------------------------
+   -- Normalize_Project_Path --
+   ----------------------------
 
-   procedure Internal_Load
-     (Registry           : Project_Registry;
-      Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
-      Errors             : Projects.Error_Report;
-      Project            : out Project_Node_Id)
+   function Normalize_Project_Path
+     (Path : Filesystem_String) return Filesystem_String
    is
-      procedure Fail (S : String);
-      --  Replaces Osint.Fail
+      function Extension return Filesystem_String;
+      --  Return the extension to add to the file name (.gpr if not already
+      --  there)
 
-      ----------
-      -- Fail --
-      ----------
+      ---------------
+      -- Extension --
+      ---------------
 
-      procedure Fail (S : String) is
+      function Extension return Filesystem_String is
       begin
-         if Errors /= null then
-            Errors (S);
+         if File_Extension (Path) /= Project_File_Extension then
+            return Project_File_Extension;
+         else
+            return "";
          end if;
-      end Fail;
+      end Extension;
 
-      Predefined_Path : constant String :=
-        +Get_Predefined_Project_Path (Registry);
    begin
-      Trace (Me, "Set project path to " & Predefined_Path);
-      Prj.Ext.Set_Project_Path (Predefined_Path);
-
-      Project := Empty_Node;
-
-      --  Use full path name so that the messages are sent to Locations view
-
-      Opt.Full_Path_Name_For_Brief_Errors := True;
-
-      Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
-      Prj.Com.Fail := Fail'Unrestricted_Access;
-      Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
-      Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
-
-      Prj.Set_Mode (Multi_Language);
-
-      Sinput.P.Clear_Source_File_Table;
-      Sinput.P.Reset_First;
-      Prj.Part.Parse
-        (Registry.Data.Tree, Project,
-         +Full_Name (Root_Project_Path).all,
-         True,
-         Store_Comments    => True,
-         Is_Config_File    => False,
-         Current_Directory => Get_Current_Dir);
-
-      Prj.Com.Fail := null;
-      Prj_Output.Cancel_Special_Output;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         Prj.Com.Fail := null;
-         Prj_Output.Cancel_Special_Output;
-         raise;
-   end Internal_Load;
+      return Normalize_Pathname (Path, Resolve_Links => False) & Extension;
+   end Normalize_Project_Path;
 
    ----------
    -- Load --
@@ -550,90 +545,153 @@ package body Projects.Registry is
       New_Project_Loaded : out Boolean;
       Status             : out Boolean)
    is
-      Previous_Project : Virtual_File;
-      Previous_Default : Boolean;
-      Iter             : Imported_Project_Iterator;
-      Timestamp        : Time;
-      Success          : Boolean;
-      Project          : Project_Node_Id;
+      procedure Fail (S : String);
+      --  Replaces Osint.Fail
+
+      procedure Internal_Load
+        (Registry           : in out Project_Registry;
+         Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
+         Errors             : Projects.Error_Report;
+         New_Project_Loaded : out Boolean);
+      --  Actual implementation. Reload_If_Errors is used to decide whether
+      --  to reload the previous project or not.
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (S : String) is
+      begin
+         if Errors /= null then
+            Errors (S);
+         end if;
+      end Fail;
+
+      -------------------
+      -- Internal_Load --
+      -------------------
+
+      procedure Internal_Load
+        (Registry           : in out Project_Registry;
+         Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
+         Errors             : Projects.Error_Report;
+         New_Project_Loaded : out Boolean)
+      is
+         Project          : Project_Node_Id;
+         Iter             : Imported_Project_Iterator;
+         Timestamp        : Time;
+         Success          : Boolean;
+         Previous_Project : Virtual_File;
+         Previous_Default : Boolean;
+
+      begin
+         if Registry.Data /= null
+           and then Registry.Data.Root /= No_Project
+         then
+            Previous_Project := Project_Path (Registry.Data.Root);
+            Previous_Default := Projects.Status (Registry.Data.Root) = Default;
+
+         else
+            Previous_Project := GNATCOLL.VFS.No_File;
+            Previous_Default := False;
+         end if;
+
+         if not Is_Regular_File (Root_Project_Path) then
+            Trace (Me, "Load: " & (+Full_Name (Root_Project_Path).all)
+                   & " is not a regular file");
+
+            if Errors /= null then
+               Errors (+Full_Name (Root_Project_Path).all
+                       & (-" is not a regular file"));
+            end if;
+
+            New_Project_Loaded := False;
+            Status := False;
+            return;
+         end if;
+
+         Trace (Me, "Set project path to "
+                & (+Get_Predefined_Project_Path (Registry)));
+         Prj.Ext.Set_Project_Path
+           (+Get_Predefined_Project_Path (Registry));
+
+         New_Project_Loaded := True;
+
+         --  Use the full path name so that the messages are sent to the result
+         --  view.
+
+         Opt.Full_Path_Name_For_Brief_Errors := True;
+         Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
+         Reset (Registry, View_Only => False);
+
+         Prj.Com.Fail := Fail'Unrestricted_Access;
+
+         Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
+         Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
+
+         Sinput.P.Clear_Source_File_Table;
+         Sinput.P.Reset_First;
+         Prj.Part.Parse
+           (Registry.Data.Tree, Project, +Full_Name (Root_Project_Path).all,
+            True, Store_Comments => True, Is_Config_File => False,
+            Current_Directory => Get_Current_Dir);
+         Prj.Com.Fail := null;
+
+         Opt.Full_Path_Name_For_Brief_Errors := False;
+
+         if Project = Empty_Node then
+            Load_Empty_Project (Registry);
+            Status := False;
+            return;
+         end if;
+
+         Registry.Data.Root := Get_Project_From_Name
+           (Registry, Prj.Tree.Name_Of (Project, Registry.Data.Tree));
+         Unchecked_Free (Registry.Data.Scenario_Variables);
+
+         Set_Status (Registry.Data.Root, From_File);
+         Prj_Output.Cancel_Special_Output;
+
+         --  We cannot simply use Clock here, since this returns local time,
+         --  and the file timestamps will be returned in GMT, therefore we
+         --  won't be able to compare.
+
+         Registry.Data.Timestamp := GNATCOLL.Utils.No_Time;
+         Iter := Start (Registry.Data.Root);
+
+         while Current (Iter) /= No_Project loop
+            Timestamp := File_Time_Stamp (Project_Path (Current (Iter)));
+
+            if Timestamp > Registry.Data.Timestamp then
+               Registry.Data.Timestamp := Timestamp;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         if Previous_Default then
+            Trace (Me, "Remove default project on disk, no longer used");
+            Delete (Previous_Project, Success);
+         end if;
+
+         Trace (Me, "End of Load project");
+
+      exception
+         when E : others =>
+            Trace (Exception_Handle, E);
+            Prj_Output.Cancel_Special_Output;
+            raise;
+      end Internal_Load;
 
    begin
       --  Activate Traces. They will unfortunately be output on stdout,
       --  but this is a convenient way to at least get them.
-
       if Active (Me_Gnat) then
          Prj.Current_Verbosity := Prj.High;
       end if;
 
       Status := True;
-
-      if Registry.Data /= null
-        and then Registry.Data.Root /= No_Project
-      then
-         Previous_Project := Project_Path (Registry.Data.Root);
-         Previous_Default := Projects.Status (Registry.Data.Root) = Default;
-
-      else
-         Previous_Project := GNATCOLL.VFS.No_File;
-         Previous_Default := False;
-      end if;
-
-      if not Is_Regular_File (Root_Project_Path) then
-         Trace (Me, "Load: " & (+Full_Name (Root_Project_Path).all)
-                & " is not a regular file");
-
-         if Errors /= null then
-            Errors (+Full_Name (Root_Project_Path).all
-                    & (-" is not a regular file"));
-         end if;
-
-         New_Project_Loaded := False;
-         Status := False;
-         return;
-      end if;
-
-      Reset (Registry, View_Only => False);
-
-      Internal_Load (Registry, Root_Project_Path, Errors, Project);
-
-      if Project = Empty_Node then
-         New_Project_Loaded := False;
-         Load_Empty_Project (Registry);
-         Status := False;
-         return;
-      end if;
-
-      New_Project_Loaded := True;
-
-      Registry.Data.Root := Get_Project_From_Name
-        (Registry, Prj.Tree.Name_Of (Project, Registry.Data.Tree));
-      Unchecked_Free (Registry.Data.Scenario_Variables);
-
-      Set_Status (Registry.Data.Root, From_File);
-
-      --  We cannot simply use Clock here, since this returns local time,
-      --  and the file timestamps will be returned in GMT, therefore we
-      --  won't be able to compare.
-
-      Registry.Data.Timestamp := GNATCOLL.Utils.No_Time;
-      Iter := Start (Registry.Data.Root);
-
-      while Current (Iter) /= No_Project loop
-         Timestamp := File_Time_Stamp (Project_Path (Current (Iter)));
-
-         if Timestamp > Registry.Data.Timestamp then
-            Registry.Data.Timestamp := Timestamp;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      if Previous_Default then
-         Trace (Me, "Remove default project on disk, no longer used");
-         Delete (Previous_Project, Success);
-      end if;
-
-      Trace (Me, "End of Load project");
+      Internal_Load (Registry, Root_Project_Path, Errors, New_Project_Loaded);
    end Load;
 
    ----------------------
@@ -710,17 +768,19 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Projects.Error_Report)
    is
+      Language : constant Name_Id :=
+                   Get_String (String (Languages_Attribute));
       Set_As_Incomplete_When_Errors : Boolean := True;
-
-      procedure Add_GPS_Naming_Schemes_To_Config_File
-        (Config_File  : in out Project_Node_Id;
-         Project_Tree : Project_Node_Tree_Ref);
-      --  Add the naming schemes defined in GPS's configuration files to the
-      --  configuration file (.cgpr) used to parse the project.
+      Current_Dir : constant String := Get_Current_Dir;
 
       procedure Report_Error
         (S : String; Project : Project_Id; Tree : Project_Tree_Ref);
       --  Handler called when the project parser finds an error
+
+      procedure Normalize_View (Project : Project_Type);
+      --  Normalize the view of the project. In particular, make sure the
+      --  languages attribute is lower case.
+      --  ??? Should this be done directly by the GNAT parser ?
 
       ------------------
       -- Report_Error --
@@ -770,99 +830,31 @@ package body Projects.Registry is
          end if;
       end Report_Error;
 
-      -------------------------------------------
-      -- Add_GPS_Naming_Schemes_To_Config_File --
-      -------------------------------------------
+      --------------------
+      -- Normalize_View --
+      --------------------
 
-      procedure Add_GPS_Naming_Schemes_To_Config_File
-        (Config_File  : in out Project_Node_Id;
-         Project_Tree : Project_Node_Tree_Ref)
-      is
-         NS : Naming_Scheme_Access := Registry.Data.Naming_Schemes;
+      procedure Normalize_View (Project : Project_Type) is
+         Var   : constant Variable_Id := Get_View (Project).Decl.Attributes;
+         Value : constant Variable_Value :=
+                   Value_Of (Language, Var, Registry.Data.View_Tree);
+         Lang  : String_List_Id;
       begin
-         if Config_File = Empty_Node then
-            --  Create a dummy config file is none was found. In that case we
-            --  need to provide the Ada naming scheme as well
+         if Value /= Nil_Variable_Value then
+            Lang := Value.Values;
+            while Lang /= Nil_String loop
+               Get_Name_String (String_Elements (Registry)(Lang).Value);
+               To_Lower (Name_Buffer (1 .. Name_Len));
+               String_Elements (Registry)(Lang).Value := Name_Find;
 
-            Trace (Me, "Creating dummy configuration file");
-
-            Config_File := Create_Project
-              (Registry       => Registry,
-               Name           => "auto",
-               Path           => Create ("auto.cgpr"),
-               Is_Config_File => True);
-
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => "default_language",
-               Value              => "Ada");
-
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Separate_Suffix_Attribute,
-               Value              => ".adb",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Spec_Suffix_Attribute,
-               Value              => ".ads",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Impl_Suffix_Attribute,
-               Value              => ".adb",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Dot_Replacement_Attribute,
-               Value              => "-");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Casing_Attribute,
-               Value              => "lowercase");
+               Lang := String_Elements (Registry)(Lang).Next;
+            end loop;
          end if;
-
-         while NS /= null loop
-            if NS.Default_Spec_Suffix.all /= Dummy_Suffix then
-               Update_Attribute_Value_In_Scenario
-                 (Tree               => Project_Tree,
-                  Project            => Config_File,
-                  Scenario_Variables => No_Scenario,
-                  Attribute          => Spec_Suffix_Attribute,
-                  Value              => NS.Default_Spec_Suffix.all,
-                  Attribute_Index    => NS.Language.all);
-            end if;
-
-            if NS.Default_Body_Suffix.all /= Dummy_Suffix then
-               Update_Attribute_Value_In_Scenario
-                 (Tree               => Project_Tree,
-                  Project            => Config_File,
-                  Scenario_Variables => No_Scenario,
-                  Attribute          => Impl_Suffix_Attribute,
-                  Value              => NS.Default_Body_Suffix.all,
-                  Attribute_Index    => NS.Language.all);
-            end if;
-
-            NS := NS.Next;
-         end loop;
-      end Add_GPS_Naming_Schemes_To_Config_File;
+      end Normalize_View;
 
       View    : Project_Id;
+      Success : Boolean;
       Iter    : Imported_Project_Iterator := Start (Registry.Data.Root);
-      Automatically_Generated : Boolean;
-      Config_File_Path : String_Access;
 
    begin
       while Current (Iter) /= No_Project loop
@@ -876,32 +868,23 @@ package body Projects.Registry is
 
       Create_Environment_Variables (Registry);
 
-      begin
-         Process_Project_And_Apply_Config
-           (Main_Project               => View,
-            User_Project_Node          => Registry.Data.Root.Node,
-            Config_File_Name           => "",
-            Autoconf_Specified         => False,
-            Project_Tree               => Registry.Data.View_Tree,
-            Project_Node_Tree          => Registry.Data.Tree,
-            Packages_To_Check          => null,
-            Allow_Automatic_Generation => False,
-            Automatically_Generated    => Automatically_Generated,
-            Config_File_Path           => Config_File_Path,
-            Report_Error             => Report_Error'Unrestricted_Access,
-            Normalized_Hostname        => "",
-            Compiler_Driver_Mandatory  => False,
-            On_Load_Config             =>
-              Add_GPS_Naming_Schemes_To_Config_File'Unrestricted_Access);
-      exception
-         when Invalid_Config =>
-            Report_Error
-              (S       => "Error while processing project",
-               Project => View,
-               Tree    => Registry.Data.View_Tree);
-      end;
+      Prj.Proc.Process
+        (In_Tree                => Registry.Data.View_Tree,
+         Project                => View, Success => Success,
+         From_Project_Node      => Registry.Data.Root.Node,
+         From_Project_Node_Tree => Registry.Data.Tree,
+         Report_Error           => Report_Error'Unrestricted_Access,
+         Is_Config_File         => False,
+         Current_Dir            => Current_Dir,
+         When_No_Sources        => Warning);
 
-      Prj.Err.Finalize;
+      --  Lower case the languages attribute
+
+      Iter := Start (Registry.Data.Root);
+      while Current (Iter) /= No_Project loop
+         Normalize_View (Current (Iter));
+         Next (Iter);
+      end loop;
 
       --  Do not set the project as incomplete if no sources existed for a
       --  given language. Otherwise, a dialog is displayed when editing the
@@ -1005,7 +988,7 @@ package body Projects.Registry is
          Register_Directory (+Get_String (Get_View (P).Object_Directory.Name));
          Register_Directory (+Get_String (Get_View (P).Exec_Directory.Name));
 
-         --  Add the sources that are already in the project.
+         --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
 
          Source_Iter := For_Each_Source
@@ -1043,24 +1026,14 @@ package body Projects.Registry is
             Next (Source_Iter);
          end loop;
 
-         --  Register the sources in our own caches
+         --  Canonicalize the file names in the naming exception lists
 
-         declare
-            Count   : constant Ada.Containers.Count_Type :=
-              Virtual_File_List.Length (Source_File_List);
-            Files   : constant File_Array_Access :=
-              new File_Array (1 .. Natural (Count));
-            Current : Cursor := First (Source_File_List);
-            J       : Natural := Files'First;
-         begin
-            while Has_Element (Current) loop
-               Files (J) := Element (Current);
-               Next (Current);
-               J := J + 1;
-            end loop;
+         Canonicalize_File_Names_In_Project (Registry);
 
-            Set_Source_Files (P, Files);
-         end;
+         --  Add the other languages' files
+
+         Add_Foreign_Source_Files
+           (Registry, P, Errors, Source_File_List, Seen);
 
          Boolean_Htable.String_Hash_Table.Reset (Seen);
 
@@ -1122,6 +1095,71 @@ package body Projects.Registry is
       end loop;
    end Add_Runtime_Files;
 
+   ----------------------------------------
+   -- Canonicalize_File_Names_In_Project --
+   ----------------------------------------
+
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry; P : Project_Type)
+   is
+      procedure Process_List (List : Array_Element_Id);
+      --  Canonicalize all the files in the given list
+
+      ------------------
+      -- Process_List --
+      ------------------
+
+      procedure Process_List (List : Array_Element_Id) is
+         Arr : Array_Element_Id := List;
+         Str : String_List_Id;
+
+      begin
+         while Arr /= No_Array_Element loop
+            case Array_Elements (Registry)(Arr).Value.Kind is
+               when Undefined | Single =>
+                  null;  --  Unexpected case, but probably not an error
+                  Trace (Me, "Canonicalize_File_Names, error in type");
+
+               when Prj.List =>
+                  Str := Array_Elements (Registry)(Arr).Value.Values;
+                  while Str /= Nil_String loop
+                     Get_Name_String (String_Elements (Registry)(Str).Value);
+                     Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
+                     String_Elements (Registry)(Str).Value := Name_Find;
+                     Str := String_Elements (Registry)(Str).Next;
+                  end loop;
+            end case;
+
+            Arr := Array_Elements (Registry)(Arr).Next;
+         end loop;
+      end Process_List;
+
+      Naming : constant Naming_Data := Get_View (P).Naming;
+   begin
+      Process_List (Naming.Implementation_Exceptions);
+      Process_List (Naming.Specification_Exceptions);
+   end Canonicalize_File_Names_In_Project;
+
+   ----------------------------------------
+   -- Canonicalize_File_Names_In_Project --
+   ----------------------------------------
+
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry)
+   is
+      Iter : Imported_Project_Iterator := Start (Registry.Data.Root);
+      P    : Project_Type;
+   begin
+      loop
+         P := Current (Iter);
+         exit when P = No_Project;
+
+         Canonicalize_File_Names_In_Project (Registry, P);
+
+         Next (Iter);
+      end loop;
+   end Canonicalize_File_Names_In_Project;
+
    ----------------------------------
    -- Create_Environment_Variables --
    ----------------------------------
@@ -1150,6 +1188,366 @@ package body Projects.Registry is
             (Registry.Data.Root, Parse_Imported => True));
       end if;
    end Reset_Environment_Variables;
+
+   ------------------------------
+   -- Add_Foreign_Source_Files --
+   ------------------------------
+
+   procedure Add_Foreign_Source_Files
+     (Registry : Project_Registry;
+      Project  : Project_Type;
+      Errors   : Put_Line_Access;
+      Source_File_List : in out Virtual_File_List.List;
+      Seen             : in out Boolean_Htable.String_Hash_Table.HTable)
+   is
+      Sources_Specified       : Boolean := False;
+      Specified_Sources_Count : Natural := 0;
+
+      Languages  : Argument_List := Get_Languages (Project);
+      Languages2 : Name_Id_Array (Languages'Range);
+      Languages3 : Name_Id_Array (Languages'Range);
+      --  The list of languages. Languages2 is a precomputed version of
+      --  Languages to speed up string comparison. Languages3's contents is
+      --  reset to No_Name if at least one file exists for the given language.
+      --  Thus we can easily issue warnings when a language has no file.
+
+      function File_In_Sources (File : String) return Boolean;
+      --  Whether File belongs to the list of source files for this project
+
+      procedure Process_Explicit_Source (File : String);
+      --  Do the required processing for a source file that has been specified
+      --  explicitly by the user, either through Source_Files or
+      --  Source_List_File attributes.
+
+      procedure Set_Source_Files;
+      --  Set the source file cache of the project
+
+      -----------------------------
+      -- Process_Explicit_Source --
+      -----------------------------
+
+      procedure Process_Explicit_Source (File : String) is
+         Src : Source_File_Data;
+      begin
+         if Get (Seen, File) then
+            return;
+         end if;
+
+         Specified_Sources_Count := Specified_Sources_Count + 1;
+
+         Src := Get (Registry.Data.Sources, File);
+
+         if Src.File = GNATCOLL.VFS.No_File then
+            Src.File := Create (+File, Project, Use_Object_Path => False);
+         end if;
+
+         --  We only add sources that can be found. In case of a debugger
+         --  project, it can appears that some of the explicit sources
+         --  (returned by the debugger itself) cannot be found (they were
+         --  used to compile the run-time for example but are not part of
+         --  the compiler distribution).
+
+         if Src.File.Is_Regular_File then
+            Append (Source_File_List, Src.File);
+            Set (Seen, File, True);
+         end if;
+
+         if Src.Lang = No_Name then
+            --  Language not found from the project, check the default
+            --  list of extensions.
+
+            declare
+               Ext : constant String := File_Extension (File);
+            begin
+               if Ext = "" then
+                  --  No extension, use Base_Name to find the
+                  --  proper language for this file. This is needed
+                  --  for makefile and ChangeLog files for example.
+                  Src.Lang := Languages_Htable.String_Hash_Table.Get
+                    (Registry.Data.Extensions, To_Lower (File));
+               else
+                  Src.Lang := Languages_Htable.String_Hash_Table.Get
+                    (Registry.Data.Extensions, Ext);
+               end if;
+            end;
+         end if;
+
+         if Src.Lang = Name_Ada then
+            --  No warning, this was already processed
+            null;
+
+         elsif Src.Project /= No_Project then
+            Errors (-("Warning, duplicate source file ") & File
+                    & " (already in "
+                    & Project_Name (Src.Project) & ')',
+                    Get_View (Project),
+                   Registry.Data.View_Tree);
+         else
+            --  Mark this language has having at least one source
+            for Index in Languages2'Range loop
+               if Languages2 (Index) = Src.Lang then
+                  Languages3 (Index) := No_Name;
+                  exit;
+               end if;
+            end loop;
+
+            Src.Project := Project;
+
+            Set (Registry.Data.Sources,
+                 K => File,
+                 E => Src);
+         end if;
+      end Process_Explicit_Source;
+
+      ---------------------
+      -- File_In_Sources --
+      ---------------------
+
+      function File_In_Sources (File : String) return Boolean is
+         Data : Source_File_Data;
+      begin
+         if Sources_Specified then
+            Data := Get (Registry.Data.Sources, File);
+            return Data.Lang /= No_Name and then Data.Project = Project;
+         else
+            return True;
+         end if;
+      end File_In_Sources;
+
+      ----------------------
+      -- Set_Source_Files --
+      ----------------------
+
+      procedure Set_Source_Files is
+         Count   : constant Ada.Containers.Count_Type :=
+                     Virtual_File_List.Length (Source_File_List);
+         Files   : constant File_Array_Access :=
+                     new File_Array (1 .. Natural (Count));
+         Current : Cursor := First (Source_File_List);
+         J       : Natural := Files'First;
+      begin
+         while Has_Element (Current) loop
+            Files (J) := Element (Current);
+            Next (Current);
+            J := J + 1;
+         end loop;
+
+         Set_Source_Files (Project, Files);
+      end Set_Source_Files;
+
+      Dirs      : GNAT.Strings.String_List_Access;
+      Dir       : Dir_Type;
+      Length    : Natural;
+      Buffer    : String (1 .. 2048);
+      Lang      : Name_Id;
+
+   begin
+      for L in Languages'Range loop
+         Languages2 (L) := Get_String (Languages (L).all);
+      end loop;
+
+      Languages3 := Languages2;
+
+      --  Nothing to do if the only language is Ada, since this has already
+      --  been taken care of.
+      --  ??? This is actually wrong in the case of a project created through
+      --  the debugger: the runtime files, for instance, were not found yet in
+      --  the source dirs, and were not part of the list of source files
+      --  returned by the project manager. But when we process the sources
+      --  below (Process_Explicit_Source), they get added. Luckily it seems
+      --  that gdb never creates an Ada-only project in any case
+
+      if Languages'Length = 0
+        or else (Languages'Length = 1
+                 and then Languages (Languages'First).all = Ada_String)
+      then
+         Set_Source_Files;
+         Free (Languages);
+         return;
+      end if;
+
+      --  Preprocess the Source_Files attribute
+      --  ??? Should be shared with the project parser (Prj.Nmsc)
+
+      declare
+         View    : constant Project_Id := Get_View (Project);
+         Sources : constant Variable_Value :=
+                     Prj.Util.Value_Of
+                       (Name_Source_Files, View.Decl.Attributes,
+                        Registry.Data.View_Tree);
+         File    : String_List_Id := Sources.Values;
+
+      begin
+         if not Sources.Default then
+            Sources_Specified := True;
+
+            while File /= Nil_String loop
+               Get_Name_String (String_Elements (Registry)(File).Value);
+               Process_Explicit_Source (Name_Buffer (1 .. Name_Len));
+               File := String_Elements (Registry)(File).Next;
+            end loop;
+         end if;
+      end;
+
+      --  Preprocess the Source_List_File attribute
+      --  ??? Should also be shared with the project parser (Prj.Nmsc)
+
+      declare
+         View             : constant Project_Id := Get_View (Project);
+         Source_List_File : constant Variable_Value :=
+                              Prj.Util.Value_Of
+                                (Name_Source_List_File, View.Decl.Attributes,
+                                 Registry.Data.View_Tree);
+         File             : Prj.Util.Text_File;
+         Line             : String (1 .. 2000);
+         Last             : Natural;
+
+      begin
+         if not Source_List_File.Default then
+            Sources_Specified := True;
+
+            declare
+               F : constant Filesystem_String :=
+                     Name_As_Directory
+                       (+Get_String (View.Directory.Name)) &
+                        (+Get_String (Source_List_File.Value));
+            begin
+               if Is_Regular_File (F) then
+                  Open (File, +F);
+
+                  while not Prj.Util.End_Of_File (File) loop
+                     Prj.Util.Get_Line (File, Line, Last);
+
+                     if Last /= 0
+                       and then (Last = 1 or else Line (1 .. 2) /= "--")
+                     then
+                        Process_Explicit_Source (Line (1 .. Last));
+                     end if;
+                  end loop;
+
+                  Close (File);
+               end if;
+            end;
+         end if;
+      end;
+
+      --  ??? Should check locally removed file, but this should really be done
+      --  by sharing code with Prj-Nmsc.
+      --  Given the implementation in prj-nmsc, does this attribute apply for
+      --  languages other than Ada ?
+
+      if not Sources_Specified then
+         --  Parse all directories to find the files that match the naming
+         --  scheme.
+
+         Dirs := Source_Dirs (Project, False);
+
+         for D in Dirs'Range loop
+            Open (Dir, Dirs (D).all);
+
+            loop
+               Read (Dir, Buffer, Length);
+               exit when Length = 0;
+
+               --  Need to normalize the casing, before we call
+               --  File_In_Sources. Unfortunately,
+               --  Get_Unit_Part_And_Name_From_Filename will do the same again,
+               --  which is slightly inefficient
+
+               --  Convert the file to UTF8
+
+               declare
+                  UTF8      : String := Buffer (1 .. Length);
+                  Part      : Unit_Part;
+                  Unit_Name : Name_Id;
+                  File      : Virtual_File;
+               begin
+                  Canonical_Case_File_Name (UTF8);
+
+                  --  Check if the file is in the list of sources, for this
+                  --  project, as specified in the project file.
+
+                  if File_In_Sources (UTF8) then
+                     --  First check naming scheme in the project, in case the
+                     --  naming scheme overrides GPS's default.
+
+                     Get_Unit_Part_And_Name_From_Filename
+                       (+Buffer (1 .. Length), Project, Part, Unit_Name, Lang);
+
+                     --  Check if the returned language belongs to the
+                     --  supported languages for the project.
+
+                     if Lang /= No_Name
+                       and then Lang /= Name_Ada
+                     then
+                        for Index in Languages2'Range loop
+                           if Languages2 (Index) = Lang then
+                              File := Create
+                                (+(Dirs (D).all & Buffer (1 .. Length)));
+                              Append (Source_File_List, File);
+
+                              Set
+                                (Registry.Data.Sources,
+                                 K => +Base_Name (File),
+                                 E => (Project, File, Lang));
+
+                              Languages3 (Index) := No_Name;
+                              exit;
+                           end if;
+                        end loop;
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+            Close (Dir);
+         end loop;
+      end if;
+
+      Set_Source_Files;
+
+      --  Print error messages for remaining languages
+
+      if not Sources_Specified
+        or else Specified_Sources_Count /= 0
+      then
+         Length := 0;
+         for L in Languages2'Range loop
+            if Languages3 (L) /= No_Name
+              and then Languages3 (L) /= Name_Ada
+            then
+               Length := Length + Languages (L)'Length + 2;
+            end if;
+         end loop;
+
+         if Length /= 0 then
+            declare
+               Error : String (1 .. Length);
+               Index : Natural := Error'First;
+            begin
+               for L in Languages2'Range loop
+                  if Languages3 (L) /= No_Name
+                    and then Languages3 (L) /= Name_Ada
+                  then
+                     Error (Index .. Index + Languages (L)'Length + 1) :=
+                       Languages (L).all & ", ";
+                     Index := Index + Languages (L).all'Length + 2;
+                  end if;
+               end loop;
+
+               if Errors /= null then
+                  Errors (-("Warning, no source files for ")
+                          & Error (Error'First .. Error'Last - 2),
+                          Get_View (Project),
+                          Registry.Data.View_Tree);
+               end if;
+            end;
+         end if;
+      end if;
+
+      Free (Languages);
+      Free (Dirs);
+   end Add_Foreign_Source_Files;
 
    ------------------------
    -- Scenario_Variables --

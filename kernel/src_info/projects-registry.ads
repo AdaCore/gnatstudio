@@ -184,8 +184,7 @@ package Projects.Registry is
 
    function Load_Or_Find
      (Registry     : Project_Registry;
-      Project_Path : Filesystem_String;
-      Errors       : Projects.Error_Report) return Project_Type;
+      Project_Path : Filesystem_String) return Project_Type;
    --  Check if Project_Path is already loaded. If not, load it and add it to
    --  the list of currently loaded tree.
 

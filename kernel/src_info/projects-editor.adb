@@ -49,29 +49,6 @@ package body Projects.Editor is
    procedure Free is new Ada.Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
 
-   -----------
-   -- Nodes --
-   -----------
-   --  The following subprograms are the same as those defined in the spec, but
-   --  apply directly on Project_Node_Id.
-   --  They do not check that the project is indeed writable, and do not handle
-   --  renaming packages: they always modify the tree given in parameter, and
-   --  will not look whether the actual package definition is in fact in
-   --  another project.
-
-   procedure Delete_Attribute
-     (Tree               : Project_Node_Tree_Ref;
-      Node               : Project_Node_Id;
-      Scenario_Variables : Scenario_Variable_Array;
-      Pkg_Name, Attribute_Name : Name_Id;
-      Attribute_Index    : String := "");
-   procedure Set_Attribute_Value_In_Scenario
-     (Tree               : Project_Node_Tree_Ref;
-      Node               : Project_Node_Id;
-      Scenario_Variables : Scenario_Variable_Array;
-      Attribute          : Attribute_Pkg;
-      Values             : Associative_Array_Values);
-
    --------------
    -- Projects --
    --------------
@@ -225,6 +202,13 @@ package body Projects.Editor is
       Values             : GNAT.OS_Lib.Argument_List;
       Attribute_Index    : String := "";
       Prepend            : Boolean := False);
+   procedure Update_Attribute_Value_In_Scenario
+     (Tree               : Project_Node_Tree_Ref;
+      Project            : Project_Node_Id;
+      Scenario_Variables : Scenario_Variable_Array;
+      Attribute          : Attribute_Pkg;
+      Value              : String;
+      Attribute_Index    : String := "");
    --  Internal version of Update_Attribute_Value_In_Scenario
 
    --------------
@@ -317,7 +301,6 @@ package body Projects.Editor is
       Attribute_Index : String;
       Rename_Prj      : out Project_Node_Id;
       Pkg             : out Project_Node_Id;
-      Package_Name    : out Name_Id;
       Attr_Name       : out Name_Id;
       Attr_Index      : out Name_Id;
       Case_Construct  : out Project_Node_Id);
@@ -920,7 +903,6 @@ package body Projects.Editor is
       Prepend            : Boolean := False)
    is
       Attribute_N     : Name_Id;
-      Pkg_Name        : Name_Id;
       List            : Project_Node_Id := Empty_Node;
       Pkg, Term, Expr : Project_Node_Id;
       Rename_Prj      : Project_Node_Id;
@@ -993,7 +975,7 @@ package body Projects.Editor is
    begin
       Common_Setup_For_Update_Attribute
         (Tree, Project, Attribute, Attribute_Index,
-         Rename_Prj, Pkg, Pkg_Name, Attribute_N, Index, Case_Construct);
+         Rename_Prj, Pkg, Attribute_N, Index, Case_Construct);
       Move_From_Common_To_Case_Construct
         (Tree, Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
          Attribute_N, Index);
@@ -1059,7 +1041,6 @@ package body Projects.Editor is
       Attribute_Index    : String := "")
    is
       Attribute_N    : Name_Id;
-      Pkg_Name       : Name_Id;
       Val            : Project_Node_Id;
       Pkg            : Project_Node_Id;
       Rename_Prj     : Project_Node_Id := Project;
@@ -1098,7 +1079,7 @@ package body Projects.Editor is
    begin
       Common_Setup_For_Update_Attribute
         (Tree, Project, Attribute, Attribute_Index,
-         Rename_Prj, Pkg, Pkg_Name, Attribute_N, Index, Case_Construct);
+         Rename_Prj, Pkg, Attribute_N, Index, Case_Construct);
       Move_From_Common_To_Case_Construct
         (Tree, Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
          Attribute_N, Index);
@@ -1123,7 +1104,6 @@ package body Projects.Editor is
       Attribute_Index : String;
       Rename_Prj      : out Project_Node_Id;
       Pkg             : out Project_Node_Id;
-      Package_Name    : out Name_Id;
       Attr_Name       : out Name_Id;
       Attr_Index      : out Name_Id;
       Case_Construct  : out Project_Node_Id)
@@ -1134,8 +1114,7 @@ package body Projects.Editor is
       Attribute_Name : constant String :=
                          String (Attribute (Sep + 1 .. Attribute'Last));
    begin
-      Attr_Name    := Get_String (Attribute_Name);
-      Package_Name := Get_String (Pkg_Name);
+      Attr_Name := Get_String (Attribute_Name);
 
       if Attribute_Index /= "" then
          Attr_Index := Get_String (Attribute_Index);
@@ -1167,14 +1146,13 @@ package body Projects.Editor is
    -------------------------------------
 
    procedure Set_Attribute_Value_In_Scenario
-     (Tree               : Project_Node_Tree_Ref;
-      Node               : Project_Node_Id;
+     (Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute          : Attribute_Pkg;
       Values             : Associative_Array_Values)
    is
       Rename_Prj, Pkg, Case_Construct, Val : Project_Node_Id;
-      Pkg_Name, Attr_Name, Attr_Index      : Name_Id;
+      Attr_Name, Attr_Index                : Name_Id;
       First                                : Project_Node_Id := Empty_Node;
       Next                                 : Project_Node_Id := Empty_Node;
       N                                    : Project_Node_Id;
@@ -1189,66 +1167,52 @@ package body Projects.Editor is
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
       begin
-         Add_In_Front (Tree, Case_Item, Clone_Node (Tree, First, True));
+         Add_In_Front
+           (Project.Tree, Case_Item, Clone_Node (Project.Tree, First, True));
       end Add_Or_Replace;
 
-   begin
-      --  The call to Delete_Attribute will normalize the right project
-      Common_Setup_For_Update_Attribute
-        (Tree, Node, Attribute, "",
-         Rename_Prj, Pkg, Pkg_Name, Attr_Name, Attr_Index, Case_Construct);
-      Delete_Attribute
-        (Tree, Node, Scenario_Variables, Pkg_Name, Attr_Name, Any_Attribute);
-
-      for V in Values'Range loop
-         Attr_Index := Get_String (Values (V).Index.all);
-         Val := Create_Literal_String
-           (Get_String (Values (V).Value.all), Tree);
-
-         N := Default_Project_Node
-           (Tree, N_Declarative_Item, Prj.Single);
-         if First = Empty_Node then
-            First := N;
-         else
-            Set_Next_Declarative_Item (Next, Tree, N);
-         end if;
-         Next := N;
-
-         Set_Current_Item_Node
-           (N, Tree,
-            Create_Attribute (Tree       => Tree,
-                              Prj_Or_Pkg => Empty_Node,
-                              Name       => Attr_Name,
-                              Index_Name => Attr_Index,
-                              Kind       => Prj.Single));
-         Set_Expression_Of
-           (Current_Item_Node (N, Tree), Tree,
-            Enclose_In_Expression (Val, Tree));
-      end loop;
-
-      For_Each_Scenario_Case_Item
-        (Tree, Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
-         Add_Or_Replace'Unrestricted_Access);
-   end Set_Attribute_Value_In_Scenario;
-
-   -------------------------------------
-   -- Set_Attribute_Value_In_Scenario --
-   -------------------------------------
-
-   procedure Set_Attribute_Value_In_Scenario
-     (Project            : Project_Type;
-      Scenario_Variables : Scenario_Variable_Array;
-      Attribute          : Attribute_Pkg;
-      Values             : Associative_Array_Values)
-   is
    begin
       if not Is_Editable (Project) then
          Trace (Me, "Project is not editable");
          return;
       end if;
 
-      Set_Attribute_Value_In_Scenario
-        (Project.Tree, Project.Node, Scenario_Variables, Attribute, Values);
+      --  The call to Delete_Attribute will normalize the right project
+      Delete_Attribute
+        (Project, Scenario_Variables, Attribute, Any_Attribute);
+      Common_Setup_For_Update_Attribute
+        (Project.Tree, Project.Node, Attribute, "",
+         Rename_Prj, Pkg, Attr_Name, Attr_Index, Case_Construct);
+
+      for V in Values'Range loop
+         Attr_Index := Get_String (Values (V).Index.all);
+         Val := Create_Literal_String
+           (Get_String (Values (V).Value.all), Project.Tree);
+
+         N := Default_Project_Node
+           (Project.Tree, N_Declarative_Item, Prj.Single);
+         if First = Empty_Node then
+            First := N;
+         else
+            Set_Next_Declarative_Item (Next, Project.Tree, N);
+         end if;
+         Next := N;
+
+         Set_Current_Item_Node
+           (N, Project.Tree,
+            Create_Attribute (Tree       => Project.Tree,
+                              Prj_Or_Pkg => Empty_Node,
+                              Name       => Attr_Name,
+                              Index_Name => Attr_Index,
+                              Kind       => Prj.Single));
+         Set_Expression_Of
+           (Current_Item_Node (N, Project.Tree), Project.Tree,
+            Enclose_In_Expression (Val, Project.Tree));
+      end loop;
+
+      For_Each_Scenario_Case_Item
+        (Project.Tree, Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
+         Add_Or_Replace'Unrestricted_Access);
    end Set_Attribute_Value_In_Scenario;
 
    ------------------------------
@@ -1453,13 +1417,20 @@ package body Projects.Editor is
    ----------------------
 
    procedure Delete_Attribute
-     (Tree               : Project_Node_Tree_Ref;
-      Node               : Project_Node_Id;
+     (Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
-      Pkg_Name, Attribute_Name : Name_Id;
+      Attribute          : Attribute_Pkg;
       Attribute_Index    : String := "")
    is
+      Sep            : constant Natural := Split_Package (Attribute);
+      Pkg_Name       : constant String :=
+                         String (Attribute (Attribute'First .. Sep - 1));
+      Attribute_Name : constant String :=
+                         String (Attribute (Sep + 1 .. Attribute'Last));
+      Attribute_N    : Name_Id;
       Pkg            : Project_Node_Id;
+      Pkg_Prj        : constant Project_Type :=
+                         Find_Project_Of_Package (Project, Pkg_Name);
       Case_Construct : Project_Node_Id;
       Index          : Name_Id := No_Name;
 
@@ -1473,16 +1444,24 @@ package body Projects.Editor is
       procedure Delete_Attr (Case_Item : Project_Node_Id) is
       begin
          Remove_Attribute_Declarations
-           (Tree, Case_Item, Attribute_Name, Index);
+           (Project.Tree, Case_Item, Attribute_N, Index);
       end Delete_Attr;
 
    begin
-      if Pkg_Name /= No_Name and then Length_Of_Name (Pkg_Name) /= 0 then
-         Pkg := Find_Package_Declaration (Tree, Node, Pkg_Name);
+      if not Is_Editable (Project) then
+         Trace (Me, "Project is not editable");
+         return;
+      end if;
+
+      Projects.Editor.Normalize.Normalize (Pkg_Prj);
+      Attribute_N := Get_String (Attribute_Name);
+
+      if Pkg_Name /= "" then
+         Pkg := Find_Package_Declaration
+           (Project.Tree, Pkg_Prj.Node, Get_String (Pkg_Name));
 
          --  If the package doesn't exist, no need to do anything
          if Pkg = Empty_Node then
-            Trace (Me, "Delete attribute: No such package");
             return;
          end if;
       else
@@ -1493,41 +1472,14 @@ package body Projects.Editor is
          Index := Get_String (Attribute_Index);
       end if;
 
-      Case_Construct := Find_Case_Statement (Tree, Node, Pkg);
+      Case_Construct := Find_Case_Statement (Project.Tree, Pkg_Prj.Node, Pkg);
       Move_From_Common_To_Case_Construct
-        (Tree, Node, Pkg, Case_Construct, Scenario_Variables,
-         Attribute_Name, Index);
+        (Project.Tree, Pkg_Prj.Node, Pkg, Case_Construct, Scenario_Variables,
+         Attribute_N, Index);
 
       For_Each_Scenario_Case_Item
-        (Tree, Node, Pkg, Case_Construct, Scenario_Variables,
+        (Project.Tree, Pkg_Prj.Node, Pkg, Case_Construct, Scenario_Variables,
          Delete_Attr'Unrestricted_Access);
-   end Delete_Attribute;
-
-   procedure Delete_Attribute
-     (Project            : Project_Type;
-      Scenario_Variables : Scenario_Variable_Array;
-      Attribute          : Attribute_Pkg;
-      Attribute_Index    : String := "")
-   is
-      Sep            : constant Natural := Split_Package (Attribute);
-      Pkg_Name       : constant String :=
-        String (Attribute (Attribute'First .. Sep - 1));
-      Attribute_Name : constant String :=
-        String (Attribute (Sep + 1 .. Attribute'Last));
-      Pkg_Prj        : constant Project_Type :=
-        Find_Project_Of_Package (Project, Pkg_Name);
-   begin
-      if not Is_Editable (Project) then
-         Trace (Me, "Project is not editable");
-         return;
-      end if;
-
-      Projects.Editor.Normalize.Normalize (Pkg_Prj);
-
-      Delete_Attribute
-        (Pkg_Prj.Tree, Pkg_Prj.Node,
-         Scenario_Variables, Get_String (Pkg_Name),
-         Get_String (Attribute_Name), Attribute_Index);
 
       Set_Project_Modified (Pkg_Prj, True);
    end Delete_Attribute;
@@ -3056,20 +3008,20 @@ package body Projects.Editor is
      (Project  : Project_Type;
       Pkg_Name : String) return Project_Type
    is
+      Tree : constant Project_Node_Tree_Ref := Project.Tree;
       Pkg  : Project_Node_Id;
       P    : Project_Type := No_Project;
    begin
       Pkg := Find_Package_Declaration
-        (Project.Tree, Project.Node, Get_String (Pkg_Name));
+        (Tree, Project.Node, Get_String (Pkg_Name));
 
       if Pkg /= Empty_Node
-        and then Project_Of_Renamed_Package_Of (Pkg, Project.Tree) /=
-        Empty_Node
+        and then Project_Of_Renamed_Package_Of (Pkg, Tree) /= Empty_Node
       then
-         Pkg := Project_Of_Renamed_Package_Of (Pkg, Project.Tree);
+         Pkg := Project_Of_Renamed_Package_Of (Pkg, Tree);
          P := Get_Project_From_Name
            (Project_Registry'Class (Get_Registry (Project)),
-            Prj.Tree.Name_Of (Pkg, Project.Tree));
+            Prj.Tree.Name_Of (Pkg, Tree));
       end if;
 
       if P = No_Project then
@@ -3729,8 +3681,7 @@ package body Projects.Editor is
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
       Name     : String;
-      Path     : GNATCOLL.VFS.Virtual_File;
-      Is_Config_File : Boolean := False) return Prj.Tree.Project_Node_Id
+      Path     : GNATCOLL.VFS.Virtual_File) return Project_Type
    is
       Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
       D            : constant Filesystem_String :=
@@ -3739,7 +3690,7 @@ package body Projects.Editor is
       Project      : constant Project_Node_Id :=
                        Default_Project_Node (Tree, N_Project);
       Project_Name : Name_Id;
-      Qualifier    : Project_Qualifier := Unspecified;
+      P            : Project_Type;
 
    begin
       --  Adding the name of the project
@@ -3755,10 +3706,6 @@ package body Projects.Editor is
       Set_Project_Declaration_Of
         (Project, Tree, Default_Project_Node (Tree, N_Project_Declaration));
 
-      if Is_Config_File then
-         Qualifier := Configuration;
-      end if;
-
       --  Register the name of the project so that we can retrieve it from one
       --  of its views
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -3769,25 +3716,9 @@ package body Projects.Editor is
           Canonical_Path => Path_Name_Type (Project_Name),
           Node           => Project,
           Extended       => False,
-          Proj_Qualifier => Qualifier));
-      return Project;
-   end Create_Project;
-
-   --------------------
-   -- Create_Project --
-   --------------------
-
-   function Create_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
-      Name     : String;
-      Path     : GNATCOLL.VFS.Virtual_File) return Project_Type
-   is
-      Tree    : constant Project_Node_Tree_Ref := Get_Tree (Registry);
-      Project : constant Project_Node_Id :=
-        Create_Project (Registry, Name, Path, Is_Config_File => False);
-      P       : Project_Type;
-   begin
+          Proj_Qualifier => Unspecified));
       Reset_Project_Name_Hash (Registry, Prj.Tree.Name_Of (Project, Tree));
+
       P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Project, Tree));
       Set_Project_Modified (P, True);
       return P;

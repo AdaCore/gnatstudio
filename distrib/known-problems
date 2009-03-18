@@ -126,13 +126,6 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Do not use Editor.add_blank_lines in combination with block
               folding.
 
-- HA07-008: Discrepencies between GPS and gprbuild
-  Problem:    The list of source files reported by GPS and seen by gprbuild
-              do not always match for languages other than Ada. This was
-              fixed by using the same project manager in both tools
-  Workaround: You can in fact open any file in GPS through /File/Open, so
-              this issue is not blocking
-
 - H624-007: Outline View slow on huge files
   Problem:    When displaying huge files (10000 significant lines of code or
               more), the Outline View introduces slowdowns in GPS.

@@ -68,11 +68,6 @@ package Projects.Editor is
    function Create_Project
      (Registry : Projects.Registry.Project_Registry'Class;
       Name     : String;
-      Path     : GNATCOLL.VFS.Virtual_File;
-      Is_Config_File : Boolean := False) return Prj.Tree.Project_Node_Id;
-   function Create_Project
-     (Registry : Projects.Registry.Project_Registry'Class;
-      Name     : String;
       Path     : GNATCOLL.VFS.Virtual_File) return Project_Type;
    --  Create a new empty project and its declaration.
    --  The project is also registered, so that it can be retrieved from one of
@@ -311,16 +306,7 @@ package Projects.Editor is
       Attribute          : Attribute_Pkg;
       Value              : String;
       Attribute_Index    : String := "");
-   procedure Update_Attribute_Value_In_Scenario
-     (Tree               : Project_Node_Tree_Ref;
-      Project            : Project_Node_Id;
-      Scenario_Variables : Scenario_Variable_Array;
-      Attribute          : Attribute_Pkg;
-      Value              : String;
-      Attribute_Index    : String := "");
-   --  Same as above, but for an attribute that contains a single value.
-   --  The second version does not check that the project is editable and does
-   --  not hande renaming packages correctly.
+   --  Same as above, but for an attribute that contains a single value
 
    type Associative_Array_Value is record
       Index : GNAT.Strings.String_Access;
@@ -337,8 +323,6 @@ package Projects.Editor is
    --  Remove all currently set values for the attribute, and replace them with
    --  Values. This is more efficient than calling
    --  Update_Attribute_Value_In_Scenario multiple times.
-   --  The second version does not check that the project is editable and does
-   --  not hande renaming packages correctly.
 
    function Get_Attribute_Value
      (Project      : Project_Type;

@@ -225,8 +225,7 @@ package body Creation_Wizard.Dependencies is
          exit when Result = Button_Cancel;
 
          Imported_Project := Load_Or_Find
-           (Get_Registry (Kernel).all, Imported_Project_Path,
-            Errors => null);
+           (Get_Registry (Kernel).all, Imported_Project_Path);
 
          Replace_Project_Occurrences
            (Root_Project      => Get_Project (Kernel),
