@@ -20,11 +20,10 @@
 with Ada.Unchecked_Deallocation; use Ada;
 
 with GNAT.Case_Util;             use GNAT.Case_Util;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -65,8 +64,6 @@ with Remote;                     use Remote;
 with String_List_Utils;          use String_List_Utils;
 with File_Utils;                 use File_Utils;
 with GUI_Utils;                  use GUI_Utils;
-with OS_Utils;                   use OS_Utils;
-with UTF8_Utils;                 use UTF8_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
@@ -87,13 +84,12 @@ package body Project_Explorers_Files is
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
-      Norm_Dest     : Filesystem_String_Access;
-      Norm_Dir      : Filesystem_String_Access;
-      D             : GNAT.Directory_Operations.Dir_Type;
+      Dir           : Virtual_File;
+      Norm_Dest     : Virtual_File;
       Depth         : Integer := 0;
       Base          : Gtk_Tree_Iter;
-      Dirs          : String_List_Utils.String_List.List;
-      Files         : String_List_Utils.String_List.List;
+      Files         : File_Array_Access := null;
+      File_Index    : Natural := 0;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True;
    end record;
@@ -111,14 +107,14 @@ package body Project_Explorers_Files is
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
-      Dir           : Filesystem_String;
+      Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : Filesystem_String  := "";
+      Append_To_Dir : Virtual_File  := No_File;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True);
    --  Add to the file view the directory Dir, at node given by Iter.
-   --  If Append_To_Dir is not "", and is a sub-directory of Dir, then
+   --  If Append_To_Dir is not No_File, and is a sub-directory of Dir, then
    --  the path is expanded recursively all the way to Append_To_Dir.
 
    procedure File_Tree_Expand_Row_Cb
@@ -292,10 +288,9 @@ package body Project_Explorers_Files is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
-      File       : String (1 .. 1024);
-      Last       : Natural;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
+      Empty      : Boolean := True;
       New_D      : Append_Directory_Idle_Data_Access;
 
       use String_List_Utils.String_List;
@@ -307,16 +302,9 @@ package body Project_Explorers_Files is
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
 
-         declare
-            Dir         : constant Virtual_File := Create (D.Norm_Dir.all);
-            FS_Dir      : constant Filesystem_String := Full_Name (Dir).all;
-            Display_Dir : constant String := Display_Full_Name (Dir);
-         begin
-            Set (D.Explorer.File_Model, Iter, Filesystem_Name_Column, +FS_Dir);
-            Set
-              (D.Explorer.File_Model, Iter, Display_Name_Column, Display_Dir);
-         end;
-
+         Set_File (D.Explorer.File_Model, Iter, File_Column, D.Dir);
+         Set (D.Explorer.File_Model, Iter, Display_Name_Column,
+              D.Dir.Display_Base_Dir_Name);
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
               Gint (Node_Types'Pos (Directory_Node)));
 
@@ -324,8 +312,6 @@ package body Project_Explorers_Files is
             Set (D.Explorer.File_Model, Iter, Icon_Column,
                  GObject (Open_Pixbufs (Directory_Node)));
             D.Base := Iter;
-
-            return Read_Directory (D);
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
@@ -339,99 +325,95 @@ package body Project_Explorers_Files is
          end if;
       end if;
 
-      Read (D.D, File, Last);
+      if D.Files = null then
+         D.Files := D.Dir.Read_Dir;
+         D.File_Index := D.Files'First;
+         Sort (D.Files.all);
+      end if;
 
-      if D.Depth >= 0 and then Last /= 0 then
-         if not (Last = 1 and then File (1) = '.')
-           and then not (Last = 2 and then File (1 .. 2) = "..")
+      if D.Depth >= 0
+        and then D.Files /= null
+        and then D.File_Index <= D.Files'Last
+      then
+         if D.Files (D.File_Index) = No_File then
+            null;
+
+         elsif Get_History
+           (Get_History (D.Explorer.Kernel).all,
+            File_View_Shows_Only_Project)
          then
-            declare
-               Name : constant Filesystem_String := +File (File'First .. Last);
-               P    : Project_Type;
-               File : Virtual_File;
-            begin
-               if Get_History
-                 (Get_History (D.Explorer.Kernel).all,
-                  File_View_Shows_Only_Project)
+            if Is_Directory (D.Files (D.File_Index)) then
+               if not Directory_Belongs_To_Project
+                 (Get_Registry (D.Explorer.Kernel).all,
+                  D.Files (D.File_Index).Full_Name.all,
+                  Direct_Only => False)
                then
-                  if Is_Directory (D.Norm_Dir.all & Name) then
-                     if Directory_Belongs_To_Project
-                       (Get_Registry (D.Explorer.Kernel).all,
-                        D.Norm_Dir.all & Name,
-                        Direct_Only => False)
-                     then
-                        Append (D.Dirs, Display_Full_Name (Create (Name)));
-                     end if;
-
-                  --  If the file belongs to the project hierarchy, we also
-                  --  need to check that it is the one that really belongs to
-                  --  the project, not a homonym in some other directory
-                  else
-                     P := Get_Project_From_File
-                       (Get_Registry (D.Explorer.Kernel).all,
-                        Name, Root_If_Not_Found => False);
-                     Get_Full_Path_From_File
-                       (Registry => Get_Registry (D.Explorer.Kernel).all,
-                        Filename => Name,
-                        Use_Source_Path => True,
-                        Use_Object_Path => True,
-                        Project => P,
-                        File    => File);
-
-                     if P /= No_Project
-                       and then File_Equal
-                         (Dir_Name (File).all, D.Norm_Dir.all, Build_Server)
-                     then
-                        Append (D.Files, +Name);
-                     end if;
-                  end if;
-
-               elsif Is_Directory (D.Norm_Dir.all & Name) then
-                  Append (D.Dirs, Display_Full_Name (Create (Name)));
-
-               else
-                  Append (D.Files, Display_Full_Name (Create (Name)));
+                  --  Remove from the list.
+                  D.Files (D.File_Index) := No_File;
                end if;
-            end;
 
-            if D.Depth = 0 then
-               D.Depth := -1;
+            else
+               declare
+                  P    : constant Project_Type :=
+                           Get_Project_From_File
+                             (Get_Registry (D.Explorer.Kernel).all,
+                              D.Files (D.File_Index).Base_Dir_Name,
+                              Root_If_Not_Found => False);
+                  File : Virtual_File;
+               begin
+                  Get_Full_Path_From_File
+                    (Registry => Get_Registry (D.Explorer.Kernel).all,
+                     Filename => D.Files (D.File_Index).Base_Dir_Name,
+                     Use_Source_Path => True,
+                     Use_Object_Path => True,
+                     Project         => P,
+                     File            => File);
+
+                  --  If not part of a project, then we remove the file.
+                  if P = No_Project
+                    or else File /= D.Files (D.File_Index)
+                  then
+                     D.Files (D.File_Index) := No_File;
+                  end if;
+               end;
             end if;
          end if;
 
+         if D.Depth = 0 then
+            D.Depth := -1;
+         end if;
+
+         D.File_Index := D.File_Index + 1;
+
+         --  give the hand to gtk main until next file is analysed
          return True;
       end if;
-
-      Close (D.D);
 
       if D.Idle then
          Pop_State (D.Explorer.Kernel);
          Push_State (D.Explorer.Kernel, Busy);
       end if;
 
-      if Is_Case_Sensitive (Build_Server) then
-         Sort (D.Dirs);
-         Sort (D.Files);
-      else
-         Sort_Case_Insensitive (D.Dirs);
-         Sort_Case_Insensitive (D.Files);
-      end if;
+      for J in D.Files'Range loop
+         if D.Files (J) /= No_File then
+            Empty := False;
+            exit;
+         end if;
+      end loop;
 
-      if Is_Empty (D.Dirs) and then Is_Empty (D.Files) then
+      if Empty then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
               GObject (Close_Pixbufs (Directory_Node)));
       end if;
 
-      while not Is_Empty (D.Dirs) loop
-         declare
-            Dir : constant Filesystem_String := +Head (D.Dirs);
-         begin
+      for J in D.Files'Range loop
+         if D.Files (J) /= No_File
+           and then D.Files (J).Is_Directory
+         then
             Append (D.Explorer.File_Model, Iter, D.Base);
-            Set (D.Explorer.File_Model, Iter, Filesystem_Name_Column,
-                 +Full_Name
-                   (Create (D.Norm_Dir.all & Dir & Directory_Separator)).all);
+            Set_File (D.Explorer.File_Model, Iter, File_Column, D.Files (J));
             Set (D.Explorer.File_Model, Iter, Display_Name_Column,
-                 Display_Full_Name (Create (Dir)));
+                 D.Files (J).Display_Base_Dir_Name);
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
                  Gint (Node_Types'Pos (Directory_Node)));
 
@@ -442,12 +424,7 @@ package body Project_Explorers_Files is
             --  Are we on the path to the target directory ?
 
             if not Path_Found
-              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
-              and then File_Equal
-                (D.Norm_Dest
-                   (D.Norm_Dest'First ..
-                       D.Norm_Dest'First + D.Norm_Dir'Length + Dir'Length - 1),
-                 D.Norm_Dir.all & Dir, Build_Server)
+              and then Is_Parent (D.Files (J), D.Norm_Dest)
             then
                Path_Found := True;
 
@@ -472,10 +449,7 @@ package body Project_Explorers_Files is
 
                --  Are we on the target directory ?
 
-               if File_Equal
-                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator,
-                  Build_Server)
-               then
+               if D.Norm_Dest = D.Files (J) then
                   declare
                      Success   : Boolean;
                      pragma Unreferenced (Success);
@@ -485,8 +459,8 @@ package body Project_Explorers_Files is
                      D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
 
                      File_Append_Directory
-                       (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                        Iter, D.Depth, D.Norm_Dest.all, False);
+                       (D.Explorer, D.Files (J),
+                        Iter, D.Depth, D.Norm_Dest, False);
 
                      D.Explorer.Expanding := True;
                      Success := Expand_Row
@@ -509,8 +483,8 @@ package body Project_Explorers_Files is
 
                else
                   File_Append_Directory
-                    (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                     Iter, D.Depth, D.Norm_Dest.all, D.Idle);
+                    (D.Explorer, D.Files (J),
+                     Iter, D.Depth, D.Norm_Dest, D.Idle);
                end if;
 
             else
@@ -519,22 +493,23 @@ package body Project_Explorers_Files is
                Set (D.Explorer.File_Model, Iter, Icon_Column,
                     GObject (Close_Pixbufs (Directory_Node)));
             end if;
-
-            Next (D.Dirs);
-         end;
+         end if;
       end loop;
 
-      while not Is_Empty (D.Files) loop
-         Append_File
-           (D.Explorer.Kernel,
-            D.Explorer.File_Model,
-            D.Base,
-            Create (Full_Filename => D.Norm_Dir.all & (+Head (D.Files))));
-         Next (D.Files);
+      for J in D.Files'Range loop
+         if D.Files (J) /= No_File
+           and then D.Files (J).Is_Regular_File
+         then
+            Append_File
+              (D.Explorer.Kernel,
+               D.Explorer.File_Model,
+               D.Base,
+               D.Files (J));
+         end if;
       end loop;
 
-      Free (D.Norm_Dir);
-      Free (D.Norm_Dest);
+      D.Norm_Dest := No_File;
+      Unchecked_Free (D.Files);
 
       Pop_State (D.Explorer.Kernel);
 
@@ -544,7 +519,7 @@ package body Project_Explorers_Files is
       return False;
 
    exception
-      when Directory_Error =>
+      when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions
 
          New_D := D;
@@ -562,41 +537,23 @@ package body Project_Explorers_Files is
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
-      Dir           : Filesystem_String;
+      Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
-      Append_To_Dir : Filesystem_String  := "";
+      Append_To_Dir : Virtual_File := No_File;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True)
    is
-      D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      D : constant Append_Directory_Idle_Data_Access :=
+            new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
       Timeout_Id : Timeout_Handler_Id;
 
    begin
-      if Physical_Read then
-         begin
-            Open (D.D, Dir);
-         exception
-            when Directory_Error =>
-               Free (D);
-               return;
-         end;
-
-         --  Force a final directory separator, since otherwise on Windows
-         --  "C:\" is converted to "C:" and only file names relative to the
-         --  current directory will be returned
-         D.Norm_Dir := new Filesystem_String'
-           (Name_As_Directory (Normalize_Pathname (Dir)));
-
-      else
-         D.Norm_Dir := new Filesystem_String'
-           (Name_As_Directory (Normalize_Pathname (Dir)));
-      end if;
-
-      D.Norm_Dest     := new Filesystem_String'
-        (Name_As_Directory (Normalize_Pathname (Append_To_Dir)));
+      D.Dir       := Dir;
+      Ensure_Directory (D.Dir);
+      D.Norm_Dest := Append_To_Dir;
       D.Depth         := Depth;
       D.Base          := Base;
       D.Explorer      := Project_Explorer_Files (Explorer);
@@ -804,10 +761,7 @@ package body Project_Explorers_Files is
 
          case Node_Type is
             when Directory_Node | File_Node =>
-               File := Create
-                 (Full_Filename =>
-                    (+Get_String
-                       (T.File_Model, Iter, Filesystem_Name_Column)));
+               File := Get_File (T.File_Model, Iter, File_Column);
                Set_File_Information (Context, (1 => File));
 
             when Entity_Node =>
@@ -879,11 +833,11 @@ package body Project_Explorers_Files is
 
       if Iter /= Null_Iter then
          declare
-            Iter_Name : constant Filesystem_String :=
-              +Get_String (T.File_Model, Iter, Filesystem_Name_Column);
+            File : constant Virtual_File :=
+                     Get_File (T.File_Model, Iter, File_Column);
 
          begin
-            if Is_Directory (Iter_Name) then
+            if File.Is_Directory then
                Set (T.File_Model, Iter, Icon_Column,
                     GObject (Close_Pixbufs (Directory_Node)));
             end if;
@@ -949,8 +903,8 @@ package body Project_Explorers_Files is
          T.Expanding := True;
 
          declare
-            Iter_Name : constant Filesystem_String :=
-              +Get_String (T.File_Model, Iter, Filesystem_Name_Column);
+            File      : constant Virtual_File :=
+                          Get_File (T.File_Model, Iter, File_Column);
             N_Type    : constant Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
@@ -960,13 +914,12 @@ package body Project_Explorers_Files is
                   Free_Children (T, Iter);
                   Set (T.File_Model, Iter, Icon_Column,
                        GObject (Open_Pixbufs (Directory_Node)));
-                  File_Append_Directory (T, Iter_Name, Iter, 1);
+                  File_Append_Directory (T, File, Iter, 1);
 
                when File_Node =>
                   Free_Children (T, Iter);
                   Append_File_Info
-                    (T.Kernel, T.File_Model, Iter,
-                     Create (Full_Filename => Iter_Name));
+                    (T.Kernel, T.File_Model, Iter, File);
 
                when Project_Node | Extends_Project_Node =>
                   null;
@@ -1064,7 +1017,7 @@ package body Project_Explorers_Files is
                        Project_Explorer_Files (Files);
       Buffer       : aliased Filesystem_String (1 .. 1024);
       Last, Len    : Integer;
-      Cur_Dir      : constant Filesystem_String := Get_Current_Dir;
+      Cur_Dir      : constant Virtual_File := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
 
    begin
@@ -1086,7 +1039,7 @@ package body Project_Explorers_Files is
 
             File_Append_Directory
               (Explorer,
-               Greatest_Common_Path (Inc),
+               Create (Greatest_Common_Path (Inc)),
                Null_Iter, 1, Get_Current_Dir, True);
             String_List_Utils.String_List.Free (Inc);
          end;
@@ -1094,52 +1047,35 @@ package body Project_Explorers_Files is
       else
          Get_Local_Filesystem.Get_Logical_Drives (Buffer, Len);
 
-         if Len = 0 then
-            File_Append_Directory
-              (Explorer, (1 => Directory_Separator),
-               Null_Iter, 1, Cur_Dir, True);
+         Last := 1;
 
-         else
-            Last := 1;
-
-            for J in 1 .. Len loop
-               if Buffer (J) = ASCII.NUL then
-                  if File_Equal
-                    (Buffer (Last .. J - 1),
-                     Cur_Dir (Cur_Dir'First ..
-                         Cur_Dir'First + J - Last - 1),
-                     Build_Server)
-                  then
+         for J in 1 .. Len loop
+            if Buffer (J) = ASCII.NUL then
+               declare
+                  Drive : constant Virtual_File :=
+                            Create (Buffer (Last .. J - 1));
+               begin
+                  if Drive.Is_Parent (Cur_Dir) then
                      File_Append_Directory
-                       (Explorer, Buffer (Last .. J - 1),
+                       (Explorer, Drive,
                         Null_Iter, 1, Cur_Dir, True);
                      Dir_Inserted := True;
 
                   else
                      File_Append_Directory
-                       (Explorer, Buffer (Last .. J - 1),
-                        Null_Iter, 0, "", False, False);
+                       (Explorer, Drive,
+                        Null_Iter, 0, No_File, False, False);
                   end if;
-
-                  Last := J + 1;
-               end if;
-            end loop;
-
-            if not Dir_Inserted then
-               declare
-                  J : Natural := Cur_Dir'First;
-               begin
-                  while J < Cur_Dir'Last
-                    and then not Is_Directory_Separator (Cur_Dir (J))
-                  loop
-                     J := J + 1;
-                  end loop;
-
-                  File_Append_Directory
-                    (Explorer, Cur_Dir (Cur_Dir'First .. J),
-                     Null_Iter, 1, Cur_Dir, True);
                end;
+
+               Last := J + 1;
             end if;
+         end loop;
+
+         if not Dir_Inserted then
+            File_Append_Directory
+              (Explorer, Cur_Dir.Get_Root,
+               Null_Iter, 1, Cur_Dir, True);
          end if;
       end if;
 
@@ -1279,10 +1215,7 @@ package body Project_Explorers_Files is
       Iter := Get_Iter_First (View.File_Model);
 
       while Iter /= Null_Iter loop
-         if File_Equal
-           (+Get_String (View.File_Model, Iter, Filesystem_Name_Column),
-            File.Full_Name.all)
-         then
+         if Get_File (View.File_Model, Iter, File_Column) = File then
             --  First select the parent and set the 'scroll to dir' state
             Path := Get_Path (View.File_Model,
                               Parent (View.File_Model, Iter));
@@ -1341,10 +1274,7 @@ package body Project_Explorers_Files is
       end if;
 
       while Iter /= Null_Iter loop
-         if File_Equal
-           (+Get_String (View.File_Model, Iter, Filesystem_Name_Column),
-            Dir.Full_Name.all)
-         then
+         if Get_File (View.File_Model, Iter, File_Column) = Dir then
             --  We found the file's directory
 
             Path := Get_Path (View.File_Model, Iter);
@@ -1364,10 +1294,8 @@ package body Project_Explorers_Files is
             Next_Iter := Children (View.File_Model, Iter);
 
             while Next_Iter /= Null_Iter loop
-               if File_Equal
-                 (+Get_String
-                    (View.File_Model, Next_Iter, Filesystem_Name_Column),
-                  File.Full_Name.all)
+               if Get_File (View.File_Model, Next_Iter, File_Column) =
+                 File
                then
                   --  File already present. Do nothing
                   return;
@@ -1417,12 +1345,12 @@ package body Project_Explorers_Files is
                   Append (View.File_Model, Iter2, Iter);
                end if;
 
-               Set (View.File_Model, Iter2, Filesystem_Name_Column,
-                    +File.Full_Name.all);
+               Set_File (View.File_Model, Iter2, File_Column, File);
                Set (View.File_Model, Iter2, Display_Name_Column,
-                    Unknown_To_UTF8 (+File.Base_Dir_Name));
+                    File.Display_Base_Dir_Name);
                Set_Node_Type (View.File_Model, Iter2, Directory_Node, False);
-               File_Append_Directory (View, File.Full_Name.all, Iter2);
+               File_Append_Directory (View, File, Iter2);
+
             else
                Append_File
                  (View.Kernel,

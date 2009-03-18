@@ -25,7 +25,7 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -62,8 +62,8 @@ package body Project_Explorers_Common is
    begin
       return GType_Array'
         (Icon_Column          => Gdk.Pixbuf.Get_Type,
-         Filesystem_Name_Column => GType_String,
-         Display_Name_Column     => GType_String,
+         File_Column          => Get_Virtual_File_Type,
+         Display_Name_Column  => GType_String,
          Node_Type_Column     => GType_Int,
          User_Data_Column     => GType_Pointer,
          Line_Column          => GType_Int,
@@ -175,7 +175,7 @@ package body Project_Explorers_Common is
          Append (Model, Iter, Base);
       end if;
 
-      Set (Model, Iter, Filesystem_Name_Column, +Full_Name (File).all);
+      Set_File (Model, Iter, File_Column, File);
       Set (Model, Iter, Display_Name_Column, Display_Base_Name (File));
       Set (Model, Iter, Icon_Column,
            Glib.Object.GObject (Close_Pixbufs (File_Node)));
@@ -219,6 +219,7 @@ package body Project_Explorers_Common is
                   Language.Category_Name (Category, Category_Name);
       N       : Gtk_Tree_Iter;
       Sibling : Gtk_Tree_Iter;
+
    begin
       Sibling := Children (Model, Parent_Iter);
 
@@ -238,7 +239,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Filesystem_Name_Column, +Full_Name (File).all);
+      Set_File (Model, N, File_Column, File);
       Set (Model, N, Display_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
            Glib.Object.GObject
@@ -325,6 +326,7 @@ package body Project_Explorers_Common is
    is
       N       : Gtk_Tree_Iter;
       Sibling : Gtk_Tree_Iter;
+
    begin
       Sibling := Children (Model, Parent_Iter);
 
@@ -345,7 +347,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Filesystem_Name_Column, +Full_Name (File).all);
+      Set_File (Model, N, File_Column, File);
       Set (Model, N, Display_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column, Reduce (Construct.Name.all));
       Set (Model, N, Icon_Column,
@@ -620,9 +622,7 @@ package body Project_Explorers_Common is
                      Cancel_Child_Drag (Child);
                      Open_File_Editor
                        (Kernel,
-                        Create
-                          (Full_Filename =>
-                           +Get_String (Model, Iter, Filesystem_Name_Column)),
+                        Get_File (Model, Iter, File_Column),
                         Line   => 0,
                         Column => 0);
                      return True;
@@ -632,9 +632,8 @@ package body Project_Explorers_Common is
 
                      if Get_State (Child) /= Floating then
                         Child.Kernel        := Kernel;
-                        Child.Dnd_From_File := Create
-                          (Full_Filename =>
-                           +Get_String (Model, Iter, Filesystem_Name_Column));
+                        Child.Dnd_From_File :=
+                          Get_File (Model, Iter, File_Column);
 
                         Child_Drag_Begin (Child, Event);
                      end if;
@@ -653,9 +652,7 @@ package body Project_Explorers_Common is
 
                      Open_File_Editor
                        (Kernel,
-                        Create
-                          (Full_Filename =>
-                           +Get_String (Model, Iter, Filesystem_Name_Column)),
+                        Get_File (Model, Iter, File_Column),
                         Line   => Natural (Line),
                         Column => Visible_Column_Type (Column));
                   end if;
@@ -701,9 +698,7 @@ package body Project_Explorers_Common is
          when File_Node =>
             Open_File_Editor
               (Kernel,
-               Create
-                 (Full_Filename =>
-                  +Get_String (Model, Iter, Filesystem_Name_Column)),
+               Get_File (Model, Iter, File_Column),
                Line   => 0,
                Column => 0);
 
@@ -713,9 +708,7 @@ package body Project_Explorers_Common is
 
             Open_File_Editor
               (Kernel,
-               Create
-                 (Full_Filename =>
-                  +Get_String (Model, Iter, Filesystem_Name_Column)),
+               Get_File (Model, Iter, File_Column),
                Line   => Natural (Line),
                Column => Visible_Column_Type (Column));
 
@@ -787,10 +780,8 @@ package body Project_Explorers_Common is
       case Get_Node_Type (Model, Node) is
          when File_Node =>
             declare
-               --  ??? Virtual_File should be stored directly in the tree
-               File : constant Virtual_File := Create
-                 (Full_Filename =>
-                  +Get_String (Model, Node, Filesystem_Name_Column));
+               File : constant Virtual_File :=
+                        Get_File (Model, Node, File_Column);
             begin
                return Duration (Get_Int (Model, Node, Timestamp_Column)) +
                  GNATCOLL.Utils.No_Time =
@@ -822,7 +813,7 @@ package body Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Filesystem_String is
    begin
-      return +Get_String (Model, Node, Display_Name_Column);
+      return Get_File (Model, Node, File_Column).Base_Name;
    end Get_Base_Name;
 
    -----------------------
@@ -833,7 +824,7 @@ package body Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Filesystem_String is
    begin
-      return +Get_String (Model, Node, Filesystem_Name_Column);
+      return Get_File (Model, Node, File_Column).Full_Name.all;
    end Get_Absolute_Name;
 
    ------------------------
@@ -842,15 +833,9 @@ package body Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
-   is
-      Absolute : constant Filesystem_String := Get_Absolute_Name (Model, Node);
+      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File is
    begin
-      if Absolute = "" then
-         return GNATCOLL.VFS.No_File;
-      else
-         return Create (Full_Filename => Absolute);
-      end if;
+      return Get_File (Model, Node, File_Column);
    end Get_File_From_Node;
 
    -----------------------------
@@ -859,18 +844,18 @@ package body Project_Explorers_Common is
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String
+      Node  : Gtk_Tree_Iter) return Virtual_File
    is
-      S : constant Filesystem_String := Get_Absolute_Name (Model, Node);
+      F : constant Virtual_File := Get_File (Model, Node, File_Column);
    begin
-      if S = "" then
-         return "";
+      if F = GNATCOLL.VFS.No_File then
+         return F;
+      end if;
+
+      if Get_Node_Type (Model, Node) = Directory_Node then
+         return F;
       else
-         if Get_Node_Type (Model, Node) = Directory_Node then
-            return S;
-         else
-            return Dir_Name (S);
-         end if;
+         return F.Get_Parent;
       end if;
    end Get_Directory_From_Node;
 

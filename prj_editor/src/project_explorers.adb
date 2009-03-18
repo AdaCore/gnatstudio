@@ -24,6 +24,7 @@ with Ada.Strings.Hash;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Glib;                      use Glib;
@@ -86,7 +87,6 @@ with Project_Explorers_Common;  use Project_Explorers_Common;
 with Remote;                    use Remote;
 with String_Hash;
 with String_Utils;              use String_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 with Tooltips;
 with Traces;                    use Traces;
 
@@ -274,7 +274,7 @@ package body Project_Explorers is
 
    procedure Set_Directory_Node_Attributes
      (Explorer  : access Project_Explorer_Record'Class;
-      Directory : Filesystem_String;
+      Directory : Virtual_File;
       Node      : Gtk_Tree_Iter;
       Project   : Project_Type;
       Node_Type : Directory_Node_Types);
@@ -1140,15 +1140,15 @@ package body Project_Explorers is
       Parent_Node : Gtk_Tree_Iter := Null_Iter;
       Name_Suffix : String := "") return Gtk_Tree_Iter
    is
-      Is_Leaf   : constant Boolean :=
-                    not Has_Imported_Projects (Project)
-                    and then Get_Attribute_Value
-                      (Project, Obj_Dir_Attribute) = ""
-                    and then Source_Dirs (Project)'Length = 0;
-      Node_Text : constant String := Project_Name (Project);
-      Node_Type : Node_Types := Project_Node;
-      N         : Gtk_Tree_Iter;
-      Ref       : Gtk_Tree_Iter := Null_Iter;
+      Is_Leaf    : constant Boolean :=
+                     not Has_Imported_Projects (Project)
+                     and then Get_Attribute_Value
+                       (Project, Obj_Dir_Attribute) = ""
+                     and then Source_Dirs (Project)'Length = 0;
+      Node_Text  : constant String := Project_Name (Project);
+      Node_Type  : Node_Types := Project_Node;
+      N          : Gtk_Tree_Iter;
+      Ref        : Gtk_Tree_Iter := Null_Iter;
 
    begin
       if Project = No_Project then
@@ -1184,8 +1184,7 @@ package body Project_Explorers is
          Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
       end if;
 
-      Set (Explorer.Tree.Model, N, Filesystem_Name_Column,
-           +Full_Name (Project_Path (Project)).all);
+      Set_File (Explorer.Tree.Model, N, File_Column, Project_Path (Project));
 
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
@@ -1218,22 +1217,22 @@ package body Project_Explorers is
       Project  : Project_Type;
       Node     : Gtk_Tree_Iter)
    is
-      Node_Text : constant String :=
-        Get_String
-          (Explorer.Tree.Model, Node, Filesystem_Name_Column);
+      File      : constant Virtual_File :=
+                    Get_File (Explorer.Tree.Model, Node, File_Column);
    begin
       if Get_History
         (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
       then
          Set (Explorer.Tree.Model, Node, Display_Name_Column,
-              Unknown_To_UTF8 (Node_Text));
+              File.Display_Full_Name);
       else
-         Set (Explorer.Tree.Model, Node,
-              Display_Name_Column,
-              Unknown_To_UTF8
-                (+Relative_Path_Name
-                (+Node_Text, Dir_Name (Project_Path (Project)).all,
-                 Build_Server)));
+         Set
+           (Explorer.Tree.Model, Node,
+            Display_Name_Column,
+            +Relative_Path_Name
+              (File.Full_Name.all,
+               Project_Path (Project).Dir_Name.all,
+               Build_Server));
       end if;
    end Update_Directory_Node_Text;
 
@@ -1324,13 +1323,14 @@ package body Project_Explorers is
 
    procedure Set_Directory_Node_Attributes
      (Explorer  : access Project_Explorer_Record'Class;
-      Directory : Filesystem_String;
+      Directory : Virtual_File;
       Node      : Gtk_Tree_Iter;
       Project   : Project_Type;
       Node_Type : Directory_Node_Types) is
    begin
-      Set (Explorer.Tree.Model, Node, Filesystem_Name_Column,
-           +Full_Name (Create (Name_As_Directory (Directory))).all);
+      Ensure_Directory (Directory);
+      Set_File
+        (Explorer.Tree.Model, Node, File_Column, Directory);
 
       Update_Directory_Node_Text (Explorer, Project, Node);
 
@@ -1360,6 +1360,7 @@ package body Project_Explorers is
       Row_Found  : Boolean := False;
       Par, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
+      File       : Virtual_File;
 
       Text       : String_Access;
    begin
@@ -1419,22 +1420,17 @@ package body Project_Explorers is
       case Node_Type is
          when Project_Node | Extends_Project_Node =>
             --  Project or extended project full pathname
-            Text := new String'
-              (Unknown_To_UTF8
-                 (Get_String
-                    (Tooltip.Explorer.Tree.Model, Iter,
-                     Filesystem_Name_Column)));
+            File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
+            Text := new String'(File.Display_Full_Name);
 
          when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
             --  Directroy full pathname and project name
             --  Get parent node which is the project name
             Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
 
+            File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
             Text := new String'
-              (Unknown_To_UTF8
-                 (Get_String
-                    (Tooltip.Explorer.Tree.Model, Iter,
-                     Filesystem_Name_Column))
+              (File.Display_Full_Name
                & ASCII.LF &
                (-"in project ") &
                Get_String
@@ -1553,7 +1549,7 @@ package body Project_Explorers is
       if Obj /= "" then
          Set_Directory_Node_Attributes
            (Explorer  => Explorer,
-            Directory => Obj,
+            Directory => Create (Obj),
             Node      => Create_Object_Dir (Node),
             Project   => Project,
             Node_Type => Obj_Directory_Node);
@@ -1562,7 +1558,7 @@ package body Project_Explorers is
       if Exec /= "" and then Exec /= Obj then
          Set_Directory_Node_Attributes
            (Explorer  => Explorer,
-            Directory => Exec,
+            Directory => Create (Exec),
             Node      => Create_Object_Dir (Node),
             Project   => Project,
             Node_Type => Exec_Directory_Node);
@@ -1845,7 +1841,7 @@ package body Project_Explorers is
          while D /= GNATCOLL.VFS.No_File
            and then D /= Root
          loop
-            if Is_Hidden (Explorer.Kernel, D.Base_Name) then
+            if Is_Hidden (Explorer.Kernel, D.Base_Dir_Name) then
                return True;
             end if;
 
@@ -1937,20 +1933,22 @@ package body Project_Explorers is
 
       for F in Files'Range loop
          declare
-            Dir : constant Cst_String_Access := Dir_Name (Files (F));
+            Dir : constant Virtual_File := Get_Parent (Files (F));
          begin
-            S_Cursor := Find (S_Dirs, Dir.all);
+
+            S_Cursor := Find (S_Dirs, Dir.Full_Name.all);
+
             if S_Cursor = No_Element then
                --  Was this directory already displayed in the tree ?
 
-               S_Cursor := Find (Old_Dirs, Dir.all);
+               S_Cursor := Find (Old_Dirs, Dir.Full_Name.all);
 
                if S_Cursor = No_Element then
                   --  No, create it
 
                   if Get_History
                     (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                    or else not Is_Hidden (Files (F).Get_Parent)
+                    or else not Is_Hidden (Dir)
                   then
                      Append
                        (Explorer.Tree.Model,
@@ -1958,12 +1956,12 @@ package body Project_Explorers is
                         Parent  => Node);
                      Set_Directory_Node_Attributes
                        (Explorer  => Explorer,
-                        Directory => Dir.all,
+                        Directory => Dir,
                         Node      => N,
                         Project   => Project,
                         Node_Type => Directory_Node);
                      Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                     Include (S_Dirs, Dir.all, N);
+                     Include (S_Dirs, Dir.Full_Name.all, N);
                   else
                      N := Null_Iter;
                   end if;
@@ -1973,7 +1971,7 @@ package body Project_Explorers is
                   --  the new representation of three
                   N := Element (S_Cursor);
                   Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                  Include (S_Dirs, Dir.all, N);
+                  Include (S_Dirs, Dir.Full_Name.all, N);
                   Delete (Old_Dirs, S_Cursor);
                end if;
 
@@ -1983,6 +1981,7 @@ package body Project_Explorers is
          end;
 
          S_Cursor := Find (S_Files, Base_Name (Files (F)));
+
          if S_Cursor /= No_Element then
             --  The file was already present in the tree, preserve it if it has
             --  the same parent directory
@@ -2058,7 +2057,7 @@ package body Project_Explorers is
                      Parent  => Node);
                   Set_Directory_Node_Attributes
                     (Explorer  => Explorer,
-                     Directory => Dir.Full_Name.all,
+                     Directory => Dir,
                      Node      => N,
                      Project   => Project,
                      Node_Type => Directory_Node);
@@ -2556,8 +2555,8 @@ package body Project_Explorers is
             --  The file was never parsed
             elsif Status = Unknown then
                if Check_Entities
-                 (Create (Full_Filename => Get_Directory_From_Node
-                            (Explorer.Tree.Model, Start) & N))
+                 (Create_From_Dir
+                    (Get_Directory_From_Node (Explorer.Tree.Model, Start), N))
                then
                   Set (C.Matches, +N, Search_Match);
                   Compute_Children (Explorer, Start);
@@ -2570,9 +2569,9 @@ package body Project_Explorers is
                   --  referenced any more, we simply don't parse them
 
                   Mark_File_And_Projects
-                    (File => Create
-                       (Full_Filename => Get_Directory_From_Node
-                          (Explorer.Tree.Model, Start) & N),
+                    (File => Create_From_Dir
+                       (Get_Directory_From_Node (Explorer.Tree.Model, Start),
+                        N),
                      Project_Marked => False,
                      Project        => Get_Project_From_Node
                        (Explorer.Tree.Model, Explorer.Kernel, Start, False),
@@ -2645,8 +2644,8 @@ package body Project_Explorers is
 
                   when Directory_Node =>
                      Next_Or_Child
-                       (+Get_Directory_From_Node
-                          (Explorer.Tree.Model, Start_Node),
+                       (Get_Directory_From_Node
+                          (Explorer.Tree.Model, Start_Node).Display_Full_Name,
                         Start_Node,
                         Context.Include_Directories, Tmp, Finish);
                      if Finish and then Context.Include_Directories then

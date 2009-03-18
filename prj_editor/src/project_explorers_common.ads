@@ -64,8 +64,8 @@ package Project_Explorers_Common is
    --  in Columns_Types.
 
    Icon_Column          : constant := 0;
-   Display_Name_Column     : constant := 1;
-   Filesystem_Name_Column  : constant := 2;
+   Display_Name_Column  : constant := 1;
+   File_Column          : constant := 2;
    Node_Type_Column     : constant := 3;
    User_Data_Column     : constant := 4;
    Line_Column          : constant := 5;
@@ -191,10 +191,8 @@ package Project_Explorers_Common is
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String;
-   --  Return the name of the directory to which Node belongs. This returns the
-   --  full directory name, relative to the project.
-   --  The return strings always ends with a directory separator.
+      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
+   --  Return the name of the directory to which Node belongs.
 
    function Get_File_From_Node
      (Model : Gtk_Tree_Store;
