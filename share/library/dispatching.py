@@ -122,7 +122,7 @@ def on_highlight_dispatching_calls (menu):
 def on_file_edited (hook, file):
   highlight_dispatching_calls (EditorBuffer.get (file))
 
-def on_compilation_finished (hook, category):
+def on_compilation_finished (hook, category, target_name="", mode_name="", status=""):
   # Re-highlight all editors
   for l in EditorBuffer.list():
      highlight_dispatching_calls (l)
