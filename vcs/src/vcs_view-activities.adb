@@ -754,9 +754,9 @@ package body VCS_View.Activities is
             end if;
          end Add_Selected_Item;
 
-         E      : aliased VCS_View_Access := Explorer;
-         EA     : constant Explorer_Selection_Foreach.Data_Type_Access :=
-                    E'Unchecked_Access;
+         E  : aliased VCS_View_Access := Explorer;
+         EA : constant Explorer_Selection_Foreach.Data_Type_Access :=
+                E'Unchecked_Access;
 
       begin
          if Explorer = null then

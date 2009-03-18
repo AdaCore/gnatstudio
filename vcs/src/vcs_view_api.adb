@@ -2074,7 +2074,7 @@ package body VCS_View_API is
 
          declare
             Dir : constant Filesystem_String :=
-              Directory_Information (Context);
+                    Directory_Information (Context);
          begin
             String_List.Append (Files, +Dir (Dir'First .. Dir'Last - 1));
          end;

@@ -246,7 +246,7 @@ package body VCS_Activities_View_API is
       --  Handle this filename in the patch
 
       Root_Dir      : constant Filesystem_String :=
-        +To_Lower (+Command.Root_Dir.all);
+                        +To_Lower (+Command.Root_Dir.all);
       Iter          : String_List.List_Node;
       Patch         : Strings.String_Access := Read_File (Command.Patch_File);
       Patch_Content : Unbounded_String := To_Unbounded_String (Patch.all);

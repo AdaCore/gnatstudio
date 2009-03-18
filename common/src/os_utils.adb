@@ -288,7 +288,8 @@ package body OS_Utils is
       -------------------
 
       function Cygwin_To_Dos
-        (Path : Filesystem_String) return Filesystem_String is
+        (Path : Filesystem_String) return Filesystem_String
+      is
          Cygdrive : constant String := "/cygdrive/";
       begin
          if Is_Cygwin_Path (Path) then
