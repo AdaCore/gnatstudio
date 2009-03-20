@@ -135,7 +135,11 @@ Known Problems fixed in GPS 4.4.0
 - HA07-008: Discrepencies between GPS and gprbuild
   Problem:    The list of source files reported by GPS and seen by gprbuild
               do not always match for languages other than Ada. This was
-              fixed by using the same project manager in both tools
+              fixed by using the same project manager in both tools.
+              However, this change has a few minor impacts on some aspects
+              of GPS: when a project is automatically generated with
+              --debug, it no longer shows the runtime files in the Project
+              View, nor the binder files (b~*.adb)
   Workaround: You can in fact open any file in GPS through /File/Open, so
               this issue is not blocking
 
