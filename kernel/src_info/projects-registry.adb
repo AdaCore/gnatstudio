@@ -1525,6 +1525,9 @@ package body Projects.Registry is
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
+
+      --  Use full path name so that the messages are sent to Locations view
+      Opt.Full_Path_Name_For_Brief_Errors := True;
    end Initialize;
 
    --------------
