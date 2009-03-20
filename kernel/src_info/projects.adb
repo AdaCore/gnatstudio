@@ -19,9 +19,7 @@
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings;                use Ada.Strings;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Hash;
-with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Text_IO;                use Ada, Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -31,7 +29,6 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 
 with Basic_Types;                use Basic_Types;
-with Casing;                     use Casing;
 with Filesystems;                use Filesystems;
 with File_Utils;                 use File_Utils;
 with Namet;                      use Namet;
@@ -105,12 +102,6 @@ package body Projects is
    function Get_View
      (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id;
    --  Return the project view for the project Name
-
-   function Check_Full_File
-     (Tree : Prj.Project_Tree_Ref;
-      File : Name_Id;
-      List : Array_Element_Id) return Array_Element_Id;
-   --  Check whether File is in the List. Return the index in the list
 
    type External_Variable_Callback is access function
      (Variable : Project_Node_Id; Prj : Project_Node_Id) return Boolean;
@@ -756,108 +747,45 @@ package body Projects is
       Unit_Name : out Name_Id;
       Lang      : out Name_Id)
    is
-      View   : Project_Id;
-      Naming : Naming_Data;
       F      : String := +Filename;
-      Arr    : Array_Element_Id;
-      Len    : Natural;
-      File   : Name_Id;
-      Langs  : String_List_Id;
+      P      : Project_Type;
+      S      : Source_Id;
    begin
-      if Project = No_Project then
-         Naming := Standard_Naming_Data;
-      else
-         View := Get_View (Project);
-         Naming := View.Naming;
-      end if;
-
-      Canonical_Case_File_Name (F);
-
-      --  Check Ada exceptions
-
-      File := Get_String (F);
-
-      Arr := Check_Full_File (Project.View_Tree, File, Naming.Bodies);
-
-      if Arr = No_Array_Element then
-         Arr := Check_Full_File (Project.View_Tree, File, Naming.Specs);
-
-         if Arr /= No_Array_Element then
-            Part      := Unit_Spec;
-            Unit_Name := Array_Elements (Project)(Arr).Index;
-            Lang      := Name_Ada;
-            return;
-         end if;
-
-      else
-         Part      := Unit_Body;
-         Unit_Name := Array_Elements (Project)(Arr).Index;
-         Lang      := Name_Ada;
-         return;
-      end if;
-
-      --  Check exceptions for other languages.
-      --  No notion of unit here, so no other file name
-
-      Arr := Check_Full_File
-        (Project.View_Tree, File, Naming.Implementation_Exceptions);
-
-      if Arr = No_Array_Element then
-         Arr := Check_Full_File
-           (Project.View_Tree, File, Naming.Specification_Exceptions);
-
-         if Arr /= No_Array_Element then
-            Part      := Unit_Spec;
-            Lang      := Array_Elements (Project)(Arr).Index;
-            Unit_Name := Get_String (F);
-            return;
-         end if;
-
-      else
-         Part      := Unit_Body;
-         Unit_Name := Get_String (F);
-         Lang      := Array_Elements (Project)(Arr).Index;
-         return;
-      end if;
-
-      --  Check standard extensions. The index in this table is the language
+      Lang      := No_Name;
+      Part      := Unit_Separate;
+      Unit_Name := No_Name;
 
       if Project /= No_Project then
-         Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
-      else
-         Langs := Nil_String;
-      end if;
+         Get_Source_And_Lang_From_File
+           (Project.Data.Registry.all,
+            Base_Name => Filename,
+            Project   => P,
+            Source    => S,
+            Lang      => Lang);
 
-      Arr := Naming.Spec_Suffix;
-      Check_Suffix_List (Project.View_Tree, +F, Langs, Arr, Len);
-      if Arr /= No_Array_Element then
-         Part      := Unit_Spec;
-         Unit_Name := Get_String (F (F'First .. F'Last - Len));
-         Lang      := Array_Elements (Project)(Arr).Index;
-         return;
-      end if;
+         if P = Project and then S /= No_Source then
+            if S.Unit /= No_Unit_Index then
+               Unit_Name := S.Unit.Name;
+            else
+               Unit_Name := Get_String (F);
+            end if;
 
-      Arr := Naming.Body_Suffix;
-      Check_Suffix_List (Project.View_Tree, +F, Langs, Arr, Len);
-      if Arr /= No_Array_Element then
-         Part      := Unit_Body;
-         Unit_Name := Get_String (F (F'First .. F'Last - Len));
-         Lang      := Array_Elements (Project)(Arr).Index;
-         return;
-      end if;
-
-      --  Test the separate suffix (for Ada files)
-
-      declare
-         Suffix : constant String := Get_String (Naming.Separate_Suffix);
-      begin
-         if Suffix_Matches (+F, +Suffix) then
-            Part      := Unit_Separate;
-            Lang      := Name_Ada;
-            Unit_Name := Get_String (F (F'First .. F'Last - Suffix'Length));
-            return;
+            case S.Kind is
+               when Spec => Part := Unit_Spec;
+               when Impl => Part := Unit_Body;
+               when Sep  => Part := Unit_Separate;
+            end case;
+         else
+            Unit_Name := Get_String (F);
          end if;
-      end;
+
+         return;
+      end if;
+
+      --  ??? Below, should really be computed when we are parsing predefined
+      --  files
+
+      Canonical_Case_File_Name (F);
 
       --  Special case for the default GNAT extensions, since whatever the user
       --  naming scheme, the runtime always has the same naming scheme
@@ -866,20 +794,15 @@ package body Projects is
          Part      := Unit_Spec;
          Unit_Name := Get_String (+Base_Name (Filename, ".ads"));
          Lang      := Name_Ada;
-         return;
 
       elsif GNAT.Directory_Operations.File_Extension (F) = ".adb" then
          Part      := Unit_Spec;
          Unit_Name := Get_String (+Base_Name (Filename, ".ads"));
          Lang      := Name_Ada;
-         return;
+
+      else
+         Unit_Name := Get_String (+Base_Name (Filename));
       end if;
-
-      --  Whatever. This should be unreachable code anyway
-
-      Lang      := No_Name;
-      Part      := Unit_Separate;
-      Unit_Name := Get_String (+Base_Name (Filename));
    end Get_Unit_Part_And_Name_From_Filename;
 
    ---------------------------------
@@ -977,27 +900,9 @@ package body Projects is
       File_Must_Exist          : Boolean := True;
       Language                 : Name_Id) return Filesystem_String
    is
-      Arr             : Array_Element_Id := No_Array_Element;
+      pragma Unreferenced (File_Must_Exist);
       Unit            : Name_Id;
-      View            : Project_Id;
-      Value           : Variable_Value;
-      Unit_Name_Cased : String := Unit_Name;
-
-      function Has_Predefined_Prefix (S : String) return Boolean;
-      --  Return True is S has a name that starts like a predefined unit
-      --  (e.g. a.b, which should be replaced by a~b)
-
-      ---------------------------
-      -- Has_Predefined_Prefix --
-      ---------------------------
-
-      function Has_Predefined_Prefix (S : String) return Boolean is
-         C : constant Character := S (S'First);
-      begin
-         return S (S'First + 1) = '.'
-           and then (C = 'a' or else C = 'g' or else C = 'i' or else C = 's');
-      end Has_Predefined_Prefix;
-
+      UIndex          : Unit_Index;
    begin
       --  Standard GNAT naming scheme
       --  ??? This isn't language independent, what if other languages have
@@ -1018,109 +923,28 @@ package body Projects is
 
       --  The project naming scheme
       else
-         View := Get_View (Project);
          Name_Len := Unit_Name'Length;
          Name_Buffer (1 .. Name_Len) := Unit_Name;
          Unit := Name_Find;
 
-         --  Check Ada exceptions
+         --  Take advantage of computation done by the project manager when we
+         --  looked for source files
 
-         case Part is
-            when Unit_Body | Unit_Separate =>
-               Value := Value_Of
-                 (Index    => Unit,
-                  In_Array => View.Naming.Bodies,
-                  In_Tree  => Project.View_Tree);
-
-            when Unit_Spec =>
-               Value := Value_Of
-                 (Index    => Unit,
-                  In_Array => View.Naming.Specs,
-                  In_Tree  => Project.View_Tree);
-         end case;
-
-         if Value /= Nil_Variable_Value then
-            return +Get_String (Value.Value);
-         end if;
-
-         --  Otherwise test the standard naming scheme
-
-         case View.Naming.Casing is
-            when All_Lower_Case =>
-               Fixed.Translate
-                 (Source  => Unit_Name_Cased,
-                  Mapping => Lower_Case_Map);
-
-            when All_Upper_Case =>
-               Fixed.Translate
-                 (Source  => Unit_Name_Cased,
-                  Mapping => Upper_Case_Map);
-
-            when others =>
-               null;
-         end case;
-
-         case Part is
-            when Unit_Body =>
-               Arr := View.Naming.Body_Suffix;
-
-            when Unit_Separate =>
-               declare
-                  N : constant Filesystem_String :=
-                    +(Unit_Name_Cased & Get_String
-                      (Name_Id (View.Naming.Separate_Suffix)));
-               begin
-                  if not File_Must_Exist
-                    or else Get_Project_From_File
-                      (Project.Data.Registry.all, N, False) = Project
-                  then
-                     return N;
+         UIndex := Units_Htable.Get (Project.View_Tree.Units_HT, Unit);
+         if UIndex /= No_Unit_Index then
+            case Part is
+               when Unit_Body | Unit_Separate =>
+                  if UIndex.File_Names (Impl) /= null then
+                     return +Get_String (UIndex.File_Names (Impl).File);
                   end if;
-               end;
 
-               return "";
-
-            when Unit_Spec =>
-               Arr := View.Naming.Spec_Suffix;
-         end case;
-
-         declare
-            Dot_Replacement : constant String := Get_String
-              (Name_Id (Get_View (Project).Naming.Dot_Replacement));
-            Uname           : String := Substitute_Dot
-              (Unit_Name_Cased, Dot_Replacement);
-
-         begin
-            --  Handle properly special naming such as a.b -> a~b
-
-            if Language = Name_Ada
-              and then Unit_Name_Cased'Length > 2
-              and then Has_Predefined_Prefix (Unit_Name_Cased)
-            then
-               Uname (Uname'First + 1) := '~';
-            end if;
-
-            while Arr /= No_Array_Element loop
-               if Array_Elements (Project)(Arr).Index = Language then
-                  declare
-                     N : constant Filesystem_String :=
-                       +(Uname & Get_String
-                         (Array_Elements (Project) (Arr).Value.Value));
-                  begin
-                     if not File_Must_Exist
-                       or else Get_Project_From_File
-                         (Project.Data.Registry.all, N, False) = Project
-                     then
-                        return N;
-                     end if;
-                  end;
-               end if;
-
-               Arr := Array_Elements (Project)(Arr).Next;
-            end loop;
-         end;
+               when Unit_Spec =>
+                  if UIndex.File_Names (Spec) /= null then
+                     return +Get_String (UIndex.File_Names (Spec).File);
+                  end if;
+            end case;
+         end if;
       end if;
-
       return "";
    end Get_Filename_From_Unit;
 
@@ -1228,6 +1052,8 @@ package body Projects is
    is
       View  : constant Project_Id := Get_View (Project);
       Value : Variable_Value;
+      Lang  : Language_Ptr;
+      Unit  : Unit_Index;
    begin
       if Project = No_Project or else View = Prj.No_Project then
          return Default;
@@ -1239,39 +1065,74 @@ package body Projects is
       if Attribute = Spec_Suffix_Attribute
         or else Attribute = Specification_Suffix_Attribute
       then
-         Value := Value_Of
-           (Index    => Get_String (Index),
-            In_Array => View.Naming.Spec_Suffix,
-            In_Tree  => Project.View_Tree);
+         Lang := Get_Language_From_Name (View, Index);
+         if Lang /= null then
+            return Get_String (Lang.Config.Naming_Data.Spec_Suffix);
+         else
+            return "";
+         end if;
 
       elsif Attribute = Impl_Suffix_Attribute
         or else Attribute = Implementation_Suffix_Attribute
       then
-         Value := Value_Of
-           (Index    => Get_String (Index),
-            In_Array => View.Naming.Body_Suffix,
-            In_Tree  => Project.View_Tree);
+         Lang := Get_Language_From_Name (View, Index);
+         if Lang /= null then
+            return Get_String (Lang.Config.Naming_Data.Body_Suffix);
+         else
+            return "";
+         end if;
 
       elsif Attribute = Separate_Suffix_Attribute then
-         return Get_String (View.Naming.Separate_Suffix);
+         Lang := Get_Language_From_Name (View, "ada");
+         if Lang /= null then
+            return Get_String (Lang.Config.Naming_Data.Separate_Suffix);
+         else
+            return "";
+         end if;
 
       elsif Attribute = Casing_Attribute then
-         return Prj.Image (View.Naming.Casing);
+         Lang := Get_Language_From_Name (View, "ada");
+         if Lang /= null then
+            return Prj.Image (Lang.Config.Naming_Data.Casing);
+         else
+            return "";
+         end if;
 
       elsif Attribute = Dot_Replacement_Attribute then
-         return Get_String (View.Naming.Dot_Replacement);
+         Lang := Get_Language_From_Name (View, "ada");
+         if Lang /= null then
+            return Get_String (Lang.Config.Naming_Data.Dot_Replacement);
+         else
+            return "";
+         end if;
 
-      elsif Attribute = Old_Implementation_Attribute then
-         Value := Value_Of
-          (Index    => Get_String (Index),
-           In_Array => View.Naming.Bodies,
-           In_Tree  => Project.View_Tree);
+      elsif Attribute = Old_Implementation_Attribute
+        or else Attribute = Implementation_Attribute
+      then
+         --  Index is a unit name
+         Unit := Units_Htable.Get
+           (Project.View_Tree.Units_HT, Get_String (Index));
+         if Unit /= No_Unit_Index
+           and then Unit.File_Names (Impl) /= null
+         then
+            return Get_String (Unit.File_Names (Impl).Display_File);
+         else
+            return "";
+         end if;
 
-      elsif Attribute = Old_Specification_Attribute then
-         Value := Value_Of
-          (Index    => Get_String (Index),
-           In_Array => View.Naming.Specs,
-           In_Tree  => Project.View_Tree);
+      elsif Attribute = Old_Specification_Attribute
+        or else Attribute = Specification_Attribute
+      then
+         --  Index is a unit name
+         Unit := Units_Htable.Get
+           (Project.View_Tree.Units_HT, Get_String (Index));
+         if Unit /= No_Unit_Index
+           and then Unit.File_Names (Spec) /= null
+         then
+            return Get_String (Unit.File_Names (Spec).Display_File);
+         else
+            return "";
+         end if;
 
       else
          Value := Get_Attribute_Value
@@ -2289,45 +2150,6 @@ package body Projects is
 
       return Project.Data.View;
    end Get_View;
-
-   ---------------------
-   -- Check_Full_File --
-   ---------------------
-
-   function Check_Full_File
-     (Tree : Prj.Project_Tree_Ref;
-      File : Name_Id;
-      List : Array_Element_Id) return Array_Element_Id
-   is
-      Prefix : Array_Element_Id := List;
-      Str    : String_List_Id;
-   begin
-      while Prefix /= No_Array_Element loop
-         case Tree.Array_Elements.Table (Prefix).Value.Kind is
-            when Undefined =>
-               null;
-
-            --  Naming exceptions for languages other than Ada
-            when Prj.List =>
-               Str := Tree.Array_Elements.Table (Prefix).Value.Values;
-               while Str /= Nil_String loop
-                  if Tree.String_Elements.Table (Str).Value = File then
-                     return Prefix;
-                  end if;
-                  Str := Tree.String_Elements.Table (Str).Next;
-               end loop;
-
-            --  Naming exceptions for Ada
-            when Single =>
-               if Tree.Array_Elements.Table (Prefix).Value.Value = File then
-                  return Prefix;
-               end if;
-         end case;
-
-         Prefix := Tree.Array_Elements.Table (Prefix).Next;
-      end loop;
-      return No_Array_Element;
-   end Check_Full_File;
 
    ----------------------
    -- Create_From_Node --

@@ -112,9 +112,10 @@ package body Projects.Registry is
       Project   : Project_Type;
       File      : GNATCOLL.VFS.Virtual_File;
       Lang      : Name_Id;
+      Source    : Source_Id;
    end record;
    No_Source_File_Data : constant Source_File_Data :=
-     (No_Project, GNATCOLL.VFS.No_File, No_Name);
+     (No_Project, GNATCOLL.VFS.No_File, No_Name, No_Source);
    --   In some case, Lang might be set to Unknown_Language, if the file was
    --   set in the project (for instance through the Source_Files attribute),
    --   but no matching language was found.
@@ -312,6 +313,8 @@ package body Projects.Registry is
       Trusted_Mode : Boolean) is
    begin
       Registry.Data.Trusted_Mode := Trusted_Mode;
+      Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
+      Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
    end Set_Trusted_Mode;
 
    ----------------------
@@ -411,6 +414,9 @@ package body Projects.Registry is
          Registry.Data.View_Tree := new Project_Tree_Data;
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
+
+         Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
+         Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
       end if;
 
       if not View_Only then
@@ -418,6 +424,7 @@ package body Projects.Registry is
       end if;
 
       Prj.Initialize (Registry.Data.View_Tree);
+      Prj.Set_Mode (Multi_Language);
 
       if View_Only then
          Naming := Registry.Data.Naming_Schemes;
@@ -507,16 +514,8 @@ package body Projects.Registry is
 
       Project := Empty_Node;
 
-      --  Use full path name so that the messages are sent to Locations view
-
-      Opt.Full_Path_Name_For_Brief_Errors := True;
-
       Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
       Prj.Com.Fail := Fail'Unrestricted_Access;
-      Opt.Follow_Links_For_Files := not Registry.Data.Trusted_Mode;
-      Opt.Follow_Links_For_Dirs := Opt.Follow_Links_For_Files;
-
-      Prj.Set_Mode (Multi_Language);
 
       Sinput.P.Clear_Source_File_Table;
       Sinput.P.Reset_First;
@@ -799,6 +798,17 @@ package body Projects.Registry is
                Attribute          => "default_language",
                Value              => "Ada");
 
+            --  Pretend we support shared and static libs. Since we are not
+            --  trying to build anyway, this isn't dangerous, and allows
+            --  loading some libraries projects which otherwise we could not
+            --  load.
+            Update_Attribute_Value_In_Scenario
+              (Tree               => Project_Tree,
+               Project            => Config_File,
+               Scenario_Variables => No_Scenario,
+               Attribute          => "library_support",
+               Value              => "full");
+
             Update_Attribute_Value_In_Scenario
               (Tree               => Project_Tree,
                Project            => Config_File,
@@ -1023,7 +1033,7 @@ package body Projects.Registry is
             begin
                Set (Registry.Data.Sources,
                     K => +Base_Name (File),
-                    E => (P, File, Source.Language.Name));
+                    E => (P, File, Source.Language.Name, Source));
 
                --  The project manager duplicates files that contain several
                --  units. Only add them once in the project sources.
@@ -1101,11 +1111,11 @@ package body Projects.Registry is
                      --  Do not override runtime files that are in the
                      --  current project
                      Info := Get (Registry.Data.Sources, File (1 .. Last));
-                     if Info.Lang = No_Name then
+                     if Info.Source = No_Source then
                         VFile := Create (Curr & (+File (1 .. Last)));
                         Set (Registry.Data.Sources,
                              K => File (1 .. Last),
-                             E => (No_Project, VFile, Name_Ada));
+                             E => (No_Project, VFile, Name_Ada, No_Source));
                      end if;
                   end if;
                end loop;
@@ -1271,6 +1281,30 @@ package body Projects.Registry is
       end if;
       return P;
    end Get_Project_From_File;
+
+   -----------------------------------
+   -- Get_Source_And_Lang_From_File --
+   -----------------------------------
+
+   procedure Get_Source_And_Lang_From_File
+     (Registry  : Project_Registry;
+      Base_Name : Filesystem_String;
+      Project   : out Project_Type;
+      Source    : out Prj.Source_Id;
+      Lang      : out Name_Id)
+   is
+      S : constant Source_File_Data := Get (Registry.Data.Sources, +Base_Name);
+   begin
+      if S = No_Source_File_Data then
+         Project := No_Project;
+         Source  := No_Source;
+         Lang    := No_Name;
+      else
+         Project := S.Project;
+         Source  := S.Source;
+         Lang    := S.Lang;
+      end if;
+   end Get_Source_And_Lang_From_File;
 
    -----------------------------------------
    -- Get_Language_From_File_From_Project --
@@ -1784,7 +1818,8 @@ package body Projects.Registry is
             if Use_Source_Path then
                Info := (Project   => Project2,
                         File      => GNATCOLL.VFS.No_File,
-                        Lang      => Name_Error);
+                        Lang      => Name_Error,
+                        Source    => No_Source);
                Set (Registry.Data.Sources, +Filename, Info);
             end if;
          end if;

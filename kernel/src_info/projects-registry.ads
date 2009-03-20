@@ -353,6 +353,14 @@ package Projects.Registry is
      (Registry : Project_Registry) return Prj.Tree.Project_Node_Tree_Ref;
    --  Return the current project tree
 
+   procedure Get_Source_And_Lang_From_File
+     (Registry  : Project_Registry;
+      Base_Name : Filesystem_String;
+      Project   : out Project_Type;
+      Source    : out Prj.Source_Id;
+      Lang      : out Namet.Name_Id);
+   --  Return internal information for the source file
+
 private
 
    type Project_Registry_Data;
