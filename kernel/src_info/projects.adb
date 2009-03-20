@@ -2261,7 +2261,9 @@ package body Projects is
       Proj : Project_List := Tree.Projects;
    begin
       while Proj /= null loop
-         if Proj.Project.Name = Name then
+         if Proj.Project.Name = Name
+           and then Proj.Project.Qualifier /= Configuration
+         then
             return Proj.Project;
          end if;
          Proj := Proj.Next;
