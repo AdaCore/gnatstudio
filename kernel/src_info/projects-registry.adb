@@ -963,6 +963,13 @@ package body Projects.Registry is
          end loop;
       end Register_Directory;
 
+      procedure Do_Nothing (Bool : in out Boolean) is null;
+      package Boolean_Htable is new String_Hash
+        (Data_Type => Boolean,
+         Free_Data => Do_Nothing,
+         Null_Ptr  => False);
+      use Boolean_Htable.String_Hash_Table;
+
       Gnatls  : constant String :=
                   Get_Attribute_Value (Registry.Data.Root, Gnatlist_Attribute);
       Iter    : Imported_Project_Iterator := Start (Registry.Data.Root, True);
@@ -970,6 +977,7 @@ package body Projects.Registry is
       P       : Project_Type;
       Source_Iter : Source_Iterator;
       Source  : Source_Id;
+      Seen             : Boolean_Htable.String_Hash_Table.HTable;
       Source_File_List : Virtual_File_List.List;
 
    begin
@@ -1034,8 +1042,17 @@ package body Projects.Registry is
                --  always guaranteed to exist)
                --  For source-based languages, we allow duplicate sources
 
-               if Source.Unit = null or else Source.Index = 0 then
+               if Source.Unit = null
+                 or else not Get (Seen, +Base_Name (File))
+               then
                   Prepend (Source_File_List, File);
+
+                  --  We must set the source has seen so that it does not
+                  --  appear twice in the project explorer which happens for
+                  --  project that uses both Source_Files and Source_Dirs
+                  --  attributes.
+
+                  Set (Seen, +Base_Name (File), True);
                end if;
             end;
 
