@@ -894,6 +894,7 @@ package body Projects.Registry is
             Report_Error             => Report_Error'Unrestricted_Access,
             Normalized_Hostname        => "",
             Compiler_Driver_Mandatory  => False,
+            Allow_Duplicate_Basenames  => True,
             On_Load_Config             =>
               Add_GPS_Naming_Schemes_To_Config_File'Unrestricted_Access);
       exception
