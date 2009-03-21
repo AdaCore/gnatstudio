@@ -135,13 +135,6 @@ package body Projects.Registry is
       Null_Ptr  => No_Name);
    use Languages_Htable.String_Hash_Table;
 
-   procedure Do_Nothing (Bool : in out Boolean) is null;
-   package Boolean_Htable is new String_Hash
-        (Data_Type => Boolean,
-         Free_Data => Do_Nothing,
-         Null_Ptr  => False);
-   use Boolean_Htable.String_Hash_Table;
-
    type Naming_Scheme_Record;
    type Naming_Scheme_Access is access Naming_Scheme_Record;
    type Naming_Scheme_Record is record
@@ -976,7 +969,6 @@ package body Projects.Registry is
       P       : Project_Type;
       Source_Iter : Source_Iterator;
       Source  : Source_Id;
-      Seen             : Boolean_Htable.String_Hash_Table.HTable;
       Source_File_List : Virtual_File_List.List;
 
    begin
@@ -1036,17 +1028,13 @@ package body Projects.Registry is
                     E => (P, File, Source.Language.Name, Source));
 
                --  The project manager duplicates files that contain several
-               --  units. Only add them once in the project sources.
+               --  units. Only add them once in the project sources (and thus
+               --  only when the Index is 0, which is the first unit and is
+               --  always guaranteed to exist)
+               --  For source-based languages, we allow duplicate sources
 
-               if not Get (Seen, +Base_Name (File)) then
-                  Append (Source_File_List, File);
-
-                  --  We must set the source has seen so that it does not
-                  --  appear twice in the project explorer which happens for
-                  --  project that uses both Source_Files and Source_Dirs
-                  --  attributes.
-
-                  Set (Seen, +Base_Name (File), True);
+               if Source.Unit = null or else Source.Index = 0 then
+                  Prepend (Source_File_List, File);
                end if;
             end;
 
@@ -1071,8 +1059,6 @@ package body Projects.Registry is
 
             Set_Source_Files (P, Files);
          end;
-
-         Boolean_Htable.String_Hash_Table.Reset (Seen);
 
          Next (Iter);
       end loop;
