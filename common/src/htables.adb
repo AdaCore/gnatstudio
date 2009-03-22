@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2008, AdaCore             --
+--                      Copyright (C) 2002-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -379,15 +379,17 @@ package body HTables is
    use Ada.Containers;
 
    function String_Hash (Key : String) return Hash_Type is
-      function Rotate_Left
-         (Value : Hash_Type; Amount : Natural) return Hash_Type;
-      pragma Import (Intrinsic, Rotate_Left);
+      function Shift_Left
+        (Value : Hash_Type; Amount : Natural) return Hash_Type;
+      pragma Import (Intrinsic, Shift_Left);
 
       Tmp : Hash_Type := 0;
 
    begin
+      --  ??? Algorithm is copied from s-strhas.adb, consider reusing directly
       for J in Key'Range loop
-         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (Key (J));
+         Tmp := Character'Pos (Key (J))
+                  + Shift_Left (Tmp, 6) + Shift_Left (Tmp, 16) - Tmp;
       end loop;
 
       return Tmp;
@@ -411,14 +413,16 @@ package body HTables is
    function Case_Insensitive_Hash (Key : String) return Header_Num is
       type Uns is mod 2 ** 32;
 
-      function Rotate_Left (Value : Uns; Amount : Natural) return Uns;
-      pragma Import (Intrinsic, Rotate_Left);
+      function Shift_Left (Value : Uns; Amount : Natural) return Uns;
+      pragma Import (Intrinsic, Shift_Left);
 
       Tmp : Uns := 0;
 
    begin
+      --  ??? Algorithm is copied from s-strhas.adb, consider reusing directly
       for J in Key'Range loop
-         Tmp := Rotate_Left (Tmp, 1) + Character'Pos (To_Lower (Key (J)));
+         Tmp := Character'Pos (To_Lower (Key (J)))
+                  + Shift_Left (Tmp, 6) + Shift_Left (Tmp, 16) - Tmp;
       end loop;
 
       return Header_Num'First +
