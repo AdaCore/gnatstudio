@@ -1,6 +1,6 @@
 """gnatcheck support for GPS
 
-This plug-in adds support gnatcheck, a coding standard checker
+This plug-in adds support for gnatcheck, a coding standard checker
 """
 
 
