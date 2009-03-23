@@ -82,18 +82,22 @@ def show_pogs_file():
   # Pogs looks for .vcg files in current dir and all subdirs. For now,
   # we'll start it in the root project's directory, but we should be
   # smarter
-  GPS.MDI.save_all (False)
-  dir = pogs_directory()
-  GPS.cd (dir)
-  sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
-  cmd = "pogs " + sw
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
-  GPS.MDI.get (spark_console).raise_window ()
-  dir_name = os.path.basename (dir)
-  buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
-  GPS.MDI.get_by_child (buf.current_view()).raise_window()
+  saved = GPS.pwd ()
+  try:
+    GPS.MDI.save_all (False)
+    dir = pogs_directory()
+    GPS.cd (dir)
+    sw = GPS.Project.root().get_tool_switches_as_string ("POGS")
+    cmd = "pogs " + sw
+    GPS.Console (spark_console, accept_input=False).clear ()
+    GPS.Console (spark_console).write (cmd + "\n")
+    GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
+    GPS.MDI.get (spark_console).raise_window ()
+    dir_name = os.path.basename (dir)
+    buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
+    GPS.MDI.get_by_child (buf.current_view()).raise_window()
+  finally:
+    GPS.cd (saved)
 
 def do_pogs_xref (context, simplified):
   """Jump to the VC referenced in the current line of the POGS output"""
@@ -141,13 +145,19 @@ def has_vc (context):
      return context.has_vc
 
 def sparkmake ():
-  GPS.MDI.save_all (False)
-  sw = GPS.current_context().project().get_tool_switches_as_string ("SPARKmake")
-  cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
-  GPS.Console (spark_console, accept_input=False).clear ()
-  GPS.Console (spark_console).write (cmd + "\n")
-  GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
-  GPS.MDI.get (spark_console).raise_window ()
+  saved = GPS.pwd ()
+  try:
+    dir = os.path.dirname (GPS.current_context().file().name())
+    GPS.cd (dir)
+    GPS.MDI.save_all (False)
+    sw = GPS.current_context().project().get_tool_switches_as_string ("SPARKmake")
+    cmd = "sparkmake " + sw + " " + GPS.current_context().file().name()
+    GPS.Console (spark_console, accept_input=False).clear ()
+    GPS.Console (spark_console).write (cmd + "\n")
+    GPS.Console (spark_console).write (GPS.Process (cmd, remote_server="Build_Server").get_result())
+    GPS.MDI.get (spark_console).raise_window ()
+  finally:
+    GPS.cd (saved)
 
 a = """<?xml version="1.0"?>
 <!--  Note: do not use the ampersand character in XML comments!!       -->
