@@ -15,6 +15,11 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I323-007 New plugin: first_subtype.py (2009-03-23)
+
+   Adds a new contextual menu entry to jump to the first subtype of an
+   Ada type
+
 NF-44-I304-017 Tooltip in locations window (2009-03-13)
 
    A tooltip appears when leaving the mouse on items in the Locations view.
