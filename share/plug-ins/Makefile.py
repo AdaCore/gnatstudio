@@ -176,7 +176,7 @@ class Makefile (Builder):
 
    def read_targets (self):
       targets = ""
-      matcher=re.compile ("^([^#.=%][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
+      matcher=re.compile ("^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
       f = file (self.buildfile)
       for line in f:
          matches=matcher.match (line)
