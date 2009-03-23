@@ -15,6 +15,12 @@ Known Problems fixed in GPS 4.3.3
               Standard->Edit coding standard) will make GPS being able to
               run gnatcheck.
 
+- I302-023: Preserve current directory in SPARK plugin
+  Problem:  SPARKMake searches for files in and under the current working
+            directory. The spark.py was changed to temporarily set the
+            current directory as appropriate
+  Workaround: use /File/Change Directory... to set the directory manually
+
 - I213-026: Crash while doing search & replace on Windows
   Problem:    When doing a search and replace, at the end of the search, if
               the user answers yes to the popup asking if he wants to start
