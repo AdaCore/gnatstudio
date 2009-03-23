@@ -33,7 +33,7 @@ Known Problems fixed in GPS 4.3.3
   Workaround: Use the menu File->Change Directory to change the working
               directory.
 
-- I128-008: Issue when modifying the toolchain from the project editor
+- I128-009: Issue when modifying the toolchain from the project editor
   Problem:    When modifying the gnatmake parameter from the project editor,
               (when setting a cross-compiler for example), the new value is not
               taken into account.
