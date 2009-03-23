@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.3
 
+- I306-002: Makefile.py confused by ':' on command lines
+  Problem:    If you are using a Makefile where some commands include a
+              colon (for instance "echo foo:test"), GPS will incorrectly
+              parse that line as being the target "echo foo", and will show
+              it in the menu
+  Workaround: This only impacts the menu (visual glitch)
+
 - I304-012: Gnatcheck menus not working
   Problem:    When using the contextual menu "Check Coding Standard of file in
               project" or when using the Tools->Coding Standard->Check* menus,
