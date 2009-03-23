@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 4.3.3
 
-- I304-012: Issues with gnatcheck in GPS
+- I304-012: Gnatcheck menus not working
   Problem:    When using the contextual menu "Check Coding Standard of file in
               project" or when using the Tools->Coding Standard->Check* menus,
               GPS reports that gnatcheck is not available.
@@ -36,7 +36,7 @@ Known Problems fixed in GPS 4.3.3
 - I128-009: Issue when modifying the toolchain from the project editor
   Problem:    When modifying the gnatmake parameter from the project editor,
               (when setting a cross-compiler for example), the new value is not
-              taken into account.
+              taken into account immediately.
   Workaround: Using the menu "Project->Reload project" makes GPS correctly take
               the new value for gnatmake into account.
 
