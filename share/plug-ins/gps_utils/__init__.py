@@ -15,7 +15,7 @@ def save_dir (fn):
    def do_work (*args, **kwargs):
       saved = pwd ()
       try:
-         apply (f, args, kwargs)
+         apply (fn, args, kwargs)
       finally:
          cd (saved)
    do_work.__name__ = fn.__name__   # Reset name 
