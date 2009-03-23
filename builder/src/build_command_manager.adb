@@ -249,7 +249,7 @@ package body Build_Command_Manager is
                          Get_Attribute_Value
                            (Prj, Compiler_Command_Attribute,
                             Default => "gnatmake",
-                            Index   => "Ada");
+                            Index   => "ada");
             First    : Natural := Gnatmake'First;
             Langs    : Argument_List := Get_Languages (Prj, Recursive => True);
 

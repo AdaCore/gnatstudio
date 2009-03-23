@@ -33,6 +33,13 @@ Known Problems fixed in GPS 4.3.3
   Workaround: Use the menu File->Change Directory to change the working
               directory.
 
+- I128-008: Issue when modifying the toolchain from the project editor
+  Problem:    When modifying the gnatmake parameter from the project editor,
+              (when setting a cross-compiler for example), the new value is not
+              taken into account.
+  Workaround: Using the menu "Project->Reload project" makes GPS correctly take
+              the new value for gnatmake into account.
+
 - I122-008: Installation does not keep existing documentation plug-ins
   Problem:    When installing GPS, if you have some existing plug-ins
               (e.g. from a gnat or gprbuild installation) that provide access
