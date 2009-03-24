@@ -300,6 +300,12 @@ Known Problems fixed in GPS 4.3.0
               directory.
   Workaround: Use a GPS_HOME which contains only plain ASCII characters
 
+- I319-021: Wrong block completion when no space between name and parameters.
+  Problem:    For procedures, functions and entries, if the routine name is
+              not followed by a space the block completion was including
+              the first parameter.
+  Workaround: Edit manually to remove the parameter name.
+
 - H915-002: File view from project filter no working
   Problem:    On the file view when activating the
               "Show files from project only" filter there is nothing
