@@ -15,6 +15,11 @@ Known Problems fixed in GPS 4.3.3
               Standard->Edit coding standard) will make GPS being able to
               run gnatcheck.
 
+- I303-017: Location view no longer jumps to build output location
+  Problem:    In some cases, the location view doesn't scroll properly to
+              show the first build error.
+  Workaround: Scroll manually using the scrollbar or mouse.
+
 - I302-023: Preserve current directory in SPARK plugin
   Problem:  SPARKMake searches for files in and under the current working
             directory. The spark.py was changed to temporarily set the

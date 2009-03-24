@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -629,7 +629,9 @@ package body GPS.Location_View is
 
       Res := Compare (Path, End_Path);
 
-      if Res >= 0 then
+      if Res >= 0
+        and then Get_Iter (Get_Model (View.Tree), Path) /= Null_Iter
+      then
          --  Path is the last path visible, scoll to see some entries under
          --  this node.
          Scroll_To_Cell (View.Tree, Path, null, True, 0.9, 0.1);
