@@ -15,7 +15,7 @@ Known Problems fixed in GPS 4.3.3
               Standard->Edit coding standard) will make GPS being able to
               run gnatcheck.
 
-- I303-017: Location view no longer jumps to build output location
+- I303-017: Location view does not always jump to build output location
   Problem:    In some cases, the location view doesn't scroll properly to
               show the first build error.
   Workaround: Scroll manually using the scrollbar or mouse.
