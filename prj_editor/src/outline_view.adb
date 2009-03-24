@@ -629,6 +629,10 @@ package body Outline_View is
       Path  : Gtk_Tree_Path;
    begin
       if Get_Button (Event) = 1 then
+         if View.File = No_File then
+            return False;
+         end if;
+
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
          Refresh (Outline, Iter, New_Iter, New_Model);
 
@@ -640,7 +644,7 @@ package body Outline_View is
             declare
                Buffer   : constant Editor_Buffer'Class :=
                  Get (Get_Buffer_Factory (View.Kernel).all,
-                      View.File, False, False);
+                      View.File, False, False, False);
 
                Line     : constant Integer :=
                  Integer (Get_Int (New_Model, New_Iter, Line_Column));
@@ -904,7 +908,7 @@ package body Outline_View is
 
       Buffer        : constant Editor_Buffer'Class :=
         Get (Get_Buffer_Factory (Outline.Kernel).all,
-             Outline.File, False, False);
+             Outline.File, False, False, False);
 
       Old_Timestamp : constant Natural := Outline.Timestamp;
       Current       : Construct_Access;
@@ -1007,6 +1011,11 @@ package body Outline_View is
       Constructs : Construct_List;
 
    begin
+      if Outline.File = No_File then
+         Clear (Outline);
+         return;
+      end if;
+
       --  Get the name of the currently selected item, if any.
 
       if Current_Iter /= Null_Iter then
