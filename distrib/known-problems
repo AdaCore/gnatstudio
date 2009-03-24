@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.4.0
 
-- I319-021: Wrong block completion when no space between name and parameters.
-  Problem:    For procedures, functions and entries, if the routine name is
-              not followed by a space the block completion was including
-              the first parameter.
-  Workaround: Edit manually to remove the parameter name.
-
 - I313-019: "Remove Category" removes highlighting for all references
   Problem:    When multiple references in the Locations window are present,
               "Remove Category" removes the highlighting of all the other
