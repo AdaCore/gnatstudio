@@ -26,11 +26,6 @@ Known Problems fixed in GPS 4.4.0
               example). This problem is VCS dependent.
   Workaround: Do not sort on those columns. The default sort is chronological.
 
-- I303-017: Location view no longer jumps to build output location
-  Problem:    In some cases, the location view doesn't scroll properly to
-              show the first build error.
-  Workaround: Scroll manually using the scrollbar or mouse.
-
 - I302-022: Cloning a target does not take into account the Category field
   Problem:    When cloning a target, the field 'Category' is not taken into
               account: the new target is created in the same category as the
