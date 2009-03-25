@@ -76,7 +76,7 @@ def pogs_directory():
 
   return dir
 
-def _spawn_cmd (cmd_name, prj_attr):
+def _spawn_cmd (cmd_name, prj_attr, input=None):
   """
   Prepare the spark console and spawn a command that sends its output to it.
   See _spawn_spark_tool for a description of the arguments
@@ -85,7 +85,7 @@ def _spawn_cmd (cmd_name, prj_attr):
   # ??? In this case, the process should be run asynchronously so as not to
   # block GPS
 
-  result = _spawn_spark_tool (cmd_name, prj_attr, show_cmd=True)
+  result = _spawn_spark_tool (cmd_name, prj_attr, show_cmd=True, input=input)
   GPS.Console (spark_console).write (result)
   GPS.MDI.get (spark_console).raise_window ()
 
@@ -102,10 +102,6 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
 
   result = ""
 
-  def local_on_exit (proc, status, output):
-     GPS.Logger ("FOO").log ("local_on_exit: " + output)
-     proc._output_on_exit = output
-      
   if not ctx:
      ctx = GPS.current_context()
 
@@ -123,7 +119,7 @@ def _spawn_spark_tool (cmd_name, prj_attr, input=None,
      GPS.Console (spark_console, accept_input=False).clear ()
      GPS.Console (spark_console).write (cmd + "\n")
 
-  proc = GPS.Process (cmd, remote_server="Build_Server")#,on_exit=local_on_exit)
+  proc = GPS.Process (cmd, remote_server="Build_Server")
   if isinstance (input, str):
      proc.send (input, add_lf=True)
      proc.send (chr (4), add_lf=False) # End of transmission
@@ -138,7 +134,7 @@ def show_pogs_file():
   # smarter
   dir = pogs_directory()
   GPS.cd (dir)
-  _spawn_cmd (cmd_name="pogs", prj_attr="POGS")
+  _spawn_cmd (cmd_name="pogs", prj_attr="POGS", input="")
 
   dir_name = os.path.basename (dir)
   buf = GPS.EditorBuffer.get (GPS.File (os.path.join (dir,dir_name)+'.sum'), force=True)
