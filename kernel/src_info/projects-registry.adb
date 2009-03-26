@@ -422,20 +422,6 @@ package body Projects.Registry is
       if View_Only then
          Naming := Registry.Data.Naming_Schemes;
          while Naming /= null loop
-            declare
-               Spec_Suffix : String := Naming.Default_Spec_Suffix.all;
-               Body_Suffix : String := Naming.Default_Body_Suffix.all;
-            begin
-               Canonical_Case_File_Name (Spec_Suffix);
-               Canonical_Case_File_Name (Body_Suffix);
-
-               Prj.Register_Default_Naming_Scheme
-                 (Language            => Get_String (Naming.Language.all),
-                  Default_Spec_Suffix => Get_String (Spec_Suffix),
-                  Default_Body_Suffix => Get_String (Body_Suffix),
-                  In_Tree             => Registry.Data.View_Tree);
-            end;
-
             Add_Language_Extension
               (Registry, Naming.Language.all, Naming.Default_Spec_Suffix.all);
             Add_Language_Extension

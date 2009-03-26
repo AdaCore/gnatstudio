@@ -118,17 +118,6 @@ package body Projects is
    --  Recursive is true).
    --  Callback is called for each of them.
 
-   procedure Check_Suffix_List
-     (Tree     : Prj.Project_Tree_Ref;
-      Filename : Filesystem_String;
-      Langs    : String_List_Id;
-      List     : in out Array_Element_Id;
-      Len      : out Natural);
-   pragma Inline (Check_Suffix_List);
-   --  Check in List whether any suffix matches Filename.
-   --  Len is set to the length of the suffix, and List to the matching item
-   --  (or No_Array_Element if there is no match)
-
    function Substitute_Dot
      (Unit_Name : String; Dot_Replacement : String) return String;
    --  Replace the '.' in unit_name with Dot_Replacement
@@ -682,60 +671,6 @@ package body Projects is
       end;
    end Get_Source_Files;
 
-   -----------------------
-   -- Check_Suffix_List --
-   -----------------------
-
-   procedure Check_Suffix_List
-     (Tree     : Prj.Project_Tree_Ref;
-      Filename : Filesystem_String;
-      Langs    : String_List_Id;
-      List     : in out Array_Element_Id;
-      Len      : out Natural)
-   is
-      Candidate     : Array_Element_Id := No_Array_Element;
-      Candidate_Len : Natural := 0;
-      Lang          : Name_Id;
-      L             : String_List_Id;
-   begin
-      while List /= No_Array_Element loop
-         Lang := Tree.Array_Elements.Table (List).Index;
-
-         Get_Name_String (Tree.Array_Elements.Table (List).Value.Value);
-
-         --  We first need to check the naming schemes for the supported
-         --  languages (in case they redefine some of the predefined naming
-         --  schemes, such as .h for c++ files). If this is not found in the
-         --  list of supported languages, then return any match we had.
-
-         declare
-            Ext : String := Name_Buffer (1 .. Name_Len);
-         begin
-            Canonical_Case_File_Name (Ext);
-
-            L := Langs;
-            if Suffix_Matches (Filename, +Ext) then
-               while L /= Nil_String loop
-                  if Tree.String_Elements.Table (L).Value = Lang then
-                     Len := Name_Len;
-                     return;
-                  end if;
-
-                  L := Tree.String_Elements.Table (L).Next;
-               end loop;
-
-               Candidate     := List;
-               Candidate_Len := Name_Len;
-            end if;
-         end;
-
-         List := Tree.Array_Elements.Table (List).Next;
-      end loop;
-
-      List := Candidate;
-      Len  := Candidate_Len;
-   end Check_Suffix_List;
-
    ------------------------------------------
    -- Get_Unit_Part_And_Name_From_Filename --
    ------------------------------------------
@@ -956,26 +891,30 @@ package body Projects is
      (Filename : Filesystem_String; Project : Project_Type) return Natural
    is
       View  : constant Project_Id := Get_View (Project);
-      Arr   : Array_Element_Id;
-      Len   : Natural;
-      Langs : String_List_Id;
+      Lang  : Language_Ptr;
+      Suffix : Name_Id;
    begin
       --  View will be null when called from the project wizard
 
       if View /= Prj.No_Project then
-         Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
+         Lang := View.Languages;
+         while Lang /= null loop
+            Suffix := Name_Id (Lang.Config.Naming_Data.Spec_Suffix);
+            if Suffix /= No_Name
+              and then Suffix_Matches (Filename, +Get_Name_String (Suffix))
+            then
+               return Filename'Last - Natural (Length_Of_Name (Suffix));
+            end if;
 
-         Arr := View.Naming.Spec_Suffix;
-         Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
-         if Arr /= No_Array_Element then
-            return Filename'Last - Len;
-         end if;
+            Suffix := Name_Id (Lang.Config.Naming_Data.Body_Suffix);
+            if Suffix /= No_Name
+              and then Suffix_Matches (Filename, +Get_Name_String (Suffix))
+            then
+               return Filename'Last - Natural (Length_Of_Name (Suffix));
+            end if;
 
-         Arr := View.Naming.Body_Suffix;
-         Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
-         if Arr /= No_Array_Element then
-            return Filename'Last - Len;
-         end if;
+            Lang := Lang.Next;
+         end loop;
       end if;
 
       --  Check the default naming scheme as well ? Otherwise, it might happen
