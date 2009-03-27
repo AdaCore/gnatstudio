@@ -1344,6 +1344,8 @@ package body Projects.Registry is
       Default_Body_Suffix : String)
    is
       Spec, Impl : String_Access;
+      Spec_Suff : String := Default_Spec_Suffix;
+      Impl_Suff : String := Default_Body_Suffix;
    begin
       --  GNAT doesn't allow empty suffixes, and will display an error when
       --  the view is recomputed, in that case. Therefore we substitute dummy
@@ -1352,13 +1354,15 @@ package body Projects.Registry is
       if Default_Spec_Suffix = "" then
          Spec := new String'(Dummy_Suffix);
       else
-         Spec := new String'(Default_Spec_Suffix);
+         Osint.Canonical_Case_File_Name (Spec_Suff);
+         Spec := new String'(Spec_Suff);
       end if;
 
       if Default_Body_Suffix = "" then
          Impl := new String'(Dummy_Suffix);
       else
-         Impl := new String'(Default_Body_Suffix);
+         Osint.Canonical_Case_File_Name (Impl_Suff);
+         Impl := new String'(Impl_Suff);
       end if;
 
       Registry.Data.Naming_Schemes := new Naming_Scheme_Record'
