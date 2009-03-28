@@ -28,6 +28,7 @@ with GNATCOLL.VFS;
 with Gdk.Color;                      use Gdk.Color;
 with Gdk.Pixbuf;                     use Gdk.Pixbuf;
 with Gtk.Box;                        use Gtk.Box;
+with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Glib;
@@ -206,8 +207,9 @@ private
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
 
-      Tree         : Tree_View;
-      Filter_Panel : Locations_Filter_Panel;
+      Tree          : Tree_View;
+      Text_Renderer : Gtk_Cell_Renderer_Text;
+      Filter_Panel  : Locations_Filter_Panel;
 
       RegExp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;

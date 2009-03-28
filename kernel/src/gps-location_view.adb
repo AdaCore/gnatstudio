@@ -35,11 +35,11 @@ with Gdk.Rectangle;            use Gdk.Rectangle;
 with Glib.Convert;
 with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
+with Glib.Properties;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
 
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;
@@ -47,6 +47,7 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tooltips;
 with Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -98,6 +99,16 @@ package body GPS.Location_View is
    function Idle_Show_Row (View : Location_View) return Boolean;
    --  Idle callback used to ensure that the proper path on the location view
    --  is visible.
+
+   package Query_Tooltip_Callbacks is
+     new Gtk.Handlers.User_Return_Callback
+           (Gtkada.Tree_View.Tree_View_Record, Boolean, Location_View);
+
+   function On_Query_Tooltip
+     (Object : access Gtkada.Tree_View.Tree_View_Record'Class;
+      Params : Glib.Values.GValues;
+      Self   : Location_View)
+      return Boolean;
 
    ---------------------
    -- Local constants --
@@ -1549,7 +1560,6 @@ package body GPS.Location_View is
    procedure Set_Column_Types (View : access Location_View_Record'Class) is
       Tree        : constant Tree_View := View.Tree;
       Col         : Gtk_Tree_View_Column renames View.Sorting_Column;
-      Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
 
       Dummy       : Gint;
@@ -1564,15 +1574,15 @@ package body GPS.Location_View is
       Add_Attribute (View.Action_Column, Pixbuf_Rend, "pixbuf", Button_Column);
       Dummy := Append_Column (Tree, View.Action_Column);
 
-      Gtk_New (Text_Rend);
+      Gtk_New (View.Text_Renderer);
       Gtk_New (Pixbuf_Rend);
 
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
-      Pack_Start (Col, Text_Rend, False);
+      Pack_Start (Col, View.Text_Renderer, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "markup", Base_Name_Column);
-      Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
+      Add_Attribute (Col, View.Text_Renderer, "markup", Base_Name_Column);
+      Add_Attribute (Col, View.Text_Renderer, "foreground_gdk", Color_Column);
 
       Dummy := Append_Column (Tree, Col);
       Set_Expander_Column (Tree, Col);
@@ -1970,7 +1980,13 @@ package body GPS.Location_View is
       Visible_Funcs.Set_Visible_Func
         (View.Tree.Filter, Is_Visible'Access, Location_View (View));
 
-      View.Tree.Set_Tooltip_Column (Base_Name_Column);
+      Glib.Properties.Set_Property
+        (View.Tree, Gtk.Widget.Has_Tooltip_Property, True);
+      Query_Tooltip_Callbacks.Connect
+        (View.Tree,
+         Gtk.Widget.Signal_Query_Tooltip,
+         On_Query_Tooltip'Access,
+         Location_View (View));
 
       Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
@@ -3680,6 +3696,90 @@ package body GPS.Location_View is
          Self.Filter_Panel.Show;
       end if;
    end On_Filter_Panel_Activated;
+
+   ----------------------
+   -- On_Query_Tooltip --
+   ----------------------
+
+   function On_Query_Tooltip
+     (Object : access Gtkada.Tree_View.Tree_View_Record'Class;
+      Params : Glib.Values.GValues;
+      Self   : Location_View)
+      return Boolean
+   is
+      pragma Unreferenced (Object);
+
+      X             : Glib.Gint :=
+                        Glib.Values.Get_Int (Glib.Values.Nth (Params, 1));
+      Y             : Glib.Gint :=
+                        Glib.Values.Get_Int (Glib.Values.Nth (Params, 2));
+      Keyboard_Mode : constant Boolean :=
+                        Glib.Values.Get_Boolean (Glib.Values.Nth (Params, 3));
+      Stub          : Gtk.Tooltips.Gtk_Tooltips_Record;
+      Tooltip       : constant Gtk.Tooltips.Gtk_Tooltips :=
+                        Gtk.Tooltips.Gtk_Tooltips
+                          (Glib.Object.Get_User_Data
+                             (Glib.Values.Get_Address
+                                (Glib.Values.Nth (Params, 4)), Stub));
+      Success       : Boolean;
+      Model         : Gtk.Tree_Model.Gtk_Tree_Model;
+      Path          : Gtk.Tree_Model.Gtk_Tree_Path;
+      Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Rect          : Gdk.Rectangle.Gdk_Rectangle;
+      X_Offset      : Glib.Gint;
+      Y_Offset      : Glib.Gint;
+      Start         : Glib.Gint;
+      Width         : Glib.Gint;
+      Height        : Glib.Gint;
+      X1            : Glib.Gint;
+      X2            : Glib.Gint;
+
+   begin
+      Self.Tree.Get_Tooltip_Context
+        (X, Y, Keyboard_Mode, Model, Path, Iter, Success);
+
+      if not Success then
+         Gtk.Tree_Model.Path_Free (Path);
+
+         return False;
+      end if;
+
+      Self.Sorting_Column.Cell_Set_Cell_Data (Model, Iter, False, False);
+
+      Self.Tree.Get_Cell_Area (Path, Self.Sorting_Column, Rect);
+      X1 := Rect.X;
+      X2 := Rect.X;
+
+      Self.Sorting_Column.Cell_Get_Position
+        (Self.Text_Renderer, Start, Width, Success);
+
+      if not Success then
+         Gtk.Tree_Model.Path_Free (Path);
+
+         return False;
+      end if;
+
+      X2 := X2 + Start;
+
+      Self.Text_Renderer.Get_Size
+        (Self.Tree, Rect, X_Offset, Y_Offset, Width, Height);
+      X2 := X2 + Width;
+
+      Self.Tree.Get_Visible_Rect (Rect);
+
+      if X1 > Rect.X and X2 < (Rect.X + Rect.Width) then
+         Gtk.Tree_Model.Path_Free (Path);
+
+         return False;
+      end if;
+
+      Tooltip.Set_Markup (Model.Get_String (Iter, Base_Name_Column));
+      Self.Tree.Set_Tooltip_Row (Tooltip, Path);
+
+      Gtk.Tree_Model.Path_Free (Path);
+
+      return True;
+   end On_Query_Tooltip;
 
    ---------------------------
    -- On_Visibility_Toggled --
