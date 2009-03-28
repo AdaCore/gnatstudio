@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2008, AdaCore              --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                  --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package handles build commands.
+--  This package handles build commands
 
 with GPS.Kernel;
 with Glib;
@@ -57,15 +57,15 @@ package Commands.Builder is
    --  Target indicates the name of the target being built.
 
    procedure Launch_Build_Command
-     (Kernel         : GPS.Kernel.Kernel_Handle;
-      CL             : GNAT.OS_Lib.String_List_Access;
-      Target_Name    : String;
-      Mode_Name      : String;
-      Server         : Server_Type;
-      Quiet          : Boolean;
-      Shadow         : Boolean;
-      Synchronous    : Boolean;
-      Use_Shell      : Boolean);
+     (Kernel      : GPS.Kernel.Kernel_Handle;
+      CL          : GNAT.OS_Lib.String_List_Access;
+      Target_Name : String;
+      Mode_Name   : String;
+      Server      : Server_Type;
+      Quiet       : Boolean;
+      Shadow      : Boolean;
+      Synchronous : Boolean;
+      Use_Shell   : Boolean);
    --  Launch a build command.
    --  CL is the command line. The first item in CL should be the executable
    --  and the rest are arguments.
@@ -79,12 +79,12 @@ package Commands.Builder is
      (Kernel  : GPS.Kernel.Kernel_Handle;
       Message : String;
       Shadow  : Boolean);
-   --  Display Message.
+   --  Display Message
 
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;
       Shadow              : Boolean;
       Create_If_Not_Exist : Boolean) return Interactive_Console;
-   --  Return the console appropriate for showing compiler errors.
+   --  Return the console appropriate for showing compiler errors
 
 end Commands.Builder;

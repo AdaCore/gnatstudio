@@ -84,25 +84,25 @@ package body Builder_Facility_Module is
    --  and toolbar.
 
    Max_Number_Of_Projects : constant := 128;
-   --  The maximum number of projects that we process when filling the Mains.
+   --  The maximum number of projects that we process when filling the Mains
 
    Me          : constant Debug_Handle := Create ("Builder_Facility_Module");
    Modes_Trace : constant Debug_Handle :=
-     Create ("Builder.Modes", GNATCOLL.Traces.Off);
+                   Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
    Build_Main_Target    : constant Unbounded_String :=
-     To_Unbounded_String ("Build Main");
+                            To_Unbounded_String ("Build Main");
    Clean_Project_Target : constant Unbounded_String :=
-     To_Unbounded_String ("Clean Project");
+                            To_Unbounded_String ("Clean Project");
    Build_All_Target : constant Unbounded_String :=
-     To_Unbounded_String ("Build All");
-   --  These target names must be kept in sync with build_targets.xml.
+                        To_Unbounded_String ("Build All");
+   --  These target names must be kept in sync with build_targets.xml
 
    Main_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
    Mode_Property : constant String := "Build-Mode";
-   --  History to store which mode is selected.
+   --  History to store which mode is selected
 
    type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
    with record
@@ -184,7 +184,7 @@ package body Builder_Facility_Module is
 
       Modes_Toolbar_Item : Gtk_Tool_Item;
       Modes_Combo : Gtk_Combo_Box;
-      --  The toolbar item containing the modes.
+      --  The toolbar item containing the modes
 
       Browsing_For_Mode    : Unbounded_String := Null_Unbounded_String;
       --  The mode we are currently looking for when filling the combo,
@@ -210,7 +210,7 @@ package body Builder_Facility_Module is
    -----------------------
 
    procedure Log (M : String; Mode : Message_Mode);
-   --  Logger for the registry.
+   --  Logger for the registry
 
    function Get_Kernel return Kernel_Handle;
    --  Utility function to get the kernel
@@ -253,7 +253,7 @@ package body Builder_Facility_Module is
    --  Create a menu item to build Target
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
-   --  Return the file where user targets are stored.
+   --  Return the file where user targets are stored
 
    procedure Attempt_Target_Register (XML : Node_Ptr; From_User : Boolean);
    --  Attempt to register target described in XML. If the model is not
@@ -269,16 +269,16 @@ package body Builder_Facility_Module is
 
    procedure On_Combo_Click
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
-   --  Called when a user clicks on a toolbar combo button.
+   --  Called when a user clicks on a toolbar combo button
 
    procedure On_Mode_Changed
      (Widget : access Gtk_Combo_Box_Record'Class);
-   --  Called when a user selects a mode from the Mode combo box.
+   --  Called when a user selects a mode from the Mode combo box
 
    procedure On_Combo_Selection
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class;
       Tip    : Gtk_Tooltips);
-   --  Called when a user selects a new item from the combo.
+   --  Called when a user selects a new item from the combo
 
    procedure On_File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
@@ -330,7 +330,7 @@ package body Builder_Facility_Module is
    --  Return the name of the Kernel Action to build T
 
    procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar.
+   --  Free memory associated to Ar
 
    procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
@@ -375,7 +375,7 @@ package body Builder_Facility_Module is
          Gtk_New (Menu);
       end if;
 
-      --  Add "Clean" item.
+      --  Add "Clean" item
 
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, "Clean");
@@ -387,7 +387,7 @@ package body Builder_Facility_Module is
          (Clean_Project_Target,
           To_Unbounded_String ("")));
 
-      --  Add "Build all" item.
+      --  Add "Build all" item
 
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, "Build all");
@@ -471,12 +471,12 @@ package body Builder_Facility_Module is
       function Get_Root_Mains return Argument_List is
          Result   : Argument_List (1 .. Max_Number_Of_Mains);
          Index    : Natural := 1;
-         --  Index of the first free element in Result.
+         --  Index of the first free element in Result
          Iterator :  Imported_Project_Iterator;
 
          Projects : Project_Type_Array (1 .. Max_Number_Of_Projects);
          Index_P  : Natural := 1;
-         --  Index of the first free element in Projects.
+         --  Index of the first free element in Projects
       begin
          Iterator := Start (Root_Project);
 
@@ -528,6 +528,7 @@ package body Builder_Facility_Module is
       then
          --  The root project is the main project
          return Root_Mains;
+
       else
          declare
             Base_Mains : constant Argument_List :=
@@ -540,6 +541,10 @@ package body Builder_Facility_Module is
 
             function Is_Already_In_Mains (S : String) return Boolean;
             --  Return True if S is in Loaded_Mains
+
+            -------------------------
+            -- Is_Already_In_Mains --
+            -------------------------
 
             function Is_Already_In_Mains (S : String) return Boolean is
             begin
@@ -891,7 +896,7 @@ package body Builder_Facility_Module is
    is
       File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       C         : Build_Configurations.Target_Cursor :=
-        Get_First_Target (Builder_Module_ID.Registry);
+                    Get_First_Target (Builder_Module_ID.Registry);
       T         : Target_Access;
    begin
       --  Protect against the following recursion:
@@ -1288,7 +1293,7 @@ package body Builder_Facility_Module is
                   Data'Unchecked_Access));
 
          begin
-            --  Do not display if no main is available.
+            --  Do not display if no main is available
             if Mains'Length > 0 then
                Button_For_Target (Get_Name (Target), Mains.all);
             end if;
@@ -1718,10 +1723,10 @@ package body Builder_Facility_Module is
 
       Insert_Mode (Builder_Module_ID.Registry, Mode.Name, Mode);
 
-      --  Add the mode to the combo if it is not a shadow mode.
+      --  Add the mode to the combo if it is not a shadow mode
 
       if not Mode.Shadow then
-         --  If the combo is not created, create it now.
+         --  If the combo is not created, create it now
 
          if Builder_Module_ID.Modes_Combo = null then
             First_Mode := True;
@@ -1948,7 +1953,8 @@ package body Builder_Facility_Module is
       Set_Draw (Space, True);
       Insert (Get_Toolbar (Kernel), Space);
 
-      --  Load the user-defined targets.
+      --  Load the user-defined targets
+
       Add_Hook (Kernel, GPS_Started_Hook,
                 Wrapper (On_GPS_Started'Access),
                 Name  => "builder_facility_module.gps_started");

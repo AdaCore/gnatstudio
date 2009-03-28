@@ -152,10 +152,12 @@ package body GPS.Kernel.Macros is
             return String_Utils.Protect
               (+Base_Name (File_Information (Context)),
                Protect_Quotes => Quoted);
+
          elsif Param = "fk" then
             return String_Utils.Protect
               (Krunch (+Base_Name (File_Information (Context))),
                Protect_Quotes => Quoted);
+
          else
             return String_Utils.Protect
               (+To_Remote (Full_Name (File_Information (Context)).all, Server),
@@ -237,6 +239,7 @@ package body GPS.Kernel.Macros is
          if Param = "pps" or else Param = "PPs" then
             if Project = No_Project then
                return "";
+
             else
                return String_Utils.Protect
                  ("-P"
@@ -310,8 +313,8 @@ package body GPS.Kernel.Macros is
                      end if;
 
                      declare
-                        N : constant String := +To_Remote
-                          (+Name (File), Server);
+                        N : constant String :=
+                              +To_Remote (+Name (File), Server);
                      begin
                         Close (File);
                         return String_Utils.Protect

@@ -395,7 +395,7 @@ package body File_Utils is
               (File'First + Length .. File'Last)));
          end if;
 
-         --  Look for the parent directory.
+         --  Look for the parent directory
          Level := Level + 1;
          loop
             Base_End := Base_End - 1;
@@ -498,7 +498,7 @@ package body File_Utils is
       while not At_End (Path, Iter) loop
          declare
             S : constant Filesystem_String :=
-                 Name_As_Directory (Current (Path, Iter)) & Base_Name;
+                  Name_As_Directory (Current (Path, Iter)) & Base_Name;
          begin
             if Is_Regular_File (S) then
                return Create (Full_Filename => S);

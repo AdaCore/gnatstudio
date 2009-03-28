@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1204,8 +1204,8 @@ package body String_Utils is
    -- Clone --
    -----------
 
-   function Clone (List : GNAT.Strings.String_List)
-      return GNAT.Strings.String_List
+   function Clone
+     (List : GNAT.Strings.String_List) return GNAT.Strings.String_List
    is
       L : String_List (List'Range);
    begin

@@ -39,7 +39,7 @@ with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Glist;
 with Glib.Object;                use Glib.Object;
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Button;                 use Gtk.Button;
 with Gtk.Check_Button;           use Gtk.Check_Button;

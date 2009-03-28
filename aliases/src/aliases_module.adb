@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2009, AdaCore             --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -210,7 +210,7 @@ package body Aliases_Module is
      (Item           : out String_Menu_Item;
       View           : access Gtk_Text_View_Record'Class;
       Label, Special : String);
-   --  Create a new String_Menu_Item.
+   --  Create a new String_Menu_Item
 
    procedure Update_Contents (Editor : access Alias_Editor_Record'Class);
    --  Update the contents of the editor, based on the list of currently
@@ -244,25 +244,25 @@ package body Aliases_Module is
    --  Load a filename, and make the resulting aliases Read_Only
 
    procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class);
-   --  Save the aliases in filename.
+   --  Save the aliases in filename
 
    procedure On_Edit_Aliases
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for the aliases edition.
+   --  Callback for the aliases edition
 
    procedure Alias_Selection_Changed
      (Editor : access Gtk_Widget_Record'Class);
-   --  Called when a new alias was selected in the editor.
+   --  Called when a new alias was selected in the editor
 
    procedure Save_Current_Var (Editor : access Alias_Editor_Record'Class);
    --  Save the value of the currently edited variable in the local aliases
    --  table.
 
    procedure Update_Aliases (Editor : access Alias_Editor_Record'Class);
-   --  Merge the local aliases into the global table.
+   --  Merge the local aliases into the global table
 
    procedure Alias_Renamed (Editor : access Gtk_Widget_Record'Class);
-   --  Called when an alias was renamed.
+   --  Called when an alias was renamed
 
    procedure Alias_Deleted (Editor : access Gtk_Widget_Record'Class);
    --  Deletes an alias
@@ -353,7 +353,7 @@ package body Aliases_Module is
 
    procedure Contextual_Destroy
      (Widget : access Gtk_Widget_Record'Class; Menu : Gtk_Menu);
-   --  Destroy the contextual menu area for the expansion edition zone.
+   --  Destroy the contextual menu area for the expansion edition zone
 
    procedure Insert_Special (Item : access Gtk_Widget_Record'Class);
    --  Insert the special entity associated with Item
@@ -2236,10 +2236,10 @@ package body Aliases_Module is
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
-        (Module                  => Module_ID (Aliases_Module_Id),
-         Kernel                  => Kernel,
-         Module_Name             => "Aliases",
-         Priority                => Default_Priority);
+        (Module      => Module_ID (Aliases_Module_Id),
+         Kernel      => Kernel,
+         Module_Name => "Aliases",
+         Priority    => Default_Priority);
 
       Register_Menu
         (Kernel, Edit, -"_Aliases",

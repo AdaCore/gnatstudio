@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -293,8 +293,8 @@ package String_Utils is
    --  If Protect_Quotes is True, then all quotes (single and double) are
    --  preceded by a backslash.
 
-   function Clone (List : GNAT.Strings.String_List)
-      return GNAT.Strings.String_List;
+   function Clone
+     (List : GNAT.Strings.String_List) return GNAT.Strings.String_List;
    --  Return a deep-copy of List. The returned value must be freed by the
    --  caller.
 
