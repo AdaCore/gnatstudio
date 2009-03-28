@@ -345,9 +345,10 @@ package String_Utils is
    --     foo\"foo    -> foo\"foo    (backslash not removed from output)
 
    function Protect
-     (S              : String;
-      Protect_Quotes : Boolean := True;
-      Protect_Spaces : Boolean := False) return String;
+     (S                   : String;
+      Protect_Quotes      : Boolean := True;
+      Protect_Spaces      : Boolean := False;
+      Protect_Backslashes : Boolean := True) return String;
    --  Escape special characters in S.
    --  Quotes are only escaped when Protect_Quotes is true.
    --  Spaces are only escaped when Protect_Spaces is true.

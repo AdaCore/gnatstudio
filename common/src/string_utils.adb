@@ -1285,16 +1285,17 @@ package body String_Utils is
    -------------
 
    function Protect
-     (S              : String;
-      Protect_Quotes : Boolean := True;
-      Protect_Spaces : Boolean := False) return String
+     (S                   : String;
+      Protect_Quotes      : Boolean := True;
+      Protect_Spaces      : Boolean := False;
+      Protect_Backslashes : Boolean := True) return String
    is
       S2    : String (1 .. S'Length * 2);
       Index : Natural := 1;
    begin
       for J in S'Range loop
          if (Protect_Quotes and then S (J) = '"')
-           or else S (J) = '\'
+           or else (Protect_Backslashes and then S (J) = '\')
            or else (Protect_Spaces and then S (J) = ' ')
          then
             S2 (Index .. Index + 1) := '\' & S (J);
