@@ -141,6 +141,12 @@ package body GPS.Kernel.Macros is
       Recurse, List_Dirs, List_Sources : Boolean;
       Entity                           : Entity_Information;
 
+      --  In this routine it is important to *not* quote backslahes on paths.
+      --  This is important because on Windows a backslash is the directory
+      --  separator and we do not want to escape it. Doing so will work in most
+      --  cases except for remote directory (\\server\drive). Having 4
+      --  backslashes at the start of the PATH is not recognized by Windows.
+
    begin
       Done.all := True;
 
@@ -167,12 +173,14 @@ package body GPS.Kernel.Macros is
       elsif Param = "d" then
          return String_Utils.Protect
            (+To_Remote (Directory_Information (Context), Server),
-            Protect_Quotes => Quoted);
+            Protect_Quotes      => Quoted,
+            Protect_Backslashes => False);
 
       elsif Param = "dk" then
          return String_Utils.Protect
            (Krunch (+To_Remote (Directory_Information (Context), Server)),
-            Protect_Quotes => Quoted);
+            Protect_Quotes      => Quoted,
+            Protect_Backslashes => False);
 
       elsif Param = "e" then
          Entity := Get_Entity (Context);
@@ -245,8 +253,9 @@ package body GPS.Kernel.Macros is
                  ("-P"
                   & (+To_Remote
                     (Full_Name (Project_Path (Project)).all, Server)),
-                  Protect_Spaces => not Quoted,
-                  Protect_Quotes => Quoted);
+                  Protect_Spaces      => not Quoted,
+                  Protect_Quotes      => Quoted,
+                  Protect_Backslashes => False);
             end if;
          end if;
 
@@ -256,12 +265,15 @@ package body GPS.Kernel.Macros is
 
          if Param = "p" or else Param = "P" then
             return String_Utils.Protect
-              (Project_Name (Project), Protect_Quotes => Quoted);
+              (Project_Name (Project),
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => False);
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
               (+To_Remote (Full_Name (Project_Path (Project)).all, Server),
-               Protect_Quotes => Quoted);
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => False);
 
          else
             Recurse := Param (Param'First + 1) = 'r';

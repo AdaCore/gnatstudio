@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I326-017: Cannot build when opening a project using UNC path
+  Problem:    When opening a project using UNC path (\\server\share) it is
+              not possible to use the GPS builder module.
+  Workaround: Mount the remote share with a drive letter.
+
 - I313-019: "Remove Category" removes highlighting for all references
   Problem:    When multiple references in the Locations window are present,
               "Remove Category" removes the highlighting of all the other
