@@ -3889,8 +3889,6 @@ package body GPS.Kernel.Remote is
             end if;
          end if;
 
-         --  Set buffer_size to 0 for dynamically allocated buffer (prevents
-         --  possible overflow)
          declare
             Oldpath : Filesystem_String_Access;
          begin
@@ -3909,6 +3907,9 @@ package body GPS.Kernel.Remote is
 
                Trace (Me, Getenv ("PATH").all);
             end if;
+
+            --  Set buffer_size to 0 for dynamically allocated buffer (prevents
+            --  possible overflow).
 
             Non_Blocking_Spawn
               (Pd.all,
@@ -3944,9 +3945,6 @@ package body GPS.Kernel.Remote is
          else
             Old_Dir := new Filesystem_String'(Directory);
          end if;
-
-         --  Set buffer_size to 0 for dynamically allocated buffer
-         --  (prevents possible overflow)
 
          Remote_Spawn
            (Pd,
