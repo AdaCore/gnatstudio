@@ -129,12 +129,12 @@ package body GPS.Kernel.Macros is
    ----------------
 
    function Substitute
-     (Param   : String;
-      Context : GPS.Kernel.Selection_Context;
-      Quoted  : Boolean;
-      Done    : access Boolean;
-      Server  : Server_Type := GPS_Server)
-      return String
+     (Param     : String;
+      Context   : GPS.Kernel.Selection_Context;
+      Quoted    : Boolean;
+      Done      : access Boolean;
+      Server    : Server_Type := GPS_Server;
+      For_Shell : Boolean := False) return String
    is
       Project                          : Project_Type := No_Project;
       Index                            : Integer;
@@ -255,7 +255,7 @@ package body GPS.Kernel.Macros is
                     (Full_Name (Project_Path (Project)).all, Server)),
                   Protect_Spaces      => not Quoted,
                   Protect_Quotes      => Quoted,
-                  Protect_Backslashes => False);
+                  Protect_Backslashes => For_Shell);
             end if;
          end if;
 
@@ -267,13 +267,13 @@ package body GPS.Kernel.Macros is
             return String_Utils.Protect
               (Project_Name (Project),
                Protect_Quotes      => Quoted,
-               Protect_Backslashes => False);
+               Protect_Backslashes => For_Shell);
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
               (+To_Remote (Full_Name (Project_Path (Project)).all, Server),
                Protect_Quotes      => Quoted,
-               Protect_Backslashes => False);
+               Protect_Backslashes => For_Shell);
 
          else
             Recurse := Param (Param'First + 1) = 'r';

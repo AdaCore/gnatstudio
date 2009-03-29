@@ -1227,8 +1227,9 @@ package body Commands.Custom is
          Num   : Integer;
          Done  : aliased Boolean := False;
          Macro : constant String :=
-                   Substitute (Param, Command.Execution.Context,
-                               Quoted, Done'Access, Current_Server);
+                   Substitute
+                     (Param, Command.Execution.Context,
+                      Quoted, Done'Access, Current_Server, For_Shell => True);
       begin
          if Done then
             return Macro;

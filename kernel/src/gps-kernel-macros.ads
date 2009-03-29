@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2005-2008, AdaCore                --
+--                   Copyright (C) 2005-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -41,12 +41,12 @@ package GPS.Kernel.Macros is
    --  null is never returned
 
    function Substitute
-     (Param   : String;
-      Context : GPS.Kernel.Selection_Context;
-      Quoted  : Boolean;
-      Done    : access Boolean;
-      Server  : Server_Type := GPS_Server)
-      return String;
+     (Param     : String;
+      Context   : GPS.Kernel.Selection_Context;
+      Quoted    : Boolean;
+      Done      : access Boolean;
+      Server    : Server_Type := GPS_Server;
+      For_Shell : Boolean := False) return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.
    --  The empty string "" is returned if Param is not one of the macro
@@ -61,6 +61,8 @@ package GPS.Kernel.Macros is
    --  Invalid_Substitution might be raised if the context is still invalid,
    --  although this isn't guaranteed in general and you must check with
    --  Macro_Filter first.
+   --  For_Shell must be set to True when the result string is to be used by a
+   --  shell command. In this case it is needed to escape backslashes.
 
 private
    type Requirements is record
