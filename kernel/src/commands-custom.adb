@@ -1274,15 +1274,13 @@ package body Commands.Custom is
                Last := Last - 1;
             end loop;
 
-            if Output (Output'First) = '''
-              and then Last > Output'First and then Output (Last) = '''
-            then
-               return String_Utils.Protect
-                 (Output (Output'First + 1 .. Last - 1),
-                  Protect_Quotes => Quoted);
+            --  Is output quoted with ' or " ?
 
-            elsif Output (Output'First) = '"'
-              and then Last > Output'First and then Output (Output'Last) = '"'
+            if Last > Output'First
+              and then
+                ((Output (Output'First) = ''' and then Output (Last) = ''')
+                 or else
+                   (Output (Output'First) = '"' and then Output (Last) = '"'))
             then
                return String_Utils.Protect
                  (Output (Output'First + 1 .. Last - 1),
