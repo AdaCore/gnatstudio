@@ -86,6 +86,6 @@ private
    overriding function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
       Context : Selection_Context) return Boolean;
-   --  See doc for inherited subprogram.
+   --  See doc for inherited subprogram
 
 end GPS.Kernel.Macros;
