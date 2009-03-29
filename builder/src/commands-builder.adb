@@ -435,7 +435,7 @@ package body Commands.Builder is
            (Kernel,
             Unprotect
               (GNATCOLL.Scripts.Utils.Argument_List_To_Quoted_String
-                 (CL.all, Quote_Backslash => False)),
+                 (CL.all, Quote_Backslash => True)),
             Shadow);
 
          if Mode_Name /= "default" then
