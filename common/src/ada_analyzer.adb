@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2001-2008, AdaCore                 --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1873,7 +1873,7 @@ package body Ada_Analyzer is
             Push (Tokens, Temp);
 
          elsif Prev_Token /= Tok_End and then
-           (Reserved = Tok_If
+           ((Reserved = Tok_If and then Num_Parens = 0)
              or else Reserved = Tok_For
              or else Reserved = Tok_While
              or else Reserved = Tok_Accept)
@@ -2044,7 +2044,7 @@ package body Ada_Analyzer is
             Indent_Function_Return (Prec);
 
          elsif Reserved = Tok_End
-           or else Reserved = Tok_Elsif
+           or else (Reserved = Tok_Elsif and then Num_Parens = 0)
            or else (Reserved = Tok_Null
                     and then Prev_Token = Tok_Is
                     and then Top_Token.Token = Tok_Procedure)
@@ -2128,8 +2128,12 @@ package body Ada_Analyzer is
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
            or else Reserved = Tok_Do
-           or else (Prev_Token /= Tok_Or  and then Reserved = Tok_Else)
-           or else (Prev_Token /= Tok_And and then Reserved = Tok_Then)
+           or else (Prev_Token /= Tok_Or
+                    and then Reserved = Tok_Else
+                    and then Num_Parens = 0)
+           or else (Prev_Token /= Tok_And
+                    and then Reserved = Tok_Then
+                    and then Num_Parens = 0)
            or else (Prev_Token /= Tok_End and then Reserved = Tok_Select)
            or else (Reserved = Tok_Or
                     and then (Top_Token.Token = Tok_Select
