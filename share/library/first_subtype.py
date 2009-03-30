@@ -19,12 +19,15 @@ def is_predefined (entity):
    return f.find ("predefined") != -1
 
 def get_first_subtype (entity):
-   while True:
-      parent = entity.type ()
-      if is_predefined (parent):
-          return entity
-      entity = parent
-   return None
+   try:
+     while True:
+        parent = entity.type ()
+        if is_predefined (parent):
+           return entity
+        entity = parent
+     return None
+   except:
+     return None
 
 def goto_first_subtype (context):
    if context.first_subtype:
