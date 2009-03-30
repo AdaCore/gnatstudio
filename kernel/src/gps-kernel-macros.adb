@@ -174,13 +174,13 @@ package body GPS.Kernel.Macros is
          return String_Utils.Protect
            (+To_Remote (Directory_Information (Context), Server),
             Protect_Quotes      => Quoted,
-            Protect_Backslashes => False);
+            Protect_Backslashes => For_Shell);
 
       elsif Param = "dk" then
          return String_Utils.Protect
            (Krunch (+To_Remote (Directory_Information (Context), Server)),
             Protect_Quotes      => Quoted,
-            Protect_Backslashes => False);
+            Protect_Backslashes => For_Shell);
 
       elsif Param = "e" then
          Entity := Get_Entity (Context);
