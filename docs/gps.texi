@@ -1132,6 +1132,9 @@ Toggle the sorting of the entries by sub-categories. This is useful,
 for example, for separating the warnings from the errors in the build
 results.
 
+@item Filter panel
+Controls availability of the filter panel at the bottom of the window.
+
 @item Expand category
 Expand all the files in the current categories.
 
@@ -1149,6 +1152,16 @@ Remove all entries from the Locations View.
 In some cases, a wrench icon will be associated on the left of a compilation
 message. See @ref{Code Fixing} for more information on how to make advantage
 of this icon.
+
+Filter panel can be used for filter out messages which match (or do not match)
+text pattern or regular expression. The @code{Close} button on the filter panel
+hides filter pannel and cancel filter. The @code{Filter} entry allows to enter
+text pattern or regular expression. The @code{Regexp} check button specify how
+to use the filter text: as text pattern or as regular expression. The
+@code{Apply} tool button replace previously applied filter by new one. The
+@code{Cancel} tool button cancel currently active filter. The @code{Hide
+matched} check button allows to revert filter, e.g. switch between matched and
+unmatched items fastly.
 
 @c --------------------------------------------------------------------
 @node The Execution Window
