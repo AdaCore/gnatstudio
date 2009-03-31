@@ -59,7 +59,6 @@
    obj:*
    obj:*
    fun:getpwnam_r
-   fun:g_get_any_init_do
 }
 {
    Errors in Xserver
