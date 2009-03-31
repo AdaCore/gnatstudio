@@ -22,6 +22,7 @@ with Interfaces.C.Strings;
 
 with Glib.Object;
 with Gtk.Editable;
+with Gtk.Enums; use Gtk.Enums;
 with Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Label;
@@ -30,9 +31,9 @@ with Gtk.Stock;
 with Gtk.Toggle_Button;
 with Gtk.Tool_Item;
 
+with GPS.Intl; use GPS.Intl;
 with GUI_Utils;
 with Histories;
-with Gtk.Enums; use Gtk.Enums;
 
 package body GPS.Location_View_Filter_Panel is
 
@@ -254,6 +255,7 @@ package body GPS.Location_View_Filter_Panel is
       --  Close button
 
       Gtk.Tool_Button.Gtk_New_From_Stock (Close, Gtk.Stock.Stock_Close);
+      Close.Set_Tooltip_Text (-"Close filter panel");
       Gtk_Tool_Button_Callbacks.Connect
         (Close,
          Gtk.Tool_Button.Signal_Clicked,
@@ -263,7 +265,7 @@ package body GPS.Location_View_Filter_Panel is
 
       --  Filter label
 
-      Gtk.Label.Gtk_New (Label, "Filter:");
+      Gtk.Label.Gtk_New (Label, -"Filter:");
       Gtk.Tool_Item.Gtk_New (Item);
       Item.Add (Label);
       Self.Insert (Item);
@@ -271,6 +273,8 @@ package body GPS.Location_View_Filter_Panel is
       --  Pattern combo box
 
       Gtk.Combo.Gtk_New (Self.Pattern);
+      Self.Pattern.Set_Tooltip_Text
+        (-"The text pattern or regular expression");
       Gtk_Entry_Callbacks.Connect
         (Self.Pattern.Get_Entry,
          Gtk.GEntry.Signal_Activate,
@@ -288,7 +292,8 @@ package body GPS.Location_View_Filter_Panel is
 
       --  RegExp check button
 
-      Gtk.Check_Button.Gtk_New (Self.Reg_Exp, "Regexp");
+      Gtk.Check_Button.Gtk_New (Self.Reg_Exp, -"Regexp");
+      Self.Reg_Exp.Set_Tooltip_Text (-"The filter is a regular expression");
       Gtk_Check_Button_Callbacks.Connect
         (Self.Reg_Exp,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -302,6 +307,7 @@ package body GPS.Location_View_Filter_Panel is
       --  Apply filter button
 
       Gtk.Tool_Button.Gtk_New_From_Stock (Self.Apply, Gtk.Stock.Stock_Apply);
+      Self.Apply.Set_Tooltip_Text (-"Apply filter");
       Gtk_Tool_Button_Callbacks.Connect
         (Self.Apply,
          Gtk.Tool_Button.Signal_Clicked,
@@ -313,6 +319,7 @@ package body GPS.Location_View_Filter_Panel is
       --  Cancel filter button
 
       Gtk.Tool_Button.Gtk_New_From_Stock (Self.Cancel, Gtk.Stock.Stock_Cancel);
+      Self.Cancel.Set_Tooltip_Text (-"Cancel currently applyed filter");
       Gtk_Tool_Button_Callbacks.Connect
         (Self.Cancel,
          Gtk.Tool_Button.Signal_Clicked,
@@ -329,6 +336,8 @@ package body GPS.Location_View_Filter_Panel is
       --  Hide matched check button
 
       Gtk.Check_Button.Gtk_New (Self.Hide_Matched, "Hide matched");
+      Self.Hide_Matched.Set_Tooltip_Text
+        (-"Inverse filter: hide matched items");
       Gtk_Check_Button_Callbacks.Connect
         (Self.Hide_Matched,
          Gtk.Toggle_Button.Signal_Toggled,
