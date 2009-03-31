@@ -1364,11 +1364,11 @@ package body Projects.Editor is
             Node := Next_Declarative_Item (Node, Tree);
          end loop;
 
-         Free (Case_Items);
-
          Remove_Attribute_Declarations
            (Tree, Parent, Attribute_Name, Attribute_Index);
       end if;
+
+      Free (Case_Items);
    end Move_From_Common_To_Case_Construct;
 
    -----------------------------------
