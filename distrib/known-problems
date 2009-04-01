@@ -1,11 +1,5 @@
 Known Problems fixed in GPS 4.4.0
 
-- I327-048: Order of preferences changes
-  Problem:    The order of lines in the preferences dialog might change
-              from one session of GPS to the next
-  Workaround: None needed, all lines are always visible. The order depends
-              on the order of lines in the preferences file
-
 - I326-017: Cannot build when opening a project using UNC path
   Problem:    When opening a project using UNC path (\\server\share) it is
               not possible to use the GPS builder module.
