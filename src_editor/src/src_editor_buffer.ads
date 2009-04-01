@@ -1052,8 +1052,7 @@ private
    procedure Reset_Blocks_Info (Buffer : Source_Buffer);
    --  Reset block information used by Data
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Data_Array, Line_Data_Array_Access);
+   procedure Free (Data : in out Line_Data_Array_Access);
 
    type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
    --  The line terminator style of the given buffer

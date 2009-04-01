@@ -1211,7 +1211,7 @@ package body Src_Editor_Buffer.Line_Information is
          H : constant Line_Data_Array := Buffer_Lines.all;
          K : constant Editable_Line_Array := Buffer.Editable_Lines.all;
       begin
-         Unchecked_Free (Buffer_Lines);
+         Free (Buffer_Lines);
          Buffer_Lines := new Line_Data_Array (1 .. N * 2);
 
          Buffer_Lines (H'Range) := H;
