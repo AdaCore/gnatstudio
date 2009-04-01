@@ -1352,6 +1352,9 @@ package body Src_Editor_Buffer is
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X
 
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Block_Record, Block_Access);
+
       ----------
       -- Free --
       ----------
@@ -1402,6 +1405,18 @@ package body Src_Editor_Buffer is
          for J in Buffer.Editable_Lines'Range loop
             if Buffer.Editable_Lines (J).Where = In_Mark then
                GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
+            end if;
+            if Buffer.Editable_Lines (J).Block /= null then
+               --  Block is shared so we need to ensure that no other block
+               --  references it. We only free the block on its last line
+               --  (which is always associated with this block, that hasn't
+               --  changed) rather than iterate through all the lines looking
+               --  for similar blocks. That avoids a O(n^2) algorithm
+
+               if Buffer.Editable_Lines (J).Block.Last_Line = J then
+                  GNAT.Strings.Free (Buffer.Editable_Lines (J).Block.Name);
+                  Unchecked_Free (Buffer.Editable_Lines (J).Block);
+               end if;
             end if;
          end loop;
 
