@@ -1346,9 +1346,6 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Data);
       pragma Warnings (Off, Stub);
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Block_Record, Block_Access);
-
       Buffer : constant Source_Buffer := Source_Buffer
         (Get_User_Data (Buf, Stub));
 
@@ -1405,9 +1402,6 @@ package body Src_Editor_Buffer is
          for J in Buffer.Editable_Lines'Range loop
             if Buffer.Editable_Lines (J).Where = In_Mark then
                GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
-            end if;
-            if Buffer.Editable_Lines (J).Block /= null then
-               Unchecked_Free (Buffer.Editable_Lines (J).Block);
             end if;
          end loop;
 
