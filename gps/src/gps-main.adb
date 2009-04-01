@@ -1507,7 +1507,8 @@ procedure GPS.Main is
 
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overriden by the user's
-      --  local choices.
+      --  local choices. Note that the preferences have already been loaded
+      --  once before, to take into account the splash screen pref for instance
 
       Load_Preferences (GPS_Main.Kernel);
 

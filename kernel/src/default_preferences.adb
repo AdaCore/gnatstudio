@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -468,7 +468,7 @@ package body Default_Preferences is
       Name, Label, Page, Doc    : String;
       Pref                      : access Preference_Record'Class)
    is
-      Old : constant Preferences_Maps.Cursor :=
+      Old : Preferences_Maps.Cursor :=
         Get_Pref_From_Name (Manager, Name);
       Old_Pref : Preference;
    begin
@@ -486,24 +486,21 @@ package body Default_Preferences is
       Free (Pref.Doc);
       Pref.Doc := new String'(Doc);
 
+      --  If the preference was already in the list, remove the old value.
+      --  It was probably inserted when reading the preferences file, which is
+      --  in no specific order. Instead, we want to preserve the order based
+      --  on the actual registration of preferences by the various modules, so
+      --  that the preferences dialog is always displayed in the same order.
+
       if Has_Element (Old) then
          Old_Pref := Element (Old);
-
-         --  Override the current value with the one that was already stored,
-         --  since the latter was most probably read from the XML file
-
-         Set_Pref
-           (Pref    => Pref,
-            Manager => Manager,
-            Value   => String'(Get_Pref (Pref)));
+         Delete (Manager.Preferences, Old);
          Free (Old_Pref);
-
-         Replace_Element (Manager.Preferences, Old, Preference (Pref));
-      else
-         Append
-           (Container => Manager.Preferences,
-            New_Item  => Preference (Pref));
       end if;
+
+      Append
+        (Container => Manager.Preferences,
+         New_Item  => Preference (Pref));
    end Register;
 
    --------------
@@ -840,7 +837,7 @@ package body Default_Preferences is
                   Node := Node.Next;
                end loop;
             else
-               Trace (Me, "Load new style preferences");
+               Trace (Me, "Load new style preferences from " & (+File_Name));
                while Node /= null loop
                   if Node.Tag.all = "pref" then
                      declare
