@@ -768,27 +768,9 @@ package body Revision_Views is
       --  Check for date with format: "Mon Mar 2 18:15:58 2009"
 
       if MA (0) = No_Match or else MB (0) = No_Match then
-         if Rev_A < Rev_B then
-            return -1;
-         elsif Rev_A > Rev_B then
-            return 1;
-         else
-            return 0;
-         end if;
-
+         return Compare (Rev_A, Rev_B);
       else
-         declare
-            C_Rev_A : constant String := Canonical (Rev_A, MA);
-            C_Rev_B : constant String := Canonical (Rev_B, MB);
-         begin
-            if C_Rev_A < C_Rev_B then
-               return -1;
-            elsif C_Rev_A > C_Rev_B then
-               return 1;
-            else
-               return 0;
-            end if;
-         end;
+         return Compare (Canonical (Rev_A, MA), Canonical (Rev_B, MB));
       end if;
    end Sort_On_Date;
 
@@ -840,18 +822,7 @@ package body Revision_Views is
       if Is_Subset (To_Set (Rev_A), Decimal_Digit_Set)
         and then Is_Subset (To_Set (Rev_B), Decimal_Digit_Set)
       then
-         declare
-            N_A : constant Integer := Integer'Value (Rev_A);
-            N_B : constant Integer := Integer'Value (Rev_B);
-         begin
-            if N_A < N_B then
-               return -1;
-            elsif N_A > N_B then
-               return 1;
-            else
-               return 0;
-            end if;
-         end;
+         return Compare (Integer'Value (Rev_A), Integer'Value (Rev_B));
 
       --  Check for CVS kind of revision numbers
       elsif Is_Subset (To_Set (Rev_A), Number_Set)
@@ -878,13 +849,7 @@ package body Revision_Views is
 
       --  Other kind of revision numbers
       else
-         if Rev_A < Rev_B then
-            return -1;
-         elsif Rev_A > Rev_B then
-            return 1;
-         else
-            return 0;
-         end if;
+         return Compare (Rev_A, Rev_B);
       end if;
    end Sort_On_Revision;
 
