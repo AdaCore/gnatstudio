@@ -31,9 +31,11 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -49,6 +51,7 @@ with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
@@ -64,6 +67,13 @@ package body VCS_View.Explorer is
 
    package Page_Status_Callback is new Gtk.Handlers.User_Callback
      (GObject_Record, Natural);
+
+   function Status_Sort
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+   --  Used to sort on status in the explorer, this special sort routine is
+   --  needed to keep the order also sorted on names.
 
    -------------------
    -- Columns_Types --
@@ -243,7 +253,6 @@ package body VCS_View.Explorer is
       --  Now go through all files that are not displayed due to filter
 
       declare
-         use String_List;
          Status    : File_Status_Record;
          Displayed : Boolean;
          Iter      : File_Hash.String_Hash_Table.Iterator;
@@ -625,6 +634,29 @@ package body VCS_View.Explorer is
       Success := True;
    end Do_Fill_Info;
 
+   -----------------
+   -- Status_Sort --
+   -----------------
+
+   function Status_Sort
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint
+   is
+      A_Status : constant String :=
+                   Get_String (Model, A, Status_Description_Column);
+      B_Status : constant String :=
+                   Get_String (Model, B, Status_Description_Column);
+   begin
+      if A_Status = B_Status then
+         return Compare
+           (Get_String (Model, A, Base_Name_Column),
+            Get_String (Model, B, Base_Name_Column));
+      else
+         return Compare (A_Status, B_Status);
+      end if;
+   end Status_Sort;
+
    ----------------------
    -- Set_Column_Types --
    ----------------------
@@ -661,6 +693,13 @@ package body VCS_View.Explorer is
         (Explorer.Status_Column, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
       Set_Clickable (Explorer.Status_Column, True);
       Set_Sort_Column_Id (Explorer.Status_Column, Status_Description_Column);
+
+      Set_Sort_Func
+        (+Explorer.Model,
+         Status_Description_Column,
+         Sort_Func => Status_Sort'Access);
+      Set_Sort_Column_Id
+        (+Explorer.Model, Status_Description_Column, Sort_Ascending);
       Dummy := Append_Column (Explorer.Tree, Explorer.Status_Column);
 
       Gtk_New (Explorer.Log_Column);
@@ -803,7 +842,7 @@ package body VCS_View.Explorer is
       Check     : Gtk_Check_Menu_Item;
       Mitem     : Gtk_Menu_Item;
       Submenu   : Gtk_Menu;
-      Files     : String_List.List;
+      Files     : String_List_Utils.String_List.List;
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
       Project   : Project_Type := No_Project;
@@ -859,7 +898,7 @@ package body VCS_View.Explorer is
                Files   => Create (Files),
                Project => Project);
 
-            String_List.Free (Files);
+            String_List_Utils.String_List.Free (Files);
          end if;
 
          Path_Free (Path);
@@ -999,7 +1038,7 @@ package body VCS_View.Explorer is
    ------------------------
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle) return String_List.List is
+     (Kernel : Kernel_Handle) return String_List_Utils.String_List.List is
    begin
       return Get_Selected_Files
         (VCS_View_Access (Get_Explorer (Kernel, False, False)));

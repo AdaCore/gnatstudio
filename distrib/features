@@ -15,6 +15,11 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I330-004 Makes VCS sort on status stable (2009-04-01)
+
+   Ensure that the sort on VCS statuses is stable. Entries for files
+   having the same status are sorted on file base name.
+
 NF-44-I329-003 Support for conditional expressions (2009-03-30)
 
    The Ada source editor now knows about new Ada 201x conditional expression
