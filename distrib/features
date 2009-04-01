@@ -15,10 +15,11 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
-NF-44-I330-004 Makes VCS sort on status stable (2009-04-01)
+NF-44-I330-004 VCS sorting on status is now stable (2009-04-01)
 
-   Ensure that the sort on VCS statuses is stable. Entries for files
-   having the same status are sorted on file base name.
+   GPS now ensures that the sort on VCS statuses is stable and that entries
+   for files having the same status are sorted alphabetically on file base
+   names.
 
 NF-44-I329-003 Support for conditional expressions (2009-03-30)
 
