@@ -375,6 +375,13 @@ package String_Utils is
    --  the character's ASCII hexadecimal code. For example a space is encoded
    --  as %20.
 
+   function Compare (A, B : String) return Glib.Gint;
+   function Compare (A, B : Integer) return Glib.Gint;
+   --  Return -1 if A<B, 1 if A>B and 0 otherwise. This routine is useful for
+   --  model specific sorting. The second version does the same comparing
+   --  integers. Even if not using string, it is better to keep this routine
+   --  next to the compare based on strings.
+
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);
@@ -382,4 +389,5 @@ private
    pragma Inline (Skip_To_Char);
    pragma Inline (Copy_String);
    pragma Inline (Replace);
+   pragma Inline (Compare);
 end String_Utils;

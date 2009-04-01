@@ -1428,4 +1428,30 @@ package body String_Utils is
       return S2 (S2'First .. J2 - 1);
    end Strip_Single_Underscores;
 
+   -------------
+   -- Compare --
+   -------------
+
+   function Compare (A, B : String) return Glib.Gint is
+   begin
+      if A < B then
+         return -1;
+      elsif A > B then
+         return 1;
+      else
+         return 0;
+      end if;
+   end Compare;
+
+   function Compare (A, B : Integer) return Glib.Gint is
+   begin
+      if A < B then
+         return -1;
+      elsif A > B then
+         return 1;
+      else
+         return 0;
+      end if;
+   end Compare;
+
 end String_Utils;
