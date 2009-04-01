@@ -214,9 +214,9 @@ package body Project_Explorers is
    --  Called when the preferences have changed
 
    function Sort_Func
-     (Model     : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
-      A         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      B         : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
+     (Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      A     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Used to sort nodes in the explorer
 
    --------------
@@ -792,12 +792,12 @@ package body Project_Explorers is
    is
       A_Before_B : Gint := -1;
       B_Before_A : Gint := 1;
-      A_Type : constant Node_Types :=
-        Get_Node_Type (Gtk_Tree_Store (Model), A);
-      B_Type : constant Node_Types :=
-        Get_Node_Type (Gtk_Tree_Store (Model), B);
-      Order : Gtk_Sort_Type;
-      Column : Gint;
+      A_Type     : constant Node_Types :=
+                     Get_Node_Type (Gtk_Tree_Store (Model), A);
+      B_Type     : constant Node_Types :=
+                     Get_Node_Type (Gtk_Tree_Store (Model), B);
+      Order      : Gtk_Sort_Type;
+      Column     : Gint;
 
       function Alphabetical return Gint;
       --  Compare the two nodes alphabetically

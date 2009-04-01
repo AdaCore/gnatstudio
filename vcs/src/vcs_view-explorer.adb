@@ -21,6 +21,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 with Namet;                     use Namet;
 
+with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -53,8 +55,6 @@ with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
 with Ignore_Db;                 use Ignore_Db;
-
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body VCS_View.Explorer is
 
