@@ -1110,7 +1110,9 @@ The Location Tree shows a hierarchy of categories, which contain
 files, which contain locations. Clicking on a location item will bring
 up a file editor at the requested place. Right-clicking on file or
 category items brings up a contextual menu allowing you to remove the
-corresponding node from the view.
+corresponding node from the view. Placing the mouse over an item
+automatically pop up a tooltip window with full text of the item if this
+text can't be completely shown in window.
 
 Every time a new category is created, as a result of a compilation or a
 search operation for instance, the first entry of that category is
