@@ -909,18 +909,18 @@ package body GPS.Location_View is
                     Get_Mark (Model, Loc_Iter, Mark_Column);
 
    begin
-      if Mark /= Nil_Editor_Mark then
-         Mark.Delete;
-      end if;
-
       Highlight_Line
         (Kernel,
          Get_File (Model, File_Iter),
-         Integer (Get_Int (Model, Loc_Iter, Line_Column)),
-         Visible_Column_Type (Get_Int (Model, Loc_Iter, Column_Column)),
+         Mark.Line,
+         Visible_Column_Type (Mark.Column),
          Integer (Get_Int (Model, Loc_Iter, Length_Column)),
          Get_Highlighting_Style (Model, File_Iter),
          False);
+
+      if Mark /= Nil_Editor_Mark then
+         Mark.Delete;
+      end if;
    end Remove_Line;
 
    ---------------------
