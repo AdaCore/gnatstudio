@@ -592,24 +592,6 @@ package body Src_Editor_Buffer is
       end if;
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Data : in out Line_Data_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Data_Array, Line_Data_Array_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
-   begin
-      if Data /= null then
-         for D in Data'Range loop
-            Unchecked_Free (Data (D).Side_Info_Data);
-         end loop;
-      end if;
-      Unchecked_Free (Data);
-   end Free;
-
    -----------------------
    -- Reset_Blocks_Info --
    -----------------------
@@ -1457,7 +1439,7 @@ package body Src_Editor_Buffer is
 
       Free (Buffer.Constructs);
 
-      Free (Buffer.Line_Data);
+      Unchecked_Free (Buffer.Line_Data);
       GNAT.Strings.Free (Buffer.Charset);
 
       Unref (Buffer.Delimiter_Tag);
@@ -2826,7 +2808,7 @@ package body Src_Editor_Buffer is
             end if;
          end loop;
 
-         Free (Buffer.Line_Data);
+         Unchecked_Free (Buffer.Line_Data);
 
          Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
          Buffer.Editable_Lines (1) :=
