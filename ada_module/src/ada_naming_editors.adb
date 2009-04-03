@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                   Copyright (C) 2001-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
 with GNAT.Strings;             use GNAT.Strings;
 with System;                   use System;
 
@@ -47,8 +48,8 @@ with String_Hash;
 package body Ada_Naming_Editors is
 
    Empty_Unit_Name : constant String := "<unit_name>";
-   Empty_Spec_Name : constant String := "<spec_file>";
-   Empty_Body_Name : constant String := "<body_file>";
+   Empty_Spec_Name : constant String := "<spec_file> [<at index>]";
+   Empty_Body_Name : constant String := "<body_file> [<at index>]";
 
    Default_Gnat_Dot_Replacement : constant String := "-";
    Default_Gnat_Spec_Suffix     : constant String := ".ads";
@@ -428,26 +429,42 @@ package body Ada_Naming_Editors is
             declare
                Values : Associative_Array_Values (1 .. Lengths (L));
                Index  : Natural := Values'First;
+               Val    : String_Access;
+               Last   : Integer;
+               Idx    : Integer;
+
             begin
                Get_First (Cache, Cache_Iter);
                loop
                   Data := Get_Element (Cache_Iter);
                   exit when Data = No_Data;
 
+                  Val := null;
+
                   if L = 1
                     and then Data.Spec_Name /= null
                   then
-                     Values (Index) :=
-                       (Index => new String'(Get_Key (Cache_Iter)),
-                        Value => Data.Spec_Name);
-                     Index := Index + 1;
+                     Val := Data.Spec_Name;
 
                   elsif L = 2
                     and then Data.Body_Name /= null
                   then
+                     Val := Data.Body_Name;
+                  end if;
+
+                  if Val /= null then
+                     Last := Ada.Strings.Fixed.Index (Val.all, " at ");
+                     if Last < Val'First then
+                        Last := Val'Last + 1;
+                        Idx  := 0;
+                     else
+                        Idx  := Integer'Value (Val (Last + 4 .. Val'Last));
+                     end if;
+
                      Values (Index) :=
                        (Index => new String'(Get_Key (Cache_Iter)),
-                        Value => Data.Body_Name);
+                        Value => new String'(Val (Val'First .. Last - 1)),
+                        At_Index => Idx);
                      Index := Index + 1;
                   end if;
 

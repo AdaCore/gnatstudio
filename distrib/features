@@ -26,6 +26,11 @@ NF-44-I329-003 Support for conditional expressions (2009-03-30)
    The Ada source editor now knows about new Ada 201x conditional expression
    and computes indentation accordingly.
 
+NF-44-I325-023 Support for multi-unit files in project properties (2009-04-02)
+
+   It is now possible to manipulate multi-unit source files in the naming
+   tab of the project properties editor
+
 NF-44-I323-007 New plugin: first_subtype.py (2009-03-23)
 
    Adds a new contextual menu entry to jump to the first subtype of an

@@ -177,13 +177,15 @@ package body Projects.Editor is
       Prj_Or_Pkg : Project_Node_Id;
       Name       : Name_Id;
       Index_Name : Name_Id := No_Name;
-      Kind       : Variable_Kind := List) return Project_Node_Id;
+      Kind       : Variable_Kind := List;
+      At_Index   : Integer := 0) return Project_Node_Id;
    --  Create a new attribute.
    --  The new declaration is added at the end of the declarative item list for
    --  Prj_Or_Pkg (but before any package declaration). No addition is done if
    --  Prj_Or_Pkg is Empty_Node.
    --  If Index_Name is not "", then if creates an attribute value for a
    --  specific index
+   --  At_Index is used for the " at <idx>" in the naming exceptions
    --
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
@@ -485,12 +487,17 @@ package body Projects.Editor is
       Prj_Or_Pkg : Project_Node_Id;
       Name       : Name_Id;
       Index_Name : Name_Id := No_Name;
-      Kind       : Variable_Kind := List) return Project_Node_Id
+      Kind       : Variable_Kind := List;
+      At_Index   : Integer := 0) return Project_Node_Id
    is
       Node : constant Project_Node_Id :=
                Default_Project_Node (Tree, N_Attribute_Declaration, Kind);
    begin
       Set_Name_Of (Node, Tree, Name);
+
+      if At_Index /= 0 then
+         Set_Source_Index_Of (Node, Tree, To => Int (At_Index));
+      end if;
 
       if Index_Name /= No_Name then
          Set_Associative_Array_Index_Of (Node, Tree, Index_Name);
@@ -1220,7 +1227,8 @@ package body Projects.Editor is
                               Prj_Or_Pkg => Empty_Node,
                               Name       => Attr_Name,
                               Index_Name => Attr_Index,
-                              Kind       => Prj.Single));
+                              Kind       => Prj.Single,
+                              At_Index   => Values (V).At_Index));
          Set_Expression_Of
            (Current_Item_Node (N, Tree), Tree,
             Enclose_In_Expression (Val, Tree));
@@ -2390,6 +2398,13 @@ package body Projects.Editor is
 
          when Prj.Single =>
             Get_Name_String (Value.Value);
+
+            if Value.Index /= 0 then
+               Name_Buffer (Name_Len + 1 .. Name_Len + 4) := " at ";
+               Name_Len := Name_Len + 4;
+               Add_Nat_To_Name_Buffer (Value.Index);
+            end if;
+
             return Name_Buffer (1 .. Name_Len);
 
          when Prj.List =>

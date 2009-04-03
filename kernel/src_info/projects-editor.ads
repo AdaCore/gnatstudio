@@ -323,8 +323,10 @@ package Projects.Editor is
    --  not hande renaming packages correctly.
 
    type Associative_Array_Value is record
-      Index : GNAT.Strings.String_Access;
-      Value : GNAT.Strings.String_Access;
+      Index    : GNAT.Strings.String_Access;
+      Value    : GNAT.Strings.String_Access;
+      At_Index : Natural := 0;  --  For naming exceptions mostly, results in
+                                 --  " at " & Index;
    end record;
    type Associative_Array_Values is array (Natural range <>)
      of Associative_Array_Value;

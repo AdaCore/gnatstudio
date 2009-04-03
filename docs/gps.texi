@@ -4573,6 +4573,21 @@ double-clicking on the line and column you want to edit.
 To add new entries to this list, use the fields at the bottom of
 the window, and press the update button.
 
+@cindex multi-unit source files
+GNAT and GPS both support Ada source files that contain multiple Ada
+units (typically a single file would contain both the spec and the body
+of the unit for instance). This is not a recommend approach if you can
+avoid it, since that might trigger unnecessary recompilation of your
+source files. Such source files are always handled as naming scheme
+exceptions, and you can specify those in the editor by adding "at 1",
+"at 2",@dots{} after the file name for either the spec, the body or
+both. The digit after "at" is the index (starting at 1) of the unit
+in the source file.
+
+For instance, specifying "file.ada at 1" for the spec and "file.ada at 2"
+for the body of the unit "unit" indicates that the two components of the
+unit are in the same file, first the spec, followed by the body.
+
 @c ------------------------------------------------------------------
 @subsection Switches
 @anchor{Switches}
