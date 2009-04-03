@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2005                       --
---                             AdaCore                               --
+--                     Copyright (C) 2001-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -125,6 +124,8 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
                Set_Text (E.Body_Filename_Entry, Body_Name);
             end if;
          end;
+      else
+         Reset_Exception_Fields (E);
       end if;
    end On_Exceptions_List_Select_Row;
 
