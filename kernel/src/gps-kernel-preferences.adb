@@ -1134,7 +1134,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "Default-VCS",
          Default => "Auto",
-         Page    => "",
+         Page    => -"VCS",
          Doc     =>
          -"The default VCS to use when no VCS is defined in the project",
          Label   => -"Default VCS");

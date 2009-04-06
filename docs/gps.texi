@@ -7367,6 +7367,9 @@ GPS needs a corresponding @command{patch} and @command{diff} command
 that usually comes with it.
 @end table
 
+The default VCS that GPS will use is "Auto" by default, and this can be
+ configured through @ref{The Preferences Dialog}.
+
 It is also possible to add your own support for other version control systems,
 or modify one of the existing interfaces, see
 @ref{Adding support for new Version Control Systems} for more information.
@@ -10289,6 +10292,10 @@ disabling this command can speed-up the VCS actions.
 @cindex ClearCase module
 Whether the built-in ClearCase (see @ref{Version Control System})
 module is activated or disabled.
+
+@item Default VCS
+@cindex Default VCS
+The default VCS to use when the project does not define a VCS.
 
 @end table
 

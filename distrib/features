@@ -15,6 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I401-007 New preference to select a default VCS (2009-04-06)
+
+   In the VCS pane of the Preferences dialog, the preference "Default VCS"
+   can be used to select a default VCS which will be used by GPS when the
+   projects do not define a VCS.
+
 NF-44-I330-004 VCS sorting on status is now stable (2009-04-01)
 
    GPS now ensures that the sort on VCS statuses is stable and that entries
