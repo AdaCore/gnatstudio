@@ -1127,15 +1127,22 @@ package body GPS.Location_View is
          if not Success
            or else Get_Iter (Model, File_Path) = Null_Iter
          then
-            File_Path := Copy (Category_Path);
-            Down (File_Path);
+            if Locations_Wrap.Get_Pref then
+               File_Path := Copy (Category_Path);
+               Down (File_Path);
 
-            if Backwards then
-               while Get_Iter (Model, File_Path) /= Null_Iter loop
-                  Next (File_Path);
-               end loop;
+               if Backwards then
+                  while Get_Iter (Model, File_Path) /= Null_Iter loop
+                     Next (File_Path);
+                  end loop;
 
-               Success := Prev (File_Path);
+                  Success := Prev (File_Path);
+               end if;
+            else
+               Path_Free (File_Path);
+               Path_Free (Path);
+               Path_Free (Category_Path);
+               return;
             end if;
          end if;
 

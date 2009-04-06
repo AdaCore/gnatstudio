@@ -1225,6 +1225,16 @@ package body GPS.Kernel.Preferences is
          Maximum => Integer'Last,
          Default => 1_000_000,
          Page    => "");
+
+      Locations_Wrap := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Locations-Wrap",
+         Label   => -"Wrap around on next/previous",
+         Doc     => -("Whether using the Next Tag and Previous Tag actions "
+           & " should wrap around to the beginning when reaching the end of "
+           & " the category."),
+         Default => False,
+         Page    => "");
    end Register_Global_Preferences;
 
    ---------------

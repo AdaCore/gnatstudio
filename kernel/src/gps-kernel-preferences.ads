@@ -244,6 +244,9 @@ package GPS.Kernel.Preferences is
    ClearCase_Command         : String_Preference;
    Default_VCS               : String_Preference;
 
+   -- Location View --
+   Locations_Wrap            : Boolean_Preference;
+
    --  Debugger preferences are registered in GVD.Preferences
 
    package Indentation_Kind_Preferences is new
