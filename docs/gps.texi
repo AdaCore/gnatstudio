@@ -7310,6 +7310,7 @@ The systems that are supported out of the box in GPS are:
 GPS can be setup to auto-detect the actual VCS to use for each
 project. This is done by selecting @code{Auto} in the @code{VCS} tab
 of the Project properties editor. @xref{The Project Properties Editor}.
+This is also the default behavior when no VCS is specified in the project.
 
 @item ClearCase
 @cindex VCS, ClearCase
