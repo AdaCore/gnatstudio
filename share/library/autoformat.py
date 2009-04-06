@@ -1,5 +1,6 @@
 """This plug-in will automatically reformat a source file each time it is
-saved on disk.
+saved on disk. See also autognatpp.py for another version using the external
+gnatpp pretty-printer instead.
 """
 
 
