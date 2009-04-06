@@ -242,6 +242,7 @@ package GPS.Kernel.Preferences is
    Hide_Not_Registered       : Boolean_Preference;
    CVS_Command               : String_Preference;
    ClearCase_Command         : String_Preference;
+   Default_VCS               : String_Preference;
 
    --  Debugger preferences are registered in GVD.Preferences
 

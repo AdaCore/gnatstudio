@@ -736,7 +736,7 @@ package body VCS_View_API is
          declare
             VCS_Name : constant String :=
               Get_Attribute_Value
-                (Project, VCS_Kind_Attribute, Default => "Auto");
+                (Project, VCS_Kind_Attribute, Default => Default_VCS.Get_Pref);
          begin
             if To_Lower (VCS_Name) = "auto" then
                Check (Project, VCS);

@@ -1130,6 +1130,15 @@ package body GPS.Kernel.Preferences is
          Doc     => -"Whether unregistered files should be hidden by default",
          Label   => -"Hide non registered files");
 
+      Default_VCS := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Default-VCS",
+         Default => "Auto",
+         Page    => "",
+         Doc     =>
+         -"The default VCS to use when no VCS is defined in the project",
+         Label   => -"Default VCS");
+
       -- CVS --
 
       CVS_Command := Create
