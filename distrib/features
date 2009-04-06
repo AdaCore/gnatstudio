@@ -15,6 +15,12 @@ of the feature.
 New features on 4.4.0
 ---------------------
 
+NF-44-I405-005 New plug-in autognatpp.py (2009-04-06)
+
+   A new optional plug-in is provided as an alternative to autoformat.py
+   which will call gnatpp on each file save instead of calling the internal
+   code reformatter.
+
 NF-44-I401-007 New preference to select a default VCS (2009-04-06)
 
    In the VCS pane of the Preferences dialog, the preference "Default VCS"
