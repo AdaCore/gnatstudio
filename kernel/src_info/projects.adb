@@ -414,6 +414,7 @@ package body Projects is
       Result      : GNAT.Strings.String_List_Access;
       Src         : String_List_Id;
       Index       : Natural := 1;
+      --  Index points to the first free element in Sources
    begin
       loop
          P := Current (Iter);
@@ -450,7 +451,7 @@ package body Projects is
          Next (Iter);
       end loop;
 
-      if Index < Sources'Last then
+      if Index - 1 < Sources'Last then
          Result := new GNAT.Strings.String_List'(Sources (1 .. Index - 1));
          Unchecked_Free (Sources);
       else
