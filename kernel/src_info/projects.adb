@@ -410,6 +410,7 @@ package body Projects is
       Iter        : Imported_Project_Iterator := Start (Project, Recursive);
       Count       : Natural := 0;
       P           : Project_Type;
+      View        : Project_Id;
       Sources     : GNAT.Strings.String_List_Access;
       Result      : GNAT.Strings.String_List_Access;
       Src         : String_List_Id;
@@ -419,8 +420,11 @@ package body Projects is
       loop
          P := Current (Iter);
          exit when P = No_Project;
-         Count := Count
-           + Length (Project.View_Tree, Get_View (P).Source_Dirs);
+
+         View := Get_View (P);
+         exit when View = Prj.No_Project;
+
+         Count := Count + Length (Project.View_Tree, View.Source_Dirs);
          Next (Iter);
       end loop;
 
