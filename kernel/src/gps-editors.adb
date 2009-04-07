@@ -132,9 +132,10 @@ package body GPS.Editors is
    end Column;
 
    overriding function Location
-     (This : Dummy_Editor_Mark) return Editor_Location'Class
+     (This : Dummy_Editor_Mark;
+      Open : Boolean) return Editor_Location'Class
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Open);
    begin
       return Nil_Editor_Location;
    end Location;

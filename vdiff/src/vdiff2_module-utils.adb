@@ -324,7 +324,7 @@ package body Vdiff2_Module.Utils is
          Remove_Blank_Lines (Kernel, D.Blank_Lines_Mark);
          if D.Special_Lines_Mark /= null then
             Remove_Special_Lines
-              (D.Special_Lines_Mark.all.Location.Buffer,
+              (D.Special_Lines_Mark.all.Location (False).Buffer,
                D.Special_Lines_Mark.all,
                D.Last - D.First);
 

@@ -162,7 +162,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_Mark);
 
    overriding function Location
-     (This : Src_Editor_Mark) return Editor_Location'Class;
+     (This : Src_Editor_Mark;
+      Open : Boolean) return Editor_Location'Class;
 
    -----------------------
    -- Src_Editor_Buffer --
@@ -802,7 +803,8 @@ package body Src_Editor_Module.Editors is
    --------------
 
    overriding function Location
-     (This : Src_Editor_Mark) return Editor_Location'Class
+     (This : Src_Editor_Mark;
+      Open : Boolean) return Editor_Location'Class
    is
       Mark : Gtk_Text_Mark;
       Iter   : Gtk_Text_Iter;
@@ -814,7 +816,11 @@ package body Src_Editor_Module.Editors is
 
          declare
             Buf : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (This.Kernel).Get (Get_File (This.Mark.Mark));
+              Get_Buffer_Factory (This.Kernel).Get
+              (Get_File (This.Mark.Mark),
+               Force       => False,
+               Open_Buffer => False,
+               Open_View   => Open);
          begin
             if Buf = Nil_Editor_Buffer then
                return Nil_Editor_Location;

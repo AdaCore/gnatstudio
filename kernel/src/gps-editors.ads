@@ -199,10 +199,11 @@ package GPS.Editors is
    --  open.
 
    function Location
-     (This : Editor_Mark) return Editor_Location'Class is abstract;
+     (This : Editor_Mark;
+      Open : Boolean) return Editor_Location'Class is abstract;
    --  Returns the current location of the mark. This location will vary
    --  depending on the changes that take place in the buffer.
-   --  This opens the editor if it is currently closed.
+   --  If no editor for the location exists, one will be open if Open is True.
 
    function Is_Present (This : Editor_Mark) return Boolean is abstract;
    --  Returns True if mark's location is still present in the buffer
@@ -522,7 +523,8 @@ private
    overriding function Column (This : Dummy_Editor_Mark) return Integer;
 
    overriding function Location
-     (This : Dummy_Editor_Mark) return Editor_Location'Class;
+     (This : Dummy_Editor_Mark;
+      Open : Boolean) return Editor_Location'Class;
 
    overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean;
 
