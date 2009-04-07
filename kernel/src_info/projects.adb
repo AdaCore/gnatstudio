@@ -435,10 +435,13 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
 
+         View := Get_View (P);
+         exit when View = Prj.No_Project;
+
          if not Has_VCS
            or else Get_Attribute_Value (P, VCS_Kind_Attribute) /= ""
          then
-            Src := Get_View (P).Source_Dirs;
+            Src := View.Source_Dirs;
 
             while Src /= Nil_String loop
                Sources (Index) := new String'
