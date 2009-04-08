@@ -844,12 +844,13 @@ package body Vdiff2_Module.Utils is
          if Arr'Length = 1 then
             Insert_Location
               (Kernel, -"Visual differences", File,
-               "1 line removed", Curr_Chunk.Range2.First - 1, 1);
+               "1 line removed", Natural'Max (Curr_Chunk.Range2.First - 1, 1),
+               1);
          else
             Insert_Location
               (Kernel, -"Visual differences", File,
                Image (Arr'Length) & " lines removed",
-               Curr_Chunk.Range2.First - 1, 1);
+               Natural'Max (Curr_Chunk.Range2.First - 1, 1), 1);
          end if;
 
          Unchecked_Free (Arr);
