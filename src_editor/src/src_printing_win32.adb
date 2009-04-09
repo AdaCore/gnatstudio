@@ -19,7 +19,7 @@
 
 --  Win32 version of this file
 
-with GNATCOLL.VFS; use GNATCOLL;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Ada.Characters.Latin_1;
 with Src_Editor_Buffer.Text_Handling;
 
@@ -139,10 +139,9 @@ package body Src_Printing is
 
       Buffer         : constant Source_Buffer := Get_Buffer (Editor);
 
-      File_Name      : constant Filesystem_String :=
-        VFS.Full_Name (Get_Filename (Editor)).all;
+      File_Name      : constant Virtual_File := Get_Filename (Editor);
 
-      Document_Name  : constant Filesystem_String := File_Name & ASCII.NUL;
+      Document_Name  : constant String := +File_Name.Full_Name & ASCII.NUL;
 
       Total_Lines    : constant INT := INT (Get_Line_Count (Buffer));
 
@@ -229,7 +228,8 @@ package body Src_Printing is
                   --  be used consistently across Windows versions...
                   New_Font := SelectObject (PD.DC, New_Font);
 
-                  Print_Header (+File_Name, Banner_Font, PD.DC);
+                  Print_Header
+                    (+File_Name.Full_Name, Banner_Font, PD.DC);
                   Print_Body
                     (This_Page,
                      Lines_Per_Page,
