@@ -23,7 +23,6 @@
 with HTables;
 with GNAT.Strings;
 with GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package SN.Xref_Pools is
 
@@ -33,7 +32,7 @@ package SN.Xref_Pools is
    Xref_File_Error : exception;
    --  Exception raised if xref file cannot be created, read, written.
 
-   Xref_Suffix : constant Filesystem_String := ".xref";
+   Xref_Suffix : constant GNATCOLL.VFS.Filesystem_String := ".xref";
    --  This suffix is used for generating xref file names.
    --  In fact generated names are constructed in this way:
    --  F(Source_Filename) & Xref_Suffix, where F is a function that
@@ -58,7 +57,7 @@ package SN.Xref_Pools is
 
    function Xref_Filename_For
      (Source_Filename : GNATCOLL.VFS.Virtual_File;
-      Directory       : Filesystem_String;
+      Directory       : GNATCOLL.VFS.Filesystem_String;
       Pool            : Xref_Pool) return GNATCOLL.VFS.Virtual_File;
    --  Return unique xref file name associated with specified source file
    --  name. It does the following steps:

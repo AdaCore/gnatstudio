@@ -29,7 +29,6 @@ with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 with Basic_Types;                use Basic_Types;
 with Entities.Debug;             use Entities.Debug;
-with File_Utils;                 use File_Utils;
 with GPS.Intl;                   use GPS.Intl;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
@@ -143,7 +142,7 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : GNATCOLL.VFS.Cst_String_Access;
+      Full_Filename : GNATCOLL.VFS.Virtual_File;
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
@@ -435,7 +434,7 @@ package body Entities is
    procedure Reset (LI : LI_File) is
    begin
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Reseting LI " & (+Full_Name (LI.Name).all));
+         Trace (Assert_Me, "Reseting LI " & Display_Full_Name (LI.Name));
       end if;
 
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
@@ -571,8 +570,8 @@ package body Entities is
       Tmp : Source_File;
    begin
       if Active (Assert_Me) then
-         Trace (Assert_Me, "Reseting " & (+Full_Name (File.Name).all));
-         if Base_Name (Get_Filename (File)) = "atree.ads" then
+         Trace (Assert_Me, "Reseting " & Display_Full_Name (File.Name));
+         if Equal (Base_Name (Get_Filename (File)), "atree.ads") then
             Debug.Dump (File, Show_Entities => True, Full => True);
          end if;
       end if;
@@ -1028,12 +1027,12 @@ package body Entities is
    -- Hash --
    ----------
 
-   function Hash (Key : GNATCOLL.VFS.Cst_String_Access) return HTable_Header is
+   function Hash (Key : GNATCOLL.VFS.Virtual_File) return HTable_Header is
    begin
-      if Is_Case_Sensitive (Build_Server) then
-         return String_Hash (+Key.all);
+      if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
+         return String_Hash (+Key.Full_Name);
       else
-         return String_Hash (To_Lower (+Key.all));
+         return String_Hash (To_Lower (+Key.Full_Name));
       end if;
    end Hash;
 
@@ -1078,23 +1077,10 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : Source_File_Item) return Cst_String_Access is
+   function Get_Key (E : Source_File_Item) return Virtual_File is
    begin
-      return Full_Name (E.File.Name);
+      return E.File.Name;
    end Get_Key;
-
-   -----------
-   -- Equal --
-   -----------
-
-   function Equal (K1, K2 : GNATCOLL.VFS.Cst_String_Access) return Boolean is
-   begin
-      if Is_Case_Sensitive (Build_Server) then
-         return K1 = K2 or else K1.all = K2.all;
-      else
-         return K1 = K2 or else To_Lower (+K1.all) = To_Lower (+K2.all);
-      end if;
-   end Equal;
 
    ----------
    -- Free --
@@ -1134,9 +1120,9 @@ package body Entities is
    -- Get_Key --
    -------------
 
-   function Get_Key (E : LI_File_Item) return GNATCOLL.VFS.Cst_String_Access is
+   function Get_Key (E : LI_File_Item) return GNATCOLL.VFS.Virtual_File is
    begin
-      return Full_Name (E.File.Name);
+      return E.File.Name;
    end Get_Key;
 
    ----------
@@ -1215,7 +1201,7 @@ package body Entities is
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
-      Full_Filename : GNATCOLL.VFS.Cst_String_Access;
+      Full_Filename : GNATCOLL.VFS.Virtual_File;
       File          : GNATCOLL.VFS.Virtual_File;
       Handler       : access LI_Handler_Record'Class;
       LI            : LI_File := null;
@@ -1239,7 +1225,7 @@ package body Entities is
          F.Ref_Count    := 1;
 
          if File = GNATCOLL.VFS.No_File then
-            F.Name := Create (Full_Filename => Full_Filename.all);
+            F.Name := Full_Filename;
          else
             F.Name := File;
          end if;
@@ -1301,7 +1287,7 @@ package body Entities is
          return null;
       else
          return Internal_Get_Or_Create
-           (Db, Full_Name (File), File, H, LI, Timestamp, Allow_Create);
+           (Db, File, File, H, LI, Timestamp, Allow_Create);
       end if;
    end Get_Or_Create;
 
@@ -1310,31 +1296,31 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Db            : Entities_Database;
-      Full_Filename : Filesystem_String;
-      Handler       : access LI_Handler_Record'Class;
-      LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
-      Allow_Create  : Boolean := True) return Source_File
+     (Db           : Entities_Database;
+      Base_Name    : Filesystem_String;
+      Handler      : access LI_Handler_Record'Class;
+      LI           : LI_File := null;
+      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
+      Allow_Create : Boolean := True) return Source_File
    is
       File : Virtual_File;
    begin
-      if Is_Absolute_Path (Full_Filename) then
+      if Is_Absolute_Path (Base_Name) then
          return Internal_Get_Or_Create
-           (Db, Full_Filename'Unrestricted_Access,
+           (Db, Create (Base_Name),
             GNATCOLL.VFS.No_File, Handler, LI, Timestamp, Allow_Create);
 
       else
          Get_Full_Path_From_File
            (Db.Registry.all,
-            Full_Filename,
+            Base_Name,
             Use_Source_Path => True,
             Use_Object_Path => False,
             Create_As_Base_If_Not_Found => True,
             File            => File);
 
          return Internal_Get_Or_Create
-           (Db, Full_Name (File),
+           (Db, File,
             File, Handler, LI, Timestamp, Allow_Create);
       end if;
    end Get_Or_Create;
@@ -1589,7 +1575,7 @@ package body Entities is
       File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type) return LI_File
    is
-      L : LI_File_Item := Get (Db.LIs, Full_Name (File));
+      L : LI_File_Item := Get (Db.LIs, File);
    begin
       Assert (Assert_Me, File /= GNATCOLL.VFS.No_File, "No LI filename");
       if L = null then

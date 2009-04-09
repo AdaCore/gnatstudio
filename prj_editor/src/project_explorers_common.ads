@@ -17,7 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNAT.Strings;   use GNAT;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
@@ -29,12 +30,10 @@ with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.MDI;     use Gtkada.MDI;
 
-with GNAT.Strings;   use GNAT;
 with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with Language;       use Language;
 with Projects;
-with GNATCOLL.VFS;
 
 package Project_Explorers_Common is
 
@@ -186,7 +185,7 @@ package Project_Explorers_Common is
 
    function Get_Absolute_Name
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String;
+      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the absolute name for Node
 
    function Get_Directory_From_Node

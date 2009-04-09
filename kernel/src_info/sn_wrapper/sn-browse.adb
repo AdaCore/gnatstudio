@@ -17,19 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.IO_Aux;               use GNAT.IO_Aux;
 with GNAT.Expect;               use GNAT.Expect;
-with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
+with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with SN.Xref_Pools;             use SN.Xref_Pools;
-with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 package body SN.Browse is
 
@@ -40,10 +36,10 @@ package body SN.Browse is
    ------------
 
    procedure Browse
-     (File_Name     : Filesystem_String;
-      DB_Directory  : Filesystem_String;
-      DBIMP_Path    : Filesystem_String;
-      Cbrowser_Path : Filesystem_String;
+     (File_Name     : Virtual_File;
+      DB_Directory  : Virtual_File;
+      DBIMP_Path    : Virtual_File;
+      Cbrowser_Path : Virtual_File;
       PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
       Args : Argument_List (1 .. 6);
@@ -51,16 +47,17 @@ package body SN.Browse is
       --  Execute browser
       Args :=
         (1 => new String'("-n"),
-         2 => new String'(+(DB_Directory & DB_File_Name)),
+         2 => new String'
+           (+(Create_From_Dir (DB_Directory, DB_File_Name).Full_Name)),
          3 => new String'("-p"),
-         4 => new String'(+DBIMP_Path),
+         4 => new String'(+DBIMP_Path.Full_Name),
          5 => new String'("-y"),
-         6 => new String'(+File_Name));
+         6 => new String'(+File_Name.Full_Name));
 
-      Trace (Me, "Spawn: " & (+Cbrowser_Path)
+      Trace (Me, "Spawn: " & Cbrowser_Path.Display_Full_Name
              & " " & Argument_List_To_String (Args));
       GNAT.Expect.Non_Blocking_Spawn
-        (PD, +Cbrowser_Path, Args, Err_To_Out => True);
+        (PD, +Cbrowser_Path.Full_Name, Args, Err_To_Out => True);
       Free (Args);
    end Browse;
 
@@ -69,22 +66,22 @@ package body SN.Browse is
    --------------------
 
    procedure Generate_Xrefs
-     (DB_Directories : GNAT.Strings.String_List_Access;
-      DBIMP_Path     : Filesystem_String;
+     (DB_Directories : GNATCOLL.VFS.File_Array;
+      DBIMP_Path     : Virtual_File;
       Started        : out Boolean;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
-      DB_Directory : constant Filesystem_String := +DB_Directories (1).all;
-      LV_File_Name : constant Filesystem_String :=
-        DB_Directory & DB_File_Name & ".lv";
-      TO_File_Name : constant Filesystem_String :=
-        DB_Directory & DB_File_Name & ".to";
-      F_File_Name  : constant Filesystem_String :=
-        DB_Directory & DB_File_Name & ".f";
-      Dir          : Dir_Type;
-      Last         : Natural;
-      Dir_Entry    : String (1 .. 8192);
+      DB_Directory : constant Virtual_File := DB_Directories (1);
+      LV_File_Name : constant Virtual_File :=
+                       Create_From_Dir
+                         (DB_Directory, DB_File_Name & ".lv");
+      TO_File_Name : constant Virtual_File :=
+                       Create_From_Dir
+                         (DB_Directory, DB_File_Name & ".to");
+      F_File_Name  : constant Virtual_File :=
+                       Create_From_Dir
+                         (DB_Directory, DB_File_Name & ".f");
       Success      : Boolean;
       Args         : Argument_List_Access;
       Content      : GNAT.Strings.String_Access;
@@ -95,28 +92,29 @@ package body SN.Browse is
       --  take a while, no need to do it if the files are already up-to-date
 
       if Active (Me) then
-         if File_Exists (+F_File_Name) then
+         if F_File_Name.Is_Regular_File then
             Trace
               (Me, ".f timestamp: "
-               & Image (File_Time_Stamp (Create (F_File_Name)),
+               & Image (File_Time_Stamp (F_File_Name),
                         "%Y-%m-%d %H:%M:%S"));
          else
             Trace (Me, "No .f file");
          end if;
-         if File_Exists (+TO_File_Name) then
+
+         if TO_File_Name.Is_Regular_File then
             Trace
               (Me, ".to timestamp: "
-               & Image (File_Time_Stamp (Create (TO_File_Name)),
+               & Image (File_Time_Stamp (TO_File_Name),
                         "%Y-%m-%d %H:%M:%S"));
          else
             Trace (Me, "No .to file");
          end if;
       end if;
 
-      if File_Exists (+TO_File_Name)
-        and then File_Exists (+F_File_Name)
+      if TO_File_Name.Is_Regular_File
+        and then F_File_Name.Is_Regular_File
         and then
-          File_Time_Stamp (+TO_File_Name) >= File_Time_Stamp (+F_File_Name)
+          File_Time_Stamp (TO_File_Name) >= File_Time_Stamp (F_File_Name)
       then
          Trace (Me, "No need to start dbimp, since db is up to date");
          Started := False;
@@ -124,16 +122,16 @@ package body SN.Browse is
       end if;
 
       --  remove .to and .lv tables
-      if File_Exists (+LV_File_Name) then
-         Delete_File (+LV_File_Name, Success);
+      if LV_File_Name.Is_Regular_File then
+         LV_File_Name.Delete (Success);
 
          if not Success then
             raise Unlink_Failure;
          end if;
       end if;
 
-      if File_Exists (+TO_File_Name) then
-         Delete_File (+TO_File_Name, Success);
+      if TO_File_Name.Is_Regular_File then
+         TO_File_Name.Delete (Success);
 
          if not Success then
             raise Unlink_Failure;
@@ -153,33 +151,32 @@ package body SN.Browse is
          raise Temp_File_Failure;
       end if;
 
-      if Is_Directory (+DB_Directory) then
-         Open (Dir, +DB_Directory);
+      if DB_Directory.Is_Directory then
+         declare
+            Files : File_Array_Access;
+         begin
+            Files := DB_Directory.Read_Dir;
 
-         loop
-            Read (Dir, Dir_Entry, Last);
-            exit when Last = 0;
+            for J in Files'Range loop
+               if Has_Suffix (Files (J), Xref_Suffix) then
+                  Content := Read_File (Files (J));
 
-            if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) =
-              +Xref_Suffix
-            then
-               Content := Read_Whole_File
-                 (+Name_As_Directory (DB_Directory) & Dir_Entry (1 .. Last));
+                  if Content /= null then
+                     if Content'Length /=
+                       Write
+                         (Temp_File, Content.all'Address, Content'Length)
+                     then
+                        Free (Content);
+                        raise Temp_File_Failure;
+                     end if;
 
-               if Content /= null then
-                  if Content'Length /=
-                    Write (Temp_File, Content.all'Address, Content'Length)
-                  then
                      Free (Content);
-                     raise Temp_File_Failure;
                   end if;
-
-                  Free (Content);
                end if;
-            end if;
-         end loop;
+            end loop;
 
-         Close (Dir);
+            Unchecked_Free (Files);
+         end;
       end if;
 
       Close (Temp_File);
@@ -190,13 +187,16 @@ package body SN.Browse is
       Args (3) := new String'("-l");
 
       for D in DB_Directories'Range loop
+         Ensure_Directory (DB_Directories (D));
+
          Args (4 + D - DB_Directories'First) :=
-           new String'(DB_Directories (D).all & (+DB_File_Name));
+           new String'(+DB_Directories (D).Full_Name & (+DB_File_Name));
       end loop;
 
-      Trace (Me, "Spawn: " & (+DBIMP_Path)
+      Trace (Me, "Spawn: " & DBIMP_Path.Display_Full_Name
              & " " & Argument_List_To_String (Args.all));
-      Non_Blocking_Spawn (PD, +DBIMP_Path, Args.all, Err_To_Out => True);
+      Non_Blocking_Spawn
+        (PD, +DBIMP_Path.Full_Name, Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
 
       Started := True;
@@ -225,37 +225,24 @@ package body SN.Browse is
    -- Delete_Database --
    ---------------------
 
-   procedure Delete_Database (DB_Directory : Filesystem_String) is
-      Dir       : Dir_Type;
-      Last      : Natural;
-      Dir_Entry : String (1 .. 1024);
-      --  1024 is the value of FILENAME_MAX in stdio.h (see
-      --  GNAT.Directory_Operations)
+   procedure Delete_Database (DB_Directory : Virtual_File) is
+      Files   : File_Array_Access;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
-      if not Is_Directory (+DB_Directory) then
+      if not Is_Directory (DB_Directory) then
          --  ignore if dir does not exist
          return;
       end if;
 
       --  enumerate all files in the target directory
-      Open (Dir, +DB_Directory);
-      if not Is_Open (Dir) then
-         raise Directory_Error;
-      end if;
+      Files := Read_Dir (DB_Directory, Files_Only);
 
-      Read (Dir, Dir_Entry, Last); -- read first directory entry
-      while Last /= 0 loop --  delete all files in directory
-         declare
-            F : String := +Name_As_Directory (DB_Directory)
-              & Dir_Entry (1 .. Last) & ASCII.NUL;
-            Success : Boolean;
-            pragma Unreferenced (Success);
-         begin
-            Delete_File (F'Address, Success);
-         end;
-         Read (Dir, Dir_Entry, Last); -- read next directory entry
+      for J in Files'Range loop
+         Files (J).Delete (Success);
       end loop;
-      Close (Dir);
+
+      Unchecked_Free (Files);
    end Delete_Database;
 
 end SN.Browse;

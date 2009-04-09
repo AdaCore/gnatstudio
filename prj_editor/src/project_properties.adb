@@ -28,7 +28,6 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -86,13 +85,11 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;                 use GUI_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 with Language_Handlers;         use Language_Handlers;
 with Prj.Attr;                  use Prj, Prj.Attr;
 with Project_Viewers;           use Project_Viewers;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with Remote;                    use Remote;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Namet;
@@ -1182,6 +1179,7 @@ package body Project_Properties is
          or else (Get_Paths_Type (Project) = From_Pref
                   and then Generate_Relative_Paths.Get_Pref);
       Iter     : Gtk_Tree_Iter;
+      F1, F2   : Virtual_File;
    begin
       if Editor.Ent /= null then
          if Editor.Attribute.Base_Name_Only then
@@ -1196,17 +1194,19 @@ package body Project_Properties is
            and then Editor.Attribute.Non_Index_Type.Typ /=
              Attribute_As_String
          then
+            --  ??? We really should handle paths on the Build server directly
+            F1 := Create_From_UTF8 (Get_Text (Editor.Ent));
+            F2 := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Value              => +Relative_Path_Name
-                 (+Get_Text (Editor.Ent), +Get_Text (Editor.Path_Widget),
-                  Build_Server),
+               Value              => +Relative_Path (F1, F2),
                Entry_Value        => Get_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
 
          else
+            F1 := Create_From_UTF8 (Get_Text (Editor.Ent));
             Update_Attribute_Value
               (Attr               => Editor.Attribute,
                Project            => Project,
@@ -1220,6 +1220,8 @@ package body Project_Properties is
             Num    : constant Gint := N_Children (Editor.Model);
             Values : GNAT.OS_Lib.Argument_List (1 .. Integer (Num));
             N      : Integer := Values'First;
+            File   : Virtual_File;
+            Path   : Virtual_File;
          begin
             Iter := Get_Iter_First (Editor.Model);
             while Iter /= Null_Iter loop
@@ -1233,23 +1235,19 @@ package body Project_Properties is
                  Attribute_As_Directory
                  and then Get_Boolean (Editor.Model, Iter, 1)
                then
-                  --  Force UNIX paths so that those paths can be used on all
-                  --  platforms (remote mode safe)
+                  File :=
+                    Create_From_UTF8 (Get_String (Editor.Model, Iter, 0));
+
                   if Relative then
+                     Path := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
+
+                     Ensure_Directory (File);
+                     --  ??? What if the Build server needs unix paths, and
+                     --  we are on Windows ?
                      Values (N) := new String'
-                       (+Name_As_Directory
-                          (Relative_Path_Name
-                             (+Get_String (Editor.Model, Iter, 0),
-                              +Get_Text (Editor.Path_Widget),
-                              --  ??? What if the filesystem path is non-UTF8?
-                              Build_Server),
-                           UNIX)
-                        & "**");
+                       (+Relative_Path (File, Path) & "**");
                   else
-                     Values (N) := new String'
-                       (+Name_As_Directory
-                          (+Get_String (Editor.Model, Iter, 0))
-                        & "**");
+                     Values (N) := new String'(+Full_Name (File) & "**");
                   end if;
 
                elsif Editor.Attribute.Base_Name_Only then
@@ -1257,11 +1255,11 @@ package body Project_Properties is
                     (Get_String (Editor.Model, Iter, 0));
 
                elsif Relative then
-                  Values (N) := new String'
-                    (+Relative_Path_Name
-                       (+Get_String (Editor.Model, Iter, 0),
-                        +Get_Text (Editor.Path_Widget),
-                        Build_Server));
+                  File :=
+                    Create_From_UTF8 (Get_String (Editor.Model, Iter, 0));
+                  Path := Create_From_UTF8 (Get_Text (Editor.Path_Widget));
+
+                  Values (N) := new String'(+Relative_Path (File, Path));
 
                else
                   Values (N) := new String'
@@ -2949,7 +2947,7 @@ package body Project_Properties is
             return (1 .. 0 => GNATCOLL.VFS.No_File);
 
          else
-            if Default = "" then
+            if Default'Length > 0 then
                --  Not set yet, the directory should default to the project
                --  directory (E617-011)
                File := Select_File
@@ -3447,7 +3445,7 @@ package body Project_Properties is
                Result : GNAT.Strings.String_List (Files'Range);
             begin
                for F in Files'Range loop
-                  Result (F) := new String'(+Full_Name (Files (F)).all);
+                  Result (F) := new String'(+Full_Name (Files (F)));
                end loop;
                return Result;
             end;
@@ -3939,7 +3937,7 @@ package body Project_Properties is
                      Result : GNAT.Strings.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
-                        Result (R) := new String'(+Full_Name (Files (R)).all);
+                        Result (R) := new String'(+Full_Name (Files (R)));
                      end loop;
                      Unchecked_Free (Files);
                      return Result;
@@ -4653,7 +4651,7 @@ package body Project_Properties is
 
          Editor.Pages (E) := Widget_Factory
            (Page, Project,
-            Full_Name (Project_Path (Project)).all,
+            Project_Path (Project),
             Editor.Kernel);
 
          if Editor.Pages (E) /= null then
@@ -5123,15 +5121,12 @@ package body Project_Properties is
                Title       => -"Error",
                Parent      => Get_Current_Window (Kernel));
 
-         elsif not Is_Directory
-           (Name_As_Directory (+Get_Text (Editor.Path)))
-         --  ??? What if the filesystem path is non-UTF8?
+         elsif not
+           Is_Directory (Create_From_UTF8 (Get_Text (Editor.Path)))
          then
             Response2 := Message_Dialog
-              (Msg         => Unknown_To_UTF8
-                 (+Name_As_Directory (+Get_Text (Editor.Path)))
-               --  ??? What if the filesystem path is non-UTF8?
-               & (-" is not a valid directory"),
+              (Msg         => Get_Text (Editor.Path)
+                                & (-" is not a valid directory"),
                Buttons     => Button_OK,
                Dialog_Type => Error,
                Title       => -"Error",
@@ -5143,25 +5138,24 @@ package body Project_Properties is
          else
             declare
                New_Name : constant String :=
-                 Get_Text (Editor.Name);
-               New_File : constant Filesystem_String :=
-                 To_File_Name (+New_Name);
-               New_Path : constant Filesystem_String :=
-                 Name_As_Directory (+Get_Text (Editor.Path));
-               --  ??? What if the filesystem path is non-UTF8?
+                            Get_Text (Editor.Name);
+               New_Base : constant Filesystem_String :=
+                            To_File_Name (+New_Name);
+               New_Path : constant Virtual_File :=
+                            Create_From_UTF8 (Get_Text (Editor.Path));
+               New_File : constant Virtual_File :=
+                            Create_From_Dir
+                              (New_Path,
+                               New_Base & Projects.Project_File_Extension);
+
             begin
                if (New_Name /= Project_Name (Project)
-                   or else New_Path /=
-                     Full_Name (Project_Directory (Project)).all)
-                 and then Is_Regular_File
-                 (New_Path & New_File & Projects.Project_File_Extension)
+                   or else New_Path /= Project_Directory (Project))
+                 and then Is_Regular_File (New_File)
                then
                   Response2 := Message_Dialog
-                    (Unknown_To_UTF8
-                       (+(New_Path &
-                        New_File &
-                        Projects.Project_File_Extension))
-                       & (-" already exists. Do you want to overwrite ?"),
+                    (New_File.Display_Full_Name
+                     & (-" already exists. Do you want to overwrite ?"),
                      Buttons     => Button_Yes or Button_No,
                      Dialog_Type => Error,
                      Title       => -"Error",
@@ -5270,14 +5264,14 @@ package body Project_Properties is
          --  project.
 
          declare
-            New_Name : constant Filesystem_String := +Get_Text (Editor.Name);
-            --  ??? What if the filesystem path is non-UTF8?
-            New_Path : constant Filesystem_String :=
-                         Name_As_Directory (+Get_Text (Editor.Path));
-            --  ??? What if the filesystem path is non-UTF8?
+            New_Name : constant String :=
+                         Get_Text (Editor.Name);
+            New_Path : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Editor.Path));
+            --  ??? Should we specify the build server's name as host ?
          begin
-            if New_Name /= +Project_Name (Project)
-              or else New_Path /= Full_Name (Project_Directory (Project)).all
+            if New_Name /= Project_Name (Project)
+              or else New_Path /= Project_Directory (Project)
             then
                Project_Renamed_Or_Moved := True;
 
@@ -5285,7 +5279,7 @@ package body Project_Properties is
                  (Root_Project  => Get_Project (Kernel),
                   Project       => Project,
                   New_Name      => New_Name,
-                  New_Path      => Create (New_Path),
+                  New_Path      => New_Path,
                   Report_Errors => Report_Error'Unrestricted_Access);
 
                --  Since we actually changed the project hierarchy (all modules

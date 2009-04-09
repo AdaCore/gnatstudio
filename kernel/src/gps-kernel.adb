@@ -20,6 +20,9 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 
+pragma Warnings (Off);
+with GNAT.Expect.TTY.Remote;
+pragma Warnings (On);
 with GNAT.OS_Lib;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
@@ -27,7 +30,6 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with System;                    use System;
 
@@ -67,7 +69,6 @@ with Basic_Mapper;              use Basic_Mapper;
 with Default_Preferences;       use Default_Preferences;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
-with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
@@ -92,14 +93,12 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects.Registry;         use Projects, Projects.Registry;
-with Remote_Descriptors;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Traces;                    use Traces;
 with XML_Parsers;
 with XML_Utils.GtkAda;
-with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel is
 
@@ -244,8 +243,8 @@ package body GPS.Kernel is
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String)
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File)
    is
       Handler : Language_Handler;
    begin
@@ -257,9 +256,8 @@ package body GPS.Kernel is
                 On_Main_Window_Destroyed'Access,
                 Handle.all'Address);
 
-      Handle.Home_Dir := new Filesystem_String'(Name_As_Directory (Home_Dir));
-      Handle.Prefix   := new Filesystem_String'
-        (Name_As_Directory (Prefix_Directory));
+      Handle.Home_Dir := Home_Dir;
+      Handle.Prefix   := Prefix_Directory;
 
       --  Create the language handler
 
@@ -301,12 +299,13 @@ package body GPS.Kernel is
       Load_Preferences (Handle);
 
       --  Load the styles
-      Load_Styles (Handle, Create (Handle.Home_Dir.all & "styles.xml"));
+      Load_Styles (Handle, Create_From_Dir (Handle.Home_Dir, "styles.xml"));
 
       On_Preferences_Changed (Handle);
 
       Handle.History := new History_Record;
-      Load (Handle.History.all, Handle.Home_Dir.all & "histories.xml");
+      Load (Handle.History.all,
+            Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       Handle.Scripts := new Kernel_Scripts_Repository'
@@ -377,7 +376,7 @@ package body GPS.Kernel is
    procedure Load_Preferences (Handle : access Kernel_Handle_Record) is
    begin
       Load_Preferences
-        (Handle.Preferences, Handle.Home_Dir.all & "preferences");
+        (Handle.Preferences, Create_From_Dir (Handle.Home_Dir, "preferences"));
    end Load_Preferences;
 
    ------------------------------
@@ -765,8 +764,8 @@ package body GPS.Kernel is
       Main_Window : constant Gdk.Window.Gdk_Window :=
                       Get_Window (Handle.Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
-      File_Name    : constant Filesystem_String :=
-        Handle.Home_Dir.all & Desktop_Name;
+      File_Name    : constant Virtual_File :=
+                       Create_From_Dir (Handle.Home_Dir, Desktop_Name);
       Project_Name : constant Virtual_File := Get_Project_Name;
       N            : Node_Ptr;
       M            : Node_Ptr;
@@ -785,8 +784,8 @@ package body GPS.Kernel is
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
-      Trace (Me, "saving desktop file " & (+File_Name)
-             & " for project " & (+Full_Name (Project_Name).all));
+      Trace (Me, "saving desktop file " & File_Name.Display_Full_Name
+             & " for project " & Project_Name.Display_Full_Name);
 
       if Main_Window = null then
          return;
@@ -836,7 +835,7 @@ package body GPS.Kernel is
       Add_File_Child (M, "project", Project_Name);
       Add_Child (N, M);
 
-      Print (N, GNATCOLL.VFS.Create (File_Name), Success);
+      Print (N, File_Name, Success);
       Free (N);
 
       if not Success then
@@ -850,7 +849,7 @@ package body GPS.Kernel is
 
    procedure Report_Preference_File_Error
      (Handle   : access Kernel_Handle_Record;
-      Filename : Filesystem_String)
+      Filename : Virtual_File)
    is
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
@@ -858,14 +857,14 @@ package body GPS.Kernel is
       if Is_In_Destruction (Handle) then
          Button := Message_Dialog
            ((-"Could not save the configuration file ") &
-            Unknown_To_UTF8 (+Filename) & ASCII.LF &
+            Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Error, Button_OK, Justification => Justify_Left);
       else
          GPS.Kernel.Console.Insert
            (Handle,
             (-"Could not save the configuration file ") &
-            Unknown_To_UTF8 (+Filename) & ASCII.LF &
+            Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
             Mode => GPS.Kernel.Console.Error);
          Raise_Console (Handle);
@@ -879,7 +878,8 @@ package body GPS.Kernel is
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean is
    begin
-      return Is_Regular_File (Handle.Home_Dir.all & Desktop_Name);
+      return Is_Regular_File
+        (Create_From_Dir (Handle.Home_Dir, Desktop_Name));
    end Has_User_Desktop;
 
    ------------------
@@ -890,14 +890,16 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record) return Boolean
    is
       MDI                     : constant MDI_Window := Get_MDI (Handle);
-      File                    : constant Filesystem_String :=
-                                  Handle.Home_Dir.all & Desktop_Name;
+      File                    : constant Virtual_File :=
+                                  Create_From_Dir
+                                    (Handle.Home_Dir, Desktop_Name);
       Project                 : constant Project_Type := Get_Project (Handle);
       Main_Window             : constant GPS_Window :=
                                   GPS_Window (Handle.Main_Window);
-      Predefined_Desktop      : constant Filesystem_String :=
-                                  Get_System_Dir (Handle) &
-                                    "share/gps/desktop.xml";
+      Predefined_Desktop      : constant Virtual_File :=
+                                  Create_From_Dir
+                                    (Get_System_Dir (Handle),
+                                     "share/gps/desktop.xml");
       Node                    : Node_Ptr;
       Project_Name            : Virtual_File := GNATCOLL.VFS.No_File;
       Child                   : Node_Ptr;
@@ -922,8 +924,8 @@ package body GPS.Kernel is
         and then (Try_User_Desktop or else not Is_Default_Desktop)
       loop
          if Try_User_Desktop and then Is_Regular_File (File) then
-            Trace (Me, "loading desktop file " & (+File)
-                   & " Project=" & (+Full_Name (Project_Name).all));
+            Trace (Me, "loading desktop file " & File.Display_Full_Name
+                   & " Project=" & Project_Name.Display_Full_Name);
             XML_Parsers.Parse (File, Node, Err);
 
          elsif Is_Regular_File (Predefined_Desktop) then
@@ -974,7 +976,7 @@ package body GPS.Kernel is
 
          if Desktop_Node /= null then
             Trace (Me, "loading desktop for " &
-                   (+Full_Name (Project_Name).all));
+                   Project_Name.Display_Full_Name);
             Success_Loading_Desktop :=
               Kernel_Desktop.Restore_Desktop
                 (MDI, XML_Utils.GtkAda.Convert (Desktop_Node),
@@ -1336,9 +1338,9 @@ package body GPS.Kernel is
    ------------------
 
    function Get_Home_Dir
-     (Handle : access Kernel_Handle_Record) return Filesystem_String is
+     (Handle : access Kernel_Handle_Record) return Virtual_File is
    begin
-      return Handle.Home_Dir.all;
+      return Handle.Home_Dir;
    end Get_Home_Dir;
 
    --------------------
@@ -1346,9 +1348,9 @@ package body GPS.Kernel is
    --------------------
 
    function Get_System_Dir
-     (Handle : access Kernel_Handle_Record) return Filesystem_String is
+     (Handle : access Kernel_Handle_Record) return Virtual_File is
    begin
-      return Handle.Prefix.all;
+      return Handle.Prefix;
    end Get_System_Dir;
 
    ---------------------
@@ -1603,19 +1605,19 @@ package body GPS.Kernel is
    begin
       Save_Styles
         (Kernel_Handle (Handle),
-         Create (Handle.Home_Dir.all & "styles.xml"));
+         Create_From_Dir (Handle.Home_Dir, "styles.xml"));
 
       Reset_Properties (Handle);
 
       Save (Handle.History.all,
-            Handle.Home_Dir.all & "histories.xml",
+            Create_From_Dir (Handle.Home_Dir, "histories.xml"),
             Success);
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
       if not Success then
          Report_Preference_File_Error
-           (Handle, Handle.Home_Dir.all & "histories.xml");
+           (Handle, Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       end if;
 
       Reset (Handle.Startup_Scripts);
@@ -1623,7 +1625,7 @@ package body GPS.Kernel is
 
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
-      Remote_Descriptors.Finalize;
+      GNAT.Expect.TTY.Remote.Close_All;
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
@@ -1680,8 +1682,6 @@ package body GPS.Kernel is
       Free (Handle.Gnatls_Cache);
       Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
-      Free (Handle.Home_Dir);
-      Free (Handle.Prefix);
       Free (Handle.Construct_Database);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,

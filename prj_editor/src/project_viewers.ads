@@ -18,13 +18,13 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;
+with GNATCOLL.VFS;
 
 with Gtk.Widget;
 
 with GPS.Kernel;
 with Projects;
 with Naming_Editors;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Project_Viewers is
 
@@ -48,7 +48,7 @@ package Project_Viewers is
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
       Project      : Projects.Project_Type;
-      Full_Project : Filesystem_String;
+      Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a new widget to display in the project properties editor or the

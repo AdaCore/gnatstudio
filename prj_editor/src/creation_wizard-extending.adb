@@ -42,7 +42,7 @@ with Projects;                 use Projects;
 with Projects.Editor;          use Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
+with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 with Wizards;                  use Wizards;
 
 package body Creation_Wizard.Extending is
@@ -150,7 +150,7 @@ package body Creation_Wizard.Extending is
       Page.Files := Create_Tree_View
         (Column_Types       => (0 => GType_Boolean,
                                 1 => GType_String,
-                                2 => GType_String),
+                                2 => Get_Virtual_File_Type),
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => 2);
@@ -169,7 +169,7 @@ package body Creation_Wizard.Extending is
          Append (Model, TIter, Null_Iter);
          Set (Model, TIter, 0, False);
          Set (Model, TIter, 1, Project_Name (Project));
-         Set (Model, TIter, 2, "");
+         Set_File (Model, TIter, 2, No_File);
 
          File_Index := 1;
          loop
@@ -179,7 +179,7 @@ package body Creation_Wizard.Extending is
             Append (Model, FIter, TIter);
             Set (Model, FIter, 0, False);
             Set (Model, FIter, 1, +Base_Name (File));
-            Set (Model, FIter, 2, +Full_Name (File).all);
+            Set_File (Model, FIter, 2, File);
 
             File_Index := File_Index + 1;
          end loop;
@@ -285,7 +285,7 @@ package body Creation_Wizard.Extending is
          FIter := Children (Model, PIter);
          while FIter /= Null_Iter loop
             if Get_Boolean (Model, FIter, 0) then
-               File := Create (Full_Filename => +Get_String (Model, FIter, 2));
+               File := Get_File (Model, FIter, 2);
                Add_File (Prj, File);
             end if;
 
@@ -380,9 +380,8 @@ package body Creation_Wizard.Extending is
 
       if Copy_Files then
          for S in Files'Range loop
-            Copy_File
-              (Name     => +Full_Name (Files (S)).all,
-               Pathname => +Full_Name (Project_Directory (Extended)).all,
+            Files (S).Copy
+              (Project_Directory (Extended).Full_Name,
                Success  => Success);
          end loop;
       end if;

@@ -19,7 +19,6 @@
 
 with Entities;
 with GNATCOLL.VFS;
-with GNATCOLL.Filesystem;
 with Projects.Registry;
 
 package ALI_Parser is
@@ -60,13 +59,13 @@ package ALI_Parser is
 
    function Get_ALI_Ext
      (LI : access ALI_Handler_Record)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the ali file extension (e.g. ".ali") for the given handler
 
    function Get_ALI_Filename
      (Handler   : access ALI_Handler_Record;
-      Base_Name : GNATCOLL.Filesystem.Filesystem_String)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      Base_Name : GNATCOLL.VFS.Filesystem_String)
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the most likely candidate for an ALI file, given a source name
 
 end ALI_Parser;

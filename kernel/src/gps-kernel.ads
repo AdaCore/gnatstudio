@@ -27,8 +27,7 @@ with System;
 with GNAT.Strings;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
-with GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Glib.Object;  use Glib;
 with Gdk.Event;    use Gdk.Event;
@@ -96,8 +95,8 @@ package GPS.Kernel is
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
       Main_Window      : Gtk.Window.Gtk_Window;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String);
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File);
    --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
@@ -204,13 +203,13 @@ package GPS.Kernel is
 
    function Get_Home_Dir
      (Handle : access Kernel_Handle_Record)
-      return GNATCOLL.Filesystem.Filesystem_String;
+     return Virtual_File;
    --  Return the Home directory. (eg ~/.gps/).
    --  The directory ends with a directory separator
 
    function Get_System_Dir
      (Handle : access Kernel_Handle_Record)
-      return GNATCOLL.Filesystem.Filesystem_String;
+     return Virtual_File;
    --  Return the installation directory for GPS. This always ends up with a
    --  directory separator.
 
@@ -250,7 +249,7 @@ package GPS.Kernel is
 
    procedure Report_Preference_File_Error
      (Handle   : access Kernel_Handle_Record;
-      Filename : GNATCOLL.Filesystem.Filesystem_String);
+      Filename : Virtual_File);
    --  Print out an error message in messages window, or display a dialog
    --  if GPS is exiting.
 
@@ -1106,10 +1105,10 @@ private
       Last_Event_For_Contextual   : Gdk.Event.Gdk_Event;
       --  The event triggering the last contextual menu
 
-      Home_Dir : Filesystem_String_Access;
+      Home_Dir : Virtual_File;
       --  The home directory (e.g ~/.gps)
 
-      Prefix : Filesystem_String_Access;
+      Prefix   : Virtual_File;
       --  Prefix directory (e.g. /opt/gps)
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;

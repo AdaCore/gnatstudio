@@ -25,7 +25,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -68,7 +68,6 @@ with Namet;                     use Namet;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Entities;
 with Find_Utils;                use Find_Utils;
-with File_Utils;                use File_Utils;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -114,18 +113,21 @@ package body Project_Explorers is
 
    function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
    pragma Inline (Hash);
+   use type Filesystem_String;
 
-   package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+   package Filename_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => Filesystem_String,
       Element_Type    => Gtk_Tree_Iter,
       Hash            => Hash,
       Equivalent_Keys => "=");
+   use Filename_Node_Hash;
+
+   package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => Virtual_File,
+      Element_Type    => Gtk_Tree_Iter,
+      Hash            => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Keys => "=");
    use File_Node_Hash;
-   --  Note: the hash is case sensitive: since we always display the file names
-   --  with the correct casing in the explorer (depending on the system), we do
-   --  not needed a case insensitive comparison here. It would be difficult
-   --  otherwise since the build server might change and we don't know until
-   --  late whether files names are case sensitive or not there.
 
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
@@ -328,7 +330,7 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files    : File_Array_Access;
+      Files    : File_Array;
       Node     : Gtk_Tree_Iter);
    --  Recompute the directories for the project
 
@@ -811,7 +813,7 @@ package body Project_Explorers is
          A_Name : constant String := Get_String (Model, A, Column);
          B_Name : constant String := Get_String (Model, B, Column);
       begin
-         if Is_Case_Sensitive (Build_Server) then
+         if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
             if A_Name < B_Name then
                return A_Before_B;
             else
@@ -1226,13 +1228,24 @@ package body Project_Explorers is
          Set (Explorer.Tree.Model, Node, Display_Name_Column,
               File.Display_Full_Name);
       else
-         Set
-           (Explorer.Tree.Model, Node,
-            Display_Name_Column,
-            +Relative_Path_Name
-              (File.Full_Name.all,
-               Project_Path (Project).Dir_Name.all,
-               Build_Server));
+         declare
+            Rel_Path : constant String := +Relative_Path
+              (File,
+               Project_Path (Project).Dir);
+         begin
+            if Rel_Path (Rel_Path'Last) = '/'
+              or else Rel_Path (Rel_Path'Last) = '\'
+            then
+               Set
+                 (Explorer.Tree.Model, Node,
+                  Display_Name_Column,
+                  Rel_Path (Rel_Path'First .. Rel_Path'Last - 1));
+            else
+               Set
+                 (Explorer.Tree.Model, Node,
+                  Display_Name_Column, Rel_Path);
+            end if;
+         end;
       end if;
    end Update_Directory_Node_Text;
 
@@ -1498,7 +1511,7 @@ package body Project_Explorers is
       Files   : File_Array_Access :=
                   Get_Source_Files (Project, Recursive => False);
    begin
-      Update_Project_Node (Explorer, Files, Node);
+      Update_Project_Node (Explorer, Files.all, Node);
       Unchecked_Free (Files);
 
    exception
@@ -1516,10 +1529,8 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Project  : Project_Type)
    is
-      Obj  : constant Filesystem_String :=
-               Name_As_Directory
-                 (Object_Path (Project, False, False));
-      Exec : constant Filesystem_String := Executables_Directory (Project);
+      Obj  : constant Virtual_File := Object_Path (Project);
+      Exec : constant Virtual_File := Executables_Directory (Project);
 
       function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
       --  Create a node for display of the object directory
@@ -1546,19 +1557,19 @@ package body Project_Explorers is
       end Create_Object_Dir;
 
    begin
-      if Obj /= "" then
+      if Obj /= GNATCOLL.VFS.No_File then
          Set_Directory_Node_Attributes
            (Explorer  => Explorer,
-            Directory => Create (Obj),
+            Directory => Obj,
             Node      => Create_Object_Dir (Node),
             Project   => Project,
             Node_Type => Obj_Directory_Node);
       end if;
 
-      if Exec /= "" and then Exec /= Obj then
+      if Exec /= GNATCOLL.VFS.No_File and then Exec /= Obj then
          Set_Directory_Node_Attributes
            (Explorer  => Explorer,
-            Directory => Create (Exec),
+            Directory => Exec,
             Node      => Create_Object_Dir (Node),
             Project   => Project,
             Node_Type => Exec_Directory_Node);
@@ -1810,7 +1821,7 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files    : File_Array_Access;
+      Files    : File_Array;
       Node     : Gtk_Tree_Iter)
    is
       function Is_Hidden (Dir : Virtual_File) return Boolean;
@@ -1853,8 +1864,9 @@ package body Project_Explorers is
 
       S_Dirs   : File_Node_Hash.Map;
       Old_Dirs : File_Node_Hash.Map;
-      S_Files  : File_Node_Hash.Map;
-      S_Cursor : File_Node_Hash.Cursor;
+      S_Files  : Filename_Node_Hash.Map;
+      D_Cursor : File_Node_Hash.Cursor;
+      S_Cursor : Filename_Node_Hash.Cursor;
    begin
       --  Depending on whether we used trusted mode or not, some extra
       --  directories might be displayed in addition to the explicit ones
@@ -1936,14 +1948,14 @@ package body Project_Explorers is
             Dir : constant Virtual_File := Get_Parent (Files (F));
          begin
 
-            S_Cursor := Find (S_Dirs, Dir.Full_Name.all);
+            D_Cursor := Find (S_Dirs, Dir);
 
-            if S_Cursor = No_Element then
+            if D_Cursor = File_Node_Hash.No_Element then
                --  Was this directory already displayed in the tree ?
 
-               S_Cursor := Find (Old_Dirs, Dir.Full_Name.all);
+               D_Cursor := Find (Old_Dirs, Dir);
 
-               if S_Cursor = No_Element then
+               if D_Cursor = File_Node_Hash.No_Element then
                   --  No, create it
 
                   if Get_History
@@ -1961,7 +1973,7 @@ package body Project_Explorers is
                         Project   => Project,
                         Node_Type => Directory_Node);
                      Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                     Include (S_Dirs, Dir.Full_Name.all, N);
+                     Include (S_Dirs, Dir, N);
                   else
                      N := Null_Iter;
                   end if;
@@ -1969,20 +1981,20 @@ package body Project_Explorers is
                else
                   --  Consider the directory as new, ie we need to keep it for
                   --  the new representation of three
-                  N := Element (S_Cursor);
+                  N := Element (D_Cursor);
                   Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                  Include (S_Dirs, Dir.Full_Name.all, N);
-                  Delete (Old_Dirs, S_Cursor);
+                  Include (S_Dirs, Dir, N);
+                  Delete (Old_Dirs, D_Cursor);
                end if;
 
             else
-               N := Element (S_Cursor);
+               N := Element (D_Cursor);
             end if;
          end;
 
          S_Cursor := Find (S_Files, Base_Name (Files (F)));
 
-         if S_Cursor /= No_Element then
+         if S_Cursor /= Filename_Node_Hash.No_Element then
             --  The file was already present in the tree, preserve it if it has
             --  the same parent directory
 
@@ -2030,7 +2042,7 @@ package body Project_Explorers is
 
          if Get_Node_Type (Explorer.Tree.Model, N2) = Directory_Node then
             if Find (Old_Dirs, Get_Absolute_Name (Explorer.Tree.Model, N2)) /=
-              No_Element
+              File_Node_Hash.No_Element
             then
                Remove (Explorer.Tree.Model, N2);
             end if;
@@ -2046,7 +2058,7 @@ package body Project_Explorers is
          begin
             Ensure_Directory (Dir);
 
-            if Find (S_Dirs, Dir.Full_Name.all) = No_Element then
+            if Find (S_Dirs, Dir) = File_Node_Hash.No_Element then
                if Get_History
                  (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
                  or else not Is_Hidden (Dir)
@@ -2124,7 +2136,7 @@ package body Project_Explorers is
          then
             case Node_Type is
                when Project_Node | Modified_Project_Node =>
-                  Update_Project_Node (Explorer, Files, Node);
+                  Update_Project_Node (Explorer, Files.all, Node);
                when others => null;
             end case;
 
@@ -2748,7 +2760,7 @@ package body Project_Explorers is
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
-         Dir  : constant Filesystem_String := Dir_Name (File).all;
+         Dir  : constant Filesystem_String := Dir_Name (File);
          Iter : Imported_Project_Iterator;
 
       begin
@@ -2953,9 +2965,10 @@ package body Project_Explorers is
         (Context  => C,
          Look_For =>
            "^" & (+Base_Name (File_Information (Context.Context))) & "$",
-         Options  => (Case_Sensitive => Is_Case_Sensitive (Build_Server),
-                      Whole_Word     => True,
-                      Regexp         => True));
+         Options  =>
+           (Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
+            Whole_Word     => True,
+            Regexp         => True));
 
       Search
         (C, Kernel,
@@ -2996,9 +3009,10 @@ package body Project_Explorers is
       Set_Context
         (Context  => C,
          Look_For => Project_Name (Project_Information (Context.Context)),
-         Options  => (Case_Sensitive => Is_Case_Sensitive (Build_Server),
-                      Whole_Word     => True,
-                      Regexp         => False));
+         Options  =>
+           (Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
+            Whole_Word     => True,
+            Regexp         => False));
 
       Search
         (C, Kernel,

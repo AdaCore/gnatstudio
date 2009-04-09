@@ -19,10 +19,10 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 with GNAT.Strings;               use GNAT.Strings;
+
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -49,8 +49,6 @@ with GPS.Intl;                   use GPS.Intl;
 with XML_Parsers;                use XML_Parsers;
 
 with Traces;                     use Traces;
-with String_Utils;               use String_Utils;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 with Language;                   use Language;
 
 package body Navigation_Module is
@@ -279,8 +277,8 @@ package body Navigation_Module is
    procedure Save_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "locations.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       File, Child : Node_Ptr;
@@ -288,7 +286,7 @@ package body Navigation_Module is
 
    begin
       if M.Markers /= null then
-         Trace (Me, "Saving " & (+Filename));
+         Trace (Me, "Saving " & Filename.Display_Full_Name);
          File     := new Node;
          File.Tag := new String'("Locations");
 
@@ -302,7 +300,7 @@ package body Navigation_Module is
             end if;
          end loop;
 
-         Print (File, GNATCOLL.VFS.Create (Filename), Success);
+         Print (File, Filename, Success);
          Free (File);
 
          if not Success then
@@ -318,8 +316,8 @@ package body Navigation_Module is
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "locations.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "locations.xml");
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       File, Child : Node_Ptr;
@@ -327,7 +325,7 @@ package body Navigation_Module is
       Err         : String_Access;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -440,15 +438,13 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
-      S_Line : constant String :=
-                 Execute_GPS_Shell_Command
-                   (Kernel, "Editor.cursor_get_line",
-                    (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
+      Editor : constant Editor_Buffer'Class :=
+                 Kernel.Get_Buffer_Factory.Get (File);
+      Location : constant Editor_Location'Class :=
+                   Cursor (Current_View (Editor));
+
    begin
-      return Natural'Value (S_Line);
-   exception
-      when Constraint_Error =>
-         return 0;
+      return Line (Location);
    end Get_Current_Line;
 
    ----------------------
@@ -461,20 +457,20 @@ package body Navigation_Module is
       Line   : Natural;
       Center : Boolean := False)
    is
-      Line_Img : aliased String := Image (Line);
+      Editor   : constant Editor_Buffer'Class :=
+                   Kernel.Get_Buffer_Factory.Get (File);
+      Location : constant Editor_Location'Class :=
+                   New_Location (Editor, Line, 0);
+      Centering : Centering_Type := With_Margin;
    begin
-      Execute_GPS_Shell_Command
-        (Kernel,
-         "Editor.cursor_set_position",
-         (Convert (Full_Name (File).all'Unrestricted_Access),
-          Line_Img'Unchecked_Access));
-
       if Center then
-         Execute_GPS_Shell_Command
-           (Kernel,
-            "Editor.cursor_center",
-            (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
+         Centering := GPS.Editors.Center;
       end if;
+
+      Cursor_Goto
+        (Current_View (Editor),
+         Location,
+         Centering => Centering);
    end Set_Current_Line;
 
    -------------------
@@ -485,15 +481,13 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
-      S_Line : constant String :=
-                 Execute_GPS_Shell_Command
-                   (Kernel, "Editor.get_last_line",
-                    (1 => Convert (Full_Name (File).all'Unrestricted_Access)));
+      Editor : constant Editor_Buffer'Class :=
+                 Kernel.Get_Buffer_Factory.Get (File);
+      Location : constant Editor_Location'Class :=
+                   End_Of_Buffer (Editor);
+
    begin
-      return Natural'Value (S_Line);
-   exception
-      when Constraint_Error =>
-         return 0;
+      return Line (Location);
    end Get_Last_Line;
 
    -------------------
@@ -506,7 +500,7 @@ package body Navigation_Module is
       Line   : Natural) return Natural
    is
       Editor : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File);
+                 Kernel.Get_Buffer_Factory.Get (File);
       Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
    begin
       return Loc.Block_End.Line;
@@ -926,6 +920,7 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context := Get_Current_Context (Kernel);
+      use type Filesystem_String;
    begin
       Push_State (Kernel, Busy);
 
@@ -936,11 +931,11 @@ package body Navigation_Module is
                  (Project_Information (Context), File_Information (Context)),
                Project_Information (Context));
          begin
-            if Dir_Name (Other_File).all /= "" then
+            if Dir_Name (Other_File) /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & (+Full_Name (File_Information (Context)).all));
+                      & Display_Full_Name (File_Information (Context)));
             end if;
          end;
       else

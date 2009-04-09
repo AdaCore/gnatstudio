@@ -35,7 +35,6 @@ with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Language_Handlers is
 
@@ -368,7 +367,7 @@ package body Language_Handlers is
       else
          if Index /= 0 then
             Trace (Me, "No LI_Handler for language "
-                   & (+Full_Name (Source_Filename).all)
+                   & Source_Filename.Display_Full_Name
                    & " Index=" & Index'Img & " lang=" & Lang);
          end if;
 

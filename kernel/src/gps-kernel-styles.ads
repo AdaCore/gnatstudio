@@ -27,7 +27,6 @@
 with Gdk.GC;     use Gdk.GC;
 with Gdk.Color; use Gdk.Color;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Editors;
 with String_Hash;
 

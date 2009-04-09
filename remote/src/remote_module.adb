@@ -1,0 +1,255 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2009, AdaCore                   --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GNAT.Strings;
+
+with Glib.Object;
+with Gtk.Widget;
+with Gtkada.MDI;
+
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with Traces;                 use Traces;
+with XML_Parsers;
+with XML_Utils;              use XML_Utils;
+
+with Remote.View;
+
+package body Remote_Module is
+
+   Me : constant Debug_Handle := Create ("Remote");
+
+   type Remote_Module_Record is new Module_ID_Record with record
+      Database : access Remote.Db.Remote_Db_Type;
+   end record;
+
+   overriding procedure Customize
+     (Module : access Remote_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level);
+   overriding procedure Destroy (Module : in out Remote_Module_Record);
+   --  See doc for inherited subprogram
+
+   Remote_Module_Id : Module_ID;
+   Module_Name : constant String := "Remote_Module";
+
+   procedure Show_Remote_View
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Shows the remote view
+
+   function Load_Desktop
+     (MDI  : Gtkada.MDI.MDI_Window;
+      Node : XML_Utils.Node_Ptr;
+      User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child;
+   --  Loads the desktop
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr;
+   --  Saves the desktop
+
+   ----------------------
+   -- Show_Remote_View --
+   ----------------------
+
+   procedure Show_Remote_View
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle) is
+   begin
+      Remote.View.Show_Remote_View (Widget, Kernel, Remote_Module_Id);
+   end Show_Remote_View;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : Gtkada.MDI.MDI_Window;
+      Node : XML_Utils.Node_Ptr;
+      User : GPS.Kernel.Kernel_Handle) return Gtkada.MDI.MDI_Child
+   is
+      pragma Unreferenced (MDI);
+   begin
+      if Node.Tag.all = Module_Name then
+         return Remote.View.Load_Desktop (Remote_Module_Id, Node, User);
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : GPS.Kernel.Kernel_Handle) return XML_Utils.Node_Ptr is
+   begin
+      return Remote.View.Save_Desktop (Widget, User, Module_Name);
+   end Save_Desktop;
+
+   ---------------
+   -- Customize --
+   ---------------
+
+   overriding procedure Customize
+     (Module : access Remote_Module_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Node   : XML_Utils.Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Level, File);
+
+   begin
+      Remote.Db.Read_From_XML
+        (Db        => Module.Database,
+         Kernel    => Module.Get_Kernel,
+         Node      => Node,
+         Is_System => True);
+   end Customize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out Remote_Module_Record) is
+      pragma Unreferenced (Module);
+   begin
+      Remote_Module_Id := null;
+   end Destroy;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Tools_View_Menu : constant String :=
+        '/' & (-"_Tools") & '/' & (-"_Views");
+
+   begin
+      Remote_Module_Id := new Remote_Module_Record;
+      Register_Module
+        (Module      => Remote_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => Module_Name);
+
+      --  Register server list changed hook
+      Register_Hook_No_Args
+        (Kernel, Remote.Db.Server_List_Changed_Hook);
+      --  Initialize the remote configuration database
+      Remote_Module_Record (Remote_Module_Id.all).Database :=
+        Remote.Db.Initialize_Database;
+
+      GPS.Kernel.Register_Desktop_Functions
+        (Save_Desktop'Access,
+         Load_Desktop'Access);
+      Register_Menu
+        (Kernel, Tools_View_Menu, -"_Remote", "",
+         Show_Remote_View'Access,
+         Ref_Item => -"Window");
+
+      --  Load user specific machine list
+      Load_Remote_Config (Kernel);
+   end Register_Module;
+
+   ------------------
+   -- Get_Database --
+   ------------------
+
+   function Get_Database return access Remote.Db.Remote_Db_Type is
+   begin
+      return Remote_Module_Record (Remote_Module_Id.all).Database;
+   end Get_Database;
+
+   ------------------------
+   -- Load_Remote_Config --
+   ------------------------
+
+   procedure Load_Remote_Config
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "remote.xml");
+      File, Child : Node_Ptr;
+      Err         : GNAT.Strings.String_Access;
+
+   begin
+      if Is_Regular_File (Filename) then
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
+         XML_Parsers.Parse (Filename, File, Err);
+
+         if File = null then
+            Insert (Kernel, Err.all, Mode => Error);
+
+         else
+            Child := File.Child;
+            while Child /= null loop
+               Remote.Db.Read_From_XML
+                 (Db        => Get_Database,
+                  Kernel    => Kernel,
+                  Node      => Child,
+                  Is_System => False);
+               Child := Child.Next;
+            end loop;
+         end if;
+
+         Free (File);
+      end if;
+   end Load_Remote_Config;
+
+   ------------------------
+   -- Save_Remote_Config --
+   ------------------------
+
+   procedure Save_Remote_Config
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Filename : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (Kernel), "remote.xml");
+      File     : Node_Ptr;
+      Success  : Boolean;
+
+   begin
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
+
+      File := new Node;
+      File.Tag := new String'("remote_config");
+
+      Remote.Db.Save_To_XML (Get_Database, File);
+
+      XML_Utils.Print (File, Filename, Success);
+
+      if not Success then
+         Report_Preference_File_Error (Kernel, Filename);
+      elsif Active (Me) then
+         Trace (Me, Filename.Display_Full_Name & " saved.");
+      end if;
+   end Save_Remote_Config;
+
+end Remote_Module;

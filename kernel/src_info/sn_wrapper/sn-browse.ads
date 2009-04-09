@@ -22,9 +22,8 @@ with GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;
-with GNAT.Strings;
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package SN.Browse is
    Unlink_Failure    : exception;
@@ -41,10 +40,10 @@ package SN.Browse is
    --  Name of file for persistent xref pool
 
    procedure Browse
-     (File_Name     : Filesystem_String;
-      DB_Directory  : Filesystem_String;
-      DBIMP_Path    : Filesystem_String;
-      Cbrowser_Path : Filesystem_String;
+     (File_Name     : Virtual_File;
+      DB_Directory  : Virtual_File;
+      DBIMP_Path    : Virtual_File;
+      Cbrowser_Path : Virtual_File;
       PD            : out GNAT.Expect.TTY.TTY_Process_Descriptor);
    --  Start the language browser on the files lists in File_Name (one file per
    --  line, and lines can start with @ to specify the name of the xref file to
@@ -55,8 +54,8 @@ package SN.Browse is
    --  process spawning, file unlinking...
 
    procedure Generate_Xrefs
-     (DB_Directories : GNAT.Strings.String_List_Access;
-      DBIMP_Path     : Filesystem_String;
+     (DB_Directories : File_Array;
+      DBIMP_Path     : Virtual_File;
       Started        : out Boolean;
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor);
@@ -71,7 +70,7 @@ package SN.Browse is
    --  to be deleted when the latter has finished executing.
    --  Started is set to False if there was no need to start dbimp.
 
-   procedure Delete_Database (DB_Directory : Filesystem_String);
+   procedure Delete_Database (DB_Directory : Virtual_File);
    --  Removes all files from SN DB directory except xref pool
 
    procedure Is_Alive

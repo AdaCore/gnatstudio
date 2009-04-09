@@ -25,7 +25,6 @@ with GNAT.Strings;
 with HTables;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Dynamic_Arrays;
 with Projects.Registry;
 with Language;
@@ -423,12 +422,12 @@ package Entities is
    --  overriden by the new value.
 
    function Get_Or_Create
-     (Db            : Entities_Database;
-      Full_Filename : Filesystem_String;
-      Handler       : access LI_Handler_Record'Class;
-      LI            : LI_File := null;
-      Timestamp     : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
-      Allow_Create  : Boolean := True) return Source_File;
+     (Db           : Entities_Database;
+      Base_Name    : GNATCOLL.VFS.Filesystem_String;
+      Handler      : access LI_Handler_Record'Class;
+      LI           : LI_File := null;
+      Timestamp    : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
+      Allow_Create : Boolean := True) return Source_File;
    --  Same as above, but the file name is specified through a string
 
    function Is_Up_To_Date (File : Source_File) return Boolean;
@@ -1294,12 +1293,11 @@ private
    procedure Set_Next (E : Source_File_Item; Next : Source_File_Item);
    function  Next     (E : Source_File_Item) return Source_File_Item;
    function  Get_Key
-     (E : Source_File_Item) return GNATCOLL.VFS.Cst_String_Access;
+     (E : Source_File_Item) return GNATCOLL.VFS.Virtual_File;
    function  Hash
-     (Key : GNATCOLL.VFS.Cst_String_Access) return HTable_Header;
-   function  Equal    (K1, K2 : GNATCOLL.VFS.Cst_String_Access) return Boolean;
+     (Key : GNATCOLL.VFS.Virtual_File) return HTable_Header;
    procedure Free     (E : in out Source_File_Item);
-   pragma Inline (Set_Next, Next, Get_Key, Hash, Equal, Free);
+   pragma Inline (Set_Next, Next, Get_Key, Hash, Free);
 
    package Files_HTable is new HTables.Static_HTable
      (Header_Num    => HTable_Header,
@@ -1307,10 +1305,10 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => GNATCOLL.VFS.Cst_String_Access,
+      Key           => GNATCOLL.VFS.Virtual_File,
       Get_Key       => Get_Key,
       Hash          => Hash,
-      Equal         => Equal,
+      Equal         => GNATCOLL.VFS."=",
       Free_Elmt_Ptr => Free);
 
    -------------
@@ -1345,7 +1343,7 @@ private
 
    procedure Set_Next (E : LI_File_Item; Next : LI_File_Item);
    function  Next     (E : LI_File_Item) return LI_File_Item;
-   function  Get_Key  (E : LI_File_Item) return GNATCOLL.VFS.Cst_String_Access;
+   function  Get_Key  (E : LI_File_Item) return GNATCOLL.VFS.Virtual_File;
    procedure Free     (E : in out LI_File_Item);
    pragma Inline (Set_Next, Next, Get_Key, Free);
 
@@ -1355,10 +1353,10 @@ private
       Null_Ptr      => null,
       Set_Next      => Set_Next,
       Next          => Next,
-      Key           => GNATCOLL.VFS.Cst_String_Access,
+      Key           => GNATCOLL.VFS.Virtual_File,
       Get_Key       => Get_Key,
       Hash          => Hash,
-      Equal         => Equal,
+      Equal         => GNATCOLL.VFS."=",
       Free_Elmt_Ptr => Free);
 
    -----------------------

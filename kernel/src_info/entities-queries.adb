@@ -209,7 +209,7 @@ package body Entities.Queries is
       if Location = No_File_Location then
          return "<no loc>";
       else
-         return (+Full_Name (Get_Filename (Location.File)).all)
+         return (+Full_Name (Get_Filename (Location.File)))
            & ':' & Location.Line'Img
            & ':' & Location.Column'Img;
       end if;
@@ -361,7 +361,7 @@ package body Entities.Queries is
    begin
       if Active (Me) then
          Trace (Me, "Find name=" & Normalized_Entity_Name
-                & " Source=" & (+Full_Name (Get_Filename (Source)).all)
+                & " Source=" & Display_Full_Name (Get_Filename (Source))
                 & " line=" & Line'Img & " column=" & Column'Img
                 & " check_decl=" & Check_Decl_Only'Img);
       end if;
@@ -483,7 +483,7 @@ package body Entities.Queries is
          end if;
       end if;
 
-      Trace (Me, "No such file registered: " & (+Full_Name (File_Name).all));
+      Trace (Me, "No such file registered: " & Display_Full_Name (File_Name));
    end Find_Declaration;
 
    ----------------------
@@ -508,7 +508,7 @@ package body Entities.Queries is
       if Active (Me) then
          if Source /= null then
             Trace (Me, "Find_Declaration entity=" & Entity_Name
-                   & " source=" & (+Full_Name (Get_Filename (Source)).all)
+                   & " source=" & Display_Full_Name (Get_Filename (Source))
                    & " line=" & Line'Img
                    & " column=" & Column'Img);
          else
@@ -1290,7 +1290,7 @@ package body Entities.Queries is
    begin
       if Active (Me) then
          Trace (Me, "Find_Ancestor_Dependencies: "
-                & (+Full_Name (Get_Filename (File)).all)
+                & Display_Full_Name (Get_Filename (File))
                 & " Self=" & Boolean'Image (Include_Self)
                 & " Single=" & Boolean'Image (Single_Source_File));
       end if;
@@ -2348,7 +2348,7 @@ package body Entities.Queries is
 
             if Active (Me) then
                Trace (Me, "Compute_Callers_And_Called for "
-                      & (+Full_Name (Get_Filename (File)).all));
+                      & Display_Full_Name (Get_Filename (File)));
                for L in Line_Info'Range loop
                   if Line_Info (L) /= null then
                      if Info_For_Decl (L) /= null then

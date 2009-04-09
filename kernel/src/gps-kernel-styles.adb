@@ -290,11 +290,11 @@ package body GPS.Kernel.Styles is
       Free (Main);
 
       if not Success then
-         Report_Preference_File_Error (Kernel, Full_Name (File).all);
+         Report_Preference_File_Error (Kernel, File);
          GPS.Kernel.Console.Insert
            (Kernel,
             "Could not save the configuration file " &
-            (+Full_Name (File).all) &
+            File.Display_Full_Name &
             ASCII.LF &
             "Please verify that you have write access to this file.",
             Mode => GPS.Kernel.Console.Error);
@@ -337,7 +337,7 @@ package body GPS.Kernel.Styles is
       end if;
 
       if Is_Regular_File (File) then
-         XML_Parsers.Parse (Full_Name (File).all, F, Err);
+         XML_Parsers.Parse (File, F, Err);
 
          if F /= null then
             Node := F.Child;

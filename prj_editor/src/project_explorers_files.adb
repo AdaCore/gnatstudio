@@ -19,9 +19,6 @@
 
 with Ada.Unchecked_Deallocation; use Ada;
 
-with GNAT.Case_Util;             use GNAT.Case_Util;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
 
@@ -60,9 +57,6 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
 with Projects.Registry;          use Projects.Registry;
-with Remote;                     use Remote;
-with String_List_Utils;          use String_List_Utils;
-with File_Utils;                 use File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with Traces;                     use Traces;
 with Histories;                  use Histories;
@@ -100,10 +94,6 @@ package body Project_Explorers_Files is
 
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view
-
-   function Parse_Path
-     (Path : Filesystem_String) return String_List_Utils.String_List.List;
-   --  Parse a path string and return a list of all directories in it
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
@@ -179,10 +169,6 @@ package body Project_Explorers_Files is
    --  It is also used to return the context for
    --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
    --  event or a null menu.
-
-   function Greatest_Common_Path
-     (L : String_List_Utils.String_List.List) return Filesystem_String;
-   --  Return the greatest common path to a list of directories
 
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer
@@ -293,8 +279,6 @@ package body Project_Explorers_Files is
       Empty      : Boolean := True;
       New_D      : Append_Directory_Idle_Data_Access;
 
-      use String_List_Utils.String_List;
-
    begin
       --  If we are appending at the base, create a node indicating the
       --  absolute path to the directory.
@@ -345,7 +329,7 @@ package body Project_Explorers_Files is
             if Is_Directory (D.Files (D.File_Index)) then
                if not Directory_Belongs_To_Project
                  (Get_Registry (D.Explorer.Kernel).all,
-                  D.Files (D.File_Index).Full_Name.all,
+                  D.Files (D.File_Index).Full_Name,
                   Direct_Only => False)
                then
                   --  Remove from the list.
@@ -1015,8 +999,7 @@ package body Project_Explorers_Files is
    procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class) is
       Explorer     : constant Project_Explorer_Files :=
                        Project_Explorer_Files (Files);
-      Buffer       : aliased Filesystem_String (1 .. 1024);
-      Last, Len    : Integer;
+      Drives       : File_Array_Access;
       Cur_Dir      : constant Virtual_File := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
 
@@ -1028,49 +1011,35 @@ package body Project_Explorers_Files is
         (Get_History (Explorer.Kernel).all, File_View_Shows_Only_Project)
       then
          declare
-            Inc : String_List_Utils.String_List.List;
-            Obj : String_List_Utils.String_List.List;
+            Inc : constant File_Array :=
+                    Include_Path (Get_Project (Explorer.Kernel), True);
+            Obj : constant File_Array :=
+                    Object_Path (Get_Project (Explorer.Kernel), True, False);
          begin
-            Inc := Parse_Path
-              (Include_Path (Get_Project (Explorer.Kernel), True));
-            Obj := Parse_Path
-              (Object_Path (Get_Project (Explorer.Kernel), True, False));
-            String_List_Utils.String_List.Concat (Inc, Obj);
-
             File_Append_Directory
               (Explorer,
-               Create (Greatest_Common_Path (Inc)),
+               Greatest_Common_Path (Inc & Obj),
                Null_Iter, 1, Get_Current_Dir, True);
-            String_List_Utils.String_List.Free (Inc);
          end;
 
       else
-         Get_Local_Filesystem.Get_Logical_Drives (Buffer, Len);
+         Drives := GNATCOLL.VFS.Get_Logical_Drives;
 
-         Last := 1;
+         if Drives /= null then
+            for J in Drives'Range loop
+               if Drives (J).Is_Parent (Cur_Dir) then
+                  File_Append_Directory
+                    (Explorer, Drives (J),
+                     Null_Iter, 1, Cur_Dir, True);
+                  Dir_Inserted := True;
 
-         for J in 1 .. Len loop
-            if Buffer (J) = ASCII.NUL then
-               declare
-                  Drive : constant Virtual_File :=
-                            Create (Buffer (Last .. J - 1));
-               begin
-                  if Drive.Is_Parent (Cur_Dir) then
-                     File_Append_Directory
-                       (Explorer, Drive,
-                        Null_Iter, 1, Cur_Dir, True);
-                     Dir_Inserted := True;
-
-                  else
-                     File_Append_Directory
-                       (Explorer, Drive,
-                        Null_Iter, 0, No_File, False, False);
-                  end if;
-               end;
-
-               Last := J + 1;
-            end if;
-         end loop;
+               else
+                  File_Append_Directory
+                    (Explorer, Drives (J),
+                     Null_Iter, 0, No_File, False, False);
+               end if;
+            end loop;
+         end if;
 
          if not Dir_Inserted then
             File_Append_Directory
@@ -1082,105 +1051,6 @@ package body Project_Explorers_Files is
    exception
       when E : others => Trace (Exception_Handle, E);
    end Refresh;
-
-   ----------------
-   -- Parse_Path --
-   ----------------
-
-   function Parse_Path
-     (Path : Filesystem_String) return String_List_Utils.String_List.List
-   is
-      First : Integer;
-      Index : Integer;
-
-      use String_List_Utils.String_List;
-      Result : String_List_Utils.String_List.List;
-
-   begin
-      First := Path'First;
-      Index := First + 1;
-
-      while Index <= Path'Last loop
-         if Path (Index) = Path_Separator then
-            Append (Result, +Path (First .. Index - 1));
-            Index := Index + 1;
-            First := Index;
-         end if;
-
-         Index := Index + 1;
-      end loop;
-
-      if First /= Path'Last then
-         Append (Result, +Path (First .. Path'Last));
-      end if;
-
-      return Result;
-   end Parse_Path;
-
-   --------------------------
-   -- Greatest_Common_Path --
-   --------------------------
-
-   function Greatest_Common_Path
-     (L : String_List_Utils.String_List.List) return Filesystem_String
-   is
-      use String_List_Utils.String_List;
-
-      N : List_Node;
-   begin
-      if Is_Empty (L) then
-         return "";
-      end if;
-
-      N := First (L);
-
-      declare
-         Greatest_Prefix        : constant Filesystem_String := +Data (N);
-         Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
-      begin
-         N := Next (N);
-
-         while N /= Null_Node loop
-            declare
-               Challenger : constant String  := Data (N);
-               First      : constant Natural := Challenger'First;
-               Index      : Natural := 0;
-               Length     : constant Natural := Challenger'Length;
-            begin
-               while Index < Greatest_Prefix_Length
-                 and then Index < Length
-                 and then
-                   ((Is_Case_Sensitive (Build_Server)
-                     and then Challenger (First + Index)
-                       = Greatest_Prefix (Greatest_Prefix'First + Index))
-                    or else
-                      (not Is_Case_Sensitive (Build_Server)
-                       and then To_Lower (Challenger (First + Index))
-                         = To_Lower (Greatest_Prefix
-                                       (Greatest_Prefix'First + Index))))
-               loop
-                  Index := Index + 1;
-               end loop;
-
-               Greatest_Prefix_Length := Index;
-            end;
-
-            if Greatest_Prefix_Length <= 1 then
-               exit;
-            end if;
-
-            N := Next (N);
-         end loop;
-
-         if Greatest_Prefix_Length = 0 then
-            return (1 => Directory_Separator);
-         end if;
-
-         return Greatest_Prefix
-           (Greatest_Prefix'First
-            .. Greatest_Prefix'First + Greatest_Prefix_Length - 1);
-      end;
-   end Greatest_Common_Path;
 
    -------------------
    -- Free_Children --
@@ -1318,7 +1188,8 @@ package body Project_Explorers_Files is
                   then
                      declare
                         Name : constant Filesystem_String :=
-                          Get_Base_Name (View.File_Model, Next_Iter);
+                                 Get_Base_Name (View.File_Model, Next_Iter);
+                        use type Filesystem_String;
                      begin
                         if Name > File.Base_Dir_Name then
                            Insert_Before

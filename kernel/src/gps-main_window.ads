@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
+
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Menu_Bar;     use Gtk.Menu_Bar;
@@ -28,7 +30,6 @@ with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 with GPS.Kernel;
 
@@ -62,8 +63,8 @@ package GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String);
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
@@ -71,8 +72,8 @@ package GPS.Main_Window is
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String);
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File);
    --  Internal initialization function
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);

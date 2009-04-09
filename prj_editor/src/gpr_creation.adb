@@ -26,7 +26,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body GPR_Creation is
 
@@ -692,7 +691,7 @@ package body GPR_Creation is
          --  The other directories do not contain any object file anyway
 
          Trace (Me, "Creating " &
-                (+Full_Name (Project_Path (Root_Project)).all));
+                Project_Path (Root_Project).Display_Full_Name);
          Project := Root_Project;
          Process_List (Project, Source_Dirs_Attribute, Source_Dirs);
 
@@ -746,8 +745,8 @@ package body GPR_Creation is
 
             for P in 0 .. Object_Dirs'Length - 1 loop
                Trace
-                 (Me, "Manipulating "
-                  & (+Full_Name (Project_Path (Projects (P))).all));
+                 (Me, "Manipulating " &
+                  Project_Path (Projects (P)).Display_Full_Name);
 
                Generate_Withs
                  (Projects          => Projects,
@@ -800,11 +799,11 @@ package body GPR_Creation is
    begin
 
       for J in Source_Dirs'Range loop
-         S_Source_Dirs (J) := new String'(+Full_Name (Source_Dirs (J)).all);
+         S_Source_Dirs (J) := new String'(+Full_Name (Source_Dirs (J)));
       end loop;
 
       for J in Object_Dirs'Range loop
-         S_Object_Dirs (J) := new String'(+Full_Name (Object_Dirs (J)).all);
+         S_Object_Dirs (J) := new String'(+Full_Name (Object_Dirs (J)));
       end loop;
 
       Create_Gpr_Files

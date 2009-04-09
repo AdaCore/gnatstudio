@@ -44,7 +44,6 @@ with Language_Handlers;  use Language_Handlers;
 with Refactoring.Performers; use Refactoring.Performers;
 with Traces;                 use Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Refactoring.Subprograms is
 

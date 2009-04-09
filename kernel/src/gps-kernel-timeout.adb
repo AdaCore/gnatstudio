@@ -29,6 +29,8 @@ pragma Warnings (On);
 with GNAT.Regpat;                use GNAT.Regpat;
 with System;                     use System;
 
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
 with Glib.Object;                use Glib.Object;
 with Glib.Values;
 with Glib.Main;                  use Glib.Main;
@@ -64,7 +66,7 @@ package body GPS.Kernel.Timeout is
       Show_Exit_Status     : Boolean;
       Synchronous          : Boolean;
       Use_Ext_Terminal     : Boolean;
-      Directory            : Filesystem_String_Access;
+      Directory            : Virtual_File;
 
       Expect_Regexp        : GNAT.Expect.Pattern_Matcher_Access;
 
@@ -201,7 +203,6 @@ package body GPS.Kernel.Timeout is
       D.Data.D.Command := null;
 
       Free (D.Data.Args);
-      Free (D.Data.Directory);
       Pop_State (D.Data.D.Kernel);
 
       Unchecked_Free (D.Data.Expect_Regexp);
@@ -250,7 +251,7 @@ package body GPS.Kernel.Timeout is
                 Command.Data.Use_Ext_Terminal,
                 Command.Data.Console,
                 Command.Data.Show_Command,
-                Command.Data.Directory.all,
+                Command.Data.Directory,
                 Command.Data.Use_Pipes);
          Free (Command.Data.Args);
          --  Set Started here so that even if spawn fails we don't pass twice
@@ -573,7 +574,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : Virtual_File := No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -593,11 +594,11 @@ package body GPS.Kernel.Timeout is
 
       if not Is_Local (Server) then
          Synchronize (Kernel, GPS_Server, Server,
-                      Blocking       => False,
-                      Print_Command  => True,
-                      Print_Output   => False,
-                      Sync_Once_Dirs => False,
-                      Queue_Id       => Q_Id);
+                      Blocking      => False,
+                      Print_Command => True,
+                      Print_Output  => False,
+                      Force         => False,
+                      Queue_Id      => Q_Id);
       end if;
 
       C := new Monitor_Command;
@@ -623,7 +624,7 @@ package body GPS.Kernel.Timeout is
          Server               => Server,
          Console              => Console,
          Use_Ext_Terminal     => Use_Ext_Terminal,
-         Directory            => new Filesystem_String'(Directory),
+         Directory            => Directory,
          Delete_Id            => No_Handler,
          Show_Output          => Show_Output,
          Show_Command         => Show_Command,
@@ -667,11 +668,11 @@ package body GPS.Kernel.Timeout is
 
       if not Is_Local (Server) then
          Synchronize (Kernel, Server, GPS_Server,
-                      Blocking       => False,
-                      Print_Command  => True,
-                      Print_Output   => False,
-                      Sync_Once_Dirs => False,
-                      Queue_Id       => Q_Id);
+                      Blocking      => False,
+                      Print_Command => True,
+                      Print_Output  => False,
+                      Force         => False,
+                      Queue_Id      => Q_Id);
       end if;
 
       Success := True;
@@ -699,7 +700,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : Virtual_File := No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -769,7 +770,7 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : Virtual_File := No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";

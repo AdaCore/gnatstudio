@@ -24,7 +24,6 @@ with Prj.Tree;
 with String_List_Utils;
 with Namet;
 with GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Projects is
 
@@ -33,8 +32,8 @@ package Projects is
    --  This type groups both the project tree and its view (i.e the tree
    --  processed according to the current environment variables)
 
-   Project_File_Extension : GNATCOLL.Filesystem.Filesystem_String :=
-     GNATCOLL.Filesystem.Filesystem_String (Prj.Project_File_Extension);
+   Project_File_Extension : GNATCOLL.VFS.Filesystem_String :=
+                              GNATCOLL.VFS."+" (Prj.Project_File_Extension);
 
    type Abstract_Registry is abstract tagged null record;
    type Abstract_Registry_Access is access all Abstract_Registry'Class;
@@ -89,7 +88,7 @@ package Projects is
    --  that the latter remains independent of GPS as much as possible.
 
    function Create
-     (Base_Name       : Filesystem_String;
+     (Base_Name       : GNATCOLL.VFS.Filesystem_String;
       Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
@@ -127,13 +126,15 @@ package Projects is
 
    function Project_Path
      (Project : Project_Type;
-      Host    : String := "") return GNATCOLL.VFS.Virtual_File;
+      Host    : String := GNATCOLL.VFS.Local_Host)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the full path name to the project file
    --  If Host is given, the path will be the one on the specified host.
 
    function Project_Directory
      (Project : Project_Type;
-      Host    : String := "") return GNATCOLL.VFS.Virtual_File;
+      Host    : String := GNATCOLL.VFS.Local_Host)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 
@@ -167,7 +168,7 @@ package Projects is
    function Source_Dirs
      (Project   : Project_Type;
       Recursive : Boolean;
-      Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access;
+      Has_VCS   : Boolean := False) return GNATCOLL.VFS.File_Array_Access;
    --  Return the list of source directories. The directories are normalized.
    --  If Recursive is True, directories from imported projects will also be
    --  returned. If Has_VCS is set to True only directories for projects having
@@ -177,16 +178,23 @@ package Projects is
    --  Returned array must be freed by the user.
 
    function Include_Path
-     (Project : Project_Type; Recursive : Boolean) return Filesystem_String;
+     (Project : Project_Type; Recursive : Boolean)
+      return GNATCOLL.VFS.File_Array;
    --  Return the source path for this project. If Recursive is True, it also
    --  includes the source path for all imported projects.
    --  The directories are not normalized.
 
    function Object_Path
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Return the directory containing the objects of the project.
+   --  This is the directory corresponding to the below call to
+   --  Object_Path (Project, False, False, False)
+
+   function Object_Path
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean;
-      Xrefs_Dirs          : Boolean := False) return Filesystem_String;
+      Xrefs_Dirs          : Boolean := False) return GNATCOLL.VFS.File_Array;
    --  Return the object path for this project. The empty string is returned
    --  if the project doesn't have any object directory (i.e. the user
    --  explicitely set it to the empty string). If Including_Libraries is True
@@ -255,7 +263,7 @@ package Projects is
    --  used.
 
    procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : Filesystem_String;
+     (Filename  : GNATCOLL.VFS.Filesystem_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Namet.Name_Id;
@@ -266,7 +274,8 @@ package Projects is
    --  used.
 
    function Delete_File_Suffix
-     (Filename : Filesystem_String; Project : Project_Type) return Natural;
+     (Filename : GNATCOLL.VFS.Filesystem_String;
+      Project  : Project_Type) return Natural;
    --  Return the last index in Filename before the beginning of the file
    --  suffix. Suffixes are searched independently from the language.
    --  If not matching suffix is found in project, the returned value will
@@ -274,7 +283,7 @@ package Projects is
 
    function Other_File_Base_Name
      (Project : Project_Type; Source_Filename : GNATCOLL.VFS.Virtual_File)
-      return Filesystem_String;
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the base name of the spec or body for Source_Filename.
    --  If the other file is not found in the project, then the other file base
    --  name, according to the GNAT naming scheme, is returned.
@@ -286,7 +295,7 @@ package Projects is
       Part                     : Unit_Part;
       Check_Predefined_Library : Boolean := False;
       File_Must_Exist          : Boolean := True;
-      Language                 : String) return Filesystem_String;
+      Language                 : String) return GNATCOLL.VFS.Filesystem_String;
    --  Return the base name for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
@@ -415,8 +424,8 @@ package Projects is
 
    function Get_Executable_Name
      (Project : Project_Type;
-      File    : GNATCOLL.Filesystem.Filesystem_String)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      File    : GNATCOLL.VFS.Filesystem_String)
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the name of the executable, either read from the project or
    --  computed from File
    --  If Project is No_Project, the default executable name for File is
@@ -427,7 +436,7 @@ package Projects is
    --  Return True if File is one of the main files of Project
 
    function Executables_Directory
-     (Project : Project_Type) return GNATCOLL.Filesystem.Filesystem_String;
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Return the directory that contains the executables generated for the
    --  main programs in Project. This is either Exec_Dir or Object_Dir.
    --  The returned string always ends with a directory separator.

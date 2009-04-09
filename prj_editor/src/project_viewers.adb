@@ -20,9 +20,10 @@
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;                 use GNAT.Strings;
-with GNAT.OS_Lib;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                    use Gdk.Color;
@@ -52,7 +53,6 @@ with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
-with File_Utils;                   use File_Utils;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
@@ -64,7 +64,6 @@ with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                   use GPS.Kernel;
 with GUI_Utils;                    use GUI_Utils;
-with UTF8_Utils;                   use UTF8_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Naming_Editors;               use Naming_Editors;
 with Namet;                        use Namet;
@@ -76,7 +75,6 @@ with Remote;                       use Remote;
 with Switches_Editors;             use Switches_Editors;
 with System;
 with Traces;                       use Traces;
-with GNATCOLL.VFS;                          use GNATCOLL.VFS;
 with Variable_Editors;             use Variable_Editors;
 
 package body Project_Viewers is
@@ -136,10 +134,10 @@ package body Project_Viewers is
    Add_Dep_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
      (1 => Path_Cst'Access);
 
-   Display_File_Name_Column    : constant := 0;
+   Display_File_Name_Column  : constant := 0;
    --  This columns contains the UTF8 representation of the file name
-   Filesystem_File_Name_Column : constant := 1;
-   --  This column contains the name of the file as it is on the filesystem
+   File_Column               : constant := 1;
+   --  This column contains the file itself
    Compiler_Switches_Column  : constant := 2;
    Compiler_Color_Column     : constant := 3;
 
@@ -179,7 +177,7 @@ package body Project_Viewers is
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record'Class;
       Project_Filter      : Projects.Project_Type;
-      Directory_Filter    : String := "");
+      Directory_Filter    : Virtual_File := GNATCOLL.VFS.No_File);
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
    --  This doesn't clear the list first!
@@ -197,8 +195,8 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : GNATCOLL.VFS.Virtual_File;
-      Directory_Filter : String := "");
+      File_Name        : Virtual_File;
+      Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File);
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
    --  The file is automatically searched in all the source directories of
@@ -264,7 +262,7 @@ package body Project_Viewers is
    procedure Update_Contents
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
-      Directory : Filesystem_String := "";
+      Directory : Virtual_File := GNATCOLL.VFS.No_File;
       File      : Virtual_File := GNATCOLL.VFS.No_File);
    --  Update the contents of the viewer.
    --  Directory and File act as filters for the information that is displayed.
@@ -305,7 +303,7 @@ package body Project_Viewers is
    overriding function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
-      Full_Project : Filesystem_String;
+      Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    overriding function Project_Editor
@@ -328,7 +326,7 @@ package body Project_Viewers is
    overriding function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project      : Project_Type;
-      Full_Project : Filesystem_String;
+      Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    overriding function Project_Editor
@@ -400,7 +398,7 @@ package body Project_Viewers is
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
       File_Name  : constant Virtual_File :=
-        Create (+Get_String (Viewer.Model, Iter, Filesystem_File_Name_Column));
+                     Get_File (Viewer.Model, Iter, File_Column);
       Language   : constant String :=
                      Get_Language_From_File
                        (Language_Handler
@@ -434,24 +432,24 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : GNATCOLL.VFS.Virtual_File;
-      Directory_Filter : String := "")
+      File_Name        : Virtual_File;
+      Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Iter : Gtk_Tree_Iter;
    begin
-      if Directory_Filter = ""
-        or else Dir_Name (File_Name).all = Name_As_Directory
-        (+Directory_Filter)
+      if Directory_Filter = GNATCOLL.VFS.No_File
+        or else Dir (File_Name) = Directory_Filter
       then
          Append (Viewer.Model, Iter, Null_Iter);
          Set (Viewer.Model,
               Iter,
               Display_File_Name_Column,
               +Base_Name (File_Name));
-         Set (Viewer.Model,
-              Iter,
-              Filesystem_File_Name_Column,
-              +Full_Name (File_Name).all);
+         Set_File
+           (Viewer.Model,
+            Iter,
+            File_Column,
+            File_Name);
          Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;
@@ -518,7 +516,7 @@ package body Project_Viewers is
    procedure Update_Contents
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
-      Directory : Filesystem_String := "";
+      Directory : Virtual_File := GNATCOLL.VFS.No_File;
       File      : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Child : MDI_Child;
@@ -532,7 +530,7 @@ package body Project_Viewers is
       --  that when a new MDI child is selected, the contents of the viewer is
       --  not necessarily reset.
 
-      if Directory = "" then
+      if Directory = GNATCOLL.VFS.No_File then
          Set_Title (Child,
                     Title => -"Editing switches for project "
                     & Project_Name (Project),
@@ -540,7 +538,7 @@ package body Project_Viewers is
       else
          Set_Title (Child,
                     Title => -"Editing switches for directory " &
-                    Unknown_To_UTF8 (+Directory),
+                    Directory.Display_Full_Name,
                     Short_Title => Project_Switches_Name);
       end if;
 
@@ -548,16 +546,13 @@ package body Project_Viewers is
       Clear (Viewer.Model);  --  ??? Should delete selectively
 
       if Viewer.Current_Project /= No_Project then
-         Show_Project (Viewer, Viewer.Current_Project, +Directory);
+         Show_Project (Viewer, Viewer.Current_Project, Directory);
       end if;
 
       if File /= GNATCOLL.VFS.No_File then
          Iter := Get_Iter_First (Viewer.Model);
          while Iter /= Null_Iter loop
-            if Create
-              (+Get_String
-                 (Viewer.Model, Iter, Filesystem_File_Name_Column)) = File
-            then
+            if Get_File (Viewer.Model, Iter, File_Column) = File then
                Unselect_All (Get_Selection (Viewer.Tree));
                Select_Iter (Get_Selection (Viewer.Tree), Iter);
                exit;
@@ -584,7 +579,7 @@ package body Project_Viewers is
          Update_Contents
            (Viewer,
             Project_Information (Context),
-            Dir_Name (File_Information (Context)).all,
+            Directory_Information (Context),
             File_Information (Context));
       else
          Update_Contents (Viewer, Get_Project (Viewer.Kernel));
@@ -638,10 +633,10 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class)
    is
       Column_Types : constant GType_Array :=
-                       (Display_File_Name_Column    => GType_String,
-                        Filesystem_File_Name_Column => GType_String,
-                        Compiler_Switches_Column    => GType_String,
-                        Compiler_Color_Column       => Gdk_Color_Type);
+                       (Display_File_Name_Column => GType_String,
+                        File_Column              => Get_Virtual_File_Type,
+                        Compiler_Switches_Column => GType_String,
+                        Compiler_Color_Column    => Gdk_Color_Type);
 
       Scrolled     : Gtk_Scrolled_Window;
       Col          : Gtk_Tree_View_Column;
@@ -745,7 +740,7 @@ package body Project_Viewers is
    procedure Show_Project
      (Viewer           : access Project_Viewer_Record'Class;
       Project_Filter   : Project_Type;
-      Directory_Filter : String := "")
+      Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Files : File_Array_Access :=
                 Get_Source_Files (Project_Filter, Recursive => False);
@@ -916,12 +911,12 @@ package body Project_Viewers is
          end if;
 
          declare
-            File_Name : constant Filesystem_String := +Get_String
-              (V.Model, Iter, Filesystem_File_Name_Column);
+            File_Name : constant Virtual_File :=
+                          Get_File (V.Model, Iter, File_Column);
          begin
             Set_File_Information
               (Context,
-               Files   => (1 => Create (File_Name)),
+               Files   => (1 => File_Name),
                Project => V.Current_Project);
          end;
       end if;
@@ -967,8 +962,7 @@ package body Project_Viewers is
 
          while Iter /= Null_Iter loop
             if Iter_Is_Selected (Selection, Iter) then
-               Names (N) := Create
-                 (+Get_String (V.Model, Iter, Filesystem_File_Name_Column));
+               Names (N) := Get_File (V.Model, Iter, File_Column);
                N := N + 1;
             end if;
 
@@ -1005,7 +999,7 @@ package body Project_Viewers is
    overriding function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
-      Full_Project : Filesystem_String;
+      Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Page, Full_Project);
@@ -1074,7 +1068,7 @@ package body Project_Viewers is
    overriding function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project      : Project_Type;
-      Full_Project : Filesystem_String;
+      Full_Project : GNATCOLL.VFS.Virtual_File;
       Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Full_Project);
@@ -1149,7 +1143,7 @@ package body Project_Viewers is
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
 
       function Remove_Redundant_Directories
-        (Old_Path, New_Path : Filesystem_String) return Filesystem_String;
+        (Old_Path, New_Path : File_Array) return File_Array;
       --  Return New_Path after having removed the directories that have been
       --  found on Old_Path.
 
@@ -1158,51 +1152,26 @@ package body Project_Viewers is
       ----------------------------------
 
       function Remove_Redundant_Directories
-        (Old_Path, New_Path : Filesystem_String) return Filesystem_String
+        (Old_Path, New_Path : File_Array) return File_Array
       is
-         Returned_Path        : Filesystem_String (1 .. New_Path'Length);
+         Returned_Path        : File_Array (1 .. New_Path'Length);
          Returned_Path_Length : Integer := 0;
-         New_It               : Path_Iterator := Start (New_Path);
-         Old_It               : Path_Iterator;
          Found                : Boolean;
       begin
-         while not At_End (New_Path, New_It) loop
-            Old_It := Start (Old_Path);
-
+         for J in New_Path'Range loop
             Found := False;
 
-            declare
-               New_Path_Item : constant Filesystem_String :=
-                 Current (New_Path, New_It);
-            begin
-               while not At_End (Old_Path, Old_It) loop
-                  if Current (Old_Path, Old_It) = New_Path_Item then
-                     Found := True;
-                     exit;
-                  end if;
-
-                  Old_It := Next (Old_Path, Old_It);
-               end loop;
-
-               if not Found then
-                  if Returned_Path_Length /= 0 then
-                     Returned_Path (Returned_Path_Length + 1) :=
-                       GNAT.OS_Lib.Path_Separator;
-
-                     Returned_Path_Length := Returned_Path_Length + 1;
-                  end if;
-
-                  Returned_Path
-                    (Returned_Path_Length + 1
-                     .. Returned_Path_Length + New_Path_Item'Length) :=
-                    New_Path_Item;
-
-                  Returned_Path_Length := Returned_Path_Length
-                    + New_Path_Item'Length;
+            for K in Old_Path'Range loop
+               if New_Path (J) = Old_Path (K) then
+                  Found := True;
+                  exit;
                end if;
-            end;
+            end loop;
 
-            New_It := Next (New_Path, New_It);
+            if not Found then
+               Returned_Path_Length := Returned_Path_Length + 1;
+               Returned_Path (Returned_Path_Length) := New_Path (J);
+            end if;
          end loop;
 
          return Returned_Path (1 .. Returned_Path_Length);
@@ -1212,25 +1181,27 @@ package body Project_Viewers is
       if Command = "add_predefined_paths" then
          Name_Parameters (Data, Add_Predefined_Parameters);
          declare
-            Old_Src : constant Filesystem_String :=
-              Get_Predefined_Source_Path (Get_Registry (Kernel).all);
-            Old_Obj : constant Filesystem_String :=
-              Get_Predefined_Object_Path (Get_Registry (Kernel).all);
-            New_Src : constant Filesystem_String :=
-              Remove_Redundant_Directories (Old_Src, +Nth_Arg (Data, 1, ""));
-            New_Obj : constant Filesystem_String :=
-              Remove_Redundant_Directories (Old_Obj, +Nth_Arg (Data, 2, ""));
+            Old_Src : constant File_Array :=
+                        Get_Predefined_Source_Path (Get_Registry (Kernel).all);
+            Old_Obj : constant File_Array :=
+                        Get_Predefined_Object_Path (Get_Registry (Kernel).all);
+            New_Src : constant File_Array :=
+                        Remove_Redundant_Directories
+                          (Old_Src,
+                           From_Path (Nth_Arg (Data, 1, "")));
+            New_Obj : constant File_Array :=
+                        Remove_Redundant_Directories
+                          (Old_Obj,
+                           From_Path (+Nth_Arg (Data, 2, "")));
          begin
-            if New_Src /= "" then
+            if New_Src'Length /= 0 then
                Set_Predefined_Source_Path
-                 (Get_Registry (Kernel).all,
-                  New_Src & GNAT.OS_Lib.Path_Separator & Old_Src);
+                 (Get_Registry (Kernel).all, New_Src & Old_Src);
             end if;
 
-            if Old_Obj /= "" then
+            if Old_Obj'Length /= 0 then
                Set_Predefined_Object_Path
-                 (Get_Registry (Kernel).all,
-                  New_Obj & GNAT.OS_Lib.Path_Separator & Old_Obj);
+                 (Get_Registry (Kernel).all, New_Obj & Old_Obj);
             end if;
          end;
       end if;
@@ -1285,9 +1256,9 @@ package body Project_Viewers is
       elsif Command = "rename" then
          Name_Parameters (Data, Rename_Cmd_Parameters);
          declare
-            Name : constant Filesystem_String := Nth_Arg (Data, 2);
+            Name : constant String := Nth_Arg (Data, 2);
             Path : constant Filesystem_String :=
-              Nth_Arg (Data, 3, Full_Name (Project_Directory (Project)).all);
+                     Nth_Arg (Data, 3, Project_Directory (Project).Full_Name);
          begin
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
@@ -1372,53 +1343,58 @@ package body Project_Viewers is
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Dirs      : String_List_Access := Source_Dirs
+            Dirs      : File_Array_Access := Source_Dirs
               (Project, Recursive => Recursive);
          begin
             Set_Return_Value_As_List (Data);
 
             for D in Dirs'Range loop
-               Set_Return_Value (Data, Dirs (D).all);
+               --  ??? We should return the Virtual_File object instead
+               Set_Return_Value (Data, Dirs (D).Full_Name);
             end loop;
 
-            Free (Dirs);
+            Unchecked_Free (Dirs);
          end;
 
       elsif Command = "object_dirs" then
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
             Recursive : constant Boolean := Nth_Arg (Data, 2, False);
-            Object    : constant Filesystem_String :=
-              Object_Path (Project, Recursive, False);
-            Iter      : Path_Iterator := Start (Object);
+            Object    : constant File_Array :=
+                          Object_Path (Project, Recursive, False);
          begin
             Set_Return_Value_As_List (Data);
 
-            while not At_End (Object, Iter) loop
-               Set_Return_Value (Data, Current (Object, Iter));
-               Iter := Next (Object, Iter);
+            for J in Object'Range loop
+               --  ??? Shouldn't we return a list of files instead ?
+               Set_Return_Value (Data, Object (J).Full_Name);
             end loop;
          end;
 
       elsif Command = "add_source_dir" then
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
-            Dir     : constant Filesystem_String := Name_As_Directory
-              (Normalize_Pathname
-                 (Nth_Arg (Data, 2),
-                  Directory => Full_Name (Project_Directory (Project)).all,
-                  Resolve_Links => False));
-            Dirs    : GNAT.Strings.String_List := (1 => new String'(+Dir));
-            Sources : String_List_Access :=
-              Source_Dirs (Project, Recursive => False);
+            Dir     : constant Virtual_File :=
+                        Create
+                          (Normalize_Pathname
+                             (Nth_Arg (Data, 2),
+                              Directory =>
+                                Full_Name (Project_Directory (Project)),
+                              Resolve_Links => False));
+            Dirs    : GNAT.Strings.String_List (1 .. 1);
+            Sources : File_Array_Access :=
+                        Source_Dirs (Project, Recursive => False);
             Found   : Boolean := False;
 
          begin
+            Ensure_Directory (Dir);
+            Dirs (1) := new String'(+Dir.Full_Name);
+
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
                for S in Sources'Range loop
-                  if Sources (S).all = +Dir then
+                  if Sources (S) = Dir then
                      Found := True;
                      exit;
                   end if;
@@ -1436,7 +1412,7 @@ package body Project_Viewers is
                end if;
 
                Free (Dirs);
-               Free (Sources);
+               Unchecked_Free (Sources);
             end if;
          end;
 
@@ -1452,7 +1428,11 @@ package body Project_Viewers is
                Set_Error_Msg (Data, -"Project is not editable");
             else
                for D in Dirs'Range loop
-                  if File_Equal (+Dirs (D).all, +Dir, Build_Server) then
+                  if File_Equal
+                    (+Dirs (D).all,
+                     +Dir,
+                     Get_Nickname (Build_Server))
+                  then
                      Free (Dirs (D));
                      Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
                      Index := Index - 1;

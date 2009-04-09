@@ -87,7 +87,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -162,7 +162,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";
@@ -190,7 +190,7 @@ package GPS.Kernel.Timeout is
       Show_Output          : Boolean := True;
       Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
-      Directory            : Filesystem_String := "";
+      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Queue_Id             : String := "";

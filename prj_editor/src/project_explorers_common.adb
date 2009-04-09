@@ -24,7 +24,6 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -154,7 +153,7 @@ package body Project_Explorers_Common is
                   Name : constant Filesystem_String :=
                     Get_Base_Name (Model, Iter);
                begin
-                  if Name > File.Base_Name then
+                  if File.Base_Name < Name then
                      Insert_Before (Model, Iter2, Base, Iter);
                      Iter := Iter2;
                      Done := True;
@@ -481,7 +480,7 @@ package body Project_Explorers_Common is
 
          Free (Constructs);
       else
-         Trace (Me, "No known language for " & (+Full_Name (File_Name).all));
+         Trace (Me, "No known language for " & Display_Full_Name (File_Name));
       end if;
 
       Pop_State (Kernel);
@@ -822,9 +821,9 @@ package body Project_Explorers_Common is
 
    function Get_Absolute_Name
      (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String is
+      Node  : Gtk_Tree_Iter) return Virtual_File is
    begin
-      return Get_File (Model, Node, File_Column).Full_Name.all;
+      return Get_File (Model, Node, File_Column);
    end Get_Absolute_Name;
 
    ------------------------

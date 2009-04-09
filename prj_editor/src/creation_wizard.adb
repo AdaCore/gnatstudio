@@ -17,6 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -34,21 +37,15 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
-with Projects.Editor;           use Projects, Projects.Editor;
-with Projects.Registry;         use Projects.Registry;
-with Traces;                    use Traces;
-
-with Wizards;                   use Wizards;
+with File_Utils;                use File_Utils;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
-with File_Utils;                use File_Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Traces;                    use Traces;
+with Wizards;                   use Wizards;
 
 package body Creation_Wizard is
 
@@ -261,7 +258,7 @@ package body Creation_Wizard is
    begin
       if Name /= GNATCOLL.VFS.No_File then
          GNATCOLL.VFS.Ensure_Directory (Name);
-         Set_Text (P.Project_Location, +GNATCOLL.VFS.Full_Name (Name).all);
+         Set_Text (P.Project_Location, +GNATCOLL.VFS.Full_Name (Name));
          --  ??? What if the filesystem path is non-UTF8?
       end if;
    end Advanced_Prj_Location;
@@ -277,9 +274,8 @@ package body Creation_Wizard is
       Project            : in out Projects.Project_Type;
       Changed            : in out Boolean)
    is
-      Dir            : constant Filesystem_String := Name_As_Directory
-        (+Get_Text (Page.Project_Location));
-      --  ??? What if the filesystem path is non-UTF8?
+      Dir            : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Page.Project_Location));
       Name           : constant String := Get_Text (Page.Project_Name);
       Relative_Paths : constant Boolean :=
         Page.Relative_Paths = null or else Get_Active (Page.Relative_Paths);
@@ -289,16 +285,19 @@ package body Creation_Wizard is
       Parent         : Project_Type;
       pragma Unreferenced (Tmp, Scenario_Variables, Result);
 
-      Project_Name : constant String := Get_Text (Page.Project_Name);
-      Prj_File       : constant Filesystem_String := To_File_Name
-        (+Project_Name);
-      Location       : constant Filesystem_String :=
-        +Get_Text (Page.Project_Location);
-      --  ??? What if the filesystem path is non-UTF8?
+      Project_Name   : constant String := Get_Text (Page.Project_Name);
+      Prj_Base_File  : constant Filesystem_String :=
+                         To_File_Name (+Project_Name);
+      Location       : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Page.Project_Location));
+      Prj_File       : Virtual_File;
+
    begin
-      if Is_Regular_File (Location & Prj_File & Project_File_Extension) then
+      Prj_File := Create_From_Dir
+        (Location, Prj_Base_File & Project_File_Extension);
+      if Is_Regular_File (Prj_File) then
          if Message_Dialog
-           (Msg         => +(Location & Prj_File & Project_File_Extension)
+           (Msg         => Prj_File.Display_Full_Name
                & (-" already exists. Do you want to overwrite ?"),
             Title       => -"File exists",
             Dialog_Type => Gtkada.Dialogs.Error,
@@ -310,14 +309,14 @@ package body Creation_Wizard is
 
       if not Is_Directory (Location) then
          if Message_Dialog
-           (Msg         => +Location
+           (Msg         => Location.Display_Full_Name
             & (-" is not a directory, would you like to create it ?"),
             Title       => -"Directory not found",
             Dialog_Type => Information,
             Buttons     => Button_Yes or Button_No) = Button_Yes
          then
             begin
-               Make_Dir (+Location);
+               Make_Dir (Location);
             exception
                when Directory_Error =>
                   null;
@@ -330,10 +329,10 @@ package body Creation_Wizard is
       then
          Project := Create_Project
            (Get_Registry (Kernel).all,
-            Name => Name (Name'First .. Name'Last - 4), Path => Create (Dir));
+            Name => Name (Name'First .. Name'Last - 4), Path => Dir);
       else
          Project := Create_Project
-           (Get_Registry (Kernel).all, Name => Name, Path => Create (Dir));
+           (Get_Registry (Kernel).all, Name => Name, Path => Dir);
       end if;
 
       if Relative_Paths then

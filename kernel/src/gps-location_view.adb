@@ -25,7 +25,6 @@ with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 
 with System;
 
@@ -2454,7 +2453,7 @@ package body GPS.Location_View is
       pragma Unreferenced (Identifier);
    begin
       Trace (Me, "Add_Action_Item: "
-             & (+Full_Name (File).all)
+             & File.Display_Full_Name
              & ' ' & Category & Line'Img & Column'Img
              & ' ' & Message);
 
@@ -2470,7 +2469,7 @@ package body GPS.Location_View is
       end if;
 
       if File_Iter = Null_Iter then
-         Trace (Me, "Add_Action_Item: File " & (+Full_Name (File).all)
+         Trace (Me, "Add_Action_Item: File " & File.Display_Full_Name
                 & " not found");
       end if;
 
@@ -3263,7 +3262,7 @@ package body GPS.Location_View is
       Free (N);
 
       if not Success then
-         Report_Preference_File_Error (Kernel, Full_Name (File).all);
+         Report_Preference_File_Error (Kernel, File);
       end if;
    end Dump_To_File;
 

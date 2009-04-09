@@ -25,8 +25,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with System.Assertions;       use System.Assertions;
 
@@ -65,10 +64,7 @@ with HTables;                 use HTables;
 with KeyManager_Module.GUI;
 with Traces;
 
-with UTF8_Utils;              use UTF8_Utils;
 with XML_Utils;               use XML_Utils;
-
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body KeyManager_Module is
@@ -262,8 +258,8 @@ package body KeyManager_Module is
    ----------------------
 
    procedure Save_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "keys.xml";
+      Filename : constant Virtual_File :=
+                   Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
       File     : Node_Ptr;
       Success  : Boolean;
 
@@ -328,8 +324,8 @@ package body KeyManager_Module is
 
       Save_Table (Keymanager_Module.Table.all, "");
 
-      Trace (Me, "Saving " & (+Filename));
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
+      Print (File, Filename, Success);
       Free (File);
 
       if not Success then
@@ -342,10 +338,11 @@ package body KeyManager_Module is
    -------------
 
    overriding procedure Destroy (Module : in out Keymanager_Module_Record) is
-      Key : constant Filesystem_String :=
-              Get_Home_Dir (Get_Kernel (Module)) & "custom_key";
+      Key : constant Virtual_File :=
+              Create_From_Dir
+                (Get_Home_Dir (Get_Kernel (Module)), "custom_key");
    begin
-      Gtk.Accel_Map.Save (+Key);
+      Gtk.Accel_Map.Save (+Key.Full_Name);
 
       Reset (Module.Table.all);
       Unchecked_Free (Module.Table);
@@ -1188,13 +1185,14 @@ package body KeyManager_Module is
                              (Kernel,
                               Create_Proxy
                                 (Command.Command,
-                                 (Event       => Event,
-                                  Context     => Context,
-                                  Synchronous => False,
-                                  Dir     => null,
-                                  Args    => null,
-                                  Label   => new String'(Binding.Action.all),
-                                  Repeat_Count => R,
+                                 (Event            => Event,
+                                  Context          => Context,
+                                  Synchronous      => False,
+                                  Dir              => No_File,
+                                  Args             => null,
+                                  Label            => new String'
+                                                        (Binding.Action.all),
+                                  Repeat_Count     => R,
                                   Remaining_Repeat =>
                                     Keymanager_Module.Repeat_Count - R)),
                               Destroy_On_Exit => True,
@@ -1262,8 +1260,8 @@ package body KeyManager_Module is
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class)
    is
-      Filename    : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "keys.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
       File, Child : Node_Ptr;
       Err         : String_Access;
       Prev        : Boolean;
@@ -1271,7 +1269,7 @@ package body KeyManager_Module is
       Keymanager_Module.Custom_Keys_Loaded := True;
 
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -1310,7 +1308,7 @@ package body KeyManager_Module is
       when E : others =>
          Trace (Traces.Exception_Handle, E);
          Insert (Kernel, -"Could not parse " &
-                 Unknown_To_UTF8 (+Filename), Mode => Error);
+                 Filename.Display_Full_Name, Mode => Error);
    end Load_Custom_Keys;
 
    ----------------------------
@@ -1814,8 +1812,8 @@ package body KeyManager_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Key     : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "custom_key";
+      Key     : constant Virtual_File :=
+                  Create_From_Dir (Get_Home_Dir (Kernel), "custom_key");
       Command : Interactive_Command_Access;
 
    begin
@@ -1845,8 +1843,8 @@ package body KeyManager_Module is
       --  on.
 
       if Is_Regular_File (Key) then
-         Trace (Me, "Loading key bindings from " & (+Key));
-         Gtk.Accel_Map.Load (+Key);
+         Trace (Me, "Loading key bindings from " & Key.Display_Full_Name);
+         Gtk.Accel_Map.Load (+Key.Full_Name);
       end if;
 
       Register_Command

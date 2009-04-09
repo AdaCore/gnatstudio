@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -54,9 +52,7 @@ with GPS.Intl;                  use GPS.Intl;
 with Creation_Wizard.Full;      use Creation_Wizard, Creation_Wizard.Full;
 with Wizards;                   use Wizards;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
-with File_Utils;                use File_Utils;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GUI_Utils;                 use GUI_Utils;
 
@@ -145,7 +141,7 @@ package body Creation_Wizard.Dependencies is
    procedure Add_Dependency_Internal
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
-      Imported_Project_Path : Filesystem_String;
+      Imported_Project_Path : Virtual_File;
       Limited_With          : Boolean;
       Use_Base_Name         : Boolean);
    --  Internal function that creates a dependency between two projects. It
@@ -159,7 +155,7 @@ package body Creation_Wizard.Dependencies is
    procedure Add_Dependency_Internal
      (Kernel                : access Kernel_Handle_Record'Class;
       Importing_Project     : Project_Type;
-      Imported_Project_Path : Filesystem_String;
+      Imported_Project_Path : Virtual_File;
       Limited_With          : Boolean;
       Use_Base_Name         : Boolean)
    is
@@ -179,7 +175,6 @@ package body Creation_Wizard.Dependencies is
          Parse_File_Locations (Kernel, S, -"Project add dependency");
       end Report_Error;
 
-      Base : constant Virtual_File := Project_Directory (Importing_Project);
       Use_Relative_Path : constant Boolean :=
                             Get_Paths_Type
                               (Importing_Project) = Projects.Relative
@@ -196,9 +191,7 @@ package body Creation_Wizard.Dependencies is
          Changed := Add_Imported_Project
            (Root_Project              => Get_Project (Kernel),
             Project                   => Importing_Project,
-            Imported_Project_Location => Create
-              (Normalize_Pathname
-                 (Imported_Project_Path, Full_Name (Base).all)),
+            Imported_Project_Location => Imported_Project_Path,
             Report_Errors     => Report_Error'Unrestricted_Access,
             Use_Base_Name     => Use_Base_Name,
             Use_Relative_Path => Use_Relative_Path,
@@ -250,76 +243,66 @@ package body Creation_Wizard.Dependencies is
       Model   : access Gtk_Tree_Store_Record'Class)
    is
       Iter             : Gtk_Tree_Iter;
-      Project_Path     : constant Filesystem_String :=
-        Get_Predefined_Project_Path
-        (Get_Registry (Kernel).all);
-      Path_Iter        : Path_Iterator;
-      Dir              : Dir_Type;
-      File             : String (1 .. 1024);
-      Last             : Integer;
+      Project_Path     : constant File_Array :=
+                           Get_Predefined_Project_Path
+                             (Get_Registry (Kernel).all);
+      Found            : Boolean;
+      Files            : File_Array_Access;
+      Imported_Prj     : Project_Type;
       Imported         : Imported_Project_Iterator;
+
    begin
-      Path_Iter := Start (Project_Path);
+      for J in Project_Path'Range loop
+         --  Make sure the path isn't duplicated
+         Found := False;
 
-      while not At_End (Project_Path, Path_Iter) loop
-         declare
-            Directory    : constant Filesystem_String :=
-                             Current (Project_Path, Path_Iter);
-            Found        : Boolean := False;
-            Iter2        : Path_Iterator := Start (Project_Path);
-            Imported_Prj : Project_Type;
-         begin
-            if Directory /= "." then
-               --  Make sure the path isn't duplicated
-               while Iter2 /= Path_Iter loop
-                  if Current (Project_Path, Iter2) = Directory then
-                     Found := True;
-                     exit;
-                  end if;
-                  Iter2 := Next (Project_Path, Iter2);
-               end loop;
+         for K in Project_Path'Range loop
+            if Project_Path (J) = Project_Path (K) then
+               Found := True;
+               exit;
+            end if;
+         end loop;
 
-               if not Found then
-                  Open (Dir, Directory);
-                  loop
-                     Read (Dir, File, Last);
-                     exit when Last = 0;
+         if not Found then
+            begin
+               Files := Project_Path (J).Read_Dir (Files_Only);
 
-                     if Last - File'First > 3
-                       and then File (Last - 3 .. Last) = ".gpr"
-                     then
+               for K in Files'Range loop
+                  declare
+                     Base : constant Filesystem_String :=
+                              Files (K).Base_Name (".gpr");
+                  begin
+                     if Has_Suffix (Files (K), ".gpr") then
                         Imported_Prj := Get_Project_From_Name
                           (Registry => Get_Registry (Kernel).all,
-                           Name => Get_String (File (File'First .. Last - 4)));
+                           Name     => Get_String (+Base));
 
                         --  If the project is already in the tree, do not
                         --  duplicate its entry.
                         if Imported_Prj = No_Project
-                          or else Full_Name
-                            (Project_Directory (Imported_Prj)).all /=
-                          Name_As_Directory (Directory)
+                          or else Project_Directory (Imported_Prj) /=
+                          Project_Path (J)
                         then
                            Append (Model, Iter, Null_Iter);
                            Set (Model, Iter, Selected_Column2, False);
-                           Set (Model, Iter, Project_Name_Column2,
-                                File (File'First .. Last - 4));
-                           Set (Model, Iter, Directory_Column2, +Directory);
-                           Set (Model, Iter, Full_Path_Column2,
-                                +Name_As_Directory (Directory)
-                                & File (File'First .. Last));
+                           Set (Model, Iter, Project_Name_Column2, +Base);
+                           Set (Model, Iter, Directory_Column2,
+                                Project_Path (J).Display_Full_Name);
+                           Set_File
+                             (Model, Iter, Full_Path_Column2, Files (K));
                            Set (Model, Iter, Is_Limited_Column2, False);
                         end if;
                      end if;
-                  end loop;
-                  Close (Dir);
-               end if;
-            end if;
-         exception
-            when Directory_Error =>
-               null;
-         end;
+                  end;
+               end loop;
 
-         Path_Iter := Next (Project_Path, Path_Iter);
+               Unchecked_Free (Files);
+
+            exception
+               when VFS_Directory_Error =>
+                  null;
+            end;
+         end if;
       end loop;
 
       Imported := Start (Root_Project => Get_Project (Kernel));
@@ -404,8 +387,8 @@ package body Creation_Wizard.Dependencies is
             Set (Model, Iter, Column_Project_Name, Project_Name (Imported));
             Set (Model, Iter, Column_Is_Limited,
                  Is_Limited or else Must_Be_Limited);
-            Set (Model, Iter, Column_Full_Path,
-                 +Full_Name (Project_Path (Imported)).all);
+            Set_File
+              (Model, Iter, Column_Full_Path, Project_Path (Imported));
 
             if Column_Can_Change_Limited /= -1 then
                Set (Model, Iter, Column_Can_Change_Limited,
@@ -414,7 +397,7 @@ package body Creation_Wizard.Dependencies is
 
             if Column_Directory /= -1 then
                Set (Model, Iter, Column_Directory,
-                    +Full_Name (Project_Directory (Imported)).all);
+                    +Full_Name (Project_Directory (Imported)));
             end if;
 
             if Column_Selected /= -1 then
@@ -461,7 +444,7 @@ package body Creation_Wizard.Dependencies is
            (Project_Name_Column       => GType_String,
             Is_Limited_Column         => GType_Boolean,
             Can_Change_Limited_Column => GType_Boolean,
-            Full_Path_Column          => GType_String,
+            Full_Path_Column          => Get_Virtual_File_Type,
             Use_Base_Name_Column      => GType_Boolean),
          Column_Names      =>
            (1 + Project_Name_Column => Cst_Project_Name'Unchecked_Access,
@@ -547,7 +530,7 @@ package body Creation_Wizard.Dependencies is
             Project_Name_Column2     => GType_String,
             Directory_Column2        => GType_String,
             Is_Limited_Column2       => GType_Boolean,
-            Full_Path_Column2        => GType_String),
+            Full_Path_Column2        => Get_Virtual_File_Type),
          Column_Names      =>
            (1 + Selected_Column2     => null,
             1 + Project_Name_Column2 => Cst_Project_Name'Unchecked_Access,
@@ -578,8 +561,8 @@ package body Creation_Wizard.Dependencies is
                     Get_Boolean (Model, Iter, Is_Limited_Column2));
                Set (PModel, PIter, Can_Change_Limited_Column,
                     not Get_Boolean (Model, Iter, Is_Limited_Column2));
-               Set (PModel, PIter, Full_Path_Column,
-                    Get_String (Model, Iter, Full_Path_Column2));
+               Set_File (PModel, PIter, Full_Path_Column,
+                    Get_File (Model, Iter, Full_Path_Column2));
                Set (PModel, PIter, Use_Base_Name_Column, True);
             end if;
 
@@ -616,7 +599,7 @@ package body Creation_Wizard.Dependencies is
          Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
          Set (Model, Iter, Is_Limited_Column, False);
          Set (Model, Iter, Can_Change_Limited_Column, True);
-         Set (Model, Iter, Full_Path_Column, Display_Full_Name (Name));
+         Set_File (Model, Iter, Full_Path_Column, Name);
          Set (Model, Iter, Use_Base_Name_Column, False);
       end if;
    end Add_New_Project_From_Wizard;
@@ -650,7 +633,7 @@ package body Creation_Wizard.Dependencies is
          Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
          Set (Model, Iter, Is_Limited_Column, False);
          Set (Model, Iter, Can_Change_Limited_Column, True);
-         Set (Model, Iter, Full_Path_Column, Display_Full_Name (Name));
+         Set_File (Model, Iter, Full_Path_Column, Name);
          Set (Model, Iter, Use_Base_Name_Column, False);
       end if;
    end Add_New_Project;
@@ -740,7 +723,7 @@ package body Creation_Wizard.Dependencies is
                  (Kernel                => Kernel,
                   Importing_Project     => Project,
                   Imported_Project_Path =>
-                    +Get_String (Model, Iter, Full_Path_Column),
+                    Get_File (Model, Iter, Full_Path_Column),
                   Limited_With          =>
                     Get_Boolean (Model, Iter, Is_Limited_Column),
                   Use_Base_Name         =>

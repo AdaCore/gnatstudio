@@ -27,9 +27,9 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
-with Basic_Types;                use Basic_Types;
-with Filesystems;                use Filesystems;
 with File_Utils;                 use File_Utils;
 with Namet;                      use Namet;
 with Osint;                      use Osint;
@@ -42,12 +42,10 @@ with Prj.Util;                   use Prj.Util;
 with Projects.Graphs;            use Projects.Graphs;
 with Projects.Editor;            use Projects.Editor;
 with Projects.Registry;          use Projects.Registry;
-with Remote.Path.Translator;     use Remote, Remote.Path.Translator;
+with Remote;                     use Remote;
 with Snames;                     use Snames;
 with Traces;
 with Types;                      use Types;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
 package body Projects is
 
@@ -75,7 +73,7 @@ package body Projects is
       --  Sorted list of imported projects (Cache for
       --  Imported_Project_Iterator)
 
-      Non_Recursive_Include_Path : Filesystem_String_Access;
+      Non_Recursive_Include_Path : GNATCOLL.VFS.File_Array_Access;
       --  The include path for this project
 
       Registry   : Project_Registry_Access;
@@ -236,7 +234,7 @@ package body Projects is
                   & " is not writable. Project not saved");
             end if;
             Trace (Me, "Project file not writable: "
-                   & (+Full_Name (Project_Path (Project)).all));
+                   & Project_Path (Project).Display_Full_Name);
             return False;
          end if;
 
@@ -247,19 +245,22 @@ package body Projects is
          end if;
 
          declare
-            Dirname  : constant Filesystem_String := Dir_Name (Filename).all;
+            Dirname  : Virtual_File renames Dir (Filename);
          begin
             Trace (Me, "Save_Project: Creating new file "
-                   & (+Full_Name (Filename).all));
+                   & Filename.Display_Full_Name);
 
             begin
                Make_Dir_Recursive (Dirname);
             exception
                when Directory_Error =>
-                  Trace (Me, "Couldn't create directory " & (+Dirname));
+                  Trace (Me, "Couldn't create directory " &
+                         Dirname.Display_Full_Name);
 
                   if Report_Error /= null then
-                     Report_Error ("Couldn't create directory " & (+Dirname));
+                     Report_Error
+                       ("Couldn't create directory " &
+                        Dirname.Display_Full_Name);
                   end if;
 
                   return False;
@@ -267,7 +268,7 @@ package body Projects is
 
             Normalize_Cases (Project);
 
-            Create (File, Mode => Out_File, Name => +Full_Name (Filename).all);
+            Create (File, Mode => Out_File, Name => +Full_Name (Filename));
             Pretty_Print
               (Project => Project,
                W_Char  => Internal_Write_Char'Unrestricted_Access,
@@ -281,12 +282,13 @@ package body Projects is
 
          exception
             when Ada.Text_IO.Name_Error =>
-               Trace (Me, "Couldn't create " & (+Full_Name (Filename).all));
+               Trace (Me, "Couldn't create " & Filename.Display_Full_Name);
 
                if Report_Error /= null then
-                  Report_Error ("Couldn't create file "
-                                & Display_Full_Name (Filename));
+                  Report_Error
+                    ("Couldn't create file " & Filename.Display_Full_Name);
                end if;
+
                return False;
          end;
       end if;
@@ -340,24 +342,20 @@ package body Projects is
 
    function Project_Path
      (Project : Project_Type;
-      Host    : String := "") return GNATCOLL.VFS.Virtual_File
+      Host    : String := Local_Host) return GNATCOLL.VFS.Virtual_File
    is
       View : constant Prj.Project_Id := Get_View (Project);
    begin
       if Get_View (Project) = Prj.No_Project then
          --  View=Prj.No_Project case needed for the project wizard
 
-         return Create
-           (FS => Get_Filesystem (Host),
-            Full_Filename => To_Remote
-              (+Get_String (Path_Name_Of (Project.Node, Project.Tree)),
-               Host));
+         return To_Remote
+           (Create (+Get_String (Path_Name_Of (Project.Node, Project.Tree))),
+            Host);
 
       else
-         return Create
-           (FS => Get_Filesystem (Host),
-            Full_Filename => To_Remote
-              (+Get_String (View.Path.Display_Name), Host));
+         return To_Remote
+           (Create (+Get_String (View.Path.Display_Name)), Host);
       end if;
    end Project_Path;
 
@@ -367,7 +365,7 @@ package body Projects is
 
    function Project_Directory
      (Project : Project_Type;
-      Host    : String := "") return GNATCOLL.VFS.Virtual_File is
+      Host    : String := Local_Host) return GNATCOLL.VFS.Virtual_File is
    begin
       return Dir (Project_Path (Project, Host));
    end Project_Directory;
@@ -404,15 +402,15 @@ package body Projects is
    function Source_Dirs
      (Project   : Project_Type;
       Recursive : Boolean;
-      Has_VCS   : Boolean := False) return GNAT.Strings.String_List_Access
+      Has_VCS   : Boolean := False) return GNATCOLL.VFS.File_Array_Access
    is
       Current_Dir : constant Filesystem_String := Get_Current_Dir;
       Iter        : Imported_Project_Iterator := Start (Project, Recursive);
       Count       : Natural := 0;
       P           : Project_Type;
       View        : Project_Id;
-      Sources     : GNAT.Strings.String_List_Access;
-      Result      : GNAT.Strings.String_List_Access;
+      Sources     : File_Array_Access;
+      Result      : File_Array_Access;
       Src         : String_List_Id;
       Index       : Natural := 1;
       --  Index points to the first free element in Sources
@@ -429,7 +427,7 @@ package body Projects is
       end loop;
 
       Iter := Start (Project, Recursive);
-      Sources := new GNAT.Strings.String_List (1 .. Count);
+      Sources := new File_Array (1 .. Count);
 
       loop
          P := Current (Iter);
@@ -444,12 +442,12 @@ package body Projects is
             Src := View.Source_Dirs;
 
             while Src /= Nil_String loop
-               Sources (Index) := new String'
-                 (+Name_As_Directory
-                    (Normalize_Pathname
-                       (+Get_String (String_Elements (P) (Src).Display_Value),
-                        Current_Dir,
-                        Resolve_Links => False)));
+               Sources (Index) := Create
+                 (Normalize_Pathname
+                    (+Get_String (String_Elements (P) (Src).Display_Value),
+                     Current_Dir,
+                     Resolve_Links => False));
+               Ensure_Directory (Sources (Index));
                Index := Index + 1;
                Src   := String_Elements (P) (Src).Next;
             end loop;
@@ -459,7 +457,7 @@ package body Projects is
       end loop;
 
       if Index - 1 < Sources'Last then
-         Result := new GNAT.Strings.String_List'(Sources (1 .. Index - 1));
+         Result := new File_Array'(Sources (1 .. Index - 1));
          Unchecked_Free (Sources);
       else
          Result := Sources;
@@ -473,26 +471,44 @@ package body Projects is
    ------------------
 
    function Include_Path
-     (Project : Project_Type; Recursive : Boolean) return Filesystem_String is
+     (Project : Project_Type; Recursive : Boolean) return File_Array is
    begin
       if Get_View (Project) = Prj.No_Project then
-         return "";
+         return (1 .. 0 => <>);
       end if;
 
       --  ??? The project parser doesn't cache the non-recursive version
       if not Recursive then
          if Project.Data.Non_Recursive_Include_Path = null then
-            Project.Data.Non_Recursive_Include_Path := new Filesystem_String'
-              (+Prj.Env.Ada_Include_Path
-                 (Get_View (Project), Project.View_Tree, Recursive));
+            Project.Data.Non_Recursive_Include_Path := new File_Array'
+              (From_Path
+                 (+Prj.Env.Ada_Include_Path
+                    (Get_View (Project), Project.View_Tree, Recursive)));
          end if;
 
          return Project.Data.Non_Recursive_Include_Path.all;
       end if;
 
-      return +Prj.Env.Ada_Include_Path
-        (Get_View (Project), Project.View_Tree, Recursive);
+      return From_Path
+        (+Prj.Env.Ada_Include_Path
+           (Get_View (Project), Project.View_Tree, Recursive));
    end Include_Path;
+
+   -----------------
+   -- Object_Path --
+   -----------------
+
+   function Object_Path
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Ret : constant File_Array := Object_Path (Project, False, False);
+   begin
+      if Ret'Length > 0 then
+         return Ret (Ret'First);
+      else
+         return GNATCOLL.VFS.No_File;
+      end if;
+   end Object_Path;
 
    -----------------
    -- Object_Path --
@@ -502,7 +518,7 @@ package body Projects is
      (Project             : Project_Type;
       Recursive           : Boolean;
       Including_Libraries : Boolean;
-      Xrefs_Dirs          : Boolean := False) return Filesystem_String
+      Xrefs_Dirs          : Boolean := False) return File_Array
    is
       View : constant Project_Id := Get_View (Project);
 
@@ -516,13 +532,17 @@ package body Projects is
       -------------------
 
       function Handle_Subdir
-        (Id : Namet.Path_Name_Type) return Filesystem_String is
+        (Id : Namet.Path_Name_Type) return Filesystem_String
+      is
          Path : constant Filesystem_String :=
-           Name_As_Directory (+Get_String (Id));
+                  Name_As_Directory (+Get_String (Id));
          Reg  : constant Project_Registry :=
                   Project_Registry (Get_Registry (Project));
+
       begin
-         if not Xrefs_Dirs or else Get_Xrefs_Subdir (Registry => Reg) = "" then
+         if not Xrefs_Dirs
+           or else Get_Xrefs_Subdir (Registry => Reg)'Length = 0
+         then
             return Path;
          elsif View.Externally_Built then
             return Path;
@@ -538,27 +558,29 @@ package body Projects is
 
    begin
       if View = Prj.No_Project then
-         return "";
+         return (1 .. 0 => <>);
 
       elsif Recursive then
-         return +Prj.Env.Ada_Objects_Path
-           (View, Project.View_Tree, Including_Libraries).all;
+         return From_Path
+           (+Prj.Env.Ada_Objects_Path
+              (View, Project.View_Tree, Including_Libraries).all);
 
       elsif Including_Libraries
         and then View.Library
         and then View.Library_ALI_Dir /= No_Path_Information
       then
          if View.Object_Directory = No_Path_Information then
-            return Handle_Subdir (View.Library_ALI_Dir.Name);
+            return (1 => Create (Handle_Subdir (View.Library_ALI_Dir.Name)));
          else
-            return Handle_Subdir (View.Object_Directory.Display_Name)
-              & Path_Separator
-              & Handle_Subdir (View.Library_ALI_Dir.Name);
+            return
+              (Create (Handle_Subdir (View.Object_Directory.Display_Name)),
+               Create (Handle_Subdir (View.Library_ALI_Dir.Name)));
          end if;
       elsif View.Object_Directory /= No_Path_Information then
-         return Handle_Subdir (View.Object_Directory.Display_Name);
+         return
+           (1 => Create (Handle_Subdir (View.Object_Directory.Display_Name)));
       else
-         return "";
+         return (1 .. 0 => <>);
       end if;
    end Object_Path;
 
@@ -966,7 +988,7 @@ package body Projects is
          N    : constant Filesystem_String := Get_Filename_From_Unit
            (Project, Unit, Part, Language => Lang);
       begin
-         if N /= "" then
+         if N'Length > 0 then
             return N;
 
          elsif Lang = Name_Ada then
@@ -976,7 +998,7 @@ package body Projects is
                  (Project, Unit, Part, Check_Predefined_Library => True,
                   Language => Lang);
             begin
-               if N2 /= "" then
+               if N2'Length > 0 then
                   return N2;
                end if;
             end;
@@ -1290,7 +1312,7 @@ package body Projects is
       Value : Argument_List := Get_Attribute_Value
         (Project, Attribute => Main_Attribute);
    begin
-      if Is_Case_Sensitive (Build_Server) then
+      if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
          for V in Value'Range loop
             if Value (V).all = File then
                Free (Value);
@@ -1320,21 +1342,22 @@ package body Projects is
    ---------------------------
 
    function Executables_Directory
-     (Project : Project_Type) return Filesystem_String is
+     (Project : Project_Type) return Virtual_File
+   is
    begin
       if Project = No_Project or else Get_View (Project) = Prj.No_Project then
-         return "";
+         return GNATCOLL.VFS.No_File;
 
       else
          declare
             Exec : constant Filesystem_String := +Get_String
-             (Name_Id (Get_View (Project).Exec_Directory.Display_Name));
+              (Name_Id (Get_View (Project).Exec_Directory.Display_Name));
+
          begin
-            if Exec /= "" then
-               return Name_As_Directory (Exec);
+            if Exec'Length > 0 then
+               return Create (Name_As_Directory (Exec));
             else
-               return Name_As_Directory
-                 (Object_Path (Project, False, False));
+               return Object_Path (Project);
             end if;
          end;
       end if;
@@ -2054,8 +2077,7 @@ package body Projects is
       --  No need to reset Project.Data.Imported_Projects, since this doesn't
       --  change when the view changes.
 
-      Free (Project.Data.Non_Recursive_Include_Path);
-
+      Unchecked_Free (Project.Data.Non_Recursive_Include_Path);
       Unchecked_Free (Project.Data.Files);
    end Reset;
 

@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2006                         --
---                              AdaCore                              --
+--                     Copyright (C) 2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,13 +17,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package handles sync between host and remote server using the rsync
---  program.
+--  Dialog for the remote mode configuration.
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;
 
-package Remote_Sync_Module is
+package Remote.Config_Dialog is
 
-   procedure Register_Module (Kernel : Kernel_Handle);
+   procedure Configure_Server_List
+     (Kernel         : GPS.Kernel.Kernel_Handle;
+      Default_Server : String := "");
+   --  Runs the server list editor dialog
 
-end Remote_Sync_Module;
+end Remote.Config_Dialog;

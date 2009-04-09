@@ -81,7 +81,7 @@ package Projects.Editor is
    procedure Rename_And_Move
      (Root_Project  : Project_Type;
       Project       : Project_Type;
-      New_Name      : Filesystem_String;
+      New_Name      : String;
       New_Path      : GNATCOLL.VFS.Virtual_File;
       Report_Errors : Output.Output_Proc := null);
    --  Rename Project to New_Name. All the nodes in the project tree starting
@@ -171,13 +171,13 @@ package Projects.Editor is
 
    function Contains_Path
      (Project : Project_Type;
-      Path    : Filesystem_String) return Boolean;
+      Path    : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return value is True if the path is defined in the project
 
    function Rename_Path
      (Project            : Project_Type;
-      Old_Path           : Filesystem_String;
-      New_Path           : Filesystem_String;
+      Old_Path           : GNATCOLL.VFS.Virtual_File;
+      New_Path           : GNATCOLL.VFS.Virtual_File;
       Use_Relative_Paths : Boolean) return Boolean;
    --  Renames the path to New_Path.
    --  Return value is True if the directory path could be renamed.

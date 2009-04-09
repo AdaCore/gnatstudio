@@ -17,10 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with Ada.Containers;
+with Ada.Unchecked_Conversion;
 
-with GNATCOLL.Filesystem;            use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;             use GNATCOLL.VFS_Utils;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
@@ -28,13 +27,12 @@ with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with Basic_Types;
 
 with Glib.Object;                use Glib.Object;
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Custom;            use Commands.Custom;
 with Entities;                   use Entities;
-with File_Utils;                 use File_Utils;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
@@ -66,7 +64,7 @@ package body Python_Module is
 
    procedure Load_Dir
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Filesystem_String;
+      Dir              : Virtual_File;
       Default_Autoload : Boolean);
    --  Load all .py files from Dir, if any.
    --  Default_Autoload indicates whether scripts in this directory should
@@ -325,15 +323,10 @@ package body Python_Module is
 
    procedure Load_Dir
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Dir              : Filesystem_String;
+      Dir              : Virtual_File;
       Default_Autoload : Boolean)
    is
-      Native_Dir : constant Filesystem_String :=
-        Normalize_Pathname (Name => Dir, Resolve_Links => False);
-      D          : Dir_Type;
-      File       : String (1 .. 1024);
-      Last       : Natural;
-      VF         : GNATCOLL.VFS.Virtual_File;
+      Files      : File_Array_Access;
       Command    : Custom_Command_Access;
       Errors     : Boolean;
       Script     : constant Scripting_Language :=
@@ -341,11 +334,11 @@ package body Python_Module is
                        (Get_Scripts (Kernel), Python_Name);
 
    begin
-      if not Is_Directory (Native_Dir) or else Script = null then
+      if not Is_Directory (Dir) or else Script = null then
          return;
       end if;
 
-      Trace (Me, "Load python files from " & (+Native_Dir));
+      Trace (Me, "Load python files from " & Dir.Display_Full_Name);
 
       --  Make sure the error messages will not be lost
 
@@ -355,33 +348,27 @@ package body Python_Module is
 
       Execute_Command
         (Script,
-         "sys.path=[r'" & (+Native_Dir) & "']+sys.path",
+         "sys.path=[r'" & (+Dir.Full_Name (True)) & "']+sys.path",
          Show_Command => False,
          Hide_Output => True,
          Errors      => Errors);
 
-      Open (D, Native_Dir);
+      Files := Dir.Read_Dir (Files_Only);
 
-      loop
-         Read (D, File, Last);
-         exit when Last = 0;
-
-         if Last > 3 and then File (Last - 2 .. Last) = ".py" then
-            VF := Create
-              (Full_Filename => Name_As_Directory (Native_Dir)
-               & (+File (1 .. Last)));
+      for J in Files'Range loop
+         if Equal (Files (J).File_Extension, ".py") then
             if Load_File_At_Startup
-              (Kernel, VF, Default => Default_Autoload)
+              (Kernel, Files (J), Default => Default_Autoload)
             then
-               Trace (Me, "Loading " & (+Full_Name (VF).all));
+               Trace (Me, "Loading " & Files (J).Display_Full_Name);
                Execute_Command
                  (Script,
-                  "import " & (+Base_Name (+File (1 .. Last), ".py")),
+                  "import " & (+Base_Name (Files (J), ".py")),
                   Show_Command => False,
                   Hide_Output  => True,
                   Errors       => Errors);
 
-               Command := Initialization_Command (Kernel, VF);
+               Command := Initialization_Command (Kernel, Files (J));
                if Command /= null then
                   Launch_Background_Command
                     (Kernel,
@@ -394,7 +381,7 @@ package body Python_Module is
          end if;
       end loop;
 
-      Close (D);
+      Unchecked_Free (Files);
    end Load_Dir;
 
    --------------------------------------
@@ -404,21 +391,18 @@ package body Python_Module is
    procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Env_Path : constant Filesystem_String := Get_Custom_Path;
-      Path     : Path_Iterator;
+      Env_Path : constant File_Array := Get_Custom_Path;
    begin
       Load_Dir
         (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True);
       Load_Dir
         (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False);
 
-      Path := Start (Env_Path);
-      while not At_End (Env_Path, Path) loop
-         if Current (Env_Path, Path) /= "" then
+      for J in Env_Path'Range loop
+         if Env_Path (J).Is_Directory then
             Load_Dir
-              (Kernel, Current (Env_Path, Path), Default_Autoload => True);
+              (Kernel, Env_Path (J), Default_Autoload => True);
          end if;
-         Path := Next (Env_Path, Path);
       end loop;
    end Load_System_Python_Startup_Files;
 
@@ -443,23 +427,21 @@ package body Python_Module is
       Instance : constant Class_Instance :=
                    Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info     : constant Virtual_File := Get_Data (Instance);
+      function Convert is new Ada.Unchecked_Conversion
+        (Ada.Containers.Hash_Type, Integer);
    begin
       if Command = "__str__" or else Command = "__repr__" then
-         Set_Return_Value (Data, Full_Name (Info).all);
+         Set_Return_Value (Data, Full_Name (Info));
 
       elsif Command = "__cmp__" then
          begin
             declare
-               Inst2 : constant Class_Instance := Nth_Arg
-                 (Data, 2, Get_File_Class (Kernel));
-               Name  : constant Filesystem_String :=
-                 Full_Name (Info, True).all;
-               Name2 : constant Filesystem_String :=
-                 Full_Name (Get_Data (Inst2), True).all;
+               File : constant Virtual_File :=
+                        Nth_Arg (Data, 2);
             begin
-               if Name < Name2 then
+               if Info < File then
                   Set_Return_Value (Data, -1);
-               elsif Name = Name2 then
+               elsif Info = File then
                   Set_Return_Value (Data, 0);
                else
                   Set_Return_Value (Data, 1);
@@ -471,7 +453,7 @@ package body Python_Module is
          end;
 
       elsif Command = "__hash__" then
-         Set_Return_Value (Data, Integer (Hash (+Full_Name (Info).all)));
+         Set_Return_Value (Data, Convert (Full_Name_Hash (Info)));
       end if;
 
    exception
@@ -520,7 +502,7 @@ package body Python_Module is
          Set_Return_Value (Data, Project_Name (Project));
 
       elsif Command = "__repr__" then
-         Set_Return_Value (Data, Full_Name (Project_Path (Project)).all);
+         Set_Return_Value (Data, Full_Name (Project_Path (Project)));
 
       elsif Command = "__cmp__" then
          declare
@@ -539,7 +521,7 @@ package body Python_Module is
 
       elsif Command = "__hash__" then
          Set_Return_Value
-           (Data, Integer (Hash (+Full_Name (Project_Path (Project)).all)));
+           (Data, Integer (Full_Name_Hash (Project_Path (Project))));
       end if;
 
    exception
@@ -584,7 +566,7 @@ package body Python_Module is
            (Data, Integer
               (Hash (Get_Name (Entity).all
                      & (+Full_Name (Get_Filename
-                       (Get_File (Get_Declaration_Of (Entity)))).all)
+                       (Get_File (Get_Declaration_Of (Entity)))))
                      & Image (Get_Line (Get_Declaration_Of (Entity)))
                      & Image
                        (Integer (Get_Column (Get_Declaration_Of (Entity)))))));
@@ -660,7 +642,7 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-            (Hash (+Full_Name (Fileinfo).all
+            (Hash (+Full_Name (Fileinfo)
                    & Image (Get_Line (Info))
                    & Image (Integer (Get_Column (Info))))));
 
@@ -672,12 +654,10 @@ package body Python_Module is
             Fileinfo2 : constant Virtual_File := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
             Col1,  Col2  : Visible_Column_Type;
-            Name1 : constant Filesystem_String := Full_Name (Fileinfo).all;
-            Name2 : constant Filesystem_String := Full_Name (Fileinfo2).all;
          begin
-            if Name1 < Name2 then
+            if Fileinfo < Fileinfo2 then
                Set_Return_Value (Data, -1);
-            elsif Name1 = Name2 then
+            elsif Fileinfo = Fileinfo2 then
                Line1 := Get_Line (Info);
                Line2 := Get_Line (Info2);
 

@@ -66,7 +66,6 @@ with Pango.Enums;             use Pango.Enums;
 with System;                  use System;
 with Traces;                  use Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body KeyManager_Module.GUI is
    use Key_Htable;
@@ -523,7 +522,8 @@ package body KeyManager_Module.GUI is
               (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
                Bold);
             if Action.Defined_In /= GNATCOLL.VFS.No_File then
-               Insert (Ed.Help, Text_Iter, +Full_Name (Action.Defined_In).all);
+               Insert
+                 (Ed.Help, Text_Iter, Display_Full_Name (Action.Defined_In));
 
                Comp_Iter := Start (Action.Command);
                if Get (Comp_Iter) /= null then

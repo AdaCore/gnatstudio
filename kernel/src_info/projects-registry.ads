@@ -19,7 +19,7 @@
 
 with Namet;
 with Prj.PP;
-with GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Projects.Registry is
 
@@ -43,7 +43,7 @@ package Projects.Registry is
    --  Registry instances you may have)
 
    function Create
-     (Name            : Filesystem_String;
+     (Name            : GNATCOLL.VFS.Filesystem_String;
       Registry        : Project_Registry'Class;
       Use_Source_Path : Boolean := True;
       Use_Object_Path : Boolean := True) return GNATCOLL.VFS.Virtual_File;
@@ -87,61 +87,62 @@ package Projects.Registry is
 
    function Get_Predefined_Source_Path
      (Registry : Project_Registry)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.File_Array;
    --  Return the predefined Source Path.
    --  Return the current directory if no source path has been set yet.
 
    function Get_Predefined_Object_Path
      (Registry : Project_Registry)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.File_Array;
    --  Return the predefined Object Path.
    --  Return the current directory if no object path has been set yet.
 
    function Get_Predefined_Project_Path
      (Registry : Project_Registry)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.File_Array;
    --  Return the predefined project path, or the current directory if no
    --  project path has been set yet.
 
    function Get_Predefined_Source_Files
-     (Registry : Project_Registry) return GNATCOLL.VFS.File_Array_Access;
+     (Registry : Project_Registry)
+      return GNATCOLL.VFS.File_Array;
    --  Return the list of sources found in the predefined project (e.g. the Ada
    --  runtime). Returned memory must be freed by the caller
 
    function Get_Xrefs_Subdir
      (Registry : Project_Registry)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the object dir's subdirectory containing the cross reference
    --  files (ali files).
 
    function Get_Mode_Subdir
      (Registry : Project_Registry)
-      return GNATCOLL.Filesystem.Filesystem_String;
+      return GNATCOLL.VFS.Filesystem_String;
    --  Return the object dir's subdirectory for the current builder mode.
 
    procedure Set_Predefined_Source_Path
      (Registry : in out Project_Registry;
-      Path     : GNATCOLL.Filesystem.Filesystem_String);
+      Path     : GNATCOLL.VFS.File_Array);
    --  Set the predefined source path
 
    procedure Set_Predefined_Object_Path
      (Registry : in out Project_Registry;
-      Path     : GNATCOLL.Filesystem.Filesystem_String);
+      Path     : GNATCOLL.VFS.File_Array);
    --  Set the predefined object path
 
    procedure Set_Predefined_Project_Path
      (Registry : in out Project_Registry;
-      Path     : GNATCOLL.Filesystem.Filesystem_String);
+      Path     : GNATCOLL.VFS.File_Array);
    --  Set the predefined project path
 
    procedure Set_Xrefs_Subdir
      (Registry : in out Project_Registry;
-      Subdir   : GNATCOLL.Filesystem.Filesystem_String);
+      Subdir   : GNATCOLL.VFS.Filesystem_String);
    --  Set the object dirs subdirectory for xrefs.
 
    procedure Set_Mode_Subdir
      (Registry : in out Project_Registry;
-      Subdir   : GNATCOLL.Filesystem.Filesystem_String);
+      Subdir   : GNATCOLL.VFS.Filesystem_String);
    --  Set the object dirs subdirectory for current build mode.
 
    ----------------------
@@ -184,10 +185,16 @@ package Projects.Registry is
 
    function Load_Or_Find
      (Registry     : Project_Registry;
-      Project_Path : Filesystem_String;
+      Project_Path : GNATCOLL.VFS.Virtual_File;
       Errors       : Projects.Error_Report) return Project_Type;
    --  Check if Project_Path is already loaded. If not, load it and add it to
    --  the list of currently loaded tree.
+
+   function Load_Or_Find
+     (Registry     : Project_Registry;
+      Project_Name : String;
+      Errors       : Projects.Error_Report) return Project_Type;
+   --  Same as above, using the project's name instead of a project file.
 
    procedure Unload_Project
      (Registry : Project_Registry; View_Only : Boolean := False);
@@ -259,7 +266,7 @@ package Projects.Registry is
       Root_If_Not_Found : Boolean := True) return Project_Type;
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Base_Name         : Filesystem_String;
+      Base_Name         : GNATCOLL.VFS.Filesystem_String;
       Root_If_Not_Found : Boolean := True) return Project_Type;
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.

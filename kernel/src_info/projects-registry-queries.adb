@@ -25,10 +25,12 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+
 with GPS.Intl;                  use GPS.Intl;
 with Prj.Ext;                   use Prj.Ext;
 with Prj;                       use Prj;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
 with Toolchains;                use Toolchains;
 with Traces;                    use Traces;
@@ -60,7 +62,8 @@ package body Projects.Registry.Queries is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Process_Descriptor'Class, Process_Descriptor_Access);
-      Current         : GNAT.Strings.String_Access := new String'("");
+      Current         : GNATCOLL.VFS.File_Array_Access :=
+                          new File_Array'(1 .. 0 => <>);
       Object_Path_Set : Boolean := False;
 
       procedure Add_Directory (S : String);
@@ -73,25 +76,28 @@ package body Projects.Registry.Queries is
       -------------------
 
       procedure Add_Directory (S : String) is
-         Tmp : GNAT.Strings.String_Access;
+         Dir : Virtual_File;
       begin
          if S = "" then
             return;
 
-         elsif S = "<Current_Directory>"
-           and then not Object_Path_Set
-         then
-            --  Do not include "." in the default source paths: when the user
-            --  is compiling, it would represent the object directory, when the
-            --  user is searching file it would represent whatever the current
-            --  directory is at that point, ...
-            return;
+         elsif S = "<Current_Directory>" then
+            if not Object_Path_Set then
+               --  Do not include "." in the default source/object paths: when
+               --  the user is compiling, it would represent the object
+               --  directory, when the user is searching file it would
+               --  represent whatever the current directory is at that point,
+               --  ...
+               return;
+            else
+               Dir := Create_From_Base (".");
+               Ensure_Directory (Dir);
+               Append (Current, Dir);
+            end if;
 
          else
-            Tmp := Current;
-            Current := new String'(Current.all & Path_Separator &
-                                   (+To_Local (+S, Build_Server)));
-            Free (Tmp);
+            Dir := To_Local (Create (+S, Get_Nickname (Build_Server)));
+            Append (Current, Dir);
          end if;
       end Add_Directory;
 
@@ -107,11 +113,11 @@ package body Projects.Registry.Queries is
 
          if Is_Local (Build_Server) then
             declare
-               Gnatls_Path : Filesystem_String_Access :=
-                 Locate_Compiler_Executable
-                   (+Gnatls_Args (Gnatls_Args'First).all);
+               Gnatls_Path : constant Virtual_File :=
+                               Locate_Compiler_Executable
+                                 (+Gnatls_Args (Gnatls_Args'First).all);
             begin
-               if Gnatls_Path = null then
+               if Gnatls_Path = No_File then
                   Success := False;
 
                   Trace (Me, "Could not locate exec " &
@@ -126,10 +132,9 @@ package body Projects.Registry.Queries is
                   Fd := new TTY_Process_Descriptor;
                   Non_Blocking_Spawn
                     (Fd.all,
-                     +Gnatls_Path.all,
+                     +Gnatls_Path.Full_Name,
                      Gnatls_Args (2 .. Gnatls_Args'Last),
                      Buffer_Size => 0, Err_To_Out => True);
-                  Free (Gnatls_Path);
                end if;
             end;
          else
@@ -177,17 +182,29 @@ package body Projects.Registry.Queries is
                   Trim (Strip_CR (Expect_Out (Fd.all)), Ada.Strings.Left);
          begin
             if S = "Object Search Path:" & ASCII.LF then
-               Trace (Me, "Set source path from gnatls to " & Current.all);
-               Set_Predefined_Source_Path (Registry.all, +Current.all);
-               Free (Current);
-               Current := new String'("");
+               if Active (Me) then
+                  Trace (Me, "Set source path from gnatls to :");
+                  for J in Current'Range loop
+                     Trace (Me, "  " & Current (J).Display_Full_Name);
+                  end loop;
+               end if;
+
+               Set_Predefined_Source_Path (Registry.all, Current.all);
+               Unchecked_Free (Current);
+               Current := new File_Array'(1 .. 0 => <>);
 
             elsif S = "Project Search Path:" & ASCII.LF then
-               Trace (Me, "Set object path from gnatls to " & Current.all);
+               if Active (Me) then
+                  Trace (Me, "Set object path from gnatls to :");
+                  for J in Current'Range loop
+                     Trace (Me, "  " & Current (J).Display_Full_Name);
+                  end loop;
+               end if;
+
                Object_Path_Set := True;
-               Set_Predefined_Object_Path (Registry.all, +Current.all);
-               Free (Current);
-               Current := new String'("");
+               Set_Predefined_Object_Path (Registry.all, Current.all);
+               Unchecked_Free (Current);
+               Current := new File_Array'(1 .. 0 => <>);
 
             else
                Add_Directory (S (S'First .. S'Last - 1));
@@ -198,14 +215,25 @@ package body Projects.Registry.Queries is
    exception
       when Process_Died =>
          if Object_Path_Set then
-            Trace (Me, "Set project path from gnatls to " & Current.all);
-            Prj.Ext.Set_Project_Path (Current.all);
+            if Active (Me) then
+               Trace (Me, "Set project path from gnatls to :");
+               for J in Current'Range loop
+                  Trace (Me, "  " & Current (J).Display_Full_Name);
+               end loop;
+            end if;
+            Prj.Ext.Set_Project_Path (+To_Path (Current.all));
+
          else
-            Trace (Me, "Set object path (2) from gnatls to " & Current.all);
-            Set_Predefined_Object_Path (Registry.all, +Current.all);
+            if Active (Me) then
+               Trace (Me, "Set object path (2) from gnatls to :");
+               for J in Current'Range loop
+                  Trace (Me, "  " & Current (J).Display_Full_Name);
+               end loop;
+            end if;
+            Set_Predefined_Object_Path (Registry.all, Current.all);
          end if;
 
-         Free (Current);
+         Unchecked_Free (Current);
          Close (Fd.all);
          Unchecked_Free (Fd);
    end Compute_Predefined_Paths;

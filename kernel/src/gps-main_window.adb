@@ -19,7 +19,6 @@
 
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;       use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;            use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
@@ -334,8 +333,8 @@ package body GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window      : out GPS_Window;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String) is
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File) is
    begin
       Main_Window := new GPS_Window_Record;
       GPS.Main_Window.Initialize (Main_Window, Home_Dir, Prefix_Directory);
@@ -385,12 +384,13 @@ package body GPS.Main_Window is
    -------------------
 
    procedure Put_Animation (Main_Window : access GPS_Window_Record'Class) is
-      Throbber : constant Filesystem_String := Normalize_Pathname
-        ("gps-animation.gif",
-         Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
-      Image    : constant Filesystem_String := Normalize_Pathname
-        ("gps-animation.png",
-         Get_System_Dir (Main_Window.Kernel) & "/share/gps/");
+      GPS_Dir  : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_System_Dir (Main_Window.Kernel), "/share/gps/");
+      Throbber : constant Filesystem_String :=
+                   Normalize_Pathname ("gps-animation.gif", GPS_Dir.Full_Name);
+      Image    : constant Filesystem_String :=
+                   Normalize_Pathname ("gps-animation.png", GPS_Dir.Full_Name);
       Error    : GError;
       Pixbuf   : Gdk_Pixbuf;
 
@@ -509,8 +509,8 @@ package body GPS.Main_Window is
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;
-      Home_Dir         : Filesystem_String;
-      Prefix_Directory : Filesystem_String)
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File)
    is
       Vbox      : Gtk_Vbox;
       Box1      : Gtk_Hbox;

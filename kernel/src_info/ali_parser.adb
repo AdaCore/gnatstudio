@@ -22,10 +22,8 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -34,8 +32,6 @@ with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Basic_Types;               use Basic_Types;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
-with File_Utils;                use File_Utils;
-with Filesystems;               use Filesystems;
 with Glib.Convert;              use Glib.Convert;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -418,10 +414,10 @@ package body ALI_Parser is
       Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
       File := Get_Or_Create
-        (Db            => Get_Database (LI),
-         Full_Filename => +Base_Name,
-         Handler       => Handler,
-         LI            => LI);
+        (Db        => Get_Database (LI),
+         Base_Name => +Base_Name,
+         Handler   => Handler,
+         LI        => LI);
       Set_Time_Stamp (File, GNATCOLL.Utils.No_Time);
 
       return File;
@@ -486,10 +482,10 @@ package body ALI_Parser is
       end if;
 
       Sfile := (Get_Or_Create
-                  (Db            => Get_Database (LI),
-                   Full_Filename => +Base_Name,
-                   Handler       => Handler,
-                   LI            => L),
+                  (Db        => Get_Database (LI),
+                   Base_Name => +Base_Name,
+                   Handler   => Handler,
+                   LI        => L),
                 Is_Separate => Is_Separate,
                 Is_Unit     => False);
 
@@ -546,7 +542,7 @@ package body ALI_Parser is
                   Part,
                   Language => Ada_String);
             begin
-               if N /= "" then
+               if N'Length > 0 then
                   return Get_String (+N);
                end if;
             end;
@@ -853,7 +849,7 @@ package body ALI_Parser is
 
          if Primitive = null then
             Trace (Assert_Me, "Couldn't find interface in ALI file: "
-                   & (+Full_Name (Get_LI_Filename (LI)).all)
+                   & Display_Full_Name (Get_LI_Filename (LI))
                    & Xref.Table (Current_Ref).File_Num'Img & " "
                    & Xref.Table (Current_Ref).Line'Img
                    & Xref.Table (Current_Ref).Col'Img);
@@ -898,7 +894,7 @@ package body ALI_Parser is
 
             if Primitive = null then
                Trace (Assert_Me, "Couldn't find primitive in ALI file: "
-                      & (+Full_Name (Get_LI_Filename (LI)).all)
+                      & Display_Full_Name (Get_LI_Filename (LI))
                       & Current_Sfile'Img
                       & Xref.Table (Current_Ref).Line'Img
                       & Xref.Table (Current_Ref).Col'Img);
@@ -949,7 +945,7 @@ package body ALI_Parser is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, "Unexpected error while parsing "
-                & (+Full_Name (Get_LI_Filename (LI)).all) & ": "
+                & Display_Full_Name (Get_LI_Filename (LI)) & ": "
                 & Exception_Information (E));
    end Process_Entity_Ref;
 
@@ -1123,7 +1119,7 @@ package body ALI_Parser is
          if Active (Assert_Me) then
             Trace (Assert_Me,
                    "Parent type not found in ALI file: "
-                   & (+Full_Name (Get_LI_Filename (LI)).all)
+                   & Display_Full_Name (Get_LI_Filename (LI))
                    & Xref_Entity.Table (Xref_Ent).Tref_File_Num'Img
                    & Xref_Entity.Table (Xref_Ent).Tref_Line'Img
                    & Xref_Entity.Table (Xref_Ent).Tref_Col'Img);
@@ -1176,7 +1172,7 @@ package body ALI_Parser is
          if Active (Assert_Me) then
             Trace (Assert_Me,
                    "Overriding type not found in ALI file: "
-                   & (+Full_Name (Get_LI_Filename (LI)).all)
+                   & Display_Full_Name (Get_LI_Filename (LI))
                    & Xref_Entity.Table (Xref_Ent).Oref_File_Num'Img
                    & Xref_Entity.Table (Xref_Ent).Oref_Line'Img
                    & Xref_Entity.Table (Xref_Ent).Oref_Col'Img);
@@ -1283,18 +1279,19 @@ package body ALI_Parser is
       function Convert is new Ada.Unchecked_Conversion
         (GNAT.Strings.String_Access, Text_Buffer_Ptr);
       pragma Warnings (On);
-      Full   : constant Filesystem_String := Full_Name (ALI_Filename).all;
+      Full   : constant Filesystem_String := Full_Name (ALI_Filename);
       Buffer : GNAT.Strings.String_Access := Read_File (ALI_Filename);
 
    begin
       if Buffer = null then
-         Trace (Me, "Couldn't open " & (+Full));
+         Trace (Me, "Couldn't open " & ALI_Filename.Display_Full_Name);
          Result := No_ALI_Id;
 
       else
          if Active (Assert_Me) then
             Trace (Assert_Me,
-                   "Parsing " & (+Full) & " Reset=" & Reset_First'Img);
+                   "Parsing " & ALI_Filename.Display_Full_Name &
+                   " Reset=" & Reset_First'Img);
          end if;
 
          --  Replace the last char by an EOF. Scan_ALI uses this character
@@ -1348,14 +1345,14 @@ package body ALI_Parser is
       if New_Timestamp /= Get_Timestamp (LI) then
          if Active (Assert_Me) then
             Trace (Assert_Me, "Load_And_Scan_ALI: "
-                   & (+Full_Name (Get_LI_Filename (LI)).all)
+                   & Display_Full_Name (Get_LI_Filename (LI))
                    & " since timestamp incorrect: old="
                    & Image (Get_Timestamp (LI), "%D-%T")
                    & " new="
                    & Image (New_Timestamp, "%D-%T"));
          else
             Trace (Me, "Load_And_Scan_ALI: "
-                   & (+Full_Name (Get_LI_Filename (LI)).all));
+                   & Display_Full_Name (Get_LI_Filename (LI)));
          end if;
 
          Set_Time_Stamp (LI, New_Timestamp);
@@ -1370,7 +1367,7 @@ package body ALI_Parser is
 
          if New_ALI_Id = No_ALI_Id then
             Trace
-              (Me, "Cannot parse " & (+Full_Name (Get_LI_Filename (LI)).all));
+              (Me, "Cannot parse " & Display_Full_Name (Get_LI_Filename (LI)));
             return False;
          end if;
 
@@ -1383,7 +1380,7 @@ package body ALI_Parser is
    exception
       when E : others =>
          Trace (Traces.Exception_Handle, "Unexpected error while parsing "
-                & (+Full_Name (Get_LI_Filename (LI)).all) & ": "
+                & Display_Full_Name (Get_LI_Filename (LI)) & ": "
                 & Exception_Information (E));
          return False;
    end Update_ALI;
@@ -1415,18 +1412,18 @@ package body ALI_Parser is
          while Last > Short_ALI_Filename'First loop
             Last := Last - 1;
             exit when (Last + Dot'Length - 1 <= Short_ALI_Filename'Last
-                       and then Short_ALI_Filename
-                         (Last .. Last + Dot'Length - 1) = Dot)
+                       and then Equal
+                         (Short_ALI_Filename
+                            (Last .. Last + Dot'Length - 1),
+                          Dot))
 
             --  Special case when there might be a confusion with the
             --  GNAT runtime files.
-              or else (Dot = "-" and then Short_ALI_Filename (Last) = '~');
+              or else (+Dot = "-" and then Short_ALI_Filename (Last) = '~');
          end loop;
          Last := Last - 1;
       end Next_Candidate;
 
-      Current_Dir_Name   : constant Character := '.';
-      Dir                : Filesystem_String_Access;
       P                  : Project_Type := Project;
       Extension : constant Filesystem_String :=
         File_Extension (Short_ALI_Filename);
@@ -1452,16 +1449,18 @@ package body ALI_Parser is
                  +Get_Attribute_Value
                  (P, Dot_Replacement_Attribute, Default => "-");
             begin
-               while Dir = null and then Last >= Short_ALI_Filename'First loop
+               while LI_Filename = GNATCOLL.VFS.No_File
+                 and then Last >= Short_ALI_Filename'First
+               loop
                   declare
-                     Path : constant Filesystem_String :=
-                       Object_Path (P, False, True, True);
+                     Path : constant File_Array :=
+                              Object_Path (P, False, True, True);
                      File : constant Filesystem_String :=
                        (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
                         & Extension);
                   begin
-                     if Path /= "" then
-                        Dir := Locate_Regular_File (File, Path);
+                     if Path'Length /= 0 then
+                        LI_Filename := Locate_Regular_File (File, Path);
                      end if;
                   end;
 
@@ -1481,16 +1480,18 @@ package body ALI_Parser is
 
       --  Still not found ? Check in the predefined object path
 
-      if Dir = null then
+      if LI_Filename = GNATCOLL.VFS.No_File then
          declare
-            Predefined_Object_Path : constant Filesystem_String :=
+            Predefined_Object_Path : constant File_Array :=
               Get_Predefined_Object_Path (Handler.Registry)
-              & Path_Separator & Current_Dir_Name;
+              & (1 => Get_Current_Dir);
             Last : Integer := Short_ALI_Filename'Last - Extension'Length;
          begin
             Predefined := True;
-            while Dir = null and then Last >= Short_ALI_Filename'First loop
-               Dir := Locate_Regular_File
+            while LI_Filename = GNATCOLL.VFS.No_File
+              and then Last >= Short_ALI_Filename'First
+            loop
+               LI_Filename := Locate_Regular_File
                  (Short_ALI_Filename
                     (Short_ALI_Filename'First .. Last) & Extension,
                   Predefined_Object_Path);
@@ -1499,15 +1500,10 @@ package body ALI_Parser is
          end;
       end if;
 
-      if Dir = null then
-         LI_Filename := GNATCOLL.VFS.No_File;
-      else
+      if LI_Filename /= GNATCOLL.VFS.No_File then
          declare
             LI : LI_File;
          begin
-            LI_Filename := Create (Dir.all);
-            Free (Dir);
-
             if Is_Parent_LI then
                --  Check whether the ALI file contains the information for
                --  the file itself
@@ -1516,6 +1512,7 @@ package body ALI_Parser is
                  (Db        => Handler.Db,
                   File      => LI_Filename,
                   Project   => Project);
+
                if LI = null then
                   LI_Filename := GNATCOLL.VFS.No_File;
 
@@ -1569,17 +1566,13 @@ package body ALI_Parser is
    is
       --  The separator character depends on the file system ('$' in most
       --  cases, '~' on VMS).
-      Char     : constant Character := Multi_Unit_Index_Char
-        (Get_Filesystem (Get_Nickname (Build_Server)).all);
+      Char     : constant Character :=
+                   Multi_Unit_Index_Char (Build_Server);
       ALI_Ext  : constant Filesystem_String := Get_ALI_Ext (Handler);
 
       P        : Project_Type := Project;
-      Dir      : Dir_Type;
-      Filename : String (1 .. 1024);
-      Last     : Natural;
       Index    : Natural;
       LI       : LI_File;
-      F        : Virtual_File;
 
    begin
       --  Start searching in the extending projects, in case the file was
@@ -1598,59 +1591,62 @@ package body ALI_Parser is
 
       while P /= No_Project loop
          declare
-            Path : constant Filesystem_String :=
-              Object_Path (P, False, True, True);
+            Paths : constant File_Array :=
+                      Object_Path (P, False, True, True);
+            Path  : Virtual_File;
+            Files : File_Array_Access;
          begin
-            if Is_Directory (Path) then
-               Open (Dir, Path);
-               loop
-                  Read (Dir, Filename, Last);
-                  exit when Last < Filename'First;
+            if Paths'Length > 0 then
+               Path := Paths (Paths'First);
+               Files := Read_Dir (Path, Files_Only);
 
-                  if Last > ALI_Ext'Length
-                    and then Filename (Last - ALI_Ext'Length + 1 .. Last) =
-                    +ALI_Ext
-                  then
-                     --  If we have a '~' followed by a digit, we likely are
-                     --  seeing a multi-unit source file ALI, so parse it
-                     --  anyway. We need to test for the digit afterward,
-                     --  otherwise we would end up reloading all a~*.ali files
-                     --  from the runtime which is too expensive.
+               for J in Files'Range loop
+                  declare
+                     Base : constant Filesystem_String :=
+                              Files (J).Base_Name (ALI_Ext);
+                  begin
+                     if Files (J).Has_Suffix (ALI_Ext) then
+                        --  If we have a '~' followed by a digit, we likely
+                        --  are seeing a multi-unit source file ALI, so
+                        --  parse it anyway. We need to test for the digit
+                        --  afterward, otherwise we would end up reloading
+                        --  all a~ * .ali files from the runtime which is
+                        --  too expensive.
 
-                     Index := Last - ALI_Ext'Length;
-                     while Index > Filename'First
-                       and then Filename (Index) /= Char
-                     loop
-                        Index := Index - 1;
-                     end loop;
+                        Index := Base'Last - 1;
 
-                     if Index > Filename'First
-                       and then Is_Digit (Filename (Index + 1))
-                     then
-                        F := Create
-                          (Name_As_Directory (Path)
-                           & (+Filename (Filename'First .. Last)));
-                        LI := Get_Or_Create
-                          (Db        => Handler.Db,
-                           File      => F,
-                           Project   => P);
+                        while Index > Base'First
+                          and then Base (Index) /= Char
+                        loop
+                           Index := Index - 1;
+                        end loop;
 
-                        --  Do not reset ALI below, since we are in the process
-                        --  of parsing an ALI file, and need to parse a second
-                        --  one. We still need to keep the data for the first
-                        --  in memory, though.
-                        if LI /= null
-                          and then Update_ALI (Handler, LI, Reset_ALI => False)
-                          and then Check_LI_And_Source (LI, Source_Filename)
+                        if Index > Base'First
+                          and then Is_Digit (Base (Index + 1))
                         then
-                           return F;
+                           LI := Get_Or_Create
+                             (Db        => Handler.Db,
+                              File      => Files (J),
+                              Project   => P);
+
+                           --  Do not reset ALI below, since we are in the
+                           --  process of parsing an ALI file, and need to
+                           --  parse a second one. We still need to keep the
+                           --  data for the first in memory, though.
+                           if LI /= null
+                             and then Update_ALI
+                               (Handler, LI, Reset_ALI => False)
+                             and then Check_LI_And_Source
+                               (LI, Source_Filename)
+                           then
+                              return Files (J);
+                           end if;
                         end if;
                      end if;
-                  end if;
-
+                  end;
                end loop;
 
-               Close (Dir);
+               Unchecked_Free (Files);
             end if;
          end;
 
@@ -1860,17 +1856,16 @@ package body ALI_Parser is
             --  compare strings.
 
             declare
-               Dir  : constant Cst_String_Access :=
-                 Dir_Name (Get_LI_Filename (Get_LI (Source)));
-               Path : constant Filesystem_String := Object_Path
-                 (Get_Project (Get_LI (Source)), False, True, True);
-               Iter : Path_Iterator := Start (Path);
+               Dir  : constant Virtual_File :=
+                        Get_Parent (Get_LI_Filename (Get_LI (Source)));
+               Path : constant File_Array :=
+                        Object_Path
+                          (Get_Project (Get_LI (Source)), False, True, True);
             begin
-               while not At_End (Path, Iter) loop
-                  Is_Up_To_Date := Current (Path, Iter) = Dir.all;
-                  exit when Is_Up_To_Date;
+               for J in Path'Range loop
+                  Is_Up_To_Date := Path (J) = Dir;
 
-                  Iter := Next (Path, Iter);
+                  exit when Is_Up_To_Date;
                end loop;
             end;
          end if;
@@ -1898,7 +1893,7 @@ package body ALI_Parser is
         (Handler, Source_Filename, Project, LI_Name, Predefined);
 
       if LI_Name = GNATCOLL.VFS.No_File then
-         Trace (Me, "No LI found for " & (+Full_Name (Source_Filename).all));
+         Trace (Me, "No LI found for " & Display_Full_Name (Source_Filename));
 
          if File_Has_No_LI_Report /= null then
             Entities.Error (File_Has_No_LI_Report.all, Source);
@@ -1907,8 +1902,8 @@ package body ALI_Parser is
          return Source;
       else
          if Active (Assert_Me) then
-            Trace (Assert_Me, "LI for " & (+Full_Name (Source_Filename).all)
-                   & " is " & (+Full_Name (LI_Name).all));
+            Trace (Assert_Me, "LI for " & Display_Full_Name (Source_Filename)
+                   & " is " & Display_Full_Name (LI_Name));
          end if;
       end if;
 
@@ -1962,50 +1957,45 @@ package body ALI_Parser is
    is
       Count : Natural := 0;
 
-      procedure Parse_Directory (Project : Project_Type; Directory : String);
+      procedure Parse_Directory
+        (Project : Project_Type; Directory : Virtual_File);
       --  Parses a specific directory
 
       ---------------------
       -- Parse_Directory --
       ---------------------
 
-      procedure Parse_Directory (Project : Project_Type; Directory : String) is
-         Dir     : Dir_Type;
-         File    : String (1 .. 1024);
-         Last    : Natural;
+      procedure Parse_Directory
+        (Project : Project_Type; Directory : Virtual_File)
+      is
          LI      : LI_File;
-         LI_File : Virtual_File;
+         Files   : File_Array_Access;
       begin
-         Open (Dir, Directory);
+         Files := Read_Dir (Directory, Files_Only);
 
-         loop
-            Read (Dir, File, Last);
-            exit when Last = 0;
-
-            if File_Extension (+File (File'First .. Last))
-              = Get_ALI_Ext (Handler)
-            then
-               LI_File := Create
-                 (Full_Filename => (+(Directory & File (File'First .. Last))));
-
+         for J in Files'Range loop
+            if Files (J).Has_Suffix (Get_ALI_Ext (Handler)) then
                LI := Get_Or_Create
                  (Db      => Handler.Db,
-                  File    => LI_File,
+                  File    => Files (J),
                   Project => Project);
                if not Update_ALI (Handler, LI, Reset_ALI => True) then
                   Trace
-                    (Me, "Couldn't parse " & (+Full_Name (LI_File).all));
+                    (Me,
+                     "Couldn't parse " &
+                     Files (J).Display_Full_Name);
                end if;
 
                Count := Count + 1;
             end if;
          end loop;
 
-         Close (Dir);
+         Unchecked_Free (Files);
 
       exception
-         when Directory_Error =>
-            Trace (Me, "Couldn't open the directory " & Directory);
+         when VFS_Directory_Error =>
+            Trace (Me, "Couldn't open the directory " &
+                   Directory.Display_Full_Name);
       end Parse_Directory;
 
       P       : Project_Type;
@@ -2018,14 +2008,11 @@ package body ALI_Parser is
          exit when P = No_Project;
 
          declare
-            Objects  : constant Filesystem_String :=
-              Object_Path (P, False, True, True);
-            Dir_Iter : Path_Iterator := Start (Objects);
+            Objects  : constant File_Array :=
+                         Object_Path (P, False, True, True);
          begin
-            while not At_End (Objects, Dir_Iter) loop
-               Parse_Directory
-                 (P, +Name_As_Directory (Current (Objects, Dir_Iter)));
-               Dir_Iter := Next (Objects, Dir_Iter);
+            for J in Objects'Range loop
+               Parse_Directory (P, Objects (J));
             end loop;
          end;
 

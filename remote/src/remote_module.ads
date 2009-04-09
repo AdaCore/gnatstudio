@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2004-2009, AdaCore                 --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -12,22 +12,28 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with Projects.Registry;
+--  This package provides a view that allows the remote servers configuration
 
-package Adp_Converter is
+with GPS.Kernel;
+with Remote.Db;
 
-   procedure Convert_Adp_File
-     (Adp_Filename   : Filesystem_String;
-      Registry       : Projects.Registry.Project_Registry'Class;
-      Project        : in out Projects.Project_Type;
-      Spec_Extension : String;
-      Body_Extension : String);
-   --  Set in Project the properties read from the adp file
+package Remote_Module is
 
-end Adp_Converter;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Initialize the module
+
+   function Get_Database return access Remote.Db.Remote_Db_Type;
+
+   procedure Load_Remote_Config
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+
+   procedure Save_Remote_Config
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+
+end Remote_Module;

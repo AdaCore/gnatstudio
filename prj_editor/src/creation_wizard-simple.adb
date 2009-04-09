@@ -23,12 +23,9 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Intl;                  use GPS.Intl;
 with Projects;                  use Projects;
 with Directory_Tree;            use Directory_Tree;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Wizards;                   use Wizards;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Creation_Wizard.Simple is
 
@@ -93,8 +90,7 @@ package body Creation_Wizard.Simple is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Current      : aliased String := Get_Current_Dir;
-      Initial_Dirs : constant String_List := (1 => Current'Unchecked_Access);
+      Initial_Dirs : constant File_Array := (1 => Get_Current_Dir);
    begin
       Gtk_New (Page.Dirs,
                Initial_Directory    => GNATCOLL.VFS.Get_Current_Dir,
@@ -124,8 +120,7 @@ package body Creation_Wizard.Simple is
       end if;
 
       declare
-         Initial_Dirs : constant Argument_List :=
-           (1 => new String'(+Full_Name (Current).all));
+         Initial_Dirs : constant File_Array := (1 => Current);
       begin
          Gtk_New (Page.Dirs,
                   Initial_Directory    => Current,

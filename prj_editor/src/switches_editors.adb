@@ -55,7 +55,6 @@ with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with Traces;                    use Traces;
 with Histories;                 use Histories;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Switches_Editors is
 
