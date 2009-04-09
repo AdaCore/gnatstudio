@@ -246,7 +246,8 @@ package body Code_Peer.Module is
 
       Kernel : constant GPS.Kernel.Kernel_Handle := Self.Get_Kernel;
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get (File.Name, False, False);
+        Kernel.Get_Buffer_Factory.Get
+          (File.Name, False, False, False);
 
       -------------
       -- Process --
