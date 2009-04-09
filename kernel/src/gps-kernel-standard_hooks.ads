@@ -25,7 +25,6 @@ with Basic_Types;
 
 with GPS.Editors;        use GPS.Editors;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Entities;
 with Projects;
 

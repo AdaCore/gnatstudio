@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                      Copyright (C) 2003-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -133,9 +133,13 @@ package GPS.Kernel.Scripts is
    --  GPS.Kernel.Scripts.New_Class particularly when a File class has already
    --  been created.
 
-   function Get_Data
+   function Nth_Arg
      (Data : Callback_Data'Class; N : Positive)
       return GNATCOLL.VFS.Virtual_File;
+   procedure Set_Nth_Arg
+     (Data : Callback_Data'Class;
+      N    : Positive;
+      File : GNATCOLL.VFS.Virtual_File);
    function Get_Data
      (Instance : Class_Instance) return GNATCOLL.VFS.Virtual_File;
    --  Retrieve the file information from an instance

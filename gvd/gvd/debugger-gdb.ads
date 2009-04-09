@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2000-2008, AdaCore               --
+--                    Copyright (C) 2000-2009, AdaCore               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -67,7 +67,7 @@ package Debugger.Gdb is
 
    overriding procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
-      Dir         : String;
+      Dir         : GNATCOLL.VFS.Virtual_File;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Detect_Language (Debugger : access Gdb_Debugger);
@@ -135,12 +135,12 @@ package Debugger.Gdb is
 
    overriding procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
-      Core     : String;
+      Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
-      Module   : String;
+      Module   : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Run

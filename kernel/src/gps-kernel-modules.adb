@@ -1277,7 +1277,7 @@ package body GPS.Kernel.Modules is
            (Kernel_Handle (Widget),
             Create_Proxy
               (Command.Command,
-               (null, Context, False, null, null, null, 1, 0)),
+               (null, Context, False, No_File, null, null, 1, 0)),
             Destroy_On_Exit => False,
             Active          => True, Show_Bar => True, Queue_Id => "");
 
@@ -1689,6 +1689,7 @@ package body GPS.Kernel.Modules is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Object);
+      use type GNATCOLL.VFS.Filesystem_String;
 
       Context : constant Drag_Context :=
                   Drag_Context (Get_Proxy (Nth (Args, 1)));

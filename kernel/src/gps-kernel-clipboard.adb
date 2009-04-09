@@ -23,8 +23,6 @@ with System;                     use System;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
-
 with Glib.Object;                use Glib.Object;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
@@ -104,8 +102,10 @@ package body GPS.Kernel.Clipboard is
    is
       Clipboard   : constant Clipboard_Access := new Clipboard_Record;
       Size        : Integer;
-      Filename    : constant Filesystem_String :=
-                      Get_Home_Dir (Kernel) & "clipboards.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir
+                        (Get_Home_Dir (Kernel),
+                         "clipboards.xml");
       File, Child : Node_Ptr;
       Err         : String_Access;
    begin
@@ -131,7 +131,7 @@ package body GPS.Kernel.Clipboard is
       Clipboard.Last_Paste := Clipboard.List'First;
 
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
          if File = null then
             Insert (Kernel, Err.all, Mode => Error);
@@ -168,8 +168,8 @@ package body GPS.Kernel.Clipboard is
    -----------------------
 
    procedure Destroy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Filename  : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "clipboards.xml";
+      Filename  : constant Virtual_File :=
+                    Create_From_Dir (Get_Home_Dir (Kernel), "clipboards.xml");
       File      : Node_Ptr;
       Child     : Node_Ptr;
       Clipboard : Clipboard_Access;
@@ -179,7 +179,7 @@ package body GPS.Kernel.Clipboard is
       if Kernel.Clipboard /= System.Null_Address then
          Clipboard := Convert (Kernel.Clipboard);
 
-         Trace (Me, "Saving " & (+Filename));
+         Trace (Me, "Saving " & Filename.Display_Full_Name);
          File := new Node;
          File.Tag := new String'("Clipboard");
          for L in Clipboard.List'Range loop
@@ -201,7 +201,7 @@ package body GPS.Kernel.Clipboard is
             end if;
          end loop;
 
-         Print (File, GNATCOLL.VFS.Create (Filename), Success);
+         Print (File, Filename, Success);
          Free (File);
 
          if not Success then

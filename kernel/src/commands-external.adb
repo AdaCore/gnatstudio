@@ -20,7 +20,7 @@
 with GNAT.Expect;                use GNAT.Expect;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Traces;                     use Traces;
 with GPS.Intl;                   use GPS.Intl;
@@ -52,8 +52,8 @@ package body Commands.External is
       Free (Command.Args);
       Free (Command.Head);
       GNAT.Strings.Free (Command.Command);
-      GNAT.Strings.Free (Command.Dir);
       Free (Command.Output);
+      Command.Dir := GNATCOLL.VFS.No_File;
 
       PID := Get_Pid (Fd);
 
@@ -71,7 +71,7 @@ package body Commands.External is
      (Item           : out External_Command_Access;
       Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
-      Dir            : String;
+      Dir            : GNATCOLL.VFS.Virtual_File;
       Args           : String_List.List;
       Head           : String_List.List;
       Handler        : String_List_Handler;
@@ -82,10 +82,10 @@ package body Commands.External is
       Item.Kernel  := Kernel;
       Item.Command := new String'(Command);
 
-      if Dir = "" then
-         Item.Dir := new String'(Get_Current_Dir);
+      if Dir = No_File then
+         Item.Dir := Get_Current_Dir;
       else
-         Item.Dir := new String'(Dir);
+         Item.Dir := Dir;
       end if;
 
       Item.Args           := Copy_String_List (Args);
@@ -215,13 +215,13 @@ package body Commands.External is
             Len       : constant Natural := Length (Command.Args);
             Args      : GNAT.OS_Lib.Argument_List (1 .. Len);
             Temp_Args : List_Node := First (Command.Args);
-            Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
+            Old_Dir   : constant Virtual_File := Get_Current_Dir;
 
          begin
             --  ??? Must add many checks for empty lists, etc
 
-            if Command.Dir'Length > 0 then
-               Change_Dir (Command.Dir.all);
+            if Command.Dir /= No_File then
+               Change_Dir (Command.Dir);
             end if;
 
             for J in Args'Range loop
@@ -229,10 +229,10 @@ package body Commands.External is
                Temp_Args := Next (Temp_Args);
             end loop;
 
-            if Command.Dir'Length > 0 then
+            if Command.Dir /= No_File then
                Trace
                  (Me,
-                  "spawn from " & Command.Dir.all & ": " &
+                  "spawn from " & Command.Dir.Display_Full_Name & ": " &
                   Command.Command.all & " " &
                   Krunch (Argument_List_To_String (Args), 128));
 
@@ -256,7 +256,7 @@ package body Commands.External is
 
             String_List.Free (Command.Args);
 
-            if Command.Dir.all /= ""  then
+            if Command.Dir /= No_File then
                Change_Dir (Old_Dir);
             end if;
          end;
@@ -269,10 +269,10 @@ package body Commands.External is
       end if;
 
    exception
-      when Directory_Error =>
+      when VFS_Directory_Error =>
          Insert (Command.Kernel,
                  -"Directory error: cannot access "
-                   & Command.Dir.all, Mode => Error);
+                   & Command.Dir.Display_Full_Name, Mode => Error);
          return Failure;
 
       when Invalid_Process =>

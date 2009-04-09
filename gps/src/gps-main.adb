@@ -26,10 +26,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNAT.Strings;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.Memory;
 with GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -58,7 +56,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Config;                    use Config;
 with DDE;
-with File_Utils;
 with GPS.Callbacks;             use GPS.Callbacks;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -83,7 +80,6 @@ with Prj_Output;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
 with Remote;                    use Remote;
-with Remote_Views;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_Utils;
 with Task_Manager;
@@ -132,7 +128,8 @@ with Project_Properties;
 with Project_Viewers;
 with Python_Module;
 with Refactoring_Module;
-with Remote_Sync_Module;
+with Remote.Rsync;
+with Remote_Module;
 with Scenario_Views;
 with Shell_Script;
 with Socket_Module;
@@ -145,8 +142,6 @@ with VFS_Module;
 with Vdiff2_Module;
 with Vdiff_Module;
 with Vsearch;
-
-with UTF8_Utils; use UTF8_Utils;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -219,8 +214,6 @@ procedure GPS.Main is
                       Create ("MODULE.Call_Graph_View", GNATCOLL.Traces.On);
    Clipboard_View_Trace   : constant Debug_Handle :=
                       Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
-   Remote_View_Trace      : constant Debug_Handle :=
-                      Create ("MODULE.Remote_View", GNATCOLL.Traces.On);
    Toolchains_Trace       : constant Debug_Handle :=
                       Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
 
@@ -229,13 +222,12 @@ procedure GPS.Main is
 
    subtype String_Access is GNAT.Strings.String_Access;
 
-   Directory              : Dir_Type;
-   Str                    : String (1 .. 1024);
-   Last                   : Natural;
    Home                   : String_Access;
+   Home_Dir               : Virtual_File;
    Project_Name           : Virtual_File := No_File;
    Prefix                 : String_Access;
-   Dir                    : Filesystem_String_Access;
+   Prefix_Dir             : Virtual_File;
+   GPS_Home_Dir           : Virtual_File;
    Batch_File             : String_Access;
    Batch_Script           : String_Access;
    Tools_Host             : String_Access;
@@ -318,8 +310,8 @@ procedure GPS.Main is
    ---------------------------
 
    procedure Display_Splash_Screen is
-      File   : constant String := Directory_Operations.Format_Pathname
-                 (Prefix.all & "/share/gps/gps-splash.png");
+      File   : constant Virtual_File :=
+                 Create_From_Dir (Prefix_Dir, "share/gps/gps-splash.png");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
@@ -330,7 +322,7 @@ procedure GPS.Main is
         and then Splash_Screen.Get_Pref
         and then Is_Regular_File (File)
       then
-         FD := Open_Read (File, Binary);
+         FD := Open_Read (+File.Full_Name, Binary);
 
          if About_Contents.all /= "" then
             Splash_Timeout := 4000;
@@ -342,7 +334,7 @@ procedure GPS.Main is
          Set_Property (Splash, Allow_Grow_Property, False);
          Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
-         Gdk_New_From_File (Pixbuf, File, Error);
+         Gdk_New_From_File (Pixbuf, +File.Full_Name, Error);
          Gtk_New (Image, Pixbuf);
          Unref (Pixbuf);
          Add (Splash, Image);
@@ -457,40 +449,16 @@ procedure GPS.Main is
 
       Home := Get_Env ("GPS_HOME");
 
-      if Home.all = "" then
-         Free (Home);
-         Home := Get_Env ("HOME");
+      if Home.all /= "" then
+         Home_Dir := Create (+Home.all);
+      else
+         Home_Dir := Get_Home_Directory;
       end if;
 
-      if Home.all = "" then
-         Free (Home);
-         Home := Get_Env ("USERPROFILE");
-      end if;
+      Free (Home);
 
-      if Home'Length > 2
-        and then Home (Home'First) = '%'
-        and then Home (Home'Last) = '%'
-      then
-         --  Some Windows systems set %HOME% to another env variable, e.g.
-         --  %USERPROFILE%
-
-         Tmp := Home;
-         Home := Get_Env (Tmp (Tmp'First + 1 .. Tmp'Last - 1));
-         Free (Tmp);
-      end if;
-
-      if Home.all = "" then
-         Free (Home);
-
-         if Directory_Separator = '\' then
-            Home := new String'("c:\");
-         else
-            Home := new String'("/");
-         end if;
-      end if;
-
-      Dir := new Filesystem_String'
-        (File_Utils.Name_As_Directory (+Home.all) & ".gps");
+      GPS_Home_Dir := Create_From_Dir (Home_Dir, ".gps");
+      Ensure_Directory (GPS_Home_Dir);
 
       Prefix := Getenv ("GPS_ROOT");
 
@@ -504,11 +472,13 @@ procedure GPS.Main is
          end if;
       end if;
 
+      Prefix_Dir := Create (+Prefix.all);
+
       --  Parse the config files
       Gtk.Rc.Add_Default_File
-        (Directory_Operations.Format_Pathname (Prefix.all & "/etc/gps/gtkrc"));
+        (+Create_From_Dir (Prefix_Dir, "etc/gps/gtkrc").Full_Name);
       Gtk.Rc.Add_Default_File
-        (+File_Utils.Name_As_Directory (Dir.all) & "gtkrc");
+        (+Create_From_Dir (GPS_Home_Dir, "gtkrc").Full_Name);
 
       Gtk.Main.Init;
 
@@ -518,14 +488,14 @@ procedure GPS.Main is
       Make_Root := Getenv ("MAKE_ROOT");
 
       if Make_Root.all = "" then
-         Setenv ("MAKE_ROOT", Prefix.all);
+         Setenv ("MAKE_ROOT", +Prefix_Dir.Full_Name);
          Free (Make_Root);
       end if;
 
       Python_Home := Getenv ("PYTHONHOME");
 
       if Python_Home.all = "" then
-         Setenv ("PYTHONHOME", Prefix.all);
+         Setenv ("PYTHONHOME", +Prefix_Dir.Full_Name);
       end if;
 
       Free (Python_Home);
@@ -535,20 +505,19 @@ procedure GPS.Main is
       Tmp := Getenv ("PYTHONPATH");
       if Tmp.all = "" then
          Setenv ("PYTHONPATH",
-                 Directory_Operations.Format_Pathname
-                   (Prefix.all & "/share/gps/python"));
+                 +Create_From_Dir (Prefix_Dir, "share/gps/python").Full_Name);
       else
-         Setenv ("PYTHONPATH", Tmp.all & Path_Separator &
-                 Directory_Operations.Format_Pathname
-                   (Prefix.all & "/share/gps/python"));
+         Setenv ("PYTHONPATH",
+                 +To_Path
+                   (From_Path (+Tmp.all) &
+                    (1 => Create_From_Dir (Prefix_Dir, "share/gps/python"))));
       end if;
 
       Free (Tmp);
 
       Gtkada.Intl.Setlocale;
       Gtkada.Intl.Bind_Text_Domain
-        ("gps",
-         Directory_Operations.Format_Pathname (Prefix.all & "/share/locale"));
+        ("gps", +Create_From_Dir (Prefix_Dir, "share/locale").Full_Name);
       Gtkada.Intl.Text_Domain ("gps");
 
       --  Redirect all default Gtk+ logs to our own trace mechanism
@@ -571,15 +540,15 @@ procedure GPS.Main is
         ("Gtk", Log_Level_Mask, Gtk_Log'Access);
 
       declare
-         Plug_Ins : constant Filesystem_String :=
-           File_Utils.Name_As_Directory (Dir.all) & "plug-ins";
+         Plug_Ins : constant Virtual_File :=
+                      Create_From_Dir (GPS_Home_Dir, "plug-ins");
       begin
-         User_Directory_Existed := Is_Directory (Dir.all);
+         User_Directory_Existed := Is_Directory (GPS_Home_Dir);
 
          if not User_Directory_Existed then
-            Make_Dir (+Dir.all);
+            Make_Dir (GPS_Home_Dir);
             Button := Message_Dialog
-              ((-"Created config directory ") & Unknown_To_UTF8 (+Dir.all),
+              ((-"Created config directory ") & GPS_Home_Dir.Display_Full_Name,
                Information, Button_OK, Justification => Justify_Left);
             Dir_Created := True;
 
@@ -589,7 +558,8 @@ procedure GPS.Main is
 
             Create
               (File,
-               Name => +File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
+               Name => +Create_From_Dir
+                 (GPS_Home_Dir, "traces.cfg").Full_Name);
             Put_Line (File, ">log.$$");
             Put_Line (File, "+");
             Put_Line (File, "DEBUG.COLORS=no");
@@ -602,21 +572,21 @@ procedure GPS.Main is
          end if;
 
          if not Is_Directory (Plug_Ins) then
-            Make_Dir (+Plug_Ins);
+            Make_Dir (Plug_Ins);
 
             if not Dir_Created then
                Button := Message_Dialog
                  ((-"Created plug-ins directory ") &
-                  Unknown_To_UTF8 (+Plug_Ins),
+                  Plug_Ins.Display_Full_Name,
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
 
       exception
-         when Directory_Error =>
+         when VFS_Directory_Error =>
             Button := Message_Dialog
               ((-"Cannot create config directory ") &
-               Unknown_To_UTF8 (+Dir.all) & ASCII.LF &
+               GPS_Home_Dir.Display_Full_Name & ASCII.LF &
                (-"Exiting..."),
                Error, Button_OK,
                Justification => Justify_Left);
@@ -624,13 +594,12 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp : constant Filesystem_String :=
-           Get_Local_Filesystem.Get_Tmp_Directory;
+         Tmp : constant Virtual_File := Get_Tmp_Directory;
       begin
-         if not Is_Directory (+Tmp) then
+         if not Is_Directory (Tmp) then
             Button := Message_Dialog
               ((-"Cannot access temporary directory ") &
-               (Unknown_To_UTF8 (+Tmp)),
+               Tmp.Display_Full_Name,
                Error, Button_OK, Justification => Justify_Left);
             OS_Exit (1);
          end if;
@@ -639,7 +608,7 @@ procedure GPS.Main is
       --  Initialize the traces
 
       GNATCOLL.Traces.Parse_Config_File
-        (Default => +File_Utils.Name_As_Directory (Dir.all) & "traces.cfg",
+        (Default => Create_From_Dir (GPS_Home_Dir, "traces.cfg"),
          On_Exception => GNATCOLL.Traces.Deactivate);
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
@@ -652,16 +621,16 @@ procedure GPS.Main is
              & String_Utils.Image (Gtk_Minor_Version) & '.'
              & String_Utils.Image (Gtk_Micro_Version));
 
-      Gtk_New (GPS_Main, Dir.all, +Prefix.all);
+      Gtk_New (GPS_Main, GPS_Home_Dir, Prefix_Dir);
 
-      About_Contents := GNATCOLL.Mmap.Read_Whole_File
-        (Directory_Operations.Format_Pathname
-           (Prefix.all & "/share/gps/about.txt"),
-         Empty_If_Not_Found => True);
+      About_Contents := Create_From_Dir
+        (Prefix_Dir, "share/gps/about.txt").Read_File;
+      if About_Contents = null then
+         About_Contents := new String'("");
+      end if;
 
       if Is_Regular_File
-        (Directory_Operations.Format_Pathname
-           (Prefix.all & "/share/gps/gps-pro.txt"))
+        (Create_From_Dir (Prefix_Dir, "share/gps/gps-pro.txt"))
       then
          GPS_Main.Public_Version := False;
       end if;
@@ -828,7 +797,8 @@ procedure GPS.Main is
 
                      elsif Full = "-tracefile" then
                         GNATCOLL.Traces.Parse_Config_File
-                           (Filename => Parameter (Parser));
+                             (Filename => Create_From_Base
+                                (+Parameter (Parser)));
 
                      elsif Full = "-tracelist" then
                         GNATCOLL.Traces.Show_Configuration
@@ -848,19 +818,19 @@ procedure GPS.Main is
 
                if not Is_Regular_File (Project_Name) then
                   if Is_Regular_File
-                    (Full_Name (Project_Name).all & Project_File_Extension)
+                    (+(Full_Name (Project_Name) & Project_File_Extension))
                   then
                      Project_Name := Create
-                       (Full_Name (Project_Name).all & Project_File_Extension);
+                       (Full_Name (Project_Name) & Project_File_Extension);
                      Trace
                        (Me, "Found project: " &
-                        (+Full_Name (Project_Name).all));
+                        Display_Full_Name (Project_Name));
                   else
                      --  Keep Project_Name even if it is invalid, we will look
                      --  for it later on the project path, but the latter is
                      --  not known yet at this point
-                     if File_Extension (+(Parameter (Parser))) =
-                       Project_File_Extension
+                     if Equal (File_Extension (Project_Name),
+                               Project_File_Extension)
                      then
                         Project_Name :=
                           Create_From_Base (Base_Name => +Parameter (Parser));
@@ -873,11 +843,11 @@ procedure GPS.Main is
 
                      Trace
                        (Me, "Project not found in current dir: "
-                        & (+Full_Name (Project_Name).all));
+                        & Project_Name.Display_Base_Name);
                   end if;
                else
                   Trace (Me, "Found project: " &
-                         (+Full_Name (Project_Name).all));
+                         Display_Full_Name (Project_Name));
                end if;
 
             when ASCII.NUL =>
@@ -1127,22 +1097,17 @@ procedure GPS.Main is
       -------------------
 
       function Setup_Project return Boolean is
-         Current : constant Filesystem_String := Get_Current_Dir;
+         Current : constant Virtual_File := Get_Current_Dir;
+         Files   : File_Array_Access;
       begin
          Auto_Load_Project := False;
-         Open (Directory, +Current);
+         Files := Read_Dir (Current, Files_Only);
 
-         loop
-            Read (Directory, Str, Last);
-
-            exit when Last = 0;
-
-            if File_Extension (+Str (1 .. Last)) = Project_File_Extension then
+         for J in Files'Range loop
+            if Equal (File_Extension (Files (J)), Project_File_Extension) then
                if Project_Name = No_File then
                   Auto_Load_Project := True;
-                  Project_Name := Create
-                    (Normalize_Pathname (+Str (1 .. Last), Current,
-                     Resolve_Links => False));
+                  Project_Name := Files (J);
                else
                   Auto_Load_Project := False;
                   exit;
@@ -1150,7 +1115,7 @@ procedure GPS.Main is
             end if;
          end loop;
 
-         Close (Directory);
+         Unchecked_Free (Files);
 
          --  If only one project file was found in the current directory, do
          --  not open the welcome dialog. Likewise if we are loading a script,
@@ -1222,7 +1187,7 @@ procedure GPS.Main is
                S : constant Filesystem_String := +Get_Argument
                  (Do_Expansion => True, Parser => Parser);
             begin
-               exit when S = "";
+               exit when S'Length = 0;
 
                --  If no project has been loaded yet, load a default project
                --  and desktop before opening source editors.
@@ -1302,12 +1267,9 @@ procedure GPS.Main is
       --  Register this very early so that other modules can access remote
       --  files
 
+      Remote_Module.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Remote.Register_Module (GPS_Main.Kernel);
-      Remote_Sync_Module.Register_Module (GPS_Main.Kernel);
-
-      if Active (Remote_View_Trace) then
-         Remote_Views.Register_Module (GPS_Main.Kernel);
-      end if;
+      Remote.Rsync.Register_Module (GPS_Main.Kernel);
 
       --  Register the locations view before all the modules that register a
       --  highlighting category. Otherwise, when loading the desktop, the
@@ -1615,9 +1577,9 @@ procedure GPS.Main is
            and then not Is_Regular_File (Project_Name)
          then
             --  We can finally search on ADA_PROJECT_PATH, which is now known
-            Project_Name := File_Utils.Find_On_Path
+            Project_Name := Locate_Regular_File
               (Base_Name (Project_Name),
-               Path => Projects.Registry.Get_Predefined_Project_Path
+               Projects.Registry.Get_Predefined_Project_Path
                  (Get_Registry (GPS_Main.Kernel).all));
          end if;
 
@@ -1711,11 +1673,15 @@ procedure GPS.Main is
    ---------------------
 
    procedure Main_Processing is
-      Log_File : aliased Filesystem_String :=
-        Get_Home_Dir (GPS_Main.Kernel) & "log";
-      Pid_File : aliased Filesystem_String :=
-        Log_File & "." & (+Pid_Image);
-      Str      : Filesystem_String_Access;
+      Log_File : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (GPS_Main.Kernel),
+                      "log");
+      Pid_File : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (GPS_Main.Kernel),
+                      +("log." & Pid_Image));
+      Str      : Virtual_File;
 
    begin
       Gtk.Main.Main;
@@ -1725,15 +1691,15 @@ procedure GPS.Main is
          Trace (Exception_Handle, E);
 
          if Is_Regular_File (Pid_File) then
-            Str := Pid_File'Unchecked_Access;
+            Str := Pid_File;
          else
-            Str := Log_File'Unchecked_Access;
+            Str := Log_File;
          end if;
 
          Button := Message_Dialog
            ("Unexpected fatal error, GPS is in an inconsistent state" &
             ASCII.LF & "Please report with contents of " &
-            Unknown_To_UTF8 (+Str.all) &
+            Str.Display_Full_Name &
             ASCII.LF & ASCII.LF &
             "You will be asked to save modified files before GPS exits",
             Error, Button_OK,
@@ -1748,7 +1714,11 @@ procedure GPS.Main is
 
    procedure Do_Cleanups is
       Kernel   : constant Kernel_Handle := GPS_Main.Kernel;
-      Log_File : constant Filesystem_String := Get_Home_Dir (Kernel) & "log";
+      Log_File : constant Virtual_File :=
+                   Create_From_Dir (Get_Home_Dir (Kernel), +"log");
+      Pid_File : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (GPS_Main.Kernel), +("log." & Pid_Image));
       Project  : constant Project_Type := Get_Project (Kernel);
       Success  : Boolean;
 
@@ -1820,14 +1790,13 @@ procedure GPS.Main is
       --  be reported.
 
       if not Unexpected_Exception
-        and then Is_Regular_File (Log_File & "." & (+Pid_Image))
+        and then Is_Regular_File (Pid_File)
       then
-         Delete_File (+Log_File, Success);
-         Rename_File (+Log_File & "." & Pid_Image, +Log_File, Success);
+         Delete (Log_File, Success);
+         Rename (Pid_File, Log_File, Success);
       end if;
 
       Free (Home);
-      Free (Dir);
       Free (Prefix);
       Free (Startup_Dir);
    end Do_Cleanups;

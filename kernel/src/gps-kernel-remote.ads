@@ -42,7 +42,7 @@ package GPS.Kernel.Remote is
       Blocking       : Boolean;
       Print_Command  : Boolean;
       Print_Output   : Boolean;
-      Sync_Once_Dirs : Boolean;
+      Force          : Boolean;
       Queue_Id       : String  := "");
    --  Perform a file system synchronisation between From and To.
    --  If Blocking is set, the call is synchronous. Else an asynchronous
@@ -63,7 +63,7 @@ package GPS.Kernel.Remote is
       Blocking       : Boolean;
       Print_Command  : Boolean;
       Print_Output   : Boolean;
-      Sync_Once_Dirs : Boolean;
+      Force          : Boolean;
       Queue_Id       : String  := "");
    --  Same as above, with From and To servers identified by their nickname
 
@@ -76,7 +76,7 @@ package GPS.Kernel.Remote is
       Use_Ext_Terminal  : Boolean := False;
       Console           : Interactive_Consoles.Interactive_Console := null;
       Show_Command      : Boolean := True;
-      Directory         : Filesystem_String := "";
+      Directory         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Use_Pipes         : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
@@ -108,27 +108,25 @@ package GPS.Kernel.Remote is
    Rsync_Hook_Type : constant Hook_Type := "rsync_action_hook_t";
 
    type Rsync_Hooks_Args
-     (Tool_Name_Length, Src_Name_Length, Dest_Name_Length, Queue_Id_Length,
-      Src_Path_Length, Dest_Path_Length : Natural)
+     (Tool_Name_Length, Host_Name_Length, Queue_Id_Length : Natural)
    is new Hooks_Data with record
       Synchronous   : Boolean;
       --  Tells if the synchronisation call shall be performed synchronously
+      Force         : Boolean;
+      --  Tells if we want to force the synchronisation.
+      To_Remote     : Boolean;
+      --  Tells if sync so from host to remote (Set to true) or to host from
+      --  remote
       Print_Output  : Boolean;
       --  Tells if rsync output is displayed on the Messages window
       Print_Command : Boolean;
       --  Tells if rsync command is displayed on thee Messages window
       Tool_Name     : String (1 .. Tool_Name_Length);
-      --  What hook function shall perform the action
-      Src_Name      : String (1 .. Src_Name_Length);
       --  Source server nickname
-      Dest_Name     : String (1 .. Dest_Name_Length);
-      --  Destination server nickname
+      Host_Name     : String (1 .. Host_Name_Length);
+      --  The host we want to synchronise with
       Queue_Id      : String (1 .. Queue_Id_Length);
       --  Queue_Id used to enqueue the sync command
-      Src_Path      : Filesystem_String (1 .. Src_Path_Length);
-      --  Source path
-      Dest_Path     : Filesystem_String (1 .. Dest_Path_Length);
-      --  Destination path
    end record;
 
    overriding function Create_Callback_Data
@@ -163,21 +161,9 @@ package GPS.Kernel.Remote is
       return GNATCOLL.Scripts.Callback_Data_Access;
    --  See inherited for documentation
 
-   ------------------------------
-   -- Server List Changed Hook --
-   ------------------------------
-
-   Server_List_Changed_Hook : constant Hook_Name := "server_list_hook";
-   --  No data hook
-
    ----------------------------
    --  Servers configuration --
    ----------------------------
-
-   procedure Configure_Server_List
-     (Kernel         : GPS.Kernel.Kernel_Handle;
-      Default_Server : String := "");
-   --  Runs the server list editor dialog
 
    procedure Assign
      (Kernel     : Kernel_Handle;

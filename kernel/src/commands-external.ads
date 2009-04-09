@@ -18,11 +18,12 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
+with GNAT.Strings;
+with GNATCOLL.VFS;
 
 with Gtk.Main;           use Gtk.Main;
 with GPS.Kernel;         use GPS.Kernel;
 with String_List_Utils;  use String_List_Utils;
-with GNAT.Strings;
 
 package Commands.External is
 
@@ -44,7 +45,7 @@ package Commands.External is
      (Item           : out External_Command_Access;
       Kernel         : not null access Kernel_Handle_Record'Class;
       Command        : String;
-      Dir            : String;
+      Dir            : GNATCOLL.VFS.Virtual_File;
       Args           : String_List.List;
       Head           : String_List.List;
       Handler        : String_List_Handler;
@@ -79,7 +80,7 @@ private
       Kernel          : access Kernel_Handle_Record'Class;
       Fd              : TTY_Process_Descriptor;
       Command         : GNAT.Strings.String_Access;
-      Dir             : GNAT.Strings.String_Access;
+      Dir             : GNATCOLL.VFS.Virtual_File;
       Args            : String_List.List;
       Head            : String_List.List;
       Handler         : String_List_Handler;

@@ -49,8 +49,7 @@
 --      are called initially.
 
 with Commands.Custom;
-with File_Utils;
-with Remote;
+with GNATCOLL.VFS_Utils;
 with XML_Utils;
 
 package GPS.Kernel.Custom is
@@ -100,24 +99,24 @@ package GPS.Kernel.Custom is
    -------------------------------
 
    function Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the system directory for automatically loaded scripts.
    --  This is $prefix/share/gps/plug-ins
 
    function No_Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the system directory for scripts that are not automatically
    --  loaded by default.
    --  This is $prefix/share/gps/libraries
 
    function Autoload_User_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the user directory for automatically loaded scripts
    --  This is ~/.gps/plug-ins.
    --  The directory is created if it doesn't exist yet.
 
-   function Get_Custom_Path return Filesystem_String;
-   --  Return a colon-separated list of directories in which the user might
+   function Get_Custom_Path return File_Array;
+   --  Return a list of directories in which the user might
    --  have put custom scripts to autoload.
 
    -----------------------------------------------
@@ -215,8 +214,7 @@ private
      (Data_Type      => Script_Description_Access,
       Free_Data      => Free,
       Null_Ptr       => null,
-      Case_Sensitive =>
-         File_Utils.Is_Case_Sensitive (Server => Remote.GPS_Server));
+      Case_Sensitive => GNATCOLL.VFS_Utils.Local_Host_Is_Case_Sensitive);
 
    type Script_Iterator is record
       Kernel : Kernel_Handle;

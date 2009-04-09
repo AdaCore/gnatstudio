@@ -223,7 +223,6 @@ package body Commands.Interactive is
          Free (X.Event);
       end if;
 
-      Free (X.Dir);
       Free (X.Label);
    end Free;
 

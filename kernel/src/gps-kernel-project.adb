@@ -20,7 +20,6 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
@@ -35,11 +34,10 @@ with Basic_Types;
 with Entities;
 with XML_Utils;                 use XML_Utils;
 with Prj;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with Remote;                    use Remote;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Location_View;         use GPS.Location_View;
@@ -111,9 +109,9 @@ package body GPS.Kernel.Project is
 
    type Predefined_Paths_Property is new GPS.Kernel.Properties.Property_Record
    with record
-      Source_Path  : Filesystem_String_Access;
-      Object_Path  : Filesystem_String_Access;
-      Project_Path : Filesystem_String_Access;
+      Source_Path  : File_Array_Access;
+      Object_Path  : File_Array_Access;
+      Project_Path : File_Array_Access;
    end record;
 
    overriding procedure Save
@@ -125,6 +123,19 @@ package body GPS.Kernel.Project is
      (Property : in out Predefined_Paths_Property;
       From     : XML_Utils.Node_Ptr);
    --  See inherited procedure
+
+   function Tag_Name (Idx : Natural) return XML_Utils.UTF8_String;
+   --  Return the tag name for path index idx
+
+   --------------
+   -- Tag_Name --
+   --------------
+
+   function Tag_Name (Idx : Natural) return XML_Utils.UTF8_String is
+      Str : constant String := Idx'Img;
+   begin
+      return "path" & Str (Str'First + 1 .. Str'Last);
+   end Tag_Name;
 
    ----------
    -- Save --
@@ -138,15 +149,38 @@ package body GPS.Kernel.Project is
    begin
       Child := new XML_Utils.Node;
       Child.Tag := new String'("source_path");
-      Child.Value := new String'(+Property.Source_Path.all);
+      XML_Utils.Set_Attribute
+        (Child, "nb_paths", Property.Source_Path'Length'Img);
+
+      for J in Property.Source_Path'Range loop
+         XML_Utils.Add_File_Child
+           (Child, Tag_Name (J), Property.Source_Path (J));
+      end loop;
+
       Add_Child (Node, Child);
+
       Child := new XML_Utils.Node;
       Child.Tag := new String'("object_path");
-      Child.Value := new String'(+Property.Object_Path.all);
+      XML_Utils.Set_Attribute
+        (Child, "nb_paths", Property.Object_Path'Length'Img);
+
+      for J in Property.Object_Path'Range loop
+         XML_Utils.Add_File_Child
+           (Child, Tag_Name (J), Property.Object_Path (J));
+      end loop;
+
       Add_Child (Node, Child);
+
       Child := new XML_Utils.Node;
       Child.Tag := new String'("project_path");
-      Child.Value := new String'(+Property.Project_Path.all);
+      XML_Utils.Set_Attribute
+        (Child, "nb_paths", Property.Project_Path'Length'Img);
+
+      for J in Property.Project_Path'Range loop
+         XML_Utils.Add_File_Child
+           (Child, Tag_Name (J), Property.Project_Path (J));
+      end loop;
+
       Add_Child (Node, Child);
 
    exception
@@ -164,11 +198,31 @@ package body GPS.Kernel.Project is
       Child : XML_Utils.Node_Ptr;
    begin
       Child := Find_Tag (From.Child, "source_path");
-      Property.Source_Path := new Filesystem_String'(+Child.Value.all);
+      Property.Source_Path := new File_Array
+        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
+
+      for J in Property.Source_Path'Range loop
+         Property.Source_Path (J) :=
+           XML_Utils.Get_File_Child (Child, Tag_Name (J));
+      end loop;
+
       Child := Find_Tag (From.Child, "object_path");
-      Property.Object_Path := new Filesystem_String'(+Child.Value.all);
+      Property.Source_Path := new File_Array
+        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
+
+      for J in Property.Object_Path'Range loop
+         Property.Object_Path (J) :=
+           XML_Utils.Get_File_Child (Child, Tag_Name (J));
+      end loop;
+
       Child := Find_Tag (From.Child, "project_path");
-      Property.Project_Path := new Filesystem_String'(+Child.Value.all);
+      Property.Project_Path := new File_Array
+        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
+
+      for J in Property.Project_Path'Range loop
+         Property.Project_Path (J) :=
+           XML_Utils.Get_File_Child (Child, Tag_Name (J));
+      end loop;
    end Load;
 
    ---------------------------------------
@@ -241,11 +295,11 @@ package body GPS.Kernel.Project is
             if Success then
                if Active (Me) then
                   Trace (Me, "set source path from cache to " &
-                         (+Property.Source_Path.all));
+                         (+To_Path (Property.Source_Path.all)));
                   Trace (Me, "set object path from cache to " &
-                         (+Property.Object_Path.all));
+                         (+To_Path (Property.Object_Path.all)));
                   Trace (Me, "set project path from cache to " &
-                         (+Property.Project_Path.all));
+                         (+To_Path (Property.Project_Path.all)));
                end if;
 
                Set_Predefined_Source_Path
@@ -275,15 +329,12 @@ package body GPS.Kernel.Project is
             Error_Handler'Unchecked_Access);
 
          if Property_Index /= No_Index then
-            Property.Source_Path :=
-              new Filesystem_String'
-                (Get_Predefined_Source_Path (Handle.Registry.all));
-            Property.Object_Path :=
-              new Filesystem_String'
-                (Get_Predefined_Object_Path (Handle.Registry.all));
-            Property.Project_Path :=
-              new Filesystem_String'
-                (Get_Predefined_Project_Path (Handle.Registry.all));
+            Property.Source_Path := new File_Array'
+              (Get_Predefined_Source_Path (Handle.Registry.all));
+            Property.Object_Path := new File_Array'
+              (Get_Predefined_Object_Path (Handle.Registry.all));
+            Property.Project_Path := new File_Array'
+              (Get_Predefined_Project_Path (Handle.Registry.all));
             Prop_Access := new Predefined_Paths_Property'(Property);
             Set_Property
               (Handle,
@@ -325,12 +376,13 @@ package body GPS.Kernel.Project is
    is
       Project             : Virtual_File :=
                               Create_From_Dir (Directory, "default.gpr");
-      Share_Dir           : constant Filesystem_String :=
-                              Get_System_Dir (Kernel) & "share/gps/";
-      Default             : constant Filesystem_String :=
-                              Share_Dir & "default.gpr";
-      Readonly            : constant Filesystem_String :=
-                              Share_Dir & "readonly.gpr";
+      Share_Dir           : constant Virtual_File :=
+                              Create_From_Dir
+                                (Get_System_Dir (Kernel), "share/gps/");
+      Default             : constant Virtual_File :=
+                              Create_From_Dir (Share_Dir, "default.gpr");
+      Readonly            : constant Virtual_File :=
+                              Create_From_Dir (Share_Dir, "readonly.gpr");
       Found               : Boolean;
       Is_Default          : Boolean := False;
 
@@ -351,11 +403,11 @@ package body GPS.Kernel.Project is
          Found := True;
 
       elsif Is_Writable (Directory) and then Is_Regular_File (Default) then
-         Copy_File (Default, Full_Name (Project).all, Found);
+         Copy (Default, Project.Full_Name, Found);
          Is_Default := True;
 
       elsif Is_Regular_File (Readonly) then
-         Project := GNATCOLL.VFS.Create (Readonly);
+         Project := Readonly;
          Found := True;
 
       else
@@ -537,8 +589,7 @@ package body GPS.Kernel.Project is
             --  Note that Running the Project_Changing_Hook has already
             --  set the build_server to Project's Host
 
-            Local_Project :=
-              Create (To_Local (Full_Name (Project).all, Build_Server));
+            Local_Project := To_Local (Project);
 
             if not Is_Regular_File (Local_Project) then
                Console.Insert

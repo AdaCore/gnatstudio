@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
-
 with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 with Gdk.Types;              use Gdk.Types;
 
@@ -33,6 +31,7 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
@@ -46,7 +45,6 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with Projects;               use Projects;
 with Traces;                 use Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 package body GPS.Menu is
 
@@ -136,7 +134,7 @@ package body GPS.Menu is
          GPS.Kernel.Console.Insert
            (Kernel,
             "Cannot change to directory: " &
-            (+Full_Name (Dir).all),
+            Dir.Display_Full_Name,
             Mode => Error);
       when E : others => Trace (Exception_Handle, E);
    end On_Change_Dir;
@@ -236,7 +234,9 @@ package body GPS.Menu is
       if Status (Project) = From_File and then Path /= No_File then
          Add_To_History
            (Kernel, Project_History_Key,
-            +Full_Name (Path, Normalize => False).all);
+            --  ??? What if the file is not utf8 ? The saved xml file might
+            --  get corrupted ...
+            +Full_Name (Path, Normalize => False));
       end if;
 
    exception

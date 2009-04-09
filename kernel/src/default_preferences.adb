@@ -75,9 +75,6 @@ with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
 with XML_Parsers;
 
-with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
-with GNATCOLL.VFS;
-
 package body Default_Preferences is
 
    Me : constant Debug_Handle := Create ("Default_Prefs");
@@ -819,7 +816,7 @@ package body Default_Preferences is
 
    procedure Load_Preferences
      (Manager   : access  Preferences_Manager_Record;
-      File_Name : Filesystem_String)
+      File_Name : Virtual_File)
    is
       File, Node : Node_Ptr;
       Err        : String_Access;
@@ -841,7 +838,8 @@ package body Default_Preferences is
                   Node := Node.Next;
                end loop;
             else
-               Trace (Me, "Load new style preferences from " & (+File_Name));
+               Trace (Me, "Load new style preferences from " &
+                      File_Name.Display_Full_Name);
                while Node /= null loop
                   if Node.Tag.all = "pref" then
                      declare
@@ -875,7 +873,7 @@ package body Default_Preferences is
 
    procedure Save_Preferences
      (Manager   : access Preferences_Manager_Record;
-      File_Name : Filesystem_String;
+      File_Name : Virtual_File;
       Success   : out Boolean)
    is
       File, Node : Node_Ptr;
@@ -895,7 +893,7 @@ package body Default_Preferences is
          Next (C);
       end loop;
 
-      Print (File, GNATCOLL.VFS.Create (File_Name), Success);
+      Print (File, File_Name, Success);
 
    exception
       when E : others => Trace (Exception_Handle, E);

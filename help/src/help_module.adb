@@ -25,12 +25,10 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Mmap;              use GNATCOLL.Mmap;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -55,7 +53,6 @@ with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Traces;                     use Traces;
-with File_Utils;                 use File_Utils;
 with Generic_List;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
@@ -117,7 +114,7 @@ package body Help_Module is
       Categories : Help_Category_List.List;
       --  The registered help files
 
-      Doc_Path   : Filesystem_String_Access;
+      Doc_Path   : File_Array_Access;
 
       Html_Class : Class_Type;
       Help_Class : Class_Type;
@@ -138,7 +135,7 @@ package body Help_Module is
 
    procedure Add_Doc_Directory
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Filesystem_String);
+      Directory : Virtual_File);
    --  Add a new directory to the documentation path
 
    procedure Add_Doc_Path_From_Env
@@ -233,7 +230,7 @@ package body Help_Module is
 
    procedure Parse_Index_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Filesystem_String);
+      Directory : Virtual_File);
    --  Parse the index file for one specific directory
 
    function Get_Shell_Documentation
@@ -302,7 +299,7 @@ package body Help_Module is
          return "";
       end if;
 
-      return "file://" & (+Full_Name (File).all) & Name (Anchor .. Name'Last);
+      return "file://" & (+Full_Name (File)) & Name (Anchor .. Name'Last);
    end Create_URL;
 
    ---------------
@@ -311,13 +308,14 @@ package body Help_Module is
 
    function Find_File (Name : Filesystem_String) return Virtual_File is
       Full : Filesystem_String_Access;
+      use type GNATCOLL.VFS.Filesystem_String_Access;
    begin
       if Is_Absolute_Path (Name) then
          return Create (Name);
       end if;
 
       Full := Locate_Regular_File
-        (Name, Help_Module_ID.Doc_Path.all);
+        (Name, To_Path (Help_Module_ID.Doc_Path.all));
 
       if Full = null then
          return GNATCOLL.VFS.No_File;
@@ -339,7 +337,7 @@ package body Help_Module is
    overriding procedure Destroy (Module : in out Help_Module_ID_Record) is
    begin
       Free (Module.Categories);
-      Free (Module.Doc_Path);
+      Unchecked_Free (Module.Doc_Path);
    end Destroy;
 
    -----------------------------
@@ -515,13 +513,16 @@ package body Help_Module is
    is
       Error : GNAT.Strings.String_Access;
       Tmp   : XML_Utils.Node_Ptr;
+      File  : constant Virtual_File :=
+                Create_From_Dir
+                  (Get_System_Dir (Kernel), "share/gps/shell_commands.xml");
    begin
-      Trace (Me, "Parsing XML file "
-             & (+Get_System_Dir (Kernel)) & "share/gps/shell_commands.xml");
+      Trace (Me, "Parsing XML file " & File.Display_Full_Name);
       XML_Parsers.Parse
-        (File  => Get_System_Dir (Kernel) & "share/gps/shell_commands.xml",
+        (File  => File,
          Tree  => Tmp,
          Error => Error);
+
       if Error /= null then
          Insert (Kernel, Error.all, Mode => GPS.Kernel.Console.Error);
          Free (Error);
@@ -590,8 +591,11 @@ package body Help_Module is
          end;
 
       elsif Command = "file" then
+         --  ??? We should return a Virtual_File instead.
          Set_Return_Value
-           (Data, Get_System_Dir (Kernel) & "share/gps/shell_commands.xml");
+           (Data,
+            +Get_System_Dir (Kernel).Full_Name &
+            "share/gps/shell_commands.xml");
 
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
@@ -611,7 +615,10 @@ package body Help_Module is
          end;
 
       elsif Command = "add_doc_directory" then
-         Add_Doc_Directory (Get_Kernel (Data), Nth_Arg (Data, 1));
+         --  ??? We should add directly the Virtual_File, instead of its
+         --  full_name
+         Add_Doc_Directory
+           (Get_Kernel (Data), Nth_Arg (Data, 1));
       end if;
    end Command_Handler;
 
@@ -621,34 +628,36 @@ package body Help_Module is
 
    procedure Add_Doc_Directory
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Filesystem_String)
+      Directory : Virtual_File)
    is
-      Dir  : constant Filesystem_String :=
-               Normalize_Pathname
-                 (Directory, Get_System_Dir (Kernel), Resolve_Links => False);
-      Old  : Filesystem_String_Access := Help_Module_ID.Doc_Path;
-      Iter : Path_Iterator;
+      use type GNATCOLL.VFS.Filesystem_String;
+      use type GNATCOLL.VFS.Filesystem_String_Access;
+      Dir  : Virtual_File;
+
    begin
-      if Directory /= "" then
-         if Old /= null then
-            Iter := Start (Old.all);
-            while not At_End (Old.all, Iter) loop
-               if Current (Old.all, Iter) = Dir then
+      if not Is_Directory (Directory) then
+         Dir := Create
+           (Normalize_Pathname
+              (Directory.Full_Name,
+               Get_System_Dir (Kernel).Full_Name,
+               Resolve_Links => False));
+      else
+         Dir := Directory;
+      end if;
+
+      if Directory /= No_File then
+         if Help_Module_ID.Doc_Path /= null then
+            for J in Help_Module_ID.Doc_Path'Range loop
+               if Help_Module_ID.Doc_Path (J) = Dir then
                   return;
                end if;
-               Iter := Next (Old.all, Iter);
             end loop;
 
-            Trace (Me, "Adding " & (+Dir) & " to GPS_DOC_PATH");
-            if Old.all = "" then
-               Help_Module_ID.Doc_Path := new Filesystem_String'(Dir);
-            else
-               Help_Module_ID.Doc_Path :=
-                 new Filesystem_String'(Dir & Path_Separator & Old.all);
-            end if;
-            Free (Old);
+            Trace (Me, "Adding " & Dir.Display_Full_Name & " to GPS_DOC_PATH");
+
+            GNATCOLL.VFS.Append (Help_Module_ID.Doc_Path, Dir);
          else
-            Help_Module_ID.Doc_Path := new Filesystem_String'(Dir);
+            Help_Module_ID.Doc_Path := new File_Array'(1 => Dir);
          end if;
 
          Parse_Index_File (Kernel, Directory => Dir);
@@ -925,13 +934,16 @@ package body Help_Module is
 
       Top        : constant GPS_Window :=
                      GPS_Window (Get_Main_Window (Kernel));
-      About_File : constant Filesystem_String :=
-        Format_Pathname (Get_System_Dir (Kernel) & "/share/gps/about.txt");
+      About_File : constant Virtual_File :=
+                     Create_From_Dir
+                       (Get_System_Dir (Kernel), "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
 
    begin
-      Contents := GNATCOLL.Mmap.Read_Whole_File
-        (+About_File, Empty_If_Not_Found => True);
+      Contents := About_File.Read_File;
+      if Contents = null then
+         Contents := new String'("");
+      end if;
 
       Button := Message_Dialog
         (GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &
@@ -976,9 +988,17 @@ package body Help_Module is
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang      : GNAT.Strings.String_Access;
       Field                  : Node_Ptr;
+      Dir                    : Virtual_File;
    begin
-      if Node.Tag.all = "doc_path" then
-         Add_Doc_Directory (Kernel, +Node.Value.all);
+      if Node.Parent /= null then
+         Dir := Get_File_Child
+           (Node.Parent, "doc_path", Use_VFS_Prefix => False);
+      else
+         Dir := No_File;
+      end if;
+
+      if Dir /= No_File then
+         Add_Doc_Directory (Kernel, Dir);
 
       elsif Node.Tag.all = "documentation_file" then
          Name  := null;
@@ -1075,15 +1095,15 @@ package body Help_Module is
 
    procedure Parse_Index_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Filesystem_String)
+      Directory : Virtual_File)
    is
-      Full    : constant Filesystem_String :=
-        Name_As_Directory (Directory) & Index_File;
+      Full    : constant Virtual_File :=
+                  Create_From_Dir (Directory, Index_File);
       Node, N : Node_Ptr;
       Err     : GNAT.Strings.String_Access;
    begin
       if Is_Regular_File (Full) then
-         Trace (Me, "Parsing index " & (+Full));
+         Trace (Me, "Parsing index " & Full.Display_Full_Name);
 
          XML_Parsers.Parse (Full, Node, Err);
 
@@ -1094,7 +1114,7 @@ package body Help_Module is
          else
             N := Node.Child;
             while N /= null loop
-               Customize (Help_Module_ID, Create (Full), N, System_Wide);
+               Customize (Help_Module_ID, Full, N, System_Wide);
                N := N.Next;
             end loop;
             Free (Node);
@@ -1112,7 +1132,8 @@ package body Help_Module is
       pragma Unreferenced (Widget);
       Contents_Marker : constant String := ASCII.LF & "@@CONTENTS@@";
       Output          : constant Virtual_File :=
-                          Create (Get_Home_Dir (Kernel) & "help_index.html");
+                          Create_From_Dir (Get_Home_Dir (Kernel),
+                                           "help_index.html");
       File            : constant Virtual_File := Find_File (Template_Index);
       Buffer          : GNAT.Strings.String_Access := Read_File (File);
       Index           : Natural;
@@ -1123,7 +1144,7 @@ package body Help_Module is
       Output_Write    : Writable_File;
 
    begin
-      Trace (Me, "loading file: " & (+Full_Name (File).all));
+      Trace (Me, "loading file: " & File.Display_Full_Name);
       if Buffer /= null then
          Index := Buffer'First;
          while Index + Contents_Marker'Length - 1 <= Buffer'Last
@@ -1176,7 +1197,7 @@ package body Help_Module is
 
          Free (Buffer);
 
-         Open_Html (Kernel, +Output.Full_Name (True).all);
+         Open_Html (Kernel, +Output.Full_Name (True));
       end if;
    end On_Load_Index;
 
@@ -1187,20 +1208,25 @@ package body Help_Module is
    procedure Add_Doc_Path_From_Env
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Path_From_Env : GNAT.Strings.String_Access := Getenv ("GPS_DOC_PATH");
-      Iter          : Path_Iterator := Start (+Path_From_Env.all);
+      Path_From_Env : constant File_Array :=
+                        From_Path (+Getenv ("GPS_DOC_PATH").all);
+      Custom_Path   : constant File_Array :=
+                        Get_Custom_Path;
+
    begin
-      while not At_End (+Path_From_Env.all, Iter) loop
-         Add_Doc_Directory (Kernel, Current (+Path_From_Env.all, Iter));
-         Iter := Next (+Path_From_Env.all, Iter);
+      for J in Path_From_Env'Range loop
+         Add_Doc_Directory (Kernel, Path_From_Env (J));
       end loop;
-      Free (Path_From_Env);
+
       Add_Doc_Directory
-        (Kernel, Get_System_Dir (Kernel) & "share/doc/gps/html/");
+        (Kernel,
+         Create_From_Dir (Get_System_Dir (Kernel), "share/doc/gps/html/"));
 
       --  We add the custom path here to make sure that the node parsed by
       --  the custom module will be able to find the documentation.
-      Add_Doc_Directory (Kernel, Get_Custom_Path);
+      for J in Custom_Path'Range loop
+         Add_Doc_Directory (Kernel, Custom_Path (J));
+      end loop;
    end Add_Doc_Path_From_Env;
 
    ---------------------

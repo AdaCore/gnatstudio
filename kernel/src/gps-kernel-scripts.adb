@@ -21,7 +21,6 @@ with Ada.Unchecked_Conversion;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
@@ -65,14 +64,13 @@ with Projects.Editor;         use Projects.Editor;
 with Projects.Registry;       use Projects.Registry;
 with Projects;                use Projects;
 with Remote;                  use Remote;
-with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_List_Utils;
 with System;                  use System;
 with System.Address_Image;
 with System.Assertions;
 with GNATCOLL.Memory;
 with Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with OS_Utils;                use OS_Utils;
 
 package body GPS.Kernel.Scripts is
@@ -416,18 +414,32 @@ package body GPS.Kernel.Scripts is
          GPS_Properties_Record'(Typ => Files, File => File));
    end Set_Data;
 
-   --------------
-   -- Get_Data --
-   --------------
+   -------------
+   -- Nth_Arg --
+   -------------
 
-   function Get_Data
+   function Nth_Arg
      (Data : Callback_Data'Class; N : Positive) return Virtual_File
    is
       Class : constant Class_Type := Get_File_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
    begin
       return Get_Data (Inst);
-   end Get_Data;
+   end Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Callback_Data'Class;
+      N    : Positive;
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      Inst  : constant Class_Instance := Create_File (Get_Script (Data), File);
+   begin
+      Set_Nth_Arg (Data, N, Inst);
+   end Set_Nth_Arg;
 
    --------------
    -- Get_Data --
@@ -492,13 +504,13 @@ package body GPS.Kernel.Scripts is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "get_system_dir" then
-         Set_Return_Value (Data, +Get_System_Dir (Kernel));
+         Set_Return_Value (Data, +Get_System_Dir (Kernel).Full_Name);
 
       elsif Command = "get_tmp_dir" then
-         Set_Return_Value (Data, +Get_Local_Filesystem.Get_Tmp_Directory);
+         Set_Return_Value (Data, +Get_Tmp_Directory.Full_Name);
 
       elsif Command = "get_home_dir" then
-         Set_Return_Value (Data, +Get_Home_Dir (Kernel));
+         Set_Return_Value (Data, +Get_Home_Dir (Kernel).Full_Name);
 
       elsif Command = "debug_memory_usage" then
          GNATCOLL.Memory.Dump
@@ -616,7 +628,7 @@ package body GPS.Kernel.Scripts is
                   Context => (Event       => null,
                               Context     => Context,
                               Synchronous => Synchronous,
-                              Dir         => null,
+                              Dir         => No_File,
                               Args        => Args,
                               Label       => new String'(Nth_Arg (Data, 1)),
                               Repeat_Count     => 1,
@@ -960,14 +972,14 @@ package body GPS.Kernel.Scripts is
             end if;
 
             --  Kernel's Create_Form_Base will override File if needed
-            File := Create_From_Dir (Get_Current_Dir, Nth_Arg (Data, 2));
+            File := Create_From_Base (Nth_Arg (Data, 2));
             Set_Data (Instance,
-                      Create_From_Base (Full_Name (File).all, Kernel));
+                      Create_From_Base (Full_Name (File), Kernel));
          end;
 
       elsif Command = "name" then
          Name_Parameters (Data, File_Name_Parameters);
-         Info := Get_Data (Data, 1);
+         Info := Nth_Arg (Data, 1);
 
          declare
             Server : Server_Type;
@@ -981,16 +993,17 @@ package body GPS.Kernel.Scripts is
             end;
 
             if Server = GPS_Server then
-               Set_Return_Value (Data, Full_Name (Info).all);
+               Set_Return_Value (Data, Full_Name (Info));
             else
                Set_Return_Value
-                 (Data, To_Remote (Full_Name (Info).all, Server));
+                 (Data,
+                  Full_Name (To_Remote (Info, Get_Nickname (Server))));
             end if;
          end;
 
       elsif Command = "project" then
          Name_Parameters (Data, File_Project_Parameters);
-         Info := Get_Data (Data, 1);
+         Info := Nth_Arg (Data, 1);
          Set_Return_Value
            (Data, Create_Project
             (Get_Script (Data),
@@ -1000,11 +1013,11 @@ package body GPS.Kernel.Scripts is
               Root_If_Not_Found => Nth_Arg (Data, 2, True))));
 
       elsif Command = "directory" then
-         Info := Get_Data (Data, 1);
-         Set_Return_Value (Data, Dir_Name (Info).all);
+         Info := Nth_Arg (Data, 1);
+         Set_Return_Value (Data, Dir_Name (Info));
 
       elsif Command = "language" then
-         Info := Get_Data (Data, 1);
+         Info := Nth_Arg (Data, 1);
          Set_Return_Value
            (Data, Get_Language_From_File
               (Get_Language_Handler (Kernel), Info));
@@ -1014,7 +1027,7 @@ package body GPS.Kernel.Scripts is
             Other   : Virtual_File;
             Project : Project_Type;
          begin
-            Info := Get_Data (Data, 1);
+            Info := Nth_Arg (Data, 1);
 
             Project := Get_Project_From_File
               (Project_Registry (Get_Registry (Kernel).all),
@@ -1029,7 +1042,7 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "entities" then
          Name_Parameters (Data, File_Entities_Parameters);
-         Info := Get_Data (Data, 1);
+         Info := Nth_Arg (Data, 1);
          declare
             Iter   : Entity_Iterator;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
@@ -1261,8 +1274,10 @@ package body GPS.Kernel.Scripts is
          Context := Get_Data (Data, 1);
          if Has_File_Information (Context) then
             Set_Return_Value
-              (Data, Create_File (Get_Script (Data),
-               File_Information (Context)));
+              (Data,
+               Create_File
+                 (Get_Script (Data),
+                  File_Information (Context)));
          else
             Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
@@ -1318,7 +1333,14 @@ package body GPS.Kernel.Scripts is
       elsif Command = "directory" then
          Context := Get_Data (Data, 1);
          if Has_Directory_Information (Context) then
-            Set_Return_Value (Data, Directory_Information (Context));
+            --  ??? We should return the Virtual_File here ?
+            --  Set_Return_Value
+            --    (Data,
+            --     Create_File
+            --       (Get_Script (Data),
+            --        Directory_Information (Context)));
+            Set_Return_Value
+              (Data, Directory_Information (Context).Full_Name);
          else
             Set_Error_Msg (Data, -"No directory stored in the context");
          end if;

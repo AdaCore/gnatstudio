@@ -20,8 +20,6 @@
 with GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
@@ -697,11 +695,11 @@ package body GVD_Module is
            or else Is_Regular_File (S)
          then
             Add_Symbols
-              (Process.Debugger, +Full_Name (S).all,
+              (Process.Debugger, S,
                Mode => GVD.Types.Visible);
          else
             Console.Insert
-              (Kernel, (-"Could not find file: ") & (+Full_Name (S).all),
+              (Kernel, (-"Could not find file: ") & S.Display_Full_Name,
                Mode => Error);
          end if;
       end;
@@ -1293,7 +1291,7 @@ package body GVD_Module is
             if Use_Exec_Dir then
                Change_Directory
                  (Process.Debugger,
-                  +Dir_Name (Process.Descriptor.Program).all);
+                  Process.Descriptor.Program);
             end if;
 
             if Is_Start then
@@ -1428,7 +1426,7 @@ package body GVD_Module is
                       GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
                       Get_Current_Process (Top);
-      Exec        : Filesystem_String_Access;
+      Exec        : Virtual_File;
       Ptr         : GNAT.Strings.String_Access :=
                       GNAT.OS_Lib.Get_Executable_Suffix;
       Exec_Suffix : constant String := Ptr.all;
@@ -1454,21 +1452,15 @@ package body GVD_Module is
          end if;
 
          if not Is_Regular_File (S) then
-            Exec := Locate_Exec_On_Path (Base_Name (S));
+            Exec := GNATCOLL.VFS.Locate_On_Path (Base_Name (S));
 
-            if Exec /= null then
-               S := Create (Full_Filename => Exec.all);
-
-               if not Is_Regular_File (S) then
-                  S := Create (Full_Filename => Exec.all & (+Exec_Suffix));
-               end if;
-
-               Free (Exec);
-            else
+            if not Is_Regular_File (Exec) then
                Console.Insert
                  (Kernel, (-"Could not find file: ") & Display_Base_Name (S),
                   Mode => Error);
                S := GNATCOLL.VFS.No_File;
+            else
+               S := Exec;
             end if;
          end if;
 
@@ -1521,7 +1513,7 @@ package body GVD_Module is
            or else Is_Regular_File (S)
          then
             Load_Core_File
-              (Process.Debugger, +Full_Name (S).all,
+              (Process.Debugger, S,
                Mode => GVD.Types.Visible);
 
          else
@@ -2333,7 +2325,8 @@ package body GVD_Module is
                   Slot_Object => Kernel,
                   User_Data   => File_Project_Record'
                     (Project => No_Project,
-                     File    => Create (Executables_Directory (Prj) & Exec)));
+                     File    => Create_From_Dir
+                       (Executables_Directory (Prj), Exec)));
 
                --  Only set accelerators for main units of the root project
                if Prj = Loaded_Project then

@@ -62,7 +62,6 @@ with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Traces;           use Traces;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -554,7 +553,7 @@ package body Breakpoints_Editor is
             --  ??? Should also check Temporary
 
             if Current = -1
-              or else Base_Name (Br.File) /= File
+              or else not Equal (Base_Name (Br.File), File)
               or else Br.Line /= Line
             then
                Remove := True;

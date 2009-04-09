@@ -25,10 +25,8 @@ with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
-with Remote.Path.Translator;  use Remote.Path.Translator;
 with String_Utils;            use String_Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNAT.Strings;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
 
 package body GPS.Kernel.Macros is
@@ -166,19 +164,26 @@ package body GPS.Kernel.Macros is
 
          else
             return String_Utils.Protect
-              (+To_Remote (Full_Name (File_Information (Context)).all, Server),
+              (+To_Remote
+                 (File_Information (Context),
+                  Get_Nickname (Server)).Full_Name,
                Protect_Quotes => Quoted);
          end if;
 
       elsif Param = "d" then
          return String_Utils.Protect
-           (+To_Remote (Directory_Information (Context), Server),
+           (+To_Remote
+              (Directory_Information (Context),
+               Get_Nickname (Server)).Full_Name,
             Protect_Quotes      => Quoted,
             Protect_Backslashes => For_Shell);
 
       elsif Param = "dk" then
          return String_Utils.Protect
-           (Krunch (+To_Remote (Directory_Information (Context), Server)),
+           (Krunch
+              (+To_Remote
+                 (Directory_Information (Context),
+                  Get_Nickname (Server)).Full_Name),
             Protect_Quotes      => Quoted,
             Protect_Backslashes => For_Shell);
 
@@ -252,7 +257,8 @@ package body GPS.Kernel.Macros is
                return String_Utils.Protect
                  ("-P"
                   & (+To_Remote
-                    (Full_Name (Project_Path (Project)).all, Server)),
+                      (Project_Path (Project),
+                       Get_Nickname (Server)).Full_Name),
                   Protect_Spaces      => not Quoted,
                   Protect_Quotes      => Quoted,
                   Protect_Backslashes => For_Shell);
@@ -271,7 +277,9 @@ package body GPS.Kernel.Macros is
 
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
-              (+To_Remote (Full_Name (Project_Path (Project)).all, Server),
+              (+To_Remote
+                 (Project_Path (Project),
+                  Get_Nickname (Server)).Full_Name,
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);
 
@@ -295,19 +303,25 @@ package body GPS.Kernel.Macros is
 
                      File       : File_Type;
                      Files_List : File_Array_Access;
-                     List       : String_List_Access;
+                     List       : File_Array_Access;
 
                   begin
                      Create (File);
 
                      if List_Dirs then
                         List := Source_Dirs (Project, Recurse);
+
                         if List /= null then
                            for K in List'Range loop
-                              Put_Line (File,
-                                        +To_Remote (+List (K).all, Server));
+                              Put_Line
+                                (File,
+                                 +Full_Name
+                                   (To_Remote
+                                      (List (K),
+                                       Get_Nickname (Server))));
                            end loop;
-                           Free (List);
+
+                           Unchecked_Free (List);
                         end if;
                      end if;
 
@@ -318,19 +332,22 @@ package body GPS.Kernel.Macros is
                               Put_Line
                                 (File,
                                  +To_Remote
-                                   (Full_Name (Files_List (K)).all, Server));
+                                   (Files_List (K),
+                                    Get_Nickname (Server)).Full_Name);
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
                      end if;
 
                      declare
-                        N : constant String :=
-                              +To_Remote (+Name (File), Server);
+                        N : constant Virtual_File :=
+                              To_Remote
+                                (Create (+Name (File)),
+                                 Get_Nickname (Server));
                      begin
                         Close (File);
                         return String_Utils.Protect
-                          (N, Protect_Quotes => Quoted);
+                          (+N.Full_Name, Protect_Quotes => Quoted);
                      end;
                   end;
 
@@ -339,18 +356,23 @@ package body GPS.Kernel.Macros is
                      use GNAT.Strings;
 
                      Result     : Unbounded_String;
-                     List       : String_List_Access;
+                     List       : File_Array_Access;
                      Files_List : File_Array_Access;
                   begin
                      if List_Dirs then
                         List := Source_Dirs (Project, Recurse);
+
                         if List /= null then
                            for K in List'Range loop
-                              Append (Result, '"' &
-                                      (+To_Remote (+List (K).all, Server)) &
-                                      """ ");
+                              Append
+                                (Result, '"' &
+                                   (+To_Remote
+                                      (List (K),
+                                       Get_Nickname (Server)).Full_Name) &
+                                 """ ");
                            end loop;
-                           Free (List);
+
+                           Unchecked_Free (List);
                         end if;
                      end if;
 
@@ -361,8 +383,9 @@ package body GPS.Kernel.Macros is
                               Append
                                 (Result,
                                 '"' &
-                                (+To_Remote (Full_Name (Files_List (K)).all,
-                                            Server)) &
+                                 (+To_Remote
+                                      (Files_List (K),
+                                       Get_Nickname (Server)).Full_Name) &
                                  """ ");
                            end loop;
                            Unchecked_Free (Files_List);

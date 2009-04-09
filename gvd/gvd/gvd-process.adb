@@ -29,7 +29,6 @@ with GNAT.Strings;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with System;                     use System;
 
 with Glib;                       use Glib;
@@ -83,7 +82,6 @@ with Projects;                   use Projects;
 with Projects.Editor;            use Projects.Editor;
 with Projects.Registry;          use Projects.Registry;
 with Remote;                     use Remote;
-with Remote.Path.Translator;     use Remote.Path.Translator;
 with String_Utils;               use String_Utils;
 with Toolchains;                 use Toolchains;
 with Traces;                     use Traces;
@@ -712,15 +710,12 @@ package body GVD.Process is
          --  Override the language currently defined in the editor
 
          declare
-            File_Name : constant Virtual_File := Create
-              (Full_Filename =>
-               --  ??? Normalize_Pathname only needed when to get absolute
-               --  file name
-                 Normalize_Pathname
-                   (To_Local
-                        (+Process.Current_Output (File_First .. File_Last),
-                         Debug_Server),
-                    Resolve_Links => False));
+            File_Name : constant Virtual_File :=
+                          To_Local
+                            (Create
+                               (+Process.Current_Output
+                                  (File_First .. File_Last),
+                                Get_Nickname (Debug_Server)));
          begin
             Load_File (Process.Editor_Text, File_Name);
          end;
@@ -1782,7 +1777,6 @@ package body GVD.Process is
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
-      Exec         : Filesystem_String_Access;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1805,7 +1799,7 @@ package body GVD.Process is
 
          for J in Extensions'Range loop
             Tmp := Create
-              (Full_Filename => Full_Name (Module).all & Extensions (J));
+              (Full_Filename => Full_Name (Module) & Extensions (J));
 
             if Is_Regular_File (Tmp) then
                Module := Tmp;
@@ -1845,7 +1839,7 @@ package body GVD.Process is
 
          declare
             Exec_Name : constant Filesystem_String :=
-              +Args (Args'First .. End_Of_Exec);
+                          +Args (Args'First .. End_Of_Exec);
          begin
             --  First check whether Exec_Name is an absolute path
 
@@ -1863,13 +1857,10 @@ package body GVD.Process is
                   --  If the Exec is not an absolute path and it is not found
                   --  from the current directory, try to locate it on path.
 
-                  Exec := Locate_Compiler_Executable (Exec_Name);
+                  Module := Locate_Compiler_Executable (Exec_Name);
 
-                  if Exec /= null then
-                     Module := Create
-                       (Full_Filename =>
-                          Normalize_Pathname (Exec.all, Get_Current_Dir));
-                     Free (Exec);
+                  if Module = No_File then
+                     Module := Create_From_Base (Exec_Name);
                   end if;
                end if;
             end if;
@@ -1982,7 +1973,7 @@ package body GVD.Process is
          List : Argument_List := Get_Attribute_Value (Project, Main_Attribute);
       begin
          for L in List'Range loop
-            if +List (L).all = Full_Name (Exec).all then
+            if Equal (+List (L).all, Full_Name (Exec)) then
                Free (List);
                return;
             end if;
@@ -2058,41 +2049,40 @@ package body GVD.Process is
 
          for L in List'Range loop
             declare
-               Dir   : constant Filesystem_String :=
-                 To_Local
-                   (Normalize_Pathname
-                        (Dir_Name (+List (L).all),
-                         Dir_Name (Exec).all,
-                         Resolve_Links => False),
-                    Debug_Server);
-               Base  : constant Filesystem_String :=
-                 Base_Name (To_Local (+List (L).all, Debug_Server));
-               Lang  : constant String :=
-                 Get_Language_From_File
-                   (Get_Language_Handler (Kernel),
-                    Create
-                      (Full_Filename => To_Local
-                         (+List (L).all, Debug_Server)));
-               Found : Boolean;
+               Remote_File : constant Virtual_File :=
+                               Create_From_Base
+                                 (+List (L).all,
+                                  Dir_Name (Exec),
+                                  Get_Nickname (Debug_Server));
+               Local_File  : constant Virtual_File := To_Local (Remote_File);
+               Dir         : constant Virtual_File := Local_File.Dir;
+               Base        : constant Filesystem_String :=
+                               Base_Name (Local_File);
+               Lang        : constant String :=
+                               Get_Language_From_File
+                                 (Get_Language_Handler (Kernel),
+                                  Local_File);
+               Found       : Boolean;
+
             begin
                Found := False;
 
                if Is_Directory (Dir) then
                   for D in Dirs'First .. Dirs_Index - 1 loop
-                     if +Dirs (D).all = Dir then
+                     if Equal (+Dirs (D).all, Dir.Full_Name) then
                         Found := True;
                         exit;
                      end if;
                   end loop;
 
                   if not Found then
-                     Dirs (Dirs_Index) := new String'(+Dir);
+                     Dirs (Dirs_Index) := new String'(+Dir.Full_Name);
                      Dirs_Index := Dirs_Index + 1;
                   end if;
 
                   Found := False;
                   for J in Bases'First .. Bases_Index - 1 loop
-                     if +Bases (J).all = Base then
+                     if Equal (+Bases (J).all, Base) then
                         Found := True;
                         exit;
                      end if;
@@ -2148,14 +2138,14 @@ package body GVD.Process is
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Obj_Dir_Attribute,
-               Value              => +Dir_Name (Exec).all);
+               Value              => +Dir_Name (Exec));
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Exec_Dir_Attribute,
-               Value              => +Dir_Name (Exec).all);
+               Value              => +Dir_Name (Exec));
 
-            Main (Main'First) := new String'(+Full_Name (Exec).all);
+            Main (Main'First) := new String'(+Full_Name (Exec));
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,

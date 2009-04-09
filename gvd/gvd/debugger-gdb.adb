@@ -23,7 +23,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
@@ -40,7 +39,6 @@ with Debugger.Gdb.Ada;          use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;            use Debugger.Gdb.C;
 with Debugger.Gdb.Cpp;          use Debugger.Gdb.Cpp;
 with Default_Preferences;       use Default_Preferences;
-with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GVD.Dialogs;               use GVD.Dialogs;
@@ -57,10 +55,8 @@ with Items;                     use Items;
 with Language.Debugger;         use Language.Debugger;
 with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
-
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Debugger.Gdb is
 
@@ -1096,11 +1092,11 @@ package body Debugger.Gdb is
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
 
-      Remote_Exec         : constant Filesystem_String :=
-                              To_Remote (Full_Name (Executable, True).all,
-                                         Debug_Server, True);
+      Remote_Exec         : constant Virtual_File :=
+                              To_Remote
+                                (Executable, Get_Nickname (Debug_Server));
       Exec_Has_Spaces     : constant Boolean :=
-        Index (+Remote_Exec, " ") /= 0;
+                              Index (Remote_Exec.Display_Full_Name, " ") /= 0;
       Process             : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
@@ -1114,9 +1110,11 @@ package body Debugger.Gdb is
          Cmd : GNAT.Strings.String_Access;
       begin
          if Exec_Has_Spaces then
-            Cmd := new String'(Command & " """ & (+Remote_Exec) & '"');
+            Cmd := new String'
+              (Command & " """ & (+Remote_Exec.Unix_Style_Full_Name) & '"');
          else
-            Cmd := new String'(Command & " " & (+Remote_Exec));
+            Cmd := new String'
+              (Command & " " & (+Remote_Exec.Unix_Style_Full_Name));
          end if;
 
          if Process /= null then
@@ -1267,10 +1265,10 @@ package body Debugger.Gdb is
 
    overriding procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
-      Core     : String;
+      Core     : Virtual_File;
       Mode     : Command_Type := Hidden)
    is
-      Core_File : constant Filesystem_String := To_Unix_Pathname (+Core);
+      Core_File : constant Filesystem_String := Core.Unix_Style_Full_Name;
    begin
       Set_Is_Started (Debugger, False);
       Send (Debugger, "core " & (+Core_File), Mode => Mode);
@@ -1292,10 +1290,10 @@ package body Debugger.Gdb is
 
    overriding procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
-      Module   : String;
+      Module   : Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      Symbols : constant String := +To_Unix_Pathname (+Module);
+      Symbols : constant String := +Module.Unix_Style_Full_Name;
    begin
       Send (Debugger, "add-symbol-file " & Symbols, Mode => Mode);
 
@@ -2418,8 +2416,7 @@ package body Debugger.Gdb is
             --  of gdb under Windows.
             S              : constant String := Send
               (Debugger,
-               "-symbol-list-lines "
-               & (Format_Pathname (+Full_Name (File).all, UNIX)),
+               "-symbol-list-lines " & (+File.Unix_Style_Full_Name),
                Mode => Internal);
             Num_Lines, Pos : Natural;
 
@@ -2497,10 +2494,10 @@ package body Debugger.Gdb is
 
    overriding procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
-      Dir         : String;
+      Dir         : Virtual_File;
       Mode        : Command_Type := Hidden)
    is
-      Directory : constant String := +To_Unix_Pathname (+Dir);
+      Directory : constant String := +Dir.Unix_Style_Full_Name;
    begin
       Send (Debugger, "cd " & Directory, Mode => Mode);
    end Change_Directory;
@@ -3244,11 +3241,16 @@ package body Debugger.Gdb is
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
             --  Translate the matched filename into local file if needed
-            Br (Num).File := Create_From_Base
-              (To_Local
+            Br (Num).File := To_Local
+              (Create
                  (+S (Matched (1).First .. Matched (1).Last),
-                  Debug_Server),
-               Debugger.Kernel);
+                  Get_Nickname (Debug_Server)));
+
+            if not Br (Num).File.Is_Absolute_Path then
+               Br (Num).File := Create_From_Base
+                 (Br (Num).File.Full_Name,
+                  Debugger.Kernel);
+            end if;
 
             Br (Num).Line := Integer'Value
               (S (Matched (2).First .. Matched (2).Last));

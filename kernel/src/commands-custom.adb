@@ -32,9 +32,9 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -73,7 +73,7 @@ with GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Password_Manager;          use Password_Manager;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
 with Traces;
 
@@ -1311,29 +1311,12 @@ package body Commands.Custom is
          Console         : Interactive_Console;
          Output_Location : GNAT.Strings.String_Access;
 
-         function To_String (P : GNAT.Strings.String_Access) return String;
-         --  Return the contents of P, or the empty string if P is null
-
          function Execute_Shell
            (Component : Custom_Component_Record'Class) return Boolean;
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean;
          --  Execute a shell or an external component. Return the success
          --  status.
-
-         ---------------
-         -- To_String --
-         ---------------
-
-         function To_String
-           (P : GNAT.Strings.String_Access) return String is
-         begin
-            if P = null then
-               return "";
-            else
-               return P.all;
-            end if;
-         end To_String;
 
          -------------------
          -- Execute_Shell --
@@ -1343,7 +1326,7 @@ package body Commands.Custom is
            (Component : Custom_Component_Record'Class) return Boolean
          is
             Errors         : aliased Boolean;
-            Old_Dir        : GNAT.Strings.String_Access;
+            Old_Dir        : Virtual_File;
             --  has to be determined here so that Current_Server is
             --  correctly set:
             Subst_Cmd_Line : constant String := Substitute
@@ -1352,9 +1335,9 @@ package body Commands.Custom is
                Callback  => Substitution'Unrestricted_Access,
                Recursive => False);
          begin
-            if Context.Dir /= null then
-               Old_Dir := new String'(Get_Current_Dir);
-               Change_Dir (Context.Dir.all);
+            if Context.Dir /= No_File then
+               Old_Dir := Get_Current_Dir;
+               Change_Dir (Context.Dir);
             end if;
 
             if Component.Script /= null then
@@ -1386,9 +1369,8 @@ package body Commands.Custom is
                end if;
             end if;
 
-            if Context.Dir /= null then
-               Change_Dir (Old_Dir.all);
-               Free (Old_Dir);
+            if Context.Dir /= No_File then
+               Change_Dir (Old_Dir);
             end if;
 
             return not Errors;
@@ -1473,8 +1455,8 @@ package body Commands.Custom is
                   Show_In_Task_Manager => Component.Show_In_Task_Manager,
                   Line_By_Line         => False,
                   Synchronous          => Context.Synchronous,
-                  Directory            => To_Remote (+To_String (Context.Dir),
-                    Component.Server),
+                  Directory            => To_Remote
+                    (Context.Dir, Get_Nickname (Component.Server)),
                   Created_Command      => Command.Sub_Command);
                Free (Args);
 
@@ -1588,7 +1570,7 @@ package body Commands.Custom is
          end if;
       end Terminate_Command;
 
-      Old_Dir : GNAT.Strings.String_Access;
+      Old_Dir : Virtual_File;
 
    begin  --  Execute
       --  If there was an external command executing:
@@ -1613,10 +1595,10 @@ package body Commands.Custom is
          Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
 
       else
-         if Context.Dir /= null then
-            Old_Dir := new String'(Get_Current_Dir);
+         if Context.Dir /= No_File then
+            Old_Dir := Get_Current_Dir;
             begin
-               Change_Dir (Context.Dir.all);
+               Change_Dir (Context.Dir);
             exception
                when Directory_Error =>
                   return Terminate_Command;
@@ -1640,9 +1622,8 @@ package body Commands.Custom is
          Check_Save_Output (Command, Command.Execution.Save_Output.all);
          Clear_Consoles (Command.Kernel, Command);
 
-         if Context.Dir /= null then
-            Change_Dir (Old_Dir.all);
-            Free (Old_Dir);
+         if Context.Dir /= No_File then
+            Change_Dir (Old_Dir);
          end if;
 
          if not Success then

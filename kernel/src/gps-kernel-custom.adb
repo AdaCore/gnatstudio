@@ -22,21 +22,17 @@ with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Intl;                  use GPS.Intl;
-with File_Utils;                use File_Utils;
-with Remote;                    use Remote;
 with String_Hash;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with XML_Parsers;
 
@@ -57,7 +53,7 @@ package body GPS.Kernel.Custom is
 
    procedure Parse_Custom_Dir
      (Kernel           : access Kernel_Handle_Record'Class;
-      Directory        : Filesystem_String;
+      Directory        : Virtual_File;
       Level            : Customization_Level;
       Default_Autoload : Boolean);
    --  Parse and process all the XML files in the directory. Only those files
@@ -69,10 +65,9 @@ package body GPS.Kernel.Custom is
    -------------------------
 
    function Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Format_Pathname (Get_System_Dir (Kernel), UNIX)
-        & "share/gps/plug-ins/";
+      return Create_From_Dir (Get_System_Dir (Kernel), "share/gps/plug-ins");
    end Autoload_System_Dir;
 
    ----------------------------
@@ -80,10 +75,9 @@ package body GPS.Kernel.Custom is
    ----------------------------
 
    function No_Autoload_System_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Format_Pathname (Get_System_Dir (Kernel), UNIX)
-        & "share/gps/library/";
+      return Create_From_Dir (Get_System_Dir (Kernel), "share/gps/library");
    end No_Autoload_System_Dir;
 
    -----------------------
@@ -91,13 +85,13 @@ package body GPS.Kernel.Custom is
    -----------------------
 
    function Autoload_User_Dir
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File
    is
-      Dir : constant Filesystem_String :=
-        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "plug-ins/";
+      Dir : constant Virtual_File :=
+              Create_From_Dir (Get_Home_Dir (Kernel), "plug-ins");
    begin
       if not Is_Directory (Dir) then
-         Make_Dir (+Dir);
+         Make_Dir (Dir);
       end if;
 
       return Dir;
@@ -107,12 +101,13 @@ package body GPS.Kernel.Custom is
    -- Get_Custom_Path --
    ---------------------
 
-   function Get_Custom_Path return Filesystem_String is
+   function Get_Custom_Path return File_Array is
       Env : String_Access := Getenv ("GPS_CUSTOM_PATH");
-      Result : constant String := Env.all;
+      Result : constant Filesystem_String := +Env.all;
    begin
       Free (Env);
-      return +Result;
+
+      return From_Path (Result);
    end Get_Custom_Path;
 
    ----------------------------------
@@ -163,27 +158,22 @@ package body GPS.Kernel.Custom is
 
    procedure Parse_Custom_Dir
      (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Filesystem_String;
+      Directory : Virtual_File;
       Level     : Customization_Level;
       Default_Autoload : Boolean)
    is
-      Norm_Dir  : constant Filesystem_String := Name_As_Directory (Directory);
-      File      : String (1 .. 1024);
-      Last      : Natural;
-      Dir       : Dir_Type;
+      use type GNATCOLL.VFS.Filesystem_String;
+      Files : File_Array_Access;
       File_Node : Node_Ptr;
       Command   : Custom_Command_Access;
 
    begin
-      if Is_Directory (Norm_Dir) then
-         Open (Dir, Directory);
-         loop
-            Read (Dir, File, Last);
-            exit when Last = 0;
+      if Is_Directory (Directory) then
+         Files := Read_Dir (Directory, Files_Only);
 
+         for J in Files'Range loop
             declare
-               F     : constant Virtual_File :=
-                 Create (Full_Filename => Norm_Dir & (+File (1 .. Last)));
+               F     : Virtual_File renames Files (J);
                Error : String_Access;
             begin
                if File_Extension (F) = XML_Extension
@@ -194,7 +184,7 @@ package body GPS.Kernel.Custom is
                   then
                      Trace (Me, "Loading " & Display_Full_Name (F));
 
-                     XML_Parsers.Parse (Full_Name (F).all, File_Node, Error);
+                     XML_Parsers.Parse (F, File_Node, Error);
 
                      if File_Node = null then
                         Trace (Me, "Could not parse XML file: "
@@ -229,11 +219,11 @@ package body GPS.Kernel.Custom is
             end;
          end loop;
 
-         Close (Dir);
+         Unchecked_Free (Files);
       end if;
 
    exception
-      when Directory_Error =>
+      when VFS_Directory_Error =>
          null;
    end Parse_Custom_Dir;
 
@@ -244,8 +234,7 @@ package body GPS.Kernel.Custom is
    procedure Load_System_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Env_Path : constant Filesystem_String := Get_Custom_Path;
-      Path     : Path_Iterator;
+      Env_Path : constant File_Array := Get_Custom_Path;
       N        : Node_Ptr;
 
    begin
@@ -279,14 +268,12 @@ package body GPS.Kernel.Custom is
         (Kernel, No_Autoload_System_Dir (Kernel), System_Wide,
          Default_Autoload => False);
 
-      Path := Start (Env_Path);
-      while not At_End (Env_Path, Path) loop
-         if Current (Env_Path, Path) /= "" then
+      for J in Env_Path'Range loop
+         if Env_Path (J) /= No_File then
             Parse_Custom_Dir
-              (Kernel, Current (Env_Path, Path), Project_Wide,
+              (Kernel, Env_Path (J), Project_Wide,
                Default_Autoload => True);
          end if;
-         Path := Next (Env_Path, Path);
       end loop;
    end Load_System_Custom_Files;
 
@@ -433,9 +420,8 @@ package body GPS.Kernel.Custom is
    procedure Parse_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Startup : constant Filesystem_String :=
-                  Format_Pathname
-                    (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+      Startup : constant Virtual_File :=
+                  Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       Err     : String_Access;
       Node, N : Node_Ptr;
    begin
@@ -479,7 +465,7 @@ package body GPS.Kernel.Custom is
             Free (Node);
          end if;
       else
-         Trace (Me, "File not found: " & (+Startup));
+         Trace (Me, "File not found: " & Startup.Display_Full_Name);
       end if;
    end Parse_Startup_Scripts_List;
 
@@ -490,9 +476,8 @@ package body GPS.Kernel.Custom is
    procedure Save_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Startup     : constant Filesystem_String :=
-                      Format_Pathname
-                        (Get_Home_Dir (Kernel), UNIX) & "startup.xml";
+      Startup : constant Virtual_File :=
+                  Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       File, Child : Node_Ptr;
       Iter        : Scripts_Hash.String_Hash_Table.Iterator;
       Script      : Script_Description_Access;
@@ -523,8 +508,8 @@ package body GPS.Kernel.Custom is
          Get_Next (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
       end loop;
 
-      Trace (Me, "Saving " & (+Startup));
-      Print (File, GNATCOLL.VFS.Create (Startup), Success);
+      Trace (Me, "Saving " & Startup.Display_Full_Name);
+      Print (File, Startup, Success);
       Free (File);
 
       if not Success then

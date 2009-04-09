@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2008, AdaCore                --
+--                   Copyright (C) 2000-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -295,7 +295,7 @@ package Debugger is
 
    procedure Change_Directory
      (Debugger    : access Debugger_Root;
-      Dir         : String;
+      Dir         : GNATCOLL.VFS.Virtual_File;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Change to directory Dir under a specified debugger session.
    --  See execution commands below for an explanation on the Mode parameter.
@@ -386,14 +386,14 @@ package Debugger is
 
    procedure Load_Core_File
      (Debugger : access Debugger_Root;
-      Core     : String;
+      Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Load a core file into the debugger.
    --  GDB_COMMAND: "core"
 
    procedure Add_Symbols
      (Debugger : access Debugger_Root;
-      Module   : String;
+      Module   : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Load symbols from a specified module into the debugger.
    --  GDB_COMMAND: "add-symbol-file"

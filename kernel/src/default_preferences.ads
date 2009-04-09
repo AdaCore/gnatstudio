@@ -29,11 +29,11 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with Gdk.Color;
 with Gdk.Types;
-with Glib;                      use Glib;
+with Glib;            use Glib;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Tooltips;
@@ -292,14 +292,14 @@ package Default_Preferences is
 
    procedure Load_Preferences
      (Manager   : access Preferences_Manager_Record;
-      File_Name : Filesystem_String);
+      File_Name : Virtual_File);
    --  Load the preferences from a specific file.
    --  The preferences can be loaded even if they have not been registered
    --  yet.
 
    procedure Save_Preferences
      (Manager   : access Preferences_Manager_Record;
-      File_Name : Filesystem_String;
+      File_Name : Virtual_File;
       Success   : out Boolean);
    --  Save the default preferences to File_Name.
 

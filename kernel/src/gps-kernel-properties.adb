@@ -79,7 +79,7 @@ package body GPS.Kernel.Properties is
    --  For now, we'll leave with this global variable.
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String;
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the filename to use when saving the persistent properties for the
    --  current project
 
@@ -371,7 +371,7 @@ package body GPS.Kernel.Properties is
 
    function To_String
      (File : GNATCOLL.VFS.Virtual_File) return String is
-      Filename : String := +Full_Name (File, True).all;
+      Filename : String := +Full_Name (File, True);
    begin
       Canonical_Case_File_Name (Filename);
 
@@ -472,13 +472,13 @@ package body GPS.Kernel.Properties is
    -----------------------------
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return Filesystem_String is
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
       --  We could use the .gps directory, but that would mean we have to keep
       --  in memory information for files that do not belong to the current
       --  project.
 
-      return Get_Home_Dir (Kernel) & "properties.xml";
+      return Create_From_Dir (Get_Home_Dir (Kernel), "properties.xml");
    end Get_Properties_Filename;
 
    --------------------------------
@@ -488,8 +488,8 @@ package body GPS.Kernel.Properties is
    procedure Save_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant Filesystem_String :=
-        Get_Properties_Filename (Kernel);
+      Filename : constant Virtual_File :=
+                   Get_Properties_Filename (Kernel);
       Iter     : Properties_Hash.String_Hash_Table.Iterator;
       Root     : Node_Ptr;
       Descr    : Property_Description_Access;
@@ -508,7 +508,7 @@ package body GPS.Kernel.Properties is
       File  : Node_Ptr;
 
    begin
-      Trace (Me, "Saving " & (+Filename));
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
       Root := new Node'
         (Tag        => new String'("persistent_properties"),
          Attributes => null,
@@ -615,7 +615,7 @@ package body GPS.Kernel.Properties is
          Next (C);
       end loop;
 
-      Print (Root, GNATCOLL.VFS.Create (Filename), Success);
+      Print (Root, Filename, Success);
       Free (Root);
 
       Clear (Nodes);
@@ -644,14 +644,14 @@ package body GPS.Kernel.Properties is
    procedure Restore_Persistent_Properties
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant Filesystem_String :=
-        Get_Properties_Filename (Kernel);
+      Filename : constant Virtual_File :=
+                   Get_Properties_Filename (Kernel);
       Root, File, Prop, Prop2 : Node_Ptr;
    begin
-      Trace (Me, "Loading " & (+Filename));
+      Trace (Me, "Loading " & Filename.Display_Full_Name);
 
-      if Is_Readable_File (+Filename) then
-         Root := Parse (GNATCOLL.VFS.Create (Filename));
+      if Is_Regular_File (Filename) then
+         Root := Parse (Filename);
 
          if Root /= null then
             File := Root.Child;

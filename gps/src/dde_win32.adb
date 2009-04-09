@@ -29,7 +29,6 @@ with Gtk.Window; use Gtk.Window;
 with GPS.Kernel.Standard_Hooks;
 with Traces;            use Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body DDE is
 
@@ -158,8 +157,7 @@ package body DDE is
                   System.Null_Address,
                   0, -- indicates that we want to get the size of the result
                   System.Null_Address, System.Null_Address);
-      Ret   : aliased GNATCOLL.Filesystem.Filesystem_String
-                (1 .. Integer (Size));
+      Ret   : aliased GNATCOLL.VFS.Filesystem_String (1 .. Integer (Size));
       Res   : INT;
       pragma Unreferenced (Res);
 

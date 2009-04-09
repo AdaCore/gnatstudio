@@ -289,7 +289,7 @@ package body GPS.Kernel.Contexts is
 
    function Has_Directory_Information (File : Virtual_File) return Boolean is
    begin
-      return Dir_Name (File).all /= "";
+      return Dir_Name (File)'Length > 0;
    end Has_Directory_Information;
 
    function Has_Directory_Information
@@ -307,10 +307,16 @@ package body GPS.Kernel.Contexts is
    ---------------------------
 
    function Directory_Information
-     (Context : Selection_Context) return Filesystem_String is
+     (Context : Selection_Context) return Virtual_File is
    begin
-      return Dir_Name
-        (Context.Data.Data.Files (Context.Data.Data.Files'First)).all;
+      if Context.Data.Data.Files
+        (Context.Data.Data.Files'First).Is_Directory
+      then
+         return Context.Data.Data.Files (Context.Data.Data.Files'First);
+      else
+         return Context.Data.Data.Files
+           (Context.Data.Data.Files'First).Get_Parent;
+      end if;
    end Directory_Information;
 
    --------------------------
@@ -319,7 +325,7 @@ package body GPS.Kernel.Contexts is
 
    function Has_File_Information (File : Virtual_File) return Boolean is
    begin
-      return Base_Name (File) /= "";
+      return Base_Name (File)'Length > 0;
    end Has_File_Information;
 
    function Has_File_Information
@@ -358,7 +364,9 @@ package body GPS.Kernel.Contexts is
    end File_Information;
 
    function File_Information
-     (Context : Selection_Context) return File_Array is
+     (Context : Selection_Context) return File_Array
+   is
+      use type GNATCOLL.VFS.Filesystem_String;
    begin
       --  Check for $log should probably be done here!
       if not Context.Data.Data.File_Checked then

@@ -23,6 +23,7 @@
 
 with Gdk.Event;
 with GNAT.Strings;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;
 with Gtk.Box;
 with XML_Utils;
@@ -43,7 +44,7 @@ package Commands.Interactive is
       Synchronous : Boolean := False;
       --  Whether the command should be executed synchronously
 
-      Dir     : GNAT.Strings.String_Access;
+      Dir     : GNATCOLL.VFS.Virtual_File;
       --  The directory in which the execution should take place
 
       Args    : GNAT.Strings.String_List_Access;
@@ -69,7 +70,7 @@ package Commands.Interactive is
      (Event       => null,
       Context     => GPS.Kernel.No_Context,
       Synchronous => False,
-      Dir         => null,
+      Dir         => No_File,
       Args        => null,
       Label       => null,
       Repeat_Count     => 1,

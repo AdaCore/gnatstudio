@@ -145,7 +145,8 @@ package body GPS.Kernel.Preferences is
 
             if Done and then Nth_Arg (Data, 3, True) then
                Save_Preferences
-                 (Kernel, Get_Home_Dir (Kernel) & "preferences");
+                 (Kernel,
+                  Create_From_Dir (Get_Home_Dir (Kernel), "preferences"));
                Run_Hook (Kernel, Preferences_Changed_Hook);
             end if;
 
@@ -1501,7 +1502,8 @@ package body GPS.Kernel.Preferences is
          On_Changed   => On_Changed'Unrestricted_Access,
          Custom_Pages => Preferences_Pages.all);
 
-      Save_Preferences (Kernel, Get_Home_Dir (Kernel) & "preferences");
+      Save_Preferences
+        (Kernel, Create_From_Dir (Get_Home_Dir (Kernel), "preferences"));
    end Edit_Preferences;
 
    ----------------------
@@ -1510,12 +1512,12 @@ package body GPS.Kernel.Preferences is
 
    procedure Save_Preferences
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : Filesystem_String)
+      File_Name : Virtual_File)
    is
       Success : Boolean;
 
    begin
-      Trace (Me, "Saving preferences in " & (+File_Name));
+      Trace (Me, "Saving preferences in " & File_Name.Display_Full_Name);
       Save_Preferences (Kernel.Preferences, File_Name, Success);
 
       if not Success then

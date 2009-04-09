@@ -48,7 +48,6 @@ with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with Projects;                  use Projects;
 with Traces;                    use Traces;
 
@@ -337,9 +336,9 @@ package body Welcome is
    begin
       Response (S, Gtk_Response_OK);
 
-      if File_Extension (Project_Name) /= Project_File_Extension then
+      if not Equal (File_Extension (Project_Name), Project_File_Extension) then
          Project_Name := Create
-           (Full_Name (Project_Name).all & Project_File_Extension);
+           (Full_Name (Project_Name) & Project_File_Extension);
       end if;
 
       if not Is_Regular_File (Project_Name) then
@@ -397,7 +396,7 @@ package body Welcome is
       Dir          : Virtual_File;
    begin
       Push_State (S.Kernel, Busy);
-      if Project_Name = "" then
+      if Project_Name'Length > 0 then
          Dir := Create (+Get_Text (S.Default_Dir));
       else
          Dir := Create (Dir_Name (Project_Name));

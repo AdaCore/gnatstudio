@@ -54,7 +54,7 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has directory information
    function Directory_Information
-     (Context : Selection_Context) return Filesystem_String;
+     (Context : Selection_Context) return GNATCOLL.VFS.Virtual_File;
    --  Return the information about the selected project. This is only relevant
    --  if Has_Directory_Information is True.
    --  This directory name always ends with a directory separator.

@@ -28,7 +28,6 @@ with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
@@ -92,7 +91,7 @@ package body GVD.Source_Editor.GPS is
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(+Full_Name (Editor.Current_File).all),
+           (1 => new String'(+Full_Name (Editor.Current_File)),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
@@ -105,7 +104,7 @@ package body GVD.Source_Editor.GPS is
       if Editor.Line /= 0 then
          declare
             Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-              (1 => new String'(+Full_Name (Editor.Current_File).all),
+              (1 => new String'(+Full_Name (Editor.Current_File)),
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
@@ -119,7 +118,7 @@ package body GVD.Source_Editor.GPS is
 
       Add_Unique_Sorted
         (Editor.Highlighted_Files,
-         +Full_Name (Editor.Current_File).all);
+         +Full_Name (Editor.Current_File));
    end Highlight_Current_Line;
 
    ------------------------------
@@ -150,7 +149,7 @@ package body GVD.Source_Editor.GPS is
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(+Full_Name (Editor.Current_File).all),
+           (1 => new String'(+Full_Name (Editor.Current_File)),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
@@ -206,7 +205,7 @@ package body GVD.Source_Editor.GPS is
       if Is_Regular_File (File_Name) then
          File := File_Name;
       else
-         File := Create_From_Base (Full_Name (File_Name).all, Kernel);
+         File := Create_From_Base (Full_Name (File_Name), Kernel);
       end if;
 
       if Editor.Current_File /= File then
@@ -270,7 +269,7 @@ package body GVD.Source_Editor.GPS is
          New_File => False,
          Focus    => False);
       Append (Editor.Highlighted_Files,
-              +Full_Name (Editor.Current_File).all);
+              +Full_Name (Editor.Current_File));
 
       Add_Line_Information
         (Kernel,

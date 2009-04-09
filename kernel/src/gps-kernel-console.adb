@@ -276,7 +276,6 @@ package body GPS.Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
-      FD      : File_Descriptor;
       Len     : Integer;
       pragma Unreferenced (Widget, Len);
 
@@ -296,10 +295,11 @@ package body GPS.Kernel.Console is
 
          declare
             Contents : constant String := Get_Chars (Console);
+            WF       : Writable_File;
          begin
-            FD := Create_File (+Full_Name (File).all, Binary);
-            Len := Write (FD, Contents'Address, Contents'Length);
-            Close (FD);
+            WF := File.Write_File;
+            Write (WF, Contents);
+            Close (WF);
          end;
       end;
 
