@@ -21,7 +21,6 @@ with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Strings;
 with System;
 
@@ -49,7 +48,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 with XML_Utils;                 use XML_Utils;
 with Traces;                    use Traces;
 with XML_Parsers;               use XML_Parsers;
@@ -561,15 +559,15 @@ package body XML_Viewer is
                --  The beginning tag is missing, add it
 
                W := Write_File (V);
-               Write (W, "<?xml version=""1.0""?>" & ASCII.LF
-                      & UTF8_To_Locale (S.all));
+               Write (W, "<?xml version=""1.0""?>" & ASCII.LF & S.all);
                Close (W);
             end if;
 
             GNAT.Strings.Free (S);
+
+            Parse (V, Root, Error);
          end;
 
-         Parse (+Buffer, Root, Error);
       else
          Parse_Buffer (Buffer, Tree => Root, Error => Error);
       end if;

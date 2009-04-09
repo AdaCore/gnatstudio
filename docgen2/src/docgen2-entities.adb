@@ -26,7 +26,7 @@ with Basic_Types;
 with Entities.Queries;            use Entities.Queries;
 with Find_Utils;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
-with String_Utils;              use String_Utils;
+with String_Utils;                use String_Utils;
 
 package body Docgen2.Entities is
 
@@ -322,7 +322,7 @@ package body Docgen2.Entities is
    begin
       return Ada.Containers.Hash_Type
         (Internal
-           (+GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)).all &
+           (+GNATCOLL.VFS.Full_Name (Get_Filename (Key.File)) &
             Natural'Image (Key.Line) &
             Basic_Types.Visible_Column_Type'Image (Key.Column)));
    end Hash;

@@ -25,13 +25,13 @@ package Docgen2_Backend.HTML is
 
    overriding function Get_Template
      (Backend    : access HTML_Backend_Record;
-      System_Dir : Filesystem_String;
-      Kind       : Template_Kind) return Filesystem_String;
+      System_Dir : Virtual_File;
+      Kind       : Template_Kind) return Virtual_File;
    --  See inherited doc.
 
    overriding function Get_Support_Dir
      (Backend    : access HTML_Backend_Record;
-      System_Dir : Filesystem_String) return Filesystem_String;
+      System_Dir : Virtual_File) return Virtual_File;
    --  See inherited doc.
 
    overriding function To_Destination_Name

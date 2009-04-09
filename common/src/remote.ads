@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2006-2008, AdaCore                  --
+--                 Copyright (C) 2006-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,8 @@
 
 --  This package handles the remote servers assignment
 
+with GNATCOLL.VFS;
+
 package Remote is
 
    type Server_Type is
@@ -32,7 +34,8 @@ package Remote is
    --   general case, but is the local server when the dual compilation
    --   mode is activated
 
-   Local_Nickname : constant String;
+   Local_Nickname         : String renames GNATCOLL.VFS.Local_Host;
+   Display_Local_Nickname : constant String := "(local)";
 
    subtype Distant_Server_Type is Server_Type
      range Build_Server .. Debug_Server;
@@ -51,8 +54,7 @@ package Remote is
    --  Get the nickname of a server. If server is local, Local_Nickname is
    --  returned
 
-private
-
-   Local_Nickname : constant String := "(local)";
+   function Multi_Unit_Index_Char (Server : Server_Type) return Character;
+   --  Return '~', except on VMS (todo) where it should return '$'
 
 end Remote;

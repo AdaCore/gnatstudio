@@ -19,7 +19,6 @@
 
 with Ada.Characters.Handling;               use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;                 use Ada.Strings.Unbounded;
-with Ada.Text_IO;                           use Ada.Text_IO;
 
 with Glib.Convert; use Glib.Convert;
 
@@ -30,7 +29,6 @@ with Basic_Types;
 with Commands;                  use Commands;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
-with File_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -54,7 +52,6 @@ with Docgen2.Entities;       use Docgen2.Entities, Docgen2.Entities.Files_List;
 with Docgen2.Scripts;        use Docgen2.Scripts;
 with Docgen2.Tags;           use Docgen2.Tags;
 with Docgen2.Utils;          use Docgen2.Utils;
-with UTF8_Utils;             use UTF8_Utils;
 
 package body Docgen2 is
 
@@ -1574,8 +1571,7 @@ package body Docgen2 is
             GPS.Kernel.Console.Insert
               (Command.Kernel,
                -"Documentation generated successfully in " &
-               (Unknown_To_UTF8
-                    (+Get_Doc_Directory (Docgen_Object (Command)))));
+               Get_Doc_Directory (Docgen_Object (Command)).Display_Full_Name);
 
             return Success;
       end case;
@@ -1706,10 +1702,9 @@ package body Docgen2 is
       Last_Idx     : Natural := 0;
       Printout     : Unbounded_String;
       Current_Line : Unbounded_String;
-      File_Handle  : File_Type;
       Translation  : Translate_Set;
       Line_Nb      : Natural := 1;
-      Tmpl         : constant Filesystem_String :=
+      Tmpl         : constant Virtual_File :=
                        Command.Backend.Get_Template
                          (Get_System_Dir (Command.Kernel), Tmpl_Src);
 
@@ -1880,23 +1875,29 @@ package body Docgen2 is
         (Translation, Assoc ("PRINTOUT", Printout));
 
       declare
-         Name : constant Filesystem_String :=
-                  Get_Doc_Directory (Command) & "src_"
-                  & Command.Backend.To_Destination_Name
-           (GNATCOLL.VFS.Base_Name (Get_Filename (File)));
+         Name : constant Virtual_File :=
+                  Create_From_Dir
+                    (Get_Doc_Directory (Command),
+                     "src_" &
+                     Command.Backend.To_Destination_Name
+                       (GNATCOLL.VFS.Base_Name (Get_Filename (File))));
+         Output : Writable_File;
       begin
-         Ada.Text_IO.Create (File_Handle, Name => +Name);
-      exception
-         when Name_Error =>
-            Insert (Command.Kernel, "Could not create " & Unknown_To_UTF8
-                    (+Name), Mode => Error);
+         Add_Custom_Index (Command, Translation);
+         Output := Name.Write_File;
+
+         if Output = Invalid_File then
+            Insert
+              (Command.Kernel,
+               "Could not create " & Name.Display_Full_Name,
+               Mode => Error);
             return;
+         end if;
+
+         Write (Output, Parse (+Tmpl.Full_Name, Translation, Cached => True));
+         Close (Output);
       end;
 
-      Add_Custom_Index (Command, Translation);
-      Ada.Text_IO.Put
-        (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-      Ada.Text_IO.Close (File_Handle);
    end Generate_Annotated_Source;
 
    ------------------
@@ -1911,12 +1912,12 @@ package body Docgen2 is
       File      : Source_File;
       E_Info    : Entity_Info)
    is
-      Tmpl        : constant Filesystem_String :=
+      Tmpl        : constant Virtual_File :=
                       Command.Backend.Get_Template
                         (Get_System_Dir (Command.Kernel), Tmpl_Spec);
       Translation : Translate_Set;
       Pkg_Found   : Boolean;
-      File_Handle : File_Type;
+      File_Handle : Writable_File;
 
       type Common_Info_Tags is record
          Name_Tag           : Vector_Tag;
@@ -2756,17 +2757,17 @@ package body Docgen2 is
       end if;
 
       if E_Info.Category = Cat_File then
-         Ada.Text_IO.Create
-           (File_Handle,
-            Name => +(Get_Doc_Directory (Command) &
-              Command.Backend.To_Destination_Name (+E_Info.Name.all)));
+         File_Handle := Write_File
+           (Create_From_Dir
+              (Get_Doc_Directory (Command),
+               Command.Backend.To_Destination_Name (+E_Info.Name.all)));
       else
-         Ada.Text_IO.Create
-           (File_Handle,
-            Name => +(Get_Doc_Directory (Command) &
-              Command.Backend.To_Destination_Name
-                (Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
-                 E_Info.Location.Pkg_Nb)));
+         File_Handle := Write_File
+           (Create_From_Dir
+              (Get_Doc_Directory (Command),
+               Command.Backend.To_Destination_Name
+                 (Base_Name (Get_Filename (E_Info.Location.File_Loc.File)),
+                  E_Info.Location.Pkg_Nb)));
       end if;
 
       Insert_Common_Informations ("PKG", Pkg_CI);
@@ -2796,9 +2797,9 @@ package body Docgen2 is
               Assoc ("SUBP_GENERIC_PARAMETERS_LOC", Subp_Generic_Params_Loc));
       Add_Custom_Index (Command, Translation);
 
-      Ada.Text_IO.Put
-        (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-      Ada.Text_IO.Close (File_Handle);
+      Write
+        (File_Handle, Parse (+Tmpl.Full_Name, Translation, Cached => True));
+      Close (File_Handle);
    end Generate_Doc;
 
    ----------------------
@@ -2843,11 +2844,11 @@ package body Docgen2 is
    ---------------------------
 
    procedure Generate_User_Indexes (Command : Docgen_Object) is
-      Tmpl         : constant Filesystem_String :=
-        Command.Backend.Get_Template
-          (Get_System_Dir (Command.Kernel),
-           Tmpl_User_Defined_File);
-      File_Handle  : File_Type;
+      Tmpl         : constant Virtual_File :=
+                       Command.Backend.Get_Template
+                         (Get_System_Dir (Command.Kernel),
+                          Tmpl_User_Defined_File);
+      File_Handle  : Writable_File;
       Translation  : Translate_Set;
    begin
       Add_Custom_Index (Command, Translation);
@@ -2865,23 +2866,22 @@ package body Docgen2 is
             Insert
               (Translation, Assoc ("PRINTOUT", Obj.Content));
 
-            declare
-               Name : constant String :=
-                 +Get_Doc_Directory (Command) & To_String (Obj.Filename);
-            begin
-               Ada.Text_IO.Create (File_Handle, Name => Name);
-            exception
-               when Name_Error =>
-                  Insert
-                    (Command.Kernel,
-                     "Could not create " & To_String (Obj.Name),
-                     Mode => Error);
-                  return;
-            end;
+            File_Handle := Write_File
+              (Create_From_Dir
+                 (Get_Doc_Directory (Command),
+                  +To_String (Obj.Filename)));
+            if File_Handle = Invalid_File then
+               Insert
+                 (Command.Kernel,
+                  "Could not create " & To_String (Obj.Filename),
+                  Mode => Error);
+               return;
+            end if;
 
-            Ada.Text_IO.Put
-              (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-            Ada.Text_IO.Close (File_Handle);
+            Write
+              (File_Handle,
+               Parse (+Tmpl.Full_Name, Translation, Cached => True));
+            Close (File_Handle);
          end;
       end loop;
    end Generate_User_Indexes;
@@ -2967,13 +2967,13 @@ package body Docgen2 is
 
    procedure Generate_Trees (Cmd : Docgen_Object)
    is
-      Tmpl        : constant Filesystem_String :=
-        Cmd.Backend.Get_Template
-          (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree);
-      Tmpl_Elem   : constant Filesystem_String :=
+      Tmpl        : constant Virtual_File :=
+                      Cmd.Backend.Get_Template
+                        (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree);
+      Tmpl_Elem   : constant Virtual_File :=
                       Cmd.Backend.Get_Template
                         (Get_System_Dir (Cmd.Kernel), Tmpl_Class_Tree_Elem);
-      File_Handle : File_Type;
+      File_Handle : Writable_File;
       Xref_Cursor : Cross_Ref_List.Cursor;
       EInfo       : Entity_Info;
       Map_Cursor  : Entity_Info_Map.Cursor;
@@ -3049,7 +3049,7 @@ package body Docgen2 is
          Insert (Translation, Assoc ("ROOT_TREE", Root_Tree_Tag));
          Insert (Translation, Assoc ("TREE_CHILDREN", Tree_Children_Tag));
 
-         return Parse (+Tmpl_Elem, Translation, Cached => True);
+         return Parse (+Tmpl_Elem.Full_Name, Translation, Cached => True);
       end Print_Tree;
 
    begin
@@ -3078,13 +3078,13 @@ package body Docgen2 is
 
       Insert (Translation, Assoc ("TREE", Tree_Tag));
       Add_Custom_Index (Cmd, Translation);
-      Ada.Text_IO.Create
-        (File_Handle,
-         Name => +(Get_Doc_Directory (Cmd) &
-         Cmd.Backend.To_Destination_Name ("tree")));
-      Ada.Text_IO.Put
-        (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-      Ada.Text_IO.Close (File_Handle);
+      File_Handle := Write_File
+        (Create_From_Dir
+           (Get_Doc_Directory (Cmd),
+            Cmd.Backend.To_Destination_Name ("tree")));
+      Write
+        (File_Handle, Parse (+Tmpl.Full_Name, Translation, Cached => True));
+      Close (File_Handle);
    end Generate_Trees;
 
    ---------------------------
@@ -3093,8 +3093,9 @@ package body Docgen2 is
 
    procedure Generate_Global_Index (Cmd : Docgen_Object)
    is
-      Tmpl         : constant Filesystem_String :=
-        Cmd.Backend.Get_Template (Get_System_Dir (Cmd.Kernel), Tmpl_Index);
+      Tmpl         : constant Virtual_File :=
+                       Cmd.Backend.Get_Template
+                         (Get_System_Dir (Cmd.Kernel), Tmpl_Index);
       Letter       : Character;
       Last_Letter  : Character := ' ';
       Letter_Kind  : Character;
@@ -3105,7 +3106,7 @@ package body Docgen2 is
       Loc_Tag      : Tag;
       Kind_Tag     : Tag;
 
-      File_Handle  : File_Type;
+      File_Handle  : Writable_File;
       type Index_Type is new Natural range 1 .. 2 * 27;
       Local_List   : array (Index_Type) of Entity_Info_List.Vector;
       List_Index   : Index_Type;
@@ -3292,21 +3293,23 @@ package body Docgen2 is
 
          if not Local_List (J).Is_Empty then
             if Letter = '*' then
-               Ada.Text_IO.Create
-                 (File_Handle,
-                  Name => +(Get_Doc_Directory (Cmd) &
-                    Cmd.Backend.To_Destination_Name
-                      ("index" & Letter_Kind & "other")));
+               File_Handle := Write_File
+                 (Create_From_Dir
+                    (Get_Doc_Directory (Cmd),
+                     Cmd.Backend.To_Destination_Name
+                       (Basename => +("index" & Letter_Kind & "other"))));
             else
-               Ada.Text_IO.Create
-                 (File_Handle,
-                  Name => +(Get_Doc_Directory (Cmd) &
-                    Cmd.Backend.To_Destination_Name
-                      ("index" & Letter_Kind & Letter)));
+               File_Handle := Write_File
+                 (Create_From_Dir
+                    (Get_Doc_Directory (Cmd),
+                     Cmd.Backend.To_Destination_Name
+                       (Basename => +("index" & Letter_Kind & Letter))));
             end if;
-            Ada.Text_IO.Put
-              (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-            Ada.Text_IO.Close (File_Handle);
+
+            Write
+              (File_Handle,
+               Parse (+Tmpl.Full_Name, Translation, Cached => True));
+            Close (File_Handle);
          end if;
 
          --  Special handling for the first non empty lists: we need
@@ -3322,13 +3325,14 @@ package body Docgen2 is
 
          if First_List then
             --  First non empty list... create index.html
-            Ada.Text_IO.Create
+            File_Handle := Write_File
+              (Create_From_Dir
+                 (Get_Doc_Directory (Cmd),
+                  Cmd.Backend.To_Destination_Name ("index")));
+            Write
               (File_Handle,
-               Name => +(Get_Doc_Directory (Cmd) &
-                 Cmd.Backend.To_Destination_Name ("index")));
-            Ada.Text_IO.Put
-              (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-            Ada.Text_IO.Close (File_Handle);
+               Parse (+Tmpl.Full_Name, Translation, Cached => True));
+            Close (File_Handle);
          end if;
       end loop;
 
@@ -3358,13 +3362,15 @@ package body Docgen2 is
             Insert (Translation, Assoc ("LOC", Loc_Tag));
             Insert (Translation, Assoc ("KIND", Kind_Tag));
 
-            Ada.Text_IO.Create
+            File_Handle := Write_File
+              (Create_From_Dir
+                 (Get_Doc_Directory (Cmd),
+                  Cmd.Backend.To_Destination_Name
+                    (+("indexs" & Last_Letter))));
+            Write
               (File_Handle,
-               Name => +(Get_Doc_Directory (Cmd) &
-                 Cmd.Backend.To_Destination_Name ("indexs" & Last_Letter)));
-            Ada.Text_IO.Put
-              (File_Handle, Parse (+Tmpl, Translation, Cached => True));
-            Ada.Text_IO.Close (File_Handle);
+               Parse (+Tmpl.Full_Name, Translation, Cached => True));
+            Close (File_Handle);
 
             Clear (Href_Tag);
             Clear (Loc_Tag);
@@ -3387,7 +3393,7 @@ package body Docgen2 is
       if Cmd.Options.Spawn_Browser then
          Open_Html
            (Kernel      => Cmd.Kernel,
-            URL_Or_File => +(Get_Doc_Directory (Cmd) &
+            URL_Or_File => +(Get_Doc_Directory (Cmd).Full_Name &
               Cmd.Backend.To_Destination_Name ("index")));
       end if;
    end Generate_Global_Index;
@@ -3399,25 +3405,28 @@ package body Docgen2 is
    procedure Generate_Support_Files (Cmd : Docgen_Object)
    is
       Src_Dir : constant GNATCOLL.VFS.Virtual_File :=
-                  Create
-                    (Cmd.Backend.Get_Support_Dir
-                       (Get_System_Dir (Cmd.Kernel)));
-      Dst_Dir : constant Filesystem_String :=
+                  Cmd.Backend.Get_Support_Dir (Get_System_Dir (Cmd.Kernel));
+      Dst_Dir : constant GNATCOLL.VFS.Virtual_File :=
                   Get_Doc_Directory (Cmd);
       Success : Boolean;
       Cursor  : Docgen2.Scripts.Custom_CSS_File_Vectors.Cursor;
       List    : constant Docgen2.Scripts.Custom_CSS_File_Vectors.Vector :=
                   Docgen2.Scripts.Get_Custom_CSS_Files;
       File    : GNATCOLL.VFS.Virtual_File;
+
    begin
+      if not Is_Directory (Dst_Dir) then
+         Dst_Dir.Make_Dir;
+      end if;
+
       Cursor := List.First;
       while Docgen2.Scripts.Custom_CSS_File_Vectors.Has_Element (Cursor) loop
          File := Docgen2.Scripts.Custom_CSS_File_Vectors.Element (Cursor);
-         File.Copy (Dst_Dir & Base_Name (File), Success);
+         File.Copy (Dst_Dir.Full_Name & Base_Name (File), Success);
          Docgen2.Scripts.Custom_CSS_File_Vectors.Next (Cursor);
       end loop;
 
-      Src_Dir.Copy (Dst_Dir & Base_Dir_Name (Src_Dir), Success);
+      Src_Dir.Copy (Dst_Dir.Full_Name & Base_Dir_Name (Src_Dir), Success);
       pragma Assert (Success);
    end Generate_Support_Files;
 
@@ -3454,12 +3463,11 @@ package body Docgen2 is
    -----------------------
 
    function Get_Doc_Directory
-     (Object : Docgen_Object) return Filesystem_String is
+     (Object : Docgen_Object) return Virtual_File is
    begin
-      return File_Utils.Name_As_Directory
-        (Object_Path
-           (Get_Root_Project (Get_Registry (Object.Kernel).all),
-            False, False)) & "doc/";
+      return Create_From_Dir
+        (Object_Path (Get_Root_Project (Get_Registry (Object.Kernel).all)),
+         +"doc/");
    end Get_Doc_Directory;
 
    ----------------------

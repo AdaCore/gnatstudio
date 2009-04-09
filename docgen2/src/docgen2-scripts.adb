@@ -185,13 +185,11 @@ package body Docgen2.Scripts is
    begin
       if Command = "register_css" then
          declare
-            Filename : constant Filesystem_String := Nth_Arg (Data, 1);
-            File     : constant GNATCOLL.VFS.Virtual_File :=
-                         GNATCOLL.VFS.Create (Filename);
+            File : constant GNATCOLL.VFS.Virtual_File := Nth_Arg (Data, 1);
          begin
             if not Is_Regular_File (File) then
                Set_Error_Msg
-                 (Data, -"Could not find file " & (+File.Full_Name.all));
+                 (Data, -"Could not find file " & File.Display_Full_Name);
                return;
             end if;
 

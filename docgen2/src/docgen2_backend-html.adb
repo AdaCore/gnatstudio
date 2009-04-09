@@ -29,26 +29,33 @@ package body Docgen2_Backend.HTML is
 
    overriding function Get_Template
      (Backend    : access HTML_Backend_Record;
-      System_Dir : Filesystem_String;
-      Kind       : Template_Kind) return Filesystem_String
+      System_Dir : Virtual_File;
+      Kind       : Template_Kind) return Virtual_File
    is
       pragma Unreferenced (Backend);
    begin
       case Kind is
          when Tmpl_Spec =>
-            return System_Dir & "share/gps/docgen2/html.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/html.tmpl");
          when Tmpl_Class_Tree =>
-            return System_Dir & "share/gps/docgen2/tree.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/tree.tmpl");
          when Tmpl_Class_Tree_Elem =>
-            return System_Dir & "share/gps/docgen2/tree_elem.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/tree_elem.tmpl");
          when Tmpl_Index =>
-            return System_Dir & "share/gps/docgen2/entities.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/entities.tmpl");
          when Tmpl_User_Defined_File =>
-            return System_Dir & "share/gps/docgen2/userdef.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/userdef.tmpl");
          when Tmpl_Src =>
-            return System_Dir & "share/gps/docgen2/src.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/src.tmpl");
          when Tmpl_Src_Index =>
-            return System_Dir & "share/gps/docgen2/src_index.tmpl";
+            return Create_From_Dir
+              (System_Dir, "share/gps/docgen2/src_index.tmpl");
       end case;
    end Get_Template;
 
@@ -58,11 +65,11 @@ package body Docgen2_Backend.HTML is
 
    overriding function Get_Support_Dir
      (Backend    : access HTML_Backend_Record;
-      System_Dir : Filesystem_String) return Filesystem_String
+      System_Dir : Virtual_File) return Virtual_File
    is
       pragma Unreferenced (Backend);
    begin
-      return System_Dir & "share/gps/docgen2/support/";
+      return Create_From_Dir (System_Dir, "share/gps/docgen2/support/");
    end Get_Support_Dir;
 
    -------------------------

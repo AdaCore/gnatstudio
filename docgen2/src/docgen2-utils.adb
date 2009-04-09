@@ -37,7 +37,7 @@ package body Docgen2.Utils is
       Line : constant String := Natural'Image (Loc.Line);
       Col  : constant String := Natural'Image (Loc.Column);
       Err  : constant String :=
-               +Get_Filename (File).Base_Name & ":" &
+               Get_Filename (File).Display_Base_Name & ":" &
                Line (Line'First + 1 .. Line'Last) & ":" &
                Col (Col'First + 1 .. Col'Last) & ": " & Msg;
    begin

@@ -62,8 +62,6 @@ with String_Utils;              use String_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with XML_Viewer;
 
 with Switches_Parser; use Switches_Parser;
@@ -1135,31 +1133,30 @@ package body Custom_Module is
             while Files /= null loop
                if To_Lower (Files.Tag.all) = "alternate" then
                   declare
-                     Filename : constant Filesystem_String :=
-                       +Get_Attribute (Files, "file");
-                     --  ??? Potentially non-utf8 string should not be
-                     --  stored in an XML attribute.
+                     Filename : constant Virtual_File :=
+                                  Get_File_Child (Files, "file");
                   begin
-                     if Filename = "" then
+                     if Filename = No_File then
                         Insert
                           (Kernel,
                            -"No alternate file specified for icon "
                            & Get_Attribute (Child, "id"), Mode => Error);
                      else
                         if Is_Absolute_Path (Filename) then
-                           Pic_File := Create (Filename);
+                           Pic_File := Filename;
                         else
                            if File = GNATCOLL.VFS.No_File then
-                              Pic_File := Create (Get_Current_Dir & Filename);
+                              Pic_File := Create_From_Dir
+                                (Get_Current_Dir, Filename.Full_Name);
                            else
-                              Pic_File := Create
-                                (Dir_Name (File).all & Filename);
+                              Pic_File := Create_From_Dir
+                                (Get_Parent (File), Filename.Full_Name);
                            end if;
                         end if;
 
                         if Is_Regular_File (Pic_File) then
                            Source := Gtk_New;
-                           Set_Filename (Source, +Full_Name (Pic_File).all);
+                           Set_Filename (Source, +Full_Name (Pic_File, True));
 
                            declare
                               Size : Gtk.Enums.Gtk_Icon_Size;
@@ -1207,10 +1204,8 @@ package body Custom_Module is
             if To_Lower (Child.Tag.all) = "icon" then
                declare
                   Id       : constant String := Get_Attribute (Child, "id");
-                  Filename : constant Filesystem_String :=
-                    +Get_Attribute (Child, "file");
-                  --  ??? Potentially non-utf8 string should not be
-                  --  stored in an XML attribute.
+                  Filename : constant Virtual_File :=
+                               Get_File_Child (Child, "file");
 
                   Pic_File : GNATCOLL.VFS.Virtual_File;
                begin
@@ -1220,7 +1215,7 @@ package body Custom_Module is
                         -"No id specified for stock icon.",
                         Mode => Error);
 
-                  elsif Filename = "" then
+                  elsif Filename = No_File then
                      Insert
                        (Kernel,
                         -"No file specified for stock icon " & Id,
@@ -1228,12 +1223,14 @@ package body Custom_Module is
 
                   else
                      if Is_Absolute_Path (Filename) then
-                        Pic_File := Create (Filename);
+                        Pic_File := Filename;
                      else
                         if File = GNATCOLL.VFS.No_File then
-                           Pic_File := Create (Get_Current_Dir & Filename);
+                           Pic_File := Create_From_Dir
+                             (Get_Current_Dir, Filename.Full_Name);
                         else
-                           Pic_File := Create (Dir_Name (File).all & Filename);
+                           Pic_File := Create_From_Dir
+                             (Get_Parent (File), Filename.Full_Name);
                         end if;
                      end if;
 
@@ -1241,7 +1238,7 @@ package body Custom_Module is
                         Set    := Gtk_New;
 
                         Source := Gtk_New;
-                        Set_Filename (Source, +Full_Name (Pic_File).all);
+                        Set_Filename (Source, +Full_Name (Pic_File, True));
                         Add_Source (Set, Source);
                         Free (Source);
 

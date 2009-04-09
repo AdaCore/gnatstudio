@@ -45,7 +45,6 @@ with Docgen2_Backend;
 with GPS.Kernel;
 with Projects;
 with GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package Docgen2 is
 
@@ -138,7 +137,7 @@ package Docgen2 is
    --  Get current docgen options from docgen object
 
    function Get_Doc_Directory
-     (Object : Docgen_Object) return Filesystem_String;
+     (Object : Docgen_Object) return GNATCOLL.VFS.Virtual_File;
    --  Return the directory in which the documentation will be generated
 
    function Get_Current_File

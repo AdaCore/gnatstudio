@@ -25,6 +25,7 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
 
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Config;
@@ -37,10 +38,9 @@ package body OS_Utils is
    -- Create_Tmp_File --
    ---------------------
 
-   function Create_Tmp_File return Filesystem_String is
-      Current_Dir : constant Filesystem_String := Get_Current_Dir;
-      Temp_Dir    : constant Filesystem_String :=
-        Get_Local_Filesystem.Get_Tmp_Directory;
+   function Create_Tmp_File return GNATCOLL.VFS.Virtual_File is
+      Current_Dir : constant Virtual_File := Get_Current_Dir;
+      Temp_Dir    : constant Virtual_File := Get_Tmp_Directory;
       Fd          : File_Descriptor;
       Base        : String_Access;
 
@@ -55,7 +55,7 @@ package body OS_Utils is
          Free (Base);
          Change_Dir (Current_Dir);
 
-         return Temp_Dir & Result;
+         return Create_From_Dir (Temp_Dir, Result);
       end;
    end Create_Tmp_File;
 
@@ -174,43 +174,16 @@ package body OS_Utils is
    -- Make_Dir_Recursive --
    ------------------------
 
-   procedure Make_Dir_Recursive (Name : Filesystem_String) is
-      Last     : Natural := Name'First + 1;
-      UNC_Path : Boolean := False;
+   procedure Make_Dir_Recursive (Name : Virtual_File) is
+      Parent : constant Virtual_File := Get_Parent (Name);
 
    begin
-      if Name (Name'First .. Last) = "\\" then
-         UNC_Path := True;
-         Last := Last + 1;
+      if Parent = No_File or else Is_Directory (Name) then
+         return;
+      else
+         Make_Dir_Recursive (Parent);
+         Name.Make_Dir;
       end if;
-
-      --  Strictly inferior to ignore '/' at the end of Name
-
-      while Last < Name'Last loop
-         while Last <= Name'Last
-           and then Name (Last) /= Directory_Separator
-           and then Name (Last) /= '/'
-         loop
-            Last := Last + 1;
-         end loop;
-
-         if not Is_Directory (Name (Name'First .. Last - 1)) then
-            begin
-               GNAT.Directory_Operations.Make_Dir
-                 (+Name (Name'First .. Last - 1));
-            exception
-               when Directory_Error =>
-                  --  ??? Ignore Directory_Error on UNC paths since apparently
-                  --  Is_Directory does not work properly on UNC paths
-
-                  if not UNC_Path then
-                     raise;
-                  end if;
-            end;
-         end if;
-
-         Last := Last + 1;
-      end loop;
    end Make_Dir_Recursive;
 
    --------------
@@ -262,6 +235,7 @@ package body OS_Utils is
 
    function Is_Cygwin_Path (Path : Filesystem_String) return Boolean is
       Cygdrive : constant Filesystem_String := "/cygdrive/";
+      use type Filesystem_String;
    begin
       return Path'Length > Cygdrive'Length + 1
         and then
@@ -293,8 +267,8 @@ package body OS_Utils is
          Cygdrive : constant String := "/cygdrive/";
       begin
          if Is_Cygwin_Path (Path) then
-            return Case_Util.To_Upper (Path (Path'First + Cygdrive'Length)) &
-              ":" & Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
+            return +(Case_Util.To_Upper (Path (Path'First + Cygdrive'Length)) &
+              ":") & Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
          else
             return Path;
          end if;
@@ -325,8 +299,8 @@ package body OS_Utils is
                  and then Result (Result'First + 1) = ':'
                  and then Result (Result'First + 2) = '/'
                then
-                  return "/cygdrive/" &
-                    Case_Util.To_Upper (Result (Result'First)) &
+                  return +("/cygdrive/" &
+                    Case_Util.To_Upper (Result (Result'First))) &
                     Result (Result'First + 2 .. Result'Last);
                else
                   return Result;

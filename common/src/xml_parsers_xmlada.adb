@@ -27,7 +27,7 @@ package body XML_Parsers is
    -----------
 
    procedure Parse
-     (File  : Filesystem_String;
+     (File  : Virtual_File;
       Tree  : out XML_Utils.Node_Ptr;
       Error : out GNAT.Strings.String_Access)
    is

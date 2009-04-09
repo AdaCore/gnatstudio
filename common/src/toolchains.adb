@@ -19,22 +19,21 @@
 
 with System;                   use System;
 with Ada.Unchecked_Conversion;
-with System.OS_Lib;            use System.OS_Lib;
 with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 
 package body Toolchains is
 
    type Toolchains_Property_Record is record
-      Active        : Boolean       := False;
-      Tools_Path    : Filesystem_String_Access := null;
-      Compiler_Path : Filesystem_String_Access := null;
+      Active        : Boolean      := False;
+      Tools_Path    : Virtual_File := No_File;
+      Compiler_Path : Virtual_File := No_File;
    end record;
 
    Property : Toolchains_Property_Record;
 
    function Internal_Locate_Exec
      (Exec_Name  : Filesystem_String;
-      Extra_Path : Filesystem_String) return Filesystem_String_Access;
+      Extra_Path : Virtual_File) return Virtual_File;
    --  Try to retrieve Exec_Name from Extra_Path. If not found, try to retrieve
    --  it from the regular path
 
@@ -44,26 +43,13 @@ package body Toolchains is
 
    procedure Set_Toolchains_Properties
      (Active               : Boolean;
-      Tool_Search_Path     : Filesystem_String;
-      Compiler_Search_Path : Filesystem_String) is
+      Tool_Search_Path     : Virtual_File;
+      Compiler_Search_Path : Virtual_File) is
    begin
-      Free (Property.Tools_Path);
-      Free (Property.Compiler_Path);
-
       Property.Active := Active;
 
-      if Tool_Search_Path /= "" then
-         Property.Tools_Path := new Filesystem_String'(Tool_Search_Path);
-      else
-         Property.Tools_Path := null;
-      end if;
-
-      if Compiler_Search_Path /= "" then
-         Property.Compiler_Path := new Filesystem_String'
-           (Compiler_Search_Path);
-      else
-         Property.Compiler_Path := null;
-      end if;
+      Property.Tools_Path    := Tool_Search_Path;
+      Property.Compiler_Path := Compiler_Search_Path;
    end Set_Toolchains_Properties;
 
    ---------------
@@ -79,26 +65,26 @@ package body Toolchains is
    -- Get_Tool_Search_Path --
    --------------------------
 
-   function Get_Tool_Search_Path return Filesystem_String is
+   function Get_Tool_Search_Path return Virtual_File is
    begin
-      if not Property.Active or else Property.Tools_Path = null then
-         return "";
+      if not Property.Active then
+         return No_File;
       end if;
 
-      return Property.Tools_Path.all;
+      return Property.Tools_Path;
    end Get_Tool_Search_Path;
 
    ------------------------------
    -- Get_Compiler_Search_Path --
    ------------------------------
 
-   function Get_Compiler_Search_Path return Filesystem_String is
+   function Get_Compiler_Search_Path return Virtual_File is
    begin
-      if not Property.Active or else Property.Compiler_Path = null then
-         return "";
+      if not Property.Active then
+         return No_File;
       end if;
 
-      return Property.Compiler_Path.all;
+      return Property.Compiler_Path;
    end Get_Compiler_Search_Path;
 
    -----------------
@@ -107,7 +93,7 @@ package body Toolchains is
 
    function Locate_Exec
      (Exec_Name : Filesystem_String;
-      Path      : Filesystem_String) return Filesystem_String_Access
+      Path      : File_Array) return Virtual_File
    is
       function Internal (C_Exec, C_Path : System.Address)
                          return System.Address;
@@ -120,10 +106,10 @@ package body Toolchains is
       pragma Import (C, Strlen, "strlen");
 
       C_Exec_Name : String := +Exec_Name & ASCII.NUL;
-      C_Path      : String := +Path & ASCII.NUL;
+      C_Path      : String := +To_Path (Path) & ASCII.NUL;
       C_Ret       : System.Address;
       C_Ret_Len   : Integer;
-      Result      : String_Access;
+      Result      : Filesystem_String_Access;
 
    begin
       C_Ret := Internal (C_Exec_Name'Address, C_Path'Address);
@@ -135,7 +121,7 @@ package body Toolchains is
       end if;
 
       if C_Ret_Len = 0 then
-         return null;
+         return No_File;
       else
          declare
             subtype Path_String is String (1 .. C_Ret_Len);
@@ -147,7 +133,7 @@ package body Toolchains is
             Path_Access : constant Path_String_Access :=
                             Address_To_Access (C_Ret);
          begin
-            Result := new String (1 .. C_Ret_Len);
+            Result := new Filesystem_String (1 .. C_Ret_Len);
 
             for J in 1 .. C_Ret_Len loop
                Result (J) := Path_Access (J);
@@ -158,17 +144,13 @@ package body Toolchains is
 
          --  Always return an absolute path name
 
-         if not Is_Absolute_Path (Result.all) then
-            declare
-               Absolute_Path : constant String :=
-                                 Normalize_Pathname (Result.all);
-            begin
-               Free (Result);
-               Result := new String'(Absolute_Path);
-            end;
-         end if;
-
-         return Convert (Result);
+         declare
+            Absolute_Path : constant Filesystem_String :=
+                              Normalize_Pathname (Result.all);
+         begin
+            Free (Result);
+            return Create (Absolute_Path);
+         end;
       end if;
    end Locate_Exec;
 
@@ -178,14 +160,14 @@ package body Toolchains is
 
    function Internal_Locate_Exec
      (Exec_Name  : Filesystem_String;
-      Extra_Path : Filesystem_String) return Filesystem_String_Access
+      Extra_Path : Virtual_File) return Virtual_File
    is
-      Ret : Filesystem_String_Access;
+      Ret : Virtual_File;
    begin
-      Ret := Locate_Exec (Exec_Name, Extra_Path);
+      Ret := Locate_Exec (Exec_Name, (1 => Extra_Path));
 
-      if Ret = null then
-         return Locate_Exec_On_Path (Exec_Name);
+      if Ret = No_File then
+         return Locate_On_Path (Exec_Name);
       else
          return Ret;
       end if;
@@ -196,13 +178,14 @@ package body Toolchains is
    ----------------------------
 
    function Locate_Tool_Executable
-     (Exec_Name : Filesystem_String) return Filesystem_String_Access is
+     (Exec_Name : Filesystem_String) return Virtual_File
+   is
    begin
-      if not Property.Active or else Property.Tools_Path = null then
-         return Locate_Exec_On_Path (Exec_Name);
+      if not Property.Active or else Property.Tools_Path = No_File then
+         return Locate_On_Path (Exec_Name);
+      else
+         return Internal_Locate_Exec (Exec_Name, Property.Tools_Path);
       end if;
-
-      return Internal_Locate_Exec (Exec_Name, Property.Tools_Path.all);
    end Locate_Tool_Executable;
 
    --------------------------------
@@ -210,13 +193,14 @@ package body Toolchains is
    --------------------------------
 
    function Locate_Compiler_Executable
-     (Exec_Name : Filesystem_String) return Filesystem_String_Access is
+     (Exec_Name : Filesystem_String) return Virtual_File
+   is
    begin
-      if not Property.Active or else Property.Compiler_Path = null then
-         return Locate_Exec_On_Path (Exec_Name);
+      if not Property.Active or else Property.Compiler_Path = No_File then
+         return Locate_On_Path (Exec_Name);
+      else
+         return Internal_Locate_Exec (Exec_Name, Property.Compiler_Path);
       end if;
-
-      return Internal_Locate_Exec (Exec_Name, Property.Compiler_Path.all);
    end Locate_Compiler_Executable;
 
 end Toolchains;

@@ -25,7 +25,7 @@ with Default_Preferences;      use Default_Preferences;
 with Entities;                 use Entities;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
 with GNATCOLL.Traces;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
@@ -131,7 +131,8 @@ package body Cpp_Module is
 
    overriding function Get_ALI_Filename
      (Handler   : access GLI_Handler_Record;
-      Base_Name : Filesystem_String) return Filesystem_String is
+      Base_Name : Filesystem_String) return Filesystem_String
+   is
    begin
       return Base_Name & Get_ALI_Ext (Handler);
    end Get_ALI_Filename;
@@ -213,7 +214,7 @@ package body Cpp_Module is
       Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
    begin
-      if Object_Path (Get_Project (Kernel), False, True) = "" then
+      if Object_Path (Get_Project (Kernel), False, True)'Length = 0 then
          Insert (Kernel,
                  -("The root project must have an object directory set, or"
                    & " C/C++ browsing is disabled"), Mode => Error);

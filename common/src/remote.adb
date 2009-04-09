@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
---                             AdaCore                               --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -82,7 +81,7 @@ package body Remote is
    function Get_Nickname (Server : Server_Type) return String is
    begin
       if Is_Local (Server) then
-         return "";
+         return Local_Nickname;
       elsif Server = Tools_Server then
          return Servers (Build_Server).Nickname.all;
       else
@@ -97,12 +96,24 @@ package body Remote is
    function Get_Printable_Nickname (Server : Server_Type) return String is
    begin
       if Is_Local (Server) then
-         return Local_Nickname;
+         return Display_Local_Nickname;
       elsif Server = Tools_Server then
          return Servers (Build_Server).Nickname.all;
       else
          return Servers (Server).Nickname.all;
       end if;
    end Get_Printable_Nickname;
+
+   ---------------------------
+   -- Multi_Unit_Index_Char --
+   ---------------------------
+
+   function Multi_Unit_Index_Char (Server : Server_Type) return Character is
+      pragma Unreferenced (Server);
+   begin
+      --  ??? If we start supporting VMS, we will need to retrieve the
+      --  FS Type of the server beforehand.
+      return '~';
+   end Multi_Unit_Index_Char;
 
 end Remote;

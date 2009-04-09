@@ -19,7 +19,7 @@
 
 with Entities;
 with Projects.Registry;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 package CPP_Parser is
 
@@ -33,7 +33,7 @@ package CPP_Parser is
    --  Create a new ALI handler
 
    function Set_Executables
-     (System_Dir : Filesystem_String;
+     (System_Dir : Virtual_File;
       Handler    : access Entities.LI_Handler_Record'Class) return String;
    --  Locate the external executables required by C and C++ handling.
    --  Return an error message to display in the console (or the empty string

@@ -138,17 +138,26 @@ package XML_Utils is
    --  Find a tag Tag in N that has a given key (and value if given).
 
    procedure Add_File_Child
-     (N    : Node_Ptr;
-      Tag  : UTF8_String;
-      File : Virtual_File);
+     (N              : Node_Ptr;
+      Tag            : UTF8_String;
+      File           : Virtual_File;
+      Use_VFS_Prefix : Boolean := True);
    --  Add File as a child of N using tag Tag.
    --  Note that Tag is not the actual XML tag, but is the same tag that should
    --  be used to retrieve the file using Get_File_Child.
+   --  If Use_VFS_Prefix is True, then the actual node name will be
+   --   "vfs_" & Tag
 
    function Get_File_Child
-     (N   : Node_Ptr;
-      Tag : UTF8_String) return Virtual_File;
+     (N              : Node_Ptr;
+      Tag            : UTF8_String;
+      Host           : String := "";
+      Use_VFS_Prefix : Boolean := True) return Virtual_File;
    --  Retrieve the file stored using Add_File_Child
+   --  If Host is set, the this host is used in case no host is already defined
+   --   in the file node
+   --  If Use_VFS_Prefix is True, then the actual node name will be
+   --   "vfs_" & Tag
 
    function String_To_Encoded_ASCII (S : String) return String;
    --  Escape all special characters using the "#<character number;" method

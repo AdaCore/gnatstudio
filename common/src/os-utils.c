@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                    Copyright (C) 2002-2006                        *
+ *                    Copyright (C) 2002-2009                        *
  *                            AdaCore                                *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -26,6 +26,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <lmcons.h>
+#include <malloc.h>
 #else
 #include <pwd.h>
 #endif

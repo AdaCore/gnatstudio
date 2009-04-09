@@ -246,7 +246,7 @@ package body XML_Readers is
    -- Parse --
    -----------
 
-   function Parse (File : Filesystem_String) return XML_Utils.Node_Ptr is
+   function Parse (File : Virtual_File) return XML_Utils.Node_Ptr is
       Tree  : XML_Utils.Node_Ptr;
       Error : Unicode.CES.Byte_Sequence_Access;
    begin
@@ -260,13 +260,13 @@ package body XML_Readers is
    -----------
 
    procedure Parse
-     (File  : Filesystem_String;
+     (File  : Virtual_File;
       Tree  : out XML_Utils.Node_Ptr;
       Error : out Unicode.CES.Byte_Sequence_Access)
    is
       Input : Mmap_Input;
    begin
-      Open (File, Input);
+      Open (File.Full_Name, Input);
       Parse (1, Input, Tree, Error);
       Close (Input);
    end Parse;

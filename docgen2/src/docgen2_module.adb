@@ -258,7 +258,7 @@ package body Docgen2_Module is
          Name_Parameters (Data, Generate_For_File_Parameters);
 
          declare
-            File : constant Virtual_File := Get_Data (Data, 1);
+            File : constant Virtual_File := Nth_Arg (Data, 1);
          begin
             Trace (Me, "Generating doc for file " &
                    Display_Full_Name (File));

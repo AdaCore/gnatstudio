@@ -20,12 +20,12 @@
 with XML_Utils;
 with GNAT.Strings;
 
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package XML_Parsers is
 
    procedure Parse
-     (File  : Filesystem_String;
+     (File  : Virtual_File;
       Tree  : out XML_Utils.Node_Ptr;
       Error : out GNAT.Strings.String_Access);
    --  Parse File, and return a pointer to the resulting Tree.

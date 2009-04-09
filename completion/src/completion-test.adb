@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                  Copyright (C) 2006-2008, AdaCore                 --
+--                  Copyright (C) 2006-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,6 @@ with Ada.Command_Line;              use Ada.Command_Line;
 with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Text_IO;                   use Ada.Text_IO;
 with Ada.Calendar;                  use Ada.Calendar;
-with Ada.Directories;               use Ada.Directories;
 
 with GNAT.OS_Lib;
 
@@ -44,7 +43,6 @@ with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Entities;               use Entities;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
 procedure Completion.Test is
    use Standard.Ada;
@@ -608,8 +606,7 @@ begin
 
    Projects.Registry.Initialize;
 
-   Given_File := Create_From_Base
-     (+Current_Directory & GNAT.OS_Lib.Directory_Separator & (+Argument (1)));
+   Given_File := Create_From_Base (+Argument (1));
 
    if Argument (2) = "parse" then
       Parse_File (Given_File);

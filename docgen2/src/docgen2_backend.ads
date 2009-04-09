@@ -20,7 +20,7 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language;              use Language;
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 package Docgen2_Backend is
 
@@ -46,15 +46,15 @@ package Docgen2_Backend is
 
    function Get_Template
      (Backend    : access Backend_Record;
-      System_Dir : Filesystem_String;
-      Kind       : Template_Kind) return Filesystem_String
+      System_Dir : Virtual_File;
+      Kind       : Template_Kind) return Virtual_File
       is abstract;
    --  Return the full path to the template used for transformation
    --  System_Dir is the main GPS directory
 
    function Get_Support_Dir
      (Backend    : access Backend_Record;
-      System_Dir : Filesystem_String) return Filesystem_String
+      System_Dir : Virtual_File) return Virtual_File
       is abstract;
    --  Return the full path to the directory containing the documentation's
    --  support files (scripts, css files, etc.)
@@ -103,7 +103,7 @@ package Docgen2_Backend is
    --  for example: in HTML, this will generate <a name="Name"></a>
 
    function Gen_Href
-     (Backend                : access Backend_Record;
+     (Backend           : access Backend_Record;
       Name, Href, Title : String)
       return String is abstract;
    --  Generate the actual code used by the backend to navigate to xref.

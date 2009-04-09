@@ -21,12 +21,10 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Calendar.Formatting;   use Ada.Calendar.Formatting;
 with Ada.Calendar.Time_Zones;   use Ada.Calendar.Time_Zones;
 with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Strings;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Basic_Types;               use Basic_Types;
@@ -34,7 +32,6 @@ with Basic_Types;               use Basic_Types;
 with DB_API;                    use DB_API;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
-with File_Utils;                use File_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Projects;                  use Projects;
@@ -46,17 +43,16 @@ with SN.Find_Fns;               use SN.Find_Fns;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body CPP_Parser is
 
    Me : constant Debug_Handle := Create ("CPP");
 
-   Xref_Suffix : constant Filesystem_String := ".xref";
-   DBIMP       : constant Filesystem_String := "dbimp";
+   Xref_Suffix : constant String := ".xref";
+   DBIMP       : constant String := "dbimp";
    --  SN database engine
-   CBrowser    : constant Filesystem_String := "cbrowser";
+   CBrowser    : constant String := "cbrowser";
    --  SN C and C++ parser
 
    Base_Time : constant Ada.Calendar.Time := Ada.Calendar.Formatting.Time_Of
@@ -147,8 +143,8 @@ package body CPP_Parser is
       Db            : Entities_Database;
       Registry      : Project_Registry;
       SN_Table      : SN_Table_Array;
-      DBIMP_Path    : Filesystem_String_Access;
-      CBrowser_Path : Filesystem_String_Access;
+      DBIMP_Path    : Virtual_File;
+      CBrowser_Path : Virtual_File;
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
 
@@ -190,7 +186,7 @@ package body CPP_Parser is
       Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Prj_Iterator    : Projects.Imported_Project_Iterator;
-      List_Filename   : Filesystem_String_Access;
+      List_Filename   : GNATCOLL.VFS.Virtual_File;
       Current_Files   : GNATCOLL.VFS.File_Array_Access;
       Current_File    : Natural;
       Lang_Handler    : Language_Handler;
@@ -246,23 +242,18 @@ package body CPP_Parser is
    --  Reclaim the memory used by the various databases.
 
    function Get_DB_Dir
-     (Project : Projects.Project_Type) return Filesystem_String;
+     (Project : Projects.Project_Type) return Virtual_File;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
    --  for specified project. If No_Project is given, the empty string is
    --  returned.
 
    function Get_DB_Dirs
-     (Project : Project_Type) return GNAT.Strings.String_List_Access;
+     (Project : Project_Type) return File_Array;
    --  Return the list of database directories that should be inspected
    --  when looking for cross-references (basically, the db directories for
    --  all imported projects).
    --  Result must be freed by user.
-
-   function Create_Directory_If_Not_Exist
-     (Dir : Filesystem_String) return Boolean;
-   --  Create the directory Dir if it doesn't exist yet.
-   --  Return True if the directory existed or could be created successfully.
 
    function Table_Extension (Table : Table_Type) return Filesystem_String;
    --  Given a table type, return the associated file extension, or "" if
@@ -534,46 +525,28 @@ package body CPP_Parser is
       end case;
    end Table_Extension;
 
-   -----------------------------------
-   -- Create_Directory_If_Not_Exist --
-   -----------------------------------
-
-   function Create_Directory_If_Not_Exist
-     (Dir : Filesystem_String) return Boolean is
-   begin
-      if Dir /= "" and then not Is_Directory (Dir) then
-         --  It might happen that the Directory exists but is not readable.
-         --  A bug in the GNAT runtime has Is_Directory return False in this
-         --  case, and Make_Dir will of course fail.
-         Make_Dir (+Dir);
-      end if;
-      return True;
-
-   exception
-      when GNAT.Directory_Operations.Directory_Error =>
-         return False;
-   end Create_Directory_If_Not_Exist;
-
    ----------------
    -- Get_DB_Dir --
    ----------------
 
    function Get_DB_Dir
-     (Project : Projects.Project_Type) return Filesystem_String
+     (Project : Projects.Project_Type) return Virtual_File
    is
+      Ret : Virtual_File;
    begin
       if Project = No_Project then
-         return "";
+         return No_File;
       else
          declare
-            Obj_Dir : constant Filesystem_String := Object_Path
-              (Project, False, Including_Libraries => False);
+            Obj_Dir : constant Virtual_File := Object_Path (Project);
          begin
-            if Obj_Dir = "" then
-               return "";
+            if Obj_Dir = No_File then
+               return No_File;
             else
-               return Name_As_Directory (Obj_Dir)
-                 & Name_As_Directory (SN.Browse.DB_Dir_Name);
+               Ret := Create_From_Dir (Obj_Dir, SN.Browse.DB_Dir_Name);
+               Ensure_Directory (Ret);
+
+               return Ret;
             end if;
          end;
       end if;
@@ -584,30 +557,18 @@ package body CPP_Parser is
    -----------------
 
    function Get_DB_Dirs
-     (Project : Project_Type) return GNAT.Strings.String_List_Access
+     (Project : Project_Type) return File_Array
    is
-      Obj_Dir : constant Filesystem_String := Object_Path
-        (Project, True, Including_Libraries => False);
-      Db_Dir  : constant Filesystem_String := Name_As_Directory (DB_Dir_Name);
-      Iter    : Path_Iterator := Start (Obj_Dir);
-      Length  : Natural := 0;
-      List    : GNAT.Strings.String_List_Access;
+      Obj_Dir : constant File_Array := Object_Path
+                  (Project, True, Including_Libraries => False);
+      List    : File_Array (Obj_Dir'Range);
 
    begin
       --  ??? Should we avoid duplicates in the list of object directories ?
 
-      while not At_End (Obj_Dir, Iter) loop
-         Length := Length + 1;
-         Iter := Next (Obj_Dir, Iter);
-      end loop;
-
-      List := new GNAT.Strings.String_List (1 .. Length);
-      Iter := Start (Obj_Dir);
-
-      for F in List'Range loop
-         List (F) := new String'
-           (+(Name_As_Directory (Current (Obj_Dir, Iter)) & Db_Dir));
-         Iter := Next (Obj_Dir, Iter);
+      for J in Obj_Dir'Range loop
+         List (J) := Create_From_Dir (Obj_Dir (J), DB_Dir_Name);
+         Ensure_Directory (List (J));
       end loop;
 
       return List;
@@ -620,44 +581,37 @@ package body CPP_Parser is
    procedure Open_DB_Files
      (Handler      : access CPP_Handler_Record'Class)
    is
-      Obj_Dir : constant Filesystem_String := Object_Path
-        (Get_Root_Project (Handler.Registry), True,
-         Including_Libraries => False);
+      Obj_Dir : constant File_Array :=
+                  Object_Path
+                    (Get_Root_Project (Handler.Registry), True, False);
       Db_Dir  : constant Filesystem_String :=
-        Name_As_Directory (SN.Browse.DB_Dir_Name);
-      Iter    : Path_Iterator := Start (Obj_Dir);
-      Length  : Natural := 0;
+                  Name_As_Directory (SN.Browse.DB_Dir_Name);
+      Obj     : Natural;
       Success : Boolean;
+      Files   : chars_ptr_array (1 .. Interfaces.C.size_t (Obj_Dir'Length));
+
    begin
       Trace (Me, "Opening the database for C and C++");
 
       --  ??? Should we avoid duplicates in the list of object directories ?
 
-      while not At_End (Obj_Dir, Iter) loop
-         Length := Length + 1;
-         Iter := Next (Obj_Dir, Iter);
-      end loop;
+      for Table in Table_Type loop
+         Obj := Obj_Dir'First;
 
-      declare
-         Files : chars_ptr_array (1 .. Interfaces.C.size_t (Length));
-      begin
-         for Table in Table_Type loop
-            Iter := Start (Obj_Dir);
-
-            for D in Files'Range loop
-               Files (D) := New_String
-                 (+(Name_As_Directory (Current (Obj_Dir, Iter)) & Db_Dir
-                  & SN.Browse.DB_File_Name & Table_Extension (Table)));
-               Iter := Next (Obj_Dir, Iter);
-            end loop;
-
-            DB_API.Open (Handler.SN_Table (Table), Files, Success);
-
-            for D in Files'Range loop
-               Free (Files (D));
-            end loop;
+         for D in Files'Range loop
+            Ensure_Directory (Obj_Dir (Obj));
+            Files (D) := New_String
+              (+(Obj_Dir (Obj).Full_Name & Db_Dir
+               & SN.Browse.DB_File_Name & Table_Extension (Table)));
+            Obj := Obj + 1;
          end loop;
-      end;
+
+         DB_API.Open (Handler.SN_Table (Table), Files, Success);
+
+         for D in Files'Range loop
+            Free (Files (D));
+         end loop;
+      end loop;
    end Open_DB_Files;
 
    --------------------
@@ -2209,8 +2163,8 @@ package body CPP_Parser is
             Body_Known => True,
             Body_Info  => C);
 
-         if Full_Name (Get_Filename (Source)).all /=
-           (+C.Key (C.File_Name.First  .. C.File_Name.Last))
+         if not Equal (Get_Filename (Source).Full_Name,
+                       (+C.Key (C.File_Name.First  .. C.File_Name.Last)))
          then
             S := Get_Or_Create
               (Handler.Db,
@@ -2638,17 +2592,16 @@ package body CPP_Parser is
       P      : Pair;
       Sym    : FIL_Table;
       Entity : Entity_Information;
-      DB_Dir           : constant Filesystem_String := Get_DB_Dir (Project);
       TO_File_Name     : constant Virtual_File :=
-        Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
+                           Create_From_Dir (Get_DB_Dir (Project),
+                                            SN.Browse.DB_File_Name & ".to");
       S      : Source_File;
    begin
       if Is_Open (Handler.SN_Table (FIL)) then
          Set_Cursor
            (Handler.SN_Table (FIL),
             Position    => By_Key,
-            Key         =>
-              +Full_Name (Get_Filename (Source), True).all & Field_Sep,
+            Key         => +Get_Filename (Source).Full_Name (True) & Field_Sep,
             Exact_Match => False);
 
          loop
@@ -2749,7 +2702,7 @@ package body CPP_Parser is
       --  in the .cpp file when analyzing the TO table for entities declared in
       --  the .h file
 
-      Trace (Me, "Parse_File " & (+Full_Name (Get_Filename (Source)).all));
+      Trace (Me, "Parse_File " & Get_Filename (Source).Display_Full_Name);
       Parse_FIL_Table (Handler, Project, Source);
 
    exception
@@ -2796,7 +2749,7 @@ package body CPP_Parser is
             end if;
 
             Trace (Me, "Couldn't create Source_File for "
-                   & (+Full_Name (File).all));
+                   & File.Display_Full_Name);
             return null;
          end if;
 
@@ -2814,7 +2767,7 @@ package body CPP_Parser is
            or else Database_Timestamp (Project) /=
              Get_Timestamp (Get_LI (Source))
            or else Get_DB_Dir (Get_Project (Get_LI (Source)))
-             /= Dir_Name (Get_LI_Filename (Get_LI (Source))).all
+             /= Get_Parent (Get_LI_Filename (Get_LI (Source)))
          then
             Parse_File (Handler, Project, Source);
          end if;
@@ -2833,7 +2786,7 @@ package body CPP_Parser is
          Open_DB_Files (Handler);
       end if;
 
-      Trace (Me, "Get_Source_Info " & (+Full_Name (Source_Filename).all));
+      Trace (Me, "Get_Source_Info " & Source_Filename.Display_Full_Name);
 
       Project := Get_Project_From_File (Handler.Registry, Source_Filename);
       Source := Load_File (Source_Filename, Project);
@@ -2842,7 +2795,7 @@ package body CPP_Parser is
          Other_File_Name := Create
            (Other_File_Base_Name (Project, Source_Filename),
             Handler.Registry);
-         Trace (Me, "Get_Source_Info " & (+Full_Name (Other_File_Name).all));
+         Trace (Me, "Get_Source_Info " & Other_File_Name.Display_Full_Name);
 
          if Other_File_Name /= Source_Filename then
             Other_File := Load_File (Other_File_Name);
@@ -2903,7 +2856,7 @@ package body CPP_Parser is
          exit when P = No_Project;
 
          Files (1) := New_String
-           (+(Get_DB_Dir (P)
+           (+(Get_DB_Dir (P).Full_Name
             & SN.Browse.DB_File_Name & Table_Extension (F)));
          DB_API.Open (Table, Files, Success);
          Free (Files (1));
@@ -2947,8 +2900,8 @@ package body CPP_Parser is
    begin
       CPP.Db            := Db;
       CPP.Registry      := Registry;
-      CPP.DBIMP_Path    := null;
-      CPP.CBrowser_Path := null;
+      CPP.DBIMP_Path    := No_File;
+      CPP.CBrowser_Path := No_File;
       return LI_Handler (CPP);
    end Create_CPP_Handler;
 
@@ -2957,9 +2910,10 @@ package body CPP_Parser is
    ------------------------
 
    function Database_Timestamp (Project : Project_Type) return Time is
-      DB_Dir       : constant Filesystem_String := Get_DB_Dir (Project);
-      TO_File_Name : constant Virtual_File := Create
-        (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
+      TO_File_Name : constant Virtual_File :=
+                       Create_From_Dir
+                         (Get_DB_Dir (Project),
+                          SN.Browse.DB_File_Name & ".to");
    begin
       return File_Time_Stamp (TO_File_Name);
    end Database_Timestamp;
@@ -2974,7 +2928,7 @@ package body CPP_Parser is
       Errors      : Projects.Error_Report;
       Single_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File)
    is
-      DB_Dir       : constant Filesystem_String := Get_DB_Dir (Project);
+      DB_Dir       : constant Virtual_File := Get_DB_Dir (Project);
       TO_Timestamp : constant Time := Database_Timestamp (Project);
       Num_C_Files  : Natural := 0;
       Tmp_File     : File_Type;
@@ -3003,20 +2957,33 @@ package body CPP_Parser is
       --  directory exists.
 
       if Iterator.Current_File <= Iterator.Current_Files'Last then
-         Success := Create_Directory_If_Not_Exist (DB_Dir);
+         if not Is_Directory (DB_Dir) then
+            begin
+               DB_Dir.Make_Dir;
+               Success := True;
+            exception
+               when VFS_Directory_Error =>
+                  Success := False;
+            end;
+         else
+            Success := True;
+         end if;
+
          if not Success then
             if Errors /= null then
                Errors ("Could not access or create the directory "
-                       & (+DB_Dir));
+                       & DB_Dir.Display_Full_Name);
             end if;
+
             Iterator.State := Skip_Project;
             return;
          end if;
 
          --  Create the list of files that need to be analyzed
 
-         Iterator.List_Filename := new Filesystem_String'(DB_Dir & "gps_list");
-         Create (Tmp_File, Out_File, Name => +Iterator.List_Filename.all);
+         Iterator.List_Filename := Create_From_Dir (DB_Dir, "gps_list");
+         Create (Tmp_File, Out_File,
+                 Name => +Iterator.List_Filename.Full_Name);
 
       else
          Iterator.State := Skip_Project;
@@ -3027,10 +2994,12 @@ package body CPP_Parser is
          declare
             File           : constant Virtual_File :=
                                Iterator.Current_Files (F);
-            Lang           : constant String := Get_Language_From_File
-              (Iterator.Lang_Handler, File);
+            Lang           : constant String :=
+                               Get_Language_From_File
+                                 (Iterator.Lang_Handler, File);
             Xref_File_Name : constant Virtual_File :=
-              Create (DB_Dir & Base_Name (File) & Xref_Suffix);
+                               Create_From_Dir
+                                 (DB_Dir, Base_Name (File) & (+Xref_Suffix));
          begin
             if Lang = C_String or else Lang = Cpp_String then
 
@@ -3046,8 +3015,8 @@ package body CPP_Parser is
                      Delete (Xref_File_Name, Success);
                   end if;
 
-                  Put_Line (Tmp_File, "@" & (+Full_Name (Xref_File_Name).all));
-                  Put_Line (Tmp_File, (+Full_Name (File, True).all));
+                  Put_Line (Tmp_File, "@" & (+Full_Name (Xref_File_Name)));
+                  Put_Line (Tmp_File, (+Full_Name (File, True)));
                   Recompute_TO := True;
 
                elsif not Recompute_TO
@@ -3065,10 +3034,10 @@ package body CPP_Parser is
          Iterator.State := Analyze_Files;
          Close_DB_Files (Iterator.Handler);
          SN.Browse.Browse
-           (File_Name     => Iterator.List_Filename.all,
+           (File_Name     => Iterator.List_Filename,
             DB_Directory  => DB_Dir,
-            DBIMP_Path    => Iterator.Handler.DBIMP_Path.all,
-            Cbrowser_Path => Iterator.Handler.CBrowser_Path.all,
+            DBIMP_Path    => Iterator.Handler.DBIMP_Path,
+            Cbrowser_Path => Iterator.Handler.CBrowser_Path,
             PD            => Iterator.PD);
          Iterator.Process_Running := True;
 
@@ -3076,8 +3045,8 @@ package body CPP_Parser is
          Iterator.State := Analyze_Files;
 
       else
-         GNAT.OS_Lib.Delete_File (+Iterator.List_Filename.all, Success);
-         Free (Iterator.List_Filename);
+         Iterator.List_Filename.Delete (Success);
+         Iterator.List_Filename := No_File;
          Iterator.State := Skip_Project;
       end if;
    end Browse_Project;
@@ -3156,7 +3125,6 @@ package body CPP_Parser is
    is
       Process_Alive : Boolean := False;
       Success       : Boolean;
-      DB_Dirs       : GNAT.Strings.String_List_Access;
 
       procedure Next_Project;
       --  Parse the source files for the next project
@@ -3199,14 +3167,13 @@ package body CPP_Parser is
                       & Project_Name (Current (Iterator.Prj_Iterator)));
                Iterator.State := Process_Xrefs;
 
-               DB_Dirs := Get_DB_Dirs (Current (Iterator.Prj_Iterator));
                SN.Browse.Generate_Xrefs
-                 (DB_Directories => DB_Dirs,
-                  DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
+                 (DB_Directories => Get_DB_Dirs
+                                      (Current (Iterator.Prj_Iterator)),
+                  DBIMP_Path     => Iterator.Handler.DBIMP_Path,
                   Started        => Iterator.Process_Running,
                   Temp_Name      => Iterator.Tmp_Filename,
                   PD             => Iterator.PD);
-               GNAT.Strings.Free (DB_Dirs);
 
             else
                Iterator.Process_Running := False;
@@ -3246,9 +3213,9 @@ package body CPP_Parser is
    overriding procedure Destroy (Iterator : in out CPP_Handler_Iterator) is
       Success : Boolean;
    begin
-      if Iterator.List_Filename /= null then
-         Delete_File (+Iterator.List_Filename.all, Success);
-         Free (Iterator.List_Filename);
+      if Iterator.List_Filename /= GNATCOLL.VFS.No_File then
+         Iterator.List_Filename.Delete (Success);
+         Iterator.List_Filename := No_File;
       end if;
 
       Unchecked_Free (Iterator.Current_Files);
@@ -3260,8 +3227,8 @@ package body CPP_Parser is
 
    overriding procedure Destroy (Handler : in out CPP_Handler_Record) is
    begin
-      Free (Handler.DBIMP_Path);
-      Free (Handler.CBrowser_Path);
+      Handler.DBIMP_Path := No_File;
+      Handler.CBrowser_Path := No_File;
    end Destroy;
 
    ---------------------
@@ -3269,55 +3236,54 @@ package body CPP_Parser is
    ---------------------
 
    function Set_Executables
-     (System_Dir : Filesystem_String;
+     (System_Dir : Virtual_File;
       Handler    : access Entities.LI_Handler_Record'Class) return String
    is
       H            : constant CPP_Handler := CPP_Handler (Handler);
-      Exec_Suffix  : Filesystem_String_Access := Convert
-        (Get_Executable_Suffix);
-      DBIMP_Dir    : Filesystem_String_Access := Convert
-        (Getenv ("DBIMP_PATH"));
-      CBrowser_Dir : Filesystem_String_Access :=
-        Convert (Getenv ("CBROWSER_PATH"));
+      --  ??? Should we convert potentially from "ENV" charset to FS charset ?
+      Exec_Suffix  : String_Access := Get_Executable_Suffix;
+      Base_Dir     : Virtual_File;
+      DBIMP_Dir    : String_Access := Getenv ("DBIMP_PATH");
+      CBrowser_Dir : String_Access := Getenv ("CBROWSER_PATH");
 
    begin
-      Free (H.DBIMP_Path);
-      Free (H.CBrowser_Path);
+      H.DBIMP_Path := No_File;
+      H.CBrowser_Path := No_File;
+      Ensure_Directory (System_Dir);
 
       if DBIMP_Dir.all = "" then
-         H.DBIMP_Path := new Filesystem_String'
-           (Name_As_Directory (System_Dir) & "bin" &
-            GNAT.OS_Lib.Directory_Separator & DBIMP & Exec_Suffix.all);
+         Base_Dir := Create_From_Dir (System_Dir, "bin");
       else
-         H.DBIMP_Path := new Filesystem_String'
-           (DBIMP_Dir.all & Directory_Separator & DBIMP & Exec_Suffix.all);
+         Base_Dir := Create (+(DBIMP_Dir.all));
       end if;
 
+      H.DBIMP_Path :=
+        Create_From_Dir (Base_Dir, +(DBIMP & Exec_Suffix.all));
+
       if CBrowser_Dir.all = "" then
-         H.CBrowser_Path := new Filesystem_String'
-           (Name_As_Directory (System_Dir) & "bin"
-            & Directory_Separator & CBrowser & Exec_Suffix.all);
+         Base_Dir := Create_From_Dir (System_Dir, "bin");
       else
-         H.CBrowser_Path := new Filesystem_String'
-           (CBrowser_Dir.all
-            & Directory_Separator & CBrowser & Exec_Suffix.all);
+         Base_Dir := Create (+(CBrowser_Dir.all));
       end if;
+
+      H.CBrowser_Path :=
+        Create_From_Dir (Base_Dir, +(CBrowser & Exec_Suffix.all));
 
       Free (Exec_Suffix);
       Free (DBIMP_Dir);
       Free (CBrowser_Dir);
 
-      if not Is_Regular_File (H.DBIMP_Path.all) then
-         Free (H.DBIMP_Path);
-         Free (H.CBrowser_Path);
-         return +DBIMP
+      if not Is_Regular_File (H.DBIMP_Path) then
+         H.DBIMP_Path := No_File;
+         H.CBrowser_Path := No_File;
+         return DBIMP
            & " not found on the path. C/C++ browsing is not available";
       end if;
 
-      if not Is_Regular_File (H.CBrowser_Path.all) then
-         Free (H.DBIMP_Path);
-         Free (H.CBrowser_Path);
-         return +CBrowser
+      if not Is_Regular_File (H.CBrowser_Path) then
+         H.DBIMP_Path := No_File;
+         H.CBrowser_Path := No_File;
+         return CBrowser
            & " not found on the path. C/C++ browsing is not available";
       end if;
 
@@ -3336,20 +3302,21 @@ package body CPP_Parser is
       Table   : DB_File;
       F_Pair  : Pair;
       F_Data  : F_Table;
-      DB_Dir  : constant Filesystem_String := Get_DB_Dir (Project);
+      DB_Dir  : constant Virtual_File := Get_DB_Dir (Project);
       Success : Boolean;
 
       Dur : Duration;
 
    begin
+      Ensure_Directory (DB_Dir);
       Files (1) := New_String
-        (+(DB_Dir & SN.Browse.DB_File_Name & Table_Extension (F)));
+        (+(DB_Dir.Full_Name & SN.Browse.DB_File_Name & Table_Extension (F)));
       DB_API.Open (Table, Files, Success);
       Free (Files (1));
 
       if Success then
          Success := False;
-         Set_Cursor_At (Table, Filename => +Full_Name (File_Name).all);
+         Set_Cursor_At (Table, Filename => +Full_Name (File_Name));
 
          loop
             Get_Pair (Table, Next_By_Key, Result => F_Pair);
@@ -3444,7 +3411,7 @@ package body CPP_Parser is
       Set_Cursor
         (Handler.SN_Table (FIL),
          Position    => By_Key,
-         Key         => +Full_Name (File_Name).all & Field_Sep,
+         Key         => +Full_Name (File_Name) & Field_Sep,
          Exact_Match => False);
 
       loop

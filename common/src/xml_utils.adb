@@ -30,9 +30,6 @@ with GNAT.UTF_32;             use GNAT.UTF_32;
 with GNAT.Strings; use GNAT.Strings;
 with Traces;       use Traces;
 
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
-with Filesystems;  use Filesystems;
-
 package body XML_Utils is
 
    Me : constant Debug_Handle := Create ("XML_Utils");
@@ -1087,23 +1084,28 @@ package body XML_Utils is
    --------------------
 
    procedure Add_File_Child
-     (N    : Node_Ptr;
-      Tag  : UTF8_String;
-      File : Virtual_File)
+     (N              : Node_Ptr;
+      Tag            : UTF8_String;
+      File           : Virtual_File;
+      Use_VFS_Prefix : Boolean := True)
    is
       Child : Node_Ptr;
 
    begin
       Child := new Node;
 
-      Child.Tag := new UTF8_String'("vfs_" & Tag);
+      if Use_VFS_Prefix then
+         Child.Tag := new UTF8_String'("vfs_" & Tag);
+      else
+         Child.Tag := new UTF8_String'(Tag);
+      end if;
       Child.Value := new UTF8_String'
-        (String_To_Encoded_ASCII (+Full_Name (File).all));
+        (String_To_Encoded_ASCII (+Full_Name (File)));
 
       declare
          Host : constant String := Get_Host (File);
       begin
-         if Host /= "" then
+         if Host /= Local_Host then
             Set_Attribute (Child, "server", Host);
          end if;
       end;
@@ -1116,8 +1118,10 @@ package body XML_Utils is
    --------------------
 
    function Get_File_Child
-     (N   : Node_Ptr;
-      Tag : UTF8_String) return Virtual_File
+     (N              : Node_Ptr;
+      Tag            : UTF8_String;
+      Host           : String := "";
+      Use_VFS_Prefix : Boolean := True) return Virtual_File
    is
       Child : Node_Ptr;
 
@@ -1125,10 +1129,15 @@ package body XML_Utils is
       Child := N.Child;
 
       if Child /= null then
-         Child := Find_Tag (Child, "vfs_" & Tag);
+         if Use_VFS_Prefix then
+            Child := Find_Tag (Child, "vfs_" & Tag);
+         else
+            Child := Find_Tag (Child, Tag);
+         end if;
       end if;
 
       if Child = null then
+
          --  Revert to trying to find in an attribute named Tag: this might
          --  be the case when trying to parse previous XML file formats.
 
@@ -1136,7 +1145,13 @@ package body XML_Utils is
             S : constant String := Get_Attribute (N, Tag, "");
          begin
             if S /= "" then
-               return Create (+S);
+               if Host /= "" then
+                  --  Return the remote file immediately: they are always saved
+                  --  as full paths.
+                  return Create (+S, Host);
+               else
+                  return Create (+S);
+               end if;
             end if;
          end;
 
@@ -1148,22 +1163,23 @@ package body XML_Utils is
          if Child = null then
             return No_File;
          end if;
+
       end if;
 
       declare
-         Value : constant String := Encoded_ASCII_To_String (Child.Value.all);
-         Host  : constant String := Get_Attribute (Child, "server", "");
-         FS    : Filesystem_Access;
+         Value     : constant String :=
+                       Encoded_ASCII_To_String (Child.Value.all);
+         Host_Attr : constant String :=
+                       Get_Attribute (Child, "server", Host);
       begin
          if Value = "" then
             return No_File;
          end if;
 
-         if Host = "" then
+         if Host_Attr = "" or else Host_Attr = Local_Host then
             return Create (+Value);
          else
-            FS := Get_Filesystem (Host);
-            return Create (FS, +Value);
+            return Create (+Value, Host_Attr);
          end if;
       end;
    end Get_File_Child;

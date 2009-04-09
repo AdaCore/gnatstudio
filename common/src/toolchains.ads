@@ -17,36 +17,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Toolchains is
 
    function Is_Toolchains_Active return Boolean;
    --  Tell if the multiple toolchains mode is active
 
-   function Get_Tool_Search_Path return Filesystem_String;
+   function Get_Tool_Search_Path return Virtual_File;
    --  Get the tool search path
 
-   function Get_Compiler_Search_Path return Filesystem_String;
+   function Get_Compiler_Search_Path return Virtual_File;
    --  Get the compiler search path
 
    function Locate_Exec
-     (Exec_Name : Filesystem_String; Path : Filesystem_String)
-      return Filesystem_String_Access;
+     (Exec_Name : Filesystem_String; Path : File_Array)
+      return Virtual_File;
    --  Locate exec on specified Path.
 
    function Locate_Tool_Executable
-     (Exec_Name : Filesystem_String) return Filesystem_String_Access;
+     (Exec_Name : Filesystem_String) return Virtual_File;
    --  Locate a tool executable on path
 
    function Locate_Compiler_Executable
-     (Exec_Name : Filesystem_String) return Filesystem_String_Access;
+     (Exec_Name : Filesystem_String) return Virtual_File;
    --  Locate a compiler executable on path
 
    procedure Set_Toolchains_Properties
      (Active               : Boolean;
-      Tool_Search_Path     : Filesystem_String;
-      Compiler_Search_Path : Filesystem_String);
+      Tool_Search_Path     : Virtual_File;
+      Compiler_Search_Path : Virtual_File);
    --  Set the toolchains selections global properties
 
 end Toolchains;

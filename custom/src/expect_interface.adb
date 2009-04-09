@@ -918,11 +918,11 @@ package body Expect_Interface is
                --  when the first execution of the D command will occur.
                D.Started := False;
                Synchronize (Kernel, GPS_Server, D.Server,
-                            Blocking       => False,
-                            Print_Command  => D.Show_Command,
-                            Print_Output   => False,
-                            Sync_Once_Dirs => False,
-                            Queue_Id       => Q_Id);
+                            Blocking      => False,
+                            Print_Command => D.Show_Command,
+                            Print_Output  => False,
+                            Force         => False,
+                            Queue_Id      => Q_Id);
             else
                D.Started := True;
 
@@ -975,11 +975,11 @@ package body Expect_Interface is
 
             if not Is_Local (D.Server) then
                Synchronize (Kernel, D.Server, GPS_Server,
-                            Blocking       => False,
-                            Print_Command  => D.Show_Command,
-                            Print_Output   => False,
-                            Sync_Once_Dirs => False,
-                            Queue_Id       => Q_Id);
+                            Blocking      => False,
+                            Print_Command => D.Show_Command,
+                            Print_Output  => False,
+                            Force         => False,
+                            Queue_Id      => Q_Id);
             end if;
 
             Set_Instance (Created_Command, Get_Script (Data), Inst);

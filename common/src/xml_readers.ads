@@ -32,7 +32,7 @@ with Sax.Exceptions;
 with Sax.Locators;
 with Unicode.CES;
 with XML_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 package XML_Readers is
 
@@ -44,13 +44,13 @@ package XML_Readers is
    --  You should free the previous Tree before calling Parse multiple times
    --  if you want to avoid memory leaks.
 
-   function Parse (File : Filesystem_String) return XML_Utils.Node_Ptr;
+   function Parse (File : Virtual_File) return XML_Utils.Node_Ptr;
    --  Same as Glib.Xml.Parse, but uses XML/Ada as the XML parser instead.
    --  Errors in the XML file will return a null value, but the error itself
    --  is no longer accessible.
 
    procedure Parse
-       (File  : Filesystem_String;
+       (File  : Virtual_File;
         Tree  : out XML_Utils.Node_Ptr;
         Error : out Unicode.CES.Byte_Sequence_Access);
    --  Same as above, except error messages are made available to the caller.
