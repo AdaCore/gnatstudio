@@ -3550,7 +3550,11 @@ package body VCS_View_API is
          Unchecked_Free (A);
       end;
 
-      return Result;
+      if Result = null then
+         return new File_Array (1 .. 0);
+      else
+         return Result;
+      end if;
    end Get_Dirs_In_Project;
 
    ------------------------------
