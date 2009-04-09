@@ -31,8 +31,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;
 with System;
 
@@ -66,16 +66,12 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Types;              use Gtkada.Types;
 
-with Filesystems;               use Filesystems;
-with Shell_Descriptors;         use Shell_Descriptors;
-with File_Utils;                use File_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Remote;                    use Remote;
+with Gexpect.Db;                use Gexpect, Gexpect.Db;
 with Traces;                    use Traces;
 with Unchecked_Deallocation;
-
-with Machine_Descriptors;       use Machine_Descriptors;
 
 package body Gtkada.File_Selector is
 
@@ -302,14 +298,13 @@ package body Gtkada.File_Selector is
 
    function Get_Location (Location_Combo : Gtk_Combo) return Virtual_File is
       Str : constant String := Get_Text (Get_Entry (Location_Combo));
-      --  ??? What if the filesystem path is non-UTF8?
 
    begin
       for J in Str'First .. Str'Last - 1 loop
          if Str (J .. J + 1) = ":|" then
-            return Create
-              (FS            => Get_Filesystem (Str (Str'First .. J - 1)),
-               Full_Filename => +Str (J + 2 .. Str'Last));
+            return Create_From_UTF8
+              (Str (J + 2 .. Str'Last),
+               Host => Str (Str'First .. J - 1));
          end if;
       end loop;
 
@@ -370,7 +365,7 @@ package body Gtkada.File_Selector is
         Compile
           (Pattern        => Pattern,
            Glob           => True,
-           Case_Sensitive => Is_Case_Sensitive (GPS_Server));
+           Case_Sensitive => Local_Host_Is_Case_Sensitive);
       --  ??? At this place, we don't know what's the selected server. If we
       --  would, we could use the server's case sensitivity instead of the
       --  local one.
@@ -437,19 +432,20 @@ package body Gtkada.File_Selector is
 
       else
          declare
-            Filename : constant Filesystem_String :=
-              +Get_Text (Dialog.Selection_Entry);
-            --  ??? What if the filesystem path is non-UTF8?
+            Filename : constant String :=
+                         Get_Text (Dialog.Selection_Entry);
             File     : Virtual_File;
+
          begin
-            File := Create
-              (FS => Get_Filesystem (Get_Host (Dialog.Current_Directory)),
-               Full_Filename => Filename);
+            File := Create_From_UTF8
+              (Filename, Get_Host (Dialog.Current_Directory));
             if Is_Absolute_Path (File) then
                return File;
             else
-               File := GNATCOLL.VFS.Create_From_Dir
-                 (Dialog.Current_Directory, Filename);
+               File := Create_From_Base
+                 (File.Full_Name,
+                  Dialog.Current_Directory.Full_Name,
+                  Host => Get_Host (Dialog.Current_Directory));
                return File;
             end if;
          end;
@@ -1080,7 +1076,7 @@ package body Gtkada.File_Selector is
 
             if Win.History /= null and then Is_Local (Dir) then
                Add_To_History (Win.History.all, "directories",
-                               +Full_Name (Dir, True).all);
+                               +Full_Name (Dir, True));
             end if;
          end if;
 
@@ -1149,10 +1145,7 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
       Host : constant String := Get_Host (Win.Current_Directory);
-      H   : Virtual_File := Create
-        (FS => Get_Filesystem (Host),
-         Full_Filename =>
-           Home_Dir (Get_Filesystem (Nickname => Host).all));
+      H   : Virtual_File := Get_Home_Directory (Host);
 
    begin
       if H /= No_File then
@@ -1255,9 +1248,8 @@ package body Gtkada.File_Selector is
       Dead : Message_Dialog_Buttons;
       pragma Unreferenced (Dead);
    begin
-      if Host /= Local_Nickname then
-         Dir := Get_Root
-           (Create (FS => Get_Filesystem (Host), Full_Filename => ""));
+      if Host /= Display_Local_Nickname then
+         Dir := Get_Current_Dir (Host);
       else
          Dir := Get_Current_Dir;
       end if;
@@ -1270,7 +1262,8 @@ package body Gtkada.File_Selector is
       end if;
 
    exception
-      when Process_Died | Invalid_Process | Invalid_Nickname =>
+      when Process_Died | Invalid_Process |
+           VFS_Invalid_File_Error | VFS_Directory_Error =>
          Dead := Message_Dialog
            ("Problem while connecting to " & Host & ASCII.LF &
             "There might be a problem with Host's configuration",
@@ -1279,7 +1272,7 @@ package body Gtkada.File_Selector is
             Parent      => Gtk_Window (Win));
          if Is_Local (Win.Current_Directory) then
             Set_Text (Get_Entry (Win.Hosts_Combo),
-                      Local_Nickname);
+                      Display_Local_Nickname);
          else
             Set_Text (Get_Entry (Win.Hosts_Combo),
                       Get_Host (Win.Current_Directory));
@@ -1693,9 +1686,8 @@ package body Gtkada.File_Selector is
             --  Handle the easy part: change to the longest directory available
 
             if S /= "" then
-               File := Create
-                 (FS => Get_Filesystem (Get_Host (Win.Current_Directory)),
-                  Full_Filename => +S);
+               File := Create_From_UTF8
+                 (S, Get_Host (Win.Current_Directory));
             else
                File := GNATCOLL.VFS.No_File;
             end if;
@@ -2039,13 +2031,19 @@ package body Gtkada.File_Selector is
 
          Gtk_New (File_Selector_Window.Hosts_Combo);
          Set_Editable (Get_Entry (File_Selector_Window.Hosts_Combo), False);
-         Gtk_New (Item, Local_Nickname);
+         Gtk_New (Item, Display_Local_Nickname);
          Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
 
-         for J in 1 .. Get_Nb_Machine_Descriptor loop
-            Gtk_New (Item, Locale_To_UTF8 (Get_Nickname (J)));
-            Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
-         end loop;
+         declare
+            Machines : constant GNAT.Strings.String_List := Get_Servers;
+         begin
+            for J in Machines'Range loop
+               Trace (Me, "Adding " & Machines (J).all &
+                      " in servers list");
+               Gtk_New (Item, Machines (J).all);
+               Add (Get_List (File_Selector_Window.Hosts_Combo), Item);
+            end loop;
+         end;
 
          if Initial_Directory /= No_File
            and then not Is_Local (Initial_Directory)
@@ -2300,14 +2298,12 @@ package body Gtkada.File_Selector is
            (-"Select directory",
             Parent            => Gtk_Window (Get_Toplevel (Ent)),
             Use_Native_Dialog => True,
-            Base_Directory    => Create (+Get_Text (Result)));
-         --  ??? What if the filesystem path is non-UTF8?
+            Base_Directory    => Create_From_UTF8 (Get_Text (Result)));
       end if;
 
       if Name /= No_File then
          Ensure_Directory (Name);
-         Set_Text (Result, +Full_Name (Name).all);
-         --  ??? What if the filesystem path is non-UTF8?
+         Set_Text (Result, Display_Full_Name (Name));
       end if;
    end Browse_Location;
 

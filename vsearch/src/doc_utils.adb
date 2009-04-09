@@ -29,7 +29,6 @@ with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
 with GNAT.Strings;           use GNAT.Strings;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 with Language_Handlers;      use Language_Handlers;
 with Language.Documentation; use Language.Documentation;
 
@@ -76,7 +75,7 @@ package body Doc_Utils is
       if Lang = null then
          if Active (Me) then
             Trace (Me, "Get_Documentation language unknown for "
-                   & (+Full_Name (Declaration_File).all));
+                   & Declaration_File.Display_Full_Name);
          end if;
 
          return "";
@@ -93,7 +92,7 @@ package body Doc_Utils is
             if Tmp_Buffer = null then
                if Active (Me) then
                   Trace (Me, "Get_Documentation, no file found "
-                         & (+Full_Name (Declaration_File).all));
+                         & Declaration_File.Display_Full_Name);
                end if;
 
                return "";

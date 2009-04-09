@@ -20,11 +20,9 @@
 with Unchecked_Deallocation;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -58,7 +56,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Filesystems;               use Filesystems;
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with UTF8_Utils;                use UTF8_Utils;
@@ -533,7 +530,7 @@ package body Directory_Tree is
                if Is_Directory (Files (F))
                  and then not Is_Symbolic_Link (Files (F))
                  and then Filter (Selector.Directory,
-                                  +Full_Name (Files (F)).all)
+                                  +Full_Name (Files (F)))
                then
                   Add_Directory (Selector, Files (F), True);
                end if;
@@ -824,8 +821,7 @@ package body Directory_Tree is
 
       Gtk_New (Ent, Max => 1024);
       Set_Width_Chars (Ent, 30);
-      Set_Text (Ent, +Full_Name (Current_Dir).all);
-      --  ??? What if the filesystem path is non-UTF8?
+      Set_Text (Ent, Display_Full_Name (Current_Dir));
 
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
@@ -849,7 +845,7 @@ package body Directory_Tree is
             Path := Get_Path (Selector.Directory.File_Model, Iter);
 
             Make_Dir_Recursive
-              (+Filesystems.Filename_From_UTF8 (Get_Text (Ent)));
+              (Create_From_UTF8 (Get_Text (Ent)));
 
             Success := Collapse_Row (Selector.Directory.File_Tree, Path);
             Success := Expand_Row (Selector.Directory.File_Tree, Path, False);
@@ -900,7 +896,7 @@ package body Directory_Tree is
       Root_Directory       : Virtual_File := Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
-      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection) is
+      Initial_Selection    : File_Array := No_Selection) is
    begin
       Selector := new Directory_Selector_Record;
       Initialize
@@ -918,7 +914,7 @@ package body Directory_Tree is
       Root_Directory       : Virtual_File := Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
-      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
+      Initial_Selection    : File_Array := No_Selection)
    is
       pragma Unreferenced (Busy_Cursor_On);
       Bbox     : Gtk_Hbutton_Box;
@@ -927,7 +923,6 @@ package body Directory_Tree is
       Arrow    : Gtk_Arrow;
       Vbox     : Gtk_Box;
       Iter     : Gtk_Tree_Iter;
-      Dir      : Virtual_File;
 
    begin
       Initialize_Vpaned (Selector);
@@ -984,19 +979,11 @@ package body Directory_Tree is
          for J in Initial_Selection'Range loop
             Append (Selector.List_Model, Iter, Null_Iter);
 
-            Dir := Create (+Initial_Selection (J).all);
-            Ensure_Directory (Dir);
-
-            declare
-               Value : GValue;
-            begin
-               Init (Value, Get_Virtual_File_Type);
-               Set_File (Value, Dir);
-               Set_Value (Selector.List_Model, Iter, File_Column, Value);
-               Unset (Value);
-            end;
+            Ensure_Directory (Initial_Selection (J));
+            Set_File
+              (Selector.List_Model, Iter, File_Column, Initial_Selection (J));
             Set (Selector.List_Model, Iter, Base_Name_Column,
-                 Unknown_To_UTF8 (+Base_Dir_Name (Dir)));
+                 Initial_Selection (J).Display_Base_Dir_Name);
          end loop;
 
       else
@@ -1710,45 +1697,34 @@ package body Directory_Tree is
      (Explorer : access Dir_Tree_Record'Class;
       Dir      : Virtual_File)
    is
-      Buffer       : aliased Filesystem_String (1 .. 1024);
-      Last, Len    : Integer;
       Dir_Inserted : Boolean := False;
+      Drives       : File_Array_Access :=
+                       Get_Logical_Drives (Dir.Get_Host);
 
    begin
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
-      Get_Filesystem (Get_Host (Dir)).Get_Logical_Drives (Buffer, Len);
 
-      if Len = 0 then
+      if Drives'Length = 0 then
          File_Append_Directory
            (Explorer, Get_Root (Dir), Null_Iter, 1, Dir, True);
          Dir_Inserted := True;
 
       else
-         Last := 1;
+         for J in Drives'Range loop
+            if Is_Parent (Drives (J), Dir) then
+               File_Append_Directory
+                 (Explorer, Drives (J), Null_Iter, 1, Dir, True);
+               Dir_Inserted := True;
 
-         for J in 1 .. Len loop
-            if Buffer (J) = ASCII.NUL then
-               declare
-                  Drive : constant Virtual_File := Create
-                    (FS            => Get_Filesystem (Get_Host (Dir)),
-                     Full_Filename => Buffer (Last .. J - 1));
-               begin
-                  if Is_Parent (Drive, Dir) then
-                     File_Append_Directory
-                       (Explorer, Drive, Null_Iter, 1, Dir, True);
-                     Dir_Inserted := True;
-
-                  else
-                     File_Append_Directory
-                       (Explorer, Drive, Null_Iter, 0, No_File, False, False);
-                  end if;
-               end;
-
-               Last := J + 1;
+            else
+               File_Append_Directory
+                 (Explorer, Drives (J), Null_Iter, 0, No_File, False, False);
             end if;
          end loop;
       end if;
+
+      Unchecked_Free (Drives);
 
       if not Dir_Inserted then
          File_Append_Directory

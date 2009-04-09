@@ -49,7 +49,6 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Intl;            use Gtkada.Intl;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
 package body Switches_Chooser.Gtkada is
 
@@ -360,13 +359,12 @@ package body Switches_Chooser.Gtkada is
    is
       F   : constant Gtk_Entry := Gtk_Entry (Field);
       Dir : constant Virtual_File := Select_Directory
-        (Base_Directory    => Create (+Get_Text (F)),
+        (Base_Directory    => Create_From_UTF8 (Get_Text (F)),
          Parent            => Gtk_Window (Get_Toplevel (F)),
          Use_Native_Dialog => Data.Editor.Native_Dialogs);
    begin
       if Dir /= GNATCOLL.VFS.No_File then
-         Set_Text (F, +Full_Name (Dir).all);
-         --  ??? What if the filesystem path is non-UTF8?
+         Set_Text (F, Display_Full_Name (Dir));
       end if;
    end Browse_Directory;
 
@@ -379,8 +377,7 @@ package body Switches_Chooser.Gtkada is
       Data   : Switch_Data)
    is
       F    : constant Gtk_Entry := Gtk_Entry (Field);
-      VF   : constant Virtual_File := Create (+Get_Text (F));
-      --  ??? What if the filesystem path is non-UTF8?
+      VF   : constant Virtual_File := Create_From_UTF8 (Get_Text (F));
       File : constant Virtual_File := Select_File
         (Base_Directory    => Dir (VF),
          Default_Name      => Display_Base_Name (VF),

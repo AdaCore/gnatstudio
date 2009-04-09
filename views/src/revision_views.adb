@@ -29,7 +29,6 @@ with GNAT.Strings;               use GNAT.Strings;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;        use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
@@ -291,7 +290,7 @@ package body Revision_Views is
                  Open_Revision_View (Kernel, File);
       Rev    : constant String := Nth_Arg (Data, 2);
       Sym    : constant String := Nth_Arg (Data, 3);
-      Key    : constant String := +Full_Name (File, True).all & "$" & Rev;
+      Key    : constant String := +Full_Name (File, True) & "$" & Rev;
       List   : SL.List;
    begin
       List := String_Hash_Table.Get (View.Syms, Key);
@@ -622,7 +621,7 @@ package body Revision_Views is
          use type SL.List_Node;
          Rev   : constant String := To_String (Line.Log.Revision);
          Key   : constant String :=
-                   +Full_Name (View.File, True).all & "$" & Rev;
+                   +Full_Name (View.File, True) & "$" & Rev;
          List  : SL.List;
          Node  : SL.List_Node;
          First : Boolean := True;

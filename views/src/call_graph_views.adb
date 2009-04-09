@@ -21,7 +21,6 @@ with GNAT.Strings;                use GNAT.Strings;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Filesystem;         use GNATCOLL.Filesystem;
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;

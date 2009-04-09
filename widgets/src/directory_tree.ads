@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2006                       --
---                              AdaCore                              --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,7 +31,6 @@ with Gdk.Window;
 with Gtk.Menu;
 with Gtk.Main;
 with Gtk.Paned;
-with GNAT.OS_Lib;
 
 with Gtk.Handlers;
 with Gtk.Tree_Model;
@@ -107,8 +105,7 @@ package Directory_Tree is
      with private;
    type Directory_Selector is access all Directory_Selector_Record'Class;
 
-   No_Selection : constant GNAT.OS_Lib.Argument_List (1 .. 0) :=
-     (others => null);
+   No_Selection : constant GNATCOLL.VFS.File_Array := (1 .. 0 => <>);
 
    procedure Gtk_New
      (Selector             : out Directory_Selector;
@@ -117,7 +114,7 @@ package Directory_Tree is
         GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
-      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
+      Initial_Selection    : GNATCOLL.VFS.File_Array := No_Selection);
    --  Create a directory selector.
    --  Multiple_Directories should be True if multiple directories can be
    --  selected by the user.
@@ -132,7 +129,7 @@ package Directory_Tree is
         GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
-      Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection);
+      Initial_Selection    : GNATCOLL.VFS.File_Array := No_Selection);
    --  Internal function for the creation of new widgets.
 
    function Get_Single_Selection
