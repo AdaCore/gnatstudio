@@ -25,7 +25,6 @@ with System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with GNAT.Strings;
 
@@ -1209,7 +1208,7 @@ package body Src_Editor_Module.Shell is
                if not Is_Absolute_Path (Filename) then
                   Get_Full_Path_From_File
                     (Get_Registry (Kernel).all,
-                     Full_Name (Filename).all,
+                     Full_Name (Filename),
                      True, False,
                      File => Filename);
                end if;
@@ -1339,7 +1338,7 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "get_file" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Full_Name (Get_File (Marker)).all);
+         Set_Return_Value (Data, Full_Name (Get_File (Marker)));
 
       elsif Command = "get_last_line" then
          declare
@@ -1870,7 +1869,7 @@ package body Src_Editor_Module.Shell is
                  (Source_Editor_Box (Get_Widget (Child)),
                   Write, Explicit => True);
             else
-               Trace (Me, "Editor not found: " & (+Full_Name (File).all));
+               Trace (Me, "Editor not found: " & Display_Full_Name (File));
             end if;
          end;
 

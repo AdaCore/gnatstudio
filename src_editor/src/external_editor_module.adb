@@ -47,7 +47,6 @@ with Traces;                    use Traces;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body External_Editor_Module is
 
@@ -249,7 +248,7 @@ package body External_Editor_Module is
 
    procedure Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
-      File          : Filesystem_String := "";
+      File          : Virtual_File := No_File;
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
       Extended_Lisp : String := "");
@@ -297,7 +296,7 @@ package body External_Editor_Module is
    -------------------
 
    procedure Select_Client is
-      Path           : Filesystem_String_Access;
+      Path           : Virtual_File;
       Args           : Argument_List_Access;
       Match          : Boolean;
       Default_Client : constant Supported_Clients := Supported_Clients'Val
@@ -330,8 +329,7 @@ package body External_Editor_Module is
             if Args'Length /= 0 then
                Path := Locate_Tool_Executable (+Args (Args'First).all);
 
-               if Path /= null then
-                  Free (Path);
+               if Path /= No_File then
                   Match := True;
                end if;
             end if;
@@ -345,9 +343,7 @@ package body External_Editor_Module is
               (Clients (C).Lisp_Command_Name.all);
 
             Path := Locate_Tool_Executable (+Args (Args'First).all);
-            if Path /= null then
-               Free (Path);
-            else
+            if Path = No_File then
                Match := False;
             end if;
 
@@ -357,9 +353,7 @@ package body External_Editor_Module is
 
          if Match and then Clients (C).Extra_Test /= null then
             Path := Locate_Tool_Executable (+Clients (C).Extra_Test.all);
-            if Path /= null then
-               Free (Path);
-            else
+            if Path = No_File then
                Match := False;
             end if;
          end if;
@@ -542,7 +536,7 @@ package body External_Editor_Module is
       Success : out Boolean)
    is
       Args : Argument_List_Access;
-      Path : Filesystem_String_Access;
+      Path : Virtual_File;
 
    begin
       Success := False;
@@ -557,7 +551,7 @@ package body External_Editor_Module is
          Args := Argument_String_To_List (Servers (S).Command_Name.all);
          Path := Locate_Tool_Executable (+Args (Args'First).all);
 
-         if Path /= null then
+         if Path /= No_File then
             Substitute
               (Args,
                P => Project_Name (Get_Project (Kernel)),
@@ -565,8 +559,7 @@ package body External_Editor_Module is
                  (External_Editor_Module_Id.Client).Server_Start_Command.all);
 
             Spawn_New_Process
-              (Kernel, Path.all, Args.all, Success);
-            Free (Path);
+              (Kernel, Path.Full_Name, Args.all, Success);
             Free (Args.all);
             Unchecked_Free (Args);
             exit;
@@ -613,7 +606,7 @@ package body External_Editor_Module is
 
    procedure Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
-      File          : Filesystem_String := "";
+      File          : Virtual_File := No_File;
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
       Extended_Lisp : String := "")
@@ -623,7 +616,7 @@ package body External_Editor_Module is
       Col_Str   : constant String := Visible_Column_Type'Image (Column);
       Result    : Integer := 0;
       Success   : Boolean;
-      Path      : Filesystem_String_Access;
+      Path      : Virtual_File;
       Args      : Argument_List_Access;
 
    begin
@@ -658,7 +651,7 @@ package body External_Editor_Module is
       Substitute
         (Args,
          P => Project_Name (Get_Project (Kernel)),
-         F => +File,
+         F => +File.Full_Name,
          C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
          L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
          E => Extended_Lisp);
@@ -672,7 +665,7 @@ package body External_Editor_Module is
          return;
       end if;
 
-      if Path = null then
+      if Path = No_File then
          Insert (Kernel, Args (Args'First).all & " not found on PATH",
                  Mode => Error);
          Free (Args.all);
@@ -684,10 +677,11 @@ package body External_Editor_Module is
         /= null
       then
          Result := Blocking_Spawn
-           (Path.all, Args (Args'First + 1 .. Args'Last));
+           (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
       else
          Spawn_New_Process
-           (Kernel, Path.all, Args (Args'First + 1 .. Args'Last), Success);
+           (Kernel, Path.Full_Name,
+            Args (Args'First + 1 .. Args'Last), Success);
       end if;
 
       --  If we couldn't send the command, it probably means that Emacs wasn't
@@ -705,14 +699,13 @@ package body External_Editor_Module is
 
             for Try in 1 .. Max_Tries loop
                Result := Blocking_Spawn
-                 (Path.all, Args (Args'First + 1 .. Args'Last));
+                 (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
                exit when Result = 0;
                delay 0.5;
             end loop;
          end if;
       end if;
 
-      Free (Path);
       Free (Args.all);
       Unchecked_Free (Args);
    end Client_Command;
@@ -740,7 +733,7 @@ package body External_Editor_Module is
 
       Client_Command
         (Kernel => Get_Kernel (Context.Context),
-         File   => Full_Name (File_Information (Context.Context)).all,
+         File   => File_Information (Context.Context),
          Line   => Line,
          Column => Column);
       Pop_State (Get_Kernel (Context.Context));
@@ -771,7 +764,7 @@ package body External_Editor_Module is
             --  ??? Incorrect handling of remote files
             Client_Command
               (Kernel => Kernel,
-               File   => Full_Name (D.File).all,
+               File   => D.File,
                Line   => Natural (D.Line),
                Column => D.Column);
             Pop_State (Kernel_Handle (Kernel));

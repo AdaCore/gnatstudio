@@ -26,7 +26,6 @@ pragma Warnings (On);
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with GNATCOLL.Utils;                      use GNATCOLL.Utils;
 with GNATCOLL.VFS;                        use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;                 use GNATCOLL.Filesystem;
 with Interfaces.C.Strings;                use Interfaces.C.Strings;
 with System.Address_Image;
 
@@ -495,10 +494,7 @@ package body Src_Editor_Buffer is
 
       if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File)
-           and then Edited.Full_Name'Length > File.Full_Name'Length
-           and then Create (Edited.Full_Name.all
-               (Edited.Full_Name'First ..
-                  Edited.Full_Name'First + File.Full_Name'Length - 1)) = File
+           and then Is_Parent (File, Edited)
          then
             Need_Action := True;
          elsif not Is_Directory (File) and then File = Edited then
@@ -533,21 +529,16 @@ package body Src_Editor_Buffer is
 
       if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File)
-           and then Edited.Full_Name'Length > File.Full_Name'Length
-           and then Create (Edited.Full_Name.all
-               (Edited.Full_Name'First ..
-                  Edited.Full_Name'First + File.Full_Name'Length - 1)) = File
+           and then Is_Parent (File, Edited)
          then
-            Dest := Create
-              (Files_2_Hooks_Args (Data.all).Renamed.Full_Name.all &
-               Edited.Full_Name.all
-                 (Edited.Full_Name'First + File.Full_Name'Length ..
-                    Edited.Full_Name'Last));
+            Dest := Create_From_Dir
+              (Files_2_Hooks_Args (Data.all).Renamed,
+               Relative_Path (Edited, File));
             Hook.Buffer.Filename := Dest;
             Hook.Buffer.Filename_Changed;
 
          elsif not Is_Directory (File)
-           and then Edited.Full_Name.all = File.Full_Name.all
+           and then Edited = File
          then
             Hook.Buffer.Filename := Files_2_Hooks_Args (Data.all).Renamed;
             Hook.Buffer.Filename_Changed;
@@ -810,7 +801,7 @@ package body Src_Editor_Buffer is
       if Buffer.Auto_Syntax_Check then
          Execute_GPS_Shell_Command
            (Buffer.Kernel,
-            "File " & (+Full_Name (Buffer.Filename).all));
+            "File " & (+Full_Name (Buffer.Filename)));
          Execute_GPS_Shell_Command
            (Buffer.Kernel, "File.shadow_check_syntax %1");
       end if;
@@ -1406,6 +1397,7 @@ package body Src_Editor_Buffer is
             if Buffer.Editable_Lines (J).Where = In_Mark then
                GNAT.Strings.Free (Buffer.Editable_Lines (J).Text);
             end if;
+
             if Buffer.Editable_Lines (J).Block /= null then
                --  Block is shared so we need to ensure that no other block
                --  references it. We only free the block on its last line
@@ -2310,7 +2302,7 @@ package body Src_Editor_Buffer is
                  (Source_Buffer (Buffer), Entity_End, Success, Line, Col);
                if not Success then
                   Trace (Me, "invalid position """
-                         & (+Full_Name (Buffer.Filename).all) & """"
+                         & Buffer.Filename.Display_Full_Name & """"
                          & Line'Img & Col'Img);
                   return False;
                end if;
@@ -2322,7 +2314,7 @@ package body Src_Editor_Buffer is
                  (Source_Buffer (Buffer), Entity_End, Success, Line, 0);
                if not Success then
                   Trace (Me, "invalid position """
-                         & (+Full_Name (Buffer.Filename).all) & """"
+                         & Buffer.Filename.Display_Full_Name & """"
                          & Line'Img & " 0--");
                   return False;
                end if;
@@ -2898,7 +2890,7 @@ package body Src_Editor_Buffer is
 
       if Contents = null then
          Trace (Me, "Load_File: Couldn't read contents of "
-                & (+Full_Name (Filename).all));
+                & Filename.Display_Full_Name);
          Success := False;
          return;
       end if;
@@ -3176,8 +3168,6 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
-      FD := Write_File (Filename);
-
       --  The file could not be opened, check whether it is read-only
 
       if Is_Regular_File (Filename) and then not Is_Writable (Filename) then
@@ -3203,6 +3193,8 @@ package body Src_Editor_Buffer is
             end if;
          end;
       end if;
+
+      FD := Write_File (Filename);
 
       if FD = Invalid_File then
          Insert
@@ -3493,7 +3485,7 @@ package body Src_Editor_Buffer is
    begin
       if not Is_Valid_Position (Buffer, Line, Column) then
          Trace (Me, "invalid position for Set_Cursor_Position "
-                & (+Full_Name (Get_Filename (Buffer)).all)
+                & Get_Filename (Buffer).Display_Full_Name
                 & Line'Img & Column'Img);
          return;
       end if;
@@ -3563,7 +3555,7 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
       else
          Trace (Me, "Invalid position for Set_Screen_Position "
-                & (+Full_Name (Get_Filename (Buffer)).all) & Line'Img);
+                & Get_Filename (Buffer).Display_Full_Name & Line'Img);
          Get_End_Iter (Buffer, Iter);
       end if;
 

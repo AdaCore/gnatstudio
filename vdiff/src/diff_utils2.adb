@@ -34,7 +34,6 @@ with Traces;                 use Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
 with String_Diff;            use String_Diff;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Diff_Utils2 is
 
@@ -248,35 +247,33 @@ package body Diff_Utils2 is
       Result     : Expect_Match;
       Ret        : Diff_List;
       Occurrence : Diff_Chunk_Access;
-      Cmd        : Filesystem_String_Access;
+      Cmd        : Virtual_File;
       Cmd_Args   : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
-      if Cmd = null or else Cmd.all = "" then
+      if Cmd = No_File then
          Console.Insert
            (Kernel, "command not found: " & Diff_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
-         Free (Cmd);
          Free (Cmd_Args);
          return Ret;
       end if;
 
-      Args (1) := new String'(+Full_Name (Ref_File).all);
-      Args (2) := new String'(+Full_Name (New_File).all);
+      Args (1) := new String'(+Full_Name (Ref_File));
+      Args (2) := new String'(+Full_Name (New_File));
 
       Trace (Me, "spawn: " & Diff_Command
-             & " " & (+Full_Name (New_File).all)
-             & " " & (+Full_Name (Ref_File).all));
+             & " " & (+Full_Name (New_File))
+             & " " & (+Full_Name (Ref_File)));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, +Cmd.all,
+           (Descriptor, +Cmd.Full_Name,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
-         Free (Cmd);
          Free (Cmd_Args);
          Free (Args);
 
@@ -318,7 +315,7 @@ package body Diff_Utils2 is
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
       Occurrence    : Diff_Chunk_Access;
-      Cmd           : Filesystem_String_Access;
+      Cmd           : Virtual_File;
       Matches       : Match_Array (0 .. 5);
       Result        : Expect_Match;
       File          : File_Type;
@@ -332,12 +329,11 @@ package body Diff_Utils2 is
       Cmd      :=
         Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
-      if Cmd = null or else Cmd.all = "" then
+      if Cmd = No_File then
          Console.Insert
            (Kernel, "command not found: " & Patch_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
-         Free (Cmd);
          Free (Cmd_Args);
          return Ret;
       end if;
@@ -346,26 +342,25 @@ package body Diff_Utils2 is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(+Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (Orig_File));
          Args (4) := new String'("-R");
-         Args (5) := new String'(+Full_Name (New_File).all);
+         Args (5) := new String'(+Full_Name (New_File));
          Num_Args := 6;
       else
-         Args (3) := new String'(+Full_Name (New_File).all);
-         Args (4) := new String'(+Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (New_File));
+         Args (4) := new String'(+Full_Name (Orig_File));
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(+Full_Name (Diff_File).all);
+      Args (Num_Args) := new String'(+Full_Name (Diff_File));
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, +Cmd.all,
+           (Descriptor, +Cmd.Full_Name,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
             Args (1 .. Num_Args));
-         Free (Cmd);
          Free (Cmd_Args);
          Free (Args);
 
@@ -379,7 +374,7 @@ package body Diff_Utils2 is
       end;
 
       --  ??? Should use VFS.Read_File instead, more efficient
-      Open (File, In_File, +Full_Name (Diff_File).all);
+      Open (File, In_File, +Full_Name (Diff_File));
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -444,9 +439,9 @@ package body Diff_Utils2 is
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
       Pattern_Bloc   : constant Pattern_Matcher :=
-                         Compile ("^====([1-3])?$", Multiple_Lines);
+                         Compile ("^====?([1-3])?\r?$", Multiple_Lines);
       Pattern_Chunk  : constant Pattern_Matcher :=
-                         Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])$",
+                         Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])\r?$",
                                   Multiple_Lines);
       Descriptor     : TTY_Process_Descriptor;
       Matches_Block  : Match_Array (0 .. 1);
@@ -459,36 +454,34 @@ package body Diff_Utils2 is
       Result         : Expect_Match;
       Ret            : Diff_List;
       Occurrence     : Diff_Chunk_Access;
-      Cmd            : Filesystem_String_Access;
+      Cmd            : Virtual_File;
       Cmd_Args       : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
       Cmd      := Locate_Tool_Executable (+Cmd_Args (Cmd_Args'First).all);
 
-      if Cmd = null or else Cmd.all = "" then
+      if Cmd = No_File then
          Console.Insert
            (Kernel, "command not found: " & Diff3_Command &
             ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
-         Free (Cmd);
          Free (Cmd_Args);
          return Ret;
       end if;
 
-      Args (1) := new String'(+Full_Name (My_Change).all);
-      Args (2) := new String'(+Full_Name (Old_File).all);
-      Args (3) := new String'(+Full_Name (Your_Change).all);
+      Args (1) := new String'(+Full_Name (My_Change));
+      Args (2) := new String'(+Full_Name (Old_File));
+      Args (3) := new String'(+Full_Name (Your_Change));
 
       Trace (Me, "spawn: " & Diff3_Command & " " &
-             (+Full_Name (My_Change).all)
-             & " " & (+Full_Name (Old_File).all)
-             & " " & (+Full_Name (Your_Change).all));
+             Display_Full_Name (My_Change)
+             & " " & Display_Full_Name (Old_File)
+             & " " & Display_Full_Name (Your_Change));
 
       Non_Blocking_Spawn
-        (Descriptor, +Cmd.all,
+        (Descriptor, +Cmd.Full_Name,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
-      Free (Cmd);
       Free (Cmd_Args);
       Free (Args);
 

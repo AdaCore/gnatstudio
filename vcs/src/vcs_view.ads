@@ -36,7 +36,6 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 with Gtk.Widget;           use Gtk.Widget;
 
 with GPS.Kernel;           use GPS.Kernel;
-with String_List_Utils;    use String_List_Utils;
 with VCS_Status;           use VCS_Status;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with Tooltips;
@@ -89,7 +88,7 @@ package VCS_View is
    --  Return the kernel associated with VCS_View
 
    function Get_Selected_Files
-     (Explorer : VCS_View_Access) return String_List.List;
+     (Explorer : VCS_View_Access) return File_Array_Access;
    --  Return the list of files that are selected
 
    procedure Clear (Explorer : access VCS_View_Record'Class);
@@ -207,6 +206,7 @@ private
    Activity_Column           : constant := 7;
    Control_Column            : constant := 8;
    Key_Column                : constant := 9;
+   File_Column               : constant := 10;
    --  Used to control the Activity "editable" attribute for the Activities
    --  Explorer or the Log "visible" attribute of the VCS Explorer.
 

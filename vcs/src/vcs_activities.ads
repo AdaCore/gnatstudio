@@ -21,7 +21,6 @@ with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with Templates_Parser;   use Templates_Parser;
 
 with GPS.Kernel;         use GPS.Kernel;
-with String_List_Utils;  use String_List_Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with VCS;                use VCS;
 
@@ -111,7 +110,7 @@ package VCS_Activities is
    --  part of an activity.
 
    function Get_Files_In_Activity
-     (Activity : Activity_Id) return String_List.List;
+     (Activity : Activity_Id) return GNATCOLL.VFS.File_Array;
    --  Returns the list of files in the given activity. The list must not be
    --  freed.
 
@@ -143,7 +142,7 @@ package VCS_Activities is
    --  Invert the group-commit status
 
    function Get_Activity_Log_Template
-     (Kernel : access Kernel_Handle_Record'Class) return String;
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  Return the activity log template to use for group commit and to build
    --  patch file header. The template is first checked into the user GPS home
    --  and if not found into GPS system directory.

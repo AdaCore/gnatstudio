@@ -25,8 +25,6 @@ with VCS_Module;          use VCS_Module;
 with VCS_Status;          use VCS_Status;
 with VCS_View;            use VCS_View;
 with VCS_View.Activities; use VCS_View.Activities;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Commands.VCS is
 
@@ -40,18 +38,18 @@ package body Commands.VCS is
 
    overriding procedure Free (X : in out Log_Action_Command_Type) is
    begin
-      String_List.Free (X.Filenames);
+      Unchecked_Free (X.Filenames);
       String_List.Free (X.Logs);
    end Free;
 
    overriding procedure Free (X : in out Get_Status_Command_Type) is
    begin
-      String_List.Free (X.Filenames);
+      Unchecked_Free (X.Filenames);
    end Free;
 
    overriding procedure Free (X : in out Update_Files_Command_Type) is
    begin
-      String_List.Free (X.Filenames);
+      Unchecked_Free (X.Filenames);
    end Free;
 
    overriding procedure Free (X : in out Generic_Kernel_Command) is
@@ -69,13 +67,13 @@ package body Commands.VCS is
       Kernel    : not null access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Logs      : String_List.List) is
    begin
       Item := new Log_Action_Command_Type;
       Item.Kernel    := Kernel;
       Item.Rep       := Rep;
-      Item.Filenames := Copy_String_List (Filenames);
+      Item.Filenames := new File_Array'(Filenames);
       Item.Logs      := Copy_String_List (Logs);
       Item.Action    := Action;
    end Create;
@@ -83,21 +81,21 @@ package body Commands.VCS is
    procedure Create
      (Item      : out Get_Status_Command_Access;
       Rep       : VCS_Access;
-      Filenames : String_List.List) is
+      Filenames : File_Array) is
    begin
       Item := new Get_Status_Command_Type;
       Item.Rep       := Rep;
-      Item.Filenames := Copy_String_List (Filenames);
+      Item.Filenames := new File_Array'(Filenames);
    end Create;
 
    procedure Create
      (Item      : out Update_Files_Command_Access;
       Kernel    : not null access Kernel_Handle_Record'Class;
-      Filenames : String_List.List) is
+      Filenames : File_Array) is
    begin
       Item := new Update_Files_Command_Type;
       Item.Kernel    := Kernel;
-      Item.Filenames := Copy_String_List (Filenames);
+      Item.Filenames := new File_Array'(Filenames);
    end Create;
 
    procedure Create
@@ -129,10 +127,10 @@ package body Commands.VCS is
    is
       use String_List;
 
-      Node  : List_Node;
       Log   : List_Node;
+      Idx   : Natural;
+      Last  : Natural;
 
-      Files : List;
    begin
       --  If we have a single element in Log, then the same log must be used
       --  for all files.
@@ -144,13 +142,13 @@ package body Commands.VCS is
          --  VCS.
          case Command.Action is
             when Commit =>
-               Commit (Command.Rep, Command.Filenames, "");
+               Commit (Command.Rep, Command.Filenames.all, "");
 
             when Add =>
-               Add (Command.Rep, Command.Filenames, "");
+               Add (Command.Rep, Command.Filenames.all, "");
 
             when Remove =>
-               Remove (Command.Rep, Command.Filenames, "");
+               Remove (Command.Rep, Command.Filenames.all, "");
 
             when others =>
                raise Program_Error;
@@ -159,13 +157,13 @@ package body Commands.VCS is
       elsif Length (Command.Logs) = 1 then
          case Command.Action is
             when Commit =>
-               Commit (Command.Rep, Command.Filenames, Data (Log));
+               Commit (Command.Rep, Command.Filenames.all, Data (Log));
 
             when Add =>
-               Add (Command.Rep, Command.Filenames, Data (Log));
+               Add (Command.Rep, Command.Filenames.all, Data (Log));
 
             when Remove =>
-               Remove (Command.Rep, Command.Filenames, Data (Log));
+               Remove (Command.Rep, Command.Filenames.all, Data (Log));
 
             when others =>
                raise Program_Error;
@@ -175,36 +173,45 @@ package body Commands.VCS is
          --  Log is not shared, launch one command for each commit having the
          --  same log.
 
-         Node := First (Command.Filenames);
-
-         while Node /= Null_Node loop
+         Idx := Command.Filenames'First;
+         while Idx <= Command.Filenames'Last loop
 
             declare
                Log_Content : constant String := Data (Log);
             begin
+               Last := Idx;
                loop
-                  Append (Files, Data (Node));
-                  Node := Next (Node);
                   Log  := Next (Log);
-
-                  exit when Log = Null_Node or else Data (Log) /= Log_Content;
+                  Last := Last + 1;
+                  exit when Last > Command.Filenames'Last
+                    or else Log = Null_Node
+                    or else Data (Log) /= Log_Content;
                end loop;
 
                case Command.Action is
                   when Commit =>
-                     Commit (Command.Rep, Files, Log_Content);
+                     Commit
+                       (Command.Rep,
+                        Command.Filenames (Idx .. Last - 1),
+                        Log_Content);
 
                   when Add =>
-                     Add (Command.Rep, Files, Log_Content);
+                     Add
+                       (Command.Rep,
+                        Command.Filenames (Idx .. Last - 1),
+                        Log_Content);
 
                   when Remove =>
-                     Remove (Command.Rep, Files, Log_Content);
+                     Remove
+                       (Command.Rep,
+                        Command.Filenames (Idx .. Last - 1),
+                        Log_Content);
 
                   when others =>
                      raise Program_Error;
                end case;
 
-               Free (Files);
+               Idx := Last;
             end;
          end loop;
       end if;
@@ -225,7 +232,7 @@ package body Commands.VCS is
    overriding function Execute
      (Command : access Get_Status_Command_Type) return Command_Return_Type is
    begin
-      Get_Status (Command.Rep, Command.Filenames, Clear_Logs => True);
+      Get_Status (Command.Rep, Command.Filenames.all, Clear_Logs => True);
       Command_Finished (Command, True);
       return Success;
    end Execute;
@@ -234,12 +241,10 @@ package body Commands.VCS is
      (Command : access Update_Files_Command_Type) return Command_Return_Type
    is
       use String_List;
-      L_Temp : List_Node := First (Command.Filenames);
    begin
-      while L_Temp /= Null_Node loop
+      for J in Command.Filenames'Range loop
          File_Changed_On_Disk
-           (Command.Kernel, Create (Full_Filename => +Data (L_Temp)));
-         L_Temp := Next (L_Temp);
+           (Command.Kernel, Command.Filenames (J));
       end loop;
 
       Command_Finished (Command, True);
@@ -269,19 +274,15 @@ package body Commands.VCS is
                     Get_Activities_Explorer (Command.Kernel, False, False);
       VCS_Ref   : constant VCS_Access :=
                     Get_VCS_For_Activity (Command.Kernel, Command.Activity);
-      Files     : constant String_List.List :=
+      Files     : constant File_Array :=
                     Get_Files_In_Activity (Command.Activity);
-      Files_It  : String_List.List_Node;
       Closed    : Boolean := True;
    begin
       --  Set the committed status if all files are up-to-date or removed
 
-      Files_It := String_List.First (Files);
-
-      while Files_It /= String_List.Null_Node loop
+      for J in Files'Range loop
          declare
-            File : constant Virtual_File :=
-              Create (Full_Filename => +String_List.Data (Files_It));
+            File : Virtual_File renames Files (J);
          begin
             Closed := Closed
               and then
@@ -289,7 +290,6 @@ package body Commands.VCS is
                  or else
                  Has_Status (Get_Status_Cache, File, VCS_Ref, Removed_Id));
          end;
-         Files_It := String_List.Next (Files_It);
       end loop;
 
       Set_Closed (Command.Kernel, Command.Activity, To => Closed);

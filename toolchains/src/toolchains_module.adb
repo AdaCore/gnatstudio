@@ -17,11 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Traces;                    use Traces;
 with GPS.Intl;                  use GPS.Intl;
@@ -42,9 +41,9 @@ package body Toolchains_Module is
    type Toolchains_Property is new GPS.Kernel.Properties.Property_Record
    with record
       Active           : Boolean;
-      Tools_Path       : Filesystem_String_Access;
+      Tools_Path       : Virtual_File;
       Use_Xrefs_Subdir : Boolean;
-      Compiler_Path    : Filesystem_String_Access;
+      Compiler_Path    : Virtual_File;
    end record;
 
    overriding procedure Save
@@ -97,18 +96,17 @@ package body Toolchains_Module is
          Add_Child (Node, Child);
       end if;
 
-      if Property.Tools_Path /= null then
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("tools_path");
-         Child.Value := new String'(+Property.Tools_Path.all);
+      if Property.Tools_Path /= No_File then
+         Add_File_Child
+           (Node, "tools_path", Property.Tools_Path,
+            Use_VFS_Prefix => False);
          Add_Child (Node, Child);
       end if;
 
-      if Property.Compiler_Path /= null then
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("compiler_path");
-         Child.Value := new String'(+Property.Compiler_Path.all);
-         Add_Child (Node, Child);
+      if Property.Compiler_Path /= No_File then
+         Add_File_Child
+           (Node, "compiler_path", Property.Compiler_Path,
+            Use_VFS_Prefix => False);
       end if;
 
    exception
@@ -135,19 +133,10 @@ package body Toolchains_Module is
       Child := Find_Tag (From.Child, "use_xrefs_subdir");
       Property.Use_Xrefs_Subdir := Child /= null or else not Property.Active;
 
-      Child := Find_Tag (From.Child, "tools_path");
-      if Child /= null then
-         Property.Tools_Path := new Filesystem_String'(+Child.Value.all);
-      else
-         Property.Tools_Path := new Filesystem_String'("");
-      end if;
-
-      Child := Find_Tag (From.Child, "compiler_path");
-      if Child /= null then
-         Property.Compiler_Path := new Filesystem_String'(+Child.Value.all);
-      else
-         Property.Compiler_Path := new Filesystem_String'("");
-      end if;
+      Property.Tools_Path :=
+        Get_File_Child (From, "tools_path", Use_VFS_Prefix => False);
+      Property.Compiler_Path :=
+        Get_File_Child (From, "compiler_path", Use_VFS_Prefix => False);
    end Load;
 
    -------------
@@ -156,8 +145,8 @@ package body Toolchains_Module is
 
    overriding procedure Destroy (Property : in out Toolchains_Property) is
    begin
-      Free (Property.Tools_Path);
-      Free (Property.Compiler_Path);
+      Property.Tools_Path    := No_File;
+      Property.Compiler_Path := No_File;
    end Destroy;
 
    -----------
@@ -168,27 +157,20 @@ package body Toolchains_Module is
      (Property : Toolchains_Property;
       Kernel   : GPS.Kernel.Kernel_Handle) is
    begin
-      if Property.Tools_Path /= null
-        and then Property.Compiler_Path /= null
-      then
-         Toolchains.Set_Toolchains_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => Property.Tools_Path.all,
-            Compiler_Search_Path => Property.Compiler_Path.all);
-      else
-         Toolchains.Set_Toolchains_Properties
-           (Active               => Property.Active,
-            Tool_Search_Path     => "",
-            Compiler_Search_Path => "");
-      end if;
+      Toolchains.Set_Toolchains_Properties
+        (Active               => Property.Active,
+         Tool_Search_Path     => Property.Tools_Path,
+         Compiler_Search_Path => Property.Compiler_Path);
 
       if Property.Active
         and then Property.Use_Xrefs_Subdir
       then
          --  ??? .xrefs and mode "xref" should not be string literals, but
          --  stored somewhere instead.
-         if Projects.Registry.Get_Xrefs_Subdir
-           (Get_Registry (Kernel).all) /= ".xrefs"
+         if not Equal
+           (Projects.Registry.Get_Xrefs_Subdir
+              (Get_Registry (Kernel).all),
+            ".xrefs")
          then
             Projects.Registry.Set_Xrefs_Subdir
               (Get_Registry (Kernel).all, ".xrefs");
@@ -199,8 +181,10 @@ package body Toolchains_Module is
          Builder_Facility_Module.Activate_Mode ("xref", True);
 
       else
-         if Projects.Registry.Get_Xrefs_Subdir
-           (Get_Registry (Kernel).all) /= ""
+         if not Equal
+           (Projects.Registry.Get_Xrefs_Subdir
+              (Get_Registry (Kernel).all),
+            "")
          then
             Projects.Registry.Set_Xrefs_Subdir
               (Get_Registry (Kernel).all, "");
@@ -238,44 +222,37 @@ package body Toolchains_Module is
       Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
       Compiler      : constant Filesystem_String :=
-        +Projects.Get_Attribute_Value
-        (GPS.Kernel.Project.Get_Project (Kernel),
-         Projects.Compiler_Command_Attribute,
-         Default => "gnatmake",
-         Index   => "Ada");
-      Default_Path  : Filesystem_String_Access;
-      Tools_Path    : Filesystem_String_Access;
-      Compiler_Path : Filesystem_String_Access;
+                        +Projects.Get_Attribute_Value
+                          (GPS.Kernel.Project.Get_Project (Kernel),
+                           Projects.Compiler_Command_Attribute,
+                           Default => "gnatmake",
+                           Index   => "Ada");
+      Default_Path  : Virtual_File;
+      Tools_Path    : Virtual_File;
+      Compiler_Path : Virtual_File;
 
    begin
-      if Property.Tools_Path = null
-        or else Property.Tools_Path.all = ""
-        or else Property.Compiler_Path = null
-        or else Property.Compiler_Path.all = ""
+      if Property.Tools_Path = No_File
+        or else Property.Compiler_Path = No_File
       then
          declare
-            Path : Filesystem_String_Access := Locate_Exec_On_Path (Compiler);
+            Path : constant Virtual_File := Locate_On_Path (Compiler);
          begin
-            if Path /= null then
-               Default_Path := new Filesystem_String'(Dir_Name (Path.all));
-               Free (Path);
+            if Path /= No_File then
+               Default_Path := Dir (Path);
             else
-               Default_Path := new Filesystem_String'("");
+               Default_Path := Get_Root (Get_Current_Dir);
             end if;
          end;
       end if;
 
-      if Property.Tools_Path = null then
-         Tools_Path := Default_Path;
-      elsif Property.Tools_Path.all = "" then
+      if Property.Tools_Path = No_File then
          Tools_Path := Default_Path;
       else
          Tools_Path := Property.Tools_Path;
       end if;
 
-      if Property.Compiler_Path = null then
-         Compiler_Path := Default_Path;
-      elsif Property.Compiler_Path.all = "" then
+      if Property.Compiler_Path = No_File then
          Compiler_Path := Default_Path;
       else
          Compiler_Path := Property.Compiler_Path;
@@ -283,21 +260,15 @@ package body Toolchains_Module is
 
       Gtk_New
         (Dialog, Kernel, Property.Active,
-         Tools_Path.all, Property.Use_Xrefs_Subdir,
-         Compiler_Path.all);
-
-      if Default_Path /= null then
-         Free (Default_Path);
-      end if;
+         Tools_Path, Property.Use_Xrefs_Subdir,
+         Compiler_Path);
 
       Resp := Dialog.Run;
 
       if Resp = Gtk_Response_OK then
          Property.Active := Get_Active (Dialog);
-         Property.Tools_Path :=
-           new Filesystem_String'(Get_Tools_Path (Dialog));
-         Property.Compiler_Path :=
-           new Filesystem_String'(Get_Compiler_Path (Dialog));
+         Property.Tools_Path := Get_Tools_Path (Dialog);
+         Property.Compiler_Path := Get_Compiler_Path (Dialog);
          Property.Use_Xrefs_Subdir := Get_Use_Xrefs_Subdir (Dialog);
 
          Prop_Access := new Toolchains_Property'(Property);
@@ -333,9 +304,9 @@ package body Toolchains_Module is
       if not Success then
          return Toolchains_Property'
            (Active           => False,
-            Tools_Path       => null,
+            Tools_Path       => No_File,
             Use_Xrefs_Subdir => True,
-            Compiler_Path    => null);
+            Compiler_Path    => No_File);
       else
          return Property;
       end if;

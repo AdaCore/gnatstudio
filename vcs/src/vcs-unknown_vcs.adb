@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
-
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Console; use GPS.Kernel.Console;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -30,18 +28,19 @@ package body VCS.Unknown_VCS is
 
    use String_List;
 
-   procedure Error (File : String);
+   procedure Error (File : Virtual_File);
    --  Convenience function to display an error message in the console
 
    -----------
    -- Error --
    -----------
 
-   procedure Error (File : String) is
+   procedure Error (File : Virtual_File) is
    begin
       Insert
         (Unknown_VCS_Reference.Kernel,
-         -"Warning: no VCS set in project properties for " & File);
+         -"Warning: no VCS set in project properties for " &
+         File.Display_Full_Name);
    end Error;
 
    ----------
@@ -82,16 +81,16 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Get_Status
      (Rep        : access Unknown_VCS_Record;
-      Filenames  : String_List.List;
+      Filenames  : File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False)
    is
       pragma Unreferenced (Rep, Clear_Logs);
    begin
-      if Filenames /= Null_List
+      if Filenames'Length > 0
         and then not Local
       then
-         Error (Head (Filenames));
+         Error (Filenames (Filenames'First));
       end if;
    end Get_Status;
 
@@ -101,22 +100,20 @@ package body VCS.Unknown_VCS is
 
    overriding function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : File_Array)
       return File_Status_List.List
    is
       pragma Unreferenced (Rep);
 
-      Current_Filename : List_Node := First (Filenames);
       Result           : File_Status_List.List;
       Blank_Status     : File_Status_Record;
       Current_Status   : File_Status_Record := Blank_Status;
    begin
-      while Current_Filename /= Null_Node loop
+      for J in Filenames'Range loop
          Current_Status := Blank_Status;
-         Current_Status.File := Create (+Data (Current_Filename));
+         Current_Status.File := Filenames (J);
 
          File_Status_List.Append (Result, Current_Status);
-         Current_Filename := Next (Current_Filename);
       end loop;
 
       return Result;
@@ -135,7 +132,7 @@ package body VCS.Unknown_VCS is
       pragma Unreferenced (Rep, Tag, As_Branch);
    begin
       if Dir /= No_File then
-         Error (+Base_Name (Dir));
+         Error (Dir);
       end if;
    end Create_Tag;
 
@@ -145,13 +142,13 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Open
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       User_Name : String := "")
    is
       pragma Unreferenced (Rep, User_Name);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Open;
 
@@ -161,13 +158,13 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Commit
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Log       : String)
    is
       pragma Unreferenced (Rep, Log);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Commit;
 
@@ -177,12 +174,12 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Update
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : File_Array)
    is
       pragma Unreferenced (Rep);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Update;
 
@@ -198,7 +195,7 @@ package body VCS.Unknown_VCS is
       pragma Unreferenced (Rep, Tag);
    begin
       if Dir /= No_File then
-         Error (+Base_Name (Dir));
+         Error (Dir);
       end if;
    end Switch;
 
@@ -208,12 +205,12 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Resolved
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : File_Array)
    is
       pragma Unreferenced (Rep);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Resolved;
 
@@ -223,13 +220,13 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Merge
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Tag       : String)
    is
       pragma Unreferenced (Rep, Tag);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Merge;
 
@@ -239,14 +236,14 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Add
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Log       : String;
       Commit    : Boolean := True)
    is
       pragma Unreferenced (Rep, Log, Commit);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
    end Add;
 
@@ -256,16 +253,15 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Remove
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Log       : String;
       Commit    : Boolean := True)
    is
       pragma Unreferenced (Rep, Log, Commit);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
-      null;
    end Remove;
 
    ------------
@@ -274,14 +270,13 @@ package body VCS.Unknown_VCS is
 
    overriding procedure Revert
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : File_Array)
    is
       pragma Unreferenced (Rep);
    begin
-      if Filenames /= Null_List then
-         Error (Head (Filenames));
+      if Filenames'Length > 0 then
+         Error (Filenames (Filenames'First));
       end if;
-      null;
    end Revert;
 
    -------------------
@@ -379,7 +374,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep, Rev, As_Text);
    begin
-      Error (+Full_Name (File).all);
+      Error (File);
    end Log;
 
    --------------
@@ -392,7 +387,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep);
    begin
-      Error (+Full_Name (File).all);
+      Error (File);
    end Annotate;
 
    ---------------------

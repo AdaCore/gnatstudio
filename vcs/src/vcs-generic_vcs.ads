@@ -40,25 +40,25 @@ package VCS.Generic_VCS is
 
    overriding procedure Get_Status
      (Rep        : access Generic_VCS_Record;
-      Filenames  : String_List.List;
+      Filenames  : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False);
 
    overriding procedure Get_Status_Dirs
      (Rep        : access Generic_VCS_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False);
 
    overriding procedure Get_Status_Dirs_Recursive
      (Rep        : access Generic_VCS_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False);
 
    overriding function Local_Get_Status
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List) return File_Status_List.List;
+      Filenames : GNATCOLL.VFS.File_Array) return File_Status_List.List;
 
    overriding procedure Create_Tag
      (Rep       : access Generic_VCS_Record;
@@ -68,17 +68,17 @@ package VCS.Generic_VCS is
 
    overriding procedure Open
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       User_Name : String := "");
 
    overriding procedure Commit
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String);
 
    overriding procedure Update
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure Switch
      (Rep : access Generic_VCS_Record;
@@ -87,28 +87,28 @@ package VCS.Generic_VCS is
 
    overriding procedure Resolved
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure Merge
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Tag       : String);
 
    overriding procedure Add
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True);
 
    overriding procedure Remove
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True);
 
    overriding procedure Revert
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure File_Revision
      (Rep      : access Generic_VCS_Record;
@@ -220,7 +220,7 @@ private
       --  Name of the directory where the external VCS keeps information
       Commands            : Action_Array;
 
-      Current_Query_Files         : String_List_Utils.String_List.List;
+      Current_Query_Files         : GNATCOLL.VFS.File_Array_Access;
       --  The files transmitted to the current "query status" command.
       --  It is only needed to store these when the status parser for the
       --  current query cannot locate files (ie File_Index = 0).

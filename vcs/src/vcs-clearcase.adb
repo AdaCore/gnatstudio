@@ -18,13 +18,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.Strings;
 
@@ -32,7 +30,6 @@ with Commands.Console;          use Commands.Console;
 with Commands.External;         use Commands.External;
 with Commands.Locations;        use Commands.Locations;
 with Commands;                  use Commands;
-with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -200,16 +197,15 @@ package body VCS.ClearCase is
       List   : String_List.List) return Boolean
    is
       Current_File : constant Filesystem_String := +String_List.Head (Head);
-      Text_File    : constant Virtual_File := Create
-        (Full_Filename =>
-           Get_Local_Filesystem.Get_Tmp_Directory
-           & Base_Name (Current_File));
+      Text_File    : constant Virtual_File :=
+                       Create_From_Dir
+                         (Get_Tmp_Directory, Base_Name (Current_File));
       L_Temp       : List_Node := First (List);
       File         : File_Type;
       Success      : Boolean;
 
    begin
-      Create (File, Name => +Full_Name (Text_File).all);
+      Create (File, Name => +Full_Name (Text_File));
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -255,15 +251,15 @@ package body VCS.ClearCase is
 
       Current_File : constant Virtual_File :=
         Create (Full_Filename => +String_List.Head (Head));
-      Patch_File   : constant Virtual_File := Create
-        (Full_Filename =>
-           Get_Local_Filesystem.Get_Tmp_Directory
-           & Base_Name (Current_File) & "$difs");
+      Patch_File   : constant Virtual_File :=
+                       Create_From_Dir
+                         (Get_Tmp_Directory,
+                          Base_Name (Current_File) & "$difs");
       File         : File_Type;
       Success      : Boolean;
 
    begin
-      Create (File, Name => +Full_Name (Patch_File).all);
+      Create (File, Name => +Full_Name (Patch_File));
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -273,8 +269,8 @@ package body VCS.ClearCase is
       Close (File);
       Insert
         (Kernel,
-           -"ClearCase: Got comparison for file "
-           & (+Full_Name (Current_File).all),
+         -"ClearCase: Got comparison for file " &
+         Current_File.Display_Full_Name,
          Mode => Verbose);
 
       Display_Differences
@@ -373,7 +369,7 @@ package body VCS.ClearCase is
 
    overriding procedure Get_Status
      (Rep        : access ClearCase_Record;
-      Filenames  : String_List.List;
+      Filenames  : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False)
    is
@@ -382,9 +378,8 @@ package body VCS.ClearCase is
       C            : External_Command_Access;
       Command_Head : List;
       Args         : List;
-      List_Temp    : List_Node := First (Filenames);
 
-      procedure Status (File : String);
+      procedure Status (File : Virtual_File);
       --  Append necessary data to local variables to query the status for
       --  File.
 
@@ -392,19 +387,19 @@ package body VCS.ClearCase is
       -- Status --
       ------------
 
-      procedure Status (File : String) is
+      procedure Status (File : Virtual_File) is
       begin
-         Append (Args, File);
-         Append (Command_Head, File);
+         Append (Args, +File.Full_Name);
+         Append (Command_Head, +File.Full_Name);
 
          Insert
            (Rep.Kernel,
-              -"ClearCase: Querying status for " & File,
+              -"ClearCase: Querying status for " & File.Display_Full_Name,
             Mode => Verbose);
       end Status;
 
    begin
-      if Is_Empty (Filenames) then
+      if Filenames'Length = 0 then
          Report_Error
            (Rep.Kernel,  -"Attempting to get the status of no file.");
          return;
@@ -416,17 +411,17 @@ package body VCS.ClearCase is
       Append (Args, "-fmt");
       Append (Args, "%Vn;%f;\n");
 
-      while List_Temp /= Null_Node loop
-         if GNAT.OS_Lib.Is_Directory (Data (List_Temp)) then
+      for J in Filenames'Range loop
+         if Is_Directory (Filenames (J)) then
             declare
                S : File_Array_Access :=
-                 Read_Files_From_Dirs (+Data (List_Temp));
+                     Filenames (J).Read_Dir;
             begin
                for J in S'Range loop
                   if S (J) /= No_File
-                    and then not Is_Directory (Full_Name (S (J)).all)
+                    and then not S (J).Is_Directory
                   then
-                     Status (+Full_Name (S (J)).all);
+                     Status (S (J));
                   end if;
                end loop;
 
@@ -434,17 +429,15 @@ package body VCS.ClearCase is
             end;
 
          else
-            Status (Data (List_Temp));
+            Status (Filenames (J));
          end if;
-
-         List_Temp := Next (List_Temp);
       end loop;
 
       Create
         (C,
          Rep.Kernel,
          ClearCase_Command.Get_Pref,
-         "",
+         No_File,
          Args,
          Command_Head,
          Status_Output_Handler'Access,
@@ -593,41 +586,38 @@ package body VCS.ClearCase is
 
    overriding function Local_Get_Status
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : GNATCOLL.VFS.File_Array)
       return File_Status_List.List
    is
       pragma Unreferenced (Rep);
 
       Result    : File_Status_List.List;
-      List_Temp : List_Node := First (Filenames);
 
-      function Status (File : String) return File_Status_Record;
+      function Status (File : Virtual_File) return File_Status_Record;
       --  Return the local file status for File
 
       ------------
       -- Status --
       ------------
 
-      function Status (File : String) return File_Status_Record is
+      function Status (File : Virtual_File) return File_Status_Record is
          Result : File_Status_Record;
       begin
-         Result.File := Create (+File);
+         Result.File := File;
          return Result;
       end Status;
 
    begin
-      while List_Temp /= Null_Node loop
-         if GNAT.OS_Lib.Is_Directory (Data (List_Temp)) then
+      for J in Filenames'Range loop
+         if Is_Directory (Filenames (J)) then
             declare
-               S : File_Array_Access :=
-                 Read_Files_From_Dirs (+Data (List_Temp));
+               S : File_Array_Access := Read_Dir (Filenames (J));
             begin
-               for J in S'Range loop
-                  if S (J) /= No_File
-                    and then not Is_Directory (Full_Name (S (J)).all)
+               for K in S'Range loop
+                  if S (K) /= No_File
+                    and then not S (K).Is_Directory
                   then
-                     File_Status_List.Append
-                       (Result, Status (+Full_Name (S (J)).all));
+                     File_Status_List.Append (Result, Status (S (K)));
                   end if;
                end loop;
 
@@ -635,10 +625,8 @@ package body VCS.ClearCase is
             end;
 
          else
-            File_Status_List.Append (Result, Status (Data (List_Temp)));
+            File_Status_List.Append (Result, Status (Filenames (J)));
          end if;
-
-         List_Temp := Next (List_Temp);
       end loop;
 
       return Result;
@@ -668,7 +656,7 @@ package body VCS.ClearCase is
 
    overriding procedure Open
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       User_Name : String := "")
    is
       pragma Unreferenced (User_Name);
@@ -676,14 +664,12 @@ package body VCS.ClearCase is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
-      File_Node : List_Node := First (Filenames);
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
             Args     : List;
             Head     : List;
-            File     : constant Virtual_File :=
-              Create (Full_Filename => +Data (File_Node));
+            File     : Virtual_File renames Filenames (J);
 
             Checkout_File_Command : External_Command_Access;
 
@@ -719,8 +705,8 @@ package body VCS.ClearCase is
 
             --  ??? Must provide a way for the user to change this
             --  log message !
-            Append (Args, -"GPS checking out " & Display_Full_Name (File));
-            Append (Args, +Full_Name (File).all);
+            Append (Args, -"GPS checking out " & File.Display_Full_Name);
+            Append (Args, +File.Full_Name);
 
             Append (Head, -"ClearCase error: could not checkout "
                     & Display_Full_Name (File));
@@ -728,7 +714,7 @@ package body VCS.ClearCase is
             Create (Checkout_File_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkout_Handler'Access,
@@ -766,8 +752,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Open;
 
@@ -777,41 +761,39 @@ package body VCS.ClearCase is
 
    overriding procedure Commit
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
-      File_Node : List_Node := First (Filenames);
-
       --  ??? This checks-in every file with the same log
 
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
             Args                 : List;
             Head                 : List;
-            File                 : constant String := Data (File_Node);
+            File                 : Virtual_File renames Filenames (J);
             Checkin_File_Command : External_Command_Access;
             Fail_Message         : Console_Command_Access;
             Success_Message      : Console_Command_Access;
-            Log_File             : constant Filesystem_String :=
-              Create_Tmp_File;
-            Fd                   : GNAT.OS_Lib.File_Descriptor;
+            Log_File             : constant Virtual_File := Create_Tmp_File;
+            Fd                   : Writable_File;
 
          begin
             Insert
               (Kernel,
                -"ClearCase: Checking-in element: "
-               & File & " ...", Mode => Info);
+               & File.Display_Full_Name & " ...", Mode => Info);
 
             --  Create the end of the message
 
             Create
               (Fail_Message,
                Kernel,
-               -("ClearCase: check-in of ") & File & (-" failed."),
+               -("ClearCase: check-in of ") & File.Display_Full_Name &
+                (-" failed."),
                False,
                True,
                Info);
@@ -819,7 +801,8 @@ package body VCS.ClearCase is
             Create
               (Success_Message,
                Kernel,
-               -("ClearCase: check-in of ") & File & (-" done."),
+               -("ClearCase: check-in of ") & File.Display_Full_Name &
+               (-" done."),
                False,
                True,
                Info);
@@ -827,32 +810,23 @@ package body VCS.ClearCase is
             Append (Args, "ci");
             Append (Args, "-cfile");
 
-            Fd := GNAT.OS_Lib.Create_File (+Log_File, GNAT.OS_Lib.Binary);
+            Fd := Write_File (Log_File);
+            Write (Fd, Log);
+            Close (Fd);
 
-            declare
-               The_Log       : aliased constant String := Log;
-               Bytes_Written : Integer;
-               pragma Unreferenced (Bytes_Written);
-            begin
-               Bytes_Written :=
-                 GNAT.OS_Lib.Write
-                   (Fd, The_Log (The_Log'First)'Address, The_Log'Length);
-            end;
+            Append (Args, +Log_File.Full_Name);
+            Append (Args, +File.Full_Name);
 
-            GNAT.OS_Lib.Close (Fd);
-
-            Append (Args, +Log_File);
-
-            Append (Args, File);
-
-            Append (Head, -"ClearCase error: could not check-in " & File);
-            Append (Head, +Log_File);
+            Append (Head,
+                    -"ClearCase error: could not check-in " &
+                    File.Display_Full_Name);
+            Append (Head, +Log_File.Full_Name);
 
             Create
               (Checkin_File_Command,
                Kernel,
                ClearCase_Command.Get_Pref,
-               "",
+               No_File,
                Args,
                Head,
                Checkin_Handler'Access,
@@ -878,8 +852,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Commit;
 
@@ -889,42 +861,41 @@ package body VCS.ClearCase is
 
    overriding procedure Update
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : GNATCOLL.VFS.File_Array)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
-      File_Node : List_Node := First (Filenames);
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
-            Args     : List;
-            File     : constant String := Data (File_Node);
-
+            Args            : List;
+            File            : Virtual_File renames Filenames (J);
             Update_Command  : External_Command_Access;
             Success_Message : Console_Command_Access;
 
          begin
             Insert (Kernel,
                     -"ClearCase: updating "
-                      & File & " ...", Mode => Info);
+                      & File.Display_Full_Name & " ...", Mode => Info);
 
             --  Create the end of the message
 
             Create (Success_Message,
                     Kernel,
-                    -("ClearCase: update of ") & File & (-" done."),
+                    -("ClearCase: update of ") & File.Display_Full_Name &
+                     (-" done."),
                     False,
                     True,
                     Info);
 
             Append (Args, "update");
-            Append (Args, File);
+            Append (Args, +File.Full_Name);
 
             Create (Update_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Null_List,
                     Display_Handler'Access,
@@ -948,8 +919,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Update;
 
@@ -976,7 +945,7 @@ package body VCS.ClearCase is
 
    overriding procedure Resolved
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : GNATCOLL.VFS.File_Array)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -992,7 +961,7 @@ package body VCS.ClearCase is
 
    overriding procedure Merge
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Tag       : String)
    is
       pragma Unreferenced (Rep, Filenames, Tag);
@@ -1129,7 +1098,7 @@ package body VCS.ClearCase is
 
    overriding procedure Add
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Log       : String;
       Commit    : Boolean := True)
    is
@@ -1138,15 +1107,13 @@ package body VCS.ClearCase is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
-      File_Node : List_Node := First (Filenames);
-
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
             Args     : List;
             Head     : List;
-            File     : constant String := Data (File_Node);
-            Dir      : constant String := Dir_Name (Data (File_Node));
+            File     : Virtual_File renames Filenames (J);
+            Dir      : Virtual_File renames Get_Parent (Filenames (J));
 
             Checkout_Dir_Command : External_Command_Access;
             Make_Element_Command : External_Command_Access;
@@ -1159,20 +1126,22 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"ClearCase: Adding element: "
-                      & File & " ...", Mode => Info);
+                      & File.Display_Full_Name & " ...", Mode => Info);
 
             --  Create the end of the message
 
             Create (Fail_Message,
                     Kernel,
-                    -("ClearCase error: Adding of ") & File & (-" failed."),
+                    -("ClearCase error: Adding of ") & File.Display_Full_Name &
+                    (-" failed."),
                     False,
                     True,
                     Info);
 
             Create (Success_Message,
                     Kernel,
-                    ("ClearCase: Adding of ") & File & (-" done."),
+                    ("ClearCase: Adding of ") & File.Display_Full_Name &
+                    (-" done."),
                     False,
                     True,
                     Info);
@@ -1181,15 +1150,16 @@ package body VCS.ClearCase is
 
             Append (Args, "co");
             Append (Args, "-c");
-            Append (Args, -"Adding " & File);
-            Append (Args, Dir);
+            Append (Args, -"Adding " & File.Display_Full_Name);
+            Append (Args, +Dir.Full_Name);
 
-            Append (Head, -"ClearCase error: could not checkout " & Dir);
+            Append (Head, -"ClearCase error: could not checkout " &
+                    Dir.Display_Full_Name);
 
             Create (Checkout_Dir_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkout_Handler'Access,
@@ -1203,17 +1173,17 @@ package body VCS.ClearCase is
             Append (Args, "mkelem");
             Append (Args, "-c");
             Append (Args, Log);
-            Append (Args, File);
+            Append (Args, +File.Full_Name);
 
             Append
               (Head,
                -"ClearCase error: could not create the repository element "
-                 & File);
+                 & File.Display_Full_Name);
 
             Create (Make_Element_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkout_Handler'Access,
@@ -1227,14 +1197,15 @@ package body VCS.ClearCase is
             Append (Args, "ci");
             Append (Args, "-c");
             Append (Args, Log);
-            Append (Args, File);
+            Append (Args, +File.Full_Name);
 
-            Append (Head, -"ClearCase error: could not checkin " & File);
+            Append (Head, -"ClearCase error: could not checkin " &
+                    File.Display_Full_Name);
 
             Create (Checkin_Element_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkin_Handler'Access,
@@ -1247,15 +1218,16 @@ package body VCS.ClearCase is
 
             Append (Args, "ci");
             Append (Args, "-c");
-            Append (Args, -"Added element: " & File);
-            Append (Args, Dir);
+            Append (Args, -"Added element: " & File.Display_Full_Name);
+            Append (Args, +Dir.Full_Name);
 
-            Append (Head, -"ClearCase error: could not checkin " & Dir);
+            Append (Head, -"ClearCase error: could not checkin " &
+                    Dir.Display_Full_Name);
 
             Create (Checkin_Dir_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkin_Handler'Access,
@@ -1302,8 +1274,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Add;
 
@@ -1313,7 +1283,7 @@ package body VCS.ClearCase is
 
    overriding procedure Remove
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : File_Array;
       Log       : String;
       Commit    : Boolean := True)
    is
@@ -1322,15 +1292,13 @@ package body VCS.ClearCase is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
-      File_Node : List_Node := First (Filenames);
-
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
             Args     : List;
             Head     : List;
-            File     : constant String := Data (File_Node);
-            Dir      : constant String := Dir_Name (Data (File_Node));
+            File     : Virtual_File renames Filenames (J);
+            Dir      : Virtual_File renames Get_Parent (File);
 
             Checkout_Dir_Command   : External_Command_Access;
             Remove_Element_Command : External_Command_Access;
@@ -1342,13 +1310,13 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"ClearCase: Removing element: "
-                      & File & " ...", Mode => Info);
+                      & File.Display_Full_Name & " ...", Mode => Info);
 
             --  Create the end of the message
 
             Create (Fail_Message,
                     Kernel,
-                    -("Removing of ") & File & (-" failed."),
+                    -("Removing of ") & File.Display_Full_Name & (-" failed."),
                     False,
                     True,
                     Info);
@@ -1365,14 +1333,15 @@ package body VCS.ClearCase is
             Append (Args, "co");
             Append (Args, "-c");
             Append (Args, Log);
-            Append (Args, Dir);
+            Append (Args, +Dir.Full_Name);
 
-            Append (Head, -"ClearCase error: could not checkout " & Dir);
+            Append (Head, -"ClearCase error: could not checkout " &
+                    Dir.Display_Full_Name);
 
             Create (Checkout_Dir_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkout_Handler'Access,
@@ -1386,17 +1355,17 @@ package body VCS.ClearCase is
             Append (Args, "rm");
             Append (Args, "-c");
             Append (Args, Log);
-            Append (Args, File);
+            Append (Args, +File.Full_Name);
 
             Append
               (Head,
                -"ClearCase error: could not remove the element "
-                 & File);
+                 & File.Display_Full_Name);
 
             Create (Remove_Element_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Remove_Handler'Access,
@@ -1410,14 +1379,15 @@ package body VCS.ClearCase is
             Append (Args, "ci");
             Append (Args, "-c");
             Append (Args, Log);
-            Append (Args, Dir);
+            Append (Args, +Dir.Full_Name);
 
-            Append (Head, -"ClearCase error: could not checkin " & Dir);
+            Append (Head, -"ClearCase error: could not checkin " &
+                    Dir.Display_Full_Name);
 
             Create (Checkin_Dir_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Head,
                     Checkin_Handler'Access,
@@ -1458,8 +1428,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Remove;
 
@@ -1469,29 +1437,27 @@ package body VCS.ClearCase is
 
    overriding procedure Revert
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : File_Array)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
-
-      File_Node : List_Node := First (Filenames);
    begin
-      while File_Node /= Null_Node loop
+      for J in Filenames'Range loop
          declare
             Args     : List;
-            File     : constant String := Data (File_Node);
+            File     : Virtual_File renames Filenames (J);
 
             Revert_Command  : External_Command_Access;
 
          begin
             Append (Args, "uncheckout");
             Append (Args, "-keep");
-            Append (Args, File);
+            Append (Args, +File.Full_Name);
 
             Create (Revert_Command,
                     Kernel,
                     ClearCase_Command.Get_Pref,
-                    "",
+                    No_File,
                     Args,
                     Null_List,
                     Display_Handler'Access,
@@ -1508,8 +1474,6 @@ package body VCS.ClearCase is
                True,
                ClearCase_Identifier);
          end;
-
-         File_Node := Next (File_Node);
       end loop;
    end Revert;
 
@@ -1570,29 +1534,29 @@ package body VCS.ClearCase is
       then
          --  If no version is specified, we assume that
          --  we want differences with the latest version.
-         Append (Args, +Full_Name (File).all);
-         Append (Args, +Full_Name (File).all & "@@/main/LATEST");
+         Append (Args, +File.Full_Name);
+         Append (Args, +File.Full_Name & "@@/main/LATEST");
 
       else
          if Version_2 = "" then
-            Append (Args, +Full_Name (File).all);
+            Append (Args, +File.Full_Name);
          else
-            Append (Args, +Full_Name (File).all & "@@" & Version_2);
+            Append (Args, +File.Full_Name & "@@" & Version_2);
          end if;
 
          if Version_1 = "" then
-            Append (Args, +Full_Name (File).all);
+            Append (Args, +File.Full_Name);
          else
-            Append (Args, +Full_Name (File).all & "@@" & Version_1);
+            Append (Args, +File.Full_Name & "@@" & Version_1);
          end if;
       end if;
 
-      Append (Head, +Full_Name (File).all);
+      Append (Head, +File.Full_Name);
 
       Create (Diff_File_Command,
               Kernel,
               ClearCase_Command.Get_Pref,
-              "",
+              No_File,
               Args,
               Head,
               Diff_Handler'Access,
@@ -1703,7 +1667,7 @@ package body VCS.ClearCase is
 
    begin
       Append (Args, "lshistory");
-      Append (Args, +Full_Name (File).all);
+      Append (Args, +File.Full_Name);
 
       Append (Command_Head, +Base_Name (File) & "$changelog");
 
@@ -1711,7 +1675,7 @@ package body VCS.ClearCase is
         (C,
          Rep.Kernel,
          ClearCase_Command.Get_Pref,
-         +Dir_Name (File).all,
+         Get_Parent (File),
          Args,
          Command_Head,
          Text_Output_Handler'Access,
@@ -1748,14 +1712,14 @@ package body VCS.ClearCase is
       Append (Args, "-out");
       Append (Args, "-");
 
-      Append (Args, +Full_Name (File).all);
-      Append (Command_Head, +Full_Name (File).all);
+      Append (Args, +File.Full_Name);
+      Append (Command_Head, +File.Full_Name);
 
       Create
         (C,
          Rep.Kernel,
          ClearCase_Command.Get_Pref,
-         +Dir_Name (File).all,
+         Get_Parent (File),
          Args,
          Command_Head,
          Annotation_Output_Handler'Access,

@@ -21,7 +21,6 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -33,7 +32,6 @@ with Basic_Mapper;              use Basic_Mapper;
 with Commands;                  use Commands;
 with Commands.VCS;              use Commands.VCS;
 with Commands.External;         use Commands.External;
-with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
@@ -44,14 +42,13 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Location_View;         use GPS.Location_View;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
+with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with UTF8_Utils;                use UTF8_Utils;
 
@@ -97,10 +94,10 @@ package body Log_Utils is
       --
       --  and so on.
 
-      Logs_Dir : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "log_files";
+      Logs_Dir : constant Virtual_File :=
+                   Create_From_Dir (Get_Home_Dir (Kernel), "log_files/");
       Mapping  : constant Virtual_File :=
-                   Create (Full_Filename => Logs_Dir & "/mapping");
+                   Create_From_Dir (Logs_Dir, "mapping");
       Mapper   : File_Mapper_Access;
       Button   : Message_Dialog_Buttons;
       Success  : Boolean;
@@ -110,20 +107,20 @@ package body Log_Utils is
 
    begin
       if not Is_Directory (Logs_Dir) then
-         Make_Dir (+Logs_Dir);
+         Make_Dir (Logs_Dir);
       end if;
 
       if not Is_Regular_File (Mapping) then
          declare
             File : File_Descriptor;
          begin
-            File := Create_New_File (+Full_Name (Mapping).all, Text);
+            File := Create_New_File (+Full_Name (Mapping), Text);
             Close (File);
          end;
       end if;
 
       begin
-         Load_Mapper (Mapper, Full_Name (Mapping).all);
+         Load_Mapper (Mapper, Mapping);
       exception
          when E : others =>
             Trace (Exception_Handle, E);
@@ -142,7 +139,7 @@ package body Log_Utils is
             declare
                File : File_Descriptor;
             begin
-               File := Create_New_File (+Full_Name (Mapping).all, Text);
+               File := Create_New_File (+Full_Name (Mapping), Text);
                Close (File);
             end;
 
@@ -171,11 +168,11 @@ package body Log_Utils is
       --  GPS_CHANGELOG_USER environement variable value or "name  <e-mail>"
       --  if not found or "name  <user@>" if USER environment variable is set.
 
-      ChangeLog   : aliased Filesystem_String :=
-        Dir_Name (File_Name).all & "ChangeLog";
+      ChangeLog   : aliased String :=
+                      +Dir_Name (File_Name) & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
       Base_Name   : constant Filesystem_String :=
-        GNATCOLL.VFS.Base_Name (File_Name);
+                      GNATCOLL.VFS.Base_Name (File_Name);
       CL_File     : Virtual_File;   -- ChangeLog file
       CL          : String_Access;  -- ChangeLog content
       W_File      : Writable_File;  -- ChangeLog write access
@@ -263,14 +260,14 @@ package body Log_Utils is
 
       Execute_GPS_Shell_Command
         (Kernel, "Editor.save_buffer",
-         (1 => Convert (ChangeLog'Unchecked_Access)));
+         (1 => ChangeLog'Unchecked_Access));
       Execute_GPS_Shell_Command
         (Kernel, "Editor.close",
-         (1 => Convert (ChangeLog'Unchecked_Access)));
+         (1 => ChangeLog'Unchecked_Access));
 
       --  Get ChangeLog content
 
-      CL_File := Create (ChangeLog);
+      CL_File := Create (+ChangeLog);
       CL      := Read_File (CL_File);
       W_File  := Write_File (CL_File);
 
@@ -340,64 +337,47 @@ package body Log_Utils is
 
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant Filesystem_String :=
-        Full_Name (File_Name, Normalize => False).all;
+                      Full_Name (File_Name, Normalize => False);
       Return_Name : constant Filesystem_String :=
-        +Get_Other_Text (Mapper, +Real_Name);
+                      +Get_Other_Text (Mapper, +Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
       --  an entry. This is a bit inefficient, we should save the mapping
       --  on disk only on exit.
 
-      if Return_Name = "" and then Create then
+      if Return_Name'Length = 0 and then Create then
          declare
-            Logs_Dir : constant Filesystem_String :=
-              Get_Home_Dir (Kernel) & "log_files";
+            Logs_Dir : constant Virtual_File :=
+                         Create_From_Dir (Get_Home_Dir (Kernel), "log_files/");
+            Mapping  : constant Virtual_File :=
+                         Create_From_Dir (Logs_Dir, "mapping");
             File     : File_Descriptor;
             S        : Virtual_File :=
-              GNATCOLL.VFS.Create
-                (Full_Filename => Logs_Dir & Directory_Separator
-                 & Base_Name (File_Name) & (+Suffix));
+                         GNATCOLL.VFS.Create_From_Dir
+                           (Logs_Dir, Base_Name (File_Name) & (+Suffix));
+            Idx      : Natural := 0;
             --  In case there are multiple files with the same base name, see
             --  the loop below to use an alternate name and store it in the
             --  mapping file.
 
          begin
-            if not Is_Regular_File (S) then
-               File := Create_New_File (+Full_Name (S).all, Text);
-               Close (File);
-               Add_Entry (Mapper,
-                          +Real_Name,
-                          +Full_Name (S, Normalize => False).all);
-               Save_Mapper
-                 (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
-               return S;
+            while Is_Regular_File (S) loop
+               S := GNATCOLL.VFS.Create_From_Dir
+                 (Logs_Dir,
+                  Base_Name (File_Name) & "$" & (+(Image (Idx) & Suffix)));
+               Idx := Idx + 1;
+            end loop;
 
-            else
-               for J in Natural loop
-                  S := GNATCOLL.VFS.Create
-                    (Full_Filename =>
-                       Logs_Dir & Directory_Separator
-                     & Base_Name (File_Name) & "$" &
-                     (+(Image (J) & Suffix)));
-
-                  if not Is_Regular_File (S) then
-                     File := Create_New_File (+Full_Name (S).all, Text);
-                     Close (File);
-                     Add_Entry
-                       (Mapper,
-                        +Real_Name,
-                        +Full_Name (S, Normalize => False).all);
-                     Save_Mapper
-                       (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
-                     return S;
-                  end if;
-               end loop;
-
-               return GNATCOLL.VFS.No_File;
-            end if;
+            File := Create_New_File (+Full_Name (S), Text);
+            Close (File);
+            Add_Entry (Mapper,
+                       +Real_Name,
+                       +Full_Name (S, Normalize => False));
+            Save_Mapper (Mapper, Mapping);
+            return S;
          end;
 
-      elsif Return_Name = "" then
+      elsif Return_Name'Length = 0 then
          return GNATCOLL.VFS.No_File;
 
       else
@@ -415,10 +395,10 @@ package body Log_Utils is
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
       F_Name : constant Filesystem_String :=
-        +Get_Other_Text
-        (Mapper, +Full_Name (Log_Name, Normalize => False).all);
+                 +Get_Other_Text
+                   (Mapper, +Full_Name (Log_Name, Normalize => False));
    begin
-      if F_Name = "" then
+      if F_Name'Length = 0 then
          return No_File;
       else
          return Create (Full_Filename => F_Name);
@@ -463,8 +443,8 @@ package body Log_Utils is
    is
       use GNAT.OS_Lib;
 
-      ChangeLog : constant Filesystem_String :=
-        Dir_Name (File_Name).all & "ChangeLog";
+      ChangeLog : constant Virtual_File :=
+                    Create_From_Dir (Dir (File_Name), "ChangeLog");
       Log_File  : constant Virtual_File :=
                     Get_Log_From_File (Kernel, File_Name, False);
    begin
@@ -473,7 +453,7 @@ package body Log_Utils is
             Log_File     : constant Virtual_File :=
                              Get_Log_From_File
                                (Kernel, File_Name, True, Suffix);
-            CL_File      : constant Virtual_File := Create (ChangeLog);
+            CL_File      : Virtual_File renames ChangeLog;
             Date_Tag     : constant String := Image (Clock, ISO_Date);
             Base_Name    : constant Filesystem_String :=
               GNATCOLL.VFS.Base_Name (File_Name);
@@ -623,12 +603,12 @@ package body Log_Utils is
    is
       --  Need to call Name_As_Directory below, to properly handle windows
       --  directories.
-      Logs_Dir : constant Filesystem_String :=
-        Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
-      Mapper   : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
+      Mapping : constant Virtual_File :=
+                  Create_From_Dir (Get_Home_Dir (Kernel), "log_files/mapping");
+      Mapper  : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      Remove_Entry (Mapper, +Full_Name (File_Name, Normalize => False).all);
-      Save_Mapper (Mapper, Logs_Dir & "mapping");
+      Remove_Entry (Mapper, +Full_Name (File_Name, Normalize => False));
+      Save_Mapper (Mapper, Mapping);
    end Remove_File_From_Mapping;
 
    -------------------
@@ -698,7 +678,7 @@ package body Log_Utils is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Ref      : VCS_Access;
       Action   : VCS_Action;
-      Files    : String_List.List;
+      Files    : File_Array;
       Activity : Activity_Id)
    is
       use String_List;
@@ -725,7 +705,6 @@ package body Log_Utils is
       end Add_LF_To_Log;
 
       Logs                   : String_List.List;
-      Files_Temp             : List_Node := First (Files);
 
       Commit_Command         : Log_Action_Command_Access;
       Get_Status_Command     : Get_Status_Command_Access;
@@ -740,7 +719,6 @@ package body Log_Utils is
 
       Log_Checks             : External_Command_Access;
       File_Checks            : External_Command_Access;
-      File                   : Virtual_File;
 
       First_Check, Last_Check : Command_Access := null;
 
@@ -755,13 +733,11 @@ package body Log_Utils is
 
       if Ref.Require_Log then
          if Activity = No_Activity then
-            while Files_Temp /= Null_Node loop
+            for J in Files'Range loop
                --  Save any open log editors, and then get the corresponding
                --  logs.
 
-               File := Create (Full_Filename => +Data (Files_Temp));
-               Append (Logs, Get_Log (Kernel, File));
-               Files_Temp := Next (Files_Temp);
+               Append (Logs, Get_Log (Kernel, Files (J)));
             end loop;
 
          else
@@ -778,28 +754,28 @@ package body Log_Utils is
                begin
                   Insert (T_Set, Assoc ("IS_PATCH", False));
                   Append
-                    (Logs, Parse (Get_Activity_Log_Template (Kernel), T_Set));
+                    (Logs,
+                     Parse
+                       (+Get_Activity_Log_Template (Kernel).Full_Name, T_Set));
                end;
 
             else
-               while Files_Temp /= Null_Node loop
+               for J in Files'Range loop
                   --  Save any open log editors, and then get the corresponding
                   --  logs.
 
-                  File := Create (Full_Filename => +Data (Files_Temp));
-
-                  if Get_Log_From_File (Kernel, File, False) = No_File then
+                  if Get_Log_From_File
+                    (Kernel, Files (J), False) = No_File
+                  then
                      --  No individual logs
                      Append (Logs, Get_Log (Kernel, Activity));
 
                   else
                      Append
                        (Logs,
-                        Add_LF_To_Log (Get_Log (Kernel, File))
+                        Add_LF_To_Log (Get_Log (Kernel, Files (J)))
                         & Get_Log (Kernel, Activity));
                   end if;
-
-                  Files_Temp := Next (Files_Temp);
                end loop;
             end if;
          end if;
@@ -858,11 +834,11 @@ package body Log_Utils is
 
       Remove_Location_Category (Kernel, -"Style/Log Check");
 
-      Files_Temp := First (Files);
+      for J in Files'Range loop
+         exit when Cancel_All;
 
-      while not Cancel_All and then Files_Temp /= Null_Node loop
-         File := Create (Full_Filename => +Data (Files_Temp));
-         Project := Get_Project_From_File (Get_Registry (Kernel).all, File);
+         Project :=
+           Get_Project_From_File (Get_Registry (Kernel).all, Files (J));
 
          if Project /= No_Project then
             declare
@@ -883,15 +859,12 @@ package body Log_Utils is
 
             begin
                if Has_Status
-                   (Get_Status_Cache,
-                    Create (+Data (Files_Temp)), Ref, Removed_Id)
+                   (Get_Status_Cache, Files (J), Ref, Removed_Id)
                then
                   --  Remove this file from the explorer now, we do not have to
                   --  check it as it is removed.
 
-                  Remove_File
-                    (Get_Explorer (Kernel, False, False),
-                     Create (+Data (Files_Temp)));
+                  Remove_File (Get_Explorer (Kernel, False, False), Files (J));
 
                else
                   --  Record a check command if necessary
@@ -908,12 +881,12 @@ package body Log_Utils is
 
                      --  Add filename
 
-                     Append (File_Args, Data (Files_Temp));
+                     Append (File_Args, +Files (J).Full_Name);
 
                      Create (File_Checks,
                              Kernel,
                              C_Args (C_Args'First).all,
-                             "",
+                             No_File,
                              File_Args,
                              Null_List,
                              Check_Handler'Access,
@@ -932,7 +905,7 @@ package body Log_Utils is
 
                if Ref.Require_Log then
                   Log_File := Get_Log_From_File
-                    (Kernel, File, False, Action_To_Log_Suffix (Action));
+                    (Kernel, Files (J), False, Action_To_Log_Suffix (Action));
                end if;
 
                if Log_Check_Command /= ""
@@ -955,7 +928,7 @@ package body Log_Utils is
 
                   elsif S.all = "" then
                      if Message_Dialog
-                       ((-"File: ") & Display_Full_Name (File)
+                       ((-"File: ") & Display_Full_Name (Files (J))
                         & ASCII.LF & ASCII.LF &
                           (-"The revision log for this file is empty,")
                         & ASCII.LF &
@@ -989,16 +962,17 @@ package body Log_Utils is
 
                   --  Add filename
 
-                  Append (Log_Args, +Full_Name (Log_File).all);
+                  Append (Log_Args, +Full_Name (Log_File));
                   Append
-                    (Head_List, -"File: " & Display_Full_Name (File) & ASCII.LF
+                    (Head_List, -"File: "
+                     & Display_Full_Name (Files (J)) & ASCII.LF
                      & (-"The revision log does not pass the checks."));
 
                   Create
                     (Log_Checks,
                      Kernel,
                      C_Args (C_Args'First).all,
-                     "",
+                     No_File,
                      Log_Args,
                      Head_List,
                      Check_Handler'Access,
@@ -1020,7 +994,6 @@ package body Log_Utils is
             end;
          end if;
 
-         Files_Temp := Next (Files_Temp);
       end loop;
 
       --  Execute the commit command after the last file check or log check

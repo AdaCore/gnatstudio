@@ -32,7 +32,6 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -43,11 +42,12 @@ with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
 with Projects.Registry;         use Projects.Registry;
 with Projects;                  use Projects;
+with String_List_Utils;         use String_List_Utils;
 with Traces;                    use Traces;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Activities is
 
@@ -74,6 +74,7 @@ package body VCS_View.Activities is
       return GType_Array'
         (Base_Name_Column          => GType_String,
          Name_Column               => GType_String,
+         File_Column               => Get_Virtual_File_Type,
          Key_Column                => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
@@ -245,8 +246,7 @@ package body VCS_View.Activities is
                      Get_Activities_Explorer (Kernel, False, False);
       Log_File   : constant Virtual_File :=
                      Get_Log_File (Kernel, Activity);
-      File_Count : constant Natural :=
-                     String_List.Length (Get_Files_In_Activity (Activity));
+      File_Count : constant Natural := Get_Files_In_Activity (Activity)'Length;
       Iter       : Gtk_Tree_Iter;
       Button     : Message_Dialog_Buttons := Button_OK;
    begin
@@ -280,44 +280,42 @@ package body VCS_View.Activities is
       use type String_List.List_Node;
       Closed : constant Boolean := Is_Closed (Activity);
       Ok     : Boolean := True;
-      Files  : String_List.List;
-      Iter   : String_List.List_Node;
+
    begin
       --  Before reopening an activity check that there is no file part of this
       --  activity that are already into an open activity.
 
       if Closed then
-         Files := Get_Files_In_Activity (Activity);
+         declare
+            Files : File_Array renames Get_Files_In_Activity (Activity);
+         begin
 
-         Iter := String_List.First (Files);
-
-         while Iter /= String_List.Null_Node loop
-            declare
-               File       : constant Virtual_File :=
-                              Create (+String_List.Data (Iter));
-               F_Activity : Activity_Id;
-               Button     : Message_Dialog_Buttons := Button_OK;
-               pragma Unreferenced (Button);
-            begin
-               F_Activity := Get_File_Activity (File);
-               if F_Activity /= No_Activity then
-                  Button := Message_Dialog
-                    (Msg     =>
-                       (-"Activity") & ''' & Get_Name (Activity) & ''' &
-                     (-"can't be re-opened") & ASCII.LF &
-                     (-"file ") & Display_Base_Name (File) &
-                     (-" is part of activity '") & Get_Name (F_Activity) &
-                     ''' & ASCII.LF,
-                     Dialog_Type => Warning,
-                     Title       => -"Open Activity",
-                     Buttons     => Button_OK);
-                  --  Revert back the status to its current setting
-                  Ok := False;
-                  exit;
-               end if;
-            end;
-            Iter := String_List.Next (Iter);
-         end loop;
+            for J in Files'Range loop
+               declare
+                  File       : Virtual_File renames Files (J);
+                  F_Activity : Activity_Id;
+                  Button     : Message_Dialog_Buttons := Button_OK;
+                  pragma Unreferenced (Button);
+               begin
+                  F_Activity := Get_File_Activity (File);
+                  if F_Activity /= No_Activity then
+                     Button := Message_Dialog
+                       (Msg         =>
+                          (-"Activity") & ''' & Get_Name (Activity) & ''' &
+                        (-"can't be re-opened") & ASCII.LF &
+                        (-"file ") & Display_Base_Name (File) &
+                        (-" is part of activity '") & Get_Name (F_Activity) &
+                        ''' & ASCII.LF,
+                        Dialog_Type => Warning,
+                        Title       => -"Open Activity",
+                        Buttons     => Button_OK);
+                     --  Revert back the status to its current setting
+                     Ok := False;
+                     exit;
+                  end if;
+               end;
+            end loop;
+         end;
       end if;
 
       if Ok then
@@ -772,7 +770,7 @@ package body VCS_View.Activities is
       Explorer : constant VCS_Activities_View_Access :=
                    VCS_Activities_View_Access (Object);
       Mitem    : Gtk_Menu_Item;
-      Files    : String_List.List;
+      Files    : File_Array_Access;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
 
@@ -809,9 +807,9 @@ package body VCS_View.Activities is
             Set_Activity_Information
               (Context,
                Get_String (Explorer.Model, Iter, Activity_Column));
-            Set_File_Information (Context, Files => Create (Files));
+            Set_File_Information (Context, Files => Files.all);
 
-            String_List.Free (Files);
+            Unchecked_Free (Files);
          end if;
 
          Path_Free (Path);
@@ -844,15 +842,12 @@ package body VCS_View.Activities is
       File_Data : access Hooks_Data'Class)
    is
       D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
-      Log_Name : constant Filesystem_String := Base_Name (D.File);
       Line     : Line_Record;
    begin
-      if Log_Name'Length > 4
-        and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
-      then
+      if Has_Suffix (D.File, "$log") then
          declare
             File_Name : constant Filesystem_String :=
-                          Log_Name (Log_Name'First .. Log_Name'Last - 4);
+                          Base_Name (D.File, "$log");
             Activity  : constant Activity_Id := Value (+File_Name);
          begin
             if Activity = No_Activity then
@@ -921,7 +916,7 @@ package body VCS_View.Activities is
    ------------------------
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle) return String_List.List is
+     (Kernel : Kernel_Handle) return File_Array_Access is
    begin
       return Get_Selected_Files
         (VCS_View_Access (Get_Activities_Explorer (Kernel, False, False)));

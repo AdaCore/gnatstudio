@@ -26,7 +26,7 @@ with GNAT.Strings;
 with GNAT.HTable;
 with GNAT.Calendar.Time_IO;      use GNAT.Calendar.Time_IO;
 
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
@@ -39,8 +39,6 @@ with VCS.Unknown_VCS;            use VCS.Unknown_VCS;
 with VCS_View;                   use VCS_View;
 with VCS_View_API;               use VCS_View_API;
 with XML_Parsers;
-with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
 
 package body VCS_Activities is
 
@@ -67,13 +65,13 @@ package body VCS_Activities is
       Group_Commit : Boolean := False;
       Closed       : Boolean := False;
       Keys         : Key_Hash_Access;
-      Files        : String_List.List;
+      Files        : File_Array_Access;
       Sorted       : Boolean;
    end record;
 
    Empty_Activity : constant Activity_Record :=
                       (No_File, null, No_Class_Instance, No_Activity,
-                       null, False, False, null, String_List.Null_List, False);
+                       null, False, False, null, null, False);
 
    subtype Hash_Header is Positive range 1 .. 123;
 
@@ -85,6 +83,9 @@ package body VCS_Activities is
 
    function Hash is new HTable.Hash (Hash_Header);
 
+   function Get_Log_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
+
    ----------
    -- Hash --
    ----------
@@ -93,6 +94,16 @@ package body VCS_Activities is
    begin
       return Hash (String (F));
    end Hash;
+
+   -----------------
+   -- Get_Log_Dir --
+   -----------------
+
+   function Get_Log_Dir
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+   begin
+      return Create_From_Dir (Get_Home_Dir (Kernel), "log_files");
+   end Get_Log_Dir;
 
    -----------
    -- Image --
@@ -124,8 +135,9 @@ package body VCS_Activities is
 
    procedure Load_Activities (Kernel : access Kernel_Handle_Record'Class) is
 
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & Activities_Filename;
+      Filename : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (Kernel), Activities_Filename);
 
       procedure Parse_Activity (Node : Node_Ptr);
       --  Parse an activity node
@@ -136,10 +148,8 @@ package body VCS_Activities is
 
       procedure Parse_Activity (Node : Node_Ptr) is
          Id           : constant String := Get_Attribute (Node, "id");
-         Project      : constant Filesystem_String :=
-           +Get_Attribute (Node, "project");
-         --  ??? Potentially non-utf8 string should not be
-         --  stored in an XML attribute.
+         Project      : constant Virtual_File :=
+                          Get_File_Child (Node, "project");
          Name         : constant String := Get_Attribute (Node, "name");
          Group_Commit : constant Boolean :=
                           Boolean'Value
@@ -155,20 +165,23 @@ package body VCS_Activities is
          Child        : Node_Ptr := Node.Child;
          Item         : Activity_Record;
       begin
-         Item := (Create (Project),
+         Item := (Project,
                   new String'(Name), No_Class_Instance, Activity_Id (Id),
                   null, Group_Commit,
                   Committed or Closed,
-                  new String_Hash_Table.HTable, String_List.Null_List, False);
+                  new String_Hash_Table.HTable, null, False);
 
          while Child /= null loop
             if Child.Tag.all = "file" then
                declare
+                  --  ??? Should use XML_Utils.Get_Child_File here...
+                  --  If a file is non-UTF8, this will break the xml file.
                   File : constant Virtual_File := Create (+Child.Value.all);
                begin
                   String_Hash_Table.Set
                     (Item.Keys.all, File_Key (File), new String'(Item_Tag));
-                  String_List.Append (Item.Files, Child.Value.all);
+
+                  Append (Item.Files, File);
                   --  Note that here we can't use Add_File. At this point the
                   --  project is not yet loaded and we can't compute the VCS
                   --  for each activities.
@@ -185,7 +198,7 @@ package body VCS_Activities is
 
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
 
          XML_Parsers.Parse (Filename, File, Err);
 
@@ -226,11 +239,11 @@ package body VCS_Activities is
 
    procedure Save_Activities (Kernel : access Kernel_Handle_Record'Class) is
 
-      Filename        : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & Activities_Filename;
+      Filename        : constant Virtual_File :=
+                          Create_From_Dir
+                            (Get_Home_Dir (Kernel), Activities_Filename);
       File, Ada_Child : Node_Ptr;
       Child, F_Child  : Node_Ptr;
-      F_Iter          : String_List.List_Node;
       Item            : Activity_Record;
       Success         : Boolean;
 
@@ -249,10 +262,7 @@ package body VCS_Activities is
          Child.Tag := new String'("activity");
 
          Set_Attribute (Child, "name", Item.Name.all);
-         Set_Attribute (Child, "project", +Full_Name (Item.Project).all);
-         --  ??? Potentially non-utf8 string should not be
-         --  stored in an XML attribute.
-
+         Add_File_Child (Child, "project", Item.Project);
          Set_Attribute (Child, "id", String (Item.Id));
          Set_Attribute
            (Child, "group_commit", Boolean'Image (Item.Group_Commit));
@@ -261,27 +271,23 @@ package body VCS_Activities is
 
          Add_Child (Ada_Child, Child);
 
-         if not String_List.Is_Empty (Item.Files) then
+         if Item.Files /= null then
             --  Append all files to this child
 
-            F_Iter := String_List.First (Item.Files);
-
-            for K in 1 .. String_List.Length (Item.Files) loop
+            for J in Item.Files'Range loop
                F_Child       := new Node;
                F_Child.Tag   := new String'("file");
-               F_Child.Value := new String'(String_List.Data (F_Iter));
+               F_Child.Value := new String'(+Item.Files (J).Full_Name);
 
                Add_Child (Child, F_Child);
-
-               F_Iter := String_List.Next (F_Iter);
             end loop;
          end if;
 
          Item := Get_Next;
       end loop;
 
-      Trace (Me, "Saving " & (+Filename));
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
+      Print (File, Filename, Success);
       Free (File);
 
       if not Success then
@@ -316,7 +322,7 @@ package body VCS_Activities is
                   null,
                   False, False,
                   new String_Hash_Table.HTable,
-                  String_List.Null_List, False));
+                  null, False));
 
                Save_Activities (Kernel);
 
@@ -335,7 +341,7 @@ package body VCS_Activities is
       Activity : Activity_Id) return VCS_Access
    is
       VCS   : VCS_Access := Get (Activity).VCS;
-      Files : String_List.List;
+      Files : File_Array_Access;
    begin
       if VCS = null or else VCS.all in Unknown_VCS_Record then
          --  It is possible that the VCS is not yet known. This happen just
@@ -345,10 +351,9 @@ package body VCS_Activities is
 
          Files := Get (Activity).Files;
 
-         if not String_List.Is_Empty (Files)then
+         if Files /= null and then Files'Length > 0 then
             declare
-               File    : constant Virtual_File :=
-                 Create (+String_List.Head (Files));
+               File    : Virtual_File renames Files (Files'First);
                Project : constant Project_Type :=
                            Get_Project_From_File
                              (Get_Registry (Kernel).all, File);
@@ -388,18 +393,17 @@ package body VCS_Activities is
       procedure Free is new Ada.Unchecked_Deallocation
         (String_Hash_Table.HTable, Key_Hash_Access);
 
-      Logs_Dir  : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "log_files";
-      File_Name : constant Filesystem_String :=
-                    Logs_Dir & OS_Lib.Directory_Separator &
-                    Filesystem_String (Activity) & "$log";
+      File_Name : constant Virtual_File :=
+                    Create_From_Dir
+                      (Get_Log_Dir (Kernel),
+                       Filesystem_String (Activity) & "$log");
       Success   : Boolean;
       pragma Unreferenced (Success);
    begin
       declare
          Item : Activity_Record := Get (Activity);
       begin
-         String_List.Free (Item.Files);
+         Unchecked_Free (Item.Files);
          String_Hash_Table.Reset (Item.Keys.all);
          Free (Item.Name);
          Free (Item.Keys);
@@ -409,7 +413,7 @@ package body VCS_Activities is
 
       Save_Activities (Kernel);
 
-      OS_Lib.Delete_File (+File_Name, Success);
+      Delete (File_Name, Success);
    end Delete_Activity;
 
    -------------
@@ -420,15 +424,12 @@ package body VCS_Activities is
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Boolean
    is
-      Logs_Dir  : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "log_files";
-      File_Name : constant Filesystem_String :=
-        Logs_Dir & OS_Lib.Directory_Separator &
-        Filesystem_String (Activity) & "$log";
-      Log_File : constant Virtual_File :=
-        Create (Full_Filename => File_Name);
+      File_Name : constant Virtual_File :=
+                    Create_From_Dir
+                      (Get_Log_Dir (Kernel),
+                       Filesystem_String (Activity) & "$log");
    begin
-      return Is_Regular_File (Log_File);
+      return Is_Regular_File (File_Name);
    end Has_Log;
 
    ------------------
@@ -439,16 +440,13 @@ package body VCS_Activities is
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Virtual_File
    is
-      Logs_Dir  : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "log_files";
-      File_Name : constant Filesystem_String :=
-                    Logs_Dir & OS_Lib.Directory_Separator &
-                    Filesystem_String (Activity) & "$log";
-      File      : constant Virtual_File := Create (File_Name);
-      F         : OS_Lib.File_Descriptor;
+      File : constant Virtual_File :=
+               Create_From_Dir
+                 (Get_Log_Dir (Kernel), Filesystem_String (Activity) & "$log");
+      F    : OS_Lib.File_Descriptor;
    begin
       if not Is_Regular_File (File) then
-         F := OS_Lib.Create_New_File (+File_Name, OS_Lib.Text);
+         F := OS_Lib.Create_New_File (+File.Full_Name, OS_Lib.Text);
          OS_Lib.Close (F);
          return File;
 
@@ -580,17 +578,21 @@ package body VCS_Activities is
    ---------------------------
 
    function Get_Files_In_Activity
-     (Activity : Activity_Id) return String_List.List
+     (Activity : Activity_Id) return File_Array
    is
       Item : Activity_Record := Get (Activity);
    begin
-      if not Item.Sorted then
-         String_List_Utils.Sort (Item.Files);
-         Item.Sorted := True;
-         Set (Activity, Item);
-      end if;
+      if Item.Files /= null then
+         if not Item.Sorted then
+            Sort (Item.Files.all);
+            Item.Sorted := True;
+            Set (Activity, Item);
+         end if;
 
-      return Item.Files;
+         return Item.Files.all;
+      else
+         return (1 .. 0 => <>);
+      end if;
    end Get_Files_In_Activity;
 
    --------------
@@ -631,7 +633,9 @@ package body VCS_Activities is
 
             String_Hash_Table.Set
               (Item.Keys.all, File_Key (File), new String'(Item_Tag));
-            String_List.Append (Item.Files, +Full_Name (File, False).all);
+
+            Append (Item.Files, File);
+
             Item.Sorted := False;
 
             Set (Activity, Item);
@@ -670,13 +674,14 @@ package body VCS_Activities is
       Item : Activity_Record := Get (Activity);
    begin
       String_Hash_Table.Remove (Item.Keys.all, File_Key (File));
-      Remove_From_List (Item.Files, +Full_Name (File, False).all);
+      Remove (Item.Files, File);
 
-      if String_List.Length (Item.Files) = 0 then
+      if Item.Files'Length = 0 then
          --  No more file in this activity, clear the information
          Item.VCS := null;
          Item.Sorted := False;
          Item.Group_Commit := False;
+         Unchecked_Free (Item.Files);
       end if;
 
       Set (Activity, Item);
@@ -752,22 +757,23 @@ package body VCS_Activities is
    -------------------------------
 
    function Get_Activity_Log_Template
-     (Kernel : access Kernel_Handle_Record'Class) return String
+     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File
    is
       Activity_Log_Template : constant Filesystem_String :=
-      "activity_log.tmplt";
-      Home_Template         : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & Activity_Log_Template;
-      Sys_Template          : constant Filesystem_String :=
-        Get_System_Dir (Kernel)
-        & "share" & OS_Lib.Directory_Separator
-        & "gps" & OS_Lib.Directory_Separator
-        & Activity_Log_Template;
+                                "activity_log.tmplt";
+      Home_Template         : constant Virtual_File :=
+                                Create_From_Dir
+                                  (Get_Home_Dir (Kernel),
+                                   Activity_Log_Template);
+      Sys_Template          : constant Virtual_File :=
+                                Create_From_Dir
+                                  (Get_System_Dir (Kernel),
+                                   "share/gps/" & Activity_Log_Template);
    begin
       if Is_Regular_File (Home_Template) then
-         return +Home_Template;
+         return Home_Template;
       else
-         return +Sys_Template;
+         return Sys_Template;
       end if;
    end Get_Activity_Log_Template;
 
@@ -779,9 +785,8 @@ package body VCS_Activities is
      (Kernel   : access Kernel_Handle_Record'Class;
       Activity : Activity_Id) return Translate_Set
    is
-      Files          : constant String_List.List :=
+      Files          : constant File_Array :=
                          Get_Files_In_Activity (Activity);
-      Iter           : String_List.List_Node;
 
       V_Files        : Tag; -- vector tag (string), file names
       V_Logs         : Tag; -- vector tag (string), corresponding log
@@ -791,13 +796,10 @@ package body VCS_Activities is
    begin
       Insert (T_Set, Assoc ("ACTIVITY_LOG", Get_Log (Kernel, Activity)));
       Insert (T_Set, Assoc ("ACTIVITY_NAME", Get_Name (Activity)));
-      Iter := String_List.First (Files);
 
-      for K in 1 .. String_List.Length (Files) loop
+      for K in Files'Range loop
          declare
-            use type String_List.List_Node;
-            Filename : constant Filesystem_String := +String_List.Data (Iter);
-            File     : constant Virtual_File := Create (Filename);
+            File     : Virtual_File renames Files (K);
          begin
             if Is_Directory (File) then
                Append (V_Is_Directory, True);
@@ -807,7 +809,6 @@ package body VCS_Activities is
 
             Append (V_Files, +Base_Dir_Name (File));
             Append (V_Logs, Get_Log (Kernel, File));
-            Iter := String_List.Next (Iter);
          end;
       end loop;
 

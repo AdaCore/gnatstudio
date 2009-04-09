@@ -17,10 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations;
 with GNAT.Regexp;
 with GNAT.Regpat;
-with GNAT.Strings;
+
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 with Gtk.Widget;
 with Gtk.Combo;
@@ -33,10 +33,7 @@ with Files_Extra_Info_Pkg;
 with Generic_List;
 with GPS.Kernel;
 with Language_Handlers;
-with GNATCOLL.VFS;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
-
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package Src_Contexts is
 
@@ -178,7 +175,7 @@ package Src_Contexts is
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : Filesystem_String  := "";
+      Directory     : GNATCOLL.VFS.Virtual_File := No_File;
       Recurse       : Boolean := False);
    --  Set the list of files to search
 
@@ -308,8 +305,9 @@ private
    type Match_Result_Array_Access is access all Match_Result_Array;
 
    type Dir_Data is record
-      Name : GNAT.Strings.String_Access;
-      Dir  : GNAT.Directory_Operations.Dir_Type;
+      Name  : Virtual_File;
+      Files : File_Array_Access;
+      F_Idx : Natural;
    end record;
    type Dir_Data_Access is access Dir_Data;
 
@@ -373,7 +371,7 @@ private
       Dirs          : Directory_List.List;
       Current_File  : GNATCOLL.VFS.Virtual_File;
 
-      Directory     : Filesystem_String_Access := null;
+      Directory     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
 
       At_End        : Boolean := False;
       --  Set to true at the end of the search

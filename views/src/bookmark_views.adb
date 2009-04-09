@@ -22,8 +22,7 @@ with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Glib;                      use Glib;
@@ -68,7 +67,6 @@ with Traces;                    use Traces;
 with Tooltips;                  use Tooltips;
 with XML_Parsers;               use XML_Parsers;
 with XML_Utils;                 use XML_Utils;
-with GNATCOLL.VFS;
 
 package body Bookmark_Views is
 
@@ -764,14 +762,14 @@ package body Bookmark_Views is
    --------------------
 
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
-      Filename    : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "bookmarks.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
       File, Child : Node_Ptr;
       Err         : String_Access;
       Marker      : Location_Marker;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -820,14 +818,14 @@ package body Bookmark_Views is
    --------------------
 
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
-      Filename    : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "bookmarks.xml";
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
       File, Child : Node_Ptr;
       List        : Bookmark_List.List_Node :=
                       First (Bookmark_Views_Module.List);
       Success     : Boolean;
    begin
-      Trace (Me, "Saving " & (+Filename));
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
       File := new Node;
       File.Tag := new String'("Bookmarks");
 
@@ -843,7 +841,7 @@ package body Bookmark_Views is
          List := Next (List);
       end loop;
 
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Print (File, Filename, Success);
       Free (File);
 
       if not Success then

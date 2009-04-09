@@ -32,7 +32,6 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Src_Editor_Module.Markers is
 

@@ -22,7 +22,7 @@ with Gtk.Dialog;  use Gtk.Dialog;
 with Gtk.Frame;   use Gtk.Frame;
 with Gtk.GEntry;  use Gtk.GEntry;
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.Kernel;  use GPS.Kernel;
 
@@ -35,9 +35,9 @@ package Toolchains_Dialog is
      (Widget            : out Dialog;
       Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active            : Boolean;
-      Tools_Path        : Filesystem_String;
+      Tools_Path        : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
-      Compiler_Path     : Filesystem_String);
+      Compiler_Path     : Virtual_File);
 
    function Get_Active
      (Widget : access Dialog_Record'Class) return Boolean;
@@ -48,11 +48,11 @@ package Toolchains_Dialog is
    --  Whether we should read ali files from a separate xrefs subdir
 
    function Get_Tools_Path
-     (Widget : access Dialog_Record'Class) return Filesystem_String;
+     (Widget : access Dialog_Record'Class) return Virtual_File;
    --  Get the path where to find the Bleeding edge compiler
 
    function Get_Compiler_Path
-     (Widget : access Dialog_Record'Class) return Filesystem_String;
+     (Widget : access Dialog_Record'Class) return Virtual_File;
    --  Get the path where to find the regular compiler
 
 private

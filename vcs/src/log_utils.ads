@@ -17,7 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
@@ -79,7 +78,7 @@ package Log_Utils is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Ref      : VCS_Access;
       Action   : VCS_Action;
-      Files    : String_List.List;
+      Files    : GNATCOLL.VFS.File_Array;
       Activity : Activity_Id);
    --  Perform Action on the list of files, assuming that they all belong to
    --  the VCS system identified by Ref.

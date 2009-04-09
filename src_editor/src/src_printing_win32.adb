@@ -27,7 +27,6 @@ with System;              use System;
 with Win32_Printing_Defs; use Win32_Printing_Defs;
 with Traces;              use Traces;
 with Ada.Exceptions;      use Ada.Exceptions;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Src_Printing is
 

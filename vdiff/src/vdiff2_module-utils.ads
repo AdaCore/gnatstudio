@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2006                     --
---                             AdaCore                               --
+--                  Copyright (C) 2003-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,7 +30,7 @@ package Vdiff2_Module.Utils is
 
    procedure Show_Merge
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Merge  : String);
+      Merge  : Virtual_File);
    --  Show a result of a Merge
 
    function Process_Differences

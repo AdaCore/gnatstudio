@@ -34,7 +34,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
 with Toolchains;                use Toolchains;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Projects;                  use Projects;
@@ -134,12 +133,12 @@ package body Toolchains_Dialog is
      (Button : access Gtk_Widget_Record'Class;
       Data   : Entry_Callback_Data)
    is
-      Current_Dir : constant Filesystem_String := +Get_Text (Data.E);
-      --  ??? What if the filesystem path is non-UTF8?
+      Current_Dir : constant String := Get_Text (Data.E);
       Start_Dir   : Virtual_File;
+
    begin
       if Current_Dir /= "" then
-         Start_Dir := Create (Current_Dir);
+         Start_Dir := Create_From_UTF8 (Current_Dir);
 
          if not Is_Directory (Start_Dir) then
             Start_Dir := GNATCOLL.VFS.Get_Current_Dir;
@@ -159,16 +158,14 @@ package body Toolchains_Dialog is
                          Projects.Compiler_Command_Attribute,
                          Default => "gnatmake",
                          Index   => "Ada");
-         Exec     : Filesystem_String_Access;
+         Exec     : Virtual_File;
       begin
          if Dir /= No_File then
-            Exec := Locate_Exec (+Compiler, Dir.Full_Name.all);
+            Exec := Locate_Exec (+Compiler, (1 => Dir));
 
-            if Exec /= null then
+            if Exec /= No_File then
                --  OK, we could locate a valid compiler.
-               Free (Exec);
                Set_Text (Data.E, Display_Full_Name (Dir));
-               --  ??? What if the filesystem path is non-UTF8?
             else
                --  No compiler found: let's display an error.
                declare
@@ -204,9 +201,9 @@ package body Toolchains_Dialog is
      (Widget            : out Dialog;
       Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Active            : Boolean;
-      Tools_Path        : Filesystem_String;
+      Tools_Path        : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
-      Compiler_Path     : Filesystem_String)
+      Compiler_Path     : Virtual_File)
    is
       Check  : Gtk_Check_Button;
       Dead   : Gtk_Widget;
@@ -256,8 +253,7 @@ package body Toolchains_Dialog is
       Attach (Table, Label, 0, 1, 0, 1);
 
       Gtk_New (Widget.Compiler_Entry);
-      Set_Text (Widget.Compiler_Entry, +Compiler_Path);
-      --  ??? What if the filesystem path is non-UTF8?
+      Set_Text (Widget.Compiler_Entry, Compiler_Path.Display_Full_Name);
       Show_All (Widget.Compiler_Entry);
       Attach (Table, Widget.Compiler_Entry, 1, 2, 0, 1);
       Set_Tip
@@ -284,8 +280,7 @@ package body Toolchains_Dialog is
       Attach (Table, Label, 0, 1, 1, 2);
 
       Gtk_New (Widget.Tools_Entry);
-      Set_Text (Widget.Tools_Entry, +Tools_Path);
-      --  ??? What if the filesystem path is non-UTF8?
+      Set_Text (Widget.Tools_Entry, Tools_Path.Display_Full_Name);
       Show_All (Widget.Tools_Entry);
       Attach (Table, Widget.Tools_Entry, 1, 2, 1, 2);
       Set_Tip
@@ -386,10 +381,9 @@ package body Toolchains_Dialog is
    --------------------
 
    function Get_Tools_Path
-     (Widget : access Dialog_Record'Class) return Filesystem_String is
+     (Widget : access Dialog_Record'Class) return Virtual_File is
    begin
-      return +Get_Text (Widget.Tools_Entry);
-      --  ??? What if the filesystem path is non-UTF8?
+      return Create_From_UTF8 (Get_Text (Widget.Tools_Entry));
    end Get_Tools_Path;
 
    -----------------------
@@ -397,10 +391,9 @@ package body Toolchains_Dialog is
    -----------------------
 
    function Get_Compiler_Path
-     (Widget : access Dialog_Record'Class) return Filesystem_String is
+     (Widget : access Dialog_Record'Class) return Virtual_File is
    begin
-      return +Get_Text (Widget.Compiler_Entry);
-      --  ??? What if the filesystem path is non-UTF8?
+      return Create_From_UTF8 (Get_Text (Widget.Compiler_Entry));
    end Get_Compiler_Path;
 
 end Toolchains_Dialog;

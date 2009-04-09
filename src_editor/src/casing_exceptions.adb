@@ -31,7 +31,6 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
 with String_Utils;            use String_Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Casing_Exceptions is
 
@@ -166,7 +165,7 @@ package body Casing_Exceptions is
       is
          Args   : Argument_List_Access :=
                     new Argument_List'
-                      (new String'(+Full_Name (File).all),
+                      (new String'(+Full_Name (File)),
                        new String'(Integer'Image (Line)),
                        new String'(Integer'Image (Column)),
                        new String'(New_Name),
@@ -343,9 +342,11 @@ package body Casing_Exceptions is
          end if;
       end Get_Name;
 
-      Name : constant String := Get_Name;
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Get_Kernel (Context.Context)) & Case_Exceptions_Filename;
+      Name     : constant String := Get_Name;
+      Filename : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (Get_Kernel (Context.Context)),
+                      Case_Exceptions_Filename);
       Success  : Boolean;
 
    begin
@@ -446,8 +447,10 @@ package body Casing_Exceptions is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filename           : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & Case_Exceptions_Filename;
+      Filename           : constant Virtual_File :=
+                             Create_From_Dir
+                               (Get_Home_Dir (Kernel),
+                                Case_Exceptions_Filename);
       Command            : Interactive_Command_Access;
       Label              : Contextual_Label;
       Substring_Filter   : Action_Filter;

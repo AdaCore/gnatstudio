@@ -22,6 +22,7 @@ with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 
 with Gdk.Color;                         use Gdk.Color;
 with Gdk.GC;                            use Gdk.GC;
@@ -65,8 +66,6 @@ with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
-with File_Utils;                        use File_Utils;
-with Filesystems;                       use Filesystems;
 with Find_Utils;                        use Find_Utils;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
@@ -102,8 +101,6 @@ with Src_Printing;
 with String_Utils;                      use String_Utils;
 with UTF8_Utils;                        use UTF8_Utils;
 with Traces;                            use Traces;
-
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Src_Editor_Module is
 
@@ -1188,7 +1185,7 @@ package body Src_Editor_Module is
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
    begin
-      Add_To_History (Kernel, Hist_Key, +Full_Name (File).all);
+      Add_To_History (Kernel, Hist_Key, +Full_Name (File));
    end Add_To_Recent_Menu;
 
    ---------------
@@ -1257,7 +1254,7 @@ package body Src_Editor_Module is
       Create_Files_Pixbufs_If_Needed (Kernel);
 
       if Active (Me) then
-         Trace (Me, "Open file " & (+Full_Name (File).all)
+         Trace (Me, "Open file " & Display_Full_Name (File)
                 & " Focus=" & Focus'Img);
       end if;
 
@@ -1395,7 +1392,7 @@ package body Src_Editor_Module is
 
                if Nb_Untitled = -1 then
                   Set_Title (Child, No_Name);
-                  Ident := Create (Full_Filename => '/' & (+No_Name));
+                  Ident := Create (+('/' & No_Name));
                else
                   declare
                      Identifier : constant String :=
@@ -1403,7 +1400,7 @@ package body Src_Editor_Module is
                                       & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
-                     Ident := Create (Full_Filename => '/' & (+Identifier));
+                     Ident := Create (+('/' & Identifier));
                   end;
                end if;
 
@@ -1420,7 +1417,7 @@ package body Src_Editor_Module is
 
       else
          Console.Insert
-           (Kernel, (-"Cannot open file ") & "'" & (+Full_Name (File).all)
+           (Kernel, (-"Cannot open file ") & "'" & Display_Full_Name (File)
             & "'",
             Add_LF => True,
             Mode   => Error);
@@ -1464,7 +1461,7 @@ package body Src_Editor_Module is
       Context := Get_Current_Context (Kernel);
 
       if Has_Directory_Information (Context) then
-         Dir := Create (Directory_Information (Context));
+         Dir := Directory_Information (Context);
       end if;
 
       declare
@@ -1567,7 +1564,7 @@ package body Src_Editor_Module is
       if File = GNATCOLL.VFS.No_File then
          return "";
       else
-         return +Full_Name (File).all;
+         return +Full_Name (File);
       end if;
    end Description;
 
@@ -1592,9 +1589,9 @@ package body Src_Editor_Module is
                            Get_Source_Files
                              (Project   => Get_Project (Kernel),
                               Recursive => True);
-      List2            : File_Array_Access :=
-                           Get_Predefined_Source_Files
-                             (Get_Registry (Kernel).all);
+      List2            : File_Array_Access := new File_Array'
+                           (Get_Predefined_Source_Files
+                              (Get_Registry (Kernel).all));
       Compl            : File_Completion_Factory;
 
    begin
@@ -1613,7 +1610,8 @@ package body Src_Editor_Module is
       --  of completions through the keyboard (C423-005)
       Gtk_New (Open_File_Entry,
                Use_Combo => False,
-               Case_Sensitive => Is_Case_Sensitive (Build_Server));
+               Case_Sensitive =>
+                 Is_Case_Sensitive (Get_Nickname (Build_Server)));
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
@@ -1668,7 +1666,7 @@ package body Src_Editor_Module is
 
             Add_To_History
               (Get_History (Kernel).all, Open_From_Path_History,
-               +Full_Name (Full).all);
+               +Full_Name (Full));
 
             if Is_Regular_File (Full) then
                Open_File_Editor
@@ -1865,7 +1863,7 @@ package body Src_Editor_Module is
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
                  (Print_Helper & " " &
-                  (+Full_Name (Get_Filename (Source)).all));
+                  (+Full_Name (Get_Filename (Source))));
             begin
                Launch_Process
                  (Kernel,
@@ -2300,7 +2298,7 @@ package body Src_Editor_Module is
       Line : Natural;
    begin
       Trace (Me, "On_Edit_File: "
-             & (+Full_Name (File_Information (Context.Context)).all));
+             & (+Full_Name (File_Information (Context.Context))));
 
       if Has_Line_Information (Context.Context) then
          Line := Contexts.Line_Information (Context.Context);
@@ -2346,7 +2344,7 @@ package body Src_Editor_Module is
       end if;
 
       Gtk_New (Dialog,
-               Title  => -"Properties for " & (+Full_Name (File).all),
+               Title  => -"Properties for " & Display_Full_Name (File),
                Parent => Get_Main_Window (Kernel),
                Flags  => Destroy_With_Parent);
       Set_Default_Size (Dialog, 400, 200);
@@ -2373,7 +2371,7 @@ package body Src_Editor_Module is
       Set_Alignment (Label, 0.0, 0.5);
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
-      Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File).all));
+      Gtk_New (Label, Unknown_To_UTF8 (+Dir_Name (File)));
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);
 
@@ -2484,7 +2482,7 @@ package body Src_Editor_Module is
                return Expansion & (+Base_Name (Get_Filename (Box)));
 
             when 'd' =>
-               return Expansion & (+Dir_Name (Get_Filename (Box)).all);
+               return Expansion & (+Dir_Name (Get_Filename (Box)));
 
             when 'p' =>
                return Expansion & Project_Name
@@ -2499,7 +2497,7 @@ package body Src_Editor_Module is
                   (Get_Project_From_File
                      (Get_Registry (Kernel).all,
                         Get_Filename (Box),
-                        Root_If_Not_Found => True))).all);
+                        Root_If_Not_Found => True))));
 
             when others =>
                return Invalid_Expansion;
@@ -3475,7 +3473,7 @@ package body Src_Editor_Module is
          Full := File;
       else
          Get_Full_Path_From_File
-           (Get_Registry (Kernel).all, Full_Name (File).all, True, False,
+           (Get_Registry (Kernel).all, Full_Name (File), True, False,
             File => Full);
          if Full = No_File then
             return null;
@@ -3571,10 +3569,10 @@ package body Src_Editor_Module is
 
    function Hash (F : Virtual_File) return Header_Num is
    begin
-      if Is_Case_Sensitive (Build_Server) then
-         return Hash (+Full_Name (F).all);
+      if Is_Case_Sensitive (Get_Nickname (Build_Server)) then
+         return Hash (+Full_Name (F));
       else
-         return Hash (To_Lower (+Full_Name (F).all));
+         return Hash (To_Lower (+Full_Name (F)));
       end if;
    end Hash;
 
@@ -3604,8 +3602,7 @@ package body Src_Editor_Module is
    function Autosaved_File (File : Virtual_File) return Virtual_File is
    begin
       --  Implementation must be in sync with Is_Auto_Save below
-      return Create
-        (Full_Filename => Dir_Name (File).all & ".#" & Base_Name (File) & "#");
+      return Create_From_Dir (Dir (File), ".#" & Base_Name (File) & "#");
    end Autosaved_File;
 
    ------------------

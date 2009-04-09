@@ -56,7 +56,6 @@ with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;
 with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
@@ -719,7 +718,7 @@ package body Completion_Module is
       if Get (M.Child) /= null then
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
          Trace (Me, "Testing new editor : "
-                & (+Full_Name (Get_Filename (M.Buffer)).all));
+                & Display_Full_Name (Get_Filename (M.Buffer)));
          --  We do not care about untitled editor. Get_File_Identifier should
          --  be called instead if we did.
 

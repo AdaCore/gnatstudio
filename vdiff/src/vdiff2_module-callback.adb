@@ -18,10 +18,8 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Gtk.Window;                        use Gtk.Window;
 
@@ -46,7 +44,7 @@ package body Vdiff2_Module.Callback is
 
    use Diff_Head_List;
 
-   function Get_Ref_Filename (File : Virtual_File) return Filesystem_String;
+   function Get_Ref_Filename (File : Virtual_File) return Virtual_File;
    pragma Inline (Get_Ref_Filename);
    --  Returns the ref filename for the give file
 
@@ -54,10 +52,10 @@ package body Vdiff2_Module.Callback is
    -- Get_Ref_Filename --
    ----------------------
 
-   function Get_Ref_Filename (File : Virtual_File) return Filesystem_String is
+   function Get_Ref_Filename (File : Virtual_File) return Virtual_File is
    begin
-      return Get_Local_Filesystem.Get_Tmp_Directory
-        & "ref$" & Base_Name (File);
+      return Create_From_Dir
+        (Get_Tmp_Directory, "ref$" & Base_Name (File));
    end Get_Ref_Filename;
 
    ---------------------------
@@ -247,7 +245,7 @@ package body Vdiff2_Module.Callback is
 
             begin
                if Merge /= GNATCOLL.VFS.No_File then
-                  Show_Merge (Kernel, +Full_Name (Merge).all);
+                  Show_Merge (Kernel, Merge);
                end if;
             end;
          end;
@@ -314,7 +312,7 @@ package body Vdiff2_Module.Callback is
 
          begin
             if Merge /= GNATCOLL.VFS.No_File then
-               Show_Merge (Kernel, +Full_Name (Merge).all);
+               Show_Merge (Kernel, Merge);
             end if;
          end;
       end;
@@ -342,7 +340,7 @@ package body Vdiff2_Module.Callback is
       ---------------
 
       procedure Setup_Ref (Ref_File : Virtual_File) is
-         Filename : constant Filesystem_String := Full_Name (Ref_File).all;
+         Filename : constant Filesystem_String := Full_Name (Ref_File);
       begin
          declare
             Args : Argument_List :=
@@ -378,8 +376,7 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Ref_F : constant Virtual_File :=
-                      Create (Full_Filename => Get_Ref_Filename (D.New_File));
+            Ref_F : Virtual_File renames Get_Ref_Filename (D.New_File);
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
@@ -399,8 +396,7 @@ package body Vdiff2_Module.Callback is
          end if;
 
          declare
-            Ref_F : constant Virtual_File :=
-                      Create (Full_Filename => Get_Ref_Filename (D.Orig_File));
+            Ref_F : Virtual_File renames Get_Ref_Filename (D.Orig_File);
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
@@ -520,8 +516,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Change_Ref_File'Access);
 
-      Selected_File :=
-        Create (Get_Ref_Filename (File_Information (Context.Context)));
+      Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
       Node := Get_Diff_Node
         (Selected_File,
@@ -564,8 +559,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Unhighlight_Difference'Access);
 
-      Selected_File :=
-        Create (Get_Ref_Filename (File_Information (Context.Context)));
+      Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
       Node := Get_Diff_Node
         (Selected_File,
@@ -595,8 +589,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Unhighlight_Difference'Access);
 
-      Selected_File :=
-        Create (Get_Ref_Filename (File_Information (Context.Context)));
+      Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
       Node := Get_Diff_Node
         (Selected_File,
@@ -645,10 +638,8 @@ package body Vdiff2_Module.Callback is
          if Data (Node).Files (J) /= GNATCOLL.VFS.No_File then
             declare
                File     : constant Virtual_File := Data (Node).Files (J);
-               Filename : constant Filesystem_String :=
-                 Full_Name (File).all;
             begin
-               if not Is_Regular_File (Filename) then
+               if not Is_Regular_File (File) then
                   To_Delete (J) := True;
                end if;
 
@@ -697,8 +688,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
 
-      Selected_File :=
-        Create (Get_Ref_Filename (File_Information (Context.Context)));
+      Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
       Node := Get_Diff_Node
         (Selected_File,

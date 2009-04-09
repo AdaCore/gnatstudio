@@ -25,8 +25,7 @@ with GPS.Kernel;                use GPS.Kernel;
 with Generic_List;
 with OS_Utils;                  use OS_Utils;
 with String_List_Utils;         use String_List_Utils;
-with GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package VCS is
 
@@ -91,7 +90,7 @@ package VCS is
    --  The name of the VCS system
 
    function Administrative_Directory
-     (Ref : access VCS_Record) return Filesystem_String;
+     (Ref : access VCS_Record) return GNATCOLL.VFS.Filesystem_String;
    --  Returns the name of the directory where the external VCS keeps
    --  information about the repository. This is .svn for Subversion for
    --  example.
@@ -219,7 +218,7 @@ package VCS is
 
    procedure Get_Status
      (Rep        : access VCS_Record;
-      Filenames  : String_List.List;
+      Filenames  : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
    --  Return the status of a list of files.
@@ -247,21 +246,22 @@ package VCS is
 
    procedure Get_Status_Dirs
      (Rep        : access VCS_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
    --  Same as above, but work on directories instead of files
 
    procedure Get_Status_Dirs_Recursive
      (Rep        : access VCS_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) is abstract;
    --  Same as above, and works on all subdirectories recursively
 
    function Local_Get_Status
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) return File_Status_List.List is abstract;
+      Filenames : GNATCOLL.VFS.File_Array)
+      return File_Status_List.List is abstract;
    --  Return the status of a list of files.
    --  This function only attempts to read information from local data, and
    --  does not connect to the repository.
@@ -282,7 +282,7 @@ package VCS is
 
    procedure Open
      (Rep       : access VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       User_Name : String := "") is abstract;
    --  Open the a file for modification.
    --  This is a necessary step for some systems but not all of them.
@@ -292,14 +292,14 @@ package VCS is
 
    procedure Commit
      (Rep       : access VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String) is abstract;
    --  Commit Filenames using Log.
    --  The user must free Filenames.
 
    procedure Update
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : GNATCOLL.VFS.File_Array) is abstract;
    --  Synchronize the local files or directories.
    --  The user must free Filenames.
 
@@ -311,13 +311,13 @@ package VCS is
 
    procedure Resolved
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : GNATCOLL.VFS.File_Array) is abstract;
    --  Change file status to resolved after conflic resolution.
    --  The user must free Filenames.
 
    procedure Merge
      (Rep       : access VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Tag       : String) is abstract;
    --  Merge the files from the specified repository with the local files.
    --  The merge is done locally, a commit is required to pass the
@@ -326,7 +326,7 @@ package VCS is
 
    procedure Add
      (Rep       : access VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True) is abstract;
    --  Add files to the specified VCS repository, commit if Commit is True.
@@ -334,7 +334,7 @@ package VCS is
 
    procedure Remove
      (Rep       : access VCS_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
@@ -343,7 +343,7 @@ package VCS is
 
    procedure Revert
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : GNATCOLL.VFS.File_Array) is abstract;
    --  Obtain the files in Filenames from their respective checked-in versions.
    --  The user must free Filenames.
 
@@ -405,7 +405,7 @@ package VCS is
 
    procedure Check_Files
      (Rep       : access VCS_Record;
-      Filenames : String_List_Utils.String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
    --  Enqueue an action that will check that the open buffers correspond
    --  to files on disk, and reload the buffers if necessary, asking the user
    --  when the buffer has been modified.
@@ -534,7 +534,7 @@ private
       Commit_Directory    : Boolean    := False;
       Require_Log         : Boolean    := True;
       Path_Style          : OS_Utils.Path_Style := System_Default;
-      Ignore_Filename     : Filesystem_String_Access;
+      Ignore_Filename     : GNATCOLL.VFS.Filesystem_String_Access;
       Used                : Boolean    := False;
       Action_Labels       : Action_Array;
    end record;

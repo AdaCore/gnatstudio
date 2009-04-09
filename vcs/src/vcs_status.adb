@@ -33,8 +33,6 @@ with Traces;                use Traces;
 with VCS_View;              use VCS_View;
 with VCS_View_API;          use VCS_View_API;
 with XML_Parsers;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body VCS_Status is
 
@@ -146,8 +144,8 @@ package body VCS_Status is
      (Kernel : access Kernel_Handle_Record'Class; Cache : Status_Cache)
    is
       Now      : constant Time := Clock;
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & VCS_Cache_Filename;
+      Filename : constant Virtual_File :=
+                   Create_From_Dir (Get_Home_Dir (Kernel), VCS_Cache_Filename);
       File     : Node_Ptr;
       F_Child  : Node_Ptr;
       Iter     : Status_Hash.Iterator;
@@ -236,7 +234,7 @@ package body VCS_Status is
          Status_Hash.Get_Next (Cache.T.all, Iter);
       end loop;
 
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Print (File, Filename, Success);
       Free (File);
 
       if not Success then
@@ -258,8 +256,9 @@ package body VCS_Status is
       pragma Warnings (Off, Cache);
 
       Now         : constant Time := Clock;
-      Filename    : constant Filesystem_String :=
-                      Get_Home_Dir (Kernel) & VCS_Cache_Filename;
+      Filename    : constant Virtual_File :=
+                      Create_From_Dir
+                        (Get_Home_Dir (Kernel), VCS_Cache_Filename);
       File, Child : Node_Ptr;
       Err         : Strings.String_Access;
 
@@ -342,7 +341,7 @@ package body VCS_Status is
 
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
 
          XML_Parsers.Parse (Filename, File, Err);
 

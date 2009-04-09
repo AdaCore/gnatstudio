@@ -19,11 +19,9 @@
 
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with String_List_Utils; use String_List_Utils;
 with GPS.Kernel;        use GPS.Kernel;
 with VCS;               use VCS;
 with VCS_Activities;    use VCS_Activities;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package VCS_Utils is
 
@@ -36,14 +34,14 @@ package VCS_Utils is
 
    function Save_Files
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Files     : String_List.List;
+      Files     : File_Array;
       Activity  : Activity_Id := No_Activity;
       Save_Logs : Boolean     := False) return Boolean;
    --  Ask the user whether he wants to save the file editors for Files.
    --  Return False if the user has cancelled the action.
 
    function Get_Current_Dir
-     (Context : Selection_Context) return Filesystem_String;
+     (Context : Selection_Context) return GNATCOLL.VFS.Virtual_File;
    --  Convenience function to get the current directory
 
    function Get_Current_File

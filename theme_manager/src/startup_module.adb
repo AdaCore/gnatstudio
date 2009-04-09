@@ -54,7 +54,7 @@ with GUI_Utils;                use GUI_Utils;
 with Pango.Enums;              use Pango.Enums;
 with System;                   use System;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
+with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 
 package body Startup_Module is
 
@@ -156,13 +156,12 @@ package body Startup_Module is
          Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
 
          Insert_With_Tags (Ed.Description, Text_Iter, -"File: ", Bold);
-         if Get_String (Model, Iter, Column_File) = "" then
+         if Get_File (Model, Iter, Column_File) = No_File then
             Insert (Ed.Description, Text_Iter, -"<not found>" & ASCII.LF);
          else
-            File := Create (Full_Filename =>
-                              +Get_String (Model, Iter, Column_File));
+            File := Get_File (Model, Iter, Column_File);
             Insert (Ed.Description, Text_Iter,
-                    +Full_Name (File).all & ASCII.LF);
+                    +Full_Name (File) & ASCII.LF);
             --  ??? What if the filesystem path is non-UTF8?
          end if;
 
@@ -342,7 +341,7 @@ package body Startup_Module is
         (Column_Types => (Column_Load       => GType_Boolean,
                           Column_Name       => GType_String,
                           Column_Explicit   => GType_Boolean,
-                          Column_File       => GType_String,
+                          Column_File       => Get_Virtual_File_Type,
                           Column_Initialize => GType_Pointer,
                           Column_Modified   => GType_Boolean,
                           Column_Background => GType_String),
@@ -417,8 +416,7 @@ package body Startup_Module is
          Set (Editor.Model, Iter, Column_Load, Get_Load (Script));
          Set (Editor.Model, Iter, Column_Name, Get_Script (Script_Iter));
          Set (Editor.Model, Iter, Column_Explicit, Get_Explicit (Script));
-         Set (Editor.Model, Iter, Column_File,
-              +Full_Name (Get_Full_File (Script)).all);
+         Set_File (Editor.Model, Iter, Column_File, Get_Full_File (Script));
          Set (Editor.Model, Iter, Column_Modified, False);
          Set (Editor.Model, Iter, Column_Initialize, +Get_Init (Script));
 

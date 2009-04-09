@@ -138,15 +138,15 @@ package body Vdiff2_Module is
 
       elsif Command = "create" then
          declare
-            File1 : constant Virtual_File := Get_Data (Data, 1);
-            File2 : constant Virtual_File := Get_Data (Data, 2);
+            File1 : constant Virtual_File := Nth_Arg (Data, 1);
+            File2 : constant Virtual_File := Nth_Arg (Data, 2);
             File3 : Virtual_File := No_File;
             Vdiff : Diff_Head_Access;
          begin
             Name_Parameters (Data, Vdiff_Create_Parameters);
 
             if Number_Of_Arguments (Data) > 2 then
-               File3 := Get_Data (Data, 3);
+               File3 := Nth_Arg (Data, 3);
             end if;
 
             Vdiff := Visual_Diff (File1, File2, File3);
@@ -161,16 +161,16 @@ package body Vdiff2_Module is
 
       elsif Command = "get" then
          declare
-            File1 : constant Virtual_File := Get_Data (Data, 1);
+            File1 : constant Virtual_File := Nth_Arg (Data, 1);
             File2 : Virtual_File := No_File;
             File3 : Virtual_File := No_File;
             Vdiff : Diff_Head_Access;
          begin
             if Number_Of_Arguments (Data) > 1 then
-               File2 := Get_Data (Data, 2);
+               File2 := Nth_Arg (Data, 2);
 
                if Number_Of_Arguments (Data) > 2 then
-                  File3 := Get_Data (Data, 3);
+                  File3 := Nth_Arg (Data, 3);
                end if;
             end if;
 

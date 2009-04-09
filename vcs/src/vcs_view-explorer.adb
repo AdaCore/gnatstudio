@@ -21,8 +21,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 with Namet;                     use Namet;
 
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-
 with Gdk;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
@@ -39,7 +37,6 @@ with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -58,6 +55,8 @@ with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
 with Ignore_Db;                 use Ignore_Db;
+
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Explorer is
 
@@ -87,6 +86,7 @@ package body VCS_View.Explorer is
       return GType_Array'
         (Base_Name_Column          => GType_String,
          Name_Column               => GType_String,
+         File_Column               => Get_Virtual_File_Type,
          Key_Column                => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
@@ -227,8 +227,8 @@ package body VCS_View.Explorer is
 
             else
                declare
-                  File    : constant Virtual_File := Create
-                    (+Get_String (Explorer.Model, Iter, Name_Column));
+                  File    : constant Virtual_File :=
+                              Get_File (Explorer.Model, Iter, File_Column);
                   Line    : constant Line_Record :=
                               Get_Cache (Get_Status_Cache, File);
                   Success : Boolean;
@@ -393,7 +393,8 @@ package body VCS_View.Explorer is
         (File : Virtual_File) return Gtk_Tree_Iter
       is
          function Get_Or_Create_Name
-           (Name : String; Display_VCS : Boolean) return Gtk_Tree_Iter;
+           (Name : String; File : Virtual_File; Display_VCS : Boolean)
+            return Gtk_Tree_Iter;
          --  Get or create node named Name
 
          ------------------------
@@ -401,15 +402,18 @@ package body VCS_View.Explorer is
          ------------------------
 
          function Get_Or_Create_Name
-           (Name : String; Display_VCS : Boolean) return Gtk_Tree_Iter
+           (Name : String; File : Virtual_File; Display_VCS : Boolean)
+            return Gtk_Tree_Iter
          is
             R_Iter : Gtk_Tree_Iter;
          begin
-            R_Iter := Get_Iter_For_Root_Node (Explorer, Name_Column, Name);
+            R_Iter :=
+              Get_Iter_For_Root_Node (Explorer, Name_Column, Name);
 
             if R_Iter = Null_Iter then
                Append (Explorer.Model, R_Iter, Null_Iter);
                Set (Explorer.Model, R_Iter, Name_Column, Name);
+               Set_File (Explorer.Model, R_Iter, File_Column, File);
 
                if Display_VCS then
                   Set (Explorer.Model, R_Iter, Base_Name_Column,
@@ -430,9 +434,11 @@ package body VCS_View.Explorer is
                        (Get_Registry (Kernel).all, File, False);
       begin
          if Project = No_Project then
-            return Get_Or_Create_Name ("No project", False);
+            return Get_Or_Create_Name
+              ("No project", GNATCOLL.VFS.No_File, False);
          else
-            return Get_Or_Create_Name (Project_Name (Project), True);
+            return Get_Or_Create_Name
+              (Project_Name (Project), Project_Path (Project), True);
          end if;
       end Get_Or_Create_Project_Iter;
 
@@ -842,7 +848,7 @@ package body VCS_View.Explorer is
       Check     : Gtk_Check_Menu_Item;
       Mitem     : Gtk_Menu_Item;
       Submenu   : Gtk_Menu;
-      Files     : String_List_Utils.String_List.List;
+      Files     : File_Array_Access;
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
       Project   : Project_Type := No_Project;
@@ -895,10 +901,10 @@ package body VCS_View.Explorer is
 
             Set_File_Information
               (Context,
-               Files   => Create (Files),
+               Files   => Files.all,
                Project => Project);
 
-            String_List_Utils.String_List.Free (Files);
+            Unchecked_Free (Files);
          end if;
 
          Path_Free (Path);
@@ -982,7 +988,7 @@ package body VCS_View.Explorer is
       File_Data : access Hooks_Data'Class)
    is
       D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
-      Log_Name : constant String := +Full_Name (D.File).all;
+      Log_Name : constant String := +Full_Name (D.File);
       Line     : Line_Record;
    begin
       if Log_Name'Length > 4
@@ -1038,7 +1044,7 @@ package body VCS_View.Explorer is
    ------------------------
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle) return String_List_Utils.String_List.List is
+     (Kernel : Kernel_Handle) return File_Array_Access is
    begin
       return Get_Selected_Files
         (VCS_View_Access (Get_Explorer (Kernel, False, False)));

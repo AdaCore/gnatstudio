@@ -21,10 +21,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Directories;           use Ada.Directories;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;               use GNAT;
-with GNAT.Strings;
+with GNAT.Strings;              use GNAT;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Templates_Parser;          use Templates_Parser;
@@ -159,9 +157,9 @@ package body VCS_Activities_View_API is
 
    type Adjust_Patch_Action_Command_Type is new Root_Command with record
       Kernel        : access Kernel_Handle_Record'Class;
-      Patch_File    : Virtual_File;     -- patch file
-      Files         : String_List.List; -- all files contained in the patch
-      Root_Dir      : Filesystem_String_Access;
+      Patch_File    : Virtual_File;      -- patch file
+      Files         : File_Array_Access; -- all files contained in the patch
+      Root_Dir      : Virtual_File;
       --  The patch root directory to set
       Header_Length : Positive;         -- the character length of the header
    end record;
@@ -230,11 +228,11 @@ package body VCS_Activities_View_API is
    overriding function Execute
      (Command : access Edit_Action_Command_Type) return Command_Return_Type
    is
-      Filename : aliased Filesystem_String := Full_Name (Command.File).all;
+      Filename : aliased String := +Full_Name (Command.File);
    begin
       Execute_GPS_Shell_Command
         (Command.Kernel, "Editor.edit",
-         (1 => Convert (Filename'Unchecked_Access)));
+         (1 => Filename'Unchecked_Access));
       return Success;
    end Execute;
 
@@ -242,12 +240,11 @@ package body VCS_Activities_View_API is
      (Command : access Adjust_Patch_Action_Command_Type)
       return Command_Return_Type
    is
-      procedure Handle (Filename : String);
+      procedure Handle (Filename : Virtual_File);
       --  Handle this filename in the patch
 
       Root_Dir      : constant Filesystem_String :=
-                        +To_Lower (+Command.Root_Dir.all);
-      Iter          : String_List.List_Node;
+                        +To_Lower (+Command.Root_Dir.Full_Name (True));
       Patch         : Strings.String_Access := Read_File (Command.Patch_File);
       Patch_Content : Unbounded_String := To_Unbounded_String (Patch.all);
 
@@ -255,10 +252,10 @@ package body VCS_Activities_View_API is
       -- Handle --
       ------------
 
-      procedure Handle (Filename : String) is
-         BF : constant String := Simple_Name (Filename);
-         LF : constant String := To_Lower (Filename);
-         NF : String := Filename;
+      procedure Handle (Filename : Virtual_File) is
+         BF : constant String := Simple_Name (+Filename.Full_Name);
+         LF : constant String := To_Lower (+Filename.Full_Name);
+         NF : String := +Filename.Full_Name;
 
          procedure Replace_Token (Prefix, Token, By : String);
          --  Replaces the slice matching ^<prefix>.*<token> by By string
@@ -318,7 +315,9 @@ package body VCS_Activities_View_API is
             end if;
          end loop;
 
-         if +LF (LF'First .. LF'First + Root_Dir'Length - 1) = Root_Dir then
+         if Equal (+LF (LF'First .. LF'First + Root_Dir'Length - 1),
+                   Root_Dir)
+         then
             Replace_Token
               ("--- ", BF, NF (NF'First + Root_Dir'Length .. NF'Last));
             Replace_Token
@@ -329,11 +328,8 @@ package body VCS_Activities_View_API is
    begin
       Strings.Free (Patch);
 
-      Iter := String_List.First (Command.Files);
-
-      for K in 1 .. String_List.Length (Command.Files) loop
-         Handle (String_List.Data (Iter));
-         Iter := String_List.Next (Iter);
+      for J in Command.Files'Range loop
+         Handle (Command.Files (J));
       end loop;
 
       declare
@@ -501,11 +497,10 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      Files : String_List.List;
+      Files : constant File_Array := Get_Files_In_Activity (Activity);
    begin
-      Files := Get_Files_In_Activity (Activity);
 
-      if String_List.Is_Empty (Files) then
+      if Files'Length = 0 then
          Console.Insert
            (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
          return;
@@ -537,11 +532,9 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      Files : String_List.List;
+      Files : constant File_Array := Get_Files_In_Activity (Activity);
    begin
-      Files := Get_Files_In_Activity (Activity);
-
-      if String_List.Is_Empty (Files) then
+      if Files'Length = 0 then
          Console.Insert
            (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
          return;
@@ -578,12 +571,11 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id)
    is
       use String_List;
-      Files          : String_List.List;
+      Files          : constant File_Array := Get_Files_In_Activity (Activity);
       All_Logs_Exist : Boolean := True;
-   begin
-      Files := Get_Files_In_Activity (Activity);
 
-      if String_List.Is_Empty (Files) then
+   begin
+      if Files'Length = 0 then
          Console.Insert
            (Kernel, -"VCS: No file in activity, cannot commit", Mode => Error);
          return;
@@ -634,16 +626,11 @@ package body VCS_Activities_View_API is
       Activity : Activity_Id)
    is
       VCS   : constant VCS_Access := Get_VCS_For_Activity (Kernel, Activity);
-      Files : constant String_List.List := Get_Files_In_Activity (Activity);
-      Iter  : String_List.List_Node;
+      Files : constant File_Array := Get_Files_In_Activity (Activity);
    begin
       --  For each file we get the diff
-
-      Iter := String_List.First (Files);
-
-      for K in 1 .. String_List.Length (Files) loop
-         Diff (VCS, Create (+String_List.Data (Iter)));
-         Iter := String_List.Next (Iter);
+      for J in Files'Range loop
+         Diff (VCS, Files (J));
       end loop;
    end Diff_Activity;
 
@@ -688,7 +675,7 @@ package body VCS_Activities_View_API is
    is
       pragma Unreferenced (Widget);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      List   : String_List.List;
+      List   : File_Array_Access;
 
    begin
       if Context /= No_Context then
@@ -697,10 +684,9 @@ package body VCS_Activities_View_API is
 
             List := Get_Selected_Files (Kernel);
 
-            while not String_List.Is_Empty (List) loop
+            for J in List'Range loop
                declare
-                  File : constant Virtual_File :=
-                           Create (+String_List.Head (List));
+                  File : Virtual_File renames List (J);
                begin
                   Get_Log_From_ChangeLog (Kernel, File);
 
@@ -710,9 +696,9 @@ package body VCS_Activities_View_API is
                      Group            => Group_Consoles,
                      Initial_Position => Position_Bottom);
                end;
-
-               String_List.Next (List);
             end loop;
+
+            Unchecked_Free (List);
 
          else
             --  This is an activity line
@@ -778,44 +764,37 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id)
    is
-      Logs_Dir     : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "log_files";
+      Logs_Dir     : constant Virtual_File :=
+                       Create_From_Dir (Get_Home_Dir (Kernel), "log_files");
       VCS          : constant VCS_Access :=
                        Get_VCS_For_Activity (Kernel, Activity);
-      Files        : constant String_List.List :=
+      Files        : constant File_Array :=
                        Get_Files_In_Activity (Activity);
-      Filename     : constant Filesystem_String :=
-                       Logs_Dir & OS_Lib.Directory_Separator
-                         & (+Image (Activity)) & ".dif";
+      File         : constant Virtual_File :=
+                       Create_From_Dir (Logs_Dir, +Image (Activity) & ".dif");
       T_Set        : Translate_Set :=
                        Get_Activity_Template_Tags (Kernel, Activity);
-      File         : Virtual_File;
       W_File       : Writable_File;
       Content      : Unbounded_String;
-      Iter         : String_List.List_Node;
 
       Edit_File    : Edit_Action_Command_Access;
       Adjust_Patch : Adjust_Patch_Action_Command_Access;
 
    begin
-      File := Create (Filename);
       W_File := Write_File (File);
 
       --  Add activity name and log
 
       Insert (T_Set, Assoc ("IS_PATCH", True));
-      Content := Parse (Get_Activity_Log_Template (Kernel), T_Set);
+      Content := Parse (+Get_Activity_Log_Template (Kernel).Full_Name, T_Set);
 
       Write (W_File, UTF8_To_Locale (To_String (Content)));
       Close (W_File);
 
       --  For each file we get the diff
 
-      Iter := String_List.First (Files);
-
-      for K in 1 .. String_List.Length (Files) loop
-         Diff_Patch (VCS, Create (+String_List.Data (Iter)), File);
-         Iter := String_List.Next (Iter);
+      for J in Files'Range loop
+         Diff_Patch (VCS, Files (J), File);
       end loop;
 
       --  Adjust patch root
@@ -828,13 +807,13 @@ package body VCS_Activities_View_API is
                                (Root_Project,
                                 VCS_Patch_Root,
                                 Default => +Full_Name
-                                  (Project_Directory (Root_Project)).all));
+                                  (Project_Directory (Root_Project))));
          Path         : constant Virtual_File := Create (Root_Dir);
       begin
          Adjust_Patch := new Adjust_Patch_Action_Command_Type;
          Adjust_Patch.Kernel := Kernel;
          Adjust_Patch.Patch_File := File;
-         Adjust_Patch.Files := Files;
+         Adjust_Patch.Files := new File_Array'(Files);
 
          --  If Root_Dir is set use it and handle the case where it is a
          --  relative path, otherwise set it to the root project directory.
@@ -842,15 +821,11 @@ package body VCS_Activities_View_API is
          Ensure_Directory (Path);
 
          if Is_Absolute_Path (Path) then
-            Adjust_Patch.Root_Dir := new
-            Filesystem_String'(Full_Name (Path).all);
+            Adjust_Patch.Root_Dir := Path;
 
          else
-            Adjust_Patch.Root_Dir := new Filesystem_String'
-              (Normalize_Pathname
-                 (Name      => Full_Name (Path).all,
-                  Directory => Full_Name (Get_Current_Dir).all)
-               & OS_Lib.Directory_Separator);
+            Adjust_Patch.Root_Dir := Create_From_Base (Path.Full_Name);
+            Ensure_Directory (Adjust_Patch.Root_Dir);
          end if;
 
          Adjust_Patch.Header_Length := Length (Content);
@@ -914,30 +889,33 @@ package body VCS_Activities_View_API is
 
       VCS      : VCS_Access;
       Activity : Activity_Id;
-      Files    : String_List.List;
       Status   : File_Status_List.List;
    begin
       Activity := First;
 
       while Activity /= No_Activity loop
-         Files := Get_Files_In_Activity (Activity);
-         VCS   := Get_VCS_For_Activity (Kernel, Activity);
+         declare
+            Files : constant File_Array :=
+                      Get_Files_In_Activity (Activity);
+         begin
+            VCS   := Get_VCS_For_Activity (Kernel, Activity);
 
-         if String_List.Is_Empty (Files) or else VCS = null then
-            Display_File_Status
-              (Kernel, Activity, File_Status_List.Null_List, VCS, True);
-
-         else
-            if Real_Query then
-               Get_Status (VCS, Files);
+            if Files'Length = 0 or else VCS = null then
+               Display_File_Status
+                 (Kernel, Activity, File_Status_List.Null_List, VCS, True);
 
             else
-               Status := Local_Get_Status (VCS, Files);
-               Display_File_Status
-                 (Kernel, Activity, Status, VCS, False, True);
-               File_Status_List.Free (Status);
+               if Real_Query then
+                  Get_Status (VCS, Files);
+
+               else
+                  Status := Local_Get_Status (VCS, Files);
+                  Display_File_Status
+                    (Kernel, Activity, Status, VCS, False, True);
+                  File_Status_List.Free (Status);
+               end if;
             end if;
-         end if;
+         end;
 
          Activity := Next;
       end loop;
@@ -1260,22 +1238,25 @@ package body VCS_Activities_View_API is
          Set_Return_Value_As_List (Data);
 
          declare
-            Node : String_List.List_Node :=
-                     String_List.First (Get_Files_In_Activity (Activity));
+            Files : File_Array renames Get_Files_In_Activity (Activity);
          begin
-            while Node /= String_List.Null_Node loop
-               Set_Return_Value (Data, String_List.Data (Node));
-               Node := String_List.Next (Node);
+            for J in Files'Range loop
+               Set_Return_Value
+                 (Data, +Files (J).Full_Name);
+               --  ??? We should return VFS instead of strings ... As in code
+               --  below
+               --  Set_Return_Value
+               --    (Data, Create_File (Get_Script (Data), Files (J)));
             end loop;
          end;
 
       elsif Command = "add_file" then
          Refresh_Explorer := True;
-         Add_File (Kernel, Activity, Get_Data (Data, 2));
+         Add_File (Kernel, Activity, Nth_Arg (Data, 2));
 
       elsif Command = "remove_file" then
          Refresh_Explorer := True;
-         Remove_File (Kernel, Activity, Get_Data (Data, 2));
+         Remove_File (Kernel, Activity, Nth_Arg (Data, 2));
 
       elsif Command = "vcs" then
          declare

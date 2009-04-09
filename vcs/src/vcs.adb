@@ -185,7 +185,7 @@ package body VCS is
    function Ignore_Filename
      (Ref : access VCS_Record) return Filesystem_String
    is
-      use GNAT.Strings;
+      use type Filesystem_String_Access;
    begin
       if Ref.Ignore_Filename = null then
          return "";
@@ -200,7 +200,7 @@ package body VCS is
 
    procedure Check_Files
      (Rep       : access VCS_Record;
-      Filenames : String_List_Utils.String_List.List)
+      Filenames : GNATCOLL.VFS.File_Array)
    is
       C : Update_Files_Command_Access;
    begin

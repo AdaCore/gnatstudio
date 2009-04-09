@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
@@ -47,7 +46,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Log_Utils;
 with Projects.Registry;         use Projects.Registry;
-with String_List_Utils;
 with Traces;                    use Traces;
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -906,7 +904,7 @@ package body VCS_Module is
 
       elsif Command = "from_file" then
          declare
-            A : constant Activity_Id := Get_File_Activity (Get_Data (Data, 1));
+            A : constant Activity_Id := Get_File_Activity (Nth_Arg (Data, 1));
          begin
             if A = No_Activity then
                Inst := No_Class_Instance;
@@ -1404,14 +1402,12 @@ package body VCS_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      use String_List_Utils.String_List;
       D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Ref    : constant VCS_Access :=
                  Get_Current_Ref
                    (Kernel,
                     Get_Project_From_File
                       (Get_Registry (Kernel).all, D.File, True));
-      Files  : List;
       Status : File_Status_Record;
    begin
       if Ref = null then
@@ -1424,9 +1420,7 @@ package body VCS_Module is
         or else Status.Status.Stock_Id.all = "gps-vcs-unknown"
       then
          --  If file not found in the cache or the status is not yet known
-         Append (Files, +Full_Name (D.File).all);
-         Get_Status (Ref, Files, False, Local => True);
-         Free (Files);
+         Get_Status (Ref, (1 => D.File), False, Local => True);
       else
          Display_Editor_Status (Kernel_Handle (Kernel), Ref, Status);
       end if;

@@ -30,8 +30,7 @@ with Snames;                    use Snames;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line;          use Ada.Command_Line;
-with File_Utils;                use File_Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Convert.Gpr is
 
@@ -65,21 +64,11 @@ package body Convert.Gpr is
    -----------------
 
    procedure Output_Path (Path : String_Access; Prefix : String) is
-      Start, Last : Natural;
+      Files : constant File_Array := From_Path (+Path.all);
    begin
-      Start := Path'First;
-      while Start <= Path'Last loop
-         Last := Start;
-         while Last <= Path'Last
-           and then Path (Last) /= Path_Separator
-         loop
-            Last := Last + 1;
-         end loop;
-
-         Put_Line (Prefix
-                   & (+Name_As_Directory
-                      (+Format_Pathname (Path (Start .. Last - 1), UNIX))));
-         Start := Last + 1;
+      for J in Files'Range loop
+         Ensure_Directory (Files (J));
+         Put_Line (Prefix & (+Files (J).Unix_Style_Full_Name));
       end loop;
    end Output_Path;
 

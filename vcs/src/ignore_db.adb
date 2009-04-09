@@ -21,11 +21,9 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed; use Ada.Strings;
 with Ada.Text_IO;                use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with GNAT.Strings;
 
 with String_Hash;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Ignore_Db is
 
@@ -52,7 +50,7 @@ package body Ignore_Db is
 
    DB : Dir_Table.String_Hash_Table.HTable;
 
-   function Load (Ignore_File : Filesystem_String) return File_Table_Access;
+   function Load (Ignore_File : Virtual_File) return File_Table_Access;
    --  Load Ignore_File and store the values into DB. Returns the new table
    --  created.
 
@@ -65,10 +63,11 @@ package body Ignore_Db is
       File : Virtual_File)
       return Boolean
    is
-      Ign_File : constant Filesystem_String :=
-                   Dir_Name (File).all & Ignore_Filename (VCS);
+      Ign_File : constant Virtual_File :=
+                   Create_From_Dir (Dir (File), Ignore_Filename (VCS));
       Files    : File_Table_Access :=
-                   Dir_Table.String_Hash_Table.Get (DB, +Ign_File);
+                   Dir_Table.String_Hash_Table.Get
+                     (DB, +Ign_File.Full_Name);
    begin
       if Files = null
         and then Is_Regular_File (Ign_File)
@@ -88,7 +87,7 @@ package body Ignore_Db is
    -- Load --
    ----------
 
-   function Load (Ignore_File : Filesystem_String) return File_Table_Access is
+   function Load (Ignore_File : Virtual_File) return File_Table_Access is
       Files  : constant File_Table_Access := new String_Hash_Table.HTable;
       File   : File_Type;
       Buffer : String (1 .. 256);
@@ -96,7 +95,7 @@ package body Ignore_Db is
    begin
       --  Add all files read from Ignore_File
 
-      Open (File, In_File, +Ignore_File);
+      Open (File, In_File, +Ignore_File.Full_Name);
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -108,7 +107,7 @@ package body Ignore_Db is
 
       --  Register this table
 
-      Dir_Table.String_Hash_Table.Set (DB, +Ignore_File, Files);
+      Dir_Table.String_Hash_Table.Set (DB, +Ignore_File.Full_Name, Files);
 
       return Files;
    end Load;

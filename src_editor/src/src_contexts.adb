@@ -23,6 +23,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;
 
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
@@ -43,7 +44,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
-with File_Utils;                use File_Utils;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
@@ -56,7 +56,6 @@ with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
-with OS_Utils;                  use OS_Utils;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -64,8 +63,6 @@ with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Traces;                    use Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body Src_Contexts is
 
@@ -955,7 +952,6 @@ package body Src_Contexts is
    overriding procedure Free (Context : in out Files_Context) is
    begin
       Directory_List.Free (Context.Dirs);
-      Free (Context.Directory);
       Context.At_End := True;
       Free (Search_Context (Context));
    end Free;
@@ -1073,18 +1069,17 @@ package body Src_Contexts is
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : Filesystem_String  := "";
+      Directory     : Virtual_File  := No_File;
       Recurse       : Boolean := False) is
    begin
-      Free (Context.Directory);
       Context.Files_Pattern := Files_Pattern;
       Context.Recurse := Recurse;
 
-      if Directory = "" then
-         Context.Directory := new Filesystem_String'(Get_Current_Dir);
+      if Directory = No_File then
+         Context.Directory := Get_Current_Dir;
       else
-         Context.Directory := new Filesystem_String'
-           (Name_As_Directory (Directory));
+         Ensure_Directory (Directory);
+         Context.Directory := Directory;
       end if;
    end Set_File_List;
 
@@ -1271,8 +1266,8 @@ package body Src_Contexts is
          Set_File_List
            (Context,
             Files_Pattern => Re,
-            Directory     => +Get_Text (Extra.Directory_Entry),
-            --  ??? What if the filesystem path is non-UTF8?
+            Directory     =>
+              Create_From_UTF8 (Get_Text (Extra.Directory_Entry)),
             Recurse       => Get_Active (Extra.Subdirs_Check));
 
          return Search_Context_Access (Context);
@@ -1721,7 +1716,7 @@ package body Src_Contexts is
 
                if Buffer /= null then
                   --  ???  Should use VFS.Write_File
-                  FD := Create_File (+Full_Name (File).all, Binary);
+                  FD := Create_File (+Full_Name (File), Binary);
                   Len := Write (FD, Buffer (1)'Address,
                                 Matches (Matches'First).Index - 1);
                   Len := Write (FD, Replace_String'Address,
@@ -2177,8 +2172,7 @@ package body Src_Contexts is
 
    overriding procedure Move_To_Next_File (Context : access Files_Context) is
       use Directory_List;
-      File_Name : String (1 .. Max_Path_Len);
-      Last      : Natural;
+      File      : Virtual_File;
 
    begin
       Context.Current_File := GNATCOLL.VFS.No_File;
@@ -2190,51 +2184,54 @@ package body Src_Contexts is
       end if;
 
       if Context.Dirs = Null_List then
-         Prepend (Context.Dirs, new Dir_Data);
-         Head (Context.Dirs).Name := new String'(+Context.Directory.all);
-         Open (Head (Context.Dirs).Dir, +Context.Directory.all);
+         Prepend
+           (Context.Dirs,
+            new Dir_Data'
+              (Name  => Context.Directory,
+               Files => Context.Directory.Read_Dir,
+               F_Idx => 1));
       end if;
 
       while Context.Current_File = GNATCOLL.VFS.No_File loop
-         Read (Head (Context.Dirs).Dir, File_Name, Last);
+         declare
+            Data : Dir_Data_Access renames Head (Context.Dirs);
+         begin
+            if Data.F_Idx > Data.Files'Last then
+               Next (Context.Dirs);
+               Context.Current_Dir := Context.Current_Dir + 1;
 
-         if Last = 0 then
-            Next (Context.Dirs);
-            Context.Current_Dir := Context.Current_Dir + 1;
+               if Context.Dirs = Null_List then
+                  --  No more searches
+                  Context.At_End := True;
+                  return;
+               end if;
 
-            if Context.Dirs = Null_List then
-               --  No more searches
-               Context.At_End := True;
-               return;
-            end if;
+            else
+               File := Data.Files (Data.F_Idx);
+               --  Data is an access type. The actual value in the list will
+               --  correctly be updated.
+               Data.F_Idx := Data.F_Idx + 1;
 
-         else
-            declare
-               Full_Name : constant String :=
-                 Head (Context.Dirs).Name.all & File_Name (1 .. Last);
-            begin
-               if Is_Directory (Full_Name) then
-                  if Context.Recurse
-                    and then File_Name (1 .. Last) /= "."
-                    and then File_Name (1 .. Last) /= ".."
-                    and then not Is_Symbolic_Link (File_Name (1 .. Last))
-                  then
+               if Is_Directory (File) then
+                  if Context.Recurse and then not Is_Symbolic_Link (File) then
                      --  ??? Do not try to follow symbolic links for now,
                      --  so that we avoid infinite recursions.
-                     Prepend (Context.Dirs, new Dir_Data);
+                     Prepend
+                       (Context.Dirs,
+                        new Dir_Data'
+                          (Name  => File,
+                           Files => File.Read_Dir,
+                           F_Idx => 1));
                      Context.Total_Dirs := Context.Total_Dirs + 1;
-                     Head (Context.Dirs).Name := new String'
-                       (+Name_As_Directory (+Full_Name));
-                     Open (Head (Context.Dirs).Dir, Full_Name);
                   end if;
 
                --  ??? Should check that we have a text file
-               elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
-                  Context.Current_File := Create (Full_Filename => +Full_Name);
+               elsif Match (+Base_Name (File), Context.Files_Pattern) then
+                  Context.Current_File := File;
                   return;
                end if;
-            end;
-         end if;
+            end if;
+         end;
       end loop;
 
    exception
@@ -2251,8 +2248,7 @@ package body Src_Contexts is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Dir_Data, Dir_Data_Access);
    begin
-      Close (D.Dir);
-      Free (D.Name);
+      Unchecked_Free (D.Files);
       Unchecked_Free (D);
    end Free;
 

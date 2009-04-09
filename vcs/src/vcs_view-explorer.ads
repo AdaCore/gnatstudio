@@ -56,7 +56,7 @@ package VCS_View.Explorer is
    --  cache.
 
    function Get_Selected_Files
-     (Kernel : Kernel_Handle) return String_List.List;
+     (Kernel : Kernel_Handle) return File_Array_Access;
    --  Return the currently selected files, as a list.
    --  Caller must free this list afterwards.
 

@@ -23,11 +23,12 @@
 with System;                    use System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Impl;         use GNATCOLL.Scripts.Impl;
-with GNATCOLL.Scripts.Shell;        use GNATCOLL.Scripts.Shell;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Impl;     use GNATCOLL.Scripts.Impl;
+with GNATCOLL.Scripts.Shell;    use GNATCOLL.Scripts.Shell;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 with Glib.Object;               use Glib.Object;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Object;                use Gtk.Object;
@@ -328,7 +329,7 @@ package body Shell_Script is
          Context => (Event       => null,
                      Context     => No_Context,
                      Synchronous => True,
-                     Dir         => null,
+                     Dir         => No_File,
                      Args        => new Argument_List'(Clone (Get_Args (D))),
                      Label       => null,
                      Repeat_Count => 1,

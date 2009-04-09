@@ -17,6 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Strings;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
+
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -29,19 +32,17 @@ with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Basic_Types;               use Basic_Types;
-with Filesystems;               use Filesystems;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
+with String_List_Utils;         use String_List_Utils;
+with Traces;                    use Traces;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
-with Traces;                    use Traces;
-with GNAT.Strings;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body VCS_View is
 
@@ -63,12 +64,12 @@ package body VCS_View is
          --  What we want here is to be able to have the path to the directory
          --  to handle.
          declare
-            Dir : constant String := +Full_Name (File, True).all;
+            Dir : constant String := +Full_Name (File, True);
          begin
             return Dir (Dir'First .. Dir'Last - 1);
          end;
       else
-         return +Full_Name (File, True).all;
+         return +Full_Name (File, True);
       end if;
    end File_Key;
 
@@ -209,9 +210,7 @@ package body VCS_View is
                Iter := Get_Iter (Explorer.Model, Path);
                Open_File_Editor
                  (Kernel,
-                  Create
-                    (Full_Filename =>
-                       +Get_String (Explorer.Model, Iter, Name_Column)),
+                  Get_File (Explorer.Model, Iter, File_Column),
                   Line   => 0,
                   Column => 0);
                Emit_Stop_By_Name (Explorer.Tree, "button_press_event");
@@ -287,7 +286,8 @@ package body VCS_View is
 
       elsif Column = Tooltip.Explorer.File_Column then
          Text := new String'
-           (Get_String (Tooltip.Explorer.Model, Iter, Name_Column));
+           (Get_File
+              (Tooltip.Explorer.Model, Iter, File_Column).Display_Full_Name);
       end if;
 
       if Text /= null then
@@ -328,7 +328,9 @@ package body VCS_View is
 
       Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
-           +Full_Name (Line_Info.Status.File).all);
+           Line_Info.Status.File.Display_Full_Name);
+      Set_File (Explorer.Model, Iter, File_Column,
+                Line_Info.Status.File);
       Set (Explorer.Model, Iter, Key_Column,
            File_Key (Line_Info.Status.File));
 
@@ -496,9 +498,9 @@ package body VCS_View is
    ------------------------
 
    function Get_Selected_Files
-     (Explorer : VCS_View_Access) return String_List.List
+     (Explorer : VCS_View_Access) return File_Array_Access
    is
-      Result : String_List.List;
+      Result : File_Array_Access := new File_Array'(1 .. 0 => <>);
 
       procedure Add_Selected_Item
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -523,8 +525,9 @@ package body VCS_View is
             --  Do not take root nodes, those are the activity name or the VCS
             --  project name not a file.
 
-            String_List.Append
-              (Result, Get_String (Explorer.Model, Iter, Name_Column));
+            GNATCOLL.VFS.Append
+              (Result,
+               Get_File (Explorer.Model, Iter, File_Column));
          end if;
       end Add_Selected_Item;
 
@@ -540,6 +543,7 @@ package body VCS_View is
       Explorer_Selection_Foreach.Selected_Foreach
         (Get_Selection (Explorer.Tree),
          Add_Selected_Item'Unrestricted_Access, EA);
+
       return Result;
    end Get_Selected_Files;
 
@@ -597,7 +601,7 @@ package body VCS_View is
    begin
       if Explorer.Context = No_Context then
          declare
-            Files : String_List.List :=
+            Files : File_Array_Access :=
                       Get_Selected_Files (VCS_View_Access (Explorer));
          begin
             Context := New_Context;
@@ -606,12 +610,13 @@ package body VCS_View is
               (Context, Explorer.Kernel,
                Abstract_Module_ID (VCS_Module_ID));
 
-            if not String_List.Is_Empty (Files) then
-               Set_File_Information (Context, Files => Create (Files));
-               String_List.Free (Files);
+            if Files /= null and then Files'Length > 0 then
+               Set_File_Information (Context, Files => Files.all);
             end if;
 
+            Unchecked_Free (Files);
             Set_Current_Context (Explorer, Context);
+
             return Context;
          end;
 
@@ -752,7 +757,7 @@ package body VCS_View is
    procedure Select_Files_Same_Status
      (Explorer : access VCS_View_Record'Class)
    is
-      Files : String_List.List;
+      Files : File_Array_Access;
       Iter  : Gtk_Tree_Iter;
 
    begin
@@ -760,12 +765,10 @@ package body VCS_View is
 
       Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
-      if String_List.Length (Files) = 1 then
+      if Files'Length = 1 then
          --  We have a single file selected
 
-         Iter := Get_Iter_From_File
-           (Explorer,
-            Create (+String_List.Data (String_List.First (Files))));
+         Iter := Get_Iter_From_File (Explorer, Files (Files'First));
 
          declare
             procedure Select_Same_Status
@@ -810,6 +813,8 @@ package body VCS_View is
             Select_All (Explorer, False);
          end;
       end if;
+
+      Unchecked_Free (Files);
    end Select_Files_Same_Status;
 
    ------------------------

@@ -48,8 +48,6 @@ with Vdiff_Module;              use Vdiff_Module;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Basic_Types;               use Basic_Types;
 
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-
 package body Vdiff_Utils is
 
    package ICS renames Interfaces.C.Strings;
@@ -337,14 +335,14 @@ package body Vdiff_Utils is
       Set_Base (Change_Style, State_Normal, Color);
 
       begin
-         Open (Infile1, In_File, +Full_Name (File1).all);
+         Open (Infile1, In_File, +Full_Name (File1));
       exception
          when Name_Error =>
             return;
       end;
 
       begin
-         Open (Infile2, In_File, +Full_Name (File2).all);
+         Open (Infile2, In_File, +Full_Name (File2));
       exception
          when Name_Error =>
             Close (Infile1);

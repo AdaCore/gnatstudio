@@ -493,7 +493,7 @@ GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
   </shell_doc>
 
   <shell_doc name="@hook@ rsync_action_hook">
-    <description>For internal use onlyl</description>
+    <description>For internal use only</description>
   </shell_doc>
 
   <shell_doc name="@hook@ server_config_hook">

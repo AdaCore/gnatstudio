@@ -34,7 +34,6 @@ with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with String_Utils;           use String_Utils;
 with Traces;                 use Traces;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -130,30 +129,28 @@ package body Diff_Utils is
       Ret          : Diff_Occurrence_Link;
       Occurrence   : Diff_Occurrence_Link;
       Diff_Command : constant String := Diff_Cmd.Get_Pref;
-      Cmd          : Filesystem_String_Access;
+      Cmd          : Virtual_File;
       Cmd_Args     : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
-      if Cmd.all = "" then
+      if Cmd = No_File then
          Trace (Me, "command not found: " & Diff_Command);
-         Free (Cmd);
          Free (Cmd_Args);
          return Ret;
       end if;
 
-      Args (1) := new String'(+Full_Name (File1).all);
-      Args (2) := new String'(+Full_Name (File2).all);
+      Args (1) := new String'(+Full_Name (File1));
+      Args (2) := new String'(+Full_Name (File2));
 
       Trace (Me, "spawn: " & Diff_Command & " "
-             & (+(Full_Name (File1).all & " " & Full_Name (File2).all)));
+             & Display_Full_Name (File1) & " " & Display_Full_Name (File2));
 
       Non_Blocking_Spawn
-        (Descriptor, +Cmd.all,
+        (Descriptor, +Cmd.Full_Name,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
-      Free (Cmd);
       Free (Cmd_Args);
 
       for J in Args'Range loop
@@ -195,7 +192,7 @@ package body Diff_Utils is
       Args          : Argument_List (1 .. 6);
       Ret           : Diff_Occurrence_Link;
       Occurrence    : Diff_Occurrence_Link;
-      Cmd           : Filesystem_String_Access;
+      Cmd           : Virtual_File;
       Pattern_Any   : constant Pattern_Matcher := Compile (".+");
       Pattern       : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
@@ -212,13 +209,12 @@ package body Diff_Utils is
       Cmd      :=
         Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
-      if Cmd = null or else Cmd.all = "" then
+      if Cmd = No_File then
          Insert (Kernel,
                  -"Patch command not found: " & Patch_Command & ASCII.LF
                  & (-"See the preferences if you need to change the value"),
                  Mode => Error);
          Trace (Me, "command not found: " & Patch_Command);
-         Free (Cmd);
          Free (Cmd_Args);
          return Ret;
       end if;
@@ -227,28 +223,27 @@ package body Diff_Utils is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(+Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (Orig_File));
          Args (4) := new String'("-R");
-         Args (5) := new String'(+Full_Name (New_File).all);
+         Args (5) := new String'(+Full_Name (New_File));
          Num_Args := 6;
 
       else
-         Args (3) := new String'(+Full_Name (New_File).all);
-         Args (4) := new String'(+Full_Name (Orig_File).all);
+         Args (3) := new String'(+Full_Name (New_File));
+         Args (4) := new String'(+Full_Name (Orig_File));
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(+Full_Name (Diff_File).all);
+      Args (Num_Args) := new String'(+Full_Name (Diff_File));
 
-      Trace (Me, "spawn: " &
+      Trace (Me, "spawn: " & Cmd.Display_Full_Name & " " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, +Cmd.all,
+           (Descriptor, +Cmd.Full_Name,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
             Args (1 .. Num_Args));
-         Free (Cmd);
          Free (Cmd_Args);
          Free (Args);
 
@@ -261,7 +256,7 @@ package body Diff_Utils is
             Close (Descriptor);
       end;
 
-      Open (File, In_File, +Full_Name (Diff_File).all);
+      Open (File, In_File, +Full_Name (Diff_File));
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);

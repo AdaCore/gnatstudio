@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2008, AdaCore                --
+--                  Copyright (C) 2001-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,25 +33,25 @@ package VCS.ClearCase is
 
    overriding procedure Get_Status
      (Rep        : access ClearCase_Record;
-      Filenames  : String_List.List;
+      Filenames  : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False);
 
    overriding procedure Get_Status_Dirs
      (Rep        : access ClearCase_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) renames Get_Status;
 
    overriding procedure Get_Status_Dirs_Recursive
      (Rep        : access ClearCase_Record;
-      Dirs       : String_List.List;
+      Dirs       : GNATCOLL.VFS.File_Array;
       Clear_Logs : Boolean := False;
       Local      : Boolean := False) renames Get_Status;
 
    overriding function Local_Get_Status
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : GNATCOLL.VFS.File_Array)
      return File_Status_List.List;
 
    overriding procedure Create_Tag
@@ -62,17 +62,17 @@ package VCS.ClearCase is
 
    overriding procedure Open
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       User_Name : String := "");
 
    overriding procedure Commit
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String);
 
    overriding procedure Update
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure Switch
      (Rep : access ClearCase_Record;
@@ -81,28 +81,28 @@ package VCS.ClearCase is
 
    overriding procedure Resolved
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure Merge
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Tag       : String);
 
    overriding procedure Add
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True);
 
    overriding procedure Remove
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Log       : String;
       Commit    : Boolean := True);
 
    overriding procedure Revert
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
 
    overriding procedure File_Revision
      (Rep      : access ClearCase_Record;

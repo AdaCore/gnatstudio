@@ -30,7 +30,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with Traces;                    use Traces;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 package body VCS_Utils is
 
@@ -69,7 +68,6 @@ package body VCS_Utils is
          end if;
       end Short_Revision;
 
-      use String_List_Utils.String_List;
    begin
       if Ref = null then
          return;
@@ -105,7 +103,7 @@ package body VCS_Utils is
    ---------------------
 
    function Get_Current_Dir
-     (Context : Selection_Context) return Filesystem_String is
+     (Context : Selection_Context) return Virtual_File is
    begin
       if Has_Directory_Information (Context) then
          return Directory_Information (Context);
@@ -132,27 +130,24 @@ package body VCS_Utils is
 
    function Save_Files
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Files     : String_List.List;
+      Files     : File_Array;
       Activity  : Activity_Id := No_Activity;
       Save_Logs : Boolean     := False) return Boolean
    is
-      use String_List;
-      Children     : MDI_Child_Array (1 .. Length (Files));
+      Children     : MDI_Child_Array (1 .. Files'Length);
       Logs         : MDI_Child_Array (Children'Range);
       Activity_Log : MDI_Child_Array (1 .. 1);
-      Files_Temp   : List_Node := First (Files);
       File         : Virtual_File;
+
    begin
       for C in Children'Range loop
-         File := Create (Full_Filename => +Data (Files_Temp));
+         File := Files (C - Children'First + Files'First);
          Children (C) := Get_File_Editor (Kernel, File);
 
          if Save_Logs then
             Logs (C) := Get_File_Editor
               (Kernel, Get_Log_From_File (Kernel, File, False));
          end if;
-
-         Files_Temp := Next (Files_Temp);
       end loop;
 
       if Save_Logs then

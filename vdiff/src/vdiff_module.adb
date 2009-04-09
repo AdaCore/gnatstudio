@@ -40,7 +40,6 @@ with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
 
 with Traces;                    use Traces;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Vdiff_Module is
@@ -176,12 +175,12 @@ package body Vdiff_Module is
 
          N2 := new Node;
          N2.Tag := new String'("File1");
-         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File1).all);
+         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File1));
          Add_Child (N, N2);
 
          N2 := new Node;
          N2.Tag := new String'("File2");
-         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File2).all);
+         N2.Value := new String'(+Full_Name (Vdiff_Access (Widget).File2));
          Add_Child (N, N2);
 
          return N;
@@ -249,8 +248,7 @@ package body Vdiff_Module is
       Child   : MDI_Child;
       pragma Unreferenced (Child);
       Success : Boolean;
-      Tmp_Dir : constant Filesystem_String :=
-        Get_Local_Filesystem.Get_Tmp_Directory;
+      Tmp_Dir : Virtual_File renames Get_Tmp_Directory;
    begin
       if D.Orig_File = GNATCOLL.VFS.No_File then
          if D.New_File = GNATCOLL.VFS.No_File then
@@ -260,7 +258,7 @@ package body Vdiff_Module is
          declare
             Base     : constant Filesystem_String := Base_Name (D.New_File);
             Ref_File : constant Virtual_File :=
-              Create (Full_Filename => Tmp_Dir & Base & "$ref");
+                         Create_From_Dir (Tmp_Dir,  Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, Ref_File, D.New_File,
@@ -278,7 +276,7 @@ package body Vdiff_Module is
          declare
             Base     : constant Filesystem_String := Base_Name (D.Orig_File);
             Ref_File : constant Virtual_File :=
-              Create (Full_Filename => Tmp_Dir & Base & "$ref");
+                         Create_From_Dir (Tmp_Dir, Base & "$ref");
          begin
             Child := Compare_Two_Files
               (Kernel, D.Orig_File, Ref_File,

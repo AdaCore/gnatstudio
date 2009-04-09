@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2000-2007, AdaCore              --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,8 @@ with Convert.Adp;               use Convert.Adp;
 with Convert.Gpr;               use Convert.Gpr;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 procedure Convert_Prj is
 
@@ -49,7 +50,7 @@ procedure Convert_Prj is
    Project_Name : String_Access;
 
 begin
-   Parse_Config_File (".gnatdebug");
+   Parse_Config_File (Create_From_Base (".gnatdebug"));
 
    loop
       case Getopt ("s: b:") is

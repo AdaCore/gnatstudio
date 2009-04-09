@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
-with GNATCOLL.Filesystem;    use GNATCOLL.Filesystem;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
@@ -90,7 +89,7 @@ package body Src_Editor_Module.Line_Highlighting is
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
-                  & (+Full_Name (File).all));
+                  & Display_Full_Name (File));
             end if;
          end;
 
@@ -150,7 +149,7 @@ package body Src_Editor_Module.Line_Highlighting is
             else
                Set_Error_Msg
                  (Data, -"File editor not found for file "
-                  & (+Full_Name (File).all));
+                  & Display_Full_Name (File));
             end if;
          end;
       end if;

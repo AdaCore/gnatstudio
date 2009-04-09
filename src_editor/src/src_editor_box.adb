@@ -21,7 +21,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with Gdk;                       use Gdk;
 with Gdk.Event;                 use Gdk.Event;
@@ -368,7 +367,7 @@ package body Src_Editor_Box is
 
          Filename := Get_Filename (Get_File (Location));
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & (+Full_Name (Filename).all));
+                & (+Full_Name (Filename)));
       else
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
@@ -408,7 +407,7 @@ package body Src_Editor_Box is
 
       Char_Column       : Character_Offset_Type;
    begin
-      if Dir_Name (Filename).all = "" then
+      if Dir (Filename) = No_File then
          Insert (Kernel, -"File not found: "
                  & Display_Base_Name (Filename), Mode => Error);
          return;
@@ -1738,7 +1737,8 @@ package body Src_Editor_Box is
             Other_File : constant Filesystem_String := Other_File_Base_Name
               (Project, File);
          begin
-            if Other_File /= "" and then Other_File /= Base_Name (File) then
+            if not Equal (Other_File, "")
+              and then not Equal (Other_File, Base_Name (File)) then
                return True;
             end if;
          end;
@@ -1841,9 +1841,9 @@ package body Src_Editor_Box is
         (Other_File_Base_Name (Project, File), Project);
    begin
       Trace (Me, "Goto_Other_File_Command File="
-             & (+Full_Name (File).all)
+             & Display_Full_Name (File)
              & " Project=" & Project_Name (Project)
-             & " Other_File=" & (+Full_Name (Other_File).all));
+             & " Other_File=" & Display_Full_Name (Other_File));
       if Other_File /= GNATCOLL.VFS.No_File then
          Open_File_Editor (Kernel, Other_File, Line => 0);
          return Commands.Success;

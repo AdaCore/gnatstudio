@@ -20,6 +20,7 @@
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
 with String_List_Utils;    use String_List_Utils;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with VCS;                  use VCS;
 with Commands.Interactive; use Commands.Interactive;
 with VCS_Activities;       use VCS_Activities;
@@ -54,7 +55,7 @@ package Commands.VCS is
       Kernel    : not null access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array;
       Logs      : String_List.List);
    --  Create a new Log_Action_Command.
    --  The user must free Filenames and Logs after calling Create.
@@ -64,14 +65,14 @@ package Commands.VCS is
    procedure Create
      (Item      : out Get_Status_Command_Access;
       Rep       : VCS_Access;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
    --  Create a new Get_Status_Command.
    --  The user must free Filenames after calling Create.
 
    procedure Create
      (Item      : out Update_Files_Command_Access;
       Kernel    : not null access Kernel_Handle_Record'Class;
-      Filenames : String_List.List);
+      Filenames : GNATCOLL.VFS.File_Array);
    --  Create a new Update_Files_Command.
    --  The user must free Filenames after calling Create.
 
@@ -111,19 +112,19 @@ package Commands.VCS is
 private
    type Get_Status_Command_Type is new Root_Command with record
       Rep       : VCS_Access;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array_Access;
    end record;
 
    type Update_Files_Command_Type is new Root_Command with record
       Kernel    : access Kernel_Handle_Record'Class;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array_Access;
    end record;
 
    type Log_Action_Command_Type is new Root_Command with record
       Kernel    : access Kernel_Handle_Record'Class;
       Rep       : VCS_Access;
       Action    : VCS_Action;
-      Filenames : String_List.List;
+      Filenames : GNATCOLL.VFS.File_Array_Access;
       Logs      : String_List.List;
    end record;
 
