@@ -25,7 +25,6 @@ with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix_Module;        use Codefix_Module;
 with GPS.Intl;              use GPS.Intl;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;            use GNATCOLL.Filesystem;
 
 package body Commands.Codefix is
 
@@ -109,12 +108,14 @@ package body Commands.Codefix is
       end if;
 
       if Command.Current_Error /= Null_Error_Id then
-         Trace
-           (Me, "Activate_Codefix: Error found at "
-            & (+Full_Name
-              (Get_File (Get_Error_Message (Command.Current_Error))).all)
-            & Get_Line (Get_Error_Message (Command.Current_Error))'Img
-            & Get_Column (Get_Error_Message (Command.Current_Error))'Img);
+         if Active (Me) then
+            Trace
+              (Me, "Activate_Codefix: Error found at "
+               & Display_Full_Name
+                 (Get_File (Get_Error_Message (Command.Current_Error)))
+               & Get_Line (Get_Error_Message (Command.Current_Error))'Img
+               & Get_Column (Get_Error_Message (Command.Current_Error))'Img);
+         end if;
 
          Create_Pixmap_And_Category
            (Command.Kernel, Command.Session, Command.Current_Error);

@@ -37,12 +37,11 @@ with Projects;               use Projects;
 with Projects.Registry;      use Projects.Registry;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Namet;                  use Namet;
+with Prj;
 with Traces;                 use Traces;
 with Find_Utils;             use Find_Utils;
 with XML_Utils;              use XML_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
-
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Browsers.Projects is
 
@@ -282,7 +281,7 @@ package body Browsers.Projects is
    begin
       V := new Browser_Project_Vertex;
       Initialize (V, Browser,
-                  Project_Name (Project) & (+Project_File_Extension),
+                  Project_Name (Project) & Prj.Project_File_Extension,
                   On_Examine_Ancestor_Hierarchy'Access,
                   On_Examine_Prj_Hierarchy'Access);
       V.Name := Project_Name (Project);

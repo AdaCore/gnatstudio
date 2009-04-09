@@ -19,6 +19,7 @@
 with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;
 
@@ -51,16 +52,16 @@ package body Code_Peer.Shell_Commands is
    procedure Build_Target_Execute
      (Kernel     : GPS.Kernel.Kernel_Handle;
       Object     : String;
-      Main_Name  : String                    := "";
-      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Force      : Boolean                   := False;
-      Extra_Args : String                    := "";
-      Build_Mode : String                    := "")
+      Main_Name  : String       := "";
+      File       : Virtual_File := GNATCOLL.VFS.No_File;
+      Force      : Boolean      := False;
+      Extra_Args : String       := "";
+      Build_Mode : String       := "")
    is
       Args   : GNAT.OS_Lib.Argument_List :=
                  (1 => new String'(Object),
                   2 => new String'(Main_Name),
-                  3 => new String'(String (GNATCOLL.VFS.Full_Name (File).all)),
+                  3 => new String'(+Full_Name (File)),
                   4 => new String'(Boolean'Image (Force)),
                   5 => new String'(Extra_Args),
                   6 => new String'(Build_Mode));

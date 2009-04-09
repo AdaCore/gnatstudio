@@ -23,40 +23,21 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+with System;          use System;
+
 with GNAT.Expect;     use GNAT.Expect;
 with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.Strings;    use GNAT.Strings;
 
-with System;          use System;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Ada.Unchecked_Deallocation;
-
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
-
-with Shell_Descriptors;   use Shell_Descriptors;
-with Machine_Descriptors; use Machine_Descriptors;
+with Gexpect;         use Gexpect;
 
 package GNAT.Expect.TTY.Remote is
 
    No_Session_Available : exception;
-
-   -----------------------------
-   -- Configuration functions --
-   -----------------------------
-
-   procedure Add_Machine_Descriptor (Desc : Machine_Descriptor);
-   --  Adds a new machine descriptor.
-
-   function Is_Configured (Nickname : String) return Boolean;
-   --  Tells if server Nickname exists
-
-   function Is_Ready_Session (Nickname : String) return Boolean;
-   --  Tell if a ready session is available for specified server
-
-   function Get_Network_Name (Nickname : String) return String;
-   --  Retrieve the network name of the specified server.
-   --  Raise Invalid_Nickname if Nickname does not correspond to a server
 
    ----------------------
    -- Expect interface --
@@ -146,6 +127,10 @@ package GNAT.Expect.TTY.Remote is
       Execution_Directory : Filesystem_String  := "");
    --  Same as above, except that the program output is also returned
 
+   function Is_Ready_Session (Nickname : String) return Boolean;
+   --  Tell if a ready session is available for specified server
+
+   procedure Close_All (Host : String);
    procedure Close_All;
    --  Closes all opened connections.
 
@@ -253,27 +238,22 @@ private
    type Session_Array is
      array (Natural range <>) of Session;
 
-   type Remote_Machine_Descriptor_Item (Max_Nb_Connections : Natural) is
-     new Machine_Descriptor_Item
+   type TTY_Data_Record (Max_Nb_Connections : Natural)
+     is new Machine_User_Data_Type
    with record
       Sessions          : Session_Array (1 .. Max_Nb_Connections);
       Echoing           : Boolean := False;
       Determine_Echoing : Boolean := True;
+      Ref_Counter       : Natural := 1;
    end record;
-   type Remote_Machine_Descriptor_Access is
-     access all Remote_Machine_Descriptor_Item;
-
-   overriding procedure Close (Desc : access Remote_Machine_Descriptor_Item);
-   --  Close all machine sessions
+   type TTY_Data_Access is access all TTY_Data_Record;
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
       Busy                 : Boolean                   := False;
       --  Tells if the remote shell is busy processing a command
       Current_Echo_Skipped : Boolean := False;
       --  Tells if the command we've sent has been echoed or not.
-      Shell                : Shell_Descriptor_Access   := null;
-      --  What shell is on the remote server
-      Machine              : Remote_Machine_Descriptor_Access := null;
+      Machine              : Machine_Access := null;
       --  What machine this descriptor is connected to
       Use_Cr_Lf            : Cr_Lf_Handling := Auto;
       --  Tell if CR shall be sent along with LF

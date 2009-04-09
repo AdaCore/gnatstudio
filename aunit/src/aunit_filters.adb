@@ -19,8 +19,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNATCOLL.Mmap;
-
 with Glib.Convert;            use Glib.Convert;
 
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
@@ -28,7 +26,6 @@ with Language;                use Language;
 with Language.Ada;            use Language.Ada;
 with Projects;                use Projects;
 with Namet;                   use Namet;
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
 package body Aunit_Filters is
 
@@ -38,7 +35,7 @@ package body Aunit_Filters is
 
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
-      File_Name    : Filesystem_String;
+      File_Name    : Virtual_File;
       Package_Name : out GNAT.Strings.String_Access;
       Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type)
@@ -62,7 +59,7 @@ package body Aunit_Filters is
       end if;
 
       Projects.Get_Unit_Part_And_Name_From_Filename
-        (Filename  => File_Name,
+        (Filename  => File_Name.Full_Name,
          Project   => Get_Project (Kernel),
          Part      => Part,
          Unit_Name => Unit_Name,
@@ -72,12 +69,12 @@ package body Aunit_Filters is
          return;
       end if;
 
-      File_Buffer := GNATCOLL.Mmap.Read_Whole_File
-        (+File_Name,
-         Empty_If_Not_Found => True);
-      Parse_Constructs
-        (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
-      Current_Construct := Constructs.First;
+      File_Buffer := File_Name.Read_File;
+      if File_Buffer /= null then
+         Parse_Constructs
+           (Ada_Lang, Locale_To_UTF8 (File_Buffer.all), Constructs);
+         Current_Construct := Constructs.First;
+      end if;
 
       --  Find the name of the suite or test case
 
@@ -163,9 +160,7 @@ package body Aunit_Filters is
       F_Type       : Test_Type;
 
    begin
-      Get_Suite_Name
-        (Filter.Kernel, Full_Name (File).all, Package_Name, Suite_Name,
-         F_Type);
+      Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
 
       --  Don't need package name
       Free (Package_Name);
@@ -201,9 +196,7 @@ package body Aunit_Filters is
       F_Type       : Test_Type;
 
    begin
-      Get_Suite_Name
-        (Filter.Kernel, Full_Name (File).all, Package_Name, Suite_Name,
-         F_Type);
+      Get_Suite_Name (Filter.Kernel, File, Package_Name, Suite_Name, F_Type);
 
       --  Don't need package name
       Free (Package_Name);

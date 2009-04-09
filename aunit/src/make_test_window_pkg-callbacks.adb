@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Gtkada.File_Selector;    use Gtkada.File_Selector;
 
 with Case_Handling;           use Case_Handling;
@@ -25,7 +26,6 @@ with GPS.Intl;                use GPS.Intl;
 
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package body Make_Test_Window_Pkg.Callbacks is
    --  Handle callbacks from "AUnit_Make_Test" main window.  Template
@@ -91,9 +91,8 @@ package body Make_Test_Window_Pkg.Callbacks is
 
    procedure On_Ok_Clicked (Window : Make_Test_Window_Access) is
 
-      Directory_Name : constant Filesystem_String :=
-        +Get_Text (Window.Directory_Entry);
-      --  ??? What if the filesystem path is non-UTF8?
+      Directory_Name : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Window.Directory_Entry));
       Name           : String := Get_Text (Window.Name_Entry);
       Description    : constant String := Get_Text (Window.Description_Entry);
       Translation    : Translate_Set;

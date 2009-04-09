@@ -27,9 +27,9 @@
 -----------------------------------------------------------------------
 
 with GNATCOLL.Mmap;
+with GNATCOLL.VFS;  use GNATCOLL.VFS;
 with Unicode;
 with Unicode.CES;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Input_Sources.Mmap is
 

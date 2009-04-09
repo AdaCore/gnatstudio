@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with XML_Utils;
-with GNATCOLL.VFS;
 
 package body Code_Peer.Bridge.Commands is
 
@@ -27,8 +26,8 @@ package body Code_Peer.Bridge.Commands is
    ----------------------
 
    procedure Add_Audit_Record
-     (Command_File_Name   : Filesystem_String;
-      Output_Directory    : Filesystem_String;
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
       Message_Id          : Positive;
       Probability_Changed : Boolean;
       New_Probability     : Code_Peer.Message_Probability_Level;
@@ -46,7 +45,7 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute
@@ -60,7 +59,7 @@ package body Code_Peer.Bridge.Commands is
       end if;
 
       XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
-      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
+      XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record;
 
@@ -69,9 +68,9 @@ package body Code_Peer.Bridge.Commands is
    -----------------
 
    procedure Audit_Trail
-     (Command_File_Name : Filesystem_String;
-      Output_Directory  : Filesystem_String;
-      Export_File_Name  : Filesystem_String;
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
       Message_Id        : Positive)
    is
       Database_Node      : XML_Utils.Node_Ptr :=
@@ -85,17 +84,17 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute
         (Audit_Trail_Node, "message", Positive'Image (Message_Id));
       XML_Utils.Set_Attribute
-        (Audit_Trail_Node, "output_file", +Export_File_Name);
+        (Audit_Trail_Node, "output_file", +Export_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
-      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
+      XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
    end Audit_Trail;
 
@@ -104,9 +103,9 @@ package body Code_Peer.Bridge.Commands is
    ----------------
 
    procedure Inspection
-     (Command_File_Name : Filesystem_String;
-      Output_Directory  : Filesystem_String;
-      Export_File_Name  : Filesystem_String)
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File)
    is
       Database_Node      : XML_Utils.Node_Ptr :=
         new XML_Utils.Node'
@@ -119,15 +118,15 @@ package body Code_Peer.Bridge.Commands is
 
    begin
       XML_Utils.Set_Attribute
-        (Database_Node, "output_directory", +Output_Directory);
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Set_Attribute
-        (Inspection_Node, "output_file", +Export_File_Name);
+        (Inspection_Node, "output_file", +Export_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
       XML_Utils.Add_Child (Database_Node, Inspection_Node);
-      XML_Utils.Print (Database_Node, GNATCOLL.VFS.Create (Command_File_Name));
+      XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
    end Inspection;
 

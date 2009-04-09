@@ -19,60 +19,59 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Tags;                   use Ada.Tags;
 
-with GNAT.Expect;               use GNAT.Expect;
+with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.OS_Lib;               use GNAT; use GNAT.OS_Lib;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNAT.OS_Lib;                use GNAT; use GNAT.OS_Lib;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNAT.Strings;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gtk.Accel_Group;           use Gtk.Accel_Group;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Glib;                       use Glib;
+with Glib.Object;                use Glib.Object;
+with Gdk.Types;                  use Gdk.Types;
+with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Gtk.Accel_Group;            use Gtk.Accel_Group;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Stock;                  use Gtk.Stock;
+with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.MDI;                 use Gtkada.MDI;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
-with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
+with GPS.Kernel.Console;         use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Timeout;         use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 
-with Projects;                  use Projects;
-with Interactive_Consoles;      use Interactive_Consoles;
-with Language_Handlers;         use Language_Handlers;
-with Entities;                  use Entities;
-with Histories;                 use Histories;
-with Remote.Path.Translator;    use Remote, Remote.Path.Translator;
+with Projects;                   use Projects;
+with Interactive_Consoles;       use Interactive_Consoles;
+with Language_Handlers;          use Language_Handlers;
+with Entities;                   use Entities;
+with Histories;                  use Histories;
+with Remote;                     use Remote;
 with Build_Command_Manager;
 with Builder_Facility_Module;
 with Basic_Types;
-with Std_Dialogs;               use Std_Dialogs;
-with String_Utils;              use String_Utils;
-with GUI_Utils;                 use GUI_Utils;
-with Traces;                    use Traces;
-with Commands;                  use Commands;
+with Std_Dialogs;                use Std_Dialogs;
+with String_Utils;               use String_Utils;
+with GUI_Utils;                  use GUI_Utils;
+with Traces;                     use Traces;
+with Commands;                   use Commands;
 
-with UTF8_Utils;                use UTF8_Utils;
+with UTF8_Utils;                 use UTF8_Utils;
 
 with Commands.Generic_Asynchronous;
 
@@ -110,7 +109,7 @@ package body Builder_Module is
       Command      : Filesystem_String_Access;
       Arguments    : GNAT.OS_Lib.Argument_List_Access;
       Ext_Terminal : Boolean;
-      Directory    : Filesystem_String_Access;
+      Directory    : GNATCOLL.VFS.Virtual_File;
       Title        : GNAT.Strings.String_Access;
    end record;
    --  The arguments used to run an executable from the "Run" menu
@@ -562,7 +561,7 @@ package body Builder_Module is
    begin
       Free (Run.Command);
       Free (Run.Arguments);
-      Free (Run.Directory);
+      Run.Directory := GNATCOLL.VFS.No_File;
       Free (Run.Title);
    end Free;
 
@@ -577,6 +576,8 @@ package body Builder_Module is
       Console : Interactive_Console;
       Child   : MDI_Child;
       Success : Boolean;
+      use type GNATCOLL.VFS.Filesystem_String_Access;
+
    begin
       if Run.Command = null then
          return;
@@ -607,7 +608,7 @@ package body Builder_Module is
          Server           => Execution_Server,
          Console          => Console,
          Success          => Success,
-         Directory        => Run.Directory.all,
+         Directory        => Run.Directory,
          Use_Ext_Terminal => Run.Ext_Terminal,
          Show_Exit_Status => True);
 
@@ -693,7 +694,7 @@ package body Builder_Module is
               and then Command (Command'First) /= ASCII.NUL
             then
                Set_Command (Run, Active, Command);
-               Run.Directory := new Filesystem_String'("");
+               Run.Directory := GNATCOLL.VFS.No_File;
 
                if Is_Local (Execution_Server) then
                   Run.Title := new String'(-"Run: " & Command);
@@ -725,15 +726,15 @@ package body Builder_Module is
               or else Arguments (Arguments'First) /= ASCII.NUL
             then
                Run.Command := new Filesystem_String'
-                 (To_Remote (Full_Name (Data.File).all, Execution_Server));
+                 (Full_Name
+                    (To_Remote (Data.File, Get_Nickname (Execution_Server))));
                Run.Arguments := Argument_String_To_List (Arguments);
                Run.Ext_Terminal := Active;
 
                if Use_Exec_Dir then
-                  Run.Directory := new Filesystem_String'
-                    (Executables_Directory (Data.Project));
+                  Run.Directory := Executables_Directory (Data.Project);
                else
-                  Run.Directory := new Filesystem_String'("");
+                  Run.Directory := GNATCOLL.VFS.No_File;
                end if;
 
                if Is_Local (Execution_Server) then
@@ -821,8 +822,8 @@ package body Builder_Module is
                   Slot_Object => Kernel,
                   User_Data   => File_Project_Record'
                     (Project => Project,
-                     File    => Create
-                       (Executables_Directory (Project) & Exec)));
+                     File    => Create_From_Dir
+                       (Executables_Directory (Project), Exec)));
 
                if Set_Shortcut and then M = Mains'First then
                   Set_Accel_Path

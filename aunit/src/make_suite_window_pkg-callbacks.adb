@@ -34,7 +34,6 @@ with Pixmaps_IDE;             use Pixmaps_IDE;
 with Row_Data;                use Row_Data;
 
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Templates_Parser;        use Templates_Parser;
 with AUnit_Templates;         use AUnit_Templates;
@@ -143,7 +142,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Get_Suite_Name (Suite_Window.Kernel, Response.Full_Name.all,
+      Get_Suite_Name (Suite_Window.Kernel, Response,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name /= null and then Package_Name /= null then
@@ -151,14 +150,14 @@ package body Make_Suite_Window_Pkg.Callbacks is
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + (+Response.Full_Name.all) + ("(test) " & Suite_Name.all));
+               + (Response.Display_Full_Name) + ("(test) " & Suite_Name.all));
             Set (Suite_Window.Test_List, Row_Num, Package_Name.all);
 
          elsif F_Type = Test_Suite then
             Row_Num := Append
               (Suite_Window.Test_List,
                Null_Array
-               + (+Response.Full_Name.all) + ("(suite) " & Suite_Name.all));
+               + (Response.Display_Full_Name) + ("(suite) " & Suite_Name.all));
             Set (Suite_Window.Test_List,
                  Row_Num,
                  Package_Name.all);
@@ -219,8 +218,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
    procedure On_Ok_Clicked (Window : Make_Suite_Window_Access) is
       --  Generate suite source file.  Exit program if successful
 
-      Directory_Name : constant Filesystem_String :=
-        +Get_Text (Window.Directory_Entry);
+      Directory_Name : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Window.Directory_Entry));
       --  ??? What if the filesystem path is non-UTF8?
       Name           : String := Get_Text (Window.Name_Entry);
       use Row_List;

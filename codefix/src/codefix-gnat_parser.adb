@@ -20,7 +20,6 @@
 with Language; use Language;
 with Language.Tree; use Language.Tree;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Projects.Registry; use Projects.Registry;
 with GNAT.Regpat; use GNAT.Regpat;
 

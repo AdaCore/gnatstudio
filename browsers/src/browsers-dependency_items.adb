@@ -58,7 +58,6 @@ with Projects;               use Projects;
 with Traces;                 use Traces;
 with XML_Utils;              use XML_Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;             use GNATCOLL.Filesystem;
 
 package body Browsers.Dependency_Items is
 

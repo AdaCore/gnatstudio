@@ -17,11 +17,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNATCOLL.VFS;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GPS.Kernel.Project;
 with Projects.Registry;
-
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Code_Peer.Bridge.Inspection_Readers is
 

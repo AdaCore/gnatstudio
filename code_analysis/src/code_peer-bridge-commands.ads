@@ -18,28 +18,28 @@
 -----------------------------------------------------------------------
 --  Generates command files for gps_codepeer_bridge commands
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 package Code_Peer.Bridge.Commands is
 
    procedure Inspection
-     (Command_File_Name : Filesystem_String;
-      Output_Directory  : Filesystem_String;
-      Export_File_Name  : Filesystem_String);
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File);
    --  Generates command file for export inspection information from the
    --  database.
 
    procedure Audit_Trail
-     (Command_File_Name : Filesystem_String;
-      Output_Directory  : Filesystem_String;
-      Export_File_Name  : Filesystem_String;
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
       Message_Id        : Positive);
    --  Generates command file for export audit trail information from the
    --  database.
 
    procedure Add_Audit_Record
-     (Command_File_Name   : Filesystem_String;
-      Output_Directory    : Filesystem_String;
+     (Command_File_Name   : Virtual_File;
+      Output_Directory    : Virtual_File;
       Message_Id          : Positive;
       Probability_Changed : Boolean;
       New_Probability     : Code_Peer.Message_Probability_Level;

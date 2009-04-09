@@ -38,9 +38,6 @@ with Traces;         use Traces;
 with XML_Utils;   use XML_Utils;
 with XML_Parsers;
 
-with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
-with GNATCOLL.VFS;
-
 package body Case_Handling.IO is
 
    Me : constant Debug_Handle := Create ("Case_Handling.IO");
@@ -51,14 +48,14 @@ package body Case_Handling.IO is
 
    procedure Load_Exceptions
      (C         : in out Casing_Exceptions;
-      Filename  : Filesystem_String;
+      Filename  : Virtual_File;
       Read_Only : Boolean)
    is
       File, Child : Node_Ptr;
       Err         : String_Access;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
 
          XML_Parsers.Parse (Filename, File, Err);
 
@@ -101,7 +98,7 @@ package body Case_Handling.IO is
 
    procedure Save_Exceptions
      (C        : Casing_Exceptions;
-      Filename : Filesystem_String;
+      Filename : Virtual_File;
       Success  : out Boolean)
    is
       File, Ada_Child : Node_Ptr;
@@ -163,8 +160,8 @@ package body Case_Handling.IO is
          end loop;
       end if;
 
-      Trace (Me, "Saving " & (+Filename));
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
+      Print (File, Filename, Success);
       Free (File);
 
    exception

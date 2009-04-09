@@ -27,8 +27,7 @@ with Projects;
 
 with Code_Peer.Bridge.Commands;
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 package body Code_Peer.Module.Bridge is
 
@@ -37,7 +36,7 @@ package body Code_Peer.Module.Bridge is
    type Bridge_Context (Mode : Bridge_Mode) is
      new GPS.Kernel.Timeout.Callback_Data_Record with record
       Module    : Code_Peer.Module.Code_Peer_Module_Id;
-      File_Name : Filesystem_String_Access;
+      File_Name : Virtual_File;
 
       case Mode is
          when Inspection =>
@@ -64,17 +63,21 @@ package body Code_Peer.Module.Bridge is
       Message : Code_Peer.Message_Access)
    is
       Project           : constant Projects.Project_Type :=
-        GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name      : constant Filesystem_String :=
-        +Projects.Project_Name (Project);
-      Object_Directory  : constant Filesystem_String :=
-        Projects.Object_Path (Project, False, False);
-      Output_Directory  : constant Filesystem_String :=
-        Compose (Object_Directory, Project_Name, "output");
-      Command_File_Name : constant Filesystem_String :=
-        Compose (Object_Directory, "bridge_in", "xml");
+                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Project_Name      : constant Virtual_File :=
+                            Projects.Project_Path (Project);
+      Object_Directory  : constant Virtual_File :=
+                            Projects.Object_Path (Project);
+      Output_Directory  : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory,
+                               Project_Name.Base_Name & ".output");
+      Command_File_Name : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory, "bridge_in.xml");
       Args              : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(+Command_File_Name));
+                            (1 => new String'
+                               (+Command_File_Name.Full_Name));
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
@@ -109,7 +112,7 @@ package body Code_Peer.Module.Bridge is
          Console       => GPS.Kernel.Console.Get_Console (Module.Kernel),
          Directory     => Object_Directory,
          Callback_Data =>
-           new Bridge_Context'(Add_Audit, Module, null, Message),
+           new Bridge_Context'(Add_Audit, Module, No_File, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
@@ -121,7 +124,7 @@ package body Code_Peer.Module.Bridge is
 
    overriding procedure Destroy (Data : in out Bridge_Context) is
    begin
-      Free (Data.File_Name);
+      null;
    end Destroy;
 
    ----------------
@@ -130,19 +133,24 @@ package body Code_Peer.Module.Bridge is
 
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id) is
       Project            : constant Projects.Project_Type :=
-        GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant Filesystem_String :=
-        +Projects.Project_Name (Project);
-      Object_Directory   : constant Filesystem_String :=
-        Projects.Object_Path (Project, False, False);
-      Output_Directory   : constant Filesystem_String :=
-        Compose (Object_Directory, Project_Name, "output");
-      Command_File_Name  : constant Filesystem_String :=
-        Compose (Object_Directory, "bridge_in", "xml");
-      Reply_File_Name    : constant Filesystem_String :=
-        Compose (Object_Directory, "bridge_out", "xml");
+                             GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Project_Name       : constant Virtual_File :=
+                             Projects.Project_Path (Project);
+      Object_Directory   : constant Virtual_File :=
+                             Projects.Object_Path (Project);
+      Output_Directory   : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory,
+                                Project_Name.Base_Name & ".output");
+      Command_File_Name  : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory, "bridge_in.xml");
+      Reply_File_Name    : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory, "bridge_out.xml");
       Args               : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(+Command_File_Name));
+                             (1 => new String'
+                                (+Command_File_Name.Full_Name));
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
@@ -162,7 +170,7 @@ package body Code_Peer.Module.Bridge is
          Directory     => Object_Directory,
          Callback_Data =>
          new Bridge_Context'
-           (Inspection, Module, new Filesystem_String'(Reply_File_Name)),
+           (Inspection, Module, Reply_File_Name),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);
@@ -183,11 +191,11 @@ package body Code_Peer.Module.Bridge is
       if Status = 0 then
          case Context.Mode is
             when Inspection =>
-               Context.Module.Load (Context.File_Name.all);
+               Context.Module.Load (Context.File_Name);
 
             when Audit_Trail =>
                Context.Module.Review_Message
-                 (Context.Message, +Context.File_Name.all);
+                 (Context.Message, Context.File_Name);
 
             when Add_Audit =>
                null;
@@ -205,18 +213,23 @@ package body Code_Peer.Module.Bridge is
    is
       Project            : constant Projects.Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant Filesystem_String :=
-        +Projects.Project_Name (Project);
-      Object_Directory   : constant Filesystem_String :=
-        Projects.Object_Path (Project, False, False);
-      Output_Directory   : constant Filesystem_String :=
-        Compose (Object_Directory, Project_Name, "output");
-      Command_File_Name  : constant Filesystem_String :=
-        Compose (Object_Directory, "bridge_in", "xml");
-      Reply_File_Name    : constant Filesystem_String :=
-        Compose (Object_Directory, "bridge_out", "xml");
+      Project_Name       : constant Virtual_File :=
+                             Projects.Project_Path (Project);
+      Object_Directory   : constant Virtual_File :=
+                             Projects.Object_Path (Project);
+      Output_Directory   : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory,
+                                Project_Name.Base_Name & ".output");
+      Command_File_Name  : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory, "bridge_in.xml");
+      Reply_File_Name    : constant Virtual_File :=
+                             Create_From_Dir
+                               (Object_Directory, "bridge_out.xml");
       Args               : GNAT.OS_Lib.Argument_List :=
-                            (1 => new String'(+Command_File_Name));
+                             (1 => new String'
+                                (+Command_File_Name.Full_Name));
       Success            : Boolean;
       pragma Warnings (Off, Success);
 
@@ -236,8 +249,7 @@ package body Code_Peer.Module.Bridge is
          Directory     => Object_Directory,
          Callback_Data =>
            new Bridge_Context'
-           (Audit_Trail, Module,
-            new Filesystem_String'(Reply_File_Name), Message),
+           (Audit_Trail, Module, Reply_File_Name, Message),
          Success       => Success,
          Exit_Cb       => On_Bridge_Exit'Access);
       GNATCOLL.Utils.Free (Args);

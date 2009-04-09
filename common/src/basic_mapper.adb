@@ -20,8 +20,6 @@
 with Ada.Text_IO;
 with Unchecked_Deallocation;
 
-with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
-
 package body Basic_Mapper is
 
    use Double_String_Table.String_Hash_Table;
@@ -105,7 +103,7 @@ package body Basic_Mapper is
 
    procedure Save_Mapper
      (Mapper    : File_Mapper_Access;
-      File_Name : Filesystem_String)
+      File_Name : Virtual_File)
    is
       File    : Ada.Text_IO.File_Type;
       Element : Iterator;
@@ -115,9 +113,9 @@ package body Basic_Mapper is
       end if;
 
       if not Is_Regular_File (File_Name) then
-         Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, +File_Name);
+         Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, +File_Name.Full_Name);
       else
-         Ada.Text_IO.Open (File, Ada.Text_IO.Out_File, +File_Name);
+         Ada.Text_IO.Open (File, Ada.Text_IO.Out_File, +File_Name.Full_Name);
       end if;
 
       Get_First (Mapper.Table_2, Element);
@@ -145,7 +143,7 @@ package body Basic_Mapper is
 
    procedure Load_Mapper
      (Mapper    : out File_Mapper_Access;
-      File_Name : Filesystem_String)
+      File_Name : Virtual_File)
    is
       File     : Ada.Text_IO.File_Type;
       Buffer_1 : String (1 .. 8192);
@@ -158,7 +156,7 @@ package body Basic_Mapper is
          Mapper := new File_Mapper;
       end if;
 
-      Ada.Text_IO.Open (File, Ada.Text_IO.In_File, +File_Name);
+      Ada.Text_IO.Open (File, Ada.Text_IO.In_File, +File_Name.Full_Name);
 
       while Last_2 >= 0
         and then Last_1 >= 0

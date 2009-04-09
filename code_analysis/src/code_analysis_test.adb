@@ -33,7 +33,6 @@ with Language.Tree;            use Language.Tree;
 with Language.Ada;             use Language.Ada;
 with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with Glib;                     use Glib;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Window;               use Gtk.Window;
@@ -125,6 +124,7 @@ procedure Code_Analysis_Test is
       Status        : Boolean;
       Project_Node  : Project_Access;
       File_Node     : Code_Analysis.File_Access;
+      P_File       : constant Virtual_File := Create_From_Base (+Project_File);
    begin
       Cov_File_Name := Create (+File_Name);
       Src_File_Name := Create
@@ -133,13 +133,12 @@ procedure Code_Analysis_Test is
       Initialize; --  From Projects.Registry
       Load
         (Registry           => Registry.all,
-         Root_Project_Path  => Create_From_Dir
-           (Get_Current_Dir, +Project_File),
+         Root_Project_Path  => P_File,
          Errors             => Project_Error'Unrestricted_Access,
          New_Project_Loaded => Loaded,
          Status             => Status);
       Project_Node  := Get_Or_Create
-        (Projects, Load_Or_Find (Registry.all, +Project_File, Errors => null));
+        (Projects, Load_Or_Find (Registry.all, P_File, Errors => null));
       File_Contents := Read_File (Cov_File_Name);
       File_Node     := Get_Or_Create (Project_Node, Src_File_Name);
       File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
@@ -232,11 +231,11 @@ procedure Code_Analysis_Test is
       for J in 0 .. Integer'Value (Project_Num) loop
          Project_Name  := Load_Or_Find
            (Registry,
-            (+Project_File
-               (Project_File'First .. Project_File'Last - 4)
-             & "_"
-             & Integer'Image (J) (2)
-             & ".gpr"),
+            Create_From_Base
+               (+(Project_File (Project_File'First .. Project_File'Last - 4)
+                & "_"
+                & Integer'Image (J) (2)
+                & ".gpr")),
             Errors => null);
          Project_Node  := Get_Or_Create (Projects, Project_Name);
 
@@ -262,11 +261,11 @@ procedure Code_Analysis_Test is
 
       Project_Name  := Load_Or_Find
         (Registry,
-         (+Project_File
-            (Project_File'First .. Project_File'Last - 4)
-          & "_"
-          & Integer'Image (5) (2)
-          & ".gpr"),
+         Create_From_Base
+           (+(Project_File (Project_File'First .. Project_File'Last - 4)
+              & "_"
+              & Integer'Image (5) (2)
+              & ".gpr")),
          Errors => null);
       Time_Before   := Clock;
       Project_Node  := Element (Projects.Find (Project_Name));

@@ -24,7 +24,7 @@
 --  session of GPS to the other.
 
 with GNAT.Strings;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;
 with Gtk.Check_Menu_Item;
 with Gtk.Combo;
 with Gtk.Toggle_Button;
@@ -43,12 +43,12 @@ package Histories is
 
    procedure Load
      (Hist      : in out History_Record;
-      File_Name : Filesystem_String);
+      File_Name : GNATCOLL.VFS.Virtual_File);
    --  Load Hist from file File_Name
 
    procedure Save
      (Hist      : in out History_Record;
-      File_Name : Filesystem_String;
+      File_Name : GNATCOLL.VFS.Virtual_File;
       Success   : out Boolean);
    --  Save Hist to a file
 

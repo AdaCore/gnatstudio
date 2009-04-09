@@ -19,19 +19,19 @@
 
 --  Support for saving/loading case exception files
 
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Case_Handling.IO is
 
    procedure Load_Exceptions
      (C         : in out Casing_Exceptions;
-      Filename  : Filesystem_String;
+      Filename  : Virtual_File;
       Read_Only : Boolean);
    --  Load case exceptions file and set the in memory container
 
    procedure Save_Exceptions
      (C        : Casing_Exceptions;
-      Filename : Filesystem_String;
+      Filename : Virtual_File;
       Success  : out Boolean);
    --  Save the case exceptions container into Filename. The container still
    --  remains in memory. The read-only case exceptions are not saved.

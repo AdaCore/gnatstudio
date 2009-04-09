@@ -23,7 +23,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Build_Command_Manager;      use Build_Command_Manager;
 with Build_Configurations;       use Build_Configurations;
@@ -206,7 +205,7 @@ package body Builder_Facility_Module.Scripts is
             Info := Get_Data
               (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
 
-            if Base_Name (Info) = "" then
+            if Base_Name (Info)'Length = 0 then
                Info := No_File;
             end if;
 

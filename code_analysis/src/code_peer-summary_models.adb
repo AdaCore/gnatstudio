@@ -19,9 +19,10 @@
 
 with Glib.Object;
 
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+
 with GPS.Intl; use GPS.Intl;
 with Projects;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Code_Peer.Summary_Models is
 

@@ -18,12 +18,12 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel; use GPS.Kernel;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Aunit_Utils is
 
    function Get_Context_Directory
-     (Kernel : Kernel_Handle) return Filesystem_String;
+     (Kernel : Kernel_Handle) return Virtual_File;
    --  Returns the full pathname for the current context in the given kernel
    --  (current selected file) Returns the empty string if the current context
    --  is not a file one.

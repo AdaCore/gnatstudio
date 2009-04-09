@@ -17,16 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;             use Ada.Text_IO;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
 with Projects;                  use Projects;
 
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with UTF8_Utils;                use UTF8_Utils;
 
 package body AUnit_Templates is
 
@@ -36,20 +32,19 @@ package body AUnit_Templates is
 
    function Get_Template_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Base   : Filesystem_String) return Filesystem_String
+      Base   : Filesystem_String) return Virtual_File
    is
-      Prefix   : constant Filesystem_String := "share/gps/aunit/";
+      Prefix : constant Virtual_File :=
+                 Create_From_Dir (Get_System_Dir (Kernel), "share/gps/aunit/");
+      File   : constant Virtual_File :=
+                 Create_From_Dir (Prefix, Base & ".tmpl");
       --  System prefix
    begin
-      declare
-         Filename : constant Filesystem_String := Base & ".tmpl";
-      begin
-         if Is_Regular_File (Get_System_Dir (Kernel) & Prefix & Filename) then
-            return Get_System_Dir (Kernel) & Prefix & Filename;
-         end if;
-      end;
+      if Is_Regular_File (File) then
+         return File;
+      end if;
 
-      return "";
+      return No_File;
    end Get_Template_File_Name;
 
    ------------------
@@ -60,15 +55,14 @@ package body AUnit_Templates is
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Template  : Filesystem_String;
       Translations   : Translate_Set;
-      Directory_Name : Filesystem_String;
+      Directory_Name : Virtual_File;
       Name           : String;
       Success        : out Boolean)
    is
-      File          : File_Type;
-      Spec_Template : constant Filesystem_String :=
+      Spec_Template : constant Virtual_File :=
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".ads");
-      Body_Template : constant Filesystem_String :=
+      Body_Template : constant Virtual_File :=
                         Get_Template_File_Name
                           (Kernel, Base_Template & ".adb");
       Spec_Filename : constant Filesystem_String :=
@@ -85,20 +79,24 @@ package body AUnit_Templates is
                            Part            => Unit_Body,
                            File_Must_Exist => False,
                            Language        => "Ada");
+      Spec_File     : constant Virtual_File :=
+                        Create_From_Dir (Directory_Name, Spec_Filename);
+      Body_File     : constant Virtual_File :=
+                        Create_From_Dir (Directory_Name, Body_Filename);
+      WF            : Writable_File;
       Dead          : Message_Dialog_Buttons;
       pragma Unreferenced (Dead);
 
    begin
       Success := False;
 
-      if Directory_Name /= ""
-        and then Is_Directory (Directory_Name)
+      if Is_Directory (Directory_Name)
         and then Name /= ""
       then
-         if Spec_Template /= "" then
-            if Is_Regular_File (Directory_Name & Spec_Filename) then
+         if Spec_Template /= No_File then
+            if Is_Regular_File (Spec_File) then
                if Message_Dialog
-                 ("File " & Unknown_To_UTF8 (+Spec_Filename)
+                 ("File " & Spec_File.Display_Full_Name
                   & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
@@ -113,18 +111,19 @@ package body AUnit_Templates is
 
             --  At least one file created. Set success
             Success := True;
-            Ada.Text_IO.Create (File, Out_File,
-                                +(Directory_Name & Spec_Filename));
-            Put (File, Parse (+Spec_Template, Translations));
-            Close (File);
-            Open_File_Editor
-              (Kernel, Create (Directory_Name & Spec_Filename, Kernel));
+
+            WF := Spec_File.Write_File;
+            GNATCOLL.VFS.Write
+              (WF, Parse (+Spec_Template.Full_Name, Translations));
+            Close (WF);
+
+            Open_File_Editor (Kernel, Spec_File);
          end if;
 
-         if Body_Template /= "" then
-            if Is_Regular_File (Directory_Name & Body_Filename) then
+         if Body_Template /= No_File then
+            if Is_Regular_File (Body_File) then
                if Message_Dialog
-                 ("File " & Unknown_To_UTF8 (+Body_Filename)
+                 ("File " & Body_File.Display_Full_Name
                   & " exists. Overwrite?",
                   Warning,
                   Button_Yes or Button_No,
@@ -139,18 +138,18 @@ package body AUnit_Templates is
 
             --  At least one file created. Set success
             Success := True;
-            Ada.Text_IO.Create (File, Out_File,
-                                +(Directory_Name & Body_Filename));
-            Put (File, Parse (+Body_Template, Translations));
-            Close (File);
-            Open_File_Editor
-              (Kernel, Create (Directory_Name & Body_Filename, Kernel));
+            WF := Body_File.Write_File;
+            GNATCOLL.VFS.Write
+              (WF, Parse (+Body_Template.Full_Name, Translations));
+            Close (WF);
+
+            Open_File_Editor (Kernel, Body_File);
          end if;
       end if;
 
       if not Success then
          Dead := Message_Dialog
-           ("No template with base name " & Unknown_To_UTF8 (+Base_Template) &
+           ("No template with base name " & (+Base_Template) &
             " could be found: please verify your GPS installation",
             Warning,
             Button_Yes,

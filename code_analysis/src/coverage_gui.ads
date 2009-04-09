@@ -27,7 +27,6 @@ with Glib;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Intl;        use GPS.Intl;
 with GNATCOLL.VFS;    use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 with Traces;          use Traces;
 with Code_Analysis;   use Code_Analysis;
 

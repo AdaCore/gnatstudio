@@ -26,7 +26,7 @@ package body Aunit_Utils is
    ---------------------------
 
    function Get_Context_Directory
-     (Kernel : Kernel_Handle) return Filesystem_String
+     (Kernel : Kernel_Handle) return Virtual_File
    is
       Context : constant Selection_Context :=
                   Get_Current_Context (Kernel);
@@ -34,7 +34,7 @@ package body Aunit_Utils is
       if Has_Directory_Information (Context) then
          return Directory_Information (Context);
       else
-         return "";
+         return No_File;
       end if;
    end Get_Context_Directory;
 

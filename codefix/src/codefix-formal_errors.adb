@@ -29,7 +29,6 @@ with Language.Tree.Database;            use Language.Tree.Database;
 with Projects.Registry;                 use Projects.Registry;
 with Traces;                            use Traces;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;               use GNATCOLL.Filesystem;
 
 package body Codefix.Formal_Errors is
 

@@ -25,7 +25,6 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 with GPS.Kernel;
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package Aunit_Filters is
 
@@ -35,7 +34,7 @@ package Aunit_Filters is
 
    procedure Get_Suite_Name
      (Kernel       : GPS.Kernel.Kernel_Handle;
-      File_Name    : Filesystem_String;
+      File_Name    : Virtual_File;
       Package_Name : out GNAT.Strings.String_Access;
       Suite_Name   : out GNAT.Strings.String_Access;
       F_Type       : out Test_Type);

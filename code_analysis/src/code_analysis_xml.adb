@@ -17,12 +17,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.Strings;            use GNAT.Strings;
 with Code_Coverage;           use Code_Coverage;
 
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 with Projects.Registry;       use Projects.Registry;
 with Language.Tree.Database;  use Language.Tree.Database;
@@ -72,12 +70,10 @@ package body Code_Analysis_XML is
       while Child /= null loop
          if Child.Tag.all = "Project" then
             Prj_Node := Get_Or_Create
-              (Projects, Load_Or_Find
-                 (Registry, +To_Lower (Get_Attribute (Child, "name")),
+              (Projects,
+               Load_Or_Find
+                 (Registry, Get_Attribute (Child, "name"),
                   Errors => null));
-            --  ??? Why the call to To_Lower?
-            --  ??? Potentially non-utf8 string should not be
-            --  stored in an XML attribute.
             Parse_Project (Prj_Node, Child);
          end if;
 

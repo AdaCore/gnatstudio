@@ -20,11 +20,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 
-with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
-
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
-with GNATCOLL.Filesystem;         use GNATCOLL.Filesystem;
-with GNATCOLL.VFS_Utils;          use GNATCOLL.VFS_Utils;
 
 with Builder_Facility_Module;     use Builder_Facility_Module;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
@@ -471,7 +467,7 @@ package body Build_Command_Manager is
       Main        : String)
    is
       Prj            : constant Project_Type := Get_Project (Kernel);
-      Old_Dir        : constant Dir_Name_Str := Get_Current_Dir;
+      Old_Dir        : constant Virtual_File := Get_Current_Dir;
       T              : Target_Access;
       Full           : Argument_List_Access;
       Command_Line   : Argument_List_Access;
@@ -632,7 +628,7 @@ package body Build_Command_Manager is
 
          --  Launch the build command
 
-         Change_Dir (Dir_Name (Project_Path (Prj)).all);
+         Change_Dir (Dir (Project_Path (Prj)));
          Launch_Build_Command
            (Kernel, Full, Target_Name, Mode, Server, Quiet, Shadow,
             Synchronous, Uses_Shell (T));

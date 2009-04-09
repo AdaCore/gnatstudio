@@ -67,7 +67,6 @@ with GPS.Location_View;         use GPS.Location_View;
 with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Traces;
 
 with Builder_Facility_Module.Scripts;
@@ -680,10 +679,8 @@ package body Builder_Facility_Module is
    ----------------------
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File is
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Get_Kernel) & "targets.xml";
    begin
-      return Create (Filename);
+      return Create_From_Dir (Get_Home_Dir (Get_Kernel), "targets.xml");
    end Get_Targets_File;
 
    ------------------
@@ -1149,6 +1146,7 @@ package body Builder_Facility_Module is
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Get_Kernel).all);
       Prop : aliased GPS.Kernel.Properties.String_Property_Access;
+      use type GNATCOLL.VFS.Filesystem_String;
 
    begin
       --  Do not consider a change to be effective if we are just creating

@@ -464,48 +464,40 @@ package body Coverage_GUI is
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
-      Gcov_Root : String_Access;
-      Result    : GNATCOLL.VFS.Virtual_File;
+      Gcov_Root_Env : String_Access;
+      Gcov_Root     : GNATCOLL.VFS.Virtual_File;
    begin
       case Current_Coverage_Tool is
          when Gcov =>
-            Gcov_Root := Getenv ("GCOV_ROOT");
+            Gcov_Root_Env := Getenv ("GCOV_ROOT");
 
-            if Gcov_Root /= null
-              and then Gcov_Root.all = ""
+            if Gcov_Root_Env /= null
+              and then Gcov_Root_Env.all = ""
             then
                --  If GCOV_ROOT is set but empty, look for files in the object
                --  directory of the root project.
-               Free (Gcov_Root);
+               Free (Gcov_Root_Env);
             end if;
 
-            if Gcov_Root = null then
+            if Gcov_Root_Env = null then
                --  Look for the gcov file in the object directory of the root
                --  project.
-               return Create
-                 (Object_Path
-                    (Get_Root_Project
-                       (Get_Registry (Kernel).all), False, False)
-                  & Directory_Separator & Base_Name (Source)
-                  & Gcov_Extension_Cst);
-
+               Gcov_Root := Object_Path
+                 (Get_Root_Project (Get_Registry (Kernel).all));
             else
                --  Look for the gcov file in the path pointed by GCOV_ROOT
-               Result := Create
-                 (+Gcov_Root.all & Directory_Separator &
-                  Base_Name (Source) & Gcov_Extension_Cst);
-
-               Free (Gcov_Root);
-               return Result;
+               Gcov_Root := Create (+Gcov_Root_Env.all);
+               Free (Gcov_Root_Env);
             end if;
 
+            return Create_From_Dir
+              (Gcov_Root,
+               Base_Name (Source) & Gcov_Extension_Cst);
+
          when Xcov =>
-            return Create
-              (Object_Path
-                 (Get_Root_Project
-                    (Get_Registry (Kernel).all), False, False)
-               & Directory_Separator & Base_Name (Source)
-               & Xcov_Extension_Cst);
+            return Create_From_Dir
+              (Object_Path (Get_Root_Project (Get_Registry (Kernel).all)),
+               Base_Name (Source) & Xcov_Extension_Cst);
       end case;
    end Find_Gcov_File;
 

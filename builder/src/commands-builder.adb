@@ -30,7 +30,7 @@ with GNAT.Expect.TTY;         use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNATCOLL.Scripts.Utils;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;

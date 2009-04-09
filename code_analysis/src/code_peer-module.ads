@@ -20,8 +20,9 @@
 with Glib.Object;
 with Gtk.Menu;
 
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+
 with Default_Preferences;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Styles;
 with GPS.Kernel.MDI;
@@ -47,7 +48,7 @@ package Code_Peer.Module is
 
    procedure Load
      (Self : access Module_Id_Record'Class;
-      File : Filesystem_String);
+      File : Virtual_File);
 
    procedure Review_Message
      (Self    : access Module_Id_Record'Class;
@@ -56,7 +57,7 @@ package Code_Peer.Module is
    procedure Review_Message
      (Self    : access Module_Id_Record'Class;
       Message : Code_Peer.Message_Access;
-      File    : String);
+      File    : Virtual_File);
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is

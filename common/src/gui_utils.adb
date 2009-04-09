@@ -25,7 +25,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with Glib.Object;              use Glib.Object;

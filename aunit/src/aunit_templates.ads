@@ -20,23 +20,23 @@
 --  This package handles the AUnit templates, and creates the source files
 --  from these templates
 
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with Templates_Parser; use Templates_Parser;
-with GNATCOLL.Filesystem; use GNATCOLL.Filesystem;
 
 package AUnit_Templates is
 
    function Get_Template_File_Name
      (Kernel : access Kernel_Handle_Record'Class;
-      Base   : Filesystem_String) return Filesystem_String;
+      Base   : Filesystem_String) return Virtual_File;
    --  Retrieve the template's full file name from base name
 
    procedure Create_Files
      (Kernel         : access Kernel_Handle_Record'Class;
       Base_Template  : Filesystem_String;
       Translations   : Translate_Set;
-      Directory_Name : Filesystem_String;
+      Directory_Name : Virtual_File;
       Name           : String;
       Success        : out Boolean);
    --  Create Directory_Name/Name.ads and Directory_Name/Name.adb files using

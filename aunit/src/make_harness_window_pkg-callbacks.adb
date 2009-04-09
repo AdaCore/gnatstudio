@@ -27,7 +27,6 @@ with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 with GPS.Intl;                  use GPS.Intl;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 with AUnit_Templates;         use AUnit_Templates;
 with Templates_Parser;        use Templates_Parser;
@@ -148,7 +147,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Get_Suite_Name (Win.Kernel, Response.Full_Name.all,
+      Get_Suite_Name (Win.Kernel, Response,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name /= null
@@ -162,7 +161,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Free (Win.Suite_Name);
       Free (Win.Package_Name);
 
-      Get_Suite_Name (Win.Kernel, Response.Full_Name.all,
+      Get_Suite_Name (Win.Kernel, Response,
                       Package_Name, Suite_Name, F_Type);
 
       if Suite_Name = null
@@ -182,7 +181,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
 
       Win.Suite_Name := Suite_Name;
       Win.Package_Name := Package_Name;
-      Set_Text (Win.File_Name_Entry, +Response.Full_Name.all);
+      Set_Text (Win.File_Name_Entry, +Response.Full_Name);
       --  ??? What if the filesystem path is non-UTF8?
 
       Check_Validity (Win);
@@ -212,8 +211,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
       --  Generate harness body source file. Close window and main loop if
       --  successful
 
-      Directory_Name : constant Filesystem_String :=
-        +Get_Text (Win.Directory_Entry);
+      Directory_Name : constant Virtual_File :=
+                         Create_From_UTF8 (Get_Text (Win.Directory_Entry));
       --  ??? What if the filesystem path is non-UTF8?
       Procedure_Name : String := Get_Text (Win.Procedure_Entry);
       Translation    : Translate_Set;

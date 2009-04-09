@@ -1,0 +1,78 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2009, AdaCore                   --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+package body Gexpect.Db is
+
+   Global_DB : access Machine_Db_Interface'Class := null;
+
+   -----------------------
+   -- Define_Machine_Db --
+   -----------------------
+
+   procedure Define_Machine_Db
+     (Db : access Machine_Db_Interface'Class)
+   is
+   begin
+      Global_DB := Db;
+   end Define_Machine_Db;
+
+   -------------------
+   -- Is_Configured --
+   -------------------
+
+   function Is_Configured (Nickname : String) return Boolean is
+   begin
+      if Nickname = "" then
+         return True;
+      end if;
+
+      if Global_DB = null then
+         raise Invalid_Machine_Configuration;
+      end if;
+
+      return Global_DB.Is_Configured (Nickname);
+   end Is_Configured;
+
+   ----------------
+   -- Get_Server --
+   ----------------
+
+   function Get_Server (Nickname : String) return Machine_Access is
+   begin
+      if Global_DB = null then
+         raise Invalid_Machine_Configuration;
+      end if;
+
+      return Global_DB.Get_Server (Nickname);
+   end Get_Server;
+
+   -----------------
+   -- Get_Servers --
+   -----------------
+
+   function Get_Servers return String_List is
+   begin
+      if Global_DB = null then
+         raise Invalid_Machine_Configuration;
+      end if;
+
+      return Global_DB.Get_Servers;
+   end Get_Servers;
+
+end Gexpect.Db;

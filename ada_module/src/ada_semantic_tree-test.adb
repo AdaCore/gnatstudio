@@ -40,7 +40,6 @@ with Projects.Registry;              use Projects.Registry;
 with String_Utils;                   use String_Utils;
 with Entities;                       use Entities;
 with GNATCOLL.VFS;                            use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;                     use GNATCOLL.Filesystem;
 
 procedure Ada_Semantic_Tree.Test is
 

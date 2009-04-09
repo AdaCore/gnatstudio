@@ -26,8 +26,6 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with System.Assertions;
 
 with Gdk.Color;                use Gdk.Color;
@@ -239,7 +237,7 @@ package body Aliases_Module is
 
    procedure Parse_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      Filename  : Filesystem_String;
+      Filename  : Virtual_File;
       Read_Only : Boolean);
    --  Load a filename, and make the resulting aliases Read_Only
 
@@ -528,8 +526,8 @@ package body Aliases_Module is
    ------------------
 
    procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class) is
-      Filename          : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "aliases";
+      Filename          : constant Virtual_File :=
+                            Create_From_Dir (Get_Home_Dir (Kernel), "aliases");
       File, Key, Child  : Node_Ptr;
       Iter              : Iterator;
       Value             : Alias_Record;
@@ -586,7 +584,7 @@ package body Aliases_Module is
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
 
-      Print (File, GNATCOLL.VFS.Create (Filename), Success);
+      Print (File, Filename, Success);
       Free (File);
 
       if not Success then
@@ -600,14 +598,14 @@ package body Aliases_Module is
 
    procedure Parse_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      Filename  : Filesystem_String;
+      Filename  : Virtual_File;
       Read_Only : Boolean)
    is
       File : Node_Ptr;
       Err : String_Access;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
          if File /= null then
             Customize (Kernel, File.Child, User_Specific, Read_Only);
@@ -617,16 +615,17 @@ package body Aliases_Module is
             Free (Err);
          end if;
       else
-         Trace (Me, "No such file: " & (+Filename));
+         Trace (Me, "No such file: " & Filename.Display_Full_Name);
       end if;
 
    exception
       when System.Assertions.Assert_Failure =>
-         Insert (Kernel, "Invalid format for " & (+Filename), Mode => Error);
+         Insert (Kernel, "Invalid format for " & Filename.Display_Full_Name,
+                 Mode => Error);
          Free (File);
 
       when Status_Error | Name_Error =>
-         Trace (Me, "No aliases file " & (+Filename));
+         Trace (Me, "No aliases file " & Filename.Display_Full_Name);
 
       when E : others =>
          Trace (Exception_Handle, E);
@@ -2248,7 +2247,9 @@ package body Aliases_Module is
          Callback   => On_Edit_Aliases'Access);
 
       Parse_File
-        (Kernel, Get_Home_Dir (Kernel) & "aliases", Read_Only => False);
+        (Kernel,
+         Create_From_Dir (Get_Home_Dir (Kernel), "aliases"),
+         Read_Only => False);
 
       Command := new Interactive_Alias_Expansion_Command;
       Command.Kernel := Kernel_Handle (Kernel);

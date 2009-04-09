@@ -61,9 +61,7 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel;               use GPS.Kernel;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
-with GNATCOLL.VFS_Utils;       use GNATCOLL.VFS_Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;      use GNATCOLL.Filesystem;
 with XML_Parsers;              use XML_Parsers;
 with XML_Utils;                use XML_Utils;
 
@@ -522,8 +520,10 @@ package body Action_Editor is
    procedure Save_Custom_Actions
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "actions.xml";
+      Filename : constant Virtual_File :=
+                   Create_From_Dir
+                     (Get_Home_Dir (Kernel),
+                      "actions.xml");
       Tree        : Node_Ptr;
       Error       : String_Access;
       Action      : Action_Record_Access;
@@ -581,8 +581,8 @@ package body Action_Editor is
          Next (Kernel, Action_Iter);
       end loop;
 
-      Trace (Me, "Saving " & (+Filename));
-      Print (Tree, Create (Filename), Success);
+      Trace (Me, "Saving " & Filename.Display_Full_Name);
+      Print (Tree, Filename, Success);
       Free (Tree);
 
       if not Success then
@@ -597,8 +597,8 @@ package body Action_Editor is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filename : constant Filesystem_String :=
-        Get_Home_Dir (Kernel) & "actions.xml";
+      Filename : constant Virtual_File :=
+                   Create_From_Dir (Get_Home_Dir (Kernel), "actions.xml");
       Tree : Node_Ptr;
       Err  : String_Access;
    begin
@@ -614,11 +614,11 @@ package body Action_Editor is
          Callback   => On_Edit_Actions'Access);
 
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & (+Filename));
+         Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, Tree, Err);
          if Tree /= null then
             GPS.Kernel.Custom.Execute_Customization_String
-              (Kernel, Create (Full_Filename => Filename), Tree.Child,
+              (Kernel, Filename, Tree.Child,
                User_Specific);
             Free (Tree);
          else

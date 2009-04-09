@@ -18,7 +18,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -296,7 +296,7 @@ package body Code_Peer.Module is
 
    procedure Load
      (Self : access Module_Id_Record'Class;
-      File : GNATCOLL.Filesystem.Filesystem_String)
+      File : Virtual_File)
    is
       use type Code_Peer.Summary_Reports.Summary_Report;
       use type Code_Analysis.Code_Analysis_Tree;
@@ -344,7 +344,7 @@ package body Code_Peer.Module is
 
       --  Load code review information
 
-      Input_Sources.File.Open (+File, Input);
+      Input_Sources.File.Open (+File.Full_Name, Input);
       Reader.Parse (Input, GPS.Kernel.Kernel_Handle (Self.Kernel), Self.Tree);
       Input_Sources.File.Close (Input);
 
@@ -754,7 +754,7 @@ package body Code_Peer.Module is
    procedure Review_Message
      (Self    : access Module_Id_Record'Class;
       Message : Code_Peer.Message_Access;
-      File    : String)
+      File    : Virtual_File)
    is
       pragma Unreferenced (Self);
 
@@ -764,7 +764,7 @@ package body Code_Peer.Module is
    begin
       --  Load inspection information
 
-      Input_Sources.File.Open (File, Input);
+      Input_Sources.File.Open (+File.Full_Name, Input);
       Reader.Parse (Input, Message.Audit);
       Input_Sources.File.Close (Input);
 

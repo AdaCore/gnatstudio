@@ -21,7 +21,7 @@ with Ada.Text_IO;         use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
-with GNATCOLL.VFS_Utils;  use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with Glib;                use Glib;
 
@@ -41,7 +41,6 @@ with GUI_Utils;           use GUI_Utils;
 with XML_Utils;           use XML_Utils;
 with Traces;              use Traces;
 with XML_Parsers;
-with GNATCOLL.VFS;
 
 package body Histories is
 
@@ -194,7 +193,7 @@ package body Histories is
 
    procedure Load
      (Hist      : in out History_Record;
-      File_Name : Filesystem_String)
+      File_Name : Virtual_File)
    is
       N     : Node_Ptr;
       File  : Node_Ptr;
@@ -234,7 +233,8 @@ package body Histories is
 
                else
                   Value := null;
-                  Trace (Me, "Invalid data type in " & (+File_Name)
+                  Trace (Me, "Invalid data type in "
+                         & File_Name.Display_Full_Name
                          & " : " & Get_Attribute (Key, "type"));
                end if;
 
@@ -314,7 +314,7 @@ package body Histories is
 
    procedure Save
      (Hist      : in out History_Record;
-      File_Name : Filesystem_String;
+      File_Name : Virtual_File;
       Success   : out Boolean)
    is
       File, Key, N : Node_Ptr;
@@ -367,7 +367,7 @@ package body Histories is
          Get_Next (Hist.Table.all, Iter);
       end loop;
 
-      Print (File, GNATCOLL.VFS.Create (File_Name), Success);
+      Print (File, File_Name, Success);
       Free (File);
    end Save;
 

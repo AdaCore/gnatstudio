@@ -21,8 +21,8 @@
 --  of strings.
 
 with String_Hash;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Basic_Mapper is
 
@@ -49,12 +49,12 @@ package Basic_Mapper is
 
    procedure Save_Mapper
      (Mapper    : File_Mapper_Access;
-      File_Name : Filesystem_String);
+      File_Name : Virtual_File);
    --  Save Mapper to file File_Name
 
    procedure Load_Mapper
      (Mapper    : out File_Mapper_Access;
-      File_Name : Filesystem_String);
+      File_Name : Virtual_File);
    --  Load Mapper from file File_Name
 
    procedure Empty_Mapper (Mapper : out File_Mapper_Access);

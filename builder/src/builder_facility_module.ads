@@ -109,7 +109,7 @@ with Build_Configurations;
 with String_List_Utils;
 with Remote;
 
-with GNATCOLL.Filesystem;            use GNATCOLL.Filesystem;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Builder_Facility_Module is
 

@@ -28,7 +28,6 @@ with GPS.Intl;            use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
 
 with Make_Harness_Window_Pkg.Callbacks; use Make_Harness_Window_Pkg.Callbacks;
-with GNATCOLL.Filesystem;       use GNATCOLL.Filesystem;
 
 package body Make_Harness_Window_Pkg is
 
@@ -109,8 +108,7 @@ package body Make_Harness_Window_Pkg is
       Set_Width_Chars (Make_Harness_Window.Directory_Entry, 50);
       Set_Max_Length (Make_Harness_Window.Directory_Entry, 0);
       Set_Text (Make_Harness_Window.Directory_Entry,
-                +Get_Context_Directory (Handle));
-      --  ??? What if the filesystem path is non-UTF8?
+                Get_Context_Directory (Handle).Display_Full_Name);
       Set_Visibility (Make_Harness_Window.Directory_Entry, True);
       Pack_Start (Hbox, Make_Harness_Window.Directory_Entry, True, True, 3);
       Widget_Callback.Connect

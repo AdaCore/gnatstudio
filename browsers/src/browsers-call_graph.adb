@@ -73,7 +73,6 @@ with String_Utils;                  use String_Utils;
 with XML_Utils;                     use XML_Utils;
 with Traces;                        use Traces;
 with GNATCOLL.VFS;                           use GNATCOLL.VFS;
-with GNATCOLL.Filesystem;                    use GNATCOLL.Filesystem;
 with Generic_List;
 
 package body Browsers.Call_Graph is
@@ -1622,12 +1621,15 @@ package body Browsers.Call_Graph is
          Put_Line (Output, Str);
       end My_Output_Line;
 
+      DB_Dump_File : Virtual_File;
+
    begin
       if Command = "dump_xref_db" then
-         Create (Output,
-                 Name => +Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
-         Trace (Me, "Database dumped in "
-                & (+Get_Home_Dir (Get_Kernel (Data))) & "db_dump");
+         DB_Dump_File := Create_From_Dir
+           (Get_Home_Dir (Get_Kernel (Data)),
+            "db_dump");
+         Create (Output, Name => +DB_Dump_File.Full_Name);
+         Trace (Me, "Database dumped in " & DB_Dump_File.Display_Full_Name);
          Entities.Debug.Output      := My_Output'Unrestricted_Access;
          Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
          Dump (Get_Database (Get_Kernel (Data)), Full => True);

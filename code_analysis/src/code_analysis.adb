@@ -18,7 +18,6 @@
 -----------------------------------------------------------------------
 
 with GNAT.Heap_Sort_G;
-with GNATCOLL.Filesystem;     use GNATCOLL.Filesystem;
 
 package body Code_Analysis is
 
