@@ -113,7 +113,6 @@ package body Project_Explorers is
 
    function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
    pragma Inline (Hash);
-   use type Filesystem_String;
 
    package Filename_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => Filesystem_String,

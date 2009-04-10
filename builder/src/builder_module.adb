@@ -576,7 +576,6 @@ package body Builder_Module is
       Console : Interactive_Console;
       Child   : MDI_Child;
       Success : Boolean;
-      use type GNATCOLL.VFS.Filesystem_String_Access;
 
    begin
       if Run.Command = null then

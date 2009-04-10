@@ -177,7 +177,6 @@ package body VCS.Generic_VCS is
    overriding function Administrative_Directory
      (Ref : access Generic_VCS_Record) return Filesystem_String
    is
-      use type GNATCOLL.VFS.Filesystem_String_Access;
    begin
       if Ref.Administrative_Dir = null then
          return "";

@@ -1207,11 +1207,12 @@ package body Remote.Db is
    overriding function Get_Mount_Point_Local_Root
      (Config   : Remote_Db_Type;
       Nickname : String;
-      Index    : Natural) return Filesystem_String
+      Index    : Natural) return FS_String
    is
+      Ret : Filesystem_String renames
+        Get_Mount_Points (Config, Nickname) (Index).Local_Root.Full_Name;
    begin
-      return Get_Mount_Points (Config, Nickname)
-        (Index).Local_Root.Full_Name;
+      return FS_String (Ret);
    end Get_Mount_Point_Local_Root;
 
    -------------------------------
@@ -1221,11 +1222,12 @@ package body Remote.Db is
    overriding function Get_Mount_Point_Host_Root
      (Config   : Remote_Db_Type;
       Nickname : String;
-      Index    : Natural) return Filesystem_String
+      Index    : Natural) return FS_String
    is
+      Ret : Filesystem_String renames
+        Get_Mount_Points (Config, Nickname) (Index).Remote_Root.Full_Name;
    begin
-      return Get_Mount_Points (Config, Nickname)
-        (Index).Remote_Root.Full_Name;
+      return FS_String (Ret);
    end Get_Mount_Point_Host_Root;
 
    ---------
@@ -1918,7 +1920,7 @@ package body Remote.Db is
         (Host                => Server.Nickname.all,
          Args                => Args,
          Status              => Status,
-         Execution_Directory => Execution_Directory);
+         Execution_Directory => Filesystem_String (Execution_Directory));
    end Execute_Remotely;
 
    ----------------------
@@ -1937,7 +1939,7 @@ package body Remote.Db is
          Args                => Args,
          Out_Value           => Result,
          Status              => Status,
-         Execution_Directory => Execution_Directory);
+         Execution_Directory => Filesystem_String (Execution_Directory));
    end Execute_Remotely;
 
    --------------------

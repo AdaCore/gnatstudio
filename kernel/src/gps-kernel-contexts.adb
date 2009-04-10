@@ -366,7 +366,6 @@ package body GPS.Kernel.Contexts is
    function File_Information
      (Context : Selection_Context) return File_Array
    is
-      use type GNATCOLL.VFS.Filesystem_String;
    begin
       --  Check for $log should probably be done here!
       if not Context.Data.Data.File_Checked then

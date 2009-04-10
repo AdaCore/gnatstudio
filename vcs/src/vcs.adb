@@ -185,7 +185,6 @@ package body VCS is
    function Ignore_Filename
      (Ref : access VCS_Record) return Filesystem_String
    is
-      use type Filesystem_String_Access;
    begin
       if Ref.Ignore_Filename = null then
          return "";

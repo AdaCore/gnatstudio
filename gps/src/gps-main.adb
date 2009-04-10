@@ -608,7 +608,8 @@ procedure GPS.Main is
       --  Initialize the traces
 
       GNATCOLL.Traces.Parse_Config_File
-        (Default => Create_From_Dir (GPS_Home_Dir, "traces.cfg"),
+        (Filename     => No_File,
+         Default      => Create_From_Dir (GPS_Home_Dir, "traces.cfg"),
          On_Exception => GNATCOLL.Traces.Deactivate);
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);

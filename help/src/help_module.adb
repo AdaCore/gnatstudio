@@ -308,7 +308,6 @@ package body Help_Module is
 
    function Find_File (Name : Filesystem_String) return Virtual_File is
       Full : Filesystem_String_Access;
-      use type GNATCOLL.VFS.Filesystem_String_Access;
    begin
       if Is_Absolute_Path (Name) then
          return Create (Name);
@@ -630,8 +629,6 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : Virtual_File)
    is
-      use type GNATCOLL.VFS.Filesystem_String;
-      use type GNATCOLL.VFS.Filesystem_String_Access;
       Dir  : Virtual_File;
 
    begin

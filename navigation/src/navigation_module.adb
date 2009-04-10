@@ -920,7 +920,6 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context := Get_Current_Context (Kernel);
-      use type Filesystem_String;
    begin
       Push_State (Kernel, Busy);
 

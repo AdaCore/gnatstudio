@@ -1093,7 +1093,9 @@ package body Gtkada.File_Selector is
             Ensure_Directory (Dir);
             Set_Text (Win.Selection_Entry, Display_Full_Name (Dir, True));
             --  ??? What if the filesystem path is non-UTF8?
-            Set_Position (Win.Selection_Entry, Full_Name (Dir, True)'Length);
+            Set_Position
+              (Win.Selection_Entry,
+               Full_Name (Dir, True).all'Length);
          else
             Refresh_Files (Win);
          end if;

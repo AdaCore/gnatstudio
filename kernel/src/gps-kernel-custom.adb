@@ -162,7 +162,6 @@ package body GPS.Kernel.Custom is
       Level     : Customization_Level;
       Default_Autoload : Boolean)
    is
-      use type GNATCOLL.VFS.Filesystem_String;
       Files : File_Array_Access;
       File_Node : Node_Ptr;
       Command   : Custom_Command_Access;

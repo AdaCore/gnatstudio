@@ -1189,7 +1189,6 @@ package body Project_Explorers_Files is
                      declare
                         Name : constant Filesystem_String :=
                                  Get_Base_Name (View.File_Model, Next_Iter);
-                        use type Filesystem_String;
                      begin
                         if Name > File.Base_Dir_Name then
                            Insert_Before

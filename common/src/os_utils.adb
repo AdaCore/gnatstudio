@@ -235,7 +235,6 @@ package body OS_Utils is
 
    function Is_Cygwin_Path (Path : Filesystem_String) return Boolean is
       Cygdrive : constant Filesystem_String := "/cygdrive/";
-      use type Filesystem_String;
    begin
       return Path'Length > Cygdrive'Length + 1
         and then

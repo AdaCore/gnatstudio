@@ -1146,7 +1146,6 @@ package body Builder_Facility_Module is
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Get_Kernel).all);
       Prop : aliased GPS.Kernel.Properties.String_Property_Access;
-      use type GNATCOLL.VFS.Filesystem_String;
 
    begin
       --  Do not consider a change to be effective if we are just creating

@@ -335,7 +335,6 @@ package body Entities.Debug is
    ----------
 
    procedure Dump (LIs : in out LI_HTable.HTable) is
-      use type Filesystem_String;
       Iter : LI_HTable.Iterator;
       Count : Natural := 0;
    begin
@@ -490,7 +489,6 @@ package body Entities.Debug is
    function Get_Sorted_List_Of_Files
      (Files : access Files_HTable.HTable) return Source_File_Array
    is
-      use type Filesystem_String;
       Iter  : Files_HTable.Iterator;
       Count : Natural := 0;
       File  : Source_File_Item;

@@ -1689,7 +1689,6 @@ package body GPS.Kernel.Modules is
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Object);
-      use type GNATCOLL.VFS.Filesystem_String;
 
       Context : constant Drag_Context :=
                   Drag_Context (Get_Proxy (Nth (Args, 1)));
