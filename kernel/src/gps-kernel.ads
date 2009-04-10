@@ -814,6 +814,9 @@ package GPS.Kernel is
    Compilation_Starting_Hook     : constant Hook_Name :=
                                      "compilation_starting";
 
+   Buffer_Modified_Hook : constant Hook_Name := "buffer_edited";
+   --  Hook called after a buffer has been edited.
+
    --  Hooks with Context_Hooks_Args argument
    Context_Changed_Hook          : constant Hook_Name := "context_changed";
 

@@ -856,11 +856,14 @@ package body Outline_View is
    -------------
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
+      Outline : constant Outline_View_Access := Outline_View_Access (View);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
 
+      Selected_Iter : Gtk_Tree_Iter;
    begin
-      Refresh (View, Null_Iter, Iter, Model);
+      Get_Selected (Get_Selection (Outline.Tree), Model, Selected_Iter);
+      Refresh (View, Selected_Iter, Iter, Model);
    end Refresh;
 
    -------------------
@@ -1215,6 +1218,10 @@ package body Outline_View is
                    Watch => GObject (Outline));
          Add_Hook (Kernel, File_Edited_Hook,
                    Wrapper (File_Edited'Access),
+                   Name  => "outline.file_edited",
+                   Watch => GObject (Outline));
+         Add_Hook (Kernel, Buffer_Modified_Hook,
+                   Wrapper (File_Saved'Access),
                    Name  => "outline.file_edited",
                    Watch => GObject (Outline));
       end if;

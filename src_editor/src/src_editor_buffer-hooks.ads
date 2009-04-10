@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2004-2008, AdaCore                  --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -48,6 +48,9 @@ package Src_Editor_Buffer.Hooks is
    procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar);
    --  Emit the Character_Added_Hook. Character should be 8 (control-H) when a
    --  character was removed from the buffer.
+
+   procedure Buffer_Modified (Buffer : Source_Buffer);
+   --  Emit the Buffer_Modified hook
 
    procedure Register_Editor_Hooks
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

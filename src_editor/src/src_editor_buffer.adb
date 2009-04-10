@@ -337,8 +337,8 @@ package body Src_Editor_Buffer is
    --  Indicate that the cursor has moved, and that a timeout should be
    --  registered to call the corresponding "after-timeout" hook.
 
-   function Check_Blocks (Buffer : Source_Buffer) return Boolean;
-   --  Timeout that recomputes the blocks if needed
+   function Edition_Timeout (Buffer : Source_Buffer) return Boolean;
+   --  Timeout called in a timeout after the user has finished editing
 
    function Cursor_Stop_Hook (Buffer : Source_Buffer) return Boolean;
    --  Hook called after the cursor has stopped moving
@@ -776,11 +776,11 @@ package body Src_Editor_Buffer is
       return Index;
    end Get_Byte_Index;
 
-   ------------------
-   -- Check_Blocks --
-   ------------------
+   ---------------------
+   -- Edition_Timeout --
+   ---------------------
 
-   function Check_Blocks (Buffer : Source_Buffer) return Boolean is
+   function Edition_Timeout (Buffer : Source_Buffer) return Boolean is
    begin
       if Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay then
          return True;
@@ -806,6 +806,10 @@ package body Src_Editor_Buffer is
            (Buffer.Kernel, "File.shadow_check_syntax %1");
       end if;
 
+      --  Emit the Buffer_Modifed hook
+
+      Buffer_Modified (Buffer);
+
       --  Unregister the timeout
 
       Buffer.Blocks_Timeout_Registered := False;
@@ -815,7 +819,7 @@ package body Src_Editor_Buffer is
       when E : others =>
          Trace (Traces.Exception_Handle, E);
          return False;
-   end Check_Blocks;
+   end Edition_Timeout;
 
    --------------------
    -- Get_Delimiters --
@@ -1153,7 +1157,7 @@ package body Src_Editor_Buffer is
          Buffer.Blocks_Timeout_Registered := True;
          Buffer.Blocks_Timeout := Buffer_Timeout.Add
            (Buffer_Recompute_Interval,
-            Check_Blocks'Access,
+            Edition_Timeout'Access,
             Source_Buffer (Buffer));
       end if;
    end Register_Edit_Timeout;

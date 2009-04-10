@@ -855,8 +855,8 @@ the outline view was last refreshed.
 
 To refresh the contents of the view, select the @code{Refresh}
 entry in the contextual menu (right-click anywhere in the outline view).
-Alternatively, you can switch temporarily to another window and come back
-to the same editor, and the outline view will be refreshed.
+The Outline View is updated automatically after editing, saving the file, or
+switching to a different editor.
 
 There are several preferences associated with the outline view,
 @xref{Outline Preferences}.
