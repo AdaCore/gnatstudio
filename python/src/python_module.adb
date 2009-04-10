@@ -346,12 +346,20 @@ package body Python_Module is
         (Script,
          Get_Or_Create_Virtual_Console (Get_Console (Kernel)));
 
-      Execute_Command
-        (Script,
-         "sys.path=[r'" & (+Dir.Full_Name (True)) & "']+sys.path",
-         Show_Command => False,
-         Hide_Output => True,
-         Errors      => Errors);
+      declare
+         Path : constant String := +Dir.Full_Name (True);
+      begin
+         --  Python requires no trailing dir separator (at least on Windows)
+
+         Execute_Command
+           (Script,
+            "sys.path=[r'" &
+            Path (Path'First .. Path'Last - 1) &
+            "']+sys.path",
+            Show_Command => False,
+            Hide_Output  => True,
+            Errors       => Errors);
+      end;
 
       Files := Dir.Read_Dir (Files_Only);
 
