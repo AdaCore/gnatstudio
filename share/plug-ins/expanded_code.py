@@ -161,26 +161,26 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
 # Register the contextual menus #
 #################################
 
-@interactive ("Ada", in_ada_file, contextual="Show expanded code/For this subprogram",
+@interactive ("Ada", in_ada_file, contextual="Expanded code/Show subprogram",
               name="show expanded code for subprogram", before="Align")
 def show_gnatdg_subprogram():
   """Show the expanded code of the current subprogram"""
   show_gnatdg(True)
 
-@interactive ("Ada", in_ada_file, contextual="Show expanded code/For this file",
+@interactive ("Ada", in_ada_file, contextual="Expanded code/Show entire file",
               name="show expanded code for file", before="Align")
 def show_gnatdg_file():
   """Show the .dg file of the current file"""
   show_gnatdg(False)
 
-@interactive ("Ada", in_ada_file, contextual="Show expanded code/For this file (in separate editor)",
+@interactive ("Ada", in_ada_file, contextual="Expanded code/Show in separate editor",
               name="show expanded code in separate editor", before="Align")
 def show_gnatdg_separate_editor():
   """Show the expanded code of the current subprogram"""
   show_gnatdg(False, True)
 
 
-@interactive ("Ada", in_ada_file, contextual="Show expanded code/Clear",
+@interactive ("Ada", in_ada_file, contextual="Expanded code/Clear",
               name="clear expanded code", before="Align")
 def clear_expanded_code():
   """Show the expanded code of the current subprogram"""
