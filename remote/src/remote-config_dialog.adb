@@ -217,8 +217,8 @@ package body Remote.Config_Dialog is
       New_Machine           : Boolean := False;
       Modified              : Boolean := False;
       Applied               : Boolean := False;
-      Restoring             : Boolean := False;
       Select_Back           : Boolean := False;
+      DB_Changed            : Boolean := False;
    end record;
    type Server_List_Editor is access all Server_List_Editor_Record'Class;
 
@@ -232,6 +232,15 @@ package body Remote.Config_Dialog is
      (Dialog   : access Server_List_Editor_Record'Class;
       Nickname : String);
    --  Initialize the different fields of Dialog with the values of Machine.
+
+   procedure Remove_Machine
+     (Dialog : access Server_List_Editor_Record'Class;
+      Nickname : String);
+   --  Remove the machine 'Nickname' from Dialog.
+
+   procedure Select_Back
+     (Dialog : access Server_List_Editor_Record'Class);
+   --  Cancel the server selection change
 
    procedure On_Changed
      (W                 : access Gtk_Widget_Record'Class;
@@ -1217,7 +1226,6 @@ package body Remote.Config_Dialog is
       Set_Text (Dialog.Nickname_Label, Machine.Nickname);
       Dialog.Selected_Machine := new String'(Machine.Nickname);
 
-      Dialog.Restoring := True;
       Set_Text
         (Dialog.Network_Name_Entry,
          Machine.Network_Name);
@@ -1254,10 +1262,128 @@ package body Remote.Config_Dialog is
       end;
       Set_Active (Dialog.Debug_Button, Machine.Use_Dbg);
 
+      --  Make sure the current states are correctly set.
       Dialog.Applied := True;
       Dialog.Modified := False;
-      Dialog.Restoring := False;
    end Set_Machine;
+
+   function For_Each
+     (Model     : access Gtk_Tree_Model_Record'Class;
+      Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
+      User_Data : System.Address) return Boolean;
+   --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
+   --  corresponding to the previously selected machine.
+
+   type For_Each_Data (Nickname_Length : Natural) is record
+      Nickname : String (1 .. Nickname_Length);
+      The_Iter : Gtk_Tree_Iter;
+      Found    : Boolean;
+   end record;
+   type For_Each_Data_Access is access all For_Each_Data;
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, For_Each_Data_Access);
+
+   --------------
+   -- For_Each --
+   --------------
+
+   function For_Each
+     (Model     : access Gtk_Tree_Model_Record'Class;
+      Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
+      User_Data : System.Address) return Boolean
+   is
+      pragma Unreferenced (Path);
+      Data : constant For_Each_Data_Access := Convert (User_Data);
+   begin
+      Data.The_Iter := Iter;
+      Data.Found    :=
+        Get_String (Model, Iter, Name_Col) = Data.Nickname;
+      return Data.Found;
+   end For_Each;
+
+   -----------------
+   -- Select_Back --
+   -----------------
+
+   procedure Select_Back
+     (Dialog : access Server_List_Editor_Record'Class)
+   is
+      Model     : constant Gtk.Tree_Model.Gtk_Tree_Model :=
+                    Get_Model (Dialog.Machine_Tree);
+
+   begin
+      if Dialog.Selected_Machine = null then
+         return;
+      end if;
+
+      Trace (Me, "Select back previous machine "
+             & Dialog.Selected_Machine.all);
+
+      declare
+         Data      : aliased For_Each_Data :=
+                       (Nickname_Length => Dialog.Selected_Machine.all'Length,
+                        Nickname        => Dialog.Selected_Machine.all,
+                        The_Iter        => Gtk.Tree_Model.Null_Iter,
+                        Found           => False);
+      begin
+         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
+
+         if Data.Found then
+            Dialog.Select_Back := True;
+            Select_Iter (Get_Selection (Dialog.Machine_Tree), Data.The_Iter);
+         end if;
+      end;
+   end Select_Back;
+
+   --------------------
+   -- Remove_Machine --
+   --------------------
+
+   procedure Remove_Machine
+     (Dialog : access Server_List_Editor_Record'Class;
+      Nickname : String)
+   is
+      Model : constant Gtk_Tree_Model := Get_Model (Dialog.Machine_Tree);
+      Iter  : Gtk_Tree_Iter;
+
+   begin
+      if Active (Me) then
+         Trace (Me, "Removing " & Nickname);
+      end if;
+
+      if Get_Database.Is_Configured (Nickname) then
+         Remote.Db.Remove (Get_Database, Nickname);
+      end if;
+
+      --  set removed machine as unmodified to prevent save upon
+      --  tree model content change (selection change)
+      Dialog.Modified := False;
+
+      declare
+         Data      : aliased For_Each_Data :=
+                       (Nickname_Length => Nickname'Length,
+                        Nickname        => Nickname,
+                        The_Iter        => Gtk.Tree_Model.Null_Iter,
+                        Found           => False);
+      begin
+         Gtk.Tree_Model.Foreach (Model, For_Each'Access, Data'Address);
+
+         if Data.Found then
+            Remove (Gtk_Tree_Store (Model), Data.The_Iter);
+         end if;
+      end;
+
+      Iter := Get_Iter_First (Model);
+
+      if Iter = Null_Iter then
+         Set_Child_Visible (Dialog.Right_Table, False);
+         Set_Sensitive (Dialog.Restore_Button, False);
+         Set_Sensitive (Dialog.Remove_Button, False);
+      end if;
+   end Remove_Machine;
 
    ----------------
    -- On_Changed --
@@ -1403,22 +1529,30 @@ package body Remote.Config_Dialog is
 
       Trace (Me, "Save " & Dialog.Selected_Machine.all);
 
-      if not Check_Fields (Dialog) then
-         return False;
-      end if;
-
       if not Force then
          Ret := Message_Dialog
            (-"The server " & Dialog.Selected_Machine.all &
-            (-" is modified. Do you want to save it before proceeding to"
+            (-" has been modified. Do you want to save it before proceeding to"
                & " the next action ?"),
             Dialog_Type => Confirmation,
             Buttons     => Button_OK or Button_Cancel,
             Parent      => Gtk_Window (Dialog));
 
          if Ret = Button_Cancel then
+            if not Get_Database.Is_Configured
+              (Dialog.Selected_Machine.all)
+            then
+               --  we don't want to save a non configured machine.
+               --  Let's remove it ...
+               Remove_Machine (Dialog, Dialog.Selected_Machine.all);
+            end if;
+
             return True;
          end if;
+      end if;
+
+      if not Check_Fields (Dialog) then
+         return False;
       end if;
 
       if Get_Database.Is_Configured (Dialog.Selected_Machine.all) then
@@ -1457,6 +1591,8 @@ package body Remote.Config_Dialog is
       Trace (Me, "Put machine into database.");
       Remote.Db.Add_Or_Replace (Get_Database, Machine);
 
+      Dialog.DB_Changed := True;
+
       --  Now save the paths
 
       Trace (Me, "Internal save paths");
@@ -1477,6 +1613,7 @@ package body Remote.Config_Dialog is
 
       Dialog.Modified := False;
       Dialog.Applied := True;
+      Remote_Module.Save_Remote_Config (Dialog.Kernel);
 
       return True;
    end Save_Current;
@@ -1504,9 +1641,8 @@ package body Remote.Config_Dialog is
       --  First try to save the current machine
 
       if not Save_Current (Server_List_Editor (W), False) then
-         --  We should block the signal here ...
-         Gtk.Handlers.Emit_Stop_By_Name
-           (W, Gtk.Tree_Selection.Signal_Changed);
+         --  Select back the old config
+         Select_Back (Dialog);
          return;
       end if;
 
@@ -1660,8 +1796,7 @@ package body Remote.Config_Dialog is
    --------------------
 
    procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class) is
-      Dialog    : Server_List_Editor_Record
-                    renames Server_List_Editor_Record (W.all);
+      Dialog    : constant Server_List_Editor := Server_List_Editor (W);
       Model     : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Ret       : Message_Dialog_Buttons;
@@ -1685,15 +1820,8 @@ package body Remote.Config_Dialog is
                return;
             end if;
 
-            if Active (Me) then
-               Trace (Me, "Removing " & Current_Selection);
-            end if;
+            Remove_Machine (Dialog, Current_Selection);
 
-            if Get_Database.Is_Configured (Current_Selection) then
-               Remote.Db.Remove (Get_Database, Current_Selection);
-            end if;
-
-            Remove (Gtk_Tree_Store (Model), Iter);
             Iter := Get_Iter_First (Model);
 
             if Iter /= Null_Iter then
@@ -1720,6 +1848,8 @@ package body Remote.Config_Dialog is
    is
       Dialog  : Server_List_Editor;
       Resp    : Gtk_Response_Type;
+      Dead    : Boolean;
+      pragma Unreferenced (Dead);
 
    begin
       Gtk_New (Dialog, Kernel, Default_Server);
@@ -1729,10 +1859,8 @@ package body Remote.Config_Dialog is
 
          --  Apply changes ?
 
-         if (Resp = Gtk_Response_OK or Resp = Gtk_Response_Apply)
-           and then Save_Current (Dialog, True)
-         then
-            Save_Remote_Config (Kernel);
+         if Resp = Gtk_Response_OK or else Resp = Gtk_Response_Apply then
+            Dead := Save_Current (Dialog, True);
          end if;
 
          exit when Resp /= Gtk_Response_Apply;
