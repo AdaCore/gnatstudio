@@ -33,6 +33,8 @@ with Debugger.VMS.Ada;  use Debugger.VMS.Ada;
 
 package body Debugger.VMS is
 
+   use GNATCOLL.VFS;
+
    Prompt_Regexp : constant Pattern_Matcher :=
      Compile ("DBG> ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
@@ -129,7 +131,7 @@ package body Debugger.VMS is
 
    begin
       Args (1) := new String'("/debug");
-      Args (2) := new String'(Executable.Base_Name);
+      Args (2) := new String'(+Executable.Base_Name);
       Args (3 .. Args'Last) := Exec_Args.all;
       Unchecked_Free (Exec_Args);
 
@@ -365,7 +367,7 @@ package body Debugger.VMS is
    overriding
    procedure Change_Directory
      (Debugger    : access VMS_Debugger;
-      Dir         : String;
+      Dir         : GNATCOLL.VFS.Virtual_File;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
    begin
@@ -478,7 +480,7 @@ package body Debugger.VMS is
    is
    begin
       Debugger.Executable := Executable;
-      Send (Debugger, "set image " & Executable.Base_Name, Mode => Mode);
+      Send (Debugger, "set image " & (+Executable.Base_Name), Mode => Mode);
    end Set_Executable;
 
    --------------------
@@ -499,7 +501,7 @@ package body Debugger.VMS is
 
    overriding procedure Load_Core_File
      (Debugger : access VMS_Debugger;
-      Core     : String;
+      Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
    begin
@@ -512,7 +514,7 @@ package body Debugger.VMS is
 
    overriding procedure Add_Symbols
      (Debugger : access VMS_Debugger;
-      Module   : String;
+      Module   : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
    begin
@@ -840,7 +842,7 @@ package body Debugger.VMS is
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       S : constant String :=
-        File.Base_Name & "\%LINE " & Image (Line);
+        (+File.Base_Name) & "\%LINE " & Image (Line);
    begin
       Send
         (Debugger,

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                   Copyright (C) 2000-2008, AdaCore                --
+--                   Copyright (C) 2000-2009, AdaCore                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,7 +90,7 @@ package Debugger.VMS is
 
    overriding procedure Change_Directory
      (Debugger    : access VMS_Debugger;
-      Dir         : String;
+      Dir         : GNATCOLL.VFS.Virtual_File;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Found_File_Name
@@ -127,12 +127,12 @@ package Debugger.VMS is
 
    overriding procedure Load_Core_File
      (Debugger : access VMS_Debugger;
-      Core     : String;
+      Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Add_Symbols
      (Debugger : access VMS_Debugger;
-      Module   : String;
+      Module   : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding procedure Run
