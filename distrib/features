@@ -76,6 +76,12 @@ NF-44-I129-010 Improved cross references loading time (2009-02-27)
    Cross references are now loaded much faster by GPS. This brings a
    significant improvement when e.g. displaying tooltips on very big projects.
 
+NF-44-I128-006 Expanded code directly in the editors (2009-04-10)
+
+   The contextual menu "Expanded code" on Ada sources allows displaying of the
+   expanded code directly in the editor. Also, you can select to display the
+   expanded code for the current subprogram only.
+
 NF-44-I122-033 Meaningful source editor titles (2009-02-04)
 
    GPS now uses more meaningful titles for source editors used to store
