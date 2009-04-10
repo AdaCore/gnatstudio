@@ -3525,12 +3525,28 @@ time.  After a global look up, information is cached in memory, so that
 further global queries will be faster.
 @end table
 
-@item Show expanded code
-For Ada files only, this entry will generate a .dg file using your gnat
-compiler (using the -gnatGL switch), and will open this file at the location
-corresponding to the current source line. this can be useful when investigating
-low-level issues and tracing precisely how the source code is transformed by
-the GNAT front-end.
+@item Expanded code
+Present for Ada files only. This menu generates a .dg file using your gnat
+compiler (using the -gnatGL switch) and displays the expanded code. This can be
+useful when investigating low-level issues and tracing precisely how the source
+code is transformed by the GNAT front-end.
+
+@table @command
+@item Show subprogram
+Display expanded code for the current subprogram in the current editor.
+
+@item Show file
+Display expanded code for the current file in the current editor.
+
+@item Show file (in separate editor)
+Display expanded code for the current file is displayed in a new editor.
+
+@item Clear
+Remove expanded code from the current editor.
+@end table
+
+For Ada files only, this entry will generate, and will open this file at the location
+corresponding to the current source line.
 
 @end table
 
