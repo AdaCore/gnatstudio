@@ -1112,7 +1112,7 @@ up a file editor at the requested place. Right-clicking on file or
 category items brings up a contextual menu allowing you to remove the
 corresponding node from the view. Placing the mouse over an item
 automatically pop up a tooltip window with full text of the item if this
-text can't be completely shown in window.
+text can't be completely shown in the window.
 
 Every time a new category is created, as a result of a compilation or a
 search operation for instance, the first entry of that category is
@@ -3538,8 +3538,8 @@ Display expanded code for the current subprogram in the current editor.
 @item Show file
 Display expanded code for the current file in the current editor.
 
-@item Show file (in separate editor)
-Display expanded code for the current file is displayed in a new editor.
+@item Show in separate editor
+Display expanded code for the current file in a new editor.
 
 @item Clear
 Remove expanded code from the current editor.
