@@ -690,13 +690,13 @@ package body Code_Peer.Module is
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
          Text        => -"Run code review",
+         Ref_Item    => "Documentation",
          Callback    => On_Run_Review'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
          Text        => -"Load code review information",
-         Ref_Item    => "Documentation",
          Add_Before  => True,
          Callback    => On_Load'Access);
 
