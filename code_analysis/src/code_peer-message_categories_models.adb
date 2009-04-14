@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,6 +25,17 @@ package body Code_Peer.Message_Categories_Models is
 
    package Category_Conversions is
      new System.Address_To_Access_Conversions (Code_Peer.Message_Category);
+
+   --------------------
+   -- All_Categories --
+   --------------------
+
+   function All_Categories
+     (Self : access Message_Categories_Model_Record'Class)
+      return Message_Category_Ordered_Sets.Set is
+   begin
+      return Self.Categories;
+   end All_Categories;
 
    -----------------
    -- Category_At --

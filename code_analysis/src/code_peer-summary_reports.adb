@@ -790,7 +790,6 @@ package body Code_Peer.Summary_Reports is
 
       Self.Analysis_Model.Clear;
       Self.Messages_Model.Clear;
-      Self.Categories_Editor.Clear;
    end On_Destroy;
 
    -------------------------------------

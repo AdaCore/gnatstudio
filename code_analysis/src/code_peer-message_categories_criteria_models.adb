@@ -23,12 +23,13 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    -- Clear --
    -----------
 
-   overriding procedure Clear (Self : access Messages_Filter_Model_Record) is
+   overriding procedure Clear
+     (Self : access Categories_Criteria_Model_Record) is
    begin
       Code_Peer.Message_Categories_Models.Message_Categories_Model_Record
         (Self.all).Clear;
 
-      Self.Categories.Clear;
+      Self.Selected_Categories.Clear;
    end Clear;
 
    ---------------------
@@ -36,7 +37,7 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    ---------------------
 
    overriding function Get_Column_Type
-     (Self  : access Messages_Filter_Model_Record;
+     (Self  : access Categories_Criteria_Model_Record;
       Index : Glib.Gint) return Glib.GType
    is
       pragma Unreferenced (Self);
@@ -59,7 +60,7 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    -------------------
 
    overriding function Get_N_Columns
-     (Self : access Messages_Filter_Model_Record) return Glib.Gint
+     (Self : access Categories_Criteria_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
 
@@ -72,7 +73,7 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    ---------------
 
    overriding procedure Get_Value
-     (Self   : access Messages_Filter_Model_Record;
+     (Self   : access Categories_Criteria_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
@@ -82,7 +83,8 @@ package body Code_Peer.Message_Categories_Criteria_Models is
          when Active_Column =>
             Glib.Values.Init (Value, Glib.GType_Boolean);
             Glib.Values.Set_Boolean
-              (Value, Self.Categories.Contains (Self.Category_At (Iter)));
+              (Value, Self.Selected_Categories.Contains
+                 (Self.Category_At (Iter)));
 
          when Name_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
@@ -98,10 +100,10 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    ----------------------------
 
    function Get_Visible_Categories
-     (Self : access Messages_Filter_Model_Record'Class)
+     (Self : access Categories_Criteria_Model_Record'Class)
       return Code_Peer.Message_Category_Sets.Set is
    begin
-      return Self.Categories;
+      return Self.Selected_Categories;
    end Get_Visible_Categories;
 
    -------------
@@ -113,7 +115,7 @@ package body Code_Peer.Message_Categories_Criteria_Models is
       Categories : Code_Peer.Message_Category_Sets.Set)
    is
    begin
-      Model := new Messages_Filter_Model_Record;
+      Model := new Categories_Criteria_Model_Record;
 
       Initialize (Model, Categories);
    end Gtk_New;
@@ -123,38 +125,119 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    ----------
 
    procedure Hide
-     (Self     : access Messages_Filter_Model_Record'Class;
+     (Self     : access Categories_Criteria_Model_Record'Class;
       Category : Code_Peer.Message_Category_Access)
    is
    begin
-      Self.Categories.Exclude (Category);
+      Self.Selected_Categories.Exclude (Category);
       Self.Row_Changed (Category);
    end Hide;
+
+   --------------
+   -- Hide_All --
+   --------------
+
+   procedure Hide_All (Self : access Categories_Criteria_Model_Record'Class) is
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor);
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor)
+      is
+         Category : constant Code_Peer.Message_Category_Access :=
+           Code_Peer.Message_Category_Ordered_Sets.Element (Position);
+
+      begin
+         if Self.Selected_Categories.Contains (Category) then
+            Self.Hide (Category);
+         end if;
+      end Process;
+
+   begin
+      Self.All_Categories.Iterate (Process'Access);
+   end Hide_All;
 
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Self       : access Messages_Filter_Model_Record'Class;
+     (Self       : access Categories_Criteria_Model_Record'Class;
       Categories : Code_Peer.Message_Category_Sets.Set) is
    begin
       Code_Peer.Message_Categories_Models.Initialize (Self, Categories);
 
-      Self.Categories := Categories;
+      Self.Selected_Categories := Categories;
    end Initialize;
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty
+     (Self : access Categories_Criteria_Model_Record'Class) return Boolean is
+   begin
+      return Self.Selected_Categories.Is_Empty;
+   end Is_Empty;
+
+   -------------
+   -- Is_Full --
+   -------------
+
+   function Is_Full
+     (Self : access Categories_Criteria_Model_Record'Class) return Boolean
+   is
+      use type Ada.Containers.Count_Type;
+
+   begin
+      return Self.All_Categories.Length = Self.Selected_Categories.Length;
+   end Is_Full;
 
    ----------
    -- Show --
    ----------
 
    procedure Show
-     (Self     : access Messages_Filter_Model_Record'Class;
+     (Self     : access Categories_Criteria_Model_Record'Class;
       Category : Code_Peer.Message_Category_Access)
    is
    begin
-      Self.Categories.Include (Category);
+      Self.Selected_Categories.Include (Category);
       Self.Row_Changed (Category);
    end Show;
+
+   --------------
+   -- Show_All --
+   --------------
+
+   procedure Show_All (Self : access Categories_Criteria_Model_Record'Class) is
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor);
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process
+        (Position : Code_Peer.Message_Category_Ordered_Sets.Cursor)
+      is
+         Category : constant Code_Peer.Message_Category_Access :=
+           Code_Peer.Message_Category_Ordered_Sets.Element (Position);
+
+      begin
+         if not Self.Selected_Categories.Contains (Category) then
+            Self.Show (Category);
+         end if;
+      end Process;
+
+   begin
+      Self.All_Categories.Iterate (Process'Access);
+   end Show_All;
 
 end Code_Peer.Message_Categories_Criteria_Models;

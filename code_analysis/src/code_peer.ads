@@ -162,8 +162,6 @@ package Code_Peer is
       Lineages      : Lifeage_Kinds_Flags;
    end record;
 
-private
-
    function Less
      (Left, Right : Code_Peer.Message_Category_Access) return Boolean;
 

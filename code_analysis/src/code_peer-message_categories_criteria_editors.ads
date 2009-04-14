@@ -20,6 +20,7 @@
 --  filter criteria editor. It is used by Summary Report form.
 
 with Glib;
+private with Gtk.Check_Button;
 private with Gtk.Scrolled_Window;
 private with Gtk.Tree_View;
 with Gtk.Widget;
@@ -48,10 +49,6 @@ package Code_Peer.Message_Categories_Criteria_Editors is
       return Code_Peer.Message_Category_Sets.Set;
    --  Returns a set of selected message categories.
 
-   procedure Clear
-     (Self : not null access Message_Categories_Criteria_Editor_Record'Class);
-   --  Clear data in the internal model.
-
    Signal_Criteria_Changed : constant Glib.Signal_Name;
    --  This signal emitted by the editor in the case of the criteria change.
 
@@ -60,8 +57,9 @@ private
    type Message_Categories_Criteria_Editor_Record is
      new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
       record
-         Model : Message_Categories_Criteria_Models.Messages_Filter_Model;
-         View  : Gtk.Tree_View.Gtk_Tree_View;
+         Model  : Message_Categories_Criteria_Models.Messages_Filter_Model;
+         View   : Gtk.Tree_View.Gtk_Tree_View;
+         Toggle : Gtk.Check_Button.Gtk_Check_Button;
       end record;
 
    Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria-changed";

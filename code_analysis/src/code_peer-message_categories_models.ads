@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,6 +39,10 @@ package Code_Peer.Message_Categories_Models is
      (Self : access Message_Categories_Model_Record'Class;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Code_Peer.Message_Category_Access;
+
+   function All_Categories
+     (Self : access Message_Categories_Model_Record'Class)
+      return Code_Peer.Message_Category_Ordered_Sets.Set;
 
    procedure Clear (Self : access Message_Categories_Model_Record);
 
