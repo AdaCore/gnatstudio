@@ -26,7 +26,7 @@ with GPS.Kernel.Modules;
 with Code_Analysis;
 private with Code_Peer.Entity_Messages_Models;
 private with Code_Peer.Summary_Models;
-private with Code_Peer.Message_Categories_Criteria_Editors;
+private with Code_Peer.Categories_Criteria_Editors;
 
 package Code_Peer.Summary_Reports is
 
@@ -78,8 +78,7 @@ private
         Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
       Messages_View      : Gtk.Tree_View.Gtk_Tree_View;
       Categories_Editor  :
-        Code_Peer.Message_Categories_Criteria_Editors.
-          Message_Categories_Criteria_Editor;
+        Code_Peer.Categories_Criteria_Editors.Categories_Criteria_Editor;
 
       Show_Lifeage       : Lifeage_Kinds_Flags :=
                          (Added => True, Unchanged => True, Removed => False);

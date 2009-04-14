@@ -25,27 +25,27 @@ private with Gtk.Scrolled_Window;
 private with Gtk.Tree_View;
 with Gtk.Widget;
 
-private with Code_Peer.Message_Categories_Criteria_Models;
+private with Code_Peer.Categories_Criteria_Models;
 
-package Code_Peer.Message_Categories_Criteria_Editors is
+package Code_Peer.Categories_Criteria_Editors is
 
-   type Message_Categories_Criteria_Editor_Record is
+   type Categories_Criteria_Editor_Record is
      new Gtk.Widget.Gtk_Widget_Record with private;
 
-   type Message_Categories_Criteria_Editor is
-     access all Message_Categories_Criteria_Editor_Record'Class;
+   type Categories_Criteria_Editor is
+     access all Categories_Criteria_Editor_Record'Class;
 
    procedure Gtk_New
-     (Editor     : in out Message_Categories_Criteria_Editor;
+     (Editor     : in out Categories_Criteria_Editor;
       Categories : Code_Peer.Message_Category_Sets.Set);
 
    procedure Initialize
      (Self       :
-        not null access Message_Categories_Criteria_Editor_Record'Class;
+        not null access Categories_Criteria_Editor_Record'Class;
       Categories : Code_Peer.Message_Category_Sets.Set);
 
    function Get_Visible_Categories
-     (Self : access Message_Categories_Criteria_Editor_Record'Class)
+     (Self : access Categories_Criteria_Editor_Record'Class)
       return Code_Peer.Message_Category_Sets.Set;
    --  Returns a set of selected message categories.
 
@@ -54,14 +54,14 @@ package Code_Peer.Message_Categories_Criteria_Editors is
 
 private
 
-   type Message_Categories_Criteria_Editor_Record is
+   type Categories_Criteria_Editor_Record is
      new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
       record
-         Model  : Message_Categories_Criteria_Models.Messages_Filter_Model;
+         Model  : Categories_Criteria_Models.Categories_Criteria_Model;
          View   : Gtk.Tree_View.Gtk_Tree_View;
          Toggle : Gtk.Check_Button.Gtk_Check_Button;
       end record;
 
    Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria-changed";
 
-end Code_Peer.Message_Categories_Criteria_Editors;
+end Code_Peer.Categories_Criteria_Editors;

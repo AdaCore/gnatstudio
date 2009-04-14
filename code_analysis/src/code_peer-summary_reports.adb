@@ -68,9 +68,9 @@ package body Code_Peer.Summary_Reports is
 
    package Message_Categories_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
-       (Code_Peer.Message_Categories_Criteria_Editors.
-            Message_Categories_Criteria_Editor_Record,
-        Summary_Report);
+          (Code_Peer.Categories_Criteria_Editors.
+             Categories_Criteria_Editor_Record,
+           Summary_Report);
 
    procedure On_Destroy (Self : access Summary_Report_Record'Class);
 
@@ -112,8 +112,8 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Categories_Criteria_Changed
      (Object : access
-        Code_Peer.Message_Categories_Criteria_Editors.
-          Message_Categories_Criteria_Editor_Record'Class;
+        Code_Peer.Categories_Criteria_Editors.
+          Categories_Criteria_Editor_Record'Class;
       Self   : Summary_Report);
 
    procedure Context_Func
@@ -663,7 +663,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Code_Peer.Message_Categories_Criteria_Editors.Gtk_New
+      Code_Peer.Categories_Criteria_Editors.Gtk_New
         (Self.Categories_Editor,
          Code_Peer.Project_Data'Class
            (Code_Analysis.Get_Or_Create
@@ -675,7 +675,7 @@ package body Code_Peer.Summary_Reports is
 
       Message_Categories_Criteria_Callbacks.Connect
         (Self.Categories_Editor,
-         Code_Peer.Message_Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Code_Peer.Categories_Criteria_Editors.Signal_Criteria_Changed,
          Message_Categories_Criteria_Callbacks.To_Marshaller
            (On_Categories_Criteria_Changed'Access),
          Summary_Report (Self));
@@ -767,8 +767,8 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Categories_Criteria_Changed
      (Object : access
-        Code_Peer.Message_Categories_Criteria_Editors.
-          Message_Categories_Criteria_Editor_Record'Class;
+        Code_Peer.Categories_Criteria_Editors.
+          Categories_Criteria_Editor_Record'Class;
       Self   : Summary_Report)
    is
    begin

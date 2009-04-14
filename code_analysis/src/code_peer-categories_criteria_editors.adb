@@ -30,35 +30,35 @@ with Gtk.Tree_View_Column;
 
 with GPS.Intl; use GPS.Intl;
 
-package body Code_Peer.Message_Categories_Criteria_Editors is
+package body Code_Peer.Categories_Criteria_Editors is
 
    procedure On_Toggle_Category_Visibility
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Interfaces.C.Strings.chars_ptr;
-      Self   : Message_Categories_Criteria_Editor);
+      Self   : Categories_Criteria_Editor);
    --  Called on click on the list's item.
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
-      Self   : Message_Categories_Criteria_Editor);
+      Self   : Categories_Criteria_Editor);
    --  Called on click on the column header.
 
    procedure On_Model_Row_Changed
      (Object : access
-        Code_Peer.Message_Categories_Criteria_Models.
+        Code_Peer.Categories_Criteria_Models.
           Categories_Criteria_Model_Record'Class;
-      Self   : Message_Categories_Criteria_Editor);
+      Self   : Categories_Criteria_Editor);
    --  Called on changes in the underlying model.
 
    procedure On_Destroy
-     (Self : access Message_Categories_Criteria_Editor_Record'Class);
+     (Self : access Categories_Criteria_Editor_Record'Class);
    --  Called on widget destroy.
 
    package Cell_Renderer_Toggle_Callbacks is
      new Gtk.Handlers.User_Callback
            (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
-            Message_Categories_Criteria_Editor);
+            Categories_Criteria_Editor);
 
    package Cell_Renderer_Toggle_Callbacks_Marshallers is
      new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
@@ -67,16 +67,16 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
    package Tree_View_Column_Callbacks is
      new Gtk.Handlers.User_Callback
            (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
-            Message_Categories_Criteria_Editor);
+            Categories_Criteria_Editor);
 
    package Message_Categories_Criteria_Editor_Callbacks is
-     new Gtk.Handlers.Callback (Message_Categories_Criteria_Editor_Record);
+     new Gtk.Handlers.Callback (Categories_Criteria_Editor_Record);
 
    package Message_Categories_Criteria_Model_Callbacks is
      new Gtk.Handlers.User_Callback
-           (Code_Peer.Message_Categories_Criteria_Models.
+           (Code_Peer.Categories_Criteria_Models.
               Categories_Criteria_Model_Record,
-            Message_Categories_Criteria_Editor);
+            Categories_Criteria_Editor);
 
    Class_Record : Glib.Object.GObject_Class := Glib.Object.Uninitialized_Class;
 
@@ -91,7 +91,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
    ----------------------------
 
    function Get_Visible_Categories
-     (Self : access Message_Categories_Criteria_Editor_Record'Class)
+     (Self : access Categories_Criteria_Editor_Record'Class)
       return Code_Peer.Message_Category_Sets.Set
    is
    begin
@@ -103,10 +103,10 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor     : in out Message_Categories_Criteria_Editor;
+     (Editor     : in out Categories_Criteria_Editor;
       Categories : Code_Peer.Message_Category_Sets.Set) is
    begin
-      Editor := new Message_Categories_Criteria_Editor_Record;
+      Editor := new Categories_Criteria_Editor_Record;
       Initialize (Editor, Categories);
    end Gtk_New;
 
@@ -116,7 +116,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
 
    procedure Initialize
      (Self       :
-        not null access Message_Categories_Criteria_Editor_Record'Class;
+        not null access Categories_Criteria_Editor_Record'Class;
       Categories : Code_Peer.Message_Category_Sets.Set)
    is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -141,14 +141,14 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
 
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
 
-      Code_Peer.Message_Categories_Criteria_Models.Gtk_New
+      Code_Peer.Categories_Criteria_Models.Gtk_New
         (Self.Model, Categories);
       Message_Categories_Criteria_Model_Callbacks.Connect
         (Self.Model,
          Gtk.Tree_Model.Signal_Row_Changed,
          Message_Categories_Criteria_Model_Callbacks.To_Marshaller
            (On_Model_Row_Changed'Access),
-         Message_Categories_Criteria_Editor (Self));
+         Categories_Criteria_Editor (Self));
       Gtk.Tree_View.Gtk_New (Self.View, Self.Model);
       Self.Add (Self.View);
 
@@ -159,7 +159,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
          Gtk.Tree_View_Column.Signal_Clicked,
          Tree_View_Column_Callbacks.To_Marshaller
            (On_Select_All_Toggled'Access),
-         Message_Categories_Criteria_Editor (Self));
+         Categories_Criteria_Editor (Self));
       Gtk.Check_Button.Gtk_New (Self.Toggle, "");
          Self.Toggle.Set_Inconsistent (False);
          Self.Toggle.Set_Active (True);
@@ -170,14 +170,14 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
       Column.Add_Attribute
         (Toggle_Renderer,
          "active",
-         Code_Peer.Message_Categories_Criteria_Models.Active_Column);
+         Code_Peer.Categories_Criteria_Models.Active_Column);
       Dummy := Self.View.Append_Column (Column);
       Cell_Renderer_Toggle_Callbacks.Connect
         (Toggle_Renderer,
          Gtk.Cell_Renderer_Toggle.Signal_Toggled,
          Cell_Renderer_Toggle_Callbacks_Marshallers.To_Marshaller
            (On_Toggle_Category_Visibility'Access),
-         Message_Categories_Criteria_Editor (Self),
+         Categories_Criteria_Editor (Self),
          True);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
@@ -187,7 +187,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
       Column.Add_Attribute
         (Text_Renderer,
          "text",
-         Code_Peer.Message_Categories_Criteria_Models.Name_Column);
+         Code_Peer.Categories_Criteria_Models.Name_Column);
       Dummy := Self.View.Append_Column (Column);
    end Initialize;
 
@@ -196,7 +196,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
    ----------------
 
    procedure On_Destroy
-     (Self : access Message_Categories_Criteria_Editor_Record'Class)
+     (Self : access Categories_Criteria_Editor_Record'Class)
    is
    begin
       Self.Model.Clear;
@@ -208,9 +208,9 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
 
    procedure On_Model_Row_Changed
      (Object : access
-        Code_Peer.Message_Categories_Criteria_Models.
+        Code_Peer.Categories_Criteria_Models.
           Categories_Criteria_Model_Record'Class;
-      Self   : Message_Categories_Criteria_Editor)
+      Self   : Categories_Criteria_Editor)
    is
       pragma Unreferenced (Object);
 
@@ -234,7 +234,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
 
    procedure On_Select_All_Toggled
      (Object : access Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record'Class;
-      Self   : Message_Categories_Criteria_Editor)
+      Self   : Categories_Criteria_Editor)
    is
       pragma Unreferenced (Object);
 
@@ -261,7 +261,7 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
      (Object : access
         Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Interfaces.C.Strings.chars_ptr;
-      Self   : Message_Categories_Criteria_Editor)
+      Self   : Categories_Criteria_Editor)
    is
       Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
                          Self.Model.Get_Iter_From_String
@@ -279,4 +279,4 @@ package body Code_Peer.Message_Categories_Criteria_Editors is
         (Self, Signal_Criteria_Changed);
    end On_Toggle_Category_Visibility;
 
-end Code_Peer.Message_Categories_Criteria_Editors;
+end Code_Peer.Categories_Criteria_Editors;

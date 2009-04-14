@@ -22,7 +22,7 @@ with Gtk.Tree_Model;
 
 with Code_Peer.Message_Categories_Models;
 
-package Code_Peer.Message_Categories_Criteria_Models is
+package Code_Peer.Categories_Criteria_Models is
 
    Active_Column      : constant := 0;
    Name_Column        : constant := 1;
@@ -32,11 +32,11 @@ package Code_Peer.Message_Categories_Criteria_Models is
      new Code_Peer.Message_Categories_Models.Message_Categories_Model_Record
        with private;
 
-   type Messages_Filter_Model is
+   type Categories_Criteria_Model is
      access all Categories_Criteria_Model_Record'Class;
 
    procedure Gtk_New
-     (Model      : in out Messages_Filter_Model;
+     (Model      : in out Categories_Criteria_Model;
       Categories : Code_Peer.Message_Category_Sets.Set);
 
    procedure Initialize
@@ -90,4 +90,4 @@ private
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue);
 
-end Code_Peer.Message_Categories_Criteria_Models;
+end Code_Peer.Categories_Criteria_Models;

@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package body Code_Peer.Message_Categories_Criteria_Models is
+package body Code_Peer.Categories_Criteria_Models is
 
    -----------
    -- Clear --
@@ -111,7 +111,7 @@ package body Code_Peer.Message_Categories_Criteria_Models is
    -------------
 
    procedure Gtk_New
-     (Model      : in out Messages_Filter_Model;
+     (Model      : in out Categories_Criteria_Model;
       Categories : Code_Peer.Message_Category_Sets.Set)
    is
    begin
@@ -240,4 +240,4 @@ package body Code_Peer.Message_Categories_Criteria_Models is
       Self.All_Categories.Iterate (Process'Access);
    end Show_All;
 
-end Code_Peer.Message_Categories_Criteria_Models;
+end Code_Peer.Categories_Criteria_Models;
