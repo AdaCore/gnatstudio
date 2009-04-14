@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,7 +26,7 @@ with GPS.Kernel.Modules;
 with Code_Analysis;
 private with Code_Peer.Entity_Messages_Models;
 private with Code_Peer.Summary_Models;
-private with Code_Peer.Messages_Filter_Models;
+private with Code_Peer.Message_Categories_Criteria_Editors;
 
 package Code_Peer.Summary_Reports is
 
@@ -70,16 +70,18 @@ package Code_Peer.Summary_Reports is
 private
 
    type Summary_Report_Record is new Gtk.Paned.Gtk_Hpaned_Record with record
-      Kernel         : GPS.Kernel.Kernel_Handle;
-      Tree           : Code_Analysis.Code_Analysis_Tree;
-      Analysis_Model : Code_Peer.Summary_Models.Summary_Model;
-      Analysis_View  : Gtk.Tree_View.Gtk_Tree_View;
-      Messages_Model : Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
-      Messages_View  : Gtk.Tree_View.Gtk_Tree_View;
-      Hide_Model     : Code_Peer.Messages_Filter_Models.Messages_Filter_Model;
-      Hide_View      : Gtk.Tree_View.Gtk_Tree_View;
+      Kernel             : GPS.Kernel.Kernel_Handle;
+      Tree               : Code_Analysis.Code_Analysis_Tree;
+      Analysis_Model     : Code_Peer.Summary_Models.Summary_Model;
+      Analysis_View      : Gtk.Tree_View.Gtk_Tree_View;
+      Messages_Model     :
+        Code_Peer.Entity_Messages_Models.Entity_Messages_Model;
+      Messages_View      : Gtk.Tree_View.Gtk_Tree_View;
+      Categories_Editor  :
+        Code_Peer.Message_Categories_Criteria_Editors.
+          Message_Categories_Criteria_Editor;
 
-      Show_Lifeage   : Lifeage_Kinds_Flags :=
+      Show_Lifeage       : Lifeage_Kinds_Flags :=
                          (Added => True, Unchanged => True, Removed => False);
       Show_Probabilities : Message_Probability_Level_Flags :=
                              (Suppressed => False, others => True);

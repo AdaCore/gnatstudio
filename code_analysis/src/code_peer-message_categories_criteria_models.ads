@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,7 @@ with Gtk.Tree_Model;
 
 with Code_Peer.Message_Categories_Models;
 
-package Code_Peer.Messages_Filter_Models is
+package Code_Peer.Message_Categories_Criteria_Models is
 
    Active_Column      : constant := 0;
    Name_Column        : constant := 1;
@@ -77,4 +77,4 @@ private
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue);
 
-end Code_Peer.Messages_Filter_Models;
+end Code_Peer.Message_Categories_Criteria_Models;

@@ -22,13 +22,11 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
-with Glib.Values;
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
@@ -65,25 +63,16 @@ package body Code_Peer.Summary_Reports is
    package Summary_Report_Callbacks is new Gtk.Handlers.Callback
      (Summary_Report_Record);
 
-   package Cell_Renderer_Toggle_Report_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
-            Summary_Report);
-
-   package Cell_Renderer_Toggle_Report_Callbacks_Marshallers is
-     new Cell_Renderer_Toggle_Report_Callbacks.Marshallers.Generic_Marshaller
-           (Interfaces.C.Strings.chars_ptr, Glib.Values.Get_Chars);
-
    package Check_Button_Report_Callbacks is new Gtk.Handlers.User_Callback
      (Gtk.Check_Button.Gtk_Check_Button_Record, Summary_Report);
 
-   procedure On_Destroy (Self : access Summary_Report_Record'Class);
+   package Message_Categories_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+       (Code_Peer.Message_Categories_Criteria_Editors.
+            Message_Categories_Criteria_Editor_Record,
+        Summary_Report);
 
-   procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
-      Self   : Summary_Report);
+   procedure On_Destroy (Self : access Summary_Report_Record'Class);
 
    procedure On_Show_All_Subprograms_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
@@ -119,6 +108,12 @@ package body Code_Peer.Summary_Reports is
 
    procedure On_Show_Suppressed_Messages_Toggled
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
+      Self   : Summary_Report);
+
+   procedure On_Categories_Criteria_Changed
+     (Object : access
+        Code_Peer.Message_Categories_Criteria_Editors.
+          Message_Categories_Criteria_Editor_Record'Class;
       Self   : Summary_Report);
 
    procedure Context_Func
@@ -291,7 +286,6 @@ package body Code_Peer.Summary_Reports is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
-      Toggle_Renderer : Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle;
       Report_Pane     : Gtk.Paned.Gtk_Vpaned;
       Filter_Box      : Gtk.Box.Gtk_Vbox;
       Check           : Gtk.Check_Button.Gtk_Check_Button;
@@ -669,48 +663,22 @@ package body Code_Peer.Summary_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Filter_Box.Pack_Start (Scrolled);
-
-      Code_Peer.Messages_Filter_Models.Gtk_New
-        (Self.Hide_Model,
+      Code_Peer.Message_Categories_Criteria_Editors.Gtk_New
+        (Self.Categories_Editor,
          Code_Peer.Project_Data'Class
            (Code_Analysis.Get_Or_Create
               (Tree,
                GPS.Kernel.Project.Get_Project
                  (Kernel)).Analysis_Data.Code_Peer_Data.all).
                     Message_Categories);
+      Filter_Box.Pack_Start (Self.Categories_Editor);
 
-      Gtk.Tree_View.Gtk_New (Self.Hide_View, Self.Hide_Model);
-      Scrolled.Add (Self.Hide_View);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Gtk.Cell_Renderer_Toggle.Gtk_New (Toggle_Renderer);
-      Column.Pack_End (Toggle_Renderer, False);
-      Column.Add_Attribute
-        (Toggle_Renderer,
-         "active",
-         Code_Peer.Messages_Filter_Models.Active_Column);
-      Dummy := Self.Hide_View.Append_Column (Column);
-      Cell_Renderer_Toggle_Report_Callbacks.Connect
-        (Toggle_Renderer,
-         Gtk.Cell_Renderer_Toggle.Signal_Toggled,
-         Cell_Renderer_Toggle_Report_Callbacks_Marshallers.To_Marshaller
-           (On_Toggle_Category_Visibility'Access),
-         Summary_Report (Self),
-         True);
-
-      Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Message categories");
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Column.Pack_End (Text_Renderer, False);
-      Column.Add_Attribute
-        (Text_Renderer,
-         "text",
-         Code_Peer.Messages_Filter_Models.Name_Column);
-      Dummy := Self.Hide_View.Append_Column (Column);
+      Message_Categories_Criteria_Callbacks.Connect
+        (Self.Categories_Editor,
+         Code_Peer.Message_Categories_Criteria_Editors.Signal_Criteria_Changed,
+         Message_Categories_Criteria_Callbacks.To_Marshaller
+           (On_Categories_Criteria_Changed'Access),
+         Summary_Report (Self));
 
       --
 
@@ -793,6 +761,23 @@ package body Code_Peer.Summary_Reports is
       return False;
    end On_Analysis_Click;
 
+   ------------------------------------
+   -- On_Categories_Criteria_Changed --
+   ------------------------------------
+
+   procedure On_Categories_Criteria_Changed
+     (Object : access
+        Code_Peer.Message_Categories_Criteria_Editors.
+          Message_Categories_Criteria_Editor_Record'Class;
+      Self   : Summary_Report)
+   is
+   begin
+      Self.Analysis_Model.Set_Visible_Message_Categories
+        (Object.Get_Visible_Categories);
+
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_Categories_Criteria_Changed;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -805,7 +790,7 @@ package body Code_Peer.Summary_Reports is
 
       Self.Analysis_Model.Clear;
       Self.Messages_Model.Clear;
-      Self.Hide_Model.Clear;
+      Self.Categories_Editor.Clear;
    end On_Destroy;
 
    -------------------------------------
@@ -916,34 +901,6 @@ package body Code_Peer.Summary_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Unchanged_Messages_Toggled;
 
-   -----------------------------------
-   -- On_Toggle_Category_Visibility --
-   -----------------------------------
-
-   procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
-      Path   : Interfaces.C.Strings.chars_ptr;
-      Self   : Summary_Report)
-   is
-      Iter  : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                         Self.Hide_Model.Get_Iter_From_String
-                           (Interfaces.C.Strings.Value (Path));
-
-   begin
-      if Object.Get_Active then
-         Self.Hide_Model.Hide (Self.Hide_Model.Category_At (Iter));
-
-      else
-         Self.Hide_Model.Show (Self.Hide_Model.Category_At (Iter));
-      end if;
-
-      Self.Analysis_Model.Set_Visible_Message_Categories
-        (Self.Hide_Model.Get_Visible_Categories);
-
-      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
-   end On_Toggle_Category_Visibility;
-
    ------------
    -- Update --
    ------------
@@ -963,7 +920,7 @@ package body Code_Peer.Summary_Reports is
       Criteria : in out Code_Peer.Message_Filter_Criteria)
    is
    begin
-      Criteria.Categories    := Self.Hide_Model.Get_Visible_Categories;
+      Criteria.Categories    := Self.Categories_Editor.Get_Visible_Categories;
       Criteria.Probabilities := Self.Show_Probabilities;
       Criteria.Lineages      := Self.Show_Lifeage;
    end Update_Criteria;

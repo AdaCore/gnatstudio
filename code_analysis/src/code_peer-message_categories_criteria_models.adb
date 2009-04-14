@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2008, AdaCore                   --
+--                  Copyright (C) 2008-2009, AdaCore                 --
 --                                                                   --
 -- GPS is Free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package body Code_Peer.Messages_Filter_Models is
+package body Code_Peer.Message_Categories_Criteria_Models is
 
    -----------
    -- Clear --
@@ -157,4 +157,4 @@ package body Code_Peer.Messages_Filter_Models is
       Self.Row_Changed (Category);
    end Show;
 
-end Code_Peer.Messages_Filter_Models;
+end Code_Peer.Message_Categories_Criteria_Models;
