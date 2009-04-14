@@ -732,9 +732,9 @@ package body Navigation_Module is
       when E : others => Trace (Exception_Handle, E);
    end On_Start_Statement;
 
-   ------------------------
+   ----------------------
    -- On_End_Statement --
-   ------------------------
+   ----------------------
 
    procedure On_End_Statement
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
