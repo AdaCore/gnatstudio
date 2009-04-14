@@ -240,7 +240,7 @@ package body Code_Peer.Categories_Criteria_Editors is
 
    begin
       if Self.Toggle.Get_Inconsistent then
-         Self.Model.Show_All;
+         Self.Model.Hide_All;
 
       elsif Self.Toggle.Get_Active then
          Self.Model.Hide_All;
