@@ -271,10 +271,12 @@ package body GVD.Generic_View is
         (View   : out Formal_View_Access;
          Child  : out GPS_MDI_Child;
          MDI    : access MDI_Window_Record'Class;
-         Kernel : access Kernel_Handle_Record'Class) is
+         Kernel : access Kernel_Handle_Record'Class)
+      is
+         Focus_Widget : Gtk_Widget;
       begin
          View := new Formal_View_Record;
-         Initialize (View, Kernel);
+         Focus_Widget := Initialize (View, Kernel);
          Add_Hook
            (Kernel,
             Hook  => Debugger_Terminated_Hook,
@@ -285,7 +287,7 @@ package body GVD.Generic_View is
          Gtk_New (Child, View,
                   Flags          => MDI_Child_Flags,
                   Group          => Group,
-                  Focus_Widget   => Gtk_Widget (View),
+                  Focus_Widget   => Focus_Widget,
                   Default_Width  => 150,
                   Default_Height => 150,
                   Module         => Get_Module);

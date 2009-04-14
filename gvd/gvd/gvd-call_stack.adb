@@ -103,9 +103,9 @@ package body GVD.Call_Stack is
      (View : access Call_Stack_Record) return XML_Utils.Node_Ptr;
    --  See inherited documentation
 
-   procedure Initialize
+   function Initialize
      (Widget : access Call_Stack_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
    function Get_View
@@ -324,9 +324,9 @@ package body GVD.Call_Stack is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Widget : access Call_Stack_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
       Name_Frame   : aliased String := -"Num";
@@ -367,6 +367,8 @@ package body GVD.Call_Stack is
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Get_Selection (Widget.Tree), Signal_Changed,
          On_Selection_Changed'Access, Widget);
+
+      return Gtk_Widget (Widget.Tree);
    end Initialize;
 
    --------------------------------

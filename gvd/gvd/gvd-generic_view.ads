@@ -147,10 +147,14 @@ package GVD.Generic_View is
       --  graphically the contents of the old view. At that point the
       --  view is still attached to a process with which you can interact.
 
-      with procedure Initialize
+      with function Initialize
         (View   : access Formal_View_Record'Class;
-         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is <>;
-      --  Function used to create the view itself
+         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+        return Gtk.Widget.Gtk_Widget is <>;
+      --  Function used to create the view itself.
+      --  This function should return the Focus_Child in the MDI sense, ie the
+      --  widget that should receive the focus when the MDI child receives the
+      --  focus.
 
       Group    : Gtkada.MDI.Child_Group;
       Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Right;

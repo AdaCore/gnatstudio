@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2000-2008, AdaCore                  --
+--                 Copyright (C) 2000-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -112,9 +112,9 @@ package body GVD.Assembly_View is
    --  display the text. It should be a fixed-width font, which is nice for
    --  source code.
 
-   procedure Initialize
+   function Initialize
      (Widget : access Assembly_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
    procedure Set_Source_Line
@@ -1132,9 +1132,9 @@ package body GVD.Assembly_View is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Widget : access Assembly_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Hook : Preferences_Hook;
    begin
@@ -1159,6 +1159,8 @@ package body GVD.Assembly_View is
         (Kernel, Preferences_Changed_Hook, Hook,
          Name => "gvd.assembly_view.preferences_changed",
          Watch => GObject (Widget));
+
+      return Gtk_Widget (Widget.View);
    end Initialize;
 
    -------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2005-2008, AdaCore              --
+--                     Copyright (C) 2005-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -88,12 +88,12 @@ package body GVD.Consoles is
 
    package TTY_Timeout is new Gtk.Main.Timeout (Debuggee_Console);
 
-   procedure Initialize
+   function Initialize
      (Console : access Debugger_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class);
-   procedure Initialize
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+   function Initialize
      (Console : access Debuggee_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class);
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create each of the console types
 
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class);
@@ -417,9 +417,9 @@ package body GVD.Consoles is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Console : access Debugger_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) is
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget is
    begin
       Initialize
         (Console,
@@ -448,6 +448,8 @@ package body GVD.Consoles is
          Object          => Console,
          ID              => Debugger_Module_ID,
          Context_Func    => Context_Factory'Access);
+
+      return Gtk_Widget (Get_View (Console));
    end Initialize;
 
    ------------------
@@ -513,9 +515,9 @@ package body GVD.Consoles is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Console : access Debuggee_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class)
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
    begin
@@ -531,6 +533,8 @@ package body GVD.Consoles is
          Wrap_Mode    => Wrap_Char);
       Widget_Callback.Connect
         (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
+
+      return Gtk_Widget (Get_View (Console));
    end Initialize;
 
    --------------------------------

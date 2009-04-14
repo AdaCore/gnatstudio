@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -108,9 +108,9 @@ package body GVD.Dialogs is
       end record;
    type Thread_View is access all Thread_View_Record'Class;
 
-   procedure Initialize
+   function Initialize
      (Thread : access Thread_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    function Get_Thread_View
      (Process : access Visual_Debugger_Record'Class)
       return Gtk_Scrolled_Window;
@@ -146,9 +146,9 @@ package body GVD.Dialogs is
    procedure Set_Task_View
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window);
-   procedure Initialize
+   function Initialize
      (Tasks  : access Task_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
    package Tasks_Views is new Scrolled_Views.Simple_Views
@@ -172,9 +172,9 @@ package body GVD.Dialogs is
    procedure Set_PD_View
      (Process : access Visual_Debugger_Record'Class;
       View    : Gtk_Scrolled_Window);
-   procedure Initialize
+   function Initialize
      (PDs    : access PD_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
    package PD_Views is new Scrolled_Views.Simple_Views
@@ -593,9 +593,9 @@ package body GVD.Dialogs is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Thread : access Thread_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       pragma Unreferenced (Kernel);
    begin
@@ -604,32 +604,40 @@ package body GVD.Dialogs is
 
       --  The tree will be created on the first call to Update, since we do not
       --  know yet how many columns are needed.
+
+      return Gtk_Widget (Thread);
    end Initialize;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Tasks  : access Task_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) is
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+   is
+      W : Gtk_Widget;
    begin
-      Initialize (Thread => Tasks, Kernel => Kernel);
+      W := Initialize (Thread => Tasks, Kernel => Kernel);
       Tasks.Get_Info := Info_Tasks_Dispatch'Access;
       Tasks.Switch   := Task_Switch_Dispatch'Access;
+      return W;
    end Initialize;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (PDs    : access PD_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) is
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+   is
+      W : Gtk_Widget;
    begin
-      Initialize (Thread => PDs, Kernel => Kernel);
+      W := Initialize (Thread => PDs, Kernel => Kernel);
       PDs.Get_Info := Info_PD_Dispatch'Access;
       PDs.Switch   := PD_Switch_Dispatch'Access;
+      return W;
    end Initialize;
 
    ----------------

@@ -154,9 +154,9 @@ package body GVD.Canvas is
    overriding procedure Update (Canvas : access GVD_Canvas_Record);
    --  Called when the canvas needs refreshing
 
-   procedure Initialize
+   function Initialize
      (Canvas : access GVD_Canvas_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class);
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new data window in the MDI
 
    function Get_Canvas
@@ -973,9 +973,9 @@ package body GVD.Canvas is
    -- Initialize --
    ----------------
 
-   procedure Initialize
+   function Initialize
      (Canvas : access GVD_Canvas_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
       Annotation_Font : Pango_Font_Description;
       Hook            : Preferences_Hook;
@@ -1014,6 +1014,8 @@ package body GVD.Canvas is
            Get_Size (Annotation_Font) - 2 * Pango_Scale));
       Configure (Get_Canvas (Canvas), Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
+
+      return Gtk_Widget (Canvas);
    end Initialize;
 
    ----------------
