@@ -617,18 +617,9 @@ package body Src_Editor_Module.Editors is
          Block := Get_Block (Source_Buffer (Get_Buffer (Iter)),
             Get_Editable_Line (Source_Buffer (Get_Buffer (Iter)), Line));
 
-         Get_Iter_At_Line_Offset
-           (Source_Buffer (Get_Buffer (Iter)), Iter2,
-            Line_Number => Gint (Block.Last_Line),
-            Char_Offset => 1);
-         Forward_Lines
-           (Iter2,
-            Count  => -1,
-            Result => Success);
-
-         if not Success then
-            return Nil_Editor_Location;
-         end if;
+         Get_Iter_At_Screen_Position
+           (Source_Buffer (Get_Buffer (Iter)), Iter2, Block.Last_Line,
+            Character_Offset_Type'(1));
 
          Forward_To_Line_End (Iter2, Success);
 
