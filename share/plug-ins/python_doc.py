@@ -586,6 +586,12 @@ def generate_doc (entity):
   shutil.copy (GPS.get_system_dir() + "share/gps/plug-ins/childtree2.png",
                GPS.get_home_dir() + "generated_doc")
 
+  ## If the files are read-only in the system dir, we would only be able to
+  ## generate the doc once
+
+  os.chmod(GPS.get_home_dir() + "generated_doc/childtree.png", stat.S_IWRITE)
+  os.chmod(GPS.get_home_dir() + "generated_doc/childtree2.png", stat.S_IWRITE)
+
   ## These comment lines are for use through pydoc
   #home_dir = GPS.get_home_dir()
   #name = home_dir + os.sep + entity.__name__ + ".html"
