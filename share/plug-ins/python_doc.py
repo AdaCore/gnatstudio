@@ -15,7 +15,7 @@ This package provides support for:
 ## No user customization below this line
 ############################################################################
 
-import GPS, pydoc, os, inspect, pydoc, sys, re, shutil
+import GPS, pydoc, os, inspect, pydoc, sys, re, shutil, stat
 from string import rstrip, lstrip, expandtabs
 
 # The following classes provide a nice way to display HTML documentation.
