@@ -11548,6 +11548,10 @@ Main source, or makefile targets.
 Note: this macro is only available in the commands defined in the Build
 Manager and the Build Launcher dialogs.
 
+@item %TT
+Same as @code{%TT}, but returns the full path to main sources rather than
+the base filename.
+
 @item %attr(Package'Name[,default])
 Replaced by the project attribute @code{Package'Name}, in other words, the
 attribute @code{Name} from the package @code{Package}. @code{Package'} is

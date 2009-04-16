@@ -23,6 +23,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
@@ -458,10 +459,35 @@ package body Builder_Facility_Module is
       Base_Project : Project_Type;
 
       Root_Project : constant Project_Type := Get_Project (Kernel);
+      Registry     : constant Project_Registry_Access := Get_Registry (Kernel);
+
+      function To_Full_Path
+        (Basename : String; Project : Project_Type) return String;
+      --  Return the full path of file Basename in project Project.
 
       function Get_Root_Mains return Argument_List;
       --  Return the mains contained in the root project and all its
       --  dependencies.
+
+      ------------------
+      -- To_Full_Path --
+      ------------------
+
+      function To_Full_Path
+        (Basename : String; Project : Project_Type) return String
+      is
+         File : Virtual_File;
+      begin
+         Get_Full_Path_From_File
+           (Registry.all,
+            Filesystem_String (Basename),
+            Use_Source_Path => True,
+            Use_Object_Path => False,
+            Project         => Project,
+            File            => File);
+
+         return +(Full_Name (File).all);
+      end To_Full_Path;
 
       --------------------
       -- Get_Root_Mains --
@@ -491,11 +517,11 @@ package body Builder_Facility_Module is
          --  the majority of cases, users will want to see the mains defined
          --  in the root project first.
 
-         for J in reverse 1 .. Index_P - 1 loop
+         for Proj in reverse 1 .. Index_P - 1 loop
             declare
                Mains : Argument_List :=
                  Get_Attribute_Value
-                   (Projects (J), Attribute => Main_Attribute);
+                   (Projects (Proj), Attribute => Main_Attribute);
             begin
                for J in Mains'Range loop
                   if Mains (J)'Length > 0 then
@@ -506,7 +532,11 @@ package body Builder_Facility_Module is
                         exit;
                      end if;
 
-                     Result (Index) := Mains (J);
+                     Result (Index) :=
+                       new String'
+                         (To_Full_Path (Mains (J).all, Projects (Proj)));
+
+                     Free (Mains (J));
                      Index := Index + 1;
                   end if;
                end loop;
@@ -530,7 +560,7 @@ package body Builder_Facility_Module is
 
       else
          declare
-            Base_Mains : constant Argument_List :=
+            Base_Mains : Argument_List :=
               Get_Attribute_Value
                 (Base_Project,
                  Attribute => Main_Attribute);
@@ -564,7 +594,19 @@ package body Builder_Facility_Module is
                return Root_Mains;
             end if;
 
+            --  Find full paths for files in Base_Mains.
+            for M in 1 .. Base_Mains'Length loop
+               declare
+                  F : constant String :=
+                    To_Full_Path (Base_Mains (M).all, Base_Project);
+               begin
+                  Free (Base_Mains (M));
+                  Base_Mains (M) := new String'(F);
+               end;
+            end loop;
+
             Mains (1 .. Base_Mains'Length) := Base_Mains;
+
             Index := Base_Mains'Length + 1;
 
             for K in Root_Mains'Range loop
@@ -1397,10 +1439,12 @@ package body Builder_Facility_Module is
          begin
             for J in Mains'Range loop
                if Mains (J) /= null then
-                  Menu_For_Action (Parent_Path => To_String (Cat_Path),
-                                   Name        => Get_Name (Target),
-                                   Main        => Mains (J).all,
-                                   Menu_Name   => Mains (J).all);
+                  Menu_For_Action
+                    (Parent_Path => To_String (Cat_Path),
+                     Name        => Get_Name (Target),
+                     Main        => Mains (J).all,
+                     Menu_Name   => GNAT.Directory_Operations.Base_Name
+                       (Mains (J).all));
                end if;
             end loop;
 

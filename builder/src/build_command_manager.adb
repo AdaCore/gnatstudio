@@ -20,6 +20,8 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
 
+with GNAT.Directory_Operations;
+
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
 
 with Builder_Facility_Module;     use Builder_Facility_Module;
@@ -357,9 +359,20 @@ package body Build_Command_Manager is
             end if;
          end;
 
-      elsif Arg = "%T" then
+      elsif Arg = "%TT" then
          if Main /= "" then
             return (1 => new String'(Main));
+         else
+            Console.Insert
+              (Kernel, -"Could not determine the target to build.",
+               Mode => Console.Error);
+            raise Invalid_Argument;
+         end if;
+
+      elsif Arg = "%T" then
+         if Main /= "" then
+            return (1 => new String'
+                      (GNAT.Directory_Operations.Base_Name (Main)));
          else
             Console.Insert
               (Kernel, -"Could not determine the target to build.",
