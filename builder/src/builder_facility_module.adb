@@ -484,7 +484,12 @@ package body Builder_Facility_Module is
             Use_Source_Path => True,
             Use_Object_Path => False,
             Project         => Project,
+            Create_As_Base_If_Not_Found => False,
             File            => File);
+
+         if File = No_File then
+            return Basename;
+         end if;
 
          return +(Full_Name (File).all);
       end To_Full_Path;
