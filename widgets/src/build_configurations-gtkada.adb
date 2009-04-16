@@ -640,8 +640,9 @@ package body Build_Configurations.Gtkada is
                 " as defined by the given name. If the value is set to" &
                 " ""main"", one entry per main defined in your project" &
                 " hierarchy will be created. See also corresponding" &
-                " macro %T on command line, and compute_build_targets hook" &
-                " for advanced usage of this field");
+                " macros %T and %TT on command line, and" &
+                " compute_build_targets hook for advanced usage of this" &
+                " field");
 
          begin
             Gtk_New_Hbox (Hbox);
