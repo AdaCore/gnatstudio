@@ -25,6 +25,7 @@ def on_exit (process, exit_status, output):
       f.close ()
       buffer = EditorBuffer.get (File (process.standard))
       buffer.current_view().set_read_only (True)
+      Editor.set_title (process.standard, "standard.ads", "standard.ads")
       os.unlink (process.standard)
 
 @interactive (name="Display standard.ads", menu="/Help/GNAT Runtime/Standard")
@@ -52,4 +53,3 @@ def display():
 
    if path: os.unlink (path)
    os.rmdir  (dir)
-
