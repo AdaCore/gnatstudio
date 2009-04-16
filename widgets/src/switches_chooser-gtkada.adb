@@ -848,6 +848,8 @@ package body Switches_Chooser.Gtkada is
             ASCII.LF &
             "    %T: base name of main source being considered" &
             ASCII.LF &
+            "    %TT: full name of main source being considered" &
+            ASCII.LF &
             "    %PP: pathname of the root project" &
             ASCII.LF &
             "    %vars: list of var=value switches from project variables" &
