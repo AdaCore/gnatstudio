@@ -898,7 +898,7 @@ package body VCS_Activities_View_API is
             Files : constant File_Array :=
                       Get_Files_In_Activity (Activity);
          begin
-            VCS   := Get_VCS_For_Activity (Kernel, Activity);
+            VCS := Get_VCS_For_Activity (Kernel, Activity);
 
             if Files'Length = 0 or else VCS = null then
                Display_File_Status

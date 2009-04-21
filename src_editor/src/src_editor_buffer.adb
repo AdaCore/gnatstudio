@@ -1857,7 +1857,7 @@ package body Src_Editor_Buffer is
               (Buffer, Editable_Line_Start, Editable_Line_End,
                Buffer_Line_Type (Line_Start + 1))
             then
-               --  We have modified the area. Stop propagation of this signal.
+               --  We have modified the area. Stop propagation of this signal
 
                Emit_Stop_By_Name (Buffer, "delete_range");
 
@@ -1896,7 +1896,7 @@ package body Src_Editor_Buffer is
 
                Result := Fold_Unfold_Line (Buffer, Editable_Line_Start, False);
                if Result then
-                  --  We have changed the buffer: stop propagation and reemit.
+                  --  We have changed the buffer: stop propagation and reemit
                   Emit_Stop_By_Name (Buffer, "delete_range");
 
                   Get_Iter_At_Mark (Buffer, Start_Iter, M1);
@@ -2581,9 +2581,7 @@ package body Src_Editor_Buffer is
       Create (Command, Source_Buffer (Buffer), Buffer.Queue);
 
       Add_Queue_Change_Hook
-        (Buffer.Queue,
-         Command_Access (Command),
-         "State_Check");
+        (Buffer.Queue, Command_Access (Command), "State_Check");
 
       Buffer.First_Removed_Line := 0;
    end Initialize;

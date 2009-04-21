@@ -3539,7 +3539,7 @@ package body VCS_View_API is
          Sort (A.all);
 
          for J in A'Range loop
-            --  Remove potential duplicated entries.
+            --  Remove potential duplicated entries
             if Result = null
               or else A (J) /= Result (Result'Last)
             then
