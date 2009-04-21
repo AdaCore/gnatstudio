@@ -1897,8 +1897,11 @@ package body Projects is
                   end;
                end if;
 
-               Assert (Me, Kind_Of (Expr, Proj.Tree) = N_Literal_String,
-                       "Default value can only be literal string");
+               if Kind_Of (Expr, Proj.Tree) /= N_Literal_String then
+                  Trace (Me, "Default value can only be literal string");
+                  Proj.Data.Uses_Variables := True; --  prevent edition
+                  return No_Name;
+               end if;
             end if;
 
             return String_Value_Of (Expr, Proj.Tree);

@@ -3869,6 +3869,12 @@ completely separate hierarchy of project, and it is much more efficient
 to create a new configuration variable and edit the switches for the
 appropriate scenario (@ref{The Project Properties Editor}).
 
+There is one limitation in what GPS can do with scenario variables: although
+gnatmake and gprbuild have no problem dealing with scenario variables
+those default value is not a static string (for instance a concatenation, or
+the value of another scenario variable), GPS will not be able to edit such
+a project graphically. Such projects will load fine in GPS though.
+
 @subsection Creating new configuration variables
 @cindex creating configuration variable
 
