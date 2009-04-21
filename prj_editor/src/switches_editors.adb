@@ -41,6 +41,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -713,6 +714,8 @@ package body Switches_Editors is
       pragma Unreferenced (Button_OK);
 
    begin
+      Run_Hook (Kernel, Project_Editor_Hook);
+
       if Files'Length > 1 then
          Gtk_New (Dialog,
                   Title  => -"Editing switches for multiple files",
