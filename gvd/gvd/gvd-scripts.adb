@@ -29,6 +29,7 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
+with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;
 with GVD_Module;              use GVD_Module;
@@ -474,6 +475,7 @@ package body GVD.Scripts is
          begin
             Process := Spawn
               (Kernel => Kernel,
+               Kind   => Debugger_Kind.Get_Pref,
                File   => File,
                Project => Get_Project (Kernel),
                Args    => Nth_Arg (Data, 2, ""));

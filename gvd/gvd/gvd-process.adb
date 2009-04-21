@@ -51,6 +51,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
+with Debugger.VMS;               use Debugger.VMS;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -1043,9 +1044,12 @@ package body GVD.Process is
       case Kind is
          when Gdb_Type =>
             Process.Debugger := new Gdb_Debugger;
-         when others =>
-            Set_Busy (Process, False);
-            raise Debugger_Not_Supported;
+         when VMS_Type =>
+            Process.Debugger := new VMS_Debugger;
+         --  in case other debugger kinds are added:
+         --  when others =>
+         --     Set_Busy (Process, False);
+         --     raise Debugger_Not_Supported;
       end case;
 
       --  Spawn the debugger
@@ -1763,6 +1767,7 @@ package body GVD.Process is
 
    function Spawn
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kind    : GVD.Types.Debugger_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type;
       Args    : String) return Visual_Debugger
@@ -1884,7 +1889,7 @@ package body GVD.Process is
          GPS_Proxy (Proxy.all).Process := Process;
          Configure
            (Process         => Process,
-            Kind            => Gdb_Type,
+            Kind            => Kind,
             Proxy           => Proxy,
             Executable      => Module,
             Debugger_Args   => Args (2 .. Args'Last),

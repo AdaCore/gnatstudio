@@ -1890,7 +1890,9 @@ package body GVD_Module is
       Page : Visual_Debugger;
       pragma Unreferenced (Page);
    begin
-      Page := Spawn (Kernel, Data.File, Get_Project (Kernel), Args);
+      Page := Spawn
+        (Kernel, Debugger_Kind.Get_Pref, Data.File,
+         Get_Project (Kernel), Args);
    end Debug_Init;
 
    -------------------

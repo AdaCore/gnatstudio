@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,6 +19,7 @@
 
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
+with GVD.Types;
 
 package GVD.Preferences is
 
@@ -34,6 +35,9 @@ package GVD.Preferences is
    --  What should happen to debugger-related windows when a debugger session
    --  is terminated.
 
+   package Debugger_Kind_Preferences is new
+     Default_Preferences.Enums.Generics (GVD.Types.Debugger_Type);
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -46,6 +50,7 @@ package GVD.Preferences is
    Execution_Window              : Boolean_Preference;
    Preserve_State_On_Exit        : Boolean_Preference;
    Debugger_Windows              : Debugger_Windows_Preferences.Preference;
+   Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
 
    -- Source Window --
    Editor_Show_Line_With_Code    : Boolean_Preference;

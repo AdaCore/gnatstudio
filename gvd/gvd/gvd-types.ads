@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                  Copyright (C) 2000-2008, AdaCore                 --
+--                  Copyright (C) 2000-2009, AdaCore                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -231,15 +231,8 @@ package GVD.Types is
 
    type Debugger_Type is
      (Gdb_Type,
-      VMS_Type,
-      Dbx_Type,
-      Xdb_Type,
-      Jdb_Type,
-      Pydb_Type,
-      Perl_Type,
-      Ladebug_Type);
+      VMS_Type);
    --  Type of debugger handled.
-   --  Beware that some debuggers might not be available.
 
    type Program_Descriptor is record
       Program       : GNATCOLL.VFS.Virtual_File;

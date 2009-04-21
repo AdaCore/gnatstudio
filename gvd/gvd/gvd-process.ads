@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                                GPS                                --
 --                                                                   --
---               Copyright (C) 2000-2008, AdaCore                    --
+--               Copyright (C) 2000-2009, AdaCore                    --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -157,6 +157,7 @@ package GVD.Process is
 
    function Spawn
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kind    : GVD.Types.Debugger_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : Projects.Project_Type;
       Args    : String) return Visual_Debugger;

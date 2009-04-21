@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2000-2008, AdaCore              --
+--                     Copyright (C) 2000-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -101,6 +101,14 @@ package body GVD.Preferences is
            & " debugger session will reuse these windows, which is"
            & " convenient if you want to put them in a specific place"),
          Default => Hide_Windows);
+
+      Debugger_Kind := Debugger_Kind_Preferences.Create
+        (Manager => Prefs,
+         Name    => XML_Prefix & "Debugger-Kind",
+         Label   => -"Debugger Kind",
+         Page    => "",
+         Doc     => -"Kind of debugger spawned by GPS",
+         Default => GVD.Types.Gdb_Type);
 
       Editor_Show_Line_With_Code := Create
         (Manager   => Prefs,
