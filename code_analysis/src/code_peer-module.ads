@@ -29,6 +29,7 @@ with GPS.Kernel.MDI;
 with Code_Analysis;
 
 private with Code_Peer.Summary_Reports;
+private with Projects;
 
 package Code_Peer.Module is
 
@@ -102,5 +103,19 @@ private
    function Is_In_Expert_Mode
      (Self : access Module_Id_Record'Class) return Boolean;
    --  Returns True if expert mode is activated.
+
+   function Codepeer_Output_Directory
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns directory which is used by CodePeer for output inspection
+   --  results.
+
+   function Codepeer_Database_Directory
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns directory which is used by CodePeer for store SQLite database
+   --  files.
+
+   function Codepeer_Library_File_Name
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns name of the library description file for CodePeer invocation.
 
 end Code_Peer.Module;

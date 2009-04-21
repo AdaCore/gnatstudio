@@ -46,34 +46,24 @@ package body Code_Peer.Module.Codepeer is
    -------------------------
 
    procedure Create_Library_File (Project : Projects.Project_Type) is
-      Project_Name       : constant Virtual_File :=
-                             Projects.Project_Path (Project);
-      Object_Directory   : constant Virtual_File :=
-                             Projects.Object_Path (Project);
-      Database_Directory : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".db");
-      Output_Directory   : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".output");
-      Library_File_Name  : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".library");
-      File               : Ada.Text_IO.File_Type;
+      File : Ada.Text_IO.File_Type;
 
    begin
       Ada.Text_IO.Create
-        (File, Ada.Text_IO.Out_File, +Library_File_Name.Full_Name);
+        (File,
+         Ada.Text_IO.Out_File,
+         +Codepeer_Library_File_Name (Project).Full_Name);
 
       Ada.Text_IO.Put_Line
-        (File, "Output_Dir := """ & (+Output_Directory.Full_Name) & """;");
+        (File,
+         "Output_Dir := """
+         & (+Codepeer_Output_Directory (Project).Full_Name) & """;");
       Ada.Text_IO.New_Line (File);
 
       Ada.Text_IO.Put_Line
-        (File, "Database_Dir := """ & (+Database_Directory.Full_Name) & """;");
+        (File,
+         "Database_Dir := """
+         & (+Codepeer_Database_Directory (Project).Full_Name) & """;");
       Ada.Text_IO.New_Line (File);
 
       Ada.Text_IO.Put_Line
@@ -123,26 +113,20 @@ package body Code_Peer.Module.Codepeer is
    ------------
 
    procedure Review (Module : Code_Peer.Module.Code_Peer_Module_Id) is
-      Project            : constant Projects.Project_Type :=
-                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant Virtual_File :=
-                             Projects.Project_Path (Project);
-      Object_Directory   : constant Virtual_File :=
-                             Projects.Object_Path (Project);
-      Library_File_Name  : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".library");
-
-      Args : GNAT.OS_Lib.Argument_List :=
+      Project          : constant Projects.Project_Type :=
+                           GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory : constant Virtual_File :=
+                           Projects.Object_Path (Project);
+      Args             : GNAT.OS_Lib.Argument_List :=
                (1 => new String'("-all"),
                 2 => new String'("-global"),
                 3 => new String'("-background"),
                 4 => new String'("-dbg-on"),
                 5 => new String'("ide_progress_bar"),
                 6 => new String'("-lib"),
-                7 => new String'(+Library_File_Name.Full_Name));
-      Success            : Boolean;
+                7 => new String'
+                           (+Codepeer_Library_File_Name (Project).Full_Name));
+      Success          : Boolean;
       pragma Warnings (Off, Success);
 
    begin

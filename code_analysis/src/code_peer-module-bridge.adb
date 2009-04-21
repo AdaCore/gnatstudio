@@ -64,14 +64,8 @@ package body Code_Peer.Module.Bridge is
    is
       Project           : constant Projects.Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name      : constant Virtual_File :=
-                            Projects.Project_Path (Project);
       Object_Directory  : constant Virtual_File :=
                             Projects.Object_Path (Project);
-      Output_Directory  : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory,
-                               Project_Name.Base_Name & ".output");
       Command_File_Name : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory, "bridge_in.xml");
@@ -87,7 +81,7 @@ package body Code_Peer.Module.Bridge is
       if Message.Audit.First_Element.Probability_Changed then
          Code_Peer.Bridge.Commands.Add_Audit_Record
            (Command_File_Name,
-            Output_Directory,
+            Codepeer_Output_Directory (Project),
             Message.Id,
             True,
             Message.Audit.First_Element.Probability,
@@ -96,7 +90,7 @@ package body Code_Peer.Module.Bridge is
       else
          Code_Peer.Bridge.Commands.Add_Audit_Record
            (Command_File_Name,
-            Output_Directory,
+            Codepeer_Output_Directory (Project),
             Message.Id,
             False,
             Code_Peer.High,
@@ -134,14 +128,8 @@ package body Code_Peer.Module.Bridge is
    procedure Inspection (Module : Code_Peer.Module.Code_Peer_Module_Id) is
       Project            : constant Projects.Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant Virtual_File :=
-                             Projects.Project_Path (Project);
       Object_Directory   : constant Virtual_File :=
                              Projects.Object_Path (Project);
-      Output_Directory   : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".output");
       Command_File_Name  : constant Virtual_File :=
                              Create_From_Dir
                                (Object_Directory, "bridge_in.xml");
@@ -158,7 +146,9 @@ package body Code_Peer.Module.Bridge is
       --  Generate command file
 
       Code_Peer.Bridge.Commands.Inspection
-        (Command_File_Name, Output_Directory, Reply_File_Name);
+        (Command_File_Name,
+         Codepeer_Output_Directory (Project),
+         Reply_File_Name);
 
       --  Run gps_codepeer_bridge
 
@@ -213,14 +203,8 @@ package body Code_Peer.Module.Bridge is
    is
       Project            : constant Projects.Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Project_Name       : constant Virtual_File :=
-                             Projects.Project_Path (Project);
       Object_Directory   : constant Virtual_File :=
                              Projects.Object_Path (Project);
-      Output_Directory   : constant Virtual_File :=
-                             Create_From_Dir
-                               (Object_Directory,
-                                Project_Name.Base_Name & ".output");
       Command_File_Name  : constant Virtual_File :=
                              Create_From_Dir
                                (Object_Directory, "bridge_in.xml");
@@ -237,7 +221,10 @@ package body Code_Peer.Module.Bridge is
       --  Generate command file
 
       Code_Peer.Bridge.Commands.Audit_Trail
-        (Command_File_Name, Output_Directory, Reply_File_Name, Message.Id);
+        (Command_File_Name,
+         Codepeer_Output_Directory (Project),
+         Reply_File_Name,
+         Message.Id);
 
       --  Run gps_codepeer_bridge
 

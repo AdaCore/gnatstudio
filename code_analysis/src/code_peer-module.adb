@@ -17,6 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
@@ -233,6 +234,69 @@ package body Code_Peer.Module is
          end;
       end if;
    end Append_To_Menu;
+
+   ---------------------------------
+   -- Codepeer_Database_Directory --
+   ---------------------------------
+
+   function Codepeer_Database_Directory
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Name      : constant GNATCOLL.VFS.Filesystem_String :=
+        GNATCOLL.VFS.Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+               (String (Projects.Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Projects.Project_Path (Project).File_Extension;
+
+   begin
+      return
+        Create_From_Dir
+          (Projects.Object_Path (Project),
+           Name (Name'First .. Name'Last - Extension'Length) & ".db");
+   end Codepeer_Database_Directory;
+
+   --------------------------------
+   -- Codepeer_Library_File_Name --
+   --------------------------------
+
+   function Codepeer_Library_File_Name
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Name      : constant GNATCOLL.VFS.Filesystem_String :=
+        GNATCOLL.VFS.Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+               (String (Projects.Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Projects.Project_Path (Project).File_Extension;
+
+   begin
+      return
+        Create_From_Dir
+          (Projects.Object_Path (Project),
+           Name (Name'First .. Name'Last - Extension'Length) & ".library");
+   end Codepeer_Library_File_Name;
+
+   -------------------------------
+   -- Codepeer_Output_Directory --
+   -------------------------------
+
+   function Codepeer_Output_Directory
+     (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Name      : constant GNATCOLL.VFS.Filesystem_String :=
+        GNATCOLL.VFS.Filesystem_String
+          (Ada.Characters.Handling.To_Lower
+               (String (Projects.Project_Path (Project).Base_Name)));
+      Extension : constant GNATCOLL.VFS.Filesystem_String :=
+        Projects.Project_Path (Project).File_Extension;
+
+   begin
+      return
+        GNATCOLL.VFS.Create_From_Dir
+          (Projects.Object_Path (Project),
+           Name (Name'First .. Name'Last - Extension'Length) & ".output");
+   end Codepeer_Output_Directory;
 
    ----------------------
    -- Hide_Annotations --
