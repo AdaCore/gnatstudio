@@ -293,7 +293,8 @@ package body GPS.Location_View_Filter_Panel is
       --  RegExp check button
 
       Gtk.Check_Button.Gtk_New (Self.Reg_Exp, -"Regexp");
-      Self.Reg_Exp.Set_Tooltip_Text (-"The filter is a regular expression");
+      Self.Reg_Exp.Set_Tooltip_Text
+        (-"Whether filter is a regular expression");
       Gtk_Check_Button_Callbacks.Connect
         (Self.Reg_Exp,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -319,7 +320,7 @@ package body GPS.Location_View_Filter_Panel is
       --  Cancel filter button
 
       Gtk.Tool_Button.Gtk_New_From_Stock (Self.Cancel, Gtk.Stock.Stock_Cancel);
-      Self.Cancel.Set_Tooltip_Text (-"Cancel currently applyed filter");
+      Self.Cancel.Set_Tooltip_Text (-"Cancel current filter");
       Gtk_Tool_Button_Callbacks.Connect
         (Self.Cancel,
          Gtk.Tool_Button.Signal_Clicked,
