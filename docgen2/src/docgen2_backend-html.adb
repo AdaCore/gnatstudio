@@ -19,7 +19,8 @@
 
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Maps;      use Ada.Strings.Maps;
-with XML_Utils;          use XML_Utils;
+with UTF8_Utils;            use UTF8_Utils;
+with XML_Utils;             use XML_Utils;
 
 package body Docgen2_Backend.HTML is
 
@@ -176,7 +177,7 @@ package body Docgen2_Backend.HTML is
    is
       pragma Unreferenced (Backend);
    begin
-      return XML_Utils.Protect  (S);
+      return XML_Utils.Protect (Unknown_To_UTF8 (S));
    end Filter;
 
    -------------
