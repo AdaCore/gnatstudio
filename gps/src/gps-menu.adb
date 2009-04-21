@@ -236,7 +236,7 @@ package body GPS.Menu is
            (Kernel, Project_History_Key,
             --  ??? What if the file is not utf8 ? The saved xml file might
             --  get corrupted ...
-            +Full_Name (Path, Normalize => False));
+            String (Full_Name (Path).all));
       end if;
 
    exception
