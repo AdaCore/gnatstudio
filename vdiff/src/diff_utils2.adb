@@ -266,9 +266,11 @@ package body Diff_Utils2 is
       Args (1) := new String'(+Full_Name (Ref_File));
       Args (2) := new String'(+Full_Name (New_File));
 
-      Trace (Me, "spawn: " & Diff_Command
-             & " " & (+Full_Name (New_File))
-             & " " & (+Full_Name (Ref_File)));
+      if Active (Me) then
+         Trace (Me, "spawn: " & Diff_Command
+                & " " & (+Full_Name (New_File))
+                & " " & (+Full_Name (Ref_File)));
+      end if;
 
       begin
          Non_Blocking_Spawn
@@ -353,8 +355,11 @@ package body Diff_Utils2 is
       end if;
 
       Args (Num_Args) := new String'(+Full_Name (Diff_File));
-      Trace (Me, "spawn: " &
-             Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
+
+      if Active (Me) then
+         Trace (Me, "spawn: " &
+                Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
+      end if;
 
       begin
          Non_Blocking_Spawn
@@ -474,10 +479,12 @@ package body Diff_Utils2 is
       Args (2) := new String'(+Full_Name (Old_File));
       Args (3) := new String'(+Full_Name (Your_Change));
 
-      Trace (Me, "spawn: " & Diff3_Command & " " &
-             Display_Full_Name (My_Change)
-             & " " & Display_Full_Name (Old_File)
-             & " " & Display_Full_Name (Your_Change));
+      if Active (Me) then
+         Trace (Me, "spawn: " & Diff3_Command & " " &
+                Display_Full_Name (My_Change)
+                & " " & Display_Full_Name (Old_File)
+                & " " & Display_Full_Name (Your_Change));
+      end if;
 
       Non_Blocking_Spawn
         (Descriptor, +Cmd.Full_Name,

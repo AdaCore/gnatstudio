@@ -145,8 +145,10 @@ package body Diff_Utils is
       Args (1) := new String'(+Full_Name (File1));
       Args (2) := new String'(+Full_Name (File2));
 
-      Trace (Me, "spawn: " & Diff_Command & " "
-             & Display_Full_Name (File1) & " " & Display_Full_Name (File2));
+      if Active (Me) then
+         Trace (Me, "spawn: " & Diff_Command & " "
+                & Display_Full_Name (File1) & " " & Display_Full_Name (File2));
+      end if;
 
       Non_Blocking_Spawn
         (Descriptor, +Cmd.Full_Name,
@@ -236,8 +238,10 @@ package body Diff_Utils is
 
       Args (Num_Args) := new String'(+Full_Name (Diff_File));
 
-      Trace (Me, "spawn: " & Cmd.Display_Full_Name & " " &
-             Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
+      if Active (Me) then
+         Trace (Me, "spawn: " & Cmd.Display_Full_Name & " " &
+                Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
+      end if;
 
       begin
          Non_Blocking_Spawn
