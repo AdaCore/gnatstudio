@@ -684,8 +684,9 @@ package body Code_Peer.Module is
          Code_Peer.Shell_Commands.Build_Target_Execute
            (Kernel,
             Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
-            Force => True,
-            Build_Mode => "codepeer");
+            Force       => True,
+            Build_Mode  => "codepeer",
+            Synchronous => False);
       end if;
    end On_Run_Review;
 

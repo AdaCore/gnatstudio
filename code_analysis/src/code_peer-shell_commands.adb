@@ -50,13 +50,14 @@ package body Code_Peer.Shell_Commands is
    --------------------------
 
    procedure Build_Target_Execute
-     (Kernel     : GPS.Kernel.Kernel_Handle;
-      Object     : String;
-      Main_Name  : String       := "";
-      File       : Virtual_File := GNATCOLL.VFS.No_File;
-      Force      : Boolean      := False;
-      Extra_Args : String       := "";
-      Build_Mode : String       := "")
+     (Kernel      : GPS.Kernel.Kernel_Handle;
+      Object      : String;
+      Main_Name   : String       := "";
+      File        : Virtual_File := GNATCOLL.VFS.No_File;
+      Force       : Boolean      := False;
+      Extra_Args  : String       := "";
+      Build_Mode  : String       := "";
+      Synchronous : Boolean      := True)
    is
       Args   : GNAT.OS_Lib.Argument_List :=
                  (1 => new String'(Object),
@@ -64,7 +65,8 @@ package body Code_Peer.Shell_Commands is
                   3 => new String'(+Full_Name (File)),
                   4 => new String'(Boolean'Image (Force)),
                   5 => new String'(Extra_Args),
-                  6 => new String'(Build_Mode));
+                  6 => new String'(Build_Mode),
+                  7 => new String'(Boolean'Image (Synchronous)));
       Result : constant String :=
                  GPS.Kernel.Scripts.Execute_GPS_Shell_Command
                   (Kernel, "BuildTarget.execute", Args);

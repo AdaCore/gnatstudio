@@ -52,6 +52,7 @@ package body Builder_Facility_Module.Scripts is
    File_Cst          : aliased constant String := "file";
    Extra_Args_Cst    : aliased constant String := "extra_args";
    Build_Mode_Cst    : aliased constant String := "build_mode";
+   Synchronous_Cst   : aliased constant String := "synchronous";
 
    Target_Class_Name : constant String := "BuildTarget";
 
@@ -63,7 +64,8 @@ package body Builder_Facility_Module.Scripts is
       3 => File_Cst'Access,
       4 => Force_Cst'Access,
       5 => Extra_Args_Cst'Access,
-      6 => Build_Mode_Cst'Access);
+      6 => Build_Mode_Cst'Access,
+      7 => Synchronous_Cst'Access);
 
    type Target_Property is new Instance_Property_Record with record
       Target_Name : Unbounded_String;
@@ -193,13 +195,14 @@ package body Builder_Facility_Module.Scripts is
          Name_Parameters (Data, Execute_Args);
 
          declare
-            Inst       : constant Class_Instance :=
-                           Nth_Arg (Data, 1, Target_Class);
-            Main       : constant String  := Nth_Arg (Data, 2, "");
-            Force      : constant Boolean := Nth_Arg (Data, 4, False);
-            Name       : constant String  := Get_Target_Name (Inst);
-            Mode       : Dialog_Mode      := Default;
-            Build_Mode : constant String  := Nth_Arg (Data, 6, "");
+            Inst        : constant Class_Instance :=
+                            Nth_Arg (Data, 1, Target_Class);
+            Main        : constant String  := Nth_Arg (Data, 2, "");
+            Force       : constant Boolean := Nth_Arg (Data, 4, False);
+            Name        : constant String  := Get_Target_Name (Inst);
+            Mode        : Dialog_Mode      := Default;
+            Build_Mode  : constant String  := Nth_Arg (Data, 6, "");
+            Synchronous : constant Boolean := Nth_Arg (Data, 7, True);
 
          begin
             Info := Get_Data
@@ -228,7 +231,7 @@ package body Builder_Facility_Module.Scripts is
                            Force_File   => Info,
                            Extra_Args   => Extra_Args,
                            Quiet        => False,
-                           Synchronous  => True,
+                           Synchronous  => Synchronous,
                            Dialog       => Mode,
                            Main         => Main);
             Free (Extra_Args);
@@ -341,7 +344,7 @@ package body Builder_Facility_Module.Scripts is
       Register_Command
         (Kernel, "execute",
          Minimum_Args => 0,
-         Maximum_Args => 5,
+         Maximum_Args => 6,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

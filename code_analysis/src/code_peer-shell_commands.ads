@@ -28,13 +28,14 @@ package Code_Peer.Shell_Commands is
    --  Creates BuildTarget and returns it.
 
    procedure Build_Target_Execute
-     (Kernel     : GPS.Kernel.Kernel_Handle;
-      Object     : String;
-      Main_Name  : String                    := "";
-      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Force      : Boolean                   := False;
-      Extra_Args : String                    := "";
-      Build_Mode : String                    := "");
+     (Kernel      : GPS.Kernel.Kernel_Handle;
+      Object      : String;
+      Main_Name   : String                    := "";
+      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Force       : Boolean                   := False;
+      Extra_Args  : String                    := "";
+      Build_Mode  : String                    := "";
+      Synchronous : Boolean                   := True);
    --  Executes BuildTarget.execute function.
 
    function Get_Build_Mode (Kernel : GPS.Kernel.Kernel_Handle) return String;
