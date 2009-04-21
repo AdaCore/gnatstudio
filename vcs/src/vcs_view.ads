@@ -129,10 +129,11 @@ package VCS_View is
    procedure Refresh (Explorer : access VCS_View_Record'Class);
    --  Redraw the files in the VCS Explorer
 
-   procedure Refresh_Log
+   procedure Refresh_File
      (Explorer : access VCS_View_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File);
-   --  Refresh the "Log" column for File
+      File     : GNATCOLL.VFS.Virtual_File;
+      Log      : Boolean := False);
+   --  Refresh the file status and the "Log" column if Log set to true
 
    procedure Initialize
      (Explorer : access VCS_View_Record'Class;

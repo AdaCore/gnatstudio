@@ -2014,13 +2014,13 @@ package body VCS_View_API is
             Remove_File_From_Mapping (Kernel, File);
 
             if Explorer /= null then
-               Refresh_Log (Explorer, File);
+               Refresh_File (Explorer, File, Log => True);
             end if;
 
             if A_Explorer /= null then
                --  ??? revisit when child package implemented
-               VCS_View.Refresh_Log
-                 (VCS_View.VCS_View_Access (A_Explorer), File);
+               VCS_View.Refresh_File
+                 (VCS_View.VCS_View_Access (A_Explorer), File, Log => True);
             end if;
          end;
 

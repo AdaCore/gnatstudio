@@ -698,31 +698,32 @@ package body VCS_View is
       Pop_State (Explorer.Kernel);
    end Refresh;
 
-   -----------------
-   -- Refresh_Log --
-   -----------------
+   ------------------
+   -- Refresh_File --
+   ------------------
 
-   procedure Refresh_Log
+   procedure Refresh_File
      (Explorer : access VCS_View_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File)
+      File     : GNATCOLL.VFS.Virtual_File;
+      Log      : Boolean := False)
    is
-      Log   : Boolean;
       Dummy : Boolean;
       Iter  : Gtk_Tree_Iter;
       Line  : Line_Record;
    begin
-      if Get_Log_From_File (Explorer.Kernel, File, False) = No_File then
-         Log := False;
-      else
-         Log := True;
-      end if;
-
       --  Refresh the information in the cache
 
       Line := Get_Cache (Get_Status_Cache, File);
 
+      if Log then
+         if Get_Log_From_File (Explorer.Kernel, File, False) = No_File then
+            Line.Log := False;
+         else
+            Line.Log := True;
+         end if;
+      end if;
+
       if Line /= No_Data then
-         Line.Log := Log;
          Set_Cache (Get_Status_Cache, File, Line);
          Iter := Get_Iter_From_File (Explorer, File);
 
@@ -730,7 +731,7 @@ package body VCS_View is
             Fill_Info (Explorer, Iter, Line, Dummy);
          end if;
       end if;
-   end Refresh_Log;
+   end Refresh_File;
 
    ------------------
    -- Collapse_All --
