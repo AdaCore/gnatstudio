@@ -996,8 +996,9 @@ package body Help_Module is
 
       if Dir /= No_File then
          Add_Doc_Directory (Kernel, Dir);
+      end if;
 
-      elsif Node.Tag.all = "documentation_file" then
+      if Node.Tag.all = "documentation_file" then
          Name  := null;
          Descr := null;
          Menu  := null;
