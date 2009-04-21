@@ -1497,14 +1497,12 @@ package body VCS_Module is
          --  Just ensure that this file is added into the explorer if not yet
          --  present.
 
-         --  Now refresh both explorers to take into account the new status
-
-         Refresh
-           (Get_Explorer (Kernel_Handle (Kernel), Raise_Child => False));
-
-         Refresh
+         Refresh_File
+           (Get_Explorer
+              (Kernel_Handle (Kernel), Raise_Child => False), D.File);
+         Refresh_File
            (Get_Activities_Explorer
-              (Kernel_Handle (Kernel), Raise_Child => False));
+              (Kernel_Handle (Kernel), Raise_Child => False), D.File);
       end if;
 
    exception
