@@ -3445,7 +3445,8 @@ package body Project_Properties is
                Result : GNAT.Strings.String_List (Files'Range);
             begin
                for F in Files'Range loop
-                  Result (F) := new String'(+Full_Name (Files (F)));
+                  Result (F) :=
+                    new String'(String (Full_Name (Files (F)).all));
                end loop;
                return Result;
             end;
@@ -3937,7 +3938,8 @@ package body Project_Properties is
                      Result : GNAT.Strings.String_List (Files'Range);
                   begin
                      for R in Result'Range loop
-                        Result (R) := new String'(+Full_Name (Files (R)));
+                        Result (R) :=
+                          new String'(String (Full_Name (Files (R)).all));
                      end loop;
                      Unchecked_Free (Files);
                      return Result;
