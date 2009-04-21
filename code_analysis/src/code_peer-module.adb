@@ -772,7 +772,8 @@ package body Code_Peer.Module is
            Default => False,
            Doc     => -("If disabled, GPS runs all programs in the CodePeer " &
                         "toolchain automatically; otherwise user is " &
-                        "resposible to call programs in right order"),
+                        "responsible for each separate step (SCIL generation" &
+                        " and CodePeer run"),
            Label   => -"Expert Mode",
            Page    => -"CodePeer");
 
