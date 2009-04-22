@@ -3744,45 +3744,15 @@ package body Projects.Editor is
       Path     : GNATCOLL.VFS.Virtual_File;
       Is_Config_File : Boolean := False) return Prj.Tree.Project_Node_Id
    is
-      Tree         : constant Project_Node_Tree_Ref := Get_Tree (Registry);
       D            : constant Filesystem_String :=
                        Name_As_Directory (Full_Name (Path))
                        & To_File_Name (+Name) & Project_File_Extension;
-      Project      : constant Project_Node_Id :=
-                       Default_Project_Node (Tree, N_Project);
-      Project_Name : Name_Id;
-      Qualifier    : Project_Qualifier := Unspecified;
-
    begin
-      --  Adding the name of the project
-      Project_Name := Get_String (Name);
-      Set_Name_Of (Project, Tree, Project_Name);
-
-      --  Adding the project path
-      Set_Directory_Of
-        (Project, Tree, Get_String (+Full_Name (Path)));
-      Set_Path_Name_Of (Project, Tree, Get_String (+D));
-
-      --  Create the project declaration
-      Set_Project_Declaration_Of
-        (Project, Tree, Default_Project_Node (Tree, N_Project_Declaration));
-
-      if Is_Config_File then
-         Qualifier := Configuration;
-      end if;
-
-      --  Register the name of the project so that we can retrieve it from one
-      --  of its views
-      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
-        (Tree.Projects_HT,
-         Prj.Tree.Name_Of (Project, Tree),
-         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
-         (Name           => Project_Name,
-          Canonical_Path => Path_Name_Type (Project_Name),
-          Node           => Project,
-          Extended       => False,
-          Proj_Qualifier => Qualifier));
-      return Project;
+      return Prj.Tree.Create_Project
+        (In_Tree        => Get_Tree (Registry),
+         Name           => Get_String (Name),
+         Full_Path      => Get_String (+D),
+         Is_Config_File => Is_Config_File);
    end Create_Project;
 
    --------------------
