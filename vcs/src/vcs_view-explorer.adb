@@ -374,7 +374,7 @@ package body VCS_View.Explorer is
       Explorer : constant VCS_Explorer_View_Access :=
                    Get_Explorer (Kernel, False, False);
 
-      File     : constant Virtual_File := File_Status.File;
+      File     : Virtual_File renames File_Status.File;
 
       New_Root : Boolean := False;
       --  Set to true if we have created a project node
@@ -482,9 +482,7 @@ package body VCS_View.Explorer is
                   Line.Status.Status.Label.all)
                then
                   if Iter = Null_Iter and then Force_Display then
-                     if P_Iter = Null_Iter then
-                        P_Iter := Get_Or_Create_Project_Iter (File);
-                     end if;
+                     P_Iter := Get_Or_Create_Project_Iter (File);
                      Append (Explorer.Model, Iter, P_Iter);
                      Displayed := True;
                   end if;
@@ -586,7 +584,9 @@ package body VCS_View.Explorer is
       end if;
 
       Push_State (Kernel, Busy);
-      Sort_Id := Freeze_Sort (Explorer.Model);
+      if File_Status_List.Length (Status) > 1 then
+         Sort_Id := Freeze_Sort (Explorer.Model);
+      end if;
 
       --  Iterate over each file
 
@@ -607,7 +607,9 @@ package body VCS_View.Explorer is
 
       Remove_Empty_Root (Explorer);
 
-      Thaw_Sort (Explorer.Model, Sort_Id);
+      if File_Status_List.Length (Status) > 1 then
+         Thaw_Sort (Explorer.Model, Sort_Id);
+      end if;
       Pop_State (Kernel);
    end Display_File_Status;
 
