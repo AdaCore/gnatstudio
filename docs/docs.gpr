@@ -6,7 +6,7 @@ project Docs is
    for Object_Dir use ".";
 
    package Naming is
-      for Specification_Suffix ("texinfo") use ".texi";
+      for Implementation_Suffix ("texinfo") use ".texi";
    end Naming;
 
    package Compiler is

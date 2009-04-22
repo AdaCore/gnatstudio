@@ -171,7 +171,7 @@ def before_exit (hook_name):
 GPS.parse_xml ("""
   <Language>
     <Name>Python</Name>
-    <Spec_Suffix>.py</Spec_Suffix>
+    <Body_Suffix>.py</Body_Suffix>
     <Keywords>(a(nd|ssert|s)|break|c(lass|ontinue)|de[fl]|e(l(if|se)|x(cept|ec))|f(inally|or|rom)|global|i(mport|[fns])|lambda|not|or|p(ass|rint)|r(aise|eturn)|try|while|yield)\\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>

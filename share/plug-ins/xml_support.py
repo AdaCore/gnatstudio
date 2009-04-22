@@ -173,7 +173,7 @@ def context_changed (hook, context):
 parse_xml ("""
   <Language>
     <Name>XML</Name>
-    <Spec_Suffix>.xml</Spec_Suffix>
+    <Body_Suffix>.xml</Body_Suffix>
     <Keywords>(&lt;/?\w+&gt;?)|(/?&gt;)</Keywords>
     <Wordchars>&lt;&gt;/</Wordchars>
     <Context>
