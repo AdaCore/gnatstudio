@@ -1,5 +1,16 @@
 Known Problems fixed in GPS 4.3.3
 
+- I421-010: Documentation generation issue with non-utf8 compatible comments
+  Problem:    When an Ada specification contains non-utf8 characters, then the
+              documentation generation will fail.
+  Workaround: Use utf-8 or ascii only comments.
+
+- I330-016: Issue when editing files switches
+  Problem:    When editing an Ada file's switch options, the Ada tab might be
+              empty.
+  Workaround: Use the project editor first, then retry editing the Ada file's
+              switches.
+
 - I327-048: Order of preferences changes
   Problem:    The order of lines in the preferences dialog might change
               from one session of GPS to the next
