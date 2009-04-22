@@ -23,7 +23,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
@@ -69,6 +68,7 @@ with Traces;                    use Traces;
 with String_Utils;              use String_Utils;
 
 with GNATCOLL.Traces;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 
 with Builder_Facility_Module.Scripts;
 with Build_Command_Manager;     use Build_Command_Manager;
@@ -76,6 +76,7 @@ with Build_Command_Manager;     use Build_Command_Manager;
 with Interactive_Consoles;      use Interactive_Consoles;
 with Commands.Builder;          use Commands.Builder;
 with XML_Utils;                 use XML_Utils;
+with GNAT.Directory_Operations;
 
 package body Builder_Facility_Module is
 
@@ -314,7 +315,7 @@ package body Builder_Facility_Module is
 
    function On_Compute_Build_Targets
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return String;
+      Data   : access Hooks_Data'Class) return Any_Type;
    --  Called when computing build targets
 
    procedure Add_Action_For_Target (T : Target_Access);
@@ -901,20 +902,37 @@ package body Builder_Facility_Module is
 
    function On_Compute_Build_Targets
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return String
+      Data   : access Hooks_Data'Class) return Any_Type
    is
       Kind : constant String := String_Hooks_Args (Data.all).Value;
    begin
       if Kind = "main" then
          declare
             Mains  : Argument_List := Get_Mains (Kernel_Handle (Kernel));
-            Result : constant String := Argument_List_To_String (Mains);
+
+            Result : Any_Type (List_Type, Mains'Length);
          begin
+            for J in Mains'Range loop
+               declare
+                  Base : constant String := GNAT.Directory_Operations.Base_Name
+                    (Mains (J).all);
+                  Display_Name : constant Any_Type :=
+                    (String_Type, Base'Length, Base);
+                  Full_Name    : constant Any_Type :=
+                    (String_Type, Mains (J).all'Length, Mains (J).all);
+               begin
+                  Result.List (1 + J - Mains'First) := new Any_Type'
+                    ((Tuple_Type, 2,
+                     Tuple => (1 => new Any_Type'(Display_Name),
+                               2 => new Any_Type'(Full_Name))));
+               end;
+            end loop;
+
             Free (Mains);
             return Result;
          end;
       else
-         return "";
+         return Empty_Any_Type;
       end if;
    end On_Compute_Build_Targets;
 
@@ -1249,16 +1267,16 @@ package body Builder_Facility_Module is
 
       procedure Button_For_Target
         (Name  : String;
-         Mains : Argument_List);
+         Mains : Any_Type);
       --  Create one button for target Name and main Main
 
       procedure Button_For_Target
         (Name  : String;
-         Mains : Argument_List)
+         Mains : Any_Type)
       is
       begin
          --  In case only one main is available, create a simple button
-         if Mains'Length <= 1 then
+         if Mains.Length <= 1 then
             declare
                Widget : Gtk.Tool_Button.Gtk_Tool_Button;
                Main   : Unbounded_String;
@@ -1266,13 +1284,13 @@ package body Builder_Facility_Module is
                Gtk_New_From_Stock (Widget, Get_Icon (Target));
                Set_Label (Widget, Name);
 
-               if Mains'Length = 0 then
+               if Mains.Length = 0 then
                   Main := Null_Unbounded_String;
                   Set_Tooltip (Widget, Get_Tooltips (Get_Kernel), Name);
                else
-                  Main := To_Unbounded_String (Mains (Mains'First).all);
+                  Main := To_Unbounded_String (Mains.List (1).Tuple (2).Str);
                   Set_Tooltip (Widget, Get_Tooltips (Get_Kernel),
-                               Name & ": " & To_String (Main));
+                               Name & ": " & Mains.List (1).Tuple (1).Str);
                end if;
 
                String_Callback.Connect
@@ -1292,12 +1310,12 @@ package body Builder_Facility_Module is
                  (Widget, Signal_Selection_Changed,
                   On_Combo_Selection'Access, Get_Tooltips (Get_Kernel));
 
-               for J in Mains'Range loop
+               for J in Mains.List'Range loop
                   Widget.Add_Item
-                    (Mains (J).all, Get_Icon (Target),
+                    (Mains.List (J).Tuple (2).Str, Get_Icon (Target),
                      new Target_And_Main'
                        (To_Unbounded_String (Name),
-                        To_Unbounded_String (Mains (J).all)));
+                        To_Unbounded_String (Mains.List (J).Tuple (2).Str)));
                end loop;
 
                Combo_Callback.Connect
@@ -1330,23 +1348,23 @@ package body Builder_Facility_Module is
               (Hooks_Data with
                  Length => Length (Targets),
                  Value  => To_String (Targets));
-            Mains  : Argument_List_Access := Argument_String_To_List
-              (Run_Hook_Until_Not_Empty
-                 (Get_Kernel,
-                  Compute_Build_Targets_Hook,
-                  Data'Unchecked_Access));
+            Mains  : Any_Type :=
+              Run_Hook_Until_Not_Empty
+                (Get_Kernel,
+                 Compute_Build_Targets_Hook,
+                 Data'Unchecked_Access);
 
          begin
             --  Do not display if no main is available
-            if Mains'Length > 0 then
-               Button_For_Target (Get_Name (Target), Mains.all);
+            if Mains.Length > 0 then
+               Button_For_Target (Get_Name (Target), Mains);
             end if;
 
             Free (Mains);
             Destroy (Data);
          end;
       else
-         Button_For_Target (Get_Name (Target), (1 .. 0 => <>));
+         Button_For_Target (Get_Name (Target), Empty_Any_Type);
       end if;
    end Install_Button_For_Target;
 
@@ -1435,26 +1453,25 @@ package body Builder_Facility_Module is
               (Hooks_Data with
                  Length => Length (Targets),
                  Value  => To_String (Targets));
-            Mains  : Argument_List_Access := Argument_String_To_List
-              (Run_Hook_Until_Not_Empty
+            Mains  : Any_Type :=
+              Run_Hook_Until_Not_Empty
                  (Get_Kernel,
                   Compute_Build_Targets_Hook,
-                  Data'Unchecked_Access));
+                  Data'Unchecked_Access);
 
          begin
-            for J in Mains'Range loop
-               if Mains (J) /= null then
+            for J in 1 .. Mains.Length loop
+               if Mains.List (J).Length /= 0 then
                   Menu_For_Action
                     (Parent_Path => To_String (Cat_Path),
                      Name        => Get_Name (Target),
-                     Main        => Mains (J).all,
-                     Menu_Name   => GNAT.Directory_Operations.Base_Name
-                       (Mains (J).all));
+                     Main        => Mains.List (J).Tuple (2).Str,
+                     Menu_Name   => Mains.List (J).Tuple (1).Str);
                end if;
             end loop;
 
-            Free (Mains);
             Destroy (Data);
+            Free (Mains);
          end;
       else
          Menu_For_Action (Parent_Path => To_String (Cat_Path),

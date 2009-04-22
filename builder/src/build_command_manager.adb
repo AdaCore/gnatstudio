@@ -43,6 +43,7 @@ with Projects;                    use Projects;
 with Remote;                      use Remote;
 with String_Utils;                use String_Utils;
 with Traces;                      use Traces;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 
 package body Build_Command_Manager is
 
@@ -745,15 +746,13 @@ package body Build_Command_Manager is
                       (Hooks_Data with
                        Length => Target_Type'Length,
                        Value  => Target_Type);
-      Mains       : Argument_List_Access :=
-                      Argument_String_To_List
-                        (Run_Hook_Until_Not_Empty
-                           (Command.Kernel,
-                            Compute_Build_Targets_Hook,
-                            Data'Unchecked_Access));
+      Mains       : Any_Type := Run_Hook_Until_Not_Empty
+        (Command.Kernel,
+         Compute_Build_Targets_Hook,
+         Data'Unchecked_Access);
 
    begin
-      if Command.Main not in 1 .. Mains'Length then
+      if Command.Main not in Mains.List'Range then
          Insert (Command.Kernel,
                  (-"This project does not contain") & Command.Main'Img
                  & " " & Target_Type & (-" targets"), Mode => Error);
@@ -771,9 +770,9 @@ package body Build_Command_Manager is
          Quiet       => Command.Quiet,
          Dialog      => Command.Dialog,
          Synchronous => False,
-         Main        => Mains (Mains'First - 1 + Command.Main).all);
-      Free (Mains);
+         Main        => Mains.List (Command.Main).Tuple (2).Str);
 
+      Free (Mains);
       return Success;
    end Execute;
 

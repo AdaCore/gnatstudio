@@ -21,7 +21,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 
 with Glib.Object;               use Glib.Object;
@@ -118,6 +117,8 @@ package body GPS.Kernel.Hooks is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Command_Handler_Return_String
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Command_Handler_Return_Any
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Command_Handler_No_Args
      (Data : in out Callback_Data'Class; Command : String);
    --  Run a hook from the shell. Each of these procedures handles a different
@@ -177,6 +178,16 @@ package body GPS.Kernel.Hooks is
       Data   : access Hooks_Data'Class) return String;
    --  Wrapper for a simple Ada function
 
+   type Wrapper_Return_Any is new Function_With_Args_Return_Any with
+   record
+      Func : Function_With_Args_Return_Any_Callback;
+   end record;
+   overriding function Execute
+     (Func   : Wrapper_Return_Any;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type;
+   --  Wrapper for a simple Ada function
+
    type Subprogram_Wrapper_No_Args is new Function_No_Args with record
       Hook       : Hook_Description_Access;
       Subprogram : Subprogram_Type;
@@ -234,6 +245,23 @@ package body GPS.Kernel.Hooks is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String;
    function Create_Subprogram_Wrapper_Return_String
+     (Subprogram : Subprogram_Type;
+      Hook       : Hook_Description_Access) return Hook_Function;
+   --  Wrapper for a shell subprogram
+
+   type Subprogram_Wrapper_Return_Any is
+     new Function_With_Args_Return_Any with
+   record
+      Hook       : Hook_Description_Access;
+      Subprogram : Subprogram_Type;
+   end record;
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_Any);
+   overriding function Execute
+     (Func   : Subprogram_Wrapper_Return_Any;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type;
+   function Create_Subprogram_Wrapper_Return_Any
      (Subprogram : Subprogram_Type;
       Hook       : Hook_Description_Access) return Hook_Function;
    --  Wrapper for a shell subprogram
@@ -515,6 +543,36 @@ package body GPS.Kernel.Hooks is
       end if;
    end Command_Handler_Return_String;
 
+   --------------------------------
+   -- Command_Handler_Return_Any --
+   --------------------------------
+
+   procedure Command_Handler_Return_Any
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant Hook_Name               := Get_Hook_Name (Data, 1);
+      Kernel : constant Kernel_Handle           := Get_Kernel (Data);
+      Info   : constant Hook_Description_Access :=
+                 Get_Or_Create_Hook (Kernel, Name);
+   begin
+      Assert (Me, Command = "run", "Invalid command: " & Command);
+      if Info.Parameters_Type = null
+        or else Info.Parameters_Type.From_Data = null
+      then
+         Set_Error_Msg (Data, -"Unknown hook: " & String (Name));
+      else
+         declare
+            Args : aliased Hooks_Data'Class :=
+              Info.Parameters_Type.From_Data (Data);
+         begin
+            Set_Return_Value
+              (Data, Run_Hook_Until_Not_Empty
+                 (Kernel, Name, Args'Unchecked_Access, Set_Busy => True));
+            Destroy (Args);
+         end;
+      end if;
+   end Command_Handler_Return_Any;
+
    ---------------------------------
    -- Register_Hook_Return_String --
    ---------------------------------
@@ -533,6 +591,25 @@ package body GPS.Kernel.Hooks is
            Create_Subprogram_Wrapper_Return_String'Access,
          Command_Handler => Command_Handler_Return_String'Access);
    end Register_Hook_Return_String;
+
+   ------------------------------
+   -- Register_Hook_Return_Any --
+   ------------------------------
+
+   procedure Register_Hook_Return_Any
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type)
+   is
+      Info : Hook_Description_Access;
+      pragma Unreferenced (Info);
+   begin
+      Info := Get_Or_Create_Hook
+        (Kernel, Name, Data_Type_Name => Data_Type_Name,
+         Create_Subprogram_Wrapper =>
+           Create_Subprogram_Wrapper_Return_Any'Access,
+         Command_Handler => Command_Handler_Return_Any'Access);
+   end Register_Hook_Return_Any;
 
    -----------------------------
    -- Command_Handler_No_Args --
@@ -797,6 +874,30 @@ package body GPS.Kernel.Hooks is
         (Function_With_Args_Return_String with Func => Callback);
    end Wrapper;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Func   : Wrapper_Return_Any;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type is
+   begin
+      return Func.Func (Kernel, Data);
+   end Execute;
+
+   -------------
+   -- Wrapper --
+   -------------
+
+   function Wrapper
+     (Callback : Function_With_Args_Return_Any_Callback)
+      return Function_With_Args_Return_Any_Access is
+   begin
+      return new Wrapper_Return_Any'
+        (Function_With_Args_Return_Any with Func => Callback);
+   end Wrapper;
+
    ---------------------------------------
    -- Create_Subprogram_Wrapper_No_Args --
    ---------------------------------------
@@ -939,12 +1040,35 @@ package body GPS.Kernel.Hooks is
          with Subprogram => Subprogram, Hook => Hook);
    end Create_Subprogram_Wrapper_Return_String;
 
+   ------------------------------------------
+   -- Create_Subprogram_Wrapper_Return_Any --
+   ------------------------------------------
+
+   function Create_Subprogram_Wrapper_Return_Any
+     (Subprogram : Subprogram_Type;
+      Hook       : Hook_Description_Access) return Hook_Function is
+   begin
+      return new Subprogram_Wrapper_Return_Any'
+        (Function_With_Args_Return_Any
+         with Subprogram => Subprogram, Hook => Hook);
+   end Create_Subprogram_Wrapper_Return_Any;
+
    -------------
    -- Destroy --
    -------------
 
    overriding procedure Destroy
      (Func : in out Subprogram_Wrapper_Return_String) is
+   begin
+      Free (Func.Subprogram);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Func : in out Subprogram_Wrapper_Return_Any) is
    begin
       Free (Func.Subprogram);
    end Destroy;
@@ -957,6 +1081,28 @@ package body GPS.Kernel.Hooks is
      (Func   : Subprogram_Wrapper_Return_String;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return String
+   is
+      D : Callback_Data_Access :=
+            Get (Kernel, Data.Data, Get_Script (Func.Subprogram.all));
+   begin
+      if D = null then
+         D := Create_Callback_Data
+           (Script => Get_Script (Func.Subprogram.all),
+            Hook   => Func.Hook.Name.all,
+            Data   => Data);
+         Set (Kernel, Data.Data, Get_Script (Func.Subprogram.all), D);
+      end if;
+      return Execute (Func.Subprogram, D.all);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Func   : Subprogram_Wrapper_Return_Any;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type
    is
       D : Callback_Data_Access :=
             Get (Kernel, Data.Data, Get_Script (Func.Subprogram.all));
@@ -1232,6 +1378,66 @@ package body GPS.Kernel.Hooks is
       when E : others =>
          Trace (Exception_Handle, E);
          return "";
+   end Run_Hook_Until_Not_Empty;
+
+   ------------------------------
+   -- Run_Hook_Until_Not_Empty --
+   ------------------------------
+
+   function Run_Hook_Until_Not_Empty
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook     : Hook_Name;
+      Data     : access Hooks_Data'Class;
+      Set_Busy : Boolean := True) return Any_Type
+   is
+      Info : constant Hook_Description_Access :=
+               Hook_Description_Access (Get (Kernel.Hooks, Hook));
+      N    : List_Node := Null_Node;
+      F    : Hook_Function_Description;
+   begin
+      if Info = null then
+         Insert (Kernel, -"No such hook: " & String (Hook));
+      else
+         if Set_Busy then
+            Push_State (Kernel_Handle (Kernel), Busy);
+         end if;
+
+         Trace (Me, "Run_Hook: " & String (Hook));
+         N := First (Info.Funcs);
+         while N /= Null_Node loop
+            F := Hooks_List.Data (N);
+            N := Next (N);
+
+            Assert (Me, F.Func.all in Function_With_Args_Return_Any'Class,
+                    "Hook expects arguments and return list: "
+                    & String (Hook) & " for function: " & String (F.Name.all));
+            declare
+               Tmp : constant Any_Type := Execute
+                 (Function_With_Args_Return_Any_Access (F.Func).all,
+                  Kernel, Data);
+            begin
+               if Tmp /= Empty_Any_Type then
+                  if Set_Busy then
+                     Pop_State (Kernel_Handle (Kernel));
+                     Free (Data.Data);
+                     return Tmp;
+                  end if;
+               end if;
+            end;
+         end loop;
+
+         Free (Data.Data);
+
+         if Set_Busy then
+            Pop_State (Kernel_Handle (Kernel));
+         end if;
+      end if;
+      return Empty_Any_Type;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return Empty_Any_Type;
    end Run_Hook_Until_Not_Empty;
 
    --------------------
@@ -1619,7 +1825,7 @@ package body GPS.Kernel.Hooks is
       Register_Hook_Return_Boolean
         (Kernel, Compilation_Starting_Hook, Compilation_Hook_Type);
 
-      Register_Hook_Return_String
+      Register_Hook_Return_Any
         (Kernel, Compute_Build_Targets_Hook, String_Hook_Type);
 
       Register_Command

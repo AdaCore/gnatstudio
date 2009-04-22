@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,8 +20,9 @@
 --  This package implements a general support for hooks.
 --  See the GPS documentation on how to use hooks from the scripting languages.
 
-with GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with Glib.Object;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 
 package GPS.Kernel.Hooks is
 
@@ -114,6 +115,12 @@ package GPS.Kernel.Hooks is
       Name           : Hook_Name;
       Data_Type_Name : Hook_Type);
    --  Same as above, except the callbacks are expected to return a string
+
+   procedure Register_Hook_Return_Any
+     (Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name           : Hook_Name;
+      Data_Type_Name : Hook_Type);
+   --  Same as above, except the callbacks are expected to return an Any type
 
    procedure Register_Hook_No_Args
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -278,6 +285,49 @@ package GPS.Kernel.Hooks is
    --  as one of the functions returns a non-empty string.
    --  Return the value returned by the last function executed
    --  It is your responsability to Destroy Data afterward
+
+   ------------------------------------------------------------
+   -- Hook functions with arguments, returning an "Any" type --
+   ------------------------------------------------------------
+
+   --  These functions are used to interface with code and scripts which might
+   --  return potentially complex types (lists, tuples, lists containing lists,
+   --  and so forth).
+   --  The hooks using this are accessible through Python but not through
+   --  shell commands.
+   --  The Any_Type is a versatile type and it can take multiple forms, even
+   --  potentially for one same hook. For instance we could imagine a hook that
+   --  returns an Integer in nominal mode, and returns an error message as a
+   --  string in exceptional mode.
+   --  The Any_Type defined in GPS does not allow the hook to express formally
+   --  its return type: the expected return type for each of these hooks should
+   --  be documented in shell_commands.xml.
+
+   type Function_With_Args_Return_Any
+      is abstract new GPS.Kernel.Hook_Function_Record with null record;
+   type Function_With_Args_Return_Any_Access is
+     access all Function_With_Args_Return_Any'Class;
+   function Execute
+     (Func   : Function_With_Args_Return_Any;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type is abstract;
+   --  Execute the action associated with the Hook Function
+
+   type Function_With_Args_Return_Any_Callback is access function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Any_Type;
+   function Wrapper
+     (Callback : Function_With_Args_Return_Any_Callback)
+      return Function_With_Args_Return_Any_Access;
+   --  See doc above for wrapper
+
+   function Run_Hook_Until_Not_Empty
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Hook     : Hook_Name;
+      Data     : access Hooks_Data'Class;
+      Set_Busy : Boolean := True) return Any_Type;
+   --  See doc above.
+   --  Caller must Free the result.
 
 private
    type Hooks_Data is abstract tagged record

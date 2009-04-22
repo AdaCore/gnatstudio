@@ -149,10 +149,10 @@ class Builder:
 
    def read_targets (self):
       """Read all targets from the build file, and return a list targets"""
-      return ""
+      return None
 
    def compute_build_targets (self, name):
-      return ""
+      return None
 
    def on_compute_build_targets (self, hook, name):
       """Called when the a build target needs to be computed"""
@@ -161,7 +161,7 @@ class Builder:
 
       except:
          Logger ("MAKE").log (traceback.format_exc())
-         return ""
+         return None
 
    def __init__ (self):
       self.targets = []
@@ -175,7 +175,7 @@ class Makefile (Builder):
       Builder.__init__ (self)
 
    def read_targets (self):
-      targets = ""
+      targets = []
       matcher=re.compile ("^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
       f = file (self.buildfile)
       for line in f:
@@ -183,11 +183,12 @@ class Makefile (Builder):
          if matches:
             if matches.group (3):
                if matches.group (3).strip() != "IGNORE":
-                  targets += " " + matches.group (1)
+                  target_name = matches.group (1)
+                  targets += [(target_name, target_name)]
             else:
                ## Handle multiple targets on same line
                for target in matches.group (1).split():
-                 targets += " " + target
+                 targets += [(target, target)]
       f.close ()
       return targets
 
@@ -195,8 +196,8 @@ class Makefile (Builder):
       if name == "make":
         self.compute_buildfile ()
         if self.buildfile:
-          return self.read_targets ().strip()
-      return ""
+          return self.read_targets ()
+      return None
 
 class Antfile (Builder):
    def __init__ (self):
@@ -230,7 +231,7 @@ class Antfile (Builder):
       if name == "ant":
         self.compute_buildfile ()
         if self.buildfile:
-          return self.read_targets ().strip()
+          return self.read_targets ()
       return ""
 
 ant_support=False
