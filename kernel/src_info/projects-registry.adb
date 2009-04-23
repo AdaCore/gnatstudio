@@ -25,7 +25,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -1604,7 +1603,11 @@ package body Projects.Registry is
 
       --  Make a copy of the result, so that we can keep a cache in the kernel
 
-      return Registry.Data.Predefined_Source_Files.all;
+      if Registry.Data.Predefined_Source_Files = null then
+         return Empty_File_Array;
+      else
+         return Registry.Data.Predefined_Source_Files.all;
+      end if;
    end Get_Predefined_Source_Files;
 
    --------------------------------
