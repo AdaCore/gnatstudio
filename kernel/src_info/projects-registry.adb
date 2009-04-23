@@ -689,11 +689,19 @@ package body Projects.Registry is
    ------------------------
 
    procedure Load_Empty_Project (Registry : in out Project_Registry) is
+      Project : Project_Type;
    begin
       Reset (Registry, View_Only => False);
       Prj.Tree.Initialize (Registry.Data.Tree);
-      Load_Custom_Project
-        (Registry, Create_Project (Registry, "empty", Get_Current_Dir));
+      Project := Create_Project (Registry, "empty", Get_Current_Dir);
+      Update_Attribute_Value_In_Scenario
+        (Project => Project,
+         Scenario_Variables => No_Scenario,
+         Attribute => Languages_Attribute,
+         Values    => (1 .. 0 => null));
+
+      Load_Custom_Project (Registry, Project);
+
       Set_Status (Registry.Data.Root, Empty);
    end Load_Empty_Project;
 
