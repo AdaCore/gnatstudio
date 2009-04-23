@@ -214,12 +214,6 @@ package body Cpp_Module is
       Handler : constant Language_Handler := Language_Handler
         (Get_Language_Handler (Kernel));
    begin
-      if Object_Path (Get_Project (Kernel), False, True)'Length = 0 then
-         Insert (Kernel,
-                 -("The root project must have an object directory set, or"
-                   & " C/C++ browsing is disabled"), Mode => Error);
-      end if;
-
       CPP_Parser.On_Project_View_Changed
         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name));
 
