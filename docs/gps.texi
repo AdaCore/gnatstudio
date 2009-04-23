@@ -12410,10 +12410,9 @@ This @code{<pref>} tag is mostly intended for use through the themes
 @c ----------------------------------------------------------------
 
 @noindent
-In addition to the predefined themes that come with GPS, you can create
-your own themes and share them between users. You can then selectively
-chose which themes they want to activate through the preferences dialog
-(@pxref{GPS Themes}).
+You can create your own themes and share them between users. You can then
+selectively chose which themes they want to activate through the preferences
+dialog (@pxref{GPS Themes}).
 
 Creating new themes is done in the customization files through
 the @code{<theme>} tag.
