@@ -182,6 +182,7 @@ package Projects.Registry is
    --  Load an empty project.
    --  Recompute_View must be called afterwards.
    --  Used only when initializing other GPS components (e.g. kernel).
+   --  This project has no source file
 
    function Load_Or_Find
      (Registry     : Project_Registry;
