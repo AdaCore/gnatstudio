@@ -208,7 +208,7 @@ package body Convert.Gpr is
         (Tree, Project, Gpr_Filename,
          Always_Errout_Finalize => True, Is_Config_File => False);
       Process (View_Tree, Project_View, Success,
-               Project, Tree, Report_Error => null, Is_Config_File => False);
+               Project, Tree, Report_Error => null);
 
       if Success then
          declare
