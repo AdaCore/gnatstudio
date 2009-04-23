@@ -1036,6 +1036,7 @@ package body Gtkada.File_Selector is
             Win.Current_Directory := Create_From_Base ("");
          else
             Ensure_Directory (Dir);
+            Normalize_Path (Dir);
             Win.Current_Directory := Dir;
          end if;
 
@@ -1067,7 +1068,6 @@ package body Gtkada.File_Selector is
 
          if Win.File_Tree = null then
             Ensure_Directory (Dir);
-            Normalize_Path (Dir);
             Set_Text (Win.Selection_Entry, Display_Full_Name (Dir));
 
             Set_Position
