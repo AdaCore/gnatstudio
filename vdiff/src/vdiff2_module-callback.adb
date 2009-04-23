@@ -597,6 +597,21 @@ package body Vdiff2_Module.Callback is
 
       Unchecked_Execute (Cmd, Data (Node));
 
+      --  Remove all virtual buffers created during diff operations
+
+      for J in Data (Node).Files'Range loop
+         declare
+            Editor : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory
+                (Get_Kernel (Vdiff_Module_ID.all)).Get
+              (Data (Node).Files (J), Open_View => False);
+         begin
+            if Editor.Current_View = Nil_Editor_View then
+               Editor.Close;
+            end if;
+         end;
+      end loop;
+
       Remove_Nodes
         (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
          Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),

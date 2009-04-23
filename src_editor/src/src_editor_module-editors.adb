@@ -469,10 +469,10 @@ package body Src_Editor_Module.Editors is
             Box := Open_File
               (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
          else
-            if Open_Buffer then
-               Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
+            Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
 
-               if Box = null then
+            if Box = null then
+               if Open_Buffer then
                   Box := Create_File_Editor (This.Kernel, File, False);
                   Pure_Editors_Hash.Set
                     (This.Pure_Buffers.all, File, (Box => Box));
@@ -1278,7 +1278,8 @@ package body Src_Editor_Module.Editors is
             Save_To_File
               (This.Buffer,
                Filename => File,
-               Success  => Success);
+               Success  => Success,
+               Force    => not Interactive);
          end if;
       end if;
    end Save;

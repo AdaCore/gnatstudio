@@ -914,8 +914,6 @@ package body Vdiff2_Module.Utils is
 
          Curr_Node := Next (Curr_Node);
       end loop;
-
-      Close (Refbuf);
    end Show_Unified_Differences;
 
    ------------------------
