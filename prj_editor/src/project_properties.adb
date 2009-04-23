@@ -2960,7 +2960,7 @@ package body Project_Properties is
                File := Select_File
                  (Parent            => Gtk_Window (Toplevel),
                   Base_Directory    => Create (Dir_Name (Default)),
-                  Default_Name      => +Base_Name (Default),
+                  Default_Name      => Base_Name (Default),
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                   Kind              => Open_File);
             end if;

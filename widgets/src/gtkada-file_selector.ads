@@ -92,9 +92,9 @@ package Gtkada.File_Selector is
    function Select_File
      (Title             : String  := "Select a file";
       Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      File_Pattern      : String  := "";
+      File_Pattern      : GNATCOLL.VFS.Filesystem_String  := "";
       Pattern_Name      : String  := "";
-      Default_Name      : String  := "";
+      Default_Name      : GNATCOLL.VFS.Filesystem_String  := "";
       Parent            : Gtk_Window := null;
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
@@ -178,21 +178,6 @@ package Gtkada.File_Selector is
       return GNATCOLL.VFS.Virtual_File;
    --  Return the selected file.
    --  Return VFS.No_File if the entry does not exist.
-
-   function Get_Ok_Button
-     (File_Selection : access File_Selector_Window_Record)
-      return Gtk.Button.Gtk_Button;
-   --  Return the OK button.
-   --  The callbacks on this button should close the dialog and do something
-   --  with the file selected by the user.
-
-   function Get_Cancel_Button
-     (File_Selection : access File_Selector_Window_Record)
-      return Gtk.Button.Gtk_Button;
-   --  Return the Cancel button.
-   --  To remove this button from the dialog, call Hide on the return value.
-   --  The callbacks on this button should simply close the dialog, but should
-   --  ignore the file selected by the user.
 
    -------------
    -- Filters --
@@ -298,16 +283,9 @@ private
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
 
-   --  ??? Ada2005: no need for this new type
-   type VF_Access is access all GNATCOLL.VFS.Virtual_File;
-
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
-      Selected_File          : VF_Access;
-      --  Contains the selected file upon close
-      --  If the file is not furnished at initialize call, it is created.
-
       Current_Directory      : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.Create_From_Base ("");
+                                 GNATCOLL.VFS.No_File;
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with
       --  a directory separator.
@@ -335,9 +313,6 @@ private
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons
 
-      Own_Main_Loop          : Boolean := False;
-      --  Whether the file selector is running in its own main loop or not
-
       Read_Idle_Handler      : Idle_Handler_Id := 0;
       --  Identifier for read idle loops
 
@@ -345,7 +320,7 @@ private
       --  Identifier for display idle loops
 
       Home_Directory         : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.Get_Current_Dir;
+                                 GNATCOLL.VFS.Get_Current_Dir;
 
       Past_History           : Simple_Stack;
       Future_History         : Simple_Stack;
@@ -378,8 +353,8 @@ private
       Filter_Combo           : Gtk_Combo;
       Filter_Combo_Entry     : Gtk_Entry;
       Selection_Entry        : Gtk_Entry;
-      Ok_Button              : Gtk_Button;
-      Cancel_Button          : Gtk_Button;
+
+      OK_Button              : Gtk_Button;
 
       History                : Histories.History;
 

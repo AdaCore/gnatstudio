@@ -27,11 +27,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Strings;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 with Interfaces.C.Strings;
 with System;
@@ -43,6 +43,7 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
+with Glib.Unicode;              use Glib.Unicode;
 
 with Gtk;                       use Gtk;
 with Gtk.Arguments;             use Gtk.Arguments;
@@ -84,6 +85,7 @@ package body Gtkada.File_Selector is
    Comment_Column    : constant := 1;
    Text_Color_Column : constant := 2;
    Icon_Column       : constant := 3;
+   File_Column       : constant := 4;
 
    Last_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
    Last_Remote_Directory : Virtual_File := GNATCOLL.VFS.Get_Current_Dir;
@@ -232,14 +234,6 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class);
    --  ???
 
-   procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  ???
-
-   procedure On_Cancel_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  ???
-
    procedure On_Destroy
      (Object : access Gtk_Widget_Record'Class);
    --  ???
@@ -308,7 +302,7 @@ package body Gtkada.File_Selector is
          end if;
       end loop;
 
-      return Create (+Str);
+      return Create_From_UTF8 (Str);
    end Get_Location;
 
    --------------
@@ -332,7 +326,8 @@ package body Gtkada.File_Selector is
         (Text_Color_Column => Gdk_Color_Type,
          Base_Name_Column  => GType_String,
          Comment_Column    => GType_String,
-         Icon_Column       => Gdk.Pixbuf.Get_Type);
+         Icon_Column       => Gdk.Pixbuf.Get_Type,
+         File_Column       => Get_Virtual_File_Type);
    end Columns_Types;
 
    ------------------------
@@ -439,6 +434,7 @@ package body Gtkada.File_Selector is
          begin
             File := Create_From_UTF8
               (Filename, Get_Host (Dialog.Current_Directory));
+
             if Is_Absolute_Path (File) then
                return File;
             else
@@ -452,28 +448,6 @@ package body Gtkada.File_Selector is
       end if;
    end Get_Selection;
 
-   -------------------
-   -- Get_Ok_Button --
-   -------------------
-
-   function Get_Ok_Button
-     (File_Selection : access File_Selector_Window_Record)
-      return Gtk.Button.Gtk_Button is
-   begin
-      return File_Selection.Ok_Button;
-   end Get_Ok_Button;
-
-   -----------------------
-   -- Get_Cancel_Button --
-   -----------------------
-
-   function Get_Cancel_Button
-     (File_Selection : access File_Selector_Window_Record)
-      return Gtk.Button.Gtk_Button is
-   begin
-      return File_Selection.Cancel_Button;
-   end Get_Cancel_Button;
-
    -----------------
    -- Select_File --
    -----------------
@@ -481,9 +455,9 @@ package body Gtkada.File_Selector is
    function Select_File
      (Title             : String  := "Select a file";
       Base_Directory    : Virtual_File := No_File;
-      File_Pattern      : String  := "";
+      File_Pattern      : Filesystem_String  := "";
       Pattern_Name      : String  := "";
-      Default_Name      : String  := "";
+      Default_Name      : Filesystem_String  := "";
       Parent            : Gtk_Window := null;
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
@@ -495,6 +469,7 @@ package body Gtkada.File_Selector is
       S             : Chars_Ptr;
       Working_Dir   : Virtual_File;
       Initial_Dir   : Virtual_File;
+      Default_File  : Virtual_File;
 
    begin
       if Use_Native_Dialog
@@ -512,20 +487,20 @@ package body Gtkada.File_Selector is
 
             S := NativeFileSelection
               (Title & ASCII.NUL,
-               Display_Full_Name (Last_Directory) & ASCII.NUL,
-               File_Pattern & ASCII.NUL,
+               +Full_Name (Last_Directory).all & ASCII.NUL,
+               +File_Pattern & ASCII.NUL,
                Pattern_Name & ASCII.NUL,
-               Default_Name & ASCII.NUL,
+               +Default_Name & ASCII.NUL,
                Pos_Mouse,
                File_Selector_Kind'Pos (Kind));
 
          else
             S := NativeFileSelection
               (Title & ASCII.NUL,
-               Display_Full_Name (Base_Directory) & ASCII.NUL,
-               File_Pattern & ASCII.NUL,
+               +Full_Name (Base_Directory).all & ASCII.NUL,
+               +File_Pattern & ASCII.NUL,
                Pattern_Name & ASCII.NUL,
-               Default_Name & ASCII.NUL,
+               +Default_Name & ASCII.NUL,
                Pos_Mouse,
                File_Selector_Kind'Pos (Kind));
          end if;
@@ -535,15 +510,17 @@ package body Gtkada.File_Selector is
 
          declare
             Val : constant String := Interfaces.C.Strings.Value (S);
+            F   : Virtual_File;
          begin
             c_free (S);
 
             if Val = "" then
                return GNATCOLL.VFS.No_File;
             else
-               Last_Directory := Create (+Dir_Name (Val));
+               F := Create (+Val);
+               Last_Directory := Dir (F);
 
-               return Create (Full_Filename => +Val);
+               return F;
             end if;
          end;
       end if;
@@ -569,10 +546,10 @@ package body Gtkada.File_Selector is
       Set_Position (File_Selector, Win_Pos_Mouse);
 
       if Default_Name /= "" then
+         Default_File := Create_From_Dir (Initial_Dir, Default_Name);
          Set_Text
            (File_Selector.Selection_Entry,
-            Display_Full_Name (Create (+Default_Name)));
-         --  ??? What if the filesystem path is non-UTF8?
+            Display_Full_Name (Default_File));
       end if;
 
       if File_Pattern /= "" then
@@ -615,12 +592,12 @@ package body Gtkada.File_Selector is
                   Register_Filter
                     (File_Selector,
                      Regexp_File_Filter
-                       (File_Pattern (Ff .. Fl - Fo), ""));
+                       (+File_Pattern (Ff .. Fl - Fo), ""));
                else
                   Register_Filter
                     (File_Selector,
                      Regexp_File_Filter
-                       (File_Pattern (Ff .. Fl - Fo),
+                       (+File_Pattern (Ff .. Fl - Fo),
                         Pattern_Name (Nf .. Nl - No)));
                end if;
 
@@ -639,8 +616,10 @@ package body Gtkada.File_Selector is
      (File_Selector : File_Selector_Window_Access;
       Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File
    is
-      Filter_A      : constant Filter_Show_All_Access := new Filter_Show_All;
-      Selected_File : aliased Virtual_File := No_File;
+      Filter_A : constant Filter_Show_All_Access := new Filter_Show_All;
+      Resp     : Gtk_Response_Type;
+      Ret      : Virtual_File;
+
    begin
       pragma Assert (File_Selector /= null);
 
@@ -653,23 +632,19 @@ package body Gtkada.File_Selector is
          Set_Transient_For (File_Selector, Parent);
       end if;
 
-      Widget_Callback.Object_Connect
-        (File_Selector.Ok_Button, Button.Signal_Clicked,
-         On_Ok_Button_Clicked'Access, File_Selector);
-      Widget_Callback.Object_Connect
-        (File_Selector.Cancel_Button, Button.Signal_Clicked,
-         On_Cancel_Button_Clicked'Access, File_Selector);
-
       Show_All (File_Selector);
-      Grab_Default (File_Selector.Ok_Button);
 
-      File_Selector.Own_Main_Loop := True;
+      Resp := File_Selector.Run;
 
-      File_Selector.Selected_File := Selected_File'Unchecked_Access;
+      if Resp = Gtk_Response_OK then
+         Ret := Get_Selection (File_Selector);
+      else
+         Ret := No_File;
+      end if;
 
-      Gtk.Main.Main;
+      Destroy (File_Selector);
 
-      return Selected_File;
+      return Ret;
    end Select_File;
 
    ----------------------
@@ -756,7 +731,9 @@ package body Gtkada.File_Selector is
       Parent        : Gtk_Window := null) return Virtual_File
    is
       Filter_A      : constant Filter_Show_All_Access := new Filter_Show_All;
-      Selected_File : aliased Virtual_File := No_File;
+      Resp          : Gtk_Response_Type;
+      Ret           : Virtual_File;
+
    begin
       pragma Assert (File_Selector /= null);
 
@@ -766,21 +743,18 @@ package body Gtkada.File_Selector is
       Set_Modal (File_Selector, True);
       Set_Transient_For (File_Selector, Parent);
 
-      Widget_Callback.Object_Connect
-        (File_Selector.Ok_Button, Button.Signal_Clicked,
-         On_Ok_Button_Clicked'Access, File_Selector);
-      Widget_Callback.Object_Connect
-        (File_Selector.Cancel_Button, Button.Signal_Clicked,
-         On_Cancel_Button_Clicked'Access, File_Selector);
-
       Show_All (File_Selector);
-      File_Selector.Own_Main_Loop := True;
+      Resp := File_Selector.Run;
 
-      File_Selector.Selected_File := Selected_File'Unchecked_Access;
+      if Resp = Gtk_Response_OK then
+         Ret := Get_Selection (File_Selector);
+      else
+         Ret := No_File;
+      end if;
 
-      Gtk.Main.Main;
+      Destroy (File_Selector);
 
-      return Selected_File;
+      return Ret;
    end Select_Directory;
 
    ------------------
@@ -840,6 +814,8 @@ package body Gtkada.File_Selector is
          if Iter /= Null_Iter then
             Set (Win.File_Model, Iter, Base_Name_Column,
                  Display_Base_Name (Data (Win.Remaining_Files)));
+            Set_File
+              (Win.File_Model, Iter, File_Column, Data (Win.Remaining_Files));
 
             if Text /= null then
                Set (Win.File_Model, Iter, Comment_Column,
@@ -881,8 +857,8 @@ package body Gtkada.File_Selector is
       end if;
 
       declare
-         Files : File_Array_Access
-           := Read_Dir (Win.Current_Directory, Files_Only);
+         Files : File_Array_Access :=
+                   Read_Dir (Win.Current_Directory, Files_Only);
          Inserted : Boolean;
       begin
          for F in Files'Range loop
@@ -1091,11 +1067,12 @@ package body Gtkada.File_Selector is
 
          if Win.File_Tree = null then
             Ensure_Directory (Dir);
-            Set_Text (Win.Selection_Entry, Display_Full_Name (Dir, True));
-            --  ??? What if the filesystem path is non-UTF8?
+            Normalize_Path (Dir);
+            Set_Text (Win.Selection_Entry, Display_Full_Name (Dir));
+
             Set_Position
               (Win.Selection_Entry,
-               Full_Name (Dir, True).all'Length);
+               Gint (UTF8_Strlen (Display_Full_Name (Dir))));
          else
             Refresh_Files (Win);
          end if;
@@ -1389,21 +1366,15 @@ package body Gtkada.File_Selector is
               File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Name_Selected (Win);
-      if Get_Text (Win.Selection_Entry) /= ""
-        and then Win.Own_Main_Loop
-      then
-         if Win.Selected_File /= null then
-            Win.Selected_File.all := Get_Selection (Win);
-         end if;
+
+      if Get_Text (Win.Selection_Entry) /= "" then
          if Win.Display_Remote then
             Last_Remote_Directory := Win.Current_Directory;
          else
             Last_Directory := Win.Current_Directory;
          end if;
 
-         Main_Quit;
-         Win.Own_Main_Loop := False;
-         Destroy (Win);
+         Win.OK_Button.Clicked;
       end if;
 
    exception
@@ -1424,57 +1395,6 @@ package body Gtkada.File_Selector is
    exception
       when E : others => Trace (Me, E);
    end On_Selection_Entry_Changed;
-
-   --------------------------
-   -- On_Ok_Button_Clicked --
-   --------------------------
-
-   procedure On_Ok_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Win : constant File_Selector_Window_Access :=
-              File_Selector_Window_Access (Object);
-   begin
-      if Win.Selected_File /= null then
-         Win.Selected_File.all := Get_Selection (Win);
-      end if;
-      if Win.Display_Remote then
-         Last_Remote_Directory := Win.Current_Directory;
-      else
-         Last_Directory := Win.Current_Directory;
-      end if;
-
-      Main_Quit;
-      Win.Own_Main_Loop := False;
-      Destroy (Win);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Ok_Button_Clicked;
-
-   ------------------------------
-   -- On_Cancel_Button_Clicked --
-   ------------------------------
-
-   procedure On_Cancel_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Win : constant File_Selector_Window_Access :=
-              File_Selector_Window_Access (Object);
-   begin
-      if Win /= null
-        and then Win.Selection_Entry /= null
-      then
-         Set_Text (Win.Selection_Entry, "");
-      end if;
-
-      Main_Quit;
-      Win.Own_Main_Loop := False;
-      Destroy (Win);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Cancel_Button_Clicked;
 
    ----------------
    -- On_Destroy --
@@ -1497,11 +1417,6 @@ package body Gtkada.File_Selector is
          Idle_Remove (Win.Read_Idle_Handler);
       end if;
 
-      if Win.Own_Main_Loop then
-         Main_Quit;
-         Win.Own_Main_Loop := False;
-      end if;
-
    exception
       when E : others => Trace (Me, E);
    end On_Destroy;
@@ -1521,8 +1436,7 @@ package body Gtkada.File_Selector is
 
    begin
       declare
-         S     : constant String := Locale_From_UTF8 (Get_String (Event));
-         Found : Boolean := False;
+         S     : constant String := Get_String (Event);
       begin
          if S'Length /= 0
            and then (Is_Alphanumeric (S (S'First))
@@ -1531,12 +1445,9 @@ package body Gtkada.File_Selector is
             Iter := Get_Iter_First (Win.File_Model);
 
             while Iter /= Null_Iter loop
-               exit when Found;
-
                declare
-                  T : constant String :=
-                    Locale_From_UTF8
-                      (Get_String (Win.File_Model, Iter, Base_Name_Column));
+                  T    : constant String :=
+                           Get_String (Win.File_Model, Iter, Base_Name_Column);
                   Path : Gtk_Tree_Path;
                begin
                   if T'Length /= 0
@@ -1549,7 +1460,7 @@ package body Gtkada.File_Selector is
                        (Win.File_Tree, Path, null, True, 0.1, 0.1);
                      Path_Free (Path);
 
-                     Found := True;
+                     exit;
                   end if;
                end;
 
@@ -1584,10 +1495,14 @@ package body Gtkada.File_Selector is
    begin
       if Get_Key_Val (Event) = GDK_Return then
          declare
-            S : constant Virtual_File := Get_Location (Win.Location_Combo);
+            S : Virtual_File renames Get_Location (Win.Location_Combo);
          begin
             if Is_Directory (S) then
                Change_Directory (Win, S);
+
+               if Win.File_Tree /= null then
+                  Set_Text (Win.Selection_Entry, "");
+               end if;
             end if;
          end;
 
@@ -1609,9 +1524,7 @@ package body Gtkada.File_Selector is
                           File_Selector_Window_Access (Get_Toplevel (Object));
       Event           : constant Gdk_Event := To_Event (Params, 1);
       S               : constant UTF8_String := Get_Text (Win.Selection_Entry);
-      G               : constant String :=
-                          Locale_From_UTF8 (Get_String (Event));
-      Found           : Boolean := False;
+      G               : constant String := Get_String (Event);
 
       First_Match     : Gtk_Tree_Iter := Null_Iter;
       --  The first column that completely matches S
@@ -1678,7 +1591,6 @@ package body Gtkada.File_Selector is
       if Get_Key_Val (Event) = GDK_Tab then
          declare
             File     : Virtual_File;
-            Sub_File : Virtual_File;
             Dir      : Virtual_File;
          begin
             --  Handle "Tab completion".
@@ -1694,31 +1606,33 @@ package body Gtkada.File_Selector is
                File := GNATCOLL.VFS.No_File;
             end if;
 
-            Sub_File := Create_From_Dir (Win.Current_Directory, +S);
+            if not Is_Absolute_Path (File) then
+               File :=
+                 Create_From_Dir (Win.Current_Directory, File.Full_Name.all);
+            end if;
 
-            if Is_Absolute_Path (File)
-              and then Is_Directory (GNATCOLL.VFS.Dir (File))
-            then
-               Change_Directory (Win, GNATCOLL.VFS.Dir (File));
-            elsif Is_Directory (GNATCOLL.VFS.Dir (Sub_File)) then
-               File := Sub_File;
-               Change_Directory (Win, GNATCOLL.VFS.Dir (File));
-               Set_Text (Win.Selection_Entry, +Base_Dir_Name (File));
-               --  ??? What if the filesystem path is non-UTF8?
-               Set_Position
-                 (Win.Selection_Entry, Base_Dir_Name (File)'Length);
+            if Is_Directory (File) then
+               Change_Directory (Win, File);
+
+            elsif Is_Directory (Get_Parent (File)) then
+               Change_Directory (Win, Get_Parent (File));
+
             else
-               --  Dir is a non-existing directory: exit now
+               --  File's dir is a non-existing directory: exit now
 
                return True;
+            end if;
+
+            if Win.File_Tree /= null then
+               Set_Text (Win.Selection_Entry, Display_Base_Name (File));
+               Set_Position
+                 (Win.Selection_Entry,
+                  Glib.Gint (UTF8_Strlen (Display_Base_Name (File))));
             end if;
 
             --  Simple case: Base is a complete valid directory
 
             if Is_Directory (File) then
-               Ensure_Directory (File);
-               Change_Directory (Win, File);
-               Set_Text (Win.Selection_Entry, "");
                return True;
             end if;
 
@@ -1731,9 +1645,9 @@ package body Gtkada.File_Selector is
 
                while Iter /= Null_Iter loop
                   Matcher
-                    (+GNATCOLL.VFS.Base_Dir_Name (File),
-                     Locale_From_UTF8
-                       (Get_String (Win.File_Model, Iter, Base_Name_Column)),
+                    (Display_Base_Name (File),
+                     Display_Base_Name
+                       (Get_File (Win.File_Model, Iter, File_Column)),
                      Iter);
                   Next (Win.File_Model, Iter);
                end loop;
@@ -1742,9 +1656,12 @@ package body Gtkada.File_Selector is
             declare
                Files : File_Array_Access :=
                          Read_Dir (Win.Current_Directory, Dirs_Only);
+               --  ??? It would be nice to get those from the directory tree.
+               --  This would remove a duplicated filesystem access.
             begin
                for F in Files'Range loop
-                  Matcher (Base_Name (S), +Base_Dir_Name (Files (F)));
+                  Matcher (Display_Base_Name (File),
+                           Display_Base_Dir_Name (Files (F)));
                end loop;
                Unchecked_Free (Files);
             end;
@@ -1760,9 +1677,10 @@ package body Gtkada.File_Selector is
 
                   Set_Text
                     (Win.Selection_Entry,
-                     Display_Full_Name
-                       (Create (+Best_Match (1 .. Suffix_Length))));
-                  Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
+                     Best_Match (1 .. Suffix_Length));
+                  Set_Position
+                    (Win.Selection_Entry,
+                     Gint (UTF8_Strlen (Best_Match (1 .. Suffix_Length))));
                end if;
 
             else
@@ -1771,12 +1689,14 @@ package body Gtkada.File_Selector is
                if Suffix_Length > 0 then
                   Set_Text
                     (Win.Selection_Entry,
-                     Display_Full_Name
+                     Display_Base_Name
                        (Create (+Best_Match (1 .. Suffix_Length))));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
 
-                  Dir := GNATCOLL.VFS.Sub_Dir
-                    (Win.Current_Directory, +Best_Match (1 .. Suffix_Length));
+                  Dir := GNATCOLL.VFS.Create_From_UTF8
+                    (Win.Current_Directory.Display_Full_Name &
+                     Best_Match (1 .. Suffix_Length),
+                     Get_Host (Win.Current_Directory));
 
                   if Is_Directory (Dir)
                     and then Win.Current_Directory /= Dir
@@ -1795,23 +1715,21 @@ package body Gtkada.File_Selector is
          Iter := Get_Iter_First (Win.File_Model);
 
          while Iter /= Null_Iter loop
-            exit when Found;
-
             declare
                T : constant String :=
-                 Locale_From_UTF8
-                   (Get_String (Win.File_Model, Iter, Base_Name_Column));
+                     Get_String (Win.File_Model, Iter, Base_Name_Column);
                S : constant String :=
-                 Locale_From_UTF8 (Get_Text (Win.Selection_Entry)) & G;
+                     Get_Text (Win.Selection_Entry) & G;
             begin
                if T'Length >= S'Length
                  and then T (T'First .. T'First + S'Length - 1)
                  = S (S'First .. S'First + S'Length - 1)
                then
-                  Found := True;
                   Path := Get_Path (Win.File_Model, Iter);
                   Scroll_To_Cell (Win.File_Tree, Path, null, True, 0.1, 0.1);
                   Path_Free (Path);
+
+                  exit;
                end if;
             end;
 
@@ -1909,6 +1827,8 @@ package body Gtkada.File_Selector is
       Toolbar1 : Gtk_Toolbar;
       Label1   : Gtk_Label;
       Item     : Gtk_List_Item;
+      Button   : Gtk_Widget;
+      pragma Unreferenced (Button);
 
       Hpaned1  : Gtk_Hpaned;
 
@@ -1945,7 +1865,6 @@ package body Gtkada.File_Selector is
 
       Gtk_New
         (File_Selector_Window.Explorer_Tree,
-         File_Selector_Window.Home_Directory,
          Initial_Directory);
 
       Set_Title (File_Selector_Window, Dialog_Title);
@@ -2207,21 +2126,13 @@ package body Gtkada.File_Selector is
         (Get_Vbox (File_Selector_Window),
          Hbox6, False, False, 3);
 
-      File_Selector_Window.Ok_Button :=
-        Gtk_Button (Add_Button (File_Selector_Window,
-                                Stock_Ok,
-                                Gtk_Response_OK));
-
-      Set_Relief (File_Selector_Window.Ok_Button, Relief_Normal);
-      Set_Flags (File_Selector_Window.Ok_Button, Can_Default);
-
-      File_Selector_Window.Cancel_Button :=
-        Gtk_Button (Add_Button (File_Selector_Window,
-                                Stock_Close,
-                                Gtk_Response_Cancel));
-
-      Set_Relief (File_Selector_Window.Cancel_Button, Relief_Normal);
-      Set_Flags (File_Selector_Window.Cancel_Button, Can_Default);
+      File_Selector_Window.OK_Button :=
+        Gtk_Button
+          (Add_Button
+               (File_Selector_Window, Stock_Ok, Gtk_Response_OK));
+      Button := Add_Button
+        (File_Selector_Window, Stock_Cancel, Gtk_Response_Cancel);
+      Set_Default_Response (File_Selector_Window, Gtk_Response_OK);
 
       Realize (File_Selector_Window);
 
@@ -2240,7 +2151,6 @@ package body Gtkada.File_Selector is
       Widget_Callback.Connect
         (File_Selector_Window, Signal_Destroy, On_Destroy'Access);
 
-      Grab_Default (File_Selector_Window.Ok_Button);
       Grab_Focus (File_Selector_Window.Selection_Entry);
 
       if Initial_Directory = No_File then

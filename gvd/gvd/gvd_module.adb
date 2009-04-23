@@ -1440,7 +1440,7 @@ package body GVD_Module is
          S : Virtual_File :=
                Select_File
                  (Title             => -"Select File to Debug",
-                  File_Pattern      => "*" & Exec_Suffix & ";*",
+                  File_Pattern      => +("*" & Exec_Suffix & ";*"),
                   Pattern_Name      => -"Executable files;All files",
                   Parent            => Get_Current_Window (Kernel),
                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,

@@ -1763,7 +1763,7 @@ package body Src_Editor_Module is
               (Title             => -"Save File As",
                Parent            => Get_Current_Window (Kernel),
                Base_Directory    => Dir (Old_Name),
-               Default_Name      => Display_Base_Name (Old_Name),
+               Default_Name      => Base_Name (Old_Name),
                Remote_Browsing   => not Is_Local (Old_Name),
                Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                Kind              => Save_File,

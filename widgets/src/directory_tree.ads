@@ -61,14 +61,12 @@ package Directory_Tree is
 
    procedure Gtk_New
      (Tree    : out Dir_Tree;
-      Root    : GNATCOLL.VFS.Virtual_File;
       Initial : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Create a new tree, whose root node points to the directory Root,
    --  pointing at the Initial directory, if it is a subdirectory of Root.
 
    procedure Initialize
      (Tree    : access Dir_Tree_Record'Class;
-      Root    : GNATCOLL.VFS.Virtual_File;
       Initial : GNATCOLL.VFS.Virtual_File);
    --  Internal function used to create the tree.
 
@@ -110,25 +108,17 @@ package Directory_Tree is
    procedure Gtk_New
      (Selector             : out Directory_Selector;
       Initial_Directory    : GNATCOLL.VFS.Virtual_File;
-      Root_Directory       : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNATCOLL.VFS.File_Array := No_Selection);
    --  Create a directory selector.
    --  Multiple_Directories should be True if multiple directories can be
    --  selected by the user.
-   --  Root_Directory is the directory associated with the root node in the
-   --  tree.
    --  You are responsible for freeing Initialize_Selection.
 
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
       Initial_Directory    : GNATCOLL.VFS.Virtual_File;
-      Root_Directory       : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.Local_Root_Dir;
       Multiple_Directories : Boolean := False;
-      Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNATCOLL.VFS.File_Array := No_Selection);
    --  Internal function for the creation of new widgets.
 
