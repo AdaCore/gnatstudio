@@ -371,6 +371,14 @@ package Src_Editor_Buffer is
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
+   procedure Modify_In_Place
+     (Buffer   : access Source_Buffer_Record;
+      Position : Natural;
+      New_Char : Character);
+   --  Replace the character located Position characters before the cursor with
+   --  New_Char If the user is currently typing the word which contains this
+   --  character, do not generate an undo/redo action for this replacement
+
    function Ends_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    function Starts_Word (Iter : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Whether the iterator ends or starts a word. This takes '_' properly
