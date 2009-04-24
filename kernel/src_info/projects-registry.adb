@@ -901,10 +901,14 @@ package body Projects.Registry is
             Allow_Automatic_Generation => False,
             Automatically_Generated    => Automatically_Generated,
             Config_File_Path           => Config_File_Path,
-            Report_Error             => Report_Error'Unrestricted_Access,
+            Flags                      => Create_Flags
+               (Report_Error              => Report_Error'Unrestricted_Access,
+                When_No_Sources           => Warning,
+                Require_Sources_Other_Lang => True,
+                     --  ??? Do we need the warnings about missing sources ?
+                Compiler_Driver_Mandatory => False,
+                Allow_Duplicate_Basenames => True),
             Normalized_Hostname        => "",
-            Compiler_Driver_Mandatory  => False,
-            Allow_Duplicate_Basenames  => True,
             On_Load_Config             =>
               Add_GPS_Naming_Schemes_To_Config_File'Unrestricted_Access);
       exception
