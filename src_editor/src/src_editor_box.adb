@@ -2103,22 +2103,23 @@ package body Src_Editor_Box is
       Views    : constant Views_Array := Get_Views (Editor.Source_Buffer);
       Writable : Boolean;
    begin
-      if Get_Explicit_Writable_Set (Editor.Source_Buffer) then
-         return;
+      if not Get_Explicit_Writable_Set (Editor.Source_Buffer) then
+         if Read_Only_Set then
+            Writable := False;
+
+         else
+            Writable :=
+              Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
+              or else Is_Writable (Get_Filename (Editor.Source_Buffer))
+              or else
+                (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
+                 and then Get_Writable (Editor.Source_Buffer));
+         end if;
+
+         Set_Writable (Editor.Source_Buffer, Writable, Explicit => False);
       end if;
 
-      if Read_Only_Set then
-         Writable := False;
-
-      else
-         Writable := Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
-           or else Is_Writable (Get_Filename (Editor.Source_Buffer))
-         or else (not Is_Regular_File (Get_Filename (Editor.Source_Buffer))
-                    and then Get_Writable (Editor.Source_Buffer));
-      end if;
-
-      Set_Writable (Editor.Source_Buffer, Writable, Explicit => False);
-      Set_Writable (Views, Writable);
+      Set_Writable (Views, Get_Writable (Editor.Source_Buffer));
    end Check_Writable;
 
    ------------------
@@ -2180,7 +2181,6 @@ package body Src_Editor_Box is
       Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
       Set_Text (Editor.Modified_Label, -"Unmodified");
       Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
-      Set_Text (Editor.Read_Only_Label, -"Writable");
    end Load_Empty_File;
 
    ------------------
