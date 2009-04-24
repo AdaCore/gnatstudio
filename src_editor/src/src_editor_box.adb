@@ -2080,8 +2080,7 @@ package body Src_Editor_Box is
    ----------------
 
    function Get_Kernel
-     (Box : access Source_Editor_Box_Record)
-      return GPS.Kernel.Kernel_Handle is
+     (Box : access Source_Editor_Box_Record) return GPS.Kernel.Kernel_Handle is
    begin
       return Box.Kernel;
    end Get_Kernel;
@@ -2110,6 +2109,7 @@ package body Src_Editor_Box is
 
       if Read_Only_Set then
          Writable := False;
+
       else
          Writable := Get_Filename (Editor.Source_Buffer) = GNATCOLL.VFS.No_File
            or else Is_Writable (Get_Filename (Editor.Source_Buffer))
@@ -2285,9 +2285,10 @@ package body Src_Editor_Box is
                    (Msg => Display_Base_Name (Name)
                     & (-" already exists. Do you want to overwrite ?"),
                     Dialog_Type => Confirmation,
-                    Buttons => Button_OK or Button_Cancel,
-                    Title => "Confirm overwriting",
-                     Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
+                    Buttons     => Button_OK or Button_Cancel,
+                    Title       => "Confirm overwriting",
+                    Parent      =>
+                      Get_Current_Window (Editor.Kernel)) /= Button_OK
                then
                   Success := False;
                end if;
@@ -2305,9 +2306,10 @@ package body Src_Editor_Box is
                 (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
                  Dialog_Type => Confirmation,
-                 Buttons => Button_OK or Button_Cancel,
-                 Title => -"File changed on disk",
-                 Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
+                 Buttons     => Button_OK or Button_Cancel,
+                 Title       => -"File changed on disk",
+                 Parent      =>
+                   Get_Current_Window (Editor.Kernel)) /= Button_OK
             then
                Success := False;
             else
@@ -2323,9 +2325,9 @@ package body Src_Editor_Box is
              (Msg => Display_Base_Name (Filename)
               & (-" already exists. Do you want to overwrite ?"),
               Dialog_Type => Confirmation,
-              Buttons => Button_OK or Button_Cancel,
-              Title => "Confirm overwriting",
-              Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
+              Buttons     => Button_OK or Button_Cancel,
+              Title       => "Confirm overwriting",
+              Parent      => Get_Current_Window (Editor.Kernel)) /= Button_OK
          then
             Success := False;
          end if;
@@ -2371,7 +2373,6 @@ package body Src_Editor_Box is
                  (Editor.Kernel, File_Changed_Detected_Hook,
                   Data'Unchecked_Access)
                then
-
                   Dialog := Create_Gtk_Dialog
                     (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
                      & (-" changed on disk.")

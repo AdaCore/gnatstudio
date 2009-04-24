@@ -4,16 +4,16 @@ Known Problems fixed in GPS 4.4.0
   Problem:    When loading a project with scenario variables whose default
               value is not a static string (a concatenation, or the value of
               another scenario variable for instance), GPS fails to load
-              properly
+              properly.
   Workaround: use static values for scenario variables for now
 
 - I415-009: Generate python doc with read-only install dir
   Problem:    When the GPS installation directory is read-only (as it should
               be to avoid overwriting files by mistake), you can only generate
               the python documentation (/Help/Python Extensions) once, and
-              will generate errors the second time on
+              will generate errors the second time on.
   Workaround: Make the files share/gps/plug-ins/*.png read-write in the
-              installation directory
+              installation directory.
 
 - I326-017: Cannot build when opening a project using UNC path
   Problem:    When opening a project using UNC path (\\server\share) it is

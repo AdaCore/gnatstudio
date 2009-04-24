@@ -151,7 +151,7 @@ package body Project_Explorers_Common is
             if Get_Node_Type (Model, Iter) = File_Node then
                declare
                   Name : constant Filesystem_String :=
-                    Get_Base_Name (Model, Iter);
+                           Get_Base_Name (Model, Iter);
                begin
                   if File.Base_Name < Name then
                      Insert_Before (Model, Iter2, Base, Iter);
@@ -169,8 +169,8 @@ package body Project_Explorers_Common is
          if not Done then
             Append (Model, Iter, Base);
          end if;
-      else
 
+      else
          Append (Model, Iter, Base);
       end if;
 
@@ -600,6 +600,7 @@ package body Project_Explorers_Common is
 
                         if Row_Expanded (Tree, Path) then
                            Success := Collapse_Row (Tree, Path);
+
                         else
                            if Add_Dummy then
                               Append_Dummy_Iter (Model, Iter);

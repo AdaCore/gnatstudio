@@ -325,10 +325,10 @@ package body Src_Editor_Buffer is
    --  the version of Get_Iter_At_Screen_Position that supports blank lines.
 
    procedure Set_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type;
-      Style  : Style_Access;
-      Set    : Boolean;
+     (Editor       : access Source_Buffer_Record;
+      Line         : Buffer_Line_Type;
+      Style        : Style_Access;
+      Set          : Boolean;
       Highlight_In : Highlight_Location_Array);
    --  Common function for [Add|Remove]_Line_Highlighting
 
@@ -1632,7 +1632,7 @@ package body Src_Editor_Buffer is
                --  If we have found a CR in the text, block the current
                --  insertion and write the stripped text instead.
 
-               Emit_Stop_By_Name (Object => Buffer, Name   => "insert_text");
+               Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
                CR_Found := Insert_Interactive_At_Cursor
                  (Buffer, T (1 .. Last), True);
                return;
@@ -1668,7 +1668,7 @@ package body Src_Editor_Buffer is
             if Result then
                --  We did unfold a block: stop propagation and insert the
                --  new text at the cursor position.
-               Emit_Stop_By_Name (Object => Buffer, Name   => "insert_text");
+               Emit_Stop_By_Name (Object => Buffer, Name => "insert_text");
 
                Result := Insert_Interactive_At_Cursor
                  (Buffer, Text (1 .. Length), True);
@@ -1982,8 +1982,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_By_Name
-        (Get_Object (Buffer), Signal_Line_Highlights_Changed
-         & ASCII.NUL);
+        (Get_Object (Buffer), Signal_Line_Highlights_Changed & ASCII.NUL);
    end Line_Highlights_Changed;
 
    --------------------------------
@@ -2339,7 +2338,7 @@ package body Src_Editor_Buffer is
 
       procedure Local_Highlight is
          UTF8   : constant Interfaces.C.Strings.chars_ptr :=
-           Get_Slice (Entity_Start, Entity_End);
+                    Get_Slice (Entity_Start, Entity_End);
 
          --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
          --  since this would give the number of chars, not bytes.
@@ -2592,8 +2591,7 @@ package body Src_Editor_Buffer is
 
    function Is_In_Comment
      (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter)
-      return Boolean is
+      Iter   : Gtk_Text_Iter) return Boolean is
    begin
       return Has_Tag (Iter, Buffer.Syntax_Tags (Comment_Text))
         or else Has_Tag (Iter, Buffer.Syntax_Tags (Annotated_Comment_Text));
@@ -2681,7 +2679,7 @@ package body Src_Editor_Buffer is
       Comment_Font : constant Pango.Font.Pango_Font_Description :=
                        Comments_Style.Get_Pref_Font;
       Annotated_Comment_Font : constant Pango.Font.Pango_Font_Description :=
-                       Annotated_Comments_Style.Get_Pref_Font;
+                                 Annotated_Comments_Style.Get_Pref_Font;
       String_Font  : constant Pango.Font.Pango_Font_Description :=
                        Strings_Style.Get_Pref_Font;
    begin
@@ -2937,8 +2935,8 @@ package body Src_Editor_Buffer is
       end if;
 
       GNAT.Strings.Free (Contents);
-      UTF8_Validate (To_Unchecked_String (UTF8) (1 .. Length),
-                     Valid, First_Invalid);
+      UTF8_Validate
+        (To_Unchecked_String (UTF8) (1 .. Length), Valid, First_Invalid);
 
       if not Valid then
          Length := First_Invalid - 1;
@@ -3056,7 +3054,7 @@ package body Src_Editor_Buffer is
 
       declare
          Terminator_Pref : constant Line_Terminators :=
-           Line_Terminator.Get_Pref;
+                             Line_Terminator.Get_Pref;
          Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
@@ -3435,6 +3433,7 @@ package body Src_Editor_Buffer is
                Buttons     => Button_OK,
                Title       => -"Warning: charset modified",
                Parent      => Get_Main_Window (Buffer.Kernel));
+
          else
             --  If the user has tried to save Buffer and got errors, do not
             --  reload the file from the disk, as the user would then lose his
@@ -3547,11 +3546,10 @@ package body Src_Editor_Buffer is
       Line   : Gint;
       Column : Visible_Column_Type)
    is
-      Result  : Boolean := True;
-      Current : Gint := 0;
-      Tab_Len : constant Gint := Buffer.Tab_Width;
-
+      Tab_Len    : constant Gint := Buffer.Tab_Width;
       The_Column : constant Gint := Gint (Column - 1);
+      Result     : Boolean := True;
+      Current    : Gint := 0;
    begin
       if Is_Valid_Position (Buffer, Line, 0) then
          Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
@@ -4456,7 +4454,7 @@ package body Src_Editor_Buffer is
 
    procedure End_Action (Buffer : access Source_Buffer_Record'Class) is
       Command : constant Editor_Command :=
-        Editor_Command (Buffer.Current_Command);
+                  Editor_Command (Buffer.Current_Command);
 
    begin
       End_Action_Hook (Buffer);
@@ -4472,7 +4470,7 @@ package body Src_Editor_Buffer is
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
-        Editor_Command (Buffer.Current_Command);
+                  Editor_Command (Buffer.Current_Command);
 
    begin
       if not Is_Null_Command (Command) then
@@ -4633,7 +4631,7 @@ package body Src_Editor_Buffer is
       Update : Boolean := False) return Boolean
    is
       New_Timestamp : Ada.Calendar.Time;
-      Result : Boolean := True;
+      Result        : Boolean := True;
    begin
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
@@ -4649,16 +4647,16 @@ package body Src_Editor_Buffer is
 
          --  If the timestamp changed, make sure the contents of the file has
          --  really changed. Otherwise, it might be for instance a VCS that
-         --  modified the timestamps, and we don't need to bother the user
-         --  with that.
-         --  There is unfortunately no function in gtk+ to get the number of
+         --  modified the timestamps, and we don't need to bother the user with
+         --  that.
+         --  There is unfortunately no function in gtk + to get the number of
          --  bytes in a buffer which we could use to speed up the following.
 
          if not Result then
             declare
                Txt  : GNAT.Strings.String_Access := Get_String (Buffer);
                Disk : GNAT.Strings.String_Access :=
-                 Read_File (Buffer.Filename);
+                        Read_File (Buffer.Filename);
             begin
                Result := Txt.all = Disk.all;
                Trace (Me, "Timestamps differ, files equal ? " & Result'Img);
@@ -4842,10 +4840,10 @@ package body Src_Editor_Buffer is
    ---------------------------
 
    procedure Set_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type;
-      Style  : Style_Access;
-      Set    : Boolean;
+     (Editor       : access Source_Buffer_Record;
+      Line         : Buffer_Line_Type;
+      Style        : Style_Access;
+      Set          : Boolean;
       Highlight_In : Highlight_Location_Array)
    is
       Category   : Natural;
@@ -4933,9 +4931,9 @@ package body Src_Editor_Buffer is
    --------------------------
 
    procedure Add_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Style  : Style_Access;
+     (Editor       : access Source_Buffer_Record;
+      Line         : Editable_Line_Type;
+      Style        : Style_Access;
       Highlight_In : Highlight_Location_Array)
    is
       The_Line : Buffer_Line_Type;

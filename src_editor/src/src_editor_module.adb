@@ -1393,6 +1393,7 @@ package body Src_Editor_Module is
                if Nb_Untitled = -1 then
                   Set_Title (Child, No_Name);
                   Ident := Create (+('/' & No_Name));
+
                else
                   declare
                      Identifier : constant String :=

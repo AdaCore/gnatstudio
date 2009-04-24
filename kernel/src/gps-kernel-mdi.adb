@@ -167,9 +167,9 @@ package body GPS.Kernel.MDI is
      (Handle : access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
-      Buf  : constant Editor_Buffer'Class := Get_Buffer_Factory (Handle).Get
-        (File  => File,
-         Force => False,
+      Buf : constant Editor_Buffer'Class := Get_Buffer_Factory (Handle).Get
+        (File        => File,
+         Force       => False,
          Open_Buffer => False,
          Open_View   => False);
    begin
