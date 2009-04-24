@@ -232,7 +232,7 @@ class Antfile (Builder):
         self.compute_buildfile ()
         if self.buildfile:
           return self.read_targets ()
-      return ""
+      return None
 
 ant_support=False
 
