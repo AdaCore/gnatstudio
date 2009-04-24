@@ -4,8 +4,4 @@ project Default is
       for Default_Switches ("Ada") use ("-g", "-O2");
    end Compiler;
 
-   package IDE is
-      for VCS_Kind use "CVS";
-   end IDE;
-
 end Default;
