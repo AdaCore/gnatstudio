@@ -2423,9 +2423,19 @@ package body Src_Editor_Module.Shell is
       elsif Command = "set_read_only" then
          Name_Parameters (Data, (1 => Read_Only_Cst'Access));
          Get_Buffer (Buffer, Data, 1);
+
          if Buffer /= null then
             Set_Writable
               (Buffer, not Nth_Arg (Data, 2, True), Explicit => True);
+
+            declare
+               Views : constant Views_Array :=
+                         Get_Views (Buffer);
+            begin
+               for J in Views'Range loop
+                  Check_Writable (Views (J));
+               end loop;
+            end;
          end if;
 
       elsif Command = "is_read_only" then
