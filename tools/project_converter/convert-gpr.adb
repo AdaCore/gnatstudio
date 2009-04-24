@@ -208,7 +208,7 @@ package body Convert.Gpr is
         (Tree, Project, Gpr_Filename,
          Always_Errout_Finalize => True, Is_Config_File => False);
       Process (View_Tree, Project_View, Success,
-               Project, Tree, Report_Error => null);
+               Project, Tree, Flags => Gnatmake_Flags);
 
       if Success then
          declare
