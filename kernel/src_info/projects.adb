@@ -23,6 +23,7 @@ with Ada.Strings.Hash;
 with Ada.Text_IO;                use Ada, Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Case_Util;             use GNAT.Case_Util;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -30,6 +31,7 @@ with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
 
+with Casing;                     use Casing;
 with File_Utils;                 use File_Utils;
 with Namet;                      use Namet;
 with Osint;                      use Osint;
@@ -865,13 +867,28 @@ package body Projects is
       File_Must_Exist          : Boolean := True;
       Language                 : Name_Id) return Filesystem_String
    is
-      pragma Unreferenced (File_Must_Exist);
-      Unit            : Name_Id;
-      UIndex          : Unit_Index;
+      function Has_Predefined_Prefix (S : String) return Boolean;
+      --  Return True is S has a name that starts like a predefined unit
+      --  (e.g. a.b, which should be replaced by a~b)
+
+      ---------------------------
+      -- Has_Predefined_Prefix --
+      ---------------------------
+
+      function Has_Predefined_Prefix (S : String) return Boolean is
+         C : constant Character := S (S'First);
+      begin
+         return S (S'First + 1) = '.'
+           and then (C = 'a' or else C = 'g' or else C = 'i' or else C = 's');
+      end Has_Predefined_Prefix;
+
+      Unit    : Name_Id;
+      UIndex  : Unit_Index;
+      Lang    : Language_Ptr;
    begin
       --  Standard GNAT naming scheme
       --  ??? This isn't language independent, what if other languages have
-      --  similar requirements
+      --  similar requirements. Should use configuration files as gprbuild does
 
       if Project = No_Project
         or else (Check_Predefined_Library and then Language = Name_Ada)
@@ -909,8 +926,62 @@ package body Projects is
                   end if;
             end case;
          end if;
+
+         --  The unit does not exist yet. Perhaps we are creating a new file
+         --  and trying to guess the correct file name
+
+         if File_Must_Exist then
+            return "";
+         end if;
+
+         --  We can only perform guesses if the language is a valid for the
+         --  project.
+
+         Lang := Get_Language_From_Name
+           (Get_View (Project), Get_Name_String (Language));
+
+         if Lang = null then
+            return "";
+         end if;
+
+         declare
+            Dot_Replacement : constant String := Get_String
+              (Name_Id (Lang.Config.Naming_Data.Dot_Replacement));
+            Uname           : String := Substitute_Dot
+              (Unit_Name, Dot_Replacement);
+
+         begin
+            case Lang.Config.Naming_Data.Casing is
+               when All_Lower_Case => To_Lower (Uname);
+               when All_Upper_Case => To_Upper (Uname);
+               when others => null;
+            end case;
+
+            --  Handle properly special naming such as a.b -> a~b
+
+            if Language = Name_Ada
+              and then Uname'Length > 2
+              and then Has_Predefined_Prefix (Uname)
+            then
+               Uname (Uname'First + 1) := '~';
+            end if;
+
+            case Part is
+               when Unit_Body =>
+                  return +(Uname
+                           & Get_Name_String
+                             (Name_Id (Lang.Config.Naming_Data.Body_Suffix)));
+
+               when Unit_Spec =>
+                  return +(Uname
+                           & Get_Name_String
+                             (Name_Id (Lang.Config.Naming_Data.Spec_Suffix)));
+
+               when others =>
+                  return "";
+            end case;
+         end;
       end if;
-      return "";
    end Get_Filename_From_Unit;
 
    ------------------------
