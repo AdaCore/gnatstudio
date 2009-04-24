@@ -2118,7 +2118,7 @@ package body Src_Editor_Box is
       end if;
 
       Set_Writable (Editor.Source_Buffer, Writable, Explicit => False);
-      Set_Writable (Views, Get_Writable (Editor.Source_Buffer));
+      Set_Writable (Views, Writable);
    end Check_Writable;
 
    ------------------
@@ -2808,20 +2808,17 @@ package body Src_Editor_Box is
       Writable : Boolean;
       Explicit : Boolean := False)
    is
-      Views       : constant Views_Array := Get_Views (Editor.Source_Buffer);
-      Is_Writable : Boolean;
+      Views : constant Views_Array := Get_Views (Editor.Source_Buffer);
    begin
       Set_Writable (Editor.Source_Buffer, Writable, Explicit);
 
-      Is_Writable := Get_Writable (Editor.Source_Buffer);
-
-      if Is_Writable then
+      if Writable then
          Add_Controls (Editor.Source_Buffer);
       else
          Remove_Controls (Editor.Source_Buffer);
       end if;
 
-      Set_Writable (Views, Is_Writable);
+      Set_Writable (Views, Writable);
    end Set_Writable;
 
    ---------------
