@@ -4220,11 +4220,12 @@ package body Src_Editor_Buffer is
       Position : Natural;
       New_Char : Character)
    is
-      Command : constant Editor_Command :=
-        Editor_Command (Buffer.Current_Command);
-
       procedure Perform_Replace;
       --  Do the actual replacement in the text buffer
+
+      ---------------------
+      -- Perform_Replace --
+      ---------------------
 
       procedure Perform_Replace is
          Iter     : Gtk_Text_Iter;
@@ -4246,6 +4247,9 @@ package body Src_Editor_Buffer is
          end if;
       end Perform_Replace;
 
+      Command : constant Editor_Command :=
+                  Editor_Command (Buffer.Current_Command);
+
    begin
       if Is_Null_Command (Command)
         or else Get_Mode (Command) /= Insertion
@@ -4266,7 +4270,7 @@ package body Src_Editor_Buffer is
             end if;
 
             Text (Text'Last + 1 - Position) := New_Char;
-               Set_Text (Command, Text);
+            Set_Text (Command, Text);
 
             Buffer.Current_Command := Command_Access (Command);
 

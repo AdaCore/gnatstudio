@@ -2429,8 +2429,7 @@ package body Src_Editor_Module.Shell is
               (Buffer, not Nth_Arg (Data, 2, True), Explicit => True);
 
             declare
-               Views : constant Views_Array :=
-                         Get_Views (Buffer);
+               Views : constant Views_Array := Get_Views (Buffer);
             begin
                for J in Views'Range loop
                   Check_Writable (Views (J));
