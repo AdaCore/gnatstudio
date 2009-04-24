@@ -1085,6 +1085,8 @@ package body Src_Editor_Box is
    function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
+      Check_Writable (B);
+
       --  If we are currently holding down the mouse button, then we do not
       --  want to offer to reload the file, since the pop-up dialog will
       --  not be able to get the mouse input. Therefore we do nothing in
@@ -1108,8 +1110,6 @@ package body Src_Editor_Box is
 
          Check_Timestamp_And_Reload
            (B, Interactive => True, Always_Reload => False);
-
-         Check_Writable (B);
 
          B.Timestamp_Mode := Check_At_Focus;
       end if;

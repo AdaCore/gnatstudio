@@ -15,6 +15,12 @@ Known Problems fixed in GPS 4.4.0
   Workaround: Make the files share/gps/plug-ins/*.png read-write in the
               installation directory.
 
+- I414-019: Buffer read/write status not properly updated
+  Problem:    If the writable status is changed by an external tool
+              (ClearCase for example) it is not always refreshed on
+              the buffer status line.
+  Workaround: Close and re-open the corresponding buffer.
+
 - I326-017: Cannot build when opening a project using UNC path
   Problem:    When opening a project using UNC path (\\server\share) it is
               not possible to use the GPS builder module.
