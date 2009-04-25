@@ -4230,7 +4230,7 @@ package body Src_Editor_Buffer is
       procedure Perform_Replace is
          Iter     : Gtk_Text_Iter;
          End_Iter : Gtk_Text_Iter;
-         Success : Boolean;
+         Success  : Boolean;
       begin
          Get_Iter_At_Mark (Buffer => Buffer,
                            Iter   => Iter,
@@ -4286,8 +4286,8 @@ package body Src_Editor_Buffer is
    ----------------
 
    procedure Select_All (Buffer : access Source_Buffer_Record) is
-      Start_Iter     : Gtk_Text_Iter;
-      End_Iter       : Gtk_Text_Iter;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
    begin
       End_Action (Buffer);
       Get_Start_Iter (Buffer, Start_Iter);
@@ -4300,9 +4300,9 @@ package body Src_Editor_Buffer is
    ----------------------
 
    procedure Select_Region
-     (Buffer       : access Source_Buffer_Record;
-      Cursor_Iter  : Gtk.Text_Iter.Gtk_Text_Iter;
-      Bound_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+     (Buffer      : access Source_Buffer_Record;
+      Cursor_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      Bound_Iter  : Gtk.Text_Iter.Gtk_Text_Iter)
    is
    begin
       End_Action (Buffer);
