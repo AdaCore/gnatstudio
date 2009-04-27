@@ -40,6 +40,7 @@ def on_exit (process, status, remaining_output):
        (" Warning:"," Warning,"),
      category=spark_category)
 
+@with_save_excursion
 def examine_file (file):
   """Examine current file through the SPARK examiner. file is an instance
      of GPS.File"""
