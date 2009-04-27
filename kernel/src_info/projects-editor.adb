@@ -25,7 +25,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with Namet;                     use Namet;
-with Prj.Attr;                  use Prj.Attr;
 with Prj.Com;                   use Prj.Com;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.Part;                  use Prj.Part;
@@ -172,24 +171,6 @@ package body Projects.Editor is
    -- Attributes --
    ----------------
 
-   function Create_Attribute
-     (Tree       : Project_Node_Tree_Ref;
-      Prj_Or_Pkg : Project_Node_Id;
-      Name       : Name_Id;
-      Index_Name : Name_Id := No_Name;
-      Kind       : Variable_Kind := List;
-      At_Index   : Integer := 0) return Project_Node_Id;
-   --  Create a new attribute.
-   --  The new declaration is added at the end of the declarative item list for
-   --  Prj_Or_Pkg (but before any package declaration). No addition is done if
-   --  Prj_Or_Pkg is Empty_Node.
-   --  If Index_Name is not "", then if creates an attribute value for a
-   --  specific index
-   --  At_Index is used for the " at <idx>" in the naming exceptions
-   --
-   --  If the variable is a list, it also creates the associated
-   --  N_Literal_String_List node.
-
    function Find_Last_Declaration_Of
      (Tree       : Project_Node_Tree_Ref;
       Parent     : Project_Node_Id;
@@ -233,15 +214,6 @@ package body Projects.Editor is
    -- Packages --
    --------------
 
-   function Get_Or_Create_Package
-     (Tree    : Project_Node_Tree_Ref;
-      Project : Project_Node_Id;
-      Pkg     : String) return Project_Node_Id;
-   --  Create (or get an existing) package in project.
-   --
-   --  ??? Should always create, since we can use a find_* function to get an
-   --  existing one.
-
    function Find_Package_Declaration
      (Tree    : Project_Node_Tree_Ref;
       Project : Project_Node_Id; Name : Namet.Name_Id) return Project_Node_Id;
@@ -250,11 +222,6 @@ package body Projects.Editor is
    -----------------
    -- Expressions --
    -----------------
-
-   function Enclose_In_Expression
-     (Node : Project_Node_Id;
-      Tree : Project_Node_Tree_Ref) return Project_Node_Id;
-   --  Enclose the Node inside a N_Expression node, and return this expression
 
    function String_As_Expression
      (Value : Name_Id; Tree : Project_Node_Tree_Ref) return Project_Node_Id;
@@ -279,11 +246,6 @@ package body Projects.Editor is
    ----------
    -- Misc --
    ----------
-
-   function Create_Literal_String
-     (Str : Namet.Name_Id; Tree : Project_Node_Tree_Ref)
-      return Project_Node_Id;
-   --  Create a literal string whose value is Str
 
    function Find_Node_By_Name
      (Tree    : Project_Node_Tree_Ref;
@@ -352,22 +314,6 @@ package body Projects.Editor is
       return Count;
    end Length;
 
-   ---------------------------
-   -- Create_Literal_String --
-   ---------------------------
-
-   function Create_Literal_String
-     (Str : Namet.Name_Id; Tree : Project_Node_Tree_Ref)
-      return Project_Node_Id
-   is
-      Node : Project_Node_Id;
-   begin
-      Node := Default_Project_Node (Tree, N_Literal_String, Prj.Single);
-      Set_Next_Literal_String (Node, Tree, Empty_Node);
-      Set_String_Value_Of (Node, Tree, Str);
-      return Node;
-   end Create_Literal_String;
-
    --------------------------
    -- String_As_Expression --
    --------------------------
@@ -377,22 +323,6 @@ package body Projects.Editor is
    begin
       return Enclose_In_Expression (Create_Literal_String (Value, Tree), Tree);
    end String_As_Expression;
-
-   ---------------------------
-   -- Enclose_In_Expression --
-   ---------------------------
-
-   function Enclose_In_Expression
-     (Node : Project_Node_Id;
-      Tree : Project_Node_Tree_Ref) return Project_Node_Id
-   is
-      Expr : constant Project_Node_Id :=
-        Default_Project_Node (Tree, N_Expression, Single);
-   begin
-      Set_First_Term (Expr, Tree, Default_Project_Node (Tree, N_Term, Single));
-      Set_Current_Term (First_Term (Expr, Tree), Tree, Node);
-      return Expr;
-   end Enclose_In_Expression;
 
    ------------------------------
    -- Find_Package_Declaration --
@@ -405,51 +335,6 @@ package body Projects.Editor is
    begin
       return Find_Node_By_Name (Tree, Project, N_Package_Declaration, Name);
    end Find_Package_Declaration;
-
-   ---------------------------
-   -- Get_Or_Create_Package --
-   ---------------------------
-
-   function Get_Or_Create_Package
-     (Tree    : Project_Node_Tree_Ref;
-      Project : Project_Node_Id;
-      Pkg     : String) return Project_Node_Id
-   is
-      Pack : Project_Node_Id;
-      N    : Name_Id;
-   begin
-      N := Get_String (Pkg);
-
-      --  Check if the package already exists
-
-      Pack := First_Package_Of (Project, Tree);
-
-      while Pack /= Empty_Node loop
-         if Prj.Tree.Name_Of (Pack, Tree) = N then
-            return Pack;
-         end if;
-
-         Pack := Next_Package_In_Project (Pack, Tree);
-      end loop;
-
-      --  Create the package and add it to the declarative item
-
-      Pack := Default_Project_Node (Tree, N_Package_Declaration);
-      Set_Name_Of (Pack, Tree, N);
-
-      --  Find the correct package id to use
-
-      Set_Package_Id_Of (Pack, Tree, Package_Node_Id_Of (N));
-
-      --  Add it to the list of packages
-      Set_Next_Package_In_Project
-        (Pack, Tree, First_Package_Of (Project, Tree));
-      Set_First_Package_Of (Project, Tree, Pack);
-
-      Add_At_End (Tree, Project_Declaration_Of (Project, Tree), Pack);
-
-      return Pack;
-   end Get_Or_Create_Package;
 
    -----------------------
    -- Find_Node_By_Name --
@@ -477,38 +362,6 @@ package body Projects.Editor is
       end loop;
       return Empty_Node;
    end Find_Node_By_Name;
-
-   ----------------------
-   -- Create_Attribute --
-   ----------------------
-
-   function Create_Attribute
-     (Tree       : Project_Node_Tree_Ref;
-      Prj_Or_Pkg : Project_Node_Id;
-      Name       : Name_Id;
-      Index_Name : Name_Id := No_Name;
-      Kind       : Variable_Kind := List;
-      At_Index   : Integer := 0) return Project_Node_Id
-   is
-      Node : constant Project_Node_Id :=
-               Default_Project_Node (Tree, N_Attribute_Declaration, Kind);
-   begin
-      Set_Name_Of (Node, Tree, Name);
-
-      if At_Index /= 0 then
-         Set_Source_Index_Of (Node, Tree, To => Int (At_Index));
-      end if;
-
-      if Index_Name /= No_Name then
-         Set_Associative_Array_Index_Of (Node, Tree, Index_Name);
-      end if;
-
-      if Prj_Or_Pkg /= Empty_Node then
-         Add_At_End (Tree, Prj_Or_Pkg, Node);
-      end if;
-
-      return Node;
-   end Create_Attribute;
 
    ------------
    -- Length --
@@ -1151,12 +1004,12 @@ package body Projects.Editor is
       end if;
 
       if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Tree, Project, Pkg_Name);
+         Pkg := Create_Package (Tree, Project, Pkg_Name);
 
          --  If we have a renamed package, modify the target package
          Rename_Prj := Project_Of_Renamed_Package_Of (Pkg, Tree);
          if Rename_Prj /= Empty_Node then
-            Pkg := Get_Or_Create_Package (Tree, Rename_Prj, Pkg_Name);
+            Pkg := Create_Package (Tree, Rename_Prj, Pkg_Name);
          else
             Rename_Prj := Project;
          end if;
@@ -2965,66 +2818,6 @@ package body Projects.Editor is
 
       return New_Node;
    end Clone_Node;
-
-   ----------------
-   -- Add_At_End --
-   ----------------
-
-   procedure Add_At_End
-     (Tree                         : Project_Node_Tree_Ref;
-      Parent                       : Project_Node_Id;
-      Expr                         : Project_Node_Id;
-      Add_Before_First_Pkg         : Boolean := False;
-      Add_Before_First_Case        : Boolean := False)
-   is
-      Real_Parent          : Project_Node_Id;
-      New_Decl, Decl, Next : Project_Node_Id;
-      Last, L              : Project_Node_Id;
-   begin
-      if Kind_Of (Expr, Tree) /= N_Declarative_Item then
-         New_Decl := Default_Project_Node (Tree, N_Declarative_Item);
-         Set_Current_Item_Node (New_Decl, Tree, Expr);
-      else
-         New_Decl := Expr;
-      end if;
-
-      if Kind_Of (Parent, Tree) = N_Project then
-         Real_Parent := Project_Declaration_Of (Parent, Tree);
-      else
-         Real_Parent := Parent;
-      end if;
-
-      Decl := First_Declarative_Item_Of (Real_Parent, Tree);
-
-      if Decl = Empty_Node then
-         Set_First_Declarative_Item_Of (Real_Parent, Tree, New_Decl);
-      else
-         loop
-            Next := Next_Declarative_Item (Decl, Tree);
-            exit when Next = Empty_Node
-              or else
-              (Add_Before_First_Pkg
-               and then Kind_Of (Current_Item_Node (Next, Tree), Tree)
-                 = N_Package_Declaration)
-              or else
-              (Add_Before_First_Case
-               and then Kind_Of (Current_Item_Node (Next, Tree), Tree)
-                 = N_Case_Construction);
-            Decl := Next;
-         end loop;
-
-         --  In case Expr is in fact a range of declarative items
-         Last := New_Decl;
-         loop
-            L := Next_Declarative_Item (Last, Tree);
-            exit when L = Empty_Node;
-            Last := L;
-         end loop;
-         Set_Next_Declarative_Item (Last, Tree, Next);
-
-         Set_Next_Declarative_Item (Decl, Tree, New_Decl);
-      end if;
-   end Add_At_End;
 
    ------------------
    -- Add_In_Front --
