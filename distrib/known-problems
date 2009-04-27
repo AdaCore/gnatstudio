@@ -5,7 +5,7 @@ Known Problems fixed in GPS 4.3.3
               documentation generation will fail.
   Workaround: Use utf-8 or ascii only comments.
 
-- I414-026: SPARK Examine file looses focus
+- I414-026: SPARK Examine file loses focus
   Problem:    When using the "Examine file" spark action, the focus is switched
               to the spark console, and the current file looses the focus
   Workaround: Click on the source editor to gain the focus again.
