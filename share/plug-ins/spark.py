@@ -45,6 +45,7 @@ def examine_file (file):
   """Examine current file through the SPARK examiner. file is an instance
      of GPS.File"""
   GPS.MDI.save_all (False)
+  mdi = GPS.MDI.current ()
   GPS.Locations.remove_category (spark_category)
   sw = file.project().get_tool_switches_as_string ("Examiner")
   cmd = "spark "+sw + " "+spark_separator+'brief "' + file.name() + '"'
@@ -52,6 +53,7 @@ def examine_file (file):
   GPS.Console (spark_console).write (cmd + "\n")
   GPS.Process (cmd, remote_server="Build_Server", regexp=".+", on_match=on_match, on_exit=on_exit)
   GPS.MDI.get (spark_console).raise_window ()
+  mdi.raise_window()
 
 def pogs_directory():
   """Return the directory in which pogs should be run. This directory
