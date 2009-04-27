@@ -68,6 +68,8 @@ GNAT_SOURCES= \
   prj-ext.adb \
   prj-nmsc.ads \
   prj-nmsc.adb \
+  prj-pars.ads \
+  prj-pars.adb \
   prj-part.ads \
   prj-part.adb \
   prj-pp.ads \

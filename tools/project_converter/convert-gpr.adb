@@ -21,20 +21,18 @@ with GNAT.IO;                   use GNAT.IO;
 with Csets;                     use Csets;
 with Prj;                       use Prj;
 with Prj.Env;                   use Prj.Env;
-with Prj.Part;                  use Prj.Part;
-with Prj.Proc;                  use Prj.Proc;
+with Prj.Pars;                  use Prj.Pars;
 with Prj.Tree;                  use Prj.Tree;
 with Prj.Util;                  use Prj.Util;
 with Namet;                     use Namet;
 with Snames;                    use Snames;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line;          use Ada.Command_Line;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Convert.Gpr is
 
-   procedure Output_Path (Path : String_Access; Prefix : String);
+   procedure Output_Path (Path : String; Prefix : String);
    --  Output one line for each directory in path. Each line starts with
    --  Prefix.
 
@@ -63,8 +61,8 @@ package body Convert.Gpr is
    -- Output_Path --
    -----------------
 
-   procedure Output_Path (Path : String_Access; Prefix : String) is
-      Files : constant File_Array := From_Path (+Path.all);
+   procedure Output_Path (Path : String; Prefix : String) is
+      Files : constant File_Array := From_Path (+Path);
    begin
       for J in Files'Range loop
          Ensure_Directory (Files (J));
@@ -190,10 +188,8 @@ package body Convert.Gpr is
    -----------------------------
 
    procedure Convert_From_Gpr_To_Adp (Gpr_Filename : String) is
-      Project : Project_Node_Id;
       Project_View : Project_Id;
       Ide_Package : constant String := "ide";
-      Success   : Boolean;
       Tree      : constant Project_Node_Tree_Ref := new Project_Node_Tree_Data;
       View_Tree : constant Project_Tree_Ref := new Project_Tree_Data;
    begin
@@ -204,13 +200,11 @@ package body Convert.Gpr is
       Prj.Tree.Initialize (Tree);
 
       Change_Dir (Dir_Name (Gpr_Filename));
-      Parse
-        (Tree, Project, Gpr_Filename,
-         Always_Errout_Finalize => True, Is_Config_File => False);
-      Process (View_Tree, Project_View, Success,
-               Project, Tree, Flags => Gnatmake_Flags);
+      Prj.Pars.Parse
+        (View_Tree, Project_View, Gpr_Filename,
+         Flags => Gnatmake_Flags);
 
-      if Success then
+      if Project_View /= No_Project then
          declare
             Compiler : constant String := Output_Array_Attr
               (Project_View, View_Tree, "compiler_command", "gnatmake",
@@ -222,9 +216,8 @@ package body Convert.Gpr is
             Default_List : constant String := "gnatls";
          begin
             Output_Path
-              (Ada_Include_Path (Project_View, View_Tree), "src_dir=");
-            Output_Path
-              (Ada_Objects_Path (Project_View, View_Tree), "obj_dir=");
+              (Ada_Include_Path (Project_View, View_Tree, True), "src_dir=");
+            Output_Path (Ada_Objects_Path (Project_View).all, "obj_dir=");
             Put_Line
               ("build_dir=" &
                Get_Name_String (Project_View.Exec_Directory.Name));

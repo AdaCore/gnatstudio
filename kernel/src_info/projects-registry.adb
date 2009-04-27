@@ -415,7 +415,6 @@ package body Projects.Registry is
       end if;
 
       Prj.Initialize (Registry.Data.View_Tree);
-      Prj.Set_Mode (Multi_Language);
 
       if View_Only then
          Naming := Registry.Data.Naming_Schemes;
@@ -1990,8 +1989,7 @@ package body Projects.Registry is
             declare
                Objs : constant String :=
                         Prj.Env.Ada_Objects_Path
-                          (Get_View (Registry.Data.Root),
-                           Registry.Data.Root.View_Tree).all;
+                          (Get_View (Registry.Data.Root)).all;
             begin
                if Objs = "" then
                   return From_Path (+Prj.Subdirs.all);

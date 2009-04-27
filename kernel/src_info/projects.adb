@@ -564,8 +564,7 @@ package body Projects is
 
       elsif Recursive then
          return From_Path
-           (+Prj.Env.Ada_Objects_Path
-              (View, Project.View_Tree, Including_Libraries).all);
+           (+Prj.Env.Ada_Objects_Path (View, Including_Libraries).all);
 
       elsif Including_Libraries
         and then View.Library
