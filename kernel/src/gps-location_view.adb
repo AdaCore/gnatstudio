@@ -914,7 +914,7 @@ package body GPS.Location_View is
          Mark.Line,
          Visible_Column_Type (Mark.Column),
          Integer (Get_Int (Model, Loc_Iter, Length_Column)),
-         Get_Highlighting_Style (Model, File_Iter),
+         Get_Highlighting_Style (Model, Loc_Iter),
          False);
 
       if Mark /= Nil_Editor_Mark then
