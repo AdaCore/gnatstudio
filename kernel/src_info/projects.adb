@@ -2778,4 +2778,20 @@ package body Projects is
       Project.Data.Files := Source_Files;
    end Set_Source_Files;
 
+   ------------------
+   -- Create_Flags --
+   ------------------
+
+   function Create_Flags
+     (On_Error : Prj.Error_Handler) return Processing_Flags is
+   begin
+      return Create_Flags
+        (Report_Error              => On_Error,
+         When_No_Sources           => Warning,
+         Require_Sources_Other_Lang => True,
+         --  ??? Do we need the warnings about missing sources ?
+         Compiler_Driver_Mandatory => False,
+         Allow_Duplicate_Basenames => True);
+   end Create_Flags;
+
 end Projects;

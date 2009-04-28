@@ -21,7 +21,6 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -189,8 +188,6 @@ package body Projects.Registry is
 
       Trusted_Mode : Boolean := True;
       --  Whether we are in trusted mode when recomputing the project view
-
-      --  Implicit dependency on the global htables in the Prj.* packages
    end record;
 
    procedure Reset
@@ -212,9 +209,7 @@ package body Projects.Registry is
    --  in the registry.
    --  Does nothing if the cache is not empty.
 
-   procedure Parse_Source_Files
-     (Registry : in out Project_Registry;
-      Errors   : Put_Line_Access);
+   procedure Parse_Source_Files (Registry : in out Project_Registry);
    --  Find all the source files for the project, and cache them in the
    --  registry.
    --  At the same time, check that the gnatls attribute is coherent between
@@ -248,6 +243,41 @@ package body Projects.Registry is
    procedure Do_Subdirs_Cleanup (Registry : Project_Registry);
    --  Cleanup empty subdirs created when opening a project with prj.subdirs
    --  set.
+
+   generic
+      Registry : Project_Registry;
+   procedure Mark_Project_Error (Project : Project_Id; Is_Warning : Boolean);
+   --  Handler called when the project parser finds an error.
+   --  Mark_Project_Incomplete should be true if any error should prevent the
+   --  edition of project properties graphically.
+
+   ------------------------
+   -- Mark_Project_Error --
+   ------------------------
+
+   procedure Mark_Project_Error (Project : Project_Id; Is_Warning : Boolean) is
+      P : Project_Type;
+   begin
+      if not Is_Warning then
+         if Project = Prj.No_Project then
+            if Registry.Data.Root /= No_Project then
+               declare
+                  Iter : Imported_Project_Iterator :=
+                    Start (Registry.Data.Root);
+               begin
+                  while Current (Iter) /= No_Project loop
+                     Set_View_Is_Complete (Current (Iter), False);
+                     Next (Iter);
+                  end loop;
+               end;
+            end if;
+
+         else
+            P := Get_Project_From_Name (Registry, Project.Name);
+            Set_View_Is_Complete (P, False);
+         end if;
+      end if;
+   end Mark_Project_Error;
 
    ---------------------
    -- String_Elements --
@@ -486,6 +516,10 @@ package body Projects.Registry is
       Errors             : Projects.Error_Report;
       Project            : out Project_Node_Id)
    is
+      procedure On_Error is new Mark_Project_Error (Registry);
+      --  Any error while parsing the project marks it as incomplete, and
+      --  prevents direct edition of the project.
+
       procedure Fail (S : String);
       --  Replaces Osint.Fail
 
@@ -519,6 +553,7 @@ package body Projects.Registry is
          True,
          Store_Comments    => True,
          Is_Config_File    => False,
+         Flags             => Create_Flags (On_Error'Unrestricted_Access),
          Current_Directory => Get_Current_Dir);
 
       Prj.Com.Fail := null;
@@ -711,65 +746,15 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Projects.Error_Report)
    is
-      Set_As_Incomplete_When_Errors : Boolean := True;
-
       procedure Add_GPS_Naming_Schemes_To_Config_File
         (Config_File  : in out Project_Node_Id;
          Project_Tree : Project_Node_Tree_Ref);
       --  Add the naming schemes defined in GPS's configuration files to the
       --  configuration file (.cgpr) used to parse the project.
 
-      procedure Report_Error
-        (S : String; Project : Project_Id; Tree : Project_Tree_Ref);
-      --  Handler called when the project parser finds an error
-
-      ------------------
-      -- Report_Error --
-      ------------------
-
-      procedure Report_Error
-        (S : String; Project : Project_Id; Tree : Project_Tree_Ref)
-      is
-         pragma Unreferenced (Tree);
-         P : Project_Type;
-      begin
-         if Project = Prj.No_Project then
-            if Set_As_Incomplete_When_Errors then
-               declare
-                  Iter : Imported_Project_Iterator :=
-                    Start (Registry.Data.Root);
-               begin
-                  while Current (Iter) /= No_Project loop
-                     Set_View_Is_Complete (Current (Iter), False);
-                     Next (Iter);
-                  end loop;
-               end;
-            end if;
-
-         else
-            P := Get_Project_From_Name (Registry, Project.Name);
-
-            --  Unless we have a warning...
-            if Index (S, "Warning") < S'First then
-               if Set_As_Incomplete_When_Errors then
-                  Set_View_Is_Complete (P, False);
-               end if;
-            end if;
-         end if;
-
-         Trace (Me, "Recompute_View: error " & S);
-
-         if Errors /= null then
-            if Project = Prj.No_Project then
-               Errors (S);
-
-            elsif Status (Registry.Data.Root) = From_File
-              or else Project_Modified (Registry.Data.Root)
-            then
-               Errors (Project_Name (P) & ": " & S);
-            end if;
-         end if;
-      end Report_Error;
+      procedure On_Error is new Mark_Project_Error (Registry);
+      --  Any error while processing the project marks it as incomplete, and
+      --  prevents direct edition of the project.
 
       -------------------------------------------
       -- Add_GPS_Naming_Schemes_To_Config_File --
@@ -856,32 +841,25 @@ package body Projects.Registry is
             Allow_Automatic_Generation => False,
             Automatically_Generated    => Automatically_Generated,
             Config_File_Path           => Config_File_Path,
-            Flags                      => Create_Flags
-               (Report_Error              => Report_Error'Unrestricted_Access,
-                When_No_Sources           => Warning,
-                Require_Sources_Other_Lang => True,
-                     --  ??? Do we need the warnings about missing sources ?
-                Compiler_Driver_Mandatory => False,
-                Allow_Duplicate_Basenames => True),
+            Flags                      =>
+              Create_Flags (On_Error'Unrestricted_Access),
             Normalized_Hostname        => "",
             On_Load_Config             =>
               Add_GPS_Naming_Schemes_To_Config_File'Unrestricted_Access);
       exception
          when Invalid_Config =>
-            Report_Error
-              (S       => "Error while processing project",
-               Project => View,
-               Tree    => Registry.Data.View_Tree);
+            --  Error message was already reported via Prj.Err
+            null;
       end;
 
+      Parse_Source_Files (Registry);
+
+      --  ??? Should not be needed since all errors are reported through the
+      --  callback already. This avoids duplicate error messages in the console
+
+      Prj_Output.Set_Special_Output (Output.Output_Proc (Errors));
       Prj.Err.Finalize;
-
-      --  Do not set the project as incomplete if no sources existed for a
-      --  given language. Otherwise, a dialog is displayed when editing the
-      --  project properties, and this might be confusing for the user.
-      Set_As_Incomplete_When_Errors := False;
-
-      Parse_Source_Files (Registry, Report_Error'Unrestricted_Access);
+      Prj_Output.Cancel_Special_Output;
 
    exception
       --  We can get an unexpected exception (actually Directory_Error) if the
@@ -894,10 +872,7 @@ package body Projects.Registry is
    -- Parse_Source_Files --
    ------------------------
 
-   procedure Parse_Source_Files
-     (Registry : in out Project_Registry;
-      Errors   : Put_Line_Access)
-   is
+   procedure Parse_Source_Files (Registry : in out Project_Registry) is
       procedure Register_Directory (Directory : Filesystem_String);
       --  Register Directory as belonging to Project.
       --  The parent directories are also registered.
@@ -950,13 +925,16 @@ package body Projects.Registry is
             Ls : constant String :=
               Get_Attribute_Value (P, Gnatlist_Attribute);
          begin
-            if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
-               Errors
-                 (-("Warning: the project attribute IDE.gnatlist doesn't have"
+            if Ls /= "" and then Ls /= Gnatls then
+               --  We do not want to mark the project as incomplete for this
+               --  warning, so we do not need to pass an actual Error_Handler
+               Prj.Err.Error_Msg
+                 (Flags => Create_Flags (null),
+                  Msg   =>
+                   -("?the project attribute IDE.gnatlist doesn't have"
                     & " the same value as in the root project."
                     & " The value """ & Gnatls & """ will be used"),
-                  Get_View (P),
-                  Registry.Data.View_Tree);
+                  Project => Get_View (P));
             end if;
          end;
 

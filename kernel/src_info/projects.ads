@@ -731,6 +731,10 @@ private
    --  Reset the importing or imported projects caches, depending on the value
    --  of Importing. See projects.adb for the definition of these two caches
 
+   function Create_Flags
+     (On_Error : Prj.Error_Handler) return Prj.Processing_Flags;
+   --  Return the flags to pass to the project manager in the context of GPS
+
    No_Variable : constant Scenario_Variable :=
      (Namet.No_Name, Namet.No_Name, Prj.Tree.Empty_Node);
 

@@ -26,6 +26,7 @@ with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with Namet;                     use Namet;
 with Prj.Com;                   use Prj.Com;
+with Prj.Err;                   use Prj.Err;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.Part;                  use Prj.Part;
 with Prj.Util;                  use Prj.Util;
@@ -3038,7 +3039,7 @@ package body Projects.Editor is
       Tmp_Prj     : Project_Type;
 
    begin
-      Prj_Output.Set_Special_Output (Report_Errors);
+      Prj_Output.Set_Special_Output (Fail'Unrestricted_Access);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       --  Make sure we are not trying to import ourselves, since otherwise it
@@ -3047,9 +3048,7 @@ package body Projects.Editor is
       if Prj.Tree.Name_Of (Project.Node, Tree) =
         Prj.Tree.Name_Of (Imported_Project, Tree)
       then
-         if Report_Errors /= null then
-            Report_Errors (-"Cannot add dependency to self");
-         end if;
+         Fail (-"Cannot add dependency to self");
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
          return Dependency_On_Self;
@@ -3064,11 +3063,8 @@ package body Projects.Editor is
          if Prj.Tree.Name_Of (Project_Node_Of (With_Clause, Tree), Tree) =
            Prj.Tree.Name_Of (Imported_Project, Tree)
          then
-            if Report_Errors /= null then
-               Report_Errors
-                 (-"There is already a dependency on "
+            Fail (-"There is already a dependency on "
                   & Get_String (Prj.Tree.Name_Of (Imported_Project, Tree)));
-            end if;
             Prj_Output.Cancel_Special_Output;
             Prj.Com.Fail := null;
             return Dependency_Already_Exists;
@@ -3095,10 +3091,7 @@ package body Projects.Editor is
       if Has_Circular_Dependencies (Project.Tree, Project.Node) then
          Set_First_With_Clause_Of
            (Project.Node, Tree, Next_With_Clause_Of (With_Clause, Tree));
-         if Report_Errors /= null then
-            Report_Errors
-              (-"Circular dependency detected in the project hierarchy");
-         end if;
+         Fail (-"Circular dependency detected in the project hierarchy");
          Trace (Me, "Circular dependency detected in the project hierarchy");
          Prj_Output.Cancel_Special_Output;
          Prj.Com.Fail := null;
@@ -3200,7 +3193,7 @@ package body Projects.Editor is
       Dep_Name         : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
 
    begin
-      Prj_Output.Set_Special_Output (Report_Errors);
+      Prj_Output.Set_Special_Output (Fail'Unrestricted_Access);
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       Dep_ID := Get_String (+Basename);
@@ -3215,11 +3208,9 @@ package body Projects.Editor is
             Full_Name (Imported_Project_Location),
             Get_Nickname (Build_Server))
          then
-            if Report_Errors /= null then
-               Report_Errors
-                 (-"A different project with the same name"
-                  & " already exists in the project tree.");
-            end if;
+            Fail
+              (-"A different project with the same name"
+               & " already exists in the project tree.");
             Prj_Output.Cancel_Special_Output;
             Prj.Com.Fail := null;
             return Project_Already_Exists;
@@ -3233,7 +3224,10 @@ package body Projects.Editor is
             +Full_Name (Imported_Project_Location),
             Is_Config_File         => False,
             Current_Directory      => Get_Current_Dir,
+            Flags                  => Create_Flags (null),
             Always_Errout_Finalize => True);
+
+         Prj.Err.Finalize;
       end if;
 
       if Imported_Project = Empty_Node then
