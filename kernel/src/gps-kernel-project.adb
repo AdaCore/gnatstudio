@@ -769,9 +769,13 @@ package body GPS.Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
-         --  No need to send to the result view, since these error messages do
-         --  not contain line numbers.
          Console.Insert (Handle, S, Mode => Console.Error);
+         Parse_File_Locations
+           (Handle,
+            S,
+            Category           => "Project",
+            Highlight          => True,
+            Remove_Duplicates  => True);
       end Report_Error;
 
       ----------------------------

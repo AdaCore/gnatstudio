@@ -179,7 +179,7 @@ package body GPS.Kernel.Console is
 
       elsif Text /= "" then
          if Mode = Error then
-            Trace (Me, "Error: " & Text);
+            Trace (Me, Text);
             if UTF8 then
                Insert_UTF8
                  (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
