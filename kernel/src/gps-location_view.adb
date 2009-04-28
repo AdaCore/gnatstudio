@@ -539,7 +539,7 @@ package body GPS.Location_View is
                        (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
                      Integer
                        (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
-                     Get_Highlighting_Style (View.Tree.Model, File_Iter));
+                     Get_Highlighting_Style (View.Tree.Model, Line_Iter));
 
                   Next (View.Tree.Model, Line_Iter);
                end loop;
