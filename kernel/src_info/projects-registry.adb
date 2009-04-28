@@ -787,18 +787,8 @@ package body Projects.Registry is
 
             Trace (Me, "Creating dummy configuration file");
 
-            Config_File := Create_Project
-              (Registry       => Registry,
-               Name           => "auto",
-               Path           => Create ("auto.cgpr"),
-               Is_Config_File => True);
-
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => "default_language",
-               Value              => "Ada");
+            Add_Default_GNAT_Naming_Scheme
+              (Config_File, Project_Tree);
 
             --  Pretend we support shared and static libs. Since we are not
             --  trying to build anyway, this isn't dangerous, and allows
@@ -810,40 +800,6 @@ package body Projects.Registry is
                Scenario_Variables => No_Scenario,
                Attribute          => "library_support",
                Value              => "full");
-
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Separate_Suffix_Attribute,
-               Value              => ".adb",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Spec_Suffix_Attribute,
-               Value              => ".ads",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Impl_Suffix_Attribute,
-               Value              => ".adb",
-               Attribute_Index    => "Ada");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Dot_Replacement_Attribute,
-               Value              => "-");
-            Update_Attribute_Value_In_Scenario
-              (Tree               => Project_Tree,
-               Project            => Config_File,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Casing_Attribute,
-               Value              => "lowercase");
          end if;
 
          while NS /= null loop
