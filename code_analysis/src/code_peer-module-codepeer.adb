@@ -95,14 +95,14 @@ package body Code_Peer.Module.Codepeer is
                     (GPS.Kernel.Kernel_Handle (Context.Module.Kernel));
 
    begin
-      if not Is_In_Expert_Mode (Context.Module) then
+      if not Context.Module.Advanced_Action then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (GPS.Kernel.Kernel_Handle (Context.Module.Kernel), "codepeer");
       end if;
 
       Code_Peer.Module.Bridge.Inspection (Context.Module);
 
-      if not Is_In_Expert_Mode (Context.Module) then
+      if not Context.Module.Advanced_Action then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (GPS.Kernel.Kernel_Handle (Context.Module.Kernel), Mode);
       end if;

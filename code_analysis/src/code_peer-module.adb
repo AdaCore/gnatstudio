@@ -98,17 +98,26 @@ package body Code_Peer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
-   procedure On_Run_Review
+   procedure On_Analyze_All
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Analyze All" menu item is activated by the user.
 
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
 
-   procedure On_Load
+   procedure On_Advanced_Run_Analysis_Manually
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Run analysis manually" menu item in the "Advanced" submenu
+   --  is activated by the user.
+
+   procedure On_Advanced_Display_Code_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Called when "Display code review" menu item in the "Advanced" submenu is
+   --  activated by the user.
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -344,16 +353,6 @@ package body Code_Peer.Module is
       end if;
    end Hide_Annotations;
 
-   -----------------------
-   -- Is_In_Expret_Mode --
-   -----------------------
-
-   function Is_In_Expert_Mode
-     (Self : access Module_Id_Record'Class) return Boolean is
-   begin
-      return Self.Expert_Mode.Get_Pref;
-   end Is_In_Expert_Mode;
-
    ----------
    -- Load --
    ----------
@@ -496,6 +495,57 @@ package body Code_Peer.Module is
       Context.Module.Update_Location_View;
    end On_Activate;
 
+   -------------------------------------
+   -- On_Advanced_Display_Code_Review --
+   -------------------------------------
+
+   procedure On_Advanced_Display_Code_Review
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+
+   begin
+      Module.Advanced_Action := True;
+      Code_Peer.Module.Bridge.Inspection (Module);
+   end On_Advanced_Display_Code_Review;
+
+   ---------------------------------------
+   -- On_Advanced_Run_Analysis_Manually --
+   ---------------------------------------
+
+   procedure On_Advanced_Run_Analysis_Manually
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+   begin
+      Module.Advanced_Action := True;
+      Code_Peer.Module.Codepeer.Review (Module);
+   end On_Advanced_Run_Analysis_Manually;
+
+   --------------------
+   -- On_Analyze_All --
+   --------------------
+
+   procedure On_Analyze_All
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Module.Autorun_Codepeer := True;
+      Module.Advanced_Action := False;
+
+      Code_Peer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
+   end On_Analyze_All;
+
    -----------------------------
    -- On_Compilation_Finished --
    -----------------------------
@@ -512,17 +562,20 @@ package body Code_Peer.Module is
           (GPS.Kernel.Kernel_Handle (Kernel));
 
    begin
-      if Hook_Data.Mode_Name = "codepeer"
-        and then Hook_Data.Status = 0
-        and then not Is_In_Expert_Mode (Module)
-      then
-         Code_Peer.Shell_Commands.Set_Build_Mode
-           (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
+      if Hook_Data.Mode_Name = "codepeer" then
+         if Module.Autorun_Codepeer
+           and then Hook_Data.Status = 0
+         then
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (GPS.Kernel.Kernel_Handle (Kernel), "codepeer");
 
-         Code_Peer.Module.Codepeer.Review (Module);
+            Code_Peer.Module.Codepeer.Review (Module);
 
-         Code_Peer.Shell_Commands.Set_Build_Mode
-           (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+            Code_Peer.Shell_Commands.Set_Build_Mode
+              (GPS.Kernel.Kernel_Handle (Kernel), Mode);
+         end if;
+
+         Module.Autorun_Codepeer := False;
       end if;
    end On_Compilation_Finished;
 
@@ -635,20 +688,6 @@ package body Code_Peer.Module is
       Context.Module.Update_Location_View;
    end On_Hide_Messages;
 
-   -------------
-   -- On_Load --
-   -------------
-
-   procedure On_Load
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
-   is
-      pragma Unreferenced (Widget, Kernel);
-
-   begin
-      Code_Peer.Module.Bridge.Inspection (Module);
-   end On_Load;
-
    -------------------------
    -- On_Message_Reviewed --
    -------------------------
@@ -665,30 +704,6 @@ package body Code_Peer.Module is
       Context.Module.Report.Update;
       Context.Module.Update_Location_View;
    end On_Message_Reviewed;
-
-   -------------------
-   -- On_Run_Review --
-   -------------------
-
-   procedure On_Run_Review
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-   begin
-      if Is_In_Expert_Mode (Module) then
-         Code_Peer.Module.Codepeer.Review (Module);
-
-      else
-         Code_Peer.Shell_Commands.Build_Target_Execute
-           (Kernel,
-            Code_Peer.Shell_Commands.Build_Target (Kernel, "Build All"),
-            Force       => True,
-            Build_Mode  => "codepeer",
-            Synchronous => False);
-      end if;
-   end On_Run_Review;
 
    -------------------------
    -- On_Show_Annotations --
@@ -754,28 +769,23 @@ package body Code_Peer.Module is
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & "Tools" & '/' & "CodePeer",
-         Text        => -"Run code review",
+         Text        => -"Analyze All",
          Ref_Item    => "Documentation",
-         Callback    => On_Run_Review'Access);
+         Callback    => On_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & "Tools" & '/' & "CodePeer",
-         Text        => -"Load code review information",
+         Parent_Path => '/' & "Tools" & '/' & "CodePeer" & '/' & "Advanced",
+         Text        => -"Run analysis manually",
          Add_Before  => True,
-         Callback    => On_Load'Access);
+         Callback    => On_Advanced_Run_Analysis_Manually'Access);
 
-      Module.Expert_Mode :=
-        Default_Preferences.Create
-          (Manager => Kernel.Get_Preferences,
-           Name    => "Codepeer-Expert-Mode",
-           Default => False,
-           Doc     => -("If disabled, GPS runs all programs in the CodePeer " &
-                        "toolchain automatically; otherwise user is " &
-                        "responsible for each separate step (SCIL generation" &
-                        " and CodePeer run"),
-           Label   => -"Expert Mode",
-           Page    => -"CodePeer");
+      GPS.Kernel.Modules.Register_Menu
+        (Kernel      => Kernel,
+         Parent_Path => '/' & "Tools" & '/' & "CodePeer" & '/' & "Advanced",
+         Text        => -"Display code review",
+         Add_Before  => True,
+         Callback    => On_Advanced_Display_Code_Review'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style

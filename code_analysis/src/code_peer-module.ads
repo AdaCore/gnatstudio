@@ -22,7 +22,6 @@ with Gtk.Menu;
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
-with Default_Preferences;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Styles;
 with GPS.Kernel.MDI;
@@ -93,16 +92,13 @@ private
 
       Filter_Criteria  : Code_Peer.Message_Filter_Criteria;
 
-      --  Preferences
-
-      Expert_Mode      : Default_Preferences.Boolean_Preference;
+      Autorun_Codepeer : Boolean := False;
+      --  codepeer must be automatically called when compilation is finished.
+      Advanced_Action  : Boolean := False;
+      --  Advanced action is requested by the user.
    end record;
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class);
-
-   function Is_In_Expert_Mode
-     (Self : access Module_Id_Record'Class) return Boolean;
-   --  Returns True if expert mode is activated.
 
    function Codepeer_Output_Directory
      (Project : Projects.Project_Type) return GNATCOLL.VFS.Virtual_File;
