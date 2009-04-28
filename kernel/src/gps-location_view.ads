@@ -140,7 +140,6 @@ package GPS.Location_View is
      (View       : access Location_View_Record'Class;
       Identifier : String;
       Category   : String;
-      H_Category : Style_Access;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Natural;
@@ -148,7 +147,6 @@ package GPS.Location_View is
       Action     : Action_Item);
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
-   --  H_Category is the category to highlight the item with.
 
    procedure Parse_File_Locations
      (Kernel                  : access Kernel_Handle_Record'Class;

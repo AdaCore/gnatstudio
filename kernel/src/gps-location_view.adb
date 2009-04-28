@@ -257,7 +257,6 @@ package body GPS.Location_View is
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
       Category      : Glib.UTF8_String;
-      H_Category    : Style_Access;
       File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -1206,7 +1205,6 @@ package body GPS.Location_View is
    procedure Get_Category_File
      (View          : access Location_View_Record'Class;
       Category      : Glib.UTF8_String;
-      H_Category    : Style_Access;
       File          : GNATCOLL.VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -1231,7 +1229,7 @@ package body GPS.Location_View is
             Fill_Iter
               (View, Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
                "", Nil_Editor_Mark, 0, 0, 0, False,
-               H_Category, View.Category_Pixbuf);
+               null, View.Category_Pixbuf);
             New_Category := True;
          else
             return;
@@ -1258,7 +1256,7 @@ package body GPS.Location_View is
          Append (Model, File_Iter, Category_Iter);
          Fill_Iter
            (View, Model, File_Iter, "", File, "", Nil_Editor_Mark, 0, 0, 0,
-            False, H_Category, View.File_Pixbuf);
+            False, null, View.File_Pixbuf);
       end if;
 
       return;
@@ -1350,7 +1348,7 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (View, Category, Highlight_Category,
+        (View, Category,
          File, Category_Iter, File_Iter, Category_Created);
 
       --  Check whether the same item already exists
@@ -1877,7 +1875,6 @@ package body GPS.Location_View is
          Get_Category_File
            (Locations,
             Category      => "Builder results",
-            H_Category    => null,
             File          => D.File,
             Category_Iter => Category_Iter,
             File_Iter     => File_Iter,
@@ -1888,7 +1885,6 @@ package body GPS.Location_View is
          Get_Category_File
            (Locations,
             Category      => Get_Category_Name (Model, Current),
-            H_Category    => null,
             File          => D.File,
             Category_Iter => Category_Iter,
             File_Iter     => File_Iter,
@@ -2148,7 +2144,7 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
-         null, GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
+         GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
       if Cat = Null_Iter then
          return;
@@ -2190,7 +2186,7 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
-         null, GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
+         GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
       if Cat = Null_Iter then
          return 0;
@@ -2232,7 +2228,7 @@ package body GPS.Location_View is
       File_Iter : Gtk_Tree_Iter;
       Dummy     : Boolean;
    begin
-      Get_Category_File (View, Identifier, null, File, Iter, File_Iter, Dummy);
+      Get_Category_File (View, Identifier, File, Iter, File_Iter, Dummy);
 
       if File_Iter = Null_Iter then
          Remove_Category_Or_File_Iter (Location_View (View), Iter);
@@ -2372,7 +2368,6 @@ package body GPS.Location_View is
      (View       : access Location_View_Record'Class;
       Identifier : String;
       Category   : String;
-      H_Category : Style_Access;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural;
       Column     : Natural;
@@ -2460,12 +2455,10 @@ package body GPS.Location_View is
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
-         H_Category,
          File, Category_Iter, File_Iter, Created, False);
 
       if Category_Iter = Null_Iter then
-         Trace (Me, "Add_Action_Item: Category " & Get_Name (H_Category)
-                & " not found");
+         Trace (Me, "Add_Action_Item: Category " & Category & " not found");
       end if;
 
       if File_Iter = Null_Iter then
@@ -2621,7 +2614,7 @@ package body GPS.Location_View is
       D    : constant Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
-        (View, D.Identifier, D.Category, null, D.File,
+        (View, D.Identifier, D.Category, D.File,
          Integer (D.Line), Integer (D.Column), D.Message, D.Action);
       return True;
    end Location_Hook;
@@ -3186,7 +3179,6 @@ package body GPS.Location_View is
                Get_Category_File
                  (View          => View,
                   Category      => Category,
-                  H_Category    => null,
                   File          => File,
                   Category_Iter => Dummy,
                   File_Iter     => Iter,
