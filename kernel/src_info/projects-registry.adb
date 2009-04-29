@@ -232,10 +232,10 @@ package body Projects.Registry is
    --  project
 
    procedure Internal_Load
-     (Registry           : Project_Registry;
-      Root_Project_Path  : GNATCOLL.VFS.Virtual_File;
-      Errors             : Projects.Error_Report;
-      Project            : out Project_Node_Id);
+     (Registry          : Project_Registry;
+      Root_Project_Path : GNATCOLL.VFS.Virtual_File;
+      Errors            : Projects.Error_Report;
+      Project           : out Project_Node_Id);
    --  Internal implementation of load. This doesn't reset the registry at all,
    --  but will properly setup the GNAT project manager so that error messages
    --  are redirected and fatal errors do not kill GPS
@@ -812,10 +812,11 @@ package body Projects.Registry is
          end loop;
       end Add_GPS_Naming_Schemes_To_Config_File;
 
-      View    : Project_Id;
-      Iter    : Imported_Project_Iterator := Start (Registry.Data.Root);
+      View                    : Project_Id;
+      Iter                    : Imported_Project_Iterator :=
+                                  Start (Registry.Data.Root);
       Automatically_Generated : Boolean;
-      Config_File_Path : String_Access;
+      Config_File_Path        : String_Access;
 
    begin
       while Current (Iter) /= No_Project loop
@@ -907,13 +908,15 @@ package body Projects.Registry is
          end loop;
       end Register_Directory;
 
-      Gnatls  : constant String :=
-                  Get_Attribute_Value (Registry.Data.Root, Gnatlist_Attribute);
-      Iter    : Imported_Project_Iterator := Start (Registry.Data.Root, True);
-      Sources : String_List_Id;
-      P       : Project_Type;
-      Source_Iter : Source_Iterator;
-      Source  : Source_Id;
+      Gnatls           : constant String :=
+                           Get_Attribute_Value
+                             (Registry.Data.Root, Gnatlist_Attribute);
+      Iter             : Imported_Project_Iterator :=
+                           Start (Registry.Data.Root, True);
+      Sources          : String_List_Id;
+      P                : Project_Type;
+      Source_Iter      : Source_Iterator;
+      Source           : Source_Id;
       Source_File_List : Virtual_File_List.List;
 
    begin
@@ -923,7 +926,7 @@ package body Projects.Registry is
 
          declare
             Ls : constant String :=
-              Get_Attribute_Value (P, Gnatlist_Attribute);
+                   Get_Attribute_Value (P, Gnatlist_Attribute);
          begin
             if Ls /= "" and then Ls /= Gnatls then
                --  We do not want to mark the project as incomplete for this
@@ -995,9 +998,9 @@ package body Projects.Registry is
 
          declare
             Count   : constant Ada.Containers.Count_Type :=
-              Virtual_File_List.Length (Source_File_List);
+                        Virtual_File_List.Length (Source_File_List);
             Files   : constant File_Array_Access :=
-              new File_Array (1 .. Natural (Count));
+                        new File_Array (1 .. Natural (Count));
             Current : Cursor := First (Source_File_List);
             J       : Natural := Files'First;
          begin
@@ -1021,8 +1024,8 @@ package body Projects.Registry is
    procedure Add_Runtime_Files
      (Registry : in out Project_Registry; Path : File_Array)
    is
-      Info      : Source_File_Data;
-      Files     : File_Array_Access;
+      Info  : Source_File_Data;
+      Files : File_Array_Access;
    begin
       for J in Path'Range loop
          begin
@@ -1171,7 +1174,7 @@ package body Projects.Registry is
       return Project_Type
    is
       S : constant Source_File_Data :=
-        Get (Registry.Data.Sources, +Base_Name (Source_Filename));
+            Get (Registry.Data.Sources, +Base_Name (Source_Filename));
       P : Project_Type := S.Project;
    begin
       --  Make sure the file we found has the same full name, since it might
@@ -1294,8 +1297,8 @@ package body Projects.Registry is
       Default_Body_Suffix : String)
    is
       Spec, Impl : String_Access;
-      Spec_Suff : String := Default_Spec_Suffix;
-      Impl_Suff : String := Default_Body_Suffix;
+      Spec_Suff  : String := Default_Spec_Suffix;
+      Impl_Suff  : String := Default_Body_Suffix;
    begin
       --  GNAT doesn't allow empty suffixes, and will display an error when
       --  the view is recomputed, in that case. Therefore we substitute dummy
@@ -1594,13 +1597,13 @@ package body Projects.Registry is
    -----------------------------
 
    procedure Get_Full_Path_From_File
-     (Registry        : Project_Registry;
-      Filename        : Filesystem_String;
-      Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project;
+     (Registry                    : Project_Registry;
+      Filename                    : Filesystem_String;
+      Use_Source_Path             : Boolean;
+      Use_Object_Path             : Boolean;
+      Project                     : Project_Type := No_Project;
       Create_As_Base_If_Not_Found : Boolean := False;
-      File            : out Virtual_File)
+      File                        : out Virtual_File)
    is
       Locale                 : Filesystem_String renames Filename;
       Project2, Real_Project : Project_Type;
@@ -1910,8 +1913,13 @@ package body Projects.Registry is
    ------------------------
 
    procedure Do_Subdirs_Cleanup (Registry : Project_Registry) is
+
       function Get_Paths return File_Array;
       --  Get the list of directories that potentially need cleanup
+
+      ---------------
+      -- Get_Paths --
+      ---------------
 
       function Get_Paths return File_Array is
       begin
@@ -1963,8 +1971,7 @@ package body Projects.Registry is
    --------------
 
    function Get_Tree
-     (Registry : Project_Registry) return Project_Node_Tree_Ref
-   is
+     (Registry : Project_Registry) return Project_Node_Tree_Ref is
    begin
       return Registry.Data.Tree;
    end Get_Tree;

@@ -118,7 +118,7 @@ package Projects.Registry is
    function Get_Mode_Subdir
      (Registry : Project_Registry)
       return GNATCOLL.VFS.Filesystem_String;
-   --  Return the object dir's subdirectory for the current builder mode.
+   --  Return the object dir's subdirectory for the current builder mode
 
    procedure Set_Predefined_Source_Path
      (Registry : in out Project_Registry;
@@ -138,12 +138,12 @@ package Projects.Registry is
    procedure Set_Xrefs_Subdir
      (Registry : in out Project_Registry;
       Subdir   : GNATCOLL.VFS.Filesystem_String);
-   --  Set the object dirs subdirectory for xrefs.
+   --  Set the object dirs subdirectory for xrefs
 
    procedure Set_Mode_Subdir
      (Registry : in out Project_Registry;
       Subdir   : GNATCOLL.VFS.Filesystem_String);
-   --  Set the object dirs subdirectory for current build mode.
+   --  Set the object dirs subdirectory for current build mode
 
    ----------------------
    -- Loading projects --
@@ -195,7 +195,7 @@ package Projects.Registry is
      (Registry     : Project_Registry;
       Project_Name : String;
       Errors       : Projects.Error_Report) return Project_Type;
-   --  Same as above, using the project's name instead of a project file.
+   --  Same as above, using the project's name instead of a project file
 
    procedure Unload_Project
      (Registry : Project_Registry; View_Only : Boolean := False);
@@ -292,13 +292,13 @@ package Projects.Registry is
    -------------
 
    procedure Get_Full_Path_From_File
-     (Registry        : Project_Registry;
-      Filename        : Filesystem_String;
-      Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean;
-      Project         : Project_Type := No_Project;
+     (Registry                    : Project_Registry;
+      Filename                    : Filesystem_String;
+      Use_Source_Path             : Boolean;
+      Use_Object_Path             : Boolean;
+      Project                     : Project_Type := No_Project;
       Create_As_Base_If_Not_Found : Boolean := False;
-      File            : out GNATCOLL.VFS.Virtual_File);
+      File                        : out GNATCOLL.VFS.Virtual_File);
    --  Return an instance of the file.
    --  This instance is shared by all callers of this function, so that they
    --  get the normalized name of the file almost for free for instance. This

@@ -26,7 +26,7 @@ with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib.Object;               use Glib.Object;
-with XML_Utils;              use XML_Utils;
+with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 
 with Gtk.Menu;                  use Gtk.Menu;
@@ -100,8 +100,7 @@ package body VCS_Module is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-      return Node_Ptr;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
    procedure Status_Parse_Handler

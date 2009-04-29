@@ -1639,7 +1639,7 @@ package body Src_Editor_Module.Shell is
       elsif Command = "add_blank_lines" then
          declare
             Filename    : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                            Create (Nth_Arg (Data, 1), Kernel);
             Line        : constant Integer := Nth_Arg (Data, 2);
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
@@ -1682,9 +1682,9 @@ package body Src_Editor_Module.Shell is
       elsif Command = "remove_blank_lines" then
          Marker := Find_Mark (Nth_Arg (Data, 1));
          declare
-            Child       : MDI_Child;
-            Number      : Integer := 0;
-            Box         : Source_Editor_Box;
+            Child  : MDI_Child;
+            Number : Integer := 0;
+            Box    : Source_Editor_Box;
          begin
             if Number_Of_Arguments (Data) >= 2 then
                Number := Nth_Arg (Data, 2);
@@ -1703,7 +1703,7 @@ package body Src_Editor_Module.Shell is
       elsif Command = "block_fold" then
          declare
             Filename    : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
+                            Create (Nth_Arg (Data, 1), Kernel);
             Line        : constant Integer := Nth_Arg (Data, 2, 0);
             Child       : MDI_Child;
             Box         : Source_Editor_Box;
@@ -1728,11 +1728,11 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "block_unfold" then
          declare
-            Filename    : constant Virtual_File :=
-              Create (Nth_Arg (Data, 1), Kernel);
-            Line        : constant Integer := Nth_Arg (Data, 2, 0);
-            Child       : MDI_Child;
-            Box         : Source_Editor_Box;
+            Filename : constant Virtual_File :=
+                         Create (Nth_Arg (Data, 1), Kernel);
+            Line     : constant Integer := Nth_Arg (Data, 2, 0);
+            Child    : MDI_Child;
+            Box      : Source_Editor_Box;
          begin
             Child := Find_Editor (Kernel, Filename);
 

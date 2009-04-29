@@ -27,6 +27,7 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
 
+with GPS.Editors;                       use GPS.Editors;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
@@ -38,7 +39,6 @@ with Traces;                            use Traces;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
-with GPS.Editors; use GPS.Editors;
 
 package body Vdiff2_Module.Callback is
 

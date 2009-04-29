@@ -39,4 +39,3 @@ ifeq ($(OS),Windows_NT)
 endif
 	$(MAKE) -s -C ../kernel/src_info/sn clean
 	-gprclean -q -r -Pgps
-

@@ -747,7 +747,7 @@ package body GPS.Kernel.Standard_Hooks is
       Data   : access String_Boolean_Hooks_Args) return Callback_Data_Access
    is
       D : constant Callback_Data_Access :=
-        new Callback_Data'Class'(Create (Script, 3));
+            new Callback_Data'Class'(Create (Script, 3));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Value);
@@ -805,7 +805,6 @@ package body GPS.Kernel.Standard_Hooks is
    is
       D : constant Callback_Data_Access :=
             new Callback_Data'Class'(Create (Script, 5));
-
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
       Set_Nth_Arg (D.all, 2, Data.Category);
