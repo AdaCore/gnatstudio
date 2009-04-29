@@ -3743,6 +3743,10 @@ package body VCS_View_API is
       elsif Command = "repository_path" then
          Set_Return_Value
            (Data, Get_Repository_Path (Kernel, Full, Nth_Arg (Data, 2, "")));
+
+      elsif Command = "set_reference" then
+         Set_Reference
+           (Create (Nth_Arg (Data, 1)), Create (Nth_Arg (Data, 2)));
       end if;
    end VCS_Command_Handler;
 

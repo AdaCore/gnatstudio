@@ -21,7 +21,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
@@ -1068,6 +1067,14 @@ package body VCS_Module is
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
       Register_Command
+        (Kernel, "set_reference",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler       => VCS_Command_Handler'Access);
+
+      Register_Command
         (Kernel, "status_parse",
          Minimum_Args  => 4,
          Maximum_Args  => 5,
@@ -1661,5 +1668,31 @@ package body VCS_Module is
    begin
       VCS_Module_ID.VCS_Project_Cache.Clear;
    end On_Project_Changing;
+
+   -------------------
+   -- Get_Reference --
+   -------------------
+
+   function Get_Reference
+     (File : Virtual_File) return Virtual_File
+   is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      if M.Reference_Map.Contains (File) then
+         return Ref_Map.Element (M.Reference_Map.Find (File));
+      else
+         return No_File;
+      end if;
+   end Get_Reference;
+
+   -------------------
+   -- Set_Reference --
+   -------------------
+
+   procedure Set_Reference (File, Reference : Virtual_File) is
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+   begin
+      M.Reference_Map.Include (File, Reference);
+   end Set_Reference;
 
 end VCS_Module;

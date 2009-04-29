@@ -23,6 +23,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;  use Ada;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 with Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
 
@@ -64,6 +65,9 @@ package VCS_Module is
    package VCS_Project_Cache_Map is new Containers.Hashed_Maps
      (Project_Type, VCS_Access, Projects.Project_Name_Hash, "=");
 
+   package Ref_Map is new Containers.Hashed_Maps
+     (Virtual_File, Virtual_File, Full_Name_Hash, "=");
+
    --  Global variable to store all the registered handlers
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
@@ -85,6 +89,8 @@ package VCS_Module is
       Activities_Child  : MDI_Child;
 
       Cached_Status     : Status_Cache;
+
+      Reference_Map     : Ref_Map.Map;
    end record;
 
    type VCS_Module_ID_Access is access all VCS_Module_ID_Record'Class;
@@ -145,5 +151,16 @@ package VCS_Module is
 
    function Get_Status_Cache return Status_Cache;
    --  Return the status cache
+
+   procedure Set_Reference (File, Reference : Virtual_File);
+   --  Record a reference file into the map. The reference file is the file
+   --  which is under version control and is the based of the file passed in
+   --  parameters. This is used to find the VCS file for a diff buffer for
+   --  example. The goal is to be able to run any VCS actions (annotation,
+   --  create revision log...) from those auxiliary buffers.
+
+   function Get_Reference (File : Virtual_File) return Virtual_File;
+   --  Return the reference file for the given file or No_File if no reference
+   --  files are recorded.
 
 end VCS_Module;
