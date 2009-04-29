@@ -391,10 +391,6 @@ package body Vdiff2_Module.Callback is
          end;
 
       elsif D.New_File = GNATCOLL.VFS.No_File then
-         if D.Orig_File = GNATCOLL.VFS.No_File then
-            return False;
-         end if;
-
          declare
             Ref_F : Virtual_File renames Get_Ref_Filename (D.Orig_File);
             Res   : Diff_Head_Access;
