@@ -985,20 +985,11 @@ package body Help_Module is
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang      : GNAT.Strings.String_Access;
       Field                  : Node_Ptr;
-      Dir                    : Virtual_File;
    begin
-      if Node.Parent /= null then
-         Dir := Get_File_Child
-           (Node.Parent, "doc_path", Use_VFS_Prefix => False);
-      else
-         Dir := No_File;
-      end if;
+      if Node.Tag.all = "doc_path" then
+         Add_Doc_Directory (Kernel, Create (+Node.Value.all));
 
-      if Dir /= No_File then
-         Add_Doc_Directory (Kernel, Dir);
-      end if;
-
-      if Node.Tag.all = "documentation_file" then
+      elsif Node.Tag.all = "documentation_file" then
          Name  := null;
          Descr := null;
          Menu  := null;
