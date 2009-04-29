@@ -804,6 +804,7 @@ package body VCS_View_API is
       Project_Section : Boolean;
       Section_Active  : Boolean;
       Items_Inserted  : Boolean := False;
+      F_Context       : Selection_Context;
 
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
 
@@ -840,7 +841,7 @@ package body VCS_View_API is
             Context_Callback.Connect
               (Item, Gtk.Menu_Item.Signal_Activate,
                Context_Callback.To_Marshaller (Callback),
-               Context);
+               F_Context);
 
             if not Section_Active then
                Set_Sensitive (Item, False);
@@ -1013,8 +1014,9 @@ package body VCS_View_API is
          if Log_File then
             declare
                Original  : constant Virtual_File :=
-                             Get_File_From_Log
-                               (Kernel, File_Information (Context));
+                             Get_Reference
+                               (Get_File_From_Log
+                                  (Kernel, File_Information (Context)));
                L_Context : Selection_Context;
             begin
                if Original /= GNATCOLL.VFS.No_File
@@ -1068,6 +1070,31 @@ package body VCS_View_API is
             end;
 
          else
+            --  Create the new context for the VCS actions based on the
+            --  original file.
+
+            declare
+               Files   : File_Array := File_Information (Context);
+               Changed : Boolean := False;
+            begin
+               for K in Files'Range loop
+                  if Get_Reference (Files (K)) /= No_File then
+                     Files (K) := Get_Reference (Files (K));
+                     Changed := True;
+                  end if;
+               end loop;
+
+               if Changed then
+                  F_Context := New_Context;
+                  Set_Context_Information
+                    (F_Context, Kernel, Get_Creator (Context));
+
+                  Set_File_Information (F_Context, Files => Files);
+               else
+                  F_Context := Context;
+               end if;
+            end;
+
             Log_Exists := Has_File_Information (Context)
               and then Get_Log_From_File
                 (Kernel, File_Information (Context), False) /= No_File;
@@ -1122,14 +1149,14 @@ package body VCS_View_API is
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Annotate'Access, Context);
+                  On_Menu_Annotate'Access, F_Context);
                Set_Sensitive (Item, Section_Active);
 
                Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Remove_Annotate'Access, Context);
+                  On_Menu_Remove_Annotate'Access, F_Context);
 
                Set_Sensitive (Item, Section_Active);
 
@@ -1141,21 +1168,21 @@ package body VCS_View_API is
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Edit_Log'Access, Context);
+                  On_Menu_Edit_Log'Access, F_Context);
                Set_Sensitive (Item, Section_Active);
 
                Gtk_New (Item, Label => -"Edit global ChangeLog");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Edit_ChangeLog'Access, Context);
+                  On_Menu_Edit_ChangeLog'Access, F_Context);
                Set_Sensitive (Item, Section_Active);
 
                Gtk_New (Item, Label => -"Remove revision log");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Remove_Log'Access, Context);
+                  On_Menu_Remove_Log'Access, F_Context);
                Set_Sensitive (Item, Section_Active);
 
                Items_Inserted := True;
@@ -1241,7 +1268,7 @@ package body VCS_View_API is
                Append (Menu, Menu_Item);
                Context_Callback.Connect
                  (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-                  On_Menu_Commit_As_Activity'Access, Context);
+                  On_Menu_Commit_As_Activity'Access, F_Context);
                Set_Sensitive (Menu_Item, Section_Active);
             end if;
 
@@ -1292,7 +1319,7 @@ package body VCS_View_API is
                   Append (Menu, Menu_Item);
                   Context_Callback.Connect
                     (Menu_Item, Gtk.Menu_Item.Signal_Activate,
-                     On_Menu_Remove_From_Activity'Access, Context);
+                     On_Menu_Remove_From_Activity'Access, F_Context);
                   Set_Sensitive (Menu_Item, Section_Active);
                end if;
             end if;

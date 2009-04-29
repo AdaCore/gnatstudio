@@ -460,6 +460,7 @@ package GPS.Kernel.Standard_Hooks is
    ----------------------
 
    type Diff_Hooks_Args (Length : Natural) is new Hooks_Data with record
+      VCS_File  : GNATCOLL.VFS.Virtual_File;
       Orig_File : GNATCOLL.VFS.Virtual_File;
       New_File  : GNATCOLL.VFS.Virtual_File;
       Diff_File : GNATCOLL.VFS.Virtual_File;

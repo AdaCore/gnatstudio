@@ -361,6 +361,7 @@ The file should be opened directly at line and column. If column_end is not 0, t
 
   <shell_doc name="@hook@ diff_action_hook">
      <param name="hook">A string, the name of the hook</param>
+     <param name="vcs_file">An instance of GPS.File</param>
      <param name="orig_file">An instance of GPS.File</param>
      <param name="ref_file">An instance of GPS.File</param>
      <param name="diff_file">An instance of GPS.File</param>

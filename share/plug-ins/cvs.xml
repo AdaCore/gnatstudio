@@ -259,7 +259,7 @@
         <shell>File "%1"</shell>
         <shell>File "$1" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3 "%5 [HEAD]"</shell>
+        <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -275,7 +275,7 @@
         <shell>File "%1"</shell>
         <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3 "%5 [$1]"</shell>
+        <shell>Hook.run %1 "$2" null %2 %3 "%5 [$1]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -291,7 +291,7 @@
         <shell>File "%1"</shell>
         <shell>File "$2" TRUE</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %2 %3 "%5 [$1]"</shell>
+        <shell>Hook.run %1 "$2" null %2 %3 "%5 [$1]"</shell>
         <shell>delete "%5"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
@@ -309,6 +309,7 @@
       <shell>File "%1"</shell>
       <shell>Editor.edit "%2"</shell>
       <shell>Editor.set_title %3 "%4 [$2]" "%4 [$2]"</shell>
+      <shell>VCS.set_reference %4 "$3"</shell>
 
       <external check-password="true">cvs -f diff -r$1 -r$2 "$3"</external>
 
@@ -316,9 +317,9 @@
         <shell>dump "%1" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %7 %2 "%9 [$1]"</shell>
+        <shell>Hook.run %1 "$3" null %8 %2 "%10 [$1]"</shell>
         <shell>delete "%4"</shell>
-        <shell>delete "%10"</shell>
+        <shell>delete "%11"</shell>
       </on-failure>
       <shell output="">echo "No differences found."</shell>
    </action>
@@ -340,7 +341,7 @@
         <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>Hook "diff_action_hook"</shell>
-        <shell>Hook.run %1 null %6 %2 "%4 [BASE]"</shell>
+        <shell>Hook.run %1 "$1" null %6 %2 "%4 [BASE]"</shell>
         <shell>delete "%4"</shell>
         <shell>delete "%9"</shell>
       </on-failure>

@@ -18,11 +18,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Command_Line;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with System;            use System;
-with GPS.Kernel;        use GPS.Kernel;
+with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
+with System;             use System;
+
+with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with Traces;            use Traces;
+with Traces;             use Traces;
+with OS_Utils;           use OS_Utils;
 
 package body GPS.Kernel.Standard_Hooks is
 
@@ -425,7 +427,7 @@ package body GPS.Kernel.Standard_Hooks is
    is
       Data : aliased Diff_Hooks_Args :=
                (Hooks_Data with
-                Title'Length, Orig_File, New_File, Diff_File, Title);
+                Title'Length, No_File, Orig_File, New_File, Diff_File, Title);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Diff_Action_Hook, Data'Unchecked_Access)
@@ -593,18 +595,37 @@ package body GPS.Kernel.Standard_Hooks is
    function From_Callback_Data_Diff
      (Data : Callback_Data'Class) return Hooks_Data'Class
    is
+      function VCS_Filename return Filesystem_String;
+      --  Ensure that the filename is not a cygwin path
+
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Title  : constant String := Nth_Arg (Data, 5, "");
+      Title  : constant String        := Nth_Arg (Data, 6, "");
+
+      ------------------
+      -- VCS_Filename --
+      ------------------
+
+      function VCS_Filename return Filesystem_String is
+         Vfile  : constant Filesystem_String := Nth_Arg (Data, 2);
+      begin
+         if Is_Cygwin_Path (Vfile) then
+            return Format_Pathname (Vfile, Style => DOS);
+         else
+            return Vfile;
+         end if;
+      end VCS_Filename;
+
    begin
       return Diff_Hooks_Args'
         (Hooks_Data with
          Title'Length,
+         VCS_File => Create (VCS_Filename),
          Orig_File =>
-           Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
-         New_File  =>
            Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True)),
-         Diff_File =>
+         New_File  =>
            Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True)),
+         Diff_File =>
+           Get_Data (Nth_Arg (Data, 5, Get_File_Class (Kernel), True)),
          Title => Title);
    end From_Callback_Data_Diff;
 
@@ -1001,17 +1022,19 @@ package body GPS.Kernel.Standard_Hooks is
       Hook   : Hook_Name;
       Data   : access Diff_Hooks_Args) return Callback_Data_Access
    is
+      VF : constant Class_Instance := Create_File (Script, Data.VCS_File);
       F1 : constant Class_Instance := Create_File (Script, Data.Orig_File);
       F2 : constant Class_Instance := Create_File (Script, Data.New_File);
       F3 : constant Class_Instance := Create_File (Script, Data.Diff_File);
       D  : constant Callback_Data_Access :=
-             new Callback_Data'Class'(Create (Script, 5));
+             new Callback_Data'Class'(Create (Script, 6));
    begin
       Set_Nth_Arg (D.all, 1, String (Hook));
-      Set_Nth_Arg (D.all, 2, F1);
-      Set_Nth_Arg (D.all, 3, F2);
-      Set_Nth_Arg (D.all, 4, F3);
-      Set_Nth_Arg (D.all, 5, Data.Title);
+      Set_Nth_Arg (D.all, 2, VF);
+      Set_Nth_Arg (D.all, 3, F1);
+      Set_Nth_Arg (D.all, 4, F2);
+      Set_Nth_Arg (D.all, 5, F3);
+      Set_Nth_Arg (D.all, 6, Data.Title);
       return D;
    end Create_Callback_Data;
 

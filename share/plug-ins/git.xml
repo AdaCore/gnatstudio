@@ -49,7 +49,7 @@
          <shell>File "%1"</shell>
          <shell>File "$1"</shell>
          <shell>Hook "diff_action_hook"</shell>
-         <shell>Hook.run %1 null %2 %3 "%5 [HEAD]"</shell>
+         <shell>Hook.run %1 "$1" null %2 %3 "%5 [HEAD]"</shell>
          <shell>delete "%5"</shell>
          <shell>delete "%9"</shell>
       </on-failure>

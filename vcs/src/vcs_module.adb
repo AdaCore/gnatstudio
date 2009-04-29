@@ -86,6 +86,11 @@ package body VCS_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
 
+   procedure File_Closed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_closed" signal
+
    procedure File_Status_Changed_Cb
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -976,6 +981,10 @@ package body VCS_Module is
                 Wrapper (File_Status_Changed_Cb'Access),
                 Name => "vcs.file_status_changed");
 
+      Add_Hook (Kernel, File_Closed_Hook,
+                Wrapper (File_Closed_Cb'Access),
+                Name => "vcs.file_closed_edited");
+
       Add_Hook
         (Kernel, Project_Changing_Hook,
          Wrapper (On_Project_Changing'Access), "vcs.project_changing");
@@ -1434,6 +1443,23 @@ package body VCS_Module is
    exception
       when E : others => Trace (Exception_Handle, E);
    end File_Edited_Cb;
+
+   --------------------
+   -- File_Closed_Cb --
+   --------------------
+
+   procedure File_Closed_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      M : constant VCS_Module_ID_Access := VCS_Module_ID;
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+   begin
+      M.Reference_Map.Exclude (D.File);
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end File_Closed_Cb;
 
    ----------------------------
    -- File_Status_Changed_Cb --

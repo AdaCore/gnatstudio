@@ -332,26 +332,26 @@ package body Vdiff2_Module.Callback is
       D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
       Success : Boolean;
 
-      procedure Setup_Ref (Ref_File : Virtual_File);
+      procedure Setup_Ref (Base, Ref_File : Virtual_File);
       --  Setup filename titles and writable permission
 
       ---------------
       -- Setup_Ref --
       ---------------
 
-      procedure Setup_Ref (Ref_File : Virtual_File) is
+      procedure Setup_Ref (Base, Ref_File : Virtual_File) is
          Filename : constant Filesystem_String := Full_Name (Ref_File);
       begin
-         declare
+         Set_Writable : declare
             Args : Argument_List :=
                      (1 => new String'(+Filename),
                       2 => new String'("FALSE"));
          begin
-            Execute_GPS_Shell_Command
-              (Kernel, "Editor.set_writable", Args);
+            Execute_GPS_Shell_Command (Kernel, "Editor.set_writable", Args);
             Free (Args);
-         end;
-         declare
+         end Set_Writable;
+
+         Set_Title : declare
             Args : Argument_List (1 .. 3);
          begin
             Args (1) := new String'(+Filename);
@@ -363,10 +363,32 @@ package body Vdiff2_Module.Callback is
                Args (3) := new String'(D.Title);
             end if;
 
-            Execute_GPS_Shell_Command
-              (Kernel, "Editor.set_title", Args);
+            Execute_GPS_Shell_Command (Kernel, "Editor.set_title", Args);
             Free (Args);
-         end;
+         end Set_Title;
+
+         if D.VCS_File /= No_File then
+            Set_Reference : declare
+               Args : Argument_List :=
+                        (1 => new String'(+Filename),
+                         2 => new String'(+Full_Name (D.VCS_File)));
+            begin
+               Execute_GPS_Shell_Command (Kernel, "VCS.set_reference", Args);
+               Free (Args);
+            end Set_Reference;
+
+            if Base /= No_File and then Base /= D.VCS_File then
+               Set_Base_Reference : declare
+                  Args : Argument_List :=
+                           (1 => new String'(+Full_Name (Base)),
+                            2 => new String'(+Full_Name (D.VCS_File)));
+               begin
+                  Execute_GPS_Shell_Command
+                    (Kernel, "VCS.set_reference", Args);
+                  Free (Args);
+               end Set_Base_Reference;
+            end if;
+         end if;
       end Setup_Ref;
 
    begin
@@ -382,7 +404,7 @@ package body Vdiff2_Module.Callback is
             Res := Visual_Patch (Ref_F, D.New_File, D.Diff_File, True);
 
             if Res /= null then
-               Setup_Ref (Ref_F);
+               Setup_Ref (D.New_File, Ref_F);
             end if;
 
             Delete (Ref_F, Success);
@@ -398,7 +420,7 @@ package body Vdiff2_Module.Callback is
             Res := Visual_Patch (D.Orig_File, Ref_F, D.Diff_File, False);
 
             if Res /= null then
-               Setup_Ref (Ref_F);
+               Setup_Ref (No_File, Ref_F);
             end if;
 
             Delete (Ref_F, Success);
