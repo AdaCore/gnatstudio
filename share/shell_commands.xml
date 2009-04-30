@@ -829,7 +829,7 @@ def my_own_action ():
    context = GPS.contextual_context()
    GPS.Console().write ("my_own_action " + `context.private` + '\n')
 
-GPS.parse_xml('
+GPS.parse_xml("""
    &lt;action name="myaction%gt;"
       &lt;filter shell_lang="python"
               shell_cmd="contextual.my_own_filter()" /&gt;
