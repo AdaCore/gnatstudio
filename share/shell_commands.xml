@@ -2471,6 +2471,12 @@ If the line and column are not specified, then the current selection is returned
       <description>Show the list of supported VCS systems</description>
   </shell_doc>
 
+  <shell_doc name="GPS.VCS.set_reference">
+      <param name="file">A string</param>
+      <param name="reference">A string</param>
+      <description>Record a reference file (the file on which a diff buffer is based for example) for a given file</description>
+  </shell_doc>
+
   <shell_doc name="GPS.VCS.get_status">
       <param name="file">A string</param>
       <description>Query the status for file</description>
