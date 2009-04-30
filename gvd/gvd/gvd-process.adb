@@ -1959,7 +1959,7 @@ package body GVD.Process is
 
       Exec := Get_Executable (Debugger.Debugger);
 
-      if not Is_Regular_File (Exec) then
+      if Exec /= No_File and then not Is_Regular_File (Exec) then
          declare
             Buttons : Message_Dialog_Buttons;
             pragma Unreferenced (Buttons);
