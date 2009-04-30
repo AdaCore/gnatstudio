@@ -515,7 +515,7 @@ package body Custom_Module is
 
          if Action /= "" then
             Command := Lookup_Action (Kernel, Action);
-            if Command.Command = null then
+            if Command = null or else Command.Command = null then
                Insert (Kernel,
                        -"Command not found when creating contextual menu: "
                        & Action,
