@@ -256,7 +256,7 @@ try:
   GDK_ESCAPE = 65307
 
   def send_key_event (keyval, control=0, alt=0, shift=0, window=None, \
-                      process_events=True):
+                      process_events=True, key_press=True):
     """Emit a key event on GPS, simulating the given key. This event is sent
        asynchronously.
        Unless process_events is true, this function will return when the
@@ -266,7 +266,10 @@ try:
        except for special characters like GDK_RETURN.
     """
 
-    event = gtk.gdk.Event (gtk.gdk.KEY_PRESS)
+    if key_press:
+      event = gtk.gdk.Event (gtk.gdk.KEY_PRESS)
+    else:
+      event = gtk.gdk.Event (gtk.gdk.KEY_RELEASE)
 
     if not window:
        window = gtk.window_list_toplevels()[0]
