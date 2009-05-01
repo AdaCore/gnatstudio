@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2003-2006                      --
---                             AdaCore                               --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +20,8 @@
 --  This package contains functionalities to access or modify the
 --  editable text (ie corresponding to editable lines, with opposition
 --  to buffer text).
+
+with Case_Handling; use Case_Handling;
 
 package Src_Editor_Buffer.Text_Handling is
 
@@ -60,9 +61,10 @@ package Src_Editor_Buffer.Text_Handling is
       After  : Integer := -1);
    --  Replace the characters around given position
 
-   procedure Autocase_Last_Word
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Apply automatic casing to the last word before the cursor,
+   procedure Autocase_Text
+     (Buffer : access Source_Buffer_Record'Class;
+      Casing : Casing_Policy);
+   --  Apply automatic casing to the text before the cursor,
    --  if the language preferences allow it. Otherwise, do nothing.
 
 end Src_Editor_Buffer.Text_Handling;

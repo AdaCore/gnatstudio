@@ -5316,7 +5316,7 @@ package body Src_Editor_Buffer is
       --  we are using the on-the-fly casing policy and we are not in Force
       --  mode.
 
-      if Indent_Params.Casing_Policy = On_The_Fly
+      if Indent_Params.Casing_Policy in End_Of_Word .. On_The_Fly
         and then not Force
       then
          Indent_Params.Casing_Policy := Disabled;
