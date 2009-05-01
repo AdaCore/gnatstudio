@@ -17,18 +17,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;         use Basic_Types;
-with Gtk.Adjustment;      use Gtk.Adjustment;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text_Iter;       use Gtk.Text_Iter;
-with Commands;            use Commands;
-with GPS.Kernel;          use GPS.Kernel;
-with Src_Editor_Buffer;   use Src_Editor_Buffer;
+with Gtk.Adjustment;                  use Gtk.Adjustment;
+with Gtk.Scrolled_Window;             use Gtk.Scrolled_Window;
+with Gtk.Text_Iter;                   use Gtk.Text_Iter;
+
+with Basic_Types;                     use Basic_Types;
+with Commands;                        use Commands;
+with GPS.Kernel;                      use GPS.Kernel;
+with Language;                        use Language;
+with Src_Editor_Buffer;               use Src_Editor_Buffer;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Box;      use Src_Editor_Box;
-with Src_Editor_Module;   use Src_Editor_Module;
-with Src_Editor_View;     use Src_Editor_View;
-with Language;            use Language;
+with Src_Editor_Box;                  use Src_Editor_Box;
+with Src_Editor_Module;               use Src_Editor_Module;
+with Src_Editor_View;                 use Src_Editor_View;
 
 package body Src_Editor_View.Commands is
 
@@ -36,8 +37,7 @@ package body Src_Editor_View.Commands is
      (Iter : in out Gtk_Text_Iter;
       Kind : Movement_Type;
       Step : Integer);
-   --  Move the iterator according to Kind. Kind should be different from
-   --  Page
+   --  Move the iterator according to Kind. Kind should be different from page
 
    ---------------
    -- Move_Iter --
@@ -113,11 +113,11 @@ package body Src_Editor_View.Commands is
       return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Iter   : Gtk_Text_Iter;
-      Mark   : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
+      View     : constant Source_View   :=
+                   Source_View (Get_Current_Focus_Widget (Command.Kernel));
+      Buffer   : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Iter     : Gtk_Text_Iter;
+      Mark     : constant Gtk_Text_Mark := View.Saved_Cursor_Mark;
       Scrolled : Gtk_Scrolled_Window;
       Adj      : Gtk_Adjustment;
       Moved    : Boolean;
@@ -162,7 +162,7 @@ package body Src_Editor_View.Commands is
    is
       pragma Unreferenced (Context);
       View : constant Source_View :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+               Source_View (Get_Current_Focus_Widget (Command.Kernel));
 
    begin
       Scroll_To_Mark
@@ -181,13 +181,13 @@ package body Src_Editor_View.Commands is
 
    overriding function Execute
      (Command : access Delete_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      View        : constant Source_View   :=
+                      Source_View (Get_Current_Focus_Widget (Command.Kernel));
+      Buffer      : constant Source_Buffer :=
+                      Source_Buffer (Get_Buffer (View));
       Iter, Start : Gtk_Text_Iter;
 
    begin
@@ -204,8 +204,7 @@ package body Src_Editor_View.Commands is
 
    overriding function Execute
      (Command : access Indentation_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
 
@@ -213,9 +212,10 @@ package body Src_Editor_View.Commands is
       --  has matched, and this is faster than looking for the current focus
       --  widget, and from there the source editor. In addition, it is possible
       --  that no widget has the focus, for instance because a dialog has
-      --  temporarily been opened
+      --  temporarily been opened.
       Box    : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
+                 Get_Source_Box_From_MDI
+                   (Find_Current_Editor (Command.Kernel));
       View   : constant Source_View   := Get_View (Box);
       Buffer : constant Source_Buffer := Get_Buffer (Box);
       Result : Boolean;
@@ -247,7 +247,7 @@ package body Src_Editor_View.Commands is
    is
       pragma Unreferenced (Context);
       View : constant Source_View :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+               Source_View (Get_Current_Focus_Widget (Command.Kernel));
    begin
       case Command.Mode is
          when As_Is =>
@@ -267,9 +267,10 @@ package body Src_Editor_View.Commands is
    is
       pragma Unreferenced (Context);
       View          : constant Source_View :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+                        Source_View
+                          (Get_Current_Focus_Widget (Command.Kernel));
       Buffer        : constant Source_Buffer :=
-        Source_Buffer (Get_Buffer (View));
+                        Source_Buffer (Get_Buffer (View));
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
       Tab_Width     : Natural renames Indent_Params.Indent_Level;
@@ -282,7 +283,7 @@ package body Src_Editor_View.Commands is
          return Failure;
       end if;
 
-      --  Read the indentation parameters corresponding to the language.
+      --  Read the indentation parameters corresponding to the language
       Get_Indentation_Parameters
         (Get_Language (Buffer), Indent_Params, Indent_Style);
 

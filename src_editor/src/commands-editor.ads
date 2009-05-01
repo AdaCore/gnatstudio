@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2009, AdaCore                --
+--                 Copyright (C) 2002-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package implements commands related to the editor.
+--  This package implements commands related to the editor
 
 with Glib;              use Glib;
 with Basic_Types;       use Basic_Types;
@@ -66,17 +66,17 @@ package Commands.Editor is
    overriding function Execute
      (Command : access Unhide_Editable_Lines_Type)
       return Command_Return_Type;
-   --  Unhides lines from the buffer.
+   --  Unhides lines from the buffer
 
    overriding function Execute
      (Command : access Hide_Editable_Lines_Type)
       return Command_Return_Type;
-   --  Hides lines from the buffer.
+   --  Hides lines from the buffer
 
    overriding function Execute
      (Command : access Remove_Blank_Lines_Command_Type)
       return Command_Return_Type;
-   --  This commands removes the Number blank lines associated with Mark.
+   --  This commands removes the Number blank lines associated with Mark
 
    type Direction_Type is (Backward, Forward, Extended);
    --  Forward direction indicates a normal command (ie the text is
@@ -88,7 +88,7 @@ package Commands.Editor is
      (Item   : out Check_Modified_State;
       Buffer : Source_Buffer;
       Queue  : Command_Queue);
-   --  Create a new Check_Modified_State command.
+   --  Create a new Check_Modified_State command
 
    overriding function Execute
      (Command : access Check_Modified_State_Type) return Command_Return_Type;
@@ -118,13 +118,13 @@ package Commands.Editor is
    type Editor_Command_Mode is (Insertion, Deletion);
 
    function Is_Null_Command (Command : Editor_Command) return Boolean;
-   --  Return True if the command does nothing at all, False otherwise.
+   --  Return True if the command does nothing at all, False otherwise
 
    function Get_Mode (Command : Editor_Command) return Editor_Command_Mode;
-   --  Return the mode associated with Command.
+   --  Return the mode associated with Command
 
    function Get_Direction (Command : Editor_Command) return Direction_Type;
-   --  Return the direction associated with Command.
+   --  Return the direction associated with Command
 
    procedure Create
      (Item          : out Editor_Command;
@@ -152,10 +152,10 @@ package Commands.Editor is
    --  current values in Item.
 
    function Get_Text (Item : Editor_Command) return UTF8_String;
-   --  Return the text (in UTF-8 format) associated with Item.
+   --  Return the text (in UTF-8 format) associated with Item
 
    procedure Set_Text (Item : Editor_Command; Text : UTF8_String);
-   --  Set the text (in UTF-8 format) associated with Item.
+   --  Set the text (in UTF-8 format) associated with Item
 
    overriding function Execute
      (Command : access Editor_Command_Type) return Command_Return_Type;
@@ -169,7 +169,7 @@ package Commands.Editor is
    overriding procedure Free (X : in out Remove_Blank_Lines_Command_Type);
    overriding procedure Free (X : in out Unhide_Editable_Lines_Type);
    overriding procedure Free (X : in out Hide_Editable_Lines_Type);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
 private
 

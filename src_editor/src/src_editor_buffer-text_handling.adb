@@ -219,11 +219,11 @@ package body Src_Editor_Buffer.Text_Handling is
    ---------------
 
    function Get_Chars
-     (Buffer     : access Source_Buffer_Record'Class;
-      Line       : Editable_Line_Type := 0;
-      Column     : Character_Offset_Type := 0;
-      Before     : Integer := -1;
-      After      : Integer := -1) return UTF8_String
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type := 0;
+      Column : Character_Offset_Type := 0;
+      Before : Integer := -1;
+      After  : Integer := -1) return UTF8_String
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;
@@ -255,12 +255,12 @@ package body Src_Editor_Buffer.Text_Handling is
    -------------------
 
    procedure Replace_Slice
-     (Buffer     : access Source_Buffer_Record'Class;
-      Text       : String;
-      Line       : Editable_Line_Type;
-      Column     : Character_Offset_Type := 0;
-      Before     : Integer := -1;
-      After      : Integer := -1)
+     (Buffer : access Source_Buffer_Record'Class;
+      Text   : String;
+      Line   : Editable_Line_Type;
+      Column : Character_Offset_Type := 0;
+      Before : Integer := -1;
+      After  : Integer := -1)
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Character_Offset_Type;

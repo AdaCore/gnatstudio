@@ -19,6 +19,8 @@
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
+
 with Gdk;                        use Gdk;
 with Gdk.Drawable;               use Gdk.Drawable;
 with Gdk.Color;                  use Gdk.Color;
@@ -69,7 +71,6 @@ with Language;                   use Language;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Traces;                     use Traces;
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
 
 package body Src_Editor_View is
 

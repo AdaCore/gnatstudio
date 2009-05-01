@@ -2775,7 +2775,7 @@ package body Src_Editor_Module is
         (Kernel, "No casing/indentation on next key",
          Command, -"Disable the casing and indentation on next key",
          Category => "Editor",
-         Filter => Src_Action_Context);
+         Filter   => Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
          Action      => "No casing/indentation on next key",

@@ -1869,6 +1869,7 @@ package body Src_Editor_Buffer is
            (Buffer,
             Buffer_Line_Type (Line_Start + 1),
             Buffer_Line_Type (Line_End + 1));
+
       else
          --  We are editing characters on a line: unfold the block below, so
          --  that the folding data remains in sync even if we remove the
@@ -4232,9 +4233,10 @@ package body Src_Editor_Buffer is
          End_Iter : Gtk_Text_Iter;
          Success  : Boolean;
       begin
-         Get_Iter_At_Mark (Buffer => Buffer,
-                           Iter   => Iter,
-                           Mark   => Get_Insert (Buffer));
+         Get_Iter_At_Mark
+           (Buffer => Buffer,
+            Iter   => Iter,
+            Mark   => Get_Insert (Buffer));
 
          Backward_Chars (Iter, Gint (Position), Success);
          if Success then

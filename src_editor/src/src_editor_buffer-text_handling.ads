@@ -49,7 +49,7 @@ package Src_Editor_Buffer.Text_Handling is
       Column_Begin : Character_Offset_Type;
       Line_End     : Editable_Line_Type;
       Column_End   : Character_Offset_Type);
-   --  Replace the characters between given positions.
+   --  Replace the characters between given positions
 
    procedure Replace_Slice
      (Buffer : access Source_Buffer_Record'Class;
@@ -58,7 +58,7 @@ package Src_Editor_Buffer.Text_Handling is
       Column : Character_Offset_Type := 0;
       Before : Integer := -1;
       After  : Integer := -1);
-   --  Replace the characters around given position.
+   --  Replace the characters around given position
 
    procedure Autocase_Last_Word
      (Buffer : access Source_Buffer_Record'Class);

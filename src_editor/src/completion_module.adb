@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2005-2009, AdaCore             --
+--                 Copyright (C) 2005-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,21 +18,26 @@
 -----------------------------------------------------------------------
 
 with GNAT.Strings;              use GNAT.Strings;
+
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with Basic_Types;               use Basic_Types;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Handlers;
+with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Commands.Editor;           use Commands.Editor;
 with Default_Preferences.Enums; use Default_Preferences;
@@ -55,7 +60,6 @@ with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with Traces;
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
 
 with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
@@ -64,10 +68,6 @@ with Completion.Keywords;       use Completion.Keywords;
 with Completion.Ada;            use Completion.Ada;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
-
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Enums;                 use Gtk.Enums;
 
 with Language.Ada;              use Language.Ada;
 with Language.Tree.Database;    use Language.Tree.Database;
@@ -104,7 +104,7 @@ package body Completion_Module is
       --  current completion operation.
 
       Node : String_List_Utils.String_List.List_Node;
-      --  The current position in the completions list.
+      --  The current position in the completions list
 
       Top_Reached    : Boolean;
       Bottom_Reached : Boolean;
@@ -112,10 +112,10 @@ package body Completion_Module is
       --  while searching.
 
       Complete : Boolean;
-      --  Whether the search for the current prefix is complete;
+      --  Whether the search for the current prefix is complete
 
       Backwards : Boolean;
-      --  True if the last direction searched was backwards.
+      --  True if the last direction searched was backwards
 
       Buffer : Source_Buffer;
       --  The buffer in which we are currently searching possible completions
@@ -129,7 +129,7 @@ package body Completion_Module is
       --  These are marks within Buffer
 
       Insert_Buffer : Source_Buffer;
-      --  The buffer from which the user requested a completion.
+      --  The buffer from which the user requested a completion
 
       Mark            : Gtk.Text_Mark.Gtk_Text_Mark;
       Word_Start_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
@@ -141,7 +141,7 @@ package body Completion_Module is
       --  Whether the current completion should be done case sensitive or not
 
       Smart_Completion_Launched : Boolean := False;
-      --  Whether the smart completion has been launched once.
+      --  Whether the smart completion has been launched once
 
       Previous_Smart_Completion_State         : Smart_Completion_Type
         := Disabled;
@@ -165,7 +165,7 @@ package body Completion_Module is
       --  The timeout associated to character triggers
 
       Has_Trigger_Timeout : Boolean := False;
-      --  Whereas a character trigger timeout is currently registered.
+      --  Whereas a character trigger timeout is currently registered
 
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
@@ -216,10 +216,10 @@ package body Completion_Module is
    procedure On_Completion_Destroy
      (Win  : access Gtk_Widget_Record'Class;
       Data : Smart_Completion_Data);
-   --  Called when the completion widget is destroyed.
+   --  Called when the completion widget is destroyed
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure File_Saved
      (Kernel : access Kernel_Handle_Record'Class;
@@ -228,26 +228,26 @@ package body Completion_Module is
 
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences are changed.
+   --  Called when the preferences are changed
 
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view is changed
 
    procedure Load_Construct_Database
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Load a whole new construct database.
+   --  Load a whole new construct database
 
    procedure Load_One_File_Constructs
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Load the constructs from one file
 
    function Trigger_Timeout_Callback return Boolean;
-   --  Timeout callback after a trigger character has been entered.
+   --  Timeout callback after a trigger character has been entered
 
    procedure Character_Added_Hook_Callback
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Hook callback on a character added.
+   --  Hook callback on a character added
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
@@ -296,6 +296,7 @@ package body Completion_Module is
             Add_Hook (Kernel, Character_Added_Hook,
                       Completion_Module.Completion_Triggers_Callback,
                       Name => "completion_module.character_added");
+
          elsif Completion_Module.Completion_Triggers_Callback /= null then
             Remove_Hook (Kernel, Character_Added_Hook,
                          Completion_Module.Completion_Triggers_Callback);
@@ -331,7 +332,7 @@ package body Completion_Module is
            = Ada_Lang
          then
             --  ??? This is a temporary kludge in order to avoid considering C
-            --  files
+            --  files.
 
             File := Get_Or_Create
               (Get_Construct_Database (Kernel),
@@ -501,12 +502,12 @@ package body Completion_Module is
          Backward_Char (Iter, Success);
       end loop;
 
-      --  We are now outside a word, move until we are inside a word again.
+      --  We are now outside a word, move until we are inside a word again
       while Success and then not Is_Entity_Letter (Get_Char (Iter)) loop
          Backward_Char (Iter, Success);
       end loop;
 
-      --  If we could not re-enter a word, it means there is no previous word.
+      --  If we could not re-enter a word, it means there is no previous word
       if not Success then
          Word_Found := False;
          return;
@@ -546,12 +547,12 @@ package body Completion_Module is
          Forward_Char (Iter, Success);
       end loop;
 
-      --  We are now outside a word, move until we enter a word.
+      --  We are now outside a word, move until we enter a word
       while Success and then not Is_Entity_Letter (Get_Char (Iter)) loop
          Forward_Char (Iter, Success);
       end loop;
 
-      --  If we have reached the end, return.
+      --  If we have reached the end, return
       if not Success then
          Word_Found := False;
          return;
@@ -596,7 +597,7 @@ package body Completion_Module is
          return;
       end if;
 
-      --  Loop until a new word with the right prefix is found.
+      --  Loop until a new word with the right prefix is found
 
       Get_Iter_At_Mark (M.Buffer, Iter_Back,    M.Previous_Mark);
       Get_Iter_At_Mark (M.Buffer, Iter_Forward, M.Next_Mark);
@@ -637,7 +638,7 @@ package body Completion_Module is
                    (S (S'First .. S'First - 1 + M.Prefix'Length),
                     M.Prefix.all,
                     Case_Sensitive => M.Case_Sensitive)
-                 and then S /= M.Prefix.all   --  only if case differs
+                 and then S /= M.Prefix.all   -- only if case differs
                  and then not Is_In_List (M.List, S (S'First .. S'Last))
                then
                   Found := True;
@@ -704,7 +705,7 @@ package body Completion_Module is
             exit;
          exception
             when Constraint_Error =>
-               null;  --  We do not have an editor
+               null;  -- We do not have an editor
          end;
          Next (M.Child);
       end loop;
@@ -770,7 +771,7 @@ package body Completion_Module is
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
-      --  There can be only one smart completion at a time.
+      --  There can be only one smart completion at a time
 
       if Completion_Module.Has_Smart_Completion then
          return Commands.Success;
@@ -1077,7 +1078,7 @@ package body Completion_Module is
         (Get_Language_Handler (Kernel), File)
         = Ada_Lang
       then
-         --  ??? This is a temporary kludge in order to avoid parsing C files.
+         --  ??? This is a temporary kludge in order to avoid parsing C files
 
          Dummy := Get_Or_Create
            (Get_Construct_Database (Kernel),
@@ -1212,7 +1213,7 @@ package body Completion_Module is
          return;
       end if;
 
-      --  Remove the previous timeout, if registered.
+      --  Remove the previous timeout, if registered
       if Completion_Module.Has_Trigger_Timeout then
          Timeout_Remove (Completion_Module.Trigger_Timeout);
          Completion_Module.Has_Trigger_Timeout := False;

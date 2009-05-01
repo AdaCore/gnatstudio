@@ -15,7 +15,6 @@ depends on it should use the statement:
 # These variables can be changed in the initialization commands associated
 # with this script (see /Edit/Startup Scripts)
 
-
 
 ############################################################################
 ## No user customization below this line
@@ -37,7 +36,6 @@ def delayed_exit (delay=200):
         GPS.exit (force=1)
   GPS.Timeout (delay, exit_gps)
 
-
 try:
   import gtk, gobject
 
@@ -57,7 +55,6 @@ try:
 
     while gtk.events_pending():
        gtk.main_iteration (block=0)
-
 
   single_click_events = [gtk.gdk.BUTTON_PRESS,
                          gtk.gdk.BUTTON_RELEASE]
@@ -297,4 +294,3 @@ try:
 
 except ImportError:
    pass
-

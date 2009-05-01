@@ -50,8 +50,7 @@ package body Src_Editor_Buffer.Hooks is
 
    overriding function Compute_Parent_Entity
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Src_File_Location_Hooks_Args)
-      return Entity_Information
+      Data   : access Src_File_Location_Hooks_Args) return Entity_Information
    is
       Box : Source_Editor_Box;
    begin
@@ -109,7 +108,8 @@ package body Src_Editor_Buffer.Hooks is
 
    procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar) is
       Data : aliased File_Edition_Hooks_Args :=
-        (Hooks_Data with File => Buffer.Filename, Character => Character);
+               (Hooks_Data
+                with File => Buffer.Filename, Character => Character);
    begin
       Run_Hook
         (Buffer.Kernel, Character_Added_Hook, Data'Unchecked_Access, False);
