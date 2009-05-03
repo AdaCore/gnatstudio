@@ -66,11 +66,11 @@ package body GPS.Kernel.Clipboard is
    --  Add the contents of the Gtk.Clipboard to Clipboard
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure Clipboard_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handles shell commands associated with the clipboard.
+   --  Handles shell commands associated with the clipboard
 
    -------------------------
    -- Preferences_Changed --
@@ -104,8 +104,7 @@ package body GPS.Kernel.Clipboard is
       Size        : Integer;
       Filename    : constant Virtual_File :=
                       Create_From_Dir
-                        (Get_Home_Dir (Kernel),
-                         "clipboards.xml");
+                        (Get_Home_Dir (Kernel), "clipboards.xml");
       File, Child : Node_Ptr;
       Err         : String_Access;
    begin
@@ -352,12 +351,12 @@ package body GPS.Kernel.Clipboard is
       Widget        : access Glib.Object.GObject_Record'Class;
       Index_In_List : Natural := 0)
    is
-      Buffer : Gtk_Text_Buffer;
-      Result : Boolean;
+      Buffer           : Gtk_Text_Buffer;
+      Result           : Boolean;
       pragma Unreferenced (Result);
-      Iter   : Gtk_Text_Iter;
+      Iter             : Gtk_Text_Iter;
       Default_Editable : Boolean;
-      Pasted : Boolean := False;
+      Pasted           : Boolean := False;
    begin
       Clipboard.Last_Is_From_System := False;
 
@@ -441,7 +440,7 @@ package body GPS.Kernel.Clipboard is
             end if;
 
             if not Default_Editable then
-               --  Cannot paste in read-only buffers.
+               --  Cannot paste in read-only buffers
                return;
             end if;
 
@@ -566,8 +565,7 @@ package body GPS.Kernel.Clipboard is
    -----------------
 
    function Get_Content
-     (Clipboard : access Clipboard_Record) return Selection_List
-   is
+     (Clipboard : access Clipboard_Record) return Selection_List is
    begin
       return Clipboard.List.all;
    end Get_Content;
@@ -577,8 +575,7 @@ package body GPS.Kernel.Clipboard is
    --------------------
 
    function Get_Last_Paste
-     (Clipboard : access Clipboard_Record) return Integer
-   is
+     (Clipboard : access Clipboard_Record) return Integer is
    begin
       return Clipboard.Last_Paste;
    end Get_Last_Paste;
