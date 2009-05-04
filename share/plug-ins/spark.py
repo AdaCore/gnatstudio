@@ -190,7 +190,7 @@ def has_vc (context):
 def sparkmake ():
   dir = os.path.dirname (GPS.current_context().file().name())
   GPS.cd (dir)
-  _spawn_cmd (cmd_name="sparkmake", prj_attr="SPARKmake")
+  _spawn_cmd (cmd_name="sparkmake", prj_attr="SPARKMake")
 
 def format_file ():
   buffer = GPS.EditorBuffer.get ()
@@ -415,7 +415,7 @@ a = """<?xml version="1.0"?>
     </switches>
   </tool>
 
-  <tool name="SPARKmake">
+  <tool name="SPARKMake">
     <language>Ada</language>
     <switches lines="2" switch_char="~">
       <title line="1">Input File Options</title>
@@ -490,7 +490,7 @@ a = """<?xml version="1.0"?>
     <shell lang="python">spark.show_pogs_file()</shell>
   </action>
 
-  <action name="SPARKmake" category="Spark" output="none">
+  <action name="SPARKMake" category="Spark" output="none">
     <filter language="Ada" />
     <shell lang="python">spark.sparkmake ()</shell>
   </action>
@@ -523,8 +523,8 @@ a = """<?xml version="1.0"?>
       <menu action="POGS">
         <Title>P_OGS</Title>
       </menu>
-      <menu action="SPARKmake">
-        <Title>SPARKma_ke</Title>
+      <menu action="SPARKMake">
+        <Title>SPARKMa_ke</Title>
       </menu>
  </submenu>
 
@@ -548,8 +548,8 @@ a = """<?xml version="1.0"?>
     <Title>SPARK/Simplify File</Title>
   </contextual>
 
-  <contextual action="SPARKmake" >
-    <Title>SPARK/SPARKmake</Title>
+  <contextual action="SPARKMake" >
+    <Title>SPARK/SPARKMake</Title>
   </contextual>
 
   <!-- Shortcut keys -->
