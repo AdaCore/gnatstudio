@@ -4229,9 +4229,10 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Perform_Replace is
-         Iter     : Gtk_Text_Iter;
-         End_Iter : Gtk_Text_Iter;
-         Success  : Boolean;
+         Iter        : Gtk_Text_Iter;
+         End_Iter    : Gtk_Text_Iter;
+         Success     : Boolean;
+         Prev_Insert : Gtk_Text_Mark;
       begin
          Get_Iter_At_Mark
            (Buffer => Buffer,
