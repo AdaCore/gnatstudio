@@ -118,6 +118,19 @@ package body Src_Contexts is
    --  On exit, Was_Partial is set to True if the callback returned False at
    --  some point.
 
+   procedure Scan_Editor
+     (Context       : access Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Editor        : MDI_Child;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Editable_Line_Type := 1;
+      Start_Column  : Character_Offset_Type := 1;
+      Was_Partial   : out Boolean);
+   --  Same as above, but works directly on the editor. This is usefull for
+   --  example when the editor has no file yet.
+
    function Scan_And_Store
      (Context  : access Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
@@ -176,6 +189,17 @@ package body Src_Contexts is
    --  See description of Force_Read in Scan_File. Kernel can be null only if
    --  Force_Read is True.
 
+   procedure First_Match
+     (Context       : access Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Editor        : MDI_Child;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Editable_Line_Type := 1;
+      Start_Column  : Character_Offset_Type := 1;
+      Result        : out Match_Result_Access);
+   --  Same as above, using an editor instead
+
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : GNATCOLL.VFS.Virtual_File;
@@ -212,6 +236,15 @@ package body Src_Contexts is
       Kernel        : Kernel_Handle;
       Callback      : Scan_Callback;
       File          : GNATCOLL.VFS.Virtual_File;
+      More_Matches  : out Boolean;
+      Matches_Found : out Boolean);
+   --  Call Callback on matches found in the file given in parmeter.
+
+   procedure Search_From_Editor
+     (Context       : access File_Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Callback      : Scan_Callback;
+      Editor        : MDI_Child;
       More_Matches  : out Boolean;
       Matches_Found : out Boolean);
    --  Call Callback on matches found in the file given in parmeter.
@@ -515,21 +548,33 @@ package body Src_Contexts is
       Start         : Natural;
       Line          : Editable_Line_Type;
       Box           : Source_Editor_Box;
-
    begin
-      --  ??? Would be nice to handle backward search, which is extremely hard
-      --  with regular expressions
-
-      Was_Partial := False;
-      Lang := Get_Language_From_File (Handler, Name);
-
       --  If there is already an open editor, that might contain local
       --  modification, use its contents, otherwise read the buffer from the
       --  file itself.
 
       if not Force_Read then
          Child := Get_File_Editor (Kernel, Name);
+
+         Scan_Editor
+           (Context,
+            Handler,
+            Child,
+            Callback,
+            Scope,
+            Lexical_State,
+            Start_Line,
+            Start_Column,
+            Was_Partial);
+
+         return;
       end if;
+
+      --  ??? Would be nice to handle backward search, which is extremely hard
+      --  with regular expressions
+
+      Was_Partial := False;
+      Lang := Get_Language_From_File (Handler, Name);
 
       if Child = null then
          Buffer := Read_File (Name);
@@ -580,6 +625,57 @@ package body Src_Contexts is
       when Invalid_Context =>
          Free (Buffer);
    end Scan_File;
+
+   -----------------
+   -- Scan_Editor --
+   -----------------
+
+   procedure Scan_Editor
+     (Context       : access Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Editor        : MDI_Child;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Editable_Line_Type := 1;
+      Start_Column  : Character_Offset_Type := 1;
+      Was_Partial   : out Boolean)
+   is
+      Lang   : Language_Access;
+      Buffer : GNAT.Strings.String_Access;
+      Start  : Natural;
+      Box    : Source_Editor_Box;
+   begin
+      --  ??? Would be nice to handle backward search, which is extremely hard
+      --  with regular expressions
+
+      Box := Get_Source_Box_From_MDI (Editor);
+
+      Was_Partial := False;
+      Lang := Get_Language_From_File (Handler, Get_Filename (Box));
+
+      if not Is_Valid_Position
+        (Get_Buffer (Box), Start_Line, Start_Column)
+      then
+         return;
+      end if;
+
+      Buffer := new String'
+        (Get_Text (Get_Buffer (Box), Start_Line, 1));
+
+      Start := Natural (Start_Column);
+
+      if Start <= Buffer'Last then
+         Scan_Buffer
+           (Buffer.all, Start, Context, Callback, Scope,
+            Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
+      end if;
+
+      Free (Buffer);
+   exception
+      when Invalid_Context =>
+         Free (Buffer);
+   end Scan_Editor;
 
    -----------------------------
    -- Locations_Category_Name --
@@ -931,6 +1027,41 @@ package body Src_Contexts is
       Scan_File (Context, Handler, Kernel,
                  Name, Callback'Unrestricted_Access, Scope,
                  Lexical_State, Start_Line, Start_Column, Force_Read,
+                 Was_Partial);
+   end First_Match;
+
+   -----------------
+   -- First_Match --
+   -----------------
+
+   procedure First_Match
+     (Context       : access Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Editor        : MDI_Child;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Editable_Line_Type := 1;
+      Start_Column  : Character_Offset_Type := 1;
+      Result        : out Match_Result_Access)
+   is
+      function Callback (Match : Match_Result) return Boolean;
+      --  Save Match in the result array.
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Result := new Match_Result'(Match);
+         return False;
+      end Callback;
+
+      Was_Partial : Boolean;
+   begin
+      Scan_Editor (Context, Handler,
+                 Editor, Callback'Unrestricted_Access, Scope,
+                 Lexical_State, Start_Line, Start_Column,
                  Was_Partial);
    end First_Match;
 
@@ -1491,13 +1622,24 @@ package body Src_Contexts is
       function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
          Found := True;
-         Highlight_Result
-           (Kernel      => Kernel,
-            File_Name   => Get_Filename (Editor),
-            Look_For    => Context_Look_For (Context),
-            Match       => Match,
-            Give_Focus  => Give_Focus,
-            Interactive => not Context.All_Occurrences);
+         if Get_Filename (Editor) /= GNATCOLL.VFS.No_File then
+            Highlight_Result
+              (Kernel      => Kernel,
+               File_Name   => Get_Filename (Editor),
+               Look_For    => Context_Look_For (Context),
+               Match       => Match,
+               Give_Focus  => Give_Focus,
+               Interactive => not Context.All_Occurrences);
+         else
+            Highlight_Result
+              (Kernel      => Kernel,
+               File_Name   => Editor.Get_Buffer.Get_File_Identifier,
+               Look_For    => Context_Look_For (Context),
+               Match       => Match,
+               Give_Focus  => Give_Focus,
+               Interactive => not Context.All_Occurrences);
+         end if;
+
          return True;
       end Interactive_Callback;
 
@@ -1519,12 +1661,11 @@ package body Src_Contexts is
            (Context, Editor, Kernel, Search_Backward);
          Continue := False; --  ??? Dummy boolean.
       else
-         Search_From_File
+         Search_From_Editor
            (Context,
             Get_Language_Handler (Kernel),
-            Kernel_Handle (Kernel),
             Interactive_Callback'Unrestricted_Access,
-            Get_Filename (Editor),
+            Child,
             Continue,
             Dummy_Boolean);
       end if;
@@ -1851,6 +1992,77 @@ package body Src_Contexts is
          end;
       end if;
    end Search_From_File;
+
+   ------------------------
+   -- Search_From_Editor --
+   ------------------------
+
+   procedure Search_From_Editor
+     (Context       : access File_Search_Context'Class;
+      Handler       : access Language_Handler_Record'Class;
+      Callback      : Scan_Callback;
+      Editor        : MDI_Child;
+      More_Matches  : out Boolean;
+      Matches_Found : out Boolean)
+   is
+      Match  : Match_Result_Access;
+   begin
+      More_Matches := False;
+      Matches_Found := False;
+
+      if Editor = null then
+         return;
+      end if;
+
+      if not Context.All_Occurrences then
+         --  Are there any more match in the current file ?
+         --  Stop looking in this file if the editor was closed (we know it was
+         --  opened when the first match was seen)
+
+         if Context.Begin_Line /= 0 then
+            First_Match
+              (Context       => Context,
+               Handler       => Handler,
+               Editor        => Editor,
+               Scope         => Context.Scope,
+               Lexical_State => Context.Current_Lexical,
+               Start_Line    => Context.Begin_Line,
+               Start_Column  => Context.Begin_Column + 1,
+               Result        => Match);
+
+            if Match /= null then
+               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+               Context.Begin_Column := Match.Begin_Column;
+               Context.End_Line     := Editable_Line_Type (Match.End_Line);
+               Context.End_Column   := Match.End_Column;
+               More_Matches := Callback (Match.all);
+               Matches_Found := True;
+               Unchecked_Free (Match);
+
+               return;
+            end if;
+         end if;
+
+         More_Matches := False;
+
+         --  Non interactive mode
+      else
+         declare
+            State : Recognized_Lexical_States := Statements;
+            Was_Partial : Boolean;
+         begin
+            Scan_Editor
+              (Context,
+               Handler,
+               Editor, Callback, Context.Scope,
+               Lexical_State => State,
+               Was_Partial   => Was_Partial);
+
+            Matches_Found := True;
+            More_Matches := Was_Partial;
+         end;
+      end if;
+   end Search_From_Editor;
 
    ------------
    -- Search --
