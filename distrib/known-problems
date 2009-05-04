@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 4.4.0
 
+- I424-008: Find all doesn't work on unsaved editors
+  Problem:    The "Find All" button of the search view doesn't extract matches
+              coming from new files not yet saved.
+  Workaround: Save the file.
+
 - I421-009: Scenario variables with non-static default values
   Problem:    When loading a project with scenario variables whose default
               value is not a static string (a concatenation, or the value of
