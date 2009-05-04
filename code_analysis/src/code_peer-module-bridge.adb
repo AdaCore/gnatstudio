@@ -190,6 +190,13 @@ package body Code_Peer.Module.Bridge is
             when Add_Audit =>
                null;
          end case;
+
+      else
+         GPS.Kernel.Console.Insert
+           (Context.Module.Get_Kernel,
+            "gps_codepeer_bridge execution failed",
+            True,
+            GPS.Kernel.Console.Error);
       end if;
    end On_Bridge_Exit;
 
