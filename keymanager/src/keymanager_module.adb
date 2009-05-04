@@ -127,12 +127,12 @@ package body KeyManager_Module is
 
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
-   --  General event handler for GPS.
+   --  General event handler for GPS
    pragma Convention (C, General_Event_Handler);
 
    procedure Debug_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address);
-   --  General event handler used for event-level debugging.
+   --  General event handler used for event-level debugging
    pragma Convention (C, Debug_Event_Handler);
 
    type Keymanager_Module_Record is new Module_ID_Record with record
@@ -144,7 +144,7 @@ package body KeyManager_Module is
       --  Whether the user's custom keys have been loaded
 
       Secondary_Keymap : Keymap_Access := null;
-      --  The secondary keymap currently in use, or null if using the primary.
+      --  The secondary keymap currently in use, or null if using the primary
 
       Active           : Boolean := True;
       --  Whether the key manager should process the key events. This is only
@@ -152,7 +152,7 @@ package body KeyManager_Module is
 
       Accel_Map_Id  : Handler_Id;
       Menus_Created : Boolean := False;
-      --  Indicates whether the initial set of menus has been created.
+      --  Indicates whether the initial set of menus has been created
 
       Repeat_Count     : Positive := 1;
       --  Number of times that the next command should be repeated
@@ -216,7 +216,7 @@ package body KeyManager_Module is
       Key    : Gdk_Key_Type;
       Modif  : Gdk_Modifier_Type;
       Keymap : out Keymap_Access);
-   --  Get or create a secondary keymap in Table.
+   --  Get or create a secondary keymap in Table
 
    pragma Warnings (Off);
    --  These two UCs are safe aliasing-wise, so kill warning
@@ -228,7 +228,7 @@ package body KeyManager_Module is
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the preferences have changed.
+   --  Called when the preferences have changed
 
    procedure Keymanager_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -612,7 +612,7 @@ package body KeyManager_Module is
         (Table       : in out Key_Htable.HTable;
          Default_Key : Gdk.Types.Gdk_Key_Type;
          Default_Mod : Gdk.Types.Gdk_Modifier_Type);
-      --  Internal version that allows setting the Changed attribute.
+      --  Internal version that allows setting the Changed attribute
 
       procedure Remove_In_Keymap (Table : in out Key_Htable.HTable);
       --  Remove all bindings to Action in Table and its secondary keymaps
@@ -1028,7 +1028,7 @@ package body KeyManager_Module is
       if Keymanager_Module.Active
         and then Get_Event_Type (Event) = Key_Press
       then
-         --  Remove any num-lock and caps-lock modifiers.
+         --  Remove any num-lock and caps-lock modifiers
          Modif := Get_State (Event) and Get_Default_Mod_Mask;
          Key   := Get_Key_Val (Event);
 
