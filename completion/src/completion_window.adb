@@ -710,10 +710,28 @@ package body Completion_Window is
          Prev := Get_Iter_First (Window.Model);
 
          if Prev = Null_Iter then
-            --  If there is no entry in the tree, delete the window.
-            Delete (Window);
+            --  If there is no entry in the tree, hide the window.
+            Hide_All (Window);
             return;
          else
+            if not Visible_Is_Set (Window) then
+               declare
+                  Previously_Volatile : constant Boolean := Window.Volatile;
+               begin
+                  --  The call to Show_All causes the focus to be grabbed on
+                  --  the tree view, and as a result the first item gets
+                  --  selected. This is not desirable if the window was
+                  --  volatile, so we need to reset the volatility after the
+                  --  call.
+                  Show_All (Window);
+
+                  if Previously_Volatile then
+                     Unselect_All (Get_Selection (Window.View));
+                     Window.all.Volatile := True;
+                  end if;
+               end;
+            end if;
+
             if not Window.all.Volatile then
                Select_Iter (Selection, Prev);
             end if;
