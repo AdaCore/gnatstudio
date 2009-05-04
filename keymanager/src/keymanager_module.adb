@@ -49,6 +49,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 
+with Config;                  use Config;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
@@ -783,7 +784,20 @@ package body KeyManager_Module is
                Accel_Mods => 0,
                Replace    => True);
          end if;
+      end if;
 
+      --  On Windows binding contol-c to non default copy action can result in
+      --  unexpected behavior.
+
+      if Config.Host = Windows
+        and then Key = "control-c"
+        and then Action /= ""
+        and then Action /= "/Edit/Copy"
+        and then Action /= "Copy to Clipboard"
+      then
+         Console.Insert
+           (Kernel, +"Warning: binding Ctrl-C is unreliable on Windows,"
+            & " external actions can have unexpected results.");
       end if;
 
       if Key = "" or else Key = -Disabled_String then
