@@ -556,18 +556,20 @@ package body Src_Contexts is
       if not Force_Read then
          Child := Get_File_Editor (Kernel, Name);
 
-         Scan_Editor
-           (Context,
-            Handler,
-            Child,
-            Callback,
-            Scope,
-            Lexical_State,
-            Start_Line,
-            Start_Column,
-            Was_Partial);
+         if Child /= null then
+            Scan_Editor
+              (Context,
+               Handler,
+               Child,
+               Callback,
+               Scope,
+               Lexical_State,
+               Start_Line,
+               Start_Column,
+               Was_Partial);
 
-         return;
+            return;
+         end if;
       end if;
 
       --  ??? Would be nice to handle backward search, which is extremely hard
