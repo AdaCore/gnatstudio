@@ -81,7 +81,7 @@
     </switches>
   </target-model>
 
-  <target model="gnatdist" category="_Project" name="Build _DSA">
+  <target model="gnatdist" category="_Project" name="Build _DSA...">
     <in-toolbar>TRUE</in-toolbar>
     <read-only>TRUE</read-only>
     <command-line>
