@@ -4239,10 +4239,6 @@ package body Src_Editor_Buffer is
             Iter   => Iter,
             Mark   => Get_Insert (Buffer));
 
-         --  Store the position of the cursor
-         Prev_Insert := Create_Mark (Buffer, "", Iter);
-
-         --  Replace text
          Backward_Chars (Iter, Gint (Position), Success);
          if Success then
             Copy (Iter, End_Iter);
@@ -4252,11 +4248,6 @@ package body Src_Editor_Buffer is
                Insert (Buffer, Iter, (1 => New_Char));
             end if;
          end if;
-
-         --  Replace the cursor at its previous position
-         Get_Iter_At_Mark (Buffer, Iter, Prev_Insert);
-         Place_Cursor (Buffer, Iter);
-         Delete_Mark (Buffer, Prev_Insert);
       end Perform_Replace;
 
       Command : constant Editor_Command :=
