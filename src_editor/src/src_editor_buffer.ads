@@ -983,6 +983,16 @@ private
    --  Signal the new cursor position by emitting the "cursor_position_changed"
    --  signal.
 
+   procedure Enter_Current_Group (Buffer : access Source_Buffer_Record'Class);
+   --  Enter the current undo-redo group. This means that all subsequent
+   --  actions will be placed in the same undo-redo group as the current
+   --  edition. This call must always be followed by a call to
+   --  Leave_Current_Group, see below.
+
+   procedure Leave_Current_Group (Buffer : access Source_Buffer_Record'Class);
+   --  Leave the current undo-redo group. This needs to be called once for each
+   --  call to Enter_Current_Group.
+
    ---------------
    -- Line data --
    ---------------
@@ -1347,6 +1357,12 @@ private
       Prevent_CR_Insertion : Boolean := False;
       --  Whether the buffer should monitor every text inserted and strip it
       --  of potential CRs.
+
+      Insert_In_Current_Group                           : Natural := 0;
+      --  If this is 0, this means that new edition actions should occur in a
+      --  new undo-redo group.
+      --  If this is >0, this corresponds to the number of clients currently
+      --  between a call to Enter_Current_Group and Leave_Current_Group.
    end record;
 
    procedure Emit_By_Name

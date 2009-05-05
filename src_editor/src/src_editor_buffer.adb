@@ -1280,6 +1280,7 @@ package body Src_Editor_Buffer is
 
       if not Buffer.Inserting then
          Reset_Completion_Data;
+         End_Action (Buffer);
       end if;
 
       Register_Cursor_Timeout (Buffer);
@@ -4450,6 +4451,14 @@ package body Src_Editor_Buffer is
          Buffer.Saved_Position := -1;
       end if;
 
+      --  Finish the current group and start a new one.
+
+      --  ??? This is the place where we could be smarter in grouping actions
+      if Buffer.Insert_In_Current_Group = 0 then
+         End_Group (Buffer.Queue);
+         Start_Group (Buffer.Queue);
+      end if;
+
       Enqueue (Buffer.Queue, Command);
       Buffer.Inserting := False;
    end Enqueue;
@@ -6478,5 +6487,25 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Prevent_CR_Insertion := Prevent;
    end Prevent_CR_Insertion;
+
+   -------------------------
+   -- Enter_Current_Group --
+   -------------------------
+
+   procedure Enter_Current_Group
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Insert_In_Current_Group := Buffer.Insert_In_Current_Group + 1;
+   end Enter_Current_Group;
+
+   -------------------------
+   -- Leave_Current_Group --
+   -------------------------
+
+   procedure Leave_Current_Group
+     (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Insert_In_Current_Group := Buffer.Insert_In_Current_Group - 1;
+   end Leave_Current_Group;
 
 end Src_Editor_Buffer;

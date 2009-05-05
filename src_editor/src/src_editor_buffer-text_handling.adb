@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -317,9 +317,18 @@ package body Src_Editor_Buffer.Text_Handling is
          if Replace'Length > 0 and then L - F > 0 then
             --  The parser sometimes callback with a null replacement.
             --  Ignore those cases as we do not want to indent the code here.
-            Replace_Slice
-              (Buffer, Replace, Line, First,
-               Before => 0, After => Length);
+
+            Enter_Current_Group (Buffer);
+            declare
+            begin
+               Replace_Slice
+                 (Buffer, Replace, Line, First,
+                  Before => 0, After => Length);
+               Leave_Current_Group (Buffer);
+            exception
+               when others =>
+                  Leave_Current_Group (Buffer);
+            end;
 
             --  Compute position of the next insert point. This can happen only
             --  in the case of an attribute. In String'Access for example the
