@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                 Copyright (C) 2003-2008, AdaCore                  --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,6 +22,7 @@ with Ada.Strings.Maps;   use Ada.Strings.Maps;
 with Glib.Unicode;       use Glib.Unicode;
 with Gtk.Text_Iter;      use Gtk.Text_Iter;
 
+with Case_Handling;      use Case_Handling;
 with Casing_Exceptions;  use Casing_Exceptions;
 with Commands.Editor;    use Commands.Editor;
 with Language;           use Language;
@@ -276,26 +277,20 @@ package body Src_Editor_Buffer.Text_Handling is
         (Buffer, Text, Line_Begin, Column_Begin, Line_End, Column_End);
    end Replace_Slice;
 
-   -------------------
-   -- Autocase_Text --
-   -------------------
+   ------------------------
+   -- Autocase_Last_Word --
+   ------------------------
 
-   procedure Autocase_Text
-     (Buffer : access Source_Buffer_Record'Class;
-      Casing : Casing_Policy)
+   procedure Autocase_Last_Word
+     (Buffer : access Source_Buffer_Record'Class)
    is
-      procedure Replace_Text_End_Of_Word
+      procedure Replace_Text
         (Ln, F, L : Natural;
          Replace  : UTF8_String);
       --  Replace text callback. Note that we do not use Ln, F, L here as these
       --  are values from the parsed buffer which is a single word here. We use
       --  instead the Line, First and Last variable below which represent the
       --  real word position on the line.
-
-      procedure Replace_Text_On_The_Fly
-        (Ln, F, L : Natural;
-         Replace  : UTF8_String);
-      --  As above but for the on-the-fly casing policy
 
       Lang              : Language_Access;
       Line              : Editable_Line_Type;
@@ -308,41 +303,11 @@ package body Src_Editor_Buffer.Text_Handling is
       Result            : Boolean;
       Char, Prev, PPrev : Character;
 
-      -----------------------------
-      -- Replace_Text_On_The_Fly --
-      -----------------------------
+      ------------------
+      -- Replace_Text --
+      ------------------
 
-      procedure Replace_Text_On_The_Fly
-        (Ln, F, L : Natural;
-         Replace  : UTF8_String)
-      is
-         pragma Unreferenced (Ln);
-         Length  : constant Character_Offset_Type :=
-                     Character_Offset_Type (UTF8_Strlen (Replace));
-         T       : constant String :=
-                     Get_Text (Buffer, Line, First, Line, First + Length);
-         Changed : Boolean := False;
-      begin
-         if Replace'Length > 0 and then L - F > 0 then
-            for K in Natural range 0 .. Natural (Length) - 1 loop
-               if T (T'Last - K) /= Replace (Replace'Last - K) then
-                  Modify_In_Place (Buffer, K + 1, Replace (Replace'Last - K));
-                  Changed := True;
-               end if;
-            end loop;
-
-            if Changed then
-               Set_Cursor_Position
-                 (Buffer, Line, First + Length, Internal => True);
-            end if;
-         end if;
-      end Replace_Text_On_The_Fly;
-
-      ------------------------------
-      -- Replace_Text_End_Of_Word --
-      ------------------------------
-
-      procedure Replace_Text_End_Of_Word
+      procedure Replace_Text
         (Ln, F, L : Natural;
          Replace  : UTF8_String)
       is
@@ -361,7 +326,7 @@ package body Src_Editor_Buffer.Text_Handling is
             --  first call is for String and the second for Access.
             First := First + Character_Offset_Type (Length) + 1;
          end if;
-      end Replace_Text_End_Of_Word;
+      end Replace_Text;
 
    begin
       Lang := Get_Language (Buffer);
@@ -381,18 +346,13 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
-         if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
-           or else (Indent_Params.Casing_Policy = End_Of_Word
-                    and then Casing = On_The_Fly)
+         if Indent_Params.Casing_Policy /= On_The_Fly
            or else Get_Language_Context (Lang).Case_Sensitive
            or else Is_In_Comment (Source_Buffer (Buffer), W_End)
            or else Is_In_String (Source_Buffer (Buffer), W_End)
          then
             --  On-the-fly casing not activated, the language is case sensitive
-            --  or we are in a comment or a string. We also disable on-the-fly
-            --  casing when end-of-word selected. Note that when on-thy-fly is
-            --  selected we still case after end-of-word. This is because when
-            --  typing fast some characters won't get cased properly.
+            --  or we are in a comment or a string.
             return;
          end if;
 
@@ -452,22 +412,13 @@ package body Src_Editor_Buffer.Text_Handling is
 
       if First /= Column then
          --  We have a word, set casing
-         if Casing = On_The_Fly then
-            Format_Buffer
-              (Lang,
-               Get_Slice (W_Start, W_End),
-               Replace         => Replace_Text_On_The_Fly'Unrestricted_Access,
-               Indent_Params   => Indent_Params,
-               Case_Exceptions => Get_Case_Exceptions);
-         else
-            Format_Buffer
-              (Lang,
-               Get_Slice (W_Start, W_End),
-               Replace         => Replace_Text_End_Of_Word'Unrestricted_Access,
-               Indent_Params   => Indent_Params,
-               Case_Exceptions => Get_Case_Exceptions);
-         end if;
+         Format_Buffer
+           (Lang,
+            Get_Slice (W_Start, W_End),
+            Replace         => Replace_Text'Unrestricted_Access,
+            Indent_Params   => Indent_Params,
+            Case_Exceptions => Get_Case_Exceptions);
       end if;
-   end Autocase_Text;
+   end Autocase_Last_Word;
 
 end Src_Editor_Buffer.Text_Handling;

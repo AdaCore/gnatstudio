@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                 Copyright (C) 2003-2009, AdaCore                  --
+--                   Copyright (C) 2003-2008, AdaCore                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -252,7 +252,6 @@ package body Src_Editor_View.Commands is
       case Command.Mode is
          when As_Is =>
             View.As_Is_Mode := True;
-            View.Clear_As_Is := False;
       end case;
       return Success;
    end Execute;

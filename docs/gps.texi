@@ -9908,11 +9908,10 @@ be indented following the RM style.
 The way the editor will handle the case settings below.
 @code{Disabled} no auto-casing will be done;
 @code{End_Of_Line} auto-casing will be done when hitting @key{Enter} key;
-@code{End_Of_Word} auto-casing will be done word-by-word while typing;
-@code{On_The_Fly} auto-casing will be done character-by-character while typing.
-For the @code{End_Of_Line}, @code{End_Of_Word} and @code{On_The_Fly} policies
-it is always possible to force the casing of the current line by pressing the
-indentation key (@key{Ctrl-Tab} by default).
+@code{On_The_Fly} auto-casing will be done word-by-word while typing.
+For the @code{End_Of_Line} and @code{On_The_Fly} policies it is always
+possible to force the casing of the current line by pressing the indentation
+key (@key{Ctrl-Tab} by default).
 
 @item Reserved word casing
 How the editor should handle reserved words casing.
