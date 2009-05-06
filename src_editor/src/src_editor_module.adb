@@ -62,6 +62,7 @@ with Pango.Layout;                      use Pango.Layout;
 
 with Aliases_Module;                    use Aliases_Module;
 with Casing_Exceptions;                 use Casing_Exceptions;
+with Case_Handling;                     use Case_Handling;
 with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
@@ -146,6 +147,11 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Reacts to the word_added Hook
+
+   procedure After_Character_Added_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Reacts to the after_character_added Hook
 
    procedure Save_To_File
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -2267,6 +2273,26 @@ package body Src_Editor_Module is
          return False;
    end File_Line_Hook;
 
+   --------------------------------
+   -- After_Character_Added_Hook --
+   --------------------------------
+
+   procedure After_Character_Added_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Buffer    : Source_Buffer;
+   begin
+      if File_Data.File = GNATCOLL.VFS.No_File then
+         return;
+      end if;
+
+      Buffer := Get_Buffer
+        (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
+      Autocase_Text (Buffer, Casing => On_The_Fly);
+   end After_Character_Added_Hook;
+
    ---------------------
    -- Word_Added_Hook --
    ---------------------
@@ -2284,7 +2310,7 @@ package body Src_Editor_Module is
 
       Buffer := Get_Buffer
         (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
-      Autocase_Last_Word (Buffer);
+      Autocase_Text (Buffer, Casing => End_Of_Word);
    end Word_Added_Hook;
 
    -------------
@@ -2812,6 +2838,9 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
                 Wrapper (Word_Added_Hook'Access),
                 Name => "src_editor.word_added");
+      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.After_Character_Added_Hook,
+                Wrapper (After_Character_Added_Hook'Access),
+                Name => "src_editor.after_character_added");
 
       --  Menus
 

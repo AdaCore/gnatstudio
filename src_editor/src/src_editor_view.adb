@@ -154,6 +154,13 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
 
+   function Key_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Used to handle the on-the-fly casing mode. We need to connect to the
+   --  release event as we want the character to be already inserted into the
+   --  buffer.
+
    function Line_Highlight_Redraw (User : Source_View) return Boolean;
    --  Redraw the source view after a change in highlights
 
@@ -1366,6 +1373,10 @@ package body Src_Editor_View is
         (View, Signal_Key_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
+      Return_Callback.Connect
+        (View, Signal_Key_Release_Event,
+         Marsh => Return_Callback.To_Marshaller (Key_Release_Event_Cb'Access),
+         After => False);
       Widget_Callback.Connect
         (View, Signal_Size_Allocate,
          Widget_Callback.To_Marshaller (Size_Allocated'Access),
@@ -2103,7 +2114,7 @@ package body Src_Editor_View is
                   Result := Do_Indentation (Buffer, Start, Last);
                end if;
 
-               View.As_Is_Mode := False;
+               View.Clear_As_Is := True;
                return True;
             end if;
 
@@ -2140,7 +2151,11 @@ package body Src_Editor_View is
             end;
       end case;
 
-      View.As_Is_Mode := False;
+      if View.As_Is_Mode then
+         --  We don't want to clear the As_Is status mode now, this must be
+         --  done after the Key_Release_Event_Cb (see below).
+         View.Clear_As_Is := True;
+      end if;
 
       return False;
 
@@ -2149,6 +2164,53 @@ package body Src_Editor_View is
          Trace (Exception_Handle, E);
          return False;
    end Key_Press_Event_Cb;
+
+   --------------------------
+   -- Key_Release_Event_Cb --
+   --------------------------
+
+   function Key_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View   : constant Source_View   := Source_View (Widget);
+      Buffer : constant Source_Buffer :=
+                 Source_Buffer (Get_Buffer (View));
+   begin
+      if Realized_Is_Set (View)
+        and then not Get_Property
+          (Gtk_Window (Get_Toplevel (View)), Has_Toplevel_Focus_Property)
+      then
+         return True;
+      end if;
+
+      if not Get_Editable (View) then
+         return False;
+      end if;
+
+      case Get_Key_Val (Event) is
+         when GDK_A .. GDK_Z | GDK_LC_a .. GDK_LC_z |
+              GDK_underscore | GDK_BackSpace =>
+            if Get_State (Event) = 0 and then not View.As_Is_Mode then
+               After_Character_Added (Buffer, Gunichar (Get_Key_Val (Event)));
+            end if;
+
+         when others =>
+            null;
+      end case;
+
+      if View.Clear_As_Is then
+         View.As_Is_Mode := False;
+         View.Clear_As_Is := False;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+         return False;
+   end Key_Release_Event_Cb;
 
    --------------------
    -- Redraw_Columns --

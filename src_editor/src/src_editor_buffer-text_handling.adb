@@ -22,7 +22,6 @@ with Ada.Strings.Maps;   use Ada.Strings.Maps;
 with Glib.Unicode;       use Glib.Unicode;
 with Gtk.Text_Iter;      use Gtk.Text_Iter;
 
-with Case_Handling;      use Case_Handling;
 with Casing_Exceptions;  use Casing_Exceptions;
 with Commands.Editor;    use Commands.Editor;
 with Language;           use Language;
@@ -209,8 +208,6 @@ package body Src_Editor_Buffer.Text_Handling is
       Create
         (C, Source_Buffer (Buffer),
          Line_Begin, Column_Begin, Line_End, Column_End, Text);
-
-      External_End_Action (Buffer);
       Enqueue (Buffer, Command_Access (C));
    end Replace_Slice;
 
@@ -277,12 +274,13 @@ package body Src_Editor_Buffer.Text_Handling is
         (Buffer, Text, Line_Begin, Column_Begin, Line_End, Column_End);
    end Replace_Slice;
 
-   ------------------------
-   -- Autocase_Last_Word --
-   ------------------------
+   -------------------
+   -- Autocase_Text --
+   -------------------
 
-   procedure Autocase_Last_Word
-     (Buffer : access Source_Buffer_Record'Class)
+   procedure Autocase_Text
+     (Buffer : access Source_Buffer_Record'Class;
+      Casing : Casing_Policy)
    is
       procedure Replace_Text
         (Ln, F, L : Natural;
@@ -296,12 +294,15 @@ package body Src_Editor_Buffer.Text_Handling is
       Line              : Editable_Line_Type;
       Column            : Character_Offset_Type;
       First             : Character_Offset_Type;
-      W_End             : Gtk_Text_Iter;
-      W_Start           : Gtk_Text_Iter;
+      W_Start, W_End    : Gtk_Text_Iter;
       Indent_Params     : Indent_Parameters;
       Indent_Kind       : Indentation_Kind;
       Result            : Boolean;
       Char, Prev, PPrev : Character;
+      Forward_Moves     : Natural := 0;
+      --  Record the number of foward moves done to replace the cursor at the
+      --  right place in On_The_Fly mode while inserting a character inside a
+      --  word. This is needed as the mark of the cursor will be replaced.
 
       ------------------
       -- Replace_Text --
@@ -348,23 +349,45 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Result := False;
 
-         if not Is_Start (W_End) then
-            Backward_Char (W_End, Result);
+         if Casing = On_The_Fly then
+            --  We can have added a character inside a word, let's look at the
+            --  word ending.
+            Look_For_End_Of_Word : loop
+               Char := Get_Char (W_End);
+               if not Is_In (Char, Word_Character_Set (Lang)) then
+                  exit Look_For_End_Of_Word;
+               end if;
+
+               Forward_Char (W_End, Result);
+               exit Look_For_End_Of_Word
+                 when not Result or else Is_End (W_End);
+               Forward_Moves := Forward_Moves + 1;
+            end loop Look_For_End_Of_Word;
+
+         else
+            if not Is_Start (W_End) and then Casing /= On_The_Fly then
+               Backward_Char (W_End, Result);
+            end if;
          end if;
 
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
-         if Indent_Params.Casing_Policy /= On_The_Fly
+         if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
+           or else (Indent_Params.Casing_Policy = End_Of_Word
+                    and then Casing = On_The_Fly)
            or else Get_Language_Context (Lang).Case_Sensitive
            or else Is_In_Comment (Source_Buffer (Buffer), W_End)
            or else Is_In_String (Source_Buffer (Buffer), W_End)
          then
             --  On-the-fly casing not activated, the language is case sensitive
-            --  or we are in a comment or a string.
+            --  or we are in a comment or a string. We also disable on-the-fly
+            --  casing when end-of-word selected. Note that when on-thy-fly is
+            --  selected we still case after end-of-word. This is because when
+            --  typing fast some characters won't get cased properly.
             return;
          end if;
 
-         if Result then
+         if Result and then Casing /= On_The_Fly then
             Forward_Char (W_End, Result);
          end if;
       end if;
@@ -426,7 +449,15 @@ package body Src_Editor_Buffer.Text_Handling is
             Replace         => Replace_Text'Unrestricted_Access,
             Indent_Params   => Indent_Params,
             Case_Exceptions => Get_Case_Exceptions);
+
+         if Casing = On_The_Fly then
+            Get_Cursor_Position (Buffer, W_End);
+            if Forward_Moves /= 0 then
+               Backward_Chars (W_End, Gint (Forward_Moves), Result);
+               Place_Cursor (Buffer, W_End);
+            end if;
+         end if;
       end if;
-   end Autocase_Last_Word;
+   end Autocase_Text;
 
 end Src_Editor_Buffer.Text_Handling;

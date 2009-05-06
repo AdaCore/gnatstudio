@@ -1,8 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2004-2006                      --
---                              AdaCore                              --
+--                 Copyright (C) 2004-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,7 +27,7 @@ with String_Hash;
 
 package Case_Handling is
 
-   type Casing_Policy is (Disabled, End_Of_Line, On_The_Fly);
+   type Casing_Policy is (Disabled, End_Of_Line, End_Of_Word, On_The_Fly);
    for Casing_Policy'Size use Integer'Size;
    pragma Convention (C, Casing_Policy);
    --  The list of supported casing policies.
