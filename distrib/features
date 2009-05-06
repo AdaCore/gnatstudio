@@ -2,7 +2,7 @@
 GPS 4.4 NEW FEATURES LIST
 =========================
 
-Copyright (c) 2007-2009, AdaCore
+Copyright (C) 2007-2009, AdaCore
 
 This file contains a list of new features introduced in GPS.
 A full description of all GPS features can be found in the GPS
@@ -14,6 +14,14 @@ of the feature.
 
 New features on 4.4.0
 ---------------------
+
+NF-44-I427-035 Smart completion: backspace key re-expands list (2009-05-05)
+
+   When entering text while the smart completion window is up, the smart
+   completion window narrows the list of choices to match the text. When there
+   are no more choices, the completion window disappears completely.
+   Now, pressing backspace to erase the last characters will cause the
+   completion window to reappear.
 
 NF-44-I425-006 VCS actions supported from auxiliary buffers (2009-04-29)
 
