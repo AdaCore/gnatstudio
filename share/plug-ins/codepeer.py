@@ -125,6 +125,7 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
       <supported-model>gprbuild</supported-model>
       <extra-args>
         <arg>--subdirs=%subdir</arg>
+        <arg>-k</arg>
         <arg>-c</arg>
         <arg>-gnatc</arg>
         <arg>-cargs</arg>
