@@ -53,7 +53,7 @@
     editor_section="DSASection"
     label="DSA configuration file name"
     hide_in="library_wizard"
-    description="Makefile to use for this project">
+    description="DSA configuration file to use for this project">
     <string type="file"/>
   </project_attribute>
 
@@ -86,7 +86,7 @@
     <read-only>TRUE</read-only>
     <command-line>
       <arg>po_gnatdist</arg>
-      <arg>%PPs</arg>
+      <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
   </target>
