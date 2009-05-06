@@ -3,10 +3,8 @@
 
    CodePeer is a static analysis tool for Ada code.
    This package allows the user to perform an automatic code review of
-   a project and integrates its output into GPS:
-     - menu Tools/CodePeer/Run code review
-     - menu Tools/CodePeer/Regenerate reports
-
+   a project and integrates its output into GPS.
+   See menu Tools->CodePeer.
 """
 
 ############################################################################
