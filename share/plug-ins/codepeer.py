@@ -130,9 +130,6 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
         <arg>-c</arg>
         <arg>-gnatc</arg>
         <arg>-cargs</arg>
-        <arg>-gnatd.I</arg>
-        <arg>-gnatdx</arg>
-        <arg>-gnata</arg>
-        <arg>-gnatVim</arg>
+        <arg>-gnatC</arg>
       </extra-args>
     </builder-mode>""")
