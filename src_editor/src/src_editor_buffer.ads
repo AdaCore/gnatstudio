@@ -60,7 +60,7 @@ package Src_Editor_Buffer is
      (Buffer : out Source_Buffer;
       Kernel : GPS.Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null);
-   --  Create a new Source_Buffer with the given Language.
+   --  Create a new Source_Buffer with the given Language
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
@@ -107,7 +107,7 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       Column : Character_Offset_Type) return Visible_Column_Type;
-   --  Return the visible column corresponding to the position.
+   --  Return the visible column corresponding to the position
 
    function Collapse_Tabs
      (Buffer : access Source_Buffer_Record;
@@ -165,7 +165,7 @@ package Src_Editor_Buffer is
 
    function Get_Language
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
-   --  Get the current language. Return null if the language is not set.
+   --  Get the current language. Return null if the language is not set
 
    procedure Set_Charset
      (Buffer : access Source_Buffer_Record; Charset : String);
@@ -377,7 +377,7 @@ package Src_Editor_Buffer is
    --  into account
 
    procedure Select_All (Buffer : access Source_Buffer_Record);
-   --  Set the selection bounds from the begining to the end of the buffer.
+   --  Set the selection bounds from the begining to the end of the buffer
 
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record);
    --  Select the word the cursor is on. The insert mark is placed at the end
@@ -587,7 +587,7 @@ package Src_Editor_Buffer is
 
    function Get_Constructs_Timestamp
      (Buffer : access Source_Buffer_Record) return Natural;
-   --  Return the "timestamp" of the constructs.
+   --  Return the "timestamp" of the constructs
 
    -----------------------
    -- Extra Information --
@@ -853,7 +853,7 @@ package Src_Editor_Buffer is
    --  Return the buffer line corresponding to file line Line
 
    procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record);
-   --  Refresh the side columns in Buffer.
+   --  Refresh the side columns in Buffer
 
    function Position_Set_Explicitely
      (Buffer : access Source_Buffer_Record;
@@ -1087,7 +1087,7 @@ private
       --  The text contained in the original special line
 
       Line_Mark          : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  The mark used for referencing special lines, for example.
+      --  The mark used for referencing special lines, for example
 
       --  ??? Need to store the line category
    end record;
@@ -1299,7 +1299,7 @@ private
       --  lines (ie when we are folding/unfolding text or adding/removing
       --  blank lines.
 
-      --  The following information are used for idle buffer highlighting.
+      --  The following information are used for idle buffer highlighting
 
       First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
@@ -1341,7 +1341,7 @@ private
       Constructs_State : Constructs_State_Type := Not_Parsed;
       --  The state of the constructs list
 
-      Constructs_Timestamp                  : Natural := 0;
+      Constructs_Timestamp : Natural := 0;
       --  The "timestamp" of the stored constructs information
 
       Blocks_Exact : Boolean := False;
@@ -1358,7 +1358,7 @@ private
       --  Whether the buffer should monitor every text inserted and strip it
       --  of potential CRs.
 
-      Insert_In_Current_Group                           : Natural := 0;
+      Insert_In_Current_Group : Natural := 0;
       --  If this is 0, this means that new edition actions should occur in a
       --  new undo-redo group.
       --  If this is >0, this corresponds to the number of clients currently

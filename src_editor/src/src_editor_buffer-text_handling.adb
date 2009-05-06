@@ -319,7 +319,6 @@ package body Src_Editor_Buffer.Text_Handling is
             --  Ignore those cases as we do not want to indent the code here.
 
             Enter_Current_Group (Buffer);
-            declare
             begin
                Replace_Slice
                  (Buffer, Replace, Line, First,

@@ -1567,9 +1567,7 @@ package body Src_Editor_Buffer is
       --  than one character, so as not to have to perform UTF8 computations
       --  in these cases.
 
-      if Number = 0
-        and then Length < 4
-      then
+      if Number = 0 and then Length < 4 then
          declare
             Index : Natural;
          begin
@@ -4451,7 +4449,7 @@ package body Src_Editor_Buffer is
          Buffer.Saved_Position := -1;
       end if;
 
-      --  Finish the current group and start a new one.
+      --  Finish the current group and start a new one
 
       --  ??? This is the place where we could be smarter in grouping actions
       if Buffer.Insert_In_Current_Group = 0 then
