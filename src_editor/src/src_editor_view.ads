@@ -255,10 +255,10 @@ private
       --  The current completion window
 
       Redraw_Registered : Boolean := False;
-      --  Whether we have registered an idle redraw of the highlights.
+      --  Whether we have registered an idle redraw of the highlights
 
       Redraw_Idle_Handler : Gtk.Main.Idle_Handler_Id;
-      --  The idle handler corresponding to Redraw_Registered.
+      --  The idle handler corresponding to Redraw_Registered
    end record;
 
 end Src_Editor_View;

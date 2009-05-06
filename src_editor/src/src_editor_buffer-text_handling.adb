@@ -384,7 +384,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Prev  := ' ';
       PPrev := ' ';
 
-      loop
+      Look_For_Start_Of_Word : loop
          Backward_Char (W_Start, Result);
          PPrev := Prev;
          Prev := Char;
@@ -402,15 +402,15 @@ package body Src_Editor_Buffer.Text_Handling is
             Forward_Char (W_Start, Result);
             Forward_Char (W_Start, Result);
             First := First + 2;
-            exit;
+            exit Look_For_Start_Of_Word;
          end if;
 
-         exit when not Result
+         exit Look_For_Start_Of_Word when not Result
            or else (Char /= '''
                     and then not Is_In (Char, Word_Character_Set (Lang)));
          First := First - 1;
-         exit when Is_Start (W_Start);
-      end loop;
+         exit Look_For_Start_Of_Word when Is_Start (W_Start);
+      end loop Look_For_Start_Of_Word;
 
       --  Move one character forward, the first character in the word
 
