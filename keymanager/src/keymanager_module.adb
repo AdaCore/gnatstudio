@@ -796,8 +796,8 @@ package body KeyManager_Module is
         and then Action /= "Copy to Clipboard"
       then
          Console.Insert
-           (Kernel, "Warning: binding Ctrl-C is unreliable on Windows,"
-            & " external actions can have unexpected results.");
+           (Kernel, -("Warning: binding Ctrl-C is unreliable on Windows,"
+            & " external actions can have unexpected results."));
       end if;
 
       if Key = "" or else Key = -Disabled_String then
