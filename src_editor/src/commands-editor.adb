@@ -395,12 +395,12 @@ package body Commands.Editor is
             Command.End_Column_After);
       end if;
 
-      Editor := Get_Source_Box_From_MDI
-        (Find_Current_Editor (Get_Kernel (Command.Buffer)));
-
       if Is_Valid_Position
         (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
       then
+         Editor := Get_Source_Box_From_MDI
+           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+
          Set_Cursor_Position
            (Command.Buffer,
             Command.End_Line_After,
