@@ -62,22 +62,25 @@
     <icon>gps-custom-build</icon>
     <command-line>
       <arg>po_gnatdist</arg>
+      <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
     <switches command="%(tool_name)s" lines="2" columns="1">
-      <title line="1" column="1">Gnadist switches</title>
       <title line="1" column="1">Distribution Runtime Library (PCS)</title>
-      <combo switch="--PCS=" noswitch="0">
+      <combo label="Distribution Runtime Library (PCS)" switch="--PCS=" noswitch="0" line="1" column="1">
         <combo-entry label="Default" value="0" />
         <combo-entry label="PolyORB" value="polyorb" />
         <combo-entry label="Garlic" value="garlic" />
       </combo>
-      <check label="Consider all files, even readonly ali files" switch="-a" line="2"/>
-      <check label="Force recompilations" switch="-f" line="2"/>
-      <check label="Be quiet, do not display partitioning operations" switch="-q" line="2"/>
-      <check label="Motivate all executed commands" switch="-v" line="2"/>
-      <check label="Keep all temporary files" switch="-t" line="2"/>
+      <title line="2" column="1">Gnadist switches</title>
+      <check label="Progress bar" switch="-d" line="2" column="1"
+             tip="Display a progress bar with information about how many files are left to be compiled"/>
+      <check label="Consider all files, even readonly ali files" switch="-a" line="2" column="1"/>
+      <check label="Force recompilations" switch="-f" line="2" column="1"/>
+      <check label="Be quiet, do not display partitioning operations" switch="-q" line="2" column="1"/>
+      <check label="Motivate all executed commands" switch="-v" line="2" column="1"/>
+      <check label="Keep all temporary files" switch="-t" line="2" column="1"/>
     </switches>
   </target-model>
 
@@ -86,6 +89,7 @@
     <read-only>TRUE</read-only>
     <command-line>
       <arg>po_gnatdist</arg>
+      <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
