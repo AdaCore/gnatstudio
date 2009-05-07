@@ -4417,7 +4417,13 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Redo (Buffer : access Source_Buffer_Record) is
+      Command : constant Editor_Command :=
+                  Editor_Command (Buffer.Current_Command);
    begin
+      if not Is_Null_Command (Command) then
+         End_Action (Buffer);
+      end if;
+
       Redo (Buffer.Queue);
    end Redo;
 
@@ -6505,5 +6511,25 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Insert_In_Current_Group := Buffer.Insert_In_Current_Group - 1;
    end Leave_Current_Group;
+
+   -----------------------
+   -- Set_In_Completion --
+   -----------------------
+
+   procedure Set_In_Completion
+     (Buffer        : Source_Buffer;
+      In_Completion : Boolean) is
+   begin
+      Buffer.In_Completion := In_Completion;
+   end Set_In_Completion;
+
+   -------------------
+   -- In_Completion --
+   -------------------
+
+   function In_Completion (Buffer : Source_Buffer) return Boolean is
+   begin
+      return Buffer.In_Completion;
+   end In_Completion;
 
 end Src_Editor_Buffer;

@@ -328,6 +328,7 @@ package body Src_Editor_Buffer.Text_Handling is
             exception
                when others =>
                   Leave_Current_Group (Buffer);
+                  raise;
             end;
 
             --  Compute position of the next insert point. This can happen only
@@ -356,6 +357,8 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
+           or else (In_Completion (Source_Buffer (Buffer))
+                     and then Casing = On_The_Fly)
            or else (Indent_Params.Casing_Policy = End_Of_Word
                     and then Casing = On_The_Fly)
            or else Get_Language_Context (Lang).Case_Sensitive

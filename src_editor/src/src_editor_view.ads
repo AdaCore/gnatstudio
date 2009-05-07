@@ -251,9 +251,6 @@ private
       Child                : GPS.Kernel.MDI.GPS_MDI_Child := null;
       --  The child that contains Editor
 
-      In_Completion        : Boolean := False;
-      --  Whether we are in an autocompletion loop
-
       Completion_Window    : Completion_Window_Access;
       --  The current completion window
 

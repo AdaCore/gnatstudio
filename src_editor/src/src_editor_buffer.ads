@@ -926,6 +926,12 @@ package Src_Editor_Buffer is
    --  The caller is responsible for freeing the returned value..
    --  The returned string is UTF8-encoded
 
+   procedure Set_In_Completion
+     (Buffer        : Source_Buffer;
+      In_Completion : Boolean);
+   function In_Completion (Buffer : Source_Buffer) return Boolean;
+   --  Get/set the flag that indicates whether we are currently in a completion
+
 private
 
    procedure Set_Cursor_Position
@@ -1363,6 +1369,9 @@ private
       --  new undo-redo group.
       --  If this is >0, this corresponds to the number of clients currently
       --  between a call to Enter_Current_Group and Leave_Current_Group.
+
+      In_Completion        : Boolean := False;
+      --  Whether we are in an autocompletion loop
    end record;
 
    procedure Emit_By_Name

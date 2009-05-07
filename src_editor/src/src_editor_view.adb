@@ -2522,7 +2522,7 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class;
       Win  : Completion_Window_Access) is
    begin
-      View.In_Completion := True;
+      Set_In_Completion (Source_Buffer (Get_Buffer (View)), True);
       View.Completion_Window := Win;
    end Start_Completion;
 
@@ -2532,7 +2532,7 @@ package body Src_Editor_View is
 
    procedure End_Completion (View : access Source_View_Record'Class) is
    begin
-      View.In_Completion := False;
+      Set_In_Completion (Source_Buffer (Get_Buffer (View)), False);
    end End_Completion;
 
    -------------------
@@ -2542,7 +2542,7 @@ package body Src_Editor_View is
    function In_Completion
      (View : access Source_View_Record'Class) return Boolean is
    begin
-      return View.In_Completion;
+      return In_Completion (Source_Buffer (Get_Buffer (View)));
    end In_Completion;
 
 end Src_Editor_View;
