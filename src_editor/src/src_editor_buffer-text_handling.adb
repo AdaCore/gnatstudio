@@ -349,25 +349,8 @@ package body Src_Editor_Buffer.Text_Handling is
 
          Result := False;
 
-         if Casing = On_The_Fly then
-            --  We can have added a character inside a word, let's look at the
-            --  word ending.
-            Look_For_End_Of_Word : loop
-               Char := Get_Char (W_End);
-               if not Is_In (Char, Word_Character_Set (Lang)) then
-                  exit Look_For_End_Of_Word;
-               end if;
-
-               Forward_Char (W_End, Result);
-               exit Look_For_End_Of_Word
-                 when not Result or else Is_End (W_End);
-               Forward_Moves := Forward_Moves + 1;
-            end loop Look_For_End_Of_Word;
-
-         else
-            if not Is_Start (W_End) and then Casing /= On_The_Fly then
-               Backward_Char (W_End, Result);
-            end if;
+         if not Is_Start (W_End) then
+            Backward_Char (W_End, Result);
          end if;
 
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
@@ -387,8 +370,24 @@ package body Src_Editor_Buffer.Text_Handling is
             return;
          end if;
 
-         if Result and then Casing /= On_The_Fly then
+         if Result then
             Forward_Char (W_End, Result);
+         end if;
+
+         if Casing = On_The_Fly then
+            --  We can have added a character inside a word, let's look at the
+            --  word ending.
+            Look_For_End_Of_Word : loop
+               Char := Get_Char (W_End);
+               if not Is_In (Char, Word_Character_Set (Lang)) then
+                  exit Look_For_End_Of_Word;
+               end if;
+
+               Forward_Char (W_End, Result);
+               exit Look_For_End_Of_Word
+                 when not Result or else Is_End (W_End);
+               Forward_Moves := Forward_Moves + 1;
+            end loop Look_For_End_Of_Word;
          end if;
       end if;
 
