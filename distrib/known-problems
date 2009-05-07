@@ -66,6 +66,12 @@ Known Problems fixed in GPS 4.3.3
               sys:1: GtkWarning: gdkdrawable-win32.c:1607: BitBlt failed:...
   Workaround: This message is harmless and can be safely ignored.
 
+- I210-053: GPS does not run on Linux glibc 2.3 and Xorg
+  Problem:    GPS 4.3.1 will not run on some GNU Linux systems using glibc 2.3
+              and Xorg.
+  Workaround: Create a symbolic link from lib/gps-xfree to lib/gps instead of
+              the default lib/gps-xorg -> lib/gps.
+
 - I206-024: Main window not always uniconified under Windows
   Problem:    When the search window is open and floating, and the main
               GPS window iconified, double-cliking on a source file in the
