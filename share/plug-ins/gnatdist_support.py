@@ -1,16 +1,31 @@
-<?xml version="1.0" ?>
-<!--  This file provides support for the Gnatdist Configuration Language:
-      In particular, it provides syntax highlighting,
-      and support for showing the entities in the Outline View.
-      This also define new tool Gnatdist, and its switches.
--->
+"""This file provides support for using the gnatdist/po_gnatdist tool
 
-<GPS>
+   gnatdist/po_gnatdist is a partitioning tool for distributed applications
+   which use features of the Distrbiuted System Annex.
+   This package provides syntax highlighting for partition configuration
+   language, and allows to run tool from GPS.
+"""
+
+
+
+import os_utils, GPS
+
+#  First, try to find gnatdist/po_gnatdist executable. po_gnatdist have
+#  preference over gnatdist
+
+gnatdist_tool = os_utils.locate_exec_on_path("po_gnatdist")
+if gnatdist_tool == "":
+  gnatdist_tool = os_utils.locate_exec_on_path("gnatdist")
+
+#  If gnatdist/po_gnatdist tool was found, enable its support in GPS
+
+if gnatdist_tool != "":
+  GPS.parse_xml ("""
   <Language>
     <Name>gnatdist</Name>
     <Parent>Ada</Parent>
     <Spec_Suffix>.cfg</Spec_Suffix>
-    <Keywords>^((c(onfiguration|hannel)|begin|use|i(s|n)|f(or|unction)|with|end|return|pr(ocedure|agma))\b|partition(;|\s+))</Keywords>
+    <Keywords>^((c(onfiguration|hannel)|begin|use|i(s|n)|f(or|unction)|with|end|return|pr(ocedure|agma))\\b|partition(;|\s+))</Keywords>
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
@@ -50,7 +65,7 @@
     package="DSA"
     name="Configuration_File"
     editor_page="DSA"
-    editor_section="DSASection"
+    editor_section="DSA configuration"
     label="DSA configuration file name"
     hide_in="library_wizard"
     description="DSA configuration file to use for this project">
@@ -61,7 +76,7 @@
     <description>PolyORB distributed application builder</description>
     <icon>gps-custom-build</icon>
     <command-line>
-      <arg>po_gnatdist</arg>
+      <arg>""" + gnatdist_tool + """</arg>
       <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
@@ -88,10 +103,10 @@
     <in-toolbar>TRUE</in-toolbar>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>po_gnatdist</arg>
+      <arg>""" + gnatdist_tool + """</arg>
       <arg>-d</arg>
       <arg>-P%PP</arg>
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
-  </target>
-</GPS>
+  </target>""")
+
