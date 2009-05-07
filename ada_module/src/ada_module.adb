@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2008, AdaCore              --
+--                     Copyright (C) 2002-2009, AdaCore              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -222,12 +222,12 @@ package body Ada_Module is
          Label   => -"Casing policy",
          Doc     => -"Keywords and Identifiers casing policy",
          Page    => -"Editor/Ada",
-         Default => End_Of_Line);
+         Default => Disabled);
 
       Ada_Reserved_Casing := Casing_Preferences.Create
         (Get_Preferences (Kernel),
          Name    => "Ada-Reserved-Casing",
-         Default => Unchanged,
+         Default => Lower,
          Page    => -"Editor/Ada",
          Doc     => -"How the editor should handle reserved words casing",
          Label   => -"Reserved word casing");
@@ -235,7 +235,7 @@ package body Ada_Module is
       Ada_Ident_Casing := Casing_Preferences.Create
         (Get_Preferences (Kernel),
          Name    => "Ada-Ident-Casing",
-         Default => Unchanged,
+         Default => Smart_Mixed,
          Page    => -"Editor/Ada",
          Doc     => -"How the editor should handle identifiers casing",
          Label   => -"Identifier casing");
