@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                Copyright (C) 2001-2008, AdaCore                   --
+--                Copyright (C) 2001-2009, AdaCore                   --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,14 @@ with String_List_Utils; use String_List_Utils;
 with Unchecked_Deallocation;
 
 package body Commands is
+
+   procedure Enqueue
+     (Queue         : Command_Queue;
+      Action        : access Root_Command'Class;
+      High_Priority : Boolean;
+      Modify_Group  : Boolean);
+   --  Internal version of Enqueue.
+   --  Modify_Group indicates whether we should modify the current group.
 
    use Command_Queues;
 
@@ -174,13 +182,26 @@ package body Commands is
       Action        : access Root_Command;
       High_Priority : Boolean := False) is
    begin
+      Enqueue (Queue, Action, High_Priority, True);
+   end Enqueue;
+
+   -------------
+   -- Enqueue --
+   -------------
+
+   procedure Enqueue
+     (Queue         : Command_Queue;
+      Action        : access Root_Command'Class;
+      High_Priority : Boolean;
+      Modify_Group  : Boolean) is
+   begin
       if Queue = Null_Command_Queue then
          return;
       end if;
 
       Action.Queue := Queue;
 
-      if Queue.Group_Level > 0 then
+      if Modify_Group then
          Action.Group := Queue.Group_Number;
       end if;
 
@@ -493,7 +514,7 @@ package body Commands is
          Group := Action.Group;
 
          Next (Queue.Undo_Queue, Free_Data => False);
-         Enqueue (Queue, Action);
+         Enqueue (Queue, Action, False, False);
 
          exit when Group = 0;
       end loop;
@@ -515,7 +536,7 @@ package body Commands is
          Group := Action.Group;
 
          Next (Queue.Redo_Queue, Free_Data => False);
-         Enqueue (Queue, Action);
+         Enqueue (Queue, Action, False, False);
 
          exit when Group = 0;
       end loop;
