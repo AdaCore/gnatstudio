@@ -27,7 +27,7 @@ NF-44-I425-006 VCS actions supported from auxiliary buffers (2009-04-29)
 
    VCS actions can now be run from auxiliary buffers (e.g. diff windows).
 
-NF-44-I417-023 New On-the-fly casing policy handling (2009-05-01)
+NF-44-I417-023 New On-the-fly casing policy handling (2009-05-06)
 
    The On_The_Fly casing policy is now activated character-by-character.
    The previous bahavior (activated after each word) has been renamed
