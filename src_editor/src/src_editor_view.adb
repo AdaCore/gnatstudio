@@ -2189,14 +2189,15 @@ package body Src_Editor_View is
       end if;
 
       case Get_Key_Val (Event) is
-         when GDK_A .. GDK_Z | GDK_LC_a .. GDK_LC_z |
-              GDK_underscore | GDK_BackSpace =>
-            if Get_State (Event) = 0 and then not View.As_Is_Mode then
-               After_Character_Added (Buffer, Gunichar (Get_Key_Val (Event)));
-            end if;
+         when GDK_Return | GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up
+            | GDK_Page_Down | GDK_End | GDK_Begin | GDK_Up | GDK_Down
+            | GDK_Left | GDK_Right =>
+            null;
 
          when others =>
-            null;
+            if Get_String (Event)'Length = 1 and then not View.As_Is_Mode then
+               After_Character_Added (Buffer, Gunichar (Get_Key_Val (Event)));
+            end if;
       end case;
 
       if View.Clear_As_Is then

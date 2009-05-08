@@ -31,6 +31,7 @@ with Gdk.Types;                         use Gdk.Types;
 with Gdk;                               use Gdk;
 
 with Glib.Object;                       use Glib.Object;
+with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
 
 with Gtk.Box;                           use Gtk.Box;
@@ -114,6 +115,9 @@ package body Src_Editor_Module is
    Open_From_Path_History : constant History_Key := "open-from-project";
    --  Key used to store the most recently open files in the Open From Project
    --  dialog.
+
+   Underscore : constant Gunichar := UTF8_Get_Char ("_");
+   Backspace  : constant Gunichar := 65288;
 
    fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, fold_block_xpm, "fold_block_xpm");
@@ -2281,16 +2285,22 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      File_Data : constant File_Edition_Hooks_Args :=
+                    File_Edition_Hooks_Args (Data.all);
       Buffer    : Source_Buffer;
    begin
       if File_Data.File = GNATCOLL.VFS.No_File then
          return;
       end if;
 
-      Buffer := Get_Buffer
-        (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
-      Autocase_Text (Buffer, Casing => On_The_Fly);
+      if Is_Alnum (File_Data.Character)
+        or else File_Data.Character = Underscore
+        or else File_Data.Character = Backspace
+      then
+         Buffer := Get_Buffer
+           (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
+         Autocase_Text (Buffer, Casing => On_The_Fly);
+      end if;
    end After_Character_Added_Hook;
 
    ---------------------
