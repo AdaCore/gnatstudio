@@ -1195,14 +1195,14 @@ package body Completion_Module is
    is
       pragma Unreferenced (Kernel);
       Edition_Data : constant File_Edition_Hooks_Args :=
-        File_Edition_Hooks_Args (Data.all);
+                       File_Edition_Hooks_Args (Data.all);
       Buffer       : UTF8_String (1 .. 6);
       Last         : Natural;
       Dummy        : Boolean;
       pragma Unreferenced (Dummy);
 
       Smart_Completion_Pref : constant Smart_Completion_Type :=
-        Smart_Completion.Get_Pref;
+                                Smart_Completion.Get_Pref;
 
       Timeout : Gint;
    begin
