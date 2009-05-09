@@ -2195,7 +2195,10 @@ package body Src_Editor_View is
             null;
 
          when others =>
-            if Get_String (Event)'Length = 1 and then not View.As_Is_Mode then
+            if Get_String (Event)'Length <= 1 and then not View.As_Is_Mode then
+               --  <= 1 becasue PyGTK do not set properly the event string. As
+               --  we want to capture that the event is not an extended key
+               --  (control, shit...) this woraround is fine.
                After_Character_Added (Buffer, Gunichar (Get_Key_Val (Event)));
             end if;
       end case;
