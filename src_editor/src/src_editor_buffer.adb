@@ -5216,6 +5216,8 @@ package body Src_Editor_Buffer is
                  Gint (Replace'Length - (End_Column - Start_Column));
             end if;
 
+            Enter_Current_Group (Buffer);
+
             Create
               (Replace_Cmd,
                Buffer,
@@ -5225,6 +5227,7 @@ package body Src_Editor_Buffer is
                End_Column,
                Replace);
             Enqueue (Buffer, Command_Access (Replace_Cmd));
+            Leave_Current_Group (Buffer);
          end if;
       end Replace_Text;
 
