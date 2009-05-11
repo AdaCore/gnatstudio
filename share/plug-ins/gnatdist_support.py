@@ -99,7 +99,7 @@ if gnatdist_tool != "":
     </switches>
   </target-model>
 
-  <target model="gnatdist" category="_Project" name="Build _DSA...">
+  <target model="gnatdist" category="_Project" name="Build _DSA Application...">
     <in-toolbar>TRUE</in-toolbar>
     <read-only>TRUE</read-only>
     <command-line>
