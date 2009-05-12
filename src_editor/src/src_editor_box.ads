@@ -184,19 +184,6 @@ package Src_Editor_Box is
    --  Centering indicates the behavior when scrolling the editor to reveal
    --  the cursor location.
 
-   procedure Replace_Sliced
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive;
-      Text         : String);
-   --  Replace the text between the start and end locations by Text.
-   --
-   --  The validity of the given locations must be verified before invoking
-   --  this procedure. An incorrect location  will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
    procedure Goto_Declaration_Or_Body
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
