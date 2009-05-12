@@ -16,20 +16,102 @@ import os_utils, gnat_switches
 
 gnatmakeproc = None
 
-def label (prefix, switch):
-   if gnat_switches.switches_comments.has_key (prefix+switch[0]):
-      str = re.sub ("^(Activate warnings|Validity checks) (on|for) ", "", gnat_switches.switches_comments[prefix+switch[0]][0].strip())
-   else:
-      str = re.sub ("^turn on (checking|warnings) (on|for) ", "", switch[1].strip())
-   str = str[0].upper()+str[1:]
-   str = re.sub ("[.] *$", "", str)
-   return 'label="%s"' % (str)
+class Check:
+   def __init__ (self, switch, switchoff, defaulttip, defaultstate, before=False):
+      self.switch = switch
+      self.switchoff = switchoff
+      self.default = defaultstate
+      self.label = defaulttip
+      self.before = before
+      self.dependencies = []
 
-def tip (prefix, switch):
-   if gnat_switches.switches_comments.has_key (prefix+switch[0]):
-      return """<tip>%s</tip>""" % (gnat_switches.switches_comments[prefix+switch[0]][1].strip())
-   else:
-        return """<tip>%s</tip>""" % switch[1].strip()
+   def Add_Default_Val_Dependency (self, dependency, activate):
+      self.dependencies.append ([dependency, activate])
+
+   def Tag (self):
+      return "check";
+
+   def Switch (self):
+      return self.switch
+
+   def SwitchOff (self):
+      return self.switchoff
+
+   def Label (self):
+      if gnat_switches.switches_comments.has_key (self.switch):
+         str = re.sub ("^(Activate warnings|Validity checks) (on|for) ", "", gnat_switches.switches_comments[self.switch][0].strip())
+      else:
+         str = re.sub ("^turn on (checking|warnings) (on|for) ", "", self.label.strip())
+      str = str[0].upper()+str[1:]
+      str = re.sub ("[.] *$", "", str)
+      return str
+
+   def Tip (self):
+      if gnat_switches.switches_comments.has_key (self.switch):
+         return """<tip>%s</tip>""" % (gnat_switches.switches_comments[self.switch][1].strip())
+      else:
+         return """<tip>%s</tip>""" % self.label.strip()
+
+   def Default (self):
+      if self.default:
+         return "on"
+      else:
+         return "off"
+
+   def _xml_internal (self):
+      return ""
+
+   def Xml (self, line, col):
+      xml = """<%s label="%s" switch="%s" line="%s" column="%s" """ % (self.Tag(), self.Label(), self.Switch(), line, col)
+
+      if self.SwitchOff() != "":
+         xml += """switchoff="%s" """ % (self.SwitchOff())
+
+      if self.Default() != "":
+         xml += """default="%s" """ % (self.Default())
+
+      if self.before:
+         xml += """before="true" """
+
+      if self._xml_internal() != "":
+         xml += self._xml_internal()
+
+      xml += """>%s</%s>""" % (self.Tip(), self.Tag())
+
+      for dep in self.dependencies:
+        if dep[1]:
+          xml += """<default-value-dependency master-switch="%s" slave-switch="%s"/>\n""" % (dep[0], self.switch)
+        else:
+          xml += """<default-value-dependency master-switch="%s" slave-switch="%s"/>\n""" % (dep[0], self.switchoff)
+      return xml
+
+class Spin (Check):
+   def __init__ (self, switch, switchoff, defaulttip, defaultvalue, minvalue, maxvalue, before=False):
+      Check.__init__ (self, switch, switchoff, defaulttip, "", before)
+      self.defaultval = defaultvalue
+      self.minval     = minvalue
+      self.maxval     = maxvalue
+
+   def Tag (self):
+      return "spin"
+
+   def Default (self):
+      return "%d" % (self.defaultval)
+
+   def _xml_internal (self):
+      return """min="%d" max="%d" separator="" """ % (self.minval, self.maxval)
+
+def Warning (switch, defaulttip, defaultstate, before=False):
+     return Check ("-gnatw"+switch, "-gnatw"+switch.upper(), defaulttip, defaultstate, before)
+
+def Validity (switch, defaulttip, defaultstate, before=False):
+     return Check ("-gnatV"+switch, "-gnatV"+switch.upper(), defaulttip, defaultstate, before)
+
+def StyleSpin (switch, defaulttip, defaultval, minval, maxval, before=False):
+     return Spin ("-gnaty"+switch, "", defaulttip, defaultval, minval, maxval, before)
+
+def Style (switch, defaulttip, defaultstate, before=False):
+     return Check ("-gnaty"+switch, "", defaulttip, defaultstate, before)
 
 class gnatMakeProc:
    """This class controls the gnatmake execution"""
@@ -39,28 +121,72 @@ class gnatMakeProc:
       self.style_checks_list = []
       self.gnatCmd = ""
 
-   def getXmlForCompiler(self):
+   def init_switches(self):
+      global xmlCompilerHead, xmlCompilerDefault, xmlCompilerTrailer
+
+      # ensure_switches returns true if the gnat command is not identical to
+      # the previous one. In this case, we need to recreate the whole xml
+      # tree and call GPS.parse_xml to update the switch editor.
+      if self.__ensure_switches():
+         try:
+            xmlCompiler = self.__get_xml()
+         except:
+            GPS.Console("Messages").write ("Exception thrown in ada_support.py:\n")
+            name = sys.exc_info()[1]
+            tb = traceback.format_list (traceback.extract_tb(sys.exc_info()[2]))
+            for info in tb:
+               GPS.Console("Messages").write (info)
+            GPS.Console("Messages").write (str (name) + "\n");
+            xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
+         GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
+
+   def get_warnings_list(self):
+      self.init_switches()
+      return self.warnings_list;
+
+   def get_validity_checks_list(self):
+      self.init_switches()
+      return self.validity_checks_list;
+
+   def get_style_checks_list(self):
+      self.init_switches()
+      return self.style_checks_list;
+
+   def __ensure_switches(self):
+      prev_cmd = self.gnatCmd
+      self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
+
+      if self.gnatCmd == "":
+         self.gnatCmd = "gnat"
+      if not os.path.isfile (self.gnatCmd):
+         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
+      if self.gnatCmd == "":
+         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
+         GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
+         return
+      # gnat check command changed: we reinitialize the rules list
+      if prev_cmd != self.gnatCmd:
+         self.__get_switches_from_help()
+         return True
+      else:
+         return False
+
+   def __get_xml(self):
       global ruleseditor, xmlCompilerHead, xmlCompilerPopupValidity, xmlCompilerPopupStyles, xmlCompilerTrailer
-      self.get_switches()
       xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
                  <title line="1" column="1" column-span="3">Global switches</title>
                  <title line="2" column="1" column-span="3">Warnings</title>
 """
       n = 0
       for switch in self.warnings_list:
-         if switch[2]:
-            # active by default
-            default="on"
-         else:
-            default="off"
-
-         if switch[0] == "a" or switch[0] == ".e" or switch[0] == "s" or switch[0] == "e":
-            if switch[0] == "a" or switch[0] == "e":
+         if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatw.e" or switch.Switch() == "-gnatws" or switch.Switch() == "-gnatwe":
+            line = "1"
+            if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatwe":
               col = "1"
             else:
               col = "2"
-            xml += """<check %s switch="-gnatw%s" line="1" column="%s" before="true">%s</check>""" % (label ("-gnatw",switch), switch[0], col, tip("-gnatw",switch))
          else:
+            line = "2"
             if n <= (len (self.warnings_list) - 4) / 3:
                col = "1"
             elif n <= (len (self.warnings_list) - 4) * 2 / 3:
@@ -68,12 +194,7 @@ class gnatMakeProc:
             else:
                col = "3"
             n = n + 1
-            xml += """<check %s switch="-gnatw%s" switch-off="-gnatw%s" default="%s" line="2" column="%s">%s</check>""" % (label ("-gnatw",switch), switch[0], switch[0].upper(), default, col, tip("-gnatw",switch))
-            if switch[3]:
-               # activated by -gnatwa
-               xml += """<default-value-dependency master-switch="-gnatwa" slave-switch="-gnatw%s"/>\n""" % (switch[0])
-            xml += """<default-value-dependency master-switch="-gnatw.e" slave-switch="-gnatw%s"/>\n""" % (switch[0])
-            xml += """<default-value-dependency master-switch="-gnatws" slave-switch="-gnatw%s"/>\n""" % (switch[0])
+         xml += switch.Xml (line, col)
       xml += """
         <dependency master-page="Ada" slave-page="Ada"
                     master-switch="-gnatwa" master-status="on"
@@ -100,19 +221,11 @@ class gnatMakeProc:
         <title line="2" column="1">Checks</title>
 """
       for switch in self.validity_checks_list:
-         if switch[2]:
-            # active by default
-            default="on"
+         if switch.Switch() == "-gnatVa" or switch.Switch() == "-gnatVn":
+            line = "1"
          else:
-            default="off"
-         if switch[0] == "a" or switch[0] == "n":
-            xml += """<check %s switch="-gnatV%s" line="1" before="true">%s</check>""" % (label ("-gnatV",switch), switch[0], tip("-gnatV",switch))
-         else:
-            xml += """<check %s switch="-gnatV%s" switch-off="-gnatV%s" default="%s" line = "2">%s</check>""" % (label ("-gnatV",switch), switch[0], switch[0].upper(), default, tip("-gnatV",switch))
-            if switch[3]:
-               # activated by -gnatVa
-               xml += """<default-value-dependency master-switch="-gnatVa" slave-switch="-gnatV%s"/>\n""" % (switch[0])
-            xml += """<default-value-dependency master-switch="-gnatVn" slave-switch="-gnatV%s"/>\n""" % (switch[0].upper())
+            line = "2"
+         xml += switch.Xml(line, "1")
       xml += """
         <dependency master-page="Ada" slave-page="Ada"
                     master-switch="-gnatp" master-status="on"
@@ -125,29 +238,21 @@ class gnatMakeProc:
                     slave-switch="-gnatVa" slave-status="off" />
         <expansion switch="-gnatV" />
       </popup>
-      <popup label="Style checks" line="2" column="1" >
+      <popup label="Style checks" line="2" column="1">
 """
-      style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", tip ("-gnaty", [ "y", "-gnaty" ]));
-      if len (style_alias_res) > 1:
-         default_style_alias = "-"+style_alias_res[1]
-      else:
-         default_style_alias = "-gnaty3abcefhiklmnprst"
+      default_style_alias = "-gnaty3abcefhiklmnprst"
+      if gnat_switches.switches_comments.has_key ("-gnatyy"):
+         style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", gnat_switches.switches_comments["-gnatyy"][1]);
+         if len (style_alias_res) > 1:
+            default_style_alias = "-"+style_alias_res[1]
 
       for switch in self.style_checks_list:
-         if switch[0]=="y":
+         if switch.Switch()=="-gnatyy":
             xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
-         elif switch[0]=="g":
+         elif switch.Switch()=="-gnatyg":
             xml += '<expansion switch="-gnatyg" alias="%s" />' % (default_style_alias + "dISux")
-         elif switch[3]=="0":
-            xml += """<check %s switch="-gnaty%s">%s</check>""" % (label ("-gnaty", switch), switch[0], tip("-gnaty",switch))
          else:
-            # place gnaty1-9 to the begining of the command_line: prevents
-            # "-gnatyM793" being generated for "-gnatyM79 -gnaty3"
-            if switch[0] == "":
-              before='before="true"'
-            else:
-              before=""
-            xml += """<spin %s switch="-gnaty%s" min="%s" max="%s" default="%s" separator="" %s>%s</spin>""" % (label ("-gnaty", switch), switch[0], switch[2], switch[3], switch[4], before, tip("-gnaty",switch))
+            xml += switch.Xml("1", "1")
       xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
       xml += """<expansion switch="-gnaty" alias="%s" />""" % (default_style_alias)
       xml += """
@@ -157,29 +262,7 @@ class gnatMakeProc:
       xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
       return xmlCompiler;
 
-   def initSwitches(self):
-      global xmlCompilerHead, xmlCompilerDefault, xmlCompilerTrailer
-      prev_cmd = self.gnatCmd
-      self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
-
-      if self.gnatCmd == "":
-         self.gnatCmd = "gnat"
-      if not os.path.isfile (self.gnatCmd):
-         self.gnatCmd = os_utils.locate_exec_on_path (self.gnatCmd)
-      if self.gnatCmd == "":
-         GPS.Console ("Messages").write ("Error: 'gnat' is not in the path.\n")
-         GPS.Console ("Messages").write ("Error: Could not initialize the ada_support module.\n")
-         return
-      # gnat check command changed: we reinitialize the rules list
-      if prev_cmd != self.gnatCmd:
-         try:
-            xmlCompiler = self.getXmlForCompiler()
-         except:
-            print "Exception thrown in ada_support.py", sys.exc_info()[1]
-            xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
-         GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
-
-   def add_switch (self, process, matched, unmatched):
+   def __add_switch_callback (self, process, matched, unmatched):
       if unmatched == "\n":
         line = self.msg
         self.msg = ""
@@ -202,10 +285,10 @@ class gnatMakeProc:
               # retrieve the list of warnings not activated by -gnatwa
               exception = re.split ("\(except ([a-zA-Z. ]*)\) *$", res[3])
               self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1]+".e")
-              self.warnings_list.append ([res[1], res[3], False, False])
+              self.warnings_list.append (Warning (res[1], res[3], False, True))
             elif res[1] == "e" or res[1] == ".e" or res[1] == "s":
               # include the global switches directly.
-              self.warnings_list.append ([res[1], res[3], False, False])
+              self.warnings_list.append (Warning (res[1], res[3], False, True))
 
             # include only on warnings, and a limited list of global warnings (gnatwa, gnatws, gnatw.e)
             if not re.search ("turn off", res[3]) and not re.search ("(all|every)", res[3]) and not re.search ("^normal warning", res[3]):
@@ -225,32 +308,41 @@ class gnatMakeProc:
 
               # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
               # remove the 'turn on' in the description
-              self.warnings_list.append ([res[1], res[3], res[2] == "*", is_alias_part])
+              warn = Warning (res[1], res[3], res[2] == "*")
+              if is_alias_part:
+                 warn.Add_Default_Val_Dependency ("-gnatwa", True);
+              warn.Add_Default_Val_Dependency ("-gnatw.e", True);
+              warn.Add_Default_Val_Dependency ("-gnatws", False);
+              self.warnings_list.append (warn)
 
         elif self.validity_checks_analysis:
           res = re.split ("^ *([^ *]+) +(.+) *$", line)
           if len (res) > 2:
             if res[1] == "a" or res[1] == "n":
-              self.validity_checks_list.append ([res[1], res[2], False, False])
+              self.validity_checks_list.append (Validity (res[1], res[2], False, True))
             elif res[1].lower() == res[1]:
-              self.validity_checks_list.append ([res[1], res[2], res[1] == "d", res[1] != "d"])
+              val = Validity (res[1], res[2], res[1] == "d")
+              if res[1] != "d":
+                 val.Add_Default_Val_Dependency ("-gnatVa", True)
+              val.Add_Default_Val_Dependency ("-gnatVn", False)
+              self.validity_checks_list.append (val)
 
         elif self.style_checks_analysis:
           res = re.split ("^ *(1[-]9|.)(n*) +(.+) *$", line)
           if len (res) > 2:
             if res[1] == "1-9":
-               self.style_checks_list.append(["", res[3], "0", "9", "0"])
+               self.style_checks_list.append(StyleSpin (switch = "", defaulttip = res[3], defaultval=0, minval=0, maxval=9, before=True))
 
             # no parameters. Do not include -gnatyN (remove all checks) and -gnatym (alias of -gnatyM79)
             elif res[1] != "N" and res[1] != "m":
                if res[2] == "":
-                  self.style_checks_list.append([res[1], res[3], "0", "0", "0"])
+                  self.style_checks_list.append(Style (switch = res[1], defaulttip = res[3], defaultstate=False))
                else:
-                  self.style_checks_list.append([res[1], res[3], "0", "32768", "0"])
+                  self.style_checks_list.append(StyleSpin (switch = res[1], defaulttip = res[3], defaultval=0, minval=0, maxval=32768))
 
       self.msg += matched
 
-   def get_switches (self):
+   def __get_switches_from_help (self):
       # Verify we have the correct gnatcheck executable
       self.warnings_list = []
       self.validity_checks_list = []
@@ -272,7 +364,7 @@ class gnatMakeProc:
          # the local machine, and fallback to the default switches if not
          # found.
          process = GPS.Process (self.gnatCmd + " make -h", "^.+\r?$",
-                                on_match=self.add_switch)
+                                on_match=self.__add_switch_callback)
          process.get_result()
       return True
 
@@ -484,6 +576,6 @@ def on_switch_editor (hook_name):
    global gnatmakeproc
    if gnatmakeproc == None:
      gnatmakeproc = gnatMakeProc()
-   gnatmakeproc.initSwitches()
+   gnatmakeproc.init_switches()
 
 GPS.Hook ("project_editor").add (on_switch_editor)
