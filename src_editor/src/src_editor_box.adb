@@ -59,7 +59,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Commands.Editor;           use Commands.Editor;
 with Entities.Queries;          use Entities.Queries;
 with Entities;                  use Entities;
 with Find_Utils;                use Find_Utils;
@@ -2479,33 +2478,6 @@ package body Src_Editor_Box is
          end if;
       end if;
    end Set_Cursor_Location;
-
-   -------------------
-   -- Replace_Slice --
-   -------------------
-
-   procedure Replace_Sliced
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive;
-      Text         : String)
-   is
-      C : Editor_Replace_Slice;
-   begin
-      Create
-        (C,
-         Editor.Source_Buffer,
-         Editable_Line_Type (Start_Line),
-         Character_Offset_Type (Start_Column),
-         Editable_Line_Type (End_Line),
-         Character_Offset_Type (End_Column),
-         Text);
-
-      External_End_Action (Editor.Source_Buffer);
-      Enqueue (Editor.Source_Buffer, Command_Access (C));
-   end Replace_Sliced;
 
    --------------------------
    -- Add_File_Information --
