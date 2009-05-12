@@ -37,6 +37,7 @@ with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
 with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Language; use Language;
+with Commands.Editor; use Commands.Editor;
 
 package body Src_Editor_Buffer.Debug is
 
@@ -342,6 +343,41 @@ package body Src_Editor_Buffer.Debug is
                     (Buffer.Editable_Line_Info_Columns.all (L).Identifier));
             end loop;
          end if;
+
+      elsif Command = "debug_dump_undo_queue"
+        or else Command = "debug_dump_redo_queue"
+      then
+         Set_Return_Value_As_List (Data);
+
+         declare
+            use Command_Queues;
+            Q : List;
+            N : List_Node;
+            C : Command_Access;
+         begin
+            if Command = "debug_dump_undo_queue" then
+               Q := Debug_Get_Undo_Queue (Buffer.Queue);
+            else
+               Q := Debug_Get_Redo_Queue (Buffer.Queue);
+            end if;
+
+            N := First (Q);
+
+            while N /= Null_Node loop
+               C := Command_Queues.Data (N);
+
+               if C.all in Base_Editor_Command_Type'Class then
+                  Set_Return_Value
+                    (Data,
+                     "[" & I (Debug_Get_Group (C)) & "]" &
+                     Debug_String (Base_Editor_Command_Type'Class (C.all)));
+               else
+                  Set_Return_Value (Data, String'("not an editor command!"));
+               end if;
+
+               N := Next (N);
+            end loop;
+         end;
       end if;
    end Buffer_Cmds;
 
@@ -392,6 +428,12 @@ package body Src_Editor_Buffer.Debug is
       Register_Command
         (Kernel, "debug_dump_syntax_highlighting",
          1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_undo_queue",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_redo_queue",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
    end Register;
 
 end Src_Editor_Buffer.Debug;
