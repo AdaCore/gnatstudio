@@ -100,7 +100,6 @@ package body Toolchains_Module is
          Add_File_Child
            (Node, "tools_path", Property.Tools_Path,
             Use_VFS_Prefix => False);
-         Add_Child (Node, Child);
       end if;
 
       if Property.Compiler_Path /= No_File then
