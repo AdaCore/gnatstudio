@@ -458,10 +458,24 @@ package Src_Editor_Buffer is
    --  Return true if auto-indentation is supported for this buffer, and if
    --  the user has activated it.
 
+   type Action_Type is
+     (No_Action,      --  No action
+      Insert_Text,    --  User is inserting non-blank graphical characters
+      Insert_Spaces,  --  User is inserting spaces or tabs
+      Insert_Line,    --  User is inserting lines
+      Delete_Text,    --  User is deleting non-blank graphical characters
+      Delete_Spaces,  --  User is deleting spaces or tabs
+      Delete_Line,    --  User is deleting lines
+      External        --  External action, not done by user
+     );
+
    procedure Enqueue
-     (Buffer  : access Source_Buffer_Record;
-      Command : Command_Access);
+     (Buffer      : access Source_Buffer_Record;
+      Command     : Command_Access;
+      User_Action : Action_Type);
    --  Enqueue an action in the Buffer queue
+   --  User_Action represents the action that the user is doing, and must be
+   --  set to No_Action if the command is not caused by user action.
 
    function Get_Kernel
      (Buffer : access Source_Buffer_Record) return GPS.Kernel.Kernel_Handle;
@@ -1372,6 +1386,8 @@ private
 
       In_Completion        : Boolean := False;
       --  Whether we are in an autocompletion loop
+
+      Last_User_Action     : Action_Type := No_Action;
    end record;
 
    procedure Emit_By_Name

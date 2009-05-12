@@ -117,7 +117,7 @@ package body Src_Editor_Module is
    --  dialog.
 
    Underscore : constant Gunichar := UTF8_Get_Char ("_");
-   Backspace  : constant Gunichar := 65288;
+   Backspace  : constant Gunichar := 8;
 
    fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, fold_block_xpm, "fold_block_xpm");
@@ -152,10 +152,10 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Reacts to the word_added Hook
 
-   procedure After_Character_Added_Hook
+   procedure User_Character_Added_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
-   --  Reacts to the after_character_added Hook
+   --  Reacts to the character_added Hook
 
    procedure Save_To_File
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -2277,11 +2277,11 @@ package body Src_Editor_Module is
          return False;
    end File_Line_Hook;
 
-   --------------------------------
-   -- After_Character_Added_Hook --
-   --------------------------------
+   -------------------------------
+   -- User_Character_Added_Hook --
+   -------------------------------
 
-   procedure After_Character_Added_Hook
+   procedure User_Character_Added_Hook
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
@@ -2289,7 +2289,9 @@ package body Src_Editor_Module is
                     File_Edition_Hooks_Args (Data.all);
       Buffer    : Source_Buffer;
    begin
-      if File_Data.File = GNATCOLL.VFS.No_File then
+      if File_Data.File = GNATCOLL.VFS.No_File
+        or else not File_Data.Interactive
+      then
          return;
       end if;
 
@@ -2301,7 +2303,7 @@ package body Src_Editor_Module is
            (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
          Autocase_Text (Buffer, Casing => On_The_Fly);
       end if;
-   end After_Character_Added_Hook;
+   end User_Character_Added_Hook;
 
    ---------------------
    -- Word_Added_Hook --
@@ -2848,8 +2850,8 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
                 Wrapper (Word_Added_Hook'Access),
                 Name => "src_editor.word_added");
-      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.After_Character_Added_Hook,
-                Wrapper (After_Character_Added_Hook'Access),
+      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Character_Added_Hook,
+                Wrapper (User_Character_Added_Hook'Access),
                 Name => "src_editor.after_character_added");
 
       --  Menus

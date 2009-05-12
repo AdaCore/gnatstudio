@@ -43,6 +43,10 @@ package body Commands is
      (Command : Command_Access) return Command_Return_Type;
    --  Internal subprogram for the implementation of Launch_Synchronous
 
+   procedure Change_Group (Queue : Command_Queue);
+   --  Change the current group, so that following actions are not grouped
+   --  in the same undo/redo group.
+
    ---------------
    -- New_Queue --
    ---------------
@@ -202,7 +206,7 @@ package body Commands is
       Action.Queue := Queue;
 
       if Modify_Group then
-         Action.Group := Queue.Group_Number;
+         Action.Group := Queue.Current_Group_Number;
       end if;
 
       if High_Priority then
@@ -511,6 +515,9 @@ package body Commands is
 
          exit when Group /= 0 and then Group /= Action.Group;
 
+         Queue.Group_Level := 0;
+         Change_Group (Queue);
+
          Group := Action.Group;
 
          Next (Queue.Undo_Queue, Free_Data => False);
@@ -532,6 +539,9 @@ package body Commands is
          Action := Head (Queue.Redo_Queue);
 
          exit when Group /= 0 and then Group /= Action.Group;
+
+         Queue.Group_Level := 0;
+         Change_Group (Queue);
 
          Group := Action.Group;
 
@@ -701,10 +711,8 @@ package body Commands is
    begin
       if Q /= null then
          Q.Group_Level := Q.Group_Level + 1;
-
-         if Q.Group_Level = 1 then
-            Q.Group_Number := Q.Group_Number + 1;
-         end if;
+         Change_Group (Q);
+         Q.Current_Group_Number := Q.Last_Group_Number;
       end if;
    end Start_Group;
 
@@ -718,5 +726,48 @@ package body Commands is
          Q.Group_Level := Q.Group_Level - 1;
       end if;
    end End_Group;
+
+   ------------------
+   -- Change_Group --
+   ------------------
+
+   procedure Change_Group (Queue : Command_Queue) is
+   begin
+      if Queue.Last_Group_Number = Natural'Last then
+         Queue.Last_Group_Number := 1;
+      else
+         Queue.Last_Group_Number := Queue.Last_Group_Number + 1;
+      end if;
+   end Change_Group;
+
+   --------------------------
+   -- Debug_Get_Undo_Queue --
+   --------------------------
+
+   function Debug_Get_Undo_Queue
+     (Q : Command_Queue) return Command_Queues.List is
+   begin
+      return Q.Undo_Queue;
+   end Debug_Get_Undo_Queue;
+
+   --------------------------
+   -- Debug_Get_Redo_Queue --
+   --------------------------
+
+   function Debug_Get_Redo_Queue
+     (Q : Command_Queue) return Command_Queues.List is
+   begin
+      return Q.Redo_Queue;
+   end Debug_Get_Redo_Queue;
+
+   ---------------------
+   -- Debug_Get_Group --
+   ---------------------
+
+   function Debug_Get_Group
+     (C : Command_Access) return Natural is
+   begin
+      return C.Group;
+   end Debug_Get_Group;
 
 end Commands;

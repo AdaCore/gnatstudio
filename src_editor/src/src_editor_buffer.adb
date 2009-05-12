@@ -1576,7 +1576,8 @@ package body Src_Editor_Buffer is
             if Index > Length then
                Character_Added
                  (Source_Buffer (Buffer),
-                  UTF8_Get_Char (Text (1 .. Length)));
+                  UTF8_Get_Char (Text (1 .. Length)),
+                  Interactive => not Buffer.Inserting);
             end if;
          end;
       end if;
@@ -1601,6 +1602,7 @@ package body Src_Editor_Buffer is
       Command : Editor_Command := Editor_Command (Buffer.Current_Command);
       Line    : Editable_Line_Type;
 
+      User_Action : Action_Type;
    begin
       if Buffer.Prevent_CR_Insertion then
          Buffer.Prevent_CR_Insertion := False;
@@ -1683,7 +1685,19 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      --  Past this point, we know we are dealing with an user action
+
       User_Edit_Hook (Buffer);
+
+      if Length = 1
+        and then (Text (1) = ' ' or else Text (1) = ASCII.HT)
+      then
+         User_Action := Insert_Spaces;
+      elsif Length = 1 and then Text (1) = ASCII.LF then
+         User_Action := Insert_Line;
+      else
+         User_Action := Insert_Text;
+      end if;
 
       if Is_Null_Command (Command) then
          Create
@@ -1693,14 +1707,16 @@ package body Src_Editor_Buffer is
             False, Line,
             Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
-         Enqueue (Buffer, Command_Access (Command));
+         Enqueue (Buffer, Command_Access (Command), User_Action);
 
          Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
 
       elsif Get_Mode (Command) = Insertion then
-         if Length = 1
-           and then (Text (1) = ASCII.LF or else Text (1) = ' ')
+         if (User_Action = Insert_Spaces
+              and then Buffer.Last_User_Action /= Insert_Spaces)
+           or else (User_Action = Insert_Line
+                     and then Buffer.Last_User_Action /= Insert_Line)
          then
             End_Action (Buffer);
             Create
@@ -1710,7 +1726,7 @@ package body Src_Editor_Buffer is
                False, Line,
                Character_Offset_Type (Get_Line_Offset (Pos) + 1));
 
-            Enqueue (Buffer, Command_Access (Command));
+            Enqueue (Buffer, Command_Access (Command), User_Action);
          end if;
 
          Add_Text (Command, Text (1 .. Length));
@@ -1725,7 +1741,7 @@ package body Src_Editor_Buffer is
             False,
             Line,
             Character_Offset_Type (Get_Line_Offset (Pos) + 1));
-         Enqueue (Buffer, Command_Access (Command));
+         Enqueue (Buffer, Command_Access (Command), User_Action);
          Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
       end if;
@@ -1768,7 +1784,9 @@ package body Src_Editor_Buffer is
          Buffer.First_Removed_Line := 0;
       end if;
 
-      Character_Added (Source_Buffer (Buffer), 8);
+      Character_Added
+        (Source_Buffer (Buffer), 8,
+         Interactive => not Buffer.Inserting);
 
    exception
       when E : others =>
@@ -1930,36 +1948,51 @@ package body Src_Editor_Buffer is
          pragma Assert (Is_Null_Command (Command));
       end if;
 
-      if Is_Null_Command (Command) then
-         Create
-           (Command,
-            Deletion,
-            Source_Buffer (Buffer),
-            True,
-            Editable_Line_Start,
-            Character_Offset_Type (Column_Start + 1),
-            Direction,
-            Editable_Line_End,
-            Character_Offset_Type (Column + 1));
+      declare
+         Slice       : constant UTF8_String :=
+           Get_Slice (Buffer, Start_Iter, End_Iter);
+         User_Action : Action_Type;
+      begin
+         if Slice = "" & ASCII.LF then
+            User_Action := Delete_Line;
+         elsif Slice = " " or else Slice = "" & ASCII.HT then
+            User_Action := Delete_Spaces;
+         else
+            User_Action := Delete_Text;
+         end if;
 
-         Enqueue (Buffer, Command_Access (Command));
+         if Is_Null_Command (Command) then
+            Create
+              (Command,
+               Deletion,
+               Source_Buffer (Buffer),
+               True,
+               Editable_Line_Start,
+               Character_Offset_Type (Column_Start + 1),
+               Direction,
+               Editable_Line_End,
+               Character_Offset_Type (Column + 1));
 
-         Add_Text
-           (Command,
-            Get_Slice (Buffer, Start_Iter, End_Iter),
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
-            Character_Offset_Type (Column_Start + 1));
-      else
-         if Direction = Forward then
+            Enqueue (Buffer, Command_Access (Command), User_Action);
+
             Add_Text
               (Command,
-               Get_Slice (Buffer, Start_Iter, End_Iter),
+               Slice,
                Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
                Character_Offset_Type (Column_Start + 1));
          else
-            Add_Text (Command, Get_Slice (Buffer, Start_Iter, End_Iter));
+            if Direction = Forward then
+               Add_Text
+                 (Command,
+                  Slice,
+                  Get_Editable_Line
+                    (Buffer, Buffer_Line_Type (Line_Start + 1)),
+                  Character_Offset_Type (Column_Start + 1));
+            else
+               Add_Text (Command, Slice);
+            end if;
          end if;
-      end if;
+      end;
 
       Buffer.Current_Command := Command_Access (Command);
 
@@ -2583,6 +2616,8 @@ package body Src_Editor_Buffer is
         (Buffer.Queue, Command_Access (Command), "State_Check");
 
       Buffer.First_Removed_Line := 0;
+
+      End_Action (Buffer);
    end Initialize;
 
    -------------------
@@ -4447,20 +4482,30 @@ package body Src_Editor_Buffer is
    -------------
 
    procedure Enqueue
-     (Buffer  : access Source_Buffer_Record;
-      Command : Command_Access) is
+     (Buffer      : access Source_Buffer_Record;
+      Command     : Command_Access;
+      User_Action : Action_Type) is
    begin
       Buffer.Inserting := True;
+
       if Buffer.Saved_Position > Get_Position (Buffer.Queue) then
          Buffer.Saved_Position := -1;
       end if;
 
       --  Finish the current group and start a new one
 
-      --  ??? This is the place where we could be smarter in grouping actions
-      if Buffer.Insert_In_Current_Group = 0 then
+      Buffer.Current_Command := null;
+
+      --  Decide whether we should group this action with the previous actions
+      if Buffer.Insert_In_Current_Group = 0
+        and then (User_Action /= Buffer.Last_User_Action)
+      then
          End_Group (Buffer.Queue);
          Start_Group (Buffer.Queue);
+      end if;
+
+      if User_Action in No_Action .. Delete_Line then
+         Buffer.Last_User_Action := User_Action;
       end if;
 
       Enqueue (Buffer.Queue, Command);
@@ -5226,7 +5271,7 @@ package body Src_Editor_Buffer is
                Editable_Line_Type (Line),
                End_Column,
                Replace);
-            Enqueue (Buffer, Command_Access (Replace_Cmd));
+            Enqueue (Buffer, Command_Access (Replace_Cmd), External);
             Leave_Current_Group (Buffer);
          end if;
       end Replace_Text;

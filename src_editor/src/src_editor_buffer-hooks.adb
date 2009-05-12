@@ -102,29 +102,20 @@ package body Src_Editor_Buffer.Hooks is
       Run_Hook (Buffer.Kernel, Word_Added_Hook, Data'Unchecked_Access, False);
    end Word_Added;
 
-   ---------------------------
-   -- After_Character_Added --
-   ---------------------------
-
-   procedure After_Character_Added
-     (Buffer : Source_Buffer; Character : Gunichar)
-   is
-      Data : aliased File_Edition_Hooks_Args :=
-        (Hooks_Data with File => Buffer.Filename, Character => Character);
-   begin
-      Run_Hook
-        (Buffer.Kernel, After_Character_Added_Hook,
-         Data'Unchecked_Access, False);
-   end After_Character_Added;
-
    ---------------------
    -- Character_Added --
    ---------------------
 
-   procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar) is
+   procedure Character_Added
+     (Buffer      : Source_Buffer;
+      Character   : Gunichar;
+      Interactive : Boolean)
+   is
       Data : aliased File_Edition_Hooks_Args :=
-               (Hooks_Data
-                with File => Buffer.Filename, Character => Character);
+        (Hooks_Data
+         with File => Buffer.Filename,
+         Character => Character,
+         Interactive => Interactive);
    begin
       Run_Hook
         (Buffer.Kernel, Character_Added_Hook, Data'Unchecked_Access, False);

@@ -32,13 +32,13 @@ package Src_Editor_Buffer.Hooks is
    File_Edition_Hook_Type : constant Hook_Type := "file_edition_hooks";
 
    type File_Edition_Hooks_Args is new File_Hooks_Args with record
-      Character : Gunichar;
+      Character   : Gunichar;
+      Interactive : Boolean;
    end record;
    type File_Edition_Hooks_Args_Access is access all
      File_Edition_Hooks_Args'Class;
 
    Character_Added_Hook       : constant Hook_Name := "character_added";
-   After_Character_Added_Hook : constant Hook_Name := "after_character_added";
 
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
@@ -46,14 +46,14 @@ package Src_Editor_Buffer.Hooks is
    procedure Word_Added (Buffer : Source_Buffer);
    --  Emit the hook Word_Added_Hook
 
-   procedure Character_Added (Buffer : Source_Buffer; Character : Gunichar);
+   procedure Character_Added
+     (Buffer      : Source_Buffer;
+      Character   : Gunichar;
+      Interactive : Boolean);
    --  Emit the Character_Added_Hook. Character should be 8 (control-H) when a
    --  character was removed from the buffer.
-
-   procedure After_Character_Added
-     (Buffer : Source_Buffer; Character : Gunichar);
-   --  Emit the hook After_Character_Added_Hook, this is raised after the
-   --  character has been inserted into the buffer.
+   --  Interactive indicates whether the character is a result of user
+   --  interaction.
 
    procedure Buffer_Modified (Buffer : Source_Buffer);
    --  Emit the Buffer_Modified hook

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2001-2008, AdaCore                  --
+--                 Copyright (C) 2001-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -316,6 +316,24 @@ package Commands is
    --  The caller is responsible for freeing Command when it is no longer
    --  used.
 
+   ---------------------
+   -- Debug functions --
+   ---------------------
+
+   --  These functions are useful for debugging purposes, but should not be
+   --  called in production.
+
+   function Debug_Get_Undo_Queue
+     (Q : Command_Queue) return Command_Queues.List;
+   --  Return the undo queue
+   function Debug_Get_Redo_Queue
+     (Q : Command_Queue) return Command_Queues.List;
+   --  Return the redo queue
+
+   function Debug_Get_Group
+     (C : Command_Access) return Natural;
+   --  Return the command's action group
+
 private
 
    function Get_Previous_Command (Queue : Command_Queue)
@@ -381,7 +399,8 @@ private
       --  are independant, >0 indicates that the commands being added to the
       --  queue are part of a group.
 
-      Group_Number        : Natural := 0;
+      Current_Group_Number     : Natural := 1;
+      Last_Group_Number        : Natural := 0;
       --  Indicates the number of the current group. This is used to
       --  distinguish between possible consecutive groups.
    end record;

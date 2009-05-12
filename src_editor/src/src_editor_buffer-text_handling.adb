@@ -208,7 +208,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Create
         (C, Source_Buffer (Buffer),
          Line_Begin, Column_Begin, Line_End, Column_End, Text);
-      Enqueue (Buffer, Command_Access (C));
+      Enqueue (Buffer, Command_Access (C), External);
    end Replace_Slice;
 
    ---------------

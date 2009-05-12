@@ -2173,9 +2173,8 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View   := Source_View (Widget);
-      Buffer : constant Source_Buffer :=
-                 Source_Buffer (Get_Buffer (View));
+      pragma Unreferenced (Event);
+      View : constant Source_View   := Source_View (Widget);
    begin
       if Realized_Is_Set (View)
         and then not Get_Property
@@ -2187,21 +2186,6 @@ package body Src_Editor_View is
       if not Get_Editable (View) then
          return False;
       end if;
-
-      case Get_Key_Val (Event) is
-         when GDK_Return | GDK_Linefeed | GDK_Tab | GDK_Home | GDK_Page_Up
-            | GDK_Page_Down | GDK_End | GDK_Begin | GDK_Up | GDK_Down
-            | GDK_Left | GDK_Right =>
-            null;
-
-         when others =>
-            if Get_String (Event)'Length <= 1 and then not View.As_Is_Mode then
-               --  <= 1 becasue PyGTK do not set properly the event string. As
-               --  we want to capture that the event is not an extended key
-               --  (control, shit...) this woraround is fine.
-               After_Character_Added (Buffer, Gunichar (Get_Key_Val (Event)));
-            end if;
-      end case;
 
       if View.Clear_As_Is then
          View.As_Is_Mode := False;

@@ -1029,7 +1029,7 @@ package body Completion_Module is
          Text.all,
          True);
 
-      Enqueue (M.Insert_Buffer, Command_Access (Shell_Command));
+      Enqueue (M.Insert_Buffer, Command_Access (Shell_Command), External);
       GNAT.Strings.Free (Text);
 
       return Commands.Success;
