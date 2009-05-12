@@ -21,7 +21,7 @@ with GNAT.OS_Lib;
 
 with GNATCOLL.Utils;
 with GPS.Kernel.Console;
-with GPS.Kernel.Project;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Kernel.Timeout;
 with Projects;
 
@@ -93,16 +93,27 @@ package body Code_Peer.Module.Codepeer is
       Mode    : constant String :=
                   Code_Peer.Shell_Commands.Get_Build_Mode
                     (GPS.Kernel.Kernel_Handle (Context.Module.Kernel));
+      Path : constant GNATCOLL.VFS.File_Array :=
+        Projects.Object_Path
+          (Get_Project (GPS.Kernel.Kernel_Handle (Context.Module.Kernel)),
+           False, False, False);
+      CodePeer_Subdir : constant Boolean :=
+        GNATCOLL.VFS.Is_Directory
+          (Create (Full_Name (Path (Path'First)) & "/codepeer",
+                   Get_Host (Path (Path'First))));
 
    begin
-      if not Context.Module.Advanced_Action then
+      --  If a codepeer dir is found in the object dir, then use this
+      --  directory, otherwise use the default object dir (advanced mode).
+
+      if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (GPS.Kernel.Kernel_Handle (Context.Module.Kernel), "codepeer");
       end if;
 
       Code_Peer.Module.Bridge.Inspection (Context.Module);
 
-      if not Context.Module.Advanced_Action then
+      if CodePeer_Subdir then
          Code_Peer.Shell_Commands.Set_Build_Mode
            (GPS.Kernel.Kernel_Handle (Context.Module.Kernel), Mode);
       end if;
@@ -117,6 +128,7 @@ package body Code_Peer.Module.Codepeer is
                            GPS.Kernel.Project.Get_Project (Module.Kernel);
       Object_Directory : constant Virtual_File :=
                            Projects.Object_Path (Project);
+      --  ??? the list of arguments should not be hardcoded
       Args             : GNAT.OS_Lib.Argument_List :=
                (1 => new String'("-all"),
                 2 => new String'("-global"),

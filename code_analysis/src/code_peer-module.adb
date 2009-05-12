@@ -113,11 +113,10 @@ package body Code_Peer.Module is
    --  Called when "Run analysis manually" menu item in the "Advanced" submenu
    --  is activated by the user.
 
-   procedure On_Advanced_Display_Code_Review
+   procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle);
-   --  Called when "Display code review" menu item in the "Advanced" submenu is
-   --  activated by the user.
+   --  Called when "Display code review" menu item is activated by the user.
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -499,16 +498,15 @@ package body Code_Peer.Module is
    -- On_Advanced_Display_Code_Review --
    -------------------------------------
 
-   procedure On_Advanced_Display_Code_Review
+   procedure On_Display_Code_Review
      (Widget : access Glib.Object.GObject_Record'Class;
       Kernel : GPS.Kernel.Kernel_Handle)
    is
       pragma Unreferenced (Widget, Kernel);
 
    begin
-      Module.Advanced_Action := True;
       Code_Peer.Module.Bridge.Inspection (Module);
-   end On_Advanced_Display_Code_Review;
+   end On_Display_Code_Review;
 
    ---------------------------------------
    -- On_Advanced_Run_Analysis_Manually --
@@ -520,7 +518,6 @@ package body Code_Peer.Module is
    is
       pragma Unreferenced (Widget, Kernel);
    begin
-      Module.Advanced_Action := True;
       Code_Peer.Module.Codepeer.Review (Module);
    end On_Advanced_Run_Analysis_Manually;
 
@@ -536,7 +533,6 @@ package body Code_Peer.Module is
 
    begin
       Module.Autorun_Codepeer := True;
-      Module.Advanced_Action := False;
 
       Code_Peer.Shell_Commands.Build_Target_Execute
         (Kernel,
@@ -768,24 +764,24 @@ package body Code_Peer.Module is
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & "Tools" & '/' & "CodePeer",
+         Parent_Path => "/Tools/CodePeer",
          Text        => -"Analyze All",
          Ref_Item    => "Documentation",
          Callback    => On_Analyze_All'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & "Tools" & '/' & "CodePeer" & '/' & "Advanced",
-         Text        => -"Run analysis manually",
+         Parent_Path => "/Tools/CodePeer",
+         Text        => -"Display code review",
          Add_Before  => True,
-         Callback    => On_Advanced_Run_Analysis_Manually'Access);
+         Callback    => On_Display_Code_Review'Access);
 
       GPS.Kernel.Modules.Register_Menu
         (Kernel      => Kernel,
-         Parent_Path => '/' & "Tools" & '/' & "CodePeer" & '/' & "Advanced",
-         Text        => -"Display code review",
+         Parent_Path => "/Tools/CodePeer/Advanced",
+         Text        => -"Run analysis manually",
          Add_Before  => True,
-         Callback    => On_Advanced_Display_Code_Review'Access);
+         Callback    => On_Advanced_Run_Analysis_Manually'Access);
 
       Module.Annotation_Style :=
         GPS.Kernel.Styles.Get_Or_Create_Style

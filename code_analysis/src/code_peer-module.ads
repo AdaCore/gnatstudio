@@ -94,8 +94,6 @@ private
 
       Autorun_Codepeer : Boolean := False;
       --  codepeer must be automatically called when compilation is finished.
-      Advanced_Action  : Boolean := False;
-      --  Advanced action is requested by the user.
    end record;
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class);
