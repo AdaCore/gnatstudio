@@ -17,7 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System.OS_Lib;              use System.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GPS.Kernel;                 use GPS.Kernel;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
