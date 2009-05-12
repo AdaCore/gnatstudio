@@ -539,4 +539,41 @@ package body Commands.Editor is
       return Success;
    end Execute;
 
+   ------------------
+   -- Debug_String --
+   ------------------
+
+   overriding function Debug_String
+     (C : Hide_Editable_Lines_Type) return String is
+   begin
+      return "Hide_Editable_Lines: " & C.Number'Img;
+   end Debug_String;
+
+   overriding function Debug_String
+     (C : Unhide_Editable_Lines_Type) return String is
+   begin
+      return "Unhide_Editable_Lines: " & C.Base_Line'Img;
+   end Debug_String;
+
+   overriding function Debug_String
+     (C : Check_Modified_State_Type) return String
+   is
+      pragma Unreferenced (C);
+   begin
+      return "Check_Modified_State";
+   end Debug_String;
+
+   overriding function Debug_String
+     (C : Editor_Command_Type) return String is
+   begin
+      return C.Edition_Mode'Img
+        & " " & C.Current_Text (1 .. C.Current_Text_Size);
+   end Debug_String;
+
+   overriding function Debug_String
+     (C : Editor_Replace_Slice_Type) return String is
+   begin
+      return "REPLACE: " & C.Text_Before.all & "->" & C.Text_After.all;
+   end Debug_String;
+
 end Commands.Editor;
