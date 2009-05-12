@@ -17,12 +17,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings;       use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with GNAT.Regpat;       use GNAT.Regpat;
+with Ada.Strings;          use Ada.Strings;
+with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
+with GNAT.Regpat;          use GNAT.Regpat;
 with GNATCOLL.Traces;
-with GPS.Intl;          use GPS.Intl;
-with GPS.Kernel.Locations;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Styles;
 with Traces;
 with Coverage_GUI;
@@ -210,7 +210,7 @@ package body Code_Coverage.Xcov is
       if Coverage.Status = Not_Covered then
          Added := True;
 
-         GPS.Kernel.Locations.Insert_Location
+         Insert_Location
            (Kernel             => Kernel,
             Category           => Coverage_GUI.Uncovered_Category,
             File               => File,
@@ -223,7 +223,7 @@ package body Code_Coverage.Xcov is
       elsif Coverage.Status in Xcov_Partially_Covered then
          Added := True;
 
-         GPS.Kernel.Locations.Insert_Location
+         Insert_Location
            (Kernel             => Kernel,
             Category           => Coverage_GUI.Partially_Covered_Category,
             File               => File,

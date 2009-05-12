@@ -59,7 +59,7 @@ with Entities;                      use Entities;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Console;            use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;          use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
@@ -1120,7 +1120,7 @@ package body Browsers.Call_Graph is
       end if;
 
       if Show_Caller and then Get_Caller (Ref) /= null then
-         GPS.Kernel.Locations.Insert_Location
+         Insert_Location
            (Kernel,
             Category           => Category,
             File               => File,
@@ -1138,7 +1138,7 @@ package body Browsers.Call_Graph is
             Sort_In_File       => Sort_In_File);
 
       else
-         GPS.Kernel.Locations.Insert_Location
+         Insert_Location
            (Kernel,
             Category           => Category,
             File               => File,
@@ -1242,8 +1242,7 @@ package body Browsers.Call_Graph is
    begin
       if Info /= null then
          begin
-            GPS.Kernel.Locations.Remove_Location_Category
-              (Kernel, Category_Title);
+            Remove_Location_Category (Kernel, Category_Title);
 
             Ref (Info);
             Data := (Kernel             => Kernel_Handle (Kernel),
@@ -1833,7 +1832,7 @@ package body Browsers.Call_Graph is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       if All_From_Same_File then
-         GPS.Kernel.Locations.Remove_Location_Category (Kernel, Title);
+         Remove_Location_Category (Kernel, Title);
 
          Find_All_Entities_In_File (Iter => Iter2, File => Local);
          while not At_End (Iter2) loop
@@ -1865,7 +1864,7 @@ package body Browsers.Call_Graph is
                   Destroy (Iter);
 
                else
-                  GPS.Kernel.Locations.Insert_Location
+                  Insert_Location
                     (Kernel,
                      Category     => Title,
                      File         => Get_Filename
@@ -1891,7 +1890,7 @@ package body Browsers.Call_Graph is
          --  Print the declaration of the entity, but only if it is in the
          --  current file, as expected by users.
 
-         GPS.Kernel.Locations.Remove_Location_Category (Kernel, Title);
+         Remove_Location_Category (Kernel, Title);
          Find_All_References
            (Iter          => Iter,
             Entity        => Entity,

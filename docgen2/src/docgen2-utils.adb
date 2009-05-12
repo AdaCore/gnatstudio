@@ -23,7 +23,7 @@ with Projects.Registry;         use Projects.Registry;
 
 with Basic_Types;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 
 package body Docgen2.Utils is
@@ -47,7 +47,7 @@ package body Docgen2.Utils is
    begin
       Insert (Kernel, Err,
               Mode => Error);
-      GPS.Kernel.Locations.Parse_File_Locations (Kernel, Err, "Documentation");
+      Parse_File_Locations (Kernel, Err, "Documentation");
    end Warning;
 
    ------------------

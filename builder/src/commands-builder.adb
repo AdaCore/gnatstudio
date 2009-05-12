@@ -34,7 +34,7 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;    use GPS.Kernel.Locations;
 with GPS.Kernel.Styles;       use GPS.Kernel.Styles;
 with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
 with GPS.Intl;                use GPS.Intl;
@@ -173,7 +173,7 @@ package body Commands.Builder is
       --  Raise the messages window is compilation was unsuccessful
       --  and no error was parsed. See D914-005
 
-      if GPS.Kernel.Locations.Category_Count (Data.Kernel, Error_Category) = 0
+      if Category_Count (Data.Kernel, Error_Category) = 0
         and then Status /= 0
       then
          Console.Raise_Console (Data.Kernel);
@@ -332,7 +332,7 @@ package body Commands.Builder is
          Append_To_Build_Output (Kernel, Slice (Lines, J), Shadow);
       end loop;
 
-      GPS.Kernel.Locations.Parse_File_Locations
+      Parse_File_Locations
         (Kernel,
          Output,
          Category           => Commands.Builder.Error_Category,

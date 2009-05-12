@@ -22,7 +22,7 @@ with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Default_Preferences.Enums;
@@ -193,9 +193,8 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access) is
    begin
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, Uncovered_Category, File_Node.Name);
-      GPS.Kernel.Locations.Remove_Location_Category
+      Remove_Location_Category (Kernel, Uncovered_Category, File_Node.Name);
+      Remove_Location_Category
         (Kernel, Partially_Covered_Category, File_Node.Name);
    end Clear_File_Locations;
 
@@ -212,12 +211,12 @@ package body Coverage_GUI is
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line and then
               File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0 then
-               GPS.Kernel.Locations.Remove_Location_Category
+               Remove_Location_Category
                  (Kernel,
                   Uncovered_Category,
                   File_Node.Name,
                   File_Node.Lines (J).Number);
-               GPS.Kernel.Locations.Remove_Location_Category
+               Remove_Location_Category
                  (Kernel,
                   Partially_Covered_Category,
                   File_Node.Name,

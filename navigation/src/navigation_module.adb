@@ -26,7 +26,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with XML_Utils;               use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
@@ -41,7 +41,7 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
@@ -839,7 +839,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
    begin
-      GPS.Kernel.Locations.Next_Item (Kernel, False);
+      Next_Item (Kernel, False);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -897,7 +897,7 @@ package body Navigation_Module is
       pragma Unreferenced (Widget);
 
    begin
-      GPS.Kernel.Locations.Next_Item (Kernel, True);
+      Next_Item (Kernel, True);
 
    exception
       when E : others => Trace (Exception_Handle, E);

@@ -55,7 +55,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
@@ -802,8 +802,7 @@ package body Builder_Facility_Module is
       end if;
 
       if Clear_Locations then
-         GPS.Kernel.Locations.Remove_Location_Category
-           (Kernel, Error_Category);
+         Remove_Location_Category (Kernel, Error_Category);
       end if;
 
       if Shadow then

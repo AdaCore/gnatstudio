@@ -19,7 +19,7 @@
 
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Input_Sources.File;
 
@@ -32,10 +32,10 @@ with Gtk.Widget;
 
 with Basic_Types;
 with GPS.Editors;
-with GPS.Intl; use GPS.Intl;
+with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
@@ -637,7 +637,7 @@ package body Code_Peer.Module is
 
       --  Cleanup location view
 
-      GPS.Kernel.Locations.Remove_Location_Category
+      Remove_Location_Category
         (Context.Module.Kernel, Code_Peer_Category_Name);
 
       --  Cleanup filter criteria
@@ -1053,7 +1053,7 @@ package body Code_Peer.Module is
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
-               GPS.Kernel.Locations.Insert_Location
+               Insert_Location
                  (Kernel       => Self.Kernel,
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
@@ -1120,8 +1120,7 @@ package body Code_Peer.Module is
       end Process_File;
 
    begin
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Self.Kernel, Code_Peer_Category_Name);
+      Remove_Location_Category (Self.Kernel, Code_Peer_Category_Name);
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;

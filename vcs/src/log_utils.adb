@@ -34,7 +34,7 @@ with Commands.VCS;              use Commands.VCS;
 with Commands.External;         use Commands.External;
 with String_Utils;              use String_Utils;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
@@ -663,8 +663,7 @@ package body Log_Utils is
                List_Temp := Next (List_Temp);
             end loop;
 
-            GPS.Kernel.Locations.Parse_File_Locations
-              (Kernel, S, -"Style/Log Check");
+            Parse_File_Locations (Kernel, S, -"Style/Log Check");
          end;
       end if;
 
@@ -833,8 +832,7 @@ package body Log_Utils is
       --  Check_Handler as we want to keep the output of multiple check
       --  commands.
 
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, -"Style/Log Check");
+      Remove_Location_Category (Kernel, -"Style/Log Check");
 
       for J in Files'Range loop
          exit when Cancel_All;

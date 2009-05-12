@@ -48,7 +48,7 @@ with GPS.Kernel;                             use GPS.Kernel;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;                   use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
@@ -1640,10 +1640,8 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, Uncovered_Category);
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, Partially_Covered_Category);
+      Remove_Location_Category (Kernel, Uncovered_Category);
+      Remove_Location_Category (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 
@@ -1679,10 +1677,8 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, Uncovered_Category);
-      GPS.Kernel.Locations.Remove_Location_Category
-        (Kernel, Partially_Covered_Category);
+      Remove_Location_Category (Kernel, Uncovered_Category);
+      Remove_Location_Category (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
    end Clear_Analysis_Instance;

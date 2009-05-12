@@ -65,7 +65,7 @@ with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;     use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
@@ -2933,7 +2933,7 @@ package body GPS.Location_View is
 
             else
                if Output = null then
-                  GPS.Kernel.Locations.Parse_File_Locations
+                  Parse_File_Locations
                     (Get_Kernel (Data),
                      Highlight               => Highlight_Category /= ""
                         or else Style_Category /= ""
@@ -2956,7 +2956,7 @@ package body GPS.Location_View is
                      Remove_Duplicates       => True);
 
                else
-                  GPS.Kernel.Locations.Parse_File_Locations
+                  Parse_File_Locations
                     (Get_Kernel (Data),
                      Highlight               => Highlight_Category /= ""
                         or else Style_Category /= ""
@@ -2986,7 +2986,7 @@ package body GPS.Location_View is
 
       elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
-         GPS.Kernel.Locations.Remove_Location_Category
+         Remove_Location_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
 
@@ -3061,7 +3061,7 @@ package body GPS.Location_View is
          declare
             Highlight : constant String  := Nth_Arg (Data, 6, "");
          begin
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Get_Kernel (Data),
                Category           => Nth_Arg (Data, 1),
                File               => Get_Data

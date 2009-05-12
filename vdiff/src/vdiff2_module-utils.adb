@@ -30,7 +30,7 @@ with Gtkada.MDI;                        use Gtkada.MDI;
 with Commands;                          use Commands;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Console;                use GPS.Kernel.Console;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;              use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
@@ -353,7 +353,7 @@ package body Vdiff2_Module.Utils is
               (Kernel, Item.Files (J), Id_Col_Vdiff);
             Unhighlight_Range (Kernel, Item.Files (J), Fine_Change_Style);
 
-            GPS.Kernel.Locations.Remove_Location_Category
+            Remove_Location_Category
               (Kernel, -"Visual differences", Item.Files (J));
          end if;
       end loop;
@@ -750,11 +750,11 @@ package body Vdiff2_Module.Utils is
          end if;
 
          if The_Range = 1 then
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", Highlight_File,
                "1 line " & Modification, Line, 1);
          else
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", Highlight_File,
                Image (The_Range) & " lines " & Modification,
                Line, 1);
@@ -841,12 +841,12 @@ package body Vdiff2_Module.Utils is
          end;
 
          if Arr'Length = 1 then
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", File,
                "1 line removed", Natural'Max (Curr_Chunk.Range2.First - 1, 1),
                1);
          else
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", File,
                Image (Arr'Length) & " lines removed",
                Natural'Max (Curr_Chunk.Range2.First - 1, 1), 1);
@@ -878,11 +878,11 @@ package body Vdiff2_Module.Utils is
          Buf.Add_File_Information (Id_Col_Vdiff, Arr);
 
          if Arr'Length = 1 then
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", File,
                "1 line added", Curr_Chunk.Range2.First, 1);
          else
-            GPS.Kernel.Locations.Insert_Location
+            Insert_Location
               (Kernel, -"Visual differences", File,
                Image (Arr'Length) & " lines added",
                Curr_Chunk.Range2.First, 1);

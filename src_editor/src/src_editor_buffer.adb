@@ -64,7 +64,7 @@ with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
 with GPS.Kernel.Console;                  use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;
+with GPS.Kernel.Locations;                use GPS.Kernel.Locations;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
@@ -3153,7 +3153,7 @@ package body Src_Editor_Buffer is
                         --  An error has occurred on this line
                         Has_Errors := True;
 
-                        GPS.Kernel.Locations.Insert_Location
+                        Insert_Location
                           (Kernel   => Buffer.Kernel,
                            Category => Conversion_Error_Message
                              (Buffer.Charset.all),
@@ -3445,7 +3445,7 @@ package body Src_Editor_Buffer is
          --  The charset is being changed: remove from the Locations View
          --  the category listing the conversion errors from that charset for
          --  this file.
-         GPS.Kernel.Locations.Remove_Location_Category
+         Remove_Location_Category
            (Buffer.Kernel,
             Conversion_Error_Message (Buffer.Charset.all),
             Buffer.Filename);
