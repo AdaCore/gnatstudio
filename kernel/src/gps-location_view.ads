@@ -74,42 +74,8 @@ package GPS.Location_View is
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
 
-   procedure Insert_Location
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : Glib.UTF8_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Text               : Glib.UTF8_String;
-      Line               : Positive;
-      Column             : Visible_Column_Type;
-      Length             : Natural := 0;
-      Highlight          : Boolean := False;
-      Highlight_Category : Style_Access := null;
-      Quiet              : Boolean := False;
-      Remove_Duplicates  : Boolean := True;
-      Enable_Counter     : Boolean := True;
-      Has_Markups        : Boolean := False;
-      Sort_In_File       : Boolean := False;
-      Look_For_Secondary : Boolean := False);
-   --  Insert a new location in the result view.
-   --  This is similar to Insert, except it creates the result view if
-   --  necessary.
-   --  If Quiet is True, the locations window will not be raised, and the
-   --  cursor will not jump to the first location.
-   --  If Remove_Duplicates is True, remove the duplicates while inserting
-   --  the items.
-   --  If Enable_Counter is True, enable the counting of the items on-the-fly.
-   --  See Recount_Category below.
-   --  If Has_Markups is True, then Text should be in Pango Markup language;
-   --  in this case, the markups will be interpreted and displayed in the
-   --  Locations view.
-   --  If Sort_In_File is True, then the new entry will be inserted before the
-   --  first entry with a higher line number. This should be avoided if you
-   --  know that you are already inserting entries sorted, since it is slower.
-   --  If Look_For_Secondary is True, Text will be scanned for additional
-   --  references of the form file:line[:column].
-
    function Category_Count
-     (Kernel   : access Kernel_Handle_Record'Class;
+     (View     : access Location_View_Record'Class;
       Category : String) return Natural;
    --  Return the number of entries for a given category
 
@@ -117,17 +83,6 @@ package GPS.Location_View is
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String);
    --  Update the counters for Category
-
-   procedure Remove_Location_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String;
-      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line     : Natural := 0);
-   --  Remove Category from the results view, if it exists.
-   --  If File /= No_File, remove only the node corresponding to File in
-   --  the category.
-   --  If also Line /= 0, removes only the corresponding line in the
-   --  corresponding File.
 
    procedure Next_Item
      (View      : access Location_View_Record'Class;
@@ -148,34 +103,50 @@ package GPS.Location_View is
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
 
-   procedure Parse_File_Locations
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : Glib.UTF8_String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : Style_Access := null;
-      Style_Category          : Style_Access := null;
-      Warning_Category        : Style_Access := null;
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1;
-      Quiet                   : Boolean := False;
-      Remove_Duplicates       : Boolean := False);
-   --  Perform a basic parsing on Text, and add any found file locations
-   --  to the results view in Category.
-   --  If Highlighting is True, attempt to highlight the corresponding
-   --  locations using Highlight_Category, Style_Category or Warning_Category
-   --  as highlighting identifier.
-   --  File_Location_Regexp indicates how file locations should be recognized.
-   --  The default blank value will matches locations reported by gcc or GNAT,
-   --  ie "file:line:column message". The various index parameters indicate the
-   --  relevant parenthesis pair in the regexp.
-   --  Remove_Duplicates indicates whether duplicated entries should be
-   --  filtered out.
+   procedure Add_Location
+     (View               : access Location_View_Record'Class;
+      Category           : Glib.UTF8_String;
+      File               : GNATCOLL.VFS.Virtual_File;
+      Line               : Positive;
+      Column             : Visible_Column_Type;
+      Length             : Natural;
+      Highlight          : Boolean;
+      Message            : Glib.UTF8_String;
+      Highlight_Category : Style_Access;
+      Quiet              : Boolean;
+      Remove_Duplicates  : Boolean;
+      Enable_Counter     : Boolean;
+      Sort_In_File       : Boolean;
+      Look_For_Secondary : Boolean;
+      Parent_Iter        : in out Gtk_Tree_Iter);
+   --  Add a file locaton in Category (the name of the node in the location
+   --  window).
+   --  File is an absolute file name. If File is not currently open, do not
+   --  create marks for File, but add it to the list of unresolved files
+   --  instead.
+   --  Message is the text to display, in pango markup language.
+   --  If Quiet is True, do not raise the locations window and do not jump
+   --  on the first item.
+   --  If Remove_Duplicates is True, do not insert the entry if it is a
+   --  duplicate.
+   --  If Model is set, append the items to Model, otherwise append them
+   --  to View.Tree.Model.
+   --  If Highlight is true, then the matching line in the source editor will
+   --  be highlighted in the color specified by Highlight_Category.
+   --  If Sort_In_File is True, then all entries for each file will be sorted
+   --  by (line, column). This is slightly slower, and should be set to False
+   --  if you know that you are inserting them sorted already.
+   --  If Look_For_Secondary is true, then we'll look and add secondary
+   --  location references, if any.
+
+   procedure Remove_Category
+     (View       : access Location_View_Record'Class;
+      Identifier : String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Line       : Natural := 0);
+   --  Remove category Identifier from the view. All corresponding marks
+   --  are deleted.
+   --  Identifier is the escaped string.
 
 private
    type Location_Record;

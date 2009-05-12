@@ -43,17 +43,17 @@ with Gtk.Label;                              use Gtk.Label;
 with Gtkada.Dialogs;                         use Gtkada.Dialogs;
 with Gtkada.Handlers;                        use Gtkada.Handlers;
 with Gtkada.MDI;                             use Gtkada.MDI;
-with GPS.Kernel.Console;
 with GPS.Intl;                               use GPS.Intl;
 with GPS.Kernel;                             use GPS.Kernel;
-with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
+with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;                    use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                       use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
+with GPS.Kernel.MDI;                         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;                     use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                     use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;              use GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;                      use GPS.Location_View;
 with Projects.Registry;                      use Projects.Registry;
 with Projects;                               use Projects;
 with GNATCOLL.VFS;                                    use GNATCOLL.VFS;
@@ -1640,8 +1640,10 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      Remove_Location_Category (Kernel, Uncovered_Category);
-      Remove_Location_Category (Kernel, Partially_Covered_Category);
+      GPS.Kernel.Locations.Remove_Location_Category
+        (Kernel, Uncovered_Category);
+      GPS.Kernel.Locations.Remove_Location_Category
+        (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
 
@@ -1677,8 +1679,10 @@ package body Code_Analysis_Module is
          Close_Child (Analysis.Child, Force => True);
       end if;
 
-      Remove_Location_Category (Kernel, Uncovered_Category);
-      Remove_Location_Category (Kernel, Partially_Covered_Category);
+      GPS.Kernel.Locations.Remove_Location_Category
+        (Kernel, Uncovered_Category);
+      GPS.Kernel.Locations.Remove_Location_Category
+        (Kernel, Partially_Covered_Category);
       Remove_Line_Information_Column (Kernel, No_File, CodeAnalysis_Cst);
       Free_Code_Analysis (Analysis.Projects);
    end Clear_Analysis_Instance;

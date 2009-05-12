@@ -41,10 +41,10 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Kernel.Console;         use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;          use GPS.Location_View;
 with GPS.Intl;                   use GPS.Intl;
 with XML_Parsers;                use XML_Parsers;
 
@@ -838,12 +838,8 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Results : constant Location_View :=
-                  Get_Or_Create_Location_View (Kernel, False);
    begin
-      if Results /= null then
-         Next_Item (Results);
-      end if;
+      GPS.Kernel.Locations.Next_Item (Kernel, False);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -900,12 +896,8 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Results : constant Location_View :=
-                  Get_Or_Create_Location_View (Kernel, False);
    begin
-      if Results /= null then
-         Next_Item (Results, Backwards => True);
-      end if;
+      GPS.Kernel.Locations.Next_Item (Kernel, True);
 
    exception
       when E : others => Trace (Exception_Handle, E);

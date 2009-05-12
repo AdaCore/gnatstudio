@@ -30,13 +30,13 @@ with Commands.Builder;            use Commands.Builder;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Console;          use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Location_View;           use GPS.Location_View;
 with OS_Utils;                    use OS_Utils;
 with Projects.Registry;           use Projects.Registry;
 with Projects;                    use Projects;
@@ -319,7 +319,8 @@ package body Build_Command_Manager is
             --  We are launching a compile command involving Force_File:
             --  remove reference to File from the Locations View.
             --  See F830-003.
-            Remove_Location_Category (Kernel, Error_Category, Force_File);
+            GPS.Kernel.Locations.Remove_Location_Category
+              (Kernel, Error_Category, Force_File);
             return (1 => new String'(+Base_Name (Force_File)));
          end if;
 
@@ -354,7 +355,8 @@ package body Build_Command_Manager is
                --  We are launching a compile command involving File:
                --  remove reference to File from the Locations View.
                --  See F830-003.
-               Remove_Location_Category (Kernel, Error_Category, File);
+               GPS.Kernel.Locations.Remove_Location_Category
+                 (Kernel, Error_Category, File);
 
                return (1 => new String'(+Base_Name (File)));
             end if;

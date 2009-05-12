@@ -35,8 +35,8 @@ with GPS.Editors;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;
 
 with Code_Peer.Bridge.Audit_Trail_Readers;
 with Code_Peer.Bridge.Inspection_Readers;
@@ -637,7 +637,7 @@ package body Code_Peer.Module is
 
       --  Cleanup location view
 
-      GPS.Location_View.Remove_Location_Category
+      GPS.Kernel.Locations.Remove_Location_Category
         (Context.Module.Kernel, Code_Peer_Category_Name);
 
       --  Cleanup filter criteria
@@ -1053,7 +1053,7 @@ package body Code_Peer.Module is
               and then Self.Filter_Criteria.Categories.Contains
                 (Message.Category)
             then
-               GPS.Location_View.Insert_Location
+               GPS.Kernel.Locations.Insert_Location
                  (Kernel       => Self.Kernel,
                   Category     => Code_Peer_Category_Name,
                   File         => File.Name,
@@ -1120,7 +1120,7 @@ package body Code_Peer.Module is
       end Process_File;
 
    begin
-      GPS.Location_View.Remove_Location_Category
+      GPS.Kernel.Locations.Remove_Location_Category
         (Self.Kernel, Code_Peer_Category_Name);
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);

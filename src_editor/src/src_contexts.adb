@@ -47,12 +47,12 @@ with Basic_Types;               use Basic_Types;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Locations;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Location_View;         use GPS.Location_View;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
@@ -729,7 +729,7 @@ package body Src_Contexts is
             Push_Current_Editor_Location_In_History (Kernel);
 
          else
-            Insert_Location
+            GPS.Kernel.Locations.Insert_Location
               (Kernel,
                Category  => Locations_Category_Name (Look_For),
                File      => File_Name,
@@ -758,7 +758,7 @@ package body Src_Contexts is
             Push_Current_Editor_Location_In_History (Kernel);
 
          else
-            Insert_Location
+            GPS.Kernel.Locations.Insert_Location
               (Kernel,
                Category  => Locations_Category_Name (Look_For),
                File      => File_Name,
@@ -2161,7 +2161,7 @@ package body Src_Contexts is
      (Context : access Abstract_Files_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Remove_Location_Category
+      GPS.Kernel.Locations.Remove_Location_Category
         (Kernel, Locations_Category_Name (Context_Look_For (Context)));
    end Reset;
 

@@ -41,10 +41,10 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Locations;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Location_View;         use GPS.Location_View;
 with Projects;                  use Projects;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -172,7 +172,8 @@ package body Creation_Wizard.Dependencies is
            (Kernel, S & ASCII.LF,
             Mode => Console.Error,
             Add_LF => False);
-         Parse_File_Locations (Kernel, S, -"Project add dependency");
+         GPS.Kernel.Locations.Parse_File_Locations
+           (Kernel, S, -"Project add dependency");
       end Report_Error;
 
       Use_Relative_Path : constant Boolean :=

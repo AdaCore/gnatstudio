@@ -21,8 +21,8 @@ with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GPS.Intl;          use GPS.Intl;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Styles;
-with GPS.Location_View;
 with Code_Analysis_GUI;
 --  ??? Why not replace by Code_Coverage_Gui?
 with Coverage_GUI;
@@ -171,7 +171,7 @@ package body Code_Coverage.Gcov is
    begin
       if Coverage.Coverage = 0 then
          Added := True;
-         GPS.Location_View.Insert_Location
+         GPS.Kernel.Locations.Insert_Location
            (Kernel             => Kernel,
             Category           => Coverage_GUI.Uncovered_Category,
             File               => File,

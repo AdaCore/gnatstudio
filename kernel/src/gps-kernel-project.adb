@@ -40,8 +40,8 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
-with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
@@ -471,7 +471,8 @@ package body GPS.Kernel.Project is
          --  would be open several times otherwise
          Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, Location_Category);
+         GPS.Kernel.Locations.Parse_File_Locations
+           (Kernel, S, Location_Category);
          Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
@@ -517,7 +518,8 @@ package body GPS.Kernel.Project is
 
          Set_Pref (Auto_Jump_To_First, Kernel, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, Location_Category);
+         GPS.Kernel.Locations.Parse_File_Locations
+           (Kernel, S, Location_Category);
          Set_Pref (Auto_Jump_To_First, Kernel, Old_Pref);
       end Report_Error;
 
@@ -636,7 +638,8 @@ package body GPS.Kernel.Project is
          Compute_Predefined_Paths
            (Kernel, Use_Cache => not Is_Local (Build_Server));
 
-         Remove_Location_Category (Kernel, Location_Category);
+         GPS.Kernel.Locations.Remove_Location_Category
+           (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Local_Project,
                Errors             => Report_Error'Unrestricted_Access,
@@ -770,7 +773,7 @@ package body GPS.Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          Console.Insert (Handle, S, Mode => Console.Error);
-         Parse_File_Locations
+         GPS.Kernel.Locations.Parse_File_Locations
            (Handle,
             S,
             Category           => "Project",
@@ -922,7 +925,8 @@ package body GPS.Kernel.Project is
       procedure Report_Error (Msg : String) is
       begin
          Insert (Kernel, Msg, Mode => GPS.Kernel.Console.Error);
-         Parse_File_Locations (Kernel, Msg, "Project save");
+         GPS.Kernel.Locations.Parse_File_Locations
+           (Kernel, Msg, "Project save");
          Result := False;
       end Report_Error;
 

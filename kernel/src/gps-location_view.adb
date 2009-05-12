@@ -65,6 +65,7 @@ with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Console;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
@@ -242,15 +243,6 @@ package body GPS.Location_View is
       Iter  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the file stored at Iter
 
-   procedure Remove_Category
-     (View       : access Location_View_Record'Class;
-      Identifier : String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural := 0);
-   --  Remove category Identifier from the view. All corresponding marks
-   --  are deleted.
-   --  Identifier is the escaped string.
-
    procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
 
@@ -295,42 +287,6 @@ package body GPS.Location_View is
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
    --  If Line is 0, consider the item as a non-leaf item.
-
-   procedure Add_Location
-     (View               : access Location_View_Record'Class;
-      Category           : Glib.UTF8_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Visible_Column_Type;
-      Length             : Natural;
-      Highlight          : Boolean;
-      Message            : Glib.UTF8_String;
-      Highlight_Category : Style_Access;
-      Quiet              : Boolean;
-      Remove_Duplicates  : Boolean;
-      Enable_Counter     : Boolean;
-      Sort_In_File       : Boolean;
-      Look_For_Secondary : Boolean;
-      Parent_Iter        : in out Gtk_Tree_Iter);
-   --  Add a file locaton in Category (the name of the node in the location
-   --  window).
-   --  File is an absolute file name. If File is not currently open, do not
-   --  create marks for File, but add it to the list of unresolved files
-   --  instead.
-   --  Message is the text to display, in pango markup language.
-   --  If Quiet is True, do not raise the locations window and do not jump
-   --  on the first item.
-   --  If Remove_Duplicates is True, do not insert the entry if it is a
-   --  duplicate.
-   --  If Model is set, append the items to Model, otherwise append them
-   --  to View.Tree.Model.
-   --  If Highlight is true, then the matching line in the source editor will
-   --  be highlighted in the color specified by Highlight_Category.
-   --  If Sort_In_File is True, then all entries for each file will be sorted
-   --  by (line, column). This is slightly slower, and should be set to False
-   --  if you know that you are inserting them sorted already.
-   --  If Look_For_Secondary is true, then we'll look and add secondary
-   --  location references, if any.
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -411,11 +367,6 @@ package body GPS.Location_View is
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True) return MDI_Child;
    --  Internal version of Get_Or_Create_Location_View
-
-   function Location_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
-   --  Called when the user executes Location_Action_Hook
 
    function Load_Desktop
      (MDI  : MDI_Window;
@@ -2064,62 +2015,6 @@ package body GPS.Location_View is
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
 
-   ---------------------
-   -- Insert_Location --
-   ---------------------
-
-   procedure Insert_Location
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : Glib.UTF8_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Text               : Glib.UTF8_String;
-      Line               : Positive;
-      Column             : Visible_Column_Type;
-      Length             : Natural := 0;
-      Highlight          : Boolean := False;
-      Highlight_Category : Style_Access := null;
-      Quiet              : Boolean := False;
-      Remove_Duplicates  : Boolean := True;
-      Enable_Counter     : Boolean := True;
-      Has_Markups        : Boolean := False;
-      Sort_In_File       : Boolean := False;
-      Look_For_Secondary : Boolean := False)
-   is
-      View : constant Location_View := Get_Or_Create_Location_View (Kernel);
-      Iter : Gtk_Tree_Iter := Null_Iter;
-   begin
-      if View /= null then
-         if Has_Markups then
-            Add_Location
-              (View,
-               Glib.Convert.Escape_Text (Category),
-               File, Line, Column, Length,
-               Highlight, Text, Highlight_Category,
-               Quiet              => Quiet,
-               Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => Enable_Counter,
-               Sort_In_File       => Sort_In_File,
-               Parent_Iter        => Iter,
-               Look_For_Secondary => Look_For_Secondary);
-
-         else
-            Add_Location
-              (View,
-               Glib.Convert.Escape_Text (Category),
-               File, Line, Column, Length,
-               Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
-               Quiet              => Quiet,
-               Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => Enable_Counter,
-               Sort_In_File       => Sort_In_File,
-               Parent_Iter        => Iter,
-               Look_For_Secondary => Look_For_Secondary);
-         end if;
-
-         Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
-      end if;
-   end Insert_Location;
-
    ----------------------
    -- Recount_Category --
    ----------------------
@@ -2169,20 +2064,14 @@ package body GPS.Location_View is
    --------------------
 
    function Category_Count
-     (Kernel   : access Kernel_Handle_Record'Class;
+     (View     : access Location_View_Record'Class;
       Category : String) return Natural
    is
-      View  : constant Location_View :=
-                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
       Cat   : Gtk_Tree_Iter;
       Iter  : Gtk_Tree_Iter;
       Dummy : Boolean;
 
    begin
-      if View = null then
-         return 0;
-      end if;
-
       Get_Category_File
         (View,
          Glib.Convert.Escape_Text (Category),
@@ -2194,25 +2083,6 @@ package body GPS.Location_View is
 
       return Natural (Get_Int (View.Tree.Model, Cat, Number_Of_Items_Column));
    end Category_Count;
-
-   ------------------------------
-   -- Remove_Location_Category --
-   ------------------------------
-
-   procedure Remove_Location_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String;
-      File     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Line     : Natural := 0)
-   is
-      View : constant Location_View :=
-               Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
-   begin
-      if View /= null then
-         Remove_Category
-           (View, Glib.Convert.Escape_Text (Category), File, Line);
-      end if;
-   end Remove_Location_Category;
 
    ---------------------
    -- Remove_Category --
@@ -2601,24 +2471,6 @@ package body GPS.Location_View is
       return MDI_Child (Child);
    end Get_Or_Create_Location_View_MDI;
 
-   -------------------
-   -- Location_Hook --
-   -------------------
-
-   function Location_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
-   is
-      View : constant Location_View :=
-               Get_Or_Create_Location_View (Kernel, False);
-      D    : constant Location_Hooks_Args := Location_Hooks_Args (Data.all);
-   begin
-      Add_Action_Item
-        (View, D.Identifier, D.Category, D.File,
-         Integer (D.Line), Integer (D.Column), D.Message, D.Action);
-      return True;
-   end Location_Hook;
-
    ----------------------------------------
    -- Read_Secondary_Pattern_Preferences --
    ----------------------------------------
@@ -2985,9 +2837,7 @@ package body GPS.Location_View is
          Kernel      => Kernel,
          Module_Name => Module_Name);
 
-      Add_Hook (Kernel, Location_Action_Hook,
-                Wrapper (Location_Hook'Access),
-                Name => "location_view.location");
+      GPS.Kernel.Locations.Register (Kernel);
       GPS.Kernel.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -3083,7 +2933,7 @@ package body GPS.Location_View is
 
             else
                if Output = null then
-                  Parse_File_Locations
+                  GPS.Kernel.Locations.Parse_File_Locations
                     (Get_Kernel (Data),
                      Highlight               => Highlight_Category /= ""
                         or else Style_Category /= ""
@@ -3106,7 +2956,7 @@ package body GPS.Location_View is
                      Remove_Duplicates       => True);
 
                else
-                  Parse_File_Locations
+                  GPS.Kernel.Locations.Parse_File_Locations
                     (Get_Kernel (Data),
                      Highlight               => Highlight_Category /= ""
                         or else Style_Category /= ""
@@ -3136,7 +2986,7 @@ package body GPS.Location_View is
 
       elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
-         Remove_Location_Category
+         GPS.Kernel.Locations.Remove_Location_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
 
@@ -3211,7 +3061,7 @@ package body GPS.Location_View is
          declare
             Highlight : constant String  := Nth_Arg (Data, 6, "");
          begin
-            Insert_Location
+            GPS.Kernel.Locations.Insert_Location
               (Get_Kernel (Data),
                Category           => Nth_Arg (Data, 1),
                File               => Get_Data
@@ -3257,220 +3107,6 @@ package body GPS.Location_View is
          Report_Preference_File_Error (Kernel, File);
       end if;
    end Dump_To_File;
-
-   --------------------------
-   -- Parse_File_Locations --
-   --------------------------
-
-   procedure Parse_File_Locations
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : Style_Access := null;
-      Style_Category          : Style_Access := null;
-      Warning_Category        : Style_Access := null;
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1;
-      Quiet                   : Boolean := False;
-      Remove_Duplicates       : Boolean := False)
-   is
-      function Get_File_Location return Pattern_Matcher;
-      --  Return the pattern matcher for the file location
-
-      function Get_Index
-        (Pref  : access Integer_Preference_Record'Class;
-         Value : Integer) return Integer;
-      --  If Value is -1, return Pref, otherwise return Value
-
-      function Get_Message (Last : Natural) return Glib.UTF8_String;
-      --  Return the error message. For backward compatibility with existing
-      --  preferences file, we check that the message Index is still good.
-      --  Otherwise, we return the last part of the regexp
-
-      -----------------------
-      -- Get_File_Location --
-      -----------------------
-
-      function Get_File_Location return Pattern_Matcher is
-      begin
-         if File_Location_Regexp = "" then
-            return Compile (File_Pattern.Get_Pref);
-         else
-            return Compile (File_Location_Regexp);
-         end if;
-      end Get_File_Location;
-
-      Max : Integer := 0;
-      --  Maximal value for the indexes
-
-      ---------------
-      -- Get_Index --
-      ---------------
-
-      function Get_Index
-        (Pref  : access Integer_Preference_Record'Class;
-         Value : Integer) return Integer
-      is
-         Location : Integer;
-      begin
-         if Value = -1 then
-            Location := Pref.Get_Pref;
-         else
-            Location := Value;
-         end if;
-
-         Max := Integer'Max (Max, Location);
-         return Location;
-      end Get_Index;
-
-      File_Location : constant Pattern_Matcher := Get_File_Location;
-      File_Index    : constant Integer :=
-                        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
-      Line_Index    : constant Integer :=
-                        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
-      Col_Index     : constant Integer :=
-                        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
-
-      Msg_Index     : constant Integer :=
-                        Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
-      Style_Index   : constant Integer :=
-                        Get_Index (Style_Pattern_Index, Style_Index_In_Regexp);
-      Warning_Index : constant Integer :=
-                        Get_Index
-                          (Warning_Pattern_Index, Warning_Index_In_Regexp);
-      Matched       : Match_Array (0 .. Max);
-      Start         : Natural := Text'First;
-      Last          : Natural;
-      Real_Last     : Natural;
-      Line          : Natural := 1;
-      Column        : Visible_Column_Type := 1;
-      C             : Style_Access;
-      View          : Location_View := null;
-      Expand        : Boolean := Quiet;
-
-      Iter          : Gtk_Tree_Iter := Null_Iter;
-
-      -----------------
-      -- Get_Message --
-      -----------------
-
-      function Get_Message (Last : Natural) return Glib.UTF8_String is
-      begin
-         if Matched (Msg_Index) /= No_Match then
-            return Text
-              (Matched (Msg_Index).First .. Matched (Msg_Index).Last);
-         else
-            return Text (Last + 1 .. Real_Last);
-         end if;
-      end Get_Message;
-
-   begin
-      while Start <= Text'Last loop
-         --  Parse Text line by line and look for file locations
-
-         while Start < Text'Last
-           and then (Text (Start) = ASCII.CR
-                     or else Text (Start) = ASCII.LF)
-         loop
-            Start := Start + 1;
-         end loop;
-
-         Real_Last := Start;
-
-         while Real_Last < Text'Last
-           and then Text (Real_Last + 1) /= ASCII.CR
-           and then Text (Real_Last + 1) /= ASCII.LF
-         loop
-            Real_Last := Real_Last + 1;
-         end loop;
-
-         Match (File_Location, Text (Start .. Real_Last), Matched);
-
-         if Matched (0) /= No_Match then
-            if Matched (Line_Index) /= No_Match then
-               Line := Integer'Value
-                 (Text
-                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
-
-               if Line <= 0 then
-                  Line := 1;
-               end if;
-            end if;
-
-            if Matched (Col_Index) = No_Match then
-               Last := Matched (Line_Index).Last;
-
-            else
-               Last := Matched (Col_Index).Last;
-               Column := Visible_Column_Type'Value
-                 (Text (Matched (Col_Index).First ..
-                            Matched (Col_Index).Last));
-
-               if Column <= 0 then
-                  Column := 1;
-               end if;
-            end if;
-
-            if Matched (Warning_Index) /= No_Match then
-               C := Warning_Category;
-            elsif  Matched (Style_Index) /= No_Match then
-               C := Style_Category;
-            else
-               C := Highlight_Category;
-            end if;
-
-            if View = null then
-               View := Get_Or_Create_Location_View (Kernel);
-            end if;
-
-            Add_Location
-              (View               => View,
-               Category           => Glib.Convert.Escape_Text (Category),
-               File               => Create
-                 (+Text (Matched
-                          (File_Index).First .. Matched (File_Index).Last),
-                  Kernel),
-               Line               => Positive (Line),
-               Column             => Column,
-               Length             => 0,
-               Highlight          => Highlight,
-               Message            => Glib.Convert.Escape_Text
-                 (Get_Message (Last)),
-               Highlight_Category => C,
-               Quiet              => Expand,
-               Remove_Duplicates  => Remove_Duplicates,
-               Enable_Counter     => False,
-               Sort_In_File       => False,
-               Parent_Iter        => Iter,
-               Look_For_Secondary => True);
-            Expand := False;
-         end if;
-
-         Start := Real_Last + 1;
-      end loop;
-
-      Recount_Category (Kernel, Category);
-
-      if View /= null then
-         if View.Sort_By_Category then
-            if Get_Sort_Column_Id (View.Sorting_Column)
-              /= Category_Line_Column
-            then
-               Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
-            end if;
-         else
-            if Get_Sort_Column_Id (View.Sorting_Column) /= Line_Column then
-               Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
-            end if;
-         end if;
-      end if;
-   end Parse_File_Locations;
 
    ----------
    -- Free --

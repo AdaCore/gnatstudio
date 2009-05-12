@@ -64,6 +64,7 @@ with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -998,7 +999,8 @@ procedure GPS.Main is
         (GPS_Main.Kernel, S,
          Mode   => GPS.Kernel.Console.Error,
          Add_LF => False);
-      GPS.Location_View.Parse_File_Locations (GPS_Main.Kernel, S, -"Project");
+      GPS.Kernel.Locations.Parse_File_Locations
+        (GPS_Main.Kernel, S, -"Project");
    end Display_Prj_Messages;
 
    ------------------

@@ -22,11 +22,15 @@ with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
 
 with Basic_Types;
-with GPS.Location_View;         use GPS.Location_View;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Locations;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 
 package body Docgen2.Utils is
+
+   -------------
+   -- Warning --
+   -------------
 
    procedure Warning
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -43,7 +47,7 @@ package body Docgen2.Utils is
    begin
       Insert (Kernel, Err,
               Mode => Error);
-      Parse_File_Locations (Kernel, Err, "Documentation");
+      GPS.Kernel.Locations.Parse_File_Locations (Kernel, Err, "Documentation");
    end Warning;
 
    ------------------
