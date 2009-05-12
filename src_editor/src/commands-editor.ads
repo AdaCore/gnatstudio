@@ -34,6 +34,10 @@ package Commands.Editor is
    end record;
    type Base_Editor_Command is access all Base_Editor_Command_Type;
 
+   function Debug_String
+     (C : Base_Editor_Command_Type) return String is abstract;
+   --  Print a string representation of the command. For debugging purposes.
+
    type Editor_Command_Type is new Base_Editor_Command_Type with private;
    type Editor_Command is access all Editor_Command_Type;
 
@@ -171,6 +175,11 @@ package Commands.Editor is
    overriding procedure Free (X : in out Hide_Editable_Lines_Type);
    --  Free memory associated to X
 
+   overriding function Debug_String
+     (C : Hide_Editable_Lines_Type) return String;
+   overriding function Debug_String
+     (C : Unhide_Editable_Lines_Type) return String;
+
 private
 
    type Check_Modified_State_Type is new Base_Editor_Command_Type with record
@@ -210,5 +219,14 @@ private
 
       Force_End         : Boolean;
    end record;
+
+   overriding function Debug_String
+     (C : Check_Modified_State_Type) return String;
+
+   overriding function Debug_String
+     (C : Editor_Command_Type) return String;
+
+   overriding function Debug_String
+     (C : Editor_Replace_Slice_Type) return String;
 
 end Commands.Editor;
