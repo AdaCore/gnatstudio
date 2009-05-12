@@ -4460,6 +4460,10 @@ package body Src_Editor_Buffer is
       end if;
 
       Redo (Buffer.Queue);
+
+      --  Undo and Redo clear the current group: start a new group.
+
+      Start_Group (Buffer.Queue);
    end Redo;
 
    ----------
@@ -4475,6 +4479,10 @@ package body Src_Editor_Buffer is
       end if;
 
       Undo (Buffer.Queue);
+
+      --  Undo and Redo clear the current group: start a new group.
+
+      Start_Group (Buffer.Queue);
    end Undo;
 
    -------------
