@@ -17,6 +17,7 @@ import os_utils, gnat_switches
 gnatmakeproc = None
 
 class Check:
+   """Handle simple on/off switches"""
    def __init__ (self, switch, switchoff, defaulttip, defaultstate, before=False):
       self.switch = switch
       self.switchoff = switchoff
@@ -86,6 +87,7 @@ class Check:
       return xml
 
 class Spin (Check):
+   """Handle switches that expect a numerical value parameter"""
    def __init__ (self, switch, switchoff, defaulttip, defaultvalue, minvalue, maxvalue, before=False):
       Check.__init__ (self, switch, switchoff, defaulttip, "", before)
       self.defaultval = defaultvalue
@@ -102,16 +104,20 @@ class Spin (Check):
       return """min="%d" max="%d" separator="" """ % (self.minval, self.maxval)
 
 def Warning (switch, defaulttip, defaultstate, before=False):
-     return Check ("-gnatw"+switch, "-gnatw"+switch.upper(), defaulttip, defaultstate, before)
+   """Returns a Warning switch object"""
+   return Check ("-gnatw"+switch, "-gnatw"+switch.upper(), defaulttip, defaultstate, before)
 
 def Validity (switch, defaulttip, defaultstate, before=False):
-     return Check ("-gnatV"+switch, "-gnatV"+switch.upper(), defaulttip, defaultstate, before)
+   """Returns a Validity Check switch object"""
+   return Check ("-gnatV"+switch, "-gnatV"+switch.upper(), defaulttip, defaultstate, before)
 
 def StyleSpin (switch, defaulttip, defaultval, minval, maxval, before=False):
-     return Spin ("-gnaty"+switch, "", defaulttip, defaultval, minval, maxval, before)
+   """Returns a SyleSpin switch object"""
+   return Spin ("-gnaty"+switch, "", defaulttip, defaultval, minval, maxval, before)
 
 def Style (switch, defaulttip, defaultstate, before=False):
-     return Check ("-gnaty"+switch, "", defaulttip, defaultstate, before)
+   """Returns a Syle switch object"""
+   return Check ("-gnaty"+switch, "", defaulttip, defaultstate, before)
 
 class gnatMakeProc:
    """This class controls the gnatmake execution"""
