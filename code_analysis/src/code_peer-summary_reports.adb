@@ -367,7 +367,7 @@ package body Code_Peer.Summary_Reports is
       Dummy := Self.Analysis_View.Append_Column (Column);
 
       Gtk.Tree_View_Column.Gtk_New (Column);
-      Column.Set_Title (-"Lifeage");
+      Column.Set_Title ("+/-");
       Column.Set_Resizable (True);
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, True);
@@ -567,7 +567,7 @@ package body Code_Peer.Summary_Reports is
 
       --  Messages lifeage
 
-      Gtk.Label.Gtk_New (Label, -"Message lifeage");
+      Gtk.Label.Gtk_New (Label, -"Message history");
       Filter_Box.Pack_Start (Label, False);
 
       Gtk.Check_Button.Gtk_New (Check, -"added");
@@ -605,7 +605,7 @@ package body Code_Peer.Summary_Reports is
       Gtk.Separator.Gtk_New_Hseparator (Separator);
       Filter_Box.Pack_Start (Separator, False);
 
-      Gtk.Label.Gtk_New (Label, -"Message probability");
+      Gtk.Label.Gtk_New (Label, -"Message criticality");
       Filter_Box.Pack_Start (Label, False);
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
