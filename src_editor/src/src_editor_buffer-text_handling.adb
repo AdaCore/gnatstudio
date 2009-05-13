@@ -300,6 +300,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Result            : Boolean;
       Char, Prev, PPrev : Character;
       Forward_Moves     : Natural := 0;
+      Text_Replaced     : Boolean;
       --  Record the number of foward moves done to replace the cursor at the
       --  right place in On_The_Fly mode while inserting a character inside a
       --  word. This is needed as the mark of the cursor will be replaced.
@@ -319,17 +320,27 @@ package body Src_Editor_Buffer.Text_Handling is
             --  The parser sometimes callback with a null replacement.
             --  Ignore those cases as we do not want to indent the code here.
 
-            Enter_Current_Group (Buffer);
-            begin
-               Replace_Slice
-                 (Buffer, Replace, Line, First,
-                  Before => 0, After => Length);
-               Leave_Current_Group (Buffer);
-            exception
-               when others =>
+            Text_Replaced := False;
+
+            --  Replace only if the relacement is actually different
+
+            if Get_Text
+              (Buffer, Line, First,
+               Line, First + Character_Offset_Type (Length)) /= Replace
+            then
+               Enter_Current_Group (Buffer);
+               begin
+                  Replace_Slice
+                    (Buffer, Replace, Line, First,
+                     Before => 0, After => Length);
                   Leave_Current_Group (Buffer);
-                  raise;
-            end;
+                  Text_Replaced := True;
+               exception
+                  when others =>
+                     Leave_Current_Group (Buffer);
+                     raise;
+               end;
+            end if;
 
             --  Compute position of the next insert point. This can happen only
             --  in the case of an attribute. In String'Access for example the
@@ -357,6 +368,8 @@ package body Src_Editor_Buffer.Text_Handling is
          Get_Indentation_Parameters (Lang, Indent_Params, Indent_Kind);
 
          if Indent_Params.Casing_Policy not in End_Of_Word .. On_The_Fly
+           or else (Indent_Params.Reserved_Casing = Unchanged
+                      and then Indent_Params.Ident_Casing = Unchanged)
            or else (In_Completion (Source_Buffer (Buffer))
                      and then Casing = On_The_Fly)
            or else (Indent_Params.Casing_Policy = End_Of_Word
@@ -452,7 +465,7 @@ package body Src_Editor_Buffer.Text_Handling is
             Indent_Params   => Indent_Params,
             Case_Exceptions => Get_Case_Exceptions);
 
-         if Casing = On_The_Fly then
+         if Casing = On_The_Fly and then Text_Replaced then
             Get_Cursor_Position (Buffer, W_End);
             if Forward_Moves /= 0 then
                Backward_Chars (W_End, Gint (Forward_Moves), Result);
