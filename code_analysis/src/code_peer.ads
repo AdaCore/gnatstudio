@@ -30,7 +30,7 @@ package Code_Peer is
    type Lifeage_Kinds is (Added, Unchanged, Removed);
 
    type Message_Probability_Level is
-     (Informational, Low, Medium, High, Suppressed);
+     (Suppressed, Informational, Low, Medium, High);
 
    type Message_Category is record
       Name : GNAT.Strings.String_Access;

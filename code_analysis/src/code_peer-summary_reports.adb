@@ -608,6 +608,16 @@ package body Code_Peer.Summary_Reports is
       Gtk.Label.Gtk_New (Label, -"Message criticality");
       Filter_Box.Pack_Start (Label, False);
 
+      Gtk.Check_Button.Gtk_New (Check, -"suppressed");
+      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Suppressed));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Suppressed_Messages_Toggled'Access),
+         Summary_Report (Self));
+
       Gtk.Check_Button.Gtk_New (Check, -"informational");
       Check.Set_Active (Self.Show_Probabilities (Code_Peer.Informational));
       Filter_Box.Pack_Start (Check, False);
@@ -646,16 +656,6 @@ package body Code_Peer.Summary_Reports is
          Gtk.Toggle_Button.Signal_Toggled,
          Check_Button_Report_Callbacks.To_Marshaller
            (On_Show_High_Messages_Toggled'Access),
-         Summary_Report (Self));
-
-      Gtk.Check_Button.Gtk_New (Check, -"suppressed");
-      Check.Set_Active (Self.Show_Probabilities (Code_Peer.Suppressed));
-      Filter_Box.Pack_Start (Check, False);
-      Check_Button_Report_Callbacks.Connect
-        (Check,
-         Gtk.Toggle_Button.Signal_Toggled,
-         Check_Button_Report_Callbacks.To_Marshaller
-           (On_Show_Suppressed_Messages_Toggled'Access),
          Summary_Report (Self));
 
       --  Messages categories
