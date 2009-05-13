@@ -252,7 +252,6 @@ package body Src_Editor_View.Commands is
       case Command.Mode is
          when As_Is =>
             View.As_Is_Mode := True;
-            View.Clear_As_Is := False;
       end case;
       return Success;
    end Execute;

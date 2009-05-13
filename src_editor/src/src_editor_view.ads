@@ -239,9 +239,6 @@ private
       --  Set to True when the as-is-key has been pressed, in this case the
       --  indentation and casing are disabled for the next key.
 
-      Clear_As_Is          : Boolean := False;
-      --  Set to true when the As_Is_Mode is to be set False
-
       Button_Event         : Gdk.Event.Gdk_Event;
       --  Stores a copy of the last button press event for button 1
 
