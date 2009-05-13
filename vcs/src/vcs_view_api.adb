@@ -1014,9 +1014,8 @@ package body VCS_View_API is
          if Log_File then
             declare
                Original  : constant Virtual_File :=
-                             Get_Reference
-                               (Get_File_From_Log
-                                  (Kernel, File_Information (Context)));
+                             Get_File_From_Log
+                               (Kernel, File_Information (Context));
                L_Context : Selection_Context;
             begin
                if Original /= GNATCOLL.VFS.No_File
