@@ -46,6 +46,9 @@ package Src_Editor_Module.Line_Highlighting is
    --  Return the GC corresponding to a category Index.
    --  If Index does not correspond to an existing category, return null.
 
+   function Get_Name (Index : Natural) return String;
+   --  Return the name of the highlighting at index. Used for debug purposes.
+
    function Get_Last_Index return Natural;
    --  Return the number of categories.
 

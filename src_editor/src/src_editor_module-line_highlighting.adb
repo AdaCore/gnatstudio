@@ -251,6 +251,22 @@ package body Src_Editor_Module.Line_Highlighting is
       end if;
    end Get_GC;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Index : Natural) return String is
+      Module_Id : constant Source_Editor_Module :=
+                    Source_Editor_Module (Src_Editor_Module_Id);
+
+   begin
+      if Index > 0 and then Index <= Module_Id.Categories'Last then
+         return Get_Name (Module_Id.Categories (Index).Style);
+      else
+         return "";
+      end if;
+   end Get_Name;
+
    --------------------
    -- Get_Last_Index --
    --------------------

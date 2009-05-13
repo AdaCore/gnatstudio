@@ -39,6 +39,9 @@ with Gtk.Text_Iter; use Gtk.Text_Iter;
 with Language; use Language;
 with Commands.Editor; use Commands.Editor;
 
+with Src_Editor_Module.Line_Highlighting;
+use Src_Editor_Module.Line_Highlighting;
+
 package body Src_Editor_Buffer.Debug is
 
    Me : constant Debug_Handle := Create ("buffer_debug", GNATCOLL.Traces.Off);
@@ -295,6 +298,16 @@ package body Src_Editor_Buffer.Debug is
               (Data, To_String (Buffer.Line_Data (Line).Side_Info_Data));
          end loop;
 
+      elsif Command = "debug_dump_line_highlighting" then
+         Set_Return_Value_As_List (Data);
+
+         for Line in Buffer.Line_Data'First .. Buffer.Line_Data'First +
+           Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
+         loop
+            Set_Return_Value
+              (Data, Get_Name (Buffer.Line_Data (Line).Highlight_Category));
+         end loop;
+
       elsif Command = "debug_dump_all_lines" then
          Set_Return_Value_As_List (Data);
 
@@ -428,6 +441,9 @@ package body Src_Editor_Buffer.Debug is
       Register_Command
         (Kernel, "debug_dump_syntax_highlighting",
          1, 1, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "debug_dump_line_highlighting",
+         0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "debug_dump_undo_queue",
          0, 0, Buffer_Cmds'Access, EditorBuffer);
