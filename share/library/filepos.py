@@ -20,7 +20,7 @@ def on_file_closed (hook, file):
 def on_file_edited (hook, file):
    try:
       buffer = EditorBuffer.get (file)
-      cursor = buffer.cursor()
+      cursor = buffer.current_view().cursor()
 
       # Do not change the line if the editor was already scrolled for
       # any reason
