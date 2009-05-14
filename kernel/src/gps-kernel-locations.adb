@@ -20,17 +20,30 @@
 with GNAT.Regpat;
 
 with Glib.Convert;
-with Gtk.Tree_Model;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;
-with GPS.Location_View;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Location_Model;        use GPS.Location_Model;
+with GPS.Location_View;         use GPS.Location_View;
+with Traces;                    use Traces;
 
 package body GPS.Kernel.Locations is
 
-   use type GPS.Location_View.Location_View;
+   -----------
+   -- Hooks --
+   -----------
+
+   type File_Edited_Hook_Record is new Function_With_Args with null record;
+   type File_Edited_Hook is access File_Edited_Hook_Record'Class;
+   overriding procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Callback for the "file_edited" hook
 
    function Location_Hook
      (Kernel : access Kernel_Handle_Record'Class;
@@ -57,6 +70,116 @@ package body GPS.Kernel.Locations is
          return 0;
       end if;
    end Category_Count;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Hook);
+
+      View  : constant GPS.Location_View.Location_View :=
+                GPS.Location_View.Get_Or_Create_Location_View (Kernel, False);
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      File  : constant Virtual_File := File_Hooks_Args (Data.all).File;
+
+      Category_Iter : Gtk_Tree_Iter;
+      File_Iter     : Gtk_Tree_Iter;
+      Line_Iter     : Gtk_Tree_Iter;
+   begin
+      if View = null then
+         return;
+      end if;
+
+      Model := View.Model;
+
+      --  Loop on the files in the result view and highlight lines as
+      --  necessary.
+
+      Category_Iter := Model.Get_Iter_First;
+
+      while Category_Iter /= Null_Iter loop
+         File_Iter := Model.Children (Category_Iter);
+
+         while File_Iter /= Null_Iter loop
+            if File = Get_File (Model, File_Iter) then
+               --  The file which has just been opened was in the locations
+               --  view, highlight lines as necessary.
+               Line_Iter := Model.Children (File_Iter);
+
+               while Line_Iter /= Null_Iter loop
+                  Highlight_Line
+                    (Kernel,
+                     File,
+                     Integer
+                       (Model.Get_Int (Line_Iter, Line_Column)),
+                     Basic_Types.Visible_Column_Type
+                       (Model.Get_Int (Line_Iter, Column_Column)),
+                     Integer
+                       (Model.Get_Int (Line_Iter, Length_Column)),
+                     Get_Highlighting_Style (Model, Line_Iter));
+
+                  Model.Next (Line_Iter);
+               end loop;
+            end if;
+
+            Model.Next (File_Iter);
+         end loop;
+
+         Model.Next (Category_Iter);
+      end loop;
+
+   exception
+      when E : others => Trace (Exception_Handle, E);
+   end Execute;
+
+   --------------------
+   -- Highlight_Line --
+   --------------------
+
+   procedure Highlight_Line
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename           : GNATCOLL.VFS.Virtual_File;
+      Line               : Natural;
+      Column             : Basic_Types.Visible_Column_Type;
+      Length             : Natural;
+      Highlight_Category : GPS.Kernel.Styles.Style_Access;
+      Highlight          : Boolean := True)
+   is
+   begin
+      if Highlight_Category = null then
+         return;
+      end if;
+
+      if Highlight then
+         if Length /= 0 then
+            Get_Buffer_Factory (Kernel)
+              .Get (Filename, Open_View => False)
+              .Apply_Style
+                (Style => Highlight_Category,
+                 Line  => Line,
+                 From_Column => Integer (Column),
+                 To_Column   => Integer (Column) + Length);
+
+         else
+            Get_Buffer_Factory (Kernel)
+              .Get (Filename, Open_View => False)
+              .Apply_Style (Style => Highlight_Category, Line  => Line);
+         end if;
+
+      else
+         Get_Buffer_Factory (Kernel)
+           .Get (Filename, Open_View => False)
+           .Remove_Style (Style       => Highlight_Category,
+                          Line        => Line,
+                          From_Column => Integer (Column),
+                          To_Column   => Integer (Column) + Length);
+      end if;
+   end Highlight_Line;
 
    ---------------------
    -- Insert_Location --
@@ -379,12 +502,21 @@ package body GPS.Kernel.Locations is
    procedure Register
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      File_Hook : File_Edited_Hook;
+
    begin
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
          GPS.Kernel.Standard_Hooks.Location_Action_Hook,
          GPS.Kernel.Hooks.Wrapper (Location_Hook'Access),
          Name => "location_view.location");
+
+      File_Hook := new File_Edited_Hook_Record;
+      Add_Hook
+        (Kernel,
+         GPS.Kernel.File_Edited_Hook,
+         File_Hook,
+         Name => "location_view.file_edited");
    end Register;
 
    ------------------------------

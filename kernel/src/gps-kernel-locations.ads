@@ -112,4 +112,17 @@ package GPS.Kernel.Locations is
    procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register hooks.
 
+   procedure Highlight_Line
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename           : GNATCOLL.VFS.Virtual_File;
+      Line               : Natural;
+      Column             : Basic_Types.Visible_Column_Type;
+      Length             : Natural;
+      Highlight_Category : GPS.Kernel.Styles.Style_Access;
+      Highlight          : Boolean := True);
+   --  Highlight the line with the corresponding category.
+   --  If Highlight is set to False, remove the highlighting.
+   --  If Line = 0, highlight / unhighlight all lines in file.
+   --  If Length = 0, highlight the whole line, otherwise use highlight_range.
+
 end GPS.Kernel.Locations;

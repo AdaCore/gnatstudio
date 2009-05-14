@@ -70,6 +70,7 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Location_Model;       use GPS.Location_Model;
 with String_Utils;             use String_Utils;
 with UTF8_Utils;               use UTF8_Utils;
 with XML_Utils;                use XML_Utils;
@@ -131,14 +132,10 @@ package body GPS.Location_View is
    Absolute_Name_Column      : constant := 2;
    Mark_Column               : constant := 3;
    Node_Type_Column          : constant := 4;
-   Line_Column               : constant := 5;
-   Column_Column             : constant := 6;
-   Length_Column             : constant := 7;
    Color_Column              : constant := 8;
    Button_Column             : constant := 9;
    Action_Column             : constant := 10;
    Highlight_Column          : constant := 11;
-   Highlight_Category_Column : constant := 12;
    Number_Of_Items_Column    : constant := 13;
    Category_Line_Column      : constant := 14;
 
@@ -223,25 +220,10 @@ package body GPS.Location_View is
       Message : String) return Locations_List.List;
    --  Return a list of file locations contained in Message
 
-   function To_Style is new Ada.Unchecked_Conversion
-     (System.Address, Style_Access);
-   function To_Address is new Ada.Unchecked_Conversion
-     (Style_Access, System.Address);
-
    function Get_Message
      (Model : not null access Gtk_Tree_Model_Record'Class;
       Iter  : Gtk_Tree_Iter) return String;
    --  Return the message stored at Iter
-
-   function Get_Highlighting_Style
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return Style_Access;
-   --  Return the highlighting style stored at Iter
-
-   function Get_File
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
-   --  Return the file stored at Iter
 
    procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
@@ -345,19 +327,6 @@ package body GPS.Location_View is
    --  Create a mark for Filename, at position given by Line, Column, with
    --  length Length.
 
-   procedure Highlight_Line
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename           : GNATCOLL.VFS.Virtual_File;
-      Line               : Natural;
-      Column             : Visible_Column_Type;
-      Length             : Natural;
-      Highlight_Category : Style_Access;
-      Highlight          : Boolean := True);
-   --  Highlight the line with the corresponding category.
-   --  If Highlight is set to False, remove the highlighting.
-   --  If Line = 0, highlight / unhighlight all lines in file.
-   --  If Length = 0, highlight the whole line, otherwise use highlight_range.
-
    procedure On_Row_Expanded
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
@@ -435,75 +404,8 @@ package body GPS.Location_View is
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
 
-   -----------
-   -- Hooks --
-   -----------
-
-   type File_Edited_Hook_Record is new Function_With_Args with record
-      View : Location_View;
-   end record;
-   type File_Edited_Hook is access File_Edited_Hook_Record'Class;
-   overriding procedure Execute
-     (Hook   : File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "file_edited" hook
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Hook   : File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      View : Location_View renames Hook.View;
-      File : constant Virtual_File := File_Hooks_Args (Data.all).File;
-
-      Category_Iter : Gtk_Tree_Iter;
-      File_Iter     : Gtk_Tree_Iter;
-      Line_Iter     : Gtk_Tree_Iter;
-   begin
-      --  Loop on the files in the result view and highlight lines as
-      --  necessary.
-
-      Category_Iter := Get_Iter_First (View.Tree.Model);
-
-      while Category_Iter /= Null_Iter loop
-         File_Iter := Children (View.Tree.Model, Category_Iter);
-
-         while File_Iter /= Null_Iter loop
-            if File = Get_File (View.Tree.Model, File_Iter) then
-               --  The file which has just been opened was in the locations
-               --  view, highlight lines as necessary.
-               Line_Iter := Children (View.Tree.Model, File_Iter);
-
-               while Line_Iter /= Null_Iter loop
-                  Highlight_Line
-                    (Kernel,
-                     File,
-                     Integer
-                       (Get_Int (View.Tree.Model, Line_Iter, Line_Column)),
-                     Visible_Column_Type
-                       (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
-                     Integer
-                       (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
-                     Get_Highlighting_Style (View.Tree.Model, Line_Iter));
-
-                  Next (View.Tree.Model, Line_Iter);
-               end loop;
-            end if;
-
-            Next (View.Tree.Model, File_Iter);
-         end loop;
-
-         Next (View.Tree.Model, Category_Iter);
-      end loop;
-
-   exception
-      when E : others => Trace (Exception_Handle, E);
-   end Execute;
+   function To_Address is new Ada.Unchecked_Conversion
+     (Style_Access, System.Address);
 
    -----------------
    -- Idle_Redraw --
@@ -664,50 +566,6 @@ package body GPS.Location_View is
          Line   => Line,
          Column => Integer (Column));
    end Create_Mark;
-
-   --------------------
-   -- Highlight_Line --
-   --------------------
-
-   procedure Highlight_Line
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename           : GNATCOLL.VFS.Virtual_File;
-      Line               : Natural;
-      Column             : Visible_Column_Type;
-      Length             : Natural;
-      Highlight_Category : Style_Access;
-      Highlight          : Boolean := True)
-   is
-   begin
-      if Highlight_Category = null then
-         return;
-      end if;
-
-      if Highlight then
-         if Length /= 0 then
-            Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open_View => False)
-              .Apply_Style
-                (Style => Highlight_Category,
-                 Line  => Line,
-                 From_Column => Integer (Column),
-                 To_Column   => Integer (Column) + Length);
-
-         else
-            Get_Buffer_Factory (Kernel)
-              .Get (Filename, Open_View => False)
-              .Apply_Style (Style => Highlight_Category, Line  => Line);
-         end if;
-
-      else
-         Get_Buffer_Factory (Kernel)
-           .Get (Filename, Open_View => False)
-           .Remove_Style (Style       => Highlight_Category,
-                          Line        => Line,
-                          From_Column => Integer (Column),
-                          To_Column   => Integer (Column) + Length);
-      end if;
-   end Highlight_Line;
 
    -------------------
    -- Goto_Location --
@@ -1877,7 +1735,6 @@ package body GPS.Location_View is
    is
       Scrolled  : Gtk_Scrolled_Window;
       Success   : Boolean;
-      File_Hook : File_Edited_Hook;
 
    begin
       Initialize_Vbox (View);
@@ -1963,15 +1820,6 @@ package body GPS.Location_View is
          Object          => View,
          ID              => Module_ID (Module),
          Context_Func    => Context_Func'Access);
-
-      File_Hook := new File_Edited_Hook_Record;
-      File_Hook.View := Location_View (View);
-      Add_Hook
-        (View.Kernel,
-         GPS.Kernel.File_Edited_Hook,
-         File_Hook,
-         Name => "location_view.file_edited",
-         Watch => GObject (View));
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
@@ -3144,41 +2992,6 @@ package body GPS.Location_View is
       return "";
    end Get_Message;
 
-   --------------
-   -- Get_File --
-   --------------
-
-   function Get_File
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File
-   is
-      Result : Virtual_File;
-      Value  : GValue;
-   begin
-      Get_Value (Model, Iter, Absolute_Name_Column, Value);
-      Result := Get_File (Value);
-      Unset (Value);
-      return Result;
-   end Get_File;
-
-   ----------------------------
-   -- Get_Highlighting_Style --
-   ----------------------------
-
-   function Get_Highlighting_Style
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return Style_Access
-   is
-      Result : Style_Access;
-      Value  : GValue;
-   begin
-      Get_Value (Model, Iter, Highlight_Category_Column, Value);
-      Result := To_Style (Get_Address (Value));
-      Unset (Value);
-
-      return Result;
-   end Get_Highlighting_Style;
-
    ----------
    -- Free --
    ----------
@@ -3473,5 +3286,16 @@ package body GPS.Location_View is
          return Found;
       end if;
    end Is_Visible;
+
+   -----------
+   -- Model --
+   -----------
+
+   function Model
+     (Self : not null access Location_View_Record'Class)
+      return not null Gtk.Tree_Model.Gtk_Tree_Model is
+   begin
+      return Gtk.Tree_Model.Gtk_Tree_Model (Self.Tree.Model);
+   end Model;
 
 end GPS.Location_View;

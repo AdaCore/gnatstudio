@@ -148,6 +148,11 @@ package GPS.Location_View is
    --  are deleted.
    --  Identifier is the escaped string.
 
+   function Model
+     (Self : not null access Location_View_Record'Class)
+      return not null Gtk.Tree_Model.Gtk_Tree_Model;
+   --  Returns internal model.
+
 private
    type Location_Record;
    type Location_Record_Access is access Location_Record;
