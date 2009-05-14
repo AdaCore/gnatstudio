@@ -808,7 +808,7 @@ package body Completion_Window is
                     Word_Character_Set (Window.Lang))
       then
          Delete (Window);
-      else
+      elsif not Window.In_Destruction then
          Adjust_Selected (Window);
       end if;
 
