@@ -1287,9 +1287,6 @@ package body Src_Editor_Buffer.Line_Information is
          for J in reverse Start + Number .. Buffer_Lines'Last loop
             Buffer_Lines (J) := Buffer_Lines (J - Number);
 
-            --  Remove highlighting category for the new lines
-            Buffer_Lines (J).Highlight_Category := 0;
-
             if Buffer.Modifying_Editable_Lines
               and then Buffer_Lines (J - Number).Editable_Line /= 0
             then
@@ -1310,6 +1307,10 @@ package body Src_Editor_Buffer.Line_Information is
                end if;
             end loop;
          end if;
+
+         --  Remove highlighting for the topmost of moved lines
+
+         Buffer_Lines (Start + Number).Highlight_Category := 0;
 
          --  Reset the newly inserted lines
 
