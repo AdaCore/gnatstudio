@@ -6345,7 +6345,9 @@ package body Src_Editor_Buffer is
                   Visible_Column_Type (Buffer.Tab_Width);
       J       : Natural;
    begin
-      if Line not in Buffer.Editable_Lines'Range then
+      if Buffer.Editable_Lines = null
+        or else Line not in Buffer.Editable_Lines'Range
+      then
          return Current;
       end if;
 

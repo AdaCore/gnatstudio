@@ -18,6 +18,7 @@
 -----------------------------------------------------------------------
 
 with XML_Utils;
+with Gtk.Handlers;
 with Gtk.Text_Mark;
 
 with GPS.Kernel;
@@ -97,6 +98,7 @@ private
          Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
          Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
          Kernel : Kernel_Handle;
+         Cid    : Gtk.Handlers.Handler_Id;
       end record;
 
    overriding procedure Destroy (Marker : in out File_Marker_Record);

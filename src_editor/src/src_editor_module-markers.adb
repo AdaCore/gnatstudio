@@ -23,6 +23,7 @@ with System.Address_Image;
 
 with Glib.Object;               use Glib.Object;
 
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
@@ -42,12 +43,20 @@ package body Src_Editor_Module.Markers is
    function Convert is new Ada.Unchecked_Conversion
      (File_Marker, System.Address);
 
+   package Markers_Callback is new Gtk.Handlers.User_Callback
+     (GObject_Record, File_Marker);
+
    procedure On_Destroy_Mark
      (Marker : System.Address; Text_Mark : System.Address);
    pragma Convention (C, On_Destroy_Mark);
    --  Called when a gtk_text_mark is destroyed. At this point, the mark is
    --  no longer attached to a buffer. This is called only when the mark
    --  is explicitly removed from the buffer.
+
+   procedure On_Changed
+     (Buffer  : access GObject_Record'Class;
+      Marker : File_Marker);
+   --  Called when a mark was set or moved in the buffer
 
    procedure Update_Marker_Location
      (Marker : access File_Marker_Record'Class);
@@ -184,11 +193,17 @@ package body Src_Editor_Module.Markers is
       Iter : Gtk_Text_Iter;
    begin
       if Marker.Mark /= null then
-         Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
-         Get_Iter_Position
-           (Source_Buffer (Marker.Buffer), Iter,
-            Marker.Line,
-            Marker.Column);
+         if not Get_Deleted (Marker.Mark) then
+            Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
+            Get_Iter_Position
+              (Source_Buffer (Marker.Buffer), Iter,
+               Marker.Line,
+               Marker.Column);
+            Trace (Me, "Updated position of marker to "
+                   & Marker.Line'Img & Marker.Column'Img);
+         else
+            Trace (Me, "Updated position of marker, mark was deleted");
+         end if;
       end if;
    end Update_Marker_Location;
 
@@ -208,6 +223,19 @@ package body Src_Editor_Module.Markers is
       M.Mark   := null;
       M.Buffer := null;
    end On_Destroy_Mark;
+
+   ----------------
+   -- On_Changed --
+   ----------------
+
+   procedure On_Changed
+     (Buffer : access GObject_Record'Class;
+      Marker : File_Marker)
+   is
+      pragma Unreferenced (Buffer);
+   begin
+      Update_Marker_Location (Marker);
+   end On_Changed;
 
    -------------
    -- Destroy --
@@ -236,6 +264,7 @@ package body Src_Editor_Module.Markers is
          --  sure that On_Destroy_Mark will never be call with the dangling
          --  File_Marker pointer.
 
+         Disconnect (Marker.Buffer, Marker.Cid);
          Weak_Unref (Marker.Mark,
                    On_Destroy_Mark'Access, Convert (M1));
 
@@ -244,6 +273,7 @@ package body Src_Editor_Module.Markers is
          end if;
 
          Marker.Mark := null;
+         Marker.Buffer := null;
       end if;
 
       while Node /= Marker_List.Null_Node loop
@@ -293,6 +323,10 @@ package body Src_Editor_Module.Markers is
 
          Weak_Ref (Marker.Mark,
                    On_Destroy_Mark'Access, Convert (File_Marker (Marker)));
+         Marker.Cid := Markers_Callback.Connect
+           (Marker.Buffer, Signal_Changed,
+            Markers_Callback.To_Marshaller (On_Changed'Access),
+            File_Marker (Marker));
       end if;
    end Create_Text_Mark;
 
@@ -349,6 +383,7 @@ package body Src_Editor_Module.Markers is
          Length  => Length,
          Buffer  => null,
          Mark    => null,
+         Cid     => <>,
          Kernel  => Kernel_Handle (Kernel));
       Create_Text_Mark (Kernel, Marker);
       Register_Persistent_Marker (Marker);
@@ -375,8 +410,12 @@ package body Src_Editor_Module.Markers is
          Length  => 0,
          Buffer  => Get_Buffer (Mark),
          Mark    => Mark,
+         Cid     => <>,
          Kernel  => Kernel_Handle (Kernel));
 
+      Marker.Cid := Markers_Callback.Connect
+        (Marker.Buffer, Signal_Changed,
+         Markers_Callback.To_Marshaller (On_Changed'Access), Marker);
       Weak_Ref (Marker.Mark, On_Destroy_Mark'Access, Convert (Marker));
 
       Update_Marker_Location (Marker);

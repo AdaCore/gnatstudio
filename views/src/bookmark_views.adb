@@ -93,6 +93,7 @@ package body Bookmark_Views is
    end record;
    type Bookmark_Views_Module_Access
      is access all Bookmark_Views_Module_Record'Class;
+   overriding procedure Destroy (Module : in out Bookmark_Views_Module_Record);
 
    Bookmark_Views_Module : Bookmark_Views_Module_Access;
 
@@ -232,6 +233,23 @@ package body Bookmark_Views is
      (Tooltip : access Bookmark_View_Tooltips;
       Pixmap  : out Gdk.Pixmap.Gdk_Pixmap;
       Area    : out Gdk.Rectangle.Gdk_Rectangle);
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Module : in out Bookmark_Views_Module_Record) is
+   begin
+      --  Even though we are saving after every explicit modification, we
+      --  should still save on exit to memorize the new location where a
+      --  bookmark ends up after the buffer has been edited.
+      --  ??? Would be better to do it when a buffer is closed (or even when
+      --  it is modified). If GPS crashes, we would lose bookmarks for open
+      --  files, but not for files that have been closed in between...
+
+      Save_Bookmarks (Get_Kernel (Module));
+   end Destroy;
 
    ----------
    -- Draw --
@@ -655,10 +673,8 @@ package body Bookmark_Views is
 
    procedure On_Model_Row_Changed (View : access Gtk_Widget_Record'Class) is
       V : constant Bookmark_View_Access := Bookmark_View_Access (View);
-      pragma Unreferenced (V);
    begin
-      null;
---      Save_Bookmarks (V.Kernel);
+      Save_Bookmarks (V.Kernel);
    end On_Model_Row_Changed;
 
    ----------------
