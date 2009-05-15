@@ -1485,6 +1485,10 @@ package body Src_Editor_Buffer is
       --  corresponding signal.
 
       if Mark = Buffer.Insert_Mark then
+         if not Buffer.Inserting then
+            End_Group (Buffer.Queue);
+            Start_Group (Buffer.Queue);
+         end if;
          Emit_New_Cursor_Position (Buffer);
          Cursor_Move_Hook (Buffer);
       end if;
