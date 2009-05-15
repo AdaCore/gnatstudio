@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.4.0
 
+- I514-028: Bookmark location not preserved when edito closed
+  Problem:    If you create a bookmark, it should always point to the same
+              location in a file. However, if you modify the editor and then
+              close it, the bookmark will point to a different location in
+              the file next time you open the file
+  Workaround: None
+
 - I424-008: Find all doesn't work on unsaved editors
   Problem:    The "Find All" button of the search view doesn't extract matches
               coming from new files not yet saved.
