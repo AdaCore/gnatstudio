@@ -199,8 +199,11 @@ package body Src_Editor_Module.Markers is
               (Source_Buffer (Marker.Buffer), Iter,
                Marker.Line,
                Marker.Column);
-            Trace (Me, "Updated position of marker to "
-                   & Marker.Line'Img & Marker.Column'Img);
+
+            if Active (Me) then
+               Trace (Me, "Updated position of marker to "
+                      & Marker.Line'Img & Marker.Column'Img);
+            end if;
          else
             Trace (Me, "Updated position of marker, mark was deleted");
          end if;
