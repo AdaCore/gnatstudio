@@ -541,6 +541,13 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; Add : Boolean);
    --  Register or Unregister a view for the buffer
 
+   type Source_Buffer_Array is array (Natural range <>) of Source_Buffer;
+   function Buffer_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Source_Buffer_Array;
+   --  Return the list of all buffers currently edited. Each buffer appears
+   --  only once even if multiple views exist.
+
    -------------------
    -- Buffer Status --
    -------------------

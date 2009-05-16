@@ -197,6 +197,14 @@ package body GPS.Editors is
       return 0;
    end Lines_Count;
 
+   overriding function Characters_Count
+     (This : Dummy_Editor_Buffer) return Natural
+   is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Characters_Count;
+
    overriding function Get_Chars
      (This : Dummy_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -363,5 +371,362 @@ package body GPS.Editors is
    begin
       return System.Null_Address;
    end Get_MDI_Child;
+
+   ----------
+   -- File --
+   ----------
+
+   overriding function File (This : Dummy_Editor_Buffer) return Virtual_File is
+      pragma Unreferenced (This);
+   begin
+      return No_File;
+   end File;
+
+   ------------------
+   -- Is_Read_Only --
+   ------------------
+
+   overriding function Is_Read_Only
+     (This : Dummy_Editor_Buffer) return Boolean
+   is
+      pragma Unreferenced (This);
+   begin
+      return False;  --  Most operations would raise an error if we return True
+   end Is_Read_Only;
+
+   ---------------------
+   -- Selection_Start --
+   ---------------------
+
+   overriding function Selection_Start
+     (This : Dummy_Editor_Buffer) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Selection_Start;
+
+   -------------------
+   -- Selection_End --
+   -------------------
+
+   overriding function Selection_End
+     (This : Dummy_Editor_Buffer) return Editor_Location'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Location;
+   end Selection_End;
+
+   overriding function Is_Modified
+     (This : Dummy_Editor_Buffer) return Boolean
+   is
+      pragma Unreferenced (This);
+   begin
+      return False;
+   end Is_Modified;
+
+   -------------
+   -- Compare --
+   -------------
+
+   function Compare
+     (This : Editor_Location; To : Editor_Location) return Compare_Result
+   is
+      L1 : constant Integer := Line (Editor_Location'Class (This));
+      L2 : constant Integer := Line (Editor_Location'Class (To));
+      C1 : Integer;
+      C2 : Integer;
+   begin
+      if L1 < L2 then
+         return -1;
+      elsif L1 = L2 then
+         C1 := Column (Editor_Location'Class (This));
+         C2 := Column (Editor_Location'Class (To));
+
+         if C1 < C2 then
+            return -1;
+         elsif C1 = C2 then
+            return 0;
+         else
+            return 1;
+         end if;
+      else
+         return 1;
+      end if;
+   end Compare;
+
+   ------------------
+   -- Is_Read_Only --
+   ------------------
+
+   overriding function Is_Read_Only
+     (This : Dummy_Editor_View) return Boolean
+   is
+      pragma Unreferenced (This);
+   begin
+      return False;
+   end Is_Read_Only;
+
+   -----------
+   -- Title --
+   -----------
+
+   overriding function Title
+     (This : Dummy_Editor_View; Short : Boolean) return String
+   is
+      pragma Unreferenced (This, Short);
+   begin
+      return "";
+   end Title;
+
+   ------------
+   -- Buffer --
+   ------------
+
+   overriding function Buffer
+     (This : Dummy_Editor_View) return Editor_Buffer'Class
+   is
+      pragma Unreferenced (This);
+   begin
+      return Nil_Editor_Buffer;
+   end Buffer;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   overriding function Name (This : Dummy_Editor_Mark) return String is
+      pragma Unreferenced (This);
+   begin
+      return "";
+   end Name;
+
+   ------------------
+   -- Forward_Word --
+   ------------------
+
+   overriding function Forward_Word
+     (This  : Dummy_Editor_Location;
+      Count : Integer) return Editor_Location'Class
+   is
+      pragma Unreferenced (This, Count);
+   begin
+      return Nil_Editor_Location;
+   end Forward_Word;
+
+   ------------------
+   -- Forward_Line --
+   ------------------
+
+   overriding function Forward_Line
+     (This  : Dummy_Editor_Location;
+      Count : Integer) return Editor_Location'Class
+   is
+      pragma Unreferenced (This, Count);
+   begin
+      return Nil_Editor_Location;
+   end Forward_Line;
+
+   -----------------
+   -- Starts_Word --
+   -----------------
+
+   overriding function Starts_Word
+     (This : Dummy_Editor_Location) return Boolean
+   is
+      pragma Unreferenced (This);
+   begin
+      return False;
+   end Starts_Word;
+
+   ---------------
+   -- Ends_Word --
+   ---------------
+
+   overriding function Ends_Word
+     (This : Dummy_Editor_Location) return Boolean
+   is
+      pragma Unreferenced (This);
+   begin
+      return False;
+   end Ends_Word;
+
+   --------------
+   -- Get_Char --
+   --------------
+
+   overriding function Get_Char
+     (This : Dummy_Editor_Location) return Integer
+   is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Get_Char;
+
+   ----------------
+   -- Block_Name --
+   ----------------
+
+   overriding function Block_Name
+     (This : Dummy_Editor_Location; Subprogram : Boolean) return String
+   is
+      pragma Unreferenced (This, Subprogram);
+   begin
+      return "";
+   end Block_Name;
+
+   -----------------
+   -- Block_Level --
+   -----------------
+
+   overriding function Block_Level
+     (This : Dummy_Editor_Location) return Natural
+   is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Block_Level;
+
+   ------------
+   -- Offset --
+   ------------
+
+   overriding function Offset (This : Dummy_Editor_Location) return Natural is
+      pragma Unreferenced (This);
+   begin
+      return 0;
+   end Offset;
+
+   ------------
+   -- Search --
+   ------------
+
+   overriding procedure Search
+     (This              : Dummy_Editor_Location;
+      Pattern           : String;
+      Backward          : Boolean := False;
+      Case_Sensitive    : Boolean := False;
+      Regexp            : Boolean := False;
+      Whole_Word        : Boolean := False;
+      Scope             : String := "Whole";
+      Dialog_On_Failure : Boolean := True;
+      Success           : out Boolean;
+      Starts            : out Dummy_Editor_Location;
+      Ends              : out Dummy_Editor_Location)
+   is
+      pragma Unreferenced (This, Pattern, Backward, Case_Sensitive, Regexp,
+                           Whole_Word, Scope, Dialog_On_Failure);
+   begin
+      Success := False;
+      Starts  := Dummy_Editor_Location (Nil_Editor_Location);
+      Ends    := Dummy_Editor_Location (Nil_Editor_Location);
+   end Search;
+
+   --------------------
+   -- Create_Overlay --
+   --------------------
+
+   overriding function Create_Overlay
+     (This : Dummy_Editor_Buffer;
+      Name : String := "") return Editor_Overlay'Class
+   is
+      pragma Unreferenced (This, Name);
+   begin
+      return Nil_Editor_Overlay;
+   end Create_Overlay;
+
+   ----------
+   -- Name --
+   ----------
+
+   overriding function Name (This : Dummy_Editor_Overlay) return String is
+      pragma Unreferenced (This);
+   begin
+      return "";
+   end Name;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   overriding function Get_Property
+     (This : Dummy_Editor_Overlay; Name : String) return String
+   is
+      pragma Unreferenced (This, Name);
+   begin
+      return "";
+   end Get_Property;
+
+   overriding function Get_Property
+     (This : Dummy_Editor_Overlay; Name : String) return Boolean
+   is
+      pragma Unreferenced (This, Name);
+   begin
+      return False;
+   end Get_Property;
+
+   -----------------
+   -- Has_Overlay --
+   -----------------
+
+   overriding function Has_Overlay
+     (This    : Dummy_Editor_Location;
+      Overlay : Editor_Overlay'Class) return Boolean
+   is
+      pragma Unreferenced (This, Overlay);
+   begin
+      return False;
+   end Has_Overlay;
+
+   ---------------------
+   -- Forward_Overlay --
+   ---------------------
+
+   overriding function Forward_Overlay
+     (This    : Dummy_Editor_Location;
+      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   is
+      pragma Unreferenced (This, Overlay);
+   begin
+      return Nil_Editor_Location;
+   end Forward_Overlay;
+
+   ----------------------
+   -- Backward_Overlay --
+   ----------------------
+
+   overriding function Backward_Overlay
+     (This    : Dummy_Editor_Location;
+      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   is
+      pragma Unreferenced (This, Overlay);
+   begin
+      return Nil_Editor_Location;
+   end Backward_Overlay;
+
+   ------------------
+   -- Get_Overlays --
+   ------------------
+
+   overriding function Get_Overlays
+     (This    : Dummy_Editor_Location) return Overlay_Lists.List
+   is
+      pragma Unreferenced (This);
+   begin
+      return Overlay_Lists.Empty_List;
+   end Get_Overlays;
+
+   -----------
+   -- Views --
+   -----------
+
+   overriding function Views
+     (This : Dummy_Editor_Buffer) return View_Lists.List
+   is
+      pragma Unreferenced (This);
+   begin
+      return View_Lists.Empty_List;
+   end Views;
 
 end GPS.Editors;

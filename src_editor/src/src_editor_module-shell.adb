@@ -17,20 +17,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Ada.Unchecked_Conversion;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with System;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 
 with GNAT.Strings;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
 with Glib.Unicode;              use Glib.Unicode;
 
 with Gdk.Color;                 use Gdk.Color;
@@ -41,9 +39,6 @@ with Gtk.Object;                use Gtk.Object;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
-
-with Pango.Enums;               use Pango.Enums;
 
 with Casing_Exceptions;         use Casing_Exceptions;
 with Commands;                  use Commands;
@@ -70,6 +65,7 @@ use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Debug;
 
+with Src_Editor_Module.Editors; use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_View;           use Src_Editor_View;
@@ -219,186 +215,119 @@ package body Src_Editor_Module.Shell is
    --  Command handler for EditorOverlay class
 
    function Create_Editor_Overlay
-     (Script : access Scripting_Language_Record'Class;
-      Tag    : Gtk_Text_Tag) return Class_Instance;
+     (Script  : access Scripting_Language_Record'Class;
+      Overlay : Editor_Overlay'Class) return Class_Instance;
    --  Manipulation of instances of the EditorOverlay class.
    --  Result must be freed unless you assign it to a Callback_Data
 
    function Create_Editor_Buffer
      (Script : access Scripting_Language_Record'Class;
-      Buffer : Source_Buffer) return Class_Instance;
+      Buffer : Editor_Buffer'Class) return Class_Instance;
    --  Manipulation of instances of the EditorBuffer class.
    --  Result of Create_Editor_Buffer must be freed unless you assign it to
    --  a Callback_Data
 
    function Create_Editor_View
      (Script : access Scripting_Language_Record'Class;
-      View   : Source_Editor_Box) return Class_Instance;
+      View   : Editor_View'Class) return Class_Instance;
    --  Return an instance of EditorView encapsulating View. Result must be
    --  freed unless you assign it to a Callback_Data.
 
    function Create_Editor_Mark
      (Script : access Scripting_Language_Record'Class;
-      Mark   : Gtk_Text_Mark) return Class_Instance;
+      Mark   : Editor_Mark'Class) return Class_Instance;
    --  Return an instance of EditorMark encapsulating Mark
 
-   type Location_Info is record
-      Buffer : Source_Buffer;
-      Line   : Editable_Line_Type;
-      Offset : Visible_Column_Type;
-   end record;
-   type Location_Info_Access is access Location_Info;
-
-   type Location_Property is new Instance_Property_Record with record
-      Location : Location_Info_Access;
-   end record;
-   type Location_Property_Access is access all Location_Property;
-   overriding procedure Destroy (Property : in out Location_Property);
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Location_Info_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Location_Info_Access, System.Address);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Location_Info, Location_Info_Access);
-
-   procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address);
-   pragma Convention (C, On_Buffer_Destroyed_For_Location);
-   --  Called when the buffer stored in an instance of EditorLocation is
-   --  destroyed
-
-   procedure Set_Location_Data
-     (Inst   : Class_Instance;
-      Buffer : Source_Buffer;
-      Line   : Editable_Line_Type;
-      Offset : Visible_Column_Type);
-   --  Set the data stored in the instance of EditorLocation
-
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
-      Location : Gtk_Text_Iter) return Class_Instance;
-   function Create_Editor_Location
-     (Script   : access Scripting_Language_Record'Class;
-      Buffer   : Source_Buffer;
-      Line     : Editable_Line_Type;
-      Column   : Visible_Column_Type) return Class_Instance;
+      Location : Editor_Location'Class) return Class_Instance;
    --  Return an instance of EditorLocation
 
-   procedure Get_Location
-     (Iter    : out Gtk_Text_Iter;
-      Data    : Callback_Data'Class;
+   function Get_Location
+     (Data    : Callback_Data'Class;
       Arg     : Positive;
-      Default : Gtk_Text_Iter;
-      Success : out Boolean);
+      Default : Editor_Location'Class := Nil_Editor_Location)
+      return Editor_Location'Class;
    --  Return the iter stored in the Arg-th parameter.
-   --  If no location could be obtain from the arguments, Iter is Set to
-   --  Default and Success to False.
+   --  If no location could be obtain from the arguments, returns Default
 
-   procedure Get_Locations
-     (Iter1                : out Gtk_Text_Iter;
-      Iter2                : out Gtk_Text_Iter;
-      Buffer               : in out Source_Buffer;
-      Data                 : in out Callback_Data'Class;
-      Arg1                 : Positive;
-      Arg2                 : Positive;
-      Compensate_Last_Iter : Boolean := True);
-   --  Get the two location arguments from Data, defaulting to resp. the
-   --  beginning and end of the buffer.
-   --  Buffer is reset to null in case of errors, or if it was null when
-   --  Get_Locations was called.
-   --  If Compensate_Last_Iter is True, then the highest iterator is moved one
-   --  additional character. This is used for gtk+ commands that take two
-   --  iterators, since they stop to operate just before the last iterator.
-
-   procedure Get_Mark
-     (Mark : out Gtk_Text_Mark;
-      Data : in out Callback_Data'Class;
-      Arg  : Positive);
+   function Get_Mark
+     (Data : Callback_Data'Class;
+      Arg  : Positive) return Editor_Mark'Class;
    --  Return the mark stored in the Arg-th parameter.
    --  Set Mark to null if it wasn't a valid instance
 
-   procedure Get_Buffer
-     (Buffer : in out Source_Buffer;
-      Data   : in out Callback_Data'Class;
-      Arg    : Positive);
+   function Get_Buffer
+     (Data   : Callback_Data'Class;
+      Arg    : Positive) return Editor_Buffer'Class;
    --  Set the Buffer variable appropriately, or null if the buffer could
    --  not be found or is no longer valid.
-   --  If the buffer is no longer valid, null is returned and an error msg is
-   --  set in Data.
+   --  If the buffer is no longer valid, raises Editor_Exception
 
-   procedure Get_Overlay
-     (Tag        : in out Gtk_Text_Tag;
-      Data       : in out Callback_Data'Class;
+   function Get_Overlay
+     (Data       : Callback_Data'Class;
       Arg        : Positive;
-      Allow_Null : Boolean := False);
+      Allow_Null : Boolean := False) return Editor_Overlay'Class;
    --  Get the EditorOverlay stored in Data
 
-   procedure Get_Box
-     (Box  : in out Source_Editor_Box;
-      Data : in out Callback_Data'Class;
-      Arg  : Positive);
+   function Get_View
+     (Data   : Callback_Data'Class;
+      Arg    : Positive) return Editor_View'Class;
    --  Return the view stored in Data
 
-   -------------
-   -- Get_Box --
-   -------------
+   --------------
+   -- Get_View --
+   --------------
 
-   procedure Get_Box
-     (Box  : in out Source_Editor_Box;
-      Data : in out Callback_Data'Class;
-      Arg  : Positive)
+   function Get_View
+     (Data   : Callback_Data'Class;
+      Arg    : Positive) return Editor_View'Class
    is
       EditorView : constant Class_Type :=
                      New_Class (Get_Kernel (Data), "EditorView");
       Inst       : constant Class_Instance := Nth_Arg (Data, Arg, EditorView);
    begin
-      Box := Source_Editor_Box (GObject'(Get_Data (Inst)));
-      if Box = null then
-         Set_Error_Msg (Data, "No associated view");
-      end if;
-   end Get_Box;
+      return View_From_Instance
+        (Src_Editor_Buffer_Factory
+           (Get_Buffer_Factory (Get_Kernel (Data)).all),
+         Instance   => Inst);
+   end Get_View;
 
    ----------------
    -- Get_Buffer --
    ----------------
 
-   procedure Get_Buffer
-     (Buffer : in out Source_Buffer;
-      Data   : in out Callback_Data'Class;
-      Arg    : Positive)
+   function Get_Buffer
+     (Data   : Callback_Data'Class;
+      Arg    : Positive) return Editor_Buffer'Class
    is
       EditorBuffer : constant Class_Type :=
                        New_Class (Get_Kernel (Data), "EditorBuffer");
-      Inst      : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
+      Inst    : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
    begin
-      Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
-      if Buffer = null then
-         Set_Error_Msg (Data, "No associated buffer");
-      end if;
+      return Buffer_From_Instance
+        (Src_Editor_Buffer_Factory
+           (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Buffer;
 
    -----------------
    -- Get_Overlay --
    -----------------
 
-   procedure Get_Overlay
-     (Tag        : in out Gtk_Text_Tag;
-      Data       : in out Callback_Data'Class;
+   function Get_Overlay
+     (Data       : Callback_Data'Class;
       Arg        : Positive;
-      Allow_Null : Boolean := False)
+      Allow_Null : Boolean := False) return Editor_Overlay'Class
    is
       EditorOverlay : constant Class_Type :=
                         New_Class (Get_Kernel (Data), "EditorOverlay");
-      Inst          : Class_Instance;
+      Inst          : constant Class_Instance :=
+        Nth_Arg (Data, Arg, EditorOverlay, Allow_Null => Allow_Null);
    begin
-      Inst := Nth_Arg (Data, Arg, EditorOverlay, Allow_Null => Allow_Null);
       if Inst = No_Class_Instance then
-         Tag := null;
+         return Nil_Editor_Overlay;
       else
-         Tag := Gtk_Text_Tag (GObject'(Get_Data (Inst)));
-         if Tag = null and then not Allow_Null then
-            Set_Error_Msg (Data, "No associated overlay");
-         end if;
+         return Overlay_From_Instance (Inst);
       end if;
    end Get_Overlay;
 
@@ -406,132 +335,43 @@ package body Src_Editor_Module.Shell is
    -- Get_Location --
    ------------------
 
-   procedure Get_Location
-     (Iter    : out Gtk_Text_Iter;
-      Data    : Callback_Data'Class;
+   function Get_Location
+     (Data    : Callback_Data'Class;
       Arg     : Positive;
-      Default : Gtk_Text_Iter;
-      Success : out Boolean)
+      Default : Editor_Location'Class := Nil_Editor_Location)
+      return Editor_Location'Class
    is
-      Class    : constant Class_Type :=
-                   New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
-      Loc_Inst : Class_Instance;
-      Info     : Location_Info_Access;
-   begin
-      Success := True;
-      Loc_Inst := Nth_Arg
+      Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
+      Inst  : constant Class_Instance := Nth_Arg
         (Data, Arg, Class, Allow_Null => True, Default => No_Class_Instance);
-
-      if Loc_Inst = No_Class_Instance then
-         Copy (Source => Default, Dest => Iter);
-         Success := False;
-
+   begin
+      if Inst = No_Class_Instance then
+         return Default;
       else
-         Info := Location_Property_Access
-           (Instance_Property'
-              (Get_Data (Loc_Inst, Editor_Location_Class_Name))).Location;
-
-         if Info.Buffer = null
-           or else not Is_Valid_Position (Info.Buffer, Info.Line, Info.Offset)
-         then
-            Copy (Source => Default, Dest => Iter);
-            Success := False;
-
-         else
-            Get_Iter_At_Screen_Position
-              (Info.Buffer, Iter,
-               Line   => Info.Line,
-               Column => Info.Offset);
-         end if;
+         declare
+            Loc : constant Editor_Location_Access := Get_Data
+              (Inst, Class_Name => Editor_Location_Class_Name);
+         begin
+            if Loc /= null then
+               return Loc.all;
+            else
+               return Default;
+            end if;
+         end;
       end if;
    end Get_Location;
-
-   -------------------
-   -- Get_Locations --
-   -------------------
-
-   procedure Get_Locations
-     (Iter1                : out Gtk_Text_Iter;
-      Iter2                : out Gtk_Text_Iter;
-      Buffer               : in out Source_Buffer;
-      Data                 : in out Callback_Data'Class;
-      Arg1                 : Positive;
-      Arg2                 : Positive;
-      Compensate_Last_Iter : Boolean := True)
-   is
-      Success : Boolean;
-
-      procedure Forward_Iter (Iter : in out Gtk_Text_Iter);
-      --  Forward Iter one char
-
-      ------------------
-      -- Forward_Iter --
-      ------------------
-
-      procedure Forward_Iter (Iter : in out Gtk_Text_Iter) is
-         Line, End_Line : Editable_Line_Type;
-         Col, End_Col   : Character_Offset_Type;
-      begin
-         Get_Iter_Position (Buffer, Iter, Line, Col);
-         Forward_Position (Buffer, Line, Col, 1, End_Line, End_Col);
-         Get_Iter_At_Screen_Position (Buffer, Iter, End_Line, End_Col);
-      end Forward_Iter;
-
-   begin
-      if Buffer /= null then
-         Get_Start_Iter (Buffer, Iter1);
-         Get_Location (Iter1, Data, Arg1, Iter1, Success);
-
-         Get_End_Iter (Buffer, Iter2);
-         Get_Location (Iter2, Data, Arg2, Iter2, Success);
-
-         if Get_Buffer (Iter1) /= Get_Buffer (Iter2)
-           or else Get_Buffer (Iter1) /= Gtk_Text_Buffer (Buffer)
-         then
-            Set_Error_Msg (Data, -"Locations are not in the correct buffer");
-            Buffer := null;
-
-         elsif Compensate_Last_Iter then
-            --  All operations that take two iterators stop just before the
-            --  second one. This is harder to use in scripts, though, so we
-            --  compensate for that here.
-            if Compare (Iter1, Iter2) <= 0 then
-               --  ??? temporarily commented out, since it breaks ctrl-k in
-               --  Emacs mode (F707-004)
-               --  if not (Is_End (Iter2) or else Ends_Line (Iter2)) then
-               if not Is_End (Iter2) then
-                  Forward_Iter (Iter2);
-               end if;
-
-            else
-               --  ??? temporarily commented out, since it breaks ctrl-k in
-               --  Emacs mode (F707-004)
-               --  if not (Is_End (Iter1) or else Ends_Line (Iter1)) then
-               if not Is_End (Iter1) then
-                  Forward_Iter (Iter1);
-               end if;
-            end if;
-         end if;
-      end if;
-   end Get_Locations;
 
    ---------------------------
    -- Create_Editor_Overlay --
    ---------------------------
 
    function Create_Editor_Overlay
-     (Script : access Scripting_Language_Record'Class;
-      Tag    : Gtk_Text_Tag) return Class_Instance
-   is
-      Inst : Class_Instance;
+     (Script  : access Scripting_Language_Record'Class;
+      Overlay : Editor_Overlay'Class) return Class_Instance is
    begin
-      Inst := Get_Instance (Script, Tag);
-      if Inst = No_Class_Instance then
-         Inst := New_Instance
-           (Script, New_Class (Get_Kernel (Script), "EditorOverlay"));
-         Set_Data (Inst, GObject (Tag));
-      end if;
-      return Inst;
+      return Instance_From_Overlay
+        (Script, New_Class (Get_Kernel (Script), "EditorOverlay"), Overlay);
    end Create_Editor_Overlay;
 
    ------------------------
@@ -540,17 +380,13 @@ package body Src_Editor_Module.Shell is
 
    function Create_Editor_Mark
      (Script : access Scripting_Language_Record'Class;
-      Mark   : Gtk_Text_Mark) return Class_Instance
+      Mark   : Editor_Mark'Class) return Class_Instance
    is
       Inst : Class_Instance;
    begin
-      Inst := Get_Instance (Script, Mark);
-      if Inst = No_Class_Instance then
-         Ref (Mark);
-         Inst := New_Instance
-           (Script, New_Class (Get_Kernel (Script), "EditorMark"));
-         Set_Data (Inst, GObject (Mark));
-      end if;
+      Inst := New_Instance
+        (Script, New_Class (Get_Kernel (Script), "EditorMark"));
+      Set_Data (Inst, "EditorMark", Mark => Mark);
       return Inst;
    end Create_Editor_Mark;
 
@@ -558,74 +394,20 @@ package body Src_Editor_Module.Shell is
    -- Get_Mark --
    --------------
 
-   procedure Get_Mark
-     (Mark : out Gtk_Text_Mark;
-      Data : in out Callback_Data'Class;
-      Arg  : Positive)
+   function Get_Mark
+     (Data : Callback_Data'Class;
+      Arg  : Positive) return Editor_Mark'Class
    is
       EditorMark : constant Class_Type :=
                      New_Class (Get_Kernel (Data), "EditorMark");
-      Inst       : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
+      Inst : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
+      M    : constant Editor_Mark_Access := Get_Data (Inst, "EditorMark");
    begin
-      Mark := Gtk_Text_Mark (GObject'(Get_Data (Inst)));
-
-      if Mark /= null and then Get_Buffer (Mark) = null then
-         --  The buffer was destroyed, so we might as well destroy the mark
-         --  reference we have kept in this instance
-         Mark := null;
+      if M = null then
+         raise Editor_Exception with -"No associated mark";
       end if;
-
-      if Mark = null then
-         Set_Error_Msg (Data, "No associated mark");
-      end if;
+      return M.all;
    end Get_Mark;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Property : in out Location_Property) is
-   begin
-      --  Make sure we will not get a signal when the buffer is destroyed later
-      --  since we are no longer interested in it
-      if Property.Location.Buffer /= null then
-         Weak_Unref
-           (Property.Location.Buffer, On_Buffer_Destroyed_For_Location'Access,
-            Data => Convert (Property.Location));
-      end if;
-      Unchecked_Free (Property.Location);
-   end Destroy;
-
-   --------------------------------------
-   -- On_Buffer_Destroyed_For_Location --
-   --------------------------------------
-
-   procedure On_Buffer_Destroyed_For_Location (Data, Obj : System.Address) is
-      pragma Unreferenced (Obj);
-      Inf : constant Location_Info_Access := Convert (Data);
-   begin
-      Inf.Buffer := null;
-   end On_Buffer_Destroyed_For_Location;
-
-   -----------------------
-   -- Set_Location_Data --
-   -----------------------
-
-   procedure Set_Location_Data
-     (Inst   : Class_Instance;
-      Buffer : Source_Buffer;
-      Line   : Editable_Line_Type;
-      Offset : Visible_Column_Type)
-   is
-      Info : constant Location_Info_Access := new Location_Info'
-        (Buffer => Buffer, Line => Line, Offset => Offset);
-   begin
-      Set_Data
-        (Inst, Editor_Location_Class_Name,
-         Location_Property'(Location => Info));
-      Weak_Ref (Buffer, On_Buffer_Destroyed_For_Location'Access,
-                Convert (Info));
-   end Set_Location_Data;
 
    ----------------------------
    -- Create_Editor_Location --
@@ -633,38 +415,14 @@ package body Src_Editor_Module.Shell is
 
    function Create_Editor_Location
      (Script   : access Scripting_Language_Record'Class;
-      Location : Gtk_Text_Iter) return Class_Instance
-   is
-      EditorLoc : constant Class_Type :=
-                    New_Class
-                      (Get_Kernel (Script), Editor_Location_Class_Name);
-      Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
-      Line      : Editable_Line_Type;
-      Column    : Visible_Column_Type;
-   begin
-      Get_Iter_Position
-        (Source_Buffer (Get_Buffer (Location)), Location, Line, Column);
-      Set_Location_Data
-        (Inst, Source_Buffer (Get_Buffer (Location)), Line, Column);
-      return Inst;
-   end Create_Editor_Location;
-
-   ----------------------------
-   -- Create_Editor_Location --
-   ----------------------------
-
-   function Create_Editor_Location
-     (Script : access Scripting_Language_Record'Class;
-      Buffer : Source_Buffer;
-      Line   : Editable_Line_Type;
-      Column : Visible_Column_Type) return Class_Instance
+      Location : Editor_Location'Class) return Class_Instance
    is
       EditorLoc : constant Class_Type :=
                     New_Class
                       (Get_Kernel (Script), Editor_Location_Class_Name);
       Inst      : constant Class_Instance := New_Instance (Script, EditorLoc);
    begin
-      Set_Location_Data (Inst, Buffer, Line, Column);
+      Set_Data (Inst, Editor_Location_Class_Name, Location);
       return Inst;
    end Create_Editor_Location;
 
@@ -674,21 +432,10 @@ package body Src_Editor_Module.Shell is
 
    function Create_Editor_Buffer
      (Script : access Scripting_Language_Record'Class;
-      Buffer : Source_Buffer) return Class_Instance
-   is
-      Inst : Class_Instance;
+      Buffer : Editor_Buffer'Class) return Class_Instance is
    begin
-      if Buffer = null then
-         return No_Class_Instance;
-      else
-         Inst := Get_Instance (Script, Buffer);
-         if Inst = No_Class_Instance then
-            Inst := New_Instance
-              (Script, New_Class (Get_Kernel (Script), "EditorBuffer"));
-            Set_Data (Inst, GObject (Buffer));
-         end if;
-         return Inst;
-      end if;
+      return Instance_From_Buffer
+        (Script, New_Class (Get_Kernel (Script), "EditorBuffer"), Buffer);
    end Create_Editor_Buffer;
 
    ------------------------
@@ -697,22 +444,10 @@ package body Src_Editor_Module.Shell is
 
    function Create_Editor_View
      (Script : access Scripting_Language_Record'Class;
-      View   : Source_Editor_Box) return Class_Instance
-   is
-      Inst : Class_Instance;
+      View   : Editor_View'Class) return Class_Instance is
    begin
-      if View = null then
-         return No_Class_Instance;
-
-      else
-         Inst := Get_Instance (Script, View);
-         if Inst = No_Class_Instance then
-            Inst := New_Instance
-              (Script, New_Class (Get_Kernel (Script), "EditorView"));
-            Set_Data (Inst, GObject (View));
-         end if;
-         return Inst;
-      end if;
+      return Instance_From_View
+        (Script, New_Class (Get_Kernel (Script), "EditorView"), View);
    end Create_Editor_View;
 
    ---------------------
@@ -1904,16 +1639,7 @@ package body Src_Editor_Module.Shell is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel      : constant Kernel_Handle := Get_Kernel (Data);
-      Buffer      : Source_Buffer;
-      Child       : MDI_Child;
-      Box         : Source_Editor_Box;
-      File        : Virtual_File;
       File_Inst   : Class_Instance;
-      Mark        : Gtk_Text_Mark;
-      Success     : Boolean;
-      Tag         : Gtk_Text_Tag;
-      Iter, Iter2 : aliased Gtk_Text_Iter;
-      Force       : Boolean;
 
    begin
       if Command = Constructor_Method then
@@ -1927,590 +1653,240 @@ package body Src_Editor_Module.Shell is
          File_Inst := Nth_Arg
            (Data, 1, Get_File_Class (Kernel),
             Default => No_Class_Instance, Allow_Null => True);
-         Force := Nth_Arg (Data, 2, Default => False);
-
-         if File_Inst = No_Class_Instance then
-            File := GNATCOLL.VFS.No_File;
-         else
-            File := Get_Data (File_Inst);
-         end if;
-
-         if File /= GNATCOLL.VFS.No_File then
-            Child := Find_Editor (Kernel, File);
-         else
-            Child := Find_Current_Editor (Kernel);
-         end if;
-
-         if Child = null then
-            if Nth_Arg (Data, 3, Default => True) then
-               Box := Open_File
-                 (Kernel, File, Line => 0, Column => 0, Column_End => 0);
-            else
-               Set_Return_Value (Data, No_Class_Instance);
-               return;
-            end if;
-         else
-            Box := Get_Source_Box_From_MDI (Child);
-
-            if File /= GNATCOLL.VFS.No_File and Force then
-               Check_Timestamp_And_Reload (Box, False, True);
-            end if;
-         end if;
 
          Set_Return_Value
            (Data, Create_Editor_Buffer
-              (Get_Script (Data), Get_Buffer (Box)));
+              (Get_Script (Data),
+               Get_Buffer_Factory (Kernel).Get
+                 (File        => Get_Data (File_Inst),
+                  Force       => Nth_Arg (Data, 2, Default => False),
+                  Open_View   => Nth_Arg (Data, 3, Default => True),
+                  Open_Buffer => False)));
 
       elsif Command = "get_new" then
-         Box := Open_File
-           (Kernel, No_File, Line => 1, Column => 1, Column_End => 1);
          Set_Return_Value
            (Data, Create_Editor_Buffer
-              (Get_Script (Data), Get_Buffer (Box)));
+              (Get_Script (Data),
+               Get_Buffer_Factory (Kernel).Get_New));
 
       elsif Command = "list" then
          declare
-            Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
-            Child_Count : Natural := 0;
+            use Buffer_Lists;
+            List : constant Buffer_Lists.List :=
+              Get_Buffer_Factory (Kernel).Buffers;
+            C    : Buffer_Lists.Cursor := First (List);
          begin
-            while Get (Iter) /= null loop
-               Child_Count := Child_Count + 1;
-               Next (Iter);
+            Set_Return_Value_As_List (Data);
+            while Has_Element (C) loop
+               Set_Return_Value
+                 (Data, Create_Editor_Buffer
+                    (Get_Script (Data), Buffer_Lists.Element (C)));
+               Next (C);
             end loop;
-
-            declare
-               Buffers : array (1 .. Child_Count) of Source_Buffer;
-               Index   : Integer := Buffers'First - 1;
-               Found   : Boolean;
-            begin
-               Iter := First_Child (Get_MDI (Kernel));
-               Set_Return_Value_As_List (Data);
-               while Get (Iter) /= null loop
-                  if Is_Source_Box (Get (Iter)) then
-                     Buffer := Get_Buffer
-                       (Get_Source_Box_From_MDI (Get (Iter)));
-                     Found := False;
-                     for J in Buffers'First .. Index loop
-                        if Buffers (J) = Buffer then
-                           Found := True;
-                           exit;
-                        end if;
-                     end loop;
-
-                     if not Found then
-                        Index := Index + 1;
-                        Buffers (Index) := Buffer;
-                        Set_Return_Value
-                          (Data, Create_Editor_Buffer
-                             (Get_Script (Data), Buffer));
-                     end if;
-                  end if;
-                  Next (Iter);
-               end loop;
-            end;
          end;
 
       elsif Command = "file" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Set_Return_Value
-              (Data, Create_File (Get_Script (Data), Get_Filename (Buffer)));
-         end if;
+         Set_Return_Value
+           (Data, Create_File (Get_Script (Data), Get_Buffer (Data, 1).File));
 
       elsif Command = "current_view" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            declare
-               File : GNATCOLL.VFS.Virtual_File := Get_Filename (Buffer);
-            begin
-               if File = GNATCOLL.VFS.No_File then
-                  File := Get_File_Identifier (Buffer);
-               end if;
-
-               Child := Find_Editor (Get_Kernel (Data), File);
-            end;
-
-            if Child = null then
-               Set_Error_Msg (Data, -"Editor not found");
-            else
-               Set_Return_Value
-                 (Data, Create_Editor_View
-                    (Get_Script (Data),
-                     Source_Editor_Box (Get_Widget (Child))));
-            end if;
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_View (Get_Script (Data),
+                                      Get_Buffer (Data, 1).Current_View));
 
       elsif Command = "views" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
+         declare
+            use View_Lists;
+            Views : constant View_Lists.List := Get_Buffer (Data, 1).Views;
+            C     : View_Lists.Cursor := First (Views);
+         begin
             Set_Return_Value_As_List (Data);
-            declare
-               Views : constant Views_Array := Get_Views (Buffer);
-            begin
-               for V in Views'Range loop
-                  Set_Return_Value
-                    (Data, Create_Editor_View (Get_Script (Data), Views (V)));
-               end loop;
-            end;
-         end if;
+            while Has_Element (C) loop
+               Set_Return_Value
+                 (Data, Create_Editor_View
+                    (Get_Script (Data), View_Lists.Element (C)));
+               Next (C);
+            end loop;
+         end;
 
       elsif Command = "close" then
          Name_Parameters (Data, (1 => Force_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            declare
-               Views : constant Views_Array := Get_Views (Buffer);
-            begin
-               for V in Views'Range loop
-                  Close (Get_MDI (Get_Kernel (Data)), Views (V),
-                         Force => Nth_Arg (Data, 2, False));
-               end loop;
-            end;
-         end if;
+         Get_Buffer (Data, 1).Close (Force => Nth_Arg (Data, 2, False));
 
       elsif Command = "save" then
          Name_Parameters (Data, (1 => Interactive_Cst'Access,
                                  2 => File_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            File_Inst := Nth_Arg
-              (Data, 3, Get_File_Class (Kernel),
-               Default => No_Class_Instance, Allow_Null => True);
-            if File_Inst = No_Class_Instance then
-               File := Get_Filename (Buffer);
-               Success := Save_MDI_Children
-                 (Get_Kernel (Data),
-                  Children => (1 => Find_Editor
-                                 (Get_Kernel (Data), Get_Filename (Buffer))),
-                  Force    => not Nth_Arg (Data, 2, False));
-            else
-               File := Get_Data (File_Inst);
-               Save_To_File (Buffer,
-                             Filename => File,
-                             Success  => Success);
-            end if;
-         end if;
+         File_Inst := Nth_Arg
+           (Data, 3, Get_File_Class (Kernel),
+            Default => No_Class_Instance, Allow_Null => True);
+         Get_Buffer (Data, 1).Save
+           (Interactive => Nth_Arg (Data, 2, False),
+            File        => Get_Data (File_Inst));
 
       elsif Command = "characters_count" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            --  ??? This is incompatible with blank/folded lines
-            Set_Return_Value (Data, Integer (Get_Char_Count (Buffer)));
-         end if;
+         Set_Return_Value (Data, Get_Buffer (Data, 1).Characters_Count);
 
       elsif Command = "lines_count" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Get_End_Iter (Buffer, Iter);
-            declare
-               Line   : Editable_Line_Type;
-               Column : Visible_Column_Type;
-            begin
-               Get_Iter_Position (Buffer, Iter, Line, Column);
-               Set_Return_Value (Data, Integer (Line));
-            end;
-         end if;
+         Set_Return_Value (Data, Get_Buffer (Data, 1).Lines_Count);
 
       elsif Command = "select" then
          Name_Parameters (Data, (1 => Start_Cst'Access,
                                  2 => End_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3, False);
-         if Buffer /= null then
-            Select_Region
-              (Buffer,
-               Cursor_Iter  => Iter2,
-               Bound_Iter   => Iter);
-         end if;
+         Get_Buffer (Data, 1).Select_Text
+           (From => Get_Location (Data, 2),
+            To   => Get_Location (Data, 3));
 
       elsif Command = "unselect" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Select_Region
-              (Buffer,
-               Start_Line   => Gint'(0),
-               Start_Column => 0,
-               End_Line     => 0,
-               End_Column   => 0);
-         end if;
+         Get_Buffer (Data, 1).Unselect;
 
-      elsif Command = "selection_start"
-        or else Command = "selection_end"
-      then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            declare
-               Mark, Cursor   : Gtk_Text_Mark;
-               IMark, ICursor : Gtk_Text_Iter;
-               Mark_First     : Boolean;
-            begin
-               Mark   := Get_Selection_Bound (Buffer);
-               Cursor := Get_Insert (Buffer);
-               Get_Iter_At_Mark (Buffer, IMark, Mark);
-               Get_Iter_At_Mark (Buffer, ICursor, Cursor);
+      elsif Command = "selection_start" then
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Buffer (Data, 1).Selection_Start));
 
-               if Command = "selection_start" then
-                  Mark_First := Compare (IMark, ICursor) <= 0;
-               else
-                  Mark_First := Compare (IMark, ICursor) > 0;
-               end if;
-
-               if Mark_First then
-                  Set_Return_Value
-                    (Data, Create_Editor_Location
-                       (Get_Script (Data), IMark));
-               else
-                  Set_Return_Value
-                    (Data, Create_Editor_Location
-                       (Get_Script (Data), ICursor));
-               end if;
-            end;
-         end if;
+      elsif Command = "selection_end" then
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Buffer (Data, 1).Selection_End));
 
       elsif Command = "beginning_of_buffer" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Get_Start_Iter (Buffer, Iter);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Buffer (Data, 1).Beginning_Of_Buffer));
 
       elsif Command = "end_of_buffer" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Get_End_Iter (Buffer, Iter);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Buffer (Data, 1).End_Of_Buffer));
 
       elsif Command = "is_modified" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Set_Return_Value (Data, Get_Status (Buffer) = Modified);
-         end if;
+         Set_Return_Value (Data, Get_Buffer (Data, 1).Is_Modified);
 
       elsif Command = "get_chars" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-
-            declare
-               Begin_Line : Editable_Line_Type;
-               Begin_Col  : Character_Offset_Type;
-               End_Line   : Editable_Line_Type;
-               End_Col    : Character_Offset_Type;
-            begin
-               Get_Iter_Position (Buffer, Iter, Begin_Line, Begin_Col);
-               Get_Iter_Position (Buffer, Iter2, End_Line, End_Col);
-               Set_Return_Value
-                 (Data,
-                  Get_Text (Buffer, Begin_Line, Begin_Col, End_Line, End_Col));
-            end;
-         end if;
+         Set_Return_Value
+           (Data, Get_Buffer (Data, 1).Get_Chars
+            (From => Get_Location (Data, 2), To => Get_Location (Data, 3)));
 
       elsif Command = "insert" then
          Name_Parameters
            (Data, (1 => Location_Cst'Access, 2 => Text_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Get_Location (Iter, Data, 2, Iter, Success);
-
-            if not Success then
-               return;
-            elsif Get_Buffer (Iter) = Gtk_Text_Buffer (Buffer) then
-               if Get_Writable (Buffer) then
-                  Insert (Buffer, Iter, Nth_Arg (Data, 3));
-                  End_Action (Buffer);
-               else
-                  Set_Error_Msg (Data, -"Buffer is not writable");
-               end if;
-            else
-               Set_Error_Msg (Data, -"Location is not in the same buffer");
-            end if;
-         end if;
+         Get_Buffer (Data, 1).Insert
+           (Get_Location (Data, 2), Nth_Arg (Data, 3));
 
       elsif Command = "delete" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-         if Buffer /= null then
-            if Get_Writable (Buffer) then
-               Delete (Buffer, Iter, Iter2);
-               End_Action (Buffer);
-            else
-               Set_Error_Msg (Data, -"Buffer is not writable");
-            end if;
-         end if;
+         Get_Buffer (Data, 1).Delete
+           (From => Get_Location (Data, 2), To => Get_Location (Data, 3));
 
-      elsif Command = "copy"
-        or else Command = "cut"
-      then
+      elsif Command = "copy" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access,
                                  3 => Append_Cst'Access));
-         declare
-            Append : constant Boolean := Nth_Arg (Data, 4, False);
-         begin
-            Get_Buffer (Buffer, Data, 1);
-            Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-            if Buffer /= null then
-               External_End_Action (Buffer);
-               Select_Range (Buffer, Iter, Iter2);
-               if Command = "copy" then
-                  Copy_Clipboard (Get_Clipboard (Kernel), Buffer);
-               else
-                  if Get_Writable (Buffer) then
-                     Cut_Clipboard (Get_Clipboard (Kernel), Buffer);
-                     End_Action (Buffer);
-                  else
-                     Set_Error_Msg (Data, -"Buffer is not writable");
-                  end if;
-               end if;
-               if Append then
-                  Merge_Clipboard (Get_Clipboard (Kernel), 1, 2);
-               end if;
-            end if;
-         end;
+         Get_Buffer (Data, 1).Copy
+           (From   => Get_Location (Data, 2),
+            To     => Get_Location (Data, 3),
+            Append => Nth_Arg (Data, 4, False));
+
+      elsif Command = "cut" then
+         Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access,
+                                 3 => Append_Cst'Access));
+         Get_Buffer (Data, 1).Cut
+           (From   => Get_Location (Data, 2),
+            To     => Get_Location (Data, 3),
+            Append => Nth_Arg (Data, 4, False));
 
       elsif Command = "paste" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Location (Iter, Data, 2, Iter, Success);
-         if not Success then
-            return;
-         elsif Get_Buffer (Iter) /= Gtk_Text_Buffer (Buffer) then
-            Set_Error_Msg (Data, -"Location is not in the same buffer");
-         elsif Buffer /= null then
-            if Get_Writable (Buffer) then
-               Place_Cursor (Buffer, Iter);
-               Paste_Clipboard (Get_Clipboard (Kernel), Buffer);
-               End_Action (Buffer);
-            else
-               Set_Error_Msg (Data, -"Buffer is not writable");
-            end if;
-         end if;
+         Get_Buffer (Data, 1).Paste (Get_Location (Data, 2));
 
       elsif Command = "blocks_fold" then
-         Name_Parameters (Data, (1 => Line_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Fold_All (Buffer);
-         end if;
+         Get_Buffer (Data, 1).Blocks_Fold;
 
       elsif Command = "blocks_unfold" then
-         Name_Parameters (Data, (1 => Line_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Unfold_All (Buffer);
-         end if;
+         Get_Buffer (Data, 1).Blocks_Unfold;
 
       elsif Command = "indent" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-         if Buffer /= null then
-            if not Do_Indentation (Buffer, Iter, Iter2) then
-               Set_Error_Msg (Data, -"Error while indenting");
-            end if;
-         end if;
-         End_Action (Buffer);
+         Get_Buffer (Data, 1).Indent
+           (From => Get_Location (Data, 2), To => Get_Location (Data, 3));
 
       elsif Command = "refill" then
          Name_Parameters (Data, (1 => From_Cst'Access, 2 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 2, 3);
-         if Buffer /= null then
-            if Get_Writable (Buffer) then
-               Select_Region
-                 (Buffer,
-                  Cursor_Iter  => Iter2,
-                  Bound_Iter   => Iter);
-               if not Do_Refill (Buffer) then
-                  Set_Error_Msg (Data, -"Error while refilling buffer");
-               end if;
-            else
-               Set_Error_Msg (Data, -"Buffer is not writable");
-            end if;
-         end if;
-         End_Action (Buffer);
+         Get_Buffer (Data, 1).Refill
+           (From => Get_Location (Data, 2), To => Get_Location (Data, 3));
 
       elsif Command = "get_mark" then
          Name_Parameters (Data, (2 => Name_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Mark := Get_Mark (Buffer, Nth_Arg (Data, 2));
-            if Mark /= null then
-               Set_Return_Value
-                 (Data, Create_Editor_Mark (Get_Script (Data), Mark));
-            else
-               Set_Error_Msg (Data, -"No such mark");
-            end if;
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Mark
+              (Get_Script (Data),
+               Get_Buffer (Data, 1).Get_Mark (Name => Nth_Arg (Data, 2))));
 
       elsif Command = "create_overlay" then
          Name_Parameters (Data, (1 => Name_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            declare
-               Name : constant String := Nth_Arg (Data, 2, "");
-            begin
-               if Name /= "" then
-                  Tag := Lookup (Get_Tag_Table (Buffer), Name);
-               end if;
-
-               if Tag = null then
-                  Gtk_New (Tag, Name);
-                  Add (Get_Tag_Table (Buffer), Tag);
-               end if;
-
-               Set_Return_Value
-                 (Data, Create_Editor_Overlay (Get_Script (Data), Tag));
-            end;
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Overlay
+              (Get_Script (Data),
+               Get_Buffer (Data, 1).Create_Overlay (Nth_Arg (Data, 2, ""))));
 
       elsif Command = "apply_overlay" then
          Name_Parameters (Data, (1 => Overlay_Cst'Access,
                                  2 => From_Cst'Access,
                                  3 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 3, 4);
-         if Buffer /= null then
-            Get_Overlay (Tag, Data, 2);
-            if Tag /= null then
-               Apply_Tag (Buffer, Tag, Iter, Iter2);
-            end if;
-         end if;
+         Get_Buffer (Data, 1).Apply_Overlay
+           (Get_Overlay (Data, 2),
+            Get_Location (Data, 3), Get_Location (Data, 4));
 
       elsif Command = "remove_overlay" then
          Name_Parameters (Data, (1 => Overlay_Cst'Access,
                                  2 => From_Cst'Access,
                                  3 => To_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-         Get_Locations (Iter, Iter2, Buffer, Data, 3, 4);
-         if Buffer /= null then
-            Get_Overlay (Tag, Data, 2);
-            if Tag /= null then
-               Remove_Tag (Buffer, Tag, Iter, Iter2);
-            end if;
-         end if;
+         Get_Buffer (Data, 1).Remove_Overlay
+           (Get_Overlay (Data, 2),
+            Get_Location (Data, 3), Get_Location (Data, 4));
 
       elsif Command = "start_undo_group" then
-         Get_Buffer (Buffer, Data, 1);
-         End_Action (Buffer);
-         Start_Group (Get_Command_Queue (Buffer));
+         Get_Buffer (Data, 1).Start_Undo_Group;
 
       elsif Command = "finish_undo_group" then
-         Get_Buffer (Buffer, Data, 1);
-         End_Action (Buffer);
-         End_Group (Get_Command_Queue (Buffer));
+         Get_Buffer (Data, 1).Finish_Undo_Group;
 
       elsif Command = "undo" then
-         Get_Buffer (Buffer, Data, 1);
-         if Get_Writable (Buffer) then
-            Undo (Buffer);
-         else
-            Set_Error_Msg (Data, -"Buffer is not writable");
-         end if;
+         Get_Buffer (Data, 1).Undo;
 
       elsif Command = "redo" then
-         Get_Buffer (Buffer, Data, 1);
-         if Get_Writable (Buffer) then
-            Redo (Buffer);
-         else
-            Set_Error_Msg (Data, -"Buffer is not writable");
-         end if;
+         Get_Buffer (Data, 1).Redo;
 
       elsif Command = "set_read_only" then
          Name_Parameters (Data, (1 => Read_Only_Cst'Access));
-         Get_Buffer (Buffer, Data, 1);
-
-         if Buffer /= null then
-            Set_Writable
-              (Buffer, not Nth_Arg (Data, 2, True), Explicit => True);
-
-            declare
-               Views : constant Views_Array := Get_Views (Buffer);
-            begin
-               for J in Views'Range loop
-                  Check_Writable (Views (J));
-               end loop;
-            end;
-         end if;
+         Get_Buffer (Data, 1).Set_Read_Only
+           (Read_Only => Nth_Arg (Data, 2, True));
 
       elsif Command = "is_read_only" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            Set_Return_Value (Data, not Get_Writable (Buffer));
-         end if;
+         Set_Return_Value (Data, Get_Buffer (Data, 1).Is_Read_Only);
 
       elsif Command = "add_special_line" then
-         Get_Buffer (Buffer, Data, 1);
-         if Buffer /= null then
-            declare
-               Line               : constant Integer := Nth_Arg (Data, 2);
-               Text               : constant String  := Nth_Arg (Data, 3);
-               Highlight_Category : Natural := 0;
-               Style              : Style_Access;
-               Name               : GNAT.OS_Lib.String_Access;
-            begin
-               if Number_Of_Arguments (Data) >= 4
-                 and then Nth_Arg (Data, 4) /= String'("")
-               then
-                  Style := Get_Or_Create_Style
-                    (Kernel, Nth_Arg (Data, 4), False);
-
-                  if Style = null then
-                     Set_Error_Msg
-                       (Data, -"No such style: " & Nth_Arg (Data, 4));
-                     return;
-                  else
-                     Highlight_Category :=
-                       Line_Highlighting.Lookup_Category (Style);
-                  end if;
-               end if;
-
-               if Number_Of_Arguments (Data) >= 5 then
-                  Name := new String'(Nth_Arg (Data, 5));
-
-               else
-                  Name := new String'("");
-               end if;
-
-               Mark := Add_Special_Lines
-                 (Buffer,
-                  Editable_Line_Type (Line),
-                  Highlight_Category,
-                  Text,
-                  Name.all, "", null);
-
-               Free (Name);
-
-               Set_Return_Value
-                 (Data, Create_Editor_Mark (Get_Script (Data), Mark));
-            end;
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Mark
+              (Get_Script (Data),
+               Get_Buffer (Data, 1).Add_Special_Line
+               (Start_Line => Nth_Arg (Data, 2),
+                Text       => Nth_Arg (Data, 3),
+                Category   => Nth_Arg (Data, 4, ""),
+                Name       => Nth_Arg (Data, 5, ""))));
 
       elsif Command = "remove_special_lines" then
-         Get_Buffer (Buffer, Data, 1);
-         Get_Mark (Mark, Data, 2);
-
-         if Buffer /= null and then Mark /= null then
-            declare
-               Number : Natural := 0;
-
-            begin
-               if Number_Of_Arguments (Data) >= 3 then
-                  Number := Nth_Arg (Data, 3);
-               end if;
-
-               Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
-                 (Buffer, Mark, Number);
-            end;
-         end if;
+         Get_Buffer (Data, 1).Remove_Special_Lines
+           (Mark  => Get_Mark (Data, 2),
+            Lines => Nth_Arg (Data, 3, 0));
 
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
+
+   exception
+      when E : Editor_Exception =>
+         Set_Error_Msg (Data, Exception_Message (E));
    end Buffer_Cmds;
 
    -------------------
@@ -2522,108 +1898,57 @@ package body Src_Editor_Module.Shell is
    is
       EditorLoc  : constant Class_Type :=
                      New_Class (Get_Kernel (Data), Editor_Location_Class_Name);
-      Buffer      : Source_Buffer;
-      Inst        : Class_Instance;
-      Iter, Iter2 : Gtk_Text_Iter;
-      Mark        : Gtk_Text_Mark;
-      Success     : Boolean;
-      Success2    : Boolean;
       Count       : Gint;
-      Block       : Block_Record;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Buffer_Cst'Access,
                                  2 => Line_Cst'Access,
                                  3 => Col_Cst'Access));
-         Inst := Nth_Arg (Data, 1, EditorLoc);
-         Get_Buffer (Buffer, Data, 2);
-         Set_Location_Data
-           (Inst,
-            Buffer,
-            Editable_Line_Type (Integer'Max (1, Nth_Arg (Data, 3))),
-            Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 4))));
+         Set_Data
+           (Nth_Arg (Data, 1, EditorLoc),
+            Editor_Location_Class_Name,
+            Get_Buffer (Data, 2).New_Location
+            (Line   => Integer'Max (1, Nth_Arg (Data, 3)),
+             Column => Integer'Max (1, Nth_Arg (Data, 4))));
 
       elsif Command = Comparison_Method then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         Get_Location (Iter2, Data, 2, Iter2, Success2);
-         if Success /= Success2
-           or else not Success
-           or else Get_Buffer (Iter) /= Get_Buffer (Iter2)
-         then
-            Set_Error_Msg (Data, -"EditorLocation not in the same buffer");
-         else
-            Set_Return_Value (Data, Integer (Compare (Iter, Iter2)));
-         end if;
+         declare
+            Loc1 : constant Editor_Location'Class := Get_Location (Data, 1);
+            Loc2 : constant Editor_Location'Class := Get_Location (Data, 2);
+         begin
+            if Loc1 = Nil_Editor_Location
+              or else Loc2 = Nil_Editor_Location
+              or else Loc1.Buffer /= Loc2.Buffer
+            then
+               Set_Error_Msg (Data, -"EditorLocation not in the same buffer");
+            else
+               Set_Return_Value (Data, Integer (Compare (Loc1, Loc2)));
+            end if;
+         end;
 
       elsif Command = "line" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Line : Editable_Line_Type;
-               Col  : Character_Offset_Type;
-            begin
-               Get_Iter_Position
-                 (Source_Buffer (Get_Buffer (Iter)), Iter, Line, Col);
-               Set_Return_Value (Data, Integer (Line));
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value (Data, Get_Location (Data, 1).Line);
 
       elsif Command = "column" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Line : Editable_Line_Type;
-               Col  : Visible_Column_Type;
-            begin
-               Get_Iter_Position
-                 (Source_Buffer (Get_Buffer (Iter)), Iter, Line, Col);
-               Set_Return_Value (Data, Integer (Col));
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value (Data, Get_Location (Data, 1).Column);
 
       elsif Command = "offset" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Set_Return_Value (Data, Integer (Get_Offset (Iter)));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value (Data, Get_Location (Data, 1).Offset);
 
       elsif Command = "buffer" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Set_Return_Value
-              (Data, Create_Editor_Buffer (Get_Script (Data),
-               Source_Buffer (Get_Buffer (Iter))));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Buffer
+              (Get_Script (Data), Get_Location (Data, 1).Buffer));
 
       elsif Command = "beginning_of_line" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Set_Line_Offset (Iter, 0);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Location (Data, 1).Beginning_Of_Line));
 
       elsif Command = "end_of_line" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            if not Ends_Line (Iter) then
-               Forward_To_Line_End (Iter, Success);
-            end if;
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Location (Data, 1).End_Of_Line));
 
       elsif Command = "search" then
          Name_Parameters
@@ -2636,373 +1961,185 @@ package body Src_Editor_Module.Shell is
              6 => Whole_Word_Cst'Access,
              7 => Scope_Cst'Access,
              8 => Dialog_On_Failure_Cst'Access));
-         declare
-            Context : Current_File_Context_Access :=
-              Current_File_Context_Access
-                (Current_File_Factory
-                     (Kernel          => Get_Kernel (Data),
-                      All_Occurrences => False,
-                      Scope           => Search_Scope'Value
-                        (Nth_Arg (Data, 7, "Whole"))));
-            Found       : Boolean;
-            Match_From  : Gtk_Text_Iter;
-            Match_Up_To : Gtk_Text_Iter;
-         begin
-            Set_Context
-              (Context,
-               Look_For => Nth_Arg (Data, 2),
-               Options  => (Case_Sensitive => Nth_Arg (Data, 4, False),
-                            Whole_Word     => Nth_Arg (Data, 6, False),
-                            Regexp         => Nth_Arg (Data, 5, False)));
-            Get_Location (Iter, Data, 1, Iter, Success);
-            if Success then
-               Search_In_Editor
-                 (Context           => Context,
-                  Start_At          => Iter,
-                  Kernel            => Get_Kernel (Data),
-                  Search_Backward   => Nth_Arg (Data, 3, False),
-                  Dialog_On_Failure => Nth_Arg (Data, 8, True),
-                  Match_From        => Match_From,
-                  Match_Up_To       => Match_Up_To,
-                  Found             => Found);
-               if Found then
-                  Set_Return_Value_As_List (Data);
-                  Set_Return_Value
-                    (Data,
-                     Create_Editor_Location (Get_Script (Data), Match_From));
-                  Set_Return_Value
-                    (Data,
-                     Create_Editor_Location (Get_Script (Data), Match_Up_To));
-               end if;
-            else
-               Set_Error_Msg (Data, -"Invalid location");
-            end if;
 
-            Free (Search_Context_Access (Context));
+         declare
+            Loc    : constant Editor_Location'Class := Get_Location (Data, 1);
+            Starts : Editor_Location'Class := Loc;
+            Ends   : Editor_Location'Class := Loc;
+            Found  : Boolean;
+         begin
+            Loc.Search
+              (Pattern           => Nth_Arg (Data, 2),
+               Backward          => Nth_Arg (Data, 3, False),
+               Case_Sensitive    => Nth_Arg (Data, 4, False),
+               Regexp            => Nth_Arg (Data, 5, False),
+               Whole_Word        => Nth_Arg (Data, 6, False),
+               Scope             => Nth_Arg (Data, 7, "Whole"),
+               Dialog_On_Failure => Nth_Arg (Data, 8, True),
+               Success           => Found,
+               Starts            => Starts,
+               Ends              => Ends);
+            if Found then
+               Set_Return_Value_As_List (Data);
+               Set_Return_Value
+                 (Data,
+                  Create_Editor_Location (Get_Script (Data), Starts));
+               Set_Return_Value
+                 (Data,
+                  Create_Editor_Location (Get_Script (Data), Ends));
+            end if;
          end;
 
       elsif Command = "forward_char" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Chars : constant Gint := Gint (Integer'(Nth_Arg (Data, 2, 1)));
-            begin
-               if Chars >= 0 then
-                  Forward_Chars (Iter, Chars, Success);
-               else
-                  Backward_Chars (Iter, -Chars, Success);
-               end if;
-            end;
-
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location (Data, 1).Forward_Char (Nth_Arg (Data, 2, 1))));
 
       elsif Command = Addition_Method then
          Name_Parameters (Data, (1 => Count_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Forward_Chars (Iter, Gint (Integer'(Nth_Arg (Data, 2))), Success);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location (Data, 1).Forward_Char (Nth_Arg (Data, 2, 1))));
 
       elsif Command = Substraction_Method then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            begin
-               --  The second argument is an integer ?
-               Count := Gint (Integer'(Nth_Arg (Data, 2)));
-               Forward_Chars (Iter, -Count, Success);
-               Set_Return_Value
-                 (Data, Create_Editor_Location (Get_Script (Data), Iter));
-            exception
-               when Invalid_Parameter =>
-                  --  The second argument is another location ?
-                  Get_Location (Iter2, Data, 2, Iter, Success);
-                  if Success then
-                     if Get_Buffer (Iter2) /= Get_Buffer (Iter) then
-                        Set_Error_Msg
-                          (Data, -"Locations not in the same buffer");
-                     else
-                        Set_Return_Value
-                          (Data,
-                           Integer (Get_Offset (Iter) - Get_Offset (Iter2)));
-                     end if;
+         Name_Parameters (Data, (1 => Count_Cst'Access));
+
+         begin
+            --  The second argument is an integer ?
+            Count := Gint (Integer'(Nth_Arg (Data, 2)));
+            Set_Return_Value
+              (Data, Create_Editor_Location
+                 (Get_Script (Data),
+                  Get_Location (Data, 1).Forward_Char (-Integer (Count))));
+         exception
+            when Invalid_Parameter =>
+               declare
+                  Loc1 : constant Editor_Location'Class :=
+                    Get_Location (Data, 1);
+                  Loc2 : constant Editor_Location'Class :=
+                    Get_Location (Data, 2);
+               begin
+                  if Loc1.Buffer /= Loc2.Buffer then
+                     Set_Error_Msg
+                       (Data, -"Locations not in the same buffer");
                   else
-                     Set_Error_Msg (Data, -"Invalid location");
+                     Set_Return_Value (Data, Loc1.Offset - Loc2.Offset);
                   end if;
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+               end;
+         end;
 
       elsif Command = "forward_word" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Forward_Word_Ends (Iter,
-                               Count  => Gint (Integer'(Nth_Arg (Data, 2, 1))),
-                               Result => Success);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location (Data, 1).Forward_Word (Nth_Arg (Data, 2, 1))));
 
       elsif Command = "starts_word" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Set_Return_Value (Data, Src_Editor_Buffer.Starts_Word (Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value (Data, Get_Location (Data, 1).Starts_Word);
 
       elsif Command = "ends_word" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Set_Return_Value (Data, Src_Editor_Buffer.Ends_Word (Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value (Data, Get_Location (Data, 1).Ends_Word);
 
       elsif Command = "forward_line" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Forward_Lines (Iter,
-                           Count  => Gint (Integer'(Nth_Arg (Data, 2, 1))),
-                           Result => Success);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location (Data, 1).Forward_Line (Nth_Arg (Data, 2, 1))));
 
       elsif Command = "create_mark" then
          Name_Parameters (Data, (1 => Name_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-
-         if Success then
-            if Nth_Arg (Data, 2, "") /= String'("") then
-               Mark := Get_Mark (Get_Buffer (Iter), Nth_Arg (Data, 2));
-            end if;
-
-            if Mark = null then
-               Mark := Create_Mark
-                 (Get_Buffer (Iter),
-                  Mark_Name => Nth_Arg (Data, 2, ""),
-                  Where     => Iter);
-            else
-               Move_Mark (Get_Buffer (Iter), Mark, Where => Iter);
-            end if;
-
-            Set_Return_Value
-              (Data, Create_Editor_Mark (Get_Script (Data), Mark));
-         else
-            Set_Error_Msg (Data, "Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Mark
+              (Get_Script (Data),
+               Get_Location (Data, 1).Create_Mark (Nth_Arg (Data, 2, ""))));
 
       elsif Command = "get_char" then
          declare
-            Unichar : Gunichar;
+            Unichar : constant Integer :=
+              Get_Location (Data, 1).Get_Char;
             Buffer  : String (1 .. 6);
             Last    : Natural;
          begin
-            Get_Location (Iter, Data, 1, Iter, Success);
-            if Success then
-               Unichar := Get_Char (Iter);
-               if Unichar = 0 then
-                  Set_Error_Msg (Data, "Invalid buffer position");
-               else
-                  Unichar_To_UTF8 (Unichar, Buffer, Last);
-                  Set_Return_Value (Data, Buffer (1 .. Last));
-               end if;
-            else
-               Set_Error_Msg (Data, -"Invalid location");
-            end if;
+            Unichar_To_UTF8 (Gunichar (Unichar), Buffer, Last);
+            Set_Return_Value (Data, Buffer (1 .. Last));
          end;
 
       elsif Command = "block_fold" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-
-         if Success then
-            declare
-               Buffer : constant Source_Buffer :=
-                          Source_Buffer (Get_Buffer (Iter));
-            begin
-               Fold_Block
-                 (Buffer,
-                  Get_Editable_Line (Buffer,
-                    Buffer_Line_Type (Get_Line (Iter) + 1)));
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Get_Location (Data, 1).Block_Fold;
 
       elsif Command = "block_unfold" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            Buffer := Source_Buffer (Get_Buffer (Iter));
-            Unfold_Line
-              (Buffer,
-               Get_Editable_Line (Buffer,
-                 Buffer_Line_Type (Get_Line (Iter) + 1)));
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Get_Location (Data, 1).Block_Unfold;
 
-      elsif Command'Length > 6
-        and then Command (Command'First .. Command'First + 5) = "block_"
-      then
-         Get_Location (Iter, Data, 1, Iter, Success);
+      elsif Command = "block_end_line" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Block_End.Line);
 
-         if Success then
-            declare
-               Line  : constant Editable_Line_Type :=
-                         Editable_Line_Type (Get_Line (Iter) + 1);
-               Block : constant Block_Record :=
-                         Get_Block (Source_Buffer (Get_Buffer (Iter)), Line);
-               Iter2 : Gtk_Text_Iter;
-            begin
-               if Command = "block_end_line" then
-                  Set_Return_Value (Data, Integer (Block.Last_Line));
+      elsif Command = "block_start_line" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Block_Start.Line);
 
-               elsif Command = "block_start_line" then
-                  Set_Return_Value (Data, Integer (Block.First_Line));
+      elsif Command = "block_start" then
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Location (Data, 1).Block_Start));
 
-               elsif Command = "block_level" then
-                  Set_Return_Value (Data, Block.Indentation_Level);
+      elsif Command = "block_end" then
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Location (Data, 1).Block_End));
 
-               elsif Command = "block_start" then
-                  Set_Return_Value
-                    (Data, Create_Editor_Location
-                       (Get_Script (Data),
-                        Source_Buffer (Get_Buffer (Iter)),
-                        Line   => Block.First_Line,
-                        Column => 1));
+      elsif Command = "block_type" then
+         Set_Return_Value
+           (Data, Language_Category'Image (Get_Location (Data, 1).Block_Type));
 
-               elsif Command = "block_end" then
-                  Get_Iter_At_Line_Offset
-                    (Source_Buffer (Get_Buffer (Iter)), Iter2,
-                     Line_Number => Gint (Block.Last_Line),
-                     Char_Offset => 1);
-                  Forward_Lines
-                    (Iter2,
-                     Count  => -1,
-                     Result => Success);
-                  Forward_To_Line_End (Iter2, Success);
-                  Set_Return_Value
-                    (Data, Create_Editor_Location
-                       (Get_Script (Data), Iter2));
-
-               elsif Command = "block_type" then
-                  Set_Return_Value
-                    (Data, Language_Category'Image (Block.Block_Type));
-
-               elsif Command = "block_name" then
-                  if Block.Name = null then
-                     Set_Return_Value (Data, String'(""));
-                  else
-                     Set_Return_Value (Data, Block.Name.all);
-                  end if;
-               end if;
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+      elsif Command = "block_name" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Block_Name (False));
 
       elsif Command = "subprogram_name" then
-         Get_Location (Iter, Data, 1, Iter, Success);
+         Set_Return_Value (Data, Get_Location (Data, 1).Block_Name (True));
 
-         if Success then
-            Buffer := Source_Buffer (Get_Buffer (Iter));
-            Block := Get_Subprogram_Block
-              (Buffer,
-               Get_Editable_Line (Buffer,
-                 Buffer_Line_Type (Get_Line (Iter) + 1)));
-            if Block.Name = null then
-               Set_Return_Value (Data, String'(""));
-            else
-               Set_Return_Value (Data, Block.Name.all);
-            end if;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+      elsif Command = "block_level" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Block_Level);
 
       elsif Command = "get_overlays" then
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
+         declare
+            use Overlay_Lists;
+            List : constant Overlay_Lists.List :=
+              Get_Location (Data, 1).Get_Overlays;
+            C    : Overlay_Lists.Cursor := First (List);
+         begin
             Set_Return_Value_As_List (Data);
-            declare
-               use Gtk.Text_Tag.Text_Tag_List;
-               List     : GSlist := Get_Tags (Iter);
-               Iterator : GSlist := List;
-            begin
-               while Iterator /= Null_List loop
-                  Set_Return_Value
-                    (Data, Create_Editor_Overlay
-                       (Get_Script (Data), Get_Data (Iterator)));
-                  Iterator := Next (Iterator);
-               end loop;
-               Free (List);
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+            while Has_Element (C) loop
+               Set_Return_Value
+                 (Data, Create_Editor_Overlay
+                    (Get_Script (Data), Overlay_Lists.Element (C)));
+               Next (C);
+            end loop;
+         end;
 
       elsif Command = "has_overlay" then
          Name_Parameters (Data, (1 => Overlay_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Tag : Gtk_Text_Tag;
-            begin
-               Get_Overlay (Tag, Data, 2);
-               if Tag /= null then
-                  Set_Return_Value (Data, Has_Tag (Iter, Tag));
-               end if;
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Get_Location (Data, 1).Has_Overlay (Get_Overlay (Data, 2)));
 
       elsif Command = "forward_overlay" then
          Name_Parameters (Data, (1 => Overlay_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Tag : Gtk_Text_Tag;
-            begin
-               Get_Overlay (Tag, Data, 2, Allow_Null => True);
-               Forward_To_Tag_Toggle (Iter, Tag, Success);
-               Set_Return_Value
-                 (Data, Create_Editor_Location (Get_Script (Data), Iter));
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location
+                 (Data, 1).Forward_Overlay (Get_Overlay (Data, 2, True))));
 
       elsif Command = "backward_overlay" then
          Name_Parameters (Data, (1 => Overlay_Cst'Access));
-         Get_Location (Iter, Data, 1, Iter, Success);
-         if Success then
-            declare
-               Tag : Gtk_Text_Tag;
-            begin
-               Get_Overlay (Tag, Data, 2, Allow_Null => True);
-               Backward_To_Tag_Toggle (Iter, Tag, Success);
-               Set_Return_Value
-                 (Data, Create_Editor_Location (Get_Script (Data), Iter));
-            end;
-         else
-            Set_Error_Msg (Data, -"Invalid location");
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data),
+               Get_Location
+                 (Data, 1).Backward_Overlay (Get_Overlay (Data, 2, True))));
       end if;
    end Location_Cmds;
 
@@ -3011,62 +2148,36 @@ package body Src_Editor_Module.Shell is
    ---------------
 
    procedure Mark_Cmds
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Mark    : Gtk_Text_Mark;
-      Iter    : Gtk_Text_Iter;
-      Success : Boolean;
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "Cannot create an EditorMark directly");
 
       elsif Command = Destructor_Method then
-         Get_Mark (Mark, Data, 1);
-         if Mark /= null
-           and then Get_Name (Mark) = ""
-         then
-            --  Do not delete named marks, since we can still access them
-            --  through get_mark() anyway
-            Trace (Me, "Deleting unnamed mark");
-            Delete_Mark (Get_Buffer (Mark), Mark);
-         end if;
+         --  Do not delete named marks, since we can still access them
+         --  through get_mark() anyway
+         declare
+            M : constant Editor_Mark'Class := Get_Mark (Data, 1);
+         begin
+            if M.Name = "" then
+               M.Delete;
+            end if;
+         end;
 
       elsif Command = "delete" then
-         Get_Mark (Mark, Data, 1);
-         if Mark /= null then
-            Trace (Me, "Deleting mark");
-            Delete_Mark (Get_Buffer (Mark), Mark);
-         end if;
+         Get_Mark (Data, 1).Delete;
 
       elsif Command = "is_present" then
-         Get_Mark (Mark, Data, 1);
-
-         if Mark /= null then
-            Set_Return_Value (Data, not Get_Deleted (Mark));
-
-         else
-            Set_Return_Value (Data, False);
-         end if;
+         Set_Return_Value (Data, Get_Mark (Data, 1).Is_Present);
 
       elsif Command = "location" then
-         Get_Mark (Mark, Data, 1);
-         if Mark /= null then
-            Get_Iter_At_Mark (Get_Buffer (Mark), Iter, Mark);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_Mark (Data, 1).Location));
 
       elsif Command = "move" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
-         Get_Mark (Mark, Data, 1);
-         if Mark /= null then
-            Get_Location (Iter, Data, 2, Iter, Success);
-            if Success then
-               Move_Mark (Get_Buffer (Mark), Mark, Iter);
-            else
-               Set_Error_Msg (Data, -"Invalid location");
-            end if;
-         end if;
+         Get_Mark (Data, 1).Move (Get_Location (Data, 2));
       end if;
    end Mark_Cmds;
 
@@ -3080,112 +2191,39 @@ package body Src_Editor_Module.Shell is
       EditorView : constant Class_Type :=
                      New_Class (Get_Kernel (Data), "EditorView");
       Inst       : Class_Instance;
-      Box        : Source_Editor_Box;
-      Buffer     : Source_Buffer;
-      Iter       : Gtk_Text_Iter;
-      Child      : MDI_Child;
-      Success    : Boolean;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Buffer_Cst'Access));
          Inst := Nth_Arg (Data, 1, EditorView);
-         Get_Buffer (Buffer, Data, 2);
-         if Buffer /= null then
-            declare
-               Views : constant Views_Array := Get_Views (Buffer);
-            begin
-               Box := New_View (Get_Kernel (Data), Views (Views'First));
-               Set_Data (Inst, GObject (Box));
-            end;
-         end if;
+         Set_Data (Inst, Get_Buffer (Data, 2).New_View);
 
       elsif Command = "buffer" then
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Set_Return_Value
-              (Data, Create_Editor_Buffer
-                 (Get_Script (Data), Get_Buffer (Box)));
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Buffer
+              (Get_Script (Data), Get_View (Data, 1).Buffer));
 
       elsif Command = "set_read_only" then
          Name_Parameters (Data, (1 => Read_Only_Cst'Access));
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Set_Writable (Box, not Nth_Arg (Data, 2, True));
-         end if;
+         Get_View (Data, 1).Set_Read_Only (Nth_Arg (Data, 2, True));
 
       elsif Command = "is_read_only" then
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Set_Return_Value (Data, not Get_Writable (Get_Buffer (Box)));
-         end if;
+         Set_Return_Value (Data, Get_View (Data, 1).Is_Read_Only);
 
       elsif Command = "center" then
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Get_Cursor_Position (Get_View (Box), Iter);
-            Get_Location (Iter, Data, 2, Iter, Success);
-
-            if Success then
-               declare
-                  M : constant Gtk_Text_Mark :=
-                        Create_Mark (Get_Buffer (Box), "", Iter);
-               begin
-                  Scroll_To_Mark
-                    (Get_View (Box),
-                     Mark          => M,
-                     Within_Margin => 0.2,
-                     Use_Align     => False,
-                     Xalign        => 0.5,
-                     Yalign        => 0.5);
-                  Delete_Mark (Get_Buffer (Box), M);
-               end;
-            else
-               Set_Error_Msg (Data, -"Invalid location");
-            end if;
-         end if;
+         Get_View (Data, 1).Center (Get_Location (Data, 2));
 
       elsif Command = "title" then
          Name_Parameters (Data, (1 => Short_Cst'Access));
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Child := Find_MDI_Child (Get_MDI (Get_Kernel (Data)), Box);
-            if Nth_Arg (Data, 2, True) then
-               Set_Return_Value (Data, Get_Title (Child));
-            else
-               Set_Return_Value (Data, Get_Short_Title (Child));
-            end if;
-         end if;
+         Set_Return_Value
+           (Data, Get_View (Data, 1).Title (Short => Nth_Arg (Data, 2, True)));
 
       elsif Command = "goto" then
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Get_Location (Iter, Data, 2, Iter, Success);
-
-            if Success then
-               declare
-                  Line : Editable_Line_Type;
-                  Col  : Character_Offset_Type;
-               begin
-                  Get_Iter_Position (Get_Buffer (Box), Iter, Line, Col);
-
-                  Set_Cursor_Location
-                    (Box,
-                     Line        => Line,
-                     Column      => Col,
-                     Force_Focus => False);
-               end;
-
-            end if;
-         end if;
+         Get_View (Data, 1).Cursor_Goto (Get_Location (Data, 2));
 
       elsif Command = "cursor" then
-         Get_Box (Box, Data, 1);
-         if Box /= null then
-            Get_Cursor_Position (Get_View (Box), Iter);
-            Set_Return_Value
-              (Data, Create_Editor_Location (Get_Script (Data), Iter));
-         end if;
+         Set_Return_Value
+           (Data, Create_Editor_Location
+              (Get_Script (Data), Get_View (Data, 1).Cursor));
       end if;
    end View_Cmds;
 
@@ -3194,9 +2232,7 @@ package body Src_Editor_Module.Shell is
    ------------------
 
    procedure Overlay_Cmds
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Tag : Gtk_Text_Tag;
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
@@ -3205,137 +2241,49 @@ package body Src_Editor_Module.Shell is
               & " use EditorBuffer.create_overlay()"));
 
       elsif Command = "name" then
-         Get_Overlay (Tag, Data, 1);
-         if Tag /= null then
-            Set_Return_Value
-              (Data, Get_Property (Tag, Gtk.Text_Tag.Name_Property));
-         end if;
+         Set_Return_Value (Data, Get_Overlay (Data, 1).Name);
 
       elsif Command = "get_property" then
          Name_Parameters (Data, (1 => Name_Cst'Access));
-         Get_Overlay (Tag, Data, 1);
-         if Tag /= null then
-            declare
-               Name : constant String := Nth_Arg (Data, 2);
-               Color : Gdk_Color;
-               W     : Weight;
-               S     : Style;
-            begin
-               if Name = "foreground" then
-                  Color := Get_Property (Tag, Foreground_Gdk_Property);
-                  Set_Return_Value (Data, To_String (Color));
 
-               elsif Name = "background" then
-                  Color := Get_Property (Tag, Background_Gdk_Property);
-                  Set_Return_Value (Data, To_String (Color));
+         declare
+            Name : constant String := Nth_Arg (Data, 2);
+         begin
+            if Name = "foreground"
+              or else Name = "background"
+              or else Name = "font"
+              or else Name = "weight"
+              or else Name = "style"
+            then
+               Set_Return_Value
+                 (Data, String'(Get_Overlay (Data, 1).Get_Property (Name)));
 
-               elsif Name = "font" then
-                  Set_Return_Value
-                    (Data, Get_Property (Tag, Font_Property));
-
-               elsif Name = "weight" then
-                  W := Get_Property (Tag, Weight_Property);
-                  case W is
-                     when Pango_Weight_Ultralight .. Pango_Weight_Light =>
-                        Set_Return_Value (Data, String'("light"));
-                     when Pango_Weight_Normal .. Pango_Weight_Medium =>
-                        Set_Return_Value (Data, String'("normal"));
-                     when others =>
-                        Set_Return_Value (Data, String'("bold"));
-                  end case;
-
-               elsif Name = "style" then
-                  S := Get_Property (Tag, Gtk.Text_Tag.Style_Property);
-                  case S is
-                     when Pango_Style_Normal =>
-                        Set_Return_Value (Data, String'("normal"));
-                     when Pango_Style_Oblique =>
-                        Set_Return_Value (Data, String'("oblique"));
-                     when Pango_Style_Italic =>
-                        Set_Return_Value (Data, String'("italic"));
-                  end case;
-
-               elsif Name = "editable" then
-                  Set_Return_Value
-                    (Data, Get_Property (Tag, Gtk.Text_Tag.Editable_Property));
-
-               else
-                  Set_Error_Msg (Data, -"Invalid property");
-               end if;
-            end;
-         end if;
+            elsif Name = "editable" then
+               Set_Return_Value
+                 (Data, Boolean'(Get_Overlay (Data, 1).Get_Property (Name)));
+            end if;
+         end;
 
       elsif Command = "set_property" then
          Name_Parameters (Data, (1 => Name_Cst'Access, 2 => Value_Cst'Access));
-         Get_Overlay (Tag, Data, 1);
-         if Tag /= null then
-            declare
-               Name : constant String := Nth_Arg (Data, 2);
-            begin
-               if Name = "foreground" then
-                  Set_Property
-                    (Tag, Foreground_Property, String'(Nth_Arg (Data, 3)));
 
-               elsif Name = "background" then
-                  Set_Property
-                    (Tag, Background_Property, String'(Nth_Arg (Data, 3)));
+         declare
+            Name : constant String := Nth_Arg (Data, 2);
+         begin
+            if Name = "foreground"
+              or else Name = "background"
+              or else Name = "font"
+              or else Name = "weight"
+              or else Name = "style"
+            then
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, String'(Nth_Arg (Data, 3)));
 
-               elsif Name = "font" then
-                  Set_Property
-                    (Tag, Font_Property, String'(Nth_Arg (Data, 3)));
-
-               elsif Name = "weight" then
-                  declare
-                     Value : constant String := Nth_Arg (Data, 3);
-                  begin
-                     if Value = "light" then
-                        Set_Property
-                          (Tag, Weight_Property, Pango_Weight_Light);
-                     elsif Value = "normal" then
-                        Set_Property
-                          (Tag, Weight_Property, Pango_Weight_Normal);
-                     elsif Value = "bold" then
-                        Set_Property
-                          (Tag, Weight_Property, Pango_Weight_Bold);
-                     else
-                        Set_Error_Msg
-                          (Data, -"Invalid weight: use light, normal or bold");
-                     end if;
-                  end;
-
-               elsif Name = "style" then
-                  declare
-                     Value : constant String := Nth_Arg (Data, 3);
-                  begin
-                     if Value = "normal" then
-                        Set_Property
-                          (Tag, Gtk.Text_Tag.Style_Property,
-                           Pango_Style_Normal);
-                     elsif Value = "oblique" then
-                        Set_Property
-                          (Tag, Gtk.Text_Tag.Style_Property,
-                           Pango_Style_Oblique);
-                     elsif Value = "italic" then
-                        Set_Property
-                          (Tag, Gtk.Text_Tag.Style_Property,
-                           Pango_Style_Italic);
-                     else
-                        Set_Error_Msg
-                          (Data,
-                           -"Invalid style, use normal, oblique, italic");
-                     end if;
-                  end;
-
-               elsif Name = "editable" then
-                  Set_Property
-                    (Tag, Gtk.Text_Tag.Editable_Property,
-                     Boolean'(Nth_Arg (Data, 3)));
-
-               else
-                  Set_Error_Msg (Data, -"Invalid property");
-               end if;
-            end;
-         end if;
+            elsif Name = "editable" then
+               Get_Overlay (Data, 1).Set_Property
+                 (Name, Boolean'(Nth_Arg (Data, 3)));
+            end if;
+         end;
 
       end if;
    end Overlay_Cmds;

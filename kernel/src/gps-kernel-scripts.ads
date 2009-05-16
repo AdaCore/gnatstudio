@@ -142,7 +142,8 @@ package GPS.Kernel.Scripts is
       File : GNATCOLL.VFS.Virtual_File);
    function Get_Data
      (Instance : Class_Instance) return GNATCOLL.VFS.Virtual_File;
-   --  Retrieve the file information from an instance
+   --  Retrieve the file information from an instance. This returns No_File
+   --  if no instance is passed
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;

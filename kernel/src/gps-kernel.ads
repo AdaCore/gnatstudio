@@ -415,7 +415,7 @@ package GPS.Kernel is
    --  legal, and should be removed from the history.
 
    procedure Destroy (Marker : in out Location_Marker_Record);
-   --  Free the memory used by Marker. By default, this does nothing
+   --  Free the memory used by Marker. By default, this does nothing.
 
    function To_String
      (Marker : access Location_Marker_Record) return String is abstract;

@@ -48,6 +48,11 @@ package Src_Editor_Module.Markers is
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
 
+   procedure Move
+     (Marker : access File_Marker_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
+   --  Move the marker to a new location within an open editor
+
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Push the location in the current editor in the history of locations.

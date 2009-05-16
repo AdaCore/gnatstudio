@@ -49,6 +49,7 @@ with Gtk.Text_Tag;                        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;                  use Gtk.Text_Tag_Table;
 
 with Gtkada.Dialogs;                      use Gtkada.Dialogs;
+with Gtkada.MDI;                          use Gtkada.MDI;
 with Gtkada.Types;                        use Gtkada.Types;
 
 with Pango.Font;                          use Pango.Font;
@@ -74,6 +75,7 @@ with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with Language;                            use Language;
 with Language.Unknown;                    use Language.Unknown;
 with Language_Handlers;                   use Language_Handlers;
+with Src_Editor_Box;                      use Src_Editor_Box;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
@@ -6593,5 +6595,51 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.In_Completion;
    end In_Completion;
+
+   -----------------
+   -- Buffer_List --
+   -----------------
+
+   function Buffer_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Source_Buffer_Array
+   is
+      Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child_Count : Natural := 0;
+   begin
+      while Get (Iter) /= null loop
+         Child_Count := Child_Count + 1;
+         Next (Iter);
+      end loop;
+
+      declare
+         Buffers : Source_Buffer_Array (1 .. Child_Count);
+         Buffer  : Source_Buffer;
+         Index   : Integer := Buffers'First - 1;
+         Found   : Boolean;
+      begin
+         Iter := First_Child (Get_MDI (Kernel));
+         while Get (Iter) /= null loop
+            if Is_Source_Box (Get (Iter)) then
+               Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (Iter)));
+               Found := False;
+               for J in Buffers'First .. Index loop
+                  if Buffers (J) = Buffer then
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Index := Index + 1;
+                  Buffers (Index) := Buffer;
+               end if;
+            end if;
+            Next (Iter);
+         end loop;
+
+         return Buffers (Buffers'First .. Index);
+      end;
+   end Buffer_List;
 
 end Src_Editor_Buffer;

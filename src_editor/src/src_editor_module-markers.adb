@@ -193,20 +193,11 @@ package body Src_Editor_Module.Markers is
       Iter : Gtk_Text_Iter;
    begin
       if Marker.Mark /= null then
-         if not Get_Deleted (Marker.Mark) then
-            Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
-            Get_Iter_Position
-              (Source_Buffer (Marker.Buffer), Iter,
-               Marker.Line,
-               Marker.Column);
-
-            if Active (Me) then
-               Trace (Me, "Updated position of marker to "
-                      & Marker.Line'Img & Marker.Column'Img);
-            end if;
-         else
-            Trace (Me, "Updated position of marker, mark was deleted");
-         end if;
+         Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
+         Get_Iter_Position
+           (Source_Buffer (Marker.Buffer), Iter,
+            Marker.Line,
+            Marker.Column);
       end if;
    end Update_Marker_Location;
 
@@ -270,6 +261,12 @@ package body Src_Editor_Module.Markers is
          Disconnect (Marker.Buffer, Marker.Cid);
          Weak_Unref (Marker.Mark,
                    On_Destroy_Mark'Access, Convert (M1));
+
+         --  Do not destroy the physical mark if it has a name, since the user
+         --  might still want to access it later on. This might lead to some
+         --  useless marks in the buffer that are never used afterward, but
+         --  presumably if the user used a name he might need the mark at any
+         --  point.
 
          if not In_Destruction_Is_Set (Source_Buffer (Marker.Buffer)) then
             Delete_Mark (Marker.Buffer, Marker.Mark);
@@ -425,6 +422,28 @@ package body Src_Editor_Module.Markers is
       Register_Persistent_Marker (Marker);
       return Marker;
    end Create_File_Marker;
+
+   ----------
+   -- Move --
+   ----------
+
+   procedure Move
+     (Marker : access File_Marker_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark)
+   is
+   begin
+      if Marker.Mark /= null then
+         Weak_Unref
+           (Marker.Mark, On_Destroy_Mark'Access,
+            Convert (File_Marker (Marker)));
+      end if;
+
+      Marker.Buffer := Get_Buffer (Mark);
+      Marker.Mark   := Mark;
+      Weak_Ref
+        (Marker.Mark, On_Destroy_Mark'Access, Convert (File_Marker (Marker)));
+      Update_Marker_Location (Marker);
+   end Move;
 
    ---------------------------------------------
    -- Push_Current_Editor_Location_In_History --
