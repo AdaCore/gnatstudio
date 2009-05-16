@@ -104,14 +104,12 @@ package body Src_Editor_Module.Editors is
       Tag    : Gtk_Text_Tag; --  one ref owned by the overlay
    end record;
 
-   type Editor_Properties_Type is (Marks, Locations);
+   type Editor_Properties_Type is (Locations);
 
    type Editors_Props_Record (Typ : Editor_Properties_Type)
      is new Instance_Property_Record
    with record
       case Typ is
-         when Marks =>
-            Mark    : Editor_Mark_Access;
          when Locations =>
             Loc     : Editor_Location_Access;
       end case;
@@ -1404,12 +1402,13 @@ package body Src_Editor_Module.Editors is
          Mark := Get_Mark (This.Mark.Mark);
 
          if Mark = null or else Get_Deleted (Mark) then
-            return Nil_Editor_Location;
+            raise Editor_Exception with -"Mark was destroyed";
          end if;
 
          Get_Iter_At_Mark (Buffer.Contents.Buffer, Iter, Mark);
 
          return Create_Editor_Location (Buffer, Iter);
+
       else
          return Nil_Editor_Location;
       end if;
@@ -2231,8 +2230,14 @@ package body Src_Editor_Module.Editors is
    overriding procedure Delete (This : Src_Editor_Mark) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (File_Marker_Record'Class, File_Marker);
+      T : Gtk_Text_Mark;
    begin
       if This.Mark /= null then
+         T := Get_Mark (This.Mark.Mark);
+         if T /= null then
+            Delete_Mark (Get_Buffer (T), T);
+         end if;
+
          Destroy (This.Mark.Mark.all);
          Unchecked_Free (This.Mark.Mark);
       end if;
@@ -3142,35 +3147,73 @@ package body Src_Editor_Module.Editors is
       return Create_Editor_Overlay (Tag => Tag);
    end Overlay_From_Instance;
 
+   ------------------------
+   -- Instance_From_Mark --
+   ------------------------
+
+   function Instance_From_Mark
+     (Script  : access Scripting_Language_Record'Class;
+      Class   : Class_Type;
+      Mark    : Editor_Mark'Class) return Class_Instance
+   is
+      Inst : Class_Instance;
+      Tag  : Gtk_Text_Mark;
+   begin
+      if Mark not in Src_Editor_Mark'Class
+        or else Src_Editor_Mark (Mark).Mark = null
+      then
+         return No_Class_Instance;
+      end if;
+
+      Tag := Get_Mark (Src_Editor_Mark (Mark).Mark.Mark);
+
+      if Tag = null then
+         return No_Class_Instance;
+      end if;
+
+      Inst := Get_Instance (Script, Tag);
+
+      if Inst = No_Class_Instance then
+         Inst := New_Instance (Script, Class);
+         Set_Data (Inst, GObject (Tag));
+      end if;
+
+      return Inst;
+   end Instance_From_Mark;
+
+   ------------------------
+   -- Mark_From_Instance --
+   ------------------------
+
+   function Mark_From_Instance
+     (This     : Src_Editor_Buffer_Factory;
+      Instance : Class_Instance) return Editor_Mark'Class
+   is
+      Tag : Gtk_Text_Mark;
+   begin
+      Tag := Gtk_Text_Mark (GObject'(Get_Data (Instance)));
+
+      if Tag = null then
+         raise Editor_Exception with -"Mark was destroyed";
+      end if;
+
+      return Create_Editor_Mark
+        (Src_Editor_Buffer (This.Get (Source_Buffer (Get_Buffer (Tag)))),
+         Tag);
+   end Mark_From_Instance;
+
    -------------
    -- Destroy --
    -------------
 
    overriding procedure Destroy (Prop : in out Editors_Props_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Editor_Mark'Class, Editor_Mark_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Editor_Location'Class, Editor_Location_Access);
    begin
       case Prop.Typ is
-         when Marks     => Unchecked_Free (Prop.Mark);
          when Locations => Unchecked_Free (Prop.Loc);
       end case;
    end Destroy;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance   : Class_Instance;
-      Class_Name : String;
-      Mark       : Editor_Mark'Class) is
-   begin
-      Set_Data
-        (Instance, Class_Name, Editors_Props_Record'
-           (Typ => Marks, Mark => new Editor_Mark'Class'(Mark)));
-   end Set_Data;
 
    --------------
    -- Set_Data --
@@ -3185,25 +3228,6 @@ package body Src_Editor_Module.Editors is
         (Instance, Class_Name, Editors_Props_Record'
            (Typ => Locations, Loc => new Editor_Location'Class'(Location)));
    end Set_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance; Class_Name : String) return Editor_Mark_Access
-   is
-      Props : Editors_Props;
-   begin
-      if Instance /= No_Class_Instance then
-         Props := Editors_Props
-           (Instance_Property'(Get_Data (Instance, Class_Name)));
-         if Props /= null then
-            return Props.Mark;
-         end if;
-      end if;
-      return null;
-   end Get_Data;
 
    --------------
    -- Get_Data --

@@ -738,7 +738,8 @@ package body GPS.Editors is
    is
       pragma Unreferenced (This, Buffer);
    begin
-      return False;
+      --  Always equal, since the only dummy_editor is nil_editor_buffer
+      return True;
    end "=";
 
 end GPS.Editors;

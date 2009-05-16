@@ -46,9 +46,9 @@ package body Src_Editor_Module.Markers is
    package Markers_Callback is new Gtk.Handlers.User_Callback
      (GObject_Record, File_Marker);
 
-   procedure On_Destroy_Mark
-     (Marker : System.Address; Text_Mark : System.Address);
-   pragma Convention (C, On_Destroy_Mark);
+   procedure On_Destroy_Buffer
+     (Marker : System.Address; Buffer : System.Address);
+   pragma Convention (C, On_Destroy_Buffer);
    --  Called when a gtk_text_mark is destroyed. At this point, the mark is
    --  no longer attached to a buffer. This is called only when the mark
    --  is explicitly removed from the buffer.
@@ -201,22 +201,19 @@ package body Src_Editor_Module.Markers is
       end if;
    end Update_Marker_Location;
 
-   ---------------------
-   -- On_Destroy_Mark --
-   ---------------------
+   -----------------------
+   -- On_Destroy_Buffer --
+   -----------------------
 
-   procedure On_Destroy_Mark
-     (Marker : System.Address; Text_Mark : System.Address)
+   procedure On_Destroy_Buffer
+     (Marker : System.Address; Buffer : System.Address)
    is
-      pragma Unreferenced (Text_Mark);
+      pragma Unreferenced (Buffer);
       M : constant File_Marker := Convert (Marker);
    begin
-      --  No need to remove the weak_ref on the mark since it has been
-      --  cancelled automatically by gtk+ prior to calling On_Destroy_Mark.
-
       M.Mark   := null;
       M.Buffer := null;
-   end On_Destroy_Mark;
+   end On_Destroy_Buffer;
 
    ----------------
    -- On_Changed --
@@ -259,18 +256,10 @@ package body Src_Editor_Module.Markers is
          --  File_Marker pointer.
 
          Disconnect (Marker.Buffer, Marker.Cid);
-         Weak_Unref (Marker.Mark,
-                   On_Destroy_Mark'Access, Convert (M1));
+         Weak_Unref (Marker.Buffer,
+                     On_Destroy_Buffer'Access, Convert (M1));
 
-         --  Do not destroy the physical mark if it has a name, since the user
-         --  might still want to access it later on. This might lead to some
-         --  useless marks in the buffer that are never used afterward, but
-         --  presumably if the user used a name he might need the mark at any
-         --  point.
-
-         if not In_Destruction_Is_Set (Source_Buffer (Marker.Buffer)) then
-            Delete_Mark (Marker.Buffer, Marker.Mark);
-         end if;
+         Unref (Marker.Mark);
 
          Marker.Mark := null;
          Marker.Buffer := null;
@@ -321,8 +310,9 @@ package body Src_Editor_Module.Markers is
          --  directly, it will be destroyed anyway, so we need to be aware of
          --  that.
 
-         Weak_Ref (Marker.Mark,
-                   On_Destroy_Mark'Access, Convert (File_Marker (Marker)));
+         Weak_Ref (Marker.Buffer,
+                   On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
+         Ref (Marker.Mark);
          Marker.Cid := Markers_Callback.Connect
            (Marker.Buffer, Signal_Changed,
             Markers_Callback.To_Marshaller (On_Changed'Access),
@@ -416,7 +406,8 @@ package body Src_Editor_Module.Markers is
       Marker.Cid := Markers_Callback.Connect
         (Marker.Buffer, Signal_Changed,
          Markers_Callback.To_Marshaller (On_Changed'Access), Marker);
-      Weak_Ref (Marker.Mark, On_Destroy_Mark'Access, Convert (Marker));
+      Weak_Ref (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
+      Ref (Marker.Mark);
 
       Update_Marker_Location (Marker);
       Register_Persistent_Marker (Marker);
@@ -434,14 +425,17 @@ package body Src_Editor_Module.Markers is
    begin
       if Marker.Mark /= null then
          Weak_Unref
-           (Marker.Mark, On_Destroy_Mark'Access,
+           (Marker.Buffer, On_Destroy_Buffer'Access,
             Convert (File_Marker (Marker)));
+         Unref (Marker.Mark);
       end if;
 
       Marker.Buffer := Get_Buffer (Mark);
       Marker.Mark   := Mark;
       Weak_Ref
-        (Marker.Mark, On_Destroy_Mark'Access, Convert (File_Marker (Marker)));
+        (Marker.Buffer, On_Destroy_Buffer'Access,
+         Convert (File_Marker (Marker)));
+      Ref (Marker.Mark);
       Update_Marker_Location (Marker);
    end Move;
 

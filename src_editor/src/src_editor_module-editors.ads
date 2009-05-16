@@ -103,6 +103,15 @@ package Src_Editor_Module.Editors is
      (Instance   : Class_Instance) return Editor_Overlay'Class;
    --  See comment above
 
+   function Instance_From_Mark
+     (Script  : access Scripting_Language_Record'Class;
+      Class   : Class_Type;
+      Mark    : Editor_Mark'Class) return Class_Instance;
+   function Mark_From_Instance
+     (This     : Src_Editor_Buffer_Factory;
+      Instance : Class_Instance) return Editor_Mark'Class;
+   --  See comment above
+
    type Editor_Mark_Access     is access all Editor_Mark'Class;
    type Editor_Location_Access is access all Editor_Location'Class;
    --  For efficiency reasons, the subprograms below return access to the
@@ -110,14 +119,6 @@ package Src_Editor_Module.Editors is
    --  procedures returning these as out parameters, instead of systematically
    --  functions.
    --  You never need to deallocate these.
-
-   procedure Set_Data
-     (Instance   : Class_Instance;
-      Class_Name : String;
-      Mark       : Editor_Mark'Class);
-   function Get_Data
-     (Instance   : Class_Instance;
-      Class_Name : String) return Editor_Mark_Access;
 
    procedure Set_Data
      (Instance   : Class_Instance;

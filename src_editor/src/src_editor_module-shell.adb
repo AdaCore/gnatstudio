@@ -380,14 +380,10 @@ package body Src_Editor_Module.Shell is
 
    function Create_Editor_Mark
      (Script : access Scripting_Language_Record'Class;
-      Mark   : Editor_Mark'Class) return Class_Instance
-   is
-      Inst : Class_Instance;
+      Mark   : Editor_Mark'Class) return Class_Instance is
    begin
-      Inst := New_Instance
-        (Script, New_Class (Get_Kernel (Script), "EditorMark"));
-      Set_Data (Inst, "EditorMark", Mark => Mark);
-      return Inst;
+      return Instance_From_Mark
+        (Script, New_Class (Get_Kernel (Script), "EditorMark"), Mark);
    end Create_Editor_Mark;
 
    --------------
@@ -401,12 +397,10 @@ package body Src_Editor_Module.Shell is
       EditorMark : constant Class_Type :=
                      New_Class (Get_Kernel (Data), "EditorMark");
       Inst : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
-      M    : constant Editor_Mark_Access := Get_Data (Inst, "EditorMark");
    begin
-      if M = null then
-         raise Editor_Exception with -"No associated mark";
-      end if;
-      return M.all;
+      return Mark_From_Instance
+        (Src_Editor_Buffer_Factory
+           (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Mark;
 
    ----------------------------
@@ -2156,12 +2150,18 @@ package body Src_Editor_Module.Shell is
       elsif Command = Destructor_Method then
          --  Do not delete named marks, since we can still access them
          --  through get_mark() anyway
-         declare
-            M : constant Editor_Mark'Class := Get_Mark (Data, 1);
          begin
-            if M.Name = "" then
-               M.Delete;
-            end if;
+            declare
+               M : constant Editor_Mark'Class := Get_Mark (Data, 1);
+            begin
+               if M.Name = "" then
+                  M.Delete;
+               end if;
+            end;
+         exception
+            when Editor_Exception =>
+               null;  --  The gtk+ mark might already have been destroyed, so
+                        --  this isn't an error
          end;
 
       elsif Command = "delete" then
