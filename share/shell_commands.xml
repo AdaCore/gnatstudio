@@ -4976,7 +4976,11 @@ When no match is found, this function returns null. Additionally, if dialog_on_f
       #################################################################-->
 
   <shell_doc name="GPS.EditorMark">
-      <description>This class represents a specific location in an open editor. As opposed to the GPS.EditorLocation class, the exact location is updated whenever the buffer is modified. For instance, if you add a line before the mark, then the mark is moved one line forward as well, so that it still points to the same character in the buffer. These marks are automatically destroyed whenever the buffer is destroyed, or if you explicitly call GPS.EditorMark.Delete</description>
+      <description>This class represents a specific location in an open editor. As opposed to the GPS.EditorLocation class, the exact location is updated whenever the buffer is modified. For instance, if you add a line before the mark, then the mark is moved one line forward as well, so that it still points to the same character in the buffer.
+
+The mark remains valid even if you close the buffer; or if you reopen it and modify it. It will always point to the same location in the file, while you have kept the python object.
+
+GPS.EditorLocation.create_mark allows you to create named marks which you can then retrieve through GPS.EditorBuffer.get_mark. Such named marks are only valid while the editor exists. As soon as you close the editor, you can no longer use get_mark to retrieve it (but the mark is still valid if you have kept a python object referencing it).</description>
       <see_also name="GPS.EditorLocation" />
   </shell_doc>
 
