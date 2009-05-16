@@ -670,6 +670,15 @@ package GPS.Editors is
    --  isn't an error if the overlay is not applied to any of the character in
    --  the range, it just has no effect in that case
 
+   overriding function "="
+     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean
+     is abstract;
+   --  Compare two buffers. Since an Editor_Buffer is just a wrapper and we
+   --  recreate as many of them as we need even for the same widget
+   --  object, we do the comparison on the widget itself.
+   --  This always return False if any of the buffers is not associated with a
+   --  live widget anymore.
+
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
 
@@ -994,6 +1003,9 @@ private
 
    overriding function Views
      (This : Dummy_Editor_Buffer) return View_Lists.List;
+
+   overriding function "="
+     (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with others => <>);

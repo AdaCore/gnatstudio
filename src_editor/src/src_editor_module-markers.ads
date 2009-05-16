@@ -69,7 +69,6 @@ package Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
    --  Return the file in which Marker is set
-
    function Get_Line
      (Marker : access File_Marker_Record'Class) return Editable_Line_Type;
    function Get_Column
@@ -79,7 +78,10 @@ package Src_Editor_Module.Markers is
       return Gtk.Text_Mark.Gtk_Text_Mark;
    function Get_Id
      (Marker : access File_Marker_Record'Class) return Integer;
-   pragma Inline (Get_File, Get_Line, Get_Column, Get_Mark, Get_Id);
+   function Get_Kernel
+     (Marker : access File_Marker_Record'Class) return Kernel_Handle;
+   pragma Inline
+     (Get_File, Get_Line, Get_Column, Get_Mark, Get_Id, Get_Kernel);
    --  Return the coordinates of the marker
 
    function Find_Mark (Id : Natural) return File_Marker;

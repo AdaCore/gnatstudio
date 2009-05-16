@@ -729,4 +729,16 @@ package body GPS.Editors is
       return View_Lists.Empty_List;
    end Views;
 
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean
+   is
+      pragma Unreferenced (This, Buffer);
+   begin
+      return False;
+   end "=";
+
 end GPS.Editors;

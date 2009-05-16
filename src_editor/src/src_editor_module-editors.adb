@@ -54,12 +54,21 @@ with Traces;                  use Traces;
 package body Src_Editor_Module.Editors is
    Me : constant Debug_Handle := Create ("Editor.Buffer");
 
-   type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
-      Kernel  : Kernel_Handle;
-      Buffer  : Source_Buffer;  --  ??? What happens when buffer is destroyed
-      File    : Virtual_File;
-      Factory : Src_Editor_Buffer_Factory;
+   type Buffer_Reference is record
+      Kernel    : Kernel_Handle;
+      Buffer    : Source_Buffer;   --  Reset to null when buffer is destroyed
+      File      : Virtual_File;
+      Factory   : Src_Editor_Buffer_Factory;
+      Ref_Count : Natural := 1;
    end record;
+   type Buffer_Reference_Access is access all Buffer_Reference;
+   type Src_Editor_Buffer is new GPS.Editors.Editor_Buffer with record
+      Contents  : Buffer_Reference_Access;  --  null only when not initialized
+   end record;
+   --  This is a reference counted type, so that when the buffer is destroyed
+   --  we can reset the Buffer field to null. This requires that the field is
+   --  not copied whenever we copy a Src_Editor_Buffer, and therefore requires
+   --  memory allocation
 
    type Src_Editor_Location is new GPS.Editors.Editor_Location with record
       Buffer : Src_Editor_Buffer;
@@ -70,26 +79,29 @@ package body Src_Editor_Module.Editors is
 
    type Mark_Reference is record
       Mark : File_Marker;
-      Refs : Integer := 1;
+      Refs : Natural := 1;
    end record;
-
    type Mark_Reference_Access is access all Mark_Reference;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Mark_Reference, Mark_Reference_Access);
-
    type Src_Editor_Mark is new GPS.Editors.Editor_Mark with record
-      Kernel : Kernel_Handle;
       Mark   : Mark_Reference_Access;
    end record;
+   --  A mark uses reference counting, since we already want to reference the
+   --  same physical data whatever Mark_Editor we use.
 
-   type Src_Editor_View is new GPS.Editors.Editor_View with record
-      Buffer : Src_Editor_Buffer;
-      Box    : Source_Editor_Box;
+   type View_Reference is record
+      Buffer    : Src_Editor_Buffer;
+      Box       : Source_Editor_Box;
+      Ref_Count : Natural := 1;
    end record;
+   type View_Reference_Access is access all View_Reference;
+   type Src_Editor_View is new GPS.Editors.Editor_View with record
+      Contents : View_Reference_Access;
+   end record;
+   --  A refcounted type so that we can reset Box when the editor is closed by
+   --  the user
 
    type Src_Editor_Overlay is new GPS.Editors.Editor_Overlay with record
-      Tag    : Gtk_Text_Tag;
+      Tag    : Gtk_Text_Tag; --  one ref owned by the overlay
    end record;
 
    type Editor_Properties_Type is (Marks, Locations);
@@ -254,7 +266,6 @@ package body Src_Editor_Module.Editors is
    overriding procedure Delete (This : Src_Editor_Mark);
 
    overriding procedure Adjust (This : in out Src_Editor_Mark);
-
    overriding procedure Finalize (This : in out Src_Editor_Mark);
 
    overriding function Location
@@ -425,6 +436,20 @@ package body Src_Editor_Module.Editors is
       Identifier : String;
       Info       : Line_Information_Data);
 
+   overriding procedure Adjust (This : in out Src_Editor_Buffer);
+   overriding procedure Finalize (This : in out Src_Editor_Buffer);
+
+   overriding function "="
+     (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean;
+
+   function Convert is new Ada.Unchecked_Conversion
+     (Buffer_Reference_Access, System.Address);
+
+   procedure On_Buffer_Destroyed
+     (Contents : System.Address; Buffer : System.Address);
+   pragma Convention (C, On_Buffer_Destroyed);
+   --  Called when the gtk+ object is destroyed, to reset internal fields
+
    ---------------------
    -- Src_Editor_View --
    ---------------------
@@ -455,6 +480,22 @@ package body Src_Editor_Module.Editors is
    overriding function Buffer
      (This : Src_Editor_View) return Editor_Buffer'Class;
 
+   overriding procedure Adjust (This : in out Src_Editor_View);
+   overriding procedure Finalize (This : in out Src_Editor_View);
+
+   function Get
+     (Buffer : Src_Editor_Buffer'Class; Box : Source_Editor_Box)
+      return Editor_View'Class;
+   --  Wrap Box into a view
+
+   function Convert is new Ada.Unchecked_Conversion
+     (View_Reference_Access, System.Address);
+
+   procedure On_View_Destroyed
+     (Contents : System.Address; View : System.Address);
+   pragma Convention (C, On_View_Destroyed);
+   --  Called when the gtk+ object is destroyed, to reset internal fields
+
    ------------------------
    -- Src_Editor_Overlay --
    ------------------------
@@ -468,6 +509,8 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Overlay; Name : String; Value : String);
    overriding procedure Set_Property
      (This : Src_Editor_Overlay; Name : String; Value : Boolean);
+   overriding procedure Adjust (This : in out Src_Editor_Overlay);
+   overriding procedure Finalize (This : in out Src_Editor_Overlay);
 
    ----------------------------
    -- Create_Editor_Location --
@@ -480,11 +523,9 @@ package body Src_Editor_Module.Editors is
       Editor_Loc : Src_Editor_Location;
    begin
       Get_Iter_Position
-        (Buffer.Buffer, Location, Editor_Loc.Line, Editor_Loc.Column);
+        (Buffer.Contents.Buffer, Location, Editor_Loc.Line, Editor_Loc.Column);
       Editor_Loc.Offset := Integer (Get_Offset (Location));
-
       Editor_Loc.Buffer := Src_Editor_Buffer (Buffer);
-
       return Editor_Loc;
    end Create_Editor_Location;
 
@@ -502,9 +543,9 @@ package body Src_Editor_Module.Editors is
       Success := True;
 
       if Location not in Src_Editor_Location'Class
-        or else Src_Editor_Location (Location).Buffer.Buffer = null
+        or else Src_Editor_Location (Location).Buffer.Contents.Buffer = null
         or else not Is_Valid_Position
-          (Src_Editor_Location (Location).Buffer.Buffer,
+          (Src_Editor_Location (Location).Buffer.Contents.Buffer,
            Src_Editor_Location (Location).Line,
            Src_Editor_Location (Location).Column)
       then
@@ -513,7 +554,7 @@ package body Src_Editor_Module.Editors is
 
       else
          Get_Iter_At_Screen_Position
-           (Src_Editor_Location (Location).Buffer.Buffer, Iter,
+           (Src_Editor_Location (Location).Buffer.Contents.Buffer, Iter,
             Line   => Src_Editor_Location (Location).Line,
             Column => Src_Editor_Location (Location).Column);
       end if;
@@ -596,13 +637,13 @@ package body Src_Editor_Module.Editors is
    is
       New_Ref : constant Mark_Reference_Access :=
         new Mark_Reference'
-          (Mark => Create_File_Marker (Buffer.Kernel, Buffer.File, Mark),
+          (Mark => Create_File_Marker
+               (Buffer.Contents.Kernel, Buffer.Contents.File, Mark),
            Refs => 1);
    begin
       pragma Assert (Mark /= null);
 
-      return Src_Editor_Mark'
-        (Editor_Mark with Kernel => Buffer.Kernel, Mark => New_Ref);
+      return Src_Editor_Mark'(Editor_Mark with Mark => New_Ref);
    end Create_Editor_Mark;
 
    -----------
@@ -610,29 +651,28 @@ package body Src_Editor_Module.Editors is
    -----------
 
    overriding procedure Close
-     (This : Src_Editor_Buffer; Force : Boolean)
-   is
-      pragma Unreferenced (Force);
+     (This : Src_Editor_Buffer; Force : Boolean) is
    begin
-      --  ??? We never took a ref, we shouldn't unref what we do not hold
-      Unref (This.Buffer);
+      if This.Contents.Buffer /= null then
+         while Pure_Editors_Hash.Get
+           (This.Contents.Factory.Pure_Buffers.all,
+            This.Contents.File).Box /= null
+         loop
+            Pure_Editors_Hash.Remove
+              (This.Contents.Factory.Pure_Buffers.all, This.Contents.File);
+         end loop;
 
-      --  ??? We must close the views, not just remove from the htable
-      --  Python had the following implementation:
---              declare
---                 Views : constant Views_Array := Get_Views (Buffer);
---              begin
---                 for V in Views'Range loop
---                    Close (Get_MDI (Get_Kernel (Data)), Views (V),
---                           Force => Force);
---                 end loop;
---              end;
+         --  Close all views
 
-      while Pure_Editors_Hash.Get
-        (This.Factory.Pure_Buffers.all, This.File).Box /= null
-      loop
-         Pure_Editors_Hash.Remove (This.Factory.Pure_Buffers.all, This.File);
-      end loop;
+         declare
+            Views : constant Views_Array := Get_Views (This.Contents.Buffer);
+         begin
+            for V in Views'Range loop
+               Close (Get_MDI (This.Contents.Kernel), Views (V),
+                      Force => Force);
+            end loop;
+         end;
+      end if;
    end Close;
 
    ---------
@@ -699,6 +739,36 @@ package body Src_Editor_Module.Editors is
       return Get (This, Get_Buffer (Box));
    end Get_New;
 
+   -----------------------
+   -- On_View_Destroyed --
+   -----------------------
+
+   procedure On_View_Destroyed
+     (Contents : System.Address; View : System.Address)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, View_Reference_Access);
+      pragma Unreferenced (View);
+      C : constant View_Reference_Access := Convert (Contents);
+   begin
+      C.Box := null;
+   end On_View_Destroyed;
+
+   -------------------------
+   -- On_Buffer_Destroyed --
+   -------------------------
+
+   procedure On_Buffer_Destroyed
+     (Contents : System.Address; Buffer : System.Address)
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Buffer_Reference_Access);
+      pragma Unreferenced (Buffer);
+      C : constant Buffer_Reference_Access := Convert (Contents);
+   begin
+      C.Buffer := null;
+   end On_Buffer_Destroyed;
+
    ---------
    -- Get --
    ---------
@@ -708,15 +778,21 @@ package body Src_Editor_Module.Editors is
       Buffer : access Source_Buffer_Record'Class)
       return Editor_Buffer'Class
    is
+      Contents : Buffer_Reference_Access;
    begin
-      --  ??? We must setup callbacks so that when the editor is closed we
-      --  reset the internal Buffer field to null to avoid errors
-      return Src_Editor_Buffer'
-        (Editor_Buffer with
-         File    => Get_Filename (Buffer),
-         Factory => Src_Editor_Buffer_Factory (This),
-         Kernel  => This.Kernel,
-         Buffer  => Source_Buffer (Buffer));
+      Contents := new Buffer_Reference'
+        (Ref_Count => 1,
+         File      => Get_Filename (Buffer),
+         Factory   => Src_Editor_Buffer_Factory (This),
+         Kernel    => This.Kernel,
+         Buffer    => Source_Buffer (Buffer));
+
+      --  If the buffer is destroyed while we still exist, we must reset the
+      --  field to null to avoid Storage_Error
+
+      Weak_Ref (Buffer, On_Buffer_Destroyed'Access, Convert (Contents));
+
+      return Src_Editor_Buffer'(Editor_Buffer with Contents => Contents);
    end Get;
 
    --------------
@@ -738,8 +814,7 @@ package body Src_Editor_Module.Editors is
                 Visible_Column_Type (Column)),
            Refs => 1);
    begin
-      return Src_Editor_Mark'
-        (Editor_Mark with Kernel => This.Kernel, Mark => New_Ref);
+      return Src_Editor_Mark'(Editor_Mark with Mark => New_Ref);
    end New_Mark;
 
    -----------------------
@@ -1164,9 +1239,77 @@ package body Src_Editor_Module.Editors is
    -- Adjust --
    ------------
 
+   overriding procedure Adjust (This : in out Src_Editor_View) is
+   begin
+      if This.Contents /= null then
+         This.Contents.Ref_Count := This.Contents.Ref_Count + 1;
+      end if;
+   end Adjust;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Src_Editor_View) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (View_Reference, View_Reference_Access);
+   begin
+      if This.Contents /= null then
+         This.Contents.Ref_Count := This.Contents.Ref_Count - 1;
+         if This.Contents.Ref_Count = 0 then
+            if This.Contents.Box /= null then
+               Weak_Unref
+                 (This.Contents.Box, On_View_Destroyed'Access,
+                  Convert (This.Contents));
+            end if;
+
+            Unchecked_Free (This.Contents);
+         end if;
+      end if;
+   end Finalize;
+
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (This : in out Src_Editor_Buffer) is
+   begin
+      if This.Contents /= null then
+         This.Contents.Ref_Count := This.Contents.Ref_Count + 1;
+      end if;
+   end Adjust;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Src_Editor_Buffer) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Buffer_Reference, Buffer_Reference_Access);
+   begin
+      if This.Contents /= null then
+         This.Contents.Ref_Count := This.Contents.Ref_Count - 1;
+
+         if This.Contents.Ref_Count = 0 then
+            if This.Contents.Buffer /= null then
+               Weak_Unref
+                 (This.Contents.Buffer, On_Buffer_Destroyed'Access,
+                  Convert (This.Contents));
+            end if;
+            Unchecked_Free (This.Contents);
+         end if;
+      end if;
+   end Finalize;
+
+   ------------
+   -- Adjust --
+   ------------
+
    overriding procedure Adjust (This : in out Src_Editor_Mark) is
    begin
-      This.Mark.Refs := This.Mark.Refs + 1;
+      if This.Mark /= null then
+         This.Mark.Refs := This.Mark.Refs + 1;
+      end if;
    end Adjust;
 
    --------------
@@ -1176,26 +1319,54 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_Mark) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (File_Marker_Record'Class, File_Marker);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Mark_Reference, Mark_Reference_Access);
    begin
-      This.Mark.Refs := This.Mark.Refs - 1;
+      if This.Mark /= null then
+         This.Mark.Refs := This.Mark.Refs - 1;
 
-      if This.Mark.Refs = 0 then
-         if This.Mark.Mark /= null then
-            if (Get_Mark (This.Mark.Mark) /= null
-                and then not Get_Deleted (Get_Mark (This.Mark.Mark))
-                and then Get_Name (Get_Mark (This.Mark.Mark)) = "")
-              or else Get_Mark (This.Mark.Mark) = null
-            then
-               --  Do not delete named marks, since we can still access them
-               --  through get_mark() anyway
+         if This.Mark.Refs = 0 then
+            if This.Mark.Mark /= null then
+               if (Get_Mark (This.Mark.Mark) /= null
+                   and then not Get_Deleted (Get_Mark (This.Mark.Mark))
+                   and then Get_Name (Get_Mark (This.Mark.Mark)) = "")
+                 or else Get_Mark (This.Mark.Mark) = null
+               then
+                  --  Do not delete named marks, since we can still access them
+                  --  through get_mark() anyway
 
-               Trace (Me, "Deleting unnamed mark");
-               Destroy (This.Mark.Mark.all);
-               Unchecked_Free (This.Mark.Mark);
+                  Trace (Me, "Deleting unnamed mark");
+                  Destroy (This.Mark.Mark.all);
+                  Unchecked_Free (This.Mark.Mark);
+               end if;
             end if;
-         end if;
 
-         Free (This.Mark);
+            Unchecked_Free (This.Mark);
+         end if;
+      end if;
+   end Finalize;
+
+   ------------
+   -- Adjust --
+   ------------
+
+   overriding procedure Adjust (This : in out Src_Editor_Overlay) is
+   begin
+      if This.Tag /= null then
+         null;
+         --  Ref (This.Tag);
+      end if;
+   end Adjust;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Src_Editor_Overlay) is
+   begin
+      if This.Tag /= null then
+         --  Unref (This.Tag);
+         null;
       end if;
    end Finalize;
 
@@ -1217,7 +1388,7 @@ package body Src_Editor_Module.Editors is
 
          declare
             Buf : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (This.Kernel).Get
+              Get_Buffer_Factory (Get_Kernel (This.Mark.Mark)).Get
               (Get_File (This.Mark.Mark),
                Force       => False,
                Open_Buffer => False,
@@ -1236,7 +1407,7 @@ package body Src_Editor_Module.Editors is
             return Nil_Editor_Location;
          end if;
 
-         Get_Iter_At_Mark (Buffer.Buffer, Iter, Mark);
+         Get_Iter_At_Mark (Buffer.Contents.Buffer, Iter, Mark);
 
          return Create_Editor_Location (Buffer, Iter);
       else
@@ -1296,6 +1467,25 @@ package body Src_Editor_Module.Editors is
       return Result;
    end New_Location;
 
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Buffer : Src_Editor_Buffer'Class; Box : Source_Editor_Box)
+      return Editor_View'Class
+   is
+      Contents : View_Reference_Access;
+   begin
+      Contents := new View_Reference'
+        (Box       => Box,
+         Buffer    => Src_Editor_Buffer (Buffer),
+         Ref_Count => 1);
+
+      Weak_Ref (Contents.Box, On_View_Destroyed'Access, Convert (Contents));
+      return Src_Editor_View'(Editor_View with Contents => Contents);
+   end Get;
+
    --------------
    -- New_View --
    --------------
@@ -1303,16 +1493,13 @@ package body Src_Editor_Module.Editors is
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class
    is
-      Result : Src_Editor_View;
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
-            Views : constant Views_Array := Get_Views (This.Buffer);
+            Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
-            Result.Box := New_View (This.Kernel, Views (Views'First));
-            Result.Buffer := This;
-
-            return Result;
+            return Get
+              (This, New_View (This.Contents.Kernel, Views (Views'First)));
          end;
       end if;
 
@@ -1325,7 +1512,7 @@ package body Src_Editor_Module.Editors is
 
    overriding function File (This : Src_Editor_Buffer) return Virtual_File is
    begin
-      return This.File;
+      return This.Contents.File;
    end File;
 
    ----------
@@ -1359,13 +1546,14 @@ package body Src_Editor_Module.Editors is
    is
       Mark : Gtk_Text_Mark;
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
             Highlight_Category : Natural := 0;
             Style              : Style_Access;
          begin
             if Category /= "" then
-               Style := Get_Or_Create_Style (This.Kernel, Category, False);
+               Style := Get_Or_Create_Style
+                 (This.Contents.Kernel, Category, False);
 
                if Style = null then
                   raise Editor_Exception
@@ -1376,7 +1564,7 @@ package body Src_Editor_Module.Editors is
             end if;
 
             Mark := Add_Special_Lines
-              (This.Buffer,
+              (This.Contents.Buffer,
                Editable_Line_Type (Start_Line),
                Highlight_Category,
                Text,
@@ -1401,7 +1589,7 @@ package body Src_Editor_Module.Editors is
       Lines : Integer)
    is
    begin
-      if This.Buffer /= null and then Mark /= Nil_Editor_Mark then
+      if This.Contents.Buffer /= null and then Mark /= Nil_Editor_Mark then
          declare
             Src_Mark : Src_Editor_Mark renames Src_Editor_Mark (Mark);
          begin
@@ -1409,7 +1597,7 @@ package body Src_Editor_Module.Editors is
               and then Get_Mark (Src_Mark.Mark.Mark) /= null
             then
                Remove_Blank_Lines
-                 (This.Buffer, Get_Mark (Src_Mark.Mark.Mark), Lines);
+                 (This.Contents.Buffer, Get_Mark (Src_Mark.Mark.Mark), Lines);
             end if;
          end;
       end if;
@@ -1424,15 +1612,16 @@ package body Src_Editor_Module.Editors is
    is
       Child : MDI_Child;
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
-            File : GNATCOLL.VFS.Virtual_File := Get_Filename (This.Buffer);
+            File : GNATCOLL.VFS.Virtual_File :=
+              Get_Filename (This.Contents.Buffer);
          begin
             if File = GNATCOLL.VFS.No_File then
-               File := Get_File_Identifier (This.Buffer);
+               File := Get_File_Identifier (This.Contents.Buffer);
             end if;
 
-            Child := Find_Editor (This.Kernel, File);
+            Child := Find_Editor (This.Contents.Kernel, File);
          end;
 
          if Child = null then
@@ -1440,13 +1629,7 @@ package body Src_Editor_Module.Editors is
 
             return Nil_Editor_View;
          else
-            --  ??? We must setup callbacks so that when the editor is closed
-            --  we reset the internal Box field to null to avoid errors
-
-            return Src_Editor_View'
-              (Editor_View with
-               Box    => Source_Editor_Box (Get_Widget (Child)),
-               Buffer => This);
+            return Get (This, Source_Editor_Box (Get_Widget (Child)));
          end if;
 
       else
@@ -1461,14 +1644,14 @@ package body Src_Editor_Module.Editors is
    overriding function Lines_Count (This : Src_Editor_Buffer) return Integer is
       Iter : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_End_Iter (This.Buffer, Iter);
+      if This.Contents.Buffer /= null then
+         Get_End_Iter (This.Contents.Buffer, Iter);
 
          declare
             Line   : Editable_Line_Type;
             Column : Visible_Column_Type;
          begin
-            Get_Iter_Position (This.Buffer, Iter, Line, Column);
+            Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
             return Integer (Line);
          end;
@@ -1485,8 +1668,8 @@ package body Src_Editor_Module.Editors is
    overriding function Characters_Count
      (This : Src_Editor_Buffer) return Natural is
    begin
-      if This.Buffer /= null then
-         return Integer (Get_Char_Count (This.Buffer));
+      if This.Contents.Buffer /= null then
+         return Integer (Get_Char_Count (This.Contents.Buffer));
       else
          --  ??? Should we check in the file on the disk
          return 0;
@@ -1504,9 +1687,10 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To, False);
-         Select_Region (This.Buffer, Cursor_Iter => Iter2, Bound_Iter => Iter);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To, False);
+         Select_Region
+           (This.Contents.Buffer, Cursor_Iter => Iter2, Bound_Iter => Iter);
       end if;
    end Select_Text;
 
@@ -1517,16 +1701,16 @@ package body Src_Editor_Module.Editors is
    overriding function Selection_Start
      (This : Src_Editor_Buffer) return Editor_Location'Class is
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
             Mark, Cursor   : Gtk_Text_Mark;
             IMark, ICursor : Gtk_Text_Iter;
             Mark_First     : Boolean;
          begin
-            Mark   := Get_Selection_Bound (This.Buffer);
-            Cursor := Get_Insert (This.Buffer);
-            Get_Iter_At_Mark (This.Buffer, IMark, Mark);
-            Get_Iter_At_Mark (This.Buffer, ICursor, Cursor);
+            Mark   := Get_Selection_Bound (This.Contents.Buffer);
+            Cursor := Get_Insert (This.Contents.Buffer);
+            Get_Iter_At_Mark (This.Contents.Buffer, IMark, Mark);
+            Get_Iter_At_Mark (This.Contents.Buffer, ICursor, Cursor);
 
             Mark_First := Compare (IMark, ICursor) <= 0;
 
@@ -1548,16 +1732,16 @@ package body Src_Editor_Module.Editors is
    overriding function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class is
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
             Mark, Cursor   : Gtk_Text_Mark;
             IMark, ICursor : Gtk_Text_Iter;
             Mark_First     : Boolean;
          begin
-            Mark   := Get_Selection_Bound (This.Buffer);
-            Cursor := Get_Insert (This.Buffer);
-            Get_Iter_At_Mark (This.Buffer, IMark, Mark);
-            Get_Iter_At_Mark (This.Buffer, ICursor, Cursor);
+            Mark   := Get_Selection_Bound (This.Contents.Buffer);
+            Cursor := Get_Insert (This.Contents.Buffer);
+            Get_Iter_At_Mark (This.Contents.Buffer, IMark, Mark);
+            Get_Iter_At_Mark (This.Contents.Buffer, ICursor, Cursor);
 
             Mark_First := Compare (IMark, ICursor) <= 0;
 
@@ -1578,9 +1762,9 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Unselect (This : Src_Editor_Buffer) is
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          Select_Region
-           (This.Buffer,
+           (This.Contents.Buffer,
             Start_Line   => Gint'(0),
             Start_Column => 0,
             End_Line     => 0,
@@ -1603,12 +1787,12 @@ package body Src_Editor_Module.Editors is
       End_Line   : Editable_Line_Type;
       End_Col    : Character_Offset_Type;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
-         Get_Iter_Position (This.Buffer, Iter, Begin_Line, Begin_Col);
-         Get_Iter_Position (This.Buffer, Iter2, End_Line, End_Col);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
+         Get_Iter_Position (This.Contents.Buffer, Iter, Begin_Line, Begin_Col);
+         Get_Iter_Position (This.Contents.Buffer, Iter2, End_Line, End_Col);
          return Get_Text
-           (This.Buffer, Begin_Line, Begin_Col, End_Line, End_Col);
+           (This.Contents.Buffer, Begin_Line, Begin_Col, End_Line, End_Col);
       else
          return "";
       end if;
@@ -1627,18 +1811,21 @@ package body Src_Editor_Module.Editors is
       Iter     : Gtk_Text_Iter;
       Success  : Boolean;
    begin
-      Get_Location (Iter, Src_From, Iter, Success);
+      if This.Contents.Buffer /= null then
+         Get_Location (Iter, Src_From, Iter, Success);
 
-      if Success then
-         if Get_Buffer (Iter) = Gtk_Text_Buffer (This.Buffer) then
-            if Get_Writable (This.Buffer) then
-               Insert (This.Buffer, Iter, Text);
-               End_Action (This.Buffer);
+         if Success then
+            if Get_Buffer (Iter) = Gtk_Text_Buffer (This.Contents.Buffer) then
+               if Get_Writable (This.Contents.Buffer) then
+                  Insert (This.Contents.Buffer, Iter, Text);
+                  End_Action (This.Contents.Buffer);
+               else
+                  raise Editor_Exception with -"Buffer is not writable";
+               end if;
             else
-               raise Editor_Exception with -"Buffer is not writable";
+               raise Editor_Exception
+                 with -"Location is not in the same buffer";
             end if;
-         else
-            raise Editor_Exception with -"Location is not in the same buffer";
          end if;
       end if;
    end Insert;
@@ -1654,12 +1841,12 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         if Get_Writable (This.Buffer) then
-            Delete (This.Buffer, Iter, Iter2);
-            End_Action (This.Buffer);
+         if Get_Writable (This.Contents.Buffer) then
+            Delete (This.Contents.Buffer, Iter, Iter2);
+            End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";
          end if;
@@ -1677,15 +1864,15 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         if not Do_Indentation (This.Buffer, Iter, Iter2) then
+         if not Do_Indentation (This.Contents.Buffer, Iter, Iter2) then
             raise Editor_Exception with -"Error while indenting";
          end if;
       end if;
 
-      End_Action (This.Buffer);
+      End_Action (This.Contents.Buffer);
    end Indent;
 
    ------------
@@ -1699,15 +1886,15 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         if Get_Writable (This.Buffer) then
+         if Get_Writable (This.Contents.Buffer) then
             Select_Region
-              (This.Buffer,
+              (This.Contents.Buffer,
                Cursor_Iter  => Iter2,
                Bound_Iter   => Iter);
-            if not Do_Refill (This.Buffer) then
+            if not Do_Refill (This.Contents.Buffer) then
                raise Editor_Exception with -"Error while refilling buffer";
             end if;
          else
@@ -1715,7 +1902,7 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
 
-      End_Action (This.Buffer);
+      End_Action (This.Contents.Buffer);
    end Refill;
 
    -------------------------
@@ -1729,9 +1916,9 @@ package body Src_Editor_Module.Editors is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
    begin
-      if This.Buffer /= null then
-         Get_Start_Iter (This.Buffer, Iter);
-         Get_Iter_Position (This.Buffer, Iter, Line, Column);
+      if This.Contents.Buffer /= null then
+         Get_Start_Iter (This.Contents.Buffer, Iter);
+         Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
          return Src_Editor_Location'
            (Editor_Location with
@@ -1755,9 +1942,9 @@ package body Src_Editor_Module.Editors is
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
    begin
-      if This.Buffer /= null then
-         Get_End_Iter (This.Buffer, Iter);
-         Get_Iter_Position (This.Buffer, Iter, Line, Column);
+      if This.Contents.Buffer /= null then
+         Get_End_Iter (This.Contents.Buffer, Iter);
+         Get_Iter_Position (This.Contents.Buffer, Iter, Line, Column);
 
          return Src_Editor_Location'
            (Editor_Location with
@@ -1782,17 +1969,18 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          if File = No_File then
             Success := Save_MDI_Children
-              (This.Kernel,
+              (This.Contents.Kernel,
                Children =>
                  (1 => Find_Editor
-                    (This.Kernel, Get_Filename (This.Buffer))),
+                    (This.Contents.Kernel,
+                     Get_Filename (This.Contents.Buffer))),
                Force    => not Interactive);
          else
             Save_To_File
-              (This.Buffer,
+              (This.Contents.Buffer,
                Filename => File,
                Success  => Success,
                Force    => not Interactive);
@@ -1810,8 +1998,8 @@ package body Src_Editor_Module.Editors is
    is
       Mark : Gtk_Text_Mark;
    begin
-      if This.Buffer /= null then
-         Mark := Get_Mark (This.Buffer, Name);
+      if This.Contents.Buffer /= null then
+         Mark := Get_Mark (This.Contents.Buffer, Name);
 
          if Mark /= null then
             return Create_Editor_Mark (This, Mark);
@@ -1838,19 +2026,21 @@ package body Src_Editor_Module.Editors is
       --  line. It should probably be enhanced rather than do it in this
       --  procedure
 
-      if From_Column = To_Column then
-         Add_Line_Highlighting
-           (This.Buffer,
-            Editable_Line_Type (Line),
-            Style_Access (Style),
-            Highlight_In => (others => True));
+      if This.Contents.Buffer /= null then
+         if From_Column = To_Column then
+            Add_Line_Highlighting
+              (This.Contents.Buffer,
+               Editable_Line_Type (Line),
+               Style_Access (Style),
+               Highlight_In => (others => True));
 
-      else
-         Highlight_Range
-           (This.Buffer, Style_Access (Style),
-            Editable_Line_Type (Line),
-            Visible_Column_Type (From_Column),
-            Visible_Column_Type (To_Column));
+         else
+            Highlight_Range
+              (This.Contents.Buffer, Style_Access (Style),
+               Editable_Line_Type (Line),
+               Visible_Column_Type (From_Column),
+               Visible_Column_Type (To_Column));
+         end if;
       end if;
    end Apply_Style;
 
@@ -1864,16 +2054,19 @@ package body Src_Editor_Module.Editors is
       Line  : Integer;
       From_Column, To_Column : Integer := -1) is
    begin
-      if From_Column = To_Column then
-         Remove_Line_Highlighting
-           (This.Buffer, Editable_Line_Type (Line), Style_Access (Style));
-      else
-         Highlight_Range
-           (This.Buffer, Style_Access (Style),
-            Editable_Line_Type (Line),
-            Visible_Column_Type (From_Column),
-            Visible_Column_Type (To_Column),
-            Remove => True);
+      if This.Contents.Buffer /= null then
+         if From_Column = To_Column then
+            Remove_Line_Highlighting
+              (This.Contents.Buffer, Editable_Line_Type (Line),
+               Style_Access (Style));
+         else
+            Highlight_Range
+              (This.Contents.Buffer, Style_Access (Style),
+               Editable_Line_Type (Line),
+               Visible_Column_Type (From_Column),
+               Visible_Column_Type (To_Column),
+               Remove => True);
+         end if;
       end if;
    end Remove_Style;
 
@@ -1883,8 +2076,10 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Start_Undo_Group (This : Src_Editor_Buffer) is
    begin
-      End_Action (This.Buffer);
-      Start_Group (Get_Command_Queue (This.Buffer));
+      if This.Contents.Buffer /= null then
+         End_Action (This.Contents.Buffer);
+         Start_Group (Get_Command_Queue (This.Contents.Buffer));
+      end if;
    end Start_Undo_Group;
 
    -----------------------
@@ -1893,8 +2088,10 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer) is
    begin
-      End_Action (This.Buffer);
-      End_Group (Get_Command_Queue (This.Buffer));
+      if This.Contents.Buffer /= null then
+         End_Action (This.Contents.Buffer);
+         End_Group (Get_Command_Queue (This.Contents.Buffer));
+      end if;
    end Finish_Undo_Group;
 
    ----------
@@ -1903,10 +2100,12 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Undo (This : Src_Editor_Buffer) is
    begin
-      if Get_Writable (This.Buffer) then
-         Undo (This.Buffer);
-      else
-         raise Editor_Exception with -"Buffer is not writable";
+      if This.Contents.Buffer /= null then
+         if Get_Writable (This.Contents.Buffer) then
+            Undo (This.Contents.Buffer);
+         else
+            raise Editor_Exception with -"Buffer is not writable";
+         end if;
       end if;
    end Undo;
 
@@ -1916,10 +2115,12 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Redo (This : Src_Editor_Buffer) is
    begin
-      if Get_Writable (This.Buffer) then
-         Redo (This.Buffer);
-      else
-         raise Editor_Exception with -"Buffer is not writable";
+      if This.Contents.Buffer /= null then
+         if Get_Writable (This.Contents.Buffer) then
+            Redo (This.Contents.Buffer);
+         else
+            raise Editor_Exception with -"Buffer is not writable";
+         end if;
       end if;
    end Redo;
 
@@ -1931,12 +2132,11 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Read_Only : Boolean)
    is
    begin
-      if This.Buffer /= null then
-         Set_Writable
-           (This.Buffer, not Read_Only, Explicit => True);
+      if This.Contents.Buffer /= null then
+         Set_Writable (This.Contents.Buffer, not Read_Only, Explicit => True);
 
          declare
-            Views : constant Views_Array := Get_Views (This.Buffer);
+            Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
             --  Update the labels on the view as well
             for J in Views'Range loop
@@ -1953,7 +2153,8 @@ package body Src_Editor_Module.Editors is
    overriding function Is_Read_Only
      (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Buffer = null or else not Get_Writable (This.Buffer);
+      return This.Contents.Buffer = null
+        or else not Get_Writable (This.Contents.Buffer);
    end Is_Read_Only;
 
    --------------------------
@@ -1965,11 +2166,11 @@ package body Src_Editor_Module.Editors is
       Identifier : String;
       Info       : Line_Information_Data) is
    begin
-      if This.Buffer = null then
+      if This.Contents.Buffer = null then
          return;
       end if;
 
-      Add_File_Information (This.Buffer, Identifier, Info);
+      Add_File_Information (This.Contents.Buffer, Identifier, Info);
    end Add_File_Information;
 
    --------------------
@@ -1981,14 +2182,14 @@ package body Src_Editor_Module.Editors is
       Constructs : out Language.Construct_List;
       Timestamp  : out Natural) is
    begin
-      if This.Buffer = null then
+      if This.Contents.Buffer = null then
          Constructs := (null, null, null, 0);
          Timestamp := 0;
          return;
       end if;
 
-      Constructs := Get_Constructs (This.Buffer, Exact);
-      Timestamp  := Get_Constructs_Timestamp (This.Buffer);
+      Constructs := Get_Constructs (This.Contents.Buffer, Exact);
+      Timestamp  := Get_Constructs_Timestamp (This.Contents.Buffer);
    end Get_Constructs;
 
    ----------
@@ -2045,8 +2246,8 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_View; Read_Only : Boolean)
    is
    begin
-      if This.Box /= null then
-         Set_Writable (This.Box, not Read_Only, Explicit => True);
+      if This.Contents.Box /= null then
+         Set_Writable (This.Contents.Box, not Read_Only, Explicit => True);
       end if;
    end Set_Read_Only;
 
@@ -2057,8 +2258,8 @@ package body Src_Editor_Module.Editors is
    overriding function Is_Read_Only (This : Src_Editor_View) return Boolean is
    begin
       --  If no box, return False so that we do not raise further errors later
-      return This.Box /= null
-        and then not Get_Writable (Get_Buffer (This.Box));
+      return This.Contents.Box /= null
+        and then not Get_Writable (Get_Buffer (This.Contents.Box));
    end Is_Read_Only;
 
    ------------
@@ -2073,29 +2274,29 @@ package body Src_Editor_Module.Editors is
       Success    : Boolean;
       Actual_Loc : Src_Editor_Location;
    begin
-      if This.Box /= null then
+      if This.Contents.Box /= null then
          if Location = Nil_Editor_Location then
             Actual_Loc := Src_Editor_Location (This.Cursor);
          else
             Actual_Loc := Src_Editor_Location (Location);
          end if;
 
-         Get_Cursor_Position (Get_View (This.Box), Iter);
+         Get_Cursor_Position (Get_View (This.Contents.Box), Iter);
          Get_Location (Iter, Actual_Loc, Iter, Success);
 
          if Success then
             declare
                M : constant Gtk_Text_Mark :=
-                 Create_Mark (Get_Buffer (This.Box), "", Iter);
+                 Create_Mark (Get_Buffer (This.Contents.Box), "", Iter);
             begin
                Scroll_To_Mark
-                 (Get_View (This.Box),
+                 (Get_View (This.Contents.Box),
                   Mark          => M,
                   Within_Margin => 0.2,
                   Use_Align     => False,
                   Xalign        => 0.5,
                   Yalign        => 0.5);
-               Delete_Mark (Get_Buffer (This.Box), M);
+               Delete_Mark (Get_Buffer (This.Contents.Box), M);
             end;
          else
             raise Editor_Exception with -"Invalid location";
@@ -2116,7 +2317,7 @@ package body Src_Editor_Module.Editors is
       Iter    : Gtk_Text_Iter;
       Success : Boolean;
    begin
-      if This.Box /= null then
+      if This.Contents.Box /= null then
          Get_Location (Iter, Src_Editor_Location (Location), Iter, Success);
 
          if Success then
@@ -2124,10 +2325,11 @@ package body Src_Editor_Module.Editors is
                Line : Editable_Line_Type;
                Col  : Character_Offset_Type;
             begin
-               Get_Iter_Position (Get_Buffer (This.Box), Iter, Line, Col);
+               Get_Iter_Position
+                 (Get_Buffer (This.Contents.Box), Iter, Line, Col);
 
                Set_Cursor_Location
-                 (This.Box,
+                 (This.Contents.Box,
                   Line        => Line,
                   Column      => Col,
                   Force_Focus => Raise_View,
@@ -2147,9 +2349,9 @@ package body Src_Editor_Module.Editors is
    is
       Iter : Gtk_Text_Iter;
    begin
-      if This.Box /= null then
-         Get_Cursor_Position (Get_View (This.Box), Iter);
-         return Create_Editor_Location (This.Buffer, Iter);
+      if This.Contents.Box /= null then
+         Get_Cursor_Position (Get_View (This.Contents.Box), Iter);
+         return Create_Editor_Location (This.Contents.Buffer, Iter);
       else
          return Nil_Editor_Location;
       end if;
@@ -2164,8 +2366,8 @@ package body Src_Editor_Module.Editors is
    is
       Child : Gtkada.MDI.MDI_Child;
    begin
-      if This.Box /= null then
-         Child := Find_MDI_Child_From_Widget (This.Box);
+      if This.Contents.Box /= null then
+         Child := Find_MDI_Child_From_Widget (This.Contents.Box);
          if Child /= null then
             if Short then
                return Get_Title (Child);
@@ -2184,7 +2386,7 @@ package body Src_Editor_Module.Editors is
    overriding function Buffer
      (This : Src_Editor_View) return Editor_Buffer'Class is
    begin
-      return This.Buffer;
+      return This.Contents.Buffer;
    end Buffer;
 
    -------------------
@@ -2198,7 +2400,7 @@ package body Src_Editor_Module.Editors is
       function Unchecked is new Ada.Unchecked_Conversion
         (Gtkada.MDI.MDI_Child, System.Address);
    begin
-      Child := Find_MDI_Child_From_Widget (This.Box);
+      Child := Find_MDI_Child_From_Widget (This.Contents.Box);
 
       if Child = null then
          return System.Null_Address;
@@ -2236,8 +2438,8 @@ package body Src_Editor_Module.Editors is
 
    overriding function Is_Modified (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Buffer /= null
-        and then Get_Status (This.Buffer) = Modified;
+      return This.Contents.Buffer /= null
+        and then Get_Status (This.Contents.Buffer) = Modified;
    end Is_Modified;
 
    ----------
@@ -2252,16 +2454,17 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         External_End_Action (This.Buffer);
-         Select_Range (This.Buffer, Iter, Iter2);
+         External_End_Action (This.Contents.Buffer);
+         Select_Range (This.Contents.Buffer, Iter, Iter2);
 
-         Copy_Clipboard (Get_Clipboard (This.Kernel), This.Buffer);
+         Copy_Clipboard
+           (Get_Clipboard (This.Contents.Kernel), This.Contents.Buffer);
 
          if Append then
-            Merge_Clipboard (Get_Clipboard (This.Kernel), 1, 2);
+            Merge_Clipboard (Get_Clipboard (This.Contents.Kernel), 1, 2);
          end if;
       end if;
    end Copy;
@@ -2278,21 +2481,22 @@ package body Src_Editor_Module.Editors is
    is
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null then
-         Get_Locations (Iter, Iter2, This.Buffer, From, To);
+      if This.Contents.Buffer /= null then
+         Get_Locations (Iter, Iter2, This.Contents.Buffer, From, To);
 
-         External_End_Action (This.Buffer);
-         Select_Range (This.Buffer, Iter, Iter2);
+         External_End_Action (This.Contents.Buffer);
+         Select_Range (This.Contents.Buffer, Iter, Iter2);
 
-         if Get_Writable (This.Buffer) then
-            Cut_Clipboard (Get_Clipboard (This.Kernel), This.Buffer);
-            End_Action (This.Buffer);
+         if Get_Writable (This.Contents.Buffer) then
+            Cut_Clipboard (Get_Clipboard (This.Contents.Kernel),
+                           This.Contents.Buffer);
+            End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";
          end if;
 
          if Append then
-            Merge_Clipboard (Get_Clipboard (This.Kernel), 1, 2);
+            Merge_Clipboard (Get_Clipboard (This.Contents.Kernel), 1, 2);
          end if;
       end if;
    end Cut;
@@ -2309,17 +2513,18 @@ package body Src_Editor_Module.Editors is
       Success : Boolean;
    begin
       Get_Location (Iter, From, Iter, Success);
-      if not Success then
+      if not Success or else This.Contents.Buffer = null then
          return;
 
-      elsif Get_Buffer (Iter) /= Gtk_Text_Buffer (This.Buffer) then
+      elsif Get_Buffer (Iter) /= Gtk_Text_Buffer (This.Contents.Buffer) then
          raise Editor_Exception with -"Location is not in the same buffer";
 
-      elsif This.Buffer /= null then
-         if Get_Writable (This.Buffer) then
-            Place_Cursor (This.Buffer, Iter);
-            Paste_Clipboard (Get_Clipboard (This.Kernel), This.Buffer);
-            End_Action (This.Buffer);
+      elsif This.Contents.Buffer /= null then
+         if Get_Writable (This.Contents.Buffer) then
+            Place_Cursor (This.Contents.Buffer, Iter);
+            Paste_Clipboard
+              (Get_Clipboard (This.Contents.Kernel), This.Contents.Buffer);
+            End_Action (This.Contents.Buffer);
          else
             raise Editor_Exception with -"Buffer is not writable";
          end if;
@@ -2332,8 +2537,8 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Blocks_Fold (This : Src_Editor_Buffer) is
    begin
-      if This.Buffer /= null then
-         Fold_All (This.Buffer);
+      if This.Contents.Buffer /= null then
+         Fold_All (This.Contents.Buffer);
       end if;
    end Blocks_Fold;
 
@@ -2343,8 +2548,8 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Blocks_Unfold (This : Src_Editor_Buffer) is
    begin
-      if This.Buffer /= null then
-         Unfold_All (This.Buffer);
+      if This.Contents.Buffer /= null then
+         Unfold_All (This.Contents.Buffer);
       end if;
    end Blocks_Unfold;
 
@@ -2384,7 +2589,7 @@ package body Src_Editor_Module.Editors is
       Context : Current_File_Context_Access :=
         Current_File_Context_Access
           (Current_File_Factory
-               (Kernel          => This.Buffer.Kernel,
+               (Kernel          => This.Buffer.Contents.Kernel,
                 All_Occurrences => False,
                 Scope           => Search_Scope'Value (Scope)));
       Match_From  : Gtk_Text_Iter;
@@ -2403,7 +2608,7 @@ package body Src_Editor_Module.Editors is
          Search_In_Editor
            (Context           => Context,
             Start_At          => Iter,
-            Kernel            => This.Buffer.Kernel,
+            Kernel            => This.Buffer.Contents.Kernel,
             Search_Backward   => Backward,
             Dialog_On_Failure => Dialog_On_Failure,
             Match_From        => Match_From,
@@ -2431,6 +2636,9 @@ package body Src_Editor_Module.Editors is
       Overlay : Src_Editor_Overlay;
    begin
       Overlay.Tag    := Tag;
+      if Tag /= null then
+         Ref (Tag);
+      end if;
       return Overlay;
    end Create_Editor_Overlay;
 
@@ -2444,17 +2652,20 @@ package body Src_Editor_Module.Editors is
    is
       Tag     : Gtk_Text_Tag;
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          if Name /= "" then
-            Tag := Lookup (Get_Tag_Table (This.Buffer), Name);
+            Tag := Lookup (Get_Tag_Table (This.Contents.Buffer), Name);
          end if;
 
          if Tag = null then
             Gtk_New (Tag, Name);
-            Add (Get_Tag_Table (This.Buffer), Tag);
+            Add (Get_Tag_Table (This.Contents.Buffer), Tag);
          end if;
 
-         return Create_Editor_Overlay (Tag);
+         return Ovy : Editor_Overlay'Class := Create_Editor_Overlay (Tag) do
+            pragma Unreferenced (Ovy);
+            Unref (Tag);  --  reference now owned by Ovy
+         end return;
       end if;
 
       return Nil_Editor_Overlay;
@@ -2473,9 +2684,9 @@ package body Src_Editor_Module.Editors is
       Ovy        : constant Src_Editor_Overlay := Src_Editor_Overlay (Overlay);
       Iter1, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null and then Ovy.Tag /= null then
-         Get_Locations (Iter1, Iter2, This.Buffer, From, To);
-         Apply_Tag (This.Buffer, Ovy.Tag, Iter1, Iter2);
+      if This.Contents.Buffer /= null and then Ovy.Tag /= null then
+         Get_Locations (Iter1, Iter2, This.Contents.Buffer, From, To);
+         Apply_Tag (This.Contents.Buffer, Ovy.Tag, Iter1, Iter2);
       end if;
    end Apply_Overlay;
 
@@ -2492,9 +2703,9 @@ package body Src_Editor_Module.Editors is
       Ovy        : constant Src_Editor_Overlay := Src_Editor_Overlay (Overlay);
       Iter1, Iter2 : Gtk_Text_Iter;
    begin
-      if This.Buffer /= null and then Ovy.Tag /= null then
-         Get_Locations (Iter1, Iter2, This.Buffer, From, To);
-         Remove_Tag (This.Buffer, Ovy.Tag, Iter1, Iter2);
+      if This.Contents.Buffer /= null and then Ovy.Tag /= null then
+         Get_Locations (Iter1, Iter2, This.Contents.Buffer, From, To);
+         Remove_Tag (This.Contents.Buffer, Ovy.Tag, Iter1, Iter2);
       end if;
    end Remove_Overlay;
 
@@ -2750,17 +2961,12 @@ package body Src_Editor_Module.Editors is
    is
       List  : View_Lists.List := View_Lists.Empty_List;
    begin
-      if This.Buffer /= null then
+      if This.Contents.Buffer /= null then
          declare
-            Views : constant Views_Array := Get_Views (This.Buffer);
+            Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
             for V in Views'Range loop
-               View_Lists.Append
-                 (List,
-                  Src_Editor_View'
-                    (Editor_View with
-                     Box    => Views (V),
-                     Buffer => This));
+               View_Lists.Append (List, Get (This, Views (V)));
             end loop;
          end;
       end if;
@@ -2818,16 +3024,17 @@ package body Src_Editor_Module.Editors is
       Inst : Class_Instance;
    begin
       if Buffer not in Src_Editor_Buffer'Class
-        or else Src_Editor_Buffer (Buffer).Buffer = null
+        or else Src_Editor_Buffer (Buffer).Contents.Buffer = null
       then
          return No_Class_Instance;
       end if;
 
-      Inst := Get_Instance (Script, Src_Editor_Buffer (Buffer).Buffer);
+      Inst :=
+        Get_Instance (Script, Src_Editor_Buffer (Buffer).Contents.Buffer);
 
       if Inst = No_Class_Instance then
          Inst := New_Instance (Script, Class);
-         Set_Data (Inst, GObject (Src_Editor_Buffer (Buffer).Buffer));
+         Set_Data (Inst, GObject (Src_Editor_Buffer (Buffer).Contents.Buffer));
       end if;
 
       return Inst;
@@ -2849,13 +3056,7 @@ package body Src_Editor_Module.Editors is
          raise Editor_Exception with -"View was destroyed";
       end if;
 
-      --  ??? We must setup callbacks so that when the editor is closed
-      --  we reset the internal Box field to null to avoid errors
-
-      return Src_Editor_View'
-        (Editor_View with
-         Box    => View,
-         Buffer => Src_Editor_Buffer (This.Get (Get_Buffer (View))));
+      return Get (Src_Editor_Buffer (This.Get (Get_Buffer (View))), View);
    end View_From_Instance;
 
    ------------------------
@@ -2870,16 +3071,16 @@ package body Src_Editor_Module.Editors is
       Inst : Class_Instance;
    begin
       if View not in Src_Editor_View'Class
-        or else Src_Editor_View (View).Box = null
+        or else Src_Editor_View (View).Contents.Box = null
       then
          return No_Class_Instance;
       end if;
 
-      Inst := Get_Instance (Script, Src_Editor_View (View).Box);
+      Inst := Get_Instance (Script, Src_Editor_View (View).Contents.Box);
 
       if Inst = No_Class_Instance then
          Inst := New_Instance (Script, Class);
-         Set_Data (Inst, GObject (Src_Editor_View (View).Box));
+         Set_Data (Inst, GObject (Src_Editor_View (View).Contents.Box));
       end if;
 
       return Inst;
@@ -2893,7 +3094,7 @@ package body Src_Editor_Module.Editors is
      (Instance   : Class_Instance;
       View       : Editor_View'Class) is
    begin
-      Set_Data (Instance, GObject (Src_Editor_View (View).Box));
+      Set_Data (Instance, GObject (Src_Editor_View (View).Contents.Box));
    end Set_Data;
 
    ---------------------------
@@ -3023,5 +3224,25 @@ package body Src_Editor_Module.Editors is
       end if;
       return null;
    end Get_Data;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "="
+     (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean
+   is
+   begin
+      --  If the gtk+ object has been deallocated (.Buffer = null), we never
+      --  have equality, since we can't do anything with the buffers anyway
+
+      if This.Contents.Buffer = null
+        or else Buffer.Contents.Buffer = null
+      then
+         return False;
+      else
+         return This.Contents.Buffer = Buffer.Contents.Buffer;
+      end if;
+   end "=";
 
 end Src_Editor_Module.Editors;

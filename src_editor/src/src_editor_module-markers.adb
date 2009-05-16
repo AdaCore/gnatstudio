@@ -643,4 +643,14 @@ package body Src_Editor_Module.Markers is
       end if;
    end Similar;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Marker : access File_Marker_Record'Class) return Kernel_Handle is
+   begin
+      return Marker.Kernel;
+   end Get_Kernel;
+
 end Src_Editor_Module.Markers;
