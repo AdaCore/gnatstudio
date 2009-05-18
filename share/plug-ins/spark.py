@@ -157,10 +157,12 @@ def do_pogs_xref (context, simplified):
   f = GPS.EditorBuffer.get (GPS.File (vc_file))
   loc = GPS.EditorLocation (f, 1, 1)
   (frm, to) = loc.search ("^(procedure|function)_\S+_" + vc + "\.$", regexp=True)
+  # Goto the VC and then scroll the window down so the selected VC is not at the
+  # bottom of the page.
 
-  # Workaround to make sure we see at least part of the rule: move forward
-  # a number of lines
-  f.current_view().goto (frm.forward_line (3))
+  f.current_view().goto (frm)
+  cursor = f.current_view().cursor()
+  f.current_view().center(cursor)
 
   GPS.MDI.get_by_child (f.current_view()).raise_window()
 
