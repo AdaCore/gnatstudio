@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -128,8 +128,6 @@ package body Task_Manager is
    begin
       Result := Execute_Incremental (Manager, False);
 
-      Refresh (Manager);
-
       --  The passive loop ends when there are no more queues left
 
       if Manager.Queues /= null then
@@ -178,12 +176,11 @@ package body Task_Manager is
             Queue.Bar := null;
          end if;
 
-         Manager.Need_Global_Refresh := True;
-
          if Manager.Queues'Length = 1 then
             Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
             Manager.Referenced_Command := -1;
+            Queue_Removed (Manager, 1);
             return False;
 
          else
@@ -222,12 +219,15 @@ package body Task_Manager is
                Unchecked_Free (Queue);
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
+
+               Queue_Removed (Manager, Index);
             end;
          end if;
 
          return True;
       end Free_Queue;
 
+      Index : Natural;
    begin
       if Manager.Queues = null then
          return False;
@@ -253,6 +253,7 @@ package body Task_Manager is
          for Q in First .. Last loop
             if Manager.Queues (Q).Current_Priority < Lowest then
                Lowest := Manager.Queues (Q).Current_Priority;
+               Index := Q;
                Queue := Manager.Queues (Q);
             end if;
 
@@ -286,8 +287,6 @@ package body Task_Manager is
          else
             Result := Safe_Execute (Command);
          end if;
-
-         Queue.Need_Refresh := True;
 
          case Result is
             when Success | Failure =>
@@ -378,6 +377,8 @@ package body Task_Manager is
 
          end case;
 
+         Queue_Changed (Manager, Index);
+
          return True;
       end if;
    end Execute_Incremental;
@@ -439,8 +440,7 @@ package body Task_Manager is
             Manager.Passive_Index := 1;
          end if;
 
-         Manager.Need_Global_Refresh := True;
-
+         Queue_Added (Manager, 1);
          return 1;
 
       else
@@ -453,8 +453,6 @@ package body Task_Manager is
                end if;
             end loop;
          end if;
-
-         Manager.Need_Global_Refresh := True;
 
          declare
             New_Queues : Task_Queue_Array
@@ -476,6 +474,7 @@ package body Task_Manager is
 
                Manager.Passive_Index := Manager.Passive_Index + 1;
 
+               Queue_Added (Manager, Manager.Queues'First);
                return Manager.Queues'First;
 
             else
@@ -490,6 +489,8 @@ package body Task_Manager is
 
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
+
+               Queue_Added (Manager, Manager.Queues'Last);
 
                return Manager.Queues'Last;
             end if;
@@ -731,5 +732,53 @@ package body Task_Manager is
          return Result;
       end;
    end Get_Scheduled_Commands;
+
+   -----------------
+   -- Queue_Added --
+   -----------------
+
+   procedure Queue_Added
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+      GUI : Task_Manager_Interface;
+   begin
+      if Manager.GUI /= null then
+         GUI := Task_Manager_Interface (Manager.GUI);
+         Queue_Added (GUI, Index);
+      end if;
+   end Queue_Added;
+
+   -------------------
+   -- Queue_Removed --
+   -------------------
+
+   procedure Queue_Removed
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+      GUI : Task_Manager_Interface;
+   begin
+      if Manager.GUI /= null then
+         GUI := Task_Manager_Interface (Manager.GUI);
+         Queue_Removed (GUI, Index);
+      end if;
+   end Queue_Removed;
+
+   -------------------
+   -- Queue_Changed --
+   -------------------
+
+   procedure Queue_Changed
+     (Manager : Task_Manager_Access;
+      Index   : Integer)
+   is
+      GUI : Task_Manager_Interface;
+   begin
+      if Manager.GUI /= null then
+         GUI := Task_Manager_Interface (Manager.GUI);
+         Queue_Changed (GUI, Index);
+      end if;
+   end Queue_Changed;
 
 end Task_Manager;

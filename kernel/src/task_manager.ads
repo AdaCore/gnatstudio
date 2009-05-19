@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                 Copyright (C) 2003-2008, AdaCore                  --
+--                 Copyright (C) 2003-2009, AdaCore                  --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -38,8 +38,8 @@ with Ada.Unchecked_Deallocation;
 
 package Task_Manager is
 
-   type Task_Manager_Record is private;
-   type Task_Manager_Access is access all Task_Manager_Record;
+   type Task_Manager_Access is private;
+   No_Task_Manager : constant Task_Manager_Access;
 
    procedure Add_Command
      (Manager    : Task_Manager_Access;
@@ -137,8 +137,6 @@ private
 
       Current_Priority : Integer := 0;
 
-      Need_Refresh : Boolean := False;
-
       Show_Bar     : Boolean := False;
 
       Block_Exit   : Boolean := True;
@@ -170,8 +168,6 @@ private
       Minimal_Active_Priority  : Integer := 0;
       Minimal_Passive_Priority : Integer := 0;
 
-      Need_Global_Refresh  : Boolean := True;
-
       --  Graphical elements
 
       GUI                  : Gtk_Widget       := null;
@@ -184,5 +180,20 @@ private
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state
    end record;
+
+   type Task_Manager_Access is access all Task_Manager_Record;
+   No_Task_Manager : constant Task_Manager_Access := null;
+
+   procedure Queue_Added
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+
+   procedure Queue_Removed
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
+
+   procedure Queue_Changed
+     (Manager : Task_Manager_Access;
+      Index   : Integer);
 
 end Task_Manager;

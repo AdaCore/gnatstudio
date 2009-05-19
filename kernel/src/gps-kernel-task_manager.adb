@@ -99,7 +99,7 @@ package body GPS.Kernel.Task_Manager is
       Manager  : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Dialog   : Gtk_Dialog;
       Label    : Gtk_Label;
-      Iface    : Task_Manager_Interface;
+      Iface    : Task_Manager_Widget_Access;
       Button   : Gtk_Widget;
       Response : Gtk_Response_Type;
 
@@ -122,7 +122,7 @@ package body GPS.Kernel.Task_Manager is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
 
-      Gtk_New (Iface, Manager, Dialog => Gtk_Widget (Dialog));
+      Iface := Task_Manager_Dialog (Manager, Dialog => Gtk_Widget (Dialog));
       Pack_Start (Get_Vbox (Dialog), Iface, Padding => 10);
 
       Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
@@ -155,6 +155,20 @@ package body GPS.Kernel.Task_Manager is
       end case;
    end On_Exit_Hook;
 
+   -----------------------
+   -- Show_Task_Manager --
+   -----------------------
+
+   procedure Show_Task_Manager (Kernel : Kernel_Handle) is
+      Child : MDI_Child;
+   begin
+      Child := Get_Or_Create_Task_Manager_Interface_MDI (Kernel, True);
+
+      if Child /= null then
+         Set_Focus_Child (Child);
+      end if;
+   end Show_Task_Manager;
+
    ---------------------
    -- On_Task_Manager --
    ---------------------
@@ -163,14 +177,8 @@ package body GPS.Kernel.Task_Manager is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Child : MDI_Child;
    begin
-      Child := Get_Or_Create_Task_Manager_Interface_MDI (Kernel, True);
-
-      if Child /= null then
-         Set_Focus_Child (Child);
-      end if;
-
+      Show_Task_Manager (Kernel);
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Task_Manager;
@@ -185,14 +193,14 @@ package body GPS.Kernel.Task_Manager is
    is
       Child : GPS_MDI_Child := GPS_MDI_Child (Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag));
-      Iface : Task_Manager_Interface;
+      Iface : Task_Manager_Widget_Access;
    begin
       if Child = null then
          if not Allow_Creation then
             return null;
          end if;
 
-         Gtk_New (Iface, Get_Task_Manager (Kernel));
+         Iface := Task_Manager_Dialog (Get_Task_Manager (Kernel));
          Gtk_New (Child, Iface,
                   Group               => Group_Consoles,
                   Module              => Task_Manager_Module_Id,
@@ -237,7 +245,7 @@ package body GPS.Kernel.Task_Manager is
       pragma Unreferenced (User);
       N : Node_Ptr;
    begin
-      if Widget.all in Task_Manager_Interface_Record'Class then
+      if Widget.all in Task_Manager_Widget_Record'Class then
          N := new Node;
          N.Tag := new String'("Task_Manager_Record");
          return N;
@@ -253,8 +261,9 @@ package body GPS.Kernel.Task_Manager is
    function Get_Task_Manager
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access is
    begin
-      if Kernel.Tasks = null then
-         Kernel.Tasks := new Task_Manager_Record;
+      if Kernel.Tasks = No_Task_Manager then
+         Kernel.Tasks := Create
+           (Kernel_Handle (Kernel), Gtk_Widget (Get_Main_Window (Kernel)));
       end if;
 
       return Kernel.Tasks;

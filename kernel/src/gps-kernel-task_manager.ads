@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003-2008, AdaCore             --
+--                      Copyright (C) 2003-2009, AdaCore             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -113,6 +113,9 @@ package GPS.Kernel.Task_Manager is
    function Get_Task_Manager
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access;
    --  Return the GPS task manager
+
+   procedure Show_Task_Manager (Kernel : Kernel_Handle);
+   --  Show the GPS task manager
 
    function Get_Command (Command : access Scheduled_Command'Class)
       return Command_Access;
