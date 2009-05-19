@@ -17,8 +17,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Conversion;
-
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
@@ -47,6 +45,7 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with GNAT.Strings;
 with System; use System;
+with System.Storage_Elements; use System.Storage_Elements;
 
 package body Task_Manager.GUI is
 
@@ -136,11 +135,6 @@ package body Task_Manager.GUI is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   function To_Address is new Ada.Unchecked_Conversion
-     (Integer, System.Address);
-   function To_Integer is new Ada.Unchecked_Conversion
-     (System.Address, Integer);
 
    package Manager_Contextual_Menus is new User_Contextual_Menus
      (Manager_Index_Record);
@@ -604,7 +598,7 @@ package body Task_Manager.GUI is
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
-      Index_1 : constant Integer := Indices'First;
+      Index_1 : constant Integer_Address := Integer_Address (Indices'First);
    begin
       if Self.GUI.Manager.Queues = null
         or else Index_1 >= Self.GUI.Manager.Queues'Length
@@ -644,7 +638,8 @@ package body Task_Manager.GUI is
      (Self : access Task_Manager_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      Old_Index : constant Integer := To_Integer (Get_User_Data_1 (Iter));
+      Old_Index : constant Integer_Address :=
+        To_Integer (Get_User_Data_1 (Iter));
    begin
       if Self.GUI.Manager.Queues = null
         or else Old_Index >= Self.GUI.Manager.Queues'Length
@@ -694,7 +689,7 @@ package body Task_Manager.GUI is
       then
          Iter := Init_Tree_Iter
            (Stamp       => 1,
-            User_Data_1 => To_Address (Integer (N) + 1),
+            User_Data_1 => To_Address (Integer_Address (N) + 1),
             User_Data_2 => System.Null_Address,
             User_Data_3 => System.Null_Address);
 
@@ -810,7 +805,8 @@ package body Task_Manager.GUI is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Index      : constant Integer := To_Integer (Get_User_Data_1 (Iter));
+      Index      : constant Integer_Address :=
+        To_Integer (Get_User_Data_1 (Iter));
       Task_Queue : Task_Queue_Access;
       Length     : Integer;
       Command    : Command_Access;
@@ -822,7 +818,7 @@ package body Task_Manager.GUI is
       end if;
 
       Task_Queue := Self.GUI.Manager.Queues
-        (Self.GUI.Manager.Queues'First - 1 + Index);
+        (Self.GUI.Manager.Queues'First - 1 + Integer (Index));
 
       Length := Command_Queues.Length (Task_Queue.Queue);
 
@@ -841,7 +837,8 @@ package body Task_Manager.GUI is
                   GObject
                     (To_Pixbuf
                        (Self.GUI,
-                        Get_Progress_Text (Self.GUI.Manager, Index, False))));
+                        Get_Progress_Text
+                          (Self.GUI.Manager, Integer (Index), False))));
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
