@@ -8803,7 +8803,7 @@ The actual switch settings are displayed in a text field at the bottom of the
 window and can be edited here directly if desired. For more information on
 the meaning of these settings please refer to the SPARK Examiner User Manual.
 
-@item The tabs for SPARKSimp, Simplifier, SPARKFormat, POGS and SPARKmake allow
+@item The tabs for SPARKSimp, Simplifier, SPARKFormat, POGS and SPARKMake allow
 the settings for these tools to be controlled in a similar way to that
 described for the Examiner above. Please refer to the specific user manual
 for each tool to find more information about these settings.
@@ -8865,16 +8865,16 @@ invokes a pop-up menu. From this menu you can select @code{SPARK->Show VC} or
 concerned. Note that by default POGS will be invoked at the top-level of the
 current project. POGS can also be invoked via the @key{F11} key.
 
-@item SPARKmake
+@item SPARKMake
 This command is enabled if a SPARK source file is selected in the editing
-window. It invokes the SPARKmake tool, using the current file as the 'root'.
+window. It invokes the SPARKMake tool, using the current file as the 'root'.
 This scans the current directory tree (unless specified otherwise under
 Project Properties) and attempts to produce an index file and metafile for the
 analysis of the current package and all packages (including bodies) that it
 depends on. Project Properties can be used to modify the switches - see the
 SPARKMake User Manual for more details. Note that this command can also be
 invoked by right-clicking anywhere in a SPARK source file in the editing
-window and selecting @code{SPARK->SPARKmake}.
+window and selecting @code{SPARK->SPARKMake}.
 
 @end table
 
