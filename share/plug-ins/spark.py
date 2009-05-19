@@ -469,10 +469,6 @@ a = """<?xml version="1.0"?>
      <shell>Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; Examiner</shell>
   </action>
 
-  <action name="SPARK help" output="SPARK Help" category="Spark">
-     <external server="build_server">spark ~help</external>
-  </action>
-
   <action name="Simplify file" category="Spark" output="none">
     <filter language="VCG" />
     <shell>Project %p</shell>
@@ -506,9 +502,6 @@ a = """<?xml version="1.0"?>
       </menu>
       <menu action="Examine metafile">
         <Title>Examine _Metafile</Title>
-      </menu>
-      <menu action="SPARK help">
-        <Title>_Help</Title>
       </menu>
       <menu action="SPARKFormat file">
         <Title>SPARK_Format File</Title>
