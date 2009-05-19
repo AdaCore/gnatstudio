@@ -8651,10 +8651,6 @@ supplying the metafile on the command line. Note that this command can also be
 invoked by right-clicking anywhere in a metafile in the editing window and
 selecting @code{SPARK->Examine Metafile}.
 
-@item Help
-Displays usage information for the SPARK Examiner in an output window named
-@code{SPARK Help}.
-
 @item SPARKFormat File
 This command is enabled if a SPARK source file is selected in the editor window.
 It will reformat the file in-place with SPARKFormat, using any switches set

@@ -6,6 +6,10 @@ Known Problems fixed in GPS 4.3.3
   Workaround: Ignore the dialog box (click OK) or specify an executable on
               the command line.
 
+- I428-003: SPARK Help menu is Examiner only
+  Problem:    There is no help for the other SPARK tools in the SPARK menu.
+  Workaround: Access the spark documentation manually.
+
 - I421-010: Documentation generation issue with non-utf8 compatible comments
   Problem:    When an Ada specification contains non-utf8 characters, then the
               documentation generation will fail.
