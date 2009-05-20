@@ -25,7 +25,6 @@ with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Object;               use Gtk.Object;
@@ -429,22 +428,12 @@ package body Task_Manager.GUI is
    is
       Tree        : constant Gtk_Tree_View := View.Tree;
       Col         : Gtk_Tree_View_Column;
-      Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
       Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
       Set_Rules_Hint (Tree, False);
-
-      Gtk_New (Col);
-      Gtk_New (Pixbuf_Rend);
-      Gtk_New (Text_Rend);
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Pack_Start (Col, Text_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "text", Command_Name_Column);
-      Dummy := Append_Column (Tree, Col);
 
       Gtk_New (Col);
       Set_Expand (Col, False);
@@ -838,7 +827,7 @@ package body Task_Manager.GUI is
                     (To_Pixbuf
                        (Self.GUI,
                         Get_Progress_Text
-                          (Self.GUI.Manager, Integer (Index), False))));
+                          (Self.GUI.Manager, Integer (Index), True))));
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
