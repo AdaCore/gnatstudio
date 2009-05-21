@@ -81,11 +81,6 @@ package GPS.Location_View is
       Category : String) return Natural;
    --  Return the number of entries for a given category
 
-   procedure Recount_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String);
-   --  Update the counters for Category
-
    procedure Next_Item
      (View      : access Location_View_Record'Class;
       Backwards : Boolean := False);

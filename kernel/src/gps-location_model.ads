@@ -124,6 +124,11 @@ package GPS.Location_Model is
    --  Clear all the marks and highlightings in file or category
    --  ??? Document parameter Line.
 
+   procedure Recount_Category
+     (Model    : Gtk_Tree_Store;
+      Category : String);
+   --  Update the counters for Category
+
    function Columns_Types return Glib.GType_Array;
    --  Returns the types for the columns in the Model.
    --  This is not implemented as

@@ -109,6 +109,11 @@ package GPS.Kernel.Locations is
    --  Remove_Duplicates indicates whether duplicated entries should be
    --  filtered out.
 
+   procedure Recount_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String);
+   --  Update the counters for Category
+
    procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register hooks.
 

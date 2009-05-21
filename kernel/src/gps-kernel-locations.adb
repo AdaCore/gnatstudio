@@ -493,8 +493,28 @@ package body GPS.Kernel.Locations is
          Start := Real_Last + 1;
       end loop;
 
-      GPS.Location_View.Recount_Category (Kernel, Category);
+      Recount_Category (Kernel, Category);
    end Parse_File_Locations;
+
+   ----------------------
+   -- Recount_Category --
+   ----------------------
+
+   procedure Recount_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String)
+   is
+      View  : constant GPS.Location_View.Location_View :=
+                Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
+
+   begin
+      if View = null then
+         return;
+      end if;
+
+      Recount_Category (Gtk_Tree_Store (View.Model), Category);
+      View.Redraw_Totals;
+   end Recount_Category;
 
    --------------
    -- Register --

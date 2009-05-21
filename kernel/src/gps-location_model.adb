@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with Glib;                 use Glib;
+with Glib.Convert;
 with Glib.Object;
 with Glib.Values;          use Glib.Values;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
@@ -289,6 +290,42 @@ package body GPS.Location_Model is
 
       return Result;
    end Get_Highlighting_Style;
+
+   ----------------------
+   -- Recount_Category --
+   ----------------------
+
+   procedure Recount_Category
+     (Model    : Gtk_Tree_Store;
+      Category : String)
+   is
+      Cat   : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+      Total : Gint := 0;
+      Sub   : Gint := 0;
+
+   begin
+      Get_Category_File
+        (Model,
+         Glib.Convert.Escape_Text (Category),
+         GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
+
+      if Cat = Null_Iter then
+         return;
+      end if;
+
+      Iter := Model.Children (Cat);
+
+      while Iter /= Null_Iter loop
+         Sub := Model.N_Children (Iter);
+         Model.Set (Iter, Number_Of_Items_Column, Sub);
+         Total := Total + Sub;
+         Model.Next (Iter);
+      end loop;
+
+      Model.Set (Cat, Number_Of_Items_Column, Total);
+   end Recount_Category;
 
    ---------------------
    -- Remove_Category --
