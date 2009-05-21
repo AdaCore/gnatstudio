@@ -22,6 +22,7 @@ with System;
 
 with Glib.Object;
 with Glib.Values;         use Glib.Values;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;  use GPS.Editors.GtkAda;
 
@@ -31,6 +32,29 @@ package body GPS.Location_Model is
      (System.Address, GPS.Kernel.Styles.Style_Access);
    function To_Address is new Ada.Unchecked_Conversion
      (Style_Access, System.Address);
+
+   -------------------
+   -- Columns_Types --
+   -------------------
+
+   function Columns_Types return Glib.GType_Array is
+   begin
+      return Glib.GType_Array'
+        (Icon_Column               => Gdk.Pixbuf.Get_Type,
+         Absolute_Name_Column      => Get_Virtual_File_Type,
+         Base_Name_Column          => Glib.GType_String,
+         Mark_Column               => Get_Editor_Mark_Type,
+         Line_Column               => Glib.GType_Int,
+         Column_Column             => Glib.GType_Int,
+         Length_Column             => Glib.GType_Int,
+         Color_Column              => Gdk.Color.Gdk_Color_Type,
+         Button_Column             => Gdk.Pixbuf.Get_Type,
+         Action_Column             => Glib.GType_Pointer,
+         Highlight_Column          => Glib.GType_Boolean,
+         Highlight_Category_Column => Glib.GType_Pointer,
+         Number_Of_Items_Column    => Glib.GType_Int,
+         Category_Line_Column      => Glib.GType_String);
+   end Columns_Types;
 
    ---------------
    -- Fill_Iter --
@@ -121,6 +145,103 @@ package body GPS.Location_Model is
          Model.Set (Iter, Color_Column, Gdk.C_Proxy'(null));
       end if;
    end Fill_Iter;
+
+   -----------------------
+   -- Get_Category_File --
+   -----------------------
+
+   procedure Get_Category_File
+     (Model           : Gtk_Tree_Store;
+      Category        : Glib.UTF8_String;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Category_Iter   : out Gtk_Tree_Iter;
+      File_Iter       : out Gtk_Tree_Iter;
+      New_Category    : out Boolean;
+      Create          : Boolean;
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      Color           : access Gdk.Color.Gdk_Color := null) is
+   begin
+      File_Iter := Null_Iter;
+      Category_Iter := Get_Iter_First (Model);
+      New_Category := False;
+
+      while Category_Iter /= Null_Iter
+        and then Get_Category_Name (Model, Category_Iter) /= Category
+      loop
+         Next (Model, Category_Iter);
+      end loop;
+
+      if Category_Iter = Null_Iter then
+         if Create then
+            Append (Model, Category_Iter, Null_Iter);
+            Fill_Iter
+              (Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
+               "", Nil_Editor_Mark, 0, 0, 0, False, null,
+               Category_Pixbuf, Color);
+            New_Category := True;
+         else
+            return;
+         end if;
+      end if;
+
+      if File = GNATCOLL.VFS.No_File then
+         return;
+      end if;
+
+      File_Iter := Children (Model, Category_Iter);
+
+      while File_Iter /= Null_Iter loop
+         if Get_File (Model, File_Iter) = File then
+            return;
+         end if;
+
+         Next (Model, File_Iter);
+      end loop;
+
+      --  When we reach this point, we need to create a new sub-category
+
+      if Create then
+         Append (Model, File_Iter, Category_Iter);
+         Fill_Iter
+           (Model, File_Iter, "", File, "", Nil_Editor_Mark, 0, 0, 0,
+            False, null, File_Pixbuf, Color);
+      end if;
+
+      return;
+   end Get_Category_File;
+
+   -----------------------
+   -- Get_Category_Name --
+   -----------------------
+
+   function Get_Category_Name
+     (Model    : access Gtk_Tree_Model_Record'Class;
+      Category : Gtk_Tree_Iter) return String
+   is
+      Cat : Gtk_Tree_Iter := Category;
+   begin
+      while Parent (Model, Cat) /= Null_Iter loop
+         Cat := Parent (Model, Cat);
+      end loop;
+
+      declare
+         Message : constant String :=
+           Get_String (Model, Cat, Base_Name_Column);
+         Matches : Match_Array (0 .. 1);
+         Cut     : Integer;
+      begin
+         Match (Items_Count_Matcher, Message, Matches);
+
+         if Matches (0) /= No_Match then
+            Cut := Matches (1).First - 1;
+         else
+            Cut := Message'Last;
+         end if;
+
+         return Message (1 .. Cut);
+      end;
+   end Get_Category_Name;
 
    --------------
    -- Get_File --

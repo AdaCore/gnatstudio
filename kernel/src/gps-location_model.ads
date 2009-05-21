@@ -17,6 +17,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Regpat;       use GNAT.Regpat;
+
 with Glib;
 with Gdk.Color;
 with Gdk.Pixbuf;        use Gdk.Pixbuf;
@@ -31,6 +33,9 @@ with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 
 package GPS.Location_Model is
 
+   --  The following list must be synchronized with the array of types
+   --  in Columns_Types.
+
    Icon_Column               : constant := 0;
    Base_Name_Column          : constant := 1;
    Absolute_Name_Column      : constant := 2;   --  Get_File
@@ -39,6 +44,8 @@ package GPS.Location_Model is
    Column_Column             : constant := 5;
    Length_Column             : constant := 6;
    Color_Column              : constant := 7;
+   Button_Column             : constant := 8;
+   Action_Column             : constant := 9;
    Highlight_Column          : constant := 10;
    Highlight_Category_Column : constant := 11;  --  Get_Highlighting_Style
    Number_Of_Items_Column    : constant := 12;
@@ -56,6 +63,28 @@ package GPS.Location_Model is
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
       return GPS.Kernel.Styles.Style_Access;
    --  Return the highlighting style stored at Iter
+
+   function Get_Category_Name
+     (Model    : access Gtk_Tree_Model_Record'Class;
+      Category : Gtk_Tree_Iter) return String;
+   --  Return the name of the category associated with that iterator
+
+   procedure Get_Category_File
+     (Model           : Gtk_Tree_Store;
+      Category        : Glib.UTF8_String;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Category_Iter   : out Gtk_Tree_Iter;
+      File_Iter       : out Gtk_Tree_Iter;
+      New_Category    : out Boolean;
+      Create          : Boolean;
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      Color           : access Gdk.Color.Gdk_Color := null);
+   --  Return the iter corresponding to Category, create it if
+   --  necessary and if Create is True.
+   --  If File is "", then the category iter will be returned.
+   --  If the category was created, New_Category is set to True.
+   --  Category is the escaped string.
 
    procedure Fill_Iter
      (Model              : Gtk_Tree_Store;
@@ -75,5 +104,15 @@ package GPS.Location_Model is
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
    --  If Line is 0, consider the item as a non-leaf item.
+
+   function Columns_Types return Glib.GType_Array;
+   --  Returns the types for the columns in the Model.
+   --  This is not implemented as
+   --       Columns_Types : constant GType_Array ...
+   --  because Gdk.Pixbuf.Get_Type cannot be called before
+   --  Gtk.Main.Init.
+
+   Items_Count_Matcher : constant Pattern_Matcher :=
+                           Compile ("( \([0-9]+ item[s]?\))$");
 
 end GPS.Location_Model;

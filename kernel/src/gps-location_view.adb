@@ -23,7 +23,6 @@ with GNAT.Expect;              use GNAT.Expect;
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 
 with System;
 
@@ -79,9 +78,6 @@ package body GPS.Location_View is
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
 
-   Items_Count_Matcher : constant Pattern_Matcher :=
-                           Compile ("( \([0-9]+ item[s]?\))$");
-
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
 
@@ -110,19 +106,6 @@ package body GPS.Location_View is
    ---------------------
    -- Local constants --
    ---------------------
-
-   function Columns_Types return GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
-
-   --  The following list must be synchronized with the array of types
-   --  in Columns_Types.
-
-   Button_Column             : constant := 8;
-   Action_Column             : constant := 9;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -212,20 +195,6 @@ package body GPS.Location_View is
 
    procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
-
-   procedure Get_Category_File
-     (View          : access Location_View_Record'Class;
-      Category      : Glib.UTF8_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Category_Iter : out Gtk_Tree_Iter;
-      File_Iter     : out Gtk_Tree_Iter;
-      New_Category  : out Boolean;
-      Create        : Boolean := True);
-   --  Return the iter corresponding to Category, create it if
-   --  necessary and if Create is True.
-   --  If File is "", then the category iter will be returned.
-   --  If the category was created, New_Category is set to True.
-   --  Category is the escaped string.
 
    procedure Get_Line_Column_Iter
      (Model     : not null access Gtk_Tree_Model_Record'Class;
@@ -328,11 +297,6 @@ package body GPS.Location_View is
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class);
    --  Callback for the activation of the sort contextual menu item
-
-   function Get_Category_Name
-     (Model    : access Gtk_Tree_Model_Record'Class;
-      Category : Gtk_Tree_Iter) return String;
-   --  Return the name of the category associated with that iterator
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -854,103 +818,6 @@ package body GPS.Location_View is
       Path_Free (Category_Path);
    end Next_Item;
 
-   -----------------------
-   -- Get_Category_Name --
-   -----------------------
-
-   function Get_Category_Name
-     (Model    : access Gtk_Tree_Model_Record'Class;
-      Category : Gtk_Tree_Iter) return String
-   is
-      Cat : Gtk_Tree_Iter := Category;
-   begin
-      while Parent (Model, Cat) /= Null_Iter loop
-         Cat := Parent (Model, Cat);
-      end loop;
-
-      declare
-         Message : constant String :=
-           Get_String (Model, Cat, Base_Name_Column);
-         Matches : Match_Array (0 .. 1);
-         Cut     : Integer;
-      begin
-         Match (Items_Count_Matcher, Message, Matches);
-
-         if Matches (0) /= No_Match then
-            Cut := Matches (1).First - 1;
-         else
-            Cut := Message'Last;
-         end if;
-
-         return Message (1 .. Cut);
-      end;
-   end Get_Category_Name;
-
-   -----------------------
-   -- Get_Category_File --
-   -----------------------
-
-   procedure Get_Category_File
-     (View          : access Location_View_Record'Class;
-      Category      : Glib.UTF8_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Category_Iter : out Gtk_Tree_Iter;
-      File_Iter     : out Gtk_Tree_Iter;
-      New_Category  : out Boolean;
-      Create        : Boolean := True)
-   is
-      Model : constant Gtk_Tree_Store := View.Model;
-
-   begin
-      File_Iter := Null_Iter;
-      Category_Iter := Get_Iter_First (Model);
-      New_Category := False;
-
-      while Category_Iter /= Null_Iter
-        and then Get_Category_Name (Model, Category_Iter) /= Category
-      loop
-         Next (Model, Category_Iter);
-      end loop;
-
-      if Category_Iter = Null_Iter then
-         if Create then
-            Append (Model, Category_Iter, Null_Iter);
-            Fill_Iter
-              (Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
-               "", Nil_Editor_Mark, 0, 0, 0, False,
-               null, View.Category_Pixbuf, View.Non_Leaf_Color'Access);
-            New_Category := True;
-         else
-            return;
-         end if;
-      end if;
-
-      if File = GNATCOLL.VFS.No_File then
-         return;
-      end if;
-
-      File_Iter := Children (Model, Category_Iter);
-
-      while File_Iter /= Null_Iter loop
-         if Get_File (Model, File_Iter) = File then
-            return;
-         end if;
-
-         Next (Model, File_Iter);
-      end loop;
-
-      --  When we reach this point, we need to create a new sub-category
-
-      if Create then
-         Append (Model, File_Iter, Category_Iter);
-         Fill_Iter
-           (Model, File_Iter, "", File, "", Nil_Editor_Mark, 0, 0, 0,
-            False, null, View.File_Pixbuf, View.Non_Leaf_Color'Access);
-      end if;
-
-      return;
-   end Get_Category_File;
-
    --------------------------
    -- Get_Line_Column_Iter --
    --------------------------
@@ -1038,8 +905,9 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (View, Category,
-         File, Category_Iter, File_Iter, Category_Created);
+        (View.Model, Category,
+         File, Category_Iter, File_Iter, Category_Created, True,
+         View.Category_Pixbuf, View.File_Pixbuf, View.Non_Leaf_Color'Access);
 
       --  Check whether the same item already exists
 
@@ -1287,29 +1155,6 @@ package body GPS.Location_View is
 
       Clicked (View.Sorting_Column);
    end Set_Column_Types;
-
-   -------------------
-   -- Columns_Types --
-   -------------------
-
-   function Columns_Types return GType_Array is
-   begin
-      return GType_Array'
-        (Icon_Column                         => Gdk.Pixbuf.Get_Type,
-         Absolute_Name_Column                => Get_Virtual_File_Type,
-         Base_Name_Column                    => GType_String,
-         Mark_Column                         => Get_Editor_Mark_Type,
-         Line_Column                         => GType_Int,
-         Column_Column                       => GType_Int,
-         Length_Column                       => GType_Int,
-         Color_Column                        => Gdk_Color_Type,
-         Button_Column                       => Gdk.Pixbuf.Get_Type,
-         Action_Column                       => GType_Pointer,
-         GPS.Location_Model.Highlight_Column => GType_Boolean,
-         Highlight_Category_Column           => GType_Pointer,
-         Number_Of_Items_Column              => GType_Int,
-         Category_Line_Column                => GType_String);
-   end Columns_Types;
 
    ----------------
    -- On_Destroy --
@@ -1566,17 +1411,17 @@ package body GPS.Location_View is
 
       if Current = Null_Iter then
          Get_Category_File
-           (Locations,
+           (Locations.Model,
             Category      => "Builder results",
             File          => D.File,
             Category_Iter => Category_Iter,
-            File_Iter     => File_Iter,
-            New_Category  => Category_Created,
-            Create        => False);
+            File_Iter       => File_Iter,
+            New_Category    => Category_Created,
+            Create          => False);
 
       else
          Get_Category_File
-           (Locations,
+           (Locations.Model,
             Category      => Get_Category_Name (Model, Current),
             File          => D.File,
             Category_Iter => Category_Iter,
@@ -1774,7 +1619,7 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (View,
+        (View.Model,
          Glib.Convert.Escape_Text (Category),
          GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
@@ -1810,7 +1655,7 @@ package body GPS.Location_View is
 
    begin
       Get_Category_File
-        (View,
+        (View.Model,
          Glib.Convert.Escape_Text (Category),
          GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
@@ -1835,7 +1680,8 @@ package body GPS.Location_View is
       File_Iter : Gtk_Tree_Iter;
       Dummy     : Boolean;
    begin
-      Get_Category_File (View, Identifier, File, Iter, File_Iter, Dummy);
+      Get_Category_File
+        (View.Model, Identifier, File, Iter, File_Iter, Dummy, False);
 
       if File_Iter = Null_Iter then
          Remove_Category_Or_File_Iter (Location_View (View), Iter);
@@ -2062,7 +1908,7 @@ package body GPS.Location_View is
              & ' ' & Message);
 
       Get_Category_File
-        (View,
+        (View.Model,
          Glib.Convert.Escape_Text (Category),
          File, Category_Iter, File_Iter, Created, False);
 
@@ -2765,7 +2611,7 @@ package body GPS.Location_View is
 
             if View /= null then
                Get_Category_File
-                 (View          => View,
+                 (Model         => View.Model,
                   Category      => Category,
                   File          => File,
                   Category_Iter => Dummy,
