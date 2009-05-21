@@ -2188,7 +2188,7 @@ package body Src_Editor_Buffer is
       Column : Character_Offset_Type := 1) return Boolean
    is
       Buffer_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Line);
+                      Get_Buffer_Line (Buffer, Line);
 
    begin
       if Buffer_Line = 0 then
@@ -4467,7 +4467,7 @@ package body Src_Editor_Buffer is
 
       Redo (Buffer.Queue);
 
-      --  Undo and Redo clear the current group: start a new group.
+      --  Undo and Redo clear the current group: start a new group
 
       Start_Group (Buffer.Queue);
    end Redo;
@@ -4486,7 +4486,7 @@ package body Src_Editor_Buffer is
 
       Undo (Buffer.Queue);
 
-      --  Undo and Redo clear the current group: start a new group.
+      --  Undo and Redo clear the current group: start a new group
 
       Start_Group (Buffer.Queue);
    end Undo;
