@@ -199,7 +199,7 @@ private
       Text         : GNAT.Strings.String_Access;
       Is_Hide      : Boolean := False;
 
-      Non_Leaf_Color : Gdk.Color.Gdk_Color;
+      Non_Leaf_Color : aliased Gdk.Color.Gdk_Color;
       --  The color to use in the first column, depending on the status of the
       --  line.
 

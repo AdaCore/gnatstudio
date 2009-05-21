@@ -17,19 +17,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Tree_Model;
+with Glib;
+with Gdk.Color;
+with Gdk.Pixbuf;        use Gdk.Pixbuf;
+with Gtk.Tree_Model;    use Gtk.Tree_Model;
+with Gtk.Tree_Store;    use Gtk.Tree_Store;
 
 with GNATCOLL.VFS;
 
-with GPS.Kernel.Styles;
+with Basic_Types;       use Basic_Types;
+with GPS.Editors;       use GPS.Editors;
+with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 
 package GPS.Location_Model is
 
+   Icon_Column               : constant := 0;
+   Base_Name_Column          : constant := 1;
    Absolute_Name_Column      : constant := 2;   --  Get_File
+   Mark_Column               : constant := 3;
    Line_Column               : constant := 5;
    Column_Column             : constant := 6;
    Length_Column             : constant := 7;
+   Color_Column              : constant := 8;
+   Highlight_Column          : constant := 11;
    Highlight_Category_Column : constant := 12;  --  Get_Highlighting_Style
+   Number_Of_Items_Column    : constant := 13;
+   Category_Line_Column      : constant := 14;
+
+   Messages_Padding : constant Integer := 10;
 
    function Get_File
      (Model : not null access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
@@ -41,5 +56,24 @@ package GPS.Location_Model is
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
       return GPS.Kernel.Styles.Style_Access;
    --  Return the highlighting style stored at Iter
+
+   procedure Fill_Iter
+     (Model              : Gtk_Tree_Store;
+      Iter               : Gtk_Tree_Iter;
+      Base_Name          : String;
+      Absolute_Name      : GNATCOLL.VFS.Virtual_File;
+      Message            : Glib.UTF8_String;
+      Mark               : Editor_Mark'Class := Nil_Editor_Mark;
+      Line               : Integer;
+      Column             : Visible_Column_Type;
+      Length             : Integer;
+      Highlighting       : Boolean;
+      Highlight_Category : Style_Access;
+      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      Color              : access Gdk.Color.Gdk_Color := null);
+   --  Fill information in Iter.
+   --  Base_Name can be left to the empty string, it will then be computed
+   --  automatically from Absolute_Name.
+   --  If Line is 0, consider the item as a non-leaf item.
 
 end GPS.Location_Model;
