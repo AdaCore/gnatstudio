@@ -29,8 +29,11 @@ with Gdk.Color;                      use Gdk.Color;
 with Gdk.Pixbuf;                     use Gdk.Pixbuf;
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
+with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Store;                 use Gtk.Tree_Store;
 with Glib;
 with Glib.Main;
 
@@ -38,7 +41,6 @@ with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;              use GPS.Kernel.Styles;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
-with Gtkada.Tree_View;               use Gtkada.Tree_View;
 with Basic_Types;                    use Basic_Types;
 with Generic_List;
 
@@ -181,7 +183,15 @@ private
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
 
-      Tree          : Tree_View;
+      Tree          : Gtk_Tree_View;
+      --  Tree view
+
+      Filter        : Gtk_Tree_Model_Filter;
+      --  Tree filter model
+
+      Model         : Gtk_Tree_Store;
+      --  Underlying model
+
       Text_Renderer : Gtk_Cell_Renderer_Text;
       Filter_Panel  : Locations_Filter_Panel;
 
