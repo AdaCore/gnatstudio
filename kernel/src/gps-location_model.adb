@@ -20,11 +20,13 @@
 with Ada.Unchecked_Conversion;
 with System;
 
+with Glib;                 use Glib;
 with Glib.Object;
-with Glib.Values;         use Glib.Values;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
-with GPS.Editors.GtkAda;  use GPS.Editors.GtkAda;
+with Glib.Values;          use Glib.Values;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;  use GNATCOLL.VFS.GtkAda;
+with GPS.Editors.GtkAda;   use GPS.Editors.GtkAda;
+with GPS.Kernel.Locations; use GPS.Kernel.Locations;
 
 package body GPS.Location_Model is
 
@@ -32,6 +34,12 @@ package body GPS.Location_Model is
      (System.Address, GPS.Kernel.Styles.Style_Access);
    function To_Address is new Ada.Unchecked_Conversion
      (Style_Access, System.Address);
+
+   procedure Remove_Line
+     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model      : not null access Gtk_Tree_Model_Record'Class;
+      Loc_Iter   : Gtk_Tree_Iter);
+   --  Clear the marks and highlightings of one specific line
 
    -------------------
    -- Columns_Types --
@@ -281,5 +289,125 @@ package body GPS.Location_Model is
 
       return Result;
    end Get_Highlighting_Style;
+
+   ----------------------------------
+   -- Remove_Category_Or_File_Iter --
+   ----------------------------------
+
+   procedure Remove_Category_Or_File_Iter
+     (Kernel : Kernel_Handle;
+      Model  : Gtk_Tree_Store;
+      Iter   : in out Gtk_Tree_Iter;
+      Line   : Natural := 0)
+   is
+      File_Iter : Gtk_Tree_Iter;
+      Parent    : Gtk_Tree_Iter;
+      File_Path : Gtk_Tree_Path;
+      Loc_Iter  : Gtk_Tree_Iter;
+
+      Removing_Category : Boolean := False;
+      --  Indicates whether we are removing a whole category or just a file
+
+   begin
+      --  Unhighlight all the lines and remove all marks in children of the
+      --  category / file.
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Iter_Copy (Iter, File_Iter);
+
+      File_Path := Model.Get_Path (File_Iter);
+
+      if Get_Depth (File_Path) = 1 then
+         File_Iter := Model.Children (File_Iter);
+         Removing_Category := True;
+
+      elsif Get_Depth (File_Path) /= 2 then
+         Path_Free (File_Path);
+         return;
+      end if;
+
+      Path_Free (File_Path);
+
+      while File_Iter /= Null_Iter loop
+         --  Delete the marks corresponding to all locations in this file
+         Loc_Iter := Model.Children (File_Iter);
+
+         if Line /= 0 then
+            --  Delete one specific line location in one specific file
+            while Loc_Iter /= Null_Iter loop
+               if Model.Get_Int (Loc_Iter, Line_Column)
+                 = Gint (Line) then
+                  Remove_Line (Kernel, Model, Loc_Iter);
+                  Model.Remove (Loc_Iter);
+
+               else
+                  Model.Next (Loc_Iter);
+               end if;
+            end loop;
+
+         else
+            while Loc_Iter /= Null_Iter loop
+               Remove_Line (Kernel, Model, Loc_Iter);
+               Model.Next (Loc_Iter);
+            end loop;
+         end if;
+
+         if Line /= 0 then
+            if Model.Children (File_Iter) = Null_Iter then
+               Model.Remove (File_Iter);
+            end if;
+
+            return;
+         end if;
+
+         exit when not Removing_Category;
+
+         Model.Next (File_Iter);
+      end loop;
+
+      if not Removing_Category then
+         Parent := Model.Parent (Iter);
+
+         Model.Set
+           (Parent,
+            Number_Of_Items_Column,
+            Model.Get_Int (Parent, Number_Of_Items_Column)
+              - Model.Get_Int (Iter, Number_Of_Items_Column));
+      end if;
+
+      Model.Remove (Iter);
+   end Remove_Category_Or_File_Iter;
+
+   -----------------
+   -- Remove_Line --
+   -----------------
+
+   procedure Remove_Line
+     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Model      : not null access Gtk_Tree_Model_Record'Class;
+      Loc_Iter   : Gtk_Tree_Iter)
+   is
+      File_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+                    Model.Parent (Loc_Iter);
+      Mark      : constant Editor_Mark'Class :=
+                    Get_Mark (Model, Loc_Iter, Mark_Column);
+
+   begin
+      Highlight_Line
+        (Kernel,
+         Get_File (Model, File_Iter),
+         Mark.Line,
+         Visible_Column_Type (Mark.Column),
+         Integer (Get_Int (Model, Loc_Iter, Length_Column)),
+         Get_Highlighting_Style (Model, Loc_Iter),
+         False);
+
+      if Mark /= Nil_Editor_Mark then
+         Mark.Delete;
+      end if;
+   end Remove_Line;
 
 end GPS.Location_Model;

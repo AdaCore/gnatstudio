@@ -213,19 +213,6 @@ package body GPS.Location_View is
    procedure Goto_Location (Object : access Gtk_Widget_Record'Class);
    --  Goto the selected location in the Location_View
 
-   procedure Remove_Category_Or_File_Iter
-     (View : Location_View;
-      Iter : in out Gtk_Tree_Iter;
-      Line : Natural := 0);
-   --  Clear all the marks and highlightings in file or category
-   --  ??? Document parameter Line.
-
-   procedure Remove_Line
-     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter);
-   --  Clear the marks and highlightings of one specific line
-
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View
 
@@ -538,127 +525,6 @@ package body GPS.Location_View is
       when E : others => Trace (Exception_Handle, E);
    end Goto_Location;
 
-   ----------------------------------
-   -- Remove_Category_Or_File_Iter --
-   ----------------------------------
-
-   procedure Remove_Category_Or_File_Iter
-     (View : Location_View;
-      Iter : in out Gtk_Tree_Iter;
-      Line : Natural := 0)
-   is
-      File_Iter : Gtk_Tree_Iter;
-      Parent    : Gtk_Tree_Iter;
-      File_Path : Gtk_Tree_Path;
-      Loc_Iter  : Gtk_Tree_Iter;
-
-      Removing_Category : Boolean := False;
-      --  Indicates whether we are removing a whole category or just a file
-
-   begin
-      --  Unhighlight all the lines and remove all marks in children of the
-      --  category / file.
-
-      if Iter = Null_Iter then
-         return;
-      end if;
-
-      Iter_Copy (Iter, File_Iter);
-
-      File_Path := View.Model.Get_Path (File_Iter);
-
-      if Get_Depth (File_Path) = 1 then
-         File_Iter := View.Model.Children (File_Iter);
-         Removing_Category := True;
-
-      elsif Get_Depth (File_Path) /= 2 then
-         Path_Free (File_Path);
-         return;
-      end if;
-
-      Path_Free (File_Path);
-
-      while File_Iter /= Null_Iter loop
-         --  Delete the marks corresponding to all locations in this file
-         Loc_Iter := View.Model.Children (File_Iter);
-
-         if Line /= 0 then
-            --  Delete one specific line location in one specific file
-            while Loc_Iter /= Null_Iter loop
-               if View.Model.Get_Int (Loc_Iter, Line_Column)
-                 = Gint (Line) then
-                  Remove_Line (View.Kernel, View.Model, Loc_Iter);
-                  View.Model.Remove (Loc_Iter);
-
-               else
-                  View.Model.Next (Loc_Iter);
-               end if;
-            end loop;
-
-         else
-            while Loc_Iter /= Null_Iter loop
-               Remove_Line (View.Kernel, View.Model, Loc_Iter);
-               View.Model.Next (Loc_Iter);
-            end loop;
-         end if;
-
-         if Line /= 0 then
-            if View.Model.Children (File_Iter) = Null_Iter then
-               View.Model.Remove (File_Iter);
-            end if;
-
-            return;
-         end if;
-
-         exit when not Removing_Category;
-
-         View.Model.Next (File_Iter);
-      end loop;
-
-      if not Removing_Category then
-         Parent := View.Model.Parent (Iter);
-
-         View.Model.Set
-           (Parent,
-            Number_Of_Items_Column,
-            View.Model.Get_Int (Parent, Number_Of_Items_Column)
-              - View.Model.Get_Int (Iter, Number_Of_Items_Column));
-
-         Redraw_Totals (View);
-      end if;
-
-      View.Model.Remove (Iter);
-   end Remove_Category_Or_File_Iter;
-
-   -----------------
-   -- Remove_Line --
-   -----------------
-
-   procedure Remove_Line
-     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Model      : not null access Gtk_Tree_Model_Record'Class;
-      Loc_Iter   : Gtk_Tree_Iter)
-   is
-      File_Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                    Model.Parent (Loc_Iter);
-      Mark      : constant Editor_Mark'Class :=
-                    Get_Mark (Model, Loc_Iter, Mark_Column);
-
-   begin
-      Highlight_Line
-        (Kernel,
-         Get_File (Model, File_Iter),
-         Mark.Line,
-         Visible_Column_Type (Mark.Column),
-         Integer (Get_Int (Model, Loc_Iter, Length_Column)),
-         Get_Highlighting_Style (Model, Loc_Iter),
-         False);
-
-      if Mark /= Nil_Editor_Mark then
-         Mark.Delete;
-      end if;
-   end Remove_Line;
-
    ---------------------
    -- Expand_Category --
    ---------------------
@@ -710,7 +576,8 @@ package body GPS.Location_View is
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
       View.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
-      Remove_Category_Or_File_Iter (View, Store_Iter);
+      Remove_Category_Or_File_Iter (View.Kernel, View.Model, Store_Iter);
+      Redraw_Totals (View);
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -1169,7 +1036,7 @@ package body GPS.Location_View is
       Iter := V.Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         Remove_Category_Or_File_Iter (V, Iter);
+         Remove_Category_Or_File_Iter (V.Kernel, V.Model, Iter);
          Iter := V.Model.Get_Iter_First;
       end loop;
 
@@ -1684,17 +1551,20 @@ package body GPS.Location_View is
         (View.Model, Identifier, File, Iter, File_Iter, Dummy, False);
 
       if File_Iter = Null_Iter then
-         Remove_Category_Or_File_Iter (Location_View (View), Iter);
+         Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
 
       else
          --  Remove the indicated file
-         Remove_Category_Or_File_Iter (Location_View (View), File_Iter, Line);
+         Remove_Category_Or_File_Iter
+           (View.Kernel, View.Model, File_Iter, Line);
 
          if View.Model.Children (Iter) = Null_Iter then
             --  If Category has no more children remove it
-            Remove_Category_Or_File_Iter (Location_View (View), Iter);
+            Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
          end if;
       end if;
+
+      Redraw_Totals (View);
    end Remove_Category;
 
    ------------------
@@ -2402,7 +2272,7 @@ package body GPS.Location_View is
       loop
          Iter := View.Model.Get_Iter_First;
          exit when Iter = Null_Iter;
-         Remove_Category_Or_File_Iter (View, Iter);
+         Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
       end loop;
       return Commands.Success;
    end Execute;

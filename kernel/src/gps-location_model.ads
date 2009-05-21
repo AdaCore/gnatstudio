@@ -29,6 +29,7 @@ with GNATCOLL.VFS;
 
 with Basic_Types;       use Basic_Types;
 with GPS.Editors;       use GPS.Editors;
+with GPS.Kernel;        use GPS.Kernel;
 with GPS.Kernel.Styles; use GPS.Kernel.Styles;
 
 package GPS.Location_Model is
@@ -104,6 +105,14 @@ package GPS.Location_Model is
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
    --  If Line is 0, consider the item as a non-leaf item.
+
+   procedure Remove_Category_Or_File_Iter
+     (Kernel : Kernel_Handle;
+      Model  : Gtk_Tree_Store;
+      Iter   : in out Gtk_Tree_Iter;
+      Line   : Natural := 0);
+   --  Clear all the marks and highlightings in file or category
+   --  ??? Document parameter Line.
 
    function Columns_Types return Glib.GType_Array;
    --  Returns the types for the columns in the Model.
