@@ -35,14 +35,14 @@ package GPS.Location_Model is
    Base_Name_Column          : constant := 1;
    Absolute_Name_Column      : constant := 2;   --  Get_File
    Mark_Column               : constant := 3;
-   Line_Column               : constant := 5;
-   Column_Column             : constant := 6;
-   Length_Column             : constant := 7;
-   Color_Column              : constant := 8;
-   Highlight_Column          : constant := 11;
-   Highlight_Category_Column : constant := 12;  --  Get_Highlighting_Style
-   Number_Of_Items_Column    : constant := 13;
-   Category_Line_Column      : constant := 14;
+   Line_Column               : constant := 4;
+   Column_Column             : constant := 5;
+   Length_Column             : constant := 6;
+   Color_Column              : constant := 7;
+   Highlight_Column          : constant := 10;
+   Highlight_Category_Column : constant := 11;  --  Get_Highlighting_Style
+   Number_Of_Items_Column    : constant := 12;
+   Category_Line_Column      : constant := 13;
 
    Messages_Padding : constant Integer := 10;
 

@@ -121,10 +121,8 @@ package body GPS.Location_View is
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
 
-   Absolute_Name_Column      : constant := 2;
-   Node_Type_Column          : constant := 4;
-   Button_Column             : constant := 9;
-   Action_Column             : constant := 10;
+   Button_Column             : constant := 8;
+   Action_Column             : constant := 9;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -1304,7 +1302,6 @@ package body GPS.Location_View is
          Line_Column                         => GType_Int,
          Column_Column                       => GType_Int,
          Length_Column                       => GType_Int,
-         Node_Type_Column                    => GType_Int,
          Color_Column                        => Gdk_Color_Type,
          Button_Column                       => Gdk.Pixbuf.Get_Type,
          Action_Column                       => GType_Pointer,
