@@ -5927,8 +5927,17 @@ package body Src_Editor_Buffer is
 
       --  Replace text with the new one
 
-      Replace_Slice
-        (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
+      if Get_Line_Count (Buffer) >= Gint (To_Line + 1) then
+         Replace_Slice
+           (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
+      else
+         --  Not valid, To_Line + 1 does not exist, To_Line is the last line
+         --  and has not line-feed.
+         Replace_Slice
+           (Buffer, From_Line, 1,
+            To_Line, Character_Offset_Type (Length (New_Text)),
+            To_String (New_Text));
+      end if;
 
       GNAT.Strings.Free (B_Sep);
       GNAT.Strings.Free (Sep);

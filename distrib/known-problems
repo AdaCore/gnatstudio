@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 4.4.0
 
+- I519-023: Refill duplicate lines on end of buffer
+  Problem:    When doing a Refill on the last line of the buffer and if
+              this line has no end-of-line character then the content will
+              gets duplicated.
+  Workaround: Add an end-of-line after the last line.
+
 - I514-028: Bookmark location not preserved when edito closed
   Problem:    If you create a bookmark, it should always point to the same
               location in a file. However, if you modify the editor and then
