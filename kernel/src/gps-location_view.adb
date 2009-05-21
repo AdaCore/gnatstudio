@@ -274,10 +274,6 @@ package body GPS.Location_View is
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler
 
-   procedure Redraw_Totals
-     (View : access Location_View_Record'Class);
-   --  Reset the columns corresponding to the "total" items
-
    function Idle_Redraw (View : Location_View) return Boolean;
    --  Redraw the "total" items
 
@@ -398,7 +394,8 @@ package body GPS.Location_View is
    -- Redraw_Totals --
    -------------------
 
-   procedure Redraw_Totals (View : access Location_View_Record'Class) is
+   procedure Redraw_Totals
+     (View : not null access Location_View_Record'Class) is
    begin
       if View.Idle_Redraw_Handler = Glib.Main.No_Source_Id then
          View.Idle_Redraw_Handler := View_Idle.Idle_Add
@@ -1532,40 +1529,6 @@ package body GPS.Location_View is
 
       return Natural (View.Model.Get_Int (Cat, Number_Of_Items_Column));
    end Category_Count;
-
-   ---------------------
-   -- Remove_Category --
-   ---------------------
-
-   procedure Remove_Category
-     (View       : access Location_View_Record'Class;
-      Identifier : String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural := 0)
-   is
-      Iter      : Gtk_Tree_Iter;
-      File_Iter : Gtk_Tree_Iter;
-      Dummy     : Boolean;
-   begin
-      Get_Category_File
-        (View.Model, Identifier, File, Iter, File_Iter, Dummy, False);
-
-      if File_Iter = Null_Iter then
-         Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
-
-      else
-         --  Remove the indicated file
-         Remove_Category_Or_File_Iter
-           (View.Kernel, View.Model, File_Iter, Line);
-
-         if View.Model.Children (Iter) = Null_Iter then
-            --  If Category has no more children remove it
-            Remove_Category_Or_File_Iter (View.Kernel, View.Model, Iter);
-         end if;
-      end if;
-
-      Redraw_Totals (View);
-   end Remove_Category;
 
    ------------------
    -- Button_Press --

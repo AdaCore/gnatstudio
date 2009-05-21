@@ -290,12 +290,44 @@ package body GPS.Location_Model is
       return Result;
    end Get_Highlighting_Style;
 
+   ---------------------
+   -- Remove_Category --
+   ---------------------
+
+   procedure Remove_Category
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Model      : Gtk_Tree_Store;
+      Identifier : String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Line       : Natural := 0)
+   is
+      Iter      : Gtk_Tree_Iter;
+      File_Iter : Gtk_Tree_Iter;
+      Dummy     : Boolean;
+   begin
+      Get_Category_File
+        (Model, Identifier, File, Iter, File_Iter, Dummy, False);
+
+      if File_Iter = Null_Iter then
+         Remove_Category_Or_File_Iter (Kernel, Model, Iter);
+
+      else
+         --  Remove the indicated file
+         Remove_Category_Or_File_Iter (Kernel, Model, File_Iter, Line);
+
+         if Model.Children (Iter) = Null_Iter then
+            --  If Category has no more children remove it
+            Remove_Category_Or_File_Iter (Kernel, Model, Iter);
+         end if;
+      end if;
+   end Remove_Category;
+
    ----------------------------------
    -- Remove_Category_Or_File_Iter --
    ----------------------------------
 
    procedure Remove_Category_Or_File_Iter
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Model  : Gtk_Tree_Store;
       Iter   : in out Gtk_Tree_Iter;
       Line   : Natural := 0)

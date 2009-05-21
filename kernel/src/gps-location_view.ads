@@ -141,19 +141,14 @@ package GPS.Location_View is
    --  If Look_For_Secondary is true, then we'll look and add secondary
    --  location references, if any.
 
-   procedure Remove_Category
-     (View       : access Location_View_Record'Class;
-      Identifier : String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural := 0);
-   --  Remove category Identifier from the view. All corresponding marks
-   --  are deleted.
-   --  Identifier is the escaped string.
-
    function Model
      (Self : not null access Location_View_Record'Class)
       return not null Gtk.Tree_Model.Gtk_Tree_Model;
    --  Returns internal model.
+
+   procedure Redraw_Totals
+     (View : not null access Location_View_Record'Class);
+   --  Reset the columns corresponding to the "total" items
 
 private
    type Location_Record;

@@ -21,6 +21,7 @@ with GNAT.Regpat;
 
 with Glib.Convert;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
@@ -535,8 +536,13 @@ package body GPS.Kernel.Locations is
 
    begin
       if View /= null then
-         GPS.Location_View.Remove_Category
-           (View, Glib.Convert.Escape_Text (Category), File, Line);
+         GPS.Location_Model.Remove_Category
+           (Kernel,
+            Gtk_Tree_Store (View.Model),
+            Glib.Convert.Escape_Text (Category),
+            File,
+            Line);
+         View.Redraw_Totals;
       end if;
    end Remove_Location_Category;
 

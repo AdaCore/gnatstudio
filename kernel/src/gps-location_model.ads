@@ -87,6 +87,16 @@ package GPS.Location_Model is
    --  If the category was created, New_Category is set to True.
    --  Category is the escaped string.
 
+   procedure Remove_Category
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Model      : Gtk_Tree_Store;
+      Identifier : String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Line       : Natural := 0);
+   --  Remove category Identifier from the view. All corresponding marks
+   --  are deleted.
+   --  Identifier is the escaped string.
+
    procedure Fill_Iter
      (Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
@@ -107,7 +117,7 @@ package GPS.Location_Model is
    --  If Line is 0, consider the item as a non-leaf item.
 
    procedure Remove_Category_Or_File_Iter
-     (Kernel : Kernel_Handle;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Model  : Gtk_Tree_Store;
       Iter   : in out Gtk_Tree_Iter;
       Line   : Natural := 0);
