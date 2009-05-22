@@ -21,6 +21,7 @@ with GNAT.Regpat;
 
 with Glib.Convert;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
@@ -84,6 +85,7 @@ package body GPS.Kernel.Locations is
 
       View  : constant GPS.Location_View.Location_View :=
                 GPS.Location_View.Get_Or_Create_Location_View (Kernel, False);
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
       File  : constant Virtual_File := File_Hooks_Args (Data.all).File;
 
       Category_Iter : Gtk_Tree_Iter;
@@ -94,40 +96,42 @@ package body GPS.Kernel.Locations is
          return;
       end if;
 
+      Model := View.Model;
+
       --  Loop on the files in the result view and highlight lines as
       --  necessary.
 
-      Category_Iter := View.Model.Get_Iter_First;
+      Category_Iter := Model.Get_Iter_First;
 
       while Category_Iter /= Null_Iter loop
-         File_Iter := View.Model.Children (Category_Iter);
+         File_Iter := Model.Children (Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            if File = Get_File (View.Model, File_Iter) then
+            if File = Get_File (Model, File_Iter) then
                --  The file which has just been opened was in the locations
                --  view, highlight lines as necessary.
-               Line_Iter := View.Model.Children (File_Iter);
+               Line_Iter := Model.Children (File_Iter);
 
                while Line_Iter /= Null_Iter loop
                   Highlight_Line
                     (Kernel,
                      File,
                      Integer
-                       (View.Model.Get_Int (Line_Iter, Line_Column)),
+                       (Model.Get_Int (Line_Iter, Line_Column)),
                      Basic_Types.Visible_Column_Type
-                       (View.Model.Get_Int (Line_Iter, Column_Column)),
+                       (Model.Get_Int (Line_Iter, Column_Column)),
                      Integer
-                       (View.Model.Get_Int (Line_Iter, Length_Column)),
-                     Get_Highlighting_Style (View.Model, Line_Iter));
+                       (Model.Get_Int (Line_Iter, Length_Column)),
+                     Get_Highlighting_Style (Model, Line_Iter));
 
-                  View.Model.Next (Line_Iter);
+                  Model.Next (Line_Iter);
                end loop;
             end if;
 
-            View.Model.Next (File_Iter);
+            Model.Next (File_Iter);
          end loop;
 
-         View.Model.Next (Category_Iter);
+         Model.Next (Category_Iter);
       end loop;
 
    exception
@@ -508,7 +512,7 @@ package body GPS.Kernel.Locations is
          return;
       end if;
 
-      Recount_Category (View.Model, Category);
+      Recount_Category (Gtk_Tree_Store (View.Model), Category);
       View.Redraw_Totals;
    end Recount_Category;
 
@@ -554,7 +558,7 @@ package body GPS.Kernel.Locations is
       if View /= null then
          GPS.Location_Model.Remove_Category
            (Kernel,
-            View.Model,
+            Gtk_Tree_Store (View.Model),
             Glib.Convert.Escape_Text (Category),
             File,
             Line);

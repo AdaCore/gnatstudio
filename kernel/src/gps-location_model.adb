@@ -24,11 +24,6 @@ with Glib;                 use Glib;
 with Glib.Convert;
 with Glib.Object;
 with Glib.Values;          use Glib.Values;
-with Gtk.Enums;
-with Gtk.Handlers;
-with Gtk.Object;
-with Gtk.Widget;
-
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;  use GNATCOLL.VFS.GtkAda;
 with GPS.Editors.GtkAda;   use GPS.Editors.GtkAda;
@@ -47,15 +42,7 @@ package body GPS.Location_Model is
       Loc_Iter   : Gtk_Tree_Iter);
    --  Clear the marks and highlightings of one specific line
 
-   procedure On_Destroy (Self : access Location_Model_Record'Class);
-
-   package Location_Model_Callback is
-     new Gtk.Handlers.Callback (Location_Model_Record);
-
    Messages_Padding : constant Integer := 10;
-
-   Non_Leaf_Color_Name : constant String := "blue";
-   --  <preference> color to use for category and file names
 
    --------------------
    -- Category_Count --
@@ -71,7 +58,7 @@ package body GPS.Location_Model is
 
    begin
       Get_Category_File
-        (Location_Model (Model),
+        (Gtk_Tree_Store (Model),
          Glib.Convert.Escape_Text (Category),
          GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
 
@@ -110,7 +97,7 @@ package body GPS.Location_Model is
    ---------------
 
    procedure Fill_Iter
-     (Model              : not null access Location_Model_Record'Class;
+     (Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
@@ -121,13 +108,15 @@ package body GPS.Location_Model is
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : Style_Access;
-      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
+      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      Color              : access Gdk.Color.Gdk_Color := null)
    is
+      type Gdk_Color_Access is access all Gdk.Color.Gdk_Color;
+
       function To_Proxy is
-        new Ada.Unchecked_Conversion (System.Address, Gdk.C_Proxy);
+        new Ada.Unchecked_Conversion (Gdk_Color_Access, Gdk.C_Proxy);
 
       Value : GValue;
-
    begin
       if Base_Name = "" then
          Set (Model, Iter, Base_Name_Column,
@@ -186,8 +175,7 @@ package body GPS.Location_Model is
       end;
 
       if Line = 0 then
-         Model.Set
-           (Iter, Color_Column, To_Proxy (Model.Non_Leaf_Color'Address));
+         Model.Set (Iter, Color_Column, To_Proxy (Gdk_Color_Access (Color)));
 
       else
          Model.Set (Iter, Color_Column, Gdk.C_Proxy'(null));
@@ -199,13 +187,16 @@ package body GPS.Location_Model is
    -----------------------
 
    procedure Get_Category_File
-     (Model           : not null access Location_Model_Record'Class;
+     (Model           : Gtk_Tree_Store;
       Category        : Glib.UTF8_String;
       File            : GNATCOLL.VFS.Virtual_File;
       Category_Iter   : out Gtk_Tree_Iter;
       File_Iter       : out Gtk_Tree_Iter;
       New_Category    : out Boolean;
-      Create          : Boolean) is
+      Create          : Boolean;
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
+      Color           : access Gdk.Color.Gdk_Color := null) is
    begin
       File_Iter := Null_Iter;
       Category_Iter := Get_Iter_First (Model);
@@ -223,7 +214,7 @@ package body GPS.Location_Model is
             Fill_Iter
               (Model, Category_Iter, Category, GNATCOLL.VFS.No_File,
                "", Nil_Editor_Mark, 0, 0, 0, False, null,
-               Model.Category_Pixbuf);
+               Category_Pixbuf, Color);
             New_Category := True;
          else
             return;
@@ -250,7 +241,7 @@ package body GPS.Location_Model is
          Append (Model, File_Iter, Category_Iter);
          Fill_Iter
            (Model, File_Iter, "", File, "", Nil_Editor_Mark, 0, 0, 0,
-            False, null, Model.File_Pixbuf);
+            False, null, File_Pixbuf, Color);
       end if;
 
       return;
@@ -374,75 +365,12 @@ package body GPS.Location_Model is
       return "";
    end Get_Message;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Model  : out Location_Model;
-      Kernel : Kernel_Handle) is
-   begin
-      Model := new Location_Model_Record;
-      Initialize (Model, Kernel);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self   : not null access Location_Model_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Success : Boolean;
-
-   begin
-      Gtk.Tree_Store.Initialize (Self, Columns_Types);
-      Self.Kernel := Kernel;
-      Self.Category_Pixbuf :=
-        Get_Main_Window (Kernel).Render_Icon
-          ("gps-box", Gtk.Enums.Icon_Size_Menu);
-      Self.File_Pixbuf :=
-        Get_Main_Window (Kernel).Render_Icon
-          ("gps-file", Gtk.Enums.Icon_Size_Menu);
-      Self.Non_Leaf_Color := Gdk.Color.Parse (Non_Leaf_Color_Name);
-      Gdk.Color.Alloc_Color
-        (Gtk.Widget.Get_Default_Colormap,
-         Self.Non_Leaf_Color, False, True, Success);
-
-      Location_Model_Callback.Connect
-        (Self, Gtk.Object.Signal_Destroy, On_Destroy'Access);
-   end Initialize;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Self : access Location_Model_Record'Class) is
-      Iter : Gtk_Tree_Iter;
-
-   begin
-      --  Remove all categories
-
-      Iter := Self.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         Remove_Category_Or_File_Iter (Self.Kernel, Self, Iter);
-         Iter := Self.Get_Iter_First;
-      end loop;
-
-      --  Free pixbufs
-
-      Unref (Self.Category_Pixbuf);
-      Unref (Self.File_Pixbuf);
-   end On_Destroy;
-
    ----------------------
    -- Recount_Category --
    ----------------------
 
    procedure Recount_Category
-     (Model    : not null access Location_Model_Record'Class;
+     (Model    : Gtk_Tree_Store;
       Category : String)
    is
       Cat   : Gtk_Tree_Iter;
@@ -479,7 +407,7 @@ package body GPS.Location_Model is
 
    procedure Remove_Category
      (Kernel     : not null access Kernel_Handle_Record'Class;
-      Model      : not null access Location_Model_Record'Class;
+      Model      : Gtk_Tree_Store;
       Identifier : String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural := 0)
@@ -511,7 +439,7 @@ package body GPS.Location_Model is
 
    procedure Remove_Category_Or_File_Iter
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Model  : not null access Location_Model_Record'Class;
+      Model  : Gtk_Tree_Store;
       Iter   : in out Gtk_Tree_Iter;
       Line   : Natural := 0)
    is

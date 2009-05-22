@@ -25,19 +25,21 @@ with GNAT.Strings;
 
 with GNATCOLL.VFS;
 
+with Gdk.Color;                      use Gdk.Color;
+with Gdk.Pixbuf;                     use Gdk.Pixbuf;
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
 with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;                 use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;          use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Store;                 use Gtk.Tree_Store;
 with Glib;
 with Glib.Main;
 
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;              use GPS.Kernel.Styles;
-with GPS.Location_Model;             use GPS.Location_Model;
 with GPS.Location_View_Filter_Panel; use GPS.Location_View_Filter_Panel;
 with Basic_Types;                    use Basic_Types;
 with Generic_List;
@@ -131,7 +133,7 @@ package GPS.Location_View is
 
    function Model
      (Self : not null access Location_View_Record'Class)
-      return not null GPS.Location_Model.Location_Model;
+      return not null Gtk.Tree_Model.Gtk_Tree_Model;
    --  Returns internal model.
 
    procedure Redraw_Totals
@@ -172,7 +174,7 @@ private
       Filter        : Gtk_Tree_Model_Filter;
       --  Tree filter model
 
-      Model         : GPS.Location_Model.Location_Model;
+      Model         : Gtk_Tree_Store;
       --  Underlying model
 
       Text_Renderer : Gtk_Cell_Renderer_Text;
@@ -181,6 +183,13 @@ private
       RegExp       : GNAT.Expect.Pattern_Matcher_Access;
       Text         : GNAT.Strings.String_Access;
       Is_Hide      : Boolean := False;
+
+      Non_Leaf_Color : aliased Gdk.Color.Gdk_Color;
+      --  The color to use in the first column, depending on the status of the
+      --  line.
+
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
 
       Action_Column   : Gtk_Tree_View_Column;
 
