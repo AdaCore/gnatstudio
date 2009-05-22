@@ -44,6 +44,31 @@ package body GPS.Location_Model is
 
    Messages_Padding : constant Integer := 10;
 
+   --------------------
+   -- Category_Count --
+   --------------------
+
+   function Category_Count
+     (Model    : not null access Gtk_Tree_Model_Record'Class;
+      Category : String) return Natural
+   is
+      Cat   : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+
+   begin
+      Get_Category_File
+        (Gtk_Tree_Store (Model),
+         Glib.Convert.Escape_Text (Category),
+         GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
+
+      if Cat = Null_Iter then
+         return 0;
+      end if;
+
+      return Natural (Model.Get_Int (Cat, Number_Of_Items_Column));
+   end Category_Count;
+
    -------------------
    -- Columns_Types --
    -------------------

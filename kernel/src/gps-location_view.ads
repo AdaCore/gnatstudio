@@ -76,11 +76,6 @@ package GPS.Location_View is
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
 
-   function Category_Count
-     (View     : access Location_View_Record'Class;
-      Category : String) return Natural;
-   --  Return the number of entries for a given category
-
    procedure Next_Item
      (View      : access Location_View_Record'Class;
       Backwards : Boolean := False);

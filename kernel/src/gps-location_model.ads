@@ -99,6 +99,11 @@ package GPS.Location_Model is
    --  Get the iter corresponding to a line/column location within the file.
    --  If Column is not specified, only the line has to match.
 
+   function Category_Count
+     (Model    : not null access Gtk_Tree_Model_Record'Class;
+      Category : String) return Natural;
+   --  Return the number of entries for a given category
+
    procedure Remove_Category
      (Kernel     : not null access Kernel_Handle_Record'Class;
       Model      : Gtk_Tree_Store;

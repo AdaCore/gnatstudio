@@ -65,7 +65,7 @@ package body GPS.Kernel.Locations is
 
    begin
       if View /= null then
-         return GPS.Location_View.Category_Count (View, Category);
+         return Category_Count (View.Model, Category);
 
       else
          return 0;

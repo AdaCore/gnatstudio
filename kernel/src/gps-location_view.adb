@@ -1418,31 +1418,6 @@ package body GPS.Location_View is
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
 
-   --------------------
-   -- Category_Count --
-   --------------------
-
-   function Category_Count
-     (View     : access Location_View_Record'Class;
-      Category : String) return Natural
-   is
-      Cat   : Gtk_Tree_Iter;
-      Iter  : Gtk_Tree_Iter;
-      Dummy : Boolean;
-
-   begin
-      Get_Category_File
-        (View.Model,
-         Glib.Convert.Escape_Text (Category),
-         GNATCOLL.VFS.No_File, Cat, Iter, Dummy, False);
-
-      if Cat = Null_Iter then
-         return 0;
-      end if;
-
-      return Natural (View.Model.Get_Int (Cat, Number_Of_Items_Column));
-   end Category_Count;
-
    ------------------
    -- Button_Press --
    ------------------
