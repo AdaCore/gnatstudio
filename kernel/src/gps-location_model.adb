@@ -42,6 +42,8 @@ package body GPS.Location_Model is
       Loc_Iter   : Gtk_Tree_Iter);
    --  Clear the marks and highlightings of one specific line
 
+   Messages_Padding : constant Integer := 10;
+
    -------------------
    -- Columns_Types --
    -------------------
@@ -290,6 +292,53 @@ package body GPS.Location_Model is
 
       return Result;
    end Get_Highlighting_Style;
+
+   --------------------------
+   -- Get_Line_Column_Iter --
+   --------------------------
+
+   procedure Get_Line_Column_Iter
+     (Model     : not null access Gtk_Tree_Model_Record'Class;
+      File_Iter : Gtk_Tree_Iter;
+      Line      : Natural;
+      Column    : Natural := 0;
+      Loc_Iter  : out Gtk_Tree_Iter)
+   is
+   begin
+      Loc_Iter := Model.Children (File_Iter);
+
+      while Loc_Iter /= Null_Iter loop
+         if Model.Get_Int (Loc_Iter, Line_Column) = Gint (Line)
+           and then
+             (Column = 0
+              or else Model.Get_Int (Loc_Iter, Column_Column) = Gint (Column))
+         then
+            return;
+         end if;
+
+         Model.Next (Loc_Iter);
+      end loop;
+
+      Loc_Iter := Null_Iter;
+   end Get_Line_Column_Iter;
+
+   -----------------
+   -- Get_Message --
+   -----------------
+
+   function Get_Message
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return String
+   is
+      M : constant String := Get_String (Model, Iter, Base_Name_Column);
+
+   begin
+      if M'Length > Messages_Padding then
+         return M (M'First + Messages_Padding + 7 .. M'Last);
+      end if;
+
+      return "";
+   end Get_Message;
 
    ----------------------
    -- Recount_Category --

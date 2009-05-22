@@ -52,8 +52,6 @@ package GPS.Location_Model is
    Number_Of_Items_Column    : constant := 12;
    Category_Line_Column      : constant := 13;
 
-   Messages_Padding : constant Integer := 10;
-
    function Get_File
      (Model : not null access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
@@ -86,6 +84,20 @@ package GPS.Location_Model is
    --  If File is "", then the category iter will be returned.
    --  If the category was created, New_Category is set to True.
    --  Category is the escaped string.
+
+   function Get_Message
+     (Model : not null access Gtk_Tree_Model_Record'Class;
+      Iter  : Gtk_Tree_Iter) return String;
+   --  Return the message stored at Iter
+
+   procedure Get_Line_Column_Iter
+     (Model     : not null access Gtk_Tree_Model_Record'Class;
+      File_Iter : Gtk_Tree_Iter;
+      Line      : Natural;
+      Column    : Natural := 0;
+      Loc_Iter  : out Gtk_Tree_Iter);
+   --  Get the iter corresponding to a line/column location within the file.
+   --  If Column is not specified, only the line has to match.
 
    procedure Remove_Category
      (Kernel     : not null access Kernel_Handle_Record'Class;

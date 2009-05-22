@@ -188,22 +188,8 @@ package body GPS.Location_View is
       Message : String) return Locations_List.List;
    --  Return a list of file locations contained in Message
 
-   function Get_Message
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return String;
-   --  Return the message stored at Iter
-
    procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
-
-   procedure Get_Line_Column_Iter
-     (Model     : not null access Gtk_Tree_Model_Record'Class;
-      File_Iter : Gtk_Tree_Iter;
-      Line      : Natural;
-      Column    : Natural := 0;
-      Loc_Iter  : out Gtk_Tree_Iter);
-   --  Get the iter corresponding to a line/column location within the file.
-   --  If Column is not specified, only the line has to match.
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -682,35 +668,6 @@ package body GPS.Location_View is
       Path_Free (Category_Path);
    end Next_Item;
 
-   --------------------------
-   -- Get_Line_Column_Iter --
-   --------------------------
-
-   procedure Get_Line_Column_Iter
-     (Model     : not null access Gtk_Tree_Model_Record'Class;
-      File_Iter : Gtk_Tree_Iter;
-      Line      : Natural;
-      Column    : Natural := 0;
-      Loc_Iter  : out Gtk_Tree_Iter)
-   is
-   begin
-      Loc_Iter := Model.Children (File_Iter);
-
-      while Loc_Iter /= Null_Iter loop
-         if Model.Get_Int (Loc_Iter, Line_Column) = Gint (Line)
-           and then
-             (Column = 0
-              or else Model.Get_Int (Loc_Iter, Column_Column) = Gint (Column))
-         then
-            return;
-         end if;
-
-         Model.Next (Loc_Iter);
-      end loop;
-
-      Loc_Iter := Null_Iter;
-   end Get_Line_Column_Iter;
-
    ------------------
    -- Add_Location --
    ------------------
@@ -769,7 +726,7 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (View.Model, Category,
+        (Model, Category,
          File, Category_Iter, File_Iter, Category_Created, True,
          View.Category_Pixbuf, View.File_Pixbuf, View.Non_Leaf_Color'Access);
 
@@ -2498,24 +2455,6 @@ package body GPS.Location_View is
       Free (X.Children);
       Unchecked_Free (X);
    end Free;
-
-   -----------------
-   -- Get_Message --
-   -----------------
-
-   function Get_Message
-     (Model : not null access Gtk_Tree_Model_Record'Class;
-      Iter  : Gtk_Tree_Iter) return String
-   is
-      M : constant String := Get_String (Model, Iter, Base_Name_Column);
-
-   begin
-      if M'Length > Messages_Padding then
-         return M (M'First + Messages_Padding + 7 .. M'Last);
-      end if;
-
-      return "";
-   end Get_Message;
 
    ----------
    -- Free --
