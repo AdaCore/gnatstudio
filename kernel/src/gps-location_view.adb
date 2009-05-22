@@ -27,6 +27,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with System;
 
 with Gdk.Event;                use Gdk.Event;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Rectangle;            use Gdk.Rectangle;
 
 with Glib.Convert;
@@ -47,7 +48,6 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Tooltips;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -65,7 +65,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
-with GPS.Location_Model;       use GPS.Location_Model;
 with String_Utils;             use String_Utils;
 with UTF8_Utils;               use UTF8_Utils;
 with XML_Utils;                use XML_Utils;
@@ -74,9 +73,6 @@ with Traces;                   use Traces;
 package body GPS.Location_View is
 
    Me : constant Debug_Handle := Create ("GPS_Location_View");
-
-   Non_Leaf_Color_Name : constant String := "blue";
-   --  <preference> color to use for category and file names
 
    type Location_View_Module is new Module_ID_Record with null record;
    Location_View_Module_Id : Module_ID;
@@ -689,7 +685,6 @@ package body GPS.Location_View is
       Look_For_Secondary : Boolean;
       Parent_Iter        : in out Gtk_Tree_Iter)
    is
-      Model            : constant Gtk_Tree_Store := View.Model;
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
       Iter, Iter2      : Gtk_Tree_Iter := Null_Iter;
@@ -715,9 +710,9 @@ package body GPS.Location_View is
 
       function Matches_Location (Iter : Gtk_Tree_Iter) return Boolean is
       begin
-         return  Get_Int (Model, Iter, Line_Column) = Gint (Line)
-           and then Get_Int (Model, Iter, Column_Column) = Gint (Column)
-           and then Get_File (Model, Iter) = File;
+         return  View.Model.Get_Int (Iter, Line_Column) = Gint (Line)
+           and then View.Model.Get_Int (Iter, Column_Column) = Gint (Column)
+           and then Get_File (View.Model, Iter) = File;
       end Matches_Location;
 
    begin
@@ -726,9 +721,8 @@ package body GPS.Location_View is
       end if;
 
       Get_Category_File
-        (Model, Category,
-         File, Category_Iter, File_Iter, Category_Created, True,
-         View.Category_Pixbuf, View.File_Pixbuf, View.Non_Leaf_Color'Access);
+        (View.Model, Category,
+         File, Category_Iter, File_Iter, Category_Created, True);
 
       --  Check whether the same item already exists
 
@@ -736,43 +730,43 @@ package body GPS.Location_View is
          if Category_Iter /= Null_Iter
            and then File_Iter /= Null_Iter
          then
-            Iter := Children (Model, File_Iter);
+            Iter := View.Model.Children (File_Iter);
 
             while Iter /= Null_Iter loop
-               if Get_Int (Model, Iter, Line_Column) = Gint (Line)
-                 and then Get_Int
-                   (Model, Iter, Column_Column) = Gint (Column)
-                 and then Get_Message (Model, Iter) = Message
+               if View.Model.Get_Int (Iter, Line_Column) = Gint (Line)
+                 and then View.Model.Get_Int
+                   (Iter, Column_Column) = Gint (Column)
+                 and then Get_Message (View.Model, Iter) = Message
                then
                   return;
                end if;
 
-               Next (Model, Iter);
+               View.Model.Next (Iter);
             end loop;
          end if;
       end if;
 
       if Sort_In_File then
-         Iter2 := Children (Model, File_Iter);
+         Iter2 := View.Model.Children (File_Iter);
          while Iter2 /= Null_Iter loop
-            if Get_Int (Model, Iter2, Line_Column) > Gint (Line)
-              or else (Get_Int (Model, Iter2, Line_Column) = Gint (Line)
-                       and then Get_Int (Model, Iter2, Column_Column) >
+            if View.Model.Get_Int (Iter2, Line_Column) > Gint (Line)
+              or else (View.Model.Get_Int (Iter2, Line_Column) = Gint (Line)
+                       and then View.Model.Get_Int (Iter2, Column_Column) >
                          Gint (Column))
             then
-               Insert_Before (Model, Iter, File_Iter, Iter2);
+               View.Model.Insert_Before (Iter, File_Iter, Iter2);
                Added := True;
                exit;
             end if;
-            Next (Model, Iter2);
+            View.Model.Next (Iter2);
          end loop;
       end if;
 
       if Enable_Counter then
-         Set (Model, File_Iter, Number_Of_Items_Column,
-              Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
-         Set (Model, Category_Iter, Number_Of_Items_Column,
-              Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
+         View.Model.Set (File_Iter, Number_Of_Items_Column,
+              View.Model.Get_Int (File_Iter, Number_Of_Items_Column) + 1);
+         View.Model.Set (Category_Iter, Number_Of_Items_Column,
+              View.Model.Get_Int (Category_Iter, Number_Of_Items_Column) + 1);
 
          Redraw_Totals (View);
       end if;
@@ -802,12 +796,12 @@ package body GPS.Location_View is
                --  No parent iter, browse the list for an iter with acceptable
                --  line and column.
 
-               Iter := Children (Model, File_Iter);
+               Iter := View.Model.Children (File_Iter);
 
                while Iter /= Null_Iter loop
                   exit when Matches_Location (Iter);
 
-                  Next (Model, Iter);
+                  View.Model.Next (Iter);
                end loop;
 
                Potential_Parent := Iter;
@@ -827,11 +821,11 @@ package body GPS.Location_View is
                --  with just the secondary information.
 
                if not Added then
-                  Append (Model, Iter, File_Iter);
+                  View.Model.Append (Iter, File_Iter);
                end if;
 
                Fill_Iter
-                 (Model, Iter,
+                 (View.Model, Iter,
                   Image (Line) & ":" & Image (Integer (Column)),
                   File, Message,
                   Create_Mark (View.Kernel, File, Line, Column),
@@ -852,7 +846,7 @@ package body GPS.Location_View is
                      exit;
                   end if;
 
-                  Next (Model, Iter);
+                  View.Model.Next (Iter);
                end loop;
             end if;
 
@@ -864,12 +858,12 @@ package body GPS.Location_View is
             Node := First (Locs);
 
             while Node /= Locations_List.Null_Node loop
-               Append (Model, Iter, Potential_Parent);
+               View.Model.Append (Iter, Potential_Parent);
 
                Loc := Data (Node);
 
                Fill_Iter
-                 (Model, Iter, " ", Loc.File, Loc.Message.all,
+                 (View.Model, Iter, " ", Loc.File, Loc.Message.all,
                   Create_Mark (View.Kernel, Loc.File, Loc.Line, Loc.Column),
                   Loc.Line, Loc.Column, Length,
                   Highlight, Highlight_Category);
@@ -891,11 +885,11 @@ package body GPS.Location_View is
             --  Fill Iter with main information
 
             if not Added then
-               Append (Model, Iter, File_Iter);
+               View.Model.Append (Iter, File_Iter);
             end if;
 
             Fill_Iter
-              (Model, Iter,
+              (View.Model, Iter,
                Image (Line) & ":" & Image (Integer (Column)),
                File, Message,
                Create_Mark (View.Kernel, File, Line, Column),
@@ -983,19 +977,8 @@ package body GPS.Location_View is
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
       V    : constant Location_View := Location_View (View);
-      Iter : Gtk_Tree_Iter;
+
    begin
-      --  Remove all categories
-
-      Iter := V.Model.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         Remove_Category_Or_File_Iter (V.Kernel, V.Model, Iter);
-         Iter := V.Model.Get_Iter_First;
-      end loop;
-
-      Unref (V.Category_Pixbuf);
-      Unref (V.File_Pixbuf);
       Basic_Types.Unchecked_Free (V.Secondary_File_Pattern);
 
       if V.Idle_Redraw_Handler /= Glib.Main.No_Source_Id then
@@ -1285,26 +1268,15 @@ package body GPS.Location_View is
       Module : Abstract_Module_ID)
    is
       Scrolled  : Gtk_Scrolled_Window;
-      Success   : Boolean;
 
    begin
       Initialize_Vbox (View);
 
       View.Kernel := Kernel;
 
-      View.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
-      Alloc_Color
-        (Get_Default_Colormap, View.Non_Leaf_Color, False, True, Success);
-
-      View.Category_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), "gps-box", Gtk.Enums.Icon_Size_Menu);
-      View.File_Pixbuf     := Render_Icon
-        (Get_Main_Window (Kernel), "gps-file", Gtk.Enums.Icon_Size_Menu);
-
       --  Initialize the tree
 
-      Gtk_New (View.Model, Columns_Types);
-
+      Gtk_New (View.Model, Kernel);
       Gtk_New (View.Filter, View.Model);
       Visible_Funcs.Set_Visible_Func
         (View.Filter, Is_Visible'Access, Location_View (View));
@@ -2732,9 +2704,9 @@ package body GPS.Location_View is
 
    function Model
      (Self : not null access Location_View_Record'Class)
-      return not null Gtk.Tree_Model.Gtk_Tree_Model is
+      return not null GPS.Location_Model.Location_Model is
    begin
-      return Gtk.Tree_Model.Gtk_Tree_Model (Self.Model);
+      return Self.Model;
    end Model;
 
 end GPS.Location_View;
