@@ -110,7 +110,9 @@ private
       Model                  : Gtk_Tree_Model;
       Manager                : Task_Manager_Access;
 
-      Button                 : Gtk_Button;
+      Progress_Bar_Button    : Gtk_Button;
+
+      Global_Button          : Gtk_Button;
       Button_Image           : Gtk_Image;
       Label                  : Gtk_Label;
 
@@ -127,7 +129,7 @@ private
       Reference_Widget       : Gtk_Widget;
       --  A reference widget to create the graphical contexts.
 
-      Stop_Button_Pixbuf     : Gdk_Pixbuf;
+      Global_Button_Pixbuf     : Gdk_Pixbuf;
    end record;
 
    procedure Push_State (Manager : Task_Manager_Access);

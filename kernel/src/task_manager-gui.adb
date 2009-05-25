@@ -150,6 +150,11 @@ package body Task_Manager.GUI is
       Data   : Manager_Index_Record);
    --  Callback for a click on the global "x" button
 
+   procedure On_Progress_Bar_Button_Clicked
+     (Object : access GObject_Record'Class;
+      Data   : Manager_Index_Record);
+   --  Callback for a click on the global progress bar "x" button
+
    function On_Button_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -314,6 +319,27 @@ package body Task_Manager.GUI is
      (Object : access GObject_Record'Class;
       Data   : Manager_Index_Record)
    is
+      pragma Unreferenced (Object);
+   begin
+      if Data.D.Manager.Queues = null then
+         return;
+      end if;
+
+      Show_Task_Manager (Data.D.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, E);
+   end On_Global_Button_Clicked;
+
+   ------------------------------------
+   -- On_Progress_Bar_Button_Clicked --
+   ------------------------------------
+
+   procedure On_Progress_Bar_Button_Clicked
+     (Object : access GObject_Record'Class;
+      Data   : Manager_Index_Record)
+   is
       Index : Natural := 0;
       Count : Natural := 1;
       pragma Unreferenced (Object);
@@ -335,16 +361,15 @@ package body Task_Manager.GUI is
 
       if Count = 1 then
          Interrupt_Command (Data.D.Manager, Index);
-      else
-         --  There is more than one task: display the task manager dialog
-
-         Show_Task_Manager (Data.D.Kernel);
       end if;
-
    exception
       when E : others =>
          Trace (Exception_Handle, E);
-   end On_Global_Button_Clicked;
+   end On_Progress_Bar_Button_Clicked;
+
+   -------------
+   -- Refresh --
+   -------------
 
    -------------
    -- Refresh --
@@ -352,13 +377,22 @@ package body Task_Manager.GUI is
 
    procedure Refresh (GUI   : Task_Manager_Interface) is
       Pixbuf : Gdk_Pixbuf;
+      Image  : Gtk_Image;
    begin
-      if GUI.Button = null then
+      if GUI.Global_Button = null then
          --  Create the GUI elements
          Gtk_New (GUI.Label, "");
 
          Pack_Start
            (GUI, GUI.Label, Expand => True, Fill => True);
+
+         Gtk_New (GUI.Progress_Bar_Button);
+         Pixbuf := Render_Icon
+           (GUI.Progress_Bar_Button, Stock_Close, Icon_Size_Menu);
+         Gtk_New (Image, Pixbuf);
+         Add (GUI.Progress_Bar_Button, Image);
+         Set_Relief (GUI.Progress_Bar_Button, Relief_None);
+         Pack_Start (GUI, GUI.Progress_Bar_Button, Expand => False);
 
          Gtk_New (GUI.Progress_Image);
          Pack_Start (GUI,
@@ -367,12 +401,12 @@ package body Task_Manager.GUI is
                      Fill    => True,
                      Padding => 3);
 
-         Gtk_New (GUI.Button);
-         Pixbuf := Render_Icon (GUI.Button, Stock_Close, Icon_Size_Menu);
+         Gtk_New (GUI.Global_Button);
+         Pixbuf := Render_Icon (GUI.Global_Button, Stock_Open, Icon_Size_Menu);
          Gtk_New (GUI.Button_Image, Pixbuf);
-         Add (GUI.Button, GUI.Button_Image);
-         Set_Relief (GUI.Button, Relief_None);
-         Pack_End (GUI, GUI.Button, Expand => False);
+         Add (GUI.Global_Button, GUI.Button_Image);
+         Set_Relief (GUI.Global_Button, Relief_None);
+         Pack_End (GUI, GUI.Global_Button, Expand => False);
 
          Pack_End
            (GUI.Manager.Progress_Area,
@@ -382,8 +416,13 @@ package body Task_Manager.GUI is
             Padding => 0);
 
          Task_Manager_Handler.Connect
-           (GUI.Button, Gtk.Button.Signal_Clicked,
+           (GUI.Global_Button, Gtk.Button.Signal_Clicked,
             On_Global_Button_Clicked'Access,
+            User_Data => (GUI, 0));
+
+         Task_Manager_Handler.Connect
+           (GUI.Progress_Bar_Button, Gtk.Button.Signal_Clicked,
+            On_Progress_Bar_Button_Clicked'Access,
             User_Data => (GUI, 0));
       end if;
 
@@ -400,19 +439,13 @@ package body Task_Manager.GUI is
             if Pd = Null_Progress_Data then
                Hide_All (GUI);
             else
-               if Pd.Multiple_Queues then
-                  Pixbuf := Render_Icon
-                    (GUI.Button, Stock_Open, Icon_Size_Menu);
-               else
-                  Pixbuf := Render_Icon
-                    (GUI.Button, Stock_Close, Icon_Size_Menu);
-               end if;
-
-               Set (GUI.Button_Image, Pixbuf);
-
                if P /= null then
                   Set (GUI.Progress_Image, P);
                   Show_All (GUI);
+               end if;
+
+               if Pd.Multiple_Queues then
+                  Hide_All (GUI.Progress_Bar_Button);
                end if;
             end if;
          end;
@@ -435,19 +468,19 @@ package body Task_Manager.GUI is
    begin
       Set_Rules_Hint (Tree, False);
 
-      Gtk_New (Col);
-      Set_Expand (Col, False);
-      Gtk_New (Pixbuf_Rend);
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Command_Progress_Column);
-      Dummy := Append_Column (Tree, Col);
-
       Gtk_New (View.Button_Col);
       Gtk_New (Pixbuf_Rend);
       Pack_End (View.Button_Col, Pixbuf_Rend, False);
       Add_Attribute
         (View.Button_Col, Pixbuf_Rend, "pixbuf", Command_Button_Column);
       Dummy := Append_Column (Tree, View.Button_Col);
+
+      Gtk_New (Col);
+      Set_Expand (Col, False);
+      Gtk_New (Pixbuf_Rend);
+      Pack_Start (Col, Pixbuf_Rend, False);
+      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Command_Progress_Column);
+      Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
    -------------------
@@ -780,8 +813,8 @@ package body Task_Manager.GUI is
          GUI.Progress_Width,
          GUI.Progress_Height);
 
-      GUI.Stop_Button_Pixbuf := Render_Icon
-        (GUI.Button, Stock_Close, Icon_Size_Menu);
+      GUI.Global_Button_Pixbuf := Render_Icon
+        (GUI.Global_Button, Stock_Close, Icon_Size_Menu);
    end Init_Graphics;
 
    ---------------
@@ -831,7 +864,7 @@ package body Task_Manager.GUI is
 
             when Command_Button_Column =>
                Init (Value, Gdk.Pixbuf.Get_Type);
-               Set_Object (Value, GObject (Self.GUI.Stop_Button_Pixbuf));
+               Set_Object (Value, GObject (Self.GUI.Global_Button_Pixbuf));
 
             when others =>
                Init (Value, Gdk.Pixbuf.Get_Type);
