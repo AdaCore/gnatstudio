@@ -17,20 +17,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.Regpat;               use GNAT.Regpat;
 
 with Glib;
 with Gdk.Color;
-with Gdk.Pixbuf;        use Gdk.Pixbuf;
-with Gtk.Tree_Model;    use Gtk.Tree_Model;
-with Gtk.Tree_Store;    use Gtk.Tree_Store;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
 
 with GNATCOLL.VFS;
 
-with Basic_Types;       use Basic_Types;
-with GPS.Editors;       use GPS.Editors;
-with GPS.Kernel;        use GPS.Kernel;
-with GPS.Kernel.Styles; use GPS.Kernel.Styles;
+with Basic_Types;               use Basic_Types;
+with GPS.Editors;               use GPS.Editors;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 
 package GPS.Location_Model is
 
@@ -52,6 +53,19 @@ package GPS.Location_Model is
    Number_Of_Items_Column    : constant := 12;
    Category_Line_Column      : constant := 13;
 
+   type Location_Model_Record is new Gtk_Tree_Store_Record with private;
+   type Location_Model is access all Location_Model_Record'Class;
+
+   procedure Gtk_New
+     (Model  : out Location_Model;
+      Kernel : Kernel_Handle);
+   --  Creates new location model.
+
+   procedure Initialize
+     (Self   : not null access Location_Model_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Initialize location model.
+
    function Get_File
      (Model : not null access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
@@ -69,16 +83,13 @@ package GPS.Location_Model is
    --  Return the name of the category associated with that iterator
 
    procedure Get_Category_File
-     (Model           : Gtk_Tree_Store;
+     (Model           : not null access Location_Model_Record'Class;
       Category        : Glib.UTF8_String;
       File            : GNATCOLL.VFS.Virtual_File;
       Category_Iter   : out Gtk_Tree_Iter;
       File_Iter       : out Gtk_Tree_Iter;
       New_Category    : out Boolean;
-      Create          : Boolean;
-      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
-      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
-      Color           : access Gdk.Color.Gdk_Color := null);
+      Create          : Boolean);
    --  Return the iter corresponding to Category, create it if
    --  necessary and if Create is True.
    --  If File is "", then the category iter will be returned.
@@ -106,7 +117,7 @@ package GPS.Location_Model is
 
    procedure Remove_Category
      (Kernel     : not null access Kernel_Handle_Record'Class;
-      Model      : Gtk_Tree_Store;
+      Model      : not null access Location_Model_Record'Class;
       Identifier : String;
       File       : GNATCOLL.VFS.Virtual_File;
       Line       : Natural := 0);
@@ -115,7 +126,7 @@ package GPS.Location_Model is
    --  Identifier is the escaped string.
 
    procedure Fill_Iter
-     (Model              : Gtk_Tree_Store;
+     (Model              : not null access Location_Model_Record'Class;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
       Absolute_Name      : GNATCOLL.VFS.Virtual_File;
@@ -126,8 +137,7 @@ package GPS.Location_Model is
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : Style_Access;
-      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf;
-      Color              : access Gdk.Color.Gdk_Color := null);
+      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
@@ -135,25 +145,43 @@ package GPS.Location_Model is
 
    procedure Remove_Category_Or_File_Iter
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Model  : Gtk_Tree_Store;
+      Model  : not null access Location_Model_Record'Class;
       Iter   : in out Gtk_Tree_Iter;
       Line   : Natural := 0);
    --  Clear all the marks and highlightings in file or category
    --  ??? Document parameter Line.
 
    procedure Recount_Category
-     (Model    : Gtk_Tree_Store;
+     (Model    : not null access Location_Model_Record'Class;
       Category : String);
    --  Update the counters for Category
 
-   function Columns_Types return Glib.GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
+   procedure Add_Action_Item
+     (Self       : not null access Location_Model_Record'Class;
+      Identifier : String;
+      Category   : String;
+      File       : GNATCOLL.VFS.Virtual_File;
+      Line       : Natural;
+      Column     : Natural;
+      Message    : String;
+      Action     : Action_Item);
+   --  Add an action item to be associated to a specified location.
+   --  If Action is null, the action item will be removed from that location.
 
    Items_Count_Matcher : constant Pattern_Matcher :=
                            Compile ("( \([0-9]+ item[s]?\))$");
+
+private
+
+   type Location_Model_Record is new Gtk_Tree_Store_Record with record
+      Kernel         : Kernel_Handle;
+
+      Non_Leaf_Color : aliased Gdk.Color.Gdk_Color;
+      --  The color to use in the first column, depending on the status of the
+      --  line.
+
+      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
+   end record;
 
 end GPS.Location_Model;
