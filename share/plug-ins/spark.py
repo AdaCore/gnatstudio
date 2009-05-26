@@ -587,10 +587,17 @@ b = """<?xml version="1.0"?>
   </documentation_file>
 
   <documentation_file>
-     <name>Release_Note_8.htm</name>
-     <descr>Release Note 8</descr>
+     <name>Release_Note_8p1p1.htm</name>
+     <descr>Release Note 8.1.1</descr>
      <category>Spark</category>
-     <menu before="About">/Help/SPARK/Release Notes/Release Note 8</menu>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 8.1.1</menu>
+  </documentation_file>
+
+  <documentation_file>
+     <name>Release_Note_8p1p0.htm</name>
+     <descr>Release Note 8.1.0</descr>
+     <category>Spark</category>
+     <menu before="About">/Help/SPARK/Release Notes/Release Note 8.1.0</menu>
   </documentation_file>
 
   <documentation_file>

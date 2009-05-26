@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 4.3.3
 
+- I501-005: GPS 'show VC' and 'Show Simplified VC' is slighlty off
+  Problem:    When selecting 'show VC' and 'Show Simplified VC', the user is
+              taken to the VC in the .vcg or .siv file but it has moved
+              the current line forward by three lines.
+  Workaround: Just click on the right line which is only just above the
+              current line.
+
 - I430-008: Error message when GPS us launched with --debug alone
   Problem:    When launching "gps --debug"with no executable, an error message
               is displayed that the executable specified was not found.
