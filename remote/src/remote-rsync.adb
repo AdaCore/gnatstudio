@@ -213,14 +213,16 @@ package body Remote.Rsync is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class) return Boolean
    is
-      Rsync_Data        : Rsync_Hooks_Args renames Rsync_Hooks_Args (Data.all);
-      Local_Path        : String_Access;
-      Remote_Path       : String_Access;
+      Rsync_Data          : Rsync_Hooks_Args renames
+                              Rsync_Hooks_Args (Data.all);
+      Local_Path          : String_Access;
+      Remote_Path         : String_Access;
       Src_Path, Dest_Path : String_Access;
-      Machine           : Gexpect.Machine_Access;
-      Success           : Boolean;
-      Cb_Data           : Rsync_Callback_Data;
-      Real_Print_Output : Boolean;
+      Machine             : Gexpect.Machine_Access;
+      All_Success         : Boolean := True;
+      Success             : Boolean;
+      Cb_Data             : Rsync_Callback_Data;
+      Real_Print_Output   : Boolean;
 
       function Build_Arg return GNAT.Strings.String_List;
       --  Build rsync arguments
@@ -442,6 +444,7 @@ package body Remote.Rsync is
                      Timeout           => Machine.Timeout,
                      Strip_CR          => False,
                      Use_Pipes         => False);
+                  All_Success := All_Success and Success;
 
                   for J in Arguments'Range loop
                      Free (Arguments (J));
@@ -451,7 +454,7 @@ package body Remote.Rsync is
          end loop;
       end;
 
-      return Rsync_Module.Ret_Data.Status = 0 and then Success;
+      return Rsync_Module.Ret_Data.Status = 0 and then All_Success;
    end On_Rsync_Hook;
 
    ----------------------
