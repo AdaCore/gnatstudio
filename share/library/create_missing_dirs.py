@@ -44,7 +44,6 @@ def on_project_changed(self):
                        created.append(dir)
                        CreatedDirs=True
      if CreatedDirs:
-        GPS.Console("").clear()
         GPS.Console("").write("Created missing dirs\n")
         GPS.Console("").write(string.join(created,"\n"))
         GPS.Console("").write("\n")
