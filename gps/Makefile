@@ -7,6 +7,12 @@ endif
 GPRBUILD=gprbuild
 GPRBUILD_FLAGS=
 
+ifeq ($(Build),Production)
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production
+else
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XGnatcoll_Build=Debug
+endif
+
 .PHONY: default resources do_links all clean
 
 default: resources do_links all
@@ -17,7 +23,8 @@ all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
-	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking -Pgps
+	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking \
+	  ${GPRBUILD_BUILD_TYPE_FLAGS} -Pgps
 
 resources:
 ifeq ($(OS),Windows_NT)
