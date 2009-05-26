@@ -123,12 +123,15 @@ if os_utils.locate_exec_on_path("codepeer") != "" \
       <supported-model>builder</supported-model>
       <supported-model>gnatmake</supported-model>
       <supported-model>gprbuild</supported-model>
+      <supported-model filter="--subdirs=">gprclean</supported-model>
+      <substitutions>
+        <substitute src="%builder" dest="%gnatmake"/>
+      </substitutions>
       <extra-args>
+        <arg>-margs</arg>
         <arg>--subdirs=%subdir</arg>
         <arg>-k</arg>
         <arg>-c</arg>
-        <arg>-gnatc</arg>
-        <arg>-cargs</arg>
-        <arg>-gnatC</arg>
+        <arg>-gnatcC</arg>
       </extra-args>
     </builder-mode>""")
