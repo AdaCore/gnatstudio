@@ -17,7 +17,7 @@ New features on 4.4.0
 
 NF-44-I513-024 Permanent GPS.EditorMark (2009-05-19)
 
-   Marks created through the GPS.EditorMark python API will not stay
+   Marks created through the GPS.EditorMark python API will now stay
    valid even if the editor is closed, and possibly reopen.
 
 NF-44-I427-035 Smart completion: backspace key re-expands list (2009-05-05)
