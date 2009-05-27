@@ -37,7 +37,7 @@ with GNATCOLL.Traces;
 
 package body Src_Editor_Module.Markers is
 
-   Me : constant Debug_Handle := Create ("Markers", GNATCOLL.Traces.Off);
+   Me : constant Debug_Handle := Create ("Markers");
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, File_Marker);
