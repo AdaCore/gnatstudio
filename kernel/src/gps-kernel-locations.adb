@@ -509,7 +509,7 @@ package body GPS.Kernel.Locations is
       end if;
 
       Recount_Category (View.Model, Category);
-      View.Redraw_Totals;
+      View.Model.Redraw_Totals;
    end Recount_Category;
 
    --------------
@@ -558,7 +558,7 @@ package body GPS.Kernel.Locations is
             Glib.Convert.Escape_Text (Category),
             File,
             Line);
-         View.Redraw_Totals;
+         View.Model.Redraw_Totals;
       end if;
    end Remove_Location_Category;
 

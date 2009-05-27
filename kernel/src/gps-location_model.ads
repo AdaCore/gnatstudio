@@ -17,9 +17,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;               use GNAT.Regpat;
-
-with Glib;
+with Glib.Main;                 use Glib.Main;
 with Gdk.Color;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -168,8 +166,9 @@ package GPS.Location_Model is
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
 
-   Items_Count_Matcher : constant Pattern_Matcher :=
-                           Compile ("( \([0-9]+ item[s]?\))$");
+   procedure Redraw_Totals
+     (Model : not null access Location_Model_Record'Class);
+   --  Reset the columns corresponding to the "total" items
 
 private
 
@@ -182,6 +181,10 @@ private
 
       Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
       File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
+
+      --  Idle handlers
+
+      Idle_Redraw_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
    end record;
 
 end GPS.Location_Model;

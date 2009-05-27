@@ -121,10 +121,6 @@ package GPS.Location_View is
       return not null GPS.Location_Model.Location_Model;
    --  Returns internal model.
 
-   procedure Redraw_Totals
-     (View : not null access Location_View_Record'Class);
-   --  Reset the columns corresponding to the "total" items
-
 private
    type Location_Record;
    type Location_Record_Access is access Location_Record;
@@ -173,7 +169,6 @@ private
 
       --  Idle handlers
 
-      Idle_Redraw_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Idle_Row_Handler    : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
 
       Sort_By_Category : Boolean := False;

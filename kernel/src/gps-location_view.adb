@@ -251,9 +251,6 @@ package body GPS.Location_View is
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler
 
-   function Idle_Redraw (View : Location_View) return Boolean;
-   --  Redraw the "total" items
-
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class);
    --  Callback for the activation of the sort contextual menu item
@@ -293,92 +290,6 @@ package body GPS.Location_View is
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
-
-   -----------------
-   -- Idle_Redraw --
-   -----------------
-
-   function Idle_Redraw (View : Location_View) return Boolean is
-      Category_Iter : Gtk_Tree_Iter;
-      File_Iter     : Gtk_Tree_Iter;
-
-      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer);
-      --  Set in View.Tree.Model and Item the Total_Column string
-
-      ---------------
-      -- Set_Total --
-      ---------------
-
-      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer) is
-         Message : constant String :=
-                     View.Model.Get_String (Iter, Base_Name_Column);
-         Img     : constant String := Image (Nb_Items);
-         Matches : Match_Array (0 .. 1);
-         Cut     : Integer;
-      begin
-         Match (Items_Count_Matcher, Message, Matches);
-
-         if Matches (0) /= No_Match then
-            Cut := Matches (1).First - 1;
-         else
-            Cut := Message'Last;
-         end if;
-
-         declare
-            Base_Message : constant String := Message (1 .. Cut);
-         begin
-            if Nb_Items = 1 then
-               Set (View.Model, Iter, Base_Name_Column,
-                    Base_Message & " (" & Img & (-" item") & ")");
-            else
-               Set (View.Model, Iter, Base_Name_Column,
-                    Base_Message & " (" & Img & (-" items") & ")");
-            end if;
-         end;
-      end Set_Total;
-
-   begin
-      Category_Iter := View.Model.Get_Iter_First;
-
-      while Category_Iter /= Null_Iter loop
-         File_Iter := View.Model.Children (Category_Iter);
-
-         while File_Iter /= Null_Iter loop
-            Set_Total
-              (File_Iter,
-               Integer
-                 (View.Model.Get_Int (File_Iter, Number_Of_Items_Column)));
-            View.Model.Next (File_Iter);
-         end loop;
-
-         Set_Total
-           (Category_Iter,
-            Integer
-              (View.Model.Get_Int (Category_Iter, Number_Of_Items_Column)));
-         View.Model.Next (Category_Iter);
-      end loop;
-
-      View.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
-      return False;
-   exception
-      when E : others =>
-         Trace (Exception_Handle, E);
-         View.Idle_Redraw_Handler := Glib.Main.No_Source_Id;
-         return False;
-   end Idle_Redraw;
-
-   -------------------
-   -- Redraw_Totals --
-   -------------------
-
-   procedure Redraw_Totals
-     (View : not null access Location_View_Record'Class) is
-   begin
-      if View.Idle_Redraw_Handler = Glib.Main.No_Source_Id then
-         View.Idle_Redraw_Handler := View_Idle.Idle_Add
-           (Idle_Redraw'Access, Location_View (View));
-      end if;
-   end Redraw_Totals;
 
    -------------------
    -- Idle_Show_Row --
@@ -551,7 +462,7 @@ package body GPS.Location_View is
       Get_Selected (Get_Selection (View.Tree), Model, Filter_Iter);
       View.Filter.Convert_Iter_To_Child_Iter (Store_Iter, Filter_Iter);
       Remove_Category_Or_File_Iter (View.Kernel, View.Model, Store_Iter);
-      Redraw_Totals (View);
+      View.Model.Redraw_Totals;
 
    exception
       when E : others => Trace (Exception_Handle, E);
@@ -762,8 +673,6 @@ package body GPS.Location_View is
               View.Model.Get_Int (File_Iter, Number_Of_Items_Column) + 1);
          View.Model.Set (Category_Iter, Number_Of_Items_Column,
               View.Model.Get_Int (Category_Iter, Number_Of_Items_Column) + 1);
-
-         Redraw_Totals (View);
       end if;
 
       if Highlight then
@@ -928,6 +837,10 @@ package body GPS.Location_View is
             Goto_Location (View);
          end if;
       end if;
+
+      if Enable_Counter then
+         View.Model.Redraw_Totals;
+      end if;
    end Add_Location;
 
    ----------------------
@@ -975,10 +888,6 @@ package body GPS.Location_View is
 
    begin
       Basic_Types.Unchecked_Free (V.Secondary_File_Pattern);
-
-      if V.Idle_Redraw_Handler /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (V.Idle_Redraw_Handler);
-      end if;
 
       if V.Row /= null then
          Path_Free (V.Row);
