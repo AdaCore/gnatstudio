@@ -227,7 +227,7 @@ package body GPS.Location_View is
    --  length Length.
 
    procedure On_Row_Expanded
-     (Object : access Gtk_Widget_Record'Class;
+     (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal
 
@@ -265,28 +265,21 @@ package body GPS.Location_View is
       Self  : Location_View) return Boolean;
    --  Used by model filter for query item visibility.
 
-   procedure On_Apply_Filter
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View);
+   procedure On_Apply_Filter (Self : access Location_View_Record'Class);
    --  Called on "apply-filter" signal from filter panel
 
-   procedure On_Cancel_Filter
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View);
+   procedure On_Cancel_Filter (Self : access Location_View_Record'Class);
    --  Called on "cancel-filter" signal from filter panel
 
-   procedure On_Visibility_Toggled
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View);
+   procedure On_Visibility_Toggled (Self : access Location_View_Record'Class);
    --  Called on "visibility-toggled" signal from filter panel
 
    procedure On_Filter_Panel_Activated
      (Widget : access Gtk_Widget_Record'Class);
    --  Called when filter panel item in the context menu is activated
 
-   package Locations_Filter_Panel_Callbacks is
-     new Gtk.Handlers.User_Callback
-       (Locations_Filter_Panel_Record, Location_View);
+   package Location_View_Callbacks is
+     new Gtk.Handlers.Callback (Location_View_Record);
 
    package Visible_Funcs is
      new Gtk.Tree_Model_Filter.Visible_Funcs (Location_View);
@@ -1201,23 +1194,20 @@ package body GPS.Location_View is
       --  Initialize the filter panel
 
       Gtk_New (View.Filter_Panel, Kernel);
-      Locations_Filter_Panel_Callbacks.Connect
+      Location_View_Callbacks.Object_Connect
         (View.Filter_Panel,
          Signal_Apply_Filter,
-         Locations_Filter_Panel_Callbacks.To_Marshaller
-           (On_Apply_Filter'Access),
+         Location_View_Callbacks.To_Marshaller (On_Apply_Filter'Access),
          Location_View (View));
-      Locations_Filter_Panel_Callbacks.Connect
+      Location_View_Callbacks.Object_Connect
         (View.Filter_Panel,
          Signal_Cancel_Filter,
-         Locations_Filter_Panel_Callbacks.To_Marshaller
-           (On_Cancel_Filter'Access),
+         Location_View_Callbacks.To_Marshaller (On_Cancel_Filter'Access),
          Location_View (View));
-      Locations_Filter_Panel_Callbacks.Connect
+      Location_View_Callbacks.Object_Connect
         (View.Filter_Panel,
          Signal_Visibility_Toggled,
-         Locations_Filter_Panel_Callbacks.To_Marshaller
-           (On_Visibility_Toggled'Access),
+         Location_View_Callbacks.To_Marshaller (On_Visibility_Toggled'Access),
          Location_View (View));
       View.Pack_Start (View.Filter_Panel, False, False);
 
@@ -1239,7 +1229,7 @@ package body GPS.Location_View is
          View,
          After => False);
 
-      Widget_Callback.Object_Connect
+      Location_View_Callbacks.Object_Connect
         (View.Tree,
          Signal_Row_Expanded, On_Row_Expanded'Access,
          Slot_Object => View,
@@ -1271,25 +1261,26 @@ package body GPS.Location_View is
    ---------------------
 
    procedure On_Row_Expanded
-     (Object : access Gtk_Widget_Record'Class;
+     (Self   : access Location_View_Record'Class;
       Params : Glib.Values.GValues)
    is
-      View : constant Location_View := Location_View (Object);
       Iter : Gtk_Tree_Iter;
+
    begin
       Get_Tree_Iter (Nth (Params, 1), Iter);
       if Iter /= Null_Iter
-        and then View.Idle_Row_Handler = Glib.Main.No_Source_Id
+        and then Self.Idle_Row_Handler = Glib.Main.No_Source_Id
       then
-         if View.Row /= null then
-            Path_Free (View.Row);
+         if Self.Row /= null then
+            Path_Free (Self.Row);
          end if;
 
-         View.Row := Get_Path (Get_Model (View.Tree), Iter);
+         Self.Row := Get_Path (Get_Model (Self.Tree), Iter);
 
-         View.Idle_Row_Handler := View_Idle.Idle_Add
-           (Idle_Show_Row'Access, View);
+         Self.Idle_Row_Handler := View_Idle.Idle_Add
+           (Idle_Show_Row'Access, Location_View (Self));
       end if;
+
    exception
       when E : others => Trace (Exception_Handle, E);
    end On_Row_Expanded;
@@ -2210,12 +2201,7 @@ package body GPS.Location_View is
    -- On_Apply_Filter --
    ---------------------
 
-   procedure On_Apply_Filter
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View)
-   is
-      pragma Unreferenced (Object);
-
+   procedure On_Apply_Filter (Self : access Location_View_Record'Class) is
       Pattern     : constant String := Self.Filter_Panel.Get_Pattern;
       New_Reg_Exp : GNAT.Expect.Pattern_Matcher_Access;
       New_Text    : GNAT.Strings.String_Access;
@@ -2248,12 +2234,7 @@ package body GPS.Location_View is
    -- On_Cancel_Filter --
    ----------------------
 
-   procedure On_Cancel_Filter
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View)
-   is
-      pragma Unreferenced (Object);
-
+   procedure On_Cancel_Filter (Self : access Location_View_Record'Class) is
    begin
       Basic_Types.Unchecked_Free (Self.RegExp);
       GNAT.Strings.Free (Self.Text);
@@ -2370,11 +2351,7 @@ package body GPS.Location_View is
    ---------------------------
 
    procedure On_Visibility_Toggled
-     (Object : access Locations_Filter_Panel_Record'Class;
-      Self   : Location_View)
-   is
-      pragma Unreferenced (Object);
-
+     (Self : access Location_View_Record'Class) is
    begin
       Self.Is_Hide := Self.Filter_Panel.Get_Hide_Matched;
 
