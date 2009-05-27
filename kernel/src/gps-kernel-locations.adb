@@ -489,7 +489,8 @@ package body GPS.Kernel.Locations is
          Start := Real_Last + 1;
       end loop;
 
-      if not Quiet
+      if View /= null
+        and then not Quiet
         and then Auto_Jump_To_First.Get_Pref
       then
          Goto_Location (View);
