@@ -90,7 +90,6 @@ package GPS.Location_View is
       Highlight          : Boolean;
       Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
-      Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
@@ -102,8 +101,6 @@ package GPS.Location_View is
    --  create marks for File, but add it to the list of unresolved files
    --  instead.
    --  Message is the text to display, in pango markup language.
-   --  If Quiet is True, do not raise the locations window and do not jump
-   --  on the first item.
    --  If Remove_Duplicates is True, do not insert the entry if it is a
    --  duplicate.
    --  If Model is set, append the items to Model, otherwise append them
@@ -120,6 +117,9 @@ package GPS.Location_View is
      (Self : not null access Location_View_Record'Class)
       return not null GPS.Location_Model.Location_Model;
    --  Returns internal model.
+
+   procedure Goto_Location (Self : access Location_View_Record'Class);
+   --  Goto the selected location in the Location_View
 
 private
    type Location_Record;

@@ -24,7 +24,7 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Location_Model;        use GPS.Location_Model;
@@ -211,7 +211,6 @@ package body GPS.Kernel.Locations is
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Text, Highlight_Category,
-               Quiet              => Quiet,
                Remove_Duplicates  => Remove_Duplicates,
                Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
@@ -224,12 +223,17 @@ package body GPS.Kernel.Locations is
                Glib.Convert.Escape_Text (Category),
                File, Line, Column, Length,
                Highlight, Glib.Convert.Escape_Text (Text), Highlight_Category,
-               Quiet              => Quiet,
                Remove_Duplicates  => Remove_Duplicates,
                Enable_Counter     => Enable_Counter,
                Sort_In_File       => Sort_In_File,
                Parent_Iter        => Iter,
                Look_For_Secondary => Look_For_Secondary);
+         end if;
+
+         if not Quiet
+           and then Auto_Jump_To_First.Get_Pref
+         then
+            Goto_Location (View);
          end if;
 
          Gtkada.MDI.Highlight_Child
@@ -386,8 +390,6 @@ package body GPS.Kernel.Locations is
       Column        : Basic_Types.Visible_Column_Type := 1;
       C             : GPS.Kernel.Styles.Style_Access;
       View          : GPS.Location_View.Location_View := null;
-      Expand        : Boolean := Quiet;
-
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
 
       -----------------
@@ -477,17 +479,21 @@ package body GPS.Kernel.Locations is
                Message            => Glib.Convert.Escape_Text
                  (Get_Message (Last)),
                Highlight_Category => C,
-               Quiet              => Expand,
                Remove_Duplicates  => Remove_Duplicates,
                Enable_Counter     => False,
                Sort_In_File       => False,
                Parent_Iter        => Iter,
                Look_For_Secondary => True);
-            Expand := False;
          end if;
 
          Start := Real_Last + 1;
       end loop;
+
+      if not Quiet
+        and then Auto_Jump_To_First.Get_Pref
+      then
+         Goto_Location (View);
+      end if;
 
       Recount_Category (Kernel, Category);
    end Parse_File_Locations;

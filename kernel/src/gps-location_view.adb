@@ -187,9 +187,6 @@ package body GPS.Location_View is
       Event : Gdk_Event) return Boolean;
    --  Callback for the "button_press" event
 
-   procedure Goto_Location (Object : access Gtk_Widget_Record'Class);
-   --  Goto the selected location in the Location_View
-
    procedure Remove_Category (Object : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View
 
@@ -361,14 +358,13 @@ package body GPS.Location_View is
    -- Goto_Location --
    -------------------
 
-   procedure Goto_Location (Object : access Gtk_Widget_Record'Class) is
-      View    : constant Location_View := Location_View (Object);
+   procedure Goto_Location (Self : access Location_View_Record'Class) is
       Iter    : Gtk_Tree_Iter;
       Model   : Gtk_Tree_Model;
       Path    : Gtk_Tree_Path;
       Success : Boolean := True;
    begin
-      Get_Selected (Get_Selection (View.Tree), Model, Iter);
+      Get_Selected (Get_Selection (Self.Tree), Model, Iter);
 
       if Iter = Null_Iter then
          return;
@@ -377,9 +373,9 @@ package body GPS.Location_View is
       Path := Get_Path (Model, Iter);
 
       while Success and then Get_Depth (Path) < 3 loop
-         Success := Expand_Row (View.Tree, Path, False);
+         Success := Expand_Row (Self.Tree, Path, False);
          Down (Path);
-         Select_Path (Get_Selection (View.Tree), Path);
+         Select_Path (Get_Selection (Self.Tree), Path);
       end loop;
 
       Iter := Get_Iter (Model, Path);
@@ -577,7 +573,6 @@ package body GPS.Location_View is
       Highlight          : Boolean;
       Message            : Glib.UTF8_String;
       Highlight_Category : Style_Access;
-      Quiet              : Boolean;
       Remove_Duplicates  : Boolean;
       Enable_Counter     : Boolean;
       Sort_In_File       : Boolean;
@@ -823,12 +818,6 @@ package body GPS.Location_View is
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
          Path_Free (Path);
-
-         if not Quiet
-           and then Auto_Jump_To_First.Get_Pref
-         then
-            Goto_Location (View);
-         end if;
       end if;
 
       if Enable_Counter then
@@ -1009,12 +998,12 @@ package body GPS.Location_View is
 
       elsif Get_Depth (Path) >= 3 then
          Gtk_New (Mitem, -"Jump to location");
-         Gtkada.Handlers.Widget_Callback.Object_Connect
+         Location_View_Callbacks.Object_Connect
            (Mitem,
             Gtk.Menu_Item.Signal_Activate,
             Goto_Location'Access,
             Explorer,
-            After => False);
+            False);
 
          Append (Menu, Mitem);
 
@@ -1367,7 +1356,7 @@ package body GPS.Location_View is
 
                else
                   Select_Path (Get_Selection (Explorer.Tree), Path);
-                  Goto_Location (View);
+                  Goto_Location (Location_View (View));
                end if;
             end if;
 
@@ -1525,7 +1514,6 @@ package body GPS.Location_View is
             Message            => Loc.Message.all,
             Highlight_Category => Get_Or_Create_Style
               (Kernel_Handle (Kernel), Loc.Highlight_Category.all, False),
-            Quiet              => True,
             Remove_Duplicates  => False,
             Enable_Counter     => True,
             Sort_In_File       => False,
