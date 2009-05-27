@@ -19,10 +19,13 @@ default: resources do_links all
 
 include ../Makefile.gnat
 
+# NOTE: we need to build gnatcoll separately, since we cannot use
+# gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all:
 	$(MAKE) -s LIBRARY_TYPE=static ENABLE_SHARED=no \
 	  -C ../templates_parser setup
 	$(MAKE) -s -C ../kernel/src_info/sn
+	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -P../gnatlib/src/gnatcoll
 	$(GPRBUILD) ${GPRBUILD_FLAGS} -p -ws -XTP_TASKING=No_Tasking \
 	  ${GPRBUILD_BUILD_TYPE_FLAGS} -Pgps
 
